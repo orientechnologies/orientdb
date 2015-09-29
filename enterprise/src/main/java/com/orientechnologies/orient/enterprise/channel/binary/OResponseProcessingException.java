@@ -22,13 +22,14 @@
 package com.orientechnologies.orient.enterprise.channel.binary;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.exception.OSystemException;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 11/8/13
  */
-public class OResponseProcessingException extends OException {
-  public OResponseProcessingException(String message, Throwable cause) {
-    super(message, cause);
+public class OResponseProcessingException extends OSystemException {
+  public OResponseProcessingException(String message) {
+    super(message);
   }
 }

@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.exception;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.common.exception.OUserException;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -32,7 +33,7 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OConcurrentModificationException extends ONeedRetryException {
+public class OConcurrentModificationException extends ONeedRetryException implements OUserException {
 
   private static final String MESSAGE_OPERATION      = "are";
   private static final String MESSAGE_RECORD_VERSION = "your=v";
@@ -49,10 +50,13 @@ public class OConcurrentModificationException extends ONeedRetryException {
    * Default constructor for OFastConcurrentModificationException
    */
   protected OConcurrentModificationException() {
+    super(makeMessage(0, new ORecordId(), OVersionFactory.instance().createVersion(), OVersionFactory.instance().createVersion()));
     rid = new ORecordId();
   }
 
   public OConcurrentModificationException(final String message) {
+    super(message);
+
     int beginPos = message.indexOf(ORID.PREFIX);
     int endPos = message.indexOf(' ', beginPos);
     rid = new ORecordId(message.substring(beginPos, endPos));
@@ -75,6 +79,8 @@ public class OConcurrentModificationException extends ONeedRetryException {
 
   public OConcurrentModificationException(final ORID iRID, final ORecordVersion iDatabaseVersion,
       final ORecordVersion iRecordVersion, final int iRecordOperation) {
+    super(makeMessage(iRecordOperation, iRID, iDatabaseVersion, iRecordVersion));
+
     if (OFastConcurrentModificationException.enabled())
       throw new IllegalStateException("Fast-throw is enabled. Use OFastConcurrentModificationException.instance() instead");
 
@@ -114,7 +120,7 @@ public class OConcurrentModificationException extends ONeedRetryException {
     return rid;
   }
 
-  public String getMessage() {
+  private static String makeMessage(int recordOperation, ORID rid, ORecordVersion databaseVersion, ORecordVersion recordVersion) {
     final String operation = ORecordOperation.getName(recordOperation);
 
     final StringBuilder sb = new StringBuilder();

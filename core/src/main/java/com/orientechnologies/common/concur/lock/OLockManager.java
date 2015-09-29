@@ -19,6 +19,8 @@
  */
 package com.orientechnologies.common.concur.lock;
 
+import com.orientechnologies.common.exception.OException;
+
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -130,7 +132,8 @@ public class OLockManager<T> {
           }
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
-          throw new OLockException("Thread interrupted while waiting for resource '" + iResourceId + "'", e);
+          throw OException.wrapException(new OLockException("Thread interrupted while waiting for resource '" + iResourceId + "'"),
+              e);
         }
       }
     } catch (RuntimeException e) {

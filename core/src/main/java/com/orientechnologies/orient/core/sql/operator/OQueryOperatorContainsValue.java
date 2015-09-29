@@ -27,6 +27,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
@@ -179,7 +180,7 @@ public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls 
       try {
         o = record.<ORecord> load();
       } catch (ORecordNotFoundException e) {
-        throw new OException("Error during loading record with id : " + record.getIdentity(), e);
+        throw new ODatabaseException("Error during loading record with id : " + record.getIdentity(), e);
       }
     }
     return o;

@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.serialization.serializer.record.string
 import com.orientechnologies.common.collection.OLazyIterator;
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.annotation.OAfterSerialization;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
@@ -96,7 +97,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       // JUST THE REFERENCE
       rid = (ORID) iLinked;
 
-      assert rid.getIdentity().isValid() || (ODatabaseRecordThreadLocal.INSTANCE.get().getStorage() instanceof OStorageProxy) : "Impossible to serialize invalid link "+ rid.getIdentity();
+      assert rid.getIdentity().isValid() || (ODatabaseRecordThreadLocal.INSTANCE.get().getStorage() instanceof OStorageProxy) : "Impossible to serialize invalid link "
+          + rid.getIdentity();
       resultRid = rid;
     } else {
       if (iLinked instanceof String)
@@ -116,7 +118,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       ORecord iLinkedRecord = ((OIdentifiable) iLinked).getRecord();
       rid = iLinkedRecord.getIdentity();
 
-      assert rid.getIdentity().isValid() || (ODatabaseRecordThreadLocal.INSTANCE.get().getStorage() instanceof OStorageProxy) : "Impossible to serialize invalid link "+ rid.getIdentity();
+      assert rid.getIdentity().isValid() || (ODatabaseRecordThreadLocal.INSTANCE.get().getStorage() instanceof OStorageProxy) : "Impossible to serialize invalid link "
+          + rid.getIdentity();
 
       final ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.get();
       if (iParentRecord != null) {
@@ -296,8 +299,9 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
           try {
             map.put(key, mapValueObject);
           } catch (ClassCastException e) {
-            throw new OSerializationException("Cannot load map because the type was not the expected: key=" + key + "(type "
-                + key.getClass().toString() + "), value=" + mapValueObject + "(type " + key.getClass() + ")", e);
+            throw OException.wrapException(new OSerializationException(
+                "Cannot load map because the type was not the expected: key=" + key + "(type " + key.getClass().toString()
+                    + "), value=" + mapValueObject + "(type " + key.getClass() + ")"), e);
           }
         }
 
@@ -754,12 +758,13 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
         if (id instanceof ODocument) {
           doc = (ODocument) id;
 
-          if(doc.hasOwners())
+          if (doc.hasOwners())
             linkedType = OType.EMBEDDED;
-          
-          assert linkedType == OType.EMBEDDED || id.getIdentity().isValid() || (ODatabaseRecordThreadLocal.INSTANCE.get()
-              .getStorage() instanceof OStorageProxy) : "Impossible to serialize invalid link " + id.getIdentity();
-          
+
+          assert linkedType == OType.EMBEDDED || id.getIdentity().isValid()
+              || (ODatabaseRecordThreadLocal.INSTANCE.get().getStorage() instanceof OStorageProxy) : "Impossible to serialize invalid link "
+              + id.getIdentity();
+
           linkedClass = ODocumentInternal.getImmutableSchemaClass(doc);
         } else
           linkedClass = null;

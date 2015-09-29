@@ -22,6 +22,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import javassist.util.proxy.Proxy;
 
 import com.orientechnologies.common.exception.OException;
@@ -254,7 +255,7 @@ public class OSchemaProxyObject implements OSchema {
     try {
       classes = OReflectionHelper.getClassesFor(iPackageName, iClassLoader);
     } catch (ClassNotFoundException e) {
-      throw new OException(e);
+      throw new ODatabaseException("Classes can not be loaded during schema generation", e);
     }
     for (Class<?> c : classes) {
       generateSchema(c);

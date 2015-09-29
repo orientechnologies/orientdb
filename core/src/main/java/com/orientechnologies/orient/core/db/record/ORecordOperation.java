@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -100,7 +101,7 @@ public class ORecordOperation implements OSerializableStream {
       return stream.toByteArray();
 
     } catch (Exception e) {
-      throw new OSerializationException("Cannot serialize record operation", e);
+      throw OException.wrapException(new OSerializationException("Cannot serialize record operation"), e);
     }
   }
 
@@ -121,7 +122,7 @@ public class ORecordOperation implements OSerializableStream {
       return this;
 
     } catch (Exception e) {
-      throw new OSerializationException("Cannot deserialize record operation", e);
+      throw OException.wrapException(new OSerializationException("Cannot deserialize record operation"), e);
     }
   }
 

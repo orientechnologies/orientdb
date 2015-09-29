@@ -42,11 +42,11 @@ import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 
 import com.orientechnologies.common.concur.lock.ODistributedCounter;
+import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.ONewLockManager;
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.directmemory.ODirectMemoryPointerFactory;
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -54,6 +54,7 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.exception.OWriteCacheException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.storage.OStorageAbstract;
@@ -631,9 +632,9 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       future.get();
     } catch (InterruptedException e) {
       Thread.interrupted();
-      throw new OException("File flush was interrupted", e);
+      throw new OInterruptedException("File flush was interrupted");
     } catch (Exception e) {
-      throw new OException("File flush was abnormally terminated", e);
+      throw new OWriteCacheException("File flush was abnormally terminated", e);
     }
   }
 
@@ -758,12 +759,12 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       commitExecutor.shutdown();
       try {
         if (!commitExecutor.awaitTermination(5, TimeUnit.MINUTES))
-          throw new OException("Background data flush task cannot be stopped.");
+          throw new OWriteCacheException("Background data flush task cannot be stopped.");
       } catch (InterruptedException e) {
         OLogManager.instance().error(this, "Data flush thread was interrupted");
 
         Thread.interrupted();
-        throw new OException("Data flush thread was interrupted", e);
+        throw new OWriteCacheException("Data flush thread was interrupted", e);
       }
     }
 
@@ -933,12 +934,12 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       commitExecutor.shutdown();
       try {
         if (!commitExecutor.awaitTermination(5, TimeUnit.MINUTES))
-          throw new OException("Background data flush task cannot be stopped.");
+          throw new OWriteCacheException("Background data flush task cannot be stopped.");
       } catch (InterruptedException e) {
         OLogManager.instance().error(this, "Data flush thread was interrupted");
 
         Thread.interrupted();
-        throw new OException("Data flush thread was interrupted", e);
+        throw new OInterruptedException("Data flush thread was interrupted");
       }
     }
 
@@ -1174,9 +1175,9 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       future.get();
     } catch (InterruptedException e) {
       Thread.interrupted();
-      throw new OException("File data removal was interrupted", e);
+      throw new OInterruptedException("File data removal was interrupted");
     } catch (Exception e) {
-      throw new OException("File data removal was abnormally terminated", e);
+      throw new OWriteCacheException("File data removal was abnormally terminated", e);
     }
   }
 

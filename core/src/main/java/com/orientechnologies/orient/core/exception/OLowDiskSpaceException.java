@@ -23,8 +23,4 @@ public class OLowDiskSpaceException extends OStorageException {
   public OLowDiskSpaceException(String string) {
     super(string);
   }
-
-  public OLowDiskSpaceException(String message, Throwable cause) {
-    super(message, cause);
-  }
 }

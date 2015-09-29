@@ -30,6 +30,10 @@ public enum OErrorCode {
     this.exceptionClass = exceptionClass;
   }
 
+  public int getCode() {
+    return code;
+  }
+
   public void throwException() {
     throwException(this.description, null);
   }

@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
@@ -258,7 +259,7 @@ public class OSQLEngine {
     if (iCurrent == null)
       return null;
 
-    if( !OCommandExecutorAbstract.checkInterruption(iContext) )
+    if (!OCommandExecutorAbstract.checkInterruption(iContext))
       return null;
 
     if (OMultiValue.isMultiValue(iCurrent) || iCurrent instanceof Iterator) {
@@ -368,7 +369,7 @@ public class OSQLEngine {
       }
     } while (added);
     if (!operators.isEmpty()) {
-      throw new OException("Unvalid sorting. " + OCollections.toString(pairs));
+      throw new ODatabaseException("Invalid sorting. " + OCollections.toString(pairs));
     }
     SORTED_OPERATORS = sorted.toArray(new OQueryOperator[sorted.size()]);
     return SORTED_OPERATORS;
@@ -405,7 +406,6 @@ public class OSQLEngine {
     iName = iName.toLowerCase(Locale.ENGLISH);
     ODynamicSQLElementFactory.FUNCTIONS.remove(iName);
   }
-
 
   public OCommandExecutor getCommand(String candidate) {
     candidate = candidate.trim();

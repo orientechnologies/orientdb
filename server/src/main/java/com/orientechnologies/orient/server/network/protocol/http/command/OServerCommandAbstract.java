@@ -62,7 +62,7 @@ public abstract class OServerCommandAbstract implements OServerCommand {
         parts.set(i, URLDecoder.decode(parts.get(i), "UTF-8"));
       }
     } catch (UnsupportedEncodingException e) {
-      throw new OHttpRequestException(e);
+      throw new OHttpRequestException("URL is encoded using format different from UTF-8", e);
     }
     if (parts.size() < iArgumentCount)
       throw new OHttpRequestException(iSyntax);

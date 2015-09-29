@@ -20,13 +20,11 @@
 package com.orientechnologies.orient.core.iterator;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.exception.OSystemException;
 
-public class OIterationException extends OException {
+public class OIterationException extends OSystemException {
 
   private static final long serialVersionUID = 2347493191705052402L;
-
-  public OIterationException() {
-  }
 
   public OIterationException(String message) {
     super(message);

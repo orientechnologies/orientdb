@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.sql.filter;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
@@ -289,8 +290,8 @@ public class OSQLFilterCondition {
       try {
         return new Date(new Double(stringValue).longValue());
       } catch (Exception pe2) {
-        throw new OQueryParsingException("Error on conversion of date '" + stringValue + "' using the format: "
-            + formatter.toPattern(), pe2);
+        throw OException.wrapException(new OQueryParsingException("Error on conversion of date '" + stringValue
+            + "' using the format: " + formatter.toPattern()), pe2);
       }
     }
   }
@@ -302,7 +303,7 @@ public class OSQLFilterCondition {
 
     if (iCurrentRecord != null) {
       iCurrentRecord = iCurrentRecord.getRecord();
-      if (iCurrentRecord!=null && ((ODocument)iCurrentRecord).getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
+      if (iCurrentRecord != null && ((ODocument) iCurrentRecord).getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
         try {
           iCurrentRecord = iCurrentRecord.getRecord().load();
         } catch (ORecordNotFoundException e) {

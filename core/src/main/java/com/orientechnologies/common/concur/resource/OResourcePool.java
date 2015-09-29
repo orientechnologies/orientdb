@@ -37,18 +37,20 @@ import com.orientechnologies.common.log.OLogManager;
  * Generic non reentrant implementation about pool of resources. It pre-allocates a semaphore of maxResources. Resources are lazily
  * created by invoking the listener.
  *
- * @param <K> Resource's Key
- * @param <V> Resource Object
+ * @param <K>
+ *          Resource's Key
+ * @param <V>
+ *          Resource Object
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class OResourcePool<K, V> {
-  protected final Semaphore sem;
-  protected final Queue<V> resources = new ConcurrentLinkedQueue<V>();
-  protected final Queue<V> resourcesOut = new ConcurrentLinkedQueue<V>();
-  protected final Collection<V> unmodifiableresources;
-  private final int maxResources;
+  protected final Semaphore             sem;
+  protected final Queue<V>              resources    = new ConcurrentLinkedQueue<V>();
+  protected final Queue<V>              resourcesOut = new ConcurrentLinkedQueue<V>();
+  protected final Collection<V>         unmodifiableresources;
+  private final int                     maxResources;
   protected OResourcePoolListener<K, V> listener;
-  protected final AtomicInteger created = new AtomicInteger();
+  protected final AtomicInteger         created      = new AtomicInteger();
 
   public OResourcePool(final int iMaxResources, final OResourcePoolListener<K, V> listener) {
     maxResources = iMaxResources;
@@ -68,7 +70,7 @@ public class OResourcePool<K, V> {
 
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
-      throw new OInterruptedException(e);
+      throw new OInterruptedException("Acquiring of resources was interrupted");
     }
 
     V res;
@@ -93,7 +95,8 @@ public class OResourcePool<K, V> {
         res = listener.createNewResource(key, additionalArgs);
         created.incrementAndGet();
         if (OLogManager.instance().isDebugEnabled())
-          OLogManager.instance().debug(this, "pool:'%s' created new resource '%s', new resource count '%d'", this, res, created.get());
+          OLogManager.instance().debug(this, "pool:'%s' created new resource '%s', new resource count '%d'", this, res,
+              created.get());
       }
       resourcesOut.add(res);
       if (OLogManager.instance().isDebugEnabled())

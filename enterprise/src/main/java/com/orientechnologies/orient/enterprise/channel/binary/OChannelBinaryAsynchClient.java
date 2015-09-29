@@ -22,6 +22,7 @@ package com.orientechnologies.orient.enterprise.channel.binary;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -150,7 +151,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
         if (e instanceof RuntimeException)
           rootException = (RuntimeException) e;
         else
-          rootException = new OException(e);
+          rootException = new OSystemException("Data processing exception", e);
       } catch (InstantiationException ignored) {
       } catch (IllegalAccessException ignored) {
       } catch (InvocationTargetException ignored) {
@@ -444,7 +445,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
       throw (OException) throwable;
     else if (throwable instanceof Throwable)
       // WRAP IT
-      throw new OResponseProcessingException("Exception during response processing", (Throwable) throwable);
+      throw new OResponseProcessingException("Exception during response processing");
     else
       OLogManager.instance().error(
           this,

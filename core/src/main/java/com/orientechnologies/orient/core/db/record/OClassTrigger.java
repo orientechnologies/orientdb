@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.db.ODatabase.STATUS;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -260,7 +261,7 @@ public class OClassTrigger extends ODocumentHookAbstract {
       try {
         result = (String) method.invoke(clz.newInstance(), iDocument);
       } catch (Exception ex) {
-        throw new OException("Failed to invoke method " + method.getName(), ex);
+        throw new ODatabaseException("Failed to invoke method " + method.getName(), ex);
       }
       if (result == null) {
         return RESULT.RECORD_NOT_CHANGED;

@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.orientechnologies.common.comparator.OCaseInsentiveComparator;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCollections;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
@@ -959,7 +960,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 
     return this;
   }
-  
+
   @Override
   public String getDescription() {
     acquireSchemaReadLock();
@@ -969,7 +970,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
       releaseSchemaReadLock();
     }
   }
-  
+
   @Override
   public OPropertyImpl setDescription(final String iDescription) {
     getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
@@ -1269,7 +1270,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
       releaseSchemaWriteLock();
     }
   }
-  
+
   private void setDescriptionInternal(final String iDescription) {
     getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
@@ -1390,13 +1391,15 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
         try {
           getDatabase().getStorage().getConfiguration().getDateFormatInstance().parse(iDateAsString);
         } catch (ParseException e) {
-          throw new OSchemaException("Invalid date format while formatting date '" + iDateAsString + "'", e);
+          throw OException.wrapException(new OSchemaException("Invalid date format while formatting date '" + iDateAsString + "'"),
+              e);
         }
       } else if (globalRef.getType() == OType.DATETIME) {
         try {
           getDatabase().getStorage().getConfiguration().getDateTimeFormatInstance().parse(iDateAsString);
         } catch (ParseException e) {
-          throw new OSchemaException("Invalid datetime format while formatting date '" + iDateAsString + "'", e);
+          throw OException.wrapException(new OSchemaException("Invalid datetime format while formatting date '" + iDateAsString
+              + "'"), e);
         }
       }
   }

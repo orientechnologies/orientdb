@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -84,7 +85,7 @@ public class OCommandExecutorSQLTruncateCluster extends OCommandExecutorSQLAbstr
     try {
       cluster.truncate();
     } catch (IOException e) {
-      throw new OCommandExecutionException("Error on executing command", e);
+      throw OException.wrapException(new OCommandExecutionException("Error on executing command"), e);
     }
 
     return recs;

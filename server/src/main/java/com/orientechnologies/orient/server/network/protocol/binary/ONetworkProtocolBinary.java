@@ -29,6 +29,7 @@ import java.util.Map.Entry;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -181,7 +182,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
           try {
             this.token = tokenHandler.parseBinaryToken(tokenBytes);
           } catch (Exception e) {
-            throw new OException("error on token parse", e);
+            throw new OSystemException("Error on token parse", e);
           }
           if (this.token == null || !this.token.getIsVerified()) {
             throw new OSecurityException("The token provided is not a valid token, signature doesn't match");
@@ -495,7 +496,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     final OIndex<?> index = connection.database.getMetadata().getIndexManager().getIndex(indexName);
 
     if (index == null)
-      throw new OException("index with name '" + indexName + "' was not found");
+      throw new OSystemException("index with name '" + indexName + "' was not found");
 
     key = index.getDefinition().createValue(key);
 
@@ -525,7 +526,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     Object key = new ODocument().fromStream(channel.readBytes()).field("key");
     final OIndex<?> index = connection.database.getMetadata().getIndexManager().getIndex(indexName);
     if (index == null)
-      throw new OException("index with name '" + indexName + "' not found");
+      throw new OSystemException("index with name '" + indexName + "' not found");
 
     key = index.getDefinition().createValue(key);
 
@@ -557,7 +558,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     final String fetchPlan = channel.readString();
     final OIndex<?> index = connection.database.getMetadata().getIndexManager().getIndex(indexName);
     if (index == null)
-      throw new OException("index with name '" + indexName + "' not found");
+      throw new OSystemException("index with name '" + indexName + "' not found");
 
     key = index.getDefinition().createValue(key);
     OAbstractCommandResultListener listener = new OSyncCommandResultListener(null);
@@ -758,7 +759,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       try {
         getServer().getClientConnectionManager().connect(this, connection, token, tokenHandler.parseBinaryToken(token));
       } catch (Exception e) {
-        throw new OException(e);
+        throw new OSystemException("Can not connect to the server using provided token", e);
       }
     }
 

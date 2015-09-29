@@ -65,7 +65,7 @@ public class OCommandExecutorSQLFindReferences extends OCommandExecutorSQLEarlyR
         recordIds.add(rid);
 
       } catch (IllegalArgumentException iae) {
-        throw new OCommandSQLParsingException("Error reading record Id", parserText, parserGetPreviousPosition(), iae);
+        throw new OCommandSQLParsingException("Error reading record Id", parserText, parserGetPreviousPosition());
       }
     }
 

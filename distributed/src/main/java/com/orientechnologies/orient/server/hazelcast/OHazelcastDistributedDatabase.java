@@ -221,7 +221,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       try {
         iCallback.call();
       } catch (Exception e) {
-        throw new ODistributedException(e);
+        throw new ODistributedException("Database can not be configured", e);
       }
 
     setOnline();

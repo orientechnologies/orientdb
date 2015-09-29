@@ -21,6 +21,7 @@
 package com.orientechnologies.common.console;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.common.log.OLogManager;
 
 import java.io.*;
@@ -84,7 +85,7 @@ public class TTYConsoleReader implements OConsoleReader {
     }
 
     if (inStream == null)
-      throw new OException("Cannot access to the input stream. Check permissions of running process");
+      throw new OSystemException("Cannot access to the input stream. Check permissions of running process");
   }
 
   public String readPassword() throws IOException {

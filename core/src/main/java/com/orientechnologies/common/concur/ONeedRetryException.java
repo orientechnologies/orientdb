@@ -19,7 +19,9 @@
  */
 package com.orientechnologies.common.concur;
 
-import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.exception.OErrorCode;
+import com.orientechnologies.orient.core.exception.OCoreException;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 
 /**
  * Abstract base exception to extend for all the exception that report to the user it has been thrown but re-executing it could
@@ -28,14 +30,22 @@ import com.orientechnologies.common.exception.OException;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public abstract class ONeedRetryException extends OException {
+public abstract class ONeedRetryException extends OCoreException {
   private static final long serialVersionUID = 1L;
-
-  public ONeedRetryException() {
-    super();
-  }
 
   public ONeedRetryException(String message) {
     super(message);
+  }
+
+  public ONeedRetryException(String message, ODurableComponent component) {
+    super(message, component);
+  }
+
+  public ONeedRetryException(String message, ODurableComponent component, OErrorCode errorCode) {
+    super(message, component, errorCode);
+  }
+
+  public ONeedRetryException(String message, Throwable cause, ODurableComponent component, OErrorCode errorCode) {
+    super(message, component, errorCode);
   }
 }

@@ -24,6 +24,7 @@ import java.lang.reflect.Array;
 import java.util.*;
 import java.util.Map.Entry;
 
+import com.orientechnologies.common.exception.OSystemException;
 import sun.misc.Signal;
 import sun.misc.SignalHandler;
 
@@ -1097,10 +1098,10 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     else {
       int recNumber = Integer.parseInt(iRecordNumber);
       if (currentResultSet.size() == 0)
-        throw new OException("No result set where to find the requested record. Execute a query first.");
+        throw new OSystemException("No result set where to find the requested record. Execute a query first.");
 
       if (currentResultSet.size() <= recNumber)
-        throw new OException("The record requested is not part of current result set (0"
+        throw new OSystemException("The record requested is not part of current result set (0"
             + (currentResultSet.size() > 0 ? "-" + (currentResultSet.size() - 1) : "") + ")");
 
       setCurrentRecord(recNumber);
@@ -1164,7 +1165,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       record = cluster.readRecord(id.clusterPosition);
     }
     if (record == null)
-      throw new OException("The record has been deleted");
+      throw new OSystemException("The record has been deleted");
     if ("ORecordSerializerBinary".equals(currentDatabase.getSerializer().toString())) {
       byte[] buff = record.getBuffer();
       ORecordSerializerBinaryDebug debugger = new ORecordSerializerBinaryDebug();
@@ -1362,7 +1363,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     checkForDatabase();
 
     if (iPropertyName.indexOf('.') == -1)
-      throw new OException("Property name is in the format <class>.<property>");
+      throw new OSystemException("Property name is in the format <class>.<property>");
 
     final String[] parts = iPropertyName.split("\\.");
 
@@ -2162,13 +2163,14 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     if (serverAdmin == null
         && (currentDatabase == null || !(currentDatabase.getStorage() instanceof OStorageRemoteThread) || currentDatabase
             .isClosed()))
-      throw new OException("Remote server is not connected. Use 'connect remote:<host>[:<port>][/<database-name>]' to connect");
+      throw new OSystemException(
+          "Remote server is not connected. Use 'connect remote:<host>[:<port>][/<database-name>]' to connect");
   }
 
   /** Should be used only by console commands */
   protected void checkForDatabase() {
     if (currentDatabase == null)
-      throw new OException("Database not selected. Use 'connect <database-name>' to connect to a database.");
+      throw new OSystemException("Database not selected. Use 'connect <database-name>' to connect to a database.");
     if (currentDatabase.isClosed())
       throw new ODatabaseException("Database '" + currentDatabaseName + "' is closed");
   }
@@ -2176,7 +2178,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   /** Should be used only by console commands */
   protected void checkCurrentObject() {
     if (currentRecord == null)
-      throw new OException("The is no current object selected: create a new one or load it");
+      throw new OSystemException("The is no current object selected: create a new one or load it");
   }
 
   public String ask(final String iText) {
