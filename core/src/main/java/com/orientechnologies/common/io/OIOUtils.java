@@ -127,7 +127,7 @@ public class OIOUtils {
     Calendar calParsed = Calendar.getInstance();
     calParsed.setTime(df.parse(iTime));
     Calendar cal = Calendar.getInstance();
-    cal.set(Calendar.HOUR, calParsed.get(Calendar.HOUR));
+    cal.set(Calendar.HOUR_OF_DAY, calParsed.get(Calendar.HOUR_OF_DAY));
     cal.set(Calendar.MINUTE, calParsed.get(Calendar.MINUTE));
     cal.set(Calendar.SECOND, calParsed.get(Calendar.SECOND));
     cal.set(Calendar.MILLISECOND, 0);
