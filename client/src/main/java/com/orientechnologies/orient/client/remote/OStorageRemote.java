@@ -1634,8 +1634,13 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
    * End response reached: release the channel in the pool to being reused
    */
   public void endResponse(final OChannelBinaryAsynchClient iNetwork) {
-    iNetwork.endResponse();
-    engine.getConnectionManager().release(iNetwork);
+    try {
+      iNetwork.endResponse();
+      engine.getConnectionManager().release(iNetwork);
+    } catch (IOException e) {
+      engine.getConnectionManager().remove(iNetwork);
+      OLogManager.instance().warn(this, "dirty data left in the socket closing", e);
+    }
   }
 
   @Override
