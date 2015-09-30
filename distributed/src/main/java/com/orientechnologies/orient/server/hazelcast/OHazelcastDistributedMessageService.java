@@ -19,14 +19,10 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
-import com.hazelcast.collection.impl.queue.QueueService;
 import com.hazelcast.config.QueueConfig;
-import com.hazelcast.core.DistributedObject;
-import com.hazelcast.core.HazelcastException;
-import com.hazelcast.core.HazelcastInstanceNotActiveException;
-import com.hazelcast.core.IAtomicLong;
-import com.hazelcast.core.IQueue;
+import com.hazelcast.core.*;
 import com.hazelcast.monitor.LocalQueueStats;
+import com.hazelcast.queue.impl.QueueService;
 import com.hazelcast.spi.exception.DistributedObjectDestroyedException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -37,13 +33,8 @@ import com.orientechnologies.orient.server.distributed.ODistributedResponseManag
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
