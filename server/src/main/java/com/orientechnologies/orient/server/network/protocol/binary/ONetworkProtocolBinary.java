@@ -151,14 +151,11 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     if (Boolean.FALSE.equals(tokenBased)) {
       solveSimpleSession();
-
     } else {
       solveTokenSession();
     }
 
     if (connection != null) {
-      connection.acquire();
-
       if (connection.database != null) {
         connection.database.activateOnCurrentThread();
         connection.data.lastDatabase = connection.database.getName();
@@ -185,7 +182,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   }
 
   private void solveTokenSession() throws IOException {
-    if(requestType == OChannelBinaryProtocol.REQUEST_CONNECT || requestType == OChannelBinaryProtocol.REQUEST_DB_OPEN) {
+    if (requestType == OChannelBinaryProtocol.REQUEST_CONNECT || requestType == OChannelBinaryProtocol.REQUEST_DB_OPEN) {
       connection = server.getClientConnectionManager().getConnection(clientTxId, this);
       if (clientTxId < 0) {
         short protocolId = 0;
@@ -201,10 +198,14 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         }
       }
       this.tokenBytes = null;
+      if(connection != null && requestType != OChannelBinaryProtocol.REQUEST_DB_REOPEN)
+        connection.acquire();
     } else {
       byte[] bytes = channel.readBytes();
 
       connection = server.getClientConnectionManager().getConnection(clientTxId, this);
+      if(connection != null)
+        connection.acquire();
       if (tokenBytes == null || tokenBytes.length == 0 || !Arrays.equals(bytes, tokenBytes) || connection == null || connection.database == null) {
         this.tokenBytes = bytes;
 
@@ -224,32 +225,29 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
           if (!tokenHandler.validateBinaryToken(token)) {
             throw new OSecurityException("The token provided is expired");
           }
+          if (connection != null && connection.database != null && !connection.database.isClosed()) {
+            connection.database.activateOnCurrentThread();
+            connection.database.close();
+          }
+          if (connection != null)
+            connection.database = null;
+
           if (requestType == OChannelBinaryProtocol.REQUEST_DB_REOPEN) {
             server.getClientConnectionManager().disconnect(clientTxId);
-            if (connection != null && connection.database != null && !connection.database.isClosed()) {
-              connection.database.activateOnCurrentThread();
-              connection.database.close();
-              connection.database = null;
-            }
-
             connection = server.getClientConnectionManager().reConnect(this, tokenBytes, token);
+            connection.acquire();
           }
 
-          if(connection != null ) {
+          if (connection != null) {
             if (requestType != OChannelBinaryProtocol.REQUEST_DB_CLOSE && connection.database == null) {
               connection.data = tokenHandler.getProtocolDataFromToken(token);
               String db = token.getDatabase();
               String type = token.getDatabaseType();
               if (db != null && type != null) {
-                //TODO refactor for use server.openDatabase
-                final ODatabaseDocumentTx database = new ODatabaseDocumentTx(server.getStoragePath(type + ":" + db));
                 if (connection.data.serverUser) {
-                  database.resetInitialization();
-                  database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSecurityServerUser.class);
-                  database.open(connection.data.serverUsername, null);
+                  connection.database  = (ODatabaseDocumentTx) server.openDatabase(type + ":" + db, token.getUserName(), null, connection.data, true);
                 } else
-                  database.open(token);
-                connection.database = database;
+                  connection.database  = (ODatabaseDocumentTx) server.openDatabase(type + ":" + db,token);
               }
             }
             if (connection.data.serverUser) {
@@ -277,6 +275,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       }
     }
     this.tokenBytes = null;
+    if(connection != null)
+      connection.acquire();
   }
 
   @Override
