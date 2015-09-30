@@ -4,6 +4,8 @@ import junit.framework.Assert;
 
 import org.junit.Test;
 
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.Direction;
@@ -49,6 +51,9 @@ public class TestSharding extends AbstractServerClusterTest {
 
       try {
         final OrientVertexType clientType = graphNoTx.createVertexType("Client-Type");
+        final OrientVertexType.OrientVertexProperty prop = clientType.createProperty("name-property", OType.STRING);
+        prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+
         for (int i = 1; i < serverInstance.size(); ++i) {
           final String serverName = serverInstance.get(i).getServerInstance().getDistributedManager().getLocalNodeName();
           clientType.addCluster("client_" + serverName);
@@ -74,7 +79,7 @@ public class TestSharding extends AbstractServerClusterTest {
         product = graph.addVertex("class:Product-Type");
 
         fishing = graph.addVertex("class:Hobby-Type");
-        fishing.setProperty("name", "Fishing");
+        fishing.setProperty("name-property", "Fishing");
       } finally {
         graph.shutdown();
       }
@@ -103,7 +108,7 @@ public class TestSharding extends AbstractServerClusterTest {
             Assert.assertEquals("Error on assigning cluster client_" + nodeName, clId, clusterId);
           }
 
-          vertices[i].setProperty("name", "shard_" + i);
+          vertices[i].setProperty("name-property", "shard_" + i);
 
           long amount = i * 10000;
           vertices[i].setProperty("amount", amount);
@@ -204,7 +209,7 @@ public class TestSharding extends AbstractServerClusterTest {
             OrientVertex v = result.iterator().next();
 
             Assert.assertEquals("Returned vertices name property is != shard_" + i + " on server " + server, "shard_" + i,
-                v.getProperty("name"));
+                v.getProperty("name-property"));
 
             final Iterable<Vertex> knows = v.getVertices(Direction.OUT, "Knows-Type");
 
@@ -289,6 +294,7 @@ public class TestSharding extends AbstractServerClusterTest {
           }
 
           Assert.assertEquals("Returned wrong vertices count on server " + server, 1, count);
+
         } finally {
           g.shutdown();
         }
@@ -300,12 +306,12 @@ public class TestSharding extends AbstractServerClusterTest {
         OrientGraphNoTx g = f.getNoTx();
         try {
 
-          Iterable<OrientVertex> result = g.command(new OCommandSQL("select name, count(*) from `Client-Type` group by name"))
-              .execute();
+          Iterable<OrientVertex> result = g.command(
+              new OCommandSQL("select name-property, count(*) from `Client-Type` group by `name-property`")).execute();
 
           int count = 0;
           for (OrientVertex v : result) {
-            System.out.println("select name, count(*) from Client-Type group by name -> " + v.getRecord());
+            System.out.println("select `name-property`, count(*) from Client-Type group by `name-property` -> " + v.getRecord());
 
             Assert.assertEquals(((Number) v.getProperty("count")).intValue(), 1);
 
@@ -324,14 +330,15 @@ public class TestSharding extends AbstractServerClusterTest {
         OrientGraphNoTx g = f.getNoTx();
         try {
 
-          Iterable<OrientVertex> result = g.command(new OCommandSQL("select name, count(*) from `Client-Type`")).execute();
+          Iterable<OrientVertex> result = g.command(new OCommandSQL("select `name-property`, count(*) from `Client-Type`"))
+              .execute();
 
           int count = 0;
           for (OrientVertex v : result) {
-            System.out.println("select name, count(*) from Client-Type -> " + v.getRecord());
+            System.out.println("select `name-property`, count(*) from Client-Type -> " + v.getRecord());
 
             Assert.assertEquals(((Number) v.getProperty("count")).intValue(), vertices.length);
-            Assert.assertNotNull(v.getProperty("name"));
+            Assert.assertNotNull(v.getProperty("name-property"));
 
             count++;
           }
@@ -341,6 +348,7 @@ public class TestSharding extends AbstractServerClusterTest {
           g.shutdown();
         }
       }
+      testQueryWithFilter();
 
       // TEST DISTRIBUTED DELETE WITH DIRECT COMMAND AND SQL
       OrientGraphFactory f = new OrientGraphFactory("plocal:target/server" + 0 + "/databases/" + getDatabaseName());
@@ -370,9 +378,9 @@ public class TestSharding extends AbstractServerClusterTest {
 
         Assert.assertEquals(totalBeforeDelete - count, totalAfterDelete);
 
-        g.command(new OCommandSQL("create vertex `Client-Type` set name = 'temp1'")).execute();
-        g.command(new OCommandSQL("create vertex `Client-Type` set name = 'temp2'")).execute();
-        g.command(new OCommandSQL("create vertex `Client-Type` set name = 'temp3'")).execute();
+        g.command(new OCommandSQL("create vertex `Client-Type` set `name-property` = 'temp1'")).execute();
+        g.command(new OCommandSQL("create vertex `Client-Type` set `name-property` = 'temp2'")).execute();
+        g.command(new OCommandSQL("create vertex `Client-Type` set `name-property` = 'temp3'")).execute();
 
         g.command(new OCommandSQL("delete vertex `Client-Type`")).execute();
 
@@ -391,10 +399,10 @@ public class TestSharding extends AbstractServerClusterTest {
       OrientGraph gTx = f.getTx();
       try {
         v1 = gTx.addVertex("class:Client-Type");
-        v1.setProperty("name", "test1");
+        v1.setProperty("name-property", "test1");
 
         v2 = gTx.addVertex("class:Client-Type");
-        v2.setProperty("name", "test1");
+        v2.setProperty("name-property", "test1");
       } finally {
         gTx.shutdown();
       }
@@ -426,6 +434,32 @@ public class TestSharding extends AbstractServerClusterTest {
       // WAIT FOR TERMINATION
       Thread.sleep(2000);
       throw e;
+    }
+  }
+
+  private void testQueryWithFilter() {
+    // TEST DISTRIBUTED QUERY AGAINST ALL 3 DATABASES TO TEST AGGREGATION + ADDITIONAL FIELD
+    for (int server = 0; server < vertices.length; ++server) {
+      OrientGraphFactory f = new OrientGraphFactory("plocal:target/server" + server + "/databases/" + getDatabaseName());
+      OrientGraphNoTx g = f.getNoTx();
+      try {
+
+        Iterable<OrientVertex> result = g.command(
+            new OCommandSQL("select * from `Client-Type` where `name-property` = 'shard_" + server + "'")).execute();
+
+        int count = 0;
+        for (OrientVertex v : result) {
+          System.out.println("select * from `Client-Type` where `name-property` = 'shard_" + server + "' ->" + v.getRecord());
+
+          Assert.assertNotNull(v.getProperty("name-property"));
+
+          count++;
+        }
+
+        Assert.assertTrue("Returned wrong vertices count on server " + server, count > 0);
+      } finally {
+        g.shutdown();
+      }
     }
   }
 }
