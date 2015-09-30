@@ -291,22 +291,28 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     return null;
   }
 
-  public void endResponse() {
+  public void endResponse() throws IOException {
     channelRead = false;
-
-    // WAKE UP ALL THE WAITING THREADS
+    boolean dirty = false;
     try {
-      readCondition.signalAll();
-    } catch (IllegalMonitorStateException e) {
-      // IGNORE IT
-      OLogManager.instance().debug(this, "Error on signaling waiting clients after reading response");
-    }
+        if (inStream.available() > 0) {
+          throw new IOException("unexpected data on socket ");
+        }
+    } finally {
+      // WAKE UP ALL THE WAITING THREADS
+      try {
+        readCondition.signalAll();
+      } catch (IllegalMonitorStateException e) {
+        // IGNORE IT
+        OLogManager.instance().debug(this, "Error on signaling waiting clients after reading response");
+      }
+      try {
+        releaseReadLock();
+      } catch (IllegalMonitorStateException e) {
+        // IGNORE IT
+        OLogManager.instance().debug(this, "Error on unlocking network channel after reading response");
+      }
 
-    try {
-      releaseReadLock();
-    } catch (IllegalMonitorStateException e) {
-      // IGNORE IT
-      OLogManager.instance().debug(this, "Error on unlocking network channel after reading response");
     }
   }
 
