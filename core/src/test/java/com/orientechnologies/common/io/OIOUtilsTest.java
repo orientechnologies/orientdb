@@ -26,7 +26,7 @@ public class OIOUtilsTest {
   @Test
   public void shoudGetRightTimeFromString() throws ParseException {
     Calendar calendar = Calendar.getInstance();
-    calendar.set(Calendar.HOUR, 5);
+    calendar.set(Calendar.HOUR_OF_DAY, 5);
     calendar.set(Calendar.MINUTE, 10);
     calendar.set(Calendar.SECOND, 0);
     calendar.set(Calendar.MILLISECOND, 0);
