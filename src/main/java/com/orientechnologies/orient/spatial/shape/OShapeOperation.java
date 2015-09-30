@@ -26,4 +26,6 @@ import com.spatial4j.core.shape.Shape;
 public interface OShapeOperation {
 
   public double distance(Shape s1, Shape s2);
+
+  public boolean intersect(Shape s1,Shape s2);
 }

@@ -23,6 +23,8 @@ import com.orientechnologies.lucene.query.SpatialQueryContext;
 import com.orientechnologies.orient.core.index.OIndexEngineException;
 import com.orientechnologies.orient.spatial.shape.OShapeBuilder;
 import com.spatial4j.core.shape.Shape;
+import org.apache.lucene.spatial.SpatialStrategy;
+import org.apache.lucene.spatial.bbox.BBoxStrategy;
 
 import java.util.Map;
 
@@ -54,6 +56,10 @@ public abstract class SpatialQueryBuilderAbstract {
       throw new OIndexEngineException("Invalid spatial query. Missing shape field " + query, null);
     }
     return factory.fromObject(geometry);
+  }
+
+  protected boolean isOnlyBB(SpatialStrategy spatialStrategy) {
+    return spatialStrategy instanceof BBoxStrategy;
   }
 
   public abstract String getName();

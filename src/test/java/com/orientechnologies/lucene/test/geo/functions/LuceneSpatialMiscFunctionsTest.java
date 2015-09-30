@@ -16,7 +16,7 @@
  *  
  */
 
-package com.orientechnologies.lucene.test.geo;
+package com.orientechnologies.lucene.test.geo.functions;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -164,4 +164,28 @@ public class LuceneSpatialMiscFunctionsTest {
       graph.drop();
     }
   }
+
+  @Test
+  public void testWithin() {
+
+    OrientGraphNoTx graph = new OrientGraphNoTx("memory:functionsTest");
+    try {
+      ODatabaseDocumentTx db = graph.getRawGraph();
+
+      List<ODocument> execute = db
+          .command(
+              new OCommandSQL(
+                  "select ST_Within(smallc,smallc) as smallinsmall,ST_Within(smallc, bigc) As smallinbig, ST_Within(bigc,smallc) As biginsmall from (SELECT ST_Buffer(ST_GeomFromText('POINT(50 50)'), 20) As smallc,ST_Buffer(ST_GeomFromText('POINT(50 50)'), 40) As bigc)"))
+          .execute();
+      ODocument next = execute.iterator().next();
+
+      Assert.assertEquals(next.field("smallinsmall"), false);
+      Assert.assertEquals(next.field("smallinbig"), true);
+      Assert.assertEquals(next.field("biginsmall"), false);
+
+    } finally {
+      graph.drop();
+    }
+  }
+
 }

@@ -48,6 +48,7 @@ public class OLuceneGeoSpatialIndexEngine extends OLuceneSpatialIndexEngineAbstr
   @Override
   protected SpatialStrategy createSpatialStrategy(OIndexDefinition indexDefinition, ODocument metadata) {
     return new BBoxStrategy(ctx, "location");
+//    return new RecursivePrefixTreeStrategy(new PackedQuadPrefixTree(ctx, 11), "location");
   }
 
   @Override

@@ -39,6 +39,7 @@ public class OSpatialFunctionsFactory implements OSQLFunctionFactory {
     register(OSTBufferFunction.NAME, new OSTBufferFunction());
     register(OSTDistanceFunction.NAME, new OSTDistanceFunction());
     register(STDisjointFunction.NAME, new STDisjointFunction());
+    register(STIntersectsFunction.NAME, new STIntersectsFunction());
 
     register(STSrid.NAME, new STSrid());
     // register(STNearFunction.NAME, new STNearFunction());

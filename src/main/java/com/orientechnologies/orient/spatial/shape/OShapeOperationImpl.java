@@ -26,16 +26,23 @@ import com.vividsolutions.jts.geom.Geometry;
  */
 public class OShapeOperationImpl implements OShapeOperation {
 
-    private final OShapeFactory factory;
+  private final OShapeFactory factory;
 
-    public OShapeOperationImpl(OShapeFactory oShapeFactory) {
-        this.factory = oShapeFactory;
-    }
+  public OShapeOperationImpl(OShapeFactory oShapeFactory) {
+    this.factory = oShapeFactory;
+  }
 
-    @Override
-    public double distance(Shape s1, Shape s2) {
-        Geometry geometry = factory.toGeometry(s1);
-        Geometry geometry1 = factory.toGeometry(s2);
-        return geometry.distance(geometry1);
-    }
+  @Override
+  public double distance(Shape s1, Shape s2) {
+    Geometry geometry = factory.toGeometry(s1);
+    Geometry geometry1 = factory.toGeometry(s2);
+    return geometry.distance(geometry1);
+  }
+
+  @Override
+  public boolean intersect(Shape s1, Shape s2) {
+    Geometry geometry = factory.toGeometry(s1);
+    Geometry geometry1 = factory.toGeometry(s2);
+    return geometry.intersects(geometry1);
+  }
 }

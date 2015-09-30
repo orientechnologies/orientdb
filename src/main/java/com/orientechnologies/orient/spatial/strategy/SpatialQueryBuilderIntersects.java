@@ -13,7 +13,7 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *
+ *  
  */
 
 package com.orientechnologies.orient.spatial.strategy;
@@ -24,6 +24,7 @@ import com.orientechnologies.orient.spatial.shape.OShapeBuilder;
 import com.spatial4j.core.shape.Shape;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.MatchAllDocsQuery;
+import org.apache.lucene.spatial.SpatialStrategy;
 import org.apache.lucene.spatial.query.SpatialArgs;
 import org.apache.lucene.spatial.query.SpatialOperation;
 
@@ -32,20 +33,24 @@ import java.util.Map;
 /**
  * Created by Enrico Risa on 11/08/15.
  */
-public class SpatialQueryBuilderWithin extends SpatialQueryBuilderAbstract {
+public class SpatialQueryBuilderIntersects extends SpatialQueryBuilderAbstract {
 
-  public static final String NAME = "within";
+  public static final String NAME = "intersects";
 
-  public SpatialQueryBuilderWithin(OLuceneSpatialIndexContainer manager, OShapeBuilder factory) {
+  public SpatialQueryBuilderIntersects(OLuceneSpatialIndexContainer manager, OShapeBuilder factory) {
     super(manager, factory);
   }
 
   @Override
   public SpatialQueryContext build(Map<String, Object> query) throws Exception {
     Shape shape = parseShape(query);
-    SpatialArgs args = new SpatialArgs(SpatialOperation.IsWithin, shape);
+    SpatialStrategy strategy = manager.strategy();
 
-    Filter filter = manager.strategy().makeFilter(args);
+    if (isOnlyBB(strategy)) {
+      shape = shape.getBoundingBox();
+    }
+    SpatialArgs args = new SpatialArgs(SpatialOperation.Intersects, shape);
+    Filter filter = strategy.makeFilter(args);
     return new SpatialQueryContext(null, manager.searcher(), new MatchAllDocsQuery(), filter);
   }
 
