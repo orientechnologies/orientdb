@@ -67,34 +67,27 @@ public class OMatchStatementExecutionTest {
     db.command(new OCommandSQL("CREATE property IndexedEdge.in LINK")).execute();
     db.command(new OCommandSQL("CREATE index IndexedEdge_out_in on IndexedEdge (out, in) NOTUNIQUE")).execute();
 
-    int nodes = 5000;
+    int nodes = 1000;
     for (int i = 0; i < nodes; i++) {
       ODocument doc = new ODocument("IndexedVertex");
       doc.field("uid", i);
       doc.save();
     }
 
-    System.out.println("vertices created");
 
     for (int i = 0; i < 100; i++) {
       db.command(
           new OCommandSQL(
               "CREATE EDGE IndexedEDGE FROM (SELECT FROM IndexedVertex WHERE uid = 0) TO (SELECT FROM IndexedVertex WHERE uid > "
                   + (i * nodes / 100) + " and uid <" + ((i + 1) * nodes / 100) + ")")).execute();
-      System.out.print(".");
     }
 
-    System.out.println(".");
-    System.out.println("first supernode created");
 
     for (int i = 0; i < 100; i++) {
       db.command(
           new OCommandSQL("CREATE EDGE IndexedEDGE FROM (SELECT FROM IndexedVertex WHERE uid > " + ((i * nodes / 100) + 1)
               + " and uid < " + (((i + 1) * nodes / 100) + 1) + ") TO (SELECT FROM IndexedVertex WHERE uid = 1)")).execute();
-      System.out.print(".");
     }
-    System.out.println(".");
-    System.out.println("second supernode created");
   }
 
   private static void initOrgChart() {
