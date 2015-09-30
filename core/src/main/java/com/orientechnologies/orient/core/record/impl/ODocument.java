@@ -1197,7 +1197,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
   /**
    * Merge current document with the document passed as parameter. If the field already exists then the conflicts are managed based
-   * on the value of the parameter 'iConflictsOtherWins'.
+   * on the value of the parameter 'iUpdateOnlyMode'.
    *
    * @param iOther
    *          Other ODocument instance to merge
@@ -1220,7 +1220,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
   /**
    * Merge current document with the document passed as parameter. If the field already exists then the conflicts are managed based
-   * on the value of the parameter 'iConflictsOtherWins'.
+   * on the value of the parameter 'iUpdateOnlyMode'.
    *
    * @param iOther
    *          Other ODocument instance to merge

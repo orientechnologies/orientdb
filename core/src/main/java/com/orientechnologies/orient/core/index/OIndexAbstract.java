@@ -65,34 +65,24 @@ import java.util.concurrent.atomic.AtomicReference;
 public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientStartupListener, OOrientShutdownListener {
   protected static final String                 CONFIG_MAP_RID  = "mapRid";
   protected static final String                 CONFIG_CLUSTERS = "clusters";
-  private final String                          databaseName;
-  protected String                              type;
-  protected String                              valueContainerAlgorithm;
+  protected final String                        type;
   protected final ONewLockManager<Object>       keyLockManager  = new ONewLockManager<Object>();
-
   @ODocumentInstance
   protected final AtomicReference<ODocument>    configuration   = new AtomicReference<ODocument>();
-  protected ODocument                           metadata;
+  protected final ODocument                     metadata;
+  protected final OAbstractPaginatedStorage     storage;
+  private final String                          databaseName;
   private final String                          name;
-  private String                                algorithm;
-  private Set<String>                           clustersToIndex = new HashSet<String>();
-
-  private volatile OIndexDefinition             indexDefinition;
-  private volatile boolean                      rebuilding      = false;
-
-  private Thread                                rebuildThread   = null;
-
-  private volatile ThreadLocal<IndexTxSnapshot> txSnapshot      = new IndexTxSnapshotThreadLocal();
-
   private final OReadersWriterSpinLock          rwLock          = new OReadersWriterSpinLock();
   private final int                             version;
-  protected final OAbstractPaginatedStorage     storage;
+  protected String                              valueContainerAlgorithm;
   protected int                                 indexId         = -1;
-
-  protected static final class IndexTxSnapshot {
-    public Map<Object, Object> indexSnapshot = new HashMap<Object, Object>();
-    public boolean             clear         = false;
-  }
+  private String                                algorithm;
+  private Set<String>                           clustersToIndex = new HashSet<String>();
+  private volatile OIndexDefinition             indexDefinition;
+  private volatile boolean                      rebuilding      = false;
+  private Thread                                rebuildThread   = null;
+  private volatile ThreadLocal<IndexTxSnapshot> txSnapshot      = new IndexTxSnapshotThreadLocal();
 
   public OIndexAbstract(String name, final String type, String algorithm, String valueContainerAlgorithm, ODocument metadata,
       int version, OAbstractPaginatedStorage storage) {
@@ -113,17 +103,6 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
     } finally {
       releaseExclusiveLock();
     }
-  }
-
-  @Override
-  public void onShutdown() {
-    txSnapshot = null;
-  }
-
-  @Override
-  public void onStartup() {
-    if (txSnapshot == null)
-      txSnapshot = new IndexTxSnapshotThreadLocal();
   }
 
   public static IndexMetadata loadMetadataInternal(final ODocument config, final String type, final String algorithm,
@@ -186,6 +165,17 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
     return new IndexMetadata(indexName, loadedIndexDefinition, clusters, type, algorithm, valueContainerAlgorithm);
   }
 
+  @Override
+  public void onShutdown() {
+    txSnapshot = null;
+  }
+
+  @Override
+  public void onStartup() {
+    if (txSnapshot == null)
+      txSnapshot = new IndexTxSnapshotThreadLocal();
+  }
+
   public void flush() {
   }
 
@@ -201,7 +191,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
 
   /**
    * Creates the index.
-   * 
+   *
    * @param clusterIndexName
    *          Cluster name where to place the TreeMap
    * @param clustersToIndex
@@ -780,7 +770,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
 
   @Override
   public ODocument getMetadata() {
-    //return getConfiguration().field("metadata", OType.EMBEDDED);
+    // return getConfiguration().field("metadata", OType.EMBEDDED);
     return metadata;
   }
 
@@ -1081,9 +1071,15 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
     }
   }
 
-  protected void onIndexEngineChange(int indexId){
+  protected void onIndexEngineChange(int indexId) {
 
   }
+
+  protected static final class IndexTxSnapshot {
+    public Map<Object, Object> indexSnapshot = new HashMap<Object, Object>();
+    public boolean             clear         = false;
+  }
+
   private static class IndexTxSnapshotThreadLocal extends ThreadLocal<IndexTxSnapshot> {
     @Override
     protected IndexTxSnapshot initialValue() {

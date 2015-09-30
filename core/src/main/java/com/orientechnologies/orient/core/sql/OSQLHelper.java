@@ -19,6 +19,13 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.parser.OBaseParser;
@@ -43,21 +50,6 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
-import com.orientechnologies.orient.core.sql.sequence.OSQLSequenceItem;
-
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * SQL Helper class
@@ -239,10 +231,6 @@ public class OSQLHelper {
     if (iWord.startsWith("$"))
       // CONTEXT VARIABLE
       return new OSQLFilterItemVariable(iCommand, iWord);
-
-    if (iWord.startsWith(OSQLSequenceItem.PREFIX)) {
-      return new OSQLSequenceItem(iCommand, iWord);
-    }
 
     // PARSE AS FIELD
     return new OSQLFilterItemField(iCommand, iWord);

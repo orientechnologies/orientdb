@@ -173,7 +173,8 @@ public class OStorageRemoteThread implements OStorageProxy {
   public OStorageProxy copy() {
     try {
       OStorageRemoteThread a = new OStorageRemoteThread(delegate);
-      delegate.openRemoteDatabase();
+      a.pushSession();
+      delegate.reopenRemoteDatabase();
       a.popSession();
       return a;
     } catch (IOException e) {
