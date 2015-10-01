@@ -128,6 +128,7 @@ public abstract class ORecordAbstract implements ORecord {
   public ORecordAbstract fromStream(final byte[] iRecordBuffer) {
     _dirty = false;
     _contentChanged = false;
+    _dirtyManager = null;
     if (ONetworkThreadLocalSerializer.getNetworkSerializer() != null) {
       ONetworkThreadLocalSerializer.getNetworkSerializer().fromStream(iRecordBuffer, this, null);
       _source = null;
@@ -377,6 +378,7 @@ public abstract class ORecordAbstract implements ORecord {
     cloned._listeners = null;
     cloned._dirty = false;
     cloned._contentChanged = false;
+    cloned._dirtyManager = null;
     return cloned;
   }
 
@@ -390,6 +392,8 @@ public abstract class ORecordAbstract implements ORecord {
     if (_source != null && _source.length > 0) {
       _dirty = iDirty;
       _contentChanged = iDirty;
+      if (!iDirty && _dirtyManager != null)
+        _dirtyManager.removePointed(this);
     }
 
     return this;
@@ -408,7 +412,8 @@ public abstract class ORecordAbstract implements ORecord {
   protected void unsetDirty() {
     _contentChanged = false;
     _dirty = false;
-    _dirtyManager = null;
+    if (_dirtyManager != null)
+      _dirtyManager.removePointed(this);
   }
 
   protected abstract byte getRecordType();
