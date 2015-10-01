@@ -277,7 +277,9 @@ public class OBasicCommandContext implements OCommandContext {
   public OCommandContext copy() {
     final OBasicCommandContext copy = new OBasicCommandContext();
     copy.init();
-    copy.variables.putAll(variables);
+
+    if (variables != null && !variables.isEmpty())
+      copy.variables.putAll(variables);
 
     copy.recordMetrics = recordMetrics;
     copy.parent = parent;

@@ -19,7 +19,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.functions.coll.*;
 import com.orientechnologies.orient.core.sql.functions.geo.OSQLFunctionDistance;
@@ -38,6 +37,7 @@ import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionIf;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionIfNull;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionSysdate;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionUUID;
+import com.orientechnologies.orient.core.sql.functions.sequence.OSQLFunctionSequence;
 import com.orientechnologies.orient.core.sql.functions.stat.OSQLFunctionMedian;
 import com.orientechnologies.orient.core.sql.functions.stat.OSQLFunctionMode;
 import com.orientechnologies.orient.core.sql.functions.stat.OSQLFunctionPercentile;
@@ -45,6 +45,10 @@ import com.orientechnologies.orient.core.sql.functions.stat.OSQLFunctionStandard
 import com.orientechnologies.orient.core.sql.functions.stat.OSQLFunctionVariance;
 import com.orientechnologies.orient.core.sql.functions.text.OSQLFunctionConcat;
 import com.orientechnologies.orient.core.sql.functions.text.OSQLFunctionFormat;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Default set of SQL function.
@@ -93,6 +97,7 @@ public final class ODefaultSQLFunctionFactory implements OSQLFunctionFactory {
     register(OSQLFunctionUUID.NAME, OSQLFunctionUUID.class);
     register(OSQLFunctionConcat.NAME, OSQLFunctionConcat.class);
     register(OSQLFunctionDecimal.NAME, OSQLFunctionDecimal.class);
+    register(OSQLFunctionSequence.NAME, new OSQLFunctionSequence());
   }
 
   public static void register(final String iName, final Object iImplementation) {

@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.core.metadata.sequence;
 
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.orient.core.annotation.OExposedMethod;
+import com.orientechnologies.common.util.OApi;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -230,19 +230,19 @@ public abstract class OSequence extends ODocumentWrapper {
   /*
    * Forwards the sequence by one, and returns the new value.
    */
-  @OExposedMethod
+  @OApi
   public abstract long next();
 
   /*
    * Returns the current sequence value. If next() was never called, returns null
    */
-  @OExposedMethod
+  @OApi
   public abstract long current();
 
   /*
    * Resets the sequence value to it's initialized value.
    */
-  @OExposedMethod
+  @OApi
   public abstract long reset();
 
   /*

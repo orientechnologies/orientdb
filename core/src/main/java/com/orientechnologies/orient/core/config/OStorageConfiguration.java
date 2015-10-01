@@ -19,18 +19,6 @@
  */
 package com.orientechnologies.orient.core.config;
 
-import java.io.IOException;
-import java.text.DecimalFormatSymbols;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.TimeZone;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategyFactory;
@@ -47,7 +35,18 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 
-import java.util.*;
+import java.io.IOException;
+import java.text.DecimalFormatSymbols;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -105,6 +104,7 @@ public class OStorageConfiguration implements OSerializableStream {
   private volatile boolean                                strictSQL;
   private volatile Map<String, Object>                    loadProperties;
   private volatile ConcurrentMap<String, IndexEngineData> indexEngines;
+  private volatile transient boolean                      validation                    = true;
 
   public OStorageConfiguration(final OStorage iStorage) {
     storage = iStorage;
@@ -145,6 +145,7 @@ public class OStorageConfiguration implements OSerializableStream {
     recordSerializerVersion = 0;
     strictSQL = false;
     indexEngines = new ConcurrentHashMap<String, IndexEngineData>();
+    validation = OGlobalConfiguration.DB_VALIDATION.getValueAsBoolean();
 
     binaryFormatVersion = CURRENT_BINARY_FORMAT_VERSION;
   }
@@ -817,6 +818,14 @@ public class OStorageConfiguration implements OSerializableStream {
 
   public void clearProperties() {
     properties.clear();
+  }
+
+  public boolean isValidationEnabled() {
+    return validation;
+  }
+
+  public void setValidation(final boolean validation) {
+    this.validation = validation;
   }
 
   protected void bindPropertiesToContext(final Map<String, Object> iProperties) {

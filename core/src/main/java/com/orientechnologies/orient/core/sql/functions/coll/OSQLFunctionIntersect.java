@@ -100,7 +100,7 @@ public class OSQLFunctionIntersect extends OSQLFunctionMultiValueAbstract<Object
   static Iterator intersectWith(final Iterator current, Object value) {
     final HashSet tempSet = new HashSet();
 
-    if (value instanceof Iterator && (!(value instanceof OSupportsContains)) || !((OSupportsContains) value).supportsFastContains())
+    if (value instanceof Iterator && (!(value instanceof OSupportsContains) || !((OSupportsContains) value).supportsFastContains()))
       value = OMultiValue.toSet(value);
 
     for (Iterator it = current; it.hasNext();) {

@@ -71,7 +71,7 @@ public class OCommandExecutorSQLAlterSequence extends OCommandExecutorSQLAbstrac
 
   @Override
   public String getSyntax() {
-    return "ALTER SEQUENCE <class> ";
+    return "ALTER SEQUENCE <sequence> [START <value>] [INCREMENT <value>] [CACHE <value>]";
   }
 
   @Override

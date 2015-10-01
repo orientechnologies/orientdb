@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
+import com.orientechnologies.orient.core.sql.functions.OSQLFunctionFiltered;
 import com.orientechnologies.orient.core.sql.method.OSQLMethod;
 
 import java.util.*;
@@ -46,29 +47,38 @@ public class OMethodCall extends SimpleNode {
       if (!first) {
         builder.append(", ");
       }
-      param.toString(params,builder);
+      param.toString(params, builder);
       first = false;
     }
     builder.append(")");
   }
-
 
   public boolean isBidirectional() {
     return bidirectionalMethods.contains(methodName.getValue().toLowerCase());
   }
 
   public Object execute(Object targetObjects, OCommandContext ctx) {
-    return execute(targetObjects, ctx, methodName.getValue(), params);
+    return execute(targetObjects, ctx, methodName.getValue(), params, null);
   }
 
-  private Object execute(Object targetObjects, OCommandContext ctx, String name, List<OExpression> iParams) {
+  public Object execute(Object targetObjects, Iterable<OIdentifiable> iPossibleResults, OCommandContext ctx) {
+    return execute(targetObjects, ctx, methodName.getValue(), params, iPossibleResults);
+  }
+
+  private Object execute(Object targetObjects, OCommandContext ctx, String name, List<OExpression> iParams,
+      Iterable<OIdentifiable> iPossibleResults) {
     List<Object> paramValues = new ArrayList<Object>();
     for (OExpression expr : iParams) {
       paramValues.add(expr.execute((OIdentifiable) ctx.getVariable("$current"), ctx));
     }
     if (graphMethods.contains(name)) {
       OSQLFunction function = OSQLEngine.getInstance().getFunction(name);
-      return function.execute(targetObjects, (OIdentifiable) ctx.getVariable("$current"), null, paramValues.toArray(), ctx);
+      if (function instanceof OSQLFunctionFiltered) {
+        return ((OSQLFunctionFiltered) function).execute(targetObjects, (OIdentifiable) ctx.getVariable("$current"), null,
+            paramValues.toArray(), iPossibleResults, ctx);
+      } else {
+        return function.execute(targetObjects, (OIdentifiable) ctx.getVariable("$current"), null, paramValues.toArray(), ctx);
+      }
 
     }
     OSQLMethod method = OSQLEngine.getMethod(name);
@@ -86,14 +96,14 @@ public class OMethodCall extends SimpleNode {
 
     String straightName = methodName.getValue();
     if (straightName.equalsIgnoreCase("out")) {
-      return execute(targetObjects, ctx, "in", params);
+      return execute(targetObjects, ctx, "in", params, null);
     }
     if (straightName.equalsIgnoreCase("in")) {
-      return execute(targetObjects, ctx, "out", params);
+      return execute(targetObjects, ctx, "out", params, null);
     }
 
     if (straightName.equalsIgnoreCase("both")) {
-      return execute(targetObjects, ctx, "both", params);
+      return execute(targetObjects, ctx, "both", params, null);
     }
 
     throw new UnsupportedOperationException("Invalid reverse traversal: " + methodName);

@@ -179,9 +179,19 @@ public class ODirtyManager {
     return real.references.get(rec);
   }
 
-  public void removeNew(ODocument oDocument) {
+  public void removeNew(ORecord record) {
     ODirtyManager real = getReal();
     if (real.newRecord != null)
-      real.newRecord.remove(oDocument);
+      real.newRecord.remove(record);
   }
+
+  public void removePointed(ORecord record) {
+    ODirtyManager real = getReal();
+    if (real.references != null) {
+      real.references.remove(record);
+      if (real.references.size() == 0)
+        references = null;
+    }
+  }
+
 }

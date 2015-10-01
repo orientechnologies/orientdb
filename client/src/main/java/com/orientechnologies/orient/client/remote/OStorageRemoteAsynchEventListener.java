@@ -42,7 +42,7 @@ public class OStorageRemoteAsynchEventListener implements ORemoteServerEventList
 
   private Map<Integer, OLiveResultListener> liveQueryListeners = new ConcurrentHashMap<Integer, OLiveResultListener>();
 
-  private OStorageRemote                 storage;
+  private OStorageRemote                    storage;
 
   public OStorageRemoteAsynchEventListener(final OStorageRemote storage) {
     this.storage = storage;
@@ -61,9 +61,10 @@ public class OStorageRemoteAsynchEventListener implements ORemoteServerEventList
     } else if (iRequestCode == OChannelBinaryProtocol.REQUEST_PUSH_LIVE_QUERY) {
       byte[] bytes = (byte[]) obj;
       DataInputStream dis = new DataInputStream(new ByteArrayInputStream(bytes));
+      Integer id = null;
       try {
         byte op = dis.readByte();
-        Integer id = dis.readInt();
+        id = dis.readInt();
 
         final ORecord record = Orient.instance().getRecordFactoryManager().newInstance(dis.readByte());
 
@@ -73,9 +74,19 @@ public class OStorageRemoteAsynchEventListener implements ORemoteServerEventList
         ORecordInternal.fill(record, rid, version, content, false);
 
         OLiveResultListener listener = liveQueryListeners.get(id);
-        listener.onLiveResult(id, new ORecordOperation(record, op));
+        if (listener != null) {
+          listener.onLiveResult(id, new ORecordOperation(record, op));
+        } else {
+          OLogManager.instance().warn(this, "Receiving invalid LiveQuery token: " + id);
+        }
 
       } catch (IOException e) {
+        if (id != null) {
+          OLiveResultListener listener = liveQueryListeners.get(id);
+          if (listener != null) {
+            listener.onError(id);
+          }
+        }
         e.printStackTrace();
       }
 

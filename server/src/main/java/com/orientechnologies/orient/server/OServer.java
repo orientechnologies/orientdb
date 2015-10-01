@@ -768,13 +768,13 @@ public class OServer {
     final String path = getStoragePath(iDbUrl);
 
     final ODatabaseInternal<?> database = new ODatabaseDocumentTx(path);
-
-    if (database.isClosed())
-      if (database.getStorage() instanceof ODirectMemoryStorage)
+    if (database.isClosed()) {
+      final OStorage storage = database.getStorage();
+      if (storage instanceof ODirectMemoryStorage && !storage.exists())
         database.create();
-      else {
+      else
         database.open(iToken);
-      }
+    }
 
     return database;
   }
@@ -800,7 +800,7 @@ public class OServer {
       final ONetworkProtocolData data, final boolean iBypassAccess) {
     final OStorage storage = database.getStorage();
     if (database.isClosed()) {
-      if (database.getStorage() instanceof ODirectMemoryStorage && !storage.exists()) {
+      if (storage instanceof ODirectMemoryStorage && !storage.exists()) {
         try {
           database.create();
         } catch (OStorageException e) {

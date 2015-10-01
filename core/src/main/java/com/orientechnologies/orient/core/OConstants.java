@@ -20,11 +20,19 @@
 package com.orientechnologies.orient.core;
 
 public class OConstants {
-  public static final String ORIENT_VERSION = "2.2.0-SNAPSHOT";
+  public static final String  ORIENT_VERSION       = "2.2.0-SNAPSHOT";
 
-  public static final String ORIENT_URL     = "www.orientdb.com";
-  public static final String COPYRIGHT      = "Copyrights (c) 2015 Orient Technologies LTD";
+  public static final int     ORIENT_VERSION_MAJOR = 2;
+  public static final int     ORIENT_VERSION_MINOR = 2;
+  public static final int     ORIENT_VERSION_HOFIX = 0;
+  public static final boolean SNAPSHOT             = true;
 
+  public static final String  ORIENT_URL           = "www.orientdb.com";
+  public static final String  COPYRIGHT            = "Copyrights (c) 2015 Orient Technologies LTD";
+
+  /**
+   * Returns the complete text of the current OrientDB version.
+   */
   public static String getVersion() {
     final StringBuilder buffer = new StringBuilder();
     buffer.append(OConstants.ORIENT_VERSION);
@@ -40,6 +48,25 @@ public class OConstants {
     return buffer.toString();
   }
 
+  /**
+   * Returns current OrientDB version as array with 3 integers: major, minor and hotfix numbers. Example: [2,2,0].
+   */
+  public static int[] getVersionNumber() {
+    return new int[] { ORIENT_VERSION_MAJOR, ORIENT_VERSION_MINOR, ORIENT_VERSION_HOFIX };
+  }
+
+  /**
+   * Returns true if current OrientDB version is a snapshot.
+   */
+  public static boolean isSnapshot() {
+    return SNAPSHOT;
+  }
+
+  /**
+   * Returns the build number if any.
+   * 
+   * @return
+   */
   public static String getBuildNumber() {
     final String buildNumber = System.getProperty("orientdb.build.number");
     if (buildNumber == null)

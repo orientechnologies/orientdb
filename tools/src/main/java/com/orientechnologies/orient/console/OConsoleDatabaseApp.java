@@ -96,6 +96,13 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginated
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedClusterDebug;
 import com.orientechnologies.orient.server.config.OServerConfigurationManager;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
+import sun.misc.Signal;
+import sun.misc.SignalHandler;
+
+import java.io.*;
+import java.lang.reflect.Array;
+import java.util.*;
+import java.util.Map.Entry;
 
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutputListener, OProgressListener {
   protected static final int    DEFAULT_WIDTH        = 150;
@@ -539,6 +546,12 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   // EVALUATE THIS BEFORE 'MOVE'
   public void moveVertex(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
     sqlCommand("move", iCommandText, "\nMove vertex command executed with result '%s' in %f sec(s).\n", true);
+  }
+
+  @ConsoleCommand(splitInWords = false, description = "Optimizes the current database", onlineHelp = "SQL-Optimize-Database")
+  public void optimizeDatabase(
+      @ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
+    sqlCommand("optimize", iCommandText, "\nDatabase optimized in %f sec(s).\n", true);
   }
 
   @ConsoleCommand(description = "Force calling of JVM Garbage Collection")
@@ -1282,7 +1295,19 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       message("\nSuper classes........: " + Arrays.toString(cls.getSuperClassesNames().toArray()));
     message("\nDefault cluster......: " + currentDatabase.getClusterNameById(cls.getDefaultClusterId()) + " (id="
         + cls.getDefaultClusterId() + ")");
-    message("\nSupported cluster ids: " + Arrays.toString(cls.getClusterIds()));
+
+    final StringBuilder clusters = new StringBuilder();
+    for (int clId : cls.getClusterIds()) {
+      if (clusters.length() > 0)
+        clusters.append(", ");
+
+      clusters.append(currentDatabase.getClusterNameById(clId));
+      clusters.append("(");
+      clusters.append(clId);
+      clusters.append(")");
+    }
+    message("\nSupported clusters...: " + clusters.toString());
+
     message("\nCluster selection....: " + cls.getClusterSelection().getName());
     message("\nOversize.............: " + cls.getClassOverSize());
 
