@@ -82,8 +82,8 @@ public class ODESEncryptionTest extends AbstractEncryptionTest {
       try {
         db.open("admin", "admin");
         Assert.fail();
-      } catch (Exception e) {
-        Assert.assertTrue(e.getCause() instanceof OSecurityException || e.getCause().getCause() instanceof OSecurityException);
+      } catch (OSecurityException e) {
+        Assert.assertTrue(true);
       } finally {
         db.activateOnCurrentThread();
         db.close();
@@ -94,8 +94,8 @@ public class ODESEncryptionTest extends AbstractEncryptionTest {
       try {
         db.open("admin", "admin");
         Assert.fail();
-      } catch (OStorageException e) {
-        Assert.assertTrue(e.getCause() instanceof OSecurityException || e.getCause().getCause() instanceof OSecurityException);
+      } catch (OSecurityException e) {
+        Assert.assertTrue(true);
       } finally {
         db.activateOnCurrentThread();
         db.close();
@@ -153,8 +153,8 @@ public class ODESEncryptionTest extends AbstractEncryptionTest {
         Assert.assertFalse(result.isEmpty());
 
         Assert.fail();
-      } catch (ODatabaseException e) {
-        Assert.assertTrue(e.getCause() instanceof OSecurityException);
+      } catch (OSecurityException e) {
+        Assert.assertTrue(true);
       } finally {
         db.close();
         Orient.instance().getStorage(DBNAME_CLUSTERTEST).close(true, false);
@@ -165,8 +165,8 @@ public class ODESEncryptionTest extends AbstractEncryptionTest {
         db.open("admin", "admin");
         db.query(new OSQLSynchQuery<ODocument>("select from TestEncryption"));
         Assert.fail();
-      } catch (OStorageException e) {
-        Assert.assertTrue(e.getCause() instanceof OSecurityException);
+      } catch (OSecurityException e) {
+        Assert.assertTrue(true);
       } finally {
         db.close();
         Orient.instance().getStorage(DBNAME_CLUSTERTEST).close(true, false);

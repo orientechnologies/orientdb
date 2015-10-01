@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.Orient;
@@ -126,7 +127,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
     try {
       serverInstance.dropUser("replicator");
     } catch (IOException e) {
-      throw new OConfigurationException("Error on deleting 'replicator' user", e);
+      throw OException.wrapException(new OConfigurationException("Error on deleting 'replicator' user"), e);
     }
   }
 

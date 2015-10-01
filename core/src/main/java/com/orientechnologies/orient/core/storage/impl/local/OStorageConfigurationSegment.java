@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
@@ -94,7 +95,8 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
       fromStream(buffer);
 
     } catch (IOException e) {
-      throw new OSerializationException("Cannot load database's configuration. The database seems to be corrupted", e);
+      throw OException.wrapException(new OSerializationException(
+          "Cannot load database's configuration. The database seems to be corrupted"), e);
     }
     return this;
   }
@@ -132,7 +134,7 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
         f.synch();
 
     } catch (Exception e) {
-      throw new OSerializationException("Error on update storage configuration", e);
+      throw OException.wrapException(new OSerializationException("Error on update storage configuration"), e);
     }
   }
 

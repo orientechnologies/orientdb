@@ -16,6 +16,7 @@
  */
 package com.orientechnologies.orient.core.fetch.json;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
@@ -63,7 +64,7 @@ public class OJSONFetchContext implements OFetchContext {
         jsonWriter.writeAttribute(settings.indentLevel > -1 ? settings.indentLevel : 1, true,
             ORecordSerializerJSON.ATTRIBUTE_FIELD_TYPES, buffer.toString());
       } catch (IOException e) {
-        throw new OFetchException("Error writing field types", e);
+        throw OException.wrapException(new OFetchException("Error writing field types"), e);
       }
   }
 
@@ -91,7 +92,8 @@ public class OJSONFetchContext implements OFetchContext {
       collectionStack.add(iRootRecord);
       settings.indentLevel++;
     } catch (IOException e) {
-      throw new OFetchException("Error writing collection field " + iFieldName + " of record " + iRootRecord.getIdentity(), e);
+      throw OException.wrapException(new OFetchException("Error writing collection field " + iFieldName + " of record "
+          + iRootRecord.getIdentity()), e);
     }
   }
 
@@ -101,7 +103,8 @@ public class OJSONFetchContext implements OFetchContext {
       jsonWriter.endCollection(settings.indentLevel, true);
       collectionStack.pop();
     } catch (IOException e) {
-      throw new OFetchException("Error writing collection field " + iFieldName + " of record " + iRootRecord.getIdentity(), e);
+      throw OException.wrapException(new OFetchException("Error writing collection field " + iFieldName + " of record "
+          + iRootRecord.getIdentity()), e);
     }
   }
 
@@ -113,7 +116,8 @@ public class OJSONFetchContext implements OFetchContext {
         collectionStack.add(new ODocument()); // <-- sorry for this... fixes #2845 but this mess should be rewritten...
       }
     } catch (IOException e) {
-      throw new OFetchException("Error writing map field " + iFieldName + " of record " + iRootRecord.getIdentity(), e);
+      throw OException.wrapException(
+          new OFetchException("Error writing map field " + iFieldName + " of record " + iRootRecord.getIdentity()), e);
     }
   }
 
@@ -124,7 +128,8 @@ public class OJSONFetchContext implements OFetchContext {
         collectionStack.pop();
       }
     } catch (IOException e) {
-      throw new OFetchException("Error writing map field " + iFieldName + " of record " + iRootRecord.getIdentity(), e);
+      throw OException.wrapException(
+          new OFetchException("Error writing map field " + iFieldName + " of record " + iRootRecord.getIdentity()), e);
     }
     settings.indentLevel--;
   }
@@ -141,7 +146,8 @@ public class OJSONFetchContext implements OFetchContext {
       jsonWriter.beginObject(settings.indentLevel, false, fieldName);
       writeSignature(jsonWriter, iDocument);
     } catch (IOException e) {
-      throw new OFetchException("Error writing link field " + iFieldName + " of record " + iRootRecord.getIdentity(), e);
+      throw OException.wrapException(
+          new OFetchException("Error writing link field " + iFieldName + " of record " + iRootRecord.getIdentity()), e);
     }
   }
 
@@ -150,7 +156,8 @@ public class OJSONFetchContext implements OFetchContext {
     try {
       jsonWriter.endObject(settings.indentLevel--, true);
     } catch (IOException e) {
-      throw new OFetchException("Error writing link field " + iFieldName + " of record " + iRootRecord.getIdentity(), e);
+      throw OException.wrapException(
+          new OFetchException("Error writing link field " + iFieldName + " of record " + iRootRecord.getIdentity()), e);
     }
   }
 

@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.server.handler;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
@@ -79,7 +80,8 @@ public class OAutomaticBackup extends OServerPluginAbstract {
             firstTime = cal.getTime();
           }
         } catch (ParseException e) {
-          throw new OConfigurationException("Parameter 'firstTime' has invalid format, expected: HH:mm:ss", e);
+          throw OException.wrapException(
+              new OConfigurationException("Parameter 'firstTime' has invalid format, expected: HH:mm:ss"), e);
         }
       } else if (param.name.equalsIgnoreCase("target.directory"))
         targetDirectory = param.value;
@@ -135,18 +137,18 @@ public class OAutomaticBackup extends OServerPluginAbstract {
           if (include) {
             final String fileName = (String) OVariableParser.resolveVariables(targetFileName, OSystemVariableResolver.VAR_BEGIN,
                 OSystemVariableResolver.VAR_END, new OVariableParserListener() {
-              @Override
-              public String resolve(final String iVariable) {
-                if (iVariable.equalsIgnoreCase(VARIABLES.DBNAME.toString()))
-                  return dbName.getKey();
-                else if (iVariable.startsWith(VARIABLES.DATE.toString())) {
-                  return new SimpleDateFormat(iVariable.substring(VARIABLES.DATE.toString().length() + 1)).format(new Date());
-                }
+                  @Override
+                  public String resolve(final String iVariable) {
+                    if (iVariable.equalsIgnoreCase(VARIABLES.DBNAME.toString()))
+                      return dbName.getKey();
+                    else if (iVariable.startsWith(VARIABLES.DATE.toString())) {
+                      return new SimpleDateFormat(iVariable.substring(VARIABLES.DATE.toString().length() + 1)).format(new Date());
+                    }
 
-                // NOT FOUND
-                throw new IllegalArgumentException("Variable '" + iVariable + "' wasn't found");
-              }
-            });
+                    // NOT FOUND
+                    throw new IllegalArgumentException("Variable '" + iVariable + "' wasn't found");
+                  }
+                });
 
             final String exportFilePath = targetDirectory + fileName;
             ODatabaseDocumentTx db = null;
@@ -165,8 +167,10 @@ public class OAutomaticBackup extends OServerPluginAbstract {
                 }
               }, compressionLevel, bufferSize);
 
-              OLogManager.instance().info(this, "[OAutomaticBackup] - Backup of database '" + dbName.getValue() + "' completed in "
-                  + (System.currentTimeMillis() - begin) + "ms");
+              OLogManager.instance().info(
+                  this,
+                  "[OAutomaticBackup] - Backup of database '" + dbName.getValue() + "' completed in "
+                      + (System.currentTimeMillis() - begin) + "ms");
               ok++;
 
             } catch (Exception e) {

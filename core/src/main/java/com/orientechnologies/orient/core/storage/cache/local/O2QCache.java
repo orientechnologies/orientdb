@@ -42,6 +42,7 @@ import com.orientechnologies.common.concur.lock.ODistributedCounter;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.ONewLockManager;
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedException;
 import com.orientechnologies.orient.core.exception.OReadCacheException;
@@ -388,7 +389,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
         Thread.interrupted();
         throw new OInterruptedException("File flush was interrupted");
       } catch (Exception e) {
-        throw new OReadCacheException("File flush was abnormally terminated", e);
+        throw OException.wrapException(new OReadCacheException("File flush was abnormally terminated"), e);
       }
     }
   }
@@ -534,13 +535,13 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
         final ObjectName mbeanName = new ObjectName(MBEAN_NAME);
         server.registerMBean(this, mbeanName);
       } catch (MalformedObjectNameException e) {
-        throw new OStorageException("Error during registration of read cache MBean", e);
+        throw OException.wrapException(new OReadCacheException("Error during registration of read cache MBean"), e);
       } catch (InstanceAlreadyExistsException e) {
-        throw new OStorageException("Error during registration of read cache MBean", e);
+        throw OException.wrapException(new OReadCacheException("Error during registration of read cache MBean"), e);
       } catch (MBeanRegistrationException e) {
-        throw new OStorageException("Error during registration of read cache MBean", e);
+        throw OException.wrapException(new OReadCacheException("Error during registration of read cache MBean"), e);
       } catch (NotCompliantMBeanException e) {
-        throw new OStorageException("Error during registration of read cache MBean", e);
+        throw OException.wrapException(new OReadCacheException("Error during registration of read cache MBean"), e);
       }
     }
   }
@@ -552,11 +553,11 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
         final ObjectName mbeanName = new ObjectName(MBEAN_NAME);
         server.unregisterMBean(mbeanName);
       } catch (MalformedObjectNameException e) {
-        throw new OStorageException("Error during unregistration of read cache MBean", e);
+        throw OException.wrapException(new OReadCacheException("Error during unregistration of read cache MBean"), e);
       } catch (InstanceNotFoundException e) {
-        throw new OStorageException("Error during unregistration of read cache MBean", e);
+        throw OException.wrapException(new OReadCacheException("Error during unregistration of read cache MBean"), e);
       } catch (MBeanRegistrationException e) {
-        throw new OStorageException("Error during unregistration of read cache MBean", e);
+        throw OException.wrapException(new OReadCacheException("Error during unregistration of read cache MBean"), e);
       }
     }
   }

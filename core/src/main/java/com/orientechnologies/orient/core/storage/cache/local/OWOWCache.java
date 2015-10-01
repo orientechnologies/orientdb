@@ -47,6 +47,7 @@ import com.orientechnologies.common.concur.lock.ONewLockManager;
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.directmemory.ODirectMemoryPointerFactory;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -459,7 +460,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       try {
         future.get();
       } catch (Exception e) {
-        throw new OStorageException("Error during fuzzy checkpoint execution for storage " + storageLocal.getName(), e);
+        throw OException.wrapException(
+            new OStorageException("Error during fuzzy checkpoint execution for storage " + storageLocal.getName()), e);
       }
     }
   }
@@ -634,7 +636,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       Thread.interrupted();
       throw new OInterruptedException("File flush was interrupted");
     } catch (Exception e) {
-      throw new OWriteCacheException("File flush was abnormally terminated", e);
+      throw OException.wrapException(new OWriteCacheException("File flush was abnormally terminated"), e);
     }
   }
 
@@ -764,7 +766,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         OLogManager.instance().error(this, "Data flush thread was interrupted");
 
         Thread.interrupted();
-        throw new OWriteCacheException("Data flush thread was interrupted", e);
+        throw OException.wrapException(new OWriteCacheException("Data flush thread was interrupted"), e);
       }
     }
 
@@ -969,13 +971,13 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         final ObjectName mbeanName = new ObjectName(getMBeanName());
         server.registerMBean(this, mbeanName);
       } catch (MalformedObjectNameException e) {
-        throw new OStorageException("Error during registration of write cache MBean", e);
+        throw OException.wrapException(new OStorageException("Error during registration of write cache MBean"), e);
       } catch (InstanceAlreadyExistsException e) {
-        throw new OStorageException("Error during registration of write cache MBean", e);
+        throw OException.wrapException(new OStorageException("Error during registration of write cache MBean"), e);
       } catch (MBeanRegistrationException e) {
-        throw new OStorageException("Error during registration of write cache MBean", e);
+        throw OException.wrapException(new OStorageException("Error during registration of write cache MBean"), e);
       } catch (NotCompliantMBeanException e) {
-        throw new OStorageException("Error during registration of write cache MBean", e);
+        throw OException.wrapException(new OStorageException("Error during registration of write cache MBean"), e);
       }
     }
   }
@@ -991,11 +993,11 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         final ObjectName mbeanName = new ObjectName(getMBeanName());
         server.unregisterMBean(mbeanName);
       } catch (MalformedObjectNameException e) {
-        throw new OStorageException("Error during unregistration of write cache MBean", e);
+        throw OException.wrapException(new OStorageException("Error during unregistration of write cache MBean"), e);
       } catch (InstanceNotFoundException e) {
-        throw new OStorageException("Error during unregistration of write cache MBean", e);
+        throw OException.wrapException(new OStorageException("Error during unregistration of write cache MBean"), e);
       } catch (MBeanRegistrationException e) {
-        throw new OStorageException("Error during unregistration of write cache MBean", e);
+        throw OException.wrapException(new OStorageException("Error during unregistration of write cache MBean"), e);
       }
     }
   }
@@ -1177,7 +1179,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       Thread.interrupted();
       throw new OInterruptedException("File data removal was interrupted");
     } catch (Exception e) {
-      throw new OWriteCacheException("File data removal was abnormally terminated", e);
+      throw OException.wrapException(new OWriteCacheException("File data removal was abnormally terminated"), e);
     }
   }
 

@@ -31,6 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OLockException;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 
 /**
@@ -110,7 +111,7 @@ public class OResourcePool<K, V> {
     } catch (Exception e) {
       sem.release();
 
-      throw new OLockException("Error on creation of the new resource in the pool", e);
+      throw OException.wrapException(new OLockException("Error on creation of the new resource in the pool"), e);
     }
   }
 

@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql.method;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.functions.coll.OSQLMethodMultiValue;
 import com.orientechnologies.orient.core.sql.functions.conversion.OSQLMethodAsDate;
@@ -114,7 +115,7 @@ public class ODefaultSQLMethodFactory implements OSQLMethodFactory {
       try {
         method = (OSQLMethod) ((Class<?>) m).newInstance();
       } catch (Exception e) {
-        throw new OCommandExecutionException("Cannot create SQL method: " + m, e);
+        throw OException.wrapException(new OCommandExecutionException("Cannot create SQL method: " + m), e);
       }
     else
       method = (OSQLMethod) m;

@@ -1134,7 +1134,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       throw e;
     } catch (Exception e) {
       OLogManager.instance().error(this, "Error during context close for db " + url, e);
-      throw new ODatabaseException("Error during context close for db " + url, e);
+      throw OException.wrapException(new ODatabaseException("Error during context close for db " + url), e);
     } finally {
       try {
         if (closeDb)

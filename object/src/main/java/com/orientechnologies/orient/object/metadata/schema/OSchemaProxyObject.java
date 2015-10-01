@@ -85,10 +85,10 @@ public class OSchemaProxyObject implements OSchema {
   public OClass createClass(String iClassName, OClass iSuperClass) {
     return underlying.createClass(iClassName, iSuperClass);
   }
-  
+
   @Override
   public OClass createClass(String iClassName, OClass... superClasses) {
-	return underlying.createClass(iClassName, superClasses);
+    return underlying.createClass(iClassName, superClasses);
   }
 
   @Override
@@ -105,12 +105,11 @@ public class OSchemaProxyObject implements OSchema {
   public OClass createClass(String iClassName, OClass iSuperClass, int[] iClusterIds) {
     return underlying.createClass(iClassName, iSuperClass, iClusterIds);
   }
-  
+
   @Override
-	public OClass createClass(String className, int[] clusterIds,
-			OClass... superClasses) {
-		return underlying.createClass(className, clusterIds, superClasses);
-	}
+  public OClass createClass(String className, int[] clusterIds, OClass... superClasses) {
+    return underlying.createClass(className, clusterIds, superClasses);
+  }
 
   @Override
   public OClass createAbstractClass(Class<?> iClass) {
@@ -126,11 +125,11 @@ public class OSchemaProxyObject implements OSchema {
   public OClass createAbstractClass(String iClassName, OClass iSuperClass) {
     return underlying.createAbstractClass(iClassName, iSuperClass);
   }
-  
+
   @Override
-	public OClass createAbstractClass(String iClassName, OClass... superClasses) {
-		return underlying.createAbstractClass(iClassName, superClasses);
-	}
+  public OClass createAbstractClass(String iClassName, OClass... superClasses) {
+    return underlying.createAbstractClass(iClassName, superClasses);
+  }
 
   @Override
   public void dropClass(String iClassName) {
@@ -166,11 +165,11 @@ public class OSchemaProxyObject implements OSchema {
   public OClass getOrCreateClass(String iClassName, OClass iSuperClass) {
     return underlying.getOrCreateClass(iClassName, iSuperClass);
   }
-  
+
   @Override
-	public OClass getOrCreateClass(String iClassName, OClass... superClasses) {
-	  return underlying.getOrCreateClass(iClassName, superClasses);
-	}
+  public OClass getOrCreateClass(String iClassName, OClass... superClasses) {
+    return underlying.getOrCreateClass(iClassName, superClasses);
+  }
 
   @Override
   public OGlobalProperty getGlobalPropertyById(int id) {
@@ -255,7 +254,7 @@ public class OSchemaProxyObject implements OSchema {
     try {
       classes = OReflectionHelper.getClassesFor(iPackageName, iClassLoader);
     } catch (ClassNotFoundException e) {
-      throw new ODatabaseException("Classes can not be loaded during schema generation", e);
+      throw OException.wrapException(new ODatabaseException("Classes can not be loaded during schema generation"), e);
     }
     for (Class<?> c : classes) {
       generateSchema(c);

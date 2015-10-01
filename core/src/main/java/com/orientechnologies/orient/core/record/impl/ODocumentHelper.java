@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.record.impl;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.Orient;
@@ -203,7 +204,8 @@ public class ODocumentHelper {
         } catch (ParseException pe) {
           final String dateFormat = ((String) iValue).length() > config.dateFormat.length() ? config.dateTimeFormat
               : config.dateFormat;
-          throw new OQueryParsingException("Error on conversion of date '" + iValue + "' using the format: " + dateFormat, pe);
+          throw OException.wrapException(new OQueryParsingException("Error on conversion of date '" + iValue
+              + "' using the format: " + dateFormat), pe);
         }
       }
     }
@@ -751,8 +753,7 @@ public class ODocumentHelper {
         if (args.size() == 1)
           result = currentValue.toString().indexOf(OIOUtils.getStringContent(args.get(0)));
         else
-          result = currentValue.toString().indexOf(OIOUtils.getStringContent(args.get(0)),
-              Integer.parseInt(args.get(1)));
+          result = currentValue.toString().indexOf(OIOUtils.getStringContent(args.get(0)), Integer.parseInt(args.get(1)));
       else if (function.startsWith("SUBSTRING("))
         if (args.size() == 1)
           result = currentValue.toString().substring(Integer.parseInt(args.get(0)));

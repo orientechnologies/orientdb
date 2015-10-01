@@ -11,6 +11,7 @@ import java.util.Random;
 import java.util.UUID;
 
 import javax.crypto.Mac;
+import javax.swing.*;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OSystemException;
@@ -180,7 +181,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
       bytes = signToken(header, unsignedToken);
       tokenByteOS.write(OBase64Utils.encodeBytesToBytes(bytes, 0, bytes.length, OBase64Utils.URL_SAFE));
     } catch (Exception ex) {
-      throw new OSystemException("Error on token parsing", ex);
+      throw OException.wrapException(new OSystemException("Error on token parsing"), ex);
     }
 
     return tokenByteOS.toByteArray();
@@ -223,7 +224,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
     } catch (RuntimeException e) {
       throw e;
     } catch (Exception e) {
-      throw new OSystemException("Error on token parsing", e);
+      throw OException.wrapException(new OSystemException("Error on token parsing"), e);
     }
     return baos.toByteArray();
   }
@@ -256,7 +257,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
       token.setIsVerified(verifyTokenSignature(token.getHeader(), binaryToken, 0, end, decodedSignature));
       return token;
     } catch (IOException e) {
-      throw new OSystemException("Error on token parsing", e);
+      throw OException.wrapException(new OSystemException("Error on token parsing"), e);
     }
   }
 
@@ -287,7 +288,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
     try {
       doc.fromJSON(new String(decodedHeader, "UTF-8"));
     } catch (UnsupportedEncodingException e) {
-      throw new OSystemException("Header is not encoded in UTF-8 format", e);
+      throw OException.wrapException(new OSystemException("Header is not encoded in UTF-8 format"), e);
     }
     final OrientJwtHeader header = new OrientJwtHeader();
     header.setType((String) doc.field("typ"));
@@ -304,7 +305,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
     try {
       doc.fromJSON(new String(decodedPayload, "UTF-8"));
     } catch (UnsupportedEncodingException e) {
-      throw new OSystemException("Payload encoding format differs from UTF-8", e);
+      throw OException.wrapException(new OSystemException("Payload encoding format differs from UTF-8"), e);
     }
     final OrientJwtPayload payload = new OrientJwtPayload();
     payload.setIssuer((String) doc.field("iss"));
@@ -394,7 +395,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
     } catch (RuntimeException e) {
       throw e;
     } catch (Exception e) {
-      throw new OSystemException("Token signature can not be verified", e);
+      throw OException.wrapException(new OSystemException("Token signature can not be verified"), e);
     } finally {
       mac.reset();
     }
@@ -406,7 +407,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
       mac.init(getKeyProvider().getKey(header));
       return mac.doFinal(unsignedToken);
     } catch (Exception ex) {
-      throw new OSystemException("Error on token parsing", ex);
+      throw OException.wrapException(new OSystemException("Error on token parsing"), ex);
     } finally {
       mac.reset();
     }
@@ -416,7 +417,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
     try {
       return binarySerializer.deserialize(bais);
     } catch (Exception e) {
-      throw new OSystemException("Can not deserialize binary token", e);
+      throw OException.wrapException(new OSystemException("Can not deserialize binary token"), e);
     }
   }
 

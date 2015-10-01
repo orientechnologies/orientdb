@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
+import com.orientechnologies.orient.core.sql.parser.OMatchStatement;
 import com.orientechnologies.orient.enterprise.channel.OSocketFactory;
 
 import java.io.BufferedInputStream;
@@ -137,21 +138,18 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
 
     } catch (Exception e) {
       // UNABLE TO REPRODUCE THE SAME SERVER-SIZE EXCEPTION: THROW A STORAGE EXCEPTION
-      rootException = new OStorageException(iMessage, iPrevious);
+      rootException = OException.wrapException(new OStorageException(iMessage), iPrevious);
     }
 
     if (c != null)
       try {
-        final Throwable e;
+        final Exception cause;
         if (c.getParameterTypes().length > 1)
-          e = (Throwable) c.newInstance(iMessage, iPrevious);
+          cause = (Exception) c.newInstance(iMessage, iPrevious);
         else
-          e = (Throwable) c.newInstance(iMessage);
+          cause = (Exception) c.newInstance(iMessage);
 
-        if (e instanceof RuntimeException)
-          rootException = (RuntimeException) e;
-        else
-          rootException = new OSystemException("Data processing exception", e);
+        rootException = OException.wrapException(new OSystemException("Data processing exception"), cause);
       } catch (InstantiationException ignored) {
       } catch (IllegalAccessException ignored) {
       } catch (InvocationTargetException ignored) {

@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.sql;
 
 import java.util.*;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -318,7 +319,7 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLAbstract {
       if (progressListener != null)
         progressListener.onCompletition(this, false);
 
-      throw new OCommandExecutionException("Error on creation of links", e);
+      throw OException.wrapException(new OCommandExecutionException("Error on creation of links"), e);
 
     } finally {
       database.declareIntent(null);

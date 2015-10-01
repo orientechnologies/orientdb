@@ -21,6 +21,7 @@ package com.orientechnologies.orient.client.remote;
 
 import com.orientechnologies.common.concur.resource.OResourcePool;
 import com.orientechnologies.common.concur.resource.OResourcePoolListener;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -176,14 +177,13 @@ public class ORemoteConnectionManager implements OChannelListener {
     return pool.getAvailableResources();
   }
 
-  public int getReusableConnections(final String url){
+  public int getReusableConnections(final String url) {
     final OResourcePool<String, OChannelBinaryAsynchClient> pool = connections.get(url);
     if (pool == null)
       return 0;
 
     return pool.getInPoolResources();
   }
-
 
   public int getCreatedInstancesInPool(final String url) {
     final OResourcePool<String, OChannelBinaryAsynchClient> pool = connections.get(url);
@@ -205,7 +205,7 @@ public class ORemoteConnectionManager implements OChannelListener {
     final List<OChannelBinaryAsynchClient> conns = new ArrayList<OChannelBinaryAsynchClient>(pool.getAllResources());
     for (OChannelBinaryAsynchClient c : conns)
       try {
-        //Unregister the listener that make the connection return to the closing pool.
+        // Unregister the listener that make the connection return to the closing pool.
         c.unregisterListener(this);
         c.close();
       } catch (Exception e) {
@@ -252,7 +252,7 @@ public class ORemoteConnectionManager implements OChannelListener {
       throw e;
     } catch (Exception e) {
       OLogManager.instance().debug(this, "Error on connecting to %s", e, iServerURL);
-      throw new OIOException("Error on connecting to " + iServerURL, e);
+      throw OException.wrapException(new OIOException("Error on connecting to " + iServerURL), e);
     }
   }
 }

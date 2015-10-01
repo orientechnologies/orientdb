@@ -19,6 +19,7 @@
   */
 package com.orientechnologies.orient.core.type.tree.provider;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -292,7 +293,7 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
         fromStreamUsingBinaryStreamSerializer(iStream);
       return this;
     } catch (IOException e) {
-      throw new OSerializationException("Cannot unmarshall tree node with id ", e);
+      throw OException.wrapException(new OSerializationException("Cannot unmarshall tree node with id "), e);
     } finally {
       PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.entry.fromStream"), "Deserialize a MVRBTree entry", timer);
     }
@@ -310,7 +311,7 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
       return buffer;
 
     } catch (IOException e) {
-      throw new OSerializationException("Cannot marshall RB+Tree node", e);
+      throw OException.wrapException(new OSerializationException("Cannot marshall RB+Tree node"), e);
     } finally {
       PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.entry.toStream"), "Serialize a MVRBTree entry", timer);
     }

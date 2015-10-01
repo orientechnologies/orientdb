@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.sql.sequence;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.orient.core.annotation.OExposedMethod;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -69,11 +70,11 @@ public class OSQLSequenceItem implements OSQLFilterItem {
       try {
         return this.method.invoke(sequence);
       } catch (IllegalAccessException e) {
-        throw new OCommandExecutionException("Failed executing method '" + this.method.getName() +
-                "' on sequence '" + this.sequenceName + "'", e);
+      throw OException.wrapException(new OCommandExecutionException("Failed executing method '" + this.method.getName()
+          + "' on sequence '" + this.sequenceName + "'"), e);
       } catch (InvocationTargetException e) {
-        throw new OCommandExecutionException("Failed executing method '" + this.method.getName() +
-                "' on sequence '" + this.sequenceName + "'", e);
+      throw OException.wrapException(new OCommandExecutionException("Failed executing method '" + this.method.getName()
+          + "' on sequence '" + this.sequenceName + "'"), e);
       }
     }
 

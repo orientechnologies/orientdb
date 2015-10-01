@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -91,8 +92,8 @@ public class OCommandExecutorSQLTruncateRecord extends OCommandExecutorSQLAbstra
         final ORecordId rid = new ORecordId(rec);
         database.getStorage().deleteRecord(rid, OVersionFactory.instance().createUntrackedVersion(), 0, null);
         database.getLocalCache().deleteRecord(rid);
-      } catch (Throwable e) {
-        throw new OCommandExecutionException("Error on executing command", e);
+      } catch (Exception e) {
+        throw OException.wrapException(new OCommandExecutionException("Error on executing command"), e);
       }
     }
 

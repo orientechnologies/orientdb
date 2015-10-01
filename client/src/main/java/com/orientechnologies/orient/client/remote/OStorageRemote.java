@@ -259,7 +259,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         // PASS THROUGH
         throw (RuntimeException) e;
       else
-        throw new OStorageException("Cannot open the remote storage: " + name, e);
+        throw OException.wrapException(new OStorageException("Cannot open the remote storage: " + name), e);
 
     } finally {
       stateLock.releaseWriteLock();
@@ -1744,7 +1744,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     } else if (!(exception instanceof IOException)) {
       if (iNetwork != null)
         engine.getConnectionManager().release(iNetwork);
-      throw new OStorageException(message, exception);
+      throw OException.wrapException(new OStorageException(message), exception);
     }
 
     if (status != STATUS.OPEN)
@@ -1824,7 +1824,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     }
 
     // RECONNECTION FAILED: THROW+LOG THE ORIGINAL EXCEPTION
-    throw new OStorageException(message, exception);
+    throw OException.wrapException(new OStorageException(message), exception);
   }
 
   protected String reopenRemoteDatabase() {
@@ -2180,7 +2180,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           parseServerURLs();
           if (cause instanceof IOException)
             throw (IOException) cause;
-          throw new OIOException("Cannot open a connection to remote server: " + iCurrentURL, cause);
+          throw OException.wrapException(new OIOException("Cannot open a connection to remote server: " + iCurrentURL), cause);
         }
       } else if (!network.isConnected()) {
         // DISCONNECTED NETWORK, GET ANOTHER ONE
@@ -2315,7 +2315,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     } catch (Exception e) {
       // ABORT TX COMMIT
       iNetwork.writeByte((byte) -1);
-      throw new OTransactionException("Error on transaction commit", e);
+      throw OException.wrapException(new OTransactionException("Error on transaction commit"), e);
     }
 
     iNetwork.writeByte((byte) 1);

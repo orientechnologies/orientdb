@@ -23,6 +23,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.directmemory.ODirectMemoryPointerFactory;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -574,9 +575,9 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
           commitExecutor.submit(new FlushTask()).get();
         } catch (InterruptedException e) {
           Thread.interrupted();
-          throw new OStorageException("Thread was interrupted during flush", e);
+          throw OException.wrapException(new OStorageException("Thread was interrupted during flush"), e);
         } catch (ExecutionException e) {
-          throw new OStorageException("Error during WAL segment '" + getPath() + "' flush", e);
+          throw OException.wrapException(new OStorageException("Error during WAL segment '" + getPath() + "' flush"), e);
         }
       } else {
         new FlushTask().run();

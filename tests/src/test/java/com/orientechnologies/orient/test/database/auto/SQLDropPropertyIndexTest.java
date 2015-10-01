@@ -34,14 +34,13 @@ import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessin
 @Test(groups = { "index" })
 public class SQLDropPropertyIndexTest extends DocumentDBBaseTest {
 
-  private static final OType        EXPECTED_PROP1_TYPE = OType.DOUBLE;
-  private static final OType        EXPECTED_PROP2_TYPE = OType.INTEGER;
+  private static final OType EXPECTED_PROP1_TYPE = OType.DOUBLE;
+  private static final OType EXPECTED_PROP2_TYPE = OType.INTEGER;
 
-	@Parameters(value = "url")
-	public SQLDropPropertyIndexTest(@Optional String url) {
-		super(url);
-	}
-
+  @Parameters(value = "url")
+  public SQLDropPropertyIndexTest(@Optional String url) {
+    super(url);
+  }
 
   @BeforeMethod
   public void beforeMethod() throws Exception {
@@ -58,7 +57,7 @@ public class SQLDropPropertyIndexTest extends DocumentDBBaseTest {
     database.command(new OCommandSQL("drop class DropPropertyIndexTestClass")).execute();
     database.getMetadata().getSchema().reload();
 
-		super.afterMethod();
+    super.afterMethod();
   }
 
   @Test
@@ -119,11 +118,13 @@ public class SQLDropPropertyIndexTest extends DocumentDBBaseTest {
       Assert.assertTrue(e.getCause() instanceof OCommandExecutionException);
 
       OCommandExecutionException exception = (OCommandExecutionException) e.getCause();
-      Assert.assertEquals(exception.getMessage(), "Property used in indexes (" + "DropPropertyIndexCompositeIndex"
-          + "). Please drop these indexes before removing property or use FORCE parameter.");
+      Assert.assertTrue(exception.getMessage().contains(
+          "Property used in indexes (" + "DropPropertyIndexCompositeIndex"
+              + "). Please drop these indexes before removing property or use FORCE parameter."));
     } catch (OCommandExecutionException e) {
-      Assert.assertEquals(e.getMessage(), "Property used in indexes (" + "DropPropertyIndexCompositeIndex"
-          + "). Please drop these indexes before removing property or use FORCE parameter.");
+      Assert.assertTrue(e.getMessage().contains(
+          "Property used in indexes (" + "DropPropertyIndexCompositeIndex"
+              + "). Please drop these indexes before removing property or use FORCE parameter."));
     }
 
     database.getMetadata().getIndexManager().reload();
@@ -153,11 +154,13 @@ public class SQLDropPropertyIndexTest extends DocumentDBBaseTest {
     } catch (OResponseProcessingException e) {
       Assert.assertTrue(e.getCause() instanceof OCommandExecutionException);
       OCommandExecutionException exception = (OCommandExecutionException) e.getCause();
-      Assert.assertEquals(exception.getMessage(), "Property used in indexes (" + "DropPropertyIndexCompositeIndex"
-          + "). Please drop these indexes before removing property or use FORCE parameter.");
+      Assert.assertTrue(exception.getMessage().contains(
+          "Property used in indexes (" + "DropPropertyIndexCompositeIndex"
+              + "). Please drop these indexes before removing property or use FORCE parameter."));
     } catch (OCommandExecutionException e) {
-      Assert.assertEquals(e.getMessage(), "Property used in indexes (" + "DropPropertyIndexCompositeIndex"
-          + "). Please drop these indexes before removing property or use FORCE parameter.");
+      Assert.assertTrue(e.getMessage().contains(
+          "Property used in indexes (" + "DropPropertyIndexCompositeIndex"
+              + "). Please drop these indexes before removing property or use FORCE parameter."));
     }
 
     database.getMetadata().getIndexManager().reload();

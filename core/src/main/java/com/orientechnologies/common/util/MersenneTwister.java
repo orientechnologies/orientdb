@@ -230,7 +230,7 @@ public strictfp class MersenneTwister extends java.util.Random implements Serial
       f.mag01 = (int[]) (mag01.clone());
       return f;
     } catch (CloneNotSupportedException e) {
-      throw new OSystemException("Can not clone instance of " + MersenneTwister.class.getSimpleName(), e);
+      throw OException.wrapException(new OSystemException("Can not clone instance of " + MersenneTwister.class.getSimpleName()), e);
     } // should never happen
   }
 

@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.command.script;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.concur.resource.OPartitionedObjectPool;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OContextVariableResolver;
@@ -137,7 +138,8 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
 
         return OCommandExecutorUtility.transformResult(ob);
       } catch (ScriptException e) {
-        throw new OCommandScriptException("Error on execution of the script", request.getText(), e.getColumnNumber(), e);
+        throw OException.wrapException(
+            new OCommandScriptException("Error on execution of the script", request.getText(), e.getColumnNumber()), e);
 
       } finally {
         scriptManager.unbind(binding, iContext, iArgs);
@@ -155,7 +157,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
       return executeSQLScript(parserText, db);
 
     } catch (IOException e) {
-      throw new OCommandExecutionException("Error on executing command: " + parserText, e);
+      throw OException.wrapException(new OCommandExecutionException("Error on executing command: " + parserText), e);
     }
   }
 

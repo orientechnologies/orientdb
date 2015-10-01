@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -373,7 +374,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
       }
     } catch (InterruptedException e) {
       Thread.interrupted();
-      throw new OStorageException("Error on closing of storage '" + name, e);
+      throw OException.wrapException(new OStorageException("Error on closing of storage '" + name), e);
     }
   }
 

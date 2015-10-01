@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.security;
 
 import com.orientechnologies.common.collection.OLRUCache;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -210,7 +211,7 @@ public class OSecurityManager {
 
       return encoded;
     } catch (Exception e) {
-      throw new OSecurityException("Cannot create a key with '" + PBKDF2_ALGORITHM + "' algorithm", e);
+      throw OException.wrapException(new OSecurityException("Cannot create a key with '" + PBKDF2_ALGORITHM + "' algorithm"), e);
     }
   }
 

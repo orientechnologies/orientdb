@@ -438,7 +438,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       final String message = "Error on unmarshalling record " + iRecord.getIdentity().toString() + " (" + e + ")";
       OLogManager.instance().error(this, message, e);
 
-      throw new OSerializationException(message, e);
+      throw OException.wrapException(new OSerializationException(message), e);
     }
   }
 

@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.core.tx;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
@@ -541,7 +542,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
           ODocumentInternal.clearTrackData(((ODocument) iRecord));
         }
 
-      } catch (Throwable t) {
+      } catch (Exception e) {
         switch (iStatus) {
         case ORecordOperation.CREATED:
           database.callbackHooks(TYPE.CREATE_FAILED, iRecord);
@@ -554,10 +555,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
           break;
         }
 
-        if (t instanceof RuntimeException)
-          throw (RuntimeException) t;
-        else
-          throw new ODatabaseException("Error on saving record " + iRecord.getIdentity(), t);
+        throw OException.wrapException(new ODatabaseException("Error on saving record " + iRecord.getIdentity()), e);
       }
     } finally {
       switch (iStatus) {

@@ -35,18 +35,4 @@ public abstract class OException extends RuntimeException {
   public OException(final String message) {
     super(message);
   }
-
-  @Override
-  public boolean equals(final Object obj) {
-    if (obj == null || !obj.getClass().equals(getClass()))
-      return false;
-
-    final String myMsg = getMessage();
-    final String otherMsg = ((OException) obj).getMessage();
-    if (myMsg == null || otherMsg == null)
-      // UNKNOWN
-      return false;
-
-    return myMsg.equals(otherMsg);
-  }
 }

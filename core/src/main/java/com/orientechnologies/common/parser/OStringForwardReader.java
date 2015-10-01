@@ -19,6 +19,7 @@
   */
 package com.orientechnologies.common.parser;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 
 import java.io.BufferedReader;
@@ -83,7 +84,7 @@ public class OStringForwardReader implements CharSequence {
 			end = start + byteRead;
 			current = start;
 		} catch (IOException e) {
-			throw new OIOException("Error in read", e);
+      throw OException.wrapException(new OIOException("Error in read"), e);
 		}
 	}
 
@@ -99,7 +100,7 @@ public class OStringForwardReader implements CharSequence {
 		try {
 			return current < end || input.ready();
 		} catch (IOException e) {
-			throw new OIOException("Error in ready", e);
+      throw OException.wrapException(new OIOException("Error in ready"), e);
 		}
 	}
 

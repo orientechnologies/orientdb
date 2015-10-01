@@ -89,8 +89,8 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 
         switch (recordStatus) {
         case ORecordOperation.CREATED:
-          oNetworkProtocolBinary.fillRecord(rid, channel.readBytes(), OVersionFactory.instance().createVersion(), entry.getRecord(),
-              database);
+          oNetworkProtocolBinary.fillRecord(rid, channel.readBytes(), OVersionFactory.instance().createVersion(),
+              entry.getRecord(), database);
 
           // SAVE THE RECORD TO RETRIEVE THEM FOR THE NEW RID TO SEND BACK TO THE REQUESTER
           createdRecords.put(rid.copy(), entry.getRecord());
@@ -130,7 +130,6 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
       if (lastTxStatus == -1)
         // ABORT TX
         throw new OTransactionAbortedException("Transaction aborted by the client");
-
 
       final ODocument remoteIndexEntries = new ODocument(channel.readBytes());
       fillIndexOperations(remoteIndexEntries);
@@ -172,7 +171,8 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 
     } catch (IOException e) {
       rollback();
-      throw new OSerializationException("Cannot read transaction record from the network. Transaction aborted", e);
+      throw OException.wrapException(new OSerializationException(
+          "Cannot read transaction record from the network. Transaction aborted"), e);
     }
   }
 
@@ -242,7 +242,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
           } else
             key = null;
         } catch (IOException ioe) {
-          throw new OTransactionException("Error during index changes deserialization. ", ioe);
+          throw OException.wrapException(new OTransactionException("Error during index changes deserialization. "), ioe);
         }
 
         for (final ODocument op : operations) {

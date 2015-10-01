@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.tx;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
@@ -426,7 +427,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
       } else
         keyContainer = null;
     } catch (IOException ioe) {
-      throw new OTransactionException("Error during index changes serialization. ", ioe);
+      throw OException.wrapException(new OTransactionException("Error during index changes serialization. "), ioe);
     }
 
     final List<ODocument> operations = new ArrayList<ODocument>();

@@ -222,7 +222,8 @@ public class MersenneTwisterFast implements Serializable, Cloneable {
       f.mag01 = (int[]) (mag01.clone());
       return f;
     } catch (CloneNotSupportedException e) {
-      throw new OSystemException("Can not clone " + MersenneTwisterFast.class.getSimpleName() + " instance", e);
+      throw OException.wrapException(new OSystemException("Can not clone " + MersenneTwisterFast.class.getSimpleName()
+          + " instance"), e);
     } // should never happen
   }
 

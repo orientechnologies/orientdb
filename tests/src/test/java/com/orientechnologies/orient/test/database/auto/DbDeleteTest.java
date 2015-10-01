@@ -70,7 +70,7 @@ public class DbDeleteTest extends DocumentDBBaseTest {
       db.drop();
       Assert.fail("Should have thrown ODatabaseException because trying to delete a not opened");
     } catch (ODatabaseException e) {
-      Assert.assertTrue(e.getMessage().equals("Database '" + url + "' is closed"));
+      Assert.assertTrue(e.getMessage().contains("Database '" + url + "' is closed"));
     } catch (OStorageException e) {
       Assert.assertTrue(e.getMessage().startsWith("Cannot delete the remote storage:"));
     }

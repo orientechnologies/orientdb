@@ -118,7 +118,7 @@ public class OHttpUtils {
           try {
             params.put(parts[0], URLDecoder.decode(parts[1], "UTF-8"));
           } catch (UnsupportedEncodingException e) {
-            throw new OSystemException("Can not parse HTTP parameters", e);
+            throw OException.wrapException(new OSystemException("Can not parse HTTP parameters"), e);
           }
       }
       return params;

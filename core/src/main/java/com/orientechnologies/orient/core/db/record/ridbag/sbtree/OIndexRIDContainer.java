@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -83,7 +84,7 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
     try {
       atomicOperation = storage.getAtomicOperationsManager().startAtomicOperation(fileName, true);
     } catch (IOException e) {
-      throw new OSBTreeException("Error creation of sbtree with name " + fileName, e);
+      throw OException.wrapException(new OSBTreeException("Error creation of sbtree with name " + fileName), e);
     }
 
     try {
@@ -110,10 +111,10 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
       try {
         storage.getAtomicOperationsManager().endAtomicOperation(true, e);
       } catch (IOException ioe) {
-        throw new OSBTreeException("Error of rollback of atomic operation", ioe);
+        throw OException.wrapException(new OSBTreeException("Error of rollback of atomic operation"), ioe);
       }
 
-      throw new OSBTreeException("Error creation of sbtree with name " + fileName, e);
+      throw OException.wrapException(new OSBTreeException("Error creation of sbtree with name " + fileName), e);
     }
   }
 

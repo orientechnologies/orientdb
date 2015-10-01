@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.object.serialization;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.reflection.OReflectionHelper;
@@ -169,7 +170,7 @@ public class OObjectSerializerHelper {
       else
         return ((Method) o).getReturnType();
     } catch (Exception e) {
-      throw new OSchemaException("Cannot get the value of the property: " + iProperty, e);
+      throw OException.wrapException(new OSchemaException("Cannot get the value of the property: " + iProperty), e);
     }
   }
 
@@ -199,7 +200,7 @@ public class OObjectSerializerHelper {
         return ((Field) o).get(iPojo);
       return null;
     } catch (Exception e) {
-      throw new OSchemaException("Cannot get the value of the property: " + iProperty, e);
+      throw OException.wrapException(new OSchemaException("Cannot get the value of the property: " + iProperty), e);
     }
   }
 
@@ -221,8 +222,8 @@ public class OObjectSerializerHelper {
 
     } catch (Exception e) {
 
-      throw new OSchemaException(
-          "Cannot set the value '" + iValue + "' to the property '" + iProperty + "' for the pojo: " + iPojo, e);
+      throw OException.wrapException(new OSchemaException("Cannot set the value '" + iValue + "' to the property '" + iProperty
+          + "' for the pojo: " + iPojo), e);
     }
   }
 
@@ -720,8 +721,8 @@ public class OObjectSerializerHelper {
         else
           m.invoke(iPojo);
       } catch (Exception e) {
-        throw new OConfigurationException("Error on executing user callback '" + m.getName() + "' annotated with '"
-            + iAnnotation.getSimpleName() + "'", e);
+        throw OException.wrapException(new OConfigurationException("Error on executing user callback '" + m.getName()
+            + "' annotated with '" + iAnnotation.getSimpleName() + "'"), e);
       }
   }
 

@@ -19,17 +19,17 @@ import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessin
 @Test(groups = { "index" })
 public class SQLCreateIndexTest extends DocumentDBBaseTest {
 
-  private static final OType        EXPECTED_PROP1_TYPE = OType.DOUBLE;
-  private static final OType        EXPECTED_PROP2_TYPE = OType.INTEGER;
+  private static final OType EXPECTED_PROP1_TYPE = OType.DOUBLE;
+  private static final OType EXPECTED_PROP2_TYPE = OType.INTEGER;
 
-	@Parameters(value = "url")
-	public SQLCreateIndexTest(@Optional String url) {
-		super(url);
-	}
+  @Parameters(value = "url")
+  public SQLCreateIndexTest(@Optional String url) {
+    super(url);
+  }
 
   @BeforeClass
   public void beforeClass() throws Exception {
-		super.beforeClass();
+    super.beforeClass();
 
     if (database.isClosed())
       database.open("admin", "admin");
@@ -375,11 +375,13 @@ public class SQLCreateIndexTest extends DocumentDBBaseTest {
       Assert.assertTrue(e.getCause() instanceof OIndexException);
       OIndexException exception = (OIndexException) e.getCause();
 
-      Assert.assertEquals(exception.getMessage(), "Linked type was not provided. "
-          + "You should provide linked type for embedded collections that are going to be indexed.");
+      Assert.assertTrue(exception.getMessage().contains(
+          "Linked type was not provided. "
+              + "You should provide linked type for embedded collections that are going to be indexed."));
     } catch (OIndexException e) {
-      Assert.assertEquals(e.getMessage(), "Linked type was not provided. "
-          + "You should provide linked type for embedded collections that are going to be indexed.");
+      Assert.assertTrue(e.getMessage().contains(
+          "Linked type was not provided. "
+              + "You should provide linked type for embedded collections that are going to be indexed."));
     }
     final OIndex<?> index = database.getMetadata().getSchema().getClass("sqlCreateIndexTestClass")
         .getClassIndex("sqlCreateIndexEmbeddedListWithoutLinkedTypeIndex");
@@ -398,11 +400,13 @@ public class SQLCreateIndexTest extends DocumentDBBaseTest {
     } catch (OResponseProcessingException e) {
       Assert.assertTrue(e.getCause() instanceof OIndexException);
       OIndexException exception = (OIndexException) e.getCause();
-      Assert.assertEquals(exception.getMessage(), "Linked type was not provided. "
-          + "You should provide linked type for embedded collections that are going to be indexed.");
+      Assert.assertTrue(exception.getMessage().contains(
+          "Linked type was not provided. "
+              + "You should provide linked type for embedded collections that are going to be indexed."));
     } catch (OIndexException e) {
-      Assert.assertEquals(e.getMessage(), "Linked type was not provided. "
-          + "You should provide linked type for embedded collections that are going to be indexed.");
+      Assert.assertTrue(e.getMessage().contains(
+          "Linked type was not provided. "
+              + "You should provide linked type for embedded collections that are going to be indexed."));
     }
     final OIndex<?> index = database.getMetadata().getSchema().getClass("sqlCreateIndexTestClass")
         .getClassIndex("sqlCreateIndexEmbeddedMapWithoutLinkedTypeIndex");

@@ -72,9 +72,10 @@ public class SchemaIndexTest extends DocumentDBBaseTest {
       Assert.fail();
     } catch (OSchemaException e) {
       Assert
-          .assertEquals(
-              e.getMessage(),
-              "Class 'SchemaSharedIndexSuperTest' cannot be dropped because it has sub classes. Remove the dependencies before trying to drop it again");
+          .assertTrue(e
+              .getMessage()
+              .contains(
+                  "Class 'SchemaSharedIndexSuperTest' cannot be dropped because it has sub classes. Remove the dependencies before trying to drop it again"));
     }
 
     database.getMetadata().getSchema().reload();

@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -144,7 +145,7 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
       if (storage instanceof OLocalPaginatedStorage)
         storage.synch();
     } catch (IOException ioe) {
-      throw new OCommandExecutionException("Error altering cluster '" + clusterName + "'", ioe);
+      throw OException.wrapException(new OCommandExecutionException("Error altering cluster '" + clusterName + "'"), ioe);
     }
 
     return result;
