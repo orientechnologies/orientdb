@@ -114,9 +114,11 @@ public class OServerAdmin {
       }
 
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Cannot connect to the remote server/database '%s'", e, OStorageException.class,
-          storage.getURL());
       storage.close(true, false);
+
+      final String message = "Cannot connect to the remote server/database '" + storage.getURL() + "'";
+      OLogManager.instance().error(this, message, e);
+      throw OException.wrapException(new OStorageException(message), e);
     }
     return this;
   }
@@ -191,7 +193,9 @@ public class OServerAdmin {
 
     try {
       if (iDatabaseName == null || iDatabaseName.length() <= 0) {
-        OLogManager.instance().error(this, "Cannot create unnamed remote storage. Check your syntax", OStorageException.class);
+        final String message = "Cannot create unnamed remote storage. Check your syntax";
+        OLogManager.instance().error(this, message);
+        throw new OStorageException(message);
       } else {
         if (iStorageMode == null)
           iStorageMode = "csv";
@@ -211,8 +215,12 @@ public class OServerAdmin {
       }
 
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Cannot create the remote storage: " + storage.getName(), e, OStorageException.class);
       storage.close(true, false);
+
+      final String message = "Cannot create the remote storage: " + storage.getName();
+      OLogManager.instance().error(this, message, e);
+
+      throw OException.wrapException(new OStorageException(message), e);
     }
     return this;
   }

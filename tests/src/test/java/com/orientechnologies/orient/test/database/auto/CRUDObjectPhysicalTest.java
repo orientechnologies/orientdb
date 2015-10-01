@@ -1800,8 +1800,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     boolean throwedEx = false;
     try {
       p.getList().add(new Object());
-    } catch (Throwable ose) {
-      if (ose instanceof ODatabaseException && ose.getCause() instanceof OSerializationException)
+    } catch (Exception ose) {
+      if (ose instanceof OSerializationException || ose.getCause() instanceof OSerializationException)
         throwedEx = true;
     }
     Assert.assertTrue(throwedEx);

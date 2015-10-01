@@ -36,6 +36,7 @@ import javax.management.NotCompliantMBeanException;
 
 import com.orientechnologies.common.console.OConsoleReader;
 import com.orientechnologies.common.console.ODefaultConsoleReader;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -247,10 +248,10 @@ public class OServer {
       return startupFromConfiguration();
 
     } catch (IOException e) {
-      OLogManager.instance().error(this, "Error on reading server configuration from file: " + iConfigurationFile, e,
-          OConfigurationException.class);
+      final String message = "Error on reading server configuration from file: " + iConfigurationFile;
+      OLogManager.instance().error(this, message, e);
+      throw OException.wrapException(new OConfigurationException(message), e);
     }
-    return this;
   }
 
   public OServer startup(final String iConfiguration) throws InstantiationException, IllegalAccessException,
@@ -346,7 +347,10 @@ public class OServer {
         loadUsers();
         loadDatabases();
       } catch (IOException e) {
-        OLogManager.instance().error(this, "Error on reading server configuration", e, OConfigurationException.class);
+        final String message = "Error on reading server configuration";
+        OLogManager.instance().error(this, message, e);
+
+        throw OException.wrapException(new OConfigurationException(message), e);
       }
 
       registerPlugins();

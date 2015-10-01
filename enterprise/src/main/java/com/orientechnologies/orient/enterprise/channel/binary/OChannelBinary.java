@@ -368,11 +368,12 @@ public abstract class OChannelBinary extends OChannel {
     }
     updateMetricReceivedBytes(i);
 
-    OLogManager.instance().error(
-        this,
-        "Received unread response from " + socket.getRemoteSocketAddress()
-            + " probably corrupted data from the network connection. Cleared dirty data in the buffer (" + i + " bytes): ["
-            + dirtyBuffer + (i > dirtyBuffer.length() ? "..." : "") + "]", OIOException.class);
+    final String message = "Received unread response from " + socket.getRemoteSocketAddress()
+        + " probably corrupted data from the network connection. Cleared dirty data in the buffer (" + i + " bytes): ["
+        + dirtyBuffer + (i > dirtyBuffer.length() ? "..." : "") + "]";
+    OLogManager.instance().error(this, message);
+    throw new OIOException(message);
+
   }
 
   @Override

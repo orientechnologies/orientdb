@@ -270,7 +270,10 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
       }
 
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Error on unload the tree: " + dataProvider, e, OStorageException.class);
+      final String message = "Error on unload the tree: " + dataProvider;
+      OLogManager.instance().error(this, message, e);
+
+      throw OException.wrapException(new OStorageException(message), e);
     } finally {
       PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.unload"), "Unload a MVRBTree", timer);
     }

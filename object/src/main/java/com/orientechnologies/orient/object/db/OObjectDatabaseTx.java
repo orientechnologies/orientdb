@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.object.db;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.Orient;
@@ -173,9 +174,11 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
             + " cannot be serialized because is not part of registered entities. To fix this error register this class");
       }
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Error on creating object of class " + iClassName, e, ODatabaseException.class);
+      final String message = "Error on creating object of class " + iClassName;
+      OLogManager.instance().error(this, message, e);
+
+      throw OException.wrapException(new ODatabaseException(message), e);
     }
-    return null;
   }
 
   /**
@@ -199,9 +202,11 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
             + " cannot be serialized because is not part of registered entities. To fix this error register this class");
       }
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Error on creating object of class " + iClassName, e, ODatabaseException.class);
+      final String message = "Error on creating object of class " + iClassName;
+      OLogManager.instance().error(this, message, e);
+
+      throw OException.wrapException(new ODatabaseException(message), e);
     }
-    return null;
   }
 
   public <RET> OObjectIteratorClass<RET> browseClass(final Class<RET> iClusterClass) {

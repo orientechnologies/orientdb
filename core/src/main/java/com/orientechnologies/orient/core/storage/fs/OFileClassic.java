@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.storage.fs;
 
 import com.orientechnologies.common.concur.lock.OLockException;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
@@ -578,7 +579,9 @@ public class OFileClassic implements OFile {
         accessFile = null;
       }
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Error on closing file " + osFile.getAbsolutePath(), e, OIOException.class);
+      final String message = "Error on closing file " + osFile.getAbsolutePath();
+      OLogManager.instance().error(this, message, e);
+      throw OException.wrapException(new OIOException(message), e);
     } finally {
       releaseWriteLock();
     }

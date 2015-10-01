@@ -150,10 +150,11 @@ public class OSecurityManager {
     try {
       return md.digest(iInput.getBytes("UTF-8"));
     } catch (UnsupportedEncodingException e) {
-      OLogManager.instance().error(this, "The requested encoding is not supported: cannot execute security checks", e,
-          OConfigurationException.class);
+      final String message = "The requested encoding is not supported: cannot execute security checks";
+      OLogManager.instance().error(this, message, e);
+
+      throw OException.wrapException(new OConfigurationException(message), e);
     }
-    return null;
   }
 
   public String createHashWithSalt(final String iPassword) {

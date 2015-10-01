@@ -68,7 +68,7 @@ public class CRUDDocumentValidationTest extends DocumentDBBaseTest {
     record.save();
   }
 
-  @Test(dependsOnMethods = "validationMinString", expectedExceptions = OValidationException.class, expectedExceptionsMessageRegExp = ".*more.*than.*")
+  @Test(dependsOnMethods = "validationMinString", expectedExceptions = OValidationException.class, expectedExceptionsMessageRegExp = "(?s).*more.*than.*")
   public void validationMaxString() {
     record.clear();
     record.field("account", account);
@@ -80,7 +80,7 @@ public class CRUDDocumentValidationTest extends DocumentDBBaseTest {
     record.save();
   }
 
-  @Test(dependsOnMethods = "validationMaxString", expectedExceptions = OValidationException.class, expectedExceptionsMessageRegExp = ".*precedes.*")
+  @Test(dependsOnMethods = "validationMaxString", expectedExceptions = OValidationException.class, expectedExceptionsMessageRegExp = "(?s).*precedes.*")
   public void validationMinDate() throws ParseException {
     record.clear();
     record.field("account", account);
