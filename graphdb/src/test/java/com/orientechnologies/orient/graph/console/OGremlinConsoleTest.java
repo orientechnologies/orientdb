@@ -69,7 +69,7 @@ public class OGremlinConsoleTest {
   @Test
   public void testMoveVertexCommand() {
     final String INPUT_FILE = "src/test/resources/graph-example-2.xml";
-    String dbUrl = "memory:testGraphMLImportWithSmallBatch";
+    String dbUrl = "memory:testMoveVertexCommand";
     StringBuilder builder = new StringBuilder();
     builder.append("create database " + dbUrl + ";\n");
     builder.append("import database " + INPUT_FILE + " batchSize=10;\n");
