@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.db.record.OAutoConvertToRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.iterator.OLazyWrapperIterator;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -34,6 +35,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Set;
 
 /**
  * Iterator that allow to iterate against multiple collection of elements.
@@ -176,7 +178,7 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
       final Object o = sources.get(i);
 
       if (o != null) {
-        if (o instanceof Collection<?> || o instanceof ORidBag) {
+        if (o instanceof Set<?> || o instanceof ORidBag) {
           // OK
         } else if (o instanceof OLazyWrapperIterator) {
           if (!((OLazyWrapperIterator) o).canUseMultiValueDirectly())
@@ -220,7 +222,7 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
         Object next = sourcesIterator.next();
         if (next != null) {
 
-          if (next instanceof Iterable<?>)
+          if (!(next instanceof ODocument) && next instanceof Iterable<?>)
             next = ((Iterable) next).iterator();
 
           if (next instanceof OAutoConvertToRecord)
