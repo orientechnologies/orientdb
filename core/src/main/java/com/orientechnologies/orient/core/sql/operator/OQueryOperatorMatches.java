@@ -19,7 +19,10 @@
   */
 package com.orientechnologies.orient.core.sql.operator;
 
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.List;
+import java.util.ArrayList;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -66,6 +69,21 @@ public class OQueryOperatorMatches extends OQueryOperatorEqualityNotNulls {
 			p = Pattern.compile(iRegex);
 			iContext.setVariable(key, p);
 		}
-		return p.matcher(iValue).matches();
+		Matcher m = p.matcher(iValue);
+		if (m.matches()) {
+			List<String> iMatches = new ArrayList<String>();
+			List<Integer> iGroups = new ArrayList<Integer>();
+			for(int i = 1; i <= m.groupCount(); i++) {
+				String match = m.group(i);
+				if (match != null) {
+					iMatches.add(match);
+					iGroups.add(i-1);
+				}
+			}
+			iContext.setVariable("matches", iMatches);
+			iContext.setVariable("groups", iGroups);
+			return true;
+		}
+		return false;
 	}
 }
