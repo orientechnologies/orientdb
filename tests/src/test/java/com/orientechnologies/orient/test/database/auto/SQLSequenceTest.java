@@ -72,7 +72,8 @@ public class SQLSequenceTest extends DocumentDBBaseTest {
   }
 
   private long sequenceSql(String sequenceName, String cmd) {
-    Iterable<ODocument> ret = database.command(new OCommandSQL("SELECT sequence('" + sequenceName + "')." + cmd + " as value")).execute();
+    Iterable<ODocument> ret = database.command(new OCommandSQL("SELECT sequence('" + sequenceName + "')." + cmd + " as value"))
+        .execute();
     return (Long) ret.iterator().next().field("value");
   }
 

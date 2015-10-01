@@ -135,7 +135,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   private Map<String, Object>                  connectionOptions;
   private OEngineRemote                        engine;
   private String                               recordFormat;
-  private Map<String,byte[]>                   tokens = new ConcurrentHashMap<String, byte[]>();
+  private Map<String, byte[]>                  tokens                  = new ConcurrentHashMap<String, byte[]>();
 
   public OStorageRemote(final String iClientId, final String iURL, final String iMode) throws IOException {
     this(iClientId, iURL, iMode, null);
@@ -188,8 +188,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       tl.serverURL = iServerURL;
       tl.sessionId = iSessionId;
     }
-    if (token != null && iServerURL!= null) {
-      this.tokens.put(iServerURL,token);
+    if (token != null && iServerURL != null) {
+      this.tokens.put(iServerURL, token);
     }
   }
 
@@ -459,7 +459,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
                 try {
                   OStorageRemoteThreadLocal.INSTANCE.get().sessionId = sessionId;
-                  OStorageRemoteThreadLocal.INSTANCE.get().serverURL= curUrl;
+                  OStorageRemoteThreadLocal.INSTANCE.get().serverURL = curUrl;
                   beginResponse(network);
                   if (network.getSrvProtocolVersion() > OChannelBinaryProtocol.PROTOCOL_VERSION_25)
                     iRid.clusterId = network.readShort();
@@ -475,7 +475,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
                 } finally {
                   endResponse(network);
                   OStorageRemoteThreadLocal.INSTANCE.get().sessionId = -1;
-                  OStorageRemoteThreadLocal.INSTANCE.get().serverURL= null;
+                  OStorageRemoteThreadLocal.INSTANCE.get().serverURL = null;
                 }
                 iCallback.call(iRid, result);
                 return null;
@@ -1795,7 +1795,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
       try {
         if (OLogManager.instance().isDebugEnabled())
-          OLogManager.instance().debug(this, "Retrying to connect to remote server #" + (retry + 1) + "/" + currentMaxRetry + "...");
+          OLogManager.instance()
+              .debug(this, "Retrying to connect to remote server #" + (retry + 1) + "/" + currentMaxRetry + "...");
 
         // FORCE RESET OF THREAD DATA (SERVER URL + SESSION ID)
         setSessionId(null, -1, null);
@@ -1803,9 +1804,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         // REACQUIRE DB SESSION ID
         final String currentURL = reopenRemoteDatabase();
 
-        OLogManager.instance()
-          .warn(this, "Connection re-acquired transparently after %dms and %d retries to server '%s': no errors will be thrown at application level",
-                 System.currentTimeMillis() - lostConnectionTime, retry + 1, currentURL);
+        OLogManager
+            .instance()
+            .warn(
+                this,
+                "Connection re-acquired transparently after %dms and %d retries to server '%s': no errors will be thrown at application level",
+                System.currentTimeMillis() - lostConnectionTime, retry + 1, currentURL);
 
         // RECONNECTED!
         return;
@@ -1826,7 +1830,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       do {
         try {
           final byte[] curToken = tokens.get(currentURL);
-          if(curToken == null || curToken.length == 0) {
+          if (curToken == null || curToken.length == 0) {
             return openRemoteDatabase();
           } else {
             network = getAvailableNetwork(currentURL);
@@ -1862,7 +1866,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           }
 
           OLogManager.instance().error(this, "Can not open database with url " + currentURL, e);
-        } catch ( OSecurityException ex){
+        } catch (OSecurityException ex) {
           if (network != null) {
             // REMOVE THE NETWORK CONNECTION IF ANY
             try {
@@ -1873,8 +1877,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             }
             network = null;
           }
-        }
-        catch (OException e) {
+        } catch (OException e) {
           // PROPAGATE ANY OTHER ORIENTDB EXCEPTION
           throw e;
 
@@ -1939,7 +1942,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           final int sessionId;
 
           try {
-            network.beginResponse(getSessionId(),false);
+            network.beginResponse(getSessionId(), false);
             sessionId = network.readInt();
             byte[] token = network.readBytes();
             if (token.length == 0) {
@@ -2160,7 +2163,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
   protected String getCurrentServerURL() {
     String url = getServerURL();
-    if(url != null)
+    if (url != null)
       return url;
     synchronized (serverURLs) {
       if (serverURLs.isEmpty()) {
@@ -2208,7 +2211,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       }
 
     } while (network == null);
-    setSessionId(lastURL,getSessionId(),tokens.get(lastURL));
+    setSessionId(lastURL, getSessionId(), tokens.get(lastURL));
     return network;
   }
 
@@ -2387,7 +2390,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         if (network.getSrvProtocolVersion() < 24)
           network.readString();
 
-        final int dataSegmentId = network.getSrvProtocolVersion() >= 12 && network.getSrvProtocolVersion() < 24 ? (int) network.readShort() : 0;
+        final int dataSegmentId = network.getSrvProtocolVersion() >= 12 && network.getSrvProtocolVersion() < 24 ? (int) network
+            .readShort() : 0;
 
         cluster.configure(this, clusterId, clusterName);
 
