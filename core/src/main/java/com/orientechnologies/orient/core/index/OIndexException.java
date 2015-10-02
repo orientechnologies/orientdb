@@ -19,10 +19,10 @@
   */
 package com.orientechnologies.orient.core.index;
 
-import com.orientechnologies.common.exception.OUserException;
+import com.orientechnologies.common.exception.OHighLevelException;
 import com.orientechnologies.orient.core.exception.OCoreException;
 
-public class OIndexException extends OCoreException implements OUserException {
+public class OIndexException extends OCoreException {
 
 	private static final long	serialVersionUID	= -2655748565531836968L;
 

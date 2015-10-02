@@ -20,7 +20,7 @@
 
 package com.orientechnologies.orient.core.storage;
 
-import com.orientechnologies.common.exception.OUserException;
+import com.orientechnologies.common.exception.OHighLevelException;
 import com.orientechnologies.orient.core.exception.OCoreException;
 import com.orientechnologies.orient.core.id.ORID;
 
@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.id.ORID;
  * @author Artem Orobets (enisher-at-gmail.com)
  * @since 9/5/12
  */
-public class ORecordDuplicatedException extends OCoreException implements OUserException {
+public class ORecordDuplicatedException extends OCoreException implements OHighLevelException {
   private final ORID rid;
 
   public ORecordDuplicatedException(ORecordDuplicatedException exception) {

@@ -19,10 +19,10 @@
  */
 package com.orientechnologies.orient.core.exception;
 
-import com.orientechnologies.common.exception.OUserException;
+import com.orientechnologies.common.exception.OHighLevelException;
 
 @SuppressWarnings("serial")
-public class OValidationException extends OCoreException implements OUserException {
+public class OValidationException extends OCoreException implements OHighLevelException {
 
   public OValidationException(OValidationException exception) {
     super(exception);

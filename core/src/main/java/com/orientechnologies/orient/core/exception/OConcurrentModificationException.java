@@ -20,7 +20,7 @@
 package com.orientechnologies.orient.core.exception;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
-import com.orientechnologies.common.exception.OUserException;
+import com.orientechnologies.common.exception.OHighLevelException;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -33,7 +33,7 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OConcurrentModificationException extends ONeedRetryException implements OUserException {
+public class OConcurrentModificationException extends ONeedRetryException implements OHighLevelException {
 
   private static final String MESSAGE_OPERATION      = "are";
   private static final String MESSAGE_RECORD_VERSION = "your=v";

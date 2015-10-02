@@ -20,7 +20,7 @@
 package com.orientechnologies.orient.core.exception;
 
 import com.orientechnologies.common.exception.OErrorCode;
-import com.orientechnologies.common.exception.OUserException;
+import com.orientechnologies.common.exception.OHighLevelException;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 
 /**
@@ -30,7 +30,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
  * 
  */
 @SuppressWarnings("serial")
-public class OSecurityException extends OCoreException implements OUserException {
+public class OSecurityException extends OCoreException implements OHighLevelException {
   public OSecurityException(OSecurityException exception) {
     super(exception);
   }
