@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.engine.local;
 
 import java.util.Map;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.engine.OEngineAbstract;
@@ -56,12 +57,13 @@ public class OEngineLocalPaginated extends OEngineAbstract {
       // GET THE STORAGE
       return new OLocalPaginatedStorage(dbName, dbName, getMode(configuration), generateStorageId(), readCache);
 
-    } catch (Throwable t) {
-      OLogManager.instance().error(this,
-          "Error on opening database: " + dbName + ". Current location is: " + new java.io.File(".").getAbsolutePath(), t,
-          ODatabaseException.class);
+    } catch (Exception e) {
+      final String message = "Error on opening database: " + dbName + ". Current location is: "
+          + new java.io.File(".").getAbsolutePath();
+      OLogManager.instance().error(this, message, e);
+
+      throw OException.wrapException(new ODatabaseException(message), e);
     }
-    return null;
   }
 
   public String getName() {

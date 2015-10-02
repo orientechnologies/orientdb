@@ -155,22 +155,6 @@ public class OLogManager {
       log(iRequester, Level.FINE, iMessage, iException, iAdditionalArgs);
   }
 
-  public void debug(final Object iRequester, final String iMessage, final Throwable iException,
-      final Class<? extends OException> iExceptionClass, final Object... iAdditionalArgs) {
-    debug(iRequester, iMessage, iException, iAdditionalArgs);
-
-    if (iExceptionClass != null)
-      try {
-        throw iExceptionClass.getConstructor(String.class, Throwable.class).newInstance(iMessage, iException);
-      } catch (NoSuchMethodException e) {
-      } catch (IllegalArgumentException e) {
-      } catch (SecurityException e) {
-      } catch (InstantiationException e) {
-      } catch (IllegalAccessException e) {
-      } catch (InvocationTargetException e) {
-      }
-  }
-
   public void info(final Object iRequester, final String iMessage, final Object... iAdditionalArgs) {
     if (isInfoEnabled())
       log(iRequester, Level.INFO, iMessage, null, iAdditionalArgs);
@@ -202,75 +186,6 @@ public class OLogManager {
   public void error(final Object iRequester, final String iMessage, final Throwable iException, final Object... iAdditionalArgs) {
     if (isErrorEnabled())
       log(iRequester, Level.SEVERE, iMessage, iException, iAdditionalArgs);
-  }
-
-  public void error(final Object iRequester, final String iMessage, final Throwable iException,
-      final Class<? extends OException> iExceptionClass, final Object... iAdditionalArgs) {
-    error(iRequester, iMessage, iException, iAdditionalArgs);
-
-    final String msg = String.format(iMessage, iAdditionalArgs);
-
-    if (iExceptionClass != null)
-      try {
-        throw iExceptionClass.getConstructor(String.class, Throwable.class).newInstance(msg, iException);
-      } catch (NoSuchMethodException e) {
-      } catch (IllegalArgumentException e) {
-      } catch (SecurityException e) {
-      } catch (InstantiationException e) {
-      } catch (IllegalAccessException e) {
-      } catch (InvocationTargetException e) {
-      }
-  }
-
-  public void error(final Object iRequester, final String iMessage, final Class<? extends OException> iExceptionClass) {
-    error(iRequester, iMessage, (Throwable) null);
-
-    try {
-      throw iExceptionClass.getConstructor(String.class).newInstance(iMessage);
-    } catch (IllegalArgumentException e) {
-    } catch (SecurityException e) {
-    } catch (InstantiationException e) {
-    } catch (IllegalAccessException e) {
-    } catch (InvocationTargetException e) {
-    } catch (NoSuchMethodException e) {
-    }
-  }
-
-  @SuppressWarnings("unchecked")
-  public void exception(final String iMessage, final Exception iNestedException, final Class<? extends OException> iExceptionClass,
-      final Object... iAdditionalArgs) throws OException {
-    if (iMessage == null)
-      return;
-
-    // FORMAT THE MESSAGE
-    String msg = String.format(iMessage, iAdditionalArgs);
-
-    Constructor<OException> c;
-    OException exceptionToThrow = null;
-    try {
-      if (iNestedException != null) {
-        c = (Constructor<OException>) iExceptionClass.getConstructor(String.class, Throwable.class);
-        exceptionToThrow = c.newInstance(msg, iNestedException);
-      }
-    } catch (Exception e) {
-    }
-
-    if (exceptionToThrow == null)
-      try {
-        c = (Constructor<OException>) iExceptionClass.getConstructor(String.class);
-        exceptionToThrow = c.newInstance(msg);
-      } catch (SecurityException e1) {
-      } catch (NoSuchMethodException e1) {
-      } catch (IllegalArgumentException e1) {
-      } catch (InstantiationException e1) {
-      } catch (IllegalAccessException e1) {
-      } catch (InvocationTargetException e1) {
-      }
-
-    if (exceptionToThrow != null)
-      throw exceptionToThrow;
-    else
-      throw new IllegalArgumentException("Cannot create the exception of type: " + iExceptionClass);
   }
 
   public boolean isWarn() {

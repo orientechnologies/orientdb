@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -95,7 +96,7 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
       attribute = OCluster.ATTRIBUTES.valueOf(attributeAsString.toUpperCase(Locale.ENGLISH));
     } catch (IllegalArgumentException e) {
       throw new OCommandSQLParsingException("Unknown class attribute '" + attributeAsString + "'. Supported attributes are: "
-          + Arrays.toString(OCluster.ATTRIBUTES.values()), parserText, oldPos, e);
+          + Arrays.toString(OCluster.ATTRIBUTES.values()), parserText, oldPos);
     }
 
     value = parserText.substring(pos + 1).trim();
@@ -144,7 +145,7 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
       if (storage instanceof OLocalPaginatedStorage)
         storage.synch();
     } catch (IOException ioe) {
-      throw new OCommandExecutionException("Error altering cluster '" + clusterName + "'", ioe);
+      throw OException.wrapException(new OCommandExecutionException("Error altering cluster '" + clusterName + "'"), ioe);
     }
 
     return result;

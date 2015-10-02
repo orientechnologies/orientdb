@@ -30,6 +30,7 @@ import java.util.Set;
 
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
@@ -256,8 +257,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
             record.setFieldType(fieldName, null);
         }
       } catch (Exception e) {
-        throw new OSerializationException("Error on unmarshalling field '" + fieldName + "' in record " + iRecord.getIdentity()
-            + " with value: " + fieldEntry, e);
+        throw OException.wrapException(new OSerializationException("Error on unmarshalling field '" + fieldName + "' in record "
+            + iRecord.getIdentity() + " with value: " + fieldEntry), e);
       }
     }
 

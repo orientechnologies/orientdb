@@ -24,6 +24,7 @@ import java.util.Map.Entry;
 import javax.script.*;
 
 import com.orientechnologies.common.concur.resource.OPartitionedObjectPool;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.Orient;
@@ -54,43 +55,40 @@ public class OScheduler extends ODocumentWrapper implements Runnable {
   public static String              PROP_STARTTIME = "starttime";
   public static String              PROP_STARTED   = "start";
 
-  private OFunction					function;
+  private OFunction                 function;
   private boolean                   isRunning      = false;
-  private ODatabaseDocumentInternal 		db;
+  private ODatabaseDocumentInternal db;
 
   public OScheduler(ODocument doc) {
-    //To check presence of function
+    // To check presence of function
     getFunction();
     bindDb();
   }
-  
-  protected void bindDb()
-  {
-	  this.db = ODatabaseRecordThreadLocal.INSTANCE.get();
-  }
-  
-  
-  @Override
-  public void fromStream(ODocument iDocument) {
-	super.fromStream(iDocument);
-	bindDb();
+
+  protected void bindDb() {
+    this.db = ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 
-public OFunction getFunctionSafe()
-  {
-	  if(function==null)
-	  {
-		  ODocument funcDoc = document.field(PROP_FUNC);
-		  if(funcDoc!=null) function = new OFunction(funcDoc);
-	  }
-	  return function;
+  @Override
+  public void fromStream(ODocument iDocument) {
+    super.fromStream(iDocument);
+    bindDb();
   }
-  
-  public OFunction getFunction()
-  {
-	  OFunction fun = getFunctionSafe();
-	  if(fun==null) throw new OCommandScriptException("function cannot be null");
-	  return fun;
+
+  public OFunction getFunctionSafe() {
+    if (function == null) {
+      ODocument funcDoc = document.field(PROP_FUNC);
+      if (funcDoc != null)
+        function = new OFunction(funcDoc);
+    }
+    return function;
+  }
+
+  public OFunction getFunction() {
+    OFunction fun = getFunctionSafe();
+    if (fun == null)
+      throw new OCommandScriptException("function cannot be null");
+    return fun;
   }
 
   public String getSchedulingRule() {
@@ -102,7 +100,7 @@ public OFunction getFunctionSafe()
   }
 
   public boolean isStarted() {
-	  Boolean started = document.field(PROP_STARTED);
+    Boolean started = document.field(PROP_STARTED);
     return started == null ? false : started;
   }
 
@@ -131,8 +129,8 @@ public OFunction getFunctionSafe()
   }
 
   public String toString() {
-    String str = "OSchedule <name:" + getSchduleName() + ",rule:" + getSchedulingRule() + ",current status:" + getStatus() + ",func:"
-        + getFunctionSafe() + ",start:" + isStarted() + ">";
+    String str = "OSchedule <name:" + getSchduleName() + ",rule:" + getSchedulingRule() + ",current status:" + getStatus()
+        + ",func:" + getFunctionSafe() + ",start:" + isStarted() + ">";
     return str;
   }
 
@@ -145,7 +143,8 @@ public OFunction getFunctionSafe()
     final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");
     final Date date = new Date(System.currentTimeMillis());
     OLogManager.instance().warn(this, "execute : " + this.toString() + " at " + sdf.format(date));
-    if(db!=null) ODatabaseRecordThreadLocal.INSTANCE.set(db);
+    if (db != null)
+      ODatabaseRecordThreadLocal.INSTANCE.set(db);
 
     this.document.field(PROP_STATUS, SCHEDULER_STATUS.RUNNING);
     this.document.field(PROP_STARTTIME, System.currentTimeMillis());
@@ -182,18 +181,20 @@ public OFunction getFunctionSafe()
           for (Entry<Object, Object> arg : iArgs.entrySet())
             args[i++] = arg.getValue();
         } else {
-        	args = OCommonConst.EMPTY_OBJECT_ARRAY;
+          args = OCommonConst.EMPTY_OBJECT_ARRAY;
         }
         invocableEngine.invokeFunction(this.function.getName(), args);
       }
     } catch (ScriptException e) {
-      throw new OCommandScriptException("Error on execution of the script", this.function.getName(), e.getColumnNumber(), e);
+      throw OException.wrapException(
+          new OCommandScriptException("Error on execution of the script", this.function.getName(), e.getColumnNumber()), e);
     } catch (NoSuchMethodException e) {
-      throw new OCommandScriptException("Error on execution of the script", this.function.getName(), 0, e);
+      throw OException
+          .wrapException(new OCommandScriptException("Error on execution of the script", this.function.getName(), 0), e);
     } catch (OCommandScriptException e) {
       throw e;
     } catch (Exception ex) {
-      throw new OCommandScriptException("Unknown Exception", this.function.getName(), 0, ex);
+      throw OException.wrapException(new OCommandScriptException("Unknown Exception", this.function.getName(), 0), ex);
     } finally {
       if (scriptManager != null && binding != null)
         scriptManager.unbind(binding, null, getArguments());

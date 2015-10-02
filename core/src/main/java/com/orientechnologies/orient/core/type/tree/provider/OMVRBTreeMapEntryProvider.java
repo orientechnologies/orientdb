@@ -1,24 +1,25 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.type.tree.provider;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -43,16 +44,16 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
    * Current version of serialization format for single MVRBTree node. Versions have negative numbers for backward compatibility
    * with previous format that does not have version number, but first value in serialized content was non-negative integer.
    */
-  private static final int            CURRENT_VERSION  = -1;
+  private static final int       CURRENT_VERSION  = -1;
   private static final OProfiler PROFILER         = Orient.instance().getProfiler();
 
-  private static final long           serialVersionUID = 1L;
-  protected K[]                       keys;
-  protected V[]                       values;
-  protected int[]                     serializedKeys;
-  protected int[]                     serializedValues;
+  private static final long      serialVersionUID = 1L;
+  protected K[]                  keys;
+  protected V[]                  values;
+  protected int[]                serializedKeys;
+  protected int[]                serializedValues;
 
-  private byte[]                      buffer;
+  private byte[]                 buffer;
 
   public OMVRBTreeMapEntryProvider(final OMVRBTreeMapProvider<K, V> iTreeDataProvider) {
     super(iTreeDataProvider, OMemoryStream.DEF_SIZE);
@@ -80,8 +81,10 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
           keys[iIndex] = k;
 
       } catch (IOException e) {
-        OLogManager.instance().error(this, "Cannot lazy load the key #" + iIndex + " in tree node " + this, e,
-            OSerializationException.class);
+        final String message = "Cannot lazy load the key #" + iIndex + " in tree node " + this;
+        OLogManager.instance().error(this, message, e);
+
+        throw OException.wrapException(new OSerializationException(message), e);
       }
 
     return k;
@@ -101,9 +104,10 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
           values[iIndex] = v;
 
       } catch (IOException e) {
+        final String message = "Cannot lazy load the value #" + iIndex + " in tree node " + this;
+        OLogManager.instance().error(this, message, e);
 
-        OLogManager.instance().error(this, "Cannot lazy load the value #" + iIndex + " in tree node " + this, e,
-            OSerializationException.class);
+        throw OException.wrapException(new OSerializationException(message), e);
       }
 
     return v;
@@ -292,7 +296,7 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
         fromStreamUsingBinaryStreamSerializer(iStream);
       return this;
     } catch (IOException e) {
-      throw new OSerializationException("Cannot unmarshall tree node with id ", e);
+      throw OException.wrapException(new OSerializationException("Cannot unmarshall tree node with id "), e);
     } finally {
       PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.entry.fromStream"), "Deserialize a MVRBTree entry", timer);
     }
@@ -310,7 +314,7 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
       return buffer;
 
     } catch (IOException e) {
-      throw new OSerializationException("Cannot marshall RB+Tree node", e);
+      throw OException.wrapException(new OSerializationException("Cannot marshall RB+Tree node"), e);
     } finally {
       PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.entry.toStream"), "Serialize a MVRBTree entry", timer);
     }

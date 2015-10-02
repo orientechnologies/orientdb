@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.core.encryption;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.encryption.impl.OAESEncryption;
 import com.orientechnologies.orient.core.encryption.impl.ODESEncryption;
@@ -67,7 +68,7 @@ public class OEncryptionFactory {
           encryption.configure(iOptions);
 
         } catch (Exception e) {
-          throw new OSecurityException("Cannot instantiate encryption algorithm '" + name + "'", e);
+          throw OException.wrapException(new OSecurityException("Cannot instantiate encryption algorithm '" + name + "'"), e);
         }
       } else
         throw new OSecurityException("Encryption with name '" + name + "' is absent");

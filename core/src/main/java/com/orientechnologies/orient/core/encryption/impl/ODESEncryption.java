@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.encryption.impl;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.exception.OInvalidStorageEncryptionKeyException;
@@ -57,8 +58,8 @@ public class ODESEncryption extends OAbstractEncryption {
       cipher = Cipher.getInstance(TRANSFORMATION);
 
     } catch (Exception e) {
-      throw new OInvalidStorageEncryptionKeyException(
-          "Cannot initialize DES encryption with current key. Assure the key is a BASE64 - 64 bits long", e);
+      throw OException.wrapException(new OInvalidStorageEncryptionKeyException(
+          "Cannot initialize DES encryption with current key. Assure the key is a BASE64 - 64 bits long"), e);
     }
 
     this.initialized = true;
@@ -66,7 +67,7 @@ public class ODESEncryption extends OAbstractEncryption {
     return this;
   }
 
-  public byte[] encryptOrDecrypt(final int mode, final byte[] input, final int offset, final int length) throws Throwable {
+  public byte[] encryptOrDecrypt(final int mode, final byte[] input, final int offset, final int length) throws Exception {
     if (!initialized)
       throw new OSecurityException("DES encryption algorithm is not available");
 

@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext.TIMEOUT_STRATEGY;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
@@ -100,7 +101,7 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
   }
 
   protected void throwParsingException(final String iText, Exception e) {
-    throw new OCommandSQLParsingException(iText, parserText, parserGetPreviousPosition(), e);
+    throw OException.wrapException(new OCommandSQLParsingException(iText, parserText, parserGetPreviousPosition()), e);
   }
 
   /**
@@ -234,7 +235,7 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
           return builder.toString();
         }
         return result.toString();
-      }catch(Exception e) {
+      } catch (Exception e) {
         throwParsingException("Error parsing query: \n" + queryText + "\n" + e.getMessage(), e);
       }
 

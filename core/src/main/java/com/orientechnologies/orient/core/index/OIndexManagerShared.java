@@ -588,7 +588,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
       ODocument metadata = idx.field(OIndexInternal.METADATA);
       if (indexType == null) {
         OLogManager.instance().error(this, "Index type is null, will process other record");
-        throw new OException("Index type is null, will process other record. Index configuration: " + idx.toString());
+        throw new OIndexException("Index type is null, will process other record. Index configuration: " + idx.toString());
       }
 
       return OIndexes.createIndex(newDb, indexName, indexType, algorithm, valueContainerAlgorithm, metadata, -1);

@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.graph.gremlin;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -150,7 +151,7 @@ public class OGremlinHelper {
 
         return scriptResult;
       } catch (Exception e) {
-        throw new OCommandExecutionException("Error on execution of the GREMLIN script", e);
+        throw OException.wrapException(new OCommandExecutionException("Error on execution of the GREMLIN script"), e);
       } finally {
         OGremlinHelper.global().releaseEngine(engine);
       }

@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
@@ -176,7 +177,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       endAtomicOperation(false, null);
     } catch (Exception e) {
       endAtomicOperation(true, e);
-      throw new OStorageException("Error during creation of cluster with name " + getName(), e);
+      throw OException.wrapException(new OStorageException("Error during creation of cluster with name " + getName()), e);
     } finally {
       releaseExclusiveLock();
     }
@@ -258,7 +259,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     } catch (Exception e) {
       endAtomicOperation(true, e);
 
-      throw new OStorageException("Error during deletion of cluset " + getName(), e);
+      throw OException.wrapException(new OStorageException("Error during deletion of cluset " + getName()), e);
     } finally {
       releaseExclusiveLock();
     }
@@ -422,7 +423,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
           return createPhysicalPosition(recordType, clusterPosition, addEntryResult.recordVersion);
         } catch (Exception e) {
           endAtomicOperation(true, e);
-          throw new OStorageException(null, e);
+          throw OException.wrapException(new OStorageException("Error during record creation"), e);
         }
       } else {
         try {
@@ -504,7 +505,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
           return createPhysicalPosition(recordType, clusterPosition, version);
         } catch (RuntimeException e) {
           endAtomicOperation(true, e);
-          throw new OStorageException(null, e);
+          throw OException.wrapException(new OStorageException("Error during record creation"), e);
         }
       }
     } finally {
@@ -691,10 +692,10 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       return true;
     } catch (IOException e) {
       endAtomicOperation(true, e);
-      throw new OStorageException(null, e);
+      throw OException.wrapException(new OStorageException("Error during record deletion"), e);
     } catch (RuntimeException e) {
       endAtomicOperation(true, e);
-      throw new OStorageException(null, e);
+      throw OException.wrapException(new OStorageException("Error during record deletion"), e);
     } finally {
       releaseExclusiveLock();
     }
@@ -726,7 +727,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         return true;
       } catch (Exception e) {
         endAtomicOperation(true, e);
-        throw new OStorageException(null, e);
+        throw OException.wrapException(new OStorageException("Error during record hide"), e);
       }
     } finally {
       releaseExclusiveLock();
@@ -953,7 +954,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       endAtomicOperation(false, null);
     } catch (RuntimeException e) {
       endAtomicOperation(true, e);
-      throw new OStorageException("Error during record update", e);
+      throw OException.wrapException(new OStorageException("Error during record update"), e);
     } finally {
       releaseExclusiveLock();
     }
@@ -986,7 +987,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
     } catch (Exception e) {
       endAtomicOperation(true, e);
-      throw new OStorageException(null, e);
+      throw OException.wrapException(new OStorageException("Error during cluster truncate"), e);
     } finally {
       releaseExclusiveLock();
     }
@@ -1057,7 +1058,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         releaseSharedLock();
       }
     } catch (IOException ioe) {
-      throw new OStorageException("Error during retrieval of size of '" + getName() + "' cluster", ioe);
+      throw OException.wrapException(new OStorageException("Error during retrieval of size of '" + getName() + "' cluster"), ioe);
     } finally {
       atomicOperationsManager.releaseReadLock(this);
     }
@@ -1295,7 +1296,8 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       config.compression = iCompressionMethod;
       storageLocal.getConfiguration().update();
     } catch (IllegalArgumentException e) {
-      throw new OStorageException("Invalid value for " + OCluster.ATTRIBUTES.COMPRESSION + " attribute", e);
+      throw OException.wrapException(new OStorageException("Invalid value for " + OCluster.ATTRIBUTES.COMPRESSION + " attribute"),
+          e);
     }
   }
 
@@ -1305,7 +1307,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       config.encryption = iMethod;
       storageLocal.getConfiguration().update();
     } catch (IllegalArgumentException e) {
-      throw new OStorageException("Invalid value for " + ATTRIBUTES.ENCRYPTION + " attribute", e);
+      throw OException.wrapException(new OStorageException("Invalid value for " + ATTRIBUTES.ENCRYPTION + " attribute"), e);
     }
   }
 
@@ -1318,8 +1320,8 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       config.recordOverflowGrowFactor = growFactor;
       storageLocal.getConfiguration().update();
     } catch (NumberFormatException nfe) {
-      throw new OStorageException("Invalid value for cluster attribute " + OCluster.ATTRIBUTES.RECORD_OVERFLOW_GROW_FACTOR
-          + " was passed [" + stringValue + "].", nfe);
+      throw OException.wrapException(new OStorageException("Invalid value for cluster attribute "
+          + OCluster.ATTRIBUTES.RECORD_OVERFLOW_GROW_FACTOR + " was passed [" + stringValue + "]."), nfe);
     }
   }
 
@@ -1332,8 +1334,8 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       config.recordGrowFactor = growFactor;
       storageLocal.getConfiguration().update();
     } catch (NumberFormatException nfe) {
-      throw new OStorageException("Invalid value for cluster attribute " + OCluster.ATTRIBUTES.RECORD_GROW_FACTOR + " was passed ["
-          + stringValue + "].", nfe);
+      throw OException.wrapException(new OStorageException("Invalid value for cluster attribute "
+          + OCluster.ATTRIBUTES.RECORD_GROW_FACTOR + " was passed [" + stringValue + "]."), nfe);
     }
   }
 

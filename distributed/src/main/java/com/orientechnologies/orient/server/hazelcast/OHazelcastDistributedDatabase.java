@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.server.hazelcast;
 
 import com.hazelcast.core.IQueue;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -196,9 +197,10 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
       return waitForResponse(iRequest, currentResponseMgr);
 
-    } catch (Throwable e) {
-      throw new ODistributedException("Error on executing distributed request (" + iRequest + ") against database '" + databaseName
-          + (iClusterNames != null ? "." + iClusterNames : "") + "' to nodes " + iNodes, e);
+    } catch (Exception e) {
+      throw OException
+          .wrapException(new ODistributedException("Error on executing distributed request (" + iRequest + ") against database '"
+              + databaseName + (iClusterNames != null ? "." + iClusterNames : "") + "' to nodes " + iNodes), e);
     }
   }
 
@@ -221,7 +223,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       try {
         iCallback.call();
       } catch (Exception e) {
-        throw new ODistributedException(e);
+        throw OException.wrapException(new ODistributedException("Database can not be configured"), e);
       }
 
     setOnline();

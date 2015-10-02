@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.network;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -74,7 +75,10 @@ public class OServerNetworkListener extends Thread {
     try {
       protocolVersion = iProtocol.newInstance().getVersion();
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Error on reading protocol version for %s", e, ONetworkProtocolException.class, iProtocol);
+      final String message = "Error on reading protocol version for " + iProtocol;
+      OLogManager.instance().error(this, message, e);
+
+      throw OException.wrapException(new ONetworkProtocolException(message), e);
     }
 
     listen(iHostName, iHostPortRange, iProtocolName, iProtocol);

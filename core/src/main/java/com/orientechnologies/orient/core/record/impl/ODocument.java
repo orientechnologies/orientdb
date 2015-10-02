@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.record.impl;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCommonConst;
@@ -235,7 +236,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     this(iFields);
     field(iFieldName, iFieldValue);
   }
-  
+
   protected static void validateField(ODocument iRecord, OImmutableProperty p) throws OValidationException {
     final Object fieldValue;
     ODocumentEntry entry = iRecord._fields.get(p.getName());
@@ -255,10 +256,10 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       }
 
     } else {
-        if (p.isMandatory()) {
-          throw new OValidationException("The field '" + p.getFullName() + "' is mandatory, but not found on record: " + iRecord);
-        }
-        fieldValue = null;
+      if (p.isMandatory()) {
+        throw new OValidationException("The field '" + p.getFullName() + "' is mandatory, but not found on record: " + iRecord);
+      }
+      fieldValue = null;
     }
 
     final OType type = p.getType();
@@ -614,7 +615,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     try {
       result = getDatabase().load(this, iFetchPlan, iIgnoreCache);
     } catch (Exception e) {
-      throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' was not found", e);
+      throw OException.wrapException(new ORecordNotFoundException("The record with id '" + getIdentity() + "' was not found"), e);
     }
 
     if (result == null)
@@ -629,7 +630,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     try {
       result = getDatabase().load(this, iFetchPlan, iIgnoreCache, loadTombstone, OStorage.LOCKING_STRATEGY.DEFAULT);
     } catch (Exception e) {
-      throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' was not found", e);
+      throw OException.wrapException(new ORecordNotFoundException("The record with id '" + getIdentity() + "' was not found"), e);
     }
 
     if (result == null)
@@ -2284,7 +2285,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
             field(prop.getName(), list);
           }
         } catch (Exception e) {
-          throw new OValidationException("impossible to convert value of field \"" + prop.getName() + "\"", e);
+          throw OException.wrapException(
+              new OValidationException("impossible to convert value of field \"" + prop.getName() + "\""), e);
         }
       }
     }
@@ -2589,7 +2591,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
    */
   private void convertFieldsToClass(OClass _clazz) {
     for (OProperty prop : _clazz.properties()) {
-      ODocumentEntry entry = _fields!=null ? _fields.get(prop.getName()) : null;
+      ODocumentEntry entry = _fields != null ? _fields.get(prop.getName()) : null;
       if (entry != null && entry.exist()) {
         if (entry.type == null || entry.type != prop.getType()) {
           field(prop.getName(), entry.value, prop.getType());

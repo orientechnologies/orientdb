@@ -57,14 +57,7 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.ORidBagDeleteHook;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
-import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.exception.OSchemaException;
-import com.orientechnologies.orient.core.exception.OSecurityAccessException;
-import com.orientechnologies.orient.core.exception.OTransactionBlockedException;
-import com.orientechnologies.orient.core.exception.OTransactionException;
-import com.orientechnologies.orient.core.exception.OValidationException;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
@@ -187,11 +180,11 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       init();
 
       databaseOwner = this;
-    } catch (Throwable t) {
+    } catch (Exception t) {
       if (storage != null)
         Orient.instance().unregisterStorage(storage);
 
-      throw new ODatabaseException("Error on opening database '" + iURL + "'", t);
+      throw OException.wrapException(new ODatabaseException("Error on opening database '" + iURL + "'"), t);
     }
 
     setSerializer(defaultSerializer);
@@ -273,7 +266,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       throw e;
     } catch (Exception e) {
       close();
-      throw new ODatabaseException("Cannot open database url=" + getURL(), e);
+      throw OException.wrapException(new ODatabaseException("Cannot open database url=" + getURL()), e);
     }
     return (DB) this;
   }
@@ -325,7 +318,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       throw e;
     } catch (Exception e) {
       close();
-      throw new ODatabaseException("Cannot open database", e);
+      throw OException.wrapException(new ODatabaseException("Cannot open database"), e);
     }
     return (DB) this;
   }
@@ -430,7 +423,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         }
 
     } catch (Exception e) {
-      throw new ODatabaseException("Cannot create database '" + getName() + "'", e);
+      throw OException.wrapException(new ODatabaseException("Cannot create database '" + getName() + "'"), e);
     }
     return (DB) this;
   }
@@ -465,7 +458,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       // PASS THROUGH
       throw e;
     } catch (Exception e) {
-      throw new ODatabaseException("Cannot delete database", e);
+      throw OException.wrapException(new ODatabaseException("Cannot delete database"), e);
     }
   }
 
@@ -649,7 +642,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       return command;
 
     } catch (Exception e) {
-      throw new ODatabaseException("Error on command execution", e);
+      throw OException.wrapException(new ODatabaseException("Error on command execution"), e);
     }
   }
 
@@ -1204,7 +1197,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     try {
       return storage.getClusterById(getClusterIdByName(clusterName)).getRecordsSize();
     } catch (Exception e) {
-      throw new ODatabaseException("Error on reading records size for cluster '" + clusterName + "'", e);
+      throw OException.wrapException(new ODatabaseException("Error on reading records size for cluster '" + clusterName + "'"), e);
     }
   }
 
@@ -1214,7 +1207,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     try {
       return storage.getClusterById(clusterId).getRecordsSize();
     } catch (Exception e) {
-      throw new ODatabaseException("Error on reading records size for cluster with id '" + clusterId + "'", e);
+      throw OException.wrapException(
+          new ODatabaseException("Error on reading records size for cluster with id '" + clusterId + "'"), e);
     }
   }
 
@@ -1601,8 +1595,11 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     for (ODatabaseListener listener : browseListeners())
       try {
         listener.onBeforeTxBegin(this);
-      } catch (Throwable t) {
-        OLogManager.instance().error(this, "Error before the transaction begin", t, OTransactionBlockedException.class);
+      } catch (Exception e) {
+        final String message = "Error before the transaction begin";
+
+        OLogManager.instance().error(this, message, e);
+        throw OException.wrapException(new OTransactionBlockedException(message), e);
       }
 
     currentTx = iTx;
@@ -1721,12 +1718,13 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       return (RET) iRecord;
     } catch (OOfflineClusterException t) {
       throw t;
-    } catch (Throwable t) {
+    } catch (Exception t) {
       if (rid.isTemporary())
-        throw new ODatabaseException("Error on retrieving record using temporary RecordId: " + rid, t);
+        throw OException.wrapException(new ODatabaseException("Error on retrieving record using temporary RecordId: " + rid), t);
       else
-        throw new ODatabaseException("Error on retrieving record " + rid + " (cluster: "
-            + storage.getPhysicalClusterNameById(rid.clusterId) + ")", t);
+        throw OException.wrapException(
+            new ODatabaseException("Error on retrieving record " + rid + " (cluster: "
+                + storage.getPhysicalClusterNameById(rid.clusterId) + ")"), t);
     } finally {
       ORecordSerializationContext.pullContext();
       getMetadata().clearThreadLocalSchemaSnapshot();
@@ -1887,7 +1885,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
           ORecordInternal.fill(record, rid, version, stream, false);
 
           callbackHookSuccess(record, wasNew, stream, operationResult);
-        } catch (Throwable t) {
+        } catch (Exception t) {
           callbackHookFailure(record, wasNew, stream);
           throw t;
         }
@@ -1903,11 +1901,12 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         getLocalCache().updateRecord(record);
     } catch (OException e) {
       throw e;
-    } catch (Throwable t) {
+    } catch (Exception t) {
       if (!ORecordId.isValid(record.getIdentity().getClusterPosition()))
-        throw new ODatabaseException("Error on saving record in cluster #" + record.getIdentity().getClusterId(), t);
+        throw OException.wrapException(new ODatabaseException("Error on saving record in cluster #"
+            + record.getIdentity().getClusterId()), t);
       else
-        throw new ODatabaseException("Error on saving record " + record.getIdentity(), t);
+        throw OException.wrapException(new ODatabaseException("Error on saving record " + record.getIdentity()), t);
 
     } finally {
       record.setInternalStatus(ORecordElement.STATUS.LOADED);
@@ -1972,7 +1971,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
             callbackHooks(ORecordHook.TYPE.AFTER_DELETE, rec);
           else if (rec != null)
             callbackHooks(ORecordHook.TYPE.DELETE_REPLICATED, rec);
-        } catch (Throwable t) {
+        } catch (Exception t) {
           callbackHooks(ORecordHook.TYPE.DELETE_FAILED, rec);
           throw t;
         }
@@ -1988,9 +1987,10 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         // RE-THROW THE EXCEPTION
         throw e;
 
-      } catch (Throwable t) {
+      } catch (Exception t) {
         // WRAP IT AS ODATABASE EXCEPTION
-        throw new ODatabaseException("Error on deleting record in cluster #" + record.getIdentity().getClusterId(), t);
+        throw OException.wrapException(new ODatabaseException("Error on deleting record in cluster #"
+            + record.getIdentity().getClusterId()), t);
       }
     } finally {
       ORecordSerializationContext.pullContext();
@@ -2447,10 +2447,10 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       throw e;
     } catch (Exception e) {
       if (record instanceof ODocument)
-        throw new ODatabaseException("Error on deleting record " + record.getIdentity() + " of class '"
-            + ((ODocument) record).getClassName() + "'", e);
+        throw OException.wrapException(new ODatabaseException("Error on deleting record " + record.getIdentity() + " of class '"
+            + ((ODocument) record).getClassName() + "'"), e);
       else
-        throw new ODatabaseException("Error on deleting record " + record.getIdentity(), e);
+        throw OException.wrapException(new ODatabaseException("Error on deleting record " + record.getIdentity()), e);
     }
     return this;
   }
@@ -2514,10 +2514,13 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     for (ODatabaseListener listener : browseListeners())
       try {
         listener.onBeforeTxCommit(this);
-      } catch (Throwable t) {
+      } catch (Exception e) {
         rollback(force);
-        OLogManager.instance().debug(this, "Cannot commit the transaction: caught exception on execution of %s.onBeforeTxCommit()",
-            t, OTransactionBlockedException.class, listener.getClass());
+
+        OLogManager.instance().error(this, "Cannot commit the transaction: caught exception on execution of %s.onBeforeTxCommit()",
+            listener.getClass().getName(), e);
+        throw OException.wrapException(new OTransactionException("Cannot commit the transaction: caught exception on execution of "
+            + listener.getClass().getName() + "#onBeforeTxCommit()"), e);
       }
 
     try {
@@ -2551,13 +2554,14 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     for (ODatabaseListener listener : browseListeners())
       try {
         listener.onAfterTxCommit(this);
-      } catch (Throwable t) {
-        OLogManager
-            .instance()
-            .debug(
-                this,
-                "Error after the transaction has been committed. The transaction remains valid. The exception caught was on execution of %s.onAfterTxCommit()",
-                t, OTransactionBlockedException.class, listener.getClass());
+      } catch (Exception e) {
+        final String message = "Error after the transaction has been committed. The transaction remains valid. The exception caught was on execution of "
+            + listener.getClass() + ".onAfterTxCommit()";
+
+        OLogManager.instance().error(this, message, e);
+
+        throw OException.wrapException(new OTransactionBlockedException(message), e);
+
       }
 
     return this;

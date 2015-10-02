@@ -208,13 +208,13 @@ public abstract class OSequence extends ODocumentWrapper {
           --retry;
           reloadSequence();
         } else {
-          throw new OSequenceException(e);
+          throw OException.wrapException(new OSequenceException("Error in transaction processing of sequence method"), e);
         }
       } catch (OException ex) {
         --retry;
         reloadSequence();
       } catch (Exception e) {
-        throw new OSequenceException(e);
+        throw OException.wrapException(new OSequenceException("Error in transaction processing of sequence method"), e);
       }
     }
     try {
@@ -223,7 +223,7 @@ public abstract class OSequence extends ODocumentWrapper {
       if (e.getCause() instanceof OConcurrentModificationException) {
         throw ((OConcurrentModificationException) e.getCause());
       }
-      throw new OSequenceException(e);
+      throw OException.wrapException(new OSequenceException("Error in transaction processing of sequence method"), e);
     }
   }
 

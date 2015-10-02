@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OCompositeKey;
@@ -1133,7 +1134,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       throw e;
     } catch (Exception e) {
       OLogManager.instance().error(this, "Error during context close for db " + url, e);
-      throw new OException("Error during context close for db " + url, e);
+      throw OException.wrapException(new ODatabaseException("Error during context close for db " + url), e);
     } finally {
       try {
         if (closeDb)

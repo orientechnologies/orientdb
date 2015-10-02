@@ -337,8 +337,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       if (result instanceof ONeedRetryException)
         throw (ONeedRetryException) result;
-      else if (result instanceof Throwable)
-        throw new ODistributedException("Error on execution distributed COMMAND", (Throwable) result);
+      else if (result instanceof Exception)
+        throw OException.wrapException(new ODistributedException("Error on execution distributed COMMAND"), (Exception) result);
 
       return result;
     } catch (ONeedRetryException e) {
@@ -547,8 +547,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
         if (masterResult instanceof ONeedRetryException)
           throw (ONeedRetryException) masterResult;
-        else if (masterResult instanceof Throwable)
-          throw new ODistributedException("Error on execution distributed CREATE_RECORD", (Throwable) masterResult);
+        else if (masterResult instanceof Exception)
+          throw OException.wrapException(new ODistributedException("Error on execution distributed CREATE_RECORD"),
+              (Exception) masterResult);
 
         // COPY THE CLUSTER POS -> RID
         final OPlaceholder masterPlaceholder = (OPlaceholder) masterResult;
@@ -627,8 +628,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       if (result instanceof ONeedRetryException)
         throw (ONeedRetryException) result;
-      else if (result instanceof Throwable)
-        throw new ODistributedException("Error on execution distributed READ_RECORD", (Throwable) result);
+      else if (result instanceof Exception)
+        throw OException.wrapException(new ODistributedException("Error on execution distributed READ_RECORD"), (Exception) result);
 
       return new OStorageOperationResult<ORawBuffer>((ORawBuffer) result);
 
@@ -673,8 +674,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       if (result instanceof ONeedRetryException)
         throw (ONeedRetryException) result;
-      else if (result instanceof Throwable)
-        throw new ODistributedException("Error on execution distributed READ_RECORD", (Throwable) result);
+      else if (result instanceof Exception)
+        throw OException.wrapException(new ODistributedException("Error on execution distributed READ_RECORD"), (Exception) result);
 
       return new OStorageOperationResult<ORawBuffer>((ORawBuffer) result);
 
@@ -746,8 +747,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
         if (result instanceof ONeedRetryException)
           throw (ONeedRetryException) result;
-        else if (result instanceof Throwable)
-          throw new ODistributedException("Error on execution distributed UPDATE_RECORD", (Throwable) result);
+        else if (result instanceof Exception)
+          throw OException.wrapException(new ODistributedException("Error on execution distributed UPDATE_RECORD"),
+              (Exception) result);
 
         // UPDATE LOCALLY
         return new OStorageOperationResult<ORecordVersion>((ORecordVersion) result);
@@ -833,8 +835,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
         if (result instanceof ONeedRetryException)
           throw (ONeedRetryException) result;
-        else if (result instanceof Throwable)
-          throw new ODistributedException("Error on execution distributed DELETE_RECORD", (Throwable) result);
+        else if (result instanceof Exception)
+          throw OException.wrapException(new ODistributedException("Error on execution distributed DELETE_RECORD"),
+              (Exception) result);
 
         return new OStorageOperationResult<Boolean>(true);
       }
@@ -1126,7 +1129,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
               if (iArgument instanceof OTxTaskResult) {
                 sendTxCompleted(localNodeName, involvedClusters, nodes, (OTxTaskResult) iArgument);
                 return null;
-              } else if (iArgument instanceof Throwable) {
+              } else if (iArgument instanceof Exception) {
                 final OAbstractRemoteTask undo = txTask.getUndoTaskForLocalStorage(iArgument);
 
                 if (undo != null)
@@ -1152,9 +1155,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
                             ODistributedServerLog.DIRECTION.NONE,
                             "async distributed transaction failed, cannot revert local transaction. Current node could have a not aligned database. Remote answer: %s",
                             e, iArgument);
-                    throw new OTransactionException(
-                        "Error on execution async distributed transaction, the database could be inconsistent",
-                        (Throwable) iArgument);
+                    throw OException.wrapException(new OTransactionException(
+                        "Error on execution async distributed transaction, the database could be inconsistent"),
+                        (Exception) iArgument);
                   }
 
                 if (ODistributedServerLog.isDebugEnabled())
@@ -1164,7 +1167,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
                 if (iArgument instanceof RuntimeException)
                   throw (RuntimeException) iArgument;
                 else
-                  throw new OTransactionException("Error on execution async distributed transaction", (Throwable) iArgument);
+                  throw OException.wrapException(new OTransactionException("Error on execution async distributed transaction"),
+                      (Exception) iArgument);
               }
 
               // UNKNOWN RESPONSE TYPE
@@ -1227,7 +1231,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         Thread.sleep(autoRetryDelay);
       return false;
 
-    } else if (result instanceof Throwable) {
+    } else if (result instanceof Exception) {
       // EXCEPTION: LOG IT AND ADD AS NESTED EXCEPTION
       if (ODistributedServerLog.isDebugEnabled())
         ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
@@ -1236,7 +1240,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       if (result instanceof OTransactionException || result instanceof ONeedRetryException)
         throw (RuntimeException) result;
 
-      throw new OTransactionException("Error on committing distributed transaction", (Throwable) result);
+      throw OException.wrapException(new OTransactionException("Error on committing distributed transaction"), (Exception) result);
     } else {
       // UNKNOWN RESPONSE TYPE
       if (ODistributedServerLog.isDebugEnabled())
@@ -1586,7 +1590,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     }
 
     OLogManager.instance().error(this, iMessage, e, iParams);
-    throw new OStorageException(String.format(iMessage, iParams), e);
+    throw OException.wrapException(new OStorageException(String.format(iMessage, iParams)), e);
   }
 
   private OFreezableStorage getFreezableStorage() {

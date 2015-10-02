@@ -19,6 +19,7 @@ package com.orientechnologies.orient.core.schedule;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
 import com.orientechnologies.orient.core.hook.ORecordHook.RESULT;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
@@ -58,7 +59,7 @@ public class OSchedulerTrigger extends ODocumentHookAbstract {
     String name = iDocument.field(OScheduler.PROP_NAME);
     OScheduler scheduler = database.getMetadata().getSchedulerListener().getScheduler(name);
     if (scheduler != null) {
-      throw new OException("Duplicate Scheduler");
+      throw new ODatabaseException("Scheduler with name " + name + " already exists in database");
     }
     boolean start = iDocument.field(OScheduler.PROP_STARTED) == null ? false : ((Boolean) iDocument.field(OScheduler.PROP_STARTED));
     if (start)

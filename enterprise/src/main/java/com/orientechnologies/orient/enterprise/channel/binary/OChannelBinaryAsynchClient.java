@@ -22,12 +22,14 @@ package com.orientechnologies.orient.enterprise.channel.binary;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
+import com.orientechnologies.orient.core.sql.parser.OMatchStatement;
 import com.orientechnologies.orient.enterprise.channel.OSocketFactory;
 
 import java.io.BufferedInputStream;
@@ -136,21 +138,18 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
 
     } catch (Exception e) {
       // UNABLE TO REPRODUCE THE SAME SERVER-SIZE EXCEPTION: THROW A STORAGE EXCEPTION
-      rootException = new OStorageException(iMessage, iPrevious);
+      rootException = OException.wrapException(new OStorageException(iMessage), iPrevious);
     }
 
     if (c != null)
       try {
-        final Throwable e;
+        final Exception cause;
         if (c.getParameterTypes().length > 1)
-          e = (Throwable) c.newInstance(iMessage, iPrevious);
+          cause = (Exception) c.newInstance(iMessage, iPrevious);
         else
-          e = (Throwable) c.newInstance(iMessage);
+          cause = (Exception) c.newInstance(iMessage);
 
-        if (e instanceof RuntimeException)
-          rootException = (RuntimeException) e;
-        else
-          rootException = new OException(e);
+        rootException = OException.wrapException(new OSystemException("Data processing exception"), cause);
       } catch (InstantiationException ignored) {
       } catch (IllegalAccessException ignored) {
       } catch (InvocationTargetException ignored) {
@@ -293,11 +292,10 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
 
   public void endResponse() throws IOException {
     channelRead = false;
-    boolean dirty = false;
     try {
-        if (inStream.available() > 0) {
-          throw new IOException("unexpected data on socket ");
-        }
+      if (inStream != null && inStream.available() > 0) {
+        throw new IOException("unexpected data in channel");
+      }
     } finally {
       // WAKE UP ALL THE WAITING THREADS
       try {
@@ -450,7 +448,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
       throw (OException) throwable;
     else if (throwable instanceof Throwable)
       // WRAP IT
-      throw new OResponseProcessingException("Exception during response processing", (Throwable) throwable);
+      throw new OResponseProcessingException("Exception during response processing");
     else
       OLogManager.instance().error(
           this,

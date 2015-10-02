@@ -29,6 +29,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.common.types.OBinary;
@@ -698,7 +699,7 @@ public abstract class OStringSerializerHelper {
     try {
       getParameters(iText, 0, -1, params);
     } catch (Exception e) {
-      throw new OCommandSQLParsingException("Error on reading parameters in: " + iText, e);
+      throw OException.wrapException(new OCommandSQLParsingException("Error on reading parameters in: " + iText), e);
     }
     return params;
   }

@@ -72,8 +72,8 @@ public class ONothingEncryptionTest extends AbstractEncryptionTest {
       try {
         db.open("admin", "admin");
         Assert.fail();
-      } catch (Exception e) {
-        Assert.assertTrue(e.getCause() instanceof OSecurityException || e.getCause().getCause() instanceof OSecurityException);
+      } catch (OSecurityException e) {
+        Assert.assertTrue(true);
       } finally {
         db.activateOnCurrentThread();
         db.close();
@@ -84,8 +84,8 @@ public class ONothingEncryptionTest extends AbstractEncryptionTest {
       try {
         db.open("admin", "admin");
         Assert.fail();
-      } catch (OStorageException e) {
-        Assert.assertTrue(e.getCause() instanceof OSecurityException || e.getCause().getCause() instanceof OSecurityException);
+      } catch (OSecurityException e) {
+        Assert.assertTrue(true);
       } finally {
         db.activateOnCurrentThread();
         db.close();

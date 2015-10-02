@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.common.util.OCommonConst;
@@ -298,9 +299,11 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         }
       } catch (Exception e) {
         if (iRecord.getIdentity().isValid())
-          throw new OSerializationException("Error on unmarshalling JSON content for record " + iRecord.getIdentity(), e);
+          throw OException.wrapException(
+              new OSerializationException("Error on unmarshalling JSON content for record " + iRecord.getIdentity()), e);
         else
-          throw new OSerializationException("Error on unmarshalling JSON content for record: " + iSource, e);
+          throw OException.wrapException(new OSerializationException("Error on unmarshalling JSON content for record: " + iSource),
+              e);
       }
     }
 
@@ -349,7 +352,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
       iOutput.append(buffer);
       return iOutput;
     } catch (IOException e) {
-      throw new OSerializationException("Error on marshalling of record to JSON", e);
+      throw OException.wrapException(new OSerializationException("Error on marshalling of record to JSON"), e);
     }
   }
 
@@ -442,10 +445,10 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
               return v;
               // REMOVED TRUNK to float
-//              if (canBeTrunkedToFloat(v))
-//                return v.floatValue();
-//              else
-//                return v;
+              // if (canBeTrunkedToFloat(v))
+              // return v.floatValue();
+              // else
+              // return v;
             } else {
               final Long v = new Long(OIOUtils.getStringContent(iFieldValue));
               // INTEGER FORMAT: DETERMINE IF DOUBLE OR FLOAT
@@ -502,8 +505,9 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
             // TRY TO PARSE AS DATE
             return ODateHelper.getDateFormatInstance().parseObject(iFieldValueAsString);
           } catch (ParseException ex) {
-            throw new OSerializationException("Unable to unmarshall date (format=" + ODateHelper.getDateFormat() + ") : "
-                + iFieldValueAsString, e);
+            throw OException.wrapException(
+                new OSerializationException("Unable to unmarshall date (format=" + ODateHelper.getDateFormat() + ") : "
+                    + iFieldValueAsString), e);
           }
         }
 
@@ -518,8 +522,9 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
             // TRY TO PARSE AS DATETIME
             return ODateHelper.getDateTimeFormatInstance().parseObject(iFieldValueAsString);
           } catch (ParseException ex) {
-            throw new OSerializationException("Unable to unmarshall datetime (format=" + ODateHelper.getDateTimeFormat() + ") : "
-                + iFieldValueAsString, e);
+            throw OException.wrapException(
+                new OSerializationException("Unable to unmarshall datetime (format=" + ODateHelper.getDateTimeFormat() + ") : "
+                    + iFieldValueAsString), e);
           }
         }
       case BINARY:

@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 
 import java.util.Collections;
@@ -69,8 +70,8 @@ public class OLiveCommandExecutorSQLFactory implements OCommandExecutorSQLFactor
     try {
       return clazz.newInstance();
     } catch (Exception e) {
-      throw new OCommandExecutionException("Error in creation of command " + name
-          + "(). Probably there is not an empty constructor or the constructor generates errors", e);
+      throw OException.wrapException(new OCommandExecutionException("Error in creation of command " + name
+          + "(). Probably there is not an empty constructor or the constructor generates errors"), e);
     }
   }
 }

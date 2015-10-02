@@ -16,6 +16,7 @@
  */
 package com.orientechnologies.orient.object.enhancement;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.reflection.OReflectionHelper;
 import com.orientechnologies.orient.core.Orient;
@@ -113,9 +114,9 @@ public class OObjectEntitySerializer {
     try {
       return toStream(o, proxiedObject, db);
     } catch (IllegalArgumentException e) {
-      throw new OSerializationException("Error serializing object of class " + o.getClass(), e);
+      throw OException.wrapException(new OSerializationException("Error serializing object of class " + o.getClass()), e);
     } catch (IllegalAccessException e) {
-      throw new OSerializationException("Error serializing object of class " + o.getClass(), e);
+      throw OException.wrapException(new OSerializationException("Error serializing object of class " + o.getClass()), e);
     }
   }
 
@@ -135,13 +136,13 @@ public class OObjectEntitySerializer {
       try {
         handler.attach(o);
       } catch (IllegalArgumentException e) {
-        throw new OSerializationException("Error detaching object of class " + o.getClass(), e);
+        throw OException.wrapException(new OSerializationException("Error detaching object of class " + o.getClass()), e);
       } catch (IllegalAccessException e) {
-        throw new OSerializationException("Error detaching object of class " + o.getClass(), e);
+        throw OException.wrapException(new OSerializationException("Error detaching object of class " + o.getClass()), e);
       } catch (NoSuchMethodException e) {
-        throw new OSerializationException("Error detaching object of class " + o.getClass(), e);
+        throw OException.wrapException(new OSerializationException("Error detaching object of class " + o.getClass()), e);
       } catch (InvocationTargetException e) {
-        throw new OSerializationException("Error detaching object of class " + o.getClass(), e);
+        throw OException.wrapException(new OSerializationException("Error detaching object of class " + o.getClass()), e);
       }
       return o;
     } else
@@ -186,13 +187,13 @@ public class OObjectEntitySerializer {
         }
         handler.detach(o, returnNonProxiedInstance);
       } catch (IllegalArgumentException e) {
-        throw new OSerializationException("Error detaching object of class " + o.getClass(), e);
+        throw OException.wrapException(new OSerializationException("Error detaching object of class " + o.getClass()), e);
       } catch (IllegalAccessException e) {
-        throw new OSerializationException("Error detaching object of class " + o.getClass(), e);
+        throw OException.wrapException(new OSerializationException("Error detaching object of class " + o.getClass()), e);
       } catch (NoSuchMethodException e) {
-        throw new OSerializationException("Error detaching object of class " + o.getClass(), e);
+        throw OException.wrapException(new OSerializationException("Error detaching object of class " + o.getClass()), e);
       } catch (InvocationTargetException e) {
-        throw new OSerializationException("Error detaching object of class " + o.getClass(), e);
+        throw OException.wrapException(new OSerializationException("Error detaching object of class " + o.getClass()), e);
       }
       return o;
     } else if (!returnNonProxiedInstance)
@@ -214,7 +215,8 @@ public class OObjectEntitySerializer {
    *          and @Version fields it could procude data replication
    * @return the object serialized or with detached data
    */
-  public static <T> T detachAll(T o, ODatabaseObject db, boolean returnNonProxiedInstance, Map<Object, Object> alreadyDetached, Map<Object, Object> lazyObjects) {
+  public static <T> T detachAll(T o, ODatabaseObject db, boolean returnNonProxiedInstance, Map<Object, Object> alreadyDetached,
+      Map<Object, Object> lazyObjects) {
     if (o instanceof Proxy) {
       OObjectProxyMethodHandler handler = (OObjectProxyMethodHandler) ((ProxyObject) o).getHandler();
       try {
@@ -229,13 +231,13 @@ public class OObjectEntitySerializer {
         }
         handler.detachAll(o, returnNonProxiedInstance, alreadyDetached, lazyObjects);
       } catch (IllegalArgumentException e) {
-        throw new OSerializationException("Error detaching object of class " + o.getClass(), e);
+        throw OException.wrapException(new OSerializationException("Error detaching object of class " + o.getClass()), e);
       } catch (IllegalAccessException e) {
-        throw new OSerializationException("Error detaching object of class " + o.getClass(), e);
+        throw OException.wrapException(new OSerializationException("Error detaching object of class " + o.getClass()), e);
       } catch (NoSuchMethodException e) {
-        throw new OSerializationException("Error detaching object of class " + o.getClass(), e);
+        throw OException.wrapException(new OSerializationException("Error detaching object of class " + o.getClass()), e);
       } catch (InvocationTargetException e) {
-        throw new OSerializationException("Error detaching object of class " + o.getClass(), e);
+        throw OException.wrapException(new OSerializationException("Error detaching object of class " + o.getClass()), e);
       }
       return o;
     } else if (!returnNonProxiedInstance)
@@ -379,7 +381,6 @@ public class OObjectEntitySerializer {
         || iClass.isAnonymousClass() || getCurrentSerializedSchema().classes.contains(iClass)) {
       return;
     }
-
 
     boolean reloadSchema = false;
     boolean automaticSchemaGeneration = false;
@@ -683,8 +684,8 @@ public class OObjectEntitySerializer {
     OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
     if (!serializedSchema.classes.contains(iField.getDeclaringClass()))
       registerCallbacks(iField.getDeclaringClass());
-    return serializedSchema.serializedFields.get(iField.getDeclaringClass()) != null ? serializedSchema.serializedFields.get(iField.getDeclaringClass()).get(iField)
-        : null;
+    return serializedSchema.serializedFields.get(iField.getDeclaringClass()) != null ? serializedSchema.serializedFields.get(
+        iField.getDeclaringClass()).get(iField) : null;
   }
 
   public static boolean isToSerialize(final Class<?> type) {
@@ -1046,7 +1047,7 @@ public class OObjectEntitySerializer {
   @SuppressWarnings("unchecked")
   public static <T> T getNonProxiedInstance(T iObject) {
     try {
-      return (T) iObject.getClass().getSuperclass().newInstance();
+      return ((Class<T>) iObject.getClass().getSuperclass()).newInstance();
     } catch (InstantiationException ie) {
       OLogManager.instance().error(iObject, "Error creating instance for class " + iObject.getClass().getSuperclass(), ie);
     } catch (IllegalAccessException ie) {
@@ -1233,8 +1234,8 @@ public class OObjectEntitySerializer {
           else
             m.invoke(iPojo);
         } catch (Exception e) {
-          throw new OConfigurationException("Error on executing user callback '" + m.getName() + "' annotated with '"
-              + iAnnotation.getSimpleName() + "'", e);
+          throw OException.wrapException(new OConfigurationException("Error on executing user callback '" + m.getName()
+              + "' annotated with '" + iAnnotation.getSimpleName() + "'"), e);
         }
       }
   }
@@ -1248,7 +1249,8 @@ public class OObjectEntitySerializer {
     List<Method> result = new ArrayList<Method>();
     Class<?> currentClass = iClass;
     while (serializedSchema.classes.contains(currentClass)) {
-      List<Method> callbackMethods = serializedSchema.callbacks.get(currentClass.getSimpleName() + "." + iAnnotation.getSimpleName());
+      List<Method> callbackMethods = serializedSchema.callbacks.get(currentClass.getSimpleName() + "."
+          + iAnnotation.getSimpleName());
       if (callbackMethods != null && !callbackMethods.isEmpty())
         result.addAll(callbackMethods);
       if (currentClass != Object.class)

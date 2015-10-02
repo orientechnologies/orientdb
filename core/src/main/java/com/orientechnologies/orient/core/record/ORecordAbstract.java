@@ -236,7 +236,7 @@ public abstract class ORecordAbstract implements ORecord {
 
       return result;
     } catch (Exception e) {
-      throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' not found", e);
+      throw OException.wrapException(new ORecordNotFoundException("The record with id '" + getIdentity() + "' not found"), e);
     }
   }
 
@@ -274,7 +274,7 @@ public abstract class ORecordAbstract implements ORecord {
     } catch (OException e) {
       throw e;
     } catch (Exception e) {
-      throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' not found", e);
+      throw OException.wrapException(new ORecordNotFoundException("The record with id '" + getIdentity() + "' not found"), e);
     }
   }
 

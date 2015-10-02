@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.concur.lock.ONewLockManager;
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -119,15 +120,15 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
         loadedIndexDefinition.fromStream(indexDefinitionDoc);
 
       } catch (final ClassNotFoundException e) {
-        throw new OIndexException("Error during deserialization of index definition", e);
+        throw OException.wrapException(new OIndexException("Error during deserialization of index definition"), e);
       } catch (final NoSuchMethodException e) {
-        throw new OIndexException("Error during deserialization of index definition", e);
+        throw OException.wrapException(new OIndexException("Error during deserialization of index definition"), e);
       } catch (final InvocationTargetException e) {
-        throw new OIndexException("Error during deserialization of index definition", e);
+        throw OException.wrapException(new OIndexException("Error during deserialization of index definition"), e);
       } catch (final InstantiationException e) {
-        throw new OIndexException("Error during deserialization of index definition", e);
+        throw OException.wrapException(new OIndexException("Error during deserialization of index definition"), e);
       } catch (final IllegalAccessException e) {
-        throw new OIndexException("Error during deserialization of index definition", e);
+        throw OException.wrapException(new OIndexException("Error during deserialization of index definition"), e);
       }
     } else {
       // @COMPATIBILITY 1.0rc6 new index model was implemented
@@ -246,7 +247,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
       if (e instanceof OIndexException)
         throw (OIndexException) e;
 
-      throw new OIndexException("Cannot create the index '" + name + "'", e);
+      throw OException.wrapException(new OIndexException("Cannot create the index '" + name + "'"), e);
 
     } finally {
       releaseExclusiveLock();
@@ -444,7 +445,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
         // IGNORE EXCEPTION: IF THE REBUILD WAS LAUNCHED IN CASE OF RID INVALID CLEAR ALWAYS GOES IN ERROR
       }
 
-      throw new OIndexException("Error on rebuilding the index for clusters: " + clustersToIndex, e);
+      throw OException.wrapException(new OIndexException("Error on rebuilding the index for clusters: " + clustersToIndex), e);
 
     } finally {
       rebuilding = false;
@@ -1046,7 +1047,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
         } else
           key = storedKey;
       } catch (IOException ioe) {
-        throw new OTransactionException("Error during index changes deserialization. ", ioe);
+        throw OException.wrapException(new OTransactionException("Error during index changes deserialization. "), ioe);
       }
     } else
       key = null;

@@ -26,6 +26,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandPredicate;
@@ -101,11 +102,13 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
     } catch (OQueryParsingException e) {
       if (e.getText() == null)
         // QUERY EXCEPTION BUT WITHOUT TEXT: NEST IT
-        throw new OQueryParsingException("Error on parsing query", parserText, parserGetCurrentPosition(), e);
+        throw OException.wrapException(
+            new OQueryParsingException("Error on parsing query", parserText, parserGetCurrentPosition()), e);
 
       throw e;
-    } catch (Throwable t) {
-      throw new OQueryParsingException("Error on parsing query", parserText, parserGetCurrentPosition(), t);
+    } catch (Exception t) {
+      throw OException.wrapException(new OQueryParsingException("Error on parsing query", parserText, parserGetCurrentPosition()),
+          t);
     }
     return this;
   }
@@ -255,7 +258,8 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
         // CONFIGURE COULD INSTANTIATE A NEW OBJECT: ACT AS A FACTORY
         return op.configure(params);
       } catch (Exception e) {
-        throw new OQueryParsingException("Syntax error using the operator '" + op.toString() + "'. Syntax is: " + op.getSyntax(), e);
+        throw OException.wrapException(new OQueryParsingException("Syntax error using the operator '" + op.toString()
+            + "'. Syntax is: " + op.getSyntax()), e);
       }
     } else
       parserMoveCurrentPosition(+1);

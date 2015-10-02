@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OInvalidStorageEncryptionKeyException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -90,8 +91,8 @@ public class OAESEncryptionTest extends AbstractEncryptionTest {
         db.open("admin", "admin");
         storage = ((ODatabaseDocumentInternal) db).getStorage();
         Assert.fail();
-      } catch (Exception e) {
-        Assert.assertTrue(e.getCause() instanceof OSecurityException || e.getCause().getCause() instanceof OSecurityException);
+      } catch (OSecurityException e) {
+        Assert.assertTrue(true);
       } finally {
         db.activateOnCurrentThread();
         db.close();
@@ -103,8 +104,8 @@ public class OAESEncryptionTest extends AbstractEncryptionTest {
         db.open("admin", "admin");
         storage = ((ODatabaseDocumentInternal) db).getStorage();
         Assert.fail();
-      } catch (OStorageException e) {
-        Assert.assertTrue(e.getCause() instanceof OSecurityException || e.getCause().getCause() instanceof OSecurityException);
+      } catch (OSecurityException e) {
+        Assert.assertTrue(true);
       } finally {
         db.activateOnCurrentThread();
         db.close();
@@ -170,8 +171,8 @@ public class OAESEncryptionTest extends AbstractEncryptionTest {
         Assert.assertFalse(result.isEmpty());
 
         Assert.fail();
-      } catch (ODatabaseException e) {
-        Assert.assertTrue(e.getCause() instanceof OSecurityException);
+      } catch (OSecurityException e) {
+        Assert.assertTrue(true);
       } finally {
         db.close();
         storage.close(true, false);
@@ -183,8 +184,8 @@ public class OAESEncryptionTest extends AbstractEncryptionTest {
         storage = ((ODatabaseDocumentInternal) db).getStorage();
         db.query(new OSQLSynchQuery<ODocument>("select from TestEncryption"));
         Assert.fail();
-      } catch (OStorageException e) {
-        Assert.assertTrue(e.getCause() instanceof OSecurityException);
+      } catch (OSecurityException e) {
+        Assert.assertTrue(true);
       } finally {
         db.close();
         storage.close(true, false);

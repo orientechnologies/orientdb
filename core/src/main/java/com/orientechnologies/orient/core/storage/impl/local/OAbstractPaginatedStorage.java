@@ -250,7 +250,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
       status = STATUS.CLOSED;
 
-      throw new OStorageException("Cannot open local storage '" + url + "' with mode=" + mode, e);
+      throw OException.wrapException(new OStorageException("Cannot open local storage '" + url + "' with mode=" + mode), e);
     } finally {
       stateLock.releaseWriteLock();
     }
@@ -410,7 +410,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       throw e;
     } catch (IOException e) {
       close();
-      throw new OStorageException("Error on creation of storage '" + name + "'", e);
+      throw OException.wrapException(new OStorageException("Error on creation of storage '" + name + "'"), e);
     } finally {
       stateLock.releaseWriteLock();
     }
@@ -461,7 +461,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         postDeleteSteps();
 
       } catch (IOException e) {
-        throw new OStorageException("Cannot delete database '" + name + "'", e);
+        throw OException.wrapException(new OStorageException("Cannot delete database '" + name + "'"), e);
       } finally {
         dataLock.releaseExclusiveLock();
 
@@ -542,7 +542,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       return doAddCluster(clusterName, true, parameters);
 
     } catch (IOException e) {
-      throw new OStorageException("Error in creation of new cluster '" + clusterName, e);
+      throw OException.wrapException(new OStorageException("Error in creation of new cluster '" + clusterName), e);
     } finally {
       stateLock.releaseWriteLock();
     }
@@ -567,7 +567,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       return addClusterInternal(clusterName, requestedId, true, parameters);
 
     } catch (IOException e) {
-      throw new OStorageException("Error in creation of new cluster '" + clusterName + "'", e);
+      throw OException.wrapException(new OStorageException("Error in creation of new cluster '" + clusterName + "'"), e);
     } finally {
       stateLock.releaseWriteLock();
     }
@@ -603,7 +603,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       makeFullCheckpoint();
       return true;
     } catch (Exception e) {
-      throw new OStorageException("Error while removing cluster '" + clusterId + "'", e);
+      throw OException.wrapException(new OStorageException("Error while removing cluster '" + clusterId + "'"), e);
 
     } finally {
       stateLock.releaseWriteLock();
@@ -653,7 +653,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       makeFullCheckpoint();
       return true;
     } catch (Exception e) {
-      throw new OStorageException("Error while removing cluster '" + clusterId + "'", e);
+      throw OException.wrapException(new OStorageException("Error while removing cluster '" + clusterId + "'"), e);
     } finally {
       stateLock.releaseWriteLock();
     }
@@ -718,7 +718,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           clusters.get(iClusterId).getLastPosition() } : OCommonConst.EMPTY_LONG_ARRAY;
 
     } catch (IOException ioe) {
-      throw new OStorageException("Cannot retrieve information about data range", ioe);
+      throw OException.wrapException(new OStorageException("Cannot retrieve information about data range"), ioe);
     } finally {
       stateLock.releaseReadLock();
     }
@@ -1178,7 +1178,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
       return indexEngines.size() - 1;
     } catch (IOException e) {
-      throw new OStorageException("Can not add index engine " + engineName + " in storage.", e);
+      throw OException.wrapException(new OStorageException("Can not add index engine " + engineName + " in storage."), e);
     } finally {
       stateLock.releaseWriteLock();
     }
@@ -1231,7 +1231,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
       return indexEngines.size() - 1;
     } catch (IOException e) {
-      throw new OStorageException("Can not add index engine " + engineName + " in storage.", e);
+      throw OException.wrapException(new OStorageException("Can not add index engine " + engineName + " in storage."), e);
     } finally {
       stateLock.releaseWriteLock();
     }
@@ -1291,7 +1291,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       if (OGlobalConfiguration.DB_MAKE_FULL_CHECKPOINT_ON_INDEX_CHANGE.getValueAsBoolean())
         makeFullCheckpoint();
     } catch (IOException e) {
-      throw new OStorageException("Error on index deletion", e);
+      throw OException.wrapException(new OStorageException("Error on index deletion"), e);
     } finally {
       stateLock.releaseWriteLock();
     }
@@ -1400,7 +1400,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       makeStorageDirty();
       engine.clear();
     } catch (IOException e) {
-      throw new OStorageException("Error during clearing of index", e);
+      throw OException.wrapException(new OStorageException("Error during clearing of index"), e);
     }
 
   }
@@ -1480,7 +1480,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       if (atomicOperation)
         atomicOperationsManager.startAtomicOperation((String) null, false);
     } catch (IOException e) {
-      throw new OStorageException("Can not put key value entry in index", e);
+      throw OException.wrapException(new OStorageException("Can not put key value entry in index"), e);
     }
 
     try {
@@ -1500,9 +1500,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         if (atomicOperation)
           atomicOperationsManager.endAtomicOperation(true, e);
 
-        throw new OStorageException("Can not put key value entry in index", e);
+        throw OException.wrapException(new OStorageException("Can not put key value entry in index"), e);
       } catch (IOException ioe) {
-        throw new OStorageException("Error during operation rollback", ioe);
+        throw OException.wrapException(new OStorageException("Error during operation rollback"), ioe);
       }
     }
 
@@ -1512,7 +1512,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     try {
       atomicOperationsManager.startAtomicOperation((String) null, false);
     } catch (IOException e) {
-      throw new OStorageException("Can not put key value entry in index", e);
+      throw OException.wrapException(new OStorageException("Can not put key value entry in index"), e);
     }
 
     try {
@@ -1532,9 +1532,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     } catch (Exception e) {
       try {
         atomicOperationsManager.endAtomicOperation(true, e);
-        throw new OStorageException("Can not put key value entry in index", e);
+        throw OException.wrapException(new OStorageException("Can not put key value entry in index"), e);
       } catch (IOException ioe) {
-        throw new OStorageException("Error during operation rollback", ioe);
+        throw OException.wrapException(new OStorageException("Error during operation rollback"), ioe);
       }
     }
   }
@@ -1870,7 +1870,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     if (e instanceof OException)
       throw ((OException) e);
     else
-      throw new OStorageException("Error during transaction commit", e);
+      throw OException.wrapException(new OStorageException("Error during transaction commit"), e);
 
   }
 
@@ -1948,7 +1948,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         OTransactionAbstract.updateCacheFromEntries(clientTx, clientTx.getAllRecordEntries(), false);
 
       } catch (IOException e) {
-        throw new OStorageException("Error during transaction rollback", e);
+        throw OException.wrapException(new OStorageException("Error during transaction rollback"), e);
       } finally {
         transaction.set(null);
         dataLock.releaseExclusiveLock();
@@ -1985,7 +1985,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
         clearStorageDirty();
       } catch (IOException e) {
-        throw new OStorageException("Error on synch storage '" + name + "'", e);
+        throw OException.wrapException(new OStorageException("Error on synch storage '" + name + "'"), e);
 
       } finally {
         dataLock.releaseSharedLock();
@@ -2072,7 +2072,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       return size;
 
     } catch (IOException ioe) {
-      throw new OStorageException("Cannot calculate records size", ioe);
+      throw OException.wrapException(new OStorageException("Cannot calculate records size"), ioe);
     }
   }
 
@@ -2148,7 +2148,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           lock();
         } catch (IOException ignored) {
         }
-        throw new OStorageException("Error on freeze of storage '" + name + "'", e);
+        throw OException.wrapException(new OStorageException("Error on freeze of storage '" + name + "'"), e);
       }
     } finally {
       stateLock.releaseReadLock();
@@ -2163,7 +2163,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         configuration.setSoftlyClosed(false);
 
     } catch (IOException e) {
-      throw new OStorageException("Error on release of storage '" + name + "'", e);
+      throw OException.wrapException(new OStorageException("Error on release of storage '" + name + "'"), e);
     }
 
     atomicOperationsManager.releaseAtomicOperations(-1);
@@ -2277,7 +2277,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       // PASS THROUGH
       throw e;
     } catch (Exception e) {
-      throw new OCommandExecutionException("Error on execution of command: " + iCommand, e);
+      throw OException.wrapException(new OCommandExecutionException("Error on execution of command: " + iCommand), e);
 
     } finally {
       if (Orient.instance().getProfiler().isRecording()) {
@@ -2311,7 +2311,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         final OCluster cluster = getClusterById(currentClusterId);
         return cluster.higherPositions(physicalPosition);
       } catch (IOException ioe) {
-        throw new OStorageException("Cluster Id " + currentClusterId + " is invalid in storage '" + name + '\'', ioe);
+        throw OException.wrapException(new OStorageException("Cluster Id " + currentClusterId + " is invalid in storage '" + name
+            + '\''), ioe);
       } finally {
         dataLock.releaseSharedLock();
       }
@@ -2336,7 +2337,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         final OCluster cluster = getClusterById(clusterId);
         return cluster.ceilingPositions(physicalPosition);
       } catch (IOException ioe) {
-        throw new OStorageException("Cluster Id " + clusterId + " is invalid in storage '" + name + '\'', ioe);
+        throw OException.wrapException(new OStorageException("Cluster Id " + clusterId + " is invalid in storage '" + name + '\''),
+            ioe);
       } finally {
         dataLock.releaseSharedLock();
       }
@@ -2363,7 +2365,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
         return cluster.lowerPositions(physicalPosition);
       } catch (IOException ioe) {
-        throw new OStorageException("Cluster Id " + currentClusterId + " is invalid in storage '" + name + '\'', ioe);
+        throw OException.wrapException(new OStorageException("Cluster Id " + currentClusterId + " is invalid in storage '" + name
+            + '\''), ioe);
       } finally {
         dataLock.releaseSharedLock();
       }
@@ -2389,7 +2392,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
         return cluster.floorPositions(physicalPosition);
       } catch (IOException ioe) {
-        throw new OStorageException("Cluster Id " + clusterId + " is invalid in storage '" + name + '\'', ioe);
+        throw OException.wrapException(new OStorageException("Cluster Id " + clusterId + " is invalid in storage '" + name + '\''),
+            ioe);
       } finally {
         dataLock.releaseSharedLock();
       }
@@ -2484,14 +2488,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       ibuChannel.position(0);
       ibuChannel.write(dataBuffer);
     } catch (IOException e) {
-      throw new OStorageException("Error during incremental backup", e);
+      throw OException.wrapException(new OStorageException("Error during incremental backup"), e);
     } finally {
       try {
         if (rndIBUFile != null)
           rndIBUFile.close();
 
       } catch (IOException e) {
-        throw new OStorageException("Error during incremental backup", e);
+        throw OException.wrapException(new OStorageException("Error during incremental backup"), e);
       }
     }
   }
@@ -2533,7 +2537,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     try {
       rndIBUFile = new RandomAccessFile(ibuFile, "r");
     } catch (FileNotFoundException e) {
-      throw new OStorageException("Backup file was not found", e);
+      throw OException.wrapException(new OStorageException("Backup file was not found"), e);
     }
 
     try {
@@ -2553,7 +2557,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         rndIBUFile.close();
       }
     } catch (IOException e) {
-      throw new OStorageException("Error during read of backup file", e);
+      throw OException.wrapException(new OStorageException("Error during read of backup file"), e);
     } finally {
       try {
         rndIBUFile.close();
@@ -2748,7 +2752,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         stateLock.releaseWriteLock();
       }
     } catch (IOException e) {
-      throw new OStorageException("Error during incremental backup", e);
+      throw OException.wrapException(new OStorageException("Error during incremental backup"), e);
     }
   }
 
@@ -2985,7 +2989,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
       clearStorageDirty();
     } catch (IOException ioe) {
-      throw new OStorageException("Error during checkpoint creation for storage " + name, ioe);
+      throw OException.wrapException(new OStorageException("Error during checkpoint creation for storage " + name), ioe);
     }
   }
 
@@ -3222,7 +3226,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
       OLogManager.instance().error(this, "Error on creating record in cluster: " + cluster, ioe);
 
-      throw new OStorageException("Error during record deletion", ioe);
+      throw OException.wrapException(new OStorageException("Error during record deletion"), ioe);
     }
   }
 
@@ -3331,7 +3335,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       return new OStorageOperationResult<Boolean>(true);
     } catch (IOException ioe) {
       OLogManager.instance().error(this, "Error on deleting record " + rid + "( cluster: " + cluster + ")", ioe);
-      throw new OStorageException("Error on deleting record " + rid + "( cluster: " + cluster + ")", ioe);
+      throw OException.wrapException(new OStorageException("Error on deleting record " + rid + "( cluster: " + cluster + ")"), ioe);
     }
   }
 
@@ -3362,7 +3366,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       return new OStorageOperationResult<Boolean>(true);
     } catch (IOException ioe) {
       OLogManager.instance().error(this, "Error on deleting record " + rid + "( cluster: " + cluster + ")", ioe);
-      throw new OStorageException("Error on deleting record " + rid + "( cluster: " + cluster + ")", ioe);
+      throw OException.wrapException(new OStorageException("Error on deleting record " + rid + "( cluster: " + cluster + ")"), ioe);
     }
   }
 
@@ -3377,7 +3381,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
       return buff;
     } catch (IOException e) {
-      throw new OStorageException("Error during read of record with rid = " + rid, e);
+      throw OException.wrapException(new OStorageException("Error during read of record with rid = " + rid), e);
     }
   }
 
@@ -3386,7 +3390,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     try {
       return cluster.readRecordIfVersionIsNotLatest(rid.clusterPosition, recordVersion);
     } catch (IOException e) {
-      throw new OStorageException("Error during read of record with rid = " + rid, e);
+      throw OException.wrapException(new OStorageException("Error during read of record with rid = " + rid), e);
     }
   }
 
@@ -3575,7 +3579,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
       status = STATUS.CLOSED;
     } catch (IOException e) {
-      OLogManager.instance().error(this, "Error on closing of storage '" + name, e, OStorageException.class);
+      final String message = "Error on closing of storage '" + name;
+      OLogManager.instance().error(this, message, e);
+
+      throw OException.wrapException(new OStorageException(message), e);
 
     } finally {
       Orient.instance().getProfiler().stopChrono("db." + name + ".close", "Close a database", timer, "db.*.close");

@@ -16,6 +16,7 @@
  */
 package com.orientechnologies.orient.object.enhancement;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.reflection.OReflectionHelper;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -153,8 +154,8 @@ public class OObjectProxyMethodHandler implements MethodHandler {
    * @throws IllegalAccessException
    * @throws NoSuchMethodException
    */
-  public void detachAll(final Object self, final boolean nonProxiedInstance, final Map<Object, Object> alreadyDetached, final Map<Object, Object> lazyObjects)
-      throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+  public void detachAll(final Object self, final boolean nonProxiedInstance, final Map<Object, Object> alreadyDetached,
+      final Map<Object, Object> lazyObjects) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
     final Class<?> selfClass = self.getClass();
 
     for (String fieldName : doc.fieldNames()) {
@@ -172,8 +173,8 @@ public class OObjectProxyMethodHandler implements MethodHandler {
           }
 
           if (OObjectEntitySerializer.isFetchLazyField(self.getClass(), fieldName)) {
-            //just make a placeholder with only the id, so it can be fetched later (but not by orient internally)
-            //do not use the already detached map for this, that might mix up lazy and non-lazy objects
+            // just make a placeholder with only the id, so it can be fetched later (but not by orient internally)
+            // do not use the already detached map for this, that might mix up lazy and non-lazy objects
             Object lazyValue = lazyObjects.get(handler.doc.getIdentity());
             if (lazyValue != null) {
               value = lazyValue;
@@ -263,13 +264,17 @@ public class OObjectProxyMethodHandler implements MethodHandler {
           }
         }
       } catch (IllegalArgumentException e) {
-        throw new OSerializationException("Error updating object after save of class " + proxiedObject.getClass(), e);
+        throw OException.wrapException(
+            new OSerializationException("Error updating object after save of class " + proxiedObject.getClass()), e);
       } catch (IllegalAccessException e) {
-        throw new OSerializationException("Error updating object after save of class " + proxiedObject.getClass(), e);
+        throw OException.wrapException(
+            new OSerializationException("Error updating object after save of class " + proxiedObject.getClass()), e);
       } catch (NoSuchMethodException e) {
-        throw new OSerializationException("Error updating object after save of class " + proxiedObject.getClass(), e);
+        throw OException.wrapException(
+            new OSerializationException("Error updating object after save of class " + proxiedObject.getClass()), e);
       } catch (InvocationTargetException e) {
-        throw new OSerializationException("Error updating object after save of class " + proxiedObject.getClass(), e);
+        throw OException.wrapException(
+            new OSerializationException("Error updating object after save of class " + proxiedObject.getClass()), e);
       }
     }
 

@@ -19,9 +19,11 @@
  */
 package com.orientechnologies.orient.server.distributed.sql;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
+import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.compression.impl.OZIPCompressionUtil;
@@ -125,7 +127,7 @@ public class OCommandExecutorSQLSyncCluster extends OCommandExecutorSQLAbstract 
         // return String.format("Merged %d records", merged);
       }
     } catch (Exception e) {
-      throw new OCommandExecutionException("Cannot execute synchronization of cluster", e);
+      throw OException.wrapException(new OCommandExecutionException("Cannot execute synchronization of cluster"), e);
     }
 
     return "Mode not supported";
@@ -229,7 +231,7 @@ public class OCommandExecutorSQLSyncCluster extends OCommandExecutorSQLAbstract 
     } catch (Exception e) {
       ODistributedServerLog.error(null, nodeName, null, ODistributedServerLog.DIRECTION.NONE,
           "error on transferring database '%s' to '%s'", e, databaseName, tempFile);
-      throw new ODistributedException("Error on transferring database", e);
+      throw OException.wrapException(new ODistributedException("Error on transferring database"), e);
     } finally {
       try {
         if (out != null) {

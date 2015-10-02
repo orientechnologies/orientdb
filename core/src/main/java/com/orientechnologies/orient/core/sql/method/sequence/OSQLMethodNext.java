@@ -42,7 +42,7 @@ public class OSQLMethodNext extends OAbstractSQLMethod {
 
   @Override
   public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
-    if (iThis ==null)
+    if (iThis == null)
       throw new OCommandSQLParsingException("Method 'next()' can be invoked only on OSequence instances, while NULL was found");
 
     if (!(iThis instanceof OSequence))

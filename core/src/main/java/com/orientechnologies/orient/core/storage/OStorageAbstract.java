@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.exception.OSecurityException;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -180,7 +181,7 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
       } catch (RuntimeException e) {
         throw e;
       } catch (Exception e) {
-        throw new OException("Error on nested call in lock", e);
+        throw OException.wrapException(new OStorageException("Error on nested call in lock"), e);
       } finally {
         if (iExclusiveLock)
           dataLock.releaseExclusiveLock();

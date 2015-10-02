@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.serialization.types.ODecimalSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
@@ -797,7 +798,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     try {
       return toWrite.getBytes(CHARSET_UTF_8);
     } catch (UnsupportedEncodingException e) {
-      throw new OSerializationException("Error on string encoding", e);
+      throw OException.wrapException(new OSerializationException("Error on string encoding"), e);
     }
   }
 
@@ -805,7 +806,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     try {
       return new String(bytes, offset, len, CHARSET_UTF_8);
     } catch (UnsupportedEncodingException e) {
-      throw new OSerializationException("Error on string decoding", e);
+      throw OException.wrapException(new OSerializationException("Error on string decoding"), e);
     }
   }
 }

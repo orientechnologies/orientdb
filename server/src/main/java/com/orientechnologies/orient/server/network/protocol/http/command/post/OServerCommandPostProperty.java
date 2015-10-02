@@ -76,33 +76,34 @@ public class OServerCommandPostProperty extends OServerCommandAuthenticatedDbAbs
      switch (propertyType) {
      case LINKLIST:
      case LINKMAP:
-     case LINKSET:
-     case LINK: {
+    case LINKSET:
+    case LINK: {
        /* try link as OType */
        OType linkType = null;
-       OClass linkClass = null;
-       if (urlParts.length >= 6) {
-         try {
-           linkType = OType.valueOf(urlParts[5]);
-         } catch (IllegalArgumentException ex) { }
+      OClass linkClass = null;
+      if (urlParts.length >= 6) {
+        try {
+          linkType = OType.valueOf(urlParts[5]);
+        } catch (IllegalArgumentException ex) {
+        }
 
-         if (linkType == null) {
-           linkClass = db.getMetadata().getSchema().getClass(urlParts[5]);
-           if (linkClass == null) {
-             throw new IllegalArgumentException(
-               "linked type declared as "
-                 + urlParts[5]
-                 + " can be either a Type or a Class, use the JSON document usage instead. See 'http://code.google.com/p/orient/w/edit/OrientDB_REST'");
-           }
-         }
-       }
+        if (linkType == null) {
+          linkClass = db.getMetadata().getSchema().getClass(urlParts[5]);
+          if (linkClass == null) {
+            throw new IllegalArgumentException(
+                "linked type declared as "
+                    + urlParts[5]
+                    + " can be either a Type or a Class, use the JSON document usage instead. See 'http://code.google.com/p/orient/w/edit/OrientDB_REST'");
+          }
+        }
+      }
 
        if (linkType != null) {
          final OProperty prop = cls.createProperty(propertyName, propertyType, linkType);
-       } else if (linkClass != null) {
-         final OProperty prop = cls.createProperty(propertyName, propertyType, linkClass);
+      } else if (linkClass != null) {
+        final OProperty prop = cls.createProperty(propertyName, propertyType, linkClass);
        } else {
-         final OProperty prop = cls.createProperty(propertyName, propertyType);
+        final OProperty prop = cls.createProperty(propertyName, propertyType);
        }
      }
        break;

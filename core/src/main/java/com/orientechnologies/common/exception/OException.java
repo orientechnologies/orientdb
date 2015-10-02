@@ -20,36 +20,19 @@
 
 package com.orientechnologies.common.exception;
 
-public class OException extends RuntimeException {
+public abstract class OException extends RuntimeException {
 
   private static final long serialVersionUID = 3882447822497861424L;
 
-  public OException() {
+  public static OException wrapException(OException exception, Exception cause) {
+    if (cause instanceof OUserException)
+      return (OException) cause;
+
+    exception.initCause(cause);
+    return exception;
   }
 
   public OException(final String message) {
     super(message);
-  }
-
-  public OException(final Throwable cause) {
-    super(cause);
-  }
-
-  public OException(final String message, final Throwable cause) {
-    super(message, cause);
-  }
-
-  @Override
-  public boolean equals(final Object obj) {
-    if (obj == null || !obj.getClass().equals(getClass()))
-      return false;
-
-    final String myMsg = getMessage();
-    final String otherMsg = ((OException) obj).getMessage();
-    if (myMsg == null || otherMsg == null)
-      // UNKNOWN
-      return false;
-
-    return myMsg.equals(otherMsg);
   }
 }

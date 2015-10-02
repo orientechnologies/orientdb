@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import javassist.util.proxy.Proxy;
@@ -406,7 +407,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
         stream2pojo(record, pojo, iFetchPlan);
 
       } catch (Exception e) {
-        throw new OConfigurationException("Cannot retrieve pojo from record " + record, e);
+        throw OException.wrapException(new OConfigurationException("Cannot retrieve pojo from record " + record), e);
       }
     }
 

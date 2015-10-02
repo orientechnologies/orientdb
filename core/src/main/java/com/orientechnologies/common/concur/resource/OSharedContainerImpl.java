@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 
 /**
@@ -56,7 +57,7 @@ public class OSharedContainerImpl implements OSharedContainer {
       try {
         value = iCallback.call();
       } catch (Exception e) {
-        throw new OStorageException("Error on creation of shared resource", e);
+        throw OException.wrapException(new OStorageException("Error on creation of shared resource"), e);
       }
 
       if (value instanceof OSharedResource)

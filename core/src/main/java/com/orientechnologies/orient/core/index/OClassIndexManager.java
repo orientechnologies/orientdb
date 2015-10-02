@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OOrientShutdownListener;
 import com.orientechnologies.orient.core.OOrientStartupListener;
@@ -387,7 +388,7 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
       try {
         return (ODocument) iRecord.load();
       } catch (final ORecordNotFoundException e) {
-        throw new OIndexException("Error during loading of record with id : " + iRecord.getIdentity(), e);
+        throw OException.wrapException(new OIndexException("Error during loading of record with id : " + iRecord.getIdentity()), e);
       }
     }
     return iRecord;

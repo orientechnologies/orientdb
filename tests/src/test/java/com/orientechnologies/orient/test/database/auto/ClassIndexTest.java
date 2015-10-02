@@ -1216,8 +1216,7 @@ public class ClassIndexTest extends DocumentDBBaseTest {
     assertEquals(inClass.getClassIndex("ClassIndexInTestPropertyOne").getName(), result.getName());
 
     final Set<OIndex<?>> indexes = inClass.getIndexes();
-    final OPropertyIndexDefinition propertyIndexDefinition = new OPropertyIndexDefinition("ClassIndexInTest", "fOne",
-        OType.INTEGER);
+    final OPropertyIndexDefinition propertyIndexDefinition = new OPropertyIndexDefinition("ClassIndexInTest", "fOne", OType.INTEGER);
 
     assertEquals(indexes.size(), 1);
 
@@ -1292,8 +1291,9 @@ public class ClassIndexTest extends DocumentDBBaseTest {
           "fEmbeddedMapWithoutLinkedType by value");
       fail();
     } catch (OIndexException e) {
-      assertEquals(e.getMessage(), "Linked type was not provided. "
-          + "You should provide linked type for embedded collections that are going to be indexed.");
+      assertTrue(e.getMessage().contains(
+          "Linked type was not provided. "
+              + "You should provide linked type for embedded collections that are going to be indexed."));
     }
   }
 

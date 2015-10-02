@@ -24,8 +24,4 @@ public class OAllCacheEntriesAreUsedException extends ODatabaseException {
   public OAllCacheEntriesAreUsedException(String string) {
     super(string);
   }
-
-  public OAllCacheEntriesAreUsedException(String message, Throwable cause) {
-    super(message, cause);
-  }
 }

@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.sql.functions.misc;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
@@ -67,7 +68,7 @@ public class OSQLFunctionEncode extends OSQLFunctionAbstract {
     if (FORMAT_BASE64.equalsIgnoreCase(format)) {
       return OBase64Utils.encodeBytes(data);
     } else {
-      throw new OException("unknowned format :" + format);
+      throw new ODatabaseException("unknowned format :" + format);
     }
   }
 

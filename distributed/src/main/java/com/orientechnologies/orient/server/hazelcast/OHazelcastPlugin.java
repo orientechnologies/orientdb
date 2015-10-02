@@ -180,7 +180,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       setNodeStatus(NODE_STATUS.ONLINE);
 
     } catch (FileNotFoundException e) {
-      throw new OConfigurationException("Error on creating Hazelcast instance", e);
+      throw OException.wrapException(new OConfigurationException("Error on creating Hazelcast instance"), e);
     }
   }
 
@@ -997,7 +997,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       file.getParentFile().mkdirs();
       file.createNewFile();
     } catch (IOException e) {
-      throw new ODistributedException("Error on creating temp database file to install locally", e);
+      throw OException.wrapException(new ODistributedException("Error on creating temp database file to install locally"), e);
     }
 
     // DELETE ANY PREVIOUS .COMPLETED FILE
@@ -1050,7 +1050,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
           } catch (Exception e) {
             ODistributedServerLog.error(this, getLocalNodeName(), null, DIRECTION.NONE,
                 "error on transferring database '%s' to '%s'", e, databaseName, fileName);
-            throw new ODistributedException("Error on transferring database", e);
+            throw OException.wrapException(new ODistributedException("Error on transferring database"), e);
           }
         }
       }).start();
@@ -1058,7 +1058,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     } catch (Exception e) {
       ODistributedServerLog.error(this, getLocalNodeName(), null, DIRECTION.NONE, "error on transferring database '%s' to '%s'", e,
           databaseName, fileName);
-      throw new ODistributedException("Error on transferring database", e);
+      throw OException.wrapException(new ODistributedException("Error on transferring database"), e);
     }
 
     final ODatabaseDocumentTx db = installDatabaseOnLocalNode(distrDatabase, databaseName, dbPath, iNode, fileName);
@@ -1179,7 +1179,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
           } catch (Exception e) {
             ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE, "error on creating cluster '%s' in class '%s'",
                 newClusterName, iClass);
-            throw new ODistributedException("Error on creating cluster '" + newClusterName + "' in class '" + iClass + "'", e);
+            throw OException.wrapException(new ODistributedException("Error on creating cluster '" + newClusterName
+                + "' in class '" + iClass + "'"), e);
           } finally {
 
             if (currentDistributedMode != OScenarioThreadLocal.RUN_MODE.DEFAULT)
@@ -1313,7 +1314,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         try {
           serverInstance.saveConfiguration();
         } catch (IOException e) {
-          throw new OConfigurationException("Cannot save server configuration", e);
+          throw OException.wrapException(new OConfigurationException("Cannot save server configuration"), e);
         }
         break;
       }
@@ -1532,7 +1533,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         } catch (Exception e) {
           ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE, "error on creating cluster '%s' in class '%s': ",
               newClusterName, iClass, e);
-          throw new ODistributedException("Error on creating cluster '" + newClusterName + "' in class '" + iClass + "'", e);
+          throw OException.wrapException(new ODistributedException("Error on creating cluster '" + newClusterName + "' in class '"
+              + iClass + "'"), e);
         } finally {
 
           if (currentDistributedMode != OScenarioThreadLocal.RUN_MODE.DEFAULT)
