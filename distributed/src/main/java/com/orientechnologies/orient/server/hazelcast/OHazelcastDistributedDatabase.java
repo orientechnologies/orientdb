@@ -473,43 +473,49 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
   }
 
   protected void checkLocalNodeInConfiguration() {
-    final ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
+    final Lock lock = manager.getLock("orientdb." + databaseName + ".cfg");
+    lock.lock();
+    try {
 
-    boolean distribCfgDirty = false;
+      final ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
 
-    final List<String> foundPartition = cfg.addNewNodeInServerList(getLocalNodeName());
-    if (foundPartition != null) {
-      // SET THE NODE.DB AS OFFLINE, READY TO BE SYNCHRONIZED
-      manager.setDatabaseStatus(getLocalNodeName(), databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
+      boolean distribCfgDirty = false;
 
-      ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "adding node '%s' in partition: db=%s %s",
-          getLocalNodeName(), databaseName, foundPartition);
+      final List<String> foundPartition = cfg.addNewNodeInServerList(getLocalNodeName());
+      if (foundPartition != null) {
+        // SET THE NODE.DB AS OFFLINE, READY TO BE SYNCHRONIZED
+        manager.setDatabaseStatus(getLocalNodeName(), databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
 
-      distribCfgDirty = true;
-    }
+        ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "adding node '%s' in partition: db=%s %s", getLocalNodeName(), databaseName, foundPartition);
 
-    // SELF ASSIGN CLUSTERS PREVIOUSLY ASSIGNED TO THIS LOCAL NODE (BY SUFFIX)
-    final String suffix2Search = "_" + getLocalNodeName();
-    for (String c : cfg.getClusterNames()) {
-      if (c.endsWith(suffix2Search)) {
-        // FOUND: ASSIGN TO LOCAL NODE
-        final String currentMaster = cfg.getMasterServer(c);
+        distribCfgDirty = true;
+      }
 
-        if (!getLocalNodeName().equals(currentMaster)) {
-          ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE,
-              "changing mastership of cluster '%s' from node '%s' to '%s'", c, currentMaster, getLocalNodeName());
-          cfg.setMasterServer(c, getLocalNodeName());
-          distribCfgDirty = true;
+      // SELF ASSIGN CLUSTERS PREVIOUSLY ASSIGNED TO THIS LOCAL NODE (BY SUFFIX)
+      final String suffix2Search = "_" + getLocalNodeName();
+      for (String c : cfg.getClusterNames()) {
+        if (c.endsWith(suffix2Search)) {
+          // FOUND: ASSIGN TO LOCAL NODE
+          final String currentMaster = cfg.getMasterServer(c);
+
+          if (!getLocalNodeName().equals(currentMaster)) {
+            ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE, "changing mastership of cluster '%s' from node '%s' to '%s'", c, currentMaster, getLocalNodeName());
+            cfg.setMasterServer(c, getLocalNodeName());
+            distribCfgDirty = true;
+          }
         }
       }
-    }
 
-    if (distribCfgDirty)
-      manager.updateCachedDatabaseConfiguration(databaseName, cfg.serialize(), true, true);
+      if (distribCfgDirty)
+        manager.updateCachedDatabaseConfiguration(databaseName, cfg.serialize(), true, true);
+
+    }finally {
+      lock.unlock();
+    }
   }
 
   protected void removeNodeInConfiguration(final String iNode, final boolean iForce) {
-    final Lock lock = manager.getLock("orientdb.clusterEvents");
+    final Lock lock = manager.getLock("orientdb." + databaseName + ".cfg");
     lock.lock();
     try {
 

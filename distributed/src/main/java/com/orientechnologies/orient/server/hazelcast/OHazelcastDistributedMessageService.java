@@ -46,6 +46,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Hazelcast implementation of distributed peer. There is one instance per database. Each node creates own instance to talk with
@@ -218,8 +219,17 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
   public void handleUnreachableNode(final String nodeName) {
     final Set<String> dbs = getDatabases();
     if (dbs != null)
-      for (String dbName : dbs)
-        getDatabase(dbName).removeNodeInConfiguration(nodeName, false);
+      for (String dbName : dbs) {
+        final Lock lock = manager.getLock("orientdb." + dbName + ".cfg");
+        lock.lock();
+        try {
+
+          getDatabase(dbName).removeNodeInConfiguration(nodeName, false);
+
+        } finally {
+          lock.unlock();
+        }
+      }
 
     // REMOVE THE SERVER'S RESPONSE QUEUE
     // removeQueue(OHazelcastDistributedMessageService.getResponseQueueName(nodeName));
