@@ -27,6 +27,24 @@ public class OCommandScriptException extends OCoreException {
   private int               position;
   private static final long serialVersionUID = -7430575036316163711L;
 
+  private static String makeMessage(String message, int position, String text) {
+    if (text == null)
+      return message;
+
+    final StringBuilder buffer = new StringBuilder();
+    buffer.append("Error on parsing script at position #");
+    buffer.append(position);
+    buffer.append(": " + message);
+    buffer.append("\nScript: ");
+    buffer.append(text);
+    buffer.append("\n------");
+    for (int i = 0; i < position - 1; ++i)
+      buffer.append("-");
+
+    buffer.append("^");
+    return buffer.toString();
+  }
+
   public OCommandScriptException(OCommandScriptException exception) {
     super(exception);
 
@@ -39,27 +57,8 @@ public class OCommandScriptException extends OCoreException {
   }
 
   public OCommandScriptException(String iMessage, String iText, int iPosition) {
-    super(iMessage);
+    super(makeMessage(iMessage, iPosition < 0 ? 0 : iPosition, iText));
     text = iText;
     position = iPosition < 0 ? 0 : iPosition;
-  }
-
-  @Override
-  public String getMessage() {
-    if (text == null)
-      return super.getMessage();
-
-    final StringBuilder buffer = new StringBuilder();
-    buffer.append("Error on parsing script at position #");
-    buffer.append(position);
-    buffer.append(": " + super.getMessage());
-    buffer.append("\nScript: ");
-    buffer.append(text);
-    buffer.append("\n------");
-    for (int i = 0; i < position - 1; ++i)
-      buffer.append("-");
-
-    buffer.append("^");
-    return buffer.toString();
   }
 }

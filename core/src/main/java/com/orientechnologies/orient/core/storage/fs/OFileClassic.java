@@ -605,7 +605,7 @@ public class OFileClassic implements OFile {
           retryCount++;
 
           if (retryCount > 10)
-            throw new IOException("Cannot delete file. Retry limit exceeded");
+            throw new IOException("Cannot delete file " + osFile.getAbsolutePath() + ". Retry limit exceeded");
         }
       }
     } finally {

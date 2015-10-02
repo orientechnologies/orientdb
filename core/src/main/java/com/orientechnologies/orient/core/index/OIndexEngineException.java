@@ -28,6 +28,10 @@ public class OIndexEngineException extends OCoreException {
     super(exception);
   }
 
+  public OIndexEngineException(String message, String componentName) {
+    super(message, componentName);
+  }
+
   public OIndexEngineException(String message) {
     super(message);
   }

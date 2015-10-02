@@ -39,16 +39,6 @@ public class OSecurityAccessException extends OSecurityException implements OHig
     databaseName = iDatabasename;
   }
 
-  public OSecurityAccessException(String message, ODurableComponent component, String databaseName) {
-    super(message, component);
-    this.databaseName = databaseName;
-  }
-
-  public OSecurityAccessException(String message, ODurableComponent component, OErrorCode errorCode, String databaseName) {
-    super(message, component, errorCode);
-    this.databaseName = databaseName;
-  }
-
   public OSecurityAccessException(final String message) {
     super(message);
   }

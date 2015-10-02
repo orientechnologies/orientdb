@@ -41,16 +41,4 @@ public abstract class ONeedRetryException extends OCoreException {
   public ONeedRetryException(String message) {
     super(message);
   }
-
-  public ONeedRetryException(String message, ODurableComponent component) {
-    super(message, component);
-  }
-
-  public ONeedRetryException(String message, ODurableComponent component, OErrorCode errorCode) {
-    super(message, component, errorCode);
-  }
-
-  public ONeedRetryException(String message, Throwable cause, ODurableComponent component, OErrorCode errorCode) {
-    super(message, component, errorCode);
-  }
 }

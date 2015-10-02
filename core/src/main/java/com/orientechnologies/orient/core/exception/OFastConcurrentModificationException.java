@@ -43,6 +43,7 @@ public class OFastConcurrentModificationException extends OConcurrentModificatio
   }
 
   private OFastConcurrentModificationException() {
+    super(MESSAGE);
   }
 
   public static boolean enabled() {
@@ -51,9 +52,5 @@ public class OFastConcurrentModificationException extends OConcurrentModificatio
 
   public static OFastConcurrentModificationException instance() {
     return INSTANCE;
-  }
-
-  public String getMessage() {
-    return MESSAGE;
   }
 }

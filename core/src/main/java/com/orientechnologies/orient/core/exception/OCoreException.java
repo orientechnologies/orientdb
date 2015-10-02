@@ -26,20 +26,20 @@ public abstract class OCoreException extends OException {
     this(message, null, null);
   }
 
-  public OCoreException(String message, ODurableComponent component) {
-    this(message, component, null);
+  public OCoreException(String message, String componentName) {
+    this(message, componentName, null);
 
   }
 
-  public OCoreException(String message, ODurableComponent component, OErrorCode errorCode) {
+  public OCoreException(String message, String componentName, OErrorCode errorCode) {
     super(message);
 
     this.errorCode = errorCode;
 
-    if (component != null) {
-      componentName = component.getName();
+    if (componentName != null) {
+      this.componentName = componentName;
     } else {
-      componentName = null;
+      this.componentName = null;
     }
 
     final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
@@ -64,7 +64,7 @@ public abstract class OCoreException extends OException {
   }
 
   @Override
-  public String getMessage() {
+  public final String getMessage() {
     final StringBuilder builder = new StringBuilder(super.getMessage());
     if (storageURL != null) {
       builder.append("\r\n\t").append("Storage URL:\"").append(storageURL).append("\"");

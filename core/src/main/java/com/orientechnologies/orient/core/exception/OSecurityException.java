@@ -38,12 +38,4 @@ public class OSecurityException extends OCoreException implements OHighLevelExce
   public OSecurityException(final String message) {
     super(message);
   }
-
-  public OSecurityException(String message, ODurableComponent component) {
-    super(message, component);
-  }
-
-  public OSecurityException(String message, ODurableComponent component, OErrorCode errorCode) {
-    super(message, component, errorCode);
-  }
 }

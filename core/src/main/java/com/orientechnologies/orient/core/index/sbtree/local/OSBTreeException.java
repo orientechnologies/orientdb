@@ -22,18 +22,20 @@ package com.orientechnologies.orient.core.index.sbtree.local;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.exception.OCoreException;
+import com.orientechnologies.orient.core.exception.ODurableComponentException;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 
 /**
  * @author Andrey Lomakin
  * @since 8/30/13
  */
-public class OSBTreeException extends OCoreException {
+public class OSBTreeException extends ODurableComponentException {
 
   public OSBTreeException(OSBTreeException exception) {
     super(exception);
   }
 
-  public OSBTreeException(String message) {
-    super(message);
+  public OSBTreeException(String message, OSBTree component) {
+    super(message, component);
   }
 }
