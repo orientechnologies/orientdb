@@ -19,6 +19,7 @@
 package com.orientechnologies.orient.etl;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -144,9 +145,9 @@ public class OETLPipeline {
         if (!haltOnError)
           return null;
 
-        e.printStackTrace();
+        //e.printStackTrace();
         loader.rollback();
-        throw new OETLProcessHaltedException(e);
+        throw OException.wrapException(new OETLProcessHaltedException("Halt"),e);
 
       }
     } while (retry < maxRetries);

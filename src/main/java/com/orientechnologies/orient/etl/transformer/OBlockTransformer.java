@@ -18,6 +18,7 @@
 
 package com.orientechnologies.orient.etl.transformer;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -46,7 +47,7 @@ public class OBlockTransformer extends OAbstractTransformer {
       block = processor.getFactory().getBlock(fieldNames[0]);
       block.configure(processor, (ODocument) iConfiguration.field(fieldNames[0]), context);
     } catch (Exception e) {
-      throw new OConfigurationException("[Block transformer] Error on configuring inner block", e);
+      throw OException.wrapException(new OConfigurationException("[Block transformer] Error on configuring inner block"), e);
     }
   }
 
@@ -58,7 +59,7 @@ public class OBlockTransformer extends OAbstractTransformer {
   @Override
   public void setPipeline(OETLPipeline iPipeline) {
     super.setPipeline(iPipeline);
-    block.setContext( context );
+    block.setContext(context);
   }
 
   @Override

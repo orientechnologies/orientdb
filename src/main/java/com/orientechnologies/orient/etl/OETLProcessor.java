@@ -18,6 +18,7 @@
 
 package com.orientechnologies.orient.etl;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
@@ -133,7 +134,7 @@ public class OETLProcessor {
             }
           }
         } catch (IOException e) {
-          throw new OConfigurationException("Error on loading config file: " + arg, e);
+          throw OException.wrapException(new OConfigurationException("Error on loading config file: " + arg), e);
         }
       }
     }
@@ -247,7 +248,7 @@ public class OETLProcessor {
       // analyzeFlow();
 
     } catch (Exception e) {
-      throw new OConfigurationException("Error on creating ETL processor", e);
+      throw OException.wrapException(new OConfigurationException("Error on creating ETL processor"), e);
     }
     return this;
   }
@@ -570,8 +571,9 @@ public class OETLProcessor {
       }
 
     } catch (Exception e) {
-      throw new OConfigurationException("Error on checking compatibility between components '" + iLastComponent.getName()
-          + "' and '" + iCurrentComponent.getName() + "'", e);
+
+      throw OException.wrapException(new OConfigurationException("Error on checking compatibility between components '"
+          + iLastComponent.getName() + "' and '" + iCurrentComponent.getName() + "'"), e);
     }
 
     throw new OConfigurationException("Component '" + iCurrentComponent.getName() + "' expects one of the following inputs " + ins
