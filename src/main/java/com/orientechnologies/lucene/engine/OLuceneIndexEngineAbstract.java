@@ -17,6 +17,7 @@
 package com.orientechnologies.lucene.engine;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.lucene.OLuceneIndexType;
@@ -302,7 +303,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
       return (Analyzer) constructor.newInstance();
     } catch (ClassNotFoundException e) {
-      throw new OIndexException("Analyzer: " + analyzerFQN + " not found", e);
+      throw OException.wrapException(new OIndexException("Analyzer: " + analyzerFQN + " not found"), e);
     } catch (NoSuchMethodException e) {
       Class classAnalyzer = null;
       try {
@@ -310,7 +311,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
         return (Analyzer) classAnalyzer.newInstance();
 
       } catch (Throwable e1) {
-        throw new OIndexException("Couldn't instantiate analyzer:  public constructor  not found", e1);
+        throw OException.wrapException(new OIndexException("Couldn't instantiate analyzer:  public constructor  not found"), e);
       }
 
     } catch (Exception e) {

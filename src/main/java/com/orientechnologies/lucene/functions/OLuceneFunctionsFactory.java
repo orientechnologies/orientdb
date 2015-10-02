@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.lucene.functions;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionFactory;
@@ -29,6 +30,10 @@ public class OLuceneFunctionsFactory implements OSQLFunctionFactory {
 
   static {
 
+  }
+
+  public static void register(final String iName, final Object iImplementation) {
+    FUNCTIONS.put(iName.toLowerCase(), iImplementation);
   }
 
   @Override
@@ -56,15 +61,12 @@ public class OLuceneFunctionsFactory implements OSQLFunctionFactory {
       try {
         return (OSQLFunction) clazz.newInstance();
       } catch (Exception e) {
-        throw new OCommandExecutionException("Error in creation of function " + name
-            + "(). Probably there is not an empty constructor or the constructor generates errors", e);
+        throw OException.wrapException(new OCommandExecutionException("Error in creation of function " + name
+            + "(). Probably there is not an empty constructor or the constructor generates errors"), e);
+
       }
     }
 
-  }
-
-  public static void register(final String iName, final Object iImplementation) {
-    FUNCTIONS.put(iName.toLowerCase(), iImplementation);
   }
 
   public Map<String, Object> getFunctions() {

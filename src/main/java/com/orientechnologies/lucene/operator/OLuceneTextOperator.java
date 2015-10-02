@@ -16,6 +16,7 @@
 
 package com.orientechnologies.lucene.operator;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.collections.OFullTextCompositeKey;
 import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -52,6 +53,10 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
 
   public OLuceneTextOperator(String iKeyword, int iPrecedence, boolean iLogical) {
     super(iKeyword, iPrecedence, iLogical);
+  }
+
+  protected static ODatabaseDocumentInternal getDatabase() {
+    return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 
   @Override
@@ -117,7 +122,7 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
     try {
       query = index.buildQuery(iRight);
     } catch (ParseException e) {
-      e.printStackTrace();
+      OLogManager.instance().error(this, "error occurred while building query", e);
     }
     return memoryIndex.search(query) > 0.0f;
   }
@@ -163,10 +168,6 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
       return Arrays.asList(fName.toString());
     }
     return Collections.emptyList();
-  }
-
-  protected static ODatabaseDocumentInternal getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 
 }

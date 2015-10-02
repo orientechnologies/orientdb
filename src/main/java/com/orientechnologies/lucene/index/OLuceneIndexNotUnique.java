@@ -16,6 +16,7 @@
 
 package com.orientechnologies.lucene.index;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -381,7 +382,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
         try {
           return indexEngine.searcher();
         } catch (IOException e) {
-          throw new OIndexException("Cannot get searcher from index " + getName(), e);
+          throw OException.wrapException(new OIndexException("Cannot get searcher from index " + getName()), e);
         }
       }
     });
@@ -400,7 +401,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
           try {
             return indexEngine.buildTxChanges();
           } catch (IOException e) {
-            throw new OIndexException("Cannot get searcher from index " + getName(), e);
+            throw OException.wrapException(new OIndexException("Cannot get searcher from index " + getName()), e);
           }
         }
       });

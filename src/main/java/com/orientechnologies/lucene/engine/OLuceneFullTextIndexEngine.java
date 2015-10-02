@@ -16,6 +16,8 @@
 
 package com.orientechnologies.lucene.engine;
 
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.OLuceneIndexType;
 import com.orientechnologies.lucene.builder.DocBuilder;
@@ -70,12 +72,12 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   }
 
   @Override
-    public IndexWriter openIndexWriter(Directory directory) throws IOException {
+  public IndexWriter openIndexWriter(Directory directory) throws IOException {
     Analyzer analyzer = getAnalyzer(metadata);
     IndexWriterConfig iwc = new IndexWriterConfig(analyzer);
     iwc.setOpenMode(IndexWriterConfig.OpenMode.APPEND);
 
-    //TODO: use writer config params to tune writer behaviour
+    // TODO: use writer config params to tune writer behaviour
 
     OLogManager.instance().debug(this, "Opening Lucene index in '%s'...", directory);
 
@@ -113,7 +115,7 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
       }
       return getResults(q, context, key, changes);
     } catch (ParseException e) {
-      throw new OIndexEngineException("Error parsing lucene query ", e);
+      throw OException.wrapException(new OIndexEngineException("Error parsing lucene query"), e);
     }
   }
 
@@ -134,7 +136,7 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
       if (facetManager.supportsFacets()) {
         try {
           addDocument(facetManager.buildDocument(doc));
-          //FIXME: writer is commited by timer task, why commit this separately?
+          // FIXME: writer is commited by timer task, why commit this separately?
           facetManager.commit();
         } catch (IOException e) {
           OLogManager.instance().error(this, "Error while updating facets", e);
@@ -142,7 +144,6 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
       } else {
         addDocument(doc);
       }
-
 
       if (!index.isAutomatic()) {
         commit();
@@ -206,7 +207,7 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
       }
       return LuceneResultSetFactory.INSTANCE.create(this, queryContext);
     } catch (IOException e) {
-      throw new OIndexException("Error reading from Lucene index", e);
+      throw OIOException.wrapException(new OIndexException("Error reading from Lucene index"), e);
     }
 
   }
@@ -273,7 +274,7 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
   @Override
   public Document buildDocument(Object key, OIdentifiable value) {
-    return builder.build(index, key, value,collectionFields, metadata);
+    return builder.build(index, key, value, collectionFields, metadata);
   }
 
   @Override
@@ -282,7 +283,8 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
     try {
       return queryBuilder.query(index, query, mgrWriter.getIndexWriter().getAnalyzer());
     } catch (ParseException e) {
-      throw new OIndexEngineException("Error parsing query", e);
+
+      throw OException.wrapException(new OIndexEngineException("Error parsing query"), e);
     }
   }
 
