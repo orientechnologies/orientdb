@@ -162,8 +162,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
           try {
             final OAsynchDistributedOperation operation = asynchronousOperationsQueue.take();
 
-            final Object result = dManager.sendRequest(operation.getDatabaseName(), operation.getClusterNames(),
-                operation.getNodes(), operation.getTask(), EXECUTION_MODE.RESPONSE);
+            final Object result = dManager.sendRequest(operation.getDatabaseName(), operation.getClusterNames(), operation
+                .getNodes(), operation.getTask(), operation.getCallback() != null ? EXECUTION_MODE.RESPONSE
+                : EXECUTION_MODE.NO_RESPONSE);
 
             if (operation.getCallback() != null)
               operation.getCallback().call(result);
