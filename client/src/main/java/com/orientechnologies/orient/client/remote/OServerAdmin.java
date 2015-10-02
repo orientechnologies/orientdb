@@ -100,7 +100,7 @@ public class OServerAdmin {
       }
 
       try {
-        storage.beginResponse(network);
+        network.beginResponse(getSessionId(), false);
         sessionId = network.readInt();
         sessionToken = network.readBytes();
         if (sessionToken.length == 0) {

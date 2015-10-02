@@ -67,13 +67,13 @@ public abstract class OCoreException extends OException {
   public final String getMessage() {
     final StringBuilder builder = new StringBuilder(super.getMessage());
     if (storageURL != null) {
-      builder.append("\r\n\t").append("Storage URL:\"").append(storageURL).append("\"");
+      builder.append("\r\n\t").append("Storage URL=\"").append(storageURL).append("\"");
     }
     if (componentName != null) {
-      builder.append("\r\n\t").append("Component name:\"").append(componentName).append("\"");
+      builder.append("\r\n\t").append("Component Name=\"").append(componentName).append("\"");
     }
     if (errorCode != null) {
-      builder.append("\r\n\t").append("Error code:\"").append(errorCode.getCode()).append("\"");
+      builder.append("\r\n\t").append("Error Code=\"").append(errorCode.getCode()).append("\"");
     }
 
     return builder.toString();

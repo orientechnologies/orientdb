@@ -2368,7 +2368,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           if (r != null) {
             if (r instanceof OIdentifiable) {
               ((Collection<OIdentifiable>) tempResult).add((OIdentifiable) r);
-            } else if (OMultiValue.isMultiValue(r)) {
+            } else if (r instanceof Iterator || OMultiValue.isMultiValue(r)) {
               for (Object o : OMultiValue.getMultiValueIterable(r)) {
                 ((Collection<OIdentifiable>) tempResult).add((OIdentifiable) o);
               }

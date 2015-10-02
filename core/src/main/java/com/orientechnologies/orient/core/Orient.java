@@ -337,23 +337,29 @@ public class Orient extends OListenerManger<OOrientListener> {
     return this;
   }
 
-  public void scheduleTask(TimerTask task, long delay, long period) {
+  public void scheduleTask(final TimerTask task, final long delay, final long period) {
     engineLock.readLock().lock();
     try {
-      if (active)
-        timer.schedule(task, delay, period);
-      else
+      if (active) {
+        if (period > 0)
+          timer.schedule(task, delay, period);
+        else
+          timer.schedule(task, delay);
+      } else
         OLogManager.instance().warn(this, "OrientDB engine is down. Task will not be scheduled.");
     } finally {
       engineLock.readLock().unlock();
     }
   }
 
-  public void scheduleTask(TimerTask task, Date firstTime, long period) {
+  public void scheduleTask(final TimerTask task, final Date firstTime, final long period) {
     engineLock.readLock().lock();
     try {
       if (active)
-        timer.schedule(task, firstTime, period);
+        if (period > 0)
+          timer.schedule(task, firstTime, period);
+        else
+          timer.schedule(task, firstTime);
       else
         OLogManager.instance().warn(this, "OrientDB engine is down. Task will not be scheduled.");
     } finally {

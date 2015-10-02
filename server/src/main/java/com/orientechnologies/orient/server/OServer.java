@@ -24,7 +24,12 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.locks.ReentrantLock;
@@ -160,6 +165,13 @@ public class OServer {
 
   public void saveConfiguration() throws IOException {
     serverCfg.saveConfiguration();
+  }
+
+  public void restart() throws ClassNotFoundException, InvocationTargetException, InstantiationException, NoSuchMethodException,
+      IllegalAccessException {
+    shutdown();
+    startup(serverCfg.getConfiguration());
+    activate();
   }
 
   /**
