@@ -70,9 +70,6 @@ public class ODistributedResponseManager {
   public ODistributedResponseManager(final ODistributedServerManager iManager, final ODistributedRequest iRequest,
       final Collection<String> expectedResponses, final int iExpectedSynchronousResponses, final int iQuorum,
       final boolean iWaitForLocalNode, final long iSynchTimeout, final long iTotalTimeout, final boolean iGroupResponsesByResult) {
-    assert iSynchTimeout > 0;
-    assert iTotalTimeout > 0;
-
     this.dManager = iManager;
     this.request = iRequest;
     this.sentOn = System.currentTimeMillis();

@@ -20,7 +20,11 @@
 package com.orientechnologies.orient.server.hazelcast;
 
 import com.hazelcast.config.QueueConfig;
-import com.hazelcast.core.*;
+import com.hazelcast.core.DistributedObject;
+import com.hazelcast.core.HazelcastException;
+import com.hazelcast.core.HazelcastInstanceNotActiveException;
+import com.hazelcast.core.IAtomicLong;
+import com.hazelcast.core.IQueue;
 import com.hazelcast.monitor.LocalQueueStats;
 import com.hazelcast.queue.impl.QueueService;
 import com.hazelcast.spi.exception.DistributedObjectDestroyedException;
@@ -32,9 +36,15 @@ import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedResponseManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -101,10 +111,19 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
 
             if (message != null) {
               senderNode = message.getSenderNodeName();
-              final long responseTime = dispatchResponseToThread(message);
 
-              if (responseTime > -1)
-                collectMetric(responseTime);
+              final long reqId = message.getRequestId();
+              if (reqId < 0) {
+                // REQUEST
+                final OAbstractRemoteTask task = (OAbstractRemoteTask) message.getPayload();
+                task.execute(manager.getServerInstance(), manager, null);
+              } else {
+                // RESPONSE
+                final long responseTime = dispatchResponseToThread(message);
+
+                if (responseTime > -1)
+                  collectMetric(responseTime);
+              }
             }
 
           } catch (InterruptedException e) {
