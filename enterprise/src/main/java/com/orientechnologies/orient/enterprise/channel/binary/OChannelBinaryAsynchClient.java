@@ -291,11 +291,10 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
 
   public void endResponse() throws IOException {
     channelRead = false;
-    boolean dirty = false;
     try {
-        if (inStream.available() > 0) {
-          throw new IOException("unexpected data on socket ");
-        }
+      if (inStream != null && inStream.available() > 0) {
+        throw new IOException("unexpected data in channel");
+      }
     } finally {
       // WAKE UP ALL THE WAITING THREADS
       try {
