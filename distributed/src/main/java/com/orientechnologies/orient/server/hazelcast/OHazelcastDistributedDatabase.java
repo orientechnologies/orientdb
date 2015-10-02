@@ -184,8 +184,6 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
           final IQueue queue = entry.getValue();
 
           if (queue != null) {
-            System.out.println(String.format("%10s -> %10s queue size: %d", getLocalNodeName(), entry.getKey(), queue.size()));
-
             if (queueMaxSize > 0 && queue.size() > queueMaxSize) {
               ODistributedServerLog.warn(this, getLocalNodeName(), iNodes.toString(), DIRECTION.OUT,
                   "queue has too many messages (%d), treating the node as in stall: trying to restart it...", queue.size());
