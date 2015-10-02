@@ -294,9 +294,9 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     channelRead = false;
     boolean dirty = false;
     try {
-        if (inStream.available() > 0) {
-          throw new IOException("unexpected data on socket ");
-        }
+      if (inStream.available() > 0) {
+        throw new IOException("unexpected data on socket ");
+      }
     } finally {
       // WAKE UP ALL THE WAITING THREADS
       try {
@@ -440,16 +440,36 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     try {
       throwable = objectInputStream.readObject();
     } catch (ClassNotFoundException e) {
-      OLogManager.instance().error(this, "Error during exception serialization", e);
+      OLogManager.instance().error(this, "Error during exception deserialization", e);
     }
 
     objectInputStream.close();
 
-    if (throwable instanceof OException)
-      throw (OException) throwable;
-    else if (throwable instanceof Throwable)
-      // WRAP IT
+    if (throwable instanceof OException) {
+      try {
+        final Class<? extends OException> cls = (Class<? extends OException>) throwable.getClass();
+        final Constructor<? extends OException> constructor;
+        constructor = cls.getConstructor(cls);
+        final OException proxyInstance = constructor.newInstance(throwable);
+
+        throw proxyInstance;
+
+      } catch (NoSuchMethodException e) {
+        OLogManager.instance().error(this, "Error during exception deserialization", e);
+      } catch (InvocationTargetException e) {
+        OLogManager.instance().error(this, "Error during exception deserialization", e);
+      } catch (InstantiationException e) {
+        OLogManager.instance().error(this, "Error during exception deserialization", e);
+      } catch (IllegalAccessException e) {
+        OLogManager.instance().error(this, "Error during exception deserialization", e);
+      }
+    }
+
+    if (throwable instanceof Throwable) {
       throw new OResponseProcessingException("Exception during response processing");
+    }
+    // WRAP IT
+
     else
       OLogManager.instance().error(
           this,

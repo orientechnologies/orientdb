@@ -25,6 +25,10 @@ public class ORecordNotFoundException extends OCoreException implements OUserExc
 
   private static final long serialVersionUID = -265573123216968L;
 
+  public ORecordNotFoundException(ORecordNotFoundException exception) {
+    super(exception);
+  }
+
   public ORecordNotFoundException(final String string) {
     super(string);
   }

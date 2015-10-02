@@ -16,6 +16,12 @@ public abstract class OCoreException extends OException {
   private final String storageURL;
   private final String componentName;
 
+  public OCoreException(OCoreException exception) {
+    super(exception);
+    this.storageURL = exception.storageURL;
+    this.componentName = exception.componentName;
+  }
+
   public OCoreException(String message) {
     this(message, null, null);
   }

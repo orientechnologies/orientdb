@@ -25,6 +25,10 @@ public class OStorageException extends OCoreException {
 
   private static final long serialVersionUID = -2655748565531836968L;
 
+  public OStorageException(OStorageException exception) {
+    super(exception);
+  }
+
   public OStorageException(String string) {
     super(string);
   }

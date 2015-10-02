@@ -23,6 +23,10 @@ public class OSerializationException extends OCoreException {
 
   private static final long serialVersionUID = -3003977236233691448L;
 
+  public OSerializationException(OSerializationException exception) {
+    super(exception);
+  }
+
   public OSerializationException(String string) {
     super(string);
   }

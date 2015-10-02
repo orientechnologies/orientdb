@@ -21,6 +21,7 @@ package com.orientechnologies.common.concur;
 
 import com.orientechnologies.common.exception.OErrorCode;
 import com.orientechnologies.orient.core.exception.OCoreException;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.ONestedRollbackException;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 
 /**
@@ -32,6 +33,10 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
  */
 public abstract class ONeedRetryException extends OCoreException {
   private static final long serialVersionUID = 1L;
+
+  public ONeedRetryException(ONeedRetryException exception) {
+    super(exception);
+  }
 
   public ONeedRetryException(String message) {
     super(message);

@@ -27,6 +27,13 @@ public class OCommandScriptException extends OCoreException {
   private int               position;
   private static final long serialVersionUID = -7430575036316163711L;
 
+  public OCommandScriptException(OCommandScriptException exception) {
+    super(exception);
+
+    this.text = exception.text;
+    this.position = exception.position;
+  }
+
   public OCommandScriptException(String iMessage) {
     super(iMessage);
   }

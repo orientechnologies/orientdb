@@ -24,15 +24,11 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
 
 public class OIndexEngineException extends OCoreException {
 
+  public OIndexEngineException(OIndexEngineException exception) {
+    super(exception);
+  }
+
   public OIndexEngineException(String message) {
     super(message);
-  }
-
-  public OIndexEngineException(String message, ODurableComponent component) {
-    super(message, component);
-  }
-
-  public OIndexEngineException(String message, ODurableComponent component, OErrorCode errorCode) {
-    super(message, component, errorCode);
   }
 }

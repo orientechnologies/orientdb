@@ -570,8 +570,6 @@ public class SQLSelectTest extends AbstractSelectTest {
     try {
       executeQuery("select from Profile order by name aaaa", database);
       Assert.fail();
-    } catch (OResponseProcessingException e) {
-      Assert.assertTrue(e.getCause() instanceof OCommandSQLParsingException);
     } catch (OCommandSQLParsingException e) {
     }
   }

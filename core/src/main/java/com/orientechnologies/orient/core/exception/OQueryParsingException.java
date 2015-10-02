@@ -49,6 +49,13 @@ public class OQueryParsingException extends OCommandSQLParsingException {
     return buffer.toString();
   }
 
+  public OQueryParsingException(OQueryParsingException exception) {
+    super(exception);
+
+    this.text = exception.text;
+    this.position = exception.position;
+  }
+
   public OQueryParsingException(final String iMessage) {
     super(iMessage);
   }

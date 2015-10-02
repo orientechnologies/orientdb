@@ -27,6 +27,10 @@ import com.orientechnologies.orient.core.exception.OCoreException;
  */
 public class OOfflineClusterException extends OCoreException implements OUserException {
 
+  public OOfflineClusterException(OOfflineClusterException exception) {
+    super(exception);
+  }
+
   public OOfflineClusterException(final String s) {
     super(s);
   }

@@ -26,6 +26,11 @@ import com.orientechnologies.common.exception.OSystemException;
  * @since 3/6/14
  */
 public class OInterruptedException extends OSystemException {
+
+  public OInterruptedException(OInterruptedException exception) {
+    super(exception);
+  }
+
   public OInterruptedException(String message) {
     super(message);
   }

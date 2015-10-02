@@ -94,8 +94,6 @@ public class IndexTest extends ObjectDBBaseTest {
       // IT SHOULD GIVE ERROR ON DUPLICATED KEY
       Assert.assertTrue(false);
 
-    } catch (OResponseProcessingException e) {
-      Assert.assertTrue(e.getCause() instanceof ORecordDuplicatedException);
     } catch (ORecordDuplicatedException e) {
       Assert.assertTrue(true);
     }
@@ -848,8 +846,6 @@ public class IndexTest extends ObjectDBBaseTest {
 
       db.commit();
       Assert.fail();
-    } catch (OResponseProcessingException e) {
-      Assert.assertTrue(e.getCause() instanceof ORecordDuplicatedException);
     } catch (ORecordDuplicatedException oie) {
     }
 
@@ -887,9 +883,6 @@ public class IndexTest extends ObjectDBBaseTest {
 
       db.commit();
       Assert.fail();
-    } catch (OResponseProcessingException e) {
-      Assert.assertTrue(e.getCause() instanceof ORecordDuplicatedException);
-      db.rollback();
     } catch (ORecordDuplicatedException oie) {
       db.rollback();
     }
@@ -926,8 +919,6 @@ public class IndexTest extends ObjectDBBaseTest {
 
       db.commit();
       Assert.fail();
-    } catch (OResponseProcessingException e) {
-      Assert.assertTrue(e.getCause() instanceof ORecordDuplicatedException);
     } catch (ORecordDuplicatedException oie) {
     }
 
@@ -968,9 +959,6 @@ public class IndexTest extends ObjectDBBaseTest {
 
       db.commit();
       Assert.fail();
-    } catch (OResponseProcessingException e) {
-      Assert.assertTrue(e.getCause() instanceof ORecordDuplicatedException);
-      db.rollback();
     } catch (ORecordDuplicatedException oie) {
       db.rollback();
     }

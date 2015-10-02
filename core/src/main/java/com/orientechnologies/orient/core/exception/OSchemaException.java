@@ -25,6 +25,10 @@ public class OSchemaException extends OCoreException implements OUserException {
 
   private static final long serialVersionUID = -8486291378415776372L;
 
+  public OSchemaException(OSchemaException exception) {
+    super(exception);
+  }
+
   public OSchemaException(String message) {
     super(message);
   }

@@ -26,6 +26,10 @@ public class OIndexException extends OCoreException implements OUserException {
 
 	private static final long	serialVersionUID	= -2655748565531836968L;
 
+  public OIndexException(OIndexException exception) {
+    super(exception);
+  }
+
 	public OIndexException(final String string) {
 		super(string);
 	}

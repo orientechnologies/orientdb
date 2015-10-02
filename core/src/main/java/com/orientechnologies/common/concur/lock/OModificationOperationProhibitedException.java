@@ -32,6 +32,10 @@ import com.orientechnologies.orient.core.exception.OCoreException;
 public class OModificationOperationProhibitedException extends OCoreException implements OUserException {
   private static final long serialVersionUID = 1L;
 
+  public OModificationOperationProhibitedException(OModificationOperationProhibitedException exception) {
+    super(exception);
+  }
+
   public OModificationOperationProhibitedException(String message) {
     super(message);
   }

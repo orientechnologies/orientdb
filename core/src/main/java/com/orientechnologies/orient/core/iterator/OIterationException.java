@@ -26,6 +26,10 @@ public class OIterationException extends OSystemException {
 
   private static final long serialVersionUID = 2347493191705052402L;
 
+  public OIterationException(OIterationException exception) {
+    super(exception);
+  }
+
   public OIterationException(String message) {
     super(message);
   }

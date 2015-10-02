@@ -101,8 +101,6 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
         vDocA_db1.field(NAME, "docA_v3");
         database1.save(vDocA_db1);
         database1.commit();
-      } catch (OResponseProcessingException e) {
-        Assert.fail("Should not failed here...");
       } catch (OConcurrentModificationException e) {
         Assert.fail("Should not failed here...");
       }
@@ -121,8 +119,6 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
       // Will throw OConcurrentModificationException
       database2.commit();
       Assert.fail("Should throw OConcurrentModificationException");
-    } catch (OResponseProcessingException e) {
-      Assert.assertTrue(e.getCause() instanceof OConcurrentModificationException);
     } catch (OConcurrentModificationException e) {
       database2.rollback();
     }
@@ -182,9 +178,6 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
       database2.activateOnCurrentThread();
       database2.commit();
       Assert.fail("Should throw OConcurrentModificationException");
-    } catch (OResponseProcessingException e) {
-      Assert.assertTrue(e.getCause() instanceof OConcurrentModificationException);
-      database2.rollback();
     } catch (OConcurrentModificationException e) {
       database2.rollback();
     }
@@ -243,9 +236,6 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
       database2.activateOnCurrentThread();
       database2.commit();
       Assert.fail("Should throw OConcurrentModificationException");
-    } catch (OResponseProcessingException e) {
-      Assert.assertTrue(e.getCause() instanceof OConcurrentModificationException);
-      database2.rollback();
     } catch (OConcurrentModificationException e) {
       database2.rollback();
     }
@@ -660,9 +650,6 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
       ((ODocument) inserted.elementAt(cnt - 2)).save();
       database.commit();
       Assert.assertTrue(false);
-    } catch (OResponseProcessingException e) {
-      Assert.assertTrue(e.getCause() instanceof OConcurrentModificationException);
-      database.rollback();
     } catch (OConcurrentModificationException e) {
       Assert.assertTrue(true);
       database.rollback();

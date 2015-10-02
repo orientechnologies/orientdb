@@ -8,19 +8,12 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
  * @since 9/28/2015
  */
 public class OWriteCacheException extends OCoreException {
+
+  public OWriteCacheException(OWriteCacheException exception) {
+    super(exception);
+  }
+
   public OWriteCacheException(String message) {
     super(message);
-  }
-
-  public OWriteCacheException(String message, ODurableComponent component) {
-    super(message, component);
-  }
-
-  public OWriteCacheException(String message, ODurableComponent component, OErrorCode errorCode) {
-    super(message, component, errorCode);
-  }
-
-  public OWriteCacheException(String message, Throwable cause, ODurableComponent component, OErrorCode errorCode) {
-    super(message, component, errorCode);
   }
 }

@@ -31,6 +31,10 @@ import com.orientechnologies.common.exception.OSystemException;
 public class ODistributedException extends OSystemException {
   private static final long serialVersionUID = 1L;
 
+  public ODistributedException(ODistributedException exception) {
+    super(exception);
+  }
+
   public ODistributedException(String message) {
     super(message);
   }

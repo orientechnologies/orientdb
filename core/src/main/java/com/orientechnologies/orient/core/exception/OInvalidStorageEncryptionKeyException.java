@@ -27,6 +27,11 @@ package com.orientechnologies.orient.core.exception;
  */
 @SuppressWarnings("serial")
 public class OInvalidStorageEncryptionKeyException extends OSecurityException {
+
+  public OInvalidStorageEncryptionKeyException(OInvalidStorageEncryptionKeyException exception) {
+    super(exception);
+  }
+
   public OInvalidStorageEncryptionKeyException(final String message) {
     super(message);
   }

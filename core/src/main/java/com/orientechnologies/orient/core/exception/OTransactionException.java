@@ -23,6 +23,10 @@ public class OTransactionException extends OCoreException {
 
 	private static final long	serialVersionUID	= 2347493191705052402L;
 
+  public OTransactionException(OTransactionException exception) {
+    super(exception);
+  }
+
 	public OTransactionException(String message) {
 		super(message);
 	}

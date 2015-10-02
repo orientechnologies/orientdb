@@ -28,6 +28,12 @@ public class OSecurityAccessException extends OSecurityException implements OUse
   private static final long serialVersionUID = -8486291378415776372L;
   private String            databaseName;
 
+  public OSecurityAccessException(OSecurityAccessException exception) {
+    super(exception);
+
+    this.databaseName = exception.databaseName;
+  }
+
   public OSecurityAccessException(final String iDatabasename, final String message) {
     super(message);
     databaseName = iDatabasename;

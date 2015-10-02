@@ -45,6 +45,13 @@ public class OCommandSQLParsingException extends OCoreException {
     return buffer.toString();
   }
 
+  public OCommandSQLParsingException(OCommandSQLParsingException exception) {
+    super(exception);
+
+    this.text = exception.text;
+    this.position = exception.position;
+  }
+
   public OCommandSQLParsingException(String iMessage) {
     super(iMessage);
   }

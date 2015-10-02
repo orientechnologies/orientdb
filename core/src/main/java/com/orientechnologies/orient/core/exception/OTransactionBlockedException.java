@@ -23,6 +23,10 @@ public class OTransactionBlockedException extends OTransactionException {
 
   private static final long serialVersionUID = 2347493191705052402L;
 
+  public OTransactionBlockedException(OTransactionBlockedException exception) {
+    super(exception);
+  }
+
   public OTransactionBlockedException(String message) {
     super(message);
   }

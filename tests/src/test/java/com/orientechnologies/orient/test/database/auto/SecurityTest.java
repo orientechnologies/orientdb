@@ -71,8 +71,6 @@ public class SecurityTest extends DocumentDBBaseTest {
       Assert.assertTrue(false);
     } catch (OSecurityAccessException e) {
       Assert.assertTrue(true);
-    } catch (OResponseProcessingException e) {
-      Assert.assertTrue(e.getCause() instanceof OSecurityAccessException);
     } finally {
       database.close();
     }
@@ -87,8 +85,6 @@ public class SecurityTest extends DocumentDBBaseTest {
           new Date()).save();
     } catch (OSecurityAccessException e) {
       Assert.assertTrue(true);
-    } catch (OResponseProcessingException e) {
-      Assert.assertTrue(e.getCause() instanceof OSecurityAccessException);
     } finally {
       database.close();
     }

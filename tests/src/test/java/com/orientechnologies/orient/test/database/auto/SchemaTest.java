@@ -348,11 +348,7 @@ public class SchemaTest extends DocumentDBBaseTest {
       database.command(new OCommandSQL("create class Antani cluster 212121")).execute();
       Assert.fail();
     } catch (Exception e) {
-      if (e instanceof OResponseProcessingException)
-        e = (Exception) e.getCause();
       Assert.assertTrue(e instanceof OCommandSQLParsingException);
-    } finally {
-
     }
   }
 
@@ -364,11 +360,7 @@ public class SchemaTest extends DocumentDBBaseTest {
       Assert.fail();
 
     } catch (Exception e) {
-      if (e instanceof OResponseProcessingException)
-        e = (Exception) e.getCause();
       Assert.assertTrue(e instanceof OCommandSQLParsingException);
-    } finally {
-
     }
   }
 
@@ -379,11 +371,7 @@ public class SchemaTest extends DocumentDBBaseTest {
       database.command(new OCommandSQL("create class Antani the pen is on the table")).execute();
       Assert.fail();
     } catch (Exception e) {
-      if (e instanceof OResponseProcessingException)
-        e = (Exception) e.getCause();
       Assert.assertTrue(e instanceof OCommandSQLParsingException);
-    } finally {
-
     }
   }
 
@@ -574,8 +562,6 @@ public class SchemaTest extends DocumentDBBaseTest {
       Assert.fail();
 
     } catch (Exception e) {
-      if (e instanceof OResponseProcessingException)
-        e = (Exception) e.getCause();
       Assert.assertTrue(e instanceof OSchemaException);
     }
   }
@@ -586,8 +572,6 @@ public class SchemaTest extends DocumentDBBaseTest {
       Assert.fail();
 
     } catch (Exception e) {
-      if (e instanceof OResponseProcessingException)
-        e = (Exception) e.getCause();
       Assert.assertTrue(e instanceof OSchemaException);
     }
   }
@@ -598,8 +582,6 @@ public class SchemaTest extends DocumentDBBaseTest {
       Assert.fail();
 
     } catch (Exception e) {
-      if (e instanceof OResponseProcessingException)
-        e = (Exception) e.getCause();
       Assert.assertTrue(e instanceof OSchemaException);
     }
   }
@@ -610,8 +592,6 @@ public class SchemaTest extends DocumentDBBaseTest {
       Assert.fail();
 
     } catch (Exception e) {
-      if (e instanceof OResponseProcessingException)
-        e = (Exception) e.getCause();
       Assert.assertTrue(e instanceof OSchemaException);
     }
   }
@@ -622,8 +602,6 @@ public class SchemaTest extends DocumentDBBaseTest {
       Assert.fail();
 
     } catch (Exception e) {
-      if (e instanceof OResponseProcessingException)
-        e = (Exception) e.getCause();
       Assert.assertTrue(e instanceof OSchemaException);
     }
   }

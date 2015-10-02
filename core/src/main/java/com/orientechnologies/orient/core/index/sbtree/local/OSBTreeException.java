@@ -28,6 +28,11 @@ import com.orientechnologies.orient.core.exception.OCoreException;
  * @since 8/30/13
  */
 public class OSBTreeException extends OCoreException {
+
+  public OSBTreeException(OSBTreeException exception) {
+    super(exception);
+  }
+
   public OSBTreeException(String message) {
     super(message);
   }

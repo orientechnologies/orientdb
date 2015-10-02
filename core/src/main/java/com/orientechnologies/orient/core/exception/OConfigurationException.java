@@ -23,6 +23,10 @@ public class OConfigurationException extends OCoreException {
 
   private static final long serialVersionUID = -8486291378415776372L;
 
+  public OConfigurationException(OConfigurationException exception) {
+    super(exception);
+  }
+
   public OConfigurationException(String message) {
     super(message);
   }

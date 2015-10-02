@@ -112,10 +112,6 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
 
       Assert.assertTrue(false);
 
-    } catch (OResponseProcessingException e) {
-      Assert.assertTrue(e.getCause() instanceof OConcurrentModificationException);
-
-      database.rollback();
     } catch (OConcurrentModificationException e) {
       Assert.assertTrue(true);
       database.rollback();
@@ -389,8 +385,6 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
       database.commit();
       Assert.fail();
     } catch (OConcurrentModificationException e) {
-      database.rollback();
-    } catch (OResponseProcessingException e) {
       database.rollback();
     }
 

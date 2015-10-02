@@ -23,6 +23,10 @@ public class OCommandExecutionException extends OCoreException {
 
   private static final long serialVersionUID = -7430575036316163711L;
 
+  public OCommandExecutionException(OCommandExecutionException exception) {
+    super(exception);
+  }
+
   public OCommandExecutionException(String message) {
     super(message);
   }

@@ -25,6 +25,10 @@ public class OHttpRequestException extends OSystemException {
 
   private static final long serialVersionUID = 12132321321321L;
 
+  public OHttpRequestException(OHttpRequestException exception) {
+    super(exception);
+  }
+
   public OHttpRequestException(String message) {
     super(message);
   }

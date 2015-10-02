@@ -31,6 +31,10 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
  */
 @SuppressWarnings("serial")
 public class OSecurityException extends OCoreException implements OUserException {
+  public OSecurityException(OSecurityException exception) {
+    super(exception);
+  }
+
   public OSecurityException(final String message) {
     super(message);
   }

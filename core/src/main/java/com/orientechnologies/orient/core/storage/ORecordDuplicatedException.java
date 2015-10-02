@@ -31,6 +31,11 @@ import com.orientechnologies.orient.core.id.ORID;
 public class ORecordDuplicatedException extends OCoreException implements OUserException {
   private final ORID rid;
 
+  public ORecordDuplicatedException(ORecordDuplicatedException exception) {
+    super(exception);
+    this.rid = exception.rid;
+  }
+
   public ORecordDuplicatedException(final String message, final ORID iRid) {
     super(message);
     this.rid = iRid;

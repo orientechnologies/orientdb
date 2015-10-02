@@ -24,6 +24,10 @@ import com.orientechnologies.common.exception.OUserException;
 @SuppressWarnings("serial")
 public class OValidationException extends OCoreException implements OUserException {
 
+  public OValidationException(OValidationException exception) {
+    super(exception);
+  }
+
   public OValidationException(String string) {
     super(string);
   }

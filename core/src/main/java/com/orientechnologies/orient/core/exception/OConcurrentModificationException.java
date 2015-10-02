@@ -46,6 +46,15 @@ public class OConcurrentModificationException extends ONeedRetryException implem
   private ORecordVersion      recordVersion          = OVersionFactory.instance().createVersion();
   private int                 recordOperation;
 
+  public OConcurrentModificationException(OConcurrentModificationException exception) {
+    super(exception);
+
+    this.rid = exception.rid;
+    this.recordVersion = exception.recordVersion;
+    this.databaseVersion = exception.databaseVersion;
+    this.recordOperation = exception.recordOperation;
+  }
+
   /**
    * Default constructor for OFastConcurrentModificationException
    */
