@@ -212,7 +212,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         this.tokenBytes = bytes;
 
         try {
-          if(tokenBytes != null )
+          if (tokenBytes != null)
             this.token = tokenHandler.parseBinaryToken(tokenBytes);
         } catch (Exception e) {
           throw OException.wrapException(new OSystemException("error on token parse"), e);
