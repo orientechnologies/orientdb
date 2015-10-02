@@ -70,8 +70,9 @@ import java.util.Random;
  * 
  */
 public class OCommandExecutorScript extends OCommandExecutorAbstract implements OCommandDistributedReplicateRequest {
-  private static final int MAX_DELAY = 100;
-  protected OCommandScript request;
+  private static final int             MAX_DELAY     = 100;
+  protected OCommandScript             request;
+  protected DISTRIBUTED_EXECUTION_MODE executionMode = DISTRIBUTED_EXECUTION_MODE.LOCAL;
 
   public OCommandExecutorScript() {
   }
@@ -79,11 +80,12 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
   @SuppressWarnings("unchecked")
   public OCommandExecutorScript parse(final OCommandRequest iRequest) {
     request = (OCommandScript) iRequest;
+    executionMode = ((OCommandScript) iRequest).getExecutionMode();
     return this;
   }
 
   public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
-    return DISTRIBUTED_EXECUTION_MODE.LOCAL;
+    return executionMode;
   }
 
   public Object execute(final Map<Object, Object> iArgs) {
