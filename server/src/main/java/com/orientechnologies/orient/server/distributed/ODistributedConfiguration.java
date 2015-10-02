@@ -55,13 +55,6 @@ public class ODistributedConfiguration {
     synchronized (configuration) {
       final Collection<String> servers = getClusterConfiguration(iClusterName).field("servers");
       if (servers != null && !servers.isEmpty()) {
-        // int otherServers = 0;
-        //
-        // for (String s : servers)
-        // if (!s.equals(NEW_NODE_TAG) && !s.equals(iLocalNode))
-        // otherServers++;
-        // TEMPORARY PATCH TO FIX OPTIMIZATION OF RUNNING AS SINGLE SERVER
-        // return otherServers > 0;
         return true;
       }
       return false;
@@ -367,6 +360,25 @@ public class ODistributedConfiguration {
         return filteredServerList;
       }
       return Collections.EMPTY_LIST;
+    }
+  }
+
+  /**
+   * Returns the complete list of servers found in configuration.
+   */
+  public Set<String> getAllConfiguredServers() {
+    synchronized (configuration) {
+      final Set<String> servers = new HashSet<String>();
+
+      for (String p : getClusterNames()) {
+        final List<String> serverList = getClusterConfiguration(p).field("servers");
+        if (serverList != null) {
+          for (String s : serverList)
+            if (!s.equals(NEW_NODE_TAG))
+              servers.add(s);
+        }
+      }
+      return servers;
     }
   }
 
