@@ -213,7 +213,6 @@ public class OETLProcessor {
 
       // EXTRACTOR
       name = iExtractor.fieldNames()[0];
-      System.out.println("name:: " + name);
       extractor = factory.getExtractor(name);
       configureComponent(extractor, (ODocument) iExtractor.field(name), iContext);
 

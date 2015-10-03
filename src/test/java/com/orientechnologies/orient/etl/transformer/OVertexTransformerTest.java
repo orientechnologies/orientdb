@@ -17,11 +17,10 @@
  */
 package com.orientechnologies.orient.etl.transformer;
 
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.etl.ETLBaseTest;
-import com.orientechnologies.orient.etl.OETLProcessHaltedException;
 import com.tinkerpop.blueprints.Parameter;
 import com.tinkerpop.blueprints.Vertex;
-import junit.framework.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -61,17 +60,12 @@ public class OVertexTransformerTest extends ETLBaseTest {
     assertEquals(2, graph.countVertices("V"));
   }
 
-  @Test
+  @Test(expected = ORecordDuplicatedException.class)
   public void testErrorOnDuplicateVertex() {
-    try {
       process("{source: { content: { value: 'name,\nGregor\nGregor\nHans' } }, extractor : { row: {} },"
           + " transformers: [{csv: {}}, {vertex: {class:'Person', skipDuplicates:false}},"
           + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
-      Assert.fail();
 
-    } catch (OETLProcessHaltedException e) {
-      Assert.assertTrue(true);
-    }
 
   }
 
