@@ -114,6 +114,8 @@ public class DbImportExportTest extends DocumentDBBaseTest implements OCommandOu
     // try to import the compressed one with 9
 
     database = new ODatabaseDocumentTx(getStorageType() + ":" + testPath + "/" + NEW_DB_URL_COMPRESSED);
+    if (database.exists())
+      database.open("admin", "admin").drop();
     database.create();
 
     ODatabaseImport dbImport = new ODatabaseImport(database, testPath + "/" + EXPORT_FILE_PATH, this);
