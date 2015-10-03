@@ -123,7 +123,9 @@ public class OETLProcessor {
       if (arg.charAt(0) != '-') {
         try {
           final String config = OIOUtils.readFileAsString(new File(arg));
-          configuration = new ODocument().fromJSON(config, "noMap");
+
+          configuration.merge(new ODocument().fromJSON(config, "noMap"), true, true);
+          // configuration = ;
           ODocument cfgGlobal = configuration.field("config");
           if (cfgGlobal != null) {
             for (String f : cfgGlobal.fieldNames()) {
