@@ -5,6 +5,7 @@ import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+
 /**
  * Created by frank on 9/18/15.
  */
