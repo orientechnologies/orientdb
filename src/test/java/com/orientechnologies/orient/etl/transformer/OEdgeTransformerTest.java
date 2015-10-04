@@ -18,6 +18,7 @@
 
 package com.orientechnologies.orient.etl.transformer;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.etl.ETLBaseTest;
@@ -43,6 +44,8 @@ public class OEdgeTransformerTest extends ETLBaseTest {
 
   @Override
   public void setUp() {
+    OGlobalConfiguration.USE_WAL.setValue(true);
+
     super.setUp();
     final OrientVertexType v1 = graph.createVertexType("V1");
     final OrientVertexType v2 = graph.createVertexType("V2");

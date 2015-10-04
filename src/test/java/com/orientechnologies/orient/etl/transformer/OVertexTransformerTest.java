@@ -17,6 +17,7 @@
  */
 package com.orientechnologies.orient.etl.transformer;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.etl.ETLBaseTest;
 import com.orientechnologies.orient.etl.OETLProcessHaltedException;
 import com.tinkerpop.blueprints.Parameter;
@@ -34,9 +35,11 @@ import static org.junit.Assert.assertEquals;
  */
 public class OVertexTransformerTest extends ETLBaseTest {
 
-    @Before
+  @Before
   public void setUp() {
-        super.setUp();
+    super.setUp();
+    OGlobalConfiguration.USE_WAL.setValue(true);
+
     graph.createVertexType("Person");
     graph.createKeyIndex("name", Vertex.class, new Parameter<String, String>("type", "UNIQUE"), new Parameter<String, String>(
         "class", "Person"));
