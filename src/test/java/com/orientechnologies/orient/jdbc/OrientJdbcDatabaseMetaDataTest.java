@@ -9,14 +9,19 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
@@ -68,16 +73,27 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
     ResultSet tableTypes = metaData.getTableTypes();
     assertTrue(tableTypes.next());
     assertEquals("TABLE", tableTypes.getString(1));
+    assertTrue(tableTypes.next());
+    assertEquals("SYSTEM TABLE", tableTypes.getString(1));
 
     assertFalse(tableTypes.next());
 
   }
 
   @Test
+  public void shouldRetrieveKeywords() throws SQLException {
+
+    final String keywordsStr = metaData.getSQLKeywords();
+    assertNotNull(keywordsStr);
+    assertThat(Arrays.asList(keywordsStr.toUpperCase().split(",\\s*")), hasItem("TRAVERSE"));
+  }
+
+  @Test
   public void getFields() throws SQLException {
     ResultSet rs = conn.createStatement().executeQuery("select from OUser");
-    if (rs != null) {
-      ResultSetMetaData metaData = rs.getMetaData();
+
+    ResultSetMetaData metaData = rs.getMetaData();
+
       int cc = metaData.getColumnCount();
       Set<String> colset = new HashSet<String>();
       List<Map<String, Object>> columns = new ArrayList<Map<String, Object>>(cc);
@@ -107,51 +123,77 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
       for (Map<String, Object> c : columns) {
         System.out.println(c);
       }
-    }
   }
 
   @Test
-  public void getAllTables() throws SQLException {
+  public void shouldFetchAllTables() throws SQLException {
     ResultSet rs = this.metaData.getTables(null, null, null, null);
+    int tableCount = rsSizeOf(rs);
+
+    assertThat(tableCount, is(11));
+
+  }
+
+  private int rsSizeOf(ResultSet rs) throws SQLException {
     int tableCount = 0;
 
     while (rs.next()) {
-      tableCount = tableCount + 1;
+      tableCount++;
     }
-    assertTrue(tableCount > 1);
+    return tableCount;
+  }
+
+  @Test
+  public void shouldGetAllTablesFilteredByAllTypes() throws SQLException {
+    ResultSet rs = this.metaData.getTableTypes();
+    List<String> tableTypes = new ArrayList<String>(2);
+    while (rs.next()) {
+      tableTypes.add(rs.getString(1));
+    }
+    rs = this.metaData.getTables(null, null, null, tableTypes.toArray(new String[2]));
+    int tableCount = rsSizeOf(rs);
+    assertThat(tableCount, is(11));
+  }
+
+  @Test
+  public void getNoTablesFilteredByEmptySetOfTypes() throws SQLException {
+    final ResultSet rs = this.metaData.getTables(null, null, null, new String[0]);
+    int tableCount = rsSizeOf(rs);
+
+    assertThat(tableCount,is(0));
   }
 
   @Test
   public void getSingleTable() throws SQLException {
     ResultSet rs = this.metaData.getTables(null, null, "ouser", null);
-    int tableCount = 0;
 
-    while (rs.next()) {
-      tableCount = tableCount + 1;
-    }
-    assertEquals(1, tableCount);
+    assertThat(rsSizeOf(rs), is(1));
   }
 
   @Test
-  public void getSingleColumn() throws SQLException {
+  public void shouldGetSingleColumnOfArticle() throws SQLException {
     ResultSet rs = this.metaData.getColumns(null, null, "Article", "uuid");
 
-    int colCount = 0;
-    while (rs.next()) {
-      colCount += 1;
-    }
-    assertEquals(1, colCount);
+    assertThat(rsSizeOf(rs), is(1));
   }
-  
+
   @Test
-  public void getAllColumns() throws SQLException {
+  public void shouldGetAllColumnsOfArticle() throws SQLException {
     ResultSet rs = this.metaData.getColumns(null, null, "Article", null);
 
-    int colCount = 0;
-    while (rs.next()) {
-      colCount += 1;
+    assertThat(rsSizeOf(rs),is(5));
+  }
+
+  @Test
+  //FIXME this is not a test: what is the target?
+  public void shouldGetAllFields() throws SQLException {
+    ResultSet rsmc = conn.getMetaData().getColumns(null, null, "OUser", null);
+    Set<String> fieldNames = new HashSet<String>();
+    while (rsmc.next()) {
+      fieldNames.add(rsmc.getString("COLUMN_NAME"));
     }
-    assertTrue(colCount > 1);
+
+    fieldNames.removeAll(Arrays.asList("name", "password", "roles", "status"));
   }
 
 }

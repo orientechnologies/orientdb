@@ -17,19 +17,22 @@
  */
 package com.orientechnologies.orient.jdbc;
 
-import com.orientechnologies.orient.core.exception.OQueryParsingException;
-import com.orientechnologies.orient.core.query.OQuery;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-
 import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.sql.*;
-import java.sql.Date;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.exception.OQueryParsingException;
+import com.orientechnologies.orient.core.query.OQuery;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 /**
  * 
@@ -69,17 +72,12 @@ public class OrientJdbcPreparedStatement extends OrientJdbcStatement implements 
   }
 
   public int executeUpdate() throws SQLException {
-    query = new OCommandSQL(sql);
-    rawResult = database.command(query).execute(params.values().toArray());
+    return this.executeUpdate(sql);
+  }
 
-    if (rawResult instanceof ODocument)
-      return 1;
-    else if (rawResult instanceof Integer)
-      return (Integer) rawResult;
-    else if (rawResult instanceof Collection)
-      return ((Collection) rawResult).size();
-
-    return 0;
+  @Override
+  public <RET> RET executeCommand(OCommandRequest query) {
+    return database.command(query).execute(params.values().toArray());
   }
 
   public void setNull(int parameterIndex, int sqlType) throws SQLException {

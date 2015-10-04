@@ -1,58 +1,52 @@
 package com.orientechnologies.orient.jdbc;
 
-import java.sql.Date;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.Statement;
-import java.sql.Types;
+import org.junit.Test;
+
+import java.sql.*;
 import java.util.Calendar;
 import java.util.TimeZone;
 
-import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.hamcrest.Matchers.*;
+import static org.junit.Assert.*;
 
 public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
 
   @Test
   public void shouldMapReturnTypes() throws Exception {
 
-    assertFalse(conn.isClosed());
+    assertThat(conn.isClosed(), is(false));
 
     Statement stmt = conn.createStatement();
     ResultSet rs = stmt.executeQuery("SELECT stringKey, intKey, text, length, date FROM Item");
-    assertEquals(20, rs.getFetchSize());
+    assertThat(rs.getFetchSize(), equalTo(20));
 
-    assertTrue(rs.isBeforeFirst());
+    assertThat(rs.isBeforeFirst(), is(true));
 
-    assertTrue(rs.next());
+    assertThat(rs.next(), is(true));
 
-    assertEquals(0, rs.getRow());
+    assertThat(rs.getRow(), equalTo(0));
 
-    assertEquals("1", rs.getString(1));
-    assertEquals("1", rs.getString("stringKey"));
-    assertEquals(1, rs.findColumn("stringKey"));
+    assertThat(rs.getString(1), equalTo("1"));
+    assertThat(rs.getString("stringKey"), equalTo("1"));
+    assertThat(rs.findColumn("stringKey"), equalTo(1));
 
-    assertEquals(1, rs.getInt(2));
-    assertEquals(1, rs.getInt("intKey"));
+    assertThat(rs.getInt(2), equalTo(1));
+    assertThat(rs.getInt("intKey"), equalTo(1));
 
-    assertEquals(rs.getString("text").length(), rs.getLong("length"));
+    assertEquals(rs.getString("text").length(), rs.getInt("length"));
 
     Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
     cal.add(Calendar.HOUR_OF_DAY, -1);
     Date date = new Date(cal.getTimeInMillis());
-    assertEquals(date.toString(), rs.getDate("date").toString());
-    assertEquals(date.toString(), rs.getDate(5).toString());
+    assertThat(rs.getDate("date").toString(), equalTo(date.toString()));
+    assertThat(rs.getDate(5).toString(), equalTo(date.toString()));
 
     rs.last();
 
-    assertEquals(19, rs.getRow());
+    assertThat(rs.getRow(), equalTo(19));
     rs.close();
 
-    assertTrue(rs.isClosed());
+    assertThat(rs.isClosed(), is(true));
   }
 
   @Test
@@ -61,27 +55,27 @@ public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
 
     Statement stmt = conn.createStatement();
     ResultSet rs = stmt.executeQuery("SELECT * FROM Item");
-    assertEquals(20, rs.getFetchSize());
+    assertThat(rs.getFetchSize(), equalTo(20));
 
-    assertTrue(rs.isBeforeFirst());
+    assertThat(rs.isBeforeFirst(), is(true));
 
-    assertTrue(rs.next());
+    assertThat(rs.next(), is(true));
 
-    assertEquals(0, rs.getRow());
+    assertThat(rs.getRow(), equalTo(0));
 
     rs.last();
 
-    assertEquals(19, rs.getRow());
+    assertThat(rs.getRow(), equalTo(19));
 
-    assertFalse(rs.next());
+    assertThat(rs.next(), is(false));
 
     rs.afterLast();
 
-    assertFalse(rs.next());
+    assertThat(rs.next(), is(false));
 
     rs.close();
 
-    assertTrue(rs.isClosed());
+    assertThat(rs.isClosed(), is(true));
 
     stmt.close();
 
@@ -91,14 +85,14 @@ public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
   @Test
   public void shouldReturnResultSetAfterExecute() throws Exception {
 
-    assertFalse(conn.isClosed());
+    assertThat(conn.isClosed(), is(false));
 
     Statement stmt = conn.createStatement();
 
-    assertTrue(stmt.execute("SELECT stringKey, intKey, text, length, date FROM Item"));
+    assertThat(stmt.execute("SELECT stringKey, intKey, text, length, date FROM Item"), is(true));
     ResultSet rs = stmt.getResultSet();
-    assertNotNull(rs);
-    assertEquals(20, rs.getFetchSize());
+    assertThat(rs, is(notNullValue()));
+    assertThat(rs.getFetchSize(), equalTo(20));
 
   }
 
@@ -111,25 +105,25 @@ public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
 
     rs.next();
     ResultSetMetaData metaData = rs.getMetaData();
-    assertEquals(5, metaData.getColumnCount());
+    assertThat(metaData.getColumnCount(), equalTo(5));
 
-    assertEquals("stringKey", metaData.getColumnName(1));
-    assertTrue(rs.getObject(1) instanceof String);
+    assertThat(metaData.getColumnName(1), equalTo("stringKey"));
+    assertThat(rs.getObject(1) instanceof String, is(true));
 
-    assertEquals("intKey", metaData.getColumnName(2));
+    assertThat(metaData.getColumnName(2), equalTo("intKey"));
 
-    assertEquals("text", metaData.getColumnName(3));
-    assertTrue(rs.getObject(3) instanceof String);
+    assertThat(metaData.getColumnName(3), equalTo("text"));
+    assertThat(rs.getObject(3) instanceof String, is(true));
 
-    assertEquals("length", metaData.getColumnName(4));
+    assertThat(metaData.getColumnName(4), equalTo("length"));
 
-    assertEquals("date", metaData.getColumnName(5));
+    assertThat(metaData.getColumnName(5), equalTo("date"));
 
   }
 
   @Test
   public void shouldMapOrientTypesToJavaSQL() throws Exception {
-    assertFalse(conn.isClosed());
+    assertThat(conn.isClosed(), is(false));
 
     Statement stmt = conn.createStatement();
     ResultSet rs = stmt.executeQuery("SELECT stringKey, intKey, text, length, date FROM Item");
@@ -137,19 +131,19 @@ public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
     rs.next();
     ResultSetMetaData metaData = rs.getMetaData();
 
-    assertEquals(5, metaData.getColumnCount());
+    assertThat(metaData.getColumnCount(), equalTo(5));
 
-    assertEquals(Types.INTEGER, metaData.getColumnType(2));
+    assertThat(metaData.getColumnType(2), equalTo(java.sql.Types.INTEGER));
 
-    assertEquals(Types.VARCHAR, metaData.getColumnType(3));
-    assertTrue(rs.getObject(3) instanceof String);
+    assertThat(metaData.getColumnType(3), equalTo(java.sql.Types.VARCHAR));
+    assertThat(rs.getObject(3) instanceof String, is(true));
 
-    assertEquals(Types.BIGINT, metaData.getColumnType(4));
+    assertThat(metaData.getColumnType(4), equalTo(java.sql.Types.BIGINT));
 
-    assertEquals(Types.TIMESTAMP, metaData.getColumnType(5));
+    assertThat(metaData.getColumnType(5), equalTo(java.sql.Types.TIMESTAMP));
 
-    assertEquals(String.class.getName(), metaData.getColumnClassName(1));
-    assertEquals(Types.VARCHAR, metaData.getColumnType(1));
+    assertThat(metaData.getColumnClassName(1), equalTo(String.class.getName()));
+    assertThat(metaData.getColumnType(1), equalTo(java.sql.Types.VARCHAR));
 
   }
 

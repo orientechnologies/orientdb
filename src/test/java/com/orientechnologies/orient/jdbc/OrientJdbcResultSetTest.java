@@ -1,73 +1,61 @@
 package com.orientechnologies.orient.jdbc;
 
-import junit.framework.Assert;
 import org.junit.Test;
 
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.Types;
 
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
 
 public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
 
   @Test
   public void shouldMapReturnTypes() throws Exception {
 
-    assertFalse(conn.isClosed());
-
-    Statement stmt = conn.createStatement();
-    ResultSet rs = stmt.executeQuery("SELECT stringKey, intKey, text, length, date FROM Item");
+    ResultSet rs = conn.createStatement().executeQuery("SELECT stringKey, intKey, text, length, date FROM Item");
 
     ResultSetMetaData metaData = rs.getMetaData();
+    assertThat(metaData, is(notNullValue()));
 
-    assertNotNull(metaData);
+    assertThat(metaData.getColumnType(1), equalTo(Types.VARCHAR));
+    assertThat(metaData.getColumnType(2), equalTo(Types.INTEGER));
+    assertThat(metaData.getColumnType(3), equalTo(Types.VARCHAR));
+    assertThat(metaData.getColumnType(4), equalTo(Types.BIGINT));
+    assertThat(metaData.getColumnType(5), equalTo(Types.TIMESTAMP));
   }
 
   @Test
-  public void testDouble() throws Exception {
-    assertFalse(conn.isClosed());
+  public void shouldMapRatingToDouble() throws Exception {
 
-    Statement stmt = conn.createStatement();
-    ResultSet rs = stmt.executeQuery("SELECT * FROM Author limit 10");
+    ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM Author limit 10");
+    int size = 0;
+    while (rs.next()) {
+      assertThat(rs.getDouble("rating"), is(notNullValue()));
+      size++;
+    }
+    assertEquals(size, 10);
+  }
+
+  @Test
+  public void shouldConvertUUIDToDouble() throws Exception {
+
+    ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM Author limit 10");
     int count = 0;
     while (rs.next()) {
-      Double rating = rs.getDouble("rating");
-      assertNotNull(rating);
+      assertThat(rs.getDouble("uuid"), is(notNullValue()));
       count++;
     }
-    assertEquals(count, 10);
+    assertThat(10, equalTo(count));
   }
 
   @Test
-  public void testDoubleConversion() throws Exception {
-    assertFalse(conn.isClosed());
+  public void shouldReturnEmptyResultSet() throws Exception {
 
-    Statement stmt = conn.createStatement();
-    ResultSet rs = stmt.executeQuery("SELECT * FROM Author limit 10");
-    int count = 0;
-    while (rs.next()) {
-      Double rating = rs.getDouble("uuid");
-      assertNotNull(rating);
-      count++;
-    }
-    assertEquals(count, 10);
-  }
+    ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM Author where false = true");
 
-  @Test
-  public void testNoResult() throws Exception {
-    assertFalse(conn.isClosed());
-
-    Statement stmt = conn.createStatement();
-    ResultSet rs = stmt.executeQuery("SELECT * FROM Author where false = true");
-    try {
-      rs.getMetaData().getColumnType(1);
-      Assert.assertTrue(false);
-    } catch (SQLException e) {
-      Assert.assertTrue(true);
-    }
+    assertThat(rs.next(), is(false));
   }
 }

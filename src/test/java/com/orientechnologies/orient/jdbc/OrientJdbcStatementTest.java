@@ -1,26 +1,24 @@
 package com.orientechnologies.orient.jdbc;
 
+import org.junit.Test;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import org.junit.Test;
-
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
-
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
 
 public class OrientJdbcStatementTest extends OrientJdbcBaseTest {
 
   @Test
   public void shouldCreateStatement() throws Exception {
     Statement stmt = conn.createStatement();
-    assertNotNull(stmt);
+    assertThat(stmt, is(notNullValue()));
     stmt.close();
-    assertTrue(stmt.isClosed());
+    assertThat(stmt.isClosed(), is(true));
 
   }
 
@@ -29,7 +27,7 @@ public class OrientJdbcStatementTest extends OrientJdbcBaseTest {
     Statement stmt = conn.createStatement();
     assertThat(stmt.execute(""), is(false));
     assertThat(stmt.getResultSet(), is(nullValue()));
-    assertTrue(!stmt.getMoreResults());
+    assertThat(stmt.getMoreResults(), is(false));
   }
 
   @Test
@@ -37,11 +35,10 @@ public class OrientJdbcStatementTest extends OrientJdbcBaseTest {
 
     Statement st = conn.createStatement();
     assertThat(st.execute("select 1"), is(true));
-    assertNotNull(st.getResultSet());
+    assertThat(st.getResultSet(), is(notNullValue()));
     ResultSet resultSet = st.getResultSet();
     resultSet.first();
-    int one = resultSet.getInt("1");
-    assertThat(one, is(1));
+    assertThat(resultSet.getInt("1"), is(1));
     assertThat(st.getMoreResults(), is(false));
 
   }

@@ -1,30 +1,26 @@
 package com.orientechnologies.orient.jdbc;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import org.junit.Test;
+
 import java.io.IOException;
 import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import org.junit.Test;
-
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.*;
+import static org.hamcrest.Matchers.*;
 
 public class OrientJdbcStatementDMLtest extends OrientJdbcBaseTest {
 
   @Test
   public void shouldInsertANewItem() throws Exception {
 
-    assertFalse(conn.isClosed());
     Date date = new Date(System.currentTimeMillis());
 
     Statement stmt = conn.createStatement();
@@ -32,49 +28,46 @@ public class OrientJdbcStatementDMLtest extends OrientJdbcBaseTest {
         .executeUpdate("INSERT into Item (stringKey, intKey, text, length, date) values ('100','100','dummy text','10','"
             + date.toString() + "')");
 
-    assertEquals(1, updated);
+    assertThat(updated, equalTo(1));
 
     stmt = conn.createStatement();
     ResultSet rs = stmt.executeQuery("SELECT stringKey, intKey, text, length, date FROM Item where intKey = '100' ");
     rs.next();
-    assertEquals(100, rs.getInt("intKey"));
-    assertEquals("100", rs.getString("stringKey"));
-    assertEquals(date.toString(), rs.getDate("date").toString());
+    assertThat(rs.getInt("intKey"), equalTo(100));
+    assertThat(rs.getString("stringKey"), equalTo("100"));
+    assertThat(rs.getDate("date").toString(), equalTo(date.toString()));
 
   }
 
   @Test
   public void shouldUpdateAnItem() throws Exception {
 
-    assertFalse(conn.isClosed());
-
     Statement stmt = conn.createStatement();
     int updated = stmt.executeUpdate("UPDATE Item set text = 'UPDATED'  WHERE intKey = '10'");
 
-    assertFalse(stmt.getMoreResults());
-    assertEquals(1, updated);
+    assertThat(stmt.getMoreResults(), is(false));
+    assertThat(updated, equalTo(1));
 
     stmt = conn.createStatement();
     ResultSet rs = stmt.executeQuery("SELECT stringKey, intKey, text, length, date FROM Item where intKey = '10' ");
     rs.next();
-    assertEquals("UPDATED", rs.getString("text"));
+    assertThat(rs.getString("text"), equalTo("UPDATED"));
 
   }
 
   @Test
   public void shouldDeleteAnItem() throws Exception {
 
-    assertFalse(conn.isClosed());
 
     Statement stmt = conn.createStatement();
     int updated = stmt.executeUpdate("DELETE FROM Item WHERE intKey = '10'");
 
-    assertFalse(stmt.getMoreResults());
+    assertThat(stmt.getMoreResults(), is(false));
     assertEquals(1, updated);
 
     stmt = conn.createStatement();
     ResultSet rs = stmt.executeQuery("SELECT stringKey, intKey, text, length, date FROM Item where intKey = '10' ");
-    assertFalse(rs.next());
+    assertThat(rs.next(), is(false));
 
   }
 
@@ -109,8 +102,7 @@ public class OrientJdbcStatementDMLtest extends OrientJdbcBaseTest {
     stmt.addBatch("CREATE PROPERTY Account.id INTEGER ");
     stmt.addBatch("CREATE PROPERTY Account.birthDate DATE ");
     stmt.addBatch("CREATE PROPERTY Account.binary BINARY ");
-    int[] results = stmt.executeBatch();
-    assertThat(results.length, equalTo(4));
+    assertThat(stmt.executeBatch().length, equalTo(4));
     stmt.close();
 
     // double value test pattern?

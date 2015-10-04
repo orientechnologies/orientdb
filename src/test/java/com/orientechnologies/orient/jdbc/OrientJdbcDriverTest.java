@@ -1,15 +1,15 @@
 package com.orientechnologies.orient.jdbc;
 
+import org.junit.Test;
+
 import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
 
-import org.junit.Test;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.Assert.assertThat;
 
 public class OrientJdbcDriverTest extends OrientJdbcBaseTest {
 
@@ -18,9 +18,8 @@ public class OrientJdbcDriverTest extends OrientJdbcBaseTest {
 
     Driver drv = new OrientJdbcDriver();
 
-    assertTrue(drv.acceptsURL("jdbc:orient:local:./working/db/test"));
-
-    assertFalse(drv.acceptsURL("local:./working/db/test"));
+    assertThat(drv.acceptsURL("jdbc:orient:local:./working/db/test"), is(true));
+    assertThat(drv.acceptsURL("local:./working/db/test"), is(false));
   }
 
   @Test
@@ -32,8 +31,8 @@ public class OrientJdbcDriverTest extends OrientJdbcBaseTest {
 
     OrientJdbcConnection conn = (OrientJdbcConnection) DriverManager.getConnection("jdbc:orient:memory:test", info);
 
-    assertNotNull(conn);
+    assertThat(conn, is(notNullValue()));
     conn.close();
-    assertTrue(conn.isClosed());
+    assertThat(conn.isClosed(), is(true));
   }
 }

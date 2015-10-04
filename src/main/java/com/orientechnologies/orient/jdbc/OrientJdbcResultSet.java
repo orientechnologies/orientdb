@@ -17,17 +17,6 @@
  */
 package com.orientechnologies.orient.jdbc;
 
-import java.io.InputStream;
-import java.io.Reader;
-import java.math.BigDecimal;
-import java.net.URL;
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
-
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
@@ -35,6 +24,14 @@ import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+
+import java.io.InputStream;
+import java.io.Reader;
+import java.math.BigDecimal;
+import java.net.URL;
+import java.sql.*;
+import java.sql.Date;
+import java.util.*;
 
 /**
  * @author Roberto Franchini (CELI srl - franchin--at--celi.it)
