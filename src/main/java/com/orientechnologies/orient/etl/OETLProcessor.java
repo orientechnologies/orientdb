@@ -22,9 +22,9 @@ import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.etl.block.OBlock;
 import com.orientechnologies.orient.etl.extractor.OExtractor;
 import com.orientechnologies.orient.etl.loader.OLoader;
@@ -46,7 +46,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * ETL processor class.
- * 
+ *
  * @author Luca Garulli (l.garulli-at-orientechnologies.com)
  */
 public class OETLProcessor {
@@ -57,7 +57,7 @@ public class OETLProcessor {
   protected OExtractor                 extractor;
   protected OLoader                    loader;
   protected List<OTransformer>         transformers;
-  protected OBasicCommandContext       context;
+  protected OCommandContext            context;
   protected long                       startTime;
   protected long                       elapsed;
   protected OETLProcessorStats         stats       = new OETLProcessorStats();
@@ -68,29 +68,9 @@ public class OETLProcessor {
   protected int                        maxRetries  = 10;
   private Thread[]                     threads;
 
-  public enum LOG_LEVELS {
-    NONE, ERROR, INFO, DEBUG
-  }
-
-  public class OETLProcessorStats {
-    public long       lastExtractorProgress = 0;
-    public long       lastLoaderProgress    = 0;
-    public long       lastLap               = 0;
-    public AtomicLong warnings              = new AtomicLong();
-    public AtomicLong errors                = new AtomicLong();
-
-    public long incrementWarnings() {
-      return warnings.incrementAndGet();
-    }
-
-    public long incrementErrors() {
-      return errors.incrementAndGet();
-    }
-  }
-
   /**
    * Creates an ETL processor by setting all the components on construction.
-   * 
+   *
    * @param iBeginBlocks
    *          List of Blocks to execute at the beginning of processing
    * @param iSource
@@ -107,8 +87,7 @@ public class OETLProcessor {
    *          Execution Context
    */
   public OETLProcessor(final List<OBlock> iBeginBlocks, final OSource iSource, final OExtractor iExtractor,
-      final List<OTransformer> iTransformers, final OLoader iLoader, final List<OBlock> iEndBlocks,
-      final OBasicCommandContext iContext) {
+      final List<OTransformer> iTransformers, final OLoader iLoader, final List<OBlock> iEndBlocks, final OCommandContext iContext) {
     beginBlocks = iBeginBlocks;
     source = iSource;
     extractor = iExtractor;
@@ -123,7 +102,6 @@ public class OETLProcessor {
   }
 
   public static void main(final String[] args) {
-    ODocument cfgGlobal = null;
 
     System.out.println("OrientDB etl v." + OConstants.getVersion() + " " + OConstants.ORIENT_URL);
     if (args.length == 0) {
@@ -132,57 +110,52 @@ public class OETLProcessor {
       System.exit(1);
     }
 
-    final OBasicCommandContext context = createDefaultContext();
+    final OETLProcessor processor = parseConfigAndParameters(args);
 
-    ODocument configuration = null;
+    processor.execute();
+  }
 
+  protected static OETLProcessor parseConfigAndParameters(String[] args) {
+    final OCommandContext context = createDefaultContext();
+
+    ODocument configuration = new ODocument().fromJSON("{}");
     for (final String arg : args) {
-      if (arg.charAt(0) == '-') {
-        final String[] parts = arg.substring(1).split("=");
-        context.setVariable(parts[0].toUpperCase(), parts[1]);
-      } else {
+      if (arg.charAt(0) != '-') {
         try {
           final String config = OIOUtils.readFileAsString(new File(arg));
-          configuration = new ODocument().fromJSON(config, "noMap");
-          cfgGlobal = configuration.field("config");
+
+          configuration.merge(new ODocument().fromJSON(config, "noMap"), true, true);
+          // configuration = ;
+          ODocument cfgGlobal = configuration.field("config");
+          if (cfgGlobal != null) {
+            for (String f : cfgGlobal.fieldNames()) {
+              context.setVariable(f, cfgGlobal.field(f));
+            }
+          }
         } catch (IOException e) {
-          throw new OConfigurationException("Error on loading config file: " + arg);
+          throw new OConfigurationException("Error on loading config file: " + arg, e);
         }
       }
     }
 
-    if (cfgGlobal != null) {
-      // INIT ThE CONTEXT WITH GLOBAL CONFIGURATION
-      for (String f : cfgGlobal.fieldNames()) {
-        context.setVariable(f, cfgGlobal.field(f));
+    // override with args passes by command line
+    for (final String arg : args) {
+      if (arg.charAt(0) == '-') {
+        final String[] parts = arg.substring(1).split("=");
+        context.setVariable(parts[0], parts[1]);
       }
     }
 
-    new OETLProcessor().parse(configuration, context).execute();
+    return new OETLProcessor().parse(configuration, context);
   }
 
-  protected static OBasicCommandContext createDefaultContext() {
-    final OBasicCommandContext context = new OBasicCommandContext();
+  protected static OCommandContext createDefaultContext() {
+    final OCommandContext context = new OBasicCommandContext();
     context.setVariable("dumpEveryMs", 1000);
     return context;
   }
 
-  protected static Collection<ODocument> parseTransformers(final String value) {
-    final Collection<ODocument> cfgTransformers = new ArrayList<ODocument>();
-    if (!value.isEmpty()) {
-      if (value.charAt(0) == '{') {
-        cfgTransformers.add(new ODocument().fromJSON(value, "noMap"));
-      } else if (value.charAt(0) == '[') {
-        final List<String> items = new ArrayList<String>();
-        OStringSerializerHelper.getCollection(value, 0, items);
-        for (String item : items)
-          cfgTransformers.add(new ODocument().fromJSON(item, "noMap"));
-      }
-    }
-    return cfgTransformers;
-  }
-
-  public OETLProcessor parse(final ODocument cfg, final OBasicCommandContext iContext) {
+  public OETLProcessor parse(final ODocument cfg, final OCommandContext iContext) {
     return parse((Collection<ODocument>) cfg.field("begin"), (ODocument) cfg.field("source"), (ODocument) cfg.field("extractor"),
         (Collection<ODocument>) cfg.field("transformers"), (ODocument) cfg.field("loader"),
         (Collection<ODocument>) cfg.field("end"), iContext);
@@ -205,12 +178,11 @@ public class OETLProcessor {
    *          List of Block configurations to execute at the end of processing
    * @param iContext
    *          Execution Context
-   * 
    * @return Current OETProcessor instance
    **/
   public OETLProcessor parse(final Collection<ODocument> iBeginBlocks, final ODocument iSource, final ODocument iExtractor,
       final Collection<ODocument> iTransformers, final ODocument iLoader, final Collection<ODocument> iEndBlocks,
-      final OBasicCommandContext iContext) {
+      final OCommandContext iContext) {
     if (iExtractor == null)
       throw new IllegalArgumentException("No Extractor configured");
 
@@ -228,7 +200,6 @@ public class OETLProcessor {
           final OBlock b = factory.getBlock(name);
           beginBlocks.add(b);
           configureComponent(b, (ODocument) block.field(name), iContext);
-          b.execute();
         }
 
       if (iSource != null) {
@@ -317,7 +288,7 @@ public class OETLProcessor {
     return logLevel;
   }
 
-  public OBasicCommandContext getContext() {
+  public OCommandContext getContext() {
     return context;
   }
 
@@ -415,8 +386,8 @@ public class OETLProcessor {
     if (cfgMaxRetries != null)
       maxRetries = cfgMaxRetries;
 
-    final int dumpEveryMs = (Integer) context.getVariable("dumpEveryMs");
-    if (dumpEveryMs > 0) {
+    final Integer dumpEveryMs = (Integer) context.getVariable("dumpEveryMs");
+    if (dumpEveryMs != null && dumpEveryMs > 0) {
       dumpTask = new TimerTask() {
         @Override
         public void run() {
@@ -491,10 +462,11 @@ public class OETLProcessor {
 
     } catch (OETLProcessHaltedException e) {
       out(LOG_LEVELS.ERROR, "ETL process halted: %s", e);
+      throw e;
     }
   }
 
-  protected void configureComponent(final OETLComponent iComponent, final ODocument iCfg, final OBasicCommandContext iContext) {
+  protected void configureComponent(final OETLComponent iComponent, final ODocument iCfg, final OCommandContext iContext) {
     iComponent.configure(this, iCfg, iContext);
   }
 
@@ -625,6 +597,26 @@ public class OETLProcessor {
       for (int i = 0; i < cores; ++i) {
         threads[i] = new Thread("OrientDB ETL Pipeline-" + i);
       }
+    }
+  }
+
+  public enum LOG_LEVELS {
+    NONE, ERROR, INFO, DEBUG
+  }
+
+  public class OETLProcessorStats {
+    public long       lastExtractorProgress = 0;
+    public long       lastLoaderProgress    = 0;
+    public long       lastLap               = 0;
+    public AtomicLong warnings              = new AtomicLong();
+    public AtomicLong errors                = new AtomicLong();
+
+    public long incrementWarnings() {
+      return warnings.incrementAndGet();
+    }
+
+    public long incrementErrors() {
+      return errors.incrementAndGet();
     }
   }
 }

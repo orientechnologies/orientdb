@@ -18,26 +18,28 @@
 
 package com.orientechnologies.orient.etl.transformer;
 
-import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.etl.OETLProcessor;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Merges two records. Useful when a record needs to be updated rather than created.
  */
 public abstract class OAbstractLookupTransformer extends OAbstractTransformer {
-  protected String               joinFieldName;
-  protected Object               joinValue;
-  protected String               lookup;
-  protected ACTION               unresolvedLinkAction = ACTION.NOTHING;
+  protected String             joinFieldName;
+  protected Object             joinValue;
+  protected String             lookup;
+  protected ACTION             unresolvedLinkAction = ACTION.NOTHING;
   private OSQLQuery<ODocument> sqlQuery;
   private OIndex<?>            index;
 
@@ -46,7 +48,7 @@ public abstract class OAbstractLookupTransformer extends OAbstractTransformer {
   }
 
   @Override
-  public void configure(final OETLProcessor iProcessor, final ODocument iConfiguration, OBasicCommandContext iContext) {
+  public void configure(final OETLProcessor iProcessor, final ODocument iConfiguration, OCommandContext iContext) {
     super.configure(iProcessor, iConfiguration, iContext);
 
     joinFieldName = iConfiguration.field("joinFieldName");
@@ -83,20 +85,34 @@ public abstract class OAbstractLookupTransformer extends OAbstractTransformer {
         final OType idxFieldType = index.getDefinition().getTypes()[0];
         joinValue = OType.convert(joinValue, idxFieldType.getDefaultJavaType());
         result = index.get(joinValue);
-      } else
+      } else {
+        if (sqlQuery instanceof OSQLSynchQuery)
+          ((OSQLSynchQuery) sqlQuery).resetPagination();
+
         result = pipeline.getDocumentDatabase().query(sqlQuery, joinValue);
+      }
 
-      if (result != null)
-        if (result instanceof Collection) {
-          if (!((Collection) result).isEmpty())
-            result = ((Collection<OIdentifiable>) result).iterator().next().getRecord();
-          else
-            result = null;
-        } else if (result instanceof OIdentifiable)
+      if (result != null && result instanceof Collection) {
+        final Collection coll = (Collection) result;
+
+        if (!coll.isEmpty()) {
+          if (iReturnRIDS) {
+            // CONVERT COLLECTION OF RECORDS IN RIDS
+            final List<ORID> resultRIDs = new ArrayList<ORID>(coll.size());
+            for (Object o : coll) {
+              if (o instanceof OIdentifiable)
+                resultRIDs.add(((OIdentifiable) o).getIdentity());
+            }
+            result = resultRIDs;
+          }
+        } else
+          result = null;
+      } else if (result instanceof OIdentifiable) {
+        if (iReturnRIDS)
+          result = ((OIdentifiable) result).getIdentity();
+        else
           result = ((OIdentifiable) result).getRecord();
-
-      if (iReturnRIDS && result instanceof ORecord)
-        result = ((ORecord) result).getIdentity();
+      }
     }
 
     return result;

@@ -17,10 +17,16 @@
  */
 package com.orientechnologies.orient.etl.transformer;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.etl.ETLBaseTest;
+import com.orientechnologies.orient.etl.OETLProcessHaltedException;
 import com.tinkerpop.blueprints.Parameter;
 import com.tinkerpop.blueprints.Vertex;
+import junit.framework.Assert;
+import org.junit.Before;
 import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * Tests ETL Vertex Transformer.
@@ -28,37 +34,55 @@ import org.junit.Test;
  * @author Gregor Frey
  */
 public class OVertexTransformerTest extends ETLBaseTest {
-  @Override
+
+  @Before
   public void setUp() {
     super.setUp();
+    OGlobalConfiguration.USE_WAL.setValue(true);
+
     graph.createVertexType("Person");
-    graph.createKeyIndex("name", Vertex.class,
-      new Parameter<String, String>("type", "UNIQUE"),
-      new Parameter<String, String>("class", "Person"));
+    graph.createKeyIndex("name", Vertex.class, new Parameter<String, String>("type", "UNIQUE"), new Parameter<String, String>(
+        "class", "Person"));
     graph.commit();
   }
 
   @Test
   public void testCreateVertex() {
     process("{source: { content: { value: 'name,\nGregor' } }, extractor : { row: {} },"
-    + " transformers: [{csv: {}}, {vertex: {class:'Person', skipDuplicates:false}},"
-    + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
+        + " transformers: [{csv: {}}, {vertex: {class:'Person', skipDuplicates:false}},"
+        + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
     assertEquals(1, graph.countVertices("Person"));
   }
 
   @Test
+  public void testCreateTargetVertexIfNotExists() {
+    process("{source: { content: { value: 'name,idf,parent\nParent,1,\nChild,2,1' } }, extractor : { row: {} },"
+        + " transformers: [{csv: {}}, {merge: { joinFieldName:'idf', lookup:'V.idf'}}, {vertex: {class:'V'}},"
+        + "{edge:{ class: 'E', joinFieldName: 'parent', lookup: 'V.idf', unresolvedLinkAction: 'CREATE' }, if: '$input.parent IS NOT NULL'}"
+        + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
+
+    assertEquals(2, graph.countVertices("V"));
+  }
+
+  @Test
   public void testErrorOnDuplicateVertex() {
-    process("{source: { content: { value: 'name,\nGregor\nGregor\nHans' } }, extractor : { row: {} },"
-    + " transformers: [{csv: {}}, {vertex: {class:'Person', skipDuplicates:false}},"
-    + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
-    assertEquals(1, graph.countVertices("Person"));
+    try {
+      process("{source: { content: { value: 'name,\nGregor\nGregor\nHans' } }, extractor : { row: {} },"
+          + " transformers: [{csv: {}}, {vertex: {class:'Person', skipDuplicates:false}},"
+          + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
+      Assert.fail();
+
+    } catch (OETLProcessHaltedException e) {
+      Assert.assertTrue(true);
+    }
+
   }
 
   @Test
   public void testSkipDuplicateVertex() {
     process("{source: { content: { value: 'name,\nGregor\nGregor\nHans' } }, extractor : { row: {} },"
-    + " transformers: [{csv: {}}, {vertex: {class:'Person', skipDuplicates:true}},"
-    + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
+        + " transformers: [{csv: {}}, {vertex: {class:'Person', skipDuplicates:true}},"
+        + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
     assertEquals(2, graph.countVertices("Person"));
   }
 }

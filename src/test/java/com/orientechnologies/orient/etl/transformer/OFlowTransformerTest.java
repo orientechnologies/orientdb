@@ -18,12 +18,13 @@
 
 package com.orientechnologies.orient.etl.transformer;
 
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.etl.ETLBaseTest;
 import com.tinkerpop.blueprints.Vertex;
 import org.junit.Test;
 
 import java.util.Iterator;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * Tests ETL Flow Transformer.

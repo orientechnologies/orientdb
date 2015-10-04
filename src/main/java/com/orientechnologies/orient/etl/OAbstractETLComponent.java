@@ -21,7 +21,7 @@ package com.orientechnologies.orient.etl;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.parser.OVariableParser;
 import com.orientechnologies.common.parser.OVariableParserListener;
-import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -33,13 +33,13 @@ import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
  */
 public abstract class OAbstractETLComponent implements OETLComponent {
   protected OETLProcessor            processor;
-  protected OBasicCommandContext     context;
+  protected OCommandContext     context;
   protected OETLProcessor.LOG_LEVELS logLevel;
   protected String                   output = null;
   protected String                   ifExpression;
 
   @Override
-  public void configure(final OETLProcessor iProcessor, final ODocument iConfiguration, final OBasicCommandContext iContext) {
+  public void configure(final OETLProcessor iProcessor, final ODocument iConfiguration, final OCommandContext iContext) {
     processor = iProcessor;
     context = iContext;
 

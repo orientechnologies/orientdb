@@ -18,7 +18,7 @@
 
 package com.orientechnologies.orient.etl.transformer;
 
-import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -50,7 +50,7 @@ public class OFieldTransformer extends OAbstractTransformer {
   }
 
   @Override
-  public void configure(OETLProcessor iProcessor, final ODocument iConfiguration, OBasicCommandContext iContext) {
+  public void configure(OETLProcessor iProcessor, final ODocument iConfiguration, OCommandContext iContext) {
     super.configure(iProcessor, iConfiguration, iContext);
     fieldName = (String) resolve(iConfiguration.field("fieldName"));
     fieldNames = (List<String>) resolve(iConfiguration.field("fieldNames"));

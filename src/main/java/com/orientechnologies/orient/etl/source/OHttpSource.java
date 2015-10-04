@@ -18,7 +18,7 @@
 
 package com.orientechnologies.orient.etl.source;
 
-import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLProcessor;
@@ -48,7 +48,7 @@ public class OHttpSource extends OAbstractSource {
   }
 
   @Override
-  public void configure(OETLProcessor iProcessor, ODocument iConfiguration, OBasicCommandContext iContext) {
+  public void configure(OETLProcessor iProcessor, ODocument iConfiguration, OCommandContext iContext) {
     super.configure(iProcessor, iConfiguration, iContext);
     url = iConfiguration.field("url");
     if (url == null || url.isEmpty())

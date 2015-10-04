@@ -27,16 +27,8 @@ echo This environment variable is needed to run this program
 goto end
 
 :okHome
-rem Get remaining unshifted command line arguments and save them in the
-set CMD_LINE_ARGS=
-
-:setArgs
-if ""%1""=="""" goto doneSetArgs
-set CMD_LINE_ARGS=%CMD_LINE_ARGS% %1
-shift
-goto setArgs
-
-:doneSetArgs
+rem Get the command line arguments and save them in the
+set CMD_LINE_ARGS=%*
 
 set KEYSTORE=%ORIENTDB_HOME%\config\cert\orientdb-console.ks
 set KEYSTORE_PASS=password

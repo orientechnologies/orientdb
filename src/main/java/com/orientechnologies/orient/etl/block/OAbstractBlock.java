@@ -18,7 +18,7 @@
 
 package com.orientechnologies.orient.etl.block;
 
-import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.etl.OAbstractETLComponent;
 
 /**
@@ -33,7 +33,7 @@ public abstract class OAbstractBlock extends OAbstractETLComponent implements OB
   }
 
   @Override
-  public void setContext(final OBasicCommandContext iContext) {
+  public void setContext(final OCommandContext iContext) {
     context = iContext;
   }
 

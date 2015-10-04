@@ -18,6 +18,8 @@
 
 package com.orientechnologies.orient.etl.transformer;
 
+import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLProcessHaltedException;
 import com.orientechnologies.orient.etl.OETLProcessor;
@@ -42,12 +44,12 @@ public class OMergeTransformer extends OAbstractLookupTransformer {
 
   @Override
   public Object executeTransform(final Object input) {
-    Object joinValue = ((ODocument) input).field(joinFieldName);
+    Object joinValue = ((ODocument) ((OIdentifiable) input).getRecord()).field(joinFieldName);
     final Object result = lookup(joinValue, false);
 
     log(OETLProcessor.LOG_LEVELS.DEBUG, "joinValue=%s, lookupResult=%s", joinValue, result);
 
-    if (result == null) {
+    if (result == null || OMultiValue.getSize(result) == 0) {
       // APPLY THE STRATEGY DEFINED IN unresolvedLinkAction
       switch (unresolvedLinkAction) {
       case NOTHING:
@@ -65,12 +67,13 @@ public class OMergeTransformer extends OAbstractLookupTransformer {
       case HALT:
         throw new OETLProcessHaltedException("[Merge transformer] Cannot resolve join for value '" + joinValue + "'");
       }
-    } else {
-      ((ODocument) result).merge((ODocument) input, true, false);
-
+    } else if (OMultiValue.getSize(result) > 1)
+      throw new OETLProcessHaltedException("[Merge transformer] Multiple results returned from join for value '" + joinValue + "'");
+    else {
+      final Object o = OMultiValue.getFirstValue(result);
+      ((ODocument) o).merge((ODocument) ((OIdentifiable) input).getRecord(), true, false);
       log(OETLProcessor.LOG_LEVELS.DEBUG, "merged record %s with found record=%s", result, input);
-
-      return result;
+      return o;
     }
 
     return input;

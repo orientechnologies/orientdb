@@ -21,6 +21,7 @@ package com.orientechnologies.orient.etl;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.etl.loader.OLoader;
 import com.orientechnologies.orient.etl.transformer.OTransformer;
@@ -37,7 +38,7 @@ public class OETLPipeline {
   protected final OETLProcessor            processor;
   protected final List<OTransformer>       transformers;
   protected final OLoader                  loader;
-  protected final OBasicCommandContext     context;
+  protected final OCommandContext     context;
   protected final OETLProcessor.LOG_LEVELS logLevel;
   protected boolean                        haltOnError = true;
   protected final int                      maxRetries;
@@ -76,6 +77,8 @@ public class OETLPipeline {
   }
 
   public ODatabaseDocumentTx getDocumentDatabase() {
+    if (db != null)
+      db.activateOnCurrentThread();
     return db;
   }
 
@@ -85,6 +88,8 @@ public class OETLPipeline {
   }
 
   public OrientBaseGraph getGraphDatabase() {
+    if (graph != null)
+      graph.makeActive();
     return graph;
   }
 
@@ -93,7 +98,7 @@ public class OETLPipeline {
     return this;
   }
 
-  public OBasicCommandContext getContext() {
+  public OCommandContext getContext() {
     return context;
   }
 

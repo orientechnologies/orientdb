@@ -1,17 +1,27 @@
 {
-  config: {
-    verbose: true
+  "config": {
+    "verbose": true
   },
-  extractor : {
-    jdbc: { driver: "com.mysql.jdbc.Driver", url: "jdbc:mysql://localhost/test", userName: "root", userPassword: "", query: "select * from Client" }
+  "extractor": {
+    "jdbc": {
+      "driver": "com.mysql.jdbc.Driver",
+      "url": "jdbc:mysql://localhost/test",
+      "userName": "root",
+      "userPassword": "",
+      "query": "select * from Client"
+    }
   },
-  transformers : [
-   { vertex: { class: "Client"} }
+  "transformers": [
+    {
+      "vertex": {
+        "class": "Client"
+      }
+    }
   ],
-  loader : {
-    orientdb: {
-      dbURL: "plocal:/temp/databases/jdbctest",
-      dbAutoCreate: true
+  "loader": {
+    "orientdb": {
+      "dbURL": "plocal:/temp/databases/jdbctest",
+      "dbAutoCreate": true
     }
   }
 }

@@ -18,7 +18,7 @@
 
 package com.orientechnologies.orient.etl.block;
 
-import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.etl.OETLProcessor;
@@ -36,7 +36,7 @@ public class OLetBlock extends OAbstractBlock {
   }
 
   @Override
-  public void configure(OETLProcessor iProcessor, final ODocument iConfiguration, final OBasicCommandContext iContext) {
+  public void configure(OETLProcessor iProcessor, final ODocument iConfiguration, final OCommandContext iContext) {
     super.configure(iProcessor, iConfiguration, iContext);
 
     name = iConfiguration.field("name");

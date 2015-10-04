@@ -18,9 +18,12 @@
 
 package com.orientechnologies.orient.etl;
 
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import junit.framework.TestCase;
+import org.junit.After;
+import org.junit.Before;
 
 import java.util.List;
 
@@ -29,22 +32,22 @@ import java.util.List;
  *
  * @author Luca Garulli
  */
-public abstract class ETLBaseTest extends TestCase {
+public abstract class ETLBaseTest {
   protected String[] names    = new String[] { "Jay", "Luca", "Bill", "Steve", "Jill", "Luigi", "Enrico", "Emanuele" };
   protected String[] surnames = new String[] { "Miner", "Ferguson", "Cancelli", "Lavori", "Raggio", "Eagles", "Smiles", "Ironcutter" };
 
   protected OrientGraph graph;
   protected OETLProcessor proc;
 
-  @Override
-  protected void setUp() {
+  @Before
+  public void setUp() {
     graph = new OrientGraph("memory:ETLBaseTest");
     graph.setUseLightweightEdges(false);
     proc = new OETLProcessor();
     proc.getFactory().registerLoader(TestLoader.class);
   }
 
-  @Override
+  @After
   public void tearDown() {
     graph.drop();
   }
@@ -53,9 +56,15 @@ public abstract class ETLBaseTest extends TestCase {
     return ((TestLoader) proc.getLoader()).loadedRecords;
   }
 
-  protected void process(String cfgJson) {
+  protected void process(final String cfgJson) {
     ODocument cfg = new ODocument().fromJSON(cfgJson, "noMap");
     proc.parse(cfg, null);
+    proc.execute();
+  }
+
+  protected void process(final String cfgJson, final OCommandContext iContext) {
+    ODocument cfg = new ODocument().fromJSON(cfgJson, "noMap");
+    proc.parse(cfg, iContext);
     proc.execute();
   }
 }
