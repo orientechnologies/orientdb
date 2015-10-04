@@ -948,12 +948,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   }
 
   @Override
-  public void incrementalBackup(String backupDirectory) {
+  public void incrementalBackup(final String backupDirectory) {
     wrapped.incrementalBackup(backupDirectory);
   }
 
   @Override
-  public void restoreFromIncrementalBackup(String filePath) {
+  public void restoreFromIncrementalBackup(final String filePath) {
     wrapped.restoreFromIncrementalBackup(filePath);
   }
 
@@ -963,7 +963,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   }
 
   @Override
-  public void close(final boolean iForce, boolean onDelete) {
+  public void close(final boolean iForce, final boolean onDelete) {
     wrapped.close(iForce, onDelete);
 
     if (isClosed())
