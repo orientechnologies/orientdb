@@ -594,10 +594,14 @@ public class OrientEdge extends OrientElement implements Edge {
         return false;
       }
 
-      if (coll.size() == 1)
-        iVertex.field(iFieldName, coll.iterator().next());
-      else if (coll.size() == 0)
-        iVertex.removeField(iFieldName);
+      if (getGraph().isAutoScaleEdgeType()) {
+        // SCALE DOWN THE TYPE (SAVES SPACE BUT COULD CAUSE VALIDATION ERRORS)
+        if (coll.size() == 1)
+          iVertex.field(iFieldName, coll.iterator().next());
+        else if (coll.size() == 0)
+          iVertex.removeField(iFieldName);
+      }
+
     } else
       throw new IllegalStateException("Wrong type found in the field '" + iFieldName + "': " + iFieldValue.getClass());
 
