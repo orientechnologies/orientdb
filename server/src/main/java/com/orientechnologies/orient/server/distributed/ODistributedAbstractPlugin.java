@@ -246,11 +246,13 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
       ODocument oldCfg = cachedDatabaseConfiguration.get(iDatabaseName);
       Integer oldVersion = oldCfg != null ? (Integer) oldCfg.field("version") : null;
       if (oldVersion == null)
-        oldVersion = 1;
+        oldVersion = 0;
 
       Integer currVersion = (Integer) cfg.field("version");
       if (currVersion == null)
-        currVersion = 1;
+        currVersion = 0;
+
+      final boolean modified = currVersion >= oldVersion;
 
       if (oldCfg != null && oldVersion > currVersion) {
         // NO CHANGE, SKIP IT
@@ -297,8 +299,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
             }
         }
       }
+      return modified;
     }
-    return true;
   }
 
   public ODistributedConfiguration getDatabaseConfiguration(final String iDatabaseName) {

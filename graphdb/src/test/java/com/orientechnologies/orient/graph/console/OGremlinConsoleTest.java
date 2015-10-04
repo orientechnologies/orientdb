@@ -65,6 +65,37 @@ public class OGremlinConsoleTest {
     }
   }
 
+
+  @Test
+  public void testMoveVertexCommand() {
+    final String INPUT_FILE = "src/test/resources/graph-example-2.xml";
+    String dbUrl = "memory:testMoveVertexCommand";
+    StringBuilder builder = new StringBuilder();
+    builder.append("create database " + dbUrl + ";\n");
+    builder.append("import database " + INPUT_FILE + " batchSize=10;\n");
+    builder.append("create class newposition extends V;\n");
+    builder.append("move vertex (select from V) to class:newposition;\n");
+    OConsoleDatabaseApp console = new OGremlinConsole(new String[] { builder.toString() });
+
+    try {
+      console.run();
+
+      ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
+      db.open("admin", "admin");
+      try {
+        List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from newposition"));
+        Assert.assertFalse(result.isEmpty());
+
+      } finally {
+        db.close();
+      }
+    } finally {
+      console.close();
+    }
+
+  }
+
+
   @Test
   public void testGraphMLImportWithSmallBatch() {
     final String INPUT_FILE = "src/test/resources/graph-example-2.xml";

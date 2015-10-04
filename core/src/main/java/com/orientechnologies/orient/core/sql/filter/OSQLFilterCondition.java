@@ -300,11 +300,14 @@ public class OSQLFilterCondition {
     if (iValue == null)
       return null;
 
-    if (iCurrentRecord != null && iCurrentRecord.getRecord().getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
-      try {
-        iCurrentRecord = iCurrentRecord.getRecord().load();
-      } catch (ORecordNotFoundException e) {
-        return null;
+    if (iCurrentRecord != null) {
+      iCurrentRecord = iCurrentRecord.getRecord();
+      if (iCurrentRecord!=null && ((ODocument)iCurrentRecord).getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
+        try {
+          iCurrentRecord = iCurrentRecord.getRecord().load();
+        } catch (ORecordNotFoundException e) {
+          return null;
+        }
       }
     }
 

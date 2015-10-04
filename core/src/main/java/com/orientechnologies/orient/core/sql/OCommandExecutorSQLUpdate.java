@@ -668,7 +668,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
     else if (value instanceof OCommandRequest)
       value = ((OCommandRequest) value).execute(record, null, context);
 
-    if (value instanceof OIdentifiable)
+    if (value instanceof OIdentifiable && ((OIdentifiable) value).getIdentity().isPersistent())
       // USE ONLY THE RID TO AVOID CONCURRENCY PROBLEM WITH OLD VERSIONS
       value = ((OIdentifiable) value).getIdentity();
     return value;

@@ -534,19 +534,6 @@ public class OClusterPositionMap extends ODurableComponent {
     }
   }
 
-  public boolean wasSoftlyClosed() throws IOException {
-    atomicOperationsManager.acquireReadLock(this);
-    try {
-      acquireSharedLock();
-      try {
-        return writeCache.wasSoftlyClosed(fileId);
-      } finally {
-        releaseSharedLock();
-      }
-    } finally {
-      atomicOperationsManager.releaseReadLock(this);
-    }
-  }
 
 
   @Override

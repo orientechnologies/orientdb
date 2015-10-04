@@ -102,7 +102,6 @@ public class OSingleFileSegment {
   }
 
   public void setSoftlyClosed(boolean softlyClosed) throws IOException {
-    file.setSoftlyClosed(softlyClosed);
   }
 
   public boolean wasSoftlyClosedAtPreviousTime() {

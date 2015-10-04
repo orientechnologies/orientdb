@@ -1,17 +1,18 @@
 package com.orientechnologies.orient.core.sql.parser;
 
-import static org.testng.Assert.fail;
+import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
-import org.testng.annotations.Test;
+import static org.testng.Assert.fail;
 
 @Test
 public class OCreateEdgeStatementTest {
 
   protected SimpleNode checkRightSyntax(String query) {
-    return checkSyntax(query, true);
+    SimpleNode result = checkSyntax(query, true);
+    return checkSyntax(result.toString(), true);
   }
 
   protected SimpleNode checkWrongSyntax(String query) {
@@ -67,6 +68,11 @@ public class OCreateEdgeStatementTest {
 
   public void testRetrySet() {
     checkRightSyntax("create edge Foo from [#11:0, #11:3] to [#11:1, #12:0] set foo='bar', bar=2 retry 3 wait 20");
+
+  }
+
+  public void testBatch() {
+    checkRightSyntax("create edge Foo from [#11:0, #11:3] to [#11:1, #12:0] set foo='bar', bar=2 retry 3 wait 20 batch 10");
 
   }
 

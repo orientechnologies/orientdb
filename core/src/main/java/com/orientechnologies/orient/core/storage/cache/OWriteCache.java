@@ -73,12 +73,6 @@ public interface OWriteCache {
 
   Long isOpen(String fileName) throws IOException;
 
-  void setSoftlyClosed(long fileId, boolean softlyClosed) throws IOException;
-
-  void setSoftlyClosed(boolean softlyClosed) throws IOException;
-
-  boolean wasSoftlyClosed(long fileId) throws IOException;
-
   void deleteFile(long fileId) throws IOException;
 
   void truncateFile(long fileId) throws IOException;

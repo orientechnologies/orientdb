@@ -35,7 +35,7 @@ import java.util.Date;
 import java.util.List;
 
 public class OServerCommandGetConnections extends OServerCommandAuthenticatedServerAbstract {
-  protected final static DateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+  protected final static DateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
   private static final String[]     NAMES          = { "GET|connections/*" };
 

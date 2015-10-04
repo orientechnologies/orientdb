@@ -28,7 +28,7 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentComparator;
@@ -37,17 +37,17 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 @Test(groups = { "crud", "record-document" })
 public class CRUDDocumentValidationTest extends DocumentDBBaseTest {
-  private ODocument           record;
-  private ODocument           account;
+  private ODocument record;
+  private ODocument account;
 
-	@Parameters(value = "url")
-	public CRUDDocumentValidationTest(@Optional String url) {
-		super(url);
-	}
+  @Parameters(value = "url")
+  public CRUDDocumentValidationTest(@Optional String url) {
+    super(url);
+  }
 
-	@Test
+  @Test
   public void openDb() {
-		createBasicTestSchema();
+    createBasicTestSchema();
 
     record = database.newInstance("Whiz");
     account = new ODocument("Account");
@@ -112,6 +112,11 @@ public class CRUDDocumentValidationTest extends DocumentDBBaseTest {
 
   @Test(dependsOnMethods = "closeDb")
   public void createSchemaForMandatoryNullableTest() throws ParseException {
+    if (database.getMetadata().getSchema().existsClass("MyTestClass")) {
+      database.getMetadata().getSchema().dropClass("MyTestClass");
+      database.getMetadata().getSchema().reload();
+    }
+
     database.command(new OCommandSQL("CREATE CLASS MyTestClass")).execute();
     database.command(new OCommandSQL("CREATE PROPERTY MyTestClass.keyField STRING")).execute();
     database.command(new OCommandSQL("ALTER PROPERTY MyTestClass.keyField MANDATORY true")).execute();
@@ -184,9 +189,31 @@ public class CRUDDocumentValidationTest extends DocumentDBBaseTest {
   }
 
   @Test(dependsOnMethods = "validationMandatoryNullableNoCloseDb")
+  public void validationDisabledAdDatabaseLevel() throws ParseException {
+    database.getMetadata().reload();
+    try {
+      ODocument doc = new ODocument("MyTestClass");
+      doc.save();
+      Assert.fail();
+    } catch (OValidationException e) {
+    }
+
+    database.command(new OCommandSQL("ALTER DATABASE " + ODatabase.ATTRIBUTES.VALIDATION.name() + " FALSE")).execute();
+    try {
+
+      ODocument doc = new ODocument("MyTestClass");
+      doc.save();
+
+      doc.delete();
+    } finally {
+      database.command(new OCommandSQL("ALTER DATABASE " + ODatabase.ATTRIBUTES.VALIDATION.name() + " TRUE")).execute();
+    }
+  }
+
+  @Test(dependsOnMethods = "validationDisabledAdDatabaseLevel")
   public void dropSchemaForMandatoryNullableTest() throws ParseException {
     database.command(new OCommandSQL("DROP CLASS MyTestClass")).execute();
-		database.getMetadata().reload();
+    database.getMetadata().reload();
   }
 
   @Test

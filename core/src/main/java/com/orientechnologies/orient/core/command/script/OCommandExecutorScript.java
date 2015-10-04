@@ -39,14 +39,24 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
-import javax.script.*;
+import javax.script.Bindings;
+import javax.script.Compilable;
+import javax.script.CompiledScript;
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
+import javax.script.ScriptException;
+import javax.script.SimpleBindings;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
 /**
  * Executes Script Commands.
@@ -56,8 +66,9 @@ import java.util.*;
  * 
  */
 public class OCommandExecutorScript extends OCommandExecutorAbstract implements OCommandDistributedReplicateRequest {
-  private static final int MAX_DELAY = 100;
-  protected OCommandScript request;
+  private static final int             MAX_DELAY     = 100;
+  protected OCommandScript             request;
+  protected DISTRIBUTED_EXECUTION_MODE executionMode = DISTRIBUTED_EXECUTION_MODE.LOCAL;
 
   public OCommandExecutorScript() {
   }
@@ -65,11 +76,12 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
   @SuppressWarnings("unchecked")
   public OCommandExecutorScript parse(final OCommandRequest iRequest) {
     request = (OCommandScript) iRequest;
+    executionMode = ((OCommandScript) iRequest).getExecutionMode();
     return this;
   }
 
   public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
-    return DISTRIBUTED_EXECUTION_MODE.LOCAL;
+    return executionMode;
   }
 
   public Object execute(final Map<Object, Object> iArgs) {

@@ -274,6 +274,10 @@ public class OSelectStatement extends OStatement {
       groupBy.replaceParameters(params);
     }
 
+    if (orderBy != null) {
+      orderBy.replaceParameters(params);
+    }
+
     if (skip != null) {
       skip.replaceParameters(params);
     }

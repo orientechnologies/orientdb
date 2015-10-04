@@ -11,7 +11,8 @@ import static org.testng.Assert.fail;
 public class OInsertStatementTest {
 
   protected SimpleNode checkRightSyntax(String query) {
-    return checkSyntax(query, true);
+    SimpleNode result = checkSyntax(query, true);
+    return checkSyntax(result.toString(), true);
   }
 
   protected SimpleNode checkWrongSyntax(String query) {
@@ -61,6 +62,28 @@ public class OInsertStatementTest {
     checkRightSyntax("insert into foo return foo select from bar TIMEOUT 10 return");
     checkRightSyntax("insert into foo return foo select from bar TIMEOUT 10 exception");
   }
+
+  public void testInsertInsert() {
+    checkRightSyntax("insert into foo set bar = (insert into foo set a = 'foo') ");
+//    checkRightSyntax("insert into foo set bar = (select from foo) ");
+  }
+
+    public void testInsertEmbeddedDocs() {
+    checkRightSyntax("INSERT INTO Activity SET user = #14:1, story = #18:2, `like` = { \n"
+        + "      count: 0, \n"
+        + "      latest: [], \n"
+        + "      '@type': 'document', \n"
+        + "      '@class': 'Like'\n"
+        + "    }");
+
+    checkRightSyntax("INSERT INTO Activity SET user = #14:1, story = #18:2, `like` = { \n"
+        + "      count: 0, \n"
+        + "      latest: [], \n"
+        + "      '@type': 'document', \n"
+        + "      '@class': 'Like'\n"
+        + "    }");
+  }
+
 
 
   private void printTree(String s) {

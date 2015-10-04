@@ -667,44 +667,6 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     }
   }
 
-  public void setSoftlyClosed(long fileId, boolean softlyClosed) throws IOException {
-    final int intId = extractFileId(fileId);
-
-    filesLock.acquireWriteLock();
-    try {
-      OFileClassic fileClassic = files.get(intId);
-      if (fileClassic != null && fileClassic.isOpen())
-        fileClassic.setSoftlyClosed(softlyClosed);
-    } finally {
-      filesLock.releaseWriteLock();
-    }
-  }
-
-  public void setSoftlyClosed(boolean softlyClosed) throws IOException {
-    filesLock.acquireWriteLock();
-    try {
-      for (long fileId : files.keySet())
-        setSoftlyClosed(fileId, softlyClosed);
-    } finally {
-      filesLock.releaseWriteLock();
-    }
-  }
-
-  public boolean wasSoftlyClosed(long fileId) throws IOException {
-    final int intId = extractFileId(fileId);
-
-    filesLock.acquireReadLock();
-    try {
-      OFileClassic fileClassic = files.get(intId);
-      if (fileClassic == null)
-        return false;
-
-      return fileClassic.wasSoftlyClosed();
-    } finally {
-      filesLock.releaseReadLock();
-    }
-  }
-
   public void deleteFile(long fileId) throws IOException {
     final int intId = extractFileId(fileId);
 

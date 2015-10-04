@@ -3,6 +3,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import java.util.List;
+import java.util.Map;
 
 public class OOrderBy extends SimpleNode {
   protected List<OOrderByItem> items;
@@ -45,6 +46,12 @@ public class OOrderBy extends SimpleNode {
       }
     }
     return result.toString();
+  }
+
+  public void replaceParameters(Map<Object, Object> params) {
+    for (OOrderByItem item: this.items) {
+      item.replaceParameters(params);
+    }
   }
 }
 /* JavaCC - OriginalChecksum=d5529400217169f15e556e5dc6fe4f5b (do not edit this line) */

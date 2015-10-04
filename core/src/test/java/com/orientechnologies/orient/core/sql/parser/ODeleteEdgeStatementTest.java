@@ -74,6 +74,8 @@ public class ODeleteEdgeStatementTest {
     checkRightSyntax("DELETE EDGE from [#12:0, #12:1] to [#13:0, #13:1] where age = 50");
     checkRightSyntax("DELETE EDGE from [#13:0, #13:1] where age = 50");
     checkRightSyntax("DELETE EDGE to [#13:0, #13:1] where age = 50");
+
+    checkRightSyntax("DELETE EDGE to [#13:0, #13:1] where age = 50 batch 10");
   }
 
   private void printTree(String s) {

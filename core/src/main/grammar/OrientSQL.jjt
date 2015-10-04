@@ -481,158 +481,6 @@ OIdentifier Identifier():
     token = <EXCEPTION>
     |
     quotedToken = <QUOTED_IDENTIFIER>
-    /*
-    (
-    //TODO REPLACE THIS WITH <QUOTED_IDENTIFIER>
-        <BACKTICK>
-        (
-            token = <IDENTIFIER>
-            |
-            token = <SELECT>
-            |
-            token = <TRAVERSE>
-            |
-            token = <INSERT>
-            |
-            token = <CREATE>
-            |
-            token = <DELETE>
-            |
-            token = <VERTEX>
-            |
-            token = <EDGE>
-            |
-            token = <UPDATE>
-            |
-            token = <UPSERT>
-            |
-            token = <FROM>
-            |
-            token = <TO>
-            |
-            token = <WHERE>
-            |
-            token = <WHILE>
-            |
-            token = <INTO>
-            |
-            token = <VALUES>
-            |
-            token = <SET>
-            |
-            token = <ADD>
-            |
-            token = <PUT>
-            |
-            token = <MERGE>
-            |
-            token = <CONTENT>
-            |
-            token = <REMOVE>
-            |
-            token = <INCREMENT>
-            |
-            token = <AND>
-            |
-            token = <OR>
-            |
-            token = <NULL>
-            |
-            token = <DEFINED>
-            |
-            token = <ORDER>
-            |
-            token = <GROUP>
-            |
-            token = <BY>
-            |
-            token = <LIMIT>
-            |
-            token = <SKIP2>
-            |
-            token = <OFFSET>
-            |
-            token = <TIMEOUT>
-            |
-            token = <ASC>
-            |
-            token = <AS>
-            |
-            token = <DESC>
-            |
-            token = <FETCHPLAN>
-            |
-            token = <RETURN>
-            |
-            token = <BEFORE>
-            |
-            token = <AFTER>
-            |
-            token = <LOCK>
-            |
-            token = <RECORD>
-            |
-            token = <WAIT>
-            |
-            token = <RETRY>
-            |
-            token = <LET>
-            |
-            token = <NOCACHE>
-            |
-            token = <UNSAFE>
-            |
-            token = <PARALLEL>
-            |
-            token = <STRATEGY>
-            |
-            token = <DEPTH_FIRST>
-            |
-            token = <BREADTH_FIRST>
-            |
-            token = <LUCENE>
-            |
-            token = <NEAR>
-            |
-            token = <WITHIN>
-            |
-            token = <UNWIND>
-            |
-            token = <MAXDEPTH>
-            |
-            token = <NOT>
-            |
-            token = <IN>
-            |
-            token = <LIKE>
-            |
-            token = <IS>
-            |
-            token = <BETWEEN>
-            |
-            token = <CONTAINS>
-            |
-            token = <CONTAINSALL>
-            |
-            token = <CONTAINSKEY>
-            |
-            token = <CONTAINSVALUE>
-            |
-            token = <CONTAINSTEXT>
-            |
-            token = <MATCHES>
-            |
-            token = <KEY>
-            |
-            token = <INSTANCEOF>
-            |
-            token = <CLUSTER>
-            |
-            token = <EXCEPTION>
-        )
-        <BACKTICK>
-    )
-    */
 ) {
 
     if(token!=null){
@@ -1521,6 +1369,7 @@ OCreateEdgeStatement CreateEdgeStatement():
     [ jjtThis.body = InsertBody() ]
     [ jjtThis.retry = Retry() ]
     [ jjtThis.wait = Wait() ]
+    [ jjtThis.batch = Batch() ]
 ) {return jjtThis;}
 }
 
@@ -1890,7 +1739,15 @@ OMathExpression ParenthesisExpression():
 {}
 {
     (
-	    <LPAREN> ( jjtThis.expression = Expression() | jjtThis.statement = SelectStatement() ) <RPAREN>
+	    <LPAREN>
+        (
+            jjtThis.expression = Expression()
+            |
+            jjtThis.statement = SelectStatement()
+            |
+            jjtThis.statement = InsertStatement()
+        )
+        <RPAREN>
 	)
 	{return jjtThis;}
 }
@@ -2866,6 +2723,8 @@ OJson Json():
             (
                 lastItem.leftIdentifier = Identifier()
                 |
+                token = <RECORD_ATTRIBUTE> {lastItem.leftString = token.image; }
+                |
                 token = <STRING_LITERAL> { lastItem.leftString = token.image.substring(1, token.image.length() - 1); }
                 |
                 token = <CHARACTER_LITERAL> { lastItem.leftString = token.image.substring(1, token.image.length() - 1); }
@@ -2877,6 +2736,8 @@ OJson Json():
                 { lastItem = new OJsonItem(); }
                 (
                     lastItem.leftIdentifier = Identifier()
+                    |
+                    token = <RECORD_ATTRIBUTE> {lastItem.leftString = token.image; }
                     |
                     token = <STRING_LITERAL> { lastItem.leftString = token.image.substring(1, token.image.length() - 1); }
                     |

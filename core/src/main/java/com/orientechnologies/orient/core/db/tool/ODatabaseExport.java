@@ -69,6 +69,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
   protected long          recordExported;
   protected int           compressionLevel  = Deflater.BEST_SPEED;
   protected int           compressionBuffer = 16384;              // 16Kb
+  protected boolean       noCompression     = false;
 
   public ODatabaseExport(final ODatabaseDocumentInternal iDatabase, final String iFileName, final OCommandOutputListener iListener)
       throws IOException {
@@ -77,23 +78,40 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     if (fileName == null)
       throw new IllegalArgumentException("file name missing");
 
-    if (!fileName.endsWith(".gz")) {
-      fileName += ".gz";
+  }
+
+  protected void checkFile() {
+    if (!noCompression) {
+      if (!fileName.endsWith(".gz")) {
+        fileName += ".gz";
+      }
     }
     final File f = new File(fileName);
     if (f.getParentFile() != null)
       f.getParentFile().mkdirs();
     if (f.exists())
       f.delete();
+  }
 
-    final GZIPOutputStream gzipOS = new GZIPOutputStream(new FileOutputStream(fileName), compressionBuffer) {
-      {
-        def.setLevel(compressionLevel);
+  protected void initWriterIfNotExists() throws IOException {
+    if (writer == null) {
+      checkFile();
+      OutputStream outputStream;
+
+      if (noCompression) {
+        outputStream = new FileOutputStream(fileName);
+      } else {
+        outputStream = new GZIPOutputStream(new FileOutputStream(fileName), compressionBuffer) {
+          {
+            def.setLevel(compressionLevel);
+          }
+        };
       }
-    };
 
-    writer = new OJSONWriter(new OutputStreamWriter(gzipOS));
-    writer.beginObject();
+      writer = new OJSONWriter(new OutputStreamWriter(outputStream));
+      writer.beginObject();
+    }
+
   }
 
   public ODatabaseExport(final ODatabaseDocumentInternal iDatabase, final OutputStream iOutputStream,
@@ -112,6 +130,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
   public ODatabaseExport exportDatabase() {
     try {
+      initWriterIfNotExists();
       listener.onMessage("\nStarted export of database '" + database.getName() + "' to " + fileName + "...");
 
       long time = System.currentTimeMillis();
@@ -141,7 +160,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     return this;
   }
 
-  public long exportRecords() throws IOException {
+  private long exportRecords() throws IOException {
     long totalFoundRecords = 0;
     long totalExportedRecords = 0;
 
@@ -265,6 +284,8 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
       compressionLevel = Integer.parseInt(items.get(0));
     else if (option.equalsIgnoreCase("-compressionBuffer"))
       compressionBuffer = Integer.parseInt(items.get(0));
+    else if (option.equals("-noCompression"))
+      noCompression = true;
     else
       super.parseSetting(option, items);
   }
