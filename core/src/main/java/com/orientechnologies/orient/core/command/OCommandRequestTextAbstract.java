@@ -19,11 +19,6 @@
   */
 package com.orientechnologies.orient.core.command;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.index.OCompositeKey;
@@ -33,6 +28,11 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Text based Command Request abstract class.
@@ -72,7 +72,7 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
     return this;
   }
 
-  public OSerializableStream fromStream(byte[] iStream) throws OSerializationException {
+  public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
     final OMemoryStream buffer = new OMemoryStream(iStream);
     fromStream(buffer);
     return this;

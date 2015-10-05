@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.serialization;
 
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
@@ -49,7 +49,7 @@ public class OMemoryStream extends OutputStream {
     Orient
         .instance()
         .getProfiler()
-      .registerHookValue("system.memory.stream.resize", "Number of resizes of memory stream buffer", METRIC_TYPE.COUNTER,
+        .registerHookValue("system.memory.stream.resize", "Number of resizes of memory stream buffer", METRIC_TYPE.COUNTER,
             new OProfilerHookValue() {
               public Object getValue() {
                 return metricResize;
@@ -263,6 +263,11 @@ public class OMemoryStream extends OutputStream {
     return position;
   }
 
+  public OMemoryStream setPosition(final int iPosition) {
+    position = iPosition;
+    return this;
+  }
+
   private void assureSpaceFor(final int iLength) {
     final byte[] localBuffer = buffer;
     final int pos = position;
@@ -386,6 +391,13 @@ public class OMemoryStream extends OutputStream {
     position += size;
 
     return portion;
+  }
+
+  /**
+   * Returns the available bytes to read.
+   */
+  public int available() {
+    return buffer.length - position;
   }
 
   public String getAsString() {

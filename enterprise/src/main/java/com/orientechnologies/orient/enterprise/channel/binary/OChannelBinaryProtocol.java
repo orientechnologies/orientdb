@@ -135,8 +135,9 @@ public class OChannelBinaryProtocol {
                                                                                              // INDEX_PUT, INDEX_REMOVE
 
   public static final int   PROTOCOL_VERSION_32                       = 32;                 // STREAMABLE RESULT SET
+  public static final int   PROTOCOL_VERSION_33                       = 33;                 // SCRIPT CAN DECIDE WHERE TO RUN IN DISTRIBUTED MODE (LOCAL, REPLICATE) - v2.1.3
 
-  public static final int   CURRENT_PROTOCOL_VERSION                  = PROTOCOL_VERSION_32;
+  public static final int   CURRENT_PROTOCOL_VERSION                  = PROTOCOL_VERSION_33;
 
   public static OIdentifiable readIdentifiable(final OChannelBinaryAsynchClient network) throws IOException {
     final int classId = network.readShort();
