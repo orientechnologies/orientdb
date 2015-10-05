@@ -54,6 +54,8 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
     return NAME;
   }
 
+
+
   @Override
   public ORecord fromStream(final byte[] iSource, ORecord iRecord, final String[] iFields) {
     if (iSource == null || iSource.length == 0)
