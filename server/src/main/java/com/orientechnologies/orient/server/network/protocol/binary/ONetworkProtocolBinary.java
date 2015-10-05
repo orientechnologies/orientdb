@@ -2054,7 +2054,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   }
 
   @Override
-  protected String getRecordSerializerName() {
+  public String getRecordSerializerName() {
     return connection.data.serializationImpl;
   }
 
