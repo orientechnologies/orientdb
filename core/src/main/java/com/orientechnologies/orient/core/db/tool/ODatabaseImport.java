@@ -847,7 +847,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
             cls.setStrictMode(Boolean.parseBoolean(strictMode));
           } else if (value.equals("\"short-name\"")) {
             final String shortName = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
-            cls.setShortName(shortName);
+            if( !cls.getName().equalsIgnoreCase( shortName ))
+              cls.setShortName(shortName);
           } else if (value.equals("\"super-class\"")) {
             // @compatibility <2.1 SINGLE CLASS ONLY
             final String classSuper = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
