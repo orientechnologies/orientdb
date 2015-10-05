@@ -74,6 +74,9 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     else
       graph = null;
 
+    if (graph == null)
+      graph = getGraph();
+
     if (graph != null)
       settings = graph.settings;
 
