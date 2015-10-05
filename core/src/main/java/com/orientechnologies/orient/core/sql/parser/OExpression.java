@@ -46,6 +46,32 @@ public class OExpression extends SimpleNode {
 
   }
 
+  public boolean isBaseIdentifier(){
+    if(value instanceof OMathExpression) {
+      return ((OMathExpression)value).isBaseIdentifier();
+    }
+
+    return false;
+  }
+
+  public boolean isEarlyCalculated(){
+    if(value instanceof Number) {
+      return true;
+    }
+    if(value instanceof String) {
+      return true;
+    }
+    if(value instanceof OInputParameter) {
+      return true;
+    }
+
+    if(value instanceof OMathExpression) {
+      return ((OMathExpression)value).isEarlyCalculated();
+    }
+
+    return false;
+  }
+
   public String getDefaultAlias() {
 
     if (value instanceof String) {

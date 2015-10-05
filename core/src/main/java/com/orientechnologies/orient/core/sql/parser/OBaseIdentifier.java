@@ -68,5 +68,9 @@ public class OBaseIdentifier extends SimpleNode {
 
     return null;
   }
+
+  public boolean isBaseIdentifier() {
+    return suffix!=null && suffix.isBaseIdentifier();
+  }
 }
 /* JavaCC - OriginalChecksum=ed89af10d8be41a83428c5608a4834f6 (do not edit this line) */

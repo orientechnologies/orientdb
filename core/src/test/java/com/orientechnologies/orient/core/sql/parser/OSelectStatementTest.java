@@ -6,6 +6,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 
 import static org.testng.Assert.*;
@@ -573,6 +574,18 @@ public class OSelectStatementTest {
     checkRightSyntax("select from ouser timeout 1 return");
 
   }
+
+  @Test
+  public void testFlatten() {
+    OSelectStatement stm = (OSelectStatement)checkRightSyntax("select from ouser where name = 'foo'");
+    List<OAndBlock> flattended = stm.whereClause.flatten();
+    assertTrue(((OBinaryCondition) flattended.get(0).subBlocks.get(0)).left.isBaseIdentifier());
+    assertFalse(((OBinaryCondition) flattended.get(0).subBlocks.get(0)).right.isBaseIdentifier());
+    assertFalse(((OBinaryCondition) flattended.get(0).subBlocks.get(0)).left.isEarlyCalculated());
+    assertTrue(((OBinaryCondition) flattended.get(0).subBlocks.get(0)).right.isEarlyCalculated());
+
+  }
+
 
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);

@@ -106,5 +106,41 @@ public class OAndBlock extends OBooleanExpression {
     return result.size() == 0 ? null : result;
   }
 
+  public List<OAndBlock> flatten() {
+    List<OAndBlock> result = new ArrayList<OAndBlock>();
+    boolean first = true;
+    for (OBooleanExpression sub : subBlocks) {
+      List<OAndBlock> subFlattened = sub.flatten();
+      List<OAndBlock> oldResult = result;
+      result = new ArrayList<OAndBlock>();
+      for (OAndBlock subAndItem : subFlattened) {
+        if (first) {
+          result.add(subAndItem);
+        } else {
+          ;
+          for(OAndBlock oldResultItem:oldResult) {
+            OAndBlock block = new OAndBlock(-1);
+            block.subBlocks.addAll(oldResultItem.subBlocks);
+            for (OBooleanExpression resultItem : subAndItem.subBlocks) {
+              block.subBlocks.add(resultItem);
+            }
+            result.add(block);
+          }
+        }
+      }
+      first = false;
+    }
+    return result;
+  }
+
+  protected OAndBlock encapsulateInAndBlock(OBooleanExpression item) {
+    if(item instanceof OAndBlock){
+      return (OAndBlock)item;
+    }
+    OAndBlock result = new OAndBlock(-1);
+    result.subBlocks.add(item);
+    return result;
+  }
+
 }
 /* JavaCC - OriginalChecksum=cf1f66cc86cfc93d357f9fcdfa4a4604 (do not edit this line) */

@@ -32,14 +32,18 @@ public class OParenthesisExpression extends OMathExpression {
     builder.append(")");
   }
 
-
-
   @Override
   protected boolean supportsBasicCalculation() {
     if (expression != null) {
       return expression.supportsBasicCalculation();
     }
     return true;
+  }
+
+  @Override
+  public boolean isEarlyCalculated() {
+    // TODO implement query execution and early calculation;
+    return expression != null && expression.isEarlyCalculated();
   }
 }
 /* JavaCC - OriginalChecksum=4656e5faf4f54dc3fc45a06d8e375c35 (do not edit this line) */

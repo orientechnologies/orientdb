@@ -5,10 +5,11 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class OWhereClause extends SimpleNode {
   protected OBooleanExpression baseExpression;
@@ -21,7 +22,9 @@ public class OWhereClause extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor. *
+   */
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -42,17 +45,103 @@ public class OWhereClause extends SimpleNode {
 
   /**
    * estimates how many items of this class will be returned applying this filter
-   * 
+   *
    * @param oClass
    * @return an estimation of the number of records of this class returned applying this filter, 0 if and only if sure that no
    *         records are returned
    */
-  public long estimate(OClass oClass) {
+  public long estimate(OClass oClass, long threshold, OCommandContext ctx) {
     long count = oClass.count();
     if (count > 1) {
-      return count / 2;
+      count = count / 2;
     }
-    return count;
+    if (count < threshold) {
+      return count;
+    }
+
+    long indexesCount = 0l;
+    List<OAndBlock> flattenedConditions = flatten();
+    Set<OIndex<?>> indexes = oClass.getIndexes();
+    for (OAndBlock condition : flattenedConditions) {
+      Map<String, Object> conditions = getEqualityOperations(condition, ctx);
+      long conditionEstimation = Long.MAX_VALUE;
+      for (OIndex index : indexes) {
+        List<String> indexedFields = index.getDefinition().getFields();
+        int nMatchingKeys = 0;
+        for (String indexedField : indexedFields) {
+          if (conditions.containsKey(indexedField)) {
+            nMatchingKeys++;
+          } else {
+            break;
+          }
+        }
+        if (nMatchingKeys > 0) {
+          long newCount = estimateFromIndex(index, conditions, nMatchingKeys);
+          if (newCount < conditionEstimation) {
+            conditionEstimation = newCount;
+          }
+        }
+      }
+      if (conditionEstimation > count) {
+        return count;
+      }
+      indexesCount += conditionEstimation;
+    }
+    return Math.min(indexesCount, count);
+  }
+
+  private long estimateFromIndex(OIndex index, Map<String, Object> conditions, int nMatchingKeys) {
+    if (nMatchingKeys < 1) {
+      throw new IllegalArgumentException("Cannot estimate from an index with zero keys");
+    }
+    OIndexDefinition definition = index.getDefinition();
+    List<String> definitionFields = definition.getFields();
+    Object key = null;
+    if (definition instanceof OPropertyIndexDefinition) {
+      key = convert(conditions.get(definitionFields.get(0)), definition.getTypes()[0]);
+    } else if (definition instanceof OCompositeIndexDefinition) {
+      key = new OCompositeKey();
+      for (int i = 0; i < nMatchingKeys; i++) {
+        Object keyValue = convert(conditions.get(definitionFields.get(i)), definition.getTypes()[i]);
+        ((OCompositeKey) key).addKey(conditions.get(definitionFields.get(i)));
+      }
+    }
+    if (key != null) {
+      Object result = index.get(key);
+      if (result instanceof Collection) {
+        return ((Collection) result).size();
+      }
+    }
+    return Long.MAX_VALUE;
+  }
+
+  private Object convert(Object o, OType oType) {
+    return OType.convert(o, oType.getDefaultJavaType());
+  }
+
+  private Map<String, Object> getEqualityOperations(OAndBlock condition, OCommandContext ctx) {
+    Map<String, Object> result = new HashMap<String, Object>();
+    for (OBooleanExpression expression : condition.subBlocks) {
+      if (expression instanceof OBinaryCondition) {
+        OBinaryCondition b = (OBinaryCondition) expression;
+        if (b.operator instanceof OEqualsCompareOperator) {
+          if (b.left.isBaseIdentifier() && b.right.isEarlyCalculated()) {
+            result.put(b.left.toString(), b.right.execute(null, ctx));
+          }
+        }
+      }
+    }
+    return result;
+  }
+
+  public List<OAndBlock> flatten() {
+    if (this.baseExpression == null) {
+      return Collections.EMPTY_LIST;
+    }
+    List<OAndBlock> result = this.baseExpression.flatten();
+    // TODO remove false conditions (contraddictions)
+    return result;
+
   }
 
   public List<OBinaryCondition> getIndexedFunctionConditions(OClass iSchemaClass, ODatabaseDocumentInternal database) {

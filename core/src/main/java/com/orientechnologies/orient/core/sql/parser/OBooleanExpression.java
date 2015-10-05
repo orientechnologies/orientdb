@@ -111,4 +111,18 @@ public abstract class OBooleanExpression extends SimpleNode {
     return null;
   }
 
+  public List<OAndBlock> flatten() {
+
+    return Collections.singletonList(encapsulateInAndBlock(this));
+  }
+
+  protected OAndBlock encapsulateInAndBlock(OBooleanExpression item) {
+    if(item instanceof OAndBlock){
+      return (OAndBlock)item;
+    }
+    OAndBlock result = new OAndBlock(-1);
+    result.subBlocks.add(item);
+    return result;
+  }
+
 }
