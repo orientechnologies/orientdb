@@ -19,20 +19,11 @@
  */
 package com.orientechnologies.orient.console;
 
-import java.io.*;
-import java.lang.reflect.Array;
-import java.util.*;
-import java.util.Map.Entry;
-
-import com.orientechnologies.common.exception.OSystemException;
-import sun.misc.Signal;
-import sun.misc.SignalHandler;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.console.TTYConsoleReader;
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
 import com.orientechnologies.common.console.annotation.ConsoleParameter;
-import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
@@ -1835,25 +1826,29 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       } catch (NoSuchMethodException ignored) {
       }
 
-    out.println(new StringBuilder("Backuping current database to: ").append(iText).append("..."));
-
     final String fileName = items.size() <= 0 || items.get(1).charAt(0) == '-' ? null : items.get(1);
 
     int bufferSize = Integer.parseInt(properties.get("backupBufferSize"));
     int compressionLevel = Integer.parseInt(properties.get("backupCompressionLevel"));
+    boolean incremental = false;
 
     for (int i = 2; i < items.size(); ++i) {
       final String item = items.get(i);
       final int sep = item.indexOf('=');
-      if (sep == -1) {
-        OLogManager.instance().warn(this, "Unrecognized parameter %s, skipped", item);
-        continue;
+
+      final String parName;
+      final String parValue;
+      if (sep > -1) {
+        parName = item.substring(1, sep);
+        parValue = item.substring(sep + 1);
+      } else {
+        parName = item.substring(1);
+        parValue = null;
       }
 
-      final String parName = item.substring(1, sep);
-      final String parValue = item.substring(sep + 1);
-
-      if (parName.equalsIgnoreCase("bufferSize"))
+      if (parName.equalsIgnoreCase("incremental"))
+        incremental = true;
+      else if (parName.equalsIgnoreCase("bufferSize"))
         bufferSize = Integer.parseInt(parValue);
       else if (parName.equalsIgnoreCase("compressionLevel"))
         compressionLevel = Integer.parseInt(parValue);
@@ -1861,15 +1856,23 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     final long startTime = System.currentTimeMillis();
     try {
-      final FileOutputStream fos = new FileOutputStream(fileName);
-      try {
-        currentDatabase.backup(fos, null, null, this, compressionLevel, bufferSize);
+      if (incremental) {
+        out.println(new StringBuilder("Executing incremental backup of database '" + currentDatabaseName + "' to: ").append(iText)
+            .append("..."));
+        currentDatabase.incrementalBackup(fileName);
+      } else {
+        out.println(new StringBuilder("Executing full backup of database '" + currentDatabaseName + "' to: ").append(iText).append(
+            "..."));
+        final FileOutputStream fos = new FileOutputStream(fileName);
+        try {
+          currentDatabase.backup(fos, null, null, this, compressionLevel, bufferSize);
 
-        message("\nBackup executed in %.2f seconds", ((float) (System.currentTimeMillis() - startTime) / 1000));
+        } finally {
+          fos.flush();
+          fos.close();
 
-      } finally {
-        fos.flush();
-        fos.close();
+          message("\nBackup executed in %.2f seconds", ((float) (System.currentTimeMillis() - startTime) / 1000));
+        }
       }
     } catch (ODatabaseExportException e) {
       printError(e);
@@ -1881,8 +1884,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       throws IOException {
     checkForDatabase();
 
-    message("\nRestoring database %s...", text);
-
     final List<String> items = OStringSerializerHelper.smartSplit(text, ' ');
 
     if (items.size() < 2)
@@ -1893,22 +1894,28 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       }
 
     final String fileName = items.size() <= 0 || (items.get(1)).charAt(0) == '-' ? null : items.get(1);
-    // final String options = fileName != null ? text.substring((items.get(0)).length() + (items.get(1)).length() + 1).trim() :
-    // text;
 
     final long startTime = System.currentTimeMillis();
     try {
-      final FileInputStream f = new FileInputStream(fileName);
-      try {
-        currentDatabase.restore(f, null, null, this);
-      } finally {
-        f.close();
+      if (new File(fileName).isDirectory()) {
+        // INCREMENTAL RESTORE
+        message("\nRestoring database '%s' from incremental backups...", text);
+        currentDatabase.incrementalRestore(fileName);
+
+      } else {
+        // FULL RESTORE
+        message("\nRestoring database '%s' from full backup...", text);
+        final FileInputStream f = new FileInputStream(fileName);
+        try {
+          currentDatabase.restore(f, null, null, this);
+        } finally {
+          f.close();
+        }
       }
-
-      message("\nDatabase restored in %.2f seconds", ((float) (System.currentTimeMillis() - startTime) / 1000));
-
     } catch (ODatabaseImportException e) {
       printError(e);
+    } finally {
+      message("\nDatabase restored in %.2f seconds", ((float) (System.currentTimeMillis() - startTime) / 1000));
     }
   }
 

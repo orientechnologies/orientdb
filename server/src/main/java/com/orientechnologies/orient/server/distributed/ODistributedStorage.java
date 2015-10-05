@@ -162,8 +162,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
           try {
             final OAsynchDistributedOperation operation = asynchronousOperationsQueue.take();
 
-            final Object result = dManager.sendRequest(operation.getDatabaseName(), operation.getClusterNames(),
-                operation.getNodes(), operation.getTask(), EXECUTION_MODE.RESPONSE);
+            final Object result = dManager.sendRequest(operation.getDatabaseName(), operation.getClusterNames(), operation
+                .getNodes(), operation.getTask(), operation.getCallback() != null ? EXECUTION_MODE.RESPONSE
+                : EXECUTION_MODE.NO_RESPONSE);
 
             if (operation.getCallback() != null)
               operation.getCallback().call(result);
@@ -947,12 +948,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   }
 
   @Override
-  public void incrementalBackup(String backupDirectory) {
+  public void incrementalBackup(final String backupDirectory) {
     wrapped.incrementalBackup(backupDirectory);
   }
 
   @Override
-  public void restoreFromIncrementalBackup(String filePath) {
+  public void restoreFromIncrementalBackup(final String filePath) {
     wrapped.restoreFromIncrementalBackup(filePath);
   }
 
@@ -962,7 +963,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   }
 
   @Override
-  public void close(final boolean iForce, boolean onDelete) {
+  public void close(final boolean iForce, final boolean onDelete) {
     wrapped.close(iForce, onDelete);
 
     if (isClosed())

@@ -20,7 +20,7 @@
 
 package com.orientechnologies.common.concur.lock;
 
-import com.orientechnologies.common.exception.OUserException;
+import com.orientechnologies.common.exception.OHighLevelException;
 import com.orientechnologies.orient.core.exception.OCoreException;
 
 /**
@@ -29,8 +29,12 @@ import com.orientechnologies.orient.core.exception.OCoreException;
  * @author Andrey Lomakin
  * @since 03.07.12
  */
-public class OModificationOperationProhibitedException extends OCoreException implements OUserException {
+public class OModificationOperationProhibitedException extends OCoreException implements OHighLevelException {
   private static final long serialVersionUID = 1L;
+
+  public OModificationOperationProhibitedException(OModificationOperationProhibitedException exception) {
+    super(exception);
+  }
 
   public OModificationOperationProhibitedException(String message) {
     super(message);

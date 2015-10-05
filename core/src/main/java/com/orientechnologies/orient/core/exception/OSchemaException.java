@@ -19,11 +19,13 @@
  */
 package com.orientechnologies.orient.core.exception;
 
-import com.orientechnologies.common.exception.OUserException;
-
-public class OSchemaException extends OCoreException implements OUserException {
+public class OSchemaException extends OCoreException {
 
   private static final long serialVersionUID = -8486291378415776372L;
+
+  public OSchemaException(OSchemaException exception) {
+    super(exception);
+  }
 
   public OSchemaException(String message) {
     super(message);

@@ -15,8 +15,7 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.exception.OUserException;
+import com.orientechnologies.common.exception.OHighLevelException;
 import com.orientechnologies.orient.core.exception.OCoreException;
 
 /**
@@ -25,7 +24,11 @@ import com.orientechnologies.orient.core.exception.OCoreException;
  * @author Luca Garulli
  * @since 2.0
  */
-public class OOfflineClusterException extends OCoreException implements OUserException {
+public class OOfflineClusterException extends OCoreException {
+
+  public OOfflineClusterException(OOfflineClusterException exception) {
+    super(exception);
+  }
 
   public OOfflineClusterException(final String s) {
     super(s);

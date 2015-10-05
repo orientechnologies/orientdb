@@ -25,8 +25,12 @@ import com.orientechnologies.orient.server.distributed.ODistributedException;
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
-public class OHotAlignmentNotPossibleExeption extends ODistributedException {
-  public OHotAlignmentNotPossibleExeption(String s) {
+public class OHotAlignmentNotPossibleException extends ODistributedException {
+  public OHotAlignmentNotPossibleException(OHotAlignmentNotPossibleException exception) {
+    super(exception);
+  }
+
+  public OHotAlignmentNotPossibleException(String s) {
     super(s);
   }
 }

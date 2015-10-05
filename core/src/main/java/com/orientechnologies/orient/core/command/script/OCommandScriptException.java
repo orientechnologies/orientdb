@@ -27,25 +27,14 @@ public class OCommandScriptException extends OCoreException {
   private int               position;
   private static final long serialVersionUID = -7430575036316163711L;
 
-  public OCommandScriptException(String iMessage) {
-    super(iMessage);
-  }
-
-  public OCommandScriptException(String iMessage, String iText, int iPosition) {
-    super(iMessage);
-    text = iText;
-    position = iPosition < 0 ? 0 : iPosition;
-  }
-
-  @Override
-  public String getMessage() {
+  private static String makeMessage(String message, int position, String text) {
     if (text == null)
-      return super.getMessage();
+      return message;
 
     final StringBuilder buffer = new StringBuilder();
     buffer.append("Error on parsing script at position #");
     buffer.append(position);
-    buffer.append(": " + super.getMessage());
+    buffer.append(": " + message);
     buffer.append("\nScript: ");
     buffer.append(text);
     buffer.append("\n------");
@@ -54,5 +43,22 @@ public class OCommandScriptException extends OCoreException {
 
     buffer.append("^");
     return buffer.toString();
+  }
+
+  public OCommandScriptException(OCommandScriptException exception) {
+    super(exception);
+
+    this.text = exception.text;
+    this.position = exception.position;
+  }
+
+  public OCommandScriptException(String iMessage) {
+    super(iMessage);
+  }
+
+  public OCommandScriptException(String iMessage, String iText, int iPosition) {
+    super(makeMessage(iMessage, iPosition < 0 ? 0 : iPosition, iText));
+    text = iText;
+    position = iPosition < 0 ? 0 : iPosition;
   }
 }

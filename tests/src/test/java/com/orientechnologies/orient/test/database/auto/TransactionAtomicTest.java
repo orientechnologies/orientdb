@@ -89,8 +89,6 @@ public class TransactionAtomicTest extends DocumentDBBaseTest {
     try {
       doc.save();
       Assert.assertTrue(false);
-    } catch (OResponseProcessingException e) {
-      Assert.assertTrue(e.getCause() instanceof OConcurrentModificationException);
     } catch (OConcurrentModificationException e) {
       Assert.assertTrue(true);
     }
@@ -206,9 +204,6 @@ public class TransactionAtomicTest extends DocumentDBBaseTest {
 
       Assert.assertTrue(false);
 
-    } catch (OResponseProcessingException e) {
-      Assert.assertTrue(e.getCause() instanceof ORecordDuplicatedException);
-      database.rollback();
     } catch (ORecordDuplicatedException e) {
       Assert.assertTrue(true);
       database.rollback();

@@ -22,7 +22,9 @@ package com.orientechnologies.orient.core.index.hashindex.local;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.OCommonConst;
+import com.orientechnologies.orient.core.exception.OLocalHashTableException;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.index.OIndexEngineException;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTreeException;
@@ -569,10 +571,10 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
       endAtomicOperation(false, null);
     } catch (IOException e) {
       rollback();
-      throw OException.wrapException(new OIndexException("Error during hash table clear"), e);
+      throw OException.wrapException(new OIndexEngineException("Error during hash table clear", getName()), e);
     } catch (Exception e) {
       rollback();
-      throw OException.wrapException(new OSBTreeException("Error during hash table clear"), e);
+      throw OException.wrapException(new OIndexEngineException("Error during hash table clear", getName()), e);
     } finally {
       releaseExclusiveLock();
     }

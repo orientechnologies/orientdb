@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -348,11 +349,7 @@ public class SchemaTest extends DocumentDBBaseTest {
       database.command(new OCommandSQL("create class Antani cluster 212121")).execute();
       Assert.fail();
     } catch (Exception e) {
-      if (e instanceof OResponseProcessingException)
-        e = (Exception) e.getCause();
       Assert.assertTrue(e instanceof OCommandSQLParsingException);
-    } finally {
-
     }
   }
 
@@ -364,11 +361,7 @@ public class SchemaTest extends DocumentDBBaseTest {
       Assert.fail();
 
     } catch (Exception e) {
-      if (e instanceof OResponseProcessingException)
-        e = (Exception) e.getCause();
       Assert.assertTrue(e instanceof OCommandSQLParsingException);
-    } finally {
-
     }
   }
 
@@ -379,11 +372,7 @@ public class SchemaTest extends DocumentDBBaseTest {
       database.command(new OCommandSQL("create class Antani the pen is on the table")).execute();
       Assert.fail();
     } catch (Exception e) {
-      if (e instanceof OResponseProcessingException)
-        e = (Exception) e.getCause();
       Assert.assertTrue(e instanceof OCommandSQLParsingException);
-    } finally {
-
     }
   }
 
@@ -511,16 +500,25 @@ public class SchemaTest extends DocumentDBBaseTest {
       Object res = database.command(
           new OCommandSQL("insert into TestOffline set name = 'offline', password = 'offline', status = 'ACTIVE'")).execute();
       Assert.assertTrue(false);
-    } catch (OOfflineClusterException e) {
-      Assert.assertTrue(true);
+    } catch (OException e) {
+
+      Throwable cause = e;
+      while (cause.getCause() != null)
+        cause = cause.getCause();
+
+      Assert.assertTrue(cause instanceof OOfflineClusterException);
     }
 
     // TEST UDPATE RECORD -> EXCEPTION
     try {
       record.field("status", "offline").save();
       Assert.assertTrue(false);
-    } catch (OOfflineClusterException e) {
-      Assert.assertTrue(true);
+    } catch (OException e) {
+      Throwable cause = e;
+      while (cause.getCause() != null)
+        cause = cause.getCause();
+
+      Assert.assertTrue(cause instanceof OOfflineClusterException);
     }
 
     // TEST DELETE RECORD -> EXCEPTION
@@ -574,8 +572,6 @@ public class SchemaTest extends DocumentDBBaseTest {
       Assert.fail();
 
     } catch (Exception e) {
-      if (e instanceof OResponseProcessingException)
-        e = (Exception) e.getCause();
       Assert.assertTrue(e instanceof OSchemaException);
     }
   }
@@ -586,8 +582,6 @@ public class SchemaTest extends DocumentDBBaseTest {
       Assert.fail();
 
     } catch (Exception e) {
-      if (e instanceof OResponseProcessingException)
-        e = (Exception) e.getCause();
       Assert.assertTrue(e instanceof OSchemaException);
     }
   }
@@ -598,8 +592,6 @@ public class SchemaTest extends DocumentDBBaseTest {
       Assert.fail();
 
     } catch (Exception e) {
-      if (e instanceof OResponseProcessingException)
-        e = (Exception) e.getCause();
       Assert.assertTrue(e instanceof OSchemaException);
     }
   }
@@ -610,8 +602,6 @@ public class SchemaTest extends DocumentDBBaseTest {
       Assert.fail();
 
     } catch (Exception e) {
-      if (e instanceof OResponseProcessingException)
-        e = (Exception) e.getCause();
       Assert.assertTrue(e instanceof OSchemaException);
     }
   }
@@ -622,8 +612,6 @@ public class SchemaTest extends DocumentDBBaseTest {
       Assert.fail();
 
     } catch (Exception e) {
-      if (e instanceof OResponseProcessingException)
-        e = (Exception) e.getCause();
       Assert.assertTrue(e instanceof OSchemaException);
     }
   }

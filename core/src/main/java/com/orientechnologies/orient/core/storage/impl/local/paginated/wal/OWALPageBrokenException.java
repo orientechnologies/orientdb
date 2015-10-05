@@ -28,6 +28,11 @@ import com.orientechnologies.common.exception.OSystemException;
  * @since 12/16/13
  */
 public class OWALPageBrokenException extends OSystemException {
+
+  public OWALPageBrokenException(OWALPageBrokenException exception) {
+    super(exception);
+  }
+
   public OWALPageBrokenException(String message) {
     super(message);
   }

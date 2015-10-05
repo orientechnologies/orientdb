@@ -16,24 +16,30 @@ public abstract class OCoreException extends OException {
   private final String storageURL;
   private final String componentName;
 
+  public OCoreException(OCoreException exception) {
+    super(exception);
+    this.storageURL = exception.storageURL;
+    this.componentName = exception.componentName;
+  }
+
   public OCoreException(String message) {
     this(message, null, null);
   }
 
-  public OCoreException(String message, ODurableComponent component) {
-    this(message, component, null);
+  public OCoreException(String message, String componentName) {
+    this(message, componentName, null);
 
   }
 
-  public OCoreException(String message, ODurableComponent component, OErrorCode errorCode) {
+  public OCoreException(String message, String componentName, OErrorCode errorCode) {
     super(message);
 
     this.errorCode = errorCode;
 
-    if (component != null) {
-      componentName = component.getName();
+    if (componentName != null) {
+      this.componentName = componentName;
     } else {
-      componentName = null;
+      this.componentName = null;
     }
 
     final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
@@ -58,16 +64,16 @@ public abstract class OCoreException extends OException {
   }
 
   @Override
-  public String getMessage() {
+  public final String getMessage() {
     final StringBuilder builder = new StringBuilder(super.getMessage());
     if (storageURL != null) {
-      builder.append("\r\n\t").append("Storage URL:\"").append(storageURL).append("\"");
+      builder.append("\r\n\t").append("Storage URL=\"").append(storageURL).append("\"");
     }
     if (componentName != null) {
-      builder.append("\r\n\t").append("Component name:\"").append(componentName).append("\"");
+      builder.append("\r\n\t").append("Component Name=\"").append(componentName).append("\"");
     }
     if (errorCode != null) {
-      builder.append("\r\n\t").append("Error code:\"").append(errorCode.getCode()).append("\"");
+      builder.append("\r\n\t").append("Error Code=\"").append(errorCode.getCode()).append("\"");
     }
 
     return builder.toString();

@@ -21,6 +21,11 @@
 package com.orientechnologies.orient.core.exception;
 
 public class OAllCacheEntriesAreUsedException extends ODatabaseException {
+
+  public OAllCacheEntriesAreUsedException(OAllCacheEntriesAreUsedException exception) {
+    super(exception);
+  }
+
   public OAllCacheEntriesAreUsedException(String string) {
     super(string);
   }

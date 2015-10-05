@@ -66,8 +66,6 @@ public class SQLMetadataTest extends DocumentDBBaseTest {
     try {
       database.command(new OSQLSynchQuery<ODocument>("select expand(indexes) from metadata:blaaa")).execute();
       Assert.fail();
-    } catch (OResponseProcessingException e) {
-      Assert.assertTrue(e.getCause() instanceof OQueryParsingException);
     } catch (OQueryParsingException e) {
     }
 

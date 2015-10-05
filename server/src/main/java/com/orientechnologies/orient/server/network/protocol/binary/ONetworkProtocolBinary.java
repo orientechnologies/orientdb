@@ -199,20 +199,21 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         }
       }
       this.tokenBytes = null;
-      if (connection != null && requestType != OChannelBinaryProtocol.REQUEST_DB_REOPEN)
+      if (connection != null)
         connection.acquire();
     } else {
       byte[] bytes = channel.readBytes();
 
       connection = server.getClientConnectionManager().getConnection(clientTxId, this);
-      if (connection != null)
+      if (connection != null && requestType != OChannelBinaryProtocol.REQUEST_DB_REOPEN)
         connection.acquire();
       if (tokenBytes == null || tokenBytes.length == 0 || !Arrays.equals(bytes, tokenBytes) || connection == null
           || connection.database == null) {
         this.tokenBytes = bytes;
 
         try {
-          this.token = tokenHandler.parseBinaryToken(tokenBytes);
+          if (tokenBytes != null)
+            this.token = tokenHandler.parseBinaryToken(tokenBytes);
         } catch (Exception e) {
           throw OException.wrapException(new OSystemException("error on token parse"), e);
         }

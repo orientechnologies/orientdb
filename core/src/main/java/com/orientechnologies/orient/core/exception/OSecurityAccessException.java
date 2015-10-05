@@ -20,27 +20,23 @@
 package com.orientechnologies.orient.core.exception;
 
 import com.orientechnologies.common.exception.OErrorCode;
-import com.orientechnologies.common.exception.OUserException;
+import com.orientechnologies.common.exception.OHighLevelException;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 
-public class OSecurityAccessException extends OSecurityException implements OUserException {
+public class OSecurityAccessException extends OSecurityException implements OHighLevelException {
 
   private static final long serialVersionUID = -8486291378415776372L;
   private String            databaseName;
 
+  public OSecurityAccessException(OSecurityAccessException exception) {
+    super(exception);
+
+    this.databaseName = exception.databaseName;
+  }
+
   public OSecurityAccessException(final String iDatabasename, final String message) {
     super(message);
     databaseName = iDatabasename;
-  }
-
-  public OSecurityAccessException(String message, ODurableComponent component, String databaseName) {
-    super(message, component);
-    this.databaseName = databaseName;
-  }
-
-  public OSecurityAccessException(String message, ODurableComponent component, OErrorCode errorCode, String databaseName) {
-    super(message, component, errorCode);
-    this.databaseName = databaseName;
   }
 
   public OSecurityAccessException(final String message) {

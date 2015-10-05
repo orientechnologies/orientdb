@@ -20,19 +20,6 @@
 
 package com.orientechnologies.orient.core.storage.impl.local;
 
-import java.io.*;
-import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
-import java.nio.channels.FileChannel;
-import java.nio.charset.Charset;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
-
 import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
@@ -124,6 +111,19 @@ import com.orientechnologies.orient.core.version.OSimpleVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
+import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.nio.charset.Charset;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
+
 /**
  * @author Andrey Lomakin
  * @since 28.03.13
@@ -132,6 +132,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     OFullCheckpointRequestListener, OIdentifiableStorage, OOrientStartupListener, OOrientShutdownListener {
   public static final String                        IBU_EXTENSION                              = ".ibu";
   public static final String                        CONF_ENTRY_NAME                            = "database.ocf";
+  public static final String                        INCREMENTAL_BACKUP_DATEFORMAT              = "yyyy-MM-dd-HH-mm-ss";
 
   private static final int                          RECORD_LOCK_TIMEOUT                        = OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT
                                                                                                    .getValueAsInteger();
@@ -2429,11 +2430,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     this.recordConflictStrategy = conflictResolver;
   }
 
-  public void incrementalBackup(String backupDirectory) {
+  public void incrementalBackup(final String backupDirectory) {
     incrementalBackup(new File(backupDirectory));
   }
 
-  public void incrementalBackup(File backupDirectory) {
+  public void incrementalBackup(final File backupDirectory) {
     if (!backupDirectory.exists()) {
       if (!backupDirectory.mkdirs()) {
         throw new OStorageException("Backup directory " + backupDirectory.getAbsolutePath()
@@ -2456,13 +2457,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         nextIndex = extractIndexFromIBUFile(backupDirectory, files[files.length - 1]) + 1;
       }
 
-      final SimpleDateFormat dateFormat = new SimpleDateFormat("HH_mm_ss_dd_MM_yyyy");
+      final SimpleDateFormat dateFormat = new SimpleDateFormat(INCREMENTAL_BACKUP_DATEFORMAT);
       final String fileName;
 
       if (lastLsn != null)
-        fileName = nextIndex + "_" + dateFormat.format(new Date()) + IBU_EXTENSION;
+        fileName = getName() + "_" + dateFormat.format(new Date()) + "_" + nextIndex + IBU_EXTENSION;
       else
-        fileName = nextIndex + "_" + dateFormat.format(new Date()) + "_full" + IBU_EXTENSION;
+        fileName = getName() + "_" + dateFormat.format(new Date()) + "_" + nextIndex + "_full" + IBU_EXTENSION;
 
       final File ibuFile = new File(backupDirectory, fileName);
 
@@ -2500,11 +2501,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     }
   }
 
-  private String[] fetchIBUFiles(File backupDirectory) throws IOException {
-    String[] files = backupDirectory.list(new FilenameFilter() {
+  private String[] fetchIBUFiles(final File backupDirectory) throws IOException {
+    final String[] files = backupDirectory.list(new FilenameFilter() {
       @Override
-      public boolean accept(File dir, String name) {
-        return name.toLowerCase(configuration.getLocaleInstance()).endsWith(IBU_EXTENSION);
+      public boolean accept(final File dir, final String name) {
+        return new File(dir, name).length() > 0 && name.toLowerCase(configuration.getLocaleInstance()).endsWith(IBU_EXTENSION);
       }
     });
 
@@ -2567,7 +2568,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     }
   }
 
-  private long extractIndexFromIBUFile(File backupDirectory, String fileName) throws IOException {
+  private long extractIndexFromIBUFile(final File backupDirectory, final String fileName) throws IOException {
     final File file = new File(backupDirectory, fileName);
     final RandomAccessFile rndFile = new RandomAccessFile(file, "r");
     final long index;
@@ -2581,7 +2582,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     return index;
   }
 
-  public OLogSequenceNumber incrementalBackup(final OutputStream stream, OLogSequenceNumber fromLsn) throws IOException {
+  public OLogSequenceNumber incrementalBackup(final OutputStream stream, final OLogSequenceNumber fromLsn) throws IOException {
     final OLogSequenceNumber lastLsn;
 
     checkOpeness();
@@ -2708,21 +2709,21 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     return lastLsn;
   }
 
-  public void restoreFromIncrementalBackup(String filePath) {
+  public void restoreFromIncrementalBackup(final String filePath) {
     restoreFromIncrementalBackup(new File(filePath));
   }
 
-  public void restoreFromIncrementalBackup(File backupDirectory) {
+  public void restoreFromIncrementalBackup(final File backupDirectory) {
     if (!backupDirectory.exists()) {
-      throw new OStorageException("Directory which should contain incremental backup files (files with extension " + IBU_EXTENSION
-          + " ) is absent. It should be located at " + backupDirectory.getAbsolutePath());
+      throw new OStorageException("Directory which should contain incremental backup files (files with extension '" + IBU_EXTENSION
+          + "') is absent. It should be located at '" + backupDirectory.getAbsolutePath() + "'");
     }
 
     try {
       final String[] files = fetchIBUFiles(backupDirectory);
       if (files.length == 0) {
-        throw new OStorageException("Can not find incremental backup files (files with extension " + IBU_EXTENSION
-            + " ) in directory " + backupDirectory.getAbsolutePath());
+        throw new OStorageException("Cannot find incremental backup files (files with extension '" + IBU_EXTENSION
+            + "') in directory '" + backupDirectory.getAbsolutePath() + "'");
       }
 
       stateLock.acquireWriteLock();

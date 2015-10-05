@@ -344,16 +344,16 @@ public class ODistributedWorker extends Thread {
 
   /**
    * Checks if last pending operation must be re-executed or not. In some circustamces the exception
-   * OHotAlignmentNotPossibleExeption is raised because it's not possible to recover the database state.
+   * OHotAlignmentNotPossibleException is raised because it's not possible to recover the database state.
    *
-   * @throws OHotAlignmentNotPossibleExeption
+   * @throws OHotAlignmentNotPossibleException
    */
   protected void hotAlignmentError(final ODistributedRequest iLastPendingRequest, final String iMessage, final Object... iParams)
-      throws OHotAlignmentNotPossibleExeption {
+      throws OHotAlignmentNotPossibleException {
     final String msg = String.format(iMessage, iParams);
 
     ODistributedServerLog.warn(this, getLocalNodeName(), iLastPendingRequest.getSenderNodeName(), DIRECTION.IN, "- " + msg);
-    throw new OHotAlignmentNotPossibleExeption(msg);
+    throw new OHotAlignmentNotPossibleException(msg);
   }
 
   protected boolean checkIfOperationHasBeenExecuted(final ODistributedRequest lastPendingRequest, final OAbstractRemoteTask task) {

@@ -20,6 +20,10 @@ package com.orientechnologies.orient.core.exception;
  * @since 10/6/14
  */
 public class OLowDiskSpaceException extends OStorageException {
+  public OLowDiskSpaceException(OLowDiskSpaceException exception) {
+    super(exception);
+  }
+
   public OLowDiskSpaceException(String string) {
     super(string);
   }

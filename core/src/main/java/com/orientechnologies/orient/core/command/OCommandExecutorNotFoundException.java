@@ -25,6 +25,10 @@ public class OCommandExecutorNotFoundException extends OCommandExecutionExceptio
 
   private static final long serialVersionUID = -7430575036316163711L;
 
+  public OCommandExecutorNotFoundException(OCommandExecutorNotFoundException exception) {
+    super(exception);
+  }
+
   public OCommandExecutorNotFoundException(String message) {
     super(message);
   }

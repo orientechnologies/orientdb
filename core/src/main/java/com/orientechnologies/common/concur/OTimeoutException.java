@@ -30,6 +30,10 @@ import com.orientechnologies.common.exception.OSystemException;
 public class OTimeoutException extends OSystemException {
   private static final long serialVersionUID = 1L;
 
+  public OTimeoutException(OTimeoutException exception) {
+    super(exception);
+  }
+
   public OTimeoutException(final String message) {
     super(message);
   }

@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.index.OIndexEngineException;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTreeException;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
@@ -84,7 +85,7 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
     try {
       atomicOperation = storage.getAtomicOperationsManager().startAtomicOperation(fileName, true);
     } catch (IOException e) {
-      throw OException.wrapException(new OSBTreeException("Error creation of sbtree with name " + fileName), e);
+      throw OException.wrapException(new OIndexEngineException("Error creation of sbtree with name " + fileName, fileName), e);
     }
 
     try {
@@ -111,10 +112,10 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
       try {
         storage.getAtomicOperationsManager().endAtomicOperation(true, e);
       } catch (IOException ioe) {
-        throw OException.wrapException(new OSBTreeException("Error of rollback of atomic operation"), ioe);
+        throw OException.wrapException(new OIndexEngineException("Error of rollback of atomic operation", fileName), ioe);
       }
 
-      throw OException.wrapException(new OSBTreeException("Error creation of sbtree with name " + fileName), e);
+      throw OException.wrapException(new OIndexEngineException("Error creation of sbtree with name " + fileName, fileName), e);
     }
   }
 

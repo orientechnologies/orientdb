@@ -2295,8 +2295,6 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
 
       List<Profile> result = database.command(query).execute(params);
       Assert.fail();
-    } catch (OResponseProcessingException e) {
-      Assert.assertTrue(e.getCause() instanceof OQueryParsingException);
     } catch (OCommandSQLParsingException e) {
       Assert.assertTrue(true);
     }

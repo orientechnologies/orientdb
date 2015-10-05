@@ -24,6 +24,10 @@ import com.orientechnologies.common.exception.OSystemException;
 public class OLockException extends OSystemException {
   private static final long serialVersionUID = 2215169397325875189L;
 
+  public OLockException(OLockException exception) {
+    super(exception);
+  }
+
   public OLockException(String iMessage) {
     super(iMessage);
   }

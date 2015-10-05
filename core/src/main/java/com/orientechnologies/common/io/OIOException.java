@@ -26,7 +26,11 @@ public class OIOException extends OSystemException {
 
 	private static final long	serialVersionUID	= -3003977236203691448L;
 
-	public OIOException(String string) {
+  public OIOException(OIOException exception) {
+    super(exception);
+  }
+
+  public OIOException(String string) {
 		super(string);
 	}
 }

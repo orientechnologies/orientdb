@@ -28,6 +28,11 @@ import com.orientechnologies.common.exception.OSystemException;
  * @since 10/19/13
  */
 public class ODirectMemoryViolationException extends OSystemException {
+
+  public ODirectMemoryViolationException(ODirectMemoryViolationException exception) {
+    super(exception);
+  }
+
   public ODirectMemoryViolationException(String message) {
     super(message);
   }

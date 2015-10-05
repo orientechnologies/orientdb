@@ -19,11 +19,15 @@
  */
 package com.orientechnologies.orient.core.exception;
 
-import com.orientechnologies.common.exception.OUserException;
+import com.orientechnologies.common.exception.OHighLevelException;
 
-public class ORecordNotFoundException extends OCoreException implements OUserException {
+public class ORecordNotFoundException extends OCoreException implements OHighLevelException {
 
   private static final long serialVersionUID = -265573123216968L;
+
+  public ORecordNotFoundException(ORecordNotFoundException exception) {
+    super(exception);
+  }
 
   public ORecordNotFoundException(final String string) {
     super(string);

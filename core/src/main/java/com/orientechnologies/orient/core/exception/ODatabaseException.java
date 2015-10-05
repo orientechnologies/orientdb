@@ -25,6 +25,10 @@ public class ODatabaseException extends OCoreException {
 
 	private static final long	serialVersionUID	= -2655748565531836968L;
 
+  public ODatabaseException(ODatabaseException exception) {
+    super(exception);
+  }
+
 	public ODatabaseException(String string) {
 		super(string);
 	}

@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.sql;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -122,16 +123,13 @@ public class OCommandExecutorSQLSelectTest {
     db.command(new OCommandSQL("insert into TestParams  set name = 'foo', surname ='foo', active = true")).execute();
     db.command(new OCommandSQL("insert into TestParams  set name = 'foo', surname ='bar', active = false")).execute();
 
-
     db.command(new OCommandSQL("CREATE class TestParamsEmbedded")).execute();
-    db.command(new OCommandSQL("insert into TestParamsEmbedded set emb = {  \n"
-        + "            \"count\":0,\n"
-        + "            \"testupdate\":\"1441258203385\"\n"
-        + "         }")).execute();
-    db.command(new OCommandSQL("insert into TestParamsEmbedded set emb = {  \n"
-        + "            \"count\":1,\n"
-        + "            \"testupdate\":\"1441258203385\"\n"
-        + "         }")).execute();
+    db.command(
+        new OCommandSQL("insert into TestParamsEmbedded set emb = {  \n" + "            \"count\":0,\n"
+            + "            \"testupdate\":\"1441258203385\"\n" + "         }")).execute();
+    db.command(
+        new OCommandSQL("insert into TestParamsEmbedded set emb = {  \n" + "            \"count\":1,\n"
+            + "            \"testupdate\":\"1441258203385\"\n" + "         }")).execute();
 
     db.command(new OCommandSQL("CREATE class TestBacktick")).execute();
     db.command(new OCommandSQL("insert into TestBacktick  set foo = 1, bar = 2, `foo-bar` = 10")).execute();
@@ -439,10 +437,8 @@ public class OCommandExecutorSQLSelectTest {
   @Test
   public void testBooleanParams() {
     // issue #4224
-    List<ODocument> qResult = db.command(
-        new OCommandSQL(
-            "select name from TestParams where name = ? and active = ?"))
-        .execute("foo", true);
+    List<ODocument> qResult = db.command(new OCommandSQL("select name from TestParams where name = ? and active = ?")).execute(
+        "foo", true);
     assertEquals(qResult.size(), 1);
   }
 
@@ -747,12 +743,12 @@ public class OCommandExecutorSQLSelectTest {
 
   @Test
   public void testExpandSkipLimit() {
-    //issue #4985
+    // issue #4985
     OSQLSynchQuery sql = new OSQLSynchQuery(
         "SELECT expand(linked) from ExpandSkipLimit where parent = true order by nnum skip 1 limit 1");
-    List<ODocument> results = db.query(sql);
+    List<OIdentifiable> results = db.query(sql);
     assertEquals(results.size(), 1);
-    ODocument doc = results.get(0);
+    ODocument doc = results.get(0).getRecord();
     assertEquals(doc.field("nnum"), 1);
   }
 
@@ -768,12 +764,10 @@ public class OCommandExecutorSQLSelectTest {
   @Test
   public void testOrderByEmbeddedParams() {
     // issue #4949
-    Map<String,Object> parameters = new HashMap<String,Object>();
-    parameters.put("paramvalue","count");
-    List<ODocument> qResult = db.command(
-        new OCommandSQL(
-            "select from TestParamsEmbedded order by emb[:paramvalue] DESC"))
-        .execute(parameters);
+    Map<String, Object> parameters = new HashMap<String, Object>();
+    parameters.put("paramvalue", "count");
+    List<ODocument> qResult = db.command(new OCommandSQL("select from TestParamsEmbedded order by emb[:paramvalue] DESC")).execute(
+        parameters);
     assertEquals(qResult.size(), 2);
     Map embedded = qResult.get(0).field("emb");
     assertEquals(embedded.get("count"), 1);
@@ -782,15 +776,13 @@ public class OCommandExecutorSQLSelectTest {
   @Test
   public void testOrderByEmbeddedParams2() {
     // issue #4949
-    Map<String,Object> parameters = new HashMap<String,Object>();
-    parameters.put("paramvalue","count");
-    List<ODocument> qResult = db.command(
-        new OCommandSQL(
-            "select from TestParamsEmbedded order by emb[:paramvalue] ASC"))
-        .execute(parameters);
+    Map<String, Object> parameters = new HashMap<String, Object>();
+    parameters.put("paramvalue", "count");
+    List<ODocument> qResult = db.command(new OCommandSQL("select from TestParamsEmbedded order by emb[:paramvalue] ASC")).execute(
+        parameters);
     assertEquals(qResult.size(), 2);
     Map embedded = qResult.get(0).field("emb");
-    assertEquals( embedded.get("count"), 0);
+    assertEquals(embedded.get("count"), 0);
   }
 
   private long indexUsages(ODatabaseDocumentTx db) {

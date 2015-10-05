@@ -40,8 +40,6 @@ public class WrongQueryTest extends DocumentDBBaseTest {
     try {
       database.command(new OSQLSynchQuery<ODocument>("select * from Account where name.not() like 'G%'")).execute();
       Assert.fail();
-    } catch (OResponseProcessingException e) {
-      Assert.assertTrue(e.getCause() instanceof OQueryParsingException);
     } catch (OCommandSQLParsingException e) {
     }
   }

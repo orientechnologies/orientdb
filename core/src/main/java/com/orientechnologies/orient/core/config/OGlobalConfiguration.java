@@ -545,6 +545,14 @@ public enum OGlobalConfiguration {
   /**
    * @Since 2.1.3
    */
+  @OApi(maturity = OApi.MATURITY.NEW)
+  DISTRIBUTED_QUEUE_MAXSIZE("distributed.queueMaxSize",
+      "Maximum queue size to mark a node as stalled. 0 = no maximum (up to 2^31-1 entries)", Integer.class, 100),
+
+  /**
+   * @Since 2.1.3
+   */
+  @OApi(maturity = OApi.MATURITY.NEW)
   DISTRIBUTED_BACKUP_DIRECTORY("distributed.backupDirectory",
       "Directory where to copy an existent database before to download from the cluster", String.class, "../backup/databases"),
 

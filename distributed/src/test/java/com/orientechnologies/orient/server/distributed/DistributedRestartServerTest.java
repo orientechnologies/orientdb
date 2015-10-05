@@ -15,23 +15,32 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://www.orientechnologies.com
- *
+ *  
  */
-package com.orientechnologies.common.concur.lock;
 
-import com.orientechnologies.common.exception.OSystemException;
+package com.orientechnologies.orient.server.distributed;
+
+import org.junit.Test;
 
 /**
- * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
- * @since 3/6/14
+ * Starts a server, then restart it
  */
-public class OInterruptedException extends OSystemException {
+public class DistributedRestartServerTest extends AbstractServerClusterTest {
+  final static int SERVERS = 1;
 
-  public OInterruptedException(OInterruptedException exception) {
-    super(exception);
+  public String getDatabaseName() {
+    return "distributed-restarttest";
   }
 
-  public OInterruptedException(String message) {
-    super(message);
+  @Test
+  public void test() throws Exception {
+    init(SERVERS);
+    prepare(false);
+    execute();
+  }
+
+  @Override
+  protected void executeTest() throws Exception {
+    serverInstance.get(0).getServerInstance().restart();
   }
 }

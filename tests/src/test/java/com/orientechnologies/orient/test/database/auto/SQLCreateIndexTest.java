@@ -155,17 +155,6 @@ public class SQLCreateIndexTest extends DocumentDBBaseTest {
               "CREATE INDEX sqlCreateIndexEmbeddedMapWrongSpecifierIndex ON sqlCreateIndexTestClass (prop3 by ttt) UNIQUE"))
           .execute();
       Assert.fail();
-    } catch (OResponseProcessingException e) {
-      Assert.assertTrue(e.getCause() instanceof OCommandSQLParsingException);
-      OCommandSQLParsingException exception = (OCommandSQLParsingException) e.getCause();
-
-      Assert
-          .assertTrue(exception
-              .getMessage()
-              .contains(
-                  "Error on parsing command at position #84: Illegal field name format, should be '<property> [by key|value]' but was 'prop3 by ttt'\n"
-                      + "Command: CREATE INDEX sqlCreateIndexEmbeddedMapWrongSpecifierIndex ON sqlCreateIndexTestClass (prop3 by ttt) UNIQUE\n"
-                      + "--------------------------------------------------------------------------------------------^"));
     } catch (OCommandSQLParsingException e) {
       Assert
           .assertTrue(e
@@ -189,17 +178,6 @@ public class SQLCreateIndexTest extends DocumentDBBaseTest {
               "CREATE INDEX sqlCreateIndexEmbeddedMapWrongSpecifierIndex ON sqlCreateIndexTestClass (prop3 b value) UNIQUE"))
           .execute();
       Assert.fail();
-    } catch (OResponseProcessingException e) {
-      Assert.assertTrue(e.getCause() instanceof OCommandSQLParsingException);
-      OCommandSQLParsingException exception = (OCommandSQLParsingException) e.getCause();
-
-      Assert
-          .assertTrue(exception
-              .getMessage()
-              .contains(
-                  "Error on parsing command at position #84: Illegal field name format, should be '<property> [by key|value]' but was 'prop3 b value'\n"
-                      + "Command: CREATE INDEX sqlCreateIndexEmbeddedMapWrongSpecifierIndex ON sqlCreateIndexTestClass (prop3 b value) UNIQUE\n"
-                      + "--------------------------------------------------------------------------------------------^"));
     } catch (OCommandSQLParsingException e) {
       Assert
           .assertTrue(e
@@ -223,17 +201,6 @@ public class SQLCreateIndexTest extends DocumentDBBaseTest {
               "CREATE INDEX sqlCreateIndexEmbeddedMapWrongSpecifierIndex ON sqlCreateIndexTestClass (prop3 by value t) UNIQUE"))
           .execute();
       Assert.fail();
-    } catch (OResponseProcessingException e) {
-      Assert.assertTrue(e.getCause() instanceof OCommandSQLParsingException);
-      OCommandSQLParsingException exception = (OCommandSQLParsingException) e.getCause();
-
-      Assert
-          .assertTrue(exception
-              .getMessage()
-              .contains(
-                  "Error on parsing command at position #84: Illegal field name format, should be '<property> [by key|value]' but was 'prop3 by value t'\n"
-                      + "Command: CREATE INDEX sqlCreateIndexEmbeddedMapWrongSpecifierIndex ON sqlCreateIndexTestClass (prop3 by value t) UNIQUE\n"
-                      + "--------------------------------------------------------------------------------------------^"));
     } catch (OCommandSQLParsingException e) {
       Assert
           .assertTrue(e
@@ -371,13 +338,6 @@ public class SQLCreateIndexTest extends DocumentDBBaseTest {
                   "CREATE INDEX sqlCreateIndexEmbeddedListWithoutLinkedTypeIndex ON sqlCreateIndexTestClass (prop6) UNIQUE"))
           .execute();
       Assert.fail();
-    } catch (OResponseProcessingException e) {
-      Assert.assertTrue(e.getCause() instanceof OIndexException);
-      OIndexException exception = (OIndexException) e.getCause();
-
-      Assert.assertTrue(exception.getMessage().contains(
-          "Linked type was not provided. "
-              + "You should provide linked type for embedded collections that are going to be indexed."));
     } catch (OIndexException e) {
       Assert.assertTrue(e.getMessage().contains(
           "Linked type was not provided. "
@@ -397,12 +357,6 @@ public class SQLCreateIndexTest extends DocumentDBBaseTest {
               "CREATE INDEX sqlCreateIndexEmbeddedMapWithoutLinkedTypeIndex ON sqlCreateIndexTestClass (prop7 by value) UNIQUE"))
           .execute();
       Assert.fail();
-    } catch (OResponseProcessingException e) {
-      Assert.assertTrue(e.getCause() instanceof OIndexException);
-      OIndexException exception = (OIndexException) e.getCause();
-      Assert.assertTrue(exception.getMessage().contains(
-          "Linked type was not provided. "
-              + "You should provide linked type for embedded collections that are going to be indexed."));
     } catch (OIndexException e) {
       Assert.assertTrue(e.getMessage().contains(
           "Linked type was not provided. "
@@ -445,26 +399,15 @@ public class SQLCreateIndexTest extends DocumentDBBaseTest {
     try {
       database.command(new OCommandSQL(query)).execute();
       Assert.fail();
-    } catch (OResponseProcessingException e) {
-      Assert.assertTrue(e.getCause() instanceof OCommandExecutionException);
-      OCommandExecutionException exception = (OCommandExecutionException) e.getCause();
-
-      Assert.assertTrue(exception.getMessage().contains(
-          "Error on execution of command: sql.CREATE INDEX sqlCreateIndexCompositeIndex3 ON"));
-
-      if (exception.getCause() instanceof OCommandExecutionException)
-        Assert.assertEquals(exception.getCause().getCause().getClass(), IllegalArgumentException.class);
-      else
-        Assert.assertEquals(exception.getCause().getClass(), IllegalArgumentException.class);
-
     } catch (OCommandExecutionException e) {
       Assert
           .assertTrue(e.getMessage().contains("Error on execution of command: sql.CREATE INDEX sqlCreateIndexCompositeIndex3 ON"));
 
-      if (e.getCause() instanceof OCommandExecutionException)
-        Assert.assertEquals(e.getCause().getCause().getClass(), IllegalArgumentException.class);
-      else
-        Assert.assertEquals(e.getCause().getClass(), IllegalArgumentException.class);
+      Throwable cause = e;
+      while (cause.getCause() != null)
+        cause = cause.getCause();
+
+      Assert.assertEquals(cause.getClass(), IllegalArgumentException.class);
 
     }
     final OIndex<?> index = database.getMetadata().getSchema().getClass("sqlCreateIndexTestClass")

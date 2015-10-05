@@ -23,6 +23,7 @@ package com.orientechnologies.orient.core.index.hashindex.local;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.orient.core.exception.OHashTableDirectoryException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
@@ -68,7 +69,7 @@ public class OHashTableDirectory extends ODurableComponent {
       throw e;
     } catch (Exception e) {
       endAtomicOperation(true, e);
-      throw OException.wrapException(new OStorageException("Error during creation of hash table"), e);
+      throw OException.wrapException(new OHashTableDirectoryException("Error during creation of hash table", this), e);
     } finally {
       releaseExclusiveLock();
     }
@@ -104,7 +105,7 @@ public class OHashTableDirectory extends ODurableComponent {
       throw e;
     } catch (Exception e) {
       endAtomicOperation(true, e);
-      throw OException.wrapException(new OStorageException("Error during hash table initialization"), e);
+      throw OException.wrapException(new OHashTableDirectoryException("Error during hash table initialization", this), e);
     }
   }
 
@@ -148,7 +149,7 @@ public class OHashTableDirectory extends ODurableComponent {
       throw e;
     } catch (Exception e) {
       endAtomicOperation(true, e);
-      throw OException.wrapException(new OStorageException("Error during hash table deletion"), e);
+      throw OException.wrapException(new OHashTableDirectoryException("Error during hash table deletion", this), e);
     } finally {
       releaseExclusiveLock();
     }
@@ -169,7 +170,7 @@ public class OHashTableDirectory extends ODurableComponent {
       throw e;
     } catch (Exception e) {
       endAtomicOperation(true, e);
-      throw OException.wrapException(new OStorageException("Error during deletion of hash table"), e);
+      throw OException.wrapException(new OHashTableDirectoryException("Error during deletion of hash table", this), e);
     } finally {
       releaseExclusiveLock();
     }
@@ -299,7 +300,7 @@ public class OHashTableDirectory extends ODurableComponent {
       throw e;
     } catch (Exception e) {
       endAtomicOperation(true, e);
-      throw OException.wrapException(new OStorageException("Error during node deletion"), e);
+      throw OException.wrapException(new OHashTableDirectoryException("Error during node deletion", this), e);
     } finally {
       releaseExclusiveLock();
     }
@@ -344,7 +345,7 @@ public class OHashTableDirectory extends ODurableComponent {
       throw e;
     } catch (Exception e) {
       endAtomicOperation(true, e);
-      throw OException.wrapException(new OStorageException("Error during setting of max left child depth"), e);
+      throw OException.wrapException(new OHashTableDirectoryException("Error during setting of max left child depth", this), e);
     } finally {
       releaseExclusiveLock();
     }
@@ -388,7 +389,7 @@ public class OHashTableDirectory extends ODurableComponent {
       throw e;
     } catch (Exception e) {
       endAtomicOperation(true, e);
-      throw OException.wrapException(new OStorageException("Error during setting of right max child depth"), e);
+      throw OException.wrapException(new OHashTableDirectoryException("Error during setting of right max child depth", this), e);
     } finally {
       releaseExclusiveLock();
     }
@@ -431,7 +432,7 @@ public class OHashTableDirectory extends ODurableComponent {
       throw e;
     } catch (Exception e) {
       endAtomicOperation(true, e);
-      throw OException.wrapException(new OStorageException("Error during setting of local node depth"), e);
+      throw OException.wrapException(new OHashTableDirectoryException("Error during setting of local node depth", this), e);
     } finally {
       releaseExclusiveLock();
     }
@@ -483,7 +484,7 @@ public class OHashTableDirectory extends ODurableComponent {
       throw e;
     } catch (Exception e) {
       endAtomicOperation(true, e);
-      throw OException.wrapException(new OStorageException("Error during setting of node"), e);
+      throw OException.wrapException(new OHashTableDirectoryException("Error during setting of node", this), e);
     } finally {
       releaseExclusiveLock();
     }
@@ -526,7 +527,7 @@ public class OHashTableDirectory extends ODurableComponent {
       throw e;
     } catch (Exception e) {
       endAtomicOperation(true, e);
-      throw OException.wrapException(new OStorageException("Error during setting of node pointer"), e);
+      throw OException.wrapException(new OHashTableDirectoryException("Error during setting of node pointer", this), e);
     } finally {
       releaseExclusiveLock();
     }
@@ -546,7 +547,8 @@ public class OHashTableDirectory extends ODurableComponent {
       throw e;
     } catch (Exception e) {
       endAtomicOperation(true, e);
-      throw OException.wrapException(new OStorageException("Error during removing of hash table directory content"), e);
+      throw OException.wrapException(
+          new OHashTableDirectoryException("Error during removing of hash table directory content", this), e);
     } finally {
       releaseExclusiveLock();
     }
