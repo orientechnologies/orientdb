@@ -19,13 +19,6 @@
  */
 package com.orientechnologies.orient.server.network.protocol.binary;
 
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.net.Socket;
-import java.net.SocketException;
-import java.util.*;
-import java.util.Map.Entry;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
@@ -38,7 +31,6 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.ONullSerializer;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.client.remote.OCollectionNetworkSerializer;
-import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCommandCache;
@@ -46,7 +38,6 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -55,7 +46,12 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
-import com.orientechnologies.orient.core.exception.*;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.exception.OSecurityException;
+import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.exception.OTransactionAbortedException;
 import com.orientechnologies.orient.core.fetch.OFetchContext;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.fetch.OFetchListener;
@@ -83,7 +79,12 @@ import com.orientechnologies.orient.core.sql.query.OConcurrentResultSet;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
+import com.orientechnologies.orient.core.storage.ORecordMetadata;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
@@ -96,8 +97,20 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
-import com.orientechnologies.orient.server.security.OSecurityServerUser;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
+
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
+import java.net.SocketException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.UUID;
 
 public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected OClientConnection connection;
@@ -218,7 +231,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
           throw OException.wrapException(new OSystemException("error on token parse"), e);
         }
         if (this.token == null || !this.token.getIsVerified()) {
-          throw new OSecurityException("The token provided is not a valid token, signature doesn't match");
+          throw new OSecurityException("The token provided is not a valid token, signature does not match");
         }
 
         if (tokenBased == null) {
@@ -632,14 +645,14 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected void checkServerAccess(final String iResource) {
     if (connection.data.protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_26) {
       if (connection.serverUser == null)
-        throw new OSecurityAccessException("Server user not authenticated.");
+        throw new OSecurityAccessException("Server user not authenticated");
 
       if (!server.isAllowed(connection.serverUser.name, iResource))
         throw new OSecurityAccessException("User '" + connection.serverUser.name + "' cannot access to the resource [" + iResource
             + "]. Use another server user or change permission in the file config/orientdb-server-config.xml");
     } else {
       if (!connection.data.serverUser)
-        throw new OSecurityAccessException("Server user not authenticated.");
+        throw new OSecurityAccessException("Server user not authenticated");
 
       if (!server.isAllowed(connection.data.serverUsername, iResource))
         throw new OSecurityAccessException("User '" + connection.data.serverUsername + "' cannot access to the resource ["
@@ -658,7 +671,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     final String clusterName = connection.database.getClusterNameById(id);
     if (clusterName == null)
       throw new IllegalArgumentException("Cluster " + id
-          + " doesn't exist anymore. Refresh the db structure or just reconnect to the database");
+          + " does not exist anymore. Refresh the db structure or just reconnect to the database");
 
     boolean result = connection.database.dropCluster(clusterName, true);
 
@@ -794,7 +807,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       try {
         getServer().getClientConnectionManager().connect(this, connection, token, tokenHandler.parseBinaryToken(token));
       } catch (Exception e) {
-        throw OException.wrapException(new OSystemException("Can not connect to the server using provided token"), e);
+        throw OException.wrapException(new OSystemException("Cannot connect to the server using provided token"), e);
       }
     }
 
@@ -1108,7 +1121,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
       connection.close();
     } else {
-      throw new OStorageException("Database with name '" + dbName + "' doesn't exits.");
+      throw new OStorageException("Database with name '" + dbName + "' does not exist");
     }
 
     beginResponse();
@@ -1937,7 +1950,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     }
     if (tokenBased && tokenHandler == null) {
       // this is not the way
-      // throw new OException("The server doesn't support the token based authentication");
+      // throw new OException("The server does not support the token based authentication");
       tokenBased = false;
     }
   }
@@ -1991,7 +2004,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
       connection.database.freeze(true);
     } else {
-      throw new OStorageException("Database with name '" + dbName + "' doesn't exits.");
+      throw new OStorageException("Database with name '" + dbName + "' does not exist");
     }
 
     beginResponse();
@@ -2024,7 +2037,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
       connection.database.release();
     } else {
-      throw new OStorageException("Database with name '" + dbName + "' doesn't exits.");
+      throw new OStorageException("Database with name '" + dbName + "' does not exist");
     }
 
     beginResponse();
