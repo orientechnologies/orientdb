@@ -74,11 +74,10 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     else
       graph = null;
 
-    rawElement = iRawElement;
-
-    final OrientBaseGraph graph = getGraph();
     if (graph != null)
       settings = graph.settings;
+
+    rawElement = iRawElement;
   }
 
   public abstract String getLabel();
