@@ -19,6 +19,14 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.collection.OSortedMultiIterator;
@@ -47,6 +55,7 @@ import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.iterator.OIdentifiableIterator;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClusters;
@@ -86,14 +95,6 @@ import com.orientechnologies.orient.core.sql.parser.OWhereClause;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY;
-
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Executes the SQL SELECT statement. the parse() method compiles the query and builds the meta information needed by the execute().
@@ -694,10 +695,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       }
     }
 
-    if (tipLimitThreshold > 0 && resultCount > tipLimitThreshold) {
-      reportTip(String.format(
-          "Query '%s' returned a result set with more than %d records. Reduce it to improve performance and reduce RAM used",
-          parserText, tipLimitThreshold));
+    if (tipLimitThreshold > 0 && resultCount > tipLimitThreshold && getLimit() == -1) {
+      reportTip(String
+          .format("Query '%s' returned a result set with more than %d records. Check if you really need all these records, or reduce the resultset by using a LIMIT to improve both performance and used RAM", parserText, tipLimitThreshold));
       tipLimitThreshold = 0;
     }
 
@@ -1466,18 +1466,20 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   private boolean serialExec(Iterator<? extends OIdentifiable> iTarget) {
     int queryScanThresholdWarning = OGlobalConfiguration.QUERY_SCAN_THRESHOLD_TIP.getValueAsInteger();
 
+    boolean tipActivated = queryScanThresholdWarning > 0 && iTarget instanceof OIdentifiableIterator && compiledFilter != null;
+
     // BROWSE, UNMARSHALL AND FILTER ALL THE RECORDS ON CURRENT THREAD
     for (int browsed = 0; iTarget.hasNext(); browsed++) {
       final OIdentifiable next = iTarget.next();
       if (!executeSearchRecord(next, context))
         return false;
 
-      if (queryScanThresholdWarning > 0 && browsed > queryScanThresholdWarning && compiledFilter != null) {
+      if (tipActivated && browsed > queryScanThresholdWarning) {
         reportTip(String
             .format(
                 "Query '%s' fetched more than %d records: to speed up the execution, create an index or change the query to use an existent index",
                 parserText, queryScanThresholdWarning));
-        queryScanThresholdWarning = 0;
+        tipActivated = false;
       }
     }
     return true;
