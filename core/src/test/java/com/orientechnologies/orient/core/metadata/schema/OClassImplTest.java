@@ -465,34 +465,6 @@ public class OClassImplTest {
   }
 
   @Test
-  public void testReservedWords() {
-    Set<String> reserved = new HashSet<String>();
-    // reserved.add("select");
-    reserved.add("traverse");
-    reserved.add("insert");
-    reserved.add("update");
-    reserved.add("delete");
-    reserved.add("from");
-    reserved.add("where");
-    reserved.add("skip");
-    reserved.add("limit");
-    reserved.add("timeout");
-
-    final OSchema oSchema = db.getMetadata().getSchema();
-    OClass foo = oSchema.createClass("OClassImplTest_testReservedWords");
-
-    for (String s : reserved) {
-      try {
-        foo.createProperty(s, OType.STRING);
-        fail();
-      } catch (OSchemaException x) {
-        System.out.println(x.getMessage());
-      }
-    }
-
-  }
-
-  @Test
   public void testClassNameSyntax() {
 
     final OSchema oSchema = db.getMetadata().getSchema();
