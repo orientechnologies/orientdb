@@ -61,10 +61,18 @@ public class OrientGraphStep<S extends Element> extends GraphStep<S> implements 
         }
     }
 
+    private boolean isLabelKey(String key) {
+       try {
+           return T.fromString(key) == T.label;
+       } catch (IllegalArgumentException e) {
+           return false;
+       }
+    }
+
     // if one of the HasContainers is a label matching predicate, then return that label
     private Optional<String> findElementLabelInHasContainers() {
         return this.hasContainers.stream()
-            .filter(hasContainer -> T.fromString(hasContainer.getKey()) == T.label)
+            .filter(hasContainer -> isLabelKey(hasContainer.getKey()))
             .findFirst()
             .map(hasContainer -> hasContainer.getValue().toString());
     }

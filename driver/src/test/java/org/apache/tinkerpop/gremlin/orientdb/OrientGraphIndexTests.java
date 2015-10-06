@@ -48,7 +48,7 @@ public class OrientGraphIndexTests {
         // It should print "index will be queried..." then "not indexed"
         Set<Vertex> result1 = graph.traversal().V().has(T.label, P.eq(label1)).has(key, P.eq(value)).toSet();
         Assert.assertTrue(result1.size() == 1);
-        Set<Vertex> result2 = graph.traversal().V().has(T.label, P.eq(label2)).has(key, P.eq(value)).toSet();
+        Set<Vertex> result2 = graph.traversal().V().has(key, P.eq(value)).has(T.label, P.eq(label2)).toSet();
         Assert.assertTrue(result2.size() == 1);
 
         // no duplicates allowed for vertex with label1
