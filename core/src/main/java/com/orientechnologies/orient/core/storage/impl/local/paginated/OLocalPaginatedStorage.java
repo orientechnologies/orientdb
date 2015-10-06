@@ -259,6 +259,11 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
           writeAheadLog.newSegment();
           newSegment = true;
 
+          if (freezeId >= 0) {
+            getAtomicOperationsManager().releaseAtomicOperations(freezeId);
+            freezeId = -1;
+          }
+
           nonActiveSegments = writeAheadLog.nonActiveSegments(startSegment);
         }
 
