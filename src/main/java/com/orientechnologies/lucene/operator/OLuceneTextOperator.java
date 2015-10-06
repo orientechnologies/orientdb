@@ -126,9 +126,10 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
       Object iLeft, Object iRight) {
 
     ODocument doc = iRecord.getRecord();
-    Set<OIndex<?>> classInvolvedIndexes = getDatabase().getMetadata().getIndexManager()
-        .getClassInvolvedIndexes(doc.getClassName(), fields(iCondition));
 
+    OClass cls = getDatabase().getMetadata().getSchema().getClass(doc.getClassName());
+
+    Set<OIndex<?>> classInvolvedIndexes = cls.getInvolvedIndexes(fields(iCondition));
     OLuceneFullTextIndex idx = null;
     for (OIndex<?> classInvolvedIndex : classInvolvedIndexes) {
 
