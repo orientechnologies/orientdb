@@ -1,6 +1,6 @@
 package org.apache.tinkerpop.gremlin.orientdb.traversal.step.sideEffect;
 
-import org.apache.tinkerpop.gremlin.orientdb.OrientIndexReference;
+import org.apache.tinkerpop.gremlin.orientdb.OrientIndexQuery;
 import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
 import org.apache.tinkerpop.gremlin.orientdb.OrientVertex;
 import org.apache.tinkerpop.gremlin.process.traversal.Compare;
@@ -34,7 +34,7 @@ public class OrientGraphStep<S extends Element> extends GraphStep<S> implements 
 
     private Iterator<? extends Vertex> vertices() {
         final OrientGraph graph = (OrientGraph) this.getTraversal().getGraph().get();
-        final Optional<OrientIndexReference> indexReference = getIndexReference();
+        final Optional<OrientIndexQuery> indexReference = getIndexReference();
 
         if (this.ids != null && this.ids.length > 0) {
             return this.iteratorList(graph.vertices(this.ids));
@@ -73,7 +73,7 @@ public class OrientGraphStep<S extends Element> extends GraphStep<S> implements 
         return ((OrientGraph) this.getTraversal().getGraph().get());
     }
 
-    private Optional<OrientIndexReference> getIndexReference() {
+    private Optional<OrientIndexQuery> getIndexReference() {
         Optional<String> elementLabel = findElementLabelInHasContainers();
         OrientGraph graph = getGraph();
         // find indexed keys only for the element subclass (if present)
@@ -91,7 +91,7 @@ public class OrientGraphStep<S extends Element> extends GraphStep<S> implements 
         if (indexedKeyAndValue.isPresent()) {
             String key = indexedKeyAndValue.get().getValue0();
             Object value = indexedKeyAndValue.get().getValue1();
-            return Optional.of(new OrientIndexReference(isVertexStep(), elementLabel, key, value));
+            return Optional.of(new OrientIndexQuery(isVertexStep(), elementLabel, key, value));
         } else
             return Optional.empty();
     }

@@ -154,7 +154,7 @@ public final class OrientGraph implements Graph {
         return iValue;
     }
 
-    public Stream<OrientVertex> getIndexedVertices(OrientIndexReference indexReference) {
+    public Stream<OrientVertex> getIndexedVertices(OrientIndexQuery indexReference) {
         makeActive();
 
 //        if (iKey.equals("@class"))

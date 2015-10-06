@@ -124,7 +124,7 @@ public class OrientGraphIndexTests {
 
         graph.addVertex(T.label, label, key, value);
         // TODO: test with a "has" traversal, if/when that supports a case insensitive match predicate
-        OrientIndexReference indexRef = new OrientIndexReference(true, Optional.of(label), key, value.toUpperCase());
+        OrientIndexQuery indexRef = new OrientIndexQuery(true, Optional.of(label), key, value.toUpperCase());
         Iterator<OrientVertex> result = graph.getIndexedVertices(indexRef).iterator();
         Assert.assertEquals(result.hasNext(), true);
     }
