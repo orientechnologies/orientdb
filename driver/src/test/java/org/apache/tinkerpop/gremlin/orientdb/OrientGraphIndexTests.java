@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.apache.tinkerpop.gremlin.process.traversal.P;
+import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.T;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.junit.Assert;
@@ -22,56 +23,109 @@ public class OrientGraphIndexTests {
     }
 
     @Test
-    public void uniqueIndex() {
-        String className = "V";
-        String keyName = "key1";
+    public void uniqueIndexOnVertices() {
+        OrientGraph graph = newGraph();
+
+        String label1 = "SomeVertexLabel1";
+        String label2 = "SomeVertexLabel2";
+        String key = "indexedKey";
         String value = "value1";
 
-        OrientGraph graph = newGraph();
-        graph.createVertexClass(className);
-
         Configuration config = new BaseConfiguration();
-//        config.setProperty("class", className);
         config.setProperty("type", "UNIQUE");
         config.setProperty("keytype", OType.STRING);
-        graph.createIndex(keyName, Vertex.class, config);
+        graph.createVertexIndex(key, label1, config);
 
-        Assert.assertEquals(graph.getIndexedKeys(Vertex.class), new HashSet<String>(Collections.singletonList(keyName)));
+        Assert.assertEquals(graph.getIndexedKeys(Vertex.class, label1), new HashSet<String>(Collections.singletonList(key)));
+        Assert.assertEquals(graph.getIndexedKeys(Vertex.class, label2), new HashSet<String>(Collections.emptyList()));
+        Assert.assertEquals(graph.getIndexedKeys(Edge.class, label1), new HashSet<String>(Collections.emptyList()));
 
-        graph.addVertex(T.label, className, keyName, value);
+        Vertex v1 = graph.addVertex(T.label, label1, key, value);
+        Vertex v2 = graph.addVertex(T.label, label2, key, value);
 
-        // This test doesn't check that the following traversal hit the index.
-        // Only verified by println debugging in OrientGraphStep.
-        Set<Vertex> result = graph.traversal().V().has(T.label, P.eq(className)).has(keyName, P.eq(value)).toSet();
-        Assert.assertTrue(result.size() == 1);
+        // Verify that the traversal hits the index via println debugging.
+        // Uncomment the println statements in OrientGraphStep.java
+        // It should print "index will be queried..." then "not indexed"
+        Set<Vertex> result1 = graph.traversal().V().has(T.label, P.eq(label1)).has(key, P.eq(value)).toSet();
+        Assert.assertTrue(result1.size() == 1);
+        Set<Vertex> result2 = graph.traversal().V().has(T.label, P.eq(label2)).has(key, P.eq(value)).toSet();
+        Assert.assertTrue(result2.size() == 1);
 
+        // no duplicates allowed for vertex with label1
         try {
-            graph.addVertex(T.label, className, keyName, value);
+            graph.addVertex(T.label, label1, key, value);
             Assert.fail("must throw duplicate key here!");
         } catch (ORecordDuplicatedException e) {
             // ok
         }
+
+        // allow duplicate for vertex with label2
+        graph.addVertex(T.label, label2, key, value);
     }
+
+    // Indexed edge properties is not yet handled / implemented.
+//    @Test
+//    public void uniqueIndexOnEdges() {
+//
+//        String vertexLabel = "SomeVertexLabel";
+//        String edgeLabel1 = "SomeEdgeLabel1";
+//        String edgeLabel2 = "SomeEdgeLabel2";
+//        String indexedKey = "indexedKey";
+//        String value = "value1";
+//
+//        OrientGraph graph = newGraph();
+//
+//        Configuration config = new BaseConfiguration();
+//        config.setProperty("type", "UNIQUE");
+//        config.setProperty("keytype", OType.STRING);
+//        graph.createEdgeIndex(indexedKey, edgeLabel1, config);
+//
+//        Assert.assertEquals(graph.getIndexedKeys(Edge.class, edgeLabel1), new HashSet<String>(Collections.singletonList(indexedKey)));
+//        Assert.assertEquals(graph.getIndexedKeys(Edge.class, edgeLabel2), new HashSet<String>(Collections.emptyList()));
+//        Assert.assertEquals(graph.getIndexedKeys(Vertex.class, vertexLabel), new HashSet<String>(Collections.emptyList()));
+//
+//        Vertex v1 = graph.addVertex(T.label, vertexLabel);
+//        Vertex v2 = graph.addVertex(T.label, vertexLabel);
+//        Edge e1 = v1.addEdge(edgeLabel1, v2, indexedKey, value);
+//        Edge e2 = v1.addEdge(edgeLabel2, v2, indexedKey, value);
+//
+//        // Verify that the traversal hits the index via println debugging.
+//        // Should print "index will be queried..." then "not indexed"
+//        Set<Edge> result1 = graph.traversal().E().has(T.label, P.eq(edgeLabel1)).toSet();
+//        Assert.assertTrue(result1.size() == 1);
+//        Set<Edge> result2 = graph.traversal().E().has(T.label, P.eq(edgeLabel2)).toSet();
+//        Assert.assertTrue(result2.size() == 1);
+//
+//        // no duplicates allowed for edge with label1
+//        try {
+//            v2.addEdge(edgeLabel1, v1, indexedKey, value);
+//            Assert.fail("must throw duplicate key here!");
+//        } catch (ORecordDuplicatedException e) {
+//            // ok
+//        }
+//
+//        // allow duplicate for vertex with label2
+//        v2.addEdge(edgeLabel2, v1, indexedKey, value);
+//    }
 
     @Test
     public void indexCollation() {
-        String className = "VC1";
-        String keyName = "name";
+        OrientGraph graph = newGraph();
+
+        String label = "VC1";
+        String key = "name";
         String value = "bob";
 
-        OrientGraph graph = newGraph();
-        graph.createVertexClass(className);
-
         Configuration config = new BaseConfiguration();
-        config.setProperty("class", className);
         config.setProperty("type", "UNIQUE");
         config.setProperty("keytype", OType.STRING);
         config.setProperty("collate", "ci");
-        graph.createIndex(keyName, Vertex.class, config);
+        graph.createVertexIndex(key, label, config);
 
-        graph.addVertex(T.label, className, keyName, value);
+        graph.addVertex(T.label, label, key, value);
         // TODO: test with a "has" traversal, if/when that supports a case insensitive match predicate
-        Iterator<OrientVertex> result = graph.getIndexedVertices(className + "." + keyName, value.toUpperCase()).iterator();
+        OrientIndexReference indexRef = new OrientIndexReference(true, Optional.of(label), key, value.toUpperCase());
+        Iterator<OrientVertex> result = graph.getIndexedVertices(indexRef).iterator();
         Assert.assertEquals(result.hasNext(), true);
     }
 }

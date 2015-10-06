@@ -41,9 +41,9 @@ import static org.apache.tinkerpop.gremlin.orientdb.StreamUtils.asStream;
 public final class OrientGraph implements Graph {
     static {
         TraversalStrategies.GlobalCache.registerStrategies(
-                OrientGraph.class,
-                TraversalStrategies.GlobalCache.getStrategies(Graph.class).clone()
-                        .addStrategies(OrientGraphStepStrategy.instance()));
+            OrientGraph.class,
+            TraversalStrategies.GlobalCache.getStrategies(Graph.class).clone()
+                .addStrategies(OrientGraphStepStrategy.instance()));
     }
 
     public static String CONFIG_URL = "orient-url";
@@ -62,10 +62,10 @@ public final class OrientGraph implements Graph {
     public OrientGraph(Configuration config) {
         this.url = config.getString(CONFIG_URL, "memory:test-" + Math.random());
         this.database = getDatabase(url,
-                config.getString(CONFIG_USER, "admin"),
-                config.getString(CONFIG_PASS, "admin"),
-                config.getBoolean(CONFIG_CREATE, true),
-                config.getBoolean(CONFIG_OPEN, true));
+            config.getString(CONFIG_USER, "admin"),
+            config.getString(CONFIG_PASS, "admin"),
+            config.getBoolean(CONFIG_CREATE, true),
+            config.getBoolean(CONFIG_OPEN, true));
     }
 
     @Override
@@ -104,7 +104,10 @@ public final class OrientGraph implements Graph {
         if (ElementHelper.getIdValue(keyValues).isPresent()) throw Vertex.Exceptions.userSuppliedIdsNotSupported();
 
         String label = ElementHelper.getLabelValue(keyValues).orElse(OImmutableClass.VERTEX_CLASS_NAME);
-        OrientVertex vertex = new OrientVertex(this, label);
+        String className = label.equals(OImmutableClass.VERTEX_CLASS_NAME) ?
+            OImmutableClass.VERTEX_CLASS_NAME :
+            OImmutableClass.VERTEX_CLASS_NAME + "_" + label;
+        OrientVertex vertex = new OrientVertex(this, className);
         ElementHelper.attachProperties(vertex, keyValues);
 
         vertex.save();
@@ -135,9 +138,9 @@ public final class OrientGraph implements Graph {
     public Iterator<Vertex> vertices(Object... vertexIds) {
         makeActive();
         return elements(
-                OImmutableClass.VERTEX_CLASS_NAME,
-                r -> new OrientVertex(this, getRawDocument(r)),
-                vertexIds);
+            OImmutableClass.VERTEX_CLASS_NAME,
+            r -> new OrientVertex(this, getRawDocument(r)),
+            vertexIds);
     }
 
     protected Object convertKey(final OIndex<?> idx, Object iValue) {
@@ -151,72 +154,36 @@ public final class OrientGraph implements Graph {
         return iValue;
     }
 
-    /**
-     * Get all the (indexed) Vertices in Graph, filtering by field name and value. Example:<code>
-     * Stream<Vertex> resultset = getIndexedVertices("name", "Jay");
-     * </code>
-     *
-     * @param iKey   indexed Field name
-     * @param iValue Field value
-     * @return Vertices as Iterable
-     */
-    public Stream<OrientVertex> getIndexedVertices(final String iKey, Object iValue) {
+    public Stream<OrientVertex> getIndexedVertices(OrientIndexReference indexReference) {
         makeActive();
 
 //        if (iKey.equals("@class"))
 //            return getVerticesOfClass(iValue.toString());
 
-        // Most of this is copied from the TinkerPop2 driver.
-        String indexName;
-        final String key;
-        int pos = iKey.indexOf('.');
-        if (pos > -1) {
-            indexName = iKey;
-
-            final String className = iKey.substring(0, pos);
-            key = iKey.substring(iKey.indexOf('.') + 1);
-
-            final OClass clazz = database.getMetadata().getImmutableSchemaSnapshot().getClass(className);
-
-            final Collection<? extends OIndex<?>> indexes = clazz.getIndexes();
-            for (OIndex<?> index : indexes) {
-                final String oInName = index.getName();
-                final int point = oInName.indexOf(".");
-                final String okey = oInName.substring(point + 1);
-                if (okey.equals(key)) {
-                    indexName = oInName;
-                    break;
-                }
-            }
+        final OIndex<?> idx = database.getMetadata().getIndexManager().getIndex(indexReference.indexName());
+        Object iValue = indexReference.value;
+        if (idx == null) {
+            // NO INDEX
+            return Collections.<OrientVertex>emptyList().stream();
         } else {
-            indexName = OrientVertexType.CLASS_NAME + "." + iKey;
-        }
-
-        final OIndex<?> idx = database.getMetadata().getIndexManager().getIndex(indexName);
-        if (idx != null) {
             iValue = convertKey(idx, iValue);
-
             Object indexValue = idx.get(iValue);
             if (indexValue == null) {
                 return Collections.<OrientVertex>emptyList().stream();
             } else if (!(indexValue instanceof Iterable<?>)) {
                 indexValue = Collections.singletonList(indexValue);
             }
-
             Iterable<ORecordId> iterableIds = (Iterable<ORecordId>) indexValue;
-
             Stream<ORecordId> ids = StreamSupport.stream(iterableIds.spliterator(), false);
             Stream<ORecord> records = ids.map(id -> (ORecord) id.getRecord()).filter(r -> r != null);
             return records.map(r -> new OrientVertex(this, getRawDocument(r)));
         }
-
-        // NO INDEX
-        return Collections.<OrientVertex>emptyList().stream();
     }
 
     private OIndexManager getIndexManager() {
         return database.getMetadata().getIndexManager();
     }
+
 
     public Set<String> getIndexedKeys(String className) {
         Iterator<OIndex<?>> indexes = getIndexManager().getClassIndexes(className).iterator();
@@ -227,8 +194,17 @@ public final class OrientGraph implements Graph {
         return indexedKeys;
     }
 
+    public Set<String> getIndexedKeys(final Class<? extends Element> elementClass, String label) {
+        if (Vertex.class.isAssignableFrom(elementClass)) {
+            return getVertexIndexedKeys(label);
+        } else if (Edge.class.isAssignableFrom(elementClass)) {
+            return getEdgeIndexedKeys(label);
+        } else {
+            throw new IllegalArgumentException("Class is not indexable: " + elementClass);
+        }
+    }
+
     public Set<String> getIndexedKeys(final Class<? extends Element> elementClass) {
-        // TODO: allow use of indexes on subclasses of V and E
         if (Vertex.class.isAssignableFrom(elementClass)) {
             return getIndexedKeys(OImmutableClass.VERTEX_CLASS_NAME);
         } else if (Edge.class.isAssignableFrom(elementClass)) {
@@ -238,13 +214,21 @@ public final class OrientGraph implements Graph {
         }
     }
 
+    public Set<String> getVertexIndexedKeys(final String label) {
+        return getIndexedKeys(OImmutableClass.VERTEX_CLASS_NAME + "_" + label);
+    }
+
+    public Set<String> getEdgeIndexedKeys(final String label) {
+        return getIndexedKeys(OImmutableClass.EDGE_CLASS_NAME + "_" + label);
+    }
+
     @Override
     public Iterator<Edge> edges(Object... edgeIds) {
         makeActive();
         return elements(
-                OImmutableClass.EDGE_CLASS_NAME,
-                r -> new OrientEdge(this, getRawDocument(r)),
-                edgeIds);
+            OImmutableClass.EDGE_CLASS_NAME,
+            r -> new OrientEdge(this, getRawDocument(r)),
+            edgeIds);
     }
 
     protected <A extends Element> Iterator<A> elements(String elementClass, Function<ORecord, A> toA, Object... elementIds) {
@@ -278,7 +262,7 @@ public final class OrientGraph implements Graph {
             currentDocument.load();
         if (ODocumentInternal.getImmutableSchemaClass(currentDocument) == null)
             throw new IllegalArgumentException(
-                    "Cannot determine the graph element type because the document class is null. Probably this is a projection, use the EXPAND() function");
+                "Cannot determine the graph element type because the document class is null. Probably this is a projection, use the EXPAND() function");
         return currentDocument;
     }
 
@@ -329,7 +313,6 @@ public final class OrientGraph implements Graph {
             }
         }
     }
-
 
     public void createVertexClass(final String className) {
         makeActive();
@@ -411,7 +394,7 @@ public final class OrientGraph implements Graph {
      * Creates an automatic indexing structure for indexing provided key for element class.
      *
      * @param key           the key to create the index for
-     * @param elementClass  the element class that the index is for
+     * @param label         the element label
      * @param configuration a collection of parameters for the underlying index implementation:
      *                      <ul>
      *                      <li>"type" is the index type between the supported types (UNIQUE, NOTUNIQUE, FULLTEXT). The default type is NOT_UNIQUE
@@ -421,33 +404,52 @@ public final class OrientGraph implements Graph {
      *                      </ul>
      * @param <T>           the element class specification
      */
-    @SuppressWarnings({"rawtypes"})
-    public <T extends Element> void createIndex(final String key, final Class<T> elementClass, final Configuration configuration) {
-        makeActive();
+    public <T extends Element> void createVertexIndex(final String key, final String label, final Configuration configuration) {
+        String className = OrientVertexType.CLASS_NAME + "_" + label;
+        createVertexClass(className);
+        createIndex(key, className, configuration);
+    }
 
-        if (elementClass == null)
-            throw new RuntimeException("class for element cannot be null");
+    /**
+     * Creates an automatic indexing structure for indexing provided key for element class.
+     *
+     * @param key           the key to create the index for
+     * @param label         the element label
+     * @param configuration a collection of parameters for the underlying index implementation:
+     *                      <ul>
+     *                      <li>"type" is the index type between the supported types (UNIQUE, NOTUNIQUE, FULLTEXT). The default type is NOT_UNIQUE
+     *                      <li>"class" is the class to index when it's a custom type derived by Vertex (V) or Edge (E)
+     *                      <li>"keytype" to use a key type different by OType.STRING,</li>
+     *                      </li>
+     *                      </ul>
+     * @param <T>           the element class specification
+     */
+    public <T extends Element> void createEdgeIndex(final String key, final String label, final Configuration configuration) {
+        String className = OrientEdgeType.CLASS_NAME + "_" + label;
+        createEdgeClass(className);
+        createIndex(key, className, configuration);
+    }
+
+    @SuppressWarnings({"rawtypes"})
+    private <T extends Element> void createIndex(final String key, String className, final Configuration configuration) {
+        makeActive();
 
         prepareIndexConfiguration(configuration);
 
         OCallable<OClass, OrientGraph> callable = new OCallable<OClass, OrientGraph>() {
             @Override
             public OClass call(final OrientGraph g) {
-                final String ancestorClassName = getClassName(elementClass);
 
                 String indexType = configuration.getString("type");
                 OType keyType = (OType) configuration.getProperty("keytype");
-                String className = configuration.getString("class");
                 String collate = configuration.getString("collate");
                 ODocument metadata = (ODocument) configuration.getProperty("metadata");
 
-                if (className == null)
-                    className = ancestorClassName;
 
                 final ODatabaseDocumentTx db = getRawDatabase();
                 final OSchema schema = db.getMetadata().getSchema();
 
-                final OClass cls = schema.getOrCreateClass(className, schema.getClass(ancestorClassName));
+                final OClass cls = schema.getClass(className);
                 final OProperty property = cls.getProperty(key);
                 if (property != null)
                     keyType = property.getType();
@@ -456,11 +458,11 @@ public final class OrientGraph implements Graph {
                 if (collate != null)
                     indexDefinition.setCollate(collate);
                 db.getMetadata().getIndexManager()
-                        .createIndex(className + "." + key, indexType, indexDefinition, cls.getPolymorphicClusterIds(), null, metadata);
+                    .createIndex(className + "." + key, indexType, indexDefinition, cls.getPolymorphicClusterIds(), null, metadata);
                 return null;
             }
         };
-        execute(callable, "create key index on '", elementClass.getSimpleName(), ".", key, "'");
+        execute(callable, "create key index on '", className, ".", key, "'");
     }
 
     public <RET> RET execute(final OCallable<RET, OrientGraph> iCallable, final String... iOperationStrings) throws RuntimeException {
@@ -474,8 +476,8 @@ public final class OrientGraph implements Graph {
 
             // ASSURE PENDING TX IF ANY IS COMMITTED
             OLogManager.instance().warn(
-                    this,
-                    msg.toString());
+                this,
+                msg.toString());
         }
         return iCallable.call(this);
     }
