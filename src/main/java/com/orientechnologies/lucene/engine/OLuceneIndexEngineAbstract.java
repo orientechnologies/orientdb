@@ -466,7 +466,9 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
           put("totalTime", finalTime);
           put("totalHits", docs.totalHits);
           put("returnedHits", docs.scoreDocs.length);
-          put("maxScore", docs.getMaxScore());
+          if (!Float.isNaN(docs.getMaxScore())) {
+            put("maxScore", docs.getMaxScore());
+          }
 
         }
       });

@@ -58,7 +58,7 @@ public class SpatialQueryBuilderNear extends SpatialQueryBuilderAbstract {
 
     Point p = (Point) shape;
 
-    SpatialArgs args = new SpatialArgs(SpatialOperation.Intersects, factory.SPATIAL_CONTEXT.makeCircle(p.getX(), p.getY(),
+    SpatialArgs args = new SpatialArgs(SpatialOperation.Intersects, factory.context().makeCircle(p.getX(), p.getY(),
         DistanceUtils.dist2Degrees(distance, DistanceUtils.EARTH_MEAN_RADIUS_KM)));
     Filter filter = manager.strategy().makeFilter(args);
     ValueSource valueSource = manager.strategy().makeDistanceValueSource(p);

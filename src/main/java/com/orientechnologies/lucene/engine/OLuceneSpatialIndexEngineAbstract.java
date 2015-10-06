@@ -19,6 +19,7 @@
 package com.orientechnologies.lucene.engine;
 
 import com.orientechnologies.lucene.OLuceneIndexType;
+import com.orientechnologies.lucene.factory.OSpatialStrategyFactory;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -48,16 +49,18 @@ import java.io.IOException;
  */
 public abstract class OLuceneSpatialIndexEngineAbstract extends OLuceneIndexEngineAbstract implements OLuceneSpatialIndexContainer {
 
-  protected final OShapeBuilder factory;
-  protected SpatialContext      ctx;
-  protected SpatialStrategy     strategy;
+  protected final OShapeBuilder     factory;
+  protected SpatialContext          ctx;
+  protected SpatialStrategy         strategy;
 
-  protected SpatialQueryBuilder queryStrategy;
+  protected OSpatialStrategyFactory strategyFactory;
+  protected SpatialQueryBuilder     queryStrategy;
 
   public OLuceneSpatialIndexEngineAbstract(String indexName, OShapeBuilder factory) {
     super(indexName);
-    this.ctx = factory.getSpatialContext();
+    this.ctx = factory.context();
     this.factory = factory;
+    strategyFactory = new OSpatialStrategyFactory(factory);
     this.queryStrategy = new SpatialQueryBuilder(this, factory);
   }
 

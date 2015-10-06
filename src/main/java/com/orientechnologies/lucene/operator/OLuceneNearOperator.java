@@ -58,12 +58,12 @@ public class OLuceneNearOperator extends OQueryTargetOperator {
     double lat = left.get(0).doubleValue();
     double lon = left.get(1).doubleValue();
 
-    Shape shape = factory.SPATIAL_CONTEXT.makePoint(lon, lat);
+    Shape shape = factory.context().makePoint(lon, lat);
     List<Number> right = (List<Number>) iRight;
 
     double lat1 = right.get(0).doubleValue();
     double lon1 = right.get(1).doubleValue();
-    Shape shape1 = factory.SPATIAL_CONTEXT.makePoint(lon1, lat1);
+    Shape shape1 = factory.context().makePoint(lon1, lat1);
 
     Map map = (Map) right.get(2);
     double distance = 0;
@@ -73,9 +73,9 @@ public class OLuceneNearOperator extends OQueryTargetOperator {
       distance = n.doubleValue();
     }
     Point p = (Point) shape1;
-    Circle circle = factory.SPATIAL_CONTEXT.makeCircle(p.getX(), p.getY(),
+    Circle circle = factory.context().makeCircle(p.getX(), p.getY(),
         DistanceUtils.dist2Degrees(distance, DistanceUtils.EARTH_MEAN_RADIUS_KM));
-    double docDistDEG = factory.SPATIAL_CONTEXT.getDistCalc().distance((Point) shape, p);
+    double docDistDEG = factory.context().getDistCalc().distance((Point) shape, p);
     final double docDistInKM = DistanceUtils.degrees2Dist(docDistDEG, DistanceUtils.EARTH_EQUATORIAL_RADIUS_KM);
     iContext.setVariable("distance", docDistInKM);
     return shape.relate(circle) == SpatialRelation.WITHIN;

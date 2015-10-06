@@ -58,9 +58,9 @@ public class STNearFunction extends OSQLFunctionAbstract {
       distance = n.doubleValue();
     }
     Point p = (Point) shape1;
-    Circle circle = factory.SPATIAL_CONTEXT.makeCircle(p.getX(), p.getY(),
+    Circle circle = factory.context().makeCircle(p.getX(), p.getY(),
         DistanceUtils.dist2Degrees(distance, DistanceUtils.EARTH_MEAN_RADIUS_KM));
-    double docDistDEG = factory.SPATIAL_CONTEXT.getDistCalc().distance((Point) shape, p);
+    double docDistDEG = factory.context().getDistCalc().distance((Point) shape, p);
     final double docDistInKM = DistanceUtils.degrees2Dist(docDistDEG, DistanceUtils.EARTH_EQUATORIAL_RADIUS_KM);
     iContext.setVariable("distance", docDistInKM);
     return shape.relate(circle) == SpatialRelation.WITHIN;

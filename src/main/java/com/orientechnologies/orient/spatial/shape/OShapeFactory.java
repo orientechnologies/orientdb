@@ -205,6 +205,19 @@ public class OShapeFactory extends OComplexShapeBuilder {
     // TODO handle exception shape not found
   }
 
+  public Geometry toGeometry(Shape shape) {
+    return SPATIAL_CONTEXT.getGeometryFrom(shape);
+  }
+
+  public ODocument toDoc(Geometry geometry) {
+    if (geometry instanceof com.vividsolutions.jts.geom.Point) {
+      com.vividsolutions.jts.geom.Point point = (com.vividsolutions.jts.geom.Point) geometry;
+      Point point1 = context().makePoint(point.getX(), point.getY());
+      return toDoc(point1);
+    }
+    return toDoc(SPATIAL_CONTEXT.makeShape(geometry));
+  }
+
   public OShapeOperation operation() {
     return operation;
   }

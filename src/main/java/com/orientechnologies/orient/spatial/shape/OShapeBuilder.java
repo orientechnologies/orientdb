@@ -36,8 +36,8 @@ import java.util.Map;
 
 public abstract class OShapeBuilder<T extends Shape> {
 
-  public static final JtsSpatialContext SPATIAL_CONTEXT;
-  public static final GeometryFactory   GEOMETRY_FACTORY;
+  protected static final JtsSpatialContext SPATIAL_CONTEXT;
+  protected static final GeometryFactory   GEOMETRY_FACTORY;
   static {
 
     JtsSpatialContextFactory factory = new JtsSpatialContextFactory();
@@ -46,8 +46,8 @@ public abstract class OShapeBuilder<T extends Shape> {
     SPATIAL_CONTEXT = new JtsSpatialContext(factory);
     GEOMETRY_FACTORY = SPATIAL_CONTEXT.getGeometryFactory();
   }
-  public static final String            COORDINATES = "coordinates";
-  public static final String            BASE_CLASS  = "OShape";
+  public static final String               COORDINATES = "coordinates";
+  public static final String               BASE_CLASS  = "OShape";
 
   public abstract String getName();
 
@@ -143,10 +143,6 @@ public abstract class OShapeBuilder<T extends Shape> {
     return toDoc(parsed);
   }
 
-  public static SpatialContext getSpatialContext() {
-    return SPATIAL_CONTEXT;
-  }
-
   public int getSRID(Shape shape) {
     Geometry geometry = toGeometry(shape);
     return geometry.getSRID();
@@ -170,6 +166,10 @@ public abstract class OShapeBuilder<T extends Shape> {
       parameters.setQuadrantSegments(quad_segs.intValue());
     }
 
+  }
+
+  public SpatialContext context() {
+    return SPATIAL_CONTEXT;
   }
 
 }

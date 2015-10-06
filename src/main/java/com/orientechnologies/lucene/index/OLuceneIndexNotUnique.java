@@ -102,13 +102,21 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
     });
   }
 
+  protected Object encodeKey(Object key) {
+    return key;
+  }
+
+  protected Object decodeKey(Object key) {
+    return key;
+  }
+
   @Override
   public OLuceneIndexNotUnique put(final Object key, final OIdentifiable singleValue) {
 
     OTransaction transaction = getDatabase().getTransaction();
     if (transaction.isActive()) {
       OLuceneTxChanges transactionChanges = getTransactionChanges(transaction);
-      transaction.addIndexEntry(this, super.getName(), OTransactionIndexChanges.OPERATION.PUT, key, singleValue);
+      transaction.addIndexEntry(this, super.getName(), OTransactionIndexChanges.OPERATION.PUT, encodeKey(key), singleValue);
 
       Document luceneDoc = storage.callIndexEngine(false, false, indexId, new OIndexEngineCallback<Document>() {
         @Override
@@ -144,7 +152,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
     OTransaction transaction = getDatabase().getTransaction();
     if (transaction.isActive()) {
 
-      transaction.addIndexEntry(this, super.getName(), OTransactionIndexChanges.OPERATION.REMOVE, key, value);
+      transaction.addIndexEntry(this, super.getName(), OTransactionIndexChanges.OPERATION.REMOVE, encodeKey(key), value);
       OLuceneTxChanges transactionChanges = getTransactionChanges(transaction);
       try {
         transactionChanges.remove(key, value);
@@ -243,7 +251,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
           checkForKeyType(key);
 
           for (OIdentifiable oIdentifiable : operations.removed) {
-            indexEngine.remove(key, oIdentifiable);
+            indexEngine.remove(decodeKey(key), oIdentifiable);
           }
 
         }
@@ -252,7 +260,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
           LuceneTxOperations operations = (LuceneTxOperations) snapshotEntry.getValue();
           checkForKeyType(key);
 
-          indexEngine.put(key, operations.added);
+          indexEngine.put(decodeKey(key), operations.added);
 
         }
         OTransaction transaction = getDatabase().getTransaction();

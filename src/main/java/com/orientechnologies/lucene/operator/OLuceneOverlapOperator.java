@@ -69,7 +69,8 @@ public class OLuceneOverlapOperator extends OLuceneSpatialOperator {
       cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), new OSpatialCompositeKey(
           keyParams));
 
-    indexResult.sendLookupTime(iContext, start);
+    if (indexResult != null)
+      indexResult.sendLookupTime(iContext, start);
     return cursor;
   }
 

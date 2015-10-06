@@ -55,9 +55,27 @@ public class OLuceneTxResultSet extends OLuceneAbstractResultSet {
     for (Document doc : deletedDocs) {
       memoryIndex.reset();
       for (IndexableField field : doc.getFields()) {
-        memoryIndex.addField(field.name(), field.stringValue(), manager.analyzer(field.name()));
+
+        if (field.stringValue() != null) {
+          memoryIndex.addField(field.name(), field.stringValue(), manager.analyzer(field.name()));
+        } else {
+          try {
+            memoryIndex.addField(field.name(), field.tokenStream(manager.analyzer(field.name()), null));
+          } catch (IOException e) {
+            e.printStackTrace();
+          }
+        }
       }
-      match += (memoryIndex.search(query) > 0.0f) ? 1 : 0;
+      if (queryContext.filter != null) {
+        try {
+          TopDocs topDocs1 = memoryIndex.createSearcher().search(query, queryContext.filter, 1);
+          match += topDocs1.totalHits;
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+      } else {
+        match += (memoryIndex.search(query) > 0.0f) ? 1 : 0;
+      }
     }
     return match;
   }

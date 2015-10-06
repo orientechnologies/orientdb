@@ -18,9 +18,10 @@
 
 package com.orientechnologies.lucene.test;
 
-import com.orientechnologies.orient.spatial.shape.OMultiPolygonShapeBuilder;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.spatial.shape.OMultiPolygonShapeBuilder;
 import com.spatial4j.core.context.jts.JtsSpatialContext;
+import com.spatial4j.core.shape.Shape;
 import com.spatial4j.core.shape.jts.JtsGeometry;
 import com.vividsolutions.jts.geom.*;
 import org.testng.annotations.AfterClass;
@@ -186,9 +187,9 @@ public abstract class BaseSpatialLuceneTest extends BaseLuceneTest {
 
     OMultiPolygonShapeBuilder builder = new OMultiPolygonShapeBuilder();
 
-    JtsGeometry geometry = builder.fromDoc(document);
+    Shape geometry = builder.fromDoc(document);
 
-    return (MultiPolygon) geometry.getGeom();
+    return (MultiPolygon) ((JtsGeometry)geometry).getGeom();
 
   }
 

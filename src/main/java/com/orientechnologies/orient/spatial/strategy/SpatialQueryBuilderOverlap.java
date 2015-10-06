@@ -24,6 +24,7 @@ import com.orientechnologies.orient.spatial.shape.OShapeBuilder;
 import com.spatial4j.core.shape.Shape;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.MatchAllDocsQuery;
+import org.apache.lucene.spatial.SpatialStrategy;
 import org.apache.lucene.spatial.query.SpatialArgs;
 import org.apache.lucene.spatial.query.SpatialOperation;
 
@@ -40,11 +41,11 @@ public class SpatialQueryBuilderOverlap extends SpatialQueryBuilderAbstract {
     super(manager, factory);
   }
 
-
   // TODO check PGIS
   @Override
   public SpatialQueryContext build(Map<String, Object> query) throws Exception {
     Shape shape = parseShape(query);
+    SpatialStrategy strategy = manager.strategy();
     SpatialArgs args = new SpatialArgs(SpatialOperation.Intersects, shape.getBoundingBox());
     Filter filter = manager.strategy().makeFilter(args);
     return new SpatialQueryContext(null, manager.searcher(), new MatchAllDocsQuery(), filter);

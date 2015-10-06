@@ -18,18 +18,30 @@ package com.orientechnologies.lucene.index;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.spatial.shape.OShapeFactory;
+import com.spatial4j.core.shape.Shape;
+import com.vividsolutions.jts.geom.Geometry;
 
 public class OLuceneSpatialIndex extends OLuceneIndexNotUnique {
 
-  public OLuceneSpatialIndex(String name, String typeId, String algorithm,int version, OAbstractPaginatedStorage storage,
+  OShapeFactory shapeFactory = OShapeFactory.INSTANCE;
+
+  public OLuceneSpatialIndex(String name, String typeId, String algorithm, int version, OAbstractPaginatedStorage storage,
       String valueContainerAlgorithm, ODocument metadata) {
-    super(name, typeId, algorithm,version, storage, valueContainerAlgorithm, metadata);
+    super(name, typeId, algorithm, version, storage, valueContainerAlgorithm, metadata);
+
   }
 
+  @Override
+  protected Object encodeKey(Object key) {
 
+    Shape shape = shapeFactory.fromDoc((ODocument) key);
+    return shapeFactory.toGeometry(shape);
+  }
 
-
-
-
-
+  @Override
+  protected Object decodeKey(Object key) {
+    Geometry geom = (Geometry) key;
+    return shapeFactory.toDoc(geom);
+  }
 }
