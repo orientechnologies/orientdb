@@ -23,6 +23,7 @@ package com.orientechnologies.orient.core.storage.impl.local;
 import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
+import com.orientechnologies.common.exception.OErrorCode;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -52,13 +53,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerShared;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
-import com.orientechnologies.orient.core.exception.OLowDiskSpaceException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndexCursor;
@@ -168,6 +163,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   private volatile boolean                          checkpointRequest                          = false;
 
   private final int                                 id;
+  private final AtomicBoolean                       backupInProgress                           = new AtomicBoolean(false);
 
   private Map<String, OIndexEngine>                 indexEngineNameMap                         = new HashMap<String, OIndexEngine>();
   private List<OIndexEngine>                        indexEngines                               = new ArrayList<OIndexEngine>();
@@ -2468,33 +2464,40 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       final File ibuFile = new File(backupDirectory, fileName);
 
       rndIBUFile = new RandomAccessFile(ibuFile, "rw");
-      final FileChannel ibuChannel = rndIBUFile.getChannel();
+      try {
+        final FileChannel ibuChannel = rndIBUFile.getChannel();
 
-      ibuChannel.position(3 * OLongSerializer.LONG_SIZE + OByteSerializer.BYTE_SIZE);
+        ibuChannel.position(3 * OLongSerializer.LONG_SIZE + OByteSerializer.BYTE_SIZE);
 
-      final OLogSequenceNumber maxLsn = incrementalBackup(Channels.newOutputStream(ibuChannel), lastLsn);
-      final ByteBuffer dataBuffer = ByteBuffer.allocate(3 * OLongSerializer.LONG_SIZE + OByteSerializer.BYTE_SIZE);
+        final OLogSequenceNumber maxLsn = incrementalBackup(Channels.newOutputStream(ibuChannel), lastLsn);
+        final ByteBuffer dataBuffer = ByteBuffer.allocate(3 * OLongSerializer.LONG_SIZE + OByteSerializer.BYTE_SIZE);
 
-      dataBuffer.putLong(nextIndex);
-      dataBuffer.putLong(maxLsn.getSegment());
-      dataBuffer.putLong(maxLsn.getPosition());
+        dataBuffer.putLong(nextIndex);
+        dataBuffer.putLong(maxLsn.getSegment());
+        dataBuffer.putLong(maxLsn.getPosition());
 
-      if (lastLsn == null)
-        dataBuffer.put((byte) 1);
-      else
-        dataBuffer.put((byte) 0);
+        if (lastLsn == null)
+          dataBuffer.put((byte) 1);
+        else
+          dataBuffer.put((byte) 0);
 
-      dataBuffer.rewind();
+        dataBuffer.rewind();
 
-      ibuChannel.position(0);
-      ibuChannel.write(dataBuffer);
+        ibuChannel.position(0);
+        ibuChannel.write(dataBuffer);
+      } catch (RuntimeException e) {
+        rndIBUFile.close();
+
+        if (!ibuFile.delete()) {
+          OLogManager.instance().error(this, ibuFile.getAbsolutePath() + " is closed but can not be deleted");
+        }
+      }
     } catch (IOException e) {
       throw OException.wrapException(new OStorageException("Error during incremental backup"), e);
     } finally {
       try {
         if (rndIBUFile != null)
           rndIBUFile.close();
-
       } catch (IOException e) {
         throw OException.wrapException(new OStorageException("Error during incremental backup"), e);
       }
@@ -2583,9 +2586,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   }
 
   public OLogSequenceNumber incrementalBackup(final OutputStream stream, final OLogSequenceNumber fromLsn) throws IOException {
-    final OLogSequenceNumber lastLsn;
+    OLogSequenceNumber lastLsn;
 
     checkOpeness();
+
+    if (!backupInProgress.compareAndSet(false, true)) {
+      throw new OBackupInProgressException(
+          "You are trying to start incremental backup but it is in progress now, please wait till it will be finished", getName(),
+          OErrorCode.BACKUP_IN_PROGRESS);
+    }
 
     stateLock.acquireReadLock();
     try {
@@ -2627,7 +2636,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
               zipOutputStream.write(btConf);
               zipOutputStream.closeEntry();
 
-              finalizeIncrementalBackup(zipOutputStream, startSegment);
+              final OLogSequenceNumber lastWALLsn = copyWALToIncrementalBackup(zipOutputStream, startSegment);
+
+              if (lastWALLsn != null && (lastLsn == null || lastWALLsn.compareTo(lastLsn) > 0)) {
+                lastLsn = lastWALLsn;
+              }
             } finally {
               writeAheadLog.preventCutTill(null);
             }
@@ -2643,12 +2656,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       }
     } finally {
       stateLock.releaseReadLock();
+
+      backupInProgress.set(false);
     }
 
     return lastLsn;
   }
 
-  protected abstract void finalizeIncrementalBackup(ZipOutputStream zipOutputStream, long startSegment) throws IOException;
+  protected abstract OLogSequenceNumber copyWALToIncrementalBackup(ZipOutputStream zipOutputStream, long startSegment)
+      throws IOException;
 
   protected abstract boolean isWritesAllowedDuringBackup();
 
@@ -2823,7 +2839,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         }
 
         if (!writeCache.fileIdsAreEqual(expectedFileId, fileId))
-          throw new OStorageException("Can not restore database from backup because expected and actaul file ids are not the same");
+          throw new OStorageException("Can not restore database from backup because expected and actual file ids are not the same");
 
         while (zipInputStream.available() > 0) {
           final byte[] data = new byte[pageSize + OLongSerializer.LONG_SIZE];
@@ -2900,16 +2916,22 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         readCache.deleteFile(fileId, writeCache);
       }
 
-      if (maxLsn != null && writeAheadLog != null) {
-        writeAheadLog.moveLsnAfter(maxLsn);
-      }
-
       final OWriteAheadLog restoreLog = createWalFromIBUFiles(walTempDir);
+      OLogSequenceNumber restoreLsn = null;
+
       if (restoreLog != null) {
         final OLogSequenceNumber beginLsn = restoreLog.begin();
-        restoreFrom(beginLsn, restoreLog);
+        restoreLsn = restoreFrom(beginLsn, restoreLog);
 
         restoreLog.delete();
+      }
+
+      if (maxLsn != null && writeAheadLog != null) {
+        if (restoreLsn != null && restoreLsn.compareTo(maxLsn) > 0) {
+          maxLsn = restoreLsn;
+        }
+
+        writeAheadLog.moveLsnAfter(maxLsn);
       }
 
       if (walTempDir != null) {
@@ -3161,7 +3183,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     if (isDirty()) {
       OLogManager.instance().warn(this, "Storage " + name + " was not closed properly. Will try to restore from write ahead log.");
       try {
-        wereDataRestoredAfterOpen = restoreFromWAL();
+        wereDataRestoredAfterOpen = restoreFromWAL() != null;
       } catch (Exception e) {
         OLogManager.instance().error(this, "Exception during storage data restore", e);
         throw e;
@@ -3804,15 +3826,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       throw new IllegalArgumentException("Cluster segment #" + iClusterId + " does not exist in database '" + name + "'");
   }
 
-  private boolean restoreFromWAL() throws IOException {
+  private OLogSequenceNumber restoreFromWAL() throws IOException {
     if (writeAheadLog == null) {
       OLogManager.instance().error(this, "Restore is not possible because write ahead logging is switched off.");
-      return true;
+      return null;
     }
 
     if (writeAheadLog.begin() == null) {
       OLogManager.instance().error(this, "Restore is not possible because write ahead log is empty.");
-      return false;
+      return null;
     }
 
     OLogManager.instance().info(this, "Looking for last checkpoint...");
@@ -3927,7 +3949,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     return false;
   }
 
-  private boolean restoreFromCheckPoint(OAbstractCheckPointStartRecord checkPointRecord) throws IOException {
+  private OLogSequenceNumber restoreFromCheckPoint(OAbstractCheckPointStartRecord checkPointRecord) throws IOException {
     if (checkPointRecord instanceof OFuzzyCheckpointStartRecord) {
       return restoreFromFuzzyCheckPoint((OFuzzyCheckpointStartRecord) checkPointRecord);
     }
@@ -3939,7 +3961,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     throw new OStorageException("Unknown checkpoint record type " + checkPointRecord.getClass().getName());
   }
 
-  private boolean restoreFromFullCheckPoint(OFullCheckpointStartRecord checkPointRecord) throws IOException {
+  private OLogSequenceNumber restoreFromFullCheckPoint(OFullCheckpointStartRecord checkPointRecord) throws IOException {
     OLogManager.instance().info(this, "Data restore procedure from full checkpoint is started. Restore is performed from LSN %s",
         checkPointRecord.getLsn());
 
@@ -3947,7 +3969,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     return restoreFrom(lsn, writeAheadLog);
   }
 
-  private boolean restoreFromFuzzyCheckPoint(OFuzzyCheckpointStartRecord checkPointRecord) throws IOException {
+  private OLogSequenceNumber restoreFromFuzzyCheckPoint(OFuzzyCheckpointStartRecord checkPointRecord) throws IOException {
     OLogManager.instance().info(this, "Data restore procedure from FUZZY checkpoint is started.");
     OLogSequenceNumber flushedLsn = checkPointRecord.getFlushedLsn();
 
@@ -3957,15 +3979,16 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     return restoreFrom(flushedLsn, writeAheadLog);
   }
 
-  private boolean restoreFromBegging() throws IOException {
+  private OLogSequenceNumber restoreFromBegging() throws IOException {
     OLogManager.instance().info(this, "Data restore procedure is started.");
     OLogSequenceNumber lsn = writeAheadLog.begin();
 
     return restoreFrom(lsn, writeAheadLog);
   }
 
-  private boolean restoreFrom(OLogSequenceNumber lsn, OWriteAheadLog writeAheadLog) throws IOException {
-    final OModifiableBoolean atLeastOnePageUpdate = new OModifiableBoolean(false);
+  private OLogSequenceNumber restoreFrom(OLogSequenceNumber lsn, OWriteAheadLog writeAheadLog) throws IOException {
+    OLogSequenceNumber logSequenceNumber = null;
+    OModifiableBoolean atLeastOnePageUpdate = new OModifiableBoolean();
 
     long recordsProcessed = 0;
 
@@ -3974,6 +3997,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     try {
       while (lsn != null) {
+        logSequenceNumber = lsn;
+
         OWALRecord walRecord = writeAheadLog.read(lsn);
 
         if (walRecord instanceof OAtomicUnitEndRecord) {
@@ -4035,7 +4060,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       backUpWAL(e);
     }
 
-    return atLeastOnePageUpdate.getValue();
+    if (atLeastOnePageUpdate.getValue())
+      return logSequenceNumber;
+
+    return null;
   }
 
   private void backUpWAL(Exception e) {

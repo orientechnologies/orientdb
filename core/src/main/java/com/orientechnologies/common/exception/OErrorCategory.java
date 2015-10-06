@@ -7,7 +7,9 @@ public enum OErrorCategory {
 
   SQL_GENERIC(1),
 
-  SQL_PARSING(2);
+  SQL_PARSING(2),
+
+  STORAGE(3);
 
   protected final int code;
 

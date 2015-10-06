@@ -43,6 +43,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODiskWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 
 import java.io.*;
@@ -193,7 +194,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
   }
 
   @Override
-  protected void finalizeIncrementalBackup(ZipOutputStream zipOutputStream, long startSegment) throws IOException {
+  protected OLogSequenceNumber copyWALToIncrementalBackup(ZipOutputStream zipOutputStream, long startSegment) throws IOException {
     File[] nonActiveSegments = writeAheadLog.nonActiveSegments(startSegment);
 
     int n = 0;
@@ -201,6 +202,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
     boolean newSegment = false;
 
     long freezeId = -1;
+    OLogSequenceNumber lastLSN = null;
 
     try {
       while (true) {
@@ -252,6 +254,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
                 "Incremental backup in progress");
           }
 
+          lastLSN = writeAheadLog.end();
+
           writeAheadLog.newSegment();
           newSegment = true;
 
@@ -266,6 +270,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
         getAtomicOperationsManager().releaseAtomicOperations(freezeId);
     }
 
+    return lastLSN;
   }
 
   @Override
