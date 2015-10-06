@@ -34,16 +34,16 @@ public class OrientGraphStep<S extends Element> extends GraphStep<S> implements 
 
     private Iterator<? extends Vertex> vertices() {
         final OrientGraph graph = (OrientGraph) this.getTraversal().getGraph().get();
-        final Optional<OrientIndexQuery> indexReference = getIndexReference();
+        final Optional<OrientIndexQuery> indexQuery = getIndexQuery();
 
         if (this.ids != null && this.ids.length > 0) {
             return this.iteratorList(graph.vertices(this.ids));
-        } else if (!indexReference.isPresent()) {
+        } else if (!indexQuery.isPresent()) {
 //            System.out.println("not indexed");
             return this.iteratorList(graph.vertices());
         } else {
 //            System.out.println("index will be queried with " + indexReference.get());
-            Stream<OrientVertex> indexedVertices = graph.getIndexedVertices(indexReference.get());
+            Stream<OrientVertex> indexedVertices = graph.getIndexedVertices(indexQuery.get());
             return indexedVertices
                 .filter(vertex -> HasContainer.testAll(vertex, this.hasContainers))
                 .collect(Collectors.<Vertex>toList())
@@ -73,7 +73,7 @@ public class OrientGraphStep<S extends Element> extends GraphStep<S> implements 
         return ((OrientGraph) this.getTraversal().getGraph().get());
     }
 
-    private Optional<OrientIndexQuery> getIndexReference() {
+    private Optional<OrientIndexQuery> getIndexQuery() {
         Optional<String> elementLabel = findElementLabelInHasContainers();
         OrientGraph graph = getGraph();
         // find indexed keys only for the element subclass (if present)
