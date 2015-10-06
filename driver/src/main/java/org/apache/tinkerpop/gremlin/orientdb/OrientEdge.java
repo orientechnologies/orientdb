@@ -3,7 +3,10 @@ package org.apache.tinkerpop.gremlin.orientdb;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.apache.tinkerpop.gremlin.structure.*;
+import org.apache.tinkerpop.gremlin.structure.Direction;
+import org.apache.tinkerpop.gremlin.structure.Edge;
+import org.apache.tinkerpop.gremlin.structure.Property;
+import org.apache.tinkerpop.gremlin.structure.Vertex;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.Arrays;
@@ -39,10 +42,8 @@ public class OrientEdge extends OrientElement implements Edge {
     }
 
     protected static ODocument createRawElement(OrientGraph graph, String className) {
-        String internalClassName = className.equals(OImmutableClass.EDGE_CLASS_NAME) ?
-            OImmutableClass.EDGE_CLASS_NAME : OImmutableClass.EDGE_CLASS_NAME + "_" + className;
-        graph.createEdgeClass(internalClassName);
-        return new ODocument(internalClassName);
+        graph.createEdgeClass(className);
+        return new ODocument(className);
     }
 
     @Override

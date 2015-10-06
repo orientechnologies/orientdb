@@ -33,10 +33,8 @@ public final class OrientVertex extends OrientElement implements Vertex {
     }
 
     protected static ODocument createRawElement(OrientGraph graph, String className) {
-        String internalClassName = className.equals(OImmutableClass.VERTEX_CLASS_NAME) ?
-            OImmutableClass.VERTEX_CLASS_NAME : OImmutableClass.VERTEX_CLASS_NAME + "_" + className;
-        graph.createVertexClass(internalClassName);
-        return new ODocument(internalClassName);
+        graph.createVertexClass(className);
+        return new ODocument(className);
     }
 
     public Iterator<Vertex> vertices(final Direction direction, final String... labels) {
@@ -137,11 +135,11 @@ public final class OrientVertex extends OrientElement implements Vertex {
 //            graph.autoStartTransaction();
 //
         final ODocument outDocument = getRawDocument();
-        if( !outDocument.getSchemaClass().isSubClassOf("V") )
+        if( !outDocument.getSchemaClass().isSubClassOf(OImmutableClass.VERTEX_CLASS_NAME) )
             throw new IllegalArgumentException("source record is not a vertex");
 
         final ODocument inDocument = ((OrientVertex)inVertex).getRawDocument();
-        if( !inDocument.getSchemaClass().isSubClassOf("V") )
+        if( !inDocument.getSchemaClass().isSubClassOf(OImmutableClass.VERTEX_CLASS_NAME) )
             throw new IllegalArgumentException("destination record is not a vertex");
 
         final OrientEdge edge;
@@ -162,7 +160,9 @@ public final class OrientVertex extends OrientElement implements Vertex {
             throw new IllegalStateException("label cannot be null");
 
         // CREATE THE EDGE DOCUMENT TO STORE FIELDS TOO
-        edge = new OrientEdge(graph, label/*, fields*/);
+        String className = label.equals(OImmutableClass.EDGE_CLASS_NAME) ?
+            OImmutableClass.EDGE_CLASS_NAME : OImmutableClass.EDGE_CLASS_NAME + "_" + label;
+        edge = new OrientEdge(graph, className/*, fields*/);
         //TODO: support inMemoryReferences
 //        if (settings.isKeepInMemoryReferences())
 //            edge.getRecord().fields(OrientBaseGraph.CONNECTION_OUT, rawElement.getIdentity(), OrientBaseGraph.CONNECTION_IN, inDocument.getIdentity());
