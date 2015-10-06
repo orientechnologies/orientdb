@@ -69,12 +69,14 @@ public class OQueryCursor implements Iterator<OIdentifiable> {
     }
   }
 
-  @Override
   public boolean hasNext() {
     return next != null;
   }
 
-  @Override
+  public void remove() {
+    throw new UnsupportedOperationException("remove");
+  }
+
   public OIdentifiable next() {
     OIdentifiable result = next;
     if (result == null) {
