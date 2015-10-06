@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.lock.ONewLockManager;
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.exception.OException;
@@ -55,7 +56,15 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -254,6 +263,15 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
     }
 
     return this;
+  }
+
+  public long count(final Object iKey) {
+    final Object result = get(iKey);
+    if (result == null)
+      return 0;
+    else if (OMultiValue.isMultiValue(result))
+      return OMultiValue.getSize(result);
+    return 1;
   }
 
   private Boolean isDurableInNonTxMode() {

@@ -19,14 +19,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.collection.OSortedMultiIterator;
@@ -36,6 +28,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.common.util.OPatternConst;
+import com.orientechnologies.common.util.OSizeable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -95,6 +88,14 @@ import com.orientechnologies.orient.core.sql.parser.OWhereClause;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY;
+
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Executes the SQL SELECT statement. the parse() method compiles the query and builds the meta information needed by the execute().
@@ -697,7 +698,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     if (tipLimitThreshold > 0 && resultCount > tipLimitThreshold && getLimit() == -1) {
       reportTip(String
-          .format("Query '%s' returned a result set with more than %d records. Check if you really need all these records, or reduce the resultset by using a LIMIT to improve both performance and used RAM", parserText, tipLimitThreshold));
+          .format(
+              "Query '%s' returned a result set with more than %d records. Check if you really need all these records, or reduce the resultset by using a LIMIT to improve both performance and used RAM",
+              parserText, tipLimitThreshold));
       tipLimitThreshold = 0;
     }
 
@@ -1136,19 +1139,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           if (rf.function instanceof OSQLFunctionCount && rf.configuredParameters.length == 1
               && "*".equals(rf.configuredParameters[0])) {
 
-            boolean restrictedClasses = false;
-            final OSecurityUser user = getDatabase().getUser();
-
-            if (parsedTarget.getTargetClasses() != null && user != null
-                && user.checkIfAllowed(ORule.ResourceGeneric.BYPASS_RESTRICTED, null, ORole.PERMISSION_READ) == null) {
-              for (String className : parsedTarget.getTargetClasses().keySet()) {
-                final OClass cls = getDatabase().getMetadata().getSchema().getClass(className);
-                if (cls.isSubClassOf(OSecurityShared.RESTRICTED_CLASSNAME)) {
-                  restrictedClasses = true;
-                  break;
-                }
-              }
-            }
+            final boolean restrictedClasses = isUsingRestrictedClasses();
 
             if (!restrictedClasses) {
               long count = 0;
@@ -1190,6 +1181,23 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     }
 
     return false;
+  }
+
+  private boolean isUsingRestrictedClasses() {
+    boolean restrictedClasses = false;
+    final OSecurityUser user = getDatabase().getUser();
+
+    if (parsedTarget.getTargetClasses() != null && user != null
+        && user.checkIfAllowed(ORule.ResourceGeneric.BYPASS_RESTRICTED, null, ORole.PERMISSION_READ) == null) {
+      for (String className : parsedTarget.getTargetClasses().keySet()) {
+        final OClass cls = getDatabase().getMetadata().getSchema().getClass(className);
+        if (cls.isSubClassOf(OSecurityShared.RESTRICTED_CLASSNAME)) {
+          restrictedClasses = true;
+          break;
+        }
+      }
+    }
+    return restrictedClasses;
   }
 
   protected void revertSubclassesProfiler(final OCommandContext iContext, int num) {
@@ -2106,11 +2114,49 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       if (cursors.size() == 0 || lastSearchResult == null) {
         return false;
       }
+
       if (cursors.size() == 1 && canOptimize(conditionHierarchy)) {
         filterOptimizer.optimize(compiledFilter, lastSearchResult);
       }
 
       uniqueResult = new ConcurrentHashMap<ORID, ORID>();
+
+      if (cursors.size() == 1 && compiledFilter == null && groupByFields == null && projections != null && projections.size() == 1) {
+        // OPTIMIZATION: ONE INDEX USED WITH JUST ONE CONDITION: REMOVE THE FILTER
+        final Entry<String, Object> entry = projections.entrySet().iterator().next();
+
+        if (entry.getValue() instanceof OSQLFunctionRuntime) {
+          final OSQLFunctionRuntime rf = (OSQLFunctionRuntime) entry.getValue();
+          if (rf.function instanceof OSQLFunctionCount && rf.configuredParameters.length == 1
+              && "*".equals(rf.configuredParameters[0])) {
+
+            final boolean restrictedClasses = isUsingRestrictedClasses();
+
+            if (!restrictedClasses) {
+              final OIndexCursor cursor = cursors.get(0);
+              long count = 0;
+              if (cursor instanceof OSizeable)
+                count = ((OSizeable) cursor).size();
+              else {
+                while (cursor.hasNext()) {
+                  cursor.next();
+                  count++;
+                }
+              }
+
+              final OProfiler profiler = Orient.instance().getProfiler();
+              if (profiler.isRecording()) {
+                profiler
+                    .updateCounter(profiler.getDatabaseMetric(database.getName(), "query.indexUsed"), "Used index in query", +1);
+              }
+              if (tempResult == null)
+                tempResult = new ArrayList<OIdentifiable>();
+              ((Collection<OIdentifiable>) tempResult).add(new ODocument().field(entry.getKey(), count));
+              return true;
+            }
+          }
+        }
+      }
 
       for (OIndexCursor cursor : cursors) {
         if (!fetchValuesFromIndexCursor(cursor)) {
@@ -2252,7 +2298,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           Object nullValue = index.get(null);
           if (nullValue != null) {
             if (nullValue instanceof Collection)
-              cursors.add(new OIndexCursorCollectionValue(((Collection) nullValue).iterator(), null));
+              cursors.add(new OIndexCursorCollectionValue((Collection) nullValue, null));
             else
               cursors.add(new OIndexCursorSingleValue((OIdentifiable) nullValue, null));
           }
