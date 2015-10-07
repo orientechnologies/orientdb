@@ -2,6 +2,8 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.common.collection.OMultiCollectionIterator;
+import com.orientechnologies.common.util.OSizeable;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -13,6 +15,8 @@ import java.util.*;
 
 public class OWhereClause extends SimpleNode {
   protected OBooleanExpression baseExpression;
+
+  protected List<OAndBlock>    flattened;
 
   public OWhereClause(int id) {
     super(id);
@@ -108,11 +112,105 @@ public class OWhereClause extends SimpleNode {
     }
     if (key != null) {
       Object result = index.get(key);
+      if(result instanceof OIdentifiable){
+        return 1;
+      }
       if (result instanceof Collection) {
         return ((Collection) result).size();
       }
+      if (result instanceof OSizeable) {
+        return ((OSizeable) result).size();
+      }
     }
     return Long.MAX_VALUE;
+  }
+
+  public Iterable fetchFromIndexes(OClass oClass, OCommandContext ctx) {
+
+    List<OAndBlock> flattenedConditions = flatten();
+    if (flattenedConditions == null || flattenedConditions.size() == 0) {
+      return null;
+    }
+    Set<OIndex<?>> indexes = oClass.getIndexes();
+    List<OIndex> bestIndexes = new ArrayList<OIndex>();
+    List<Map<String, Object>> indexConditions = new ArrayList<Map<String, Object>>();
+    for (OAndBlock condition : flattenedConditions) {
+      Map<String, Object> conditions = getEqualityOperations(condition, ctx);
+      long conditionEstimation = Long.MAX_VALUE;
+      OIndex bestIndex = null;
+      Map<String, Object> bestCondition = null;
+
+      for (OIndex index : indexes) {
+        List<String> indexedFields = index.getDefinition().getFields();
+        int nMatchingKeys = 0;
+        for (String indexedField : indexedFields) {
+          if (conditions.containsKey(indexedField)) {
+            nMatchingKeys++;
+          } else {
+            break;
+          }
+        }
+        if (nMatchingKeys > 0) {
+          long newCount = estimateFromIndex(index, conditions, nMatchingKeys);
+          if (newCount >= 0 && newCount <= conditionEstimation) {
+            conditionEstimation = newCount;
+            bestIndex = index;
+            bestCondition = conditions;
+          }
+        }
+      }
+      if (bestIndex == null) {
+        return null;
+      }
+      bestIndexes.add(bestIndex);
+      indexConditions.add(bestCondition);
+    }
+    OMultiCollectionIterator result = new OMultiCollectionIterator();
+
+    for (int i = 0; i < bestIndexes.size(); i++) {
+      OIndex index = bestIndexes.get(i);
+      Map<String, Object> condition = indexConditions.get(i);
+      result.add(fetchFromIndex(index, indexConditions.get(i)));
+    }
+    return result;
+  }
+
+  private Iterable fetchFromIndex(OIndex index, Map<String, Object> conditions) {
+    OIndexDefinition definition = index.getDefinition();
+    List<String> definitionFields = definition.getFields();
+    Object key = null;
+    if (definition instanceof OPropertyIndexDefinition) {
+      key = convert(conditions.get(definitionFields.get(0)), definition.getTypes()[0]);
+    } else if (definition instanceof OCompositeIndexDefinition) {
+      key = new OCompositeKey();
+      for (int i = 0; i < definitionFields.size(); i++) {
+        String keyName = definitionFields.get(i);
+        if (!conditions.containsKey(keyName)) {
+          break;
+        }
+        Object keyValue = convert(conditions.get(keyName), definition.getTypes()[i]);
+        ((OCompositeKey) key).addKey(conditions.get(keyName));
+      }
+    }
+    if (key != null) {
+      final Object result = index.get(key);
+      if (result == null) {
+        return Collections.EMPTY_LIST;
+      }
+      if (result instanceof Iterable) {
+        return (Iterable) result;
+      }
+      if (result instanceof Iterator) {
+        return new Iterable() {
+          @Override
+          public Iterator iterator() {
+            return (Iterator) result;
+          }
+        };
+      }
+      return Collections.singleton(result);
+    }
+    return null;
   }
 
   private Object convert(Object o, OType oType) {
@@ -138,9 +236,11 @@ public class OWhereClause extends SimpleNode {
     if (this.baseExpression == null) {
       return Collections.EMPTY_LIST;
     }
-    List<OAndBlock> result = this.baseExpression.flatten();
+    if (flattened == null) {
+      flattened = this.baseExpression.flatten();
+    }
     // TODO remove false conditions (contraddictions)
-    return result;
+    return flattened;
 
   }
 

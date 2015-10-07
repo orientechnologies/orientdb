@@ -16,6 +16,7 @@ import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OIterableRecordSource;
+import com.orientechnologies.orient.core.sql.filter.OSQLTarget;
 import com.orientechnologies.orient.core.sql.query.OBasicResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -354,7 +355,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       OCommandContext iCommandContext, Map<String, String> aliasClasses) {
     Iterator<OIdentifiable> it = query(aliasClasses.get(nextAlias), aliasFilters.get(nextAlias), iCommandContext);
     Set<OIdentifiable> result = new HashSet<OIdentifiable>();
-    while(it.hasNext()){
+    while (it.hasNext()) {
       result.add(it.next().getIdentity());
     }
 
@@ -592,27 +593,25 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     database.checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, schemaClass.getName().toLowerCase());
 
     Iterable<ORecord> baseIterable = fetchFromIndex(schemaClass, oWhereClause);
-    // if (baseIterable == null) {
-    // baseIterable = new ORecordIteratorClass<ORecord>((ODatabaseDocumentInternal) database, (ODatabaseDocumentInternal) database,
-    // className, true, true);
-    // }
-    // Iterable<OIdentifiable> result = new FilteredIterator(baseIterable, oWhereClause);
 
+    // OSelectStatement stm = buildSelectStatement(className, oWhereClause);
+    // return stm.execute(ctx);
 
-    OSelectStatement stm = buildSelectStatement(className, oWhereClause);
-    return stm.execute(ctx);
+    String text;
+    if (oWhereClause == null) {
+      text = "(select from " + className + ")";
+    } else {
+      StringBuilder builder = new StringBuilder();
+      oWhereClause.toString(ctx.getInputParameters(), builder);
+      text = "(select from " + className + " where " + builder.toString() + ")";
+    }
+    OSQLTarget target = new OSQLTarget(text, ctx, "where");
 
-//    String text;
-//    if (oWhereClause == null) {
-//      text = "(select from " + className + ")";
-//    } else {
-//      StringBuilder builder = new StringBuilder();
-//      oWhereClause.toString(ctx.getInputParameters(), builder);
-//      text = "(select from " + className + " where " + builder.toString() + ")";
-//    }
-//    OSQLTarget target = new OSQLTarget(text, ctx, "where");
-//
-//    return (Iterable) target.getTargetRecords();
+    Iterable targetResult = (Iterable) target.getTargetRecords();
+    if (targetResult == null) {
+      return null;
+    }
+    return targetResult.iterator();
   }
 
   private OSelectStatement buildSelectStatement(String className, OWhereClause oWhereClause) {
@@ -647,7 +646,8 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     return lowerValue.getKey();
   }
 
-  private Map<String, Long> estimateRootEntries(Map<String, String> aliasClasses, Map<String, OWhereClause> aliasFilters, OCommandContext ctx) {
+  private Map<String, Long> estimateRootEntries(Map<String, String> aliasClasses, Map<String, OWhereClause> aliasFilters,
+      OCommandContext ctx) {
     Set<String> allAliases = new LinkedHashSet<String>();
     allAliases.addAll(aliasClasses.keySet());
     allAliases.addAll(aliasFilters.keySet());
