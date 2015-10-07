@@ -17,7 +17,7 @@ libraryDependencies ++= Seq(
   "com.orientechnologies" % "orientdb-graphdb" % orientDBVersion,
   "com.orientechnologies" % "orientdb-client" % orientDBVersion,
   "com.michaelpollmeier" %% "gremlin-scala" % "3.0.0.M9-incubating",
-  "com.michaelpollmeier" % "orientdb-gremlin" % "3.0.0.M3"
+  "com.michaelpollmeier" % "orientdb-gremlin" % "3.0.0.M4-SNAPSHOT"
 )
 
 testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oD")
