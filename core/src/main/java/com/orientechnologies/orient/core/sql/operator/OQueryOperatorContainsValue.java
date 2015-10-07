@@ -86,7 +86,7 @@ public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls 
       if (indexResult == null || indexResult instanceof OIdentifiable)
         cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, key);
       else
-        cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), key);
+        cursor = new OIndexCursorCollectionValue((Collection<OIdentifiable>) indexResult, key);
     } else {
       // in case of composite keys several items can be returned in case of we perform search
       // using part of composite key stored in index.
@@ -111,7 +111,7 @@ public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls 
           if (indexResult == null || indexResult instanceof OIdentifiable)
             cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, keyOne);
           else
-            cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), keyOne);
+            cursor = new OIndexCursorCollectionValue((Collection<OIdentifiable>) indexResult, keyOne);
         } else
           return null;
       }

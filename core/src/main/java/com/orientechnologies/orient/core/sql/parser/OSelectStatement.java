@@ -270,8 +270,16 @@ public class OSelectStatement extends OStatement {
         if (oClass == null) {
           throw new OCommandExecutionException("Class not found in database schema: " + className);
         }
-        boolean ascendingOrder = true;// TODO
-        result = (Iterator<OIdentifiable>) searchInClasses(oClass, true, ascendingOrder);
+        if (whereClause != null) {
+          Iterable resultIterable = whereClause.fetchFromIndexes(oClass, ctx);
+          if (resultIterable != null) {
+            result = resultIterable.iterator();
+          }
+        }
+        if (result == null) {
+          boolean ascendingOrder = true;// TODO
+          result = (Iterator<OIdentifiable>) searchInClasses(oClass, true, ascendingOrder);
+        }
       } else {
         Object calculationResult = targetItem.identifier.execute(null, ctx);
         if (calculationResult instanceof Iterable) {

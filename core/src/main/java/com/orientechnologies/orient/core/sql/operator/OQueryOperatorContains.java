@@ -1,23 +1,28 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.sql.operator;
+
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -32,11 +37,6 @@ import com.orientechnologies.orient.core.index.OIndexDefinitionMultiValue;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
-
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 
 /**
  * CONTAINS operator.
@@ -152,7 +152,7 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
       if (indexResult == null || indexResult instanceof OIdentifiable)
         cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, key);
       else
-        cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), key);
+        cursor = new OIndexCursorCollectionValue((Collection<OIdentifiable>) indexResult, key);
     } else {
       // in case of composite keys several items can be returned in case of we perform search
       // using part of composite key stored in index.
@@ -176,7 +176,7 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
           if (indexResult == null || indexResult instanceof OIdentifiable)
             cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, keyOne);
           else
-            cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), keyOne);
+            cursor = new OIndexCursorCollectionValue((Collection<OIdentifiable>) indexResult, keyOne);
         } else
           return null;
       }

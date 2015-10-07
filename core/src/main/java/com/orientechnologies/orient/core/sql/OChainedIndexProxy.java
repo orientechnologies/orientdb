@@ -57,7 +57,7 @@ import java.util.*;
 
 @SuppressWarnings({ "unchecked", "rawtypes" })
 public class OChainedIndexProxy<T> implements OIndex<T> {
-  private final OIndex<T> firstIndex;
+  private final OIndex<T>       firstIndex;
 
   private final List<OIndex<?>> indexChain;
   private final OIndex<?>       lastIndex;
@@ -405,8 +405,8 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
 
     final OProfiler profiler = Orient.instance().getProfiler();
     if (profiler.isRecording()) {
-      Orient.instance().getProfiler().updateCounter(profiler.getDatabaseMetric(index.getDatabaseName(), "query.indexUsed"),
-          "Used index in query", +1);
+      Orient.instance().getProfiler()
+          .updateCounter(profiler.getDatabaseMetric(index.getDatabaseName(), "query.indexUsed"), "Used index in query", +1);
 
       final int paramCount = index.getDefinition().getParamCount();
       if (paramCount > 1) {
@@ -465,6 +465,11 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
   }
 
   public long getSize() {
+    throw new UnsupportedOperationException("Not allowed operation");
+  }
+
+  @Override
+  public long count(Object iKey) {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
@@ -579,7 +584,7 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
   }
 
   private final class ExternalIndexCursor extends OIndexAbstractCursor {
-    private final OIndexCursor internalCursor;
+    private final OIndexCursor        internalCursor;
 
     private final List<OIdentifiable> queryResult     = new ArrayList<OIdentifiable>();
     private Iterator<OIdentifiable>   currentIterator = OEmptyIterator.IDENTIFIABLE_INSTANCE;

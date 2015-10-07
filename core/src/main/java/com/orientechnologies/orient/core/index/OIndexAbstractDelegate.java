@@ -21,7 +21,6 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -97,6 +96,11 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
 
   public long getSize() {
     return delegate.getSize();
+  }
+
+  @Override
+  public long count(final Object iKey) {
+    return delegate.count(iKey);
   }
 
   @Override

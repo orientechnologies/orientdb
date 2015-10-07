@@ -19,6 +19,9 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
+import java.util.Collection;
+import java.util.List;
+
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -34,9 +37,6 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
-
-import java.util.Collection;
-import java.util.List;
 
 /**
  * CONTAINSTEXT operator. Look if a text is contained in a property. This is usually used with the FULLTEXT-INDEX for fast lookup at
@@ -140,7 +140,7 @@ public class OQueryOperatorContainsText extends OQueryTargetOperator {
       if (indexResult == null || indexResult instanceof OIdentifiable)
         cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, key);
       else
-        cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), key);
+        cursor = new OIndexCursorCollectionValue((Collection<OIdentifiable>) indexResult, key);
     } else
       return null;
 
