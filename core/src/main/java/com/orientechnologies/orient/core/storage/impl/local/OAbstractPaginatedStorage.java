@@ -2614,19 +2614,19 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           final ZipOutputStream zipOutputStream = new ZipOutputStream(bufferedOutputStream, Charset.forName(configuration
               .getCharset()));
           try {
-            final long newSegmentFreezeId = atomicOperationsManager.freezeAtomicOperations(
-                OModificationOperationProhibitedException.class, "Backup in progress");
+            final long startSegment;
+            final long newSegmentFreezeId = atomicOperationsManager.freezeAtomicOperations(null, null);
+
             try {
               writeAheadLog.newSegment();
+              final OLogSequenceNumber startLsn = writeAheadLog.end();
+              writeAheadLog.preventCutTill(startLsn);
+              startSegment = writeAheadLog.activeSegment();
             } finally {
               atomicOperationsManager.releaseAtomicOperations(newSegmentFreezeId);
             }
 
-            final OLogSequenceNumber startLsn = writeAheadLog.end();
-            writeAheadLog.preventCutTill(startLsn);
-
             try {
-              final long startSegment = writeAheadLog.activeSegment();
               lastLsn = backupPagesWithChanges(fromLsn, zipOutputStream);
               final ZipEntry configurationEntry = new ZipEntry(CONF_ENTRY_NAME);
 

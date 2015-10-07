@@ -249,9 +249,10 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
           if (newSegment)
             break;
 
+          boolean lockedForNewSegment = false;
           if (freezeId < 0) {
-            freezeId = getAtomicOperationsManager().freezeAtomicOperations(OModificationOperationProhibitedException.class,
-                "Incremental backup in progress");
+            freezeId = getAtomicOperationsManager().freezeAtomicOperations(null, null);
+            lockedForNewSegment = true;
           }
 
           lastLSN = writeAheadLog.end();
@@ -259,7 +260,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
           writeAheadLog.newSegment();
           newSegment = true;
 
-          if (freezeId >= 0) {
+          if (lockedForNewSegment) {
             getAtomicOperationsManager().releaseAtomicOperations(freezeId);
             freezeId = -1;
           }

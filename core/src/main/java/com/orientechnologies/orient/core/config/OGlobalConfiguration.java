@@ -260,7 +260,7 @@ public enum OGlobalConfiguration {
 
   INDEX_DURABLE_IN_NON_TX_MODE("index.durableInNonTxMode",
       "Indicates whether index implementation for plocal storage will be durable in non-Tx mode, false by default", Boolean.class,
-      false),
+      true),
 
   INDEX_TX_MODE("index.txMode",
       "Indicates index durability level in TX mode. Can be ROLLBACK_ONLY or FULL (ROLLBACK_ONLY by default)", String.class, "FULL"),
