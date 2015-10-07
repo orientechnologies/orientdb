@@ -16,7 +16,6 @@
 
 package com.orientechnologies.lucene.shape;
 
-import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.spatial4j.core.context.SpatialContext;
@@ -32,6 +31,7 @@ public class ORectangleShapeFactory implements OShapeFactory {
 
     Point[] points = new Point[2];
     int i = 0;
+
     for (Object o : key.getKeys()) {
       List<Number> numbers = (List<Number>) o;
       double lat = ((Double) OType.convert(numbers.get(0), Double.class)).doubleValue();
@@ -39,7 +39,15 @@ public class ORectangleShapeFactory implements OShapeFactory {
       points[i] = ctx.makePoint(lng, lat);
       i++;
     }
-    return ctx.makeRectangle(points[0], points[1]);
+
+    Point lowerLeft = points[0];
+    Point topRight = points[1];
+    if (lowerLeft.getX() > topRight.getX()) {
+      double x = lowerLeft.getX();
+      lowerLeft = ctx.makePoint(topRight.getX(), lowerLeft.getY());
+      topRight = ctx.makePoint(x, topRight.getY());
+    }
+    return ctx.makeRectangle(lowerLeft, topRight);
   }
 
   @Override
