@@ -66,7 +66,7 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
     if (indexResult == null || indexResult instanceof OIdentifiable)
       cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, new OFullTextCompositeKey(keyParams));
     else
-      cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), new OFullTextCompositeKey(
+      cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult), new OFullTextCompositeKey(
           keyParams));
     return cursor;
   }

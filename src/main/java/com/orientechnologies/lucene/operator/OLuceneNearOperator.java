@@ -131,7 +131,7 @@ public class OLuceneNearOperator extends OQueryTargetOperator {
     if (indexResult == null || indexResult instanceof OIdentifiable)
       cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, new OSpatialCompositeKey(keyParams));
     else
-      cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), new OSpatialCompositeKey(
+      cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult), new OSpatialCompositeKey(
           keyParams));
 
     iContext.setVariable("$luceneIndex", true);

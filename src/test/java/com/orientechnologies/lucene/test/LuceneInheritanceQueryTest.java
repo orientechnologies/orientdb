@@ -19,6 +19,9 @@
 package com.orientechnologies.lucene.test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -67,28 +70,28 @@ public class LuceneInheritanceQueryTest {
     }
   }
 
-//  @Test
-//  public void testIndex() {
-//    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:testInheritance");
-//    db.create();
-//
-//    OClass test = db.getMetadata().getSchema().createClass("Test");
-//    OProperty name = test.createProperty("name", OType.STRING);
-//    name.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
-//
-//    try {
-//
-//      ODocument doc = new ODocument("Test");
-//      doc.field("name", "abc");
-//      db.save(doc);
-//
-//      OIndex<?> index = db.getMetadata().getIndexManager().getIndex("Test.name");
-//
-//      Object abc = index.get("abc");
-//      System.out.println(abc);
-//
-//    } finally {
-//      db.drop();
-//    }
-//  }
+  @Test
+  public void testIndex() {
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:testInheritance");
+    db.create();
+
+    OClass test = db.getMetadata().getSchema().createClass("Test");
+    OProperty name = test.createProperty("name", OType.STRING);
+    name.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+
+    try {
+
+      ODocument doc = new ODocument("Test");
+      doc.field("name", "abc");
+      db.save(doc);
+
+      OIndex<?> index = db.getMetadata().getIndexManager().getIndex("Test.name");
+
+      Object abc = index.get("abc");
+      System.out.println(abc);
+
+    } finally {
+      db.drop();
+    }
+  }
 }

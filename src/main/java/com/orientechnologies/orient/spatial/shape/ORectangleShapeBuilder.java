@@ -50,6 +50,7 @@ public class ORectangleShapeBuilder extends OShapeBuilder<Rectangle> {
 
     Point[] points = new Point[2];
     int i = 0;
+
     for (Object o : key.getKeys()) {
       List<Number> numbers = (List<Number>) o;
       double lat = ((Double) OType.convert(numbers.get(0), Double.class)).doubleValue();
@@ -57,7 +58,15 @@ public class ORectangleShapeBuilder extends OShapeBuilder<Rectangle> {
       points[i] = ctx.makePoint(lng, lat);
       i++;
     }
-    return ctx.makeRectangle(points[0], points[1]);
+
+    Point lowerLeft = points[0];
+    Point topRight = points[1];
+    if (lowerLeft.getX() > topRight.getX()) {
+      double x = lowerLeft.getX();
+      lowerLeft = ctx.makePoint(topRight.getX(), lowerLeft.getY());
+      topRight = ctx.makePoint(x, topRight.getY());
+    }
+    return ctx.makeRectangle(lowerLeft, topRight);
   }
 
   @Override
