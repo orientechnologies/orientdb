@@ -1,5 +1,6 @@
 package org.apache.tinkerpop.gremlin.orientdb.traversal.step.sideEffect;
 
+import com.orientechnologies.common.log.OLogManager;
 import org.apache.tinkerpop.gremlin.orientdb.OrientIndexQuery;
 import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
 import org.apache.tinkerpop.gremlin.orientdb.OrientVertex;
@@ -39,10 +40,10 @@ public class OrientGraphStep<S extends Element> extends GraphStep<S> implements 
         if (this.ids != null && this.ids.length > 0) {
             return this.iteratorList(graph.vertices(this.ids));
         } else if (!indexQuery.isPresent()) {
-//            System.out.println("not indexed");
+            OLogManager.instance().warn(this, "scanning through all vertices without using an index");
             return this.iteratorList(graph.vertices());
         } else {
-//            System.out.println("index will be queried with " + indexReference.get());
+            OLogManager.instance().info(this, "index will be queried with " + indexQuery.get());
             Stream<OrientVertex> indexedVertices = graph.getIndexedVertices(indexQuery.get());
             return indexedVertices
                 .filter(vertex -> HasContainer.testAll(vertex, this.hasContainers))
