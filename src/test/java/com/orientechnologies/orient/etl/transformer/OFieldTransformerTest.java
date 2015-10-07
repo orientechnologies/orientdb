@@ -33,7 +33,7 @@ public class OFieldTransformerTest extends ETLBaseTest {
 
   @Test
   public void testValue() {
-    process("{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { row: {} }, transformers: [{ csv: {} }, {field: {fieldName:'test', value: 33}}], loader: { test: {} } }");
+    process("{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { csv: {} }, transformers: [{field: {fieldName:'test', value: 33}}], loader: { test: {} } }");
     assertEquals(1, getResult().size());
 
     ODocument doc = getResult().get(0);
@@ -45,7 +45,7 @@ public class OFieldTransformerTest extends ETLBaseTest {
 
   @Test
   public void testExpression() {
-    process("{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { row: {} }, transformers: [{ csv: {} }, {field: {fieldName:'test', expression: 'surname'}}], loader: { test: {} } }");
+    process("{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { csv: {} }, transformers: [ {field: {fieldName:'test', expression: 'surname'}}], loader: { test: {} } }");
     assertEquals(1, getResult().size());
 
     ODocument doc = getResult().get(0);
@@ -57,7 +57,7 @@ public class OFieldTransformerTest extends ETLBaseTest {
 
   @Test
   public void testRemove() {
-    process("{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { row: {} }, transformers: [{ csv: {} }, {field: {fieldName:'surname', operation: 'remove'}}], loader: { test: {} } }");
+    process("{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { csv: {} }, transformers: [ {field: {fieldName:'surname', operation: 'remove'}}], loader: { test: {} } }");
     assertEquals(1, getResult().size());
 
     ODocument doc = getResult().get(0);
@@ -67,7 +67,7 @@ public class OFieldTransformerTest extends ETLBaseTest {
 
   @Test
   public void testSave() {
-    process("{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { row: {} }, transformers: [{ csv: {} }, {field:{fieldName:'@class', value:'Test'}}, {field:{ fieldName:'test', value: 33, save: true}}], loader: { orientdb: { dbURL: 'memory:ETLBaseTest' } } }");
+    process("{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { csv: {} }, transformers: [{field:{fieldName:'@class', value:'Test'}}, {field:{ fieldName:'test', value: 33, save: true}}], loader: { orientdb: { dbURL: 'memory:ETLBaseTest' } } }");
     assertEquals(1, graph.countVertices("Test"));
   }
 }

@@ -17,7 +17,7 @@ public class OLogTransformerTest extends ETLBaseTest {
     @Test
     public void testPrefix() throws Exception {
         ByteArrayOutputStream output = getByteArrayOutputStream();
-        String cfgJson = "{source: { content: { value: 'id,text\n1,Hello\n2,Bye'} }, extractor : { row : {} }, transformers : [{ csv : {} },{ log : {prefix:'-> '}}], loader : { test: {} } }";
+        String cfgJson = "{source: { content: { value: 'id,text\n1,Hello\n2,Bye'} }, extractor : { csv: {} }, transformers : [{ log : {prefix:'-> '}}], loader : { test: {} } }";
         process(cfgJson);
         List<ODocument> res = getResult();
         ODocument doc = res.get(0);
@@ -28,7 +28,7 @@ public class OLogTransformerTest extends ETLBaseTest {
     @Test
     public void testPostfix() throws Exception {
         ByteArrayOutputStream output = getByteArrayOutputStream();
-        String cfgJson = "{source: { content: { value: 'id,text\n1,Hello\n2,Bye'} }, extractor : { row : {} }, transformers : [{ csv : {} },{ log : {postfix:'-> '}}], loader : { test: {} } }";
+        String cfgJson = "{source: { content: { value: 'id,text\n1,Hello\n2,Bye'} }, extractor : { csv : {} }, transformers : [{ log : {postfix:'-> '}}], loader : { test: {} } }";
         process(cfgJson);
         List<ODocument> res = getResult();
         ODocument doc = res.get(0);

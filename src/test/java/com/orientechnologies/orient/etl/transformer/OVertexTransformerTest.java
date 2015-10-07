@@ -44,16 +44,16 @@ public class OVertexTransformerTest extends ETLBaseTest {
 
   @Test
   public void testCreateVertex() {
-    process("{source: { content: { value: 'name,\nGregor' } }, extractor : { row: {} },"
-        + " transformers: [{csv: {}}, {vertex: {class:'Person', skipDuplicates:false}},"
+    process("{source: { content: { value: 'name,\nGregor' } }, extractor : { csv: {} },"
+        + " transformers: [{vertex: {class:'Person', skipDuplicates:false}},"
         + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
     assertEquals(1, graph.countVertices("Person"));
   }
 
   @Test
   public void testCreateTargetVertexIfNotExists() {
-    process("{source: { content: { value: 'name,idf,parent\nParent,1,\nChild,2,1' } }, extractor : { row: {} },"
-        + " transformers: [{csv: {}}, {merge: { joinFieldName:'idf', lookup:'V.idf'}}, {vertex: {class:'V'}},"
+    process("{source: { content: { value: 'name,idf,parent\nParent,1,\nChild,2,1' } }, extractor : { csv: {} },"
+        + " transformers: [{merge: { joinFieldName:'idf', lookup:'V.idf'}}, {vertex: {class:'V'}},"
         + "{edge:{ class: 'E', joinFieldName: 'parent', lookup: 'V.idf', unresolvedLinkAction: 'CREATE' }, if: '$input.parent IS NOT NULL'}"
         + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
 
@@ -62,8 +62,8 @@ public class OVertexTransformerTest extends ETLBaseTest {
 
   @Test(expected = ORecordDuplicatedException.class)
   public void testErrorOnDuplicateVertex() {
-      process("{source: { content: { value: 'name,\nGregor\nGregor\nHans' } }, extractor : { row: {} },"
-          + " transformers: [{csv: {}}, {vertex: {class:'Person', skipDuplicates:false}},"
+      process("{source: { content: { value: 'name,\nGregor\nGregor\nHans' } }, extractor : { csv: {} },"
+          + " transformers: [ {vertex: {class:'Person', skipDuplicates:false}},"
           + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
 
 
@@ -71,8 +71,8 @@ public class OVertexTransformerTest extends ETLBaseTest {
 
   @Test
   public void testSkipDuplicateVertex() {
-    process("{source: { content: { value: 'name,\nGregor\nGregor\nHans' } }, extractor : { row: {} },"
-        + " transformers: [{csv: {}}, {vertex: {class:'Person', skipDuplicates:true}},"
+    process("{source: { content: { value: 'name,\nGregor\nGregor\nHans' } }, extractor : { csv: {} },"
+        + " transformers: [{vertex: {class:'Person', skipDuplicates:true}},"
         + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
     assertEquals(2, graph.countVertices("Person"));
   }

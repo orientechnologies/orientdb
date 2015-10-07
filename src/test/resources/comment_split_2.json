@@ -1,11 +1,8 @@
 {
   "extractor": {
-    "row": {}
+    "csv": {}
   },
   "transformers": [
-    {
-      "csv": {}
-    },
     {
       "vertex": {
         "class": "Comment"

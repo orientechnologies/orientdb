@@ -1,16 +1,13 @@
 {
   "source": {
     "file": {
-      "path": "./src/main/resources/comments.csv"
+      "path": "./src/test/resources/comments.csv"
     }
   },
   "extractor": {
-    "row": {}
+    "csv": {}
   },
   "transformers": [
-    {
-      "csv": {}
-    },
     {
       "vertex": {
         "class": "Comment"
