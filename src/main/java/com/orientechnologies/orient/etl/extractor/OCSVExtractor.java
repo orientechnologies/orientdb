@@ -27,7 +27,6 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
   private Map<String, OType>  columnTypes     = new HashMap<String, OType>();
   private long                skipFrom        = -1;
   private long                skipTo          = -1;
-  private long                line            = -1;
   private Character           stringCharacter = '"';
   private boolean             unicode         = true;
   private Iterator<CSVRecord> recordIterator;
@@ -39,19 +38,28 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
   public ODocument getConfiguration() {
     return new ODocument()
         .fromJSON("{parameters:["
-                + getCommonConfigurationParameters()
-                + ",{separator:{optional:true,description:'Column separator'}},"
-                + "{columnsOnFirstLine:{optional:true,description:'Columns are described in the first line'}},"
-                + "{columns:{optional:true,description:'Columns array containing names, and optionally type after : (e.g.: name:String, age:int'}},"
-                + "{nullValue:{optional:true,description:'Value to consider as NULL_STRING. Default is NULL'}},"
-                + "{unicode:{optional:true,description:'Support unicode values as \\u<code>'}},"
-                + "{dateFormat:{optional:true,description:'Date format used to parde dates. Default is yyyy-MM-dd'}},"
-                + "{quote:{optional:true,description:'String character delimiter. Use \"\" to do not use any delimitator'}},"
-                + "{ignoreEmptyLines:{optional:true,description:'Ignore empty lines',type:'boolean'}},"
-                + "{skipFrom:{optional:true,description:'Line number where start to skip',type:'int'}},"
-                + "{skipTo:{optional:true,description:'Line number where skip ends',type:'int'}}"
-                + "{predefinedFormat:{optional:true,description:'Name of standard csv format (from Apache commons-csv): DEFAULT, EXCEL, MYSQL, RFC4180, TDF',type:'String'}}"
-                + "],input:['String'],output:'ODocument'}");
+            + getCommonConfigurationParameters()
+            + ",{separator:{optional:true,description:'Column separator'}},"
+            + "{columnsOnFirstLine:{optional:true,description:'Columns are described in the first line'}},"
+            + "{columns:{optional:true,description:'Columns array containing names, and optionally type after : (e.g.: name:String, age:int'}},"
+            + "{nullValue:{optional:true,description:'Value to consider as NULL_STRING. Default is NULL'}},"
+            + "{dateFormat:{optional:true,description:'Date format used to parde dates. Default is yyyy-MM-dd'}},"
+            + "{quote:{optional:true,description:'String character delimiter. Use \"\" to do not use any delimitator'}},"
+            + "{ignoreEmptyLines:{optional:true,description:'Ignore empty lines',type:'boolean'}},"
+            + "{skipFrom:{optional:true,description:'Line number where start to skip',type:'int'}},"
+            + "{skipTo:{optional:true,description:'Line number where skip ends',type:'int'}}"
+            + "{predefinedFormat:{optional:true,description:'Name of standard csv format (from Apache commons-csv): DEFAULT, EXCEL, MYSQL, RFC4180, TDF',type:'String'}}"
+            + "],input:['String'],output:'ODocument'}");
+  }
+
+  @Override
+  public String getName() {
+    return "csv";
+  }
+
+  @Override
+  public String getUnit() {
+    return "rows";
   }
 
   @Override
@@ -117,10 +125,6 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
       csvFormat.withNullString(nullValue);
     }
 
-    if (iConfiguration.containsField("unicode")) {
-      unicode = iConfiguration.field("unicode");
-    }
-
     if (iConfiguration.containsField("quote")) {
       final String value = iConfiguration.field("quote").toString();
       if (!value.isEmpty()) {
@@ -144,20 +148,24 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
 
   @Override
   public boolean hasNext() {
-    return recordIterator.hasNext();
+    if (recordIterator.hasNext()) {
+      CSVRecord csvRecord = recordIterator.next();
+
+      while (shouldSkipRecord(csvRecord) && recordIterator.hasNext()) {
+        csvRecord = recordIterator.next();
+      }
+      next = fetchNext(csvRecord);
+      return true;
+    }
+    return false;
+
   }
 
-  @Override
-  public String getUnit() {
-    return "rows";
+  private boolean shouldSkipRecord(CSVRecord csvRecord) {
+    return csvRecord.getRecordNumber() <= skipTo && csvRecord.getRecordNumber() >= skipFrom;
   }
 
-  @Override
-  public OExtractedItem next() {
-    final CSVRecord csvRecord = recordIterator.next();
-
-    // TODO implement skip
-
+  private OExtractedItem fetchNext(CSVRecord csvRecord) {
     ODocument doc = new ODocument();
     final Map<String, String> recordAsMap = csvRecord.toMap();
 
@@ -175,8 +183,8 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
     } else {
 
       for (Map.Entry<String, OType> typeEntry : columnTypes.entrySet()) {
-        final OType fieldType = typeEntry.getValue();
         final String fieldName = typeEntry.getKey();
+        final OType fieldType = typeEntry.getValue();
         String fieldValueAsString = recordAsMap.get(fieldName);
         try {
 
@@ -196,8 +204,8 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
   }
 
   @Override
-  public String getName() {
-    return "csv";
+  public OExtractedItem next() {
+    return next;
   }
 
   private Object determineTheType(String fieldStringValue) {
@@ -238,30 +246,17 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
         if (!isFinite((Float) fieldValue)) {
           fieldValue = new Double(numberAsString);
         }
-      } else
+      } else {
         try {
           fieldValue = new Integer(fieldStringValue);
         } catch (Exception e) {
           fieldValue = new Long(fieldStringValue);
         }
+      }
     } catch (NumberFormatException nf) {
       fieldValue = fieldStringValue;
     }
     return fieldValue;
-  }
-
-  private boolean skipTransform() {
-    line++;
-
-    if (skipFrom > -1) {
-      if (skipTo > -1) {
-        if (line >= skipFrom && line <= skipTo)
-          return true;
-      } else if (line >= skipFrom)
-        // SKIP IT
-        return true;
-    }
-    return false;
   }
 
   /**

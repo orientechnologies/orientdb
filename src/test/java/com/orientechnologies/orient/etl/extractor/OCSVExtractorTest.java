@@ -29,7 +29,7 @@ public class OCSVExtractorTest extends ETLBaseTest {
 
   @Test
   public void testEmpty() {
-    String cfgJson = "{source: { content: { value: '' }  }, extractor : { json: {} }, loader: { test: {} } }";
+    String cfgJson = "{source: { content: { value: '' }  }, extractor : { csv: {} }, loader: { test: {} } }";
     process(cfgJson);
     assertEquals(0, getResult().size());
   }
@@ -54,8 +54,31 @@ public class OCSVExtractorTest extends ETLBaseTest {
   }
 
   @Test
+  public void testSkipFromTwoToFour() {
+    String content = "name,surname,id";
+    for (int i = 0; i < names.length; ++i)
+      content += "\n" + names[i] + "," + surnames[i] + "," + i;
+    process("{source: { content: { value: '" + content + "' } }, " + "extractor : { csv: {skipFrom: 1, skipTo: 4} },  "
+        + "loader: { test: {} } }");
+
+    assertThat(getResult()).hasSize(names.length - 4);
+  }
+
+  @Test
   public void testDateTypeAutodetection() {
     String cfgJson = "{source: { content: { value: 'BirthDay\n2008-04-30' }  }, extractor : { csv: {} }, loader: { test: {} } }";
+    process(cfgJson);
+    List<ODocument> res = getResult();
+    ODocument doc = res.get(0);
+    Date birthday = doc.field("BirthDay");
+    assertEquals(2008, birthday.getYear() + 1900);
+    assertEquals(4, birthday.getMonth() + 1);
+    assertEquals(30, birthday.getDate());
+  }
+
+  @Test
+  public void testDateTypeAutodetectionWithCustomDateFormat() {
+    String cfgJson = "{source: { content: { value: 'BirthDay\n30-04-2008' }  }, extractor : { csv: {dateFormat: \"dd-MM-yyyy\"} }, loader: { test: {} } }";
     process(cfgJson);
     List<ODocument> res = getResult();
     ODocument doc = res.get(0);
@@ -204,19 +227,12 @@ public class OCSVExtractorTest extends ETLBaseTest {
   }
 
   @Test
-  public void testGetCellContentWithoutQuoteString() {
-    String unQuotedString = "aaa";
-    OCSVTransformer ocsvTransformer = new OCSVTransformer();
-    assertEquals(unQuotedString, ocsvTransformer.getCellContent(unQuotedString));
-  }
-
-  @Test
   public void testIsFiniteFloat() {
-    OCSVTransformer ocsvTransformer = new OCSVTransformer();
-    assertFalse(ocsvTransformer.isFinite(Float.NaN));
-    assertFalse(ocsvTransformer.isFinite(Float.POSITIVE_INFINITY));
-    assertFalse(ocsvTransformer.isFinite(Float.NEGATIVE_INFINITY));
-    assertTrue(ocsvTransformer.isFinite(0f));
+    OCSVExtractor ocsvExtractor = new OCSVExtractor();
+    assertFalse(ocsvExtractor.isFinite(Float.NaN));
+    assertFalse(ocsvExtractor.isFinite(Float.POSITIVE_INFINITY));
+    assertFalse(ocsvExtractor.isFinite(Float.NEGATIVE_INFINITY));
+    assertTrue(ocsvExtractor.isFinite(0f));
   }
 
   @Test
