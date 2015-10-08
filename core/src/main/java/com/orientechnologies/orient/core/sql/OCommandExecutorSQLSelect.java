@@ -2121,7 +2121,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
       uniqueResult = new ConcurrentHashMap<ORID, ORID>();
 
-      if (cursors.size() == 1 && compiledFilter == null && groupByFields == null && projections != null && projections.size() == 1) {
+      if (cursors.size() == 1 && (compiledFilter == null || compiledFilter.getRootCondition()==null) && groupByFields == null && projections != null && projections.size() == 1) {
         // OPTIMIZATION: ONE INDEX USED WITH JUST ONE CONDITION: REMOVE THE FILTER
         final Entry<String, Object> entry = projections.entrySet().iterator().next();
 
