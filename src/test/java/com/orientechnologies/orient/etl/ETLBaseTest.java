@@ -18,7 +18,6 @@
 
 package com.orientechnologies.orient.etl;
 
-import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
@@ -33,10 +32,11 @@ import java.util.List;
  * @author Luca Garulli
  */
 public abstract class ETLBaseTest {
-  protected String[] names    = new String[] { "Jay", "Luca", "Bill", "Steve", "Jill", "Luigi", "Enrico", "Emanuele" };
-  protected String[] surnames = new String[] { "Miner", "Ferguson", "Cancelli", "Lavori", "Raggio", "Eagles", "Smiles", "Ironcutter" };
+  protected String[]      names    = new String[] { "Jay", "Luca", "Bill", "Steve", "Jill", "Luigi", "Enrico", "Emanuele" };
+  protected String[]      surnames = new String[] { "Miner", "Ferguson", "Cancelli", "Lavori", "Raggio", "Eagles", "Smiles",
+      "Ironcutter"                };
 
-  protected OrientGraph graph;
+  protected OrientGraph   graph;
   protected OETLProcessor proc;
 
   @Before

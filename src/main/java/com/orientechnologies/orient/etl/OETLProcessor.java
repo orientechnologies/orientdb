@@ -569,6 +569,7 @@ public class OETLProcessor {
       }
 
     } catch (Exception e) {
+
       throw new OConfigurationException("Error on checking compatibility between components '" + iLastComponent.getName()
           + "' and '" + iCurrentComponent.getName() + "'", e);
     }

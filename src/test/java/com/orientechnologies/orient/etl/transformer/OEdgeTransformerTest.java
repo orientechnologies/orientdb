@@ -63,8 +63,8 @@ public class OEdgeTransformerTest extends ETLBaseTest {
 
   @Test
   public void testNotLightweightEdge() {
-    process("{source: { content: { value: 'name,surname,friend\nJay,Miner,Luca' } }, extractor : { row: {} },"
-        + " transformers: [{csv: {}}, {vertex: {class:'V1'}}, {edge:{class:'Friend',joinFieldName:'friend',lookup:'V2.name'}},"
+    process("{source: { content: { value: 'name,surname,friend\nJay,Miner,Luca' } }, extractor : { csv: {} },"
+        + " transformers: [{vertex: {class:'V1'}}, {edge:{class:'Friend',joinFieldName:'friend',lookup:'V2.name'}},"
         + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
 
     assertEquals(1, graph.countVertices("V1"));
@@ -77,8 +77,8 @@ public class OEdgeTransformerTest extends ETLBaseTest {
     graph.addVertex("class:V2").setProperty("name", "Luca");
     graph.commit();
 
-    process("{source: { content: { value: 'name,surname,friend\nJay,Miner,Luca' } }, extractor : { row: {} },"
-        + " transformers: [{csv: {}}, {vertex: {class:'V1'}}, {edge:{class:'Friend',joinFieldName:'friend',lookup:'V2.name'}},"
+    process("{source: { content: { value: 'name,surname,friend\nJay,Miner,Luca' } }, extractor : { csv: {} },"
+        + " transformers: [{vertex: {class:'V1'}}, {edge:{class:'Friend',joinFieldName:'friend',lookup:'V2.name'}},"
         + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
 
     assertEquals(1, graph.countVertices("V1"));
@@ -88,8 +88,8 @@ public class OEdgeTransformerTest extends ETLBaseTest {
 
   @Test
   public void testEdgeWithProperties() {
-    process("{source: { content: { value: 'id,name,surname,friendSince,friendId,friendName,friendSurname\n0,Jay,Miner,1996,1,Luca,Garulli' } }, extractor : { row: {} },"
-        + " transformers: [{csv: {}}, {vertex: {class:'V1'}}, "
+    process("{source: { content: { value: 'id,name,surname,friendSince,friendId,friendName,friendSurname\n0,Jay,Miner,1996,1,Luca,Garulli' } }, extractor : { csv: {} },"
+        + " transformers: [ {vertex: {class:'V1'}}, "
         + "{edge:{unresolvedLinkAction:'CREATE',class:'Friend',joinFieldName:'friendId',lookup:'V2.fid',targetVertexFields:{name:'${input.friendName}',surname:'${input.friendSurname}'},edgeFields:{since:'${input.friendSince}'}}},"
         + "{field:{fieldNames:['friendSince','friendId','friendName','friendSurname'],operation:'remove'}}"
         + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
@@ -134,16 +134,16 @@ public class OEdgeTransformerTest extends ETLBaseTest {
 
   @Test(expected = OETLProcessHaltedException.class)
   public void testErrorOnDuplicateVertex() {
-      process("{source: { content: { value: 'name,surname,friend\nJay,Miner,Luca\nJay,Miner,Luca' } }, extractor : { row: {} },"
-          + " transformers: [{csv: {}}, {merge: {joinFieldName:'name',lookup:'V1.name'}}, {vertex: {class:'V1'}}, {edge:{class:'Friend',joinFieldName:'friend',lookup:'V2.name'}},"
-          + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
+    process("{source: { content: { value: 'name,surname,friend\nJay,Miner,Luca\nJay,Miner,Luca' } }, extractor : { csv: {} },"
+        + " transformers: [{merge: {joinFieldName:'name',lookup:'V1.name'}}, {vertex: {class:'V1'}}, {edge:{class:'Friend',joinFieldName:'friend',lookup:'V2.name'}},"
+        + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
 
   }
 
   @Test
   public void testSkipDuplicateVertex() {
-    process("{source: { content: { value: 'name,surname,friend\nJay,Miner,Luca\nJay,Miner,Luca' } }, extractor : { row: {} },"
-        + " transformers: [{csv: {}}, {merge: {joinFieldName:'name',lookup:'V1.name'}}, {vertex: {class:'V1'}}, {edge:{class:'Friend',skipDuplicates:true, joinFieldName:'friend',lookup:'V2.name'}},"
+    process("{source: { content: { value: 'name,surname,friend\nJay,Miner,Luca\nJay,Miner,Luca' } }, extractor : { csv: {} },"
+        + " transformers: [ {merge: {joinFieldName:'name',lookup:'V1.name'}}, {vertex: {class:'V1'}}, {edge:{class:'Friend',skipDuplicates:true, joinFieldName:'friend',lookup:'V2.name'}},"
         + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
 
     assertEquals(1, graph.countVertices("V1"));

@@ -38,10 +38,10 @@ public class OETLPipeline {
   protected final OETLProcessor            processor;
   protected final List<OTransformer>       transformers;
   protected final OLoader                  loader;
-  protected final OCommandContext     context;
+  protected final OCommandContext          context;
   protected final OETLProcessor.LOG_LEVELS logLevel;
-  protected boolean                        haltOnError = true;
   protected final int                      maxRetries;
+  protected boolean                        haltOnError = true;
   protected ODatabaseDocumentTx            db;
   protected OrientBaseGraph                graph;
 
@@ -144,9 +144,9 @@ public class OETLPipeline {
         if (!haltOnError)
           return null;
 
-        e.printStackTrace();
+        // e.printStackTrace();
         loader.rollback();
-        throw new OETLProcessHaltedException(e);
+        throw new OETLProcessHaltedException("Halt", e);
 
       }
     } while (retry < maxRetries);

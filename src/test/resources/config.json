@@ -1,26 +1,21 @@
 {
   "extractor": {
-    "line": {
-      "path": "/temp/test.csv",
-      "lock": true
+    "csv": {
+      "separator": ";",
+      "columnsOnFirstLine": false,
+      "columns": [
+        "id",
+        "beginDate",
+        "aams",
+        "wow",
+        "serial",
+        "dontknow",
+        "endDate"
+      ]
     }
   },
+
   "transformers": [
-    {
-      "csv": {
-        "separator": ";",
-        "columnsOnFirstLine": false,
-        "columns": [
-          "id",
-          "beginDate",
-          "aams",
-          "wow",
-          "serial",
-          "dontknow",
-          "endDate"
-        ]
-      }
-    },
     {
       "field": {
         "fieldName": "dontknow",

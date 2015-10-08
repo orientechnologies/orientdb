@@ -31,6 +31,10 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @deprecated use OCSVExtractor
+ */
+@Deprecated
 public class OCSVTransformer extends OAbstractTransformer {
   private char         separator          = ',';
   private boolean      columnsOnFirstLine = true;
@@ -42,6 +46,10 @@ public class OCSVTransformer extends OAbstractTransformer {
   private String       nullValue;
   private Character    stringCharacter    = '"';
   private boolean      unicode            = true;
+
+  public static boolean isFinite(final float value) {
+    return Math.abs(value) <= FloatConsts.MAX_VALUE;
+  }
 
   @Override
   public ODocument getConfiguration() {
@@ -140,10 +148,6 @@ public class OCSVTransformer extends OAbstractTransformer {
 
     log(OETLProcessor.LOG_LEVELS.DEBUG, "document=%s", doc);
     return doc;
-  }
-
-  public static boolean isFinite(final float value) {
-    return Math.abs(value) <= FloatConsts.MAX_VALUE;
   }
 
   private Object processKnownType(ODocument doc, int i, String fieldName, String fieldStringValue, OType fieldType) {

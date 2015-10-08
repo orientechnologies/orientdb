@@ -58,7 +58,7 @@ public class OBlockTransformer extends OAbstractTransformer {
   @Override
   public void setPipeline(OETLPipeline iPipeline) {
     super.setPipeline(iPipeline);
-    block.setContext( context );
+    block.setContext(context);
   }
 
   @Override

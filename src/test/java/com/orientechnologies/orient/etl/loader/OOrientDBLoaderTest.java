@@ -16,14 +16,14 @@ public class OOrientDBLoaderTest extends ETLBaseTest {
   @Test
   public void testAddMetadataToIndex() {
 
-    process("{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { row: {} }, transformers: [{ csv: {} }], loader: { orientdb: {\n"
+    process("{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { csv: {} }, loader: { orientdb: {\n"
             + "      dbURL: \"memory:ETLBaseTest\",\n"
             + "      dbUser: \"admin\",\n"
             + "      dbPassword: \"admin\",\n"
             + "      dbAutoCreate: true,\n"
             + "      tx: false,\n"
             + "      batchCommit: 1000,\n"
-            + "      wal : false,\n"
+            + "      wal : true,\n"
             + "      dbType: \"graph\",\n"
             + "      classes: [\n"
             + "        {name:\"Person\", extends: \"V\" },\n"

@@ -21,11 +21,12 @@ package com.orientechnologies.orient.etl;
 import com.orientechnologies.common.exception.OException;
 
 public class OETLProcessHaltedException extends OException {
-  public OETLProcessHaltedException(Throwable iNested) {
-    super(iNested);
-  }
 
   public OETLProcessHaltedException(final String s) {
     super(s);
+  }
+
+  public OETLProcessHaltedException(String message, Throwable cause) {
+    super(message, cause);
   }
 }
