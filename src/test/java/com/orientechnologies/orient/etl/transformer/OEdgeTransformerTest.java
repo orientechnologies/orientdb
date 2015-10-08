@@ -32,7 +32,9 @@ import org.junit.Test;
 import java.util.Iterator;
 import java.util.Set;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Tests ETL Field Transformer.
@@ -147,4 +149,26 @@ public class OEdgeTransformerTest extends ETLBaseTest {
     assertEquals(1, graph.countVertices("V2"));
     assertEquals(1, graph.countEdges("Friend"));
   }
+
+  @Test
+  public void testVertexAndEdgesOnSeparatedFiles() {
+    // IMPORT PERSON (VERTICES)
+    process("{source: { content: { value: 'id,name\n1,Luigi\n2,Luca\n3,Enrico\n4,Franco\n5,Gianni' } }, extractor : { row: {} },"
+        + " transformers: [{csv: {}}, {merge: {joinFieldName:'id',lookup:'PersonMF.id'}}, {vertex: {class:'PersonMF'}}"
+        + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', classes: [{name:'PersonMF',extends:'V'}] } } }");
+
+    assertEquals(5, graph.countVertices("PersonMF"));
+
+    // IMPORT FRIEND (EDGES)
+    process("{source: { content: { value: 'friend_from,friend_to,since\n" + "1,2,2005\n" + "1,3,2008\n" + "2,3,2008\n"
+        + "1,4,2015\n" + "2,5,2008\n" + "3,5,2015\n" + "4,5,2015' } }, extractor : { row: {} }," + " transformers: ["
+        + "{csv: {}}," + "{merge: {joinFieldName:'friend_from',lookup:'PersonMF.id'}}," + "{vertex: {class:'PersonMF'}},"
+        + "{edge:{class:'FriendMF',joinFieldName:'friend_to',lookup:'PersonMF.id',edgeFields:{since:'${input.since}'} }},"
+        + "{field: {operation:'remove', fieldNames:['friend_from','friend_to','since']}}"
+        + "], loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', classes: [{name:'FriendMF',extends:'E'}] } } }");
+
+    assertEquals(5, graph.countVertices("PersonMF"));
+    assertEquals(7, graph.countEdges("FriendMF"));
+  }
+
 }
