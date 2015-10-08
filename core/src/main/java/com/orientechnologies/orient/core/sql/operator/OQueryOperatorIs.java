@@ -104,8 +104,8 @@ public class OQueryOperatorIs extends OQueryOperatorEquality {
       else
         cursor = new OIndexCursorCollectionValue((Collection<OIdentifiable>) indexResult, key);
     } else {
-      // in case of composite keys several items can be returned in case of we perform search
-      // using part of composite key stored in index.
+      // in case of composite keys several items can be returned in case we perform search
+      // using part of composite key stored in index
 
       final OCompositeIndexDefinition compositeIndexDefinition = (OCompositeIndexDefinition) indexDefinition;
 

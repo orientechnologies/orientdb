@@ -23,13 +23,13 @@ package com.orientechnologies.orient.core.serialization.serializer.record.binary
 import com.orientechnologies.orient.core.metadata.schema.OType;
 
 /**
- * Compares types at binary level (super fast).
+ * Compares types at binary level: super fast, using of literals as much as it can.
  * 
  * @author Luca Garulli
  */
 public interface OBinaryComparator {
   /**
-   * Compares if 2 values are the same.
+   * Compares if two values are the same.
    *
    * @param iFirstValue
    *          First value to compare
@@ -42,4 +42,19 @@ public interface OBinaryComparator {
    * @return true if they match, otherwise false
    */
   boolean isEqual(BytesContainer iFirstValue, OType iFirstType, BytesContainer iSecondValue, OType iSecondType);
+
+  /**
+   * Compares two values executing also conversion between types.
+   *
+   * @param iValue1
+   *          First value to compare
+   * @param iType1
+   *          First value type
+   * @param iValue2
+   *          Second value to compare
+   * @param iType2
+   *          Second value type
+   * @return 0 if they matches, >0 if first value is major than second, <0 in case is minor
+   */
+  int compare(BytesContainer iValue1, OType iType1, BytesContainer iValue2, OType iType2);
 }
