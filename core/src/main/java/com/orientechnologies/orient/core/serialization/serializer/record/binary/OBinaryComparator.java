@@ -21,21 +21,25 @@
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 
-public interface ODocumentSerializer {
-
-  void serialize(ODocument document, BytesContainer bytes, boolean iClassOnly);
-
-  int serializeValue(BytesContainer bytes, Object value, OType type, OType linkedType);
-
-  void deserialize(ODocument document, BytesContainer bytes);
-
-  void deserializePartial(ODocument document, BytesContainer bytes, String[] iFields);
-
-  Object deserializeValue(BytesContainer bytes, OType type, ODocument ownerDocument);
-
-  OBinaryField deserializeField(BytesContainer bytes, String iFieldName);
-
-  OBinaryComparator getComparator();
+/**
+ * Compares types at binary level (super fast).
+ * 
+ * @author Luca Garulli
+ */
+public interface OBinaryComparator {
+  /**
+   * Compares if 2 values are the same.
+   *
+   * @param iFirstValue
+   *          First value to compare
+   * @param iFirstType
+   *          First value type
+   * @param iSecondValue
+   *          Second value to compare
+   * @param iSecondType
+   *          Second value type
+   * @return true if they match, otherwise false
+   */
+  boolean isEqual(BytesContainer iFirstValue, OType iFirstType, BytesContainer iSecondValue, OType iSecondType);
 }

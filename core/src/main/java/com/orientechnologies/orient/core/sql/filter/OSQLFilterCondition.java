@@ -31,9 +31,13 @@ import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.query.OQueryRuntimeValueMulti;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.OBinaryField;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
@@ -89,33 +93,64 @@ public class OSQLFilterCondition {
 
     Object r = evaluate(iCurrentRecord, iCurrentResult, right, iContext);
 
-    final OCollate collate = getCollate();
-
-    final Object[] convertedValues = checkForConversion(iCurrentRecord, l, r, collate);
-    if (convertedValues != null) {
-      l = convertedValues[0];
-      r = convertedValues[1];
+    if (l instanceof OBinaryField) {
+      if (r != null && !(r instanceof OBinaryField)) {
+        final BytesContainer bytes = new BytesContainer();
+        final OType type = OType.getTypeByValue(r);
+        ORecordSerializerBinary.INSTANCE.getCurrentSerializer().serializeValue(bytes, r, type, null);
+        bytes.offset = 0;
+        r = new OBinaryField(null, type, bytes);
+        right = r;
+      } else
+        r = ((OBinaryField) r).copy();
     }
 
-    if (operator == null) {
-      if (l == null)
-      // THE LEFT RETURNED NULL
-      {
-        return Boolean.FALSE;
+    if (r instanceof OBinaryField) {
+      if (l != null && !(l instanceof OBinaryField)) {
+        final BytesContainer bytes = new BytesContainer();
+        final OType type = OType.getTypeByValue(l);
+        ORecordSerializerBinary.INSTANCE.getCurrentSerializer().serializeValue(bytes, l, type, null);
+        bytes.offset = 0;
+        l = new OBinaryField(null, type, bytes);
+        left = l;
+      }
+    } else
+      l = ((OBinaryField) l).copy();
+
+    try {
+      final OCollate collate = getCollate();
+
+      final Object[] convertedValues = checkForConversion(iCurrentRecord, l, r, collate);
+      if (convertedValues != null) {
+        l = convertedValues[0];
+        r = convertedValues[1];
       }
 
-      // UNITARY OPERATOR: JUST RETURN LEFT RESULT
-      return l;
-    }
+      if (operator == null) {
+        if (l == null)
+        // THE LEFT RETURNED NULL
+        {
+          return Boolean.FALSE;
+        }
 
-    Object result;
-    try {
-      result = operator.evaluateRecord(iCurrentRecord, iCurrentResult, this, l, r, iContext);
-    } catch (Exception e) {
-      result = Boolean.FALSE;
-    }
+        // UNITARY OPERATOR: JUST RETURN LEFT RESULT
+        return l;
+      }
 
-    return result;
+      Object result;
+      try {
+        result = operator.evaluateRecord(iCurrentRecord, iCurrentResult, this, l, r, iContext);
+      } catch (Exception e) {
+        result = Boolean.FALSE;
+      }
+
+      return result;
+    } finally {
+      if (left instanceof OBinaryField)
+        ((OBinaryField) left).bytes.offset = 0;
+      if (right instanceof OBinaryField)
+        ((OBinaryField) right).bytes.offset = 0;
+    }
   }
 
   public OCollate getCollate() {
@@ -301,6 +336,9 @@ public class OSQLFilterCondition {
     if (iValue == null)
       return null;
 
+    if (iValue instanceof BytesContainer)
+      return iValue;
+
     if (iCurrentRecord != null) {
       iCurrentRecord = iCurrentRecord.getRecord();
       if (iCurrentRecord != null && ((ODocument) iCurrentRecord).getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
@@ -310,6 +348,10 @@ public class OSQLFilterCondition {
           return null;
         }
       }
+    }
+
+    if (iValue instanceof OSQLFilterItemField) {
+      return ((OSQLFilterItemField) iValue).getBinaryField(iCurrentRecord);
     }
 
     if (iValue instanceof OSQLFilterItem) {

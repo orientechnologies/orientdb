@@ -21,21 +21,25 @@
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 
-public interface ODocumentSerializer {
+/**
+ * Represents a binary field.
+ * 
+ * @author Luca Garulli
+ */
+public class OBinaryField {
 
-  void serialize(ODocument document, BytesContainer bytes, boolean iClassOnly);
+  public final String         name;
+  public final OType          type;
+  public final BytesContainer bytes;
 
-  int serializeValue(BytesContainer bytes, Object value, OType type, OType linkedType);
+  public OBinaryField(final String iName, final OType iType, final BytesContainer iBytes) {
+    name = iName;
+    type = iType;
+    bytes = iBytes;
+  }
 
-  void deserialize(ODocument document, BytesContainer bytes);
-
-  void deserializePartial(ODocument document, BytesContainer bytes, String[] iFields);
-
-  Object deserializeValue(BytesContainer bytes, OType type, ODocument ownerDocument);
-
-  OBinaryField deserializeField(BytesContainer bytes, String iFieldName);
-
-  OBinaryComparator getComparator();
+  public OBinaryField copy() {
+    return new OBinaryField(name, type, bytes.copy());
+  }
 }

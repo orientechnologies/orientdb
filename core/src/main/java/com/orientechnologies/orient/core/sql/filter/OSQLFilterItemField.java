@@ -27,6 +27,9 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.OBinaryField;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodField;
 import com.orientechnologies.orient.core.sql.methods.OSQLMethodRuntime;
 
@@ -110,6 +113,14 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
       return transformValue(iRecord, iContext, v);
     }
     return null;
+  }
+
+  public OBinaryField getBinaryField(final OIdentifiable iRecord) {
+    if (iRecord == null)
+      throw new OCommandExecutionException("expression item '" + name + "' cannot be resolved because current record is NULL");
+
+    return ORecordSerializerBinary.INSTANCE.getCurrentSerializer().deserializeField(
+        new BytesContainer(iRecord.getRecord().toStream()).skip(1), name);
   }
 
   public String getRoot() {
