@@ -594,33 +594,33 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       pointer = writeString(bytes, value.toString());
       break;
     case DOUBLE:
-      long dg = Double.doubleToLongBits((Double) value);
+      long dg = Double.doubleToLongBits(((Number) value).doubleValue());
       pointer = bytes.alloc(OLongSerializer.LONG_SIZE);
       OLongSerializer.INSTANCE.serializeLiteral(dg, bytes.bytes, pointer);
       break;
     case FLOAT:
-      int fg = Float.floatToIntBits((Float) value);
+      int fg = Float.floatToIntBits(((Number) value).floatValue());
       pointer = bytes.alloc(OIntegerSerializer.INT_SIZE);
       OIntegerSerializer.INSTANCE.serializeLiteral(fg, bytes.bytes, pointer);
       break;
     case BYTE:
       pointer = bytes.alloc(1);
-      bytes.bytes[pointer] = (Byte) value;
+      bytes.bytes[pointer] = ((Number) value).byteValue();
       break;
     case BOOLEAN:
       pointer = bytes.alloc(1);
       bytes.bytes[pointer] = ((Boolean) value) ? (byte) 1 : (byte) 0;
       break;
     case DATETIME:
-      if (value instanceof Long) {
-        pointer = OVarIntSerializer.write(bytes, (Long) value);
+      if (value instanceof Number) {
+        pointer = OVarIntSerializer.write(bytes, ((Number) value).longValue());
       } else
         pointer = OVarIntSerializer.write(bytes, ((Date) value).getTime());
       break;
     case DATE:
       long dateValue;
-      if (value instanceof Long) {
-        dateValue = (Long) value;
+      if (value instanceof Number) {
+        dateValue = ((Number) value).longValue();
       } else
         dateValue = ((Date) value).getTime();
       int offset = ODateHelper.getDatabaseTimeZone().getOffset(dateValue);
