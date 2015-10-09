@@ -3340,11 +3340,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       makeStorageDirty();
       atomicOperationsManager.startAtomicOperation((String) null, false);
       try {
+        cluster.deleteRecord(ppos.clusterPosition);
+
         final ORecordSerializationContext context = ORecordSerializationContext.getContext();
         if (context != null)
           context.executeOperations(this);
-
-        cluster.deleteRecord(ppos.clusterPosition);
         atomicOperationsManager.endAtomicOperation(false, null);
       } catch (Exception e) {
         atomicOperationsManager.endAtomicOperation(true, e);
@@ -3373,11 +3373,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       makeStorageDirty();
       atomicOperationsManager.startAtomicOperation((String) null, false);
       try {
+        cluster.hideRecord(ppos.clusterPosition);
+
         final ORecordSerializationContext context = ORecordSerializationContext.getContext();
         if (context != null)
           context.executeOperations(this);
 
-        cluster.hideRecord(ppos.clusterPosition);
         atomicOperationsManager.endAtomicOperation(false, null);
       } catch (Exception e) {
         atomicOperationsManager.endAtomicOperation(true, e);
