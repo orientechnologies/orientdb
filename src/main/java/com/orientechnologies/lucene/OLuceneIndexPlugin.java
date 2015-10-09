@@ -16,6 +16,8 @@
 
 package com.orientechnologies.lucene;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.spatial.shape.OShapeFactory;
 import org.apache.lucene.util.Version;
 
 import com.orientechnologies.common.log.OLogManager;
@@ -37,6 +39,8 @@ import com.orientechnologies.orient.spatial.functions.OSpatialFunctionsFactory;
 
 public class OLuceneIndexPlugin extends OServerPluginAbstract implements ODatabaseLifecycleListener {
 
+  private OLuceneSpatialManager spatialManager;
+
   public OLuceneIndexPlugin() {
   }
 
@@ -56,6 +60,7 @@ public class OLuceneIndexPlugin extends OServerPluginAbstract implements ODataba
 
     registerFunctions();
 
+    spatialManager = new OLuceneSpatialManager(OShapeFactory.INSTANCE);
     OLogManager.instance().info(this, "Lucene index plugin installed and active. Lucene version: %s", Version.LATEST);
   }
 
@@ -94,13 +99,13 @@ public class OLuceneIndexPlugin extends OServerPluginAbstract implements ODataba
   }
 
   @Override
-  public void onCreate(final ODatabaseInternal iDatabase) {
-
+  public void onCreate(ODatabaseInternal iDatabase) {
+    spatialManager.init((ODatabaseDocumentTx) iDatabase);
   }
 
   @Override
-  public void onOpen(final ODatabaseInternal iDatabase) {
-
+  public void onOpen(ODatabaseInternal iDatabase) {
+    spatialManager.init((ODatabaseDocumentTx) iDatabase);
   }
 
   @Override
