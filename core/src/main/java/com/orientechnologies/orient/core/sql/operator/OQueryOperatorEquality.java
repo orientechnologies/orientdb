@@ -66,7 +66,11 @@ public abstract class OQueryOperatorEquality extends OQueryOperator {
   @Override
   public Object evaluateRecord(final OIdentifiable iRecord, ODocument iCurrentResult, final OSQLFilterCondition iCondition,
       final Object iLeft, final Object iRight, OCommandContext iContext) {
-    if (iLeft instanceof OQueryRuntimeValueMulti) {
+
+    if (iLeft instanceof OBinaryField && iRight instanceof OBinaryField)
+      // BINARY COMPARISON
+      return evaluate((OBinaryField) iLeft, (OBinaryField) iRight, iContext);
+    else if (iLeft instanceof OQueryRuntimeValueMulti) {
       // LEFT = MULTI
       final OQueryRuntimeValueMulti left = (OQueryRuntimeValueMulti) iLeft;
 
@@ -149,9 +153,6 @@ public abstract class OQueryOperatorEquality extends OQueryOperator {
       }
     } else {
       // SINGLE SIMPLE ITEM
-      if (iLeft instanceof OBinaryField && iRight instanceof OBinaryField)
-        return evaluate((OBinaryField) iLeft, (OBinaryField) iRight, iContext);
-
       return evaluateExpression(iRecord, iCondition, iLeft, iRight, iContext);
     }
   }
