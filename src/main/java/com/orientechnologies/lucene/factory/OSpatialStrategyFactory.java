@@ -53,7 +53,11 @@ public class OSpatialStrategyFactory {
     OClass linkedClass = property.getLinkedClass();
 
     if ("OPoint".equalsIgnoreCase(linkedClass.getName())) {
-      strategy = new RecursivePrefixTreeStrategy(new GeohashPrefixTree(ctx, 11), "location");
+      RecursivePrefixTreeStrategy recursivePrefixTreeStrategy = new RecursivePrefixTreeStrategy(new GeohashPrefixTree(ctx, 11),
+          "location");
+      recursivePrefixTreeStrategy.setDistErrPct(0);
+      strategy = recursivePrefixTreeStrategy;
+
     } else {
       strategy = new BBoxStrategy(ctx, "location");
     }

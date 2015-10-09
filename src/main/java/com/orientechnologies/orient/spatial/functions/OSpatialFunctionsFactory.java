@@ -33,19 +33,16 @@ public class OSpatialFunctionsFactory implements OSQLFunctionFactory {
   static {
     register(OSTGeomFromTextFunction.NAME, new OSTGeomFromTextFunction());
     register(OSTAsTextFunction.NAME, new OSTAsTextFunction());
-    register(STWithinFunction.NAME, new STWithinFunction());
-    register(STEqualsFunction.NAME, new STEqualsFunction());
+    register(OSTWithinFunction.NAME, new OSTWithinFunction());
+    register(OSTEqualsFunction.NAME, new OSTEqualsFunction());
     register(OSTAsBinaryFunction.NAME, new OSTAsBinaryFunction());
     register(OSTEnvelopFunction.NAME, new OSTEnvelopFunction());
     register(OSTBufferFunction.NAME, new OSTBufferFunction());
     register(OSTDistanceFunction.NAME, new OSTDistanceFunction());
-    register(STDisjointFunction.NAME, new STDisjointFunction());
-    register(STIntersectsFunction.NAME, new STIntersectsFunction());
-
-    register(STSrid.NAME, new STSrid());
-    // register(STNearFunction.NAME, new STNearFunction());
-    // register(STContainsFunction.NAME, new STContainsFunction());
-
+    register(OSTDisjointFunction.NAME, new OSTDisjointFunction());
+    register(OSTIntersectsFunction.NAME, new OSTIntersectsFunction());
+    register(OSTContainsFunction.NAME, new OSTContainsFunction());
+    register(OSTSrid.NAME, new OSTSrid());
   }
 
   public static void register(final String iName, final Object iImplementation) {

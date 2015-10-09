@@ -27,13 +27,13 @@ import com.spatial4j.core.shape.Shape;
 /**
  * Created by Enrico Risa on 26/09/15.
  */
-public class STSrid extends OSQLFunctionAbstract {
+public class OSTSrid extends OSQLFunctionAbstract {
 
   public static final String NAME    = "st_srid";
 
   OShapeFactory              factory = OShapeFactory.INSTANCE;
 
-  public STSrid() {
+  public OSTSrid() {
     super(NAME, 1, 1);
   }
 

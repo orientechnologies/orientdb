@@ -32,12 +32,16 @@ import com.vividsolutions.jts.operation.buffer.BufferOp;
 import com.vividsolutions.jts.operation.buffer.BufferParameters;
 
 import java.text.ParseException;
+import java.util.HashMap;
 import java.util.Map;
 
 public abstract class OShapeBuilder<T extends Shape> {
 
   protected static final JtsSpatialContext SPATIAL_CONTEXT;
   protected static final GeometryFactory   GEOMETRY_FACTORY;
+
+  protected static Map<String, Integer>    capStyles   = new HashMap<String, Integer>();
+  protected static Map<String, Integer>    join        = new HashMap<String, Integer>();
   static {
 
     JtsSpatialContextFactory factory = new JtsSpatialContextFactory();
@@ -45,6 +49,14 @@ public abstract class OShapeBuilder<T extends Shape> {
     factory.validationRule = JtsWktShapeParser.ValidationRule.none;
     SPATIAL_CONTEXT = new JtsSpatialContext(factory);
     GEOMETRY_FACTORY = SPATIAL_CONTEXT.getGeometryFactory();
+    capStyles.put("round", 1);
+    capStyles.put("flat", 2);
+    capStyles.put("square", 1);
+
+    join.put("round", 1);
+    join.put("mitre", 2);
+    join.put("bevel", 3);
+
   }
   public static final String               COORDINATES = "coordinates";
   public static final String               BASE_CLASS  = "OShape";
@@ -119,7 +131,6 @@ public abstract class OShapeBuilder<T extends Shape> {
   }
 
   public JtsGeometry toShape(Geometry geometry) {
-    // dateline180Check is false because ElasticSearch does it's own dateline wrapping
     JtsGeometry jtsGeometry = new JtsGeometry(geometry, SPATIAL_CONTEXT, false, false);
     // if (autoValidateJtsGeometry)
     // jtsGeometry.validate();
@@ -161,12 +172,51 @@ public abstract class OShapeBuilder<T extends Shape> {
 
   private void bindParameters(BufferParameters parameters, Map<String, Object> params) {
 
-    Number quad_segs = (Number) params.get("quad_segs");
+    bindQuad(parameters, params);
 
-    if (quad_segs != null) {
-      parameters.setQuadrantSegments(quad_segs.intValue());
+    bindMitre(parameters, params);
+
+    bindCap(parameters, params);
+
+    bindJoin(parameters, params);
+  }
+
+  private void bindCap(BufferParameters parameters, Map<String, Object> params) {
+    String endCap = (String) params.get("endCap");
+
+    if (endCap != null) {
+      Integer style = capStyles.get(endCap);
+      if (style != null) {
+        parameters.setEndCapStyle(style);
+      }
     }
 
+  }
+
+  private void bindJoin(BufferParameters parameters, Map<String, Object> params) {
+    String join = (String) params.get("join");
+    if (join != null) {
+      Integer style = OShapeBuilder.join.get(join);
+      if (style != null) {
+        parameters.setJoinStyle(style);
+      }
+    }
+  }
+
+  private void bindMitre(BufferParameters parameters, Map<String, Object> params) {
+    Number mitre = (Number) params.get("mitre");
+
+    if (mitre != null) {
+      parameters.setMitreLimit(mitre.doubleValue());
+    }
+  }
+
+  private void bindQuad(BufferParameters parameters, Map<String, Object> params) {
+    Number quadSegs = (Number) params.get("quadSegs");
+
+    if (quadSegs != null) {
+      parameters.setQuadrantSegments(quadSegs.intValue());
+    }
   }
 
   public SpatialContext context() {

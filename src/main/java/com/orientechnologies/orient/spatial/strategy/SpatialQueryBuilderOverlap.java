@@ -47,7 +47,7 @@ public class SpatialQueryBuilderOverlap extends SpatialQueryBuilderAbstract {
     Shape shape = parseShape(query);
     SpatialStrategy strategy = manager.strategy();
     SpatialArgs args = new SpatialArgs(SpatialOperation.Intersects, shape.getBoundingBox());
-    Filter filter = manager.strategy().makeFilter(args);
+    Filter filter = strategy.makeFilter(args);
     return new SpatialQueryContext(null, manager.searcher(), new MatchAllDocsQuery(), filter);
   }
 

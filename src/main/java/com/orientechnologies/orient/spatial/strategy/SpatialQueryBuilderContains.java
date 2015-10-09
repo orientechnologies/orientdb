@@ -24,6 +24,7 @@ import com.orientechnologies.orient.spatial.shape.OShapeBuilder;
 import com.spatial4j.core.shape.Shape;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.MatchAllDocsQuery;
+import org.apache.lucene.spatial.SpatialStrategy;
 import org.apache.lucene.spatial.query.SpatialArgs;
 import org.apache.lucene.spatial.query.SpatialOperation;
 
@@ -43,8 +44,13 @@ public class SpatialQueryBuilderContains extends SpatialQueryBuilderAbstract {
   @Override
   public SpatialQueryContext build(Map<String, Object> query) throws Exception {
     Shape shape = parseShape(query);
+    SpatialStrategy strategy = manager.strategy();
+
+    if (isOnlyBB(strategy)) {
+      shape = shape.getBoundingBox();
+    }
     SpatialArgs args = new SpatialArgs(SpatialOperation.Intersects, shape);
-    Filter filter = manager.strategy().makeFilter(args);
+    Filter filter = strategy.makeFilter(args);
     return new SpatialQueryContext(null, manager.searcher(), new MatchAllDocsQuery(), filter);
   }
 
