@@ -1835,7 +1835,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       if (_fields != null && !_fields.isEmpty()) {
         boolean allFound = true;
         for (String f : iFields)
-          if (!f.startsWith("@") && !_fields.containsKey(f)) {
+          if (f != null && !f.startsWith("@") && !_fields.containsKey(f)) {
             allFound = false;
             break;
           }
