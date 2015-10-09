@@ -117,6 +117,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   public static final String  KEYWORD_NOCACHE   = "NOCACHE";
   private static final String KEYWORD_AS        = "AS";
   private static final String KEYWORD_PARALLEL  = "PARALLEL";
+  private static final int    PARTIAL_SORT_BUFFER_THRESHOLD = 10000;
 
   private static class AsyncResult {
     final OIdentifiable   record;
@@ -440,7 +441,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       applyExpand();
       handleNoTarget();
       handleGroupBy(context);
-      applyOrderBy();
+      applyOrderBy(true);
 
       subIterator = new ArrayList<OIdentifiable>((List<OIdentifiable>) getResult()).iterator();
       lastRecord = null;
@@ -475,7 +476,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       applyExpand();
       handleNoTarget();
       handleGroupBy(context);
-      applyOrderBy();
+      applyOrderBy(true);
       applyLimitAndSkip();
     }
     return getResult();
@@ -727,12 +728,35 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       if (tempResult == null)
         tempResult = new ArrayList<OIdentifiable>();
 
+      applyPartialOrderBy();
+
       for (OIdentifiable iRes : allResults) {
         ((Collection<OIdentifiable>) tempResult).add(iRes);
       }
     }
 
     return result;
+  }
+
+  /**
+   * in case of ORDER BY + SKIP + LIMIT, this method applies ORDER BY operation on partial result and discards overflowing
+   * results (results > skip + limit)
+   */
+  private void applyPartialOrderBy() {
+    if (orderedFields.isEmpty() || fullySortedByIndex || isRidOnlySort()) {
+      return;
+    }
+
+    if (limit > 0) {
+      int sortBufferSize = limit + 1;
+      if (skip > 0) {
+        sortBufferSize += skip;
+      }
+      if (tempResult instanceof List && ((List) tempResult).size() >= sortBufferSize + PARTIAL_SORT_BUFFER_THRESHOLD) {
+        applyOrderBy(false);
+        tempResult = new ArrayList(((List) tempResult).subList(0, sortBufferSize));
+      }
+    }
   }
 
   private Collection<OIdentifiable> unwind(final OIdentifiable iRecord, final List<String> unwindFields,
@@ -2370,7 +2394,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     return false;
   }
 
-  private void applyOrderBy() {
+  private void applyOrderBy(boolean clearOrderedFields) {
     if (orderedFields.isEmpty() || fullySortedByIndex || isRidOnlySort()) {
       return;
     }
@@ -2385,7 +2409,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         tempResult = list;
       }
       tempResult = applySort((List<OIdentifiable>) tempResult, orderedFields, context);
-      orderedFields.clear();
+      if(clearOrderedFields) {
+        orderedFields.clear();
+      }
     } finally {
       metricRecorder.orderByElapsed(startOrderBy);
     }
