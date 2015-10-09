@@ -246,7 +246,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
           if (!(d instanceof OIdentifiable))
             // NON-DOCUMENT AS RESULT, COMES FROM EXPAND? CREATE A DOCUMENT AT THE FLY
             d = new ODocument().field("value", d);
-          else if (!(d instanceof ORID || d instanceof ORecord))
+          else
             d = ((OIdentifiable) d).getRecord();
 
           if (limit > -1 && fetched >= limit)
