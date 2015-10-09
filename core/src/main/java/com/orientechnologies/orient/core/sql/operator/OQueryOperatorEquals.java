@@ -35,7 +35,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.OBinaryField;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
@@ -211,9 +211,13 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
     return equals(iLeft, iRight);
   }
 
-  public boolean evaluate(final BytesContainer iFirstValue, final OType iFirstType, final BytesContainer iSecondValue,
-      final OType iSecondType) {
+  public boolean evaluate(final OBinaryField iFirstField, final OBinaryField iSecondField, OCommandContext iContext) {
     return ORecordSerializerBinary.INSTANCE.getCurrentSerializer().getComparator()
-        .isEqual(iFirstValue, iFirstType, iSecondValue, iSecondType);
+        .isEqual(iFirstField, iSecondField);
+  }
+
+  @Override
+  public boolean isSupportingBinaryEvaluate(){
+    return true;
   }
 }

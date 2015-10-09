@@ -15,14 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import org.testng.Assert;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -40,9 +32,16 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * If some of the tests start to fail then check cluster number in queries, e.g #7:1. It can be because the order of clusters could
@@ -62,6 +61,17 @@ public class SQLSelectTest extends AbstractSelectTest {
     OrientVertex vertex = graph.addVertex("class:vertexB", "name", name, "map", map);
 
     graph.addEdge(null, graph.getVertex(root), vertex, "E");
+  }
+
+  @BeforeClass
+  public void init() {
+    if (!database.getMetadata().getSchema().existsClass("Profile")) {
+      database.getMetadata().getSchema().createClass("Profile");
+
+      for (int i = 0; i < 1000; ++i) {
+        database.newInstance("Profile").field("test", i).field("name", "N" + i).save();
+      }
+    }
   }
 
   @Test
@@ -1072,7 +1082,6 @@ public class SQLSelectTest extends AbstractSelectTest {
 
   @Test
   public void queryMathOperators() {
-
     List<ODocument> result = executeQuery("select * from account where id < 3 + 4", database);
     Assert.assertFalse(result.isEmpty());
     for (int i = 0; i < result.size(); ++i)

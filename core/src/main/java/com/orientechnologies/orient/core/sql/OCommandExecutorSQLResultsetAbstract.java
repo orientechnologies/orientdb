@@ -256,7 +256,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
             if (!(d instanceof OIdentifiable))
               // NON-DOCUMENT AS RESULT, COMES FROM EXPAND? CREATE A DOCUMENT AT THE FLY
               d = new ODocument().field("value", d);
-            else if (!(d instanceof ORID || d instanceof ORecord))
+            else
               d = ((OIdentifiable) d).getRecord();
 
             if (limit > -1 && fetched >= limit)
@@ -479,8 +479,8 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
       return new ORecordIteratorClass<ORecord>(database, database, iCls.getName(), iPolymorphic, isUseCache()).setRange(range[0],
           range[1]);
     else
-      return new ORecordIteratorClassDescendentOrder<ORecord>(database, database, iCls.getName(), iPolymorphic)
-          .setRange(range[0], range[1]);
+      return new ORecordIteratorClassDescendentOrder<ORecord>(database, database, iCls.getName(), iPolymorphic).setRange(range[0],
+          range[1]);
   }
 
   protected boolean isUseCache() {

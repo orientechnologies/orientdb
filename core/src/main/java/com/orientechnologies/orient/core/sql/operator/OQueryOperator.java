@@ -31,7 +31,11 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OIndexSearchResult;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
-import com.orientechnologies.orient.core.sql.operator.math.*;
+import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorDivide;
+import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorMinus;
+import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorMod;
+import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorMultiply;
+import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorPlus;
 
 import java.util.List;
 
@@ -232,6 +236,10 @@ public abstract class OQueryOperator {
   }
 
   public boolean canShortCircuit(Object l) {
+    return false;
+  }
+
+  public boolean isSupportingBinaryEvaluate() {
     return false;
   }
 }

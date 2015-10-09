@@ -26,6 +26,8 @@ import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.OBinaryField;
@@ -84,12 +86,14 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
     }
   }
 
-  public OSQLFilterItemField(final String iName) {
+  public OSQLFilterItemField(final String iName, final OClass iClass) {
     this.name = OIOUtils.getStringContent(iName);
+    collate = getCollateForField(iClass, name);
   }
 
-  public OSQLFilterItemField(final OBaseParser iQueryToParse, final String iName) {
+  public OSQLFilterItemField(final OBaseParser iQueryToParse, final String iName, final OClass iClass) {
     super(iQueryToParse, iName);
+    collate = getCollateForField(iClass, name);
   }
 
   public Object getValue(final OIdentifiable iRecord, final Object iCurrentResult, final OCommandContext iContext) {
@@ -107,9 +111,6 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
     // UNMARSHALL THE SINGLE FIELD
     if (doc.deserializeFields(preLoadedFieldsArray)) {
       final Object v = doc.rawField(name);
-
-      collate = getCollateForField(doc, name);
-
       return transformValue(iRecord, iContext, v);
     }
     return null;
@@ -119,8 +120,14 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
     if (iRecord == null)
       throw new OCommandExecutionException("expression item '" + name + "' cannot be resolved because current record is NULL");
 
-    return ORecordSerializerBinary.INSTANCE.getCurrentSerializer().deserializeField(
-        new BytesContainer(iRecord.getRecord().toStream()).skip(1), name);
+    if (operationsChain != null && operationsChain.size() > 0)
+      // CANNOT USE BINARY FIELDS
+      return null;
+
+    final ORecord rec = iRecord.getRecord();
+
+    return ORecordSerializerBinary.INSTANCE.getCurrentSerializer().deserializeField(new BytesContainer(rec.toStream()).skip(1),
+        rec instanceof ODocument ? ((ODocument) rec).getSchemaClass() : null, name);
   }
 
   public String getRoot() {

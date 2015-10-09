@@ -22,10 +22,8 @@ package com.orientechnologies.orient.core.sql.operator;
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.query.OQueryRuntimeValueMulti;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.OBinaryField;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
@@ -56,13 +54,13 @@ public abstract class OQueryOperatorEquality extends OQueryOperator {
   protected abstract boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition,
       final Object iLeft, final Object iRight, OCommandContext iContext);
 
-  public boolean evaluate(final BytesContainer iFirstValue, final OType iFirstType, final BytesContainer iSecondValue,
-      final OType iSecondType) {
+  public boolean evaluate(final OBinaryField iFirstField, final OBinaryField iSecondField, final OCommandContext iContext) {
+    final Object left = ORecordSerializerBinary.INSTANCE.getCurrentSerializer().deserializeValue(iFirstField.bytes,
+        iFirstField.type, null);
+    final Object right = ORecordSerializerBinary.INSTANCE.getCurrentSerializer().deserializeValue(iSecondField.bytes,
+        iFirstField.type, null);
 
-    final Object left = ORecordSerializerBinary.INSTANCE.getCurrentSerializer().deserializeValue(iFirstValue, iFirstType, null);
-    final Object right = ORecordSerializerBinary.INSTANCE.getCurrentSerializer().deserializeValue(iSecondValue, iSecondType, null);
-
-    return evaluateExpression(null, null, left, right, null);
+    return evaluateExpression(null, null, left, right, iContext);
   }
 
   @Override
@@ -152,8 +150,7 @@ public abstract class OQueryOperatorEquality extends OQueryOperator {
     } else {
       // SINGLE SIMPLE ITEM
       if (iLeft instanceof OBinaryField && iRight instanceof OBinaryField)
-        return evaluate(((OBinaryField) iLeft).bytes, ((OBinaryField) iLeft).type, ((OBinaryField) iRight).bytes,
-            ((OBinaryField) iRight).type);
+        return evaluate((OBinaryField) iLeft, (OBinaryField) iRight, iContext);
 
       return evaluateExpression(iRecord, iCondition, iLeft, iRight, iContext);
     }

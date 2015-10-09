@@ -24,7 +24,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * the Collating strategy when comparison in SQL statement is required.
+ * Factory to hold collating strategies to compare values in SQL statement and indexes.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 

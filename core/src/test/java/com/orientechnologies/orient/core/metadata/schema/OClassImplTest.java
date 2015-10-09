@@ -335,7 +335,7 @@ public class OClassImplTest {
     oClass.createProperty("test6", OType.INTEGER);
 
     ODocument document = new ODocument("Test19");
-    // TODO add boolan and byte
+    // TODO add boolean and byte
     document.field("test1", (short) 1);
     document.field("test2", 1);
     document.field("test3", 4L);

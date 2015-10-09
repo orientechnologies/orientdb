@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
+import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 
 /**
@@ -32,14 +33,16 @@ public class OBinaryField {
   public final String         name;
   public final OType          type;
   public final BytesContainer bytes;
+  public final OCollate       collate;
 
-  public OBinaryField(final String iName, final OType iType, final BytesContainer iBytes) {
+  public OBinaryField(final String iName, final OType iType, final BytesContainer iBytes, final OCollate iCollate) {
     name = iName;
     type = iType;
     bytes = iBytes;
+    collate = iCollate;
   }
 
   public OBinaryField copy() {
-    return new OBinaryField(name, type, bytes.copy());
+    return new OBinaryField(name, type, bytes.copy(), collate);
   }
 }

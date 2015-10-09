@@ -29,32 +29,31 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
  */
 public interface OBinaryComparator {
   /**
-   * Compares if two values are the same.
+   * Compares if two binary values are the same.
    *
    * @param iFirstValue
    *          First value to compare
-   * @param iFirstType
-   *          First value type
    * @param iSecondValue
    *          Second value to compare
-   * @param iSecondType
-   *          Second value type
    * @return true if they match, otherwise false
    */
-  boolean isEqual(BytesContainer iFirstValue, OType iFirstType, BytesContainer iSecondValue, OType iSecondType);
+  boolean isEqual(OBinaryField iFirstValue, OBinaryField iSecondValue);
 
   /**
-   * Compares two values executing also conversion between types.
+   * Compares two binary values executing also conversion between types.
    *
    * @param iValue1
    *          First value to compare
-   * @param iType1
-   *          First value type
    * @param iValue2
    *          Second value to compare
-   * @param iType2
-   *          Second value type
    * @return 0 if they matches, >0 if first value is major than second, <0 in case is minor
    */
-  int compare(BytesContainer iValue1, OType iType1, BytesContainer iValue2, OType iType2);
+  int compare(OBinaryField iValue1, OBinaryField iValue2);
+
+  /**
+   * Returns true if the type is binary comparable
+   * 
+   * @return
+   */
+  boolean isBinaryComparable(OType iType);
 }

@@ -171,7 +171,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     }
   }
 
-  public OBinaryField deserializeField(final BytesContainer bytes, final String iFieldName) {
+  public OBinaryField deserializeField(final BytesContainer bytes, final OClass iClass, final String iFieldName) {
     // SKIP CLASS NAME
     final int classNameLen = OVarIntSerializer.readAsInteger(bytes);
     bytes.skip(classNameLen);
@@ -190,15 +190,25 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       } else if (len > 0) {
         // CHECK BY FIELD NAME SIZE: THIS AVOID EVEN THE UNMARSHALLING OF FIELD NAME
         if (iFieldName.length() == len) {
+          boolean match = true;
           for (int j = 0; j < len; ++j)
-            if (bytes.bytes[bytes.offset + j] != field[j])
+            if (bytes.bytes[bytes.offset + j] != field[j]) {
+              match = false;
               break;
+            }
 
           bytes.skip(len);
           final int valuePos = readInteger(bytes);
           final OType type = readOType(bytes);
+
+          if (!match)
+            continue;
+
+          if (!ORecordSerializerBinary.INSTANCE.getCurrentSerializer().getComparator().isBinaryComparable(type))
+            return null;
+
           bytes.offset = valuePos;
-          return new OBinaryField(iFieldName, type, bytes);
+          return new OBinaryField(iFieldName, type, bytes, null);
         }
 
         // SKIP IT
@@ -216,8 +226,14 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
             type = prop.getType();
           else
             type = readOType(bytes);
+
+          if (!ORecordSerializerBinary.INSTANCE.getCurrentSerializer().getComparator().isBinaryComparable(type))
+            return null;
+
           bytes.offset = valuePos;
-          return new OBinaryField(iFieldName, type, bytes);
+
+          final OProperty classProp = iClass.getProperty(iFieldName);
+          return new OBinaryField(iFieldName, type, bytes, classProp != null ? classProp.getCollate() : null);
         }
         bytes.skip(OIntegerSerializer.INT_SIZE + (prop.getType() != OType.ANY ? 0 : 1));
       }

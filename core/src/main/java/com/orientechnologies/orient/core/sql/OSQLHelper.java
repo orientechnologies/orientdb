@@ -19,13 +19,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.parser.OBaseParser;
@@ -50,6 +43,13 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * SQL Helper class
@@ -80,7 +80,7 @@ public class OSQLHelper {
     }
 
     // PARSE AS FIELD
-    return new OSQLFilterItemField(null, iWord);
+    return new OSQLFilterItemField(null, iWord, iRecord.getSchemaClass());
   }
 
   /**
@@ -233,7 +233,7 @@ public class OSQLHelper {
       return new OSQLFilterItemVariable(iCommand, iWord);
 
     // PARSE AS FIELD
-    return new OSQLFilterItemField(iCommand, iWord);
+    return new OSQLFilterItemField(iCommand, iWord, null);
   }
 
   public static OSQLFunctionRuntime getFunction(final OBaseParser iCommand, final String iWord) {

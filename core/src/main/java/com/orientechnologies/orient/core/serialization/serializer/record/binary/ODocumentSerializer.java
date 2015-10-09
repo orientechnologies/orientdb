@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -35,7 +36,7 @@ public interface ODocumentSerializer {
 
   Object deserializeValue(BytesContainer bytes, OType type, ODocument ownerDocument);
 
-  OBinaryField deserializeField(BytesContainer bytes, String iFieldName);
+  OBinaryField deserializeField(BytesContainer bytes, OClass iClass, String iFieldName);
 
   OBinaryComparator getComparator();
 }

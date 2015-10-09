@@ -1286,7 +1286,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     }
   }
 
-  private OSQLFilterCondition convertToBetweenClause(OSQLFilterCondition condition) {
+  private OSQLFilterCondition convertToBetweenClause(final OSQLFilterCondition condition) {
     if (condition == null) {
       return null;
     }
@@ -1331,7 +1331,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     final List<Object> betweenBoundaries = new ArrayList<Object>();
 
     if (rightCondition.getLeft() instanceof OSQLFilterItemField) {
-      OSQLFilterItemField itemField = (OSQLFilterItemField) rightCondition.getLeft();
+      final OSQLFilterItemField itemField = (OSQLFilterItemField) rightCondition.getLeft();
       if (!itemField.isFieldChain()) {
         return null;
       }
@@ -1343,7 +1343,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       rightField = itemField.getRoot();
       betweenBoundaries.add(rightCondition.getRight());
     } else if (rightCondition.getRight() instanceof OSQLFilterItemField) {
-      OSQLFilterItemField itemField = (OSQLFilterItemField) rightCondition.getRight();
+      final OSQLFilterItemField itemField = (OSQLFilterItemField) rightCondition.getRight();
       if (!itemField.isFieldChain()) {
         return null;
       }
@@ -1362,7 +1362,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     String leftField;
     if (leftCondition.getLeft() instanceof OSQLFilterItemField) {
-      OSQLFilterItemField itemField = (OSQLFilterItemField) leftCondition.getLeft();
+      final OSQLFilterItemField itemField = (OSQLFilterItemField) leftCondition.getLeft();
       if (!itemField.isFieldChain()) {
         return null;
       }
@@ -1374,7 +1374,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       leftField = itemField.getRoot();
       betweenBoundaries.add(leftCondition.getRight());
     } else if (leftCondition.getRight() instanceof OSQLFilterItemField) {
-      OSQLFilterItemField itemField = (OSQLFilterItemField) leftCondition.getRight();
+      final OSQLFilterItemField itemField = (OSQLFilterItemField) leftCondition.getRight();
       if (!itemField.isFieldChain()) {
         return null;
       }
@@ -1409,7 +1409,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         between.setRightInclusive(false);
       }
 
-      return new OSQLFilterCondition(new OSQLFilterItemField(this, leftField), between, betweenBoundaries.toArray());
+      return new OSQLFilterCondition(new OSQLFilterItemField(this, leftField, null), between, betweenBoundaries.toArray());
     }
 
     if ((leftOperator instanceof OQueryOperatorMajor || leftOperator instanceof OQueryOperatorMajorEquals)
@@ -1426,7 +1426,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
       Collections.reverse(betweenBoundaries);
 
-      return new OSQLFilterCondition(new OSQLFilterItemField(this, leftField), between, betweenBoundaries.toArray());
+      return new OSQLFilterCondition(new OSQLFilterItemField(this, leftField, null), between, betweenBoundaries.toArray());
 
     }
 
@@ -2121,7 +2121,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
       uniqueResult = new ConcurrentHashMap<ORID, ORID>();
 
-      if (cursors.size() == 1 && compiledFilter == null && groupByFields == null && projections != null && projections.size() == 1) {
+      if (cursors.size() == 1 && (compiledFilter == null || compiledFilter.getRootCondition() == null) && groupByFields == null
+          && projections != null && projections.size() == 1) {
         // OPTIMIZATION: ONE INDEX USED WITH JUST ONE CONDITION: REMOVE THE FILTER
         final Entry<String, Object> entry = projections.entrySet().iterator().next();
 

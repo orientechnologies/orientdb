@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
-import java.util.List;
-
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
@@ -32,11 +30,13 @@ import com.orientechnologies.orient.core.index.OIndexDefinitionMultiValue;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.OBinaryField;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
+
+import java.util.List;
 
 /**
  * MINOR operator.
@@ -132,9 +132,12 @@ public class OQueryOperatorMinor extends OQueryOperatorEqualityNotNulls {
   }
 
   @Override
-  public boolean evaluate(final BytesContainer iFirstValue, final OType iFirstType, final BytesContainer iSecondValue,
-      final OType iSecondType) {
-    return ORecordSerializerBinary.INSTANCE.getCurrentSerializer().getComparator()
-        .compare(iFirstValue, iFirstType, iSecondValue, iSecondType) < 0;
+  public boolean evaluate(final OBinaryField iFirstField, final OBinaryField iSecondField, OCommandContext iContext) {
+    return ORecordSerializerBinary.INSTANCE.getCurrentSerializer().getComparator().compare(iFirstField, iSecondField) < 0;
+  }
+
+  @Override
+  public boolean isSupportingBinaryEvaluate() {
+    return true;
   }
 }
