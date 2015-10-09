@@ -57,23 +57,11 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.sql.filter.OFilterOptimizer;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
+import com.orientechnologies.orient.core.sql.filter.*;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionDistinct;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCount;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorAnd;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorBetween;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorIn;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajor;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajorEquals;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinor;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinorEquals;
+import com.orientechnologies.orient.core.sql.operator.*;
 import com.orientechnologies.orient.core.sql.parser.OOrderBy;
 import com.orientechnologies.orient.core.sql.parser.OOrderByItem;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
@@ -95,41 +83,44 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 @SuppressWarnings("unchecked")
 public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstract {
-  public static final String          KEYWORD_SELECT       = "SELECT";
-  public static final String          KEYWORD_ASC          = "ASC";
-  public static final String          KEYWORD_DESC         = "DESC";
-  public static final String          KEYWORD_ORDER        = "ORDER";
-  public static final String          KEYWORD_BY           = "BY";
-  public static final String          KEYWORD_GROUP        = "GROUP";
-  public static final String          KEYWORD_UNWIND       = "UNWIND";
-  public static final String          KEYWORD_FETCHPLAN    = "FETCHPLAN";
-  public static final String          KEYWORD_NOCACHE      = "NOCACHE";
-  private static final String         KEYWORD_AS           = "AS";
-  private static final String         KEYWORD_PARALLEL     = "PARALLEL";
-  private final OOrderByOptimizer     orderByOptimizer     = new OOrderByOptimizer();
-  private final OMetricRecorder       metricRecorder       = new OMetricRecorder();
-  private final OFilterOptimizer      filterOptimizer      = new OFilterOptimizer();
-  private final OFilterAnalyzer       filterAnalyzer       = new OFilterAnalyzer();
-  private Map<String, String>         projectionDefinition = null;
+  public static final  String KEYWORD_SELECT                = "SELECT";
+  public static final  String KEYWORD_ASC                   = "ASC";
+  public static final  String KEYWORD_DESC                  = "DESC";
+  public static final  String KEYWORD_ORDER                 = "ORDER";
+  public static final  String KEYWORD_BY                    = "BY";
+  public static final  String KEYWORD_GROUP                 = "GROUP";
+  public static final  String KEYWORD_UNWIND                = "UNWIND";
+  public static final  String KEYWORD_FETCHPLAN             = "FETCHPLAN";
+  public static final  String KEYWORD_NOCACHE               = "NOCACHE";
+  private static final String KEYWORD_AS                    = "AS";
+  private static final String KEYWORD_PARALLEL              = "PARALLEL";
+  private static final int    PARTIAL_SORT_BUFFER_THRESHOLD = 10000;
+
+  private final OOrderByOptimizer           orderByOptimizer     = new OOrderByOptimizer();
+  private final OMetricRecorder             metricRecorder       = new OMetricRecorder();
+  private final OFilterOptimizer            filterOptimizer      = new OFilterOptimizer();
+  private final OFilterAnalyzer             filterAnalyzer       = new OFilterAnalyzer();
+  private       Map<String, String>         projectionDefinition = null;
   // THIS HAS BEEN KEPT FOR COMPATIBILITY; BUT IT'S USED THE PROJECTIONS IN GROUPED-RESULTS
-  private Map<String, Object>         projections          = null;
-  private List<OPair<String, String>> orderedFields        = new ArrayList<OPair<String, String>>();
+  private       Map<String, Object>         projections          = null;
+  private       List<OPair<String, String>> orderedFields        = new ArrayList<OPair<String, String>>();
   private List<String>                groupByFields;
   private Map<Object, ORuntimeResult> groupedResult;
   private List<String>                unwindFields;
   private Object                      expandTarget;
-  private int                         fetchLimit           = -1;
-  private OIdentifiable               lastRecord;
-  private String                      fetchPlan;
-  private volatile boolean            executing;
-  private boolean                     fullySortedByIndex   = false;
-  private LOCKING_STRATEGY            lockingStrategy      = LOCKING_STRATEGY.DEFAULT;
-  private boolean                     parallel             = false;
-  private Lock                        parallelLock         = new ReentrantLock();
-  private Set<ORID>                   uniqueResult;
-  private boolean                     noCache              = false;
-  private int                         tipLimitThreshold    = OGlobalConfiguration.QUERY_LIMIT_THRESHOLD_TIP.getValueAsInteger();
-  private String                      NULL_VALUE           = "null";
+  private int fetchLimit = -1;
+  private          OIdentifiable lastRecord;
+  private          String        fetchPlan;
+  private volatile boolean       executing;
+  private boolean          fullySortedByIndex = false;
+  private LOCKING_STRATEGY lockingStrategy    = LOCKING_STRATEGY.DEFAULT;
+  private boolean          parallel           = false;
+  private Lock             parallelLock       = new ReentrantLock();
+  private Set<ORID> uniqueResult;
+  private boolean noCache           = false;
+  private int     tipLimitThreshold = OGlobalConfiguration.QUERY_LIMIT_THRESHOLD_TIP
+      .getValueAsInteger();
+  private String  NULL_VALUE        = "null";
 
   public OCommandExecutorSQLSelect() {
   }
@@ -401,7 +392,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       applyExpand();
       handleNoTarget();
       handleGroupBy();
-      applyOrderBy();
+      applyOrderBy(true);
 
       subIterator = new ArrayList<OIdentifiable>((List<OIdentifiable>) getResult()).iterator();
       lastRecord = null;
@@ -437,7 +428,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         applyExpand();
         handleNoTarget();
         handleGroupBy();
-        applyOrderBy();
+        applyOrderBy(true);
         applyLimitAndSkip();
       }
       return getResult();
@@ -682,12 +673,35 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       if (tempResult == null)
         tempResult = new ArrayList<OIdentifiable>();
 
+      applyPartialOrderBy();
+
       for (OIdentifiable iRes : allResults) {
         ((Collection<OIdentifiable>) tempResult).add(iRes);
       }
     }
 
     return result;
+  }
+
+  /**
+   * in case of ORDER BY + SKIP + LIMIT, this method applies ORDER BY operation on partial result and discards overflowing
+   * results (results > skip + limit)
+   */
+  private void applyPartialOrderBy() {
+    if (orderedFields.isEmpty() || fullySortedByIndex || isRidOnlySort()) {
+      return;
+    }
+
+    if (limit > 0) {
+      int sortBufferSize = limit + 1;
+      if (skip > 0) {
+        sortBufferSize += skip;
+      }
+      if (tempResult instanceof List && ((List) tempResult).size() >= sortBufferSize + PARTIAL_SORT_BUFFER_THRESHOLD) {
+        applyOrderBy(false);
+        tempResult = new ArrayList(((List) tempResult).subList(0, sortBufferSize));
+      }
+    }
   }
 
   private Collection<OIdentifiable> unwind(OIdentifiable iRecord, List<String> unwindFields) {
@@ -2085,7 +2099,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     return false;
   }
 
-  private void applyOrderBy() {
+  private void applyOrderBy(boolean clearOrder) {
     if (orderedFields.isEmpty() || fullySortedByIndex || isRidOnlySort()) {
       return;
     }
@@ -2100,7 +2114,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         tempResult = list;
       }
       tempResult = applySort((List<OIdentifiable>) tempResult, orderedFields, context);
-      orderedFields.clear();
+      if (clearOrder) {
+        orderedFields.clear();
+      }
     } finally {
       metricRecorder.orderByElapsed(startOrderBy);
     }
@@ -2140,6 +2156,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         }
       } else {
         final OMultiCollectionIterator<OIdentifiable> finalResult = new OMultiCollectionIterator<OIdentifiable>();
+        finalResult.setAutoConvertToRecord(true);
         int iteratorLimit = 0;
         if (limit < 0) {
           iteratorLimit = -1;

@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.sql;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -19,8 +20,10 @@ import static org.testng.Assert.*;
 
 @Test
 public class OCommandExecutorSQLSelectTest {
-  private static String DB_STORAGE = "memory";
-  private static String DB_NAME    = "OCommandExecutorSQLSelectTest";
+  private static String DB_STORAGE             = "memory";
+  private static String DB_NAME                = "OCommandExecutorSQLSelectTest";
+
+  private int           ORDER_SKIP_LIMIT_ITEMS = 100 * 1000;
 
   ODatabaseDocumentTx   db;
 
@@ -104,14 +107,12 @@ public class OCommandExecutorSQLSelectTest {
     db.command(new OCommandSQL("insert into TestParams  set name = 'foo', surname ='bar', active = false")).execute();
 
     db.command(new OCommandSQL("CREATE class TestParamsEmbedded")).execute();
-    db.command(new OCommandSQL("insert into TestParamsEmbedded set emb = {  \n"
-        + "            \"count\":0,\n"
-        + "            \"testupdate\":\"1441258203385\"\n"
-        + "         }")).execute();
-    db.command(new OCommandSQL("insert into TestParamsEmbedded set emb = {  \n"
-        + "            \"count\":1,\n"
-        + "            \"testupdate\":\"1441258203385\"\n"
-        + "         }")).execute();
+    db.command(
+        new OCommandSQL("insert into TestParamsEmbedded set emb = {  \n" + "            \"count\":0,\n"
+            + "            \"testupdate\":\"1441258203385\"\n" + "         }")).execute();
+    db.command(
+        new OCommandSQL("insert into TestParamsEmbedded set emb = {  \n" + "            \"count\":1,\n"
+            + "            \"testupdate\":\"1441258203385\"\n" + "         }")).execute();
 
     db.command(new OCommandSQL("CREATE class TestBacktick")).execute();
     db.command(new OCommandSQL("insert into TestBacktick  set foo = 1, bar = 2, `foo-bar` = 10")).execute();
@@ -145,6 +146,27 @@ public class OCommandExecutorSQLSelectTest {
         .execute();
 
     initExpandSkipLimit(db);
+
+    initMassiveOrderSkipLimit(db);
+  }
+
+  private void initMassiveOrderSkipLimit(ODatabaseDocumentTx db) {
+    db.getMetadata().getSchema().createClass("MassiveOrderSkipLimit");
+    db.declareIntent(new OIntentMassiveInsert());
+    String fieldValue = "laskdf lkajsd flaksjdf laksjd flakjsd flkasjd flkajsd flkajsd flkajsd flkajsd flkajsd flkjas;lkj a;ldskjf laksdj asdklasdjf lskdaj fladsd";
+    for (int i = 0; i < ORDER_SKIP_LIMIT_ITEMS; i++) {
+      ODocument doc = new ODocument("MassiveOrderSkipLimit");
+      doc.field("nnum", i);
+      doc.field("aaa", fieldValue);
+      doc.field("bbb", fieldValue);
+      doc.field("bbba", fieldValue);
+      doc.field("daf", fieldValue);
+      doc.field("dfgd", fieldValue);
+      doc.field("dgd", fieldValue);
+
+      doc.save();
+    }
+    db.declareIntent(null);
   }
 
   private void initExpandSkipLimit(ODatabaseDocumentTx db) {
@@ -419,22 +441,18 @@ public class OCommandExecutorSQLSelectTest {
   @Test
   public void testBooleanParams() {
     // issue #4224
-    List<ODocument> qResult = db.command(
-        new OCommandSQL(
-            "select name from TestParams where name = ? and active = ?"))
-        .execute("foo", true);
+    List<ODocument> qResult = db.command(new OCommandSQL("select name from TestParams where name = ? and active = ?")).execute(
+        "foo", true);
     assertEquals(qResult.size(), 1);
   }
 
   @Test
   public void testOrderByEmbeddedParams() {
     // issue #4949
-    Map<String,Object> parameters = new HashMap<String,Object>();
-    parameters.put("paramvalue","count");
-    List<ODocument> qResult = db.command(
-        new OCommandSQL(
-            "select from TestParamsEmbedded order by emb[:paramvalue] DESC"))
-        .execute(parameters);
+    Map<String, Object> parameters = new HashMap<String, Object>();
+    parameters.put("paramvalue", "count");
+    List<ODocument> qResult = db.command(new OCommandSQL("select from TestParamsEmbedded order by emb[:paramvalue] DESC")).execute(
+        parameters);
     assertEquals(qResult.size(), 2);
     Map embedded = qResult.get(0).field("emb");
     assertEquals(embedded.get("count"), 1);
@@ -443,15 +461,13 @@ public class OCommandExecutorSQLSelectTest {
   @Test
   public void testOrderByEmbeddedParams2() {
     // issue #4949
-    Map<String,Object> parameters = new HashMap<String,Object>();
-    parameters.put("paramvalue","count");
-    List<ODocument> qResult = db.command(
-        new OCommandSQL(
-            "select from TestParamsEmbedded order by emb[:paramvalue] ASC"))
-        .execute(parameters);
+    Map<String, Object> parameters = new HashMap<String, Object>();
+    parameters.put("paramvalue", "count");
+    List<ODocument> qResult = db.command(new OCommandSQL("select from TestParamsEmbedded order by emb[:paramvalue] ASC")).execute(
+        parameters);
     assertEquals(qResult.size(), 2);
     Map embedded = qResult.get(0).field("emb");
-    assertEquals( embedded.get("count"), 0);
+    assertEquals(embedded.get("count"), 0);
   }
 
   @Test
@@ -768,13 +784,42 @@ public class OCommandExecutorSQLSelectTest {
 
   @Test
   public void testExpandSkipLimit() {
-    //issue #4985
+    // issue #4985
     OSQLSynchQuery sql = new OSQLSynchQuery(
         "SELECT expand(linked) from ExpandSkipLimit where parent = true order by nnum skip 1 limit 1");
     List<ODocument> results = db.query(sql);
     assertEquals(results.size(), 1);
     ODocument doc = results.get(0);
     assertEquals(doc.field("nnum"), 1);
+  }
+
+  @Test
+  public void testMassiveOrderAscSkipLimit() {
+    long begin = System.currentTimeMillis();
+    int skip = 1000;
+    OSQLSynchQuery sql = new OSQLSynchQuery("SELECT from MassiveOrderSkipLimit order by nnum asc skip " + skip + " limit 5");
+    List<ODocument> results = db.query(sql);
+    assertEquals(results.size(), 5);
+    System.out.println("elapsed: " + (System.currentTimeMillis() - begin));
+    for (int i = 0; i < results.size(); i++) {
+      ODocument doc = results.get(i);
+      assertEquals(doc.field("nnum"), skip + i);
+    }
+  }
+
+  @Test
+  public void testMassiveOrderDescSkipLimit() {
+    long begin = System.currentTimeMillis();
+    int skip = 1000;
+    OSQLSynchQuery sql = new OSQLSynchQuery("SELECT from MassiveOrderSkipLimit order by nnum desc skip " + skip + " limit 5");
+
+    List<ODocument> results = db.query(sql);
+    assertEquals(results.size(), 5);
+    System.out.println("elapsed: " + (System.currentTimeMillis() - begin));
+    for (int i = 0; i < results.size(); i++) {
+      ODocument doc = results.get(i);
+      assertEquals(doc.field("nnum"), ORDER_SKIP_LIMIT_ITEMS - 1 - skip - i);
+    }
   }
 
   @Test
