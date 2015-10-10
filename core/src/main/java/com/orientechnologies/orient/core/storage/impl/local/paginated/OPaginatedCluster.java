@@ -15,20 +15,13 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISK_CACHE_PAGE_SIZE;
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.compression.OCompression;
 import com.orientechnologies.orient.core.compression.OCompressionFactory;
@@ -42,9 +35,10 @@ import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.encryption.OEncryptionFactory;
 import com.orientechnologies.orient.core.exception.OPaginatedClusterException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
@@ -56,6 +50,14 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISK_CACHE_PAGE_SIZE;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
@@ -1249,6 +1251,73 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
   public ORecordConflictStrategy getRecordConflictStrategy() {
     return recordConflictStrategy;
+  }
+
+  @SuppressFBWarnings(value = "PZLA_PREFER_ZERO_LENGTH_ARRAYS")
+  public void scan(final boolean iAscendingOrder, final long iFrom, final long iTo, final OCallable<Boolean, ORecord> iCallback)
+      throws IOException {
+    atomicOperationsManager.acquireReadLock(this);
+    try {
+      acquireSharedLock();
+      try {
+        OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
+
+        final long firstPos = iFrom > -1 ? iFrom : getFirstPosition();
+        final long lastPos = iTo > -1 ? iTo : getLastPosition();
+
+        for (long clusterPosition = iAscendingOrder ? firstPos : lastPos; iAscendingOrder ? clusterPosition <= lastPos
+            : clusterPosition >= firstPos; clusterPosition += (iAscendingOrder ? 1 : -1)) {
+
+          OClusterPositionMapBucket.PositionEntry positionEntry = clusterPositionMap.get(clusterPosition);
+          if (positionEntry == null)
+            continue;
+
+          int recordPosition = positionEntry.getRecordPosition();
+          long pageIndex = positionEntry.getPageIndex();
+
+          if (getFilledUpTo(atomicOperation, fileId) <= pageIndex)
+            continue;
+
+          ORecordVersion recordVersion = null;
+          OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false);
+          try {
+            final OClusterPage localPage = new OClusterPage(cacheEntry, false, getChangesTree(atomicOperation, cacheEntry));
+            if (localPage.isDeleted(recordPosition))
+              continue;
+
+            recordVersion = localPage.getRecordVersion(recordPosition);
+          } finally {
+            releasePage(atomicOperation, cacheEntry);
+          }
+
+          byte[] fullContent = readFullEntry(clusterPosition, pageIndex, recordPosition, atomicOperation);
+          if (fullContent == null)
+            continue;
+
+          int fullContentPosition = 0;
+
+          byte recordType = fullContent[fullContentPosition];
+          fullContentPosition++;
+
+          int readContentSize = OIntegerSerializer.INSTANCE.deserializeNative(fullContent, fullContentPosition);
+          fullContentPosition += OIntegerSerializer.INT_SIZE;
+
+          byte[] recordContent = compression.uncompress(fullContent, fullContentPosition, readContentSize);
+          recordContent = encryption.decrypt(recordContent);
+
+          final ORecord rec = Orient.instance().getRecordFactoryManager().newInstance(recordType);
+          ORecordInternal.fill(rec, new ORecordId(id, clusterPosition), recordVersion, recordContent, false);
+
+          if (iCallback.call(rec).equals(Boolean.FALSE))
+            break;
+        }
+
+      } finally {
+        releaseSharedLock();
+      }
+    } finally {
+      atomicOperationsManager.releaseReadLock(this);
+    }
   }
 
   private void setRecordConflictStrategy(final String stringValue) {

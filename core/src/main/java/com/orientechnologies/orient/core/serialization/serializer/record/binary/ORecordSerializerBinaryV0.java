@@ -20,6 +20,16 @@
 
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
+import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.serialization.types.ODecimalSerializer;
@@ -55,16 +65,6 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.orientechnologies.orient.core.util.ODateHelper;
-
-import java.io.Serializable;
-import java.io.UnsupportedEncodingException;
-import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
 public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
@@ -106,7 +106,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         // CHECK BY FIELD NAME SIZE: THIS AVOID EVEN THE UNMARSHALLING OF FIELD NAME
         boolean match = false;
         for (int i = 0; i < iFields.length; ++i) {
-          if (iFields[i].length() == len) {
+          if (iFields[i] != null && iFields[i].length() == len) {
             boolean matchField = true;
             for (int j = 0; j < len; ++j) {
               if (bytes.bytes[bytes.offset + j] != fields[i][j]) {
