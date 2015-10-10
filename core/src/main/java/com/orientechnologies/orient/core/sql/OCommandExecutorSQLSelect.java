@@ -52,7 +52,6 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.iterator.OIdentifiableIterator;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
-import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClusters;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -102,6 +101,7 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -1604,149 +1604,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       }
     }
 
-    boolean res;
-
-    if (iTarget instanceof ORecordIteratorClusters && ((ORecordIteratorClusters) iTarget).getClusterIds().length > 1)
-      res = execParallelWithMultipleThreads((ORecordIteratorClusters) iTarget, (ODatabaseDocumentTx) db);
-    else
-      res = execParallelWithPool(iTarget, db);
+    final boolean res = execParallelWithPool((ORecordIteratorClusters) iTarget, (ODatabaseDocumentTx) db);
 
     if (OLogManager.instance().isDebugEnabled())
       OLogManager.instance().debug(this, "Parallel query '%s' completed", parserText);
 
     return res;
-  }
-
-  private boolean execParallelWithMultipleThreads(final ORecordIteratorClusters iTarget, final ODatabaseDocumentTx db) {
-    final int[] clusterIds = iTarget.getClusterIds();
-
-    final List<String> clusterList = new ArrayList<String>();
-    for (int i = 0; i < clusterIds.length; ++i) {
-      final OCluster cluster = db.getStorage().getClusterById(clusterIds[i]);
-      if (cluster.getEntries() > 0)
-        clusterList.add(cluster.getName());
-    }
-
-    // CREATE ONE THREAD PER CLUSTER
-    final int threadNumber = clusterList.size();
-
-    OLogManager.instance().debug(this, "Executing parallel query with strategy one thread per cluster. clusterIds=%d, threads=%d",
-        clusterIds.length, threadNumber);
-
-    final Thread[] threads = new Thread[threadNumber];
-    final boolean[] results = new boolean[threadNumber];
-    final OCommandContext[] contexts = new OCommandContext[threadNumber];
-
-    final RuntimeException[] exceptions = new RuntimeException[threadNumber];
-
-    parallelRunning = true;
-
-    final AtomicInteger runningThreads = new AtomicInteger(threadNumber);
-
-    for (int i = 0; i < threadNumber; ++i) {
-      final int current = i;
-
-      threads[i] = new Thread(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            ODatabaseDocumentTx localDatabase = null;
-            try {
-              exceptions[current] = null;
-              results[current] = true;
-
-              final OCommandContext threadContext = context.copy();
-              contexts[current] = threadContext;
-
-              localDatabase = db.copy();
-              localDatabase.activateOnCurrentThread();
-
-              // CREATE A SNAPSHOT TO AVOID DEADLOCKS
-              db.getMetadata().getSchema().makeSnapshot();
-
-              // scanClusterWithIterator(localDatabase, threadContext, clusterList.get(current), current, results);
-              storageScan(localDatabase, threadContext, clusterList.get(current), current, results);
-
-            } catch (RuntimeException t) {
-              exceptions[current] = t;
-            } finally {
-              runningThreads.decrementAndGet();
-              resultQueue.offer(PARALLEL_END_EXECUTION_THREAD);
-
-              if (localDatabase != null)
-                localDatabase.close();
-
-            }
-          } catch (Exception e) {
-            e.printStackTrace();
-          }
-        }
-      }, "OrientDB SELECT " + getDatabase().getName() + "-" + i);
-      threads[i].start();
-    }
-
-    while (runningThreads.get() > 0 || !resultQueue.isEmpty()) {
-      try {
-        final AsyncResult result = resultQueue.take();
-
-        if (OExecutionThreadLocal.isInterruptCurrentOperation())
-          throw new InterruptedException("Operation has been interrupted");
-
-        if (result != PARALLEL_END_EXECUTION_THREAD) {
-
-          if (!handleResult(result.record, result.context)) {
-            // STOP EXECUTORS
-            parallelRunning = false;
-            break;
-          }
-        }
-
-      } catch (InterruptedException e) {
-        Thread.interrupted();
-        break;
-      }
-    }
-
-    parallelRunning = false;
-
-    // JOIN ALL THE THREADS
-    for (int i = 0; i < threadNumber; ++i) {
-      try {
-        threads[i].join();
-        context.merge(contexts[i]);
-      } catch (InterruptedException e) {
-        break;
-      }
-    }
-
-    // CHECK FOR ANY EXCEPTION
-    for (int i = 0; i < threadNumber; ++i)
-      if (exceptions[i] != null)
-        throw exceptions[i];
-
-    for (int i = 0; i < threadNumber; ++i) {
-      if (!results[i])
-        return false;
-    }
-    return true;
-  }
-
-  protected void scanClusterWithIterator(final ODatabaseDocumentTx localDatabase, final OCommandContext iContext,
-      final int iClusterId, final int current, final boolean[] results) {
-    final ORecordIteratorCluster it = new ORecordIteratorCluster(localDatabase, localDatabase, iClusterId);
-
-    while (it.hasNext()) {
-      final ORecord next = it.next();
-
-      if (!executeSearchRecord(next, iContext)) {
-        results[current] = false;
-        break;
-      }
-
-      if (parallel && !parallelRunning)
-        // EXECUTION ENDED
-        break;
-    }
   }
 
   protected void storageScan(final ODatabaseDocumentTx localDatabase, final OCommandContext iContext, final String iClusterName,
@@ -1780,11 +1643,128 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     }
   }
 
+  private boolean execParallelWithPool(final ORecordIteratorClusters iTarget, final ODatabaseDocumentTx db) {
+    final int[] clusterIds = iTarget.getClusterIds();
+
+    final List<String> clusterList = new ArrayList<String>();
+    for (int i = 0; i < clusterIds.length; ++i) {
+      final OCluster cluster = db.getStorage().getClusterById(clusterIds[i]);
+      if (cluster.getEntries() > 0)
+        clusterList.add(cluster.getName());
+    }
+
+    // CREATE ONE THREAD PER CLUSTER
+    final int jobNumbers = clusterList.size();
+    final List<Future<?>> jobs = new ArrayList<Future<?>>();
+
+    OLogManager.instance().debug(this, "Executing parallel query with strategy executors. clusterIds=%d, jobs=%d",
+        clusterIds.length, jobNumbers);
+
+    final boolean[] results = new boolean[jobNumbers];
+    final OCommandContext[] contexts = new OCommandContext[jobNumbers];
+
+    final RuntimeException[] exceptions = new RuntimeException[jobNumbers];
+
+    parallelRunning = true;
+
+    final AtomicInteger runningJobs = new AtomicInteger(jobNumbers);
+
+    for (int i = 0; i < jobNumbers; ++i) {
+      final int current = i;
+
+      final Runnable job = new Runnable() {
+        @Override
+        public void run() {
+          try {
+            ODatabaseDocumentTx localDatabase = null;
+            try {
+              exceptions[current] = null;
+              results[current] = true;
+
+              final OCommandContext threadContext = context.copy();
+              contexts[current] = threadContext;
+
+              localDatabase = db.copy();
+              localDatabase.activateOnCurrentThread();
+
+              // CREATE A SNAPSHOT TO AVOID DEADLOCKS
+              db.getMetadata().getSchema().makeSnapshot();
+
+              // scanClusterWithIterator(localDatabase, threadContext, clusterList.get(current), current, results);
+              storageScan(localDatabase, threadContext, clusterList.get(current), current, results);
+
+            } catch (RuntimeException t) {
+              exceptions[current] = t;
+            } finally {
+              runningJobs.decrementAndGet();
+              resultQueue.offer(PARALLEL_END_EXECUTION_THREAD);
+
+              if (localDatabase != null)
+                localDatabase.close();
+
+            }
+          } catch (Exception e) {
+            e.printStackTrace();
+          }
+        }
+      };
+
+      jobs.add(Orient.instance().submit(job));
+    }
+
+    while (runningJobs.get() > 0 || !resultQueue.isEmpty()) {
+      try {
+        final AsyncResult result = resultQueue.take();
+
+        if (OExecutionThreadLocal.isInterruptCurrentOperation())
+          throw new InterruptedException("Operation has been interrupted");
+
+        if (result != PARALLEL_END_EXECUTION_THREAD) {
+
+          if (!handleResult(result.record, result.context)) {
+            // STOP EXECUTORS
+            parallelRunning = false;
+            break;
+          }
+        }
+
+      } catch (InterruptedException e) {
+        Thread.interrupted();
+        break;
+      }
+    }
+
+    parallelRunning = false;
+
+    // JOIN ALL THE THREADS
+    for (int i = 0; i < jobs.size(); ++i) {
+      try {
+        jobs.get(i).get();
+        context.merge(contexts[i]);
+      } catch (InterruptedException e) {
+        break;
+      } catch (ExecutionException e) {
+        e.printStackTrace();
+      }
+    }
+
+    // CHECK FOR ANY EXCEPTION
+    for (int i = 0; i < jobNumbers; ++i)
+      if (exceptions[i] != null)
+        throw exceptions[i];
+
+    for (int i = 0; i < jobNumbers; ++i) {
+      if (!results[i])
+        return false;
+    }
+    return true;
+  }
+
   /**
    * Deprecate this method because it's inefficient in comparison to one thread per cluster.
    */
   @Deprecated
-  private boolean execParallelWithPool(Iterator<? extends OIdentifiable> iTarget, final ODatabaseDocumentInternal db) {
+  private boolean execParallelWithPool2(Iterator<? extends OIdentifiable> iTarget, final ODatabaseDocumentInternal db) {
     final int cores = Runtime.getRuntime().availableProcessors();
 
     OLogManager.instance().debug(this, "Executing parallel query with strategy thread pool=%d", cores);
