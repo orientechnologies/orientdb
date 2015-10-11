@@ -19,6 +19,16 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.io.IOException;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.collection.OSortedMultiIterator;
@@ -95,16 +105,6 @@ import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
-
-import java.io.IOException;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Executes the SQL SELECT statement. the parse() method compiles the query and builds the meta information needed by the execute().
@@ -1712,9 +1712,23 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       jobs.add(Orient.instance().submit(job));
     }
 
+    boolean tipProvided = false;
     while (runningJobs.get() > 0 || !resultQueue.isEmpty()) {
       try {
         final AsyncResult result = resultQueue.take();
+
+        final int qSize = resultQueue.size();
+
+        if (!tipProvided && qSize >= OGlobalConfiguration.QUERY_PARALLEL_RESULT_QUEUE_SIZE.getValueAsInteger() - 1) {
+          OLogManager
+              .instance()
+              .debug(
+                  this,
+                  "Parallel query '%s' has result queue full (size=%d), this could reduce concurrency level. Consider increasing queue size with setting: %s=<size>",
+                  parserText, OGlobalConfiguration.QUERY_PARALLEL_RESULT_QUEUE_SIZE.getValueAsInteger(),
+                  OGlobalConfiguration.QUERY_PARALLEL_RESULT_QUEUE_SIZE.getKey());
+          tipProvided = true;
+        }
 
         if (OExecutionThreadLocal.isInterruptCurrentOperation())
           throw new InterruptedException("Operation has been interrupted");

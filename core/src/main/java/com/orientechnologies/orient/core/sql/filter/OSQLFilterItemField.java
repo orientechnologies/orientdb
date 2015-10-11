@@ -109,11 +109,11 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
     }
 
     // UNMARSHALL THE SINGLE FIELD
-    if (doc.deserializeFields(preLoadedFieldsArray)) {
-      final Object v = doc.rawField(name);
-      return transformValue(iRecord, iContext, v);
-    }
-    return null;
+    if (preLoadedFieldsArray != null && !doc.deserializeFields(preLoadedFieldsArray))
+      return null;
+
+    final Object v = doc.rawField(name);
+    return transformValue(iRecord, iContext, v);
   }
 
   public OBinaryField getBinaryField(final OIdentifiable iRecord) {
