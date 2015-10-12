@@ -92,6 +92,7 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProt
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryServer;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.OServerInfo;
 import com.orientechnologies.orient.server.ShutdownHelper;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
@@ -332,6 +333,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
       case OChannelBinaryProtocol.REQUEST_DB_LIST:
         listDatabases();
+        break;
+
+      case OChannelBinaryProtocol.REQUEST_SERVER_INFO:
+        serverInfo();
         break;
 
       case OChannelBinaryProtocol.REQUEST_DB_OPEN:
@@ -2455,6 +2460,20 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       sendOk(clientTxId);
       byte[] stream = getRecordBytes(result);
       channel.writeBytes(stream);
+    } finally {
+      endResponse();
+    }
+  }
+
+  private void serverInfo() throws IOException {
+    checkServerAccess("server.info");
+
+    setDataCommandInfo("Server Info");
+
+    beginResponse();
+    try {
+      sendOk(clientTxId);
+      channel.writeString(OServerInfo.getServerInfo(server));
     } finally {
       endResponse();
     }
