@@ -19,12 +19,6 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -42,6 +36,12 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 /**
  * IN operator.
@@ -188,14 +188,14 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
       if (iLeft instanceof OSQLFilterItem)
         iLeft = ((OSQLFilterItem) iLeft).getValue(null, null, null);
 
-      ridCollection = OMultiValue.getMultiValueIterable(iLeft);
+      ridCollection = OMultiValue.getMultiValueIterable(iLeft, false);
       ridSize = OMultiValue.getSize(iLeft);
     } else if (iLeft instanceof OSQLFilterItemField
         && ODocumentHelper.ATTRIBUTE_RID.equals(((OSQLFilterItemField) iLeft).getRoot())) {
       if (iRight instanceof OSQLFilterItem)
         iRight = ((OSQLFilterItem) iRight).getValue(null, null, null);
 
-      ridCollection = OMultiValue.getMultiValueIterable(iRight);
+      ridCollection = OMultiValue.getMultiValueIterable(iRight, false);
       ridSize = OMultiValue.getSize(iRight);
     } else
       return null;
@@ -215,7 +215,7 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
         final Collection<Object> collectionToMatch = (Collection<Object>) iRight;
 
         boolean found = false;
-        for (final Object o1 : OMultiValue.getMultiValueIterable(iLeft)) {
+        for (final Object o1 : OMultiValue.getMultiValueIterable(iLeft, false)) {
           for (final Object o2 : collectionToMatch) {
             if (OQueryOperatorEquals.equals(o1, o2)) {
               found = true;
@@ -229,7 +229,7 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
         if (iLeft instanceof Set<?>)
           return ((Set) iLeft).contains(iRight);
 
-        for (final Object o : OMultiValue.getMultiValueIterable(iLeft)) {
+        for (final Object o : OMultiValue.getMultiValueIterable(iLeft, false)) {
           if (OQueryOperatorEquals.equals(iRight, o))
             return true;
         }
@@ -239,7 +239,7 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
       if (iRight instanceof Set<?>)
         return ((Set) iRight).contains(iLeft);
 
-      for (final Object o : OMultiValue.getMultiValueIterable(iRight)) {
+      for (final Object o : OMultiValue.getMultiValueIterable(iRight, false)) {
         if (OQueryOperatorEquals.equals(iLeft, o))
           return true;
       }

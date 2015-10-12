@@ -389,7 +389,7 @@ public class OSQLFilterCondition {
     }
 
     if (OMultiValue.isMultiValue(iValue)) {
-      final Iterable<?> multiValue = OMultiValue.getMultiValueIterable(iValue);
+      final Iterable<?> multiValue = OMultiValue.getMultiValueIterable(iValue, false);
 
       // MULTI VALUE: RETURN A COPY
       final ArrayList<Object> result = new ArrayList<Object>(OMultiValue.getSize(iValue));

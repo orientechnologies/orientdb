@@ -247,7 +247,7 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
               if (arraySize == 1)
                 partialIterator = new OIterableObject<T>((T) Array.get(next, 0));
               else
-                partialIterator = (Iterator<T>) OMultiValue.getMultiValueIterator(next);
+                partialIterator = (Iterator<T>) OMultiValue.getMultiValueIterator(next, false);
               return true;
             }
           } else {

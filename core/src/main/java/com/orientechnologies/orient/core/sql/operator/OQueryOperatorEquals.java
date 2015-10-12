@@ -94,7 +94,7 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
         Object fieldValue = ((ODocument) iRecord).field(firstFieldName[0]);
         if (fieldValue != null) {
           if (iConsiderIn && OMultiValue.isMultiValue(fieldValue)) {
-            for (Object o : OMultiValue.getMultiValueIterable(fieldValue)) {
+            for (Object o : OMultiValue.getMultiValueIterable(fieldValue, false)) {
               if (o != null && o.equals(iValue))
                 return true;
             }

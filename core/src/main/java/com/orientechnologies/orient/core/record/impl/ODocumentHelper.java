@@ -133,7 +133,7 @@ public class ODocumentHelper {
           return (RET) newValue;
         } else if (OMultiValue.isMultiValue(iValue)) {
           // GENERIC MULTI VALUE
-          for (Object s : OMultiValue.getMultiValueIterable(iValue)) {
+          for (Object s : OMultiValue.getMultiValueIterable(iValue, false)) {
             ((Collection<Object>) newValue).add(s);
           }
           return (RET) newValue;
@@ -261,7 +261,7 @@ public class ODocumentHelper {
             value = getMapEntry((Map<String, ?>) value, fieldName);
           else if (OMultiValue.isMultiValue(value)) {
             final HashSet<Object> temp = new HashSet<Object>();
-            for (Object o : OMultiValue.getMultiValueIterable(value)) {
+            for (Object o : OMultiValue.getMultiValueIterable(value, false)) {
               if (o instanceof OIdentifiable) {
                 Object r = getFieldValue(o, iFieldName);
                 if (r != null)
@@ -519,7 +519,7 @@ public class ODocumentHelper {
             value = getMapEntry((Map<String, ?>) value, fieldName);
           else if (OMultiValue.isMultiValue(value)) {
             final Set<Object> values = new HashSet<Object>();
-            for (Object v : OMultiValue.getMultiValueIterable(value)) {
+            for (Object v : OMultiValue.getMultiValueIterable(value, false)) {
               final Object item;
 
               if (v instanceof OIdentifiable)
@@ -1405,7 +1405,7 @@ public class ODocumentHelper {
           deleteCrossRefs(iRid, (ODocument) fieldValue);
         } else if (OMultiValue.isMultiValue(fieldValue)) {
           // MULTI-VALUE (COLLECTION, ARRAY OR MAP), CHECK THE CONTENT
-          for (final Iterator<?> it = OMultiValue.getMultiValueIterator(fieldValue); it.hasNext();) {
+          for (final Iterator<?> it = OMultiValue.getMultiValueIterator(fieldValue, false); it.hasNext();) {
             final Object item = it.next();
 
             if (fieldValue.equals(iRid)) {

@@ -354,7 +354,7 @@ public class OSQLHelper {
             final List<Object> tempColl = new ArrayList<Object>(OMultiValue.getSize(fieldValue));
 
             String singleFieldName = null;
-            for (Object o : OMultiValue.getMultiValueIterable(fieldValue)) {
+            for (Object o : OMultiValue.getMultiValueIterable(fieldValue, false)) {
               if (o instanceof OIdentifiable && !((OIdentifiable) o).getIdentity().isPersistent()) {
                 // TEMPORARY / EMBEDDED
                 final ORecord rec = ((OIdentifiable) o).getRecord();

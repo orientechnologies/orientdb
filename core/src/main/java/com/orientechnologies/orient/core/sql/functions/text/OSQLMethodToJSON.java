@@ -67,7 +67,7 @@ public class OSQLMethodToJSON extends OAbstractSQLMethod {
     } else if (OMultiValue.isMultiValue(iThis)) {
 
       final List<String> result = new ArrayList<String>();
-      for (Object o : OMultiValue.getMultiValueIterable(iThis)) {
+      for (Object o : OMultiValue.getMultiValueIterable(iThis, false)) {
         if (o != null && o instanceof OIdentifiable) {
           final ORecord record = ((OIdentifiable) o).getRecord();
           result.add(iParams.length == 1 ? record.toJSON(format) : record.toJSON());

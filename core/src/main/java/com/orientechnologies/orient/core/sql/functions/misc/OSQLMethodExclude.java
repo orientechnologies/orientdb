@@ -83,7 +83,7 @@ public class OSQLMethodExclude extends OAbstractSQLMethod {
       } else if (OMultiValue.isMultiValue(iThis)) {
         // ACT ON MULTIPLE DOCUMENTS
         final List<Object> result = new ArrayList<Object>(OMultiValue.getSize(iThis));
-        for (Object o : OMultiValue.getMultiValueIterable(iThis)) {
+        for (Object o : OMultiValue.getMultiValueIterable(iThis, false)) {
           if (o instanceof OIdentifiable) {
             result.add(copy((ODocument) ((OIdentifiable) o).getRecord(), iParams));
           }

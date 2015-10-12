@@ -21,7 +21,6 @@ package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OCollections;
@@ -45,7 +44,15 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorFactory;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 import static com.orientechnologies.common.util.OClassLoaderHelper.lookupProviderWithOrientClassLoader;
 
@@ -264,12 +271,12 @@ public class OSQLEngine {
 
     if (OMultiValue.isMultiValue(iCurrent) || iCurrent instanceof Iterator) {
       final OMultiCollectionIterator<Object> result = new OMultiCollectionIterator<Object>();
-      for (Object o : OMultiValue.getMultiValueIterable(iCurrent)) {
+      for (Object o : OMultiValue.getMultiValueIterable(iCurrent, false)) {
         if (iContext != null && !iContext.checkTimeout())
           return null;
 
         if (OMultiValue.isMultiValue(o) || o instanceof Iterator) {
-          for (Object inner : OMultiValue.getMultiValueIterable(o)) {
+          for (Object inner : OMultiValue.getMultiValueIterable(o, false)) {
             result.add(iCallable.call((OIdentifiable) inner));
           }
         } else

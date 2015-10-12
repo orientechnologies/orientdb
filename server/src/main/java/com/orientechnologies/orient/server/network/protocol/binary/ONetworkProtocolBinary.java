@@ -1507,7 +1507,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       final byte collectionType = result instanceof Set ? (byte) 's' : (byte) 'l';
       channel.writeByte(collectionType);
       channel.writeInt(OMultiValue.getSize(result));
-      for (Object o : OMultiValue.getMultiValueIterable(result)) {
+      for (Object o : OMultiValue.getMultiValueIterable(result, false)) {
         try {
           if (load && o instanceof ORecordId)
             o = ((ORecordId) o).getRecord();

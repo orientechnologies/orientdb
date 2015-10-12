@@ -28,7 +28,6 @@ import com.orientechnologies.orient.core.annotation.OAfterSerialization;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -45,7 +44,6 @@ import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.entity.OEntityManagerInternal;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -56,7 +54,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
-import com.orientechnologies.orient.core.serialization.serializer.ONetworkThreadLocalSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.object.OObjectSerializerHelperManager;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringBuilderSerializable;
@@ -364,7 +361,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
           coll = new ORecordLazyList(iRecord);
 
           if (iValue.getClass().isArray()) {
-            Iterable<Object> iterab = OMultiValue.getMultiValueIterable(iValue);
+            Iterable<Object> iterab = OMultiValue.getMultiValueIterable(iValue, false);
             for (Object i : iterab) {
               coll.add((OIdentifiable) i);
             }
@@ -715,7 +712,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       final Map<ODocument, Boolean> iMarshalledRecords, final boolean iSaveOnlyDirty, final boolean iSet) {
     iOutput.append(iSet ? OStringSerializerHelper.SET_BEGIN : OStringSerializerHelper.LIST_BEGIN);
 
-    final Iterator<Object> iterator = OMultiValue.getMultiValueIterator(iValue);
+    final Iterator<Object> iterator = OMultiValue.getMultiValueIterator(iValue, false);
 
     OType linkedType = iLinkedType;
 
