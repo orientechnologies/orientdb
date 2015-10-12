@@ -19,12 +19,6 @@
  */
 package com.orientechnologies.orient.client.remote;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -32,13 +26,16 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.index.OIndexManager;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Remote administration class of OrientDB Server instances.
@@ -148,6 +145,33 @@ public class OServerAdmin {
       throw OException.wrapException(new OStorageException("Cannot retrieve the configuration list"), e);
     }
     return (Map<String, String>) result.field("databases");
+  }
+
+  /**
+   * Returns the server information in form of document.
+   *
+   * @throws IOException
+   */
+  @SuppressWarnings("unchecked")
+  public synchronized ODocument getServerInfo() throws IOException {
+
+    final ODocument result = new ODocument();
+    try {
+      final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_SERVER_INFO);
+      storage.endRequest(network);
+
+      try {
+        storage.beginResponse(network);
+        result.fromJSON(network.readString());
+      } finally {
+        storage.endResponse(network);
+      }
+
+    } catch (Exception e) {
+      storage.close(true, false);
+      throw OException.wrapException(new OStorageException("Cannot retrieve server information"), e);
+    }
+    return result;
   }
 
   public int getSessionId() {

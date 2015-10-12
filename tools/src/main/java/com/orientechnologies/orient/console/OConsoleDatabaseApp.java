@@ -362,6 +362,37 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     out.println();
   }
 
+  @ConsoleCommand(description = "List all the active connections to the server", onlineHelp = "Console-Command-List-Connections")
+  public void listConnections() throws IOException {
+    if (serverAdmin != null) {
+      final ODocument serverInfo = serverAdmin.getServerInfo();
+
+      final List<OIdentifiable> resultSet = new ArrayList<OIdentifiable>();
+
+      final Collection<Map<String, Object>> connections = serverInfo.field("connections");
+      for (Map<String, Object> conn : connections) {
+        final ODocument row = new ODocument();
+
+        String commandDetail = (String) conn.get("commandInfo");
+
+        if (commandDetail != null && ((String) conn.get("commandDetail")).length() > 1)
+          commandDetail += " (" + conn.get("commandDetail") + ")";
+
+        row.fields("ID", conn.get("connectionId"), "REMOTE_ADDRESS", conn.get("remoteAddress"), "CONNECTED_ON",
+            conn.get("connectedOn"), "DATABASE", conn.get("db"), "USER", conn.get("user"), "COMMAND", commandDetail, "TOT_REQS",
+            conn.get("totalRequests"));
+        resultSet.add(row);
+      }
+
+      final OTableFormatter formatter = new OTableFormatter(this);
+      formatter.writeRecords(resultSet, -1);
+
+    } else {
+      message("\nNot connected to the Server instance. You've to connect to the Server using server's credentials (look at orientdb-*server-config.xml file)");
+    }
+    out.println();
+  }
+
   @ConsoleCommand(description = "Reload the database schema")
   public void reloadSchema() throws IOException {
     message("\nreloading database schema...");
