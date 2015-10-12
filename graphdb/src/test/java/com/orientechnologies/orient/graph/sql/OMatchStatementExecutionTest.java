@@ -270,12 +270,36 @@ public class OMatchStatementExecutionTest {
   }
 
   @Test
+  public void testCommonFriendsArrows() throws Exception {
+
+    List<ODocument> qResult = db
+        .command(
+            new OCommandSQL(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend-{as:friend}-Friend-{class: Person, where:(name = 'n4')} return $matches)"))
+        .execute();
+    assertEquals(1, qResult.size());
+    assertEquals("n2", qResult.get(0).field("name"));
+  }
+
+  @Test
   public void testCommonFriends2() throws Exception {
 
     List<ODocument> qResult = db
         .command(
             new OCommandSQL(
                 "match {class:Person, where:(name = 'n1')}.both('Friend'){as:friend}.both('Friend'){class: Person, where:(name = 'n4')} return friend.name as name"))
+        .execute();
+    assertEquals(1, qResult.size());
+    assertEquals("n2", qResult.get(0).field("name"));
+  }
+
+  @Test
+  public void testCommonFriends2Arrows() throws Exception {
+
+    List<ODocument> qResult = db
+        .command(
+            new OCommandSQL(
+                "match {class:Person, where:(name = 'n1')}-Friend-{as:friend}-Friend-{class: Person, where:(name = 'n4')} return friend.name as name"))
         .execute();
     assertEquals(1, qResult.size());
     assertEquals("n2", qResult.get(0).field("name"));
@@ -293,11 +317,32 @@ public class OMatchStatementExecutionTest {
   }
 
   @Test
+  public void testReturnMethodArrows() throws Exception {
+    List<ODocument> qResult = db
+        .command(
+            new OCommandSQL(
+                "match {class:Person, where:(name = 'n1')}-Friend-{as:friend}-Friend-{class: Person, where:(name = 'n4')} return friend.name.toUppercase() as name"))
+        .execute();
+    assertEquals(1, qResult.size());
+    assertEquals("N2", qResult.get(0).field("name"));
+  }
+
+  @Test
   public void testReturnExpression() throws Exception {
     List<ODocument> qResult = db
         .command(
             new OCommandSQL(
                 "match {class:Person, where:(name = 'n1')}.both('Friend'){as:friend}.both('Friend'){class: Person, where:(name = 'n4')} return friend.name + ' ' +friend.name as name"))
+        .execute();
+    assertEquals(1, qResult.size());
+    assertEquals("n2 n2", qResult.get(0).field("name"));
+  }
+  @Test
+  public void testReturnExpressionArrows() throws Exception {
+    List<ODocument> qResult = db
+        .command(
+            new OCommandSQL(
+                "match {class:Person, where:(name = 'n1')}-Friend-{as:friend}-Friend-{class: Person, where:(name = 'n4')} return friend.name + ' ' +friend.name as name"))
         .execute();
     assertEquals(1, qResult.size());
     assertEquals("n2 n2", qResult.get(0).field("name"));
@@ -315,12 +360,35 @@ public class OMatchStatementExecutionTest {
   }
 
   @Test
+  public void testReturnDefaultAliasArrows() throws Exception {
+    List<ODocument> qResult = db
+        .command(
+            new OCommandSQL(
+                "match {class:Person, where:(name = 'n1')}-Friend-{as:friend}-Friend-{class: Person, where:(name = 'n4')} return friend.name"))
+        .execute();
+    assertEquals(1, qResult.size());
+    assertEquals("n2", qResult.get(0).field("friend_name"));
+  }
+
+  @Test
   public void testFriendsOfFriends() throws Exception {
 
     List<ODocument> qResult = db
         .command(
             new OCommandSQL(
                 "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend').out('Friend'){as:friend} return $matches)"))
+        .execute();
+    assertEquals(1, qResult.size());
+    assertEquals("n4", qResult.get(0).field("name"));
+  }
+
+  @Test
+  public void testFriendsOfFriendsArrows() throws Exception {
+
+    List<ODocument> qResult = db
+        .command(
+            new OCommandSQL(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend->{}-Friend->{as:friend} return $matches)"))
         .execute();
     assertEquals(1, qResult.size());
     assertEquals("n4", qResult.get(0).field("name"));
@@ -341,12 +409,38 @@ public class OMatchStatementExecutionTest {
   }
 
   @Test
+  public void testFriendsOfFriends2Arrows() throws Exception {
+
+    List<ODocument> qResult = db
+        .command(
+            new OCommandSQL(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1'), as: me}-Friend-{}-Friend-{as:friend, where: ($matched.me != $currentMatch)} return $matches)"))
+        .execute();
+
+    for (ODocument doc : qResult) {
+      assertNotEquals(doc.field("name"), "n1");
+    }
+  }
+
+  @Test
   public void testFriendsWithName() throws Exception {
 
     List<ODocument> qResult = db
         .command(
             new OCommandSQL(
                 "select friend.name as name from (match {class:Person, where:(name = 'n1' and 1 + 1 = 2)}.out('Friend'){as:friend, where:(name = 'n2' and 1 + 1 = 2)} return friend)"))
+        .execute();
+    assertEquals(1, qResult.size());
+    assertEquals("n2", qResult.get(0).field("name"));
+  }
+
+  @Test
+  public void testFriendsWithNameArrows() throws Exception {
+
+    List<ODocument> qResult = db
+        .command(
+            new OCommandSQL(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1' and 1 + 1 = 2)}-Friend->{as:friend, where:(name = 'n2' and 1 + 1 = 2)} return friend)"))
         .execute();
     assertEquals(1, qResult.size());
     assertEquals("n2", qResult.get(0).field("name"));
@@ -385,6 +479,40 @@ public class OMatchStatementExecutionTest {
 
   }
 
+
+  @Test
+  public void testWhileArrows() throws Exception {
+
+    List<ODocument> qResult = db
+        .command(
+            new OCommandSQL(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend->{as:friend, while: ($depth < 1)} return friend)"))
+        .execute();
+    assertEquals(3, qResult.size());
+
+    qResult = db
+        .command(
+            new OCommandSQL(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend->{as:friend, while: ($depth < 2), where: ($depth=1) } return friend)"))
+        .execute();
+    assertEquals(2, qResult.size());
+
+    qResult = db
+        .command(
+            new OCommandSQL(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend->{as:friend, while: ($depth < 4), where: ($depth=1) } return friend)"))
+        .execute();
+    assertEquals(2, qResult.size());
+
+    qResult = db
+        .command(
+            new OCommandSQL(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend->{as:friend, while: (true) } return friend)"))
+        .execute();
+    assertEquals(6, qResult.size());
+
+  }
+
   @Test
   public void testMaxDepth() throws Exception {
     List<ODocument> qResult = db
@@ -418,6 +546,38 @@ public class OMatchStatementExecutionTest {
   }
 
   @Test
+  public void testMaxDepthArrow() throws Exception {
+    List<ODocument> qResult = db
+        .command(
+            new OCommandSQL(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend->{as:friend, maxDepth: 1, where: ($depth=1) } return friend)"))
+        .execute();
+    assertEquals(2, qResult.size());
+
+    qResult = db
+        .command(
+            new OCommandSQL(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend->{as:friend, maxDepth: 1 } return friend)"))
+        .execute();
+    assertEquals(3, qResult.size());
+
+    qResult = db
+        .command(
+            new OCommandSQL(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend->{as:friend, maxDepth: 0 } return friend)"))
+        .execute();
+    assertEquals(1, qResult.size());
+
+    qResult = db
+        .command(
+            new OCommandSQL(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend->{as:friend, maxDepth: 1, where: ($depth > 0) } return friend)"))
+        .execute();
+    assertEquals(2, qResult.size());
+
+  }
+
+  @Test
   public void testManager() {
     // the manager of a person is the manager of the department that person belongs to.
     // if that department does not have a direct manager, climb up the hierarchy until you find one
@@ -425,7 +585,13 @@ public class OMatchStatementExecutionTest {
     assertEquals("c", getManager("p12").field("name"));
     assertEquals("b", getManager("p6").field("name"));
     assertEquals("b", getManager("p11").field("name"));
+
+    assertEquals("c", getManagerArrows("p10").field("name"));
+    assertEquals("c", getManagerArrows("p12").field("name"));
+    assertEquals("b", getManagerArrows("p6").field("name"));
+    assertEquals("b", getManagerArrows("p11").field("name"));
   }
+
 
   private ODocument getManager(String personName) {
     StringBuilder query = new StringBuilder();
@@ -445,6 +611,22 @@ public class OMatchStatementExecutionTest {
     return qResult.get(0).getRecord();
   }
 
+  private ODocument getManagerArrows(String personName) {
+    StringBuilder query = new StringBuilder();
+    query.append("select expand(manager) from (");
+    query.append("  match {class:Employee, where: (name = '" + personName + "')}");
+    query.append("  -WorksAt->{}-ParentDepartment->{");
+    query.append("      while: (in('ManagerOf').size() == 0),");
+    query.append("      where: (in('ManagerOf').size() > 0)");
+    query.append("  }<-ManagerOf-{as: manager}");
+    query.append("  return manager");
+    query.append(")");
+
+    List<OIdentifiable> qResult = db.command(new OCommandSQL(query.toString())).execute();
+    assertEquals(1, qResult.size());
+    return qResult.get(0).getRecord();
+  }
+
   @Test
   public void testManager2() {
     // the manager of a person is the manager of the department that person belongs to.
@@ -453,6 +635,11 @@ public class OMatchStatementExecutionTest {
     assertEquals("c", getManager2("p12").field("name"));
     assertEquals("b", getManager2("p6").field("name"));
     assertEquals("b", getManager2("p11").field("name"));
+
+    assertEquals("c", getManager2Arrows("p10").field("name"));
+    assertEquals("c", getManager2Arrows("p12").field("name"));
+    assertEquals("b", getManager2Arrows("p6").field("name"));
+    assertEquals("b", getManager2Arrows("p11").field("name"));
   }
 
   private ODocument getManager2(String personName) {
@@ -466,6 +653,23 @@ public class OMatchStatementExecutionTest {
     query.append("     }");
     query.append("   )");
     query.append("  .in('ManagerOf'){as: manager}");
+    query.append("  return manager");
+    query.append(")");
+
+    List<OIdentifiable> qResult = db.command(new OCommandSQL(query.toString())).execute();
+    assertEquals(1, qResult.size());
+    return qResult.get(0).getRecord();
+  }
+
+  private ODocument getManager2Arrows(String personName) {
+    StringBuilder query = new StringBuilder();
+    query.append("select expand(manager) from (");
+    query.append("  match {class:Employee, where: (name = '" + personName + "')}");
+    query.append("   .( -WorksAt->{}-ParentDepartment->{");
+    query.append("       while: (in('ManagerOf').size() == 0),");
+    query.append("       where: (in('ManagerOf').size() > 0)");
+    query.append("     }");
+    query.append("   )<-ManagerOf-{as: manager}");
     query.append("  return manager");
     query.append(")");
 
@@ -514,6 +718,45 @@ public class OMatchStatementExecutionTest {
     return db.command(new OCommandSQL(query.toString())).execute();
   }
 
+
+  @Test
+  public void testManagedArrows() {
+    // people managed by a manager are people who belong to his department or people who belong to sub-departments without a manager
+    List<OIdentifiable> managedByA = getManagedByArrows("a");
+    assertEquals(1, managedByA.size());
+    assertEquals("p1", ((ODocument) managedByA.get(0).getRecord()).field("name"));
+
+    List<OIdentifiable> managedByB = getManagedByArrows("b");
+    assertEquals(5, managedByB.size());
+    Set<String> expectedNames = new HashSet<String>();
+    expectedNames.add("p2");
+    expectedNames.add("p3");
+    expectedNames.add("p6");
+    expectedNames.add("p7");
+    expectedNames.add("p11");
+    Set<String> names = new HashSet<String>();
+    for (OIdentifiable id : managedByB) {
+      ODocument doc = id.getRecord();
+      String name = doc.field("name");
+      names.add(name);
+    }
+    assertEquals(expectedNames, names);
+  }
+
+  private List<OIdentifiable> getManagedByArrows(String managerName) {
+    StringBuilder query = new StringBuilder();
+    query.append("select expand(managed) from (");
+    query.append("  match {class:Employee, where: (name = '" + managerName + "')}");
+    query.append("  -ManagerOf->{}<-ParentDepartment-{");
+    query.append("      while: ($depth = 0 or in('ManagerOf').size() = 0),");
+    query.append("      where: ($depth = 0 or in('ManagerOf').size() = 0)");
+    query.append("  }<-WorksAt-{as: managed}");
+    query.append("  return managed");
+    query.append(")");
+
+    return db.command(new OCommandSQL(query.toString())).execute();
+  }
+
   @Test
   public void testManaged2() {
     // people managed by a manager are people who belong to his department or people who belong to sub-departments without a manager
@@ -554,6 +797,46 @@ public class OMatchStatementExecutionTest {
     return db.command(new OCommandSQL(query.toString())).execute();
   }
 
+
+  @Test
+  public void testManaged2Arrows() {
+    // people managed by a manager are people who belong to his department or people who belong to sub-departments without a manager
+    List<OIdentifiable> managedByA = getManagedBy2Arrows("a");
+    assertEquals(1, managedByA.size());
+    assertEquals("p1", ((ODocument) managedByA.get(0).getRecord()).field("name"));
+
+    List<OIdentifiable> managedByB = getManagedBy2Arrows("b");
+    assertEquals(5, managedByB.size());
+    Set<String> expectedNames = new HashSet<String>();
+    expectedNames.add("p2");
+    expectedNames.add("p3");
+    expectedNames.add("p6");
+    expectedNames.add("p7");
+    expectedNames.add("p11");
+    Set<String> names = new HashSet<String>();
+    for (OIdentifiable id : managedByB) {
+      ODocument doc = id.getRecord();
+      String name = doc.field("name");
+      names.add(name);
+    }
+    assertEquals(expectedNames, names);
+  }
+
+  private List<OIdentifiable> getManagedBy2Arrows(String managerName) {
+    StringBuilder query = new StringBuilder();
+    query.append("select expand(managed) from (");
+    query.append("  match {class:Employee, where: (name = '" + managerName + "')}");
+    query.append("  -ManagerOf->{}");
+    query.append("  .(inE('ParentDepartment').outV()){");
+    query.append("      while: ($depth = 0 or in('ManagerOf').size() = 0),");
+    query.append("      where: ($depth = 0 or in('ManagerOf').size() = 0)");
+    query.append("  }<-WorksAt-{as: managed}");
+    query.append("  return managed");
+    query.append(")");
+
+    return db.command(new OCommandSQL(query.toString())).execute();
+  }
+
   @Test
   public void testTriangle1() {
     StringBuilder query = new StringBuilder();
@@ -563,6 +846,19 @@ public class OMatchStatementExecutionTest {
     query.append("  .out('TriangleE'){as: friend3},");
     query.append("{class:TriangleV, as: friend1}");
     query.append("  .out('TriangleE'){as: friend3}");
+    query.append("return $matches");
+
+    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
+    assertEquals(1, result.size());
+
+  }
+
+  @Test
+  public void testTriangle1Arrows() {
+    StringBuilder query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:TriangleV, as: friend1, where: (uid = 0)} -TriangleE-> {as: friend2} -TriangleE-> {as: friend3},");
+    query.append("{class:TriangleV, as: friend1} -TriangleE-> {as: friend3}");
     query.append("return $matches");
 
     List<?> result = db.command(new OCommandSQL(query.toString())).execute();
@@ -592,15 +888,38 @@ public class OMatchStatementExecutionTest {
     assertEquals(2, friend3.field("uid"));
   }
 
+
+  @Test
+  public void testTriangle2Arrows() {
+    StringBuilder query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:TriangleV, as: friend1}");
+    query.append("  -TriangleE->{class:TriangleV, as: friend2, where: (uid = 1)}");
+    query.append("  -TriangleE->{as: friend3},");
+    query.append("{class:TriangleV, as: friend1}");
+    query.append("  -TriangleE->{as: friend3}");
+    query.append("return $matches");
+
+    List<ODocument> result = db.command(new OCommandSQL(query.toString())).execute();
+    assertEquals(1, result.size());
+    ODocument doc = result.get(0);
+    ODocument friend1 = ((OIdentifiable) doc.field("friend1")).getRecord();
+    ODocument friend2 = ((OIdentifiable) doc.field("friend2")).getRecord();
+    ODocument friend3 = ((OIdentifiable) doc.field("friend3")).getRecord();
+    assertEquals(0, friend1.field("uid"));
+    assertEquals(1, friend2.field("uid"));
+    assertEquals(2, friend3.field("uid"));
+  }
+
   @Test
   public void testTriangle3() {
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append("{class:TriangleV, as: friend1}");
-    query.append("  .out('TriangleE'){as: friend2}");
-    query.append("  .out('TriangleE'){as: friend3, where: (uid = 2)},");
+    query.append("  -TriangleE->{as: friend2}");
+    query.append("  -TriangleE->{as: friend3, where: (uid = 2)},");
     query.append("{class:TriangleV, as: friend1}");
-    query.append("  .out('TriangleE'){as: friend3}");
+    query.append("  -TriangleE->{as: friend3}");
     query.append("return $matches");
 
     List<ODocument> result = db.command(new OCommandSQL(query.toString())).execute();
@@ -624,6 +943,22 @@ public class OMatchStatementExecutionTest {
   }
 
   @Test
+  public void testTriangle4Arrows() {
+    StringBuilder query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:TriangleV, as: friend1}");
+    query.append("  -TriangleE->{as: friend2, where: (uid = 1)}");
+    query.append("  -TriangleE->{as: friend3},");
+    query.append("{class:TriangleV, as: friend1}");
+    query.append("  -TriangleE->{as: friend3}");
+    query.append("return $matches");
+
+    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
+    assertEquals(1, result.size());
+
+  }
+
+  @Test
   public void testTriangleWithEdges4() {
     StringBuilder query = new StringBuilder();
     query.append("match ");
@@ -636,8 +971,8 @@ public class OMatchStatementExecutionTest {
 
     List<?> result = db.command(new OCommandSQL(query.toString())).execute();
     assertEquals(1, result.size());
-
   }
+
 
   @Test
   public void testCartesianProduct() {
@@ -758,6 +1093,20 @@ public class OMatchStatementExecutionTest {
     query.append("match ");
     query.append("{class:IndexedVertex, as: one, where: (uid = 0)}");
     query.append(".out('IndexedEdge'){class:IndexedVertex, as: two, where: (uid = 1)}");
+    query.append("return one, two");
+
+    long begin = System.currentTimeMillis();
+    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
+    assertEquals(1, result.size());
+    System.out.println("took " + (System.currentTimeMillis() - begin));// TODO
+  }
+
+  @Test
+  public void testIndexedEdgeArrows() {
+    StringBuilder query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:IndexedVertex, as: one, where: (uid = 0)}");
+    query.append("-IndexedEdge->{class:IndexedVertex, as: two, where: (uid = 1)}");
     query.append("return one, two");
 
     long begin = System.currentTimeMillis();

@@ -123,8 +123,15 @@ public interface OrientSqlTreeConstants
   public int JJTMATCHPATHITEM = 117;
   public int JJTMATCHPATHITEMFIRST = 118;
   public int JJTMULTIMATCHPATHITEM = 119;
-  public int JJTMATCHFILTER = 120;
-  public int JJTMATCHFILTERITEM = 121;
+  public int JJTMULTIMATCHPATHITEMARROWS = 120;
+  public int JJTMATCHFILTER = 121;
+  public int JJTMATCHFILTERITEM = 122;
+  public int JJTOUTPATHITEM = 123;
+  public int JJTINPATHITEM = 124;
+  public int JJTBOTHPATHITEM = 125;
+  public int JJTOUTPATHITEMOPT = 126;
+  public int JJTINPATHITEMOPT = 127;
+  public int JJTBOTHPATHITEMOPT = 128;
 
 
   public String[] jjtNodeName = {
@@ -248,8 +255,15 @@ public interface OrientSqlTreeConstants
     "MatchPathItem",
     "MatchPathItemFirst",
     "MultiMatchPathItem",
+    "MultiMatchPathItemArrows",
     "MatchFilter",
     "MatchFilterItem",
+    "OutPathItem",
+    "InPathItem",
+    "BothPathItem",
+    "OutPathItemOpt",
+    "InPathItemOpt",
+    "BothPathItemOpt",
   };
 }
-/* JavaCC - OriginalChecksum=641c1ff31bd09a16f3fde581d7ff8010 (do not edit this line) */
+/* JavaCC - OriginalChecksum=c5338e42d6f24a56a0a9087a4d005721 (do not edit this line) */
