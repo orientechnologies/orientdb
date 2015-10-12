@@ -64,29 +64,28 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.PAGI
  * @since 10/7/13
  */
 public class OPaginatedCluster extends ODurableComponent implements OCluster {
-  public static final String                    DEF_EXTENSION            = ".pcl";
-  private static final int                      DISK_PAGE_SIZE           = DISK_CACHE_PAGE_SIZE.getValueAsInteger();
-  private static final int                      LOWEST_FREELIST_BOUNDARY = PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY
-                                                                             .getValueAsInteger();
-  private final static int                      FREE_LIST_SIZE           = DISK_PAGE_SIZE - LOWEST_FREELIST_BOUNDARY;
-  private static final int                      PAGE_INDEX_OFFSET        = 16;
-  private static final int                      RECORD_POSITION_MASK     = 0xFFFF;
-  private static final int                      ONE_KB                   = 1024;
-  private volatile OCompression                 compression;
-  private volatile OEncryption                  encryption;
-  private volatile String                       encryptionKey;
-  private final boolean                         systemCluster;
-  private OClusterPositionMap                   clusterPositionMap;
-  private OAbstractPaginatedStorage             storageLocal;
-  private volatile int                          id;
-  private long                                  fileId;
-  private OStoragePaginatedClusterConfiguration config;
-  private long                                  pinnedStateEntryIndex;
-  private ORecordConflictStrategy               recordConflictStrategy;
+  public static final  String DEF_EXTENSION            = ".pcl";
+  private static final int    DISK_PAGE_SIZE           = DISK_CACHE_PAGE_SIZE.getValueAsInteger();
+  private static final int    LOWEST_FREELIST_BOUNDARY = PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY.getValueAsInteger();
+  private final static int    FREE_LIST_SIZE           = DISK_PAGE_SIZE - LOWEST_FREELIST_BOUNDARY;
+  private static final int    PAGE_INDEX_OFFSET        = 16;
+  private static final int    RECORD_POSITION_MASK     = 0xFFFF;
+  private static final int    ONE_KB                   = 1024;
+  private volatile OCompression                          compression;
+  private volatile OEncryption                           encryption;
+  private volatile String                                encryptionKey;
+  private final    boolean                               systemCluster;
+  private          OClusterPositionMap                   clusterPositionMap;
+  private          OAbstractPaginatedStorage             storageLocal;
+  private volatile int                                   id;
+  private          long                                  fileId;
+  private          OStoragePaginatedClusterConfiguration config;
+  private          long                                  pinnedStateEntryIndex;
+  private          ORecordConflictStrategy               recordConflictStrategy;
 
   private static final class AddEntryResult {
-    private final long           pageIndex;
-    private final int            pagePosition;
+    private final long pageIndex;
+    private final int  pagePosition;
 
     private final ORecordVersion recordVersion;
     private final int            recordsSizeDiff;
@@ -116,8 +115,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   }
 
   @Override
-  public void configure(final OStorage storage, final int id, final String clusterName, final Object... parameters)
-      throws IOException {
+  public void configure(final OStorage storage, final int id, final String clusterName, final Object... parameters) throws IOException {
     acquireExclusiveLock();
     try {
       final OContextConfiguration ctxCfg = storage.getConfiguration().getContextConfiguration();
@@ -125,9 +123,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       final String cfgEncryption = ctxCfg.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD);
       final String cfgEncryptionKey = ctxCfg.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY);
 
-      config = new OStoragePaginatedClusterConfiguration(storage.getConfiguration(), id, clusterName, null, true,
-          OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR,
-          cfgCompression, cfgEncryption, cfgEncryptionKey, null, OStorageClusterConfiguration.STATUS.ONLINE);
+      config = new OStoragePaginatedClusterConfiguration(storage.getConfiguration(), id, clusterName, null, true, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR, cfgCompression, cfgEncryption, cfgEncryptionKey, null, OStorageClusterConfiguration.STATUS.ONLINE);
       config.name = clusterName;
 
       init((OAbstractPaginatedStorage) storage, config);
@@ -170,7 +166,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
       initCusterState(atomicOperation);
 
-      if (config.root.clusters.size() <= config.id)
+      if (config.root.clusters.size()<=config.id)
         config.root.clusters.add(config);
       else
         config.root.clusters.set(config.id, config);
@@ -180,8 +176,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       endAtomicOperation(false, null);
     } catch (Exception e) {
       endAtomicOperation(true, e);
-      throw OException.wrapException(
-          new OPaginatedClusterException("Error during creation of cluster with name " + getName(), this), e);
+      throw OException.wrapException(new OPaginatedClusterException("Error during creation of cluster with name " + getName(), this), e);
     } finally {
       releaseExclusiveLock();
     }
@@ -1290,6 +1285,11 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
           if (iCallback.call(rec).equals(Boolean.FALSE))
             break;
+
+          if( Thread.currentThread().isInterrupted() ) {
+            Thread.currentThread().interrupt();
+            break;
+          }
         }
 
       } finally {

@@ -1547,8 +1547,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         final long to = range[1] != null && range[1].getClusterId() == clusterId ? range[1].getClusterPosition() : -1;
 
         try {
-          ((OAbstractPaginatedStorage) localDatabase.getStorage().getUnderlying()).scanCluster(clusteName, isBrowsingAscendingOrder(), from, to,
-              new OCallable<Boolean, ORecord>() {
+          ((OAbstractPaginatedStorage) localDatabase.getStorage().getUnderlying()).scanCluster(clusteName,
+              isBrowsingAscendingOrder(), from, to, new OCallable<Boolean, ORecord>() {
                 @Override
                 public Boolean call(final ORecord iRecord) {
                   if (!executeSearchRecord(iRecord, context)) {
@@ -1712,6 +1712,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       jobs.add(Orient.instance().submit(job));
     }
 
+    boolean cancelQuery = false;
     boolean tipProvided = false;
     while (runningJobs.get() > 0 || !resultQueue.isEmpty()) {
       try {
@@ -1744,21 +1745,30 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
       } catch (InterruptedException e) {
         Thread.interrupted();
+        cancelQuery = true;
         break;
       }
     }
 
     parallelRunning = false;
 
-    // JOIN ALL THE THREADS
-    for (int i = 0; i < jobs.size(); ++i) {
-      try {
-        jobs.get(i).get();
-        context.merge(contexts[i]);
-      } catch (InterruptedException e) {
-        break;
-      } catch (ExecutionException e) {
-        e.printStackTrace();
+    if (cancelQuery) {
+      // CANCEL ALL THE RUNNING JOBS
+      for (int i = 0; i < jobs.size(); ++i) {
+        jobs.get(i).cancel(true);
+      }
+    } else {
+      // JOIN ALL THE JOBS
+      for (int i = 0; i < jobs.size(); ++i) {
+        try {
+          jobs.get(i).get();
+          context.merge(contexts[i]);
+        } catch (InterruptedException e) {
+          break;
+        } catch (final ExecutionException e) {
+          OLogManager.instance().error(this, "Error on executing parallel query", e);
+          throw OException.wrapException(new OCommandExecutionException("Error on executing parallel query"), e);
+        }
       }
     }
 
