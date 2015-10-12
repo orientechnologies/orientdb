@@ -369,7 +369,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
       final List<OIdentifiable> resultSet = new ArrayList<OIdentifiable>();
 
-      final Collection<Map<String, Object>> connections = serverInfo.field("connections");
+      final List<Map<String, Object>> connections = serverInfo.field("connections");
       for (Map<String, Object> conn : connections) {
         final ODocument row = new ODocument();
 
@@ -378,11 +378,20 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         if (commandDetail != null && ((String) conn.get("commandDetail")).length() > 1)
           commandDetail += " (" + conn.get("commandDetail") + ")";
 
-        row.fields("ID", conn.get("connectionId"), "REMOTE_ADDRESS", conn.get("remoteAddress"), "CONNECTED_ON",
-            conn.get("connectedOn"), "DATABASE", conn.get("db"), "USER", conn.get("user"), "COMMAND", commandDetail, "TOT_REQS",
+        row.fields("ID", conn.get("connectionId"), "REMOTE_ADDRESS", conn.get("remoteAddress"), "LAST_OPERATION_ON",
+            conn.get("lastCommandOn"), "DATABASE", conn.get("db"), "USER", conn.get("user"), "COMMAND", commandDetail, "TOT_REQS",
             conn.get("totalRequests"));
         resultSet.add(row);
       }
+
+      resultSet.sort(new Comparator<OIdentifiable>() {
+        @Override
+        public int compare(final OIdentifiable o1,final  OIdentifiable o2) {
+          final String o1s = ((ODocument) o1).field("LAST_OPERATION_ON");
+          final String o2s = ((ODocument) o2).field("LAST_OPERATION_ON");
+          return o2s.compareTo(o1s);
+        }
+      });
 
       final OTableFormatter formatter = new OTableFormatter(this);
       formatter.writeRecords(resultSet, -1);

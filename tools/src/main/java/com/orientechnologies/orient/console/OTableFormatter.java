@@ -347,6 +347,8 @@ public class OTableFormatter {
 
     if (tempRids)
       columns.remove("@RID");
+    if (!hasClass)
+      columns.remove("@CLASS");
 
     return columns;
   }
