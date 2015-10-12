@@ -18,7 +18,7 @@
 
 package com.orientechnologies.lucene.test;
 
-import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -82,7 +82,8 @@ public class LuceneInsertDeleteTest extends BaseLuceneTest {
     Collection<?> coll = (Collection<?>) idx.get("Rome");
     Assert.assertEquals(coll.size(), 1);
     Assert.assertEquals(idx.getSize(), 1);
-    doc = databaseDocumentTx.load((ORID) coll.iterator().next());
+    OIdentifiable next = (OIdentifiable) coll.iterator().next();
+    doc = databaseDocumentTx.load(next.getRecord());
 
     databaseDocumentTx.delete(doc);
 

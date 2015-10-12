@@ -125,10 +125,22 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
   protected OLuceneFullTextIndex involvedIndex(OIdentifiable iRecord, ODocument iCurrentResult, OSQLFilterCondition iCondition,
       Object iLeft, Object iRight) {
 
+    Object left = iCondition.getLeft();
     ODocument doc = iRecord.getRecord();
-
     OClass cls = getDatabase().getMetadata().getSchema().getClass(doc.getClassName());
+    if (isChained(iCondition.getLeft())) {
 
+      OSQLFilterItemField chained = (OSQLFilterItemField) left;
+
+      OSQLFilterItemField.FieldChain fieldChain = chained.getFieldChain();
+      OClass oClass = cls;
+      for (int i = 0; i < fieldChain.getItemCount() - 1; i++) {
+        oClass = oClass.getProperty(fieldChain.getItemName(i)).getLinkedClass();
+      }
+      if (oClass != null) {
+        cls = oClass;
+      }
+    }
     Set<OIndex<?>> classInvolvedIndexes = cls.getInvolvedIndexes(fields(iCondition));
     OLuceneFullTextIndex idx = null;
     for (OIndex<?> classInvolvedIndex : classInvolvedIndexes) {
@@ -139,6 +151,15 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
       }
     }
     return idx;
+
+  }
+
+  private boolean isChained(Object left) {
+    if (left instanceof OSQLFilterItemField) {
+      OSQLFilterItemField field = (OSQLFilterItemField) left;
+      return field.isFieldChain();
+    }
+    return false;
   }
 
   protected static ODatabaseDocumentInternal getDatabase() {
@@ -165,7 +186,12 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
     if (left instanceof OSQLFilterItemField) {
 
       OSQLFilterItemField fName = (OSQLFilterItemField) left;
-      return Arrays.asList(fName.toString());
+      if (fName.isFieldChain()) {
+        int itemCount = fName.getFieldChain().getItemCount();
+        return Arrays.asList(fName.getFieldChain().getItemName(itemCount - 1));
+      } else {
+        return Arrays.asList(fName.toString());
+      }
     }
     return Collections.emptyList();
   }
