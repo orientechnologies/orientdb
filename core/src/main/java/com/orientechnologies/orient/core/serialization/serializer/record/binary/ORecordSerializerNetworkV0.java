@@ -20,19 +20,42 @@
 
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
+import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.serialization.types.ODecimalSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.orient.core.db.record.*;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordLazyList;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
+import com.orientechnologies.orient.core.db.record.OTrackedList;
+import com.orientechnologies.orient.core.db.record.OTrackedMap;
+import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -44,12 +67,6 @@ import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.orientechnologies.orient.core.util.ODateHelper;
-
-import java.io.Serializable;
-import java.io.UnsupportedEncodingException;
-import java.math.BigDecimal;
-import java.util.*;
-import java.util.Map.Entry;
 
 public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
 
@@ -211,7 +228,8 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
       if (value != null) {
         final OType type = getFieldType(values[i].getValue());
         if (type == null) {
-          throw new OSerializationException("Impossible serialize value of type " + value.getClass() + " with the ODocument binary serializer");
+          throw new OSerializationException("Impossible serialize value of type " + value.getClass()
+              + " with the ODocument binary serializer");
         }
         pointer = serializeValue(bytes, value, type, getLinkedType(document, type, values[i].getKey()));
         OIntegerSerializer.INSTANCE.serializeLiteral(pointer, bytes.bytes, pos[i]);
@@ -219,6 +237,45 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
       }
     }
 
+  }
+
+  @Override
+  public String[] getFieldNames(final BytesContainer bytes) {
+    // SKIP CLASS NAME
+    final int classNameLen = OVarIntSerializer.readAsInteger(bytes);
+    bytes.skip(classNameLen);
+
+    final List<String> result = new ArrayList<String>();
+
+    final OMetadataInternal metadata = (OMetadataInternal) ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata();
+    final OImmutableSchema _schema = metadata.getImmutableSchemaSnapshot();
+
+    String fieldName;
+    while (true) {
+      OGlobalProperty prop = null;
+      final int len = OVarIntSerializer.readAsInteger(bytes);
+      if (len == 0) {
+        // SCAN COMPLETED
+        break;
+      } else if (len > 0) {
+        // PARSE FIELD NAME
+        fieldName = stringFromBytes(bytes.bytes, bytes.offset, len).intern();
+        result.add(fieldName);
+
+        // SKIP THE REST
+        bytes.skip(len + OIntegerSerializer.INT_SIZE + 1);
+      } else {
+        // LOAD GLOBAL PROPERTY BY ID
+        final int id = (len * -1) - 1;
+        prop = _schema.getGlobalPropertyById(id);
+        result.add(prop.getName());
+
+        // SKIP THE REST
+        bytes.skip(OIntegerSerializer.INT_SIZE + (prop.getType() != OType.ANY ? 0 : 1));
+      }
+    }
+
+    return result.toArray(new String[result.size()]);
   }
 
   protected OClass serializeClass(final ODocument document, final BytesContainer bytes) {
@@ -554,7 +611,8 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
   }
 
   private int writeLinkMap(final BytesContainer bytes, final Map<Object, OIdentifiable> map) {
-    final boolean disabledAutoConversion = map instanceof ORecordLazyMultiValue && ((ORecordLazyMultiValue) map).isAutoConvertToRecord();
+    final boolean disabledAutoConversion = map instanceof ORecordLazyMultiValue
+        && ((ORecordLazyMultiValue) map).isAutoConvertToRecord();
 
     if (disabledAutoConversion)
       // AVOID TO FETCH RECORD
@@ -604,7 +662,8 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
       if (value != null) {
         final OType type = getTypeFromValueEmbedded(value);
         if (type == null) {
-          throw new OSerializationException("Impossible serialize value of type " + value.getClass() + " with the ODocument binary serializer");
+          throw new OSerializationException("Impossible serialize value of type " + value.getClass()
+              + " with the ODocument binary serializer");
         }
         pointer = serializeValue(bytes, value, type, null);
         OIntegerSerializer.INSTANCE.serializeLiteral(pointer, bytes.bytes, pos[i]);
@@ -636,7 +695,8 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
     assert (!(value instanceof OMVRBTreeRIDSet));
     final int pos = OVarIntSerializer.write(bytes, value.size());
 
-    final boolean disabledAutoConversion = value instanceof ORecordLazyMultiValue && ((ORecordLazyMultiValue) value).isAutoConvertToRecord();
+    final boolean disabledAutoConversion = value instanceof ORecordLazyMultiValue
+        && ((ORecordLazyMultiValue) value).isAutoConvertToRecord();
 
     if (disabledAutoConversion)
       // AVOID TO FETCH RECORD
@@ -678,7 +738,8 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
         writeOType(bytes, bytes.alloc(1), type);
         serializeValue(bytes, itemValue, type, null);
       } else {
-        throw new OSerializationException("Impossible serialize value of type " + value.getClass() + " with the ODocument binary serializer");
+        throw new OSerializationException("Impossible serialize value of type " + value.getClass()
+            + " with the ODocument binary serializer");
       }
     }
     return pos;
@@ -756,15 +817,14 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
   }
 
   public OBinaryField deserializeField(final BytesContainer bytes, final OClass iClass, final String iFieldName) {
-    //TODO: check if integrate the binary disc binary comparator here
+    // TODO: check if integrate the binary disc binary comparator here
     throw new UnsupportedOperationException("network serializer doesn't support comparators");
   }
 
   @Override
   public OBinaryComparator getComparator() {
-    //TODO: check if integrate the binary disc binary comparator here
+    // TODO: check if integrate the binary disc binary comparator here
     throw new UnsupportedOperationException("network serializer doesn't support comparators");
   }
-
 
 }
