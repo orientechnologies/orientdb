@@ -723,6 +723,14 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
    */
   public String[] fieldNames() {
     checkForLoading();
+
+    if (_status == ORecordElement.STATUS.LOADED && _source != null) {
+      // DESERIALIZE FIELD NAMES ONLY (SUPPORTED ONLY BY BINARY SERIALIZER)
+      final String[] fieldNames = _recordFormat.getFieldNames(_source);
+      if (fieldNames != null)
+        return fieldNames;
+    }
+
     checkForFields();
 
     if (_fields == null || _fields.size() == 0)

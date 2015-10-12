@@ -43,6 +43,11 @@ public class ORecordSerializerRaw implements ORecordSerializer {
   }
 
   @Override
+  public String[] getFieldNames(byte[] iSource) {
+    return null;
+  }
+
+  @Override
   public String toString() {
     return NAME;
   }

@@ -101,6 +101,22 @@ public class ORecordSerializerBinary implements ORecordSerializer {
     return container.fitBytes();
   }
 
+  @Override
+  public String[] getFieldNames(final byte[] iSource) {
+    if (iSource == null || iSource.length == 0)
+      return new String[0];
+
+    final BytesContainer container = new BytesContainer(iSource).skip(1);
+
+    try {
+      return serializerByVersion[iSource[0]].getFieldNames(container);
+    } catch (RuntimeException e) {
+      OLogManager.instance().warn(this, "Error deserializing record to get field-names, send this data for debugging: %s ",
+          OBase64Utils.encodeBytes(iSource));
+      throw e;
+    }
+  }
+
   private void checkTypeODocument(final ORecord iRecord) {
     if (!(iRecord instanceof ODocument)) {
       throw new UnsupportedOperationException("The " + ORecordSerializerBinary.NAME + " don't support record of type "

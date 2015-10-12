@@ -661,6 +661,11 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
     return fromString(iSource, (ORecord) ODatabaseRecordThreadLocal.INSTANCE.get().newInstance(), null);
   }
 
+  @Override
+  public String[] getFieldNames(byte[] iSource) {
+    return null;
+  }
+
   public ORecord fromStream(final byte[] iSource, final ORecord iRecord, final String[] iFields) {
     final long timer = PROFILER.startChrono();
 

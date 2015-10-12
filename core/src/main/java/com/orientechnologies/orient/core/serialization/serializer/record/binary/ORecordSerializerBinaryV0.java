@@ -20,16 +20,6 @@
 
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
-import java.io.Serializable;
-import java.io.UnsupportedEncodingException;
-import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.serialization.types.ODecimalSerializer;
@@ -65,6 +55,18 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.orientechnologies.orient.core.util.ODateHelper;
+
+import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
@@ -293,6 +295,45 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
     if (last > bytes.offset)
       bytes.offset = last;
+  }
+
+  @Override
+  public String[] getFieldNames(final BytesContainer bytes) {
+    // SKIP CLASS NAME
+    final int classNameLen = OVarIntSerializer.readAsInteger(bytes);
+    bytes.skip(classNameLen);
+
+    final List<String> result = new ArrayList<String>();
+
+    final OMetadataInternal metadata = (OMetadataInternal) ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata();
+    final OImmutableSchema _schema = metadata.getImmutableSchemaSnapshot();
+
+    String fieldName;
+    while (true) {
+      OGlobalProperty prop = null;
+      final int len = OVarIntSerializer.readAsInteger(bytes);
+      if (len == 0) {
+        // SCAN COMPLETED
+        break;
+      } else if (len > 0) {
+        // PARSE FIELD NAME
+        fieldName = stringFromBytes(bytes.bytes, bytes.offset, len).intern();
+        result.add(fieldName);
+
+        // SKIP THE REST
+        bytes.skip(len + OIntegerSerializer.INT_SIZE + 1);
+      } else {
+        // LOAD GLOBAL PROPERTY BY ID
+        final int id = (len * -1) - 1;
+        prop = _schema.getGlobalPropertyById(id);
+        result.add(prop.getName());
+
+        // SKIP THE REST
+        bytes.skip(OIntegerSerializer.INT_SIZE + (prop.getType() != OType.ANY ? 0 : 1));
+      }
+    }
+
+    return result.toArray(new String[result.size()]);
   }
 
   @SuppressWarnings("unchecked")

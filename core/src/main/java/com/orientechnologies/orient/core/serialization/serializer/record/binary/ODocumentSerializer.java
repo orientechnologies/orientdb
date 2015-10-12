@@ -39,4 +39,9 @@ public interface ODocumentSerializer {
   OBinaryField deserializeField(BytesContainer bytes, OClass iClass, String iFieldName);
 
   OBinaryComparator getComparator();
+
+  /**
+   * Returns the array of field names with no values.
+   */
+  String[] getFieldNames(BytesContainer iBytes);
 }

@@ -28,11 +28,11 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 
 public class ORecordSerializerNetwork implements ORecordSerializer {
 
-  public static final  String                   NAME                   = "onet_ser_v0";
-  public static final  ORecordSerializerNetwork INSTANCE               = new ORecordSerializerNetwork();
-  private static final byte                     CURRENT_RECORD_VERSION = 0;
+  public static final String                   NAME                   = "onet_ser_v0";
+  public static final ORecordSerializerNetwork INSTANCE               = new ORecordSerializerNetwork();
+  private static final byte                    CURRENT_RECORD_VERSION = 0;
 
-  private ODocumentSerializer[] serializerByVersion;
+  private ODocumentSerializer[]                serializerByVersion;
 
   public ORecordSerializerNetwork() {
     serializerByVersion = new ODocumentSerializer[1];
@@ -54,8 +54,6 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
     return NAME;
   }
 
-
-
   @Override
   public ORecord fromStream(final byte[] iSource, ORecord iRecord, final String[] iFields) {
     if (iSource == null || iSource.length == 0)
@@ -74,7 +72,8 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
       else
         serializerByVersion[iSource[0]].deserialize((ODocument) iRecord, container);
     } catch (RuntimeException e) {
-      OLogManager.instance().warn(this, "Error deserializing record with id %s send this data for debugging: %s ", iRecord.getIdentity().toString(), OBase64Utils.encodeBytes(iSource));
+      OLogManager.instance().warn(this, "Error deserializing record with id %s send this data for debugging: %s ",
+          iRecord.getIdentity().toString(), OBase64Utils.encodeBytes(iSource));
       throw e;
     }
     return iRecord;
@@ -95,9 +94,26 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
     return container.fitBytes();
   }
 
+  @Override
+  public String[] getFieldNames(final byte[] iSource) {
+    if (iSource == null || iSource.length == 0)
+      return new String[0];
+
+    final BytesContainer container = new BytesContainer(iSource).skip(1);
+
+    try {
+      return serializerByVersion[iSource[0]].getFieldNames(container);
+    } catch (RuntimeException e) {
+      OLogManager.instance().warn(this, "Error deserializing record to get field-names, send this data for debugging: %s ",
+          OBase64Utils.encodeBytes(iSource));
+      throw e;
+    }
+  }
+
   private void checkTypeODocument(final ORecord iRecord) {
     if (!(iRecord instanceof ODocument)) {
-      throw new UnsupportedOperationException("The " + ORecordSerializerNetwork.NAME + " don't support record of type " + iRecord.getClass().getName());
+      throw new UnsupportedOperationException("The " + ORecordSerializerNetwork.NAME + " don't support record of type "
+          + iRecord.getClass().getName());
     }
   }
 
