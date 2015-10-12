@@ -576,7 +576,9 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       final Map<String, Long> result = new HashMap<String, Long>();
 
       for (Map.Entry<String, Integer> entry : nameIdMap.entrySet()) {
-        result.put(entry.getKey(), composeFileId(id, entry.getValue()));
+        if (entry.getValue() > 0) {
+          result.put(entry.getKey(), composeFileId(id, entry.getValue()));
+        }
       }
 
       return result;

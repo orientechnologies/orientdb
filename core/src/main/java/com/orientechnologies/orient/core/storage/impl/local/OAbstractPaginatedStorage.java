@@ -2542,6 +2542,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         if (!ibuFile.delete()) {
           OLogManager.instance().error(this, ibuFile.getAbsolutePath() + " is closed but can not be deleted");
         }
+
+        throw e;
       }
     } catch (IOException e) {
       throw OException.wrapException(new OStorageException("Error during incremental backup"), e);
@@ -2827,6 +2829,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   public void restoreFromIncrementalBackup(final InputStream inputStream, final boolean isFull) throws IOException {
     stateLock.acquireWriteLock();
     try {
+      final List<String> currentFiles = new ArrayList<String>(writeCache.files().keySet());
       final Locale serverLocale = configuration.getLocaleInstance();
 
       closeClusters(false);
@@ -2959,7 +2962,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         processedFiles.add(zipEntry.getName());
       }
 
-      final List<String> currentFiles = new ArrayList<String>(writeCache.files().keySet());
+
       currentFiles.removeAll(processedFiles);
 
       for (String file : currentFiles) {

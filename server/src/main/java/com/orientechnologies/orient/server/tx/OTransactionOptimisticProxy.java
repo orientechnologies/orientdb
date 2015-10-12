@@ -36,7 +36,10 @@ import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.ONetworkThreadLocalSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
@@ -76,6 +79,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 
     try {
       setUsingLog(channel.readByte() == 1);
+      Map<ORecord, byte []> lazyDeserialize = new IdentityHashMap<ORecord, byte[]>();
 
       byte lastTxStatus;
       for (lastTxStatus = channel.readByte(); lastTxStatus == 1; lastTxStatus = channel.readByte()) {
@@ -89,8 +93,10 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 
         switch (recordStatus) {
         case ORecordOperation.CREATED:
-          oNetworkProtocolBinary.fillRecord(rid, channel.readBytes(), OVersionFactory.instance().createVersion(),
-              entry.getRecord(), database);
+          byte [] content = channel.readBytes();
+          ORecordInternal.fill(entry.getRecord(), rid, OVersionFactory.instance().createVersion(), null, true);
+          //oNetworkProtocolBinary.fillRecord(rid, content, OVersionFactory.instance().createVersion(), entry.getRecord(), database);
+          lazyDeserialize.put(entry.getRecord(), content);
 
           // SAVE THE RECORD TO RETRIEVE THEM FOR THE NEW RID TO SEND BACK TO THE REQUESTER
           createdRecords.put(rid.copy(), entry.getRecord());
@@ -99,7 +105,9 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
         case ORecordOperation.UPDATED:
           ORecordVersion version = channel.readVersion();
           byte[] bytes = channel.readBytes();
-          oNetworkProtocolBinary.fillRecord(rid, bytes, version, entry.getRecord(), database);
+          ORecordInternal.fill(entry.getRecord(), rid, version, null, true);
+//          oNetworkProtocolBinary.fillRecord(rid, bytes, version, entry.getRecord(), database);
+          lazyDeserialize.put(entry.getRecord(), bytes);
           if (protocolVersion >= 23)
             ORecordInternal.setContentChanged(entry.getRecord(), channel.readBoolean());
           break;
@@ -122,6 +130,28 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 
         // PUT IN TEMPORARY LIST TO GET FETCHED AFTER ALL FOR CACHE
         tempEntries.put(entry.getRecord().getIdentity(), entry);
+      }
+
+      String dbSerializerName = "";
+      if (database != null)
+        dbSerializerName = database.getSerializer().toString();
+
+      String name = oNetworkProtocolBinary.getRecordSerializerName();
+      for(Map.Entry<ORecord,byte []> entry : lazyDeserialize.entrySet()) {
+        ORecord record = entry.getKey();
+        if (ORecordInternal.getRecordType(record) == ODocument.RECORD_TYPE && !dbSerializerName.equals(name)) {
+          try {
+            ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(name);
+            ONetworkThreadLocalSerializer.setNetworkSerializer(ser);
+            record.fromStream(entry.getValue());
+          } finally {
+            ONetworkThreadLocalSerializer.setNetworkSerializer(null);
+          }
+          record.setDirty();
+        } else {
+          record.fromStream(entry.getValue());
+          record.setDirty();
+        }
       }
 
       if (toThrow != null)

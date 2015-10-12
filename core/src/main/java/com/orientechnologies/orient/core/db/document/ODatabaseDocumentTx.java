@@ -162,10 +162,10 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   public ODatabaseDocumentTx(final String iURL, boolean keepStorageOpen) {
     super(false);
 
-    activateOnCurrentThread();
-
     if (iURL == null)
       throw new IllegalArgumentException("URL parameter is null");
+
+    activateOnCurrentThread();
 
     try {
       this.keepStorageOpen = keepStorageOpen;
@@ -190,6 +190,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     } catch (Exception t) {
       if (storage != null)
         Orient.instance().unregisterStorage(storage);
+      ODatabaseRecordThreadLocal.INSTANCE.remove();
 
       throw OException.wrapException(new ODatabaseException("Error on opening database '" + iURL + "'"), t);
     }

@@ -45,6 +45,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageVariablePars
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODiskWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+import sun.misc.IOUtils;
 
 import java.io.*;
 import java.lang.String;
@@ -63,16 +64,15 @@ import java.util.zip.ZipOutputStream;
  */
 public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements OFreezableStorage {
 
-  public static final int                  WAL_BACKUP_ITERATION_STEP = 2;
-  private static String[]                  ALL_FILE_EXTENSIONS       = { ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx", ".ocs",
-      ".oef", ".oem", ".oet", ODiskWriteAheadLog.WAL_SEGMENT_EXTENSION, ODiskWriteAheadLog.MASTER_RECORD_EXTENSION,
+  private static String[]                  ALL_FILE_EXTENSIONS = { ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx", ".ocs", ".oef",
+      ".oem", ".oet", ODiskWriteAheadLog.WAL_SEGMENT_EXTENSION, ODiskWriteAheadLog.MASTER_RECORD_EXTENSION,
       OHashTableIndexEngine.BUCKET_FILE_EXTENSION, OHashTableIndexEngine.METADATA_FILE_EXTENSION,
       OHashTableIndexEngine.TREE_FILE_EXTENSION, OHashTableIndexEngine.NULL_BUCKET_FILE_EXTENSION,
       OClusterPositionMap.DEF_EXTENSION, OSBTreeIndexEngine.DATA_FILE_EXTENSION, OWOWCache.NAME_ID_MAP_EXTENSION,
       OIndexRIDContainer.INDEX_FILE_EXTENSION, OSBTreeCollectionManagerShared.DEFAULT_EXTENSION,
-      OSBTreeIndexEngine.NULL_BUCKET_FILE_EXTENSION                 };
+      OSBTreeIndexEngine.NULL_BUCKET_FILE_EXTENSION           };
 
-  private static final int                 ONE_KB                    = 1024;
+  private static final int                 ONE_KB              = 1024;
 
   private final int                        DELETE_MAX_RETRIES;
   private final int                        DELETE_WAIT_TIME;
@@ -195,85 +195,43 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
 
   @Override
   protected OLogSequenceNumber copyWALToIncrementalBackup(ZipOutputStream zipOutputStream, long startSegment) throws IOException {
-    File[] nonActiveSegments = writeAheadLog.nonActiveSegments(startSegment);
 
-    int n = 0;
-    int i = 0;
-    boolean newSegment = false;
+    File[] nonActiveSegments;
 
-    long freezeId = -1;
-    OLogSequenceNumber lastLSN = null;
-
+    OLogSequenceNumber lastLSN;
+    long freezeId = getAtomicOperationsManager().freezeAtomicOperations(null, null);
     try {
-      while (true) {
-        for (; i < WAL_BACKUP_ITERATION_STEP * (n + 1) && i < nonActiveSegments.length; i++) {
-          final File nonActiveSegment = nonActiveSegments[i];
-          final FileInputStream fileInputStream = new FileInputStream(nonActiveSegment);
+      writeAheadLog.newSegment();
+      nonActiveSegments = writeAheadLog.nonActiveSegments(startSegment);
+      lastLSN = writeAheadLog.end();
+    } finally {
+      getAtomicOperationsManager().releaseAtomicOperations(freezeId);
+    }
+
+    for (final File nonActiveSegment : nonActiveSegments) {
+      final FileInputStream fileInputStream = new FileInputStream(nonActiveSegment);
+      try {
+        final BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
+        try {
+          final ZipEntry entry = new ZipEntry(nonActiveSegment.getName());
+          zipOutputStream.putNextEntry(entry);
           try {
-            final BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
-            try {
-              final ZipEntry entry = new ZipEntry(nonActiveSegment.getName());
-              zipOutputStream.putNextEntry(entry);
-              try {
-                final byte[] buffer = new byte[4096];
+            final byte[] buffer = new byte[4096];
 
-                int br = 0;
+            int br = 0;
 
-                while ((br = bufferedInputStream.read(buffer)) >= 0) {
-                  zipOutputStream.write(buffer, 0, br);
-                }
-              } finally {
-                zipOutputStream.closeEntry();
-              }
-            } finally {
-              bufferedInputStream.close();
+            while ((br = bufferedInputStream.read(buffer)) >= 0) {
+              zipOutputStream.write(buffer, 0, br);
             }
           } finally {
-            fileInputStream.close();
+            zipOutputStream.closeEntry();
           }
+        } finally {
+          bufferedInputStream.close();
         }
-
-        final File[] updatedNonActiveSegments = writeAheadLog.nonActiveSegments(startSegment);
-
-        if (freezeId < 0 && updatedNonActiveSegments.length > nonActiveSegments.length + WAL_BACKUP_ITERATION_STEP) {
-          OLogManager.instance().warn(this,
-              "Incremental backup can not keep up with grow of write ahead log , write operations will be blocked");
-
-          freezeId = getAtomicOperationsManager().freezeAtomicOperations(OModificationOperationProhibitedException.class,
-              "Incremental backup can not keep up with grow of write ahead log , write operations are blocked");
-        }
-
-        nonActiveSegments = updatedNonActiveSegments;
-
-        if (i >= nonActiveSegments.length) {
-          if (newSegment)
-            break;
-
-          boolean lockedForNewSegment = false;
-          if (freezeId < 0) {
-            freezeId = getAtomicOperationsManager().freezeAtomicOperations(null, null);
-            lockedForNewSegment = true;
-          }
-
-          lastLSN = writeAheadLog.end();
-
-          writeAheadLog.newSegment();
-          newSegment = true;
-
-          if (lockedForNewSegment) {
-            getAtomicOperationsManager().releaseAtomicOperations(freezeId);
-            freezeId = -1;
-          }
-
-          nonActiveSegments = writeAheadLog.nonActiveSegments(startSegment);
-        }
-
-        n++;
+      } finally {
+        fileInputStream.close();
       }
-
-    } finally {
-      if (freezeId >= 0)
-        getAtomicOperationsManager().releaseAtomicOperations(freezeId);
     }
 
     return lastLSN;
@@ -287,8 +245,13 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
   @Override
   protected File createWalTempDirectory() {
     final File walDirectory = new File(getStoragePath(), "walIncrementalBackupRestoreDirectory");
+
+    if (walDirectory.exists()) {
+      OFileUtils.deleteRecursively(walDirectory);
+    }
+
     if (!walDirectory.mkdirs())
-      throw new OStorageException("Can not create temprary directory to store files created during incremental backup");
+      throw new OStorageException("Can not create temporary directory to store files created during incremental backup");
 
     return walDirectory;
   }
