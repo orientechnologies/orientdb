@@ -570,7 +570,9 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
     metadataLock.lock();
     try {
       for (Map.Entry<String, Integer> entry : fileNameIdMap.entrySet()) {
-        result.put(entry.getKey(), composeFileId(id, entry.getValue()));
+        if (entry.getValue() > 0) {
+          result.put(entry.getKey(), composeFileId(id, entry.getValue()));
+        }
       }
     } finally {
       metadataLock.unlock();
