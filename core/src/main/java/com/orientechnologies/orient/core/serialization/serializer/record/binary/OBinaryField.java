@@ -20,23 +20,29 @@
 
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
-import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 
-public interface ODocumentSerializer {
+/**
+ * Represents a binary field.
+ * 
+ * @author Luca Garulli
+ */
+public class OBinaryField {
 
-  void serialize(ODocument document, BytesContainer bytes, boolean iClassOnly);
+  public final String         name;
+  public final OType          type;
+  public final BytesContainer bytes;
+  public final OCollate       collate;
 
-  int serializeValue(BytesContainer bytes, Object value, OType type, OType linkedType);
+  public OBinaryField(final String iName, final OType iType, final BytesContainer iBytes, final OCollate iCollate) {
+    name = iName;
+    type = iType;
+    bytes = iBytes;
+    collate = iCollate;
+  }
 
-  void deserialize(ODocument document, BytesContainer bytes);
-
-  void deserializePartial(ODocument document, BytesContainer bytes, String[] iFields);
-
-  Object deserializeValue(BytesContainer bytes, OType type, ODocument ownerDocument);
-
-  OBinaryField deserializeField(BytesContainer bytes, OClass iClass, String iFieldName);
-
-  OBinaryComparator getComparator();
+  public OBinaryField copy() {
+    return new OBinaryField(name, type, bytes.copy(), collate);
+  }
 }

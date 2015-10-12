@@ -875,7 +875,7 @@ public class ODocumentHelper {
         }
       } else if (!ODocumentHelper.hasSameContentOf(current, iMyDb, (ODocument) iOther, iOtherDb, ridMapper))
         return false;
-    } else if (!compareScalarValues(iCurrent, iOther, ridMapper))
+    } else if (!compareScalarValues(iCurrent, iMyDb, iOther, iOtherDb, ridMapper))
       return false;
     return true;
   }
@@ -910,7 +910,7 @@ public class ODocumentHelper {
     if (iOther == null)
       return false;
 
-    if (iCheckAlsoIdentity && !iCurrent.equals(iOther) && iCurrent.getIdentity().isValid())
+    if (iCheckAlsoIdentity && iCurrent.getIdentity().isValid() && !iCurrent.getIdentity().equals(iOther.getIdentity()))
       return false;
 
     if (iMyDb != null)
@@ -988,7 +988,7 @@ public class ODocumentHelper {
           if (!hasSameContentOf((ODocument) myFieldValue, iMyDb, (ODocument) otherFieldValue, iOtherDb, ridMapper))
             return false;
         } else {
-          if (!compareScalarValues(myFieldValue, otherFieldValue, ridMapper))
+          if (!compareScalarValues(myFieldValue, iMyDb, otherFieldValue, iOtherDb, ridMapper))
             return false;
         }
     }
@@ -1073,7 +1073,7 @@ public class ODocumentHelper {
             }
           });
 
-          if (!compareScalarValues(myValue, otherValue, ridMapper))
+          if (!compareScalarValues(myValue, iMyDb, otherValue, iOtherDb, ridMapper))
             return false;
         }
       }
@@ -1330,7 +1330,8 @@ public class ODocumentHelper {
     }
   }
 
-  private static boolean compareScalarValues(Object myValue, Object otherValue, RIDMapper ridMapper) {
+  private static boolean compareScalarValues(Object myValue, ODatabaseDocumentInternal iMyDb, Object otherValue,
+      ODatabaseDocumentInternal iOtherDb, RIDMapper ridMapper) {
     if (myValue == null && otherValue != null || myValue != null && otherValue == null)
       return false;
 
@@ -1351,7 +1352,12 @@ public class ODocumentHelper {
       for (int i = 0; i < myArraySize; i++) {
         final Object first = Array.get(myValue, i);
         final Object second = Array.get(otherValue, i);
-        if (first == null && second != null || (first != null && !first.equals(second)))
+        if (first == null && second != null)
+          return false;
+        if (first instanceof ODocument && second instanceof ODocument)
+          return hasSameContentOf((ODocument) first, iMyDb, (ODocument) second, iOtherDb, ridMapper);
+
+        if (first != null && !first.equals(second))
           return false;
       }
 
