@@ -19,10 +19,14 @@
 package com.orientechnologies.lucene.test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -128,6 +132,46 @@ public class LuceneMiscTest {
       graph.drop();
     }
 
+  }
+
+  @Test
+  public void dottedNotationTest() {
+
+    OrientGraphNoTx db = new OrientGraphNoTx("memory:dotted");
+
+    try {
+      OSchema schema = db.getRawGraph().getMetadata().getSchema();
+      OClass v = schema.getClass("V");
+      OClass e = schema.getClass("E");
+      OClass author = schema.createClass("Author");
+      author.setSuperClass(v);
+      author.createProperty("name", OType.STRING);
+
+      OClass song = schema.createClass("Song");
+      song.setSuperClass(v);
+      song.createProperty("title", OType.STRING);
+
+      OClass authorOf = schema.createClass("AuthorOf");
+      authorOf.createProperty("in", OType.LINK, song);
+      authorOf.setSuperClass(e);
+
+      db.command(new OCommandSQL("create index AuthorOf.in on AuthorOf (in) NOTUNIQUE")).execute();
+      db.command(new OCommandSQL("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE")).execute();
+
+      OrientVertex authorVertex = db.addVertex("class:Author", new String[] { "name", "Bob Dylan" });
+      OrientVertex songVertex = db.addVertex("class:Song", new String[] { "title", "hurricane" });
+
+      authorVertex.addEdge("AuthorOf", songVertex);
+
+      List<Object> results = db.getRawGraph().command(new OCommandSQL("select from AuthorOf")).execute();
+      Assert.assertEquals(results.size(), 1);
+
+      results = db.getRawGraph().command(new OCommandSQL("select from AuthorOf where in.title lucene 'hurricane'")).execute();
+
+      Assert.assertEquals(results.size(), 1);
+    } finally {
+      db.drop();
+    }
   }
 
 }

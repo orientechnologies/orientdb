@@ -66,8 +66,7 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
     if (indexResult == null || indexResult instanceof OIdentifiable)
       cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, new OFullTextCompositeKey(keyParams));
     else
-      cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult), new OFullTextCompositeKey(
-          keyParams));
+      cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult), new OFullTextCompositeKey(keyParams));
     return cursor;
   }
 
@@ -130,12 +129,23 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
   protected OLuceneFullTextIndex involvedIndex(OIdentifiable iRecord, ODocument iCurrentResult, OSQLFilterCondition iCondition,
       Object iLeft, Object iRight) {
 
+
     ODocument doc = iRecord.getRecord();
     OClass cls = getDatabase().getMetadata().getSchema().getClass(doc.getClassName());
-    // Set<OIndex<?>> classInvolvedIndexes = getDatabase().getMetadata().getIndexManager()
-    // .getClassInvolvedIndexes(doc.getClassName(), fields(iCondition));
 
+    if (isChained(iCondition.getLeft())) {
 
+      OSQLFilterItemField chained = (OSQLFilterItemField) iCondition.getLeft();
+
+      OSQLFilterItemField.FieldChain fieldChain = chained.getFieldChain();
+      OClass oClass = cls;
+      for (int i = 0; i < fieldChain.getItemCount() - 1; i++) {
+        oClass = oClass.getProperty(fieldChain.getItemName(i)).getLinkedClass();
+      }
+      if (oClass != null) {
+        cls = oClass;
+      }
+    }
     Set<OIndex<?>> classInvolvedIndexes = cls.getInvolvedIndexes(fields(iCondition));
     OLuceneFullTextIndex idx = null;
     for (OIndex<?> classInvolvedIndex : classInvolvedIndexes) {
@@ -148,6 +158,14 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
     return idx;
   }
 
+
+  private boolean isChained(Object left) {
+    if (left instanceof OSQLFilterItemField) {
+      OSQLFilterItemField field = (OSQLFilterItemField) left;
+      return field.isFieldChain();
+    }
+    return false;
+  }
   protected Collection<String> fields(OSQLFilterCondition iCondition) {
 
     Object left = iCondition.getLeft();
@@ -168,7 +186,12 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
     if (left instanceof OSQLFilterItemField) {
 
       OSQLFilterItemField fName = (OSQLFilterItemField) left;
-      return Arrays.asList(fName.toString());
+      if (fName.isFieldChain()) {
+        int itemCount = fName.getFieldChain().getItemCount();
+        return Arrays.asList(fName.getFieldChain().getItemName(itemCount - 1));
+      } else {
+        return Arrays.asList(fName.toString());
+      }
     }
     return Collections.emptyList();
   }
