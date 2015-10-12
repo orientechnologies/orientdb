@@ -125,9 +125,12 @@ public class GraphValidationTest {
 
   @Test
   public void edgesCannotBeVertices() {
-    OrientGraphNoTx gNoTx = new OrientGraphNoTx("remote:localhost/pokec", "admin", "admin");
+    OrientGraphNoTx gNoTx = new OrientGraphNoTx(URL, "admin", "admin");
     try {
-      OrientVertex v = gNoTx.addVertex(null);
+      gNoTx.createVertexType("TestV");
+      gNoTx.createEdgeType("TestE");
+
+      OrientVertex v = gNoTx.addVertex("class:TestV");
       OrientVertex loadedV = gNoTx.getVertex(v.getIdentity());
       try {
         OrientEdge e = gNoTx.getEdge(v.getIdentity().toString());
@@ -139,9 +142,9 @@ public class GraphValidationTest {
       gNoTx.shutdown();
     }
 
-    OrientGraph g = new OrientGraph("remote:localhost/pokec", "admin", "admin");
+    OrientGraph g = new OrientGraph(URL, "admin", "admin");
     try {
-      OrientVertex v = g.addVertex(null);
+      OrientVertex v = g.addVertex("class:TestV");
       OrientVertex loadedV = g.getVertex(v.getIdentity().toString());
       try {
         OrientEdge e = g.getEdge(v.getIdentity());
