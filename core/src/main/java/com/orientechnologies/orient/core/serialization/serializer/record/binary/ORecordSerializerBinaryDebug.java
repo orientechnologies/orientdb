@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.serialization.serializer.record.binary
 
 import java.util.ArrayList;
 
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
@@ -70,7 +69,7 @@ public class ORecordSerializerBinaryDebug extends ORecordSerializerBinaryV0 {
           int headerCursor = bytes.offset;
           bytes.offset = valuePos;
           try {
-            debugProperty.value = readSingleValue(bytes, type, new ODocument());
+            debugProperty.value = deserializeValue(bytes, type, new ODocument());
           } catch (RuntimeException ex) {
             debugProperty.faildToRead = true;
             debugProperty.readingException = ex;

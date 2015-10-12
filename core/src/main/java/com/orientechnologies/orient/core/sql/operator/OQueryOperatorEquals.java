@@ -19,9 +19,6 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
-import java.util.Collection;
-import java.util.List;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -38,9 +35,14 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.OBinaryField;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
+
+import java.util.Collection;
+import java.util.List;
 
 /**
  * EQUALS operator.
@@ -207,5 +209,15 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
   protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
       final Object iRight, OCommandContext iContext) {
     return equals(iLeft, iRight);
+  }
+
+  public boolean evaluate(final OBinaryField iFirstField, final OBinaryField iSecondField, OCommandContext iContext) {
+    return ORecordSerializerBinary.INSTANCE.getCurrentSerializer().getComparator()
+        .isEqual(iFirstField, iSecondField);
+  }
+
+  @Override
+  public boolean isSupportingBinaryEvaluate(){
+    return true;
   }
 }

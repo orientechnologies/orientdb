@@ -32,7 +32,7 @@ public class ORecordSerializerBinary implements ORecordSerializer {
   public static final ORecordSerializerBinary INSTANCE               = new ORecordSerializerBinary();
   private static final byte                   CURRENT_RECORD_VERSION = 0;
 
-  private ODocumentSerializer[] serializerByVersion;
+  private ODocumentSerializer[]               serializerByVersion;
 
   public ORecordSerializerBinary() {
     serializerByVersion = new ODocumentSerializer[1];
@@ -49,6 +49,14 @@ public class ORecordSerializerBinary implements ORecordSerializer {
     return CURRENT_RECORD_VERSION;
   }
 
+  public ODocumentSerializer getSerializer(final int iVersion) {
+    return serializerByVersion[iVersion];
+  }
+
+  public ODocumentSerializer getCurrentSerializer() {
+    return serializerByVersion[serializerByVersion.length - 1];
+  }
+
   @Override
   public String toString() {
     return NAME;
@@ -63,8 +71,7 @@ public class ORecordSerializerBinary implements ORecordSerializer {
     else
       checkTypeODocument(iRecord);
 
-    BytesContainer container = new BytesContainer(iSource);
-    container.skip(1);
+    final BytesContainer container = new BytesContainer(iSource).skip(1);
 
     try {
       if (iFields != null && iFields.length > 0)
@@ -96,8 +103,8 @@ public class ORecordSerializerBinary implements ORecordSerializer {
 
   private void checkTypeODocument(final ORecord iRecord) {
     if (!(iRecord instanceof ODocument)) {
-      throw new UnsupportedOperationException(
-          "The " + ORecordSerializerBinary.NAME + " don't support record of type " + iRecord.getClass().getName());
+      throw new UnsupportedOperationException("The " + ORecordSerializerBinary.NAME + " don't support record of type "
+          + iRecord.getClass().getName());
     }
   }
 

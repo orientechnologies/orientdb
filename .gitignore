@@ -23,3 +23,5 @@ out
 .idea/
 
 tests/src/test/java/com/orientechnologies/orient/test/database/auto/_*.xml
+
+export/
