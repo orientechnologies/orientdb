@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -110,6 +111,8 @@ public class OSQLFilterCondition {
     Object result;
     try {
       result = operator.evaluateRecord(iCurrentRecord, iCurrentResult, this, l, r, iContext);
+    } catch (OCommandExecutionException e) {
+      throw e;
     } catch (Exception e) {
       result = Boolean.FALSE;
     }
