@@ -43,7 +43,7 @@ import java.util.Set;
  */
 public class OSQLFunctionOut extends OSQLFunctionMoveFiltered {
   public static final String NAME               = "out";
-  int                        supernodeThreshold = 1000;
+
 
   public OSQLFunctionOut() {
     super(NAME, 0, -1);

@@ -105,6 +105,19 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     return visitor.visit(this, data);
   }
 
+  // ------------------------------------------------------------------
+  // query parsing and optimization
+  // ------------------------------------------------------------------
+
+  /**
+   * this method parses the statement
+   *
+   * @param iRequest
+   *          Command request implementation.
+   *
+   * @param <RET>
+   * @return
+   */
   @Override
   public <RET extends OCommandExecutor> RET parse(OCommandRequest iRequest) {
     final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
@@ -138,7 +151,6 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     for (OMatchExpression expr : this.matchExpressions) {
       pattern.addExpression(expr);
     }
-    validateReturn();
 
     Map<String, OWhereClause> aliasFilters = new LinkedHashMap<String, OWhereClause>();
     Map<String, String> aliasClasses = new LinkedHashMap<String, String>();
@@ -154,6 +166,11 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     return (RET) this;
   }
 
+  /**
+   * rebinds filter (where) conditions to alias nodes after optimization
+   * 
+   * @param aliasFilters
+   */
   private void rebindFilters(Map<String, OWhereClause> aliasFilters) {
     for (OMatchExpression expression : matchExpressions) {
       OWhereClause newFilter = aliasFilters.get(expression.origin.getAlias());
@@ -166,25 +183,12 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     }
   }
 
-  private void validateReturn() {
-    // Set<String> aliases = pattern.aliasToNode.keySet();
-    // if (returnItems.size() == 1) {
-    // String returnAlias = returnItems.iterator().next().toString();
-    // if (!returnAlias.equalsIgnoreCase("$matches") && !returnAlias.equalsIgnoreCase("$paths") && !aliases.contains(returnAlias)) {
-    // throw new OCommandSQLParsingException("Invalid return alias: " + returnAlias);
-    // }
-    // return;
-    // }
-    // for (OExpression s : this.returnItems) {
-    // String returnAlias = s.toString();
-    // if (!aliases.contains(returnAlias)) {
-    // throw new OCommandSQLParsingException("Invalid return alias: " + returnAlias);
-    // }
-    // }
-  }
-
+  /**
+   * assigns default aliases to pattern nodes that do not have an explicit alias
+   * 
+   * @param matchExpressions
+   */
   private void assignDefaultAliases(List<OMatchExpression> matchExpressions) {
-
     int counter = 0;
     for (OMatchExpression expression : matchExpressions) {
       if (expression.origin.getAlias() == null) {
@@ -202,12 +206,33 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     }
   }
 
+  // ------------------------------------------------------------------
+  // query execution
+  // ------------------------------------------------------------------
+
+  /**
+   * this method works statefully, using request and context variables from current Match statement.
+   * This method will be deprecated in next releases
+   *
+   * @param iArgs
+   *          Optional variable arguments to pass to the command.
+   *
+   * @return
+   */
   @Override
   public Object execute(Map<Object, Object> iArgs) {
     this.context.setInputParameters(iArgs);
     return execute(this.request, this.context);
   }
 
+  /**
+   * executes the match statement. This is the preferred execute() method and it has to be used as the default one in the future.
+   * This method works in stateless mode
+   * 
+   * @param request
+   * @param context
+   * @return
+   */
   public Object execute(OSQLAsynchQuery<ODocument> request, OCommandContext context) {
     Map<Object, Object> iArgs = context.getInputParameters();
     try {
@@ -221,7 +246,8 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       MatchExecutionPlan executionPlan = new MatchExecutionPlan();
       executionPlan.sortedEdges = sortedEdges;
 
-      calculateMatch(estimatedRootEntries, new MatchContext(), aliasClasses, aliasFilters, context, request, executionPlan);
+      calculateMatch(pattern, estimatedRootEntries, new MatchContext(), aliasClasses, aliasFilters, context, request, executionPlan);
+
       return getResult(request);
     } finally {
       if (request.getResultListener() != null) {
@@ -231,7 +257,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
 
   }
 
-  /*
+  /**
    * sort edges in the order they will be matched
    */
   private List<EdgeTraversal> sortEdges(Map<String, Long> estimatedRootEntries, Pattern pattern) {
@@ -291,14 +317,6 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     return null;
   }
 
-  private boolean calculateMatch(Map<String, Long> estimatedRootEntries, MatchContext matchContext,
-      Map<String, String> aliasClasses, Map<String, OWhereClause> aliasFilters, OCommandContext iCommandContext,
-      OSQLAsynchQuery<ODocument> request, MatchExecutionPlan executionPlan) {
-    return calculateMatch(pattern, estimatedRootEntries, matchContext, aliasClasses, aliasFilters, iCommandContext, request,
-        executionPlan);
-
-  }
-
   private boolean calculateMatch(Pattern pattern, Map<String, Long> estimatedRootEntries, MatchContext matchContext,
       Map<String, String> aliasClasses, Map<String, OWhereClause> aliasFilters, OCommandContext iCommandContext,
       OSQLAsynchQuery<ODocument> request, MatchExecutionPlan executionPlan) {
@@ -331,8 +349,10 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       executionPlan.preFetchedAliases.put(nextAlias, estimatedRootEntries.get(nextAlias));
     }
 
+    //pick first edge (as sorted before)
     EdgeTraversal firstEdge = executionPlan.sortedEdges.size() == 0 ? null : executionPlan.sortedEdges.get(0);
     String smallestAlias = null;
+    //and choose the most convenient starting point (the most convenient traversal direction)
     if (firstEdge != null) {
       smallestAlias = firstEdge.out ? firstEdge.edge.out.alias : firstEdge.edge.in.alias;
     } else {

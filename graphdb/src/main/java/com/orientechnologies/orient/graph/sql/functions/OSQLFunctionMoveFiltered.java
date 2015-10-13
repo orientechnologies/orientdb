@@ -37,6 +37,8 @@ import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
  */
 public abstract class OSQLFunctionMoveFiltered extends OSQLFunctionMove implements OSQLFunctionFiltered{
 
+  protected static int                        supernodeThreshold = 1000; //move to some configuration
+
   public OSQLFunctionMoveFiltered() {
     super(NAME, 1, 2);
   }
