@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Basic implementation of OCommandContext interface that stores variables in a map. Supports parent/child context to build a tree
@@ -51,6 +52,7 @@ public class OBasicCommandContext implements OCommandContext {
   private long                                                                       executionStartedOn;
   private long                                                                       timeoutMs;
   private com.orientechnologies.orient.core.command.OCommandContext.TIMEOUT_STRATEGY timeoutStrategy;
+  protected AtomicLong                                                               resultsProcessed         = new AtomicLong(0);
 
   public OBasicCommandContext() {
   }
@@ -308,5 +310,13 @@ public class OBasicCommandContext implements OCommandContext {
   public void setInputParameters(Map<Object, Object> inputParameters) {
     this.inputParameters = inputParameters;
 
+  }
+
+  /**
+   * returns the number of results processed. This is intended to be used with LIMIT in SQL statements
+   * @return
+   */
+  public AtomicLong getResultsProcessed() {
+    return resultsProcessed;
   }
 }

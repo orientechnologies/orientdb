@@ -243,6 +243,30 @@ public class OMatchStatementExecutionTest {
   }
 
   @Test
+  public void testSimpleLimit() throws Exception {
+    List<ODocument> qResult = db.command(
+        new OCommandSQL("match {class:Person, as: person, where: (name = 'n1' or name = 'n2')} return person limit 1")).execute();
+
+    assertEquals(1, qResult.size());
+  }
+
+  @Test
+  public void testSimpleLimit2() throws Exception {
+    List<ODocument> qResult = db.command(
+        new OCommandSQL("match {class:Person, as: person, where: (name = 'n1' or name = 'n2')} return person limit -1")).execute();
+
+    assertEquals(2, qResult.size());
+  }
+
+  @Test
+  public void testSimpleLimit3() throws Exception {
+    List<ODocument> qResult = db.command(
+        new OCommandSQL("match {class:Person, as: person, where: (name = 'n1' or name = 'n2')} return person limit 3")).execute();
+
+    assertEquals(2, qResult.size());
+  }
+
+  @Test
   public void testSimpleUnnamedParams() throws Exception {
     List<ODocument> qResult = db.command(
         new OCommandSQL("match {class:Person, as: person, where: (name = ? or name = ?)} return person")).execute("n1", "n2");
@@ -476,6 +500,20 @@ public class OMatchStatementExecutionTest {
                 "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, while: (true) } return friend)"))
         .execute();
     assertEquals(6, qResult.size());
+
+    qResult = db
+        .command(
+            new OCommandSQL(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, while: (true) } return friend limit 3)"))
+        .execute();
+    assertEquals(3, qResult.size());
+
+    qResult = db
+        .command(
+            new OCommandSQL(
+                "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, while: (true) } return friend) limit 3"))
+        .execute();
+    assertEquals(3, qResult.size());
 
   }
 
@@ -987,7 +1025,21 @@ public class OMatchStatementExecutionTest {
     for (OIdentifiable d : result) {
       assertEquals(((ODocument) ((ODocument) d.getRecord()).field("friend1")).field("uid"), 1);
     }
+  }
 
+  @Test
+  public void testCartesianProductLimit() {
+    StringBuilder query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:TriangleV, as: friend1, where:(uid = 1)},");
+    query.append("{class:TriangleV, as: friend2, where:(uid = 2 or uid = 3)}");
+    query.append("return $matches LIMIT 1");
+
+    List<OIdentifiable> result = db.command(new OCommandSQL(query.toString())).execute();
+    assertEquals(1, result.size());
+    for (OIdentifiable d : result) {
+      assertEquals(((ODocument) ((ODocument) d.getRecord()).field("friend1")).field("uid"), 1);
+    }
   }
 
   @Test

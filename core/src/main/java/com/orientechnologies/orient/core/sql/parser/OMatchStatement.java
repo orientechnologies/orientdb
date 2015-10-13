@@ -142,6 +142,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       this.matchExpressions = result.matchExpressions;
       this.returnItems = result.returnItems;
       this.returnAliases = result.returnAliases;
+      this.limit = result.limit;
     } catch (ParseException e) {
       OErrorCode.QUERY_PARSE_ERROR.throwException(e.getMessage(), e);
     }
@@ -211,8 +212,8 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   // ------------------------------------------------------------------
 
   /**
-   * this method works statefully, using request and context variables from current Match statement.
-   * This method will be deprecated in next releases
+   * this method works statefully, using request and context variables from current Match statement. This method will be deprecated
+   * in next releases
    *
    * @param iArgs
    *          Optional variable arguments to pass to the command.
@@ -349,10 +350,10 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       executionPlan.preFetchedAliases.put(nextAlias, estimatedRootEntries.get(nextAlias));
     }
 
-    //pick first edge (as sorted before)
+    // pick first edge (as sorted before)
     EdgeTraversal firstEdge = executionPlan.sortedEdges.size() == 0 ? null : executionPlan.sortedEdges.get(0);
     String smallestAlias = null;
-    //and choose the most convenient starting point (the most convenient traversal direction)
+    // and choose the most convenient starting point (the most convenient traversal direction)
     if (firstEdge != null) {
       smallestAlias = firstEdge.out ? firstEdge.edge.out.alias : firstEdge.edge.in.alias;
     } else {
@@ -389,12 +390,12 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     iCommandContext.setVariable("$matched", matchContext.matched);
 
     if (pattern.getNumOfEdges() == matchContext.matchedEdges.size() && allNodesCalculated(matchContext, pattern)) {
-      addResult(matchContext, request, iCommandContext);
-      return true;
+      // false if limit reached
+      return addResult(matchContext, request, iCommandContext);
     }
     if (executionPlan.sortedEdges.size() == matchContext.currentEdgeNumber) {
-      expandCartesianProduct(pattern, matchContext, aliasClasses, aliasFilters, iCommandContext, request);
-      return true;
+      // false if limit reached
+      return expandCartesianProduct(pattern, matchContext, aliasClasses, aliasFilters, iCommandContext, request);
     }
     EdgeTraversal currentEdge = executionPlan.sortedEdges.get(matchContext.currentEdgeNumber);
     PatternNode rootNode = currentEdge.out ? currentEdge.edge.out : currentEdge.edge.in;
@@ -501,7 +502,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     return true;
   }
 
-  private void expandCartesianProduct(Pattern pattern, MatchContext matchContext, Map<String, String> aliasClasses,
+  private boolean expandCartesianProduct(Pattern pattern, MatchContext matchContext, Map<String, String> aliasClasses,
       Map<String, OWhereClause> aliasFilters, OCommandContext iCommandContext, OSQLAsynchQuery<ODocument> request) {
     for (String alias : pattern.aliasToNode.keySet()) {
       if (!matchContext.matched.containsKey(alias)) {
@@ -514,14 +515,23 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
         for (OIdentifiable id : values) {
           MatchContext childContext = matchContext.copy(alias, id);
           if (allNodesCalculated(childContext, pattern)) {
-            addResult(childContext, request, iCommandContext);
+            // false if limit reached
+            boolean added = addResult(childContext, request, iCommandContext);
+            if (!added) {
+              return false;
+            }
           } else {
-            expandCartesianProduct(pattern, childContext, aliasClasses, aliasFilters, iCommandContext, request);
+            // false if limit reached
+            boolean added = expandCartesianProduct(pattern, childContext, aliasClasses, aliasFilters, iCommandContext, request);
+            if (!added) {
+              return false;
+            }
           }
         }
         break;
       }
     }
+    return true;
   }
 
   private boolean allNodesCalculated(MatchContext matchContext, Pattern pattern) {
@@ -533,7 +543,14 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     return true;
   }
 
-  private void addResult(MatchContext matchContext, OSQLAsynchQuery<ODocument> request, OCommandContext ctx) {
+  private boolean addResult(MatchContext matchContext, OSQLAsynchQuery<ODocument> request, OCommandContext ctx) {
+    long currentCount = ((OBasicCommandContext) ctx).getResultsProcessed().incrementAndGet();
+    if (limit != null) {
+      long limitValue = limit.num.getValue().longValue();
+      if (limitValue > -1 && limitValue < currentCount) {
+        return false;
+      }
+    }
     if (returnsMatches()) {
       ODocument doc = getDatabase().newInstance();
       for (Map.Entry<String, OIdentifiable> entry : matchContext.matched.entrySet()) {
@@ -541,7 +558,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
           doc.field(entry.getKey(), entry.getValue());
         }
       }
-      Object result = getResult(request);
+      // Object result = getResult(request);
 
       if (request.getResultListener() != null) {
         request.getResultListener().result(doc);
@@ -551,7 +568,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       for (Map.Entry<String, OIdentifiable> entry : matchContext.matched.entrySet()) {
         doc.field(entry.getKey(), entry.getValue());
       }
-      Object result = getResult(request);
+      // Object result = getResult(request);
 
       if (request.getResultListener() != null) {
         request.getResultListener().result(doc);
@@ -574,12 +591,13 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
 
         i++;
       }
-      Object result = getResult(request);
+      // Object result = getResult(request);
 
       if (request.getResultListener() != null) {
         request.getResultListener().result(doc);
       }
     }
+    return true;
   }
 
   private boolean isExplicitAlias(String key) {
@@ -757,16 +775,18 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
 
   @Override
   public <RET extends OCommandExecutor> RET setProgressListener(OProgressListener progressListener) {
-
     this.progressListener = progressListener;
     return (RET) this;
   }
 
   @Override
   public <RET extends OCommandExecutor> RET setLimit(int iLimit) {
-    // TODO
+    if (this.limit == null) {
+      this.limit = new OLimit(-1);
+      this.limit.num = new OInteger(-1);
+      this.limit.num.value = iLimit;
+    }
     return (RET) this;
-    // throw new UnsupportedOperationException();
   }
 
   @Override
