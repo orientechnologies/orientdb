@@ -20,19 +20,6 @@
 
 package com.orientechnologies.orient.core.storage.impl.local;
 
-import java.io.*;
-import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
-import java.nio.channels.FileChannel;
-import java.nio.charset.Charset;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
-
 import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
@@ -127,6 +114,19 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OSimpleVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
+import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.nio.charset.Charset;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 /**
  * @author Andrey Lomakin
@@ -2745,7 +2745,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       stream.write(binaryFileId, 0, binaryFileId.length);
 
       for (long pageIndex = 0; pageIndex < filledUpTo; pageIndex++) {
-        final OCacheEntry cacheEntry = readCache.load(fileId, pageIndex, true, writeCache);
+        final OCacheEntry cacheEntry = readCache.load(fileId, pageIndex, true, writeCache, 0);
         cacheEntry.acquireSharedLock();
         try {
           final OLogSequenceNumber pageLsn = ODurablePage.getLogSequenceNumberFromPage(cacheEntry.getCachePointer()
@@ -2917,7 +2917,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
           final long pageIndex = OLongSerializer.INSTANCE.deserializeNative(data, 0);
 
-          OCacheEntry cacheEntry = readCache.load(fileId, pageIndex, true, writeCache);
+          OCacheEntry cacheEntry = readCache.load(fileId, pageIndex, true, writeCache, 0);
 
           if (cacheEntry == null) {
             do {
@@ -2961,7 +2961,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
         processedFiles.add(zipEntry.getName());
       }
-
 
       currentFiles.removeAll(processedFiles);
 
@@ -4222,7 +4221,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         final long pageIndex = updatePageRecord.getPageIndex();
         fileId = readCache.openFile(fileId, writeCache);
 
-        OCacheEntry cacheEntry = readCache.load(fileId, pageIndex, true, writeCache);
+        OCacheEntry cacheEntry = readCache.load(fileId, pageIndex, true, writeCache, 0);
         if (cacheEntry == null) {
           do {
             if (cacheEntry != null)

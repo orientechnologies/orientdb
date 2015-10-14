@@ -421,7 +421,7 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
           if (!testWriteCache.isOpen(fileId))
             testReadCache.openFile(fileId, testWriteCache);
 
-          OCacheEntry cacheEntry = testReadCache.load(fileId, pageIndex, true, testWriteCache);
+          OCacheEntry cacheEntry = testReadCache.load(fileId, pageIndex, true, testWriteCache, 0);
           if (cacheEntry == null) {
             do {
               if (cacheEntry != null)
