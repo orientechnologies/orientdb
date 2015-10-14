@@ -85,6 +85,7 @@ public class ORuntimeResult {
 
       for (Entry<String, Object> projection : iProjections.entrySet()) {
         final String prjName = projection.getKey();
+
         final Object v = projection.getValue();
 
         if (v == null && prjName != null) {
@@ -175,7 +176,6 @@ public class ORuntimeResult {
 
           } else
             iValue.field(prjName, projectionValue);
-
       }
     }
 
@@ -227,8 +227,11 @@ public class ORuntimeResult {
         ORuntimeResult.applyRecord(ORuntimeResult.createProjectionDocument(iId), iProjections, iContext, iRecord), iProjections);
   }
 
-  public void applyRecord(final OIdentifiable iRecord) {
-    applyRecord(value, projections, context, iRecord);
+  public ODocument applyRecord(final OIdentifiable iRecord) {
+    // SYNCHRONIZE ACCESS TO AVOID CONTENTION ON THE SAME INSTANCE
+    synchronized (this) {
+      return applyRecord(value, projections, context, iRecord);
+    }
   }
 
   /**
