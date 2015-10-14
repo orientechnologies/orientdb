@@ -21,7 +21,6 @@
 package com.orientechnologies.orient.core.storage.cache;
 
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 
 import java.io.IOException;
@@ -62,6 +61,8 @@ public interface OWriteCache {
   Future store(long fileId, long pageIndex, OCachePointer dataPointer);
 
   OCachePointer load(long fileId, long pageIndex, boolean addNewPages) throws IOException;
+
+  OCachePointer[] loadPages(long fileId, long pageIndex, int prefetchPages) throws IOException;
 
   void flush(long fileId);
 
