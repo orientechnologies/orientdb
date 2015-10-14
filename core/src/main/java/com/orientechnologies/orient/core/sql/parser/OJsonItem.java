@@ -10,8 +10,6 @@ public class OJsonItem {
   protected String      leftString;
   protected OExpression right;
 
-
-
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (leftIdentifier != null) {
       builder.append("\"");
@@ -25,5 +23,15 @@ public class OJsonItem {
     }
     builder.append(": ");
     right.toString(params, builder);
+  }
+
+  public String getLeftValue() {
+    if (leftString != null) {
+      return leftString;
+    }
+    if (leftIdentifier != null) {
+      leftIdentifier.getValue();
+    }
+    return null;
   }
 }

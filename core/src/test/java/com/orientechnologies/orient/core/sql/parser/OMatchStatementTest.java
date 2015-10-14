@@ -158,6 +158,11 @@ public class OMatchStatementTest {
     checkRightSyntax("MATCH {class: 'V'} RETURN foo limit 10");
   }
 
+  @Test
+  public void testReturnJson() {
+    checkRightSyntax("MATCH {class: 'V'} RETURN {'name':'foo', 'value': bar}");
+  }
+
 
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);

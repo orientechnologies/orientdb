@@ -74,14 +74,12 @@ public class OMatchStatementExecutionTest {
       doc.save();
     }
 
-
     for (int i = 0; i < 100; i++) {
       db.command(
           new OCommandSQL(
               "CREATE EDGE IndexedEDGE FROM (SELECT FROM IndexedVertex WHERE uid = 0) TO (SELECT FROM IndexedVertex WHERE uid > "
                   + (i * nodes / 100) + " and uid <" + ((i + 1) * nodes / 100) + ")")).execute();
     }
-
 
     for (int i = 0; i < 100; i++) {
       db.command(
@@ -361,6 +359,7 @@ public class OMatchStatementExecutionTest {
     assertEquals(1, qResult.size());
     assertEquals("n2 n2", qResult.get(0).field("name"));
   }
+
   @Test
   public void testReturnExpressionArrows() throws Exception {
     List<ODocument> qResult = db
@@ -517,7 +516,6 @@ public class OMatchStatementExecutionTest {
 
   }
 
-
   @Test
   public void testWhileArrows() throws Exception {
 
@@ -629,7 +627,6 @@ public class OMatchStatementExecutionTest {
     assertEquals("b", getManagerArrows("p6").field("name"));
     assertEquals("b", getManagerArrows("p11").field("name"));
   }
-
 
   private ODocument getManager(String personName) {
     StringBuilder query = new StringBuilder();
@@ -756,7 +753,6 @@ public class OMatchStatementExecutionTest {
     return db.command(new OCommandSQL(query.toString())).execute();
   }
 
-
   @Test
   public void testManagedArrows() {
     // people managed by a manager are people who belong to his department or people who belong to sub-departments without a manager
@@ -834,7 +830,6 @@ public class OMatchStatementExecutionTest {
 
     return db.command(new OCommandSQL(query.toString())).execute();
   }
-
 
   @Test
   public void testManaged2Arrows() {
@@ -926,7 +921,6 @@ public class OMatchStatementExecutionTest {
     assertEquals(2, friend3.field("uid"));
   }
 
-
   @Test
   public void testTriangle2Arrows() {
     StringBuilder query = new StringBuilder();
@@ -1010,7 +1004,6 @@ public class OMatchStatementExecutionTest {
     List<?> result = db.command(new OCommandSQL(query.toString())).execute();
     assertEquals(1, result.size());
   }
-
 
   @Test
   public void testCartesianProduct() {
@@ -1165,6 +1158,48 @@ public class OMatchStatementExecutionTest {
     List<?> result = db.command(new OCommandSQL(query.toString())).execute();
     assertEquals(1, result.size());
     System.out.println("took " + (System.currentTimeMillis() - begin));// TODO
+  }
+
+  @Test
+  public void testJson() {
+    StringBuilder query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:IndexedVertex, as: one, where: (uid = 0)} ");
+    query.append("return {'name':'foo', 'uuid':one.uid}");
+
+    List<ODocument> result = db.command(new OCommandSQL(query.toString())).execute();
+    assertEquals(1, result.size());
+    ODocument doc = result.get(0);
+    assertEquals("foo", doc.field("name"));
+    assertEquals(0, doc.field("uuid"));
+  }
+
+  @Test
+  public void testJson2() {
+    StringBuilder query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:IndexedVertex, as: one, where: (uid = 0)} ");
+    query.append("return {'name':'foo', 'sub': {'uuid':one.uid}}");
+
+    List<ODocument> result = db.command(new OCommandSQL(query.toString())).execute();
+    assertEquals(1, result.size());
+    ODocument doc = result.get(0);
+    assertEquals("foo", doc.field("name"));
+    assertEquals(0, doc.field("sub.uuid"));
+  }
+
+  @Test
+  public void testJson3() {
+    StringBuilder query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:IndexedVertex, as: one, where: (uid = 0)} ");
+    query.append("return {'name':'foo', 'sub': [{'uuid':one.uid}]}");
+
+    List<ODocument> result = db.command(new OCommandSQL(query.toString())).execute();
+    assertEquals(1, result.size());
+    ODocument doc = result.get(0);
+    assertEquals("foo", doc.field("name"));
+    assertEquals(0, doc.field("sub[0].uuid"));
   }
 
   private long indexUsages(ODatabaseDocumentTx db) {

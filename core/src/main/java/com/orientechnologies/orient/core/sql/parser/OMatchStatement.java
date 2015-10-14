@@ -52,6 +52,13 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       result.matchedEdges.putAll(matchedEdges);
       return result;
     }
+
+    public ODocument toDoc() {
+      ODocument doc = new ODocument();
+      doc.fromMap((Map) matched);
+      return doc;
+    }
+
   }
 
   public static class EdgeTraversal {
@@ -573,6 +580,11 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       if (request.getResultListener() != null) {
         request.getResultListener().result(doc);
       }
+    } else if (returnsJson()) {
+      if (request.getResultListener() != null) {
+        request.getResultListener().result(jsonToDocument(matchContext, ctx));
+      }
+
     } else {
       ODocument doc = getDatabase().newInstance();
       int i = 0;
@@ -598,6 +610,20 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       }
     }
     return true;
+  }
+
+  private boolean returnsJson() {
+    if (returnItems.size() == 1 && (returnItems.get(0).value instanceof OJson) && returnAliases.get(0) == null) {
+      return true;
+    }
+    return false;
+  }
+
+  private ODocument jsonToDocument(MatchContext matchContext, OCommandContext ctx) {
+    if (returnItems.size() == 1 && (returnItems.get(0).value instanceof OJson) && returnAliases.get(0) == null) {
+      return ((OJson) returnItems.get(0).value).toDocument(matchContext.toDoc(), ctx);
+    }
+    throw new IllegalStateException("Match RETURN statement is not a plain JSON");
   }
 
   private boolean isExplicitAlias(String key) {
