@@ -19,6 +19,16 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
+import java.io.ByteArrayOutputStream;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.lang.ref.WeakReference;
+import java.util.*;
+import java.util.Map.Entry;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
@@ -69,30 +79,20 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
-import java.io.ByteArrayOutputStream;
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.lang.ref.WeakReference;
-import java.util.*;
-import java.util.Map.Entry;
-
 /**
  * Document representation to handle values dynamically. Can be used in schema-less, schema-mixed and schema-full modes. Fields can
  * be added at run-time. Instances can be reused across calls by using the reset() before to re-use.
  */
 @SuppressWarnings({ "unchecked" })
-public class ODocument extends ORecordAbstract implements Iterable<Entry<String, Object>>, ORecordSchemaAware, ODetachable,
-    Externalizable {
+public class ODocument extends ORecordAbstract
+    implements Iterable<Entry<String, Object>>, ORecordSchemaAware, ODetachable, Externalizable {
 
-  public static final byte                                RECORD_TYPE             = 'd';
-  protected static final String[]                         EMPTY_STRINGS           = new String[] {};
-  private static final long                               serialVersionUID        = 1L;
-  protected int                                           _fieldSize;
+  public static final byte        RECORD_TYPE      = 'd';
+  protected static final String[] EMPTY_STRINGS    = new String[] {};
+  private static final long       serialVersionUID = 1L;
+  protected int                   _fieldSize;
 
-  protected Map<String, ODocumentEntry>                   _fields;
+  protected Map<String, ODocumentEntry> _fields;
 
   protected boolean                                       _trackingChanges        = true;
   protected boolean                                       _ordered                = true;
@@ -170,8 +170,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       final OSchema schema = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot();
       final OClass cls = schema.getClassByClusterId(_recordId.clusterId);
       if (cls != null && !cls.getName().equals(iClassName))
-        throw new IllegalArgumentException("Cluster id does not correspond class name should be " + iClassName + " but found "
-            + cls.getName());
+        throw new IllegalArgumentException(
+            "Cluster id does not correspond class name should be " + iClassName + " but found " + cls.getName());
     }
 
     _dirty = false;
@@ -337,7 +337,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       if (p.getMinComparable().compareTo(fieldValue) > 0) {
         switch (p.getType()) {
         case STRING:
-          throw new OValidationException("The field '" + p.getFullName() + "' contains fewer characters than " + min + " requested");
+          throw new OValidationException(
+              "The field '" + p.getFullName() + "' contains fewer characters than " + min + " requested");
         case DATE:
         case DATETIME:
           throw new OValidationException("The field '" + p.getFullName() + "' contains the date " + fieldValue
@@ -390,8 +391,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
         boolean simple = fieldValue != null ? OType.isSimpleType(fieldValue) : OType.isSimpleType(orgVal);
         if ((simple) || (fieldValue != null && orgVal == null) || (fieldValue == null && orgVal != null)
             || (fieldValue != null && !fieldValue.equals(orgVal)))
-          throw new OValidationException("The field '" + p.getFullName() + "' is immutable and cannot be altered. Field value is: "
-              + entry.value);
+          throw new OValidationException(
+              "The field '" + p.getFullName() + "' is immutable and cannot be altered. Field value is: " + entry.value);
       }
     }
   }
@@ -724,7 +725,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   public String[] fieldNames() {
     checkForLoading();
 
-    if (_status == ORecordElement.STATUS.LOADED && _source != null) {
+    if (_status == ORecordElement.STATUS.LOADED && _source != null && ODatabaseRecordThreadLocal.INSTANCE.isDefined()) {
       // DESERIALIZE FIELD NAMES ONLY (SUPPORTED ONLY BY BINARY SERIALIZER)
       final String[] fieldNames = _recordFormat.getFieldNames(_source);
       if (fieldNames != null)
@@ -1299,7 +1300,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     final Iterator<Entry<String, ODocumentEntry>> iterator = _fields.entrySet().iterator();
     return new Iterator<Entry<String, Object>>() {
       private Entry<String, ODocumentEntry> current;
-      private boolean                       read = true;
+      private boolean read = true;
 
       public boolean hasNext() {
         while (iterator.hasNext()) {
@@ -2293,8 +2294,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
             field(prop.getName(), list);
           }
         } catch (Exception e) {
-          throw OException.wrapException(
-              new OValidationException("impossible to convert value of field \"" + prop.getName() + "\""), e);
+          throw OException
+              .wrapException(new OValidationException("impossible to convert value of field \"" + prop.getName() + "\""), e);
         }
       }
     }
@@ -2573,7 +2574,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
   private void fetchClassName() {
     final ODatabaseDocumentInternal database = getDatabaseIfDefinedInternal();
-    if (database != null && database.getStorageVersions() != null && database.getStorageVersions().classesAreDetectedByClusterId()) {
+    if (database != null && database.getStorageVersions() != null
+        && database.getStorageVersions().classesAreDetectedByClusterId()) {
       if (_recordId.clusterId < 0) {
         checkForLoading();
         checkForFields(ODocumentHelper.ATTRIBUTE_CLASS);
