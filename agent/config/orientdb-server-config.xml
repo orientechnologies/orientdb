@@ -89,7 +89,5 @@
         <entry value="true" name="cache.level2.enabled"/>
         <entry value="1000" name="cache.level2.size"/>
         <entry value="true" name="profiler.enabled"/>
-        <entry value="info" name="log.console.level"/>
-        <entry value="fine" name="log.file.level"/>
     </properties>
 </orient-server>

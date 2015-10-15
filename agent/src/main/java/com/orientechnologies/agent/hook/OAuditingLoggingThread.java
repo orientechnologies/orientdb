@@ -43,6 +43,7 @@ public class OAuditingLoggingThread extends Thread {
 
     this.databaseURL = iDatabaseURL;
     this.auditingQueue = auditingQueue;
+    setDaemon(true);
   }
 
   @Override
