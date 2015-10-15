@@ -75,6 +75,10 @@ angular
         templateUrl: 'views/topics.html',
         controller: 'TopicCtrl'
       })
+      .when('/charts', {
+        templateUrl: 'views/charts.html',
+        controller: 'ChartsCtrl'
+      })
       .when('/topics/new', {
         templateUrl: 'views/topics/topicNew.html',
         controller: 'TopicNewCtrl'
