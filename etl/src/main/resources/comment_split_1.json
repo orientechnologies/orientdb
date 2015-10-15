@@ -1,0 +1,9 @@
+{
+  "source": {
+    "file": {
+      "path": "./src/main/resources/comments.csv"
+    }
+  }
+
+}
+
