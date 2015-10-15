@@ -168,6 +168,15 @@ public class GithubMockController {
 
   }
 
+  @RequestMapping(value = "/user", method = RequestMethod.GET)
+  public OUser findUser(@RequestHeader(value = "Authorization") String auth) {
+
+    final OUser byGithubToken = userRepository.findByGithubToken(auth.replace("token ", ""));
+
+    return byGithubToken;
+
+  }
+
   public void runInThread(final Runnable runnable) {
 
     new Thread(new Runnable() {
