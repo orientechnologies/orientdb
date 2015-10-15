@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Andrey Lomakin <lomakin.andrey@gmail.com>.
  * @since 10/6/2015
  */
-@Test
+@Test(enabled = false)
 public class StorageBackupMTStateTest {
   static {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(3);
