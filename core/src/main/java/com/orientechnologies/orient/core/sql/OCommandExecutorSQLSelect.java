@@ -684,8 +684,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   /**
-   * in case of ORDER BY + SKIP + LIMIT, this method applies ORDER BY operation on partial result and discards overflowing results
-   * (results > skip + limit)
+   * in case of ORDER BY + SKIP + LIMIT, this method applies ORDER BY operation on partial result and discards overflowing
+   * results (results > skip + limit)
    */
   private void applyPartialOrderBy() {
     if (orderedFields.isEmpty() || fullySortedByIndex || isRidOnlySort()) {
@@ -1615,7 +1615,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       }
 
     }
-    fullySortedByIndex = fullySorted && expandTarget == null;
+    fullySortedByIndex = fullySorted;
 
     uniqueResult = new HashSet<ORID>();
 
@@ -1722,7 +1722,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             boolean ascSortOrder = !indexIsUsedInOrderBy || orderedFields.get(0).getValue().equals(KEYWORD_ASC);
 
             if (indexIsUsedInOrderBy) {
-              fullySortedByIndex = expandTarget == null && indexDefinition.getFields().size() >= orderedFields.size() && conditionHierarchy.size() == 1;
+              fullySortedByIndex = indexDefinition.getFields().size() >= orderedFields.size() && conditionHierarchy.size() == 1;
             }
 
             context.setVariable("$limit", limit);
@@ -1875,7 +1875,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
               boolean ascSortOrder = !indexIsUsedInOrderBy || orderedFields.get(0).getValue().equals(KEYWORD_ASC);
 
               if (indexIsUsedInOrderBy) {
-                fullySortedByIndex = expandTarget == null && indexDefinition.getFields().size() >= orderedFields.size() && conditionHierarchy.size() == 1;
+                fullySortedByIndex = indexDefinition.getFields().size() >= orderedFields.size() && conditionHierarchy.size() == 1;
               }
 
               context.setVariable("$limit", limit);
@@ -1993,7 +1993,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           return null;
         }
 
-        fullySortedByIndex = expandTarget == null;
+        fullySortedByIndex = true;
 
         if (context.isRecordingMetrics()) {
           context.setVariable("indexIsUsedInOrderBy", true);
