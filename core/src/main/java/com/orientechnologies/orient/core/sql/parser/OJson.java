@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -56,13 +57,32 @@ public class OJson extends SimpleNode {
       if (name == null) {
         continue;
       }
-      Object value = item.right.execute(source, ctx);
+      Object value;
+      if (item.right.value instanceof OJson) {
+        value = ((OJson) item.right.value).toDocument(source, ctx);
+      } else {
+        value = item.right.execute(source, ctx);
+      }
       doc.field(name, value);
     }
 
     return doc;
   }
 
+  public Map<String, Object> toMap(OIdentifiable source, OCommandContext ctx) {
+    String className = getClassNameForDocument(ctx);
+    Map<String, Object> doc = new HashMap<String, Object>();
+    for (OJsonItem item : items) {
+      String name = item.getLeftValue();
+      if (name == null) {
+        continue;
+      }
+      Object value = item.right.execute(source, ctx);
+      doc.put(name, value);
+    }
+
+    return doc;
+  }
 
   private String getClassNameForDocument(OCommandContext ctx) {
     for (OJsonItem item : items) {

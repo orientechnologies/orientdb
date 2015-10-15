@@ -35,7 +35,7 @@ public class OExpression extends SimpleNode {
     } else if (value instanceof OMathExpression) {
       return ((OMathExpression) value).execute(iCurrentRecord, ctx);
     } else if (value instanceof OJson) {
-      return ((OJson) value).toDocument(iCurrentRecord, ctx);
+      return ((OJson) value).toMap(iCurrentRecord, ctx);
     } else if (value instanceof String) {
       return value;
     } else if (value instanceof Number) {
