@@ -1259,8 +1259,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   }
 
   @SuppressFBWarnings(value = "PZLA_PREFER_ZERO_LENGTH_ARRAYS")
-  public void scan(final boolean iAscendingOrder, final long iFrom, final long iTo, final OCallable<Boolean, ORecord> iCallback)
-      throws IOException {
+  public long scan(final boolean iAscendingOrder, final long iFrom, final long iTo, final long iLimit, final OCallable<Boolean, ORecord> iCallback) throws IOException {
     atomicOperationsManager.acquireReadLock(this);
     try {
       acquireSharedLock();
@@ -1271,10 +1270,14 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         final long progressDump = recordsToScan / 10;
         final int prefetchPages = OGlobalConfiguration.QUERY_SCAN_PREFETCH_PAGES.getValueAsInteger();
 
-        for (long clusterPosition = iAscendingOrder ? firstPos : lastPos; iAscendingOrder ? clusterPosition <= lastPos
+        long clusterPosition = iAscendingOrder ? firstPos : lastPos;
+        long browsed = 0;
+
+        for (; iAscendingOrder ? clusterPosition <= lastPos
             : clusterPosition >= firstPos; clusterPosition += (iAscendingOrder ? 1 : -1)) {
 
           final ORawBuffer buffer = readRecordNoLock(clusterPosition, prefetchPages);
+
           if (buffer == null)
             continue;
 
@@ -1297,7 +1300,13 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
             Thread.currentThread().interrupt();
             break;
           }
+
+          if (iLimit > 0 && browsed++ > iLimit)
+            // LIMIT REACHED, RETURN TRUE TO CONTINUE
+            return clusterPosition;
         }
+
+        return -1;
 
       } finally {
         releaseSharedLock();

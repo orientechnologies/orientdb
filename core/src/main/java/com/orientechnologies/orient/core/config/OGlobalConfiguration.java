@@ -19,16 +19,6 @@
  */
 package com.orientechnologies.orient.core.config;
 
-import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.util.OApi;
-import com.orientechnologies.orient.core.OConstants;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.cache.ORecordCacheWeakRefs;
-import com.orientechnologies.orient.core.metadata.OMetadataDefault;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
-import com.orientechnologies.orient.core.storage.cache.local.O2QCache;
-
 import java.io.File;
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
@@ -40,6 +30,16 @@ import java.util.Map.Entry;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
+
+import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OApi;
+import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.cache.ORecordCacheWeakRefs;
+import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
+import com.orientechnologies.orient.core.storage.cache.local.O2QCache;
 
 /**
  * Keeps all configuration settings. At startup assigns the configuration values by reading system properties.
@@ -456,6 +456,10 @@ public enum OGlobalConfiguration {
   QUERY_SCAN_PREFETCH_PAGES("query.scanPrefetchPages",
       "Pages to early fetch during scan. Setting this value higher makes scan faster because reduce the number of I/O operations, even if consumes more memory. Use 0 to do not prefetch",
       Integer.class, 20),
+
+  QUERY_SCAN_BATCH_SIZE("query.scanBatchSize",
+      "Scan clusters at blocks of records. This avoids to keep the lock on storage and cluster for too much time. High values means faster execution, but also a lower concurrency level. Set 0 to disable batch scan. This is suggested for readonly databases",
+      Long.class, 100000),
 
   QUERY_SCAN_THRESHOLD_TIP("query.scanThresholdTip",
       "If total number of records scanned in a query is major than this threshold a warning is given. Use 0 to disable it",
