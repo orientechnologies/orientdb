@@ -582,7 +582,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       }
     } else if (returnsJson()) {
       if (request.getResultListener() != null) {
-        request.getResultListener().result(jsonToDocument(matchContext, ctx));
+        request.getResultListener().result(jsonToMap(matchContext, ctx));
       }
 
     } else {
@@ -619,9 +619,9 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     return false;
   }
 
-  private ODocument jsonToDocument(MatchContext matchContext, OCommandContext ctx) {
+  private Map<String, Object> jsonToMap(MatchContext matchContext, OCommandContext ctx) {
     if (returnItems.size() == 1 && (returnItems.get(0).value instanceof OJson) && returnAliases.get(0) == null) {
-      return ((OJson) returnItems.get(0).value).toDocument(matchContext.toDoc(), ctx);
+      return ((OJson) returnItems.get(0).value).toMap(matchContext.toDoc(), ctx);
     }
     throw new IllegalStateException("Match RETURN statement is not a plain JSON");
   }
