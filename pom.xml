@@ -101,6 +101,7 @@
         <module>tests</module>
         <module>distributed</module>
         <module>graphdb</module>
+        <module>jdbc</module>
         <module>etl</module>
         <module>distribution</module>
     </modules>
@@ -553,6 +554,9 @@
         </profile>
         <profile>
             <id>findbugs</id>
+            <activation>
+                <activeByDefault>fale</activeByDefault>
+            </activation>
             <build>
                 <plugins>
                     <plugin>
