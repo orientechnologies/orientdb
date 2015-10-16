@@ -1852,7 +1852,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       return false;
     }
 
-    OOrderBy order = new OOrderBy();
+    final OOrderBy order = new OOrderBy();
     order.setItems(new ArrayList<OOrderByItem>());
     if (this.orderedFields != null) {
       for (OPair<String, String> pair : this.orderedFields) {

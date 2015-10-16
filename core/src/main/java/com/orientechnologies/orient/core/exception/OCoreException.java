@@ -4,14 +4,13 @@ import com.orientechnologies.common.exception.OErrorCode;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 
 /**
  * @author Andrey Lomakin <lomakin.andrey@gmail.com>.
  * @since 9/28/2015
  */
 public abstract class OCoreException extends OException {
-  private OErrorCode   errorCode;
+  private OErrorCode errorCode;
 
   private final String storageURL;
   private final String componentName;

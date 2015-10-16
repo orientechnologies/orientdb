@@ -288,24 +288,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
             // MIX & FILTER RESULT SET AVOIDING DUPLICATES
             // TODO: ONCE OPTIMIZED (SEE ABOVE) AVOID TO FILTER HERE
 
-            final ArrayList<Object> set = new ArrayList<Object>();
-            for (Map.Entry<String, Object> entry : ((Map<String, Object>) results).entrySet()) {
-              final Object nodeResult = entry.getValue();
-              if (nodeResult instanceof Collection)
-                set.addAll((Collection<?>) nodeResult);
-              else if (nodeResult instanceof Exception)
-                // RECEIVED EXCEPTION
-                throw (Exception) nodeResult;
-              else
-                set.add(nodeResult);
-            }
-
-            if (result instanceof OResultSet) {
-              // REUSE THE SAME RESULTSET TO AVOID DUPLICATES
-              ((OResultSet) result).clear();
-              ((OResultSet) result).addAll(set);
-            } else
-              result = new ArrayList<Object>(set);
+            result = exec.mergeResults(results);
           }
 
         } else {

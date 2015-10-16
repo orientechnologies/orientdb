@@ -19,17 +19,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -63,6 +52,9 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorNotEquals;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Executes a TRAVERSE crossing records. Returns a List<OIdentifiable> containing all the traversed records that match the WHERE
@@ -696,5 +688,41 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
   @Override
   public boolean isCacheable() {
     return true;
+  }
+  
+  public Object mergeResults(Map<String, Object> results) throws Exception {
+
+    if (results.isEmpty())
+      return null;
+
+    // TODO: DELEGATE MERGE AT EVERY COMMAND
+    final ArrayList<Object> mergedResult = new ArrayList<Object>();
+
+    final Object firstResult = results.values().iterator().next();
+
+    for (Map.Entry<String, Object> entry : results.entrySet()) {
+      final String nodeName = entry.getKey();
+      final Object nodeResult = entry.getValue();
+
+      if (nodeResult instanceof Collection)
+        mergedResult.addAll((Collection<?>) nodeResult);
+      else if (nodeResult instanceof Exception)
+        // RECEIVED EXCEPTION
+        throw (Exception) nodeResult;
+      else
+        mergedResult.add(nodeResult);
+    }
+
+    Object result = null;
+
+    if (firstResult instanceof OResultSet) {
+      // REUSE THE SAME RESULTSET TO AVOID DUPLICATES
+      ((OResultSet) firstResult).clear();
+      ((OResultSet) firstResult).addAll(mergedResult);
+      result = firstResult;
+    } else
+      result = new ArrayList<Object>(mergedResult);
+
+    return result;
   }
 }

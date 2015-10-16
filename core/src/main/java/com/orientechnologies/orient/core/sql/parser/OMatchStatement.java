@@ -875,6 +875,11 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     return -1;
   }
 
+  @Override
+  public Object mergeResults(Map<String, Object> results) throws Exception {
+    return results;
+  }
+
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append(KEYWORD_MATCH);
     builder.append(" ");
