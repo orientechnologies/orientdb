@@ -233,9 +233,14 @@ public class ODistributedConfiguration {
       if (iClusterNames.size() == 1) {
         final List<String> serverList = getClusterConfiguration(iClusterNames.iterator().next()).field("servers");
 
-        // PICK THE FIRST ONE
-        servers.put(serverList.get(0), iClusterNames);
-        return servers;
+        for (String s : serverList) {
+          if (NEW_NODE_TAG.equalsIgnoreCase(s))
+            continue;
+
+          // PICK THE FIRST ONE
+          servers.put(s, iClusterNames);
+          return servers;
+        }
       }
 
       // GROUP BY SERVER WITH THE NUMBER OF CLUSTERS
@@ -243,6 +248,9 @@ public class ODistributedConfiguration {
       for (String p : iClusterNames) {
         final List<String> serverList = getClusterConfiguration(p).field("servers");
         for (String s : serverList) {
+          if (NEW_NODE_TAG.equalsIgnoreCase(s))
+            continue;
+
           Collection<String> clustersInServer = serverMap.get(s);
           if (clustersInServer == null) {
             clustersInServer = new HashSet<String>();

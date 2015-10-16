@@ -93,7 +93,7 @@ public class OSyncClusterTask extends OAbstractReplicatedTask {
 
           iManager.getConfigurationMap().put(DEPLOYCLUSTER + databaseName + "." + clusterName, random);
 
-          ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT, "deploying cluster %s...",
+          ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT, "deploying cluster %s...",
               databaseName);
 
           final File backupFile = new File(Orient.getTempPath() + "/backup_" + database.getName() + "_" + clusterName + ".zip");
