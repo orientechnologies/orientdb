@@ -99,7 +99,7 @@ public class ODocumentHelper {
       } else if (iValue instanceof ORecord) {
         return (RET) ((ORecord) iValue).getIdentity();
       }
-    } else if (ORecord.class.isAssignableFrom(iFieldType)) {
+    } else if (OIdentifiable.class.isAssignableFrom(iFieldType)) {
       if (iValue instanceof ORID || iValue instanceof ORecord) {
         return (RET) iValue;
       } else if (iValue instanceof String) {

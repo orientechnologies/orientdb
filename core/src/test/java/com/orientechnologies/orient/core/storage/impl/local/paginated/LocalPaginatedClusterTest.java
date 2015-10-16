@@ -1173,7 +1173,7 @@ public class LocalPaginatedClusterTest {
     OPhysicalPosition physicalPosition = paginatedCluster
         .createRecord(record, OVersionFactory.instance().createVersion(), (byte) 1);
 
-    OCacheEntry cacheEntry = readCache.load(1, 1, false, writeCache);
+    OCacheEntry cacheEntry = readCache.load(1, 1, false, writeCache, 0);
     OClusterPage page = new OClusterPage(cacheEntry, false, null);
     int recordIndex = (int) (physicalPosition.clusterPosition & 0xFFFF);
 
@@ -1184,7 +1184,7 @@ public class LocalPaginatedClusterTest {
     physicalPosition = paginatedCluster.createRecord(record, OVersionFactory.instance().createVersion(), (byte) 1);
 
     recordIndex = (int) (physicalPosition.clusterPosition & 0xFFFF);
-    cacheEntry = readCache.load(1, 1, false, writeCache);
+    cacheEntry = readCache.load(1, 1, false, writeCache, 0);
     page = new OClusterPage(cacheEntry, false, null);
 
     Assert.assertEquals(page.getRecordSize(recordIndex), record.length * 2 + RECORD_SYSTEM_INFORMATION);
@@ -1209,7 +1209,7 @@ public class LocalPaginatedClusterTest {
 
     paginatedCluster.updateRecord(physicalPosition.clusterPosition, record, version, (byte) 1);
 
-    OCacheEntry cacheEntry = readCache.load(1, 1, false, writeCache);
+    OCacheEntry cacheEntry = readCache.load(1, 1, false, writeCache, 0);
     int recordIndex = (int) (physicalPosition.clusterPosition & 0xFFFF);
     OClusterPage page = new OClusterPage(cacheEntry, false, null);
 
@@ -1221,7 +1221,7 @@ public class LocalPaginatedClusterTest {
 
     paginatedCluster.updateRecord(physicalPosition.clusterPosition, record, version, (byte) 1);
 
-    cacheEntry = readCache.load(1, 1, false, writeCache);
+    cacheEntry = readCache.load(1, 1, false, writeCache, 0);
     page = new OClusterPage(cacheEntry, false, null);
 
     int fullContentSize = 500 + OIntegerSerializer.INT_SIZE + OByteSerializer.BYTE_SIZE; // type + real size

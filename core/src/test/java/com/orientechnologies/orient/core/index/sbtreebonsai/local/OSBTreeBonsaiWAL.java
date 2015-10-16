@@ -9,12 +9,6 @@ import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
-import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
-import com.orientechnologies.orient.core.storage.cache.OWriteCache;
-import com.orientechnologies.orient.core.storage.fs.OFileClassic;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -27,15 +21,26 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
+import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
-import com.orientechnologies.orient.core.storage.cache.local.O2QCache;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
+import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
+import com.orientechnologies.orient.core.storage.cache.OWriteCache;
+import com.orientechnologies.orient.core.storage.cache.local.O2QCache;
+import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
+import com.orientechnologies.orient.core.storage.fs.OFileClassic;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitEndRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODiskWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
 
 /**
  * @author Andrey Lomakin
@@ -315,7 +320,7 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiLocalTest {
           if (!expectedWriteCache.isOpen(fileId))
             expectedReadCache.openFile(fileId, expectedWriteCache);
 
-          OCacheEntry cacheEntry = expectedReadCache.load(fileId, pageIndex, true, expectedWriteCache);
+          OCacheEntry cacheEntry = expectedReadCache.load(fileId, pageIndex, true, expectedWriteCache, 0);
           if (cacheEntry == null) {
             do {
               cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache);

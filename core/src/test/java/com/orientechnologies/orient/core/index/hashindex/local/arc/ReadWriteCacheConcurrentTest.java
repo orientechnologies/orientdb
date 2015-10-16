@@ -1,28 +1,40 @@
 package com.orientechnologies.orient.core.index.hashindex.local.arc;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
-
-import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
-import com.orientechnologies.orient.core.storage.cache.OWriteCache;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
+import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.cache.local.O2QCache;
+import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Queue;
+import java.util.Random;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicIntegerArray;
+import java.util.concurrent.atomic.AtomicLongArray;
+import java.util.concurrent.atomic.AtomicReferenceArray;
 
 /**
  * @author Artem Loginov
@@ -219,7 +231,7 @@ public class ReadWriteCacheConcurrentTest {
     }
 
     private void writeToFile(int fileNumber, long pageIndex) throws IOException {
-      OCacheEntry cacheEntry = readBuffer.load(fileIds.get(fileNumber), pageIndex, false, writeBuffer);
+      OCacheEntry cacheEntry = readBuffer.load(fileIds.get(fileNumber), pageIndex, false, writeBuffer, 0);
       if (cacheEntry == null) {
         do {
           if (cacheEntry != null)
@@ -231,7 +243,7 @@ public class ReadWriteCacheConcurrentTest {
 
       if (cacheEntry.getPageIndex() > pageIndex) {
         readBuffer.release(cacheEntry, writeBuffer);
-        cacheEntry = readBuffer.load(fileIds.get(fileNumber), pageIndex, false, writeBuffer);
+        cacheEntry = readBuffer.load(fileIds.get(fileNumber), pageIndex, false, writeBuffer, 0);
       }
 
       OCachePointer pointer = cacheEntry.getCachePointer();
@@ -289,7 +301,7 @@ public class ReadWriteCacheConcurrentTest {
       long pageIndex = Math.abs(new Random().nextInt() % PAGE_COUNT);
       int fileNumber = new Random().nextInt(FILE_COUNT);
 
-      OCacheEntry cacheEntry = readBuffer.load(fileIds.get(fileNumber), pageIndex, false, writeBuffer);
+      OCacheEntry cacheEntry = readBuffer.load(fileIds.get(fileNumber), pageIndex, false, writeBuffer, 0);
       OCachePointer pointer = cacheEntry.getCachePointer();
 
       byte[] content = pointer.getDataPointer().get(systemOffset + OWOWCache.PAGE_PADDING, 8);

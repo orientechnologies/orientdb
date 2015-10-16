@@ -33,6 +33,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class StorageBackupMTStateTest {
   static {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(3);
+    OGlobalConfiguration.INDEX_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(10);
   }
 
   private final OReadersWriterSpinLock               flowLock               = new OReadersWriterSpinLock();
@@ -82,10 +83,15 @@ public class StorageBackupMTStateTest {
 
     pool = new OPartitionedDatabasePool(dbURL, "admin", "admin");
 
-    System.out.println("Start insertion");
-    final ExecutorService executor = Executors.newSingleThreadExecutor();
+    System.out.println("Start data modification");
+    final ExecutorService executor = Executors.newFixedThreadPool(5);
     final ScheduledExecutorService backupExecutor = Executors.newSingleThreadScheduledExecutor();
-    backupExecutor.scheduleWithFixedDelay(new IncrementalBackupThread(), 1, 1, TimeUnit.MINUTES);
+    final ScheduledExecutorService classCreatorExecutor = Executors.newSingleThreadScheduledExecutor();
+    final ScheduledExecutorService classDeleterExecutor = Executors.newSingleThreadScheduledExecutor();
+
+    classDeleterExecutor.scheduleWithFixedDelay(new ClassDeleter(), 10, 10, TimeUnit.MINUTES);
+    backupExecutor.scheduleWithFixedDelay(new IncrementalBackupThread(), 5, 5, TimeUnit.MINUTES);
+    classCreatorExecutor.scheduleWithFixedDelay(new ClassAdder(), 7, 5, TimeUnit.MINUTES);
 
     List<Future<Void>> futures = new ArrayList<Future<Void>>();
 
@@ -93,9 +99,10 @@ public class StorageBackupMTStateTest {
     futures.add(executor.submit(new NonTxInserter()));
     futures.add(executor.submit(new TxInserter()));
     futures.add(executor.submit(new TxInserter()));
+    futures.add(executor.submit(new RecordsDeleter()));
 
     int k = 0;
-    while (k < 10) {
+    while (k < 60) {
       Thread.sleep(30 * 1000);
       k++;
 
@@ -104,16 +111,27 @@ public class StorageBackupMTStateTest {
 
     stop = true;
 
+    System.out.println("Stop backup");
+    backupExecutor.shutdown();
+
+    System.out.println("Stop class creation/deletion");
+    classCreatorExecutor.shutdown();
+    classDeleterExecutor.shutdown();
+
+    backupExecutor.awaitTermination(15, TimeUnit.MINUTES);
+    classCreatorExecutor.awaitTermination(15, TimeUnit.MINUTES);
+    classDeleterExecutor.awaitTermination(15, TimeUnit.MINUTES);
+
+    System.out.println("Stop data threads");
+
     for (Future<Void> future : futures)
       future.get();
 
-    backupExecutor.shutdown();
-    backupExecutor.awaitTermination(15, TimeUnit.MINUTES);
-
-    System.out.println("Stop insertion ");
+    System.out.println("All threads are stopped");
 
     pool.close();
 
+    System.out.println("Final incremental  backup");
     databaseDocumentTx = new ODatabaseDocumentTx(dbURL);
     databaseDocumentTx.open("admin", "admin");
     databaseDocumentTx.incrementalBackup(backupDir.getAbsolutePath());
@@ -166,9 +184,11 @@ public class StorageBackupMTStateTest {
     cls.createProperty("linkedDocuments", OType.LINKBAG);
 
     cls.createIndex(cls.getName() + "IdIndex", OClass.INDEX_TYPE.UNIQUE, "id");
-    cls.createIndex(cls.getName() + "IntValueIndex", OClass.INDEX_TYPE.NOTUNIQUE, "intValue");
+    cls.createIndex(cls.getName() + "IntValueIndex", OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX, "intValue");
 
     classInstancesCounters.put(cls.getName(), new AtomicInteger());
+
+    System.out.println("Class " + cls.getName() + " is added");
 
     return cls;
   }
@@ -250,6 +270,7 @@ public class StorageBackupMTStateTest {
     protected final Random random = new Random();
 
     protected void insertRecord(ODatabaseDocumentTx db) {
+      final int docId;
       final int classes = classCounter.get();
 
       String className;
@@ -261,7 +282,9 @@ public class StorageBackupMTStateTest {
       } while (classCounter == null);
 
       final ODocument doc = new ODocument(className);
-      doc.field("id", classCounter.getAndIncrement());
+      docId = classCounter.getAndIncrement();
+
+      doc.field("id", docId);
       doc.field("stringValue", "value");
       doc.field("intValue", random.nextInt(1024));
 
@@ -279,17 +302,28 @@ public class StorageBackupMTStateTest {
 
       ORidBag linkedDocuments = new ORidBag();
 
-      while (linkedDocuments.size() < 5 && linkedDocuments.size() < linkedClassCounter.get()) {
+      long linkedClassCount = db.countClass(linkedClassName);
+      long tCount = 0;
+
+      while (linkedDocuments.size() < 5 && linkedDocuments.size() < linkedClassCount) {
         List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>("select * from " + linkedClassName + " where id="
             + random.nextInt(linkedClassCounter.get())));
 
         if (docs.size() > 0)
           linkedDocuments.add(docs.get(0));
 
+        tCount++;
+
+        if (tCount % 10 == 0)
+          linkedClassCount = db.countClass(linkedClassName);
       }
 
       doc.field("linkedDocuments", linkedDocuments);
       doc.save();
+
+      if (docId % 10000 == 0) {
+        System.out.println(docId + " documents of class " + className + " were inserted");
+      }
     }
   }
 
@@ -299,9 +333,145 @@ public class StorageBackupMTStateTest {
       ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbURL);
       db.open("admin", "admin");
       try {
-        System.out.println("Start backup");
-        db.incrementalBackup(backupDir.getAbsolutePath());
-        System.out.println("End backup");
+        flowLock.acquireReadLock();
+        try {
+          System.out.println("Start backup");
+          db.incrementalBackup(backupDir.getAbsolutePath());
+          System.out.println("End backup");
+        } finally {
+          flowLock.releaseReadLock();
+        }
+      } catch (Exception e) {
+        e.printStackTrace();
+      } finally {
+        db.close();
+      }
+    }
+  }
+
+  private final class ClassAdder implements Runnable {
+    @Override
+    public void run() {
+      ODatabaseDocumentTx databaseDocumentTx = new ODatabaseDocumentTx(dbURL);
+      databaseDocumentTx.open("admin", "admin");
+      try {
+        flowLock.acquireReadLock();
+        try {
+          OSchema schema = databaseDocumentTx.getMetadata().getSchema();
+          createClass(schema);
+        } finally {
+          flowLock.releaseReadLock();
+        }
+      } catch (Exception e) {
+        e.printStackTrace();
+      } finally {
+        databaseDocumentTx.close();
+      }
+    }
+  }
+
+  private final class RecordsDeleter implements Callable<Void> {
+    private final Random random = new Random();
+
+    @Override
+    public Void call() throws Exception {
+      int counter = 0;
+      while (!stop) {
+        while (true) {
+          ODatabaseDocumentTx databaseDocumentTx = pool.acquire();
+          try {
+            flowLock.acquireReadLock();
+            try {
+              final int classes = classCounter.get();
+
+              String className;
+              AtomicInteger classCounter;
+
+              long countClasses;
+              do {
+                className = CLASS_PREFIX + random.nextInt(classes);
+                classCounter = classInstancesCounters.get(className);
+
+                if (classCounter != null)
+                  countClasses = databaseDocumentTx.countClass(className);
+                else
+                  countClasses = 0;
+              } while (classCounter == null || countClasses == 0);
+
+              boolean deleted = false;
+              do {
+                List<ODocument> docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>("select * from " + className
+                    + " where id=" + random.nextInt(classCounter.get())));
+
+                if (docs.size() > 0) {
+                  final ODocument document = docs.get(0);
+                  document.delete();
+                  deleted = true;
+                }
+              } while (!deleted);
+
+              counter++;
+
+              if (counter % 1000 == 0) {
+                System.out.println(counter + " documents are deleted");
+                System.out.println("Pause for 3 seconds...");
+                Thread.sleep(3000);
+              }
+
+              break;
+            } finally {
+              flowLock.releaseReadLock();
+            }
+          } catch (OModificationOperationProhibitedException mope) {
+            System.out.println("Modification was prohibited ... wait 5s.");
+            Thread.sleep(5 * 1000);
+          } catch (ORecordNotFoundException rnfe) {
+            // retry
+          } catch (OConcurrentModificationException cme) {
+            // retry
+          } catch (RuntimeException e) {
+            e.printStackTrace();
+            throw e;
+          } finally {
+            databaseDocumentTx.close();
+          }
+        }
+      }
+
+      return null;
+    }
+  }
+
+  private final class ClassDeleter implements Runnable {
+    private final Random random = new Random();
+
+    @Override
+    public void run() {
+      ODatabaseDocumentTx db = pool.acquire();
+      try {
+        flowLock.acquireWriteLock();
+        try {
+          final OSchema schema = db.getMetadata().getSchema();
+          final int classes = classCounter.get();
+
+          String className;
+          AtomicInteger classCounter;
+
+          do {
+            className = CLASS_PREFIX + random.nextInt(classes);
+            classCounter = classInstancesCounters.get(className);
+          } while (classCounter == null);
+
+          schema.dropClass(className);
+          classInstancesCounters.remove(className);
+          System.out.println("Class " + className + " was deleted");
+
+        } catch (RuntimeException e) {
+          e.printStackTrace();
+          throw e;
+        } finally {
+          flowLock.releaseWriteLock();
+        }
       } finally {
         db.close();
       }

@@ -20,7 +20,12 @@
 
 package com.orientechnologies.common.concur.lock;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -199,7 +204,7 @@ public class ONewLockManager<T> {
     }
   }
 
-  public boolean tryAcquireExclusiveLock(T value, long timeout) throws InterruptedException {
+  public boolean tryAcquireExclusiveLock(final T value, final long timeout) throws InterruptedException {
     if (useSpinLock)
       throw new IllegalStateException("Spin lock does not support try lock mode");
 
@@ -215,39 +220,21 @@ public class ONewLockManager<T> {
     return lock.tryLock(timeout, TimeUnit.MILLISECONDS);
   }
 
-  public void acquireExclusiveLocksInBatch(T... value) {
+  public void acquireExclusiveLocksInBatch(final T... value) {
     if (value == null)
       return;
 
-    final T[] values = Arrays.copyOf(value, value.length);
-
-    Arrays.sort(values, 0, values.length, new Comparator<T>() {
-      @Override
-      public int compare(T one, T two) {
-        final int indexOne;
-        if (one == null)
-          indexOne = 0;
-        else
-          indexOne = index(one.hashCode());
-
-        final int indexTwo;
-        if (two == null)
-          indexTwo = 0;
-        else
-          indexTwo = index(two.hashCode());
-
-        if (indexOne > indexTwo)
-          return 1;
-
-        if (indexOne < indexTwo)
-          return -1;
-
-        return 0;
-      }
-    });
-
-    for (T val : values) {
+    for (T val : getOrderedValues(value)) {
       acquireExclusiveLock(val);
+    }
+  }
+
+  public void acquireSharedLocksInBatch(final T... value) {
+    if (value == null)
+      return;
+
+    for (T val : getOrderedValues(value)) {
+      acquireSharedLock(val);
     }
   }
 
@@ -459,4 +446,33 @@ public class ONewLockManager<T> {
     lock.unlock();
   }
 
+  protected T[] getOrderedValues(final T[] value) {
+    final T[] values = Arrays.copyOf(value, value.length);
+
+    Arrays.sort(values, 0, values.length, new Comparator<T>() {
+      @Override
+      public int compare(T one, T two) {
+        final int indexOne;
+        if (one == null)
+          indexOne = 0;
+        else
+          indexOne = index(one.hashCode());
+
+        final int indexTwo;
+        if (two == null)
+          indexTwo = 0;
+        else
+          indexTwo = index(two.hashCode());
+
+        if (indexOne > indexTwo)
+          return 1;
+
+        if (indexOne < indexTwo)
+          return -1;
+
+        return 0;
+      }
+    });
+    return values;
+  }
 }
