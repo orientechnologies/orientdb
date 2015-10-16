@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
-import com.orientechnologies.orient.core.sql.parser.OMatchStatement;
 import com.orientechnologies.orient.enterprise.channel.OSocketFactory;
 
 import java.io.BufferedInputStream;
@@ -67,7 +66,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
 
   public OChannelBinaryAsynchClient(final String remoteHost, final int remotePort, final String iDatabaseName,
       final OContextConfiguration iConfig, final int protocolVersion, final ORemoteServerEventListener asynchEventListener)
-      throws IOException {
+          throws IOException {
     super(OSocketFactory.instance(iConfig).createSocket(), iConfig);
     try {
 
@@ -98,13 +97,12 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
 
         srvProtocolVersion = readShort();
       } catch (IOException e) {
-        throw new ONetworkProtocolException("Cannot read protocol version from remote server " + socket.getRemoteSocketAddress()
-            + ": " + e);
+        throw new ONetworkProtocolException(
+            "Cannot read protocol version from remote server " + socket.getRemoteSocketAddress() + ": " + e);
       }
 
       if (srvProtocolVersion != protocolVersion) {
-        OLogManager.instance().warn(
-            this,
+        OLogManager.instance().warn(this,
             "The Client driver version is different than Server version: client=" + protocolVersion + ", server="
                 + srvProtocolVersion
                 + ". You could not use the full features of the newer version. Assure to have the same versions on both");
@@ -167,11 +165,11 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     releaseWriteLock();
   }
 
-  public byte[] beginResponse(final int iRequesterId, boolean token) throws IOException {
+  public byte[] beginResponse(final int iRequesterId, final boolean token) throws IOException {
     return beginResponse(iRequesterId, timeout, token);
   }
 
-  public byte[] beginResponse(final int iRequesterId, final long iTimeout, boolean token) throws IOException {
+  public byte[] beginResponse(final int iRequesterId, final long iTimeout, final boolean token) throws IOException {
     try {
       int unreadResponse = 0;
       final long startClock = iTimeout > 0 ? System.currentTimeMillis() : 0;
@@ -187,8 +185,6 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
 
         if (!isConnected()) {
           releaseReadLock();
-          readLock = false;
-
           throw new IOException("Channel is closed");
         }
 
@@ -417,13 +413,15 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
   }
 
   private void setReadResponseTimeout() throws SocketException {
-    if (socket != null && socket.isConnected() && !socket.isClosed())
-      socket.setSoTimeout(socketTimeout);
+    final Socket s = socket;
+    if (s != null && s.isConnected() && !s.isClosed())
+      s.setSoTimeout(socketTimeout);
   }
 
   private void setWaitResponseTimeout() throws SocketException {
-    if (socket != null)
-      socket.setSoTimeout(OGlobalConfiguration.NETWORK_REQUEST_TIMEOUT.getValueAsInteger());
+    final Socket s = socket;
+    if (s != null)
+      s.setSoTimeout(OGlobalConfiguration.NETWORK_REQUEST_TIMEOUT.getValueAsInteger());
   }
 
   private void throwSerializedException(final byte[] serializedException) throws IOException {
@@ -465,8 +463,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     // WRAP IT
 
     else
-      OLogManager.instance().error(
-          this,
+      OLogManager.instance().error(this,
           "Error during exception serialization, serialized exception is not Throwable, exception type is "
               + (throwable != null ? throwable.getClass().getName() : "null"));
   }

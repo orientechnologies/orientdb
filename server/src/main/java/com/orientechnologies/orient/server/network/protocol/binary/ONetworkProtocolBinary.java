@@ -675,8 +675,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     final String clusterName = connection.database.getClusterNameById(id);
     if (clusterName == null)
-      throw new IllegalArgumentException("Cluster " + id
-          + " does not exist anymore. Refresh the db structure or just reconnect to the database");
+      throw new IllegalArgumentException(
+          "Cluster " + id + " does not exist anymore. Refresh the db structure or just reconnect to the database");
 
     boolean result = connection.database.dropCluster(clusterName, true);
 
@@ -923,8 +923,9 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
       channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_ERROR);
       channel.writeInt(iClientTxId);
-      if (!Boolean.FALSE.equals(tokenBased) && requestType != OChannelBinaryProtocol.REQUEST_CONNECT && requestType != OChannelBinaryProtocol.REQUEST_DB_OPEN && (connection != null && connection.data != null
-            || connection.data.protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_32)){
+      if (tokenBased != null && Boolean.TRUE.equals(tokenBased) && requestType != OChannelBinaryProtocol.REQUEST_CONNECT
+          && (requestType != OChannelBinaryProtocol.REQUEST_DB_OPEN || (connection != null && connection.data != null
+              && connection.data.protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_32))) {
         // TODO: Check if the token is expiring and if it is send a new token
 
         if (token != null) {
@@ -1041,8 +1042,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     } else if (operation.equals("config")) {
       checkServerAccess("server.replication.config");
 
-      response = new ODocument().fromJSON(dManager.getDatabaseConfiguration((String) request.field("db")).serialize()
-          .toJSON("prettyPrint"));
+      response = new ODocument()
+          .fromJSON(dManager.getDatabaseConfiguration((String) request.field("db")).serialize().toJSON("prettyPrint"));
 
     }
 
@@ -1919,7 +1920,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected void endResponse() throws IOException {
     // resetting transaction state. Commands are stateless and connection should be cleared
     // otherwise reused connection (connections pool) may lead to unpredicted errors
-    if (connection != null && connection.database != null && connection.database.activateOnCurrentThread().getTransaction() != null) {
+    if (connection != null && connection.database != null
+        && connection.database.activateOnCurrentThread().getTransaction() != null) {
       connection.database.activateOnCurrentThread();
       connection.database.getTransaction().rollback();
     }
@@ -2119,8 +2121,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     final OSBTreeCollectionManager sbTreeCollectionManager = connection.database.getSbTreeCollectionManager();
     final OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.loadSBTree(collectionPointer);
     try {
-      final Map<OIdentifiable, OSBTreeRidBag.Change> changes = OSBTreeRidBag.ChangeSerializationHelper.INSTANCE.deserializeChanges(
-          changeStream, 0);
+      final Map<OIdentifiable, OSBTreeRidBag.Change> changes = OSBTreeRidBag.ChangeSerializationHelper.INSTANCE
+          .deserializeChanges(changeStream, 0);
 
       int realSize = tree.getRealBagSize(changes);
 
@@ -2175,8 +2177,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
   private byte[] serializeSBTreeEntryCollection(List<Entry<OIdentifiable, Integer>> collection,
       OBinarySerializer<OIdentifiable> keySerializer, OBinarySerializer<Integer> valueSerializer) {
-    byte[] stream = new byte[OIntegerSerializer.INT_SIZE + collection.size()
-        * (keySerializer.getFixedLength() + valueSerializer.getFixedLength())];
+    byte[] stream = new byte[OIntegerSerializer.INT_SIZE
+        + collection.size() * (keySerializer.getFixedLength() + valueSerializer.getFixedLength())];
     int offset = 0;
 
     OIntegerSerializer.INSTANCE.serializeLiteral(collection.size(), stream, offset);
