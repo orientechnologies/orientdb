@@ -18,12 +18,13 @@
 
 package com.orientechnologies.lucene.test.geo;
 
-import com.orientechnologies.lucene.test.BaseLuceneTest;
-import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
-import junit.framework.Assert;
+import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
+import com.orientechnologies.lucene.test.BaseLuceneTest;
+import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 
 /**
  * Created by Enrico Risa on 06/08/15.
