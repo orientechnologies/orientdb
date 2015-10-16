@@ -397,7 +397,7 @@ public enum OGlobalConfiguration {
   }),
 
   // COMMAND
-  COMMAND_TIMEOUT("command.timeout", "Default timeout for commands expressed in milliseconds", Long.class, 0),
+  COMMAND_TIMEOUT("command.timeout", "Default timeout for commands expressed in milliseconds", Long.class, 0,true),
 
   // QUERY
   QUERY_SCAN_THRESHOLD_TIP("query.scanThresholdTip",
