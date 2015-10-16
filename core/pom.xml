@@ -72,33 +72,6 @@
                 <exclude.test.5>**/OSBTreeBonsaiLocalTest.java</exclude.test.5>
                 <exclude.test.6>**/LocalPaginatedClusterTest.java</exclude.test.6>
             </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>findbugs-maven-plugin</artifactId>
-                        <configuration>
-                            <effort>Max</effort>
-                            <threshold>Low</threshold>
-                            <xmlOutput>true</xmlOutput>
-                            <findbugsXmlOutput>true</findbugsXmlOutput>
-                            <includeFilterFile>findbugs_filter.xml</includeFilterFile>
-                        </configuration>
-                        <executions>
-                            <!--
-                                Ensures that FindBugs inspects source code when project is compiled.
-                            -->
-                            <execution>
-                                <id>analyze-compile</id>
-                                <phase>compile</phase>
-                                <goals>
-                                    <goal>check</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
         </profile>
 
         <profile>
