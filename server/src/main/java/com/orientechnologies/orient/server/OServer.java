@@ -612,7 +612,7 @@ public class OServer {
   }
 
   public Collection<OServerPluginInfo> getPlugins() {
-    return pluginManager.getPlugins();
+    return pluginManager != null ? pluginManager.getPlugins() : null;
   }
 
   public OContextConfiguration getContextConfiguration() {
