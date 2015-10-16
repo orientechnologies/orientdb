@@ -513,7 +513,7 @@ angular.module('webappApp')
 
     $scope.markAsQuestion = function(){
       $scope.newComment = {}
-      $scope.newComment.body = "This is more a question than an issue. Please post it in the Community Group where more than 2k users can answer to your question: https://groups.google.com/forum/#!forum/orient-database (it's FREE)"
+      $scope.newComment.body = "This is more a question than an issue. Please post it on StackOverflow http://stackoverflow.com/questions/tagged/orientdb"
       $scope.comment().then(function(data){
 
           $scope.close().then(function(){
