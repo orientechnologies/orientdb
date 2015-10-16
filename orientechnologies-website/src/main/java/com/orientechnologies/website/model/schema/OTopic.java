@@ -52,6 +52,12 @@ public enum OTopic implements OTypeHolder<Topic> {
       return OType.LONG;
     }
   },
+  CLIENT_ONLY("clientOnly") {
+    @Override
+    public OType getType() {
+      return OType.BOOLEAN;
+    }
+  },
   CONFIDENTIAL("confidential") {
     @Override
     public OType getType() {
@@ -134,6 +140,7 @@ public enum OTopic implements OTypeHolder<Topic> {
     doc.field(UPDATED_AT.toString(), entity.getUpdatedAt());
     doc.field(TITLE.toString(), entity.getTitle());
     doc.field(CONFIDENTIAL.toString(), Boolean.TRUE.equals(entity.getConfidential()));
+    doc.field(CLIENT_ONLY.toString(), Boolean.TRUE.equals(entity.getClientOnly()));
     return doc;
   }
 
@@ -148,6 +155,7 @@ public enum OTopic implements OTypeHolder<Topic> {
     issue.setUpdatedAt((Date) doc.field(UPDATED_AT.toString()));
     issue.setUuid((String) doc.field(UUID.toString()));
     issue.setConfidential((Boolean) doc.field(CONFIDENTIAL.toString()));
+    issue.setClientOnly((Boolean) doc.field(CLIENT_ONLY.toString()));
     OrientVertex iss = graph.getVertex(doc);
     for (Vertex vertex : iss.getVertices(Direction.IN, HasTopic.class.getSimpleName())) {
       issue.setOrganization(OOrganization.NAME.fromDoc(((OrientVertex) vertex).getRecord(), graph));

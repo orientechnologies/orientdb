@@ -8,12 +8,12 @@
  * Controller of the webappApp
  */
 angular.module('webappApp')
-    .controller('ClientCtrl', function ($scope, Organization) {
+  .controller('ClientCtrl', function ($scope, Organization) {
 
-        Organization.all("clients").getList().then(function (data) {
-            $scope.clients = data.plain();
-        })
-    });
+    Organization.all("clients").getList().then(function (data) {
+      $scope.clients = data.plain();
+    })
+  });
 
 angular.module('webappApp')
     .controller('ClientNewCtrl', function ($scope, Organization, $location) {

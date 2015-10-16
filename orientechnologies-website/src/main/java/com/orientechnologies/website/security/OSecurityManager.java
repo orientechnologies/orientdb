@@ -60,6 +60,13 @@ public class OSecurityManager {
     return false;
   }
 
+  public boolean isCurrentClient(String organization) {
+
+    Client client = userService.getClient(SecurityHelper.currentUser(), organization);
+
+    return client != null;
+  }
+
   public OUser bot(String organization) {
     List<OUser> bots = organizationRepository.findBots(organization);
     if (bots.size() > 0) {

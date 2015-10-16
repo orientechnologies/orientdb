@@ -71,7 +71,7 @@ public class OrganizationController extends ExceptionController {
   private TagService             tagService;
 
   @Autowired
-  private OSecurityManager securityManager;
+  private OSecurityManager       securityManager;
 
   @RequestMapping(value = "{name}", method = RequestMethod.GET)
   public ResponseEntity<Organization> getOrganizationInfo(@PathVariable("name") String name) {
@@ -461,6 +461,18 @@ public class OrganizationController extends ExceptionController {
         HttpStatus.OK);
   }
 
+  @RequestMapping(value = "{name}/announcements", method = RequestMethod.GET)
+  @ResponseStatus(HttpStatus.OK)
+  public ResponseEntity<List<Topic>> getAnnouncements(@PathVariable("name") String name) {
+
+    if (securityManager.isCurrentClient(name)) {
+      List<Topic> topics = orgRepository.findOrganizationTopicsForClients(name);
+      return new ResponseEntity<List<Topic>>(topics, HttpStatus.OK);
+    } else {
+      return new ResponseEntity<List<Topic>>(HttpStatus.NOT_FOUND);
+    }
+  }
+
   @RequestMapping(value = "{name}/topics", method = RequestMethod.POST)
   @ResponseStatus(HttpStatus.OK)
   public ResponseEntity<Topic> postTopic(@PathVariable("name") String name, @RequestBody Topic topic) {
@@ -574,8 +586,8 @@ public class OrganizationController extends ExceptionController {
     Topic singleTopicByNumber = orgRepository.findSingleTopicByNumber(name, uuid);
     if (singleTopicByNumber != null) {
 
-      if(Boolean.TRUE.equals(singleTopicByNumber.getConfidential())){
-        if(!securityManager.isCurrentMemberOrSupport(name)){
+      if (Boolean.TRUE.equals(singleTopicByNumber.getConfidential())) {
+        if (!securityManager.isCurrentMemberOrSupport(name)) {
           return new ResponseEntity<Topic>(HttpStatus.UNAUTHORIZED);
         }
       }

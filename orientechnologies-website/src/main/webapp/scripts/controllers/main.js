@@ -35,6 +35,10 @@ angular.module('webappApp')
       Organization.all('issues').customGET("", {q: $scope.query, page: $scope.page}).then(function (data) {
         $scope.issues = data.content;
       });
+
+      Organization.all('announcements').getList().then(function (data) {
+        $scope.annauncements = data.plain();
+      });
       function loadBoard() {
 
         if ($scope.isMember) {
@@ -91,7 +95,7 @@ angular.module('webappApp')
 
       $scope.isMember = User.isMember(ORGANIZATION);
       $scope.isSupport = User.isSupport(ORGANIZATION);
-
+      $scope.isClient = User.isClient(ORGANIZATION);
 
       loadBoard();
 

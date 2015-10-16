@@ -21,7 +21,6 @@ angular.module('webappApp')
 
     $rootScope.$on('$routeChangeSuccess', function (scope, next, current) {
 
-
       if (next.$$route.originalPath.indexOf('/rooms') != -1) {
         $scope.isChat = true;
       } else {

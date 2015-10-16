@@ -212,6 +212,52 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
   // TOPICS
 
   @Override
+  public List<Topic> findOrganizationTopicsByTag(String name, String tag) {
+    String query = String
+        .format(
+            "select from (select expand(out('HasTopic')) from Organization where name = '%s')  where out('HasTag').name contains '%s' order by createdAt desc",
+            name, tag);
+
+    OrientGraph db = dbFactory.getGraph();
+    Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
+
+    List<Topic> topics = new ArrayList<Topic>();
+    for (OrientVertex vertice : vertices) {
+
+      ODocument doc = vertice.getRecord();
+      Topic e = OTopic.NUMBER.fromDoc(doc, db);
+      userService.profileUser(SecurityHelper.currentUser(), e.getUser(), name);
+      topics.add(e);
+
+    }
+
+    return topics;
+  }
+
+  @Override
+  public List<Topic> findOrganizationTopicsForClients(String name) {
+    String query = String
+        .format(
+            "select from (select expand(out('HasTopic')) from Organization where name = '%s')  where clientOnly = true order by createdAt desc limit 3",
+            name);
+
+    OrientGraph db = dbFactory.getGraph();
+    Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
+
+    List<Topic> topics = new ArrayList<Topic>();
+    for (OrientVertex vertice : vertices) {
+
+      ODocument doc = vertice.getRecord();
+      Topic e = OTopic.NUMBER.fromDoc(doc, db);
+      userService.profileUser(SecurityHelper.currentUser(), e.getUser(), name);
+      topics.add(e);
+
+    }
+
+    return topics;
+  }
+
+  @Override
   public Page<Topic> findOrganizationTopics(String name, String q, String page, String perPage) {
 
     String query = topicsQueryParams(q, name, false);
@@ -233,7 +279,9 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
     List<Topic> topics = new ArrayList<Topic>();
     for (OrientVertex vertice : vertices) {
       ODocument doc = vertice.getRecord();
-      topics.add(OTopic.NUMBER.fromDoc(doc, db));
+      Topic e = OTopic.NUMBER.fromDoc(doc, db);
+      userService.profileUser(SecurityHelper.currentUser(), e.getUser(), name);
+      topics.add(e);
     }
     return new Page<Topic>(p, pP, count, topics);
   }
@@ -265,8 +313,12 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
 
     boolean canSeePrivate = securityManager.isCurrentMemberOrSupport(name);
 
+    boolean isClient = securityManager.isCurrentClient(name);
     if (!canSeePrivate) {
       query = query + " where confidential <> true";
+      if (!isClient) {
+        query = query + " and clientOnly <> true";
+      }
     }
     if (!count) {
       query = query + " order by createdAt desc";
