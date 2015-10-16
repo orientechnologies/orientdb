@@ -29,7 +29,7 @@
 
     <artifactId>orientdb-etl</artifactId>
 
-    <name>orientdb-etl</name>
+    <name>OrientDB ETL</name>
     <description>ETL tools for OrientDB NoSQL document graph dbms</description>
 
     <properties>
