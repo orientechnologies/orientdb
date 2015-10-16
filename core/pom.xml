@@ -62,7 +62,7 @@
         <profile>
             <id>development</id>
             <activation>
-                <activeByDefault>false</activeByDefault>
+                <activeByDefault>true</activeByDefault>
             </activation>
             <properties>
                 <exclude.test.1>**/LocalHashTableIterationTest.java</exclude.test.1>
