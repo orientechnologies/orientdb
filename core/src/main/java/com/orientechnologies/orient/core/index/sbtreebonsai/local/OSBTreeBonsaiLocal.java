@@ -79,12 +79,8 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
   private OBinarySerializer<K>                  keySerializer;
   private OBinarySerializer<V>                  valueSerializer;
 
-  private final boolean                         durableInNonTxMode;
-
-  public OSBTreeBonsaiLocal(String name, String dataFileExtension, boolean durableInNonTxMode, OAbstractPaginatedStorage storage) {
+  public OSBTreeBonsaiLocal(String name, String dataFileExtension, OAbstractPaginatedStorage storage) {
     super(storage, name, dataFileExtension);
-
-    this.durableInNonTxMode = durableInNonTxMode;
   }
 
   public void create(OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer) {
@@ -564,11 +560,6 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     } finally {
       lock.unlock();
     }
-  }
-
-  @Override
-  protected OAtomicOperation startAtomicOperation() throws IOException {
-    return atomicOperationsManager.startAtomicOperation(this, !durableInNonTxMode);
   }
 
   @Override

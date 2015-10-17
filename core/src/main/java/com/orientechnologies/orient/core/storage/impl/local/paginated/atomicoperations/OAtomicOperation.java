@@ -65,21 +65,14 @@ public class OAtomicOperation {
   private OReadCache               readCache;
   private OWriteCache              writeCache;
 
-  private final boolean            rollbackOnlyMode;
-
   public OAtomicOperation(OLogSequenceNumber startLSN, OOperationUnitId operationUnitId, OReadCache readCache,
-      OWriteCache writeCache, int storageId, boolean rollbackOnlyMode) {
+      OWriteCache writeCache, int storageId) {
     this.storageId = storageId;
     this.startLSN = startLSN;
     this.operationUnitId = operationUnitId;
     startCounter = 1;
     this.readCache = readCache;
     this.writeCache = writeCache;
-    this.rollbackOnlyMode = rollbackOnlyMode;
-  }
-
-  public boolean isRollbackOnlyMode() {
-    return rollbackOnlyMode;
   }
 
   public OLogSequenceNumber getStartLSN() {
@@ -333,27 +326,25 @@ public class OAtomicOperation {
   }
 
   public void commitChanges(OWriteAheadLog writeAheadLog) throws IOException {
-    if (!rollbackOnlyMode) {
-      for (long deletedFileId : deletedFiles) {
-        writeAheadLog.log(new OFileDeletedWALRecord(operationUnitId, deletedFileId));
-      }
+    for (long deletedFileId : deletedFiles) {
+      writeAheadLog.log(new OFileDeletedWALRecord(operationUnitId, deletedFileId));
+    }
 
-      for (Map.Entry<Long, FileChanges> fileChangesEntry : fileChanges.entrySet()) {
-        final FileChanges fileChanges = fileChangesEntry.getValue();
-        final long fileId = fileChangesEntry.getKey();
+    for (Map.Entry<Long, FileChanges> fileChangesEntry : fileChanges.entrySet()) {
+      final FileChanges fileChanges = fileChangesEntry.getValue();
+      final long fileId = fileChangesEntry.getKey();
 
-        if (fileChanges.isNew)
-          writeAheadLog.log(new OFileCreatedWALRecord(operationUnitId, fileChanges.fileName, fileId));
-        else if (fileChanges.truncate)
-          writeAheadLog.log(new OFileTruncatedWALRecord(operationUnitId, fileId));
+      if (fileChanges.isNew)
+        writeAheadLog.log(new OFileCreatedWALRecord(operationUnitId, fileChanges.fileName, fileId));
+      else if (fileChanges.truncate)
+        writeAheadLog.log(new OFileTruncatedWALRecord(operationUnitId, fileId));
 
-        for (Map.Entry<Long, FilePageChanges> filePageChangesEntry : fileChanges.pageChangesMap.entrySet()) {
-          final long pageIndex = filePageChangesEntry.getKey();
-          final FilePageChanges filePageChanges = filePageChangesEntry.getValue();
+      for (Map.Entry<Long, FilePageChanges> filePageChangesEntry : fileChanges.pageChangesMap.entrySet()) {
+        final long pageIndex = filePageChangesEntry.getKey();
+        final FilePageChanges filePageChanges = filePageChangesEntry.getValue();
 
-          filePageChanges.lsn = writeAheadLog.log(new OUpdatePageRecord(pageIndex, fileId, operationUnitId,
-              filePageChanges.changesTree));
-        }
+        filePageChanges.lsn = writeAheadLog.log(new OUpdatePageRecord(pageIndex, fileId, operationUnitId,
+            filePageChanges.changesTree));
       }
     }
 
@@ -390,8 +381,7 @@ public class OAtomicOperation {
           ODurablePage durablePage = new ODurablePage(cacheEntry, null);
           durablePage.restoreChanges(filePageChanges.changesTree);
 
-          if (!rollbackOnlyMode)
-            durablePage.setLsn(filePageChanges.lsn);
+          durablePage.setLsn(filePageChanges.lsn);
 
           if (filePageChanges.pinPage)
             readCache.pinPage(cacheEntry);

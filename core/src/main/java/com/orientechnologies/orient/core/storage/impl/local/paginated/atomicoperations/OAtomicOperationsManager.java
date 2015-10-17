@@ -115,14 +115,14 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     this.writeCache = storage.getWriteCache();
   }
 
-  public OAtomicOperation startAtomicOperation(ODurableComponent durableComponent, boolean rollbackOnlyMode) throws IOException {
+  public OAtomicOperation startAtomicOperation(ODurableComponent durableComponent) throws IOException {
     if (durableComponent != null)
-      return startAtomicOperation(durableComponent.getFullName(), rollbackOnlyMode);
+      return startAtomicOperation(durableComponent.getFullName());
 
-    return startAtomicOperation((String) null, rollbackOnlyMode);
+    return startAtomicOperation((String) null);
   }
 
-  public OAtomicOperation startAtomicOperation(String fullName, boolean rollbackOnlyMode) throws IOException {
+  public OAtomicOperation startAtomicOperation(String fullName) throws IOException {
     if (writeAheadLog == null)
       return null;
 
@@ -159,14 +159,9 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     assert freezeRequests.get() >= 0;
 
     final OOperationUnitId unitId = OOperationUnitId.generateId();
-    final OLogSequenceNumber lsn;
+    final OLogSequenceNumber lsn = writeAheadLog.logAtomicOperationStartRecord(true, unitId);
 
-    if (!rollbackOnlyMode)
-      lsn = writeAheadLog.logAtomicOperationStartRecord(true, unitId);
-    else
-      lsn = null;
-
-    operation = new OAtomicOperation(lsn, unitId, readCache, writeCache, storage.getId(), rollbackOnlyMode);
+    operation = new OAtomicOperation(lsn, unitId, readCache, writeCache, storage.getId());
     currentOperation.set(operation);
 
     if (trackAtomicOperations) {
@@ -366,8 +361,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       if (!operation.isRollback())
         operation.commitChanges(writeAheadLog);
 
-      if (!operation.isRollbackOnlyMode())
-        writeAheadLog.logAtomicOperationEndRecord(operation.getOperationUnitId(), rollback, operation.getStartLSN());
+      writeAheadLog.logAtomicOperationEndRecord(operation.getOperationUnitId(), rollback, operation.getStartLSN());
 
       currentOperation.set(null);
 

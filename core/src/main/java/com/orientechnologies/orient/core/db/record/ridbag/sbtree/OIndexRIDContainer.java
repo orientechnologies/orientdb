@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndexEngineException;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
-import com.orientechnologies.orient.core.index.sbtree.local.OSBTreeException;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
@@ -83,7 +82,7 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
         .getUnderlying();
     final OAtomicOperation atomicOperation;
     try {
-      atomicOperation = storage.getAtomicOperationsManager().startAtomicOperation(fileName, true);
+      atomicOperation = storage.getAtomicOperationsManager().startAtomicOperation(fileName);
     } catch (IOException e) {
       throw OException.wrapException(new OIndexEngineException("Error creation of sbtree with name " + fileName, fileName), e);
     }
@@ -252,7 +251,7 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
 
   private void convertToSbTree() {
     final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
-    final OIndexRIDContainerSBTree tree = new OIndexRIDContainerSBTree(fileId, durableNonTxMode, (OAbstractPaginatedStorage) db
+    final OIndexRIDContainerSBTree tree = new OIndexRIDContainerSBTree(fileId, (OAbstractPaginatedStorage) db
         .getStorage().getUnderlying());
 
     tree.addAll(underlying);

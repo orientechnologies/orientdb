@@ -36,7 +36,7 @@ public class ConcurrencySBTreeBonsaiLocalTest {
           .loadSBTree(treePointer1);
 
       final OAtomicOperationsManager atomManager = ((OAbstractPaginatedStorage) db.getStorage()).getAtomicOperationsManager();
-      atomManager.startAtomicOperation(tree, false);
+      atomManager.startAtomicOperation(tree);
       for (int i = 1000; i < 2000; i++)
         tree.put(new ORecordId(10, i), 1);
       Future<?> ex = null;
@@ -46,7 +46,7 @@ public class ConcurrencySBTreeBonsaiLocalTest {
           @Override
           public void run() {
             try {
-              atomManager.startAtomicOperation(tree1, false);
+              atomManager.startAtomicOperation(tree1);
               for (int i = 2000; i < 3000; i++)
                 tree1.put(new ORecordId(10, i), 1);
               atomManager.endAtomicOperation(false, null);

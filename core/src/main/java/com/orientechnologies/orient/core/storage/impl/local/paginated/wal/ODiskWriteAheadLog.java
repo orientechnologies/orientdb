@@ -1217,10 +1217,10 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
 
       flush();
 
-      final OLogSequenceNumber minLsn = preventCutTill;
+      final OLogSequenceNumber maxLsn = preventCutTill;
 
-      if (minLsn != null && lsn.compareTo(minLsn) < 0)
-        lsn = minLsn;
+      if (maxLsn != null && lsn.compareTo(maxLsn) > 0)
+        lsn = maxLsn;
 
       int lastTruncateIndex = -1;
 

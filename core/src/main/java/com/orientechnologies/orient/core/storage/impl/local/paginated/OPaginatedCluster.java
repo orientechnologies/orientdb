@@ -1328,7 +1328,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
   @Override
   protected OAtomicOperation startAtomicOperation() throws IOException {
-    return atomicOperationsManager.startAtomicOperation(this, !config.useWal);
+    return atomicOperationsManager.startAtomicOperation(this);
   }
 
   private void updateClusterState(long sizeDiff, long recordsSizeDiff, OAtomicOperation atomicOperation) throws IOException {

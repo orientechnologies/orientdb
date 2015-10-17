@@ -1543,7 +1543,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     checkIndexId(indexId);
     try {
       if (atomicOperation)
-        atomicOperationsManager.startAtomicOperation((String) null, false);
+        atomicOperationsManager.startAtomicOperation((String) null);
     } catch (IOException e) {
       throw OException.wrapException(new OStorageException("Can not put key value entry in index"), e);
     }
@@ -1575,7 +1575,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
   private void doUpdateIndexEntry(int indexId, Object key, Callable<Object> valueCreator) {
     try {
-      atomicOperationsManager.startAtomicOperation((String) null, false);
+      atomicOperationsManager.startAtomicOperation((String) null);
     } catch (IOException e) {
       throw OException.wrapException(new OStorageException("Can not put key value entry in index"), e);
     }
@@ -2684,12 +2684,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
               Charset.forName(configuration.getCharset()));
           try {
             final long startSegment;
-            final long newSegmentFreezeId = atomicOperationsManager.freezeAtomicOperations(null, null);
 
+            final long newSegmentFreezeId = atomicOperationsManager.freezeAtomicOperations(null, null);
             try {
-              writeAheadLog.newSegment();
               final OLogSequenceNumber startLsn = writeAheadLog.end();
               writeAheadLog.preventCutTill(startLsn);
+
+              writeAheadLog.newSegment();
               startSegment = writeAheadLog.activeSegment();
             } finally {
               atomicOperationsManager.releaseAtomicOperations(newSegmentFreezeId);
@@ -2737,7 +2738,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
   protected abstract boolean isWritesAllowedDuringBackup();
 
-  private OLogSequenceNumber backupPagesWithChanges(OLogSequenceNumber changeLsn, ZipOutputStream stream) throws IOException {
+  private OLogSequenceNumber backupPagesWithChanges(final OLogSequenceNumber changeLsn, ZipOutputStream stream) throws IOException {
     OLogSequenceNumber lastLsn = changeLsn;
 
     final Map<String, Long> files = writeCache.files();
@@ -2911,7 +2912,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         if (!writeCache.fileIdsAreEqual(expectedFileId, fileId))
           throw new OStorageException("Can not restore database from backup because expected and actual file ids are not the same");
 
-        while (zipInputStream.available() > 0) {
+        while (true) {
           final byte[] data = new byte[pageSize + OLongSerializer.LONG_SIZE];
 
           int rb = 0;
@@ -2923,6 +2924,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
               if (rb > 0)
                 throw new OStorageException("Can not read data from file " + zipEntry.getName());
               else {
+                if (isClosed)
+                  readCache.closeFile(fileId, true, writeCache);
+
                 processedFiles.add(zipEntry.getName());
                 continue entryLoop;
               }
@@ -2971,11 +2975,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
             readCache.release(cacheEntry, writeCache);
           }
         }
-
-        if (isClosed)
-          readCache.closeFile(fileId, true, writeCache);
-
-        processedFiles.add(zipEntry.getName());
       }
 
       currentFiles.removeAll(processedFiles);
@@ -3030,7 +3029,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     byte[] buffer = new byte[1024];
 
     int rb = 0;
-    while (zipInputStream.available() > 0) {
+    while (true) {
       final int b = zipInputStream.read(buffer, rb, buffer.length - rb);
 
       if (b == -1)
@@ -3234,7 +3233,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     transaction.set(new OStorageTransaction(clientTx));
     try {
-      atomicOperationsManager.startAtomicOperation((String) null, false);
+      atomicOperationsManager.startAtomicOperation((String) null);
     } catch (RuntimeException e) {
       transaction.set(null);
       throw e;
@@ -3276,7 +3275,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         recordVersion = OVersionFactory.instance().createVersion();
 
       makeStorageDirty();
-      atomicOperationsManager.startAtomicOperation((String) null, false);
+      atomicOperationsManager.startAtomicOperation((String) null);
       try {
         ppos = cluster.createRecord(content, recordVersion, recordType);
         rid.clusterPosition = ppos.clusterPosition;
@@ -3351,7 +3350,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       }
 
       makeStorageDirty();
-      atomicOperationsManager.startAtomicOperation((String) null, false);
+      atomicOperationsManager.startAtomicOperation((String) null);
       try {
         if (updateContent)
           cluster.updateRecord(rid.clusterPosition, content, ppos.recordVersion, recordType);
@@ -3409,7 +3408,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           throw new OConcurrentModificationException(rid, ppos.recordVersion, version, ORecordOperation.DELETED);
 
       makeStorageDirty();
-      atomicOperationsManager.startAtomicOperation((String) null, false);
+      atomicOperationsManager.startAtomicOperation((String) null);
       try {
         cluster.deleteRecord(ppos.clusterPosition);
 
@@ -3442,7 +3441,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         return new OStorageOperationResult<Boolean>(false);
 
       makeStorageDirty();
-      atomicOperationsManager.startAtomicOperation((String) null, false);
+      atomicOperationsManager.startAtomicOperation((String) null);
       try {
         cluster.hideRecord(ppos.clusterPosition);
 
@@ -4234,6 +4233,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
         final long pageIndex = updatePageRecord.getPageIndex();
         fileId = readCache.openFile(fileId, writeCache);
+        String fileName = writeCache.fileNameById(fileId);
 
         OCacheEntry cacheEntry = readCache.load(fileId, pageIndex, true, writeCache, 0);
         if (cacheEntry == null) {

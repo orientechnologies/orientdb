@@ -201,9 +201,9 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
     OLogSequenceNumber lastLSN;
     long freezeId = getAtomicOperationsManager().freezeAtomicOperations(null, null);
     try {
+      lastLSN = writeAheadLog.end();
       writeAheadLog.newSegment();
       nonActiveSegments = writeAheadLog.nonActiveSegments(startSegment);
-      lastLSN = writeAheadLog.end();
     } finally {
       getAtomicOperationsManager().releaseAtomicOperations(freezeId);
     }

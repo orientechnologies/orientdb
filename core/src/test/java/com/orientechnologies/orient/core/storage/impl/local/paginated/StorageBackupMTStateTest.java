@@ -102,7 +102,7 @@ public class StorageBackupMTStateTest {
     futures.add(executor.submit(new RecordsDeleter()));
 
     int k = 0;
-    while (k < 60) {
+    while (k < 180) {
       Thread.sleep(30 * 1000);
       k++;
 
