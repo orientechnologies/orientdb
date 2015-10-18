@@ -2070,7 +2070,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   private int createClusterIfNeeded(String nameOrId) {
-    String[] parts = nameOrId.split(" ");
+    final String[] parts = nameOrId.split(" ");
     int clId = getClusterId(parts[0]);
 
     if (clId == NOT_EXISTENT_CLUSTER_ID) {
