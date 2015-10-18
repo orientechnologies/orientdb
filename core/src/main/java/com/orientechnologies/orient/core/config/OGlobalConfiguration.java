@@ -181,9 +181,6 @@ public enum OGlobalConfiguration {
     PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY("storage.lowestFreeListBound",
         "The least amount of free space (in kb) in a page, which is tracked in paginated storage.", Integer.class, 16),
 
-    @Deprecated STORAGE_USE_CRC32_FOR_EACH_RECORD("storage.cluster.usecrc32",
-        "Indicates whether crc32 should be used for each record to check record integrity.", Boolean.class, false),
-
     STORAGE_LOCK_TIMEOUT("storage.lockTimeout", "Maximum amount of time (in ms) to lock the storage.", Integer.class, 0),
 
     STORAGE_RECORD_LOCK_TIMEOUT("storage.record.lockTimeout", "Maximum of time (in ms) to lock a shared record.",
@@ -376,8 +373,6 @@ public enum OGlobalConfiguration {
     NETWORK_HTTP_JSONP_ENABLED("network.http.jsonp",
         "Enable the usage of JSONP, if requested by the client. The parameter name to use is 'callback'.", Boolean.class, false, true),
 
-    @Deprecated OAUTH2_SECRETKEY("oauth2.secretkey", "Http OAuth2 secret key.", String.class, ""),
-
     NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT("network.http.sessionExpireTimeout",
         "Timeout, after which an http session is considered to have expired (in seconds).", Integer.class, 300),
 
@@ -408,28 +403,24 @@ public enum OGlobalConfiguration {
             }
         }),
 
-    PROFILER_AUTODUMP_INTERVAL("profiler.autoDump.interval",
-        "Dumps the profiler values at regular intervals (in seconds).", Integer.class, 0,
-            new OConfigurationChangeCallback() {
-                public void change(final Object iCurrentValue, final Object iNewValue) {
-                    Orient.instance().getProfiler().setAutoDump((Integer) iNewValue);
-                }
-        }),
+    PROFILER_AUTODUMP_INTERVAL("profiler.autoDump.interval", "Dumps the profiler values at regular intervals (in seconds).", Integer.class, 0, new OConfigurationChangeCallback() {
+        public void change(final Object iCurrentValue, final Object iNewValue) {
+            Orient.instance().getProfiler().setAutoDump((Integer) iNewValue);
+        }
+    }),
 
     // LOG
-    LOG_CONSOLE_LEVEL("log.console.level", "Console logging level.", String.class, "info",
-        new OConfigurationChangeCallback() {
-            public void change(final Object iCurrentValue, final Object iNewValue) {
-                OLogManager.instance().setLevel((String) iNewValue, ConsoleHandler.class);
-            }
-        }),
+    LOG_CONSOLE_LEVEL("log.console.level", "Console logging level.", String.class, "info", new OConfigurationChangeCallback() {
+        public void change(final Object iCurrentValue, final Object iNewValue) {
+            OLogManager.instance().setLevel((String) iNewValue, ConsoleHandler.class);
+        }
+    }),
 
-    LOG_FILE_LEVEL("log.file.level", "File logging level.", String.class, "fine",
-        new OConfigurationChangeCallback() {
-            public void change(final Object iCurrentValue, final Object iNewValue) {
-                OLogManager.instance().setLevel((String) iNewValue, FileHandler.class);
-            }
-        }),
+    LOG_FILE_LEVEL("log.file.level", "File logging level.", String.class, "fine", new OConfigurationChangeCallback() {
+        public void change(final Object iCurrentValue, final Object iNewValue) {
+            OLogManager.instance().setLevel((String) iNewValue, FileHandler.class);
+        }
+    }),
 
     // CACHE
     CACHE_LOCAL_IMPL("cache.local.impl", "Local Record cache implementation.", String.class, ORecordCacheWeakRefs.class.getName()),
@@ -439,58 +430,40 @@ public enum OGlobalConfiguration {
 
     COMMAND_CACHE_ENABLED("command.cache.enabled", "Enable command cache.", Boolean.class, false),
 
-    COMMAND_CACHE_EVICT_STRATEGY("command.cache.evictStrategy", "Command cache strategy between: [INVALIDATE_ALL,PER_CLUSTER]",
-        String.class, "PER_CLUSTER"),
+    COMMAND_CACHE_EVICT_STRATEGY("command.cache.evictStrategy", "Command cache strategy between: [INVALIDATE_ALL,PER_CLUSTER]", String.class, "PER_CLUSTER"),
 
-    COMMAND_CACHE_MIN_EXECUTION_TIME("command.cache.minExecutionTime", "Minimum execution time to consider caching the result set.",
-        Integer.class, 10),
+    COMMAND_CACHE_MIN_EXECUTION_TIME("command.cache.minExecutionTime", "Minimum execution time to consider caching the result set.", Integer.class, 10),
 
-    COMMAND_CACHE_MAX_RESULSET_SIZE("command.cache.maxResultsetSize", "Maximum resultset time to consider caching result set.",
-        Integer.class, 500),
+    COMMAND_CACHE_MAX_RESULSET_SIZE("command.cache.maxResultsetSize", "Maximum resultset time to consider caching result set.", Integer.class, 500),
 
     // QUERY
-    QUERY_PARALLEL_AUTO("query.parallelAuto", "Auto enable parallel query, if requirements are met.", Boolean.class,
-        Runtime.getRuntime().availableProcessors() > 2),
+    QUERY_PARALLEL_AUTO("query.parallelAuto", "Auto enable parallel query, if requirements are met.", Boolean.class, Runtime.getRuntime().availableProcessors()>2),
 
-    QUERY_PARALLEL_MINIMUM_RECORDS("query.parallelMinimumRecords",
-        "Minimum number of records to activate parallel query automatically.", Long.class, 300000),
+    QUERY_PARALLEL_MINIMUM_RECORDS("query.parallelMinimumRecords", "Minimum number of records to activate parallel query automatically.", Long.class, 300000),
 
-    QUERY_PARALLEL_RESULT_QUEUE_SIZE("query.parallelResultQueueSize",
-        "Size of the queue that holds results on parallel execution. The queue is blocking, so in case the queue is full, the query threads will be in a wait state.",
-        Integer.class, 20000),
+    QUERY_PARALLEL_RESULT_QUEUE_SIZE("query.parallelResultQueueSize", "Size of the queue that holds results on parallel execution. The queue is blocking, so in case the queue is full, the query threads will be in a wait state.", Integer.class, 20000),
 
-    QUERY_SCAN_PREFETCH_PAGES("query.scanPrefetchPages",
-        "Pages to prefetch during scan. Setting this value higher makes scans faster, because it reduces the number of I/O operations, though it consumes more memory. (Use 0 to disable)",
-        Integer.class, 20),
+    QUERY_SCAN_PREFETCH_PAGES("query.scanPrefetchPages", "Pages to prefetch during scan. Setting this value higher makes scans faster, because it reduces the number of I/O operations, though it consumes more memory. (Use 0 to disable)", Integer.class, 20),
 
-    QUERY_SCAN_BATCH_SIZE("query.scanBatchSize",
-        "Scan clusters in blocks of records. This setting reduces the lock time on the cluster during scans. A high value mean a faster execution, but also a lower concurrency level. Set to 0 to disable batch scanning. Disabling batch scanning is suggested for read-only databases only",
-        Long.class, 100000),
+    QUERY_SCAN_BATCH_SIZE("query.scanBatchSize", "Scan clusters in blocks of records. This setting reduces the lock time on the cluster during scans. A high value mean a faster execution, but also a lower concurrency level. Set to 0 to disable batch scanning. Disabling batch scanning is suggested for read-only databases only", Long.class, 100000),
 
-    QUERY_SCAN_THRESHOLD_TIP("query.scanThresholdTip",
-        "If the total number of records scanned in a query exceeds this setting, then a warning is given. (Use 0 to disable)",
-        Long.class, 50000),
+    QUERY_SCAN_THRESHOLD_TIP("query.scanThresholdTip", "If the total number of records scanned in a query exceeds this setting, then a warning is given. (Use 0 to disable)", Long.class, 50000),
 
-    QUERY_LIMIT_THRESHOLD_TIP("query.limitThresholdTip",
-        "If the total number of returned records exceeds this value, then a warning is given. (Use 0 to disable)",
-        Long.class, 10000),
+    QUERY_LIMIT_THRESHOLD_TIP("query.limitThresholdTip", "If the total number of returned records exceeds this value, then a warning is given. (Use 0 to disable)", Long.class, 10000),
 
     STATEMENT_CACHE_SIZE("statement.cacheSize", "Number of parsed SQL statements kept in cache.", Integer.class, 100),
 
     /**
-    * Maximum size of pool of network channels between client and server. A channel is a TCP/IP connection.
-    */
-    CLIENT_CHANNEL_MAX_POOL("client.channel.maxPool",
-        "Maximum size of pool of network channels between client and server. A channel is a TCP/IP connection.", Integer.class, 100),
+     * Maximum size of pool of network channels between client and server. A channel is a TCP/IP connection.
+     */
+    CLIENT_CHANNEL_MAX_POOL("client.channel.maxPool", "Maximum size of pool of network channels between client and server. A channel is a TCP/IP connection.", Integer.class, 100),
 
     /**
-    *Maximum time, where the client should wait for a connection from the pool, when all connections busy.
-    */
-    CLIENT_CONNECT_POOL_WAIT_TIMEOUT("client.connectionPool.waitTimeout",
-        "Maximum time, where the client should wait for a connection from the pool, when all connections busy.", Integer.class, 5000, true),
+     *Maximum time, where the client should wait for a connection from the pool, when all connections busy.
+     */
+    CLIENT_CONNECT_POOL_WAIT_TIMEOUT("client.connectionPool.waitTimeout", "Maximum time, where the client should wait for a connection from the pool, when all connections busy.", Integer.class, 5000, true),
 
-    CLIENT_DB_RELEASE_WAIT_TIMEOUT("client.channel.dbReleaseWaitTimeout",
-        "Delay (in ms), after which a data modification command will be resent, if the DB was frozen.", Integer.class, 10000, true),
+    CLIENT_DB_RELEASE_WAIT_TIMEOUT("client.channel.dbReleaseWaitTimeout", "Delay (in ms), after which a data modification command will be resent, if the DB was frozen.", Integer.class, 10000, true),
 
     CLIENT_USE_SSL("client.ssl.enabled", "Use SSL for client connections.", Boolean.class, false),
 
@@ -502,161 +475,119 @@ public enum OGlobalConfiguration {
 
     CLIENT_SSL_TRUSTSTORE_PASSWORD("client.ssl.trustStorePass", "Use SSL for client connections.", String.class, null),
 
-    @Deprecated CLIENT_SESSION_TOKEN_BASED("client.session.tokenBased", "Request a token based session to the server.", Boolean.class,
-      true),
-
     // SERVER
-    SERVER_OPEN_ALL_DATABASES_AT_STARTUP("server.openAllDatabasesAtStartup",
-        "If true, the server opens all the available databases at startup. Available since 2.2", Boolean.class, false),
+    SERVER_OPEN_ALL_DATABASES_AT_STARTUP("server.openAllDatabasesAtStartup", "If true, the server opens all the available databases at startup. Available since 2.2", Boolean.class, false),
 
-    SERVER_CHANNEL_CLEAN_DELAY("server.channel.cleanDelay", "Time in ms of delay to check pending closed connections.", Integer.class,
-        5000),
+    SERVER_CHANNEL_CLEAN_DELAY("server.channel.cleanDelay", "Time in ms of delay to check pending closed connections.", Integer.class, 5000),
 
     SERVER_CACHE_FILE_STATIC("server.cache.staticFile", "Cache static resources upon loading.", Boolean.class, false),
 
-    SERVER_LOG_DUMP_CLIENT_EXCEPTION_LEVEL("server.log.dumpClientExceptionLevel",
-        "Logs client exceptions. Use any level supported by Java java.util.logging.Level class: OFF, FINE, CONFIG, INFO, WARNING, SEVERE",
-        Level.class, Level.FINE),
+    SERVER_LOG_DUMP_CLIENT_EXCEPTION_LEVEL("server.log.dumpClientExceptionLevel", "Logs client exceptions. Use any level supported by Java java.util.logging.Level class: OFF, FINE, CONFIG, INFO, WARNING, SEVERE", Level.class, Level.FINE),
 
-    SERVER_LOG_DUMP_CLIENT_EXCEPTION_FULLSTACKTRACE("server.log.dumpClientExceptionFullStackTrace",
-        "Dumps the full stack trace of the exception sent to the client", Boolean.class, Boolean.FALSE, true),
+    SERVER_LOG_DUMP_CLIENT_EXCEPTION_FULLSTACKTRACE("server.log.dumpClientExceptionFullStackTrace", "Dumps the full stack trace of the exception sent to the client", Boolean.class, Boolean.FALSE, true),
 
     // DISTRIBUTED
-    DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT("distributed.crudTaskTimeout",
-        "Maximum timeout (in ms) to wait for CRUD remote tasks.", Long.class, 3000l, true),
+    DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT("distributed.crudTaskTimeout", "Maximum timeout (in ms) to wait for CRUD remote tasks.", Long.class, 3000l, true),
 
-    DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT("distributed.commandTaskTimeout",
-        "Maximum timeout (in ms) to wait for Command remote tasks.", Long.class, 10000l, true),
+    DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT("distributed.commandTaskTimeout", "Maximum timeout (in ms) to wait for Command remote tasks.", Long.class, 10000l, true),
 
-    DISTRIBUTED_COMMAND_LONG_TASK_SYNCH_TIMEOUT("distributed.commandLongTaskTimeout",
-        "Maximum timeout (in ms) to wait for Long-running remote tasks.", Long.class, 24 * 60 * 60 * 1000, true),
+    DISTRIBUTED_COMMAND_LONG_TASK_SYNCH_TIMEOUT("distributed.commandLongTaskTimeout", "Maximum timeout (in ms) to wait for Long-running remote tasks.", Long.class, 24 * 60 * 60 * 1000, true),
 
-    DISTRIBUTED_DEPLOYDB_TASK_SYNCH_TIMEOUT("distributed.deployDbTaskTimeout",
-        "Maximum timeout (in ms) to wait for database deployment.", Long.class, 1200000l, true),
+    DISTRIBUTED_DEPLOYDB_TASK_SYNCH_TIMEOUT("distributed.deployDbTaskTimeout", "Maximum timeout (in ms) to wait for database deployment.", Long.class, 1200000l, true),
 
-    DISTRIBUTED_DEPLOYCHUNK_TASK_SYNCH_TIMEOUT("distributed.deployChunkTaskTimeout",
-        "Maximum timeout (in ms) to wait for database chunk deployment.", Long.class, 15000l, true),
+    DISTRIBUTED_DEPLOYCHUNK_TASK_SYNCH_TIMEOUT("distributed.deployChunkTaskTimeout", "Maximum timeout (in ms) to wait for database chunk deployment.", Long.class, 15000l, true),
 
-    DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION("distributed.deployDbTaskCompression",
-        "Compression level (between 0 and 9) to use in backup for database deployment.", Integer.class, 7, true),
+    DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION("distributed.deployDbTaskCompression", "Compression level (between 0 and 9) to use in backup for database deployment.", Integer.class, 7, true),
 
-    DISTRIBUTED_QUEUE_TIMEOUT("distributed.queueTimeout", "Maximum timeout (in ms) to wait for the response in replication.",
-        Long.class, 5000l, true),
+    DISTRIBUTED_QUEUE_TIMEOUT("distributed.queueTimeout", "Maximum timeout (in ms) to wait for the response in replication.", Long.class, 5000l, true),
 
-    DISTRIBUTED_ASYNCH_QUEUE_SIZE("distributed.asynchQueueSize",
-        "Queue size to handle distributed asynchronous operations. (0 = dynamic allocation, which means up to 2^31-1 entries)", Integer.class, 0),
+    DISTRIBUTED_ASYNCH_QUEUE_SIZE("distributed.asynchQueueSize", "Queue size to handle distributed asynchronous operations. (0 = dynamic allocation, which means up to 2^31-1 entries)", Integer.class, 0),
 
-    DISTRIBUTED_ASYNCH_RESPONSES_TIMEOUT("distributed.asynchResponsesTimeout",
-        "Maximum timeout (in ms) to collect all the asynchronous responses from replication.", Long.class, 15000l),
+    DISTRIBUTED_ASYNCH_RESPONSES_TIMEOUT("distributed.asynchResponsesTimeout", "Maximum timeout (in ms) to collect all the asynchronous responses from replication.", Long.class, 15000l),
 
-    DISTRIBUTED_PURGE_RESPONSES_TIMER_DELAY("distributed.purgeResponsesTimerDelay",
-        "Maximum timeout (in ms) to collect all the asynchronous responses from replication.", Long.class, 15000l),
+    DISTRIBUTED_PURGE_RESPONSES_TIMER_DELAY("distributed.purgeResponsesTimerDelay", "Maximum timeout (in ms) to collect all the asynchronous responses from replication.", Long.class, 15000l),
 
     /**
-    * @Since 2.1.3
-    */
-    @OApi(maturity = OApi.MATURITY.NEW) DISTRIBUTED_QUEUE_MAXSIZE("distributed.queueMaxSize",
-        "Maximum queue size to mark a node as stalled. (0 = no maximum, which means up to 2^31-1 entries)", Integer.class, 100),
+     * @Since 2.1.3
+     */
+    @OApi(maturity = OApi.MATURITY.NEW)DISTRIBUTED_QUEUE_MAXSIZE("distributed.queueMaxSize", "Maximum queue size to mark a node as stalled. (0 = no maximum, which means up to 2^31-1 entries)", Integer.class, 100),
 
     /**
-    * @Since 2.1.3
-    */
-    @OApi(maturity = OApi.MATURITY.NEW) DISTRIBUTED_BACKUP_DIRECTORY("distributed.backupDirectory",
-        "Directory where the copy of an existent database is saved, before it is downloaded from the cluster.", String.class, "../backup/databases"),
+     * @Since 2.1.3
+     */
+    @OApi(maturity = OApi.MATURITY.NEW)DISTRIBUTED_BACKUP_DIRECTORY("distributed.backupDirectory", "Directory where the copy of an existent database is saved, before it is downloaded from the cluster.", String.class, "../backup/databases"),
 
     /**
-    * @Since 2.1
-    */
-    @OApi(maturity = OApi.MATURITY.NEW) DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY("distributed.concurrentTxMaxAutoRetry",
-        "Maximum attempts the transaction coordinator should execute a transaction automatically, if records are locked. (Minimum is 1 = no attempts)",
-        Integer.class, 10, true),
+     * @Since 2.1
+     */
+    @OApi(maturity = OApi.MATURITY.NEW)DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY("distributed.concurrentTxMaxAutoRetry", "Maximum attempts the transaction coordinator should execute a transaction automatically, if records are locked. (Minimum is 1 = no attempts)", Integer.class, 10, true),
 
     /**
-    * @Since 2.1
-    */
-    @OApi(maturity = OApi.MATURITY.NEW) DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY("distributed.concurrentTxAutoRetryDelay",
-        "Delay (in ms) between attempts on executing a distributed transaction, which had failed because of locked records. (0=no delay)",
-        Integer.class, 100, true),
+     * @Since 2.1
+     */
+    @OApi(maturity = OApi.MATURITY.NEW)DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY("distributed.concurrentTxAutoRetryDelay", "Delay (in ms) between attempts on executing a distributed transaction, which had failed because of locked records. (0=no delay)", Integer.class, 100, true),
 
-    DB_MAKE_FULL_CHECKPOINT_ON_INDEX_CHANGE("db.makeFullCheckpointOnIndexChange",
-        "When index metadata is changed, a full checkpoint is performed.", Boolean.class, true, true),
+    DB_MAKE_FULL_CHECKPOINT_ON_INDEX_CHANGE("db.makeFullCheckpointOnIndexChange", "When index metadata is changed, a full checkpoint is performed.", Boolean.class, true, true),
 
-    DB_MAKE_FULL_CHECKPOINT_ON_SCHEMA_CHANGE("db.makeFullCheckpointOnSchemaChange",
-        "When index schema is changed, a full checkpoint is performed.", Boolean.class, true, true),
+    DB_MAKE_FULL_CHECKPOINT_ON_SCHEMA_CHANGE("db.makeFullCheckpointOnSchemaChange", "When index schema is changed, a full checkpoint is performed.", Boolean.class, true, true),
 
-    DB_DOCUMENT_SERIALIZER("db.document.serializer", "The default record serializer used by the document database.", String.class,
-        ORecordSerializerBinary.NAME),
+    DB_DOCUMENT_SERIALIZER("db.document.serializer", "The default record serializer used by the document database.", String.class, ORecordSerializerBinary.NAME),
 
-    @Deprecated LAZYSET_WORK_ON_STREAM("lazyset.workOnStream", "Deprecated, now BINARY serialization is used in place of CSV",
-        Boolean.class, true),
+    @Deprecated CLIENT_SESSION_TOKEN_BASED("client.session.tokenBased", "Request a token based session to the server.", Boolean.class, true),
+
+    @Deprecated OAUTH2_SECRETKEY("oauth2.secretkey", "Http OAuth2 secret key.", String.class, ""),
+
+    @Deprecated STORAGE_USE_CRC32_FOR_EACH_RECORD("storage.cluster.usecrc32", "Indicates whether crc32 should be used for each record to check record integrity.", Boolean.class, false),
+
+    @Deprecated LAZYSET_WORK_ON_STREAM("lazyset.workOnStream", "Deprecated, now BINARY serialization is used in place of CSV", Boolean.class, true),
 
     @Deprecated DB_MVCC("db.mvcc", "Deprecated, MVCC cannot be disabled anymore", Boolean.class, true),
 
-    @Deprecated DB_USE_DISTRIBUTED_VERSION("db.use.distributedVersion", "Deprecated, distributed version is not used anymore",
-        Boolean.class, Boolean.FALSE),
+    @Deprecated DB_USE_DISTRIBUTED_VERSION("db.use.distributedVersion", "Deprecated, distributed version is not used anymore", Boolean.class, Boolean.FALSE),
 
-    @Deprecated MVRBTREE_TIMEOUT("mvrbtree.timeout", "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX",
-    Integer.class, 0),
+    @Deprecated MVRBTREE_TIMEOUT("mvrbtree.timeout", "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Integer.class, 0),
 
-    @Deprecated MVRBTREE_NODE_PAGE_SIZE("mvrbtree.nodePageSize",
-        "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Integer.class, 256),
+    @Deprecated MVRBTREE_NODE_PAGE_SIZE("mvrbtree.nodePageSize", "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Integer.class, 256),
 
-    @Deprecated MVRBTREE_LOAD_FACTOR("mvrbtree.loadFactor",
-        "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Float.class, 0.7f),
+    @Deprecated MVRBTREE_LOAD_FACTOR("mvrbtree.loadFactor", "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Float.class, 0.7f),
 
-    @Deprecated MVRBTREE_OPTIMIZE_THRESHOLD("mvrbtree.optimizeThreshold",
-        "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Integer.class, 100000),
+    @Deprecated MVRBTREE_OPTIMIZE_THRESHOLD("mvrbtree.optimizeThreshold", "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Integer.class, 100000),
 
-    @Deprecated MVRBTREE_ENTRYPOINTS("mvrbtree.entryPoints",
-        "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Integer.class, 64),
+    @Deprecated MVRBTREE_ENTRYPOINTS("mvrbtree.entryPoints", "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Integer.class, 64),
 
-    @Deprecated MVRBTREE_OPTIMIZE_ENTRYPOINTS_FACTOR("mvrbtree.optimizeEntryPointsFactor",
-        "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Float.class, 1.0f),
+    @Deprecated MVRBTREE_OPTIMIZE_ENTRYPOINTS_FACTOR("mvrbtree.optimizeEntryPointsFactor", "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Float.class, 1.0f),
 
-    @Deprecated MVRBTREE_ENTRY_KEYS_IN_MEMORY("mvrbtree.entryKeysInMemory",
-        "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Boolean.class, Boolean.FALSE),
+    @Deprecated MVRBTREE_ENTRY_KEYS_IN_MEMORY("mvrbtree.entryKeysInMemory", "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Boolean.class, Boolean.FALSE),
 
-    @Deprecated MVRBTREE_ENTRY_VALUES_IN_MEMORY("mvrbtree.entryValuesInMemory",
-        "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Boolean.class, Boolean.FALSE),
+    @Deprecated MVRBTREE_ENTRY_VALUES_IN_MEMORY("mvrbtree.entryValuesInMemory", "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Boolean.class, Boolean.FALSE),
 
-    // TREEMAP OF RIDS
-    @Deprecated MVRBTREE_RID_BINARY_THRESHOLD("mvrbtree.ridBinaryThreshold",
-        "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Integer.class, -1),
+    @Deprecated MVRBTREE_RID_BINARY_THRESHOLD("mvrbtree.ridBinaryThreshold", "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Integer.class, -1),
 
-    @Deprecated MVRBTREE_RID_NODE_PAGE_SIZE("mvrbtree.ridNodePageSize",
-        "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Integer.class, 64),
+    @Deprecated MVRBTREE_RID_NODE_PAGE_SIZE("mvrbtree.ridNodePageSize", "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Integer.class, 64),
 
-    @Deprecated MVRBTREE_RID_NODE_SAVE_MEMORY("mvrbtree.ridNodeSaveMemory",
-        "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Boolean.class, Boolean.FALSE),
+    @Deprecated MVRBTREE_RID_NODE_SAVE_MEMORY("mvrbtree.ridNodeSaveMemory", "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Boolean.class, Boolean.FALSE),
 
     @Deprecated TX_COMMIT_SYNCH("tx.commit.synch", "Synchronizes the storage after transaction commit", Boolean.class, false),
 
-    @Deprecated TX_AUTO_RETRY("tx.autoRetry",
-        "Maximum number of automatic retry if some resource has been locked in the middle of the transaction (Timeout exception)",
-    Integer.class, 1),
+    @Deprecated TX_AUTO_RETRY("tx.autoRetry", "Maximum number of automatic retry if some resource has been locked in the middle of the transaction (Timeout exception)", Integer.class, 1),
 
     @Deprecated TX_LOG_TYPE("tx.log.fileType", "File type to handle transaction logs: mmap or classic", String.class, "classic"),
 
-    @Deprecated TX_LOG_SYNCH("tx.log.synch",
-        "Executes a synch against the file-system at every log entry. This slows down transactions but guarantee transaction reliability on unreliable drives",
-    Boolean.class, Boolean.FALSE), @Deprecated TX_USE_LOG("tx.useLog",
-        "Transactions use log file to store temporary data to be rolled back in case of crash", Boolean.class, true),
+    @Deprecated TX_LOG_SYNCH("tx.log.synch", "Executes a synch against the file-system at every log entry. This slows down transactions but guarantee transaction reliability on unreliable drives", Boolean.class, Boolean.FALSE), @Deprecated TX_USE_LOG("tx.useLog", "Transactions use log file to store temporary data to be rolled back in case of crash", Boolean.class, true),
 
-    @Deprecated INDEX_AUTO_REBUILD_AFTER_NOTSOFTCLOSE("index.auto.rebuildAfterNotSoftClose",
-        "Auto rebuild all automatic indexes after upon database open when wasn't closed properly", Boolean.class, true),
+    @Deprecated INDEX_AUTO_REBUILD_AFTER_NOTSOFTCLOSE("index.auto.rebuildAfterNotSoftClose", "Auto rebuild all automatic indexes after upon database open when wasn't closed properly", Boolean.class, true),
 
     @Deprecated CLIENT_CHANNEL_MIN_POOL("client.channel.minPool", "Minimum pool size", Integer.class, 1),
 
     @Deprecated
-        // DEPRECATED IN 2.0
-        STORAGE_KEEP_OPEN("storage.keepOpen", "Deprecated", Boolean.class, Boolean.TRUE),
+    // DEPRECATED IN 2.0
+      STORAGE_KEEP_OPEN("storage.keepOpen", "Deprecated", Boolean.class, Boolean.TRUE),
 
     // DEPRECATED IN 2.0, LEVEL1 CACHE CANNOT BE DISABLED ANYMORE
-        @Deprecated CACHE_LOCAL_ENABLED("cache.local.enabled", "Deprecated, Level1 cache cannot be disabled anymore", Boolean.class,
-        true);
+    @Deprecated CACHE_LOCAL_ENABLED("cache.local.enabled", "Deprecated, Level1 cache cannot be disabled anymore", Boolean.class, true);
 
-    private final String key;
-    private final Object defValue;
+    private final String   key;
+    private final Object   defValue;
     private final Class<?> type;
     private Object value = null;
     private String description;
@@ -670,8 +601,7 @@ public enum OGlobalConfiguration {
         autoConfig();
     }
 
-    OGlobalConfiguration(final String iKey, final String iDescription, final Class<?> iType, final Object iDefValue,
-            final OConfigurationChangeCallback iChangeAction) {
+    OGlobalConfiguration(final String iKey, final String iDescription, final Class<?> iType, final Object iDefValue, final OConfigurationChangeCallback iChangeAction) {
         this(iKey, iDescription, iType, iDefValue, true);
         changeCallback = iChangeAction;
     }
@@ -680,13 +610,11 @@ public enum OGlobalConfiguration {
         this(iKey, iDescription, iType, iDefValue, false);
     }
 
-    OGlobalConfiguration(final String iKey, final String iDescription, final Class<?> iType, final Object iDefValue,
-            final Boolean iCanChange) {
+    OGlobalConfiguration(final String iKey, final String iDescription, final Class<?> iType, final Object iDefValue, final Boolean iCanChange) {
         this(iKey, iDescription, iType, iDefValue, iCanChange, false);
     }
 
-    OGlobalConfiguration(final String iKey, final String iDescription, final Class<?> iType, final Object iDefValue,
-            final boolean iCanChange, final boolean iHidden) {
+    OGlobalConfiguration(final String iKey, final String iDescription, final Class<?> iType, final Object iDefValue, final boolean iCanChange, final boolean iHidden) {
         key = iKey;
         description = iDescription;
         defValue = iDefValue;
@@ -717,24 +645,24 @@ public enum OGlobalConfiguration {
     }
 
     /**
-    * Find the OGlobalConfiguration instance by the key. Key is case insensitive.
-    *
-    * @param iKey
-    *          Key to find. It's case insensitive.
-    * @return OGlobalConfiguration instance if found, otherwise null
-    */
+     * Find the OGlobalConfiguration instance by the key. Key is case insensitive.
+     *
+     * @param iKey
+     *          Key to find. It's case insensitive.
+     * @return OGlobalConfiguration instance if found, otherwise null
+     */
     public static OGlobalConfiguration findByKey(final String iKey) {
         for (OGlobalConfiguration v : values()) {
             if (v.getKey().equalsIgnoreCase(iKey))
-            return v;
+                return v;
         }
         return null;
     }
 
     /**
-    * Changes the configuration values in one shot by passing a Map of values. Keys can be the Java ENUM names or the string
-    * representation of configuration values
-    */
+     * Changes the configuration values in one shot by passing a Map of values. Keys can be the Java ENUM names or the string
+     * representation of configuration values
+     */
     public static void setConfiguration(final Map<String, Object> iConfig) {
         for (Entry<String, Object> config : iConfig.entrySet()) {
             for (OGlobalConfiguration v : values()) {
@@ -750,8 +678,8 @@ public enum OGlobalConfiguration {
     }
 
     /**
-    * Assign configuration values by reading system properties.
-    */
+     * Assign configuration values by reading system properties.
+     */
     private static void readConfiguration() {
         String prop;
         for (OGlobalConfiguration config : values()) {
@@ -762,56 +690,50 @@ public enum OGlobalConfiguration {
     }
 
     private static void autoConfig() {
-            final long freeSpaceInMB = new File(".").getFreeSpace() / 1024 / 1024;
+        final long freeSpaceInMB = new File(".").getFreeSpace() / 1024 / 1024;
 
         if (System.getProperty(DISK_CACHE_SIZE.key) == null)
             autoConfigDiskCacheSize(freeSpaceInMB);
 
         if (System.getProperty(WAL_RESTORE_BATCH_SIZE.key) == null) {
             final long jvmMaxMemory = Runtime.getRuntime().maxMemory();
-            if (jvmMaxMemory > 2 * OFileUtils.GIGABYTE)
+            if (jvmMaxMemory>2 * OFileUtils.GIGABYTE)
                 // INCREASE WAL RESTORE BATCH SIZE TO 50K INSTEAD OF DEFAULT 1K
                 WAL_RESTORE_BATCH_SIZE.setValue(50000);
-            else
-                if (jvmMaxMemory > 512 * OFileUtils.MEGABYTE)
+            else if (jvmMaxMemory>512 * OFileUtils.MEGABYTE)
                 // INCREASE WAL RESTORE BATCH SIZE TO 10K INSTEAD OF DEFAULT 1K
                 WAL_RESTORE_BATCH_SIZE.setValue(10000);
-            }
+        }
     }
 
     private static void autoConfigDiskCacheSize(final long freeSpaceInMB) {
-            final OperatingSystemMXBean mxBean = ManagementFactory.getOperatingSystemMXBean();
+        final OperatingSystemMXBean mxBean = ManagementFactory.getOperatingSystemMXBean();
         try {
             final Method memorySize = mxBean.getClass().getDeclaredMethod("getTotalPhysicalMemorySize");
-                memorySize.setAccessible(true);
+            memorySize.setAccessible(true);
 
-                final long osMemory = (Long) memorySize.invoke(mxBean);
-                final long jvmMaxMemory = Runtime.getRuntime().maxMemory();
+            final long osMemory = (Long) memorySize.invoke(mxBean);
+            final long jvmMaxMemory = Runtime.getRuntime().maxMemory();
 
-                // DISK-CACHE IN MB = OS MEMORY - MAX HEAP JVM MEMORY - 2 GB
-                long diskCacheInMB = (osMemory - jvmMaxMemory) / (1024 * 1024) - 2 * 1024;
-                if (diskCacheInMB > 0) {
+            // DISK-CACHE IN MB = OS MEMORY - MAX HEAP JVM MEMORY - 2 GB
+            long diskCacheInMB = (osMemory - jvmMaxMemory) / (1024 * 1024) - 2 * 1024;
+            if (diskCacheInMB>0) {
 
-                    // CHECK IF CANDIDATE DISK-CACHE IS BIGGER THAN 80% OF FREE SPACE IN DISK
-                    if (diskCacheInMB > freeSpaceInMB * 80 / 100)
-                        // LOW DISK SPACE: REDUCE DISK CACHE SIZE TO HALF SIZE OF FREE DISK SPACE
-                        diskCacheInMB = freeSpaceInMB * 50 / 100;
+                // CHECK IF CANDIDATE DISK-CACHE IS BIGGER THAN 80% OF FREE SPACE IN DISK
+                if (diskCacheInMB>freeSpaceInMB * 80 / 100)
+                    // LOW DISK SPACE: REDUCE DISK CACHE SIZE TO HALF SIZE OF FREE DISK SPACE
+                    diskCacheInMB = freeSpaceInMB * 50 / 100;
 
-                        OLogManager.instance().info(null, "OrientDB auto-config DISKCACHE=%,dMB (heap=%,dMB os=%,dMB disk=%,dMB)", diskCacheInMB,
-                            jvmMaxMemory / 1024 / 1024, osMemory / 1024 / 1024, freeSpaceInMB);
+                OLogManager.instance().info(null, "OrientDB auto-config DISKCACHE=%,dMB (heap=%,dMB os=%,dMB disk=%,dMB)", diskCacheInMB, jvmMaxMemory / 1024 / 1024, osMemory / 1024 / 1024, freeSpaceInMB);
 
-                            DISK_CACHE_SIZE.setValue(diskCacheInMB);
-                } else {
-                    // LOW MEMORY: SET IT TO 256MB ONLY
-                    OLogManager.instance().warn(null,
-                        "Not enough physical memory available for DISKCACHE: %,dMB (heap=%,dMB). Set lower Maximum Heap (-Xmx setting on JVM) and restart OrientDB. Now running with DISKCACHE="
-                        + O2QCache.MIN_CACHE_SIZE + "MB",
-                        osMemory / 1024 / 1024, jvmMaxMemory / 1024 / 1024);
-                        DISK_CACHE_SIZE.setValue(O2QCache.MIN_CACHE_SIZE);
+                DISK_CACHE_SIZE.setValue(diskCacheInMB);
+            } else {
+                // LOW MEMORY: SET IT TO 256MB ONLY
+                OLogManager.instance().warn(null, "Not enough physical memory available for DISKCACHE: %,dMB (heap=%,dMB). Set lower Maximum Heap (-Xmx setting on JVM) and restart OrientDB. Now running with DISKCACHE=" + O2QCache.MIN_CACHE_SIZE + "MB", osMemory / 1024 / 1024, jvmMaxMemory / 1024 / 1024);
+                DISK_CACHE_SIZE.setValue(O2QCache.MIN_CACHE_SIZE);
 
-                    OLogManager.instance().info(null, "OrientDB config DISKCACHE=%,dMB (heap=%,dMB os=%,dMB disk=%,dMB)", diskCacheInMB,
-                        jvmMaxMemory / 1024 / 1024, osMemory / 1024 / 1024, freeSpaceInMB);
-                }
+                OLogManager.instance().info(null, "OrientDB config DISKCACHE=%,dMB (heap=%,dMB os=%,dMB disk=%,dMB)", diskCacheInMB, jvmMaxMemory / 1024 / 1024, osMemory / 1024 / 1024, freeSpaceInMB);
+            }
         } catch (NoSuchMethodException e) {
         } catch (InvocationTargetException e) {
         } catch (IllegalAccessException e) {
