@@ -473,7 +473,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     if (cfg == null)
       return;
 
-    installClustersOfClass(iDatabase, cfg, iClass);
+    installClustersOfClass(iDatabase, iClass);
   }
 
   @Override
@@ -953,7 +953,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         if (backupDatabase)
           backupCurrentDatabase(databaseName);
 
-        final Set<String> toSyncClusters = installDatabaseFromNetwork(dbPath, databaseName, distrDatabase, cfg, r.getKey(),
+        final Set<String> toSyncClusters = installDatabaseFromNetwork(dbPath, databaseName, distrDatabase, r.getKey(),
             (ODistributedDatabaseChunk) value);
 
         // SYNC ALL THE CLUSTERS
@@ -1002,7 +1002,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
    * Returns the clusters where sync is required.
    */
   protected Set<String> installDatabaseFromNetwork(final String dbPath, final String databaseName,
-      final OHazelcastDistributedDatabase distrDatabase, final ODistributedConfiguration cfg, final String iNode,
+      final OHazelcastDistributedDatabase distrDatabase, final String iNode,
       final ODistributedDatabaseChunk value) {
     // DISCARD ALL THE MESSAGES BEFORE THE BACKUP
     distrDatabase.setWaitForMessage(value.getLastOperationId());
@@ -1098,6 +1098,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       final Lock lock = getLock("orientdb." + databaseName + ".cfg");
       lock.lock();
       try {
+        // GET LAST VERSION IN LOCK
+        final ODistributedConfiguration cfg = getDatabaseConfiguration(db.getName());
+
         distrDatabase.configureDatabase(false, true, new Callable<Void>() {
           @Override
           public Void call() throws Exception {
@@ -1116,6 +1119,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       db.activateOnCurrentThread();
       db.close();
     }
+
+    final ODistributedConfiguration cfg = getDatabaseConfiguration(db.getName());
 
     // ASK FOR INDIVIDUAL CLUSTERS IN CASE OF SHARDING AND NO LOCAL COPY
     final Set<String> localManagedClusters = cfg.getClustersOnServer(localNodeName);
@@ -1144,15 +1149,14 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     for (OClass c : iDatabase.getMetadata().getSchema().getClasses()) {
       if (!(c.getClusterSelection() instanceof OLocalClusterStrategy))
         // INSTALL ONLY ON NON-ENHANCED CLASSES
-        installClustersOfClass(iDatabase, cfg, c);
+        installClustersOfClass(iDatabase, c);
     }
   }
 
   /**
    * Guarantees that each class has own master cluster.
    */
-  public synchronized void installClustersOfClass(final ODatabaseInternal iDatabase, final ODistributedConfiguration cfg,
-      final OClass iClass) {
+  public synchronized void installClustersOfClass(final ODatabaseInternal iDatabase, final OClass iClass) {
 
     final String databaseName = iDatabase.getName();
 
@@ -1173,6 +1177,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     final Lock lock = getLock("orientdb." + databaseName + ".cfg");
     lock.lock();
     try {
+      // GET LAST VERSION IN LOCK
+      final ODistributedConfiguration cfg = getDatabaseConfiguration(iDatabase.getName());
 
       // CHECK IF EACH NODE HAS IS MASTER OF ONE CLUSTER
       final Set<String> servers = cfg.getServers(null);
@@ -1565,7 +1571,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
       final Set<String> cfgClusterNames = new HashSet<String>();
       for (String cl : cfg.getClusterNames())
-        cfgClusterNames.add(cl);
+        cfgClusterNames.add(cl.toLowerCase());
 
       if (cfgClusterNames.contains(newClusterName)) {
         // FOUND A CLUSTER PREVIOUSLY ASSIGNED TO THE LOCAL ONE: CHANGE ASSIGNMENT TO LOCAL NODE AGAIN

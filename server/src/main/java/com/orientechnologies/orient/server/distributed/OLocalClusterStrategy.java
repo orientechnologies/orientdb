@@ -81,14 +81,27 @@ public class OLocalClusterStrategy implements OClusterSelectionStrategy {
     final int[] clusterIds = cls.getClusterIds();
     final List<String> clusterNames = new ArrayList<String>(clusterIds.length);
     for (int c : clusterIds)
-      clusterNames.add(db.getClusterNameById(c));
+      clusterNames.add(db.getClusterNameById(c).toLowerCase());
 
     final ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
 
-    String bestCluster = cfg.getLocalCluster(clusterNames, nodeName);
+    final String bestCluster = cfg.getLocalCluster(clusterNames, nodeName);
     if (bestCluster == null) {
+
+      // FILL THE MAP CLUSTER/SERVERS
+      final StringBuilder buffer = new StringBuilder();
+      for (String c : clusterNames) {
+        if (buffer.length() > 0)
+          buffer.append(" ");
+
+        buffer.append("cluster ");
+        buffer.append(c);
+        buffer.append(": ");
+        buffer.append(cfg.getServers(c, null));
+      }
+
       OLogManager.instance().warn(this, "Cannot find best cluster for class '%s'. Configured servers for clusters %s are %s",
-          cls.getName(), clusterNames, cfg.getServers(clusterNames));
+          cls.getName(), clusterNames, buffer.toString());
 
       throw new ODatabaseException(
           "Cannot find best cluster for class '" + cls.getName() + "' on server '" + nodeName + "'. ClusterStrategy=" + getName());
