@@ -122,7 +122,7 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
 
     if (iConfiguration.containsField("nullValue")) {
       nullValue = iConfiguration.<String> field("nullValue");
-      csvFormat.withNullString(nullValue);
+      csvFormat = csvFormat.withNullString(nullValue);
     }
 
     if (iConfiguration.containsField("quote")) {
