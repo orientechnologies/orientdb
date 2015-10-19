@@ -77,6 +77,19 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
   }
 
   @Override
+  public List<Issue> findOrganizationIssues(String name) {
+    OrientGraph db = dbFactory.getGraph();
+    String query = "select expand(out('HasRepo').out('HasIssue')) from Organization where name = ?";
+    Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute(name);
+    List<Issue> issues = new ArrayList<Issue>();
+    for (OrientVertex vertex : vertices) {
+      ODocument doc = vertex.getRecord();
+      issues.add(OIssue.NUMBER.fromDoc(doc, db));
+    }
+    return issues;
+  }
+
+  @Override
   public List<Issue> findOrganizationIssuesByLabel(String name, String label) {
 
     OrientGraph db = dbFactory.getGraph();

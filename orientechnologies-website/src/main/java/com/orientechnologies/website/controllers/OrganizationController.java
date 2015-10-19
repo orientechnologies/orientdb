@@ -7,6 +7,7 @@ import com.orientechnologies.website.hateoas.assembler.PagedResourceAssembler;
 import com.orientechnologies.website.hateoas.assembler.TopicAssembler;
 import com.orientechnologies.website.helper.SecurityHelper;
 import com.orientechnologies.website.model.schema.dto.*;
+import com.orientechnologies.website.model.schema.dto.report.SimpleReportPoint;
 import com.orientechnologies.website.model.schema.dto.web.ImportDTO;
 import com.orientechnologies.website.model.schema.dto.web.IssueDTO;
 import com.orientechnologies.website.model.schema.dto.web.hateoas.IssueResource;
@@ -25,8 +26,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 @RestController
 @EnableAutoConfiguration
@@ -71,7 +75,7 @@ public class OrganizationController extends ExceptionController {
   private TagService             tagService;
 
   @Autowired
-  private OSecurityManager securityManager;
+  private OSecurityManager       securityManager;
 
   @RequestMapping(value = "{name}", method = RequestMethod.GET)
   public ResponseEntity<Organization> getOrganizationInfo(@PathVariable("name") String name) {
@@ -574,8 +578,8 @@ public class OrganizationController extends ExceptionController {
     Topic singleTopicByNumber = orgRepository.findSingleTopicByNumber(name, uuid);
     if (singleTopicByNumber != null) {
 
-      if(Boolean.TRUE.equals(singleTopicByNumber.getConfidential())){
-        if(!securityManager.isCurrentMemberOrSupport(name)){
+      if (Boolean.TRUE.equals(singleTopicByNumber.getConfidential())) {
+        if (!securityManager.isCurrentMemberOrSupport(name)) {
           return new ResponseEntity<Topic>(HttpStatus.UNAUTHORIZED);
         }
       }
@@ -661,6 +665,330 @@ public class OrganizationController extends ExceptionController {
       return new ResponseEntity<List<Tag>>(tags, HttpStatus.OK);
     } else {
       return new ResponseEntity<List<Tag>>(HttpStatus.NOT_FOUND);
+    }
+
+  }
+
+  /**
+   *
+   * @param name
+   *          organization name
+   * @param interval
+   *          supported: monthly, daily
+   * @return
+   */
+  @RequestMapping(value = "{name}/reports/openIssuesPerInterval/{interval}/{clientOnly}", method = RequestMethod.GET)
+  @ResponseStatus(HttpStatus.OK)
+  public ResponseEntity<List<SimpleReportPoint>> openIssuesPerInterval(@PathVariable("name") String name,
+      @PathVariable("interval") String interval, @PathVariable("clientOnly") boolean clientOnly) {
+    if (securityManager.isCurrentMember(name)) {
+
+      List<Issue> all = orgRepository.findOrganizationIssues(name);
+
+      final DateFormat df;
+      if ("monthly".equals(interval)) {
+        df = new SimpleDateFormat("yyyy-MM");
+      } else {// daily
+        df = new SimpleDateFormat("yyyy-MM-dd");
+      }
+
+      List<SimpleReportPoint> result = all.stream().filter(issue -> issue.getCreatedAt() != null)
+          .filter(issue -> clientOnly ? issue.getClient() != null : true)
+          .collect(Collectors.groupingBy(issue -> df.format(issue.getCreatedAt()), Collectors.counting())).entrySet().stream()
+          .map(foo -> {
+            try {
+              return new SimpleReportPoint(foo.getKey(), df.parse(foo.getKey()), foo.getValue().doubleValue());
+            } catch (Exception e) {
+              return null;
+            }
+          }).collect(Collectors.toList());
+
+      Collections.sort(result, new Comparator<SimpleReportPoint>() {
+        @Override
+        public int compare(SimpleReportPoint o1, SimpleReportPoint o2) {
+          return o1.getDate().compareTo(o2.getDate());
+        }
+      });
+      return new ResponseEntity<List<SimpleReportPoint>>(result, HttpStatus.OK);
+    } else {
+      return new ResponseEntity<List<SimpleReportPoint>>(HttpStatus.NOT_FOUND);
+    }
+
+  }
+
+  /**
+   * return number of closed issues per timestamp
+   * 
+   * @param name
+   *          organization name
+   * @param interval
+   *          supported: monthly, daily
+   * @return
+   */
+  @RequestMapping(value = "{name}/reports/closedIssuesPerInterval/{interval}/{clientOnly}", method = RequestMethod.GET)
+  @ResponseStatus(HttpStatus.OK)
+  public ResponseEntity<List<SimpleReportPoint>> closedIssuesPerInterval(@PathVariable("name") String name,
+      @PathVariable("interval") String interval, @PathVariable("clientOnly") boolean clientOnly) {
+    if (securityManager.isCurrentMember(name)) {
+
+      List<Issue> all = orgRepository.findOrganizationIssues(name);
+
+      final DateFormat df;
+      if ("monthly".equals(interval)) {
+        df = new SimpleDateFormat("yyyy-MM");
+      } else {// daily
+        df = new SimpleDateFormat("yyyy-MM-dd");
+      }
+
+      List<SimpleReportPoint> result = all.stream().filter(issue -> issue.getClosedAt() != null && issue.isClosed())
+          .filter(issue -> clientOnly ? issue.getClient() != null : true)
+          .collect(Collectors.groupingBy(issue -> df.format(issue.getClosedAt()), Collectors.counting())).entrySet().stream()
+          .map(foo -> {
+            try {
+              return new SimpleReportPoint(foo.getKey(), df.parse(foo.getKey()), foo.getValue().doubleValue());
+            } catch (Exception e) {
+              return null;
+            }
+          }).collect(Collectors.toList());
+
+      Collections.sort(result, new Comparator<SimpleReportPoint>() {
+        @Override
+        public int compare(SimpleReportPoint o1, SimpleReportPoint o2) {
+          return o1.getDate().compareTo(o2.getDate());
+        }
+      });
+      return new ResponseEntity<List<SimpleReportPoint>>(result, HttpStatus.OK);
+    } else {
+      return new ResponseEntity<List<SimpleReportPoint>>(HttpStatus.NOT_FOUND);
+    }
+  }
+
+  @RequestMapping(value = "{name}/reports/issuesPerDeveloper/{clientOnly}", method = RequestMethod.GET)
+  @ResponseStatus(HttpStatus.OK)
+  public ResponseEntity<List<SimpleReportPoint>> totalIssuesPerDeveloper(@PathVariable("name") String name,
+      @PathVariable("clientOnly") boolean clientOnly) {
+    if (securityManager.isCurrentMember(name)) {
+
+      SimpleDateFormat df = new SimpleDateFormat("yyyy-MM");
+      List<Issue> all = orgRepository.findOrganizationIssues(name);
+
+      List<SimpleReportPoint> result = all
+          .stream()
+          .filter(issue -> clientOnly ? issue.getClient() != null : true)
+          .collect(
+              Collectors.groupingBy(issue -> issue.getAssignee() == null ? "none" : issue.getAssignee().getName(),
+                  Collectors.counting())).entrySet().stream()
+          .map(foo -> new SimpleReportPoint(foo.getKey(), null, foo.getValue().doubleValue())
+
+          ).collect(Collectors.toList());
+
+      return new ResponseEntity<List<SimpleReportPoint>>(result, HttpStatus.OK);
+    } else {
+      return new ResponseEntity<List<SimpleReportPoint>>(HttpStatus.NOT_FOUND);
+    }
+
+  }
+
+  @RequestMapping(value = "{name}/reports/openIssuesPerDeveloper/{clientOnly}", method = RequestMethod.GET)
+  @ResponseStatus(HttpStatus.OK)
+  public ResponseEntity<List<SimpleReportPoint>> totalOpenIssuesPerDeveloper(@PathVariable("name") String name,
+      @PathVariable("clientOnly") boolean clientOnly) {
+    if (securityManager.isCurrentMember(name)) {
+
+      SimpleDateFormat df = new SimpleDateFormat("yyyy-MM");
+      List<Issue> all = orgRepository.findOrganizationIssues(name);
+
+      List<SimpleReportPoint> result = all
+          .stream()
+          .filter(issue -> !issue.isClosed())
+          .filter(issue -> clientOnly ? issue.getClient() != null : true)
+          .collect(
+              Collectors.groupingBy(issue -> issue.getAssignee() == null ? "none" : issue.getAssignee().getName(),
+                  Collectors.counting())).entrySet().stream()
+          .map(foo -> new SimpleReportPoint(foo.getKey(), null, foo.getValue().doubleValue())
+
+          ).collect(Collectors.toList());
+
+      return new ResponseEntity<List<SimpleReportPoint>>(result, HttpStatus.OK);
+    } else {
+      return new ResponseEntity<List<SimpleReportPoint>>(HttpStatus.NOT_FOUND);
+    }
+
+  }
+
+  @RequestMapping(value = "{name}/reports/closedIssuesPerDeveloper/{clientOnly}", method = RequestMethod.GET)
+  @ResponseStatus(HttpStatus.OK)
+  public ResponseEntity<List<SimpleReportPoint>> totalClosedIssuesPerDeveloper(@PathVariable("name") String name,
+      @PathVariable("clientOnly") boolean clientOnly) {
+    if (securityManager.isCurrentMember(name)) {
+
+      SimpleDateFormat df = new SimpleDateFormat("yyyy-MM");
+      List<Issue> all = orgRepository.findOrganizationIssues(name);
+
+      List<SimpleReportPoint> result = all
+          .stream()
+          .filter(issue -> issue.getClosedAt() != null && issue.isClosed())
+          .filter(issue -> issue.isClosed())
+          .filter(issue -> clientOnly ? issue.getClient() != null : true)
+          .collect(
+              Collectors.groupingBy(issue -> issue.getAssignee() == null ? "none" : issue.getAssignee().getName(),
+                  Collectors.counting())).entrySet().stream()
+          .map(foo -> new SimpleReportPoint(foo.getKey(), null, foo.getValue().doubleValue())
+
+          ).collect(Collectors.toList());
+
+      return new ResponseEntity<List<SimpleReportPoint>>(result, HttpStatus.OK);
+    } else {
+      return new ResponseEntity<List<SimpleReportPoint>>(HttpStatus.NOT_FOUND);
+    }
+
+  }
+
+  @RequestMapping(value = "{name}/reports/openIssuesPerDeveloper/{year}/{month}/{clientOnly}", method = RequestMethod.GET)
+  @ResponseStatus(HttpStatus.OK)
+  public ResponseEntity<List<SimpleReportPoint>> openIssuesPerDeveloper(@PathVariable("name") String name,
+      @PathVariable("year") int year, @PathVariable("month") int month, @PathVariable("clientOnly") boolean clientOnly) {
+    if (securityManager.isCurrentMember(name)) {
+
+      SimpleDateFormat df = new SimpleDateFormat("yyyy-MM");
+      List<Issue> all = orgRepository.findOrganizationIssues(name);
+
+      List<SimpleReportPoint> result = all
+          .stream()
+          .filter(issue -> clientOnly ? issue.getClient() != null : true)
+          .filter(new Predicate<Issue>() {
+            @Override
+            public boolean test(Issue issue) {
+              if (issue.getCreatedAt() == null) {
+                return false;
+              }
+              Calendar cal = new GregorianCalendar();
+              cal.setTime(issue.getCreatedAt());
+              if (cal.get(Calendar.YEAR) == year && cal.get(Calendar.MONTH) == month) {
+                return true;
+              }
+              return false;
+            }
+          })
+          .collect(
+              Collectors.groupingBy(issue -> issue.getAssignee() == null ? "none" : issue.getAssignee().getName(),
+                  Collectors.counting())).entrySet().stream()
+          .map(foo -> new SimpleReportPoint(foo.getKey(), null, foo.getValue().doubleValue())
+
+          ).collect(Collectors.toList());
+
+      return new ResponseEntity<List<SimpleReportPoint>>(result, HttpStatus.OK);
+    } else {
+      return new ResponseEntity<List<SimpleReportPoint>>(HttpStatus.NOT_FOUND);
+    }
+
+  }
+
+  @RequestMapping(value = "{name}/reports/closedIssuesPerDeveloper/{year}/{month}/{clientOnly}", method = RequestMethod.GET)
+  @ResponseStatus(HttpStatus.OK)
+  public ResponseEntity<List<SimpleReportPoint>> closedIssuesPerDeveloper(@PathVariable("name") String name,
+      @PathVariable("year") int year, @PathVariable("month") int month, @PathVariable("clientOnly") boolean clientOnly) {
+    if (securityManager.isCurrentMember(name)) {
+
+      SimpleDateFormat df = new SimpleDateFormat("yyyy-MM");
+      List<Issue> all = orgRepository.findOrganizationIssues(name);
+
+      List<SimpleReportPoint> result = all
+          .stream()
+          .filter(issue -> clientOnly ? issue.getClient() != null : true)
+          .filter(issue -> issue.getClosedAt() != null && issue.isClosed())
+          .filter(new Predicate<Issue>() {
+            @Override
+            public boolean test(Issue issue) {
+              Calendar cal = new GregorianCalendar();
+              cal.setTime(issue.getClosedAt());
+              if (cal.get(Calendar.YEAR) == year && cal.get(Calendar.MONTH) == month) {
+                return true;
+              }
+              return false;
+            }
+          })
+          .collect(
+              Collectors.groupingBy(issue -> issue.getAssignee() == null ? "none" : issue.getAssignee().getName(),
+                  Collectors.counting())).entrySet().stream()
+          .map(foo -> new SimpleReportPoint(foo.getKey(), null, foo.getValue().doubleValue())
+
+          ).collect(Collectors.toList());
+
+      return new ResponseEntity<List<SimpleReportPoint>>(result, HttpStatus.OK);
+    } else {
+      return new ResponseEntity<List<SimpleReportPoint>>(HttpStatus.NOT_FOUND);
+    }
+
+  }
+
+  @RequestMapping(value = "{name}/reports/issuesPerClient", method = RequestMethod.GET)
+  @ResponseStatus(HttpStatus.OK)
+  public ResponseEntity<List<SimpleReportPoint>> totalIssuesPerClient(@PathVariable("name") String name) {
+    if (securityManager.isCurrentMember(name)) {
+      List<Issue> all = orgRepository.findOrganizationIssues(name);
+
+      List<SimpleReportPoint> result = all
+          .stream()
+          .filter(issue -> issue.getClient() != null)
+          .collect(
+              Collectors.groupingBy(issue -> issue.getClient().getName(),
+                  Collectors.counting())).entrySet().stream()
+          .map(foo -> new SimpleReportPoint(foo.getKey(), null, foo.getValue().doubleValue())
+
+          ).collect(Collectors.toList());
+
+      return new ResponseEntity<List<SimpleReportPoint>>(result, HttpStatus.OK);
+    } else {
+      return new ResponseEntity<List<SimpleReportPoint>>(HttpStatus.NOT_FOUND);
+    }
+
+  }
+
+  @RequestMapping(value = "{name}/reports/openIssuesPerClient", method = RequestMethod.GET)
+  @ResponseStatus(HttpStatus.OK)
+  public ResponseEntity<List<SimpleReportPoint>> totalOpenIssuesPerClient(@PathVariable("name") String name) {
+    if (securityManager.isCurrentMember(name)) {
+      List<Issue> all = orgRepository.findOrganizationIssues(name);
+
+      List<SimpleReportPoint> result = all
+          .stream()
+          .filter(issue ->issue.getClient() != null)
+          .filter(issue -> !issue.isClosed())
+          .collect(
+              Collectors.groupingBy(issue -> issue.getClient().getName(),
+                  Collectors.counting())).entrySet().stream()
+          .map(foo -> new SimpleReportPoint(foo.getKey(), null, foo.getValue().doubleValue())
+
+          ).collect(Collectors.toList());
+
+      return new ResponseEntity<List<SimpleReportPoint>>(result, HttpStatus.OK);
+    } else {
+      return new ResponseEntity<List<SimpleReportPoint>>(HttpStatus.NOT_FOUND);
+    }
+
+  }
+
+  @RequestMapping(value = "{name}/reports/closedIssuesPerClient", method = RequestMethod.GET)
+  @ResponseStatus(HttpStatus.OK)
+  public ResponseEntity<List<SimpleReportPoint>> totalClosedIssuesPerClient(@PathVariable("name") String name) {
+    if (securityManager.isCurrentMember(name)) {
+      List<Issue> all = orgRepository.findOrganizationIssues(name);
+
+      List<SimpleReportPoint> result = all
+          .stream()
+          .filter(issue -> issue.getClient() != null)
+          .filter(issue -> issue.isClosed())
+          .collect(
+              Collectors.groupingBy(issue -> issue.getClient().getName(),
+                  Collectors.counting())).entrySet().stream()
+          .map(foo -> new SimpleReportPoint(foo.getKey(), null, foo.getValue().doubleValue())
+
+          ).collect(Collectors.toList());
+
+      return new ResponseEntity<List<SimpleReportPoint>>(result, HttpStatus.OK);
+    } else {
+      return new ResponseEntity<List<SimpleReportPoint>>(HttpStatus.NOT_FOUND);
     }
 
   }

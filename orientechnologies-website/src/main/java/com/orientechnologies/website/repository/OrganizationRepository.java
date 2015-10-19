@@ -11,6 +11,8 @@ public interface OrganizationRepository extends BaseRepository<Organization> {
 
   public OUser findOwnerByName(String name);
 
+  public List<Issue> findOrganizationIssues(String name);
+
   public List<Issue> findOrganizationIssuesByLabel(String name, String label);
 
   public List<Issue> findOrganizationIssues(String name, String q, String page, String perPage);
