@@ -31,4 +31,14 @@ public class OETLProcessorTest {
     assertThat(processor.getExtractor().getName()).isEqualTo("csv");
   }
 
+
+  @Test
+  public void shouldExceuteBeginBlocktoExpandVariables() throws Exception {
+
+    final OETLProcessor processor = OETLProcessor.parseConfigAndParameters(new String[] { "./src/test/resources/comment.json" });
+
+    assertThat(processor.context.getVariable("filePath")).isEqualTo("./src/test/resources/comments.csv");
+
+  }
+
 }

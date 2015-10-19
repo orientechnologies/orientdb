@@ -51,44 +51,38 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Luca Garulli (l.garulli-at-orientechnologies.com)
  */
 public class OETLProcessor {
-  protected final OETLComponentFactory factory     = new OETLComponentFactory();
-  protected List<OBlock>               beginBlocks;
-  protected List<OBlock>               endBlocks;
-  protected OSource                    source;
-  protected OExtractor                 extractor;
-  protected OLoader                    loader;
-  protected List<OTransformer>         transformers;
-  protected OCommandContext            context;
-  protected long                       startTime;
-  protected long                       elapsed;
-  protected OETLProcessorStats         stats       = new OETLProcessorStats();
-  protected TimerTask                  dumpTask;
-  protected LOG_LEVELS                 logLevel    = LOG_LEVELS.INFO;
-  protected boolean                    haltOnError = true;
-  protected boolean                    parallel    = false;
-  protected int                        maxRetries  = 10;
-  private Thread[]                     threads;
+  protected final OETLComponentFactory factory = new OETLComponentFactory();
+  protected List<OBlock>       beginBlocks;
+  protected List<OBlock>       endBlocks;
+  protected OSource            source;
+  protected OExtractor         extractor;
+  protected OLoader            loader;
+  protected List<OTransformer> transformers;
+  protected OCommandContext    context;
+  protected long               startTime;
+  protected long               elapsed;
+  protected OETLProcessorStats stats = new OETLProcessorStats();
+  protected TimerTask dumpTask;
+  protected LOG_LEVELS logLevel    = LOG_LEVELS.INFO;
+  protected boolean    haltOnError = true;
+  protected boolean    parallel    = false;
+  protected int        maxRetries  = 10;
+  private Thread[] threads;
 
   /**
    * Creates an ETL processor by setting all the components on construction.
    *
-   * @param iBeginBlocks
-   *          List of Blocks to execute at the beginning of processing
-   * @param iSource
-   *          Source component
-   * @param iExtractor
-   *          Extractor component
-   * @param iTransformers
-   *          List of Transformers
-   * @param iLoader
-   *          Loader component
-   * @param iEndBlocks
-   *          List of Blocks to execute at the end of processing
-   * @param iContext
-   *          Execution Context
+   * @param iBeginBlocks  List of Blocks to execute at the beginning of processing
+   * @param iSource       Source component
+   * @param iExtractor    Extractor component
+   * @param iTransformers List of Transformers
+   * @param iLoader       Loader component
+   * @param iEndBlocks    List of Blocks to execute at the end of processing
+   * @param iContext      Execution Context
    */
   public OETLProcessor(final List<OBlock> iBeginBlocks, final OSource iSource, final OExtractor iExtractor,
-      final List<OTransformer> iTransformers, final OLoader iLoader, final List<OBlock> iEndBlocks, final OCommandContext iContext) {
+      final List<OTransformer> iTransformers, final OLoader iLoader, final List<OBlock> iEndBlocks,
+      final OCommandContext iContext) {
     beginBlocks = iBeginBlocks;
     source = iSource;
     extractor = iExtractor;
@@ -165,20 +159,13 @@ public class OETLProcessor {
   /**
    * Creates an ETL processor by setting the configuration of each component.
    *
-   * @param iBeginBlocks
-   *          List of Block configurations to execute at the beginning of processing
-   * @param iSource
-   *          Source component configuration
-   * @param iExtractor
-   *          Extractor component configuration
-   * @param iTransformers
-   *          List of Transformer configurations
-   * @param iLoader
-   *          Loader component configuration
-   * @param iEndBlocks
-   *          List of Block configurations to execute at the end of processing
-   * @param iContext
-   *          Execution Context
+   * @param iBeginBlocks  List of Block configurations to execute at the beginning of processing
+   * @param iSource       Source component configuration
+   * @param iExtractor    Extractor component configuration
+   * @param iTransformers List of Transformer configurations
+   * @param iLoader       Loader component configuration
+   * @param iEndBlocks    List of Block configurations to execute at the end of processing
+   * @param iContext      Execution Context
    * @return Current OETProcessor instance
    **/
   public OETLProcessor parse(final Collection<ODocument> iBeginBlocks, final ODocument iSource, final ODocument iExtractor,
@@ -201,6 +188,8 @@ public class OETLProcessor {
           final OBlock b = factory.getBlock(name);
           beginBlocks.add(b);
           configureComponent(b, (ODocument) block.field(name), iContext);
+          //Execution is necessary to resolve let blocks and provide resolved variables to other components
+          b.execute();
         }
 
       if (iSource != null) {
@@ -208,8 +197,9 @@ public class OETLProcessor {
         name = iSource.fieldNames()[0];
         source = factory.getSource(name);
         configureComponent(source, (ODocument) iSource.field(name), iContext);
-      } else
+      } else {
         source = factory.getSource("input");
+      }
 
       // EXTRACTOR
       name = iExtractor.fieldNames()[0];
@@ -221,28 +211,31 @@ public class OETLProcessor {
         name = iLoader.fieldNames()[0];
         loader = factory.getLoader(name);
         configureComponent(loader, (ODocument) iLoader.field(name), iContext);
-      } else
+      } else {
         loader = factory.getLoader("output");
+      }
 
       // TRANSFORMERS
       transformers = new ArrayList<OTransformer>();
-      if (iTransformers != null)
+      if (iTransformers != null) {
         for (ODocument t : iTransformers) {
           name = t.fieldNames()[0];
           final OTransformer tr = factory.getTransformer(name);
           transformers.add(tr);
           configureComponent(tr, (ODocument) t.field(name), iContext);
         }
+      }
 
       // END BLOCKS
       endBlocks = new ArrayList<OBlock>();
-      if (iEndBlocks != null)
+      if (iEndBlocks != null) {
         for (ODocument block : iEndBlocks) {
           name = block.fieldNames()[0];
           final OBlock b = factory.getBlock(name);
           endBlocks.add(b);
           configureComponent(b, (ODocument) block.field(name), iContext);
         }
+      }
 
       // analyzeFlow();
 
@@ -275,6 +268,10 @@ public class OETLProcessor {
 
   public OExtractor getExtractor() {
     return extractor;
+  }
+
+  public OSource getSource() {
+    return source;
   }
 
   public OLoader getLoader() {
@@ -311,8 +308,7 @@ public class OETLProcessor {
       }
 
       final LinkedBlockingQueue<OExtractedItem> queue = new LinkedBlockingQueue<OExtractedItem>(threads.length * 500) {
-        @Override
-        public boolean offer(OExtractedItem e) {
+        @Override public boolean offer(OExtractedItem e) {
           // turn offer() and add() into a blocking calls (unless interrupted)
           try {
             put(e);
@@ -330,8 +326,7 @@ public class OETLProcessor {
 
       for (int i = 0; i < threads.length; ++i) {
         threads[i] = new Thread(new Runnable() {
-          @Override
-          public void run() {
+          @Override public void run() {
             final OETLPipeline pipeline = new OETLPipeline(processor, transformers, loader, logLevel, maxRetries, haltOnError);
             pipeline.begin();
 
@@ -390,8 +385,7 @@ public class OETLProcessor {
     final Integer dumpEveryMs = (Integer) context.getVariable("dumpEveryMs");
     if (dumpEveryMs != null && dumpEveryMs > 0) {
       dumpTask = new TimerTask() {
-        @Override
-        public void run() {
+        @Override public void run() {
           dumpProgress();
         }
       };
@@ -487,8 +481,8 @@ public class OETLProcessor {
       try {
         inClass = Class.forName(iClassName);
       } catch (ClassNotFoundException e) {
-        throw new OConfigurationException("Class '" + iClassName + "' declared as 'input' of ETL Component '"
-            + iComponent.getName() + "' was not found.");
+        throw new OConfigurationException(
+            "Class '" + iClassName + "' declared as 'input' of ETL Component '" + iComponent.getName() + "' was not found.");
       }
     return inClass;
   }
@@ -571,8 +565,9 @@ public class OETLProcessor {
 
     } catch (Exception e) {
 
-      throw OException.wrapException(new OConfigurationException("Error on checking compatibility between components '"
-          + iLastComponent.getName() + "' and '" + iCurrentComponent.getName() + "'"), e);
+      throw OException.wrapException(new OConfigurationException(
+          "Error on checking compatibility between components '" + iLastComponent.getName() + "' and '" + iCurrentComponent
+              .getName() + "'"), e);
     }
 
     throw new OConfigurationException("Component '" + iCurrentComponent.getName() + "' expects one of the following inputs " + ins

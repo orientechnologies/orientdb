@@ -1,7 +1,20 @@
 {
+  "config": {
+    "log": "INFO",
+    "fileDirectory": "./src/test/resources/",
+    "fileName": "comments.csv"
+  },
+  "begin": [
+    {
+      "let": {
+        "name": "$filePath",
+        "expression": "$fileDirectory.append($fileName)"
+      }
+    }
+  ],
   "source": {
     "file": {
-      "path": "./src/test/resources/comments.csv"
+      "path": "$filePath"
     }
   },
   "extractor": {
