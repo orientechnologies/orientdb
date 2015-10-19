@@ -46,7 +46,7 @@ angular.module('webappApp')
       var chartData = {
         data: {
           x: "x",
-          columns: [["x"], ["open"], ["closed"]]
+          columns: [["x"], ["still open"], ["new"], ["closed"]]
         },
         axis: {
           x: {
@@ -60,24 +60,40 @@ angular.module('webappApp')
 
       var chart = c3.generate(chartData);
 
+
       Organization.all("reports/openIssuesPerInterval/monthly/"+$scope.clientOnly).getList().then(function (data) {
-        var chartData  = {columns:[["x"], ["open"]]};
+        var chartData  = {columns:[["x"], ["still open"], ["new"], ["closed"]]};
+        var total = 0;
         data.forEach(function (item, idx, ar) {
+          var monthly = parseInt(item.value, 10);
+          total += monthly;
           chartData.columns[0][idx + 1] = item['label'] + "-01";
-          chartData.columns[1][idx + 1] = parseInt(item.value, 10);
+          chartData.columns[2][idx + 1] = monthly;
+
+          console.log("open: "+total+" new: "+monthly);
         });
-        console.log(chartData);
-        chart.load(chartData);
+
+        Organization.all("reports/closedIssuesPerInterval/monthly/"+$scope.clientOnly).getList().then(function (data) {
+
+          data.forEach(function (item, idx2, ar) {
+            var value = parseInt(item.value, 10);
+            console.log("closed: "+value+" ("+chartData.columns[1][idx2 + 1]+" - "+value+")");
+            if(idx2>1){
+              chartData.columns[1][idx2 + 1] = chartData.columns[1][idx2] + chartData.columns[2][idx2 + 1] - value;
+            }else{
+              chartData.columns[1][idx2 + 1] = chartData.columns[2][idx2 + 1] - value;
+            }
+            console.log("still open: "+chartData.columns[1][idx2 + 1]);
+            chartData.columns[3][idx2 + 1] = value;
+
+          });
+
+
+          chart.load(chartData);
+        });
+
       });
 
-      Organization.all("reports/closedIssuesPerInterval/monthly/"+$scope.clientOnly).getList().then(function (data) {
-        var chartData  = {columns:[["x"], ["closed"]]};
-        data.forEach(function (item, idx, ar) {
-          chartData.columns[0][idx + 1] = item['label'] + "-01";
-          chartData.columns[1][idx + 1] = parseInt(item.value, 10);
-        });
-        chart.load(chartData);
-      });
     }
 
 
@@ -226,7 +242,7 @@ angular.module('webappApp')
       });
     }
 
-    
+
     //-----------------------------------------------------------
     //--------------   closed issues per developer --------------
     //-----------------------------------------------------------
