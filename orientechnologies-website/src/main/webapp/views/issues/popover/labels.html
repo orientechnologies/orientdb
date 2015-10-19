@@ -12,7 +12,7 @@
     <ul class="labels-group">
       <li class="label-item" ng-click="toggleLabel(label)" ng-class="{ 'label-unselected' : !isLabeled(label)  }"
           style="background-color: {{label.color | toRgbString:0.4}}"
-          ng-repeat="label in labels | filter:labelFilter">
+          ng-repeat="label in labels | filter:labelFilter | orderBy : 'name'">
         <div class="container-fluid">
           <div class="row">
             <div class="col-md-1 text-center">

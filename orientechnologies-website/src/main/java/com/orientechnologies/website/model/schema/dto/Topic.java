@@ -22,6 +22,7 @@ public class Topic extends Identity {
   private Long         comments;
   private OUser        user;
   private Boolean      confidential;
+  private Boolean      clientOnly;
 
   protected List<Tag>  tags;
 
@@ -103,5 +104,14 @@ public class Topic extends Identity {
 
   public void setTags(List<Tag> tags) {
     this.tags = tags;
+  }
+
+
+  public Boolean getClientOnly() {
+    return clientOnly;
+  }
+
+  public void setClientOnly(Boolean clientOnly) {
+    this.clientOnly = clientOnly;
   }
 }

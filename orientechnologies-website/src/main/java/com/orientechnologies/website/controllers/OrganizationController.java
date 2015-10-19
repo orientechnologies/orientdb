@@ -465,6 +465,18 @@ public class OrganizationController extends ExceptionController {
         HttpStatus.OK);
   }
 
+  @RequestMapping(value = "{name}/announcements", method = RequestMethod.GET)
+  @ResponseStatus(HttpStatus.OK)
+  public ResponseEntity<List<Topic>> getAnnouncements(@PathVariable("name") String name) {
+
+    if (securityManager.isCurrentClient(name)) {
+      List<Topic> topics = orgRepository.findOrganizationTopicsForClients(name);
+      return new ResponseEntity<List<Topic>>(topics, HttpStatus.OK);
+    } else {
+      return new ResponseEntity<List<Topic>>(HttpStatus.NOT_FOUND);
+    }
+  }
+
   @RequestMapping(value = "{name}/topics", method = RequestMethod.POST)
   @ResponseStatus(HttpStatus.OK)
   public ResponseEntity<Topic> postTopic(@PathVariable("name") String name, @RequestBody Topic topic) {

@@ -474,4 +474,14 @@ span.label-dark {
     color: white !important;
 }
 
+.announcement-item hr {
+  margin-bottom: 5px;
+  margin-top: 5px;
+}
 
+.announcement-item  .announcement-item-body .mkd-preview p {
+  display: none;
+}
+.announcement-item .announcement-item-body .mkd-preview p:first-child {
+  display: inherit;
+}
