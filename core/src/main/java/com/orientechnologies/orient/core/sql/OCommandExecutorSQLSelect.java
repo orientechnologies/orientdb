@@ -640,7 +640,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   protected boolean handleResult(final OIdentifiable iRecord, final OCommandContext iContext) {
     lastRecord = iRecord;
 
-    if ((orderedFields.isEmpty() || fullySortedByIndex || isRidOnlySort()) && skip > 0 && this.unwindFields == null) {
+    if ((orderedFields.isEmpty() || fullySortedByIndex || isRidOnlySort()) && skip > 0 && this.unwindFields == null && this.expandTarget == null) {
       lastRecord = null;
       skip--;
       return true;
@@ -653,13 +653,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     }
 
     return !((orderedFields.isEmpty() || fullySortedByIndex || isRidOnlySort()) && !isAnyFunctionAggregates()
-        && (groupByFields == null || groupByFields.isEmpty()) && fetchLimit > -1 && resultCount >= fetchLimit);
-
+        && (groupByFields == null || groupByFields.isEmpty()) && fetchLimit > -1 && resultCount >= fetchLimit && expandTarget == null);
   }
 
   /**
    * Returns the temporary RID counter assuring it's unique per query tree.
-   * 
+   *
    * @return Serial as integer
    * @param iContext
    */
@@ -766,7 +765,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
    * (results > skip + limit)
    */
   private void applyPartialOrderBy() {
-    if (orderedFields.isEmpty() || fullySortedByIndex || isRidOnlySort()) {
+    if (expandTarget != null || (unwindFields != null && unwindFields.size() > 0) || orderedFields.isEmpty() || fullySortedByIndex
+        || isRidOnlySort()) {
       return;
     }
 
@@ -816,7 +816,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
   /**
    * Report the tip to the profiler and collect it in context to be reported by tools like Studio
-   * 
+   *
    * @param iMessage
    */
   protected void reportTip(final String iMessage) {
@@ -2007,7 +2007,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             boolean ascSortOrder = !indexIsUsedInOrderBy || orderedFields.get(0).getValue().equals(KEYWORD_ASC);
 
             if (indexIsUsedInOrderBy) {
-              fullySortedByIndex = indexDefinition.getFields().size() >= orderedFields.size() && conditionHierarchy.size() == 1;
+              fullySortedByIndex = expandTarget == null && indexDefinition.getFields().size() >= orderedFields.size() && conditionHierarchy.size() == 1;
             }
 
             context.setVariable("$limit", limit);
@@ -2166,7 +2166,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
               boolean ascSortOrder = !indexIsUsedInOrderBy || orderedFields.get(0).getValue().equals(KEYWORD_ASC);
 
               if (indexIsUsedInOrderBy) {
-                fullySortedByIndex = indexDefinition.getFields().size() >= orderedFields.size() && conditionHierarchy.size() == 1;
+                fullySortedByIndex = expandTarget == null && indexDefinition.getFields().size() >= orderedFields.size() && conditionHierarchy.size() == 1;
               }
 
               context.setVariable("$limit", limit);
@@ -2523,17 +2523,20 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         }
       } else {
         final OMultiCollectionIterator<OIdentifiable> finalResult = new OMultiCollectionIterator<OIdentifiable>();
-        int iteratorLimit = 0;
-        if (limit < 0) {
-          iteratorLimit = -1;
-        } else {
-          iteratorLimit += limit;
-          if (skip > 0) {
-            iteratorLimit += skip;
-          }
-        }
 
-        finalResult.setLimit(iteratorLimit);
+        if (orderedFields == null || orderedFields.size() == 0) {
+          // expand is applied before sorting, so limiting the result set here would give wrong results
+          int iteratorLimit = 0;
+          if (limit < 0) {
+            iteratorLimit = -1;
+          } else {
+            iteratorLimit += limit;
+            if (skip > 0) {
+              iteratorLimit += skip;
+            }
+          }
+          finalResult.setLimit(iteratorLimit);
+        }
 
         for (OIdentifiable id : tempResult) {
           final Object fieldValue;
