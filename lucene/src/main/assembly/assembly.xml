@@ -1,0 +1,20 @@
+<assembly>
+    <id>dist</id>
+    <formats>
+        <format>jar</format>
+    </formats>
+    <includeBaseDirectory>false</includeBaseDirectory>
+    <dependencySets>
+        <dependencySet>
+            <outputDirectory/>
+            <unpack>true</unpack>
+            <includes>
+                <include>${groupId}:${artifactId}</include>
+                <include>org.apache.lucene:*</include>
+                <include>com.spatial4j:*</include>
+            </includes>
+
+        </dependencySet>
+    </dependencySets>
+
+</assembly>
