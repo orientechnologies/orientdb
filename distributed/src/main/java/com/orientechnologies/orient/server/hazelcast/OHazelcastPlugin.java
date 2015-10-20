@@ -105,9 +105,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   protected String membershipListenerRegistration;
 
   protected volatile HazelcastInstance          hazelcastInstance;
-  protected Object                              installDatabaseLock = new Object();
   protected long                                lastClusterChangeOn;
-  protected List<ODistributedLifecycleListener> listeners           = new ArrayList<ODistributedLifecycleListener>();
+  protected List<ODistributedLifecycleListener> listeners = new ArrayList<ODistributedLifecycleListener>();
 
   public OHazelcastPlugin() {
   }
@@ -1014,8 +1013,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
    * Returns the clusters where sync is required.
    */
   protected Set<String> installDatabaseFromNetwork(final String dbPath, final String databaseName,
-      final OHazelcastDistributedDatabase distrDatabase, final String iNode,
-      final ODistributedDatabaseChunk value) {
+      final OHazelcastDistributedDatabase distrDatabase, final String iNode, final ODistributedDatabaseChunk value) {
     // DISCARD ALL THE MESSAGES BEFORE THE BACKUP
     distrDatabase.setWaitForMessage(value.getLastOperationId());
 
@@ -1439,17 +1437,15 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       return;
 
     // LOCKING THIS RESOURCE PREVENT CONCURRENT INSTALL OF THE SAME DB
-    synchronized (installDatabaseLock) {
-      for (Entry<String, Object> entry : getConfigurationMap().entrySet()) {
-        if (entry.getKey().startsWith(CONFIG_DATABASE_PREFIX)) {
-          final String databaseName = entry.getKey().substring(CONFIG_DATABASE_PREFIX.length());
+    for (Entry<String, Object> entry : getConfigurationMap().entrySet()) {
+      if (entry.getKey().startsWith(CONFIG_DATABASE_PREFIX)) {
+        final String databaseName = entry.getKey().substring(CONFIG_DATABASE_PREFIX.length());
 
-          final ODocument config = (ODocument) entry.getValue();
-          final Boolean autoDeploy = config.field("autoDeploy");
+        final ODocument config = (ODocument) entry.getValue();
+        final Boolean autoDeploy = config.field("autoDeploy");
 
-          if (autoDeploy != null && autoDeploy) {
-            installDatabase(iStartup, databaseName, config);
-          }
+        if (autoDeploy != null && autoDeploy) {
+          installDatabase(iStartup, databaseName, config);
         }
       }
     }
