@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import junit.framework.Assert;
+import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -45,8 +45,7 @@ import java.util.zip.ZipFile;
 /**
  * Created by enricorisa on 02/10/14.
  */
-@Test(groups = "embedded")
-public class LuceneSpatialQueryTest extends BaseLuceneTest {
+@Test(groups = "embedded") public class LuceneSpatialQueryTest extends BaseLuceneTest {
 
   public LuceneSpatialQueryTest() {
   }
@@ -55,13 +54,11 @@ public class LuceneSpatialQueryTest extends BaseLuceneTest {
     super(remote);
   }
 
-  @Override
-  protected String getDatabaseName() {
+  @Override protected String getDatabaseName() {
     return "luceneSpatial";
   }
 
-  @BeforeClass
-  public void init() {
+  @BeforeClass public void init() {
     initDB();
     OSchema schema = databaseDocumentTx.getMetadata().getSchema();
     OClass v = schema.getClass("V");
@@ -83,8 +80,7 @@ public class LuceneSpatialQueryTest extends BaseLuceneTest {
         ZipEntry entry = entries.nextElement();
 
         Orient.instance().getTimer().schedule(new TimerTask() {
-          @Override
-          public void run() {
+          @Override public void run() {
 
             Runtime runtime = Runtime.getRuntime();
 
@@ -92,8 +88,9 @@ public class LuceneSpatialQueryTest extends BaseLuceneTest {
             long maxMemory = runtime.maxMemory();
             long allocatedMemory = runtime.totalMemory();
             long freeMemory = runtime.freeMemory();
-            OLogManager.instance().info(this, "Memory Stats: free [%d], allocated [%d], max [%d] total free [%d]",
-                freeMemory / 1024, allocatedMemory / 1024, maxMemory / 1024, (freeMemory + (maxMemory - allocatedMemory)) / 1024);
+            OLogManager.instance()
+                .info(this, "Memory Stats: free [%d], allocated [%d], max [%d] total free [%d]", freeMemory / 1024,
+                    allocatedMemory / 1024, maxMemory / 1024, (freeMemory + (maxMemory - allocatedMemory)) / 1024);
           }
         }, 10000, 10000);
         if (entry.getName().equals("location.csv")) {
@@ -141,13 +138,11 @@ public class LuceneSpatialQueryTest extends BaseLuceneTest {
 
   }
 
-  @AfterClass
-  public void deInit() {
+  @AfterClass public void deInit() {
     deInitDB();
   }
 
-  @Test
-  public void testNearQuery() {
+  @Test public void testNearQuery() {
 
     String query = "select *,$distance from Place where [latitude,longitude,$spatial] NEAR [41.893056,12.482778,{\"maxDistance\": 0.5}]";
     List<ODocument> docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
@@ -158,8 +153,7 @@ public class LuceneSpatialQueryTest extends BaseLuceneTest {
 
   }
 
-  @Test
-  public void testWithinQuery() {
+  @Test public void testWithinQuery() {
     String query = "select * from Place where [latitude,longitude] WITHIN [[51.507222,-0.1275],[55.507222,-0.1275]]";
     List<ODocument> docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
     Assert.assertEquals(238, docs.size());
