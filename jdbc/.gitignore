@@ -1,0 +1,24 @@
+build.number
+*.class
+*/target/*
+target
+*/test-output
+*/databases
+*.gz
+*.patch
+
+# Package Files #
+*.war
+*.ear
+
+# Eclipse IDE files
+*.classpath
+*.project
+*/*.settings
+*.prefs
+
+#IntelliJ IDEA files
+*.iml
+.idea/
+
+tests/src/test/java/com/orientechnologies/orient/test/database/auto/_*.xml
