@@ -831,6 +831,20 @@ public class OCommandExecutorSQLSelectTest {
     assertEquals(doc.field("r"), 10);
   }
 
+  @Test
+  public void testIntersectExpandLet() {
+    //issue #5121
+    OSQLSynchQuery sql = new OSQLSynchQuery("select expand(intersect($q1, $q2)) "
+        + "let $q1 = (select from OUser where name ='admin')," + "$q2 = (select from OUser where name ='admin')");
+
+    List<ODocument> results = db.query(sql);
+    assertEquals(results.size(), 1);
+    for (int i = 0; i < results.size(); i++) {
+      ODocument doc = results.get(i);
+      assertEquals(doc.field("name"), "admin");
+    }
+  }
+
   private long indexUsages(ODatabaseDocumentTx db) {
     final long oldIndexUsage;
     try {

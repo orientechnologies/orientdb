@@ -2156,6 +2156,19 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
               }
             }
           }
+        } else if (expandTarget instanceof OSQLFunctionRuntime) {
+          if (((OSQLFunctionRuntime) expandTarget).aggregateResults()) {
+            throw new OCommandExecutionException("Unsupported operation: aggregate function in expand(" + expandTarget + ")");
+          } else {
+            Object r = ((OSQLFunctionRuntime) expandTarget).execute(null, null, null, context);
+            if (r instanceof OIdentifiable) {
+              ((Collection<OIdentifiable>) tempResult).add((OIdentifiable) r);
+            } else if (r instanceof Iterator || OMultiValue.isMultiValue(r)) {
+              for (Object o : OMultiValue.getMultiValueIterable(r)) {
+                ((Collection<OIdentifiable>) tempResult).add((OIdentifiable) o);
+              }
+            }
+          }
         }
       } else {
         final OMultiCollectionIterator<OIdentifiable> finalResult = new OMultiCollectionIterator<OIdentifiable>();
