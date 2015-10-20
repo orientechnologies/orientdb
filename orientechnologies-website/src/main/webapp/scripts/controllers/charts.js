@@ -15,11 +15,10 @@ angular.module('webappApp')
     $scope.years = [];
     for(var i = 2012; i <= new Date().getFullYear(); i++){
       $scope.years.push(i);
-      console.log(i);
     }
 
     $scope.months = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-    $scope.date = {year:new Date().getFullYear(), month:new Date().getMonth()};
+    $scope.date = {year:new Date().getFullYear(), month:new Date().getMonth()+1};
     $scope.clientOnly = false;
     $scope.chartTitle = "";
 
@@ -128,8 +127,8 @@ angular.module('webappApp')
       var committers = [];
 
       var today = new Date();
-      var month = $scope.date.month - 1?$scope.date.month - 1:today.getMonth();
-      var year = $scope.date.year?$scope.date.year:today.getFullYear();
+      var month = $scope.date.month ? $scope.date.month - 1 : today.getMonth();
+      var year = $scope.date.year ? $scope.date.year:today.getFullYear();
 
       $scope.chartTitle = 'Open/closed issues per developer per month ('+(month+1)+"/"+year+")";
 
