@@ -1531,10 +1531,17 @@ OArrayRangeSelector ArrayRangeSelector():
 
 
 String Alias():
-{ OIdentifier identifier; }
 {
-	identifier = Identifier()
-	{return identifier.getValue();}
+    OIdentifier identifier = null;
+    ORecordAttribute recordAttribute = null;
+}
+{
+    (
+        identifier = Identifier()
+        |
+        recordAttribute = RecordAttribute()
+    )
+	{return identifier!=null?identifier.getValue():recordAttribute.name;}
 }
 
 ORecordAttribute RecordAttribute():

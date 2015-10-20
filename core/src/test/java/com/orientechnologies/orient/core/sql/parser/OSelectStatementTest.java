@@ -595,6 +595,12 @@ public class OSelectStatementTest {
 
   }
 
+  @Test
+  public void testRecordAttributeAsAlias() {
+    checkRightSyntax("select @rid as @rid from foo ");
+
+  }
+
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);
     try {
