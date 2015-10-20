@@ -1,97 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <parent>
+    <artifactId>orientdb-parent</artifactId>
+    <groupId>com.orientechnologies</groupId>
+    <version>2.1.5-SNAPSHOT</version>
+  </parent>
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.orientechnologies</groupId>
   <artifactId>orientdb-etl</artifactId>
-  <name>orientdb-etl</name>
-  <version>2.1.5-SNAPSHOT</version>
+  <name>OrientDB ETL</name>
   <description>ETL tools for OrientDB NoSQL document graph dbms</description>
-  <url>http://maven.apache.org</url>
-  <issueManagement>
-    <system>GitHub Issues</system>
-    <url>https://github.com/orientechnologies/orientdb-etl/issues</url>
-  </issueManagement>
-  <ciManagement>
-    <system>jenkins</system>
-    <url>http://helios.orientechnologies.com/</url>
-  </ciManagement>
-  <inceptionYear>2014</inceptionYear>
-  <developers>
-    <developer>
-      <id>l.garulli</id>
-      <name>Luca Garulli</name>
-      <email>l.garulli@orientechnologies.com</email>
-      <organization>Orient Technologies</organization>
-      <organizationUrl>http://www.orientechnologies.com</organizationUrl>
-      <roles>
-        <role>architect</role>
-        <role>developer</role>
-        <role>founder</role>
-      </roles>
-      <timezone>+1</timezone>
-    </developer>
-    <developer>
-      <id>r.franchini</id>
-      <name>Roberto Franchini</name>
-      <email>r.franchini@orientechnologies.com</email>
-      <organization>Orient Technologies</organization>
-      <organizationUrl>http://www.orientechnologies.com</organizationUrl>
-      <roles>
-        <role>architect</role>
-        <role>developer</role>
-      </roles>
-      <timezone>+1</timezone>
-    </developer>
-  </developers>
-  <licenses>
-    <license>
-      <name>Apache 2</name>
-      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-    </license>
-  </licenses>
-  <scm>
-    <connection>scm:git:https://github.com/orientechnologies/orientdb-etl.git</connection>
-    <developerConnection>scm:git:git@github.com:orientechnologies/orientdb-etl.git</developerConnection>
-    <url>https://github.com/orientechnologies/orientdb-etl</url>
-  </scm>
-  <organization>
-    <name>Orient Technologies</name>
-    <url>http://www.orientechnologies.com</url>
-  </organization>
   <build>
     <plugins>
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.18.1</version>
         <dependencies>
           <dependency>
             <groupId>org.apache.maven.surefire</groupId>
             <artifactId>surefire-junit4</artifactId>
-            <version>2.18.1</version>
+            <version>${surefire.version}</version>
           </dependency>
         </dependencies>
-      </plugin>
-      <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.1</version>
-        <configuration>
-          <fork>true</fork>
-          <source>${maven.compile.sourceLevel}</source>
-          <target>${maven.compile.targetLevel}</target>
-          <encoding>${project.build.sourceEncoding}</encoding>
-        </configuration>
-      </plugin>
-      <plugin>
-        <artifactId>maven-release-plugin</artifactId>
-        <version>2.5.1</version>
-        <configuration>
-          <mavenExecutorId>forked-path</mavenExecutorId>
-          <useReleaseProfile>false</useReleaseProfile>
-          <localCheckout>true</localCheckout>
-          <pushChanges>false</pushChanges>
-          <allowTimestampedSnapshots>true</allowTimestampedSnapshots>
-          <releaseProfiles>release</releaseProfiles>
-        </configuration>
       </plugin>
       <plugin>
         <artifactId>maven-shade-plugin</artifactId>
@@ -121,38 +49,6 @@
       </plugin>
     </plugins>
   </build>
-  <profiles>
-    <profile>
-      <id>release-sign-artifacts</id>
-      <build>
-        <plugins>
-          <plugin>
-            <artifactId>maven-gpg-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>sign-artifacts</id>
-                <phase>verify</phase>
-                <goals>
-                  <goal>sign</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-  </profiles>
-  <repositories>
-    <repository>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
-      <snapshots />
-      <id>sonatype-nexus-snapshots</id>
-      <name>Sonatype Nexus Snapshots</name>
-      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-    </repository>
-  </repositories>
   <dependencies>
     <dependency>
       <groupId>com.orientechnologies</groupId>
@@ -210,32 +106,9 @@
       <version>2.1.5-SNAPSHOT</version>
       <scope>compile</scope>
     </dependency>
-    <dependency>
-      <groupId>com.tinkerpop.blueprints</groupId>
-      <artifactId>blueprints-core</artifactId>
-      <version>2.6.0</version>
-      <scope>compile</scope>
-    </dependency>
   </dependencies>
-  <distributionManagement>
-    <repository>
-      <id>sonatype-nexus-staging</id>
-      <name>OrientDB Maven2 Repository</name>
-      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
-    </repository>
-    <snapshotRepository>
-      <id>sonatype-nexus-snapshots</id>
-      <name>OrientDB Maven2 Snapshot Repository</name>
-      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-    </snapshotRepository>
-  </distributionManagement>
   <properties>
-    <maven.compile.sourceLevel>${jdkVersion}</maven.compile.sourceLevel>
-    <orientdb.version>${project.version}</orientdb.version>
-    <maven.compile.targetLevel>${jdkVersion}</maven.compile.targetLevel>
-    <blueprints.version>2.6.0</blueprints.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <jdkVersion>1.6</jdkVersion>
   </properties>
 </project>
 
