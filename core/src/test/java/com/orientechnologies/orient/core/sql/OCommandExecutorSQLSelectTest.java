@@ -40,8 +40,8 @@ import static org.testng.Assert.*;
 
 @Test
 public class OCommandExecutorSQLSelectTest {
-  private static String DB_STORAGE = "memory";
-  private static String DB_NAME    = "OCommandExecutorSQLSelectTest";
+  private static String DB_STORAGE             = "memory";
+  private static String DB_NAME                = "OCommandExecutorSQLSelectTest";
 
   private int           ORDER_SKIP_LIMIT_ITEMS = 100 * 1000;
 
@@ -187,7 +187,6 @@ public class OCommandExecutorSQLSelectTest {
     }
     db.declareIntent(null);
   }
-
 
   private void initExpandSkipLimit(ODatabaseDocumentTx db) {
     db.getMetadata().getSchema().createClass("ExpandSkipLimit");
@@ -831,6 +830,20 @@ public class OCommandExecutorSQLSelectTest {
     for (int i = 0; i < results.size(); i++) {
       ODocument doc = results.get(i);
       assertEquals(doc.field("nnum"), ORDER_SKIP_LIMIT_ITEMS - 1 - skip - i);
+    }
+  }
+
+  @Test
+  public void testIntersectExpandLet() {
+    //issue #5121
+    OSQLSynchQuery sql = new OSQLSynchQuery("select expand(intersect($q1, $q2)) "
+        + "let $q1 = (select from OUser where name ='admin')," + "$q2 = (select from OUser where name ='admin')");
+
+    List<ODocument> results = db.query(sql);
+    assertEquals(results.size(), 1);
+    for (int i = 0; i < results.size(); i++) {
+      ODocument doc = results.get(i);
+      assertEquals(doc.field("name"), "admin");
     }
   }
 
