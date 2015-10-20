@@ -217,11 +217,6 @@ public class OClusterRemote implements OCluster {
   }
 
   @Override
-  public boolean useWal() {
-    throw new UnsupportedOperationException("useWal()");
-  }
-
-  @Override
   public float recordGrowFactor() {
     throw new UnsupportedOperationException("recordGrowFactor()");
   }

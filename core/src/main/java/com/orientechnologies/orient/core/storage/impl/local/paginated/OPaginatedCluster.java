@@ -283,9 +283,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       case NAME:
         setNameInternal(stringValue);
         break;
-      case USE_WAL:
-        setUseWalInternal(stringValue);
-        break;
       case RECORD_GROW_FACTOR:
         setRecordGrowFactorInternal(stringValue);
         break;
@@ -325,16 +322,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     }
 
     return null;
-  }
-
-  @Override
-  public boolean useWal() {
-    acquireSharedLock();
-    try {
-      return config.useWal;
-    } finally {
-      releaseSharedLock();
-    }
   }
 
   @Override
@@ -1360,7 +1347,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
     this.id = config.getId();
 
-    clusterPositionMap = new OClusterPositionMap(storage, getName(), this.config.useWal);
+    clusterPositionMap = new OClusterPositionMap(storage, getName());
   }
 
   private void setCompressionInternal(final String iCompressionMethod, final String iCompressionOptions) {
@@ -1414,15 +1401,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     }
   }
 
-  private void setUseWalInternal(String stringValue) {
-    if (!(stringValue.equals("true") || stringValue.equals("false")))
-      throw new OPaginatedClusterException(
-          "Invalid value for cluster attribute " + OCluster.ATTRIBUTES.USE_WAL + " was passed [" + stringValue + "].", this);
-
-    config.useWal = Boolean.valueOf(stringValue);
-    clusterPositionMap.setUseWal(config.useWal);
-    storageLocal.getConfiguration().update();
-  }
 
   private void setNameInternal(final String newName) throws IOException {
 

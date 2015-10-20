@@ -104,8 +104,6 @@ public interface OCluster {
    */
   long getRecordsSize() throws IOException;
 
-  boolean useWal();
-
   float recordGrowFactor();
 
   float recordOverflowGrowFactor();

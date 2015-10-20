@@ -202,11 +202,6 @@ public class OOfflineCluster implements OCluster {
   }
 
   @Override
-  public boolean useWal() {
-    return false;
-  }
-
-  @Override
   public float recordGrowFactor() {
     return 0;
   }

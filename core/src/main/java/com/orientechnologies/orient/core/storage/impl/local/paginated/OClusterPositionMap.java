@@ -40,27 +40,11 @@ public class OClusterPositionMap extends ODurableComponent {
   public static final String DEF_EXTENSION = ".cpm";
 
   private long               fileId;
-  private boolean            useWal;
 
-  public OClusterPositionMap(OAbstractPaginatedStorage storage, String name, boolean useWal) {
+  public OClusterPositionMap(OAbstractPaginatedStorage storage, String name) {
     super(storage, name, DEF_EXTENSION);
-
-    acquireExclusiveLock();
-    try {
-      this.useWal = useWal;
-    } finally {
-      releaseExclusiveLock();
-    }
   }
 
-  public void setUseWal(boolean useWal) {
-    acquireExclusiveLock();
-    try {
-      this.useWal = useWal;
-    } finally {
-      releaseExclusiveLock();
-    }
-  }
 
   public void open() throws IOException {
     acquireExclusiveLock();
