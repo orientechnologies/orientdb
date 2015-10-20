@@ -1,4 +1,3 @@
-
 <div class="panel">
   <div clas="row panel-heading">
     <button class="btn" ng-click="chart(issues)">Open/closed issues</button>
@@ -12,10 +11,10 @@
       <div class="form-group" ng-show="showClientOnly"><label class="control-label">Client only </label><input class="form-control" type="checkbox" ng-model="clientOnly"  ng-change="chart(currentChart)"/></div>
     </div>
     <div class="col-md-2">
-      <div class="form-group" ng-show="showYear"><label class="control-label">Year </label><select class="form-control" ng-model="date.year" ng-options="year for year in years" ng-change="chart(currentChart)"/></div>
+      <div class="form-group" ng-show="showYear"><label class="control-label">Year </label><select class="form-control" ng-model="date.year" ng-options="year for year in years" ng-change="chart(currentChart)"></select></div>
     </div>
     <div class="col-md-2">
-      <div class="form-group" ng-show="showMonth"><label class="control-label">Month </label><select class="form-control" ng-model="date.month" ng-options="month for month in months" ng-change="chart(currentChart)"/></div>
+      <div class="form-group" ng-show="showMonth"><label class="control-label">Month </label><select class="form-control" ng-model="date.month" ng-options="month for month in months" ng-change="chart(currentChart)"></select></div>
     </div>
   </div>
   <div class="row">
