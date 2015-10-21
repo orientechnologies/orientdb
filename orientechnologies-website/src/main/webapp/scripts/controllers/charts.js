@@ -124,6 +124,11 @@ angular.module('webappApp')
         }
       };
 
+      chartData.data.onclick = function(d, element){
+        $location.path("/issues").search({q: "is:open assignee:\""+chartData.data.columns[0][d.x+1]+"\""});
+        $scope.$apply();
+      }
+
       var committers = [];
 
       var today = new Date();
@@ -229,6 +234,10 @@ angular.module('webappApp')
         }
       };
 
+      chartData.data.onclick = function(d, element){
+        $location.path("/issues").search({q: "is:open assignee:\""+ d.name +"\""});
+        $scope.$apply();
+      }
 
       Organization.all("reports/issuesPerDeveloper/"+$scope.clientOnly).getList().then(function (data) {
         data.forEach(function (item, idx, ar) {
@@ -236,6 +245,7 @@ angular.module('webappApp')
             chartData.data.columns.push([item.label, item.value]);
           }
         });
+
 
         c3.generate(chartData);
       });
@@ -258,6 +268,12 @@ angular.module('webappApp')
           type:"pie"
         }
       };
+
+      chartData.data.onclick = function(d, element){
+        $location.path("/issues").search({q: "is:open assignee:\""+ d.name +"\""});
+        $scope.$apply();
+      }
+
 
 
       Organization.all("reports/closedIssuesPerDeveloper/"+$scope.clientOnly).getList().then(function (data) {
@@ -298,6 +314,7 @@ angular.module('webappApp')
       };
       chartData.data.onclick = function(d, element){
         $location.path("/issues").search({q: "is:open client:\""+chartData.data.columns[0][d.x+1]+"\""});
+        $scope.$apply();
       }
 
 
