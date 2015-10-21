@@ -20,14 +20,6 @@
 
 package com.orientechnologies.orient.server.network.protocol.binary;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
@@ -40,12 +32,18 @@ import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
-import com.orientechnologies.orient.core.version.ORecordVersion;
-import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryServer;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OClientSessions;
+
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Asynchronous command result manager. As soon as a record is returned by the command is sent over the wire.
@@ -119,7 +117,7 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
           out.writeByte(iOp.type);
           out.writeInt(iToken);
           out.writeByte(ORecordInternal.getRecordType(iOp.getRecord()));
-          writeVersion(out, iOp.getRecord().getRecordVersion());
+          writeVersion(out, iOp.getRecord().getVersion());
           writeRID(out, (ORecordId) iOp.getRecord().getIdentity());
           writeBytes(out, protocol.getRecordBytes(iOp.getRecord()));
 
@@ -161,9 +159,8 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
 
   }
 
-  private void writeVersion(DataOutputStream out, ORecordVersion v) throws IOException {
-    final ORecordVersion version = OVersionFactory.instance().createVersion();
-    out.writeInt(version.getCounter());
+  private void writeVersion(DataOutputStream out, int v) throws IOException {
+    out.writeInt(v);
   }
 
   private void writeRID(DataOutputStream out, ORecordId record) throws IOException {

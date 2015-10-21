@@ -19,6 +19,13 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
+import java.lang.reflect.Array;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.Map.Entry;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
@@ -44,13 +51,6 @@ import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.method.OSQLMethod;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
-
-import java.lang.reflect.Array;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.Map.Entry;
 
 /**
  * Helper class to manage documents.
@@ -184,8 +184,8 @@ public class ODocumentHelper {
       else
         iValue = iValue.toString();
       if (!(iValue instanceof String) && !iFieldType.isAssignableFrom(iValue.getClass()))
-        throw new IllegalArgumentException("Property '" + iFieldName + "' of type '" + iFieldType
-            + "' cannot accept value of type: " + iValue.getClass());
+        throw new IllegalArgumentException(
+            "Property '" + iFieldName + "' of type '" + iFieldType + "' cannot accept value of type: " + iValue.getClass());
     } else if (Date.class.isAssignableFrom(iFieldType)) {
       if (iValue instanceof String && ODatabaseRecordThreadLocal.INSTANCE.isDefined()) {
         final OStorageConfiguration config = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration();
@@ -204,8 +204,8 @@ public class ODocumentHelper {
         } catch (ParseException pe) {
           final String dateFormat = ((String) iValue).length() > config.dateFormat.length() ? config.dateTimeFormat
               : config.dateFormat;
-          throw OException.wrapException(new OQueryParsingException("Error on conversion of date '" + iValue
-              + "' using the format: " + dateFormat), pe);
+          throw OException.wrapException(
+              new OQueryParsingException("Error on conversion of date '" + iValue + "' using the format: " + dateFormat), pe);
         }
       }
     }
@@ -291,8 +291,8 @@ public class ODocumentHelper {
           value = ((OCommandContext) value).getVariables();
 
         if (value instanceof OIdentifiable) {
-          final ORecord record = currentRecord != null && currentRecord instanceof OIdentifiable ? ((OIdentifiable) currentRecord)
-              .getRecord() : null;
+          final ORecord record = currentRecord != null && currentRecord instanceof OIdentifiable
+              ? ((OIdentifiable) currentRecord).getRecord() : null;
 
           final Object index = getIndexPart(iContext, indexPart);
           final String indexAsString = index != null ? index.toString() : null;
@@ -345,8 +345,8 @@ public class ODocumentHelper {
             if (conditionFieldValue != null && fieldValue != null)
               conditionFieldValue = OType.convert(conditionFieldValue, fieldValue.getClass());
 
-            if (fieldValue == null && !conditionFieldValue.equals("null") || fieldValue != null
-                && !fieldValue.equals(conditionFieldValue))
+            if (fieldValue == null && !conditionFieldValue.equals("null")
+                || fieldValue != null && !fieldValue.equals(conditionFieldValue))
               value = null;
           }
         } else if (value instanceof Map<?, ?>) {
@@ -377,8 +377,8 @@ public class ODocumentHelper {
 
             final List<String> fieldNames = new ArrayList<String>(map.keySet());
             final int rangeFrom = from != null && !from.isEmpty() ? Integer.parseInt(from) : 0;
-            final int rangeTo = to != null && !to.isEmpty() ? Math.min(Integer.parseInt(to), fieldNames.size() - 1) : fieldNames
-                .size() - 1;
+            final int rangeTo = to != null && !to.isEmpty() ? Math.min(Integer.parseInt(to), fieldNames.size() - 1)
+                : fieldNames.size() - 1;
 
             final Object[] values = new Object[rangeTo - rangeFrom + 1];
 
@@ -400,8 +400,8 @@ public class ODocumentHelper {
             if (conditionFieldValue != null && fieldValue != null)
               conditionFieldValue = OType.convert(conditionFieldValue, fieldValue.getClass());
 
-            if (fieldValue == null && !conditionFieldValue.equals("null") || fieldValue != null
-                && !fieldValue.equals(conditionFieldValue))
+            if (fieldValue == null && !conditionFieldValue.equals("null")
+                || fieldValue != null && !fieldValue.equals(conditionFieldValue))
               value = null;
           }
 
@@ -468,12 +468,13 @@ public class ODocumentHelper {
             if (values.isEmpty())
               // RETURNS NULL
               value = values;
-            else if (values.size() == 1)
-              // RETURNS THE SINGLE ODOCUMENT
-              value = values.iterator().next();
             else
-              // RETURNS THE FILTERED COLLECTION
-              value = values;
+              if (values.size() == 1)
+                // RETURNS THE SINGLE ODOCUMENT
+                value = values.iterator().next();
+            else
+                // RETURNS THE FILTERED COLLECTION
+                value = values;
           }
         }
       } else {
@@ -650,7 +651,7 @@ public class ODocumentHelper {
       else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_RID_POS))
         return iCurrent.getIdentity().getClusterPosition();
       else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_VERSION))
-        return iCurrent.getRecord().getRecordVersion().getCounter();
+        return iCurrent.getRecord().getVersion();
       else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_CLASS))
         return ((ODocument) iCurrent.getRecord()).getClassName();
       else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_TYPE))
@@ -1338,8 +1339,8 @@ public class ODocumentHelper {
     if (myValue == null)
       return true;
 
-    if (myValue.getClass().isArray() && !otherValue.getClass().isArray() || !myValue.getClass().isArray()
-        && otherValue.getClass().isArray())
+    if (myValue.getClass().isArray() && !otherValue.getClass().isArray()
+        || !myValue.getClass().isArray() && otherValue.getClass().isArray())
       return false;
 
     if (myValue.getClass().isArray() && otherValue.getClass().isArray()) {

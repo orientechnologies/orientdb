@@ -20,6 +20,12 @@
 
 package com.orientechnologies.orient.client.remote;
 
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -27,22 +33,14 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
-import com.orientechnologies.orient.core.version.ORecordVersion;
-import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEventListener;
-
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
-import java.io.IOException;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class OStorageRemoteAsynchEventListener implements ORemoteServerEventListener {
 
   private Map<Integer, OLiveResultListener> liveQueryListeners = new ConcurrentHashMap<Integer, OLiveResultListener>();
 
-  private OStorageRemote                    storage;
+  private OStorageRemote storage;
 
   public OStorageRemoteAsynchEventListener(final OStorageRemote storage) {
     this.storage = storage;
@@ -69,7 +67,7 @@ public class OStorageRemoteAsynchEventListener implements ORemoteServerEventList
         final ORecord record = Orient.instance().getRecordFactoryManager().newInstance(dis.readByte());
 
         final ORecordId rid = readRID(dis);
-        final ORecordVersion version = readVersion(dis);
+        final int version = readVersion(dis);
         final byte[] content = readBytes(dis);
         ORecordInternal.fill(record, rid, version, content, false);
 
@@ -95,10 +93,8 @@ public class OStorageRemoteAsynchEventListener implements ORemoteServerEventList
 
   }
 
-  private ORecordVersion readVersion(DataInputStream dis) throws IOException {
-    final ORecordVersion version = OVersionFactory.instance().createVersion();
-    version.setCounter(dis.readInt());
-    return version;
+  private int readVersion(DataInputStream dis) throws IOException {
+    return dis.readInt();
   }
 
   private ORecordId readRID(DataInputStream dis) throws IOException {

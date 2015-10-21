@@ -21,8 +21,6 @@ package com.orientechnologies.orient.server.distributed.task;
 
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.version.ORecordVersion;
-import com.orientechnologies.orient.core.version.OVersionFactory;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -35,14 +33,14 @@ import java.io.ObjectOutput;
  *
  */
 public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedTask {
-  protected ORecordId      rid;
-  protected ORecordVersion version;
-  protected boolean        inTx = false;
+  protected ORecordId rid;
+  protected int       version;
+  protected boolean   inTx = false;
 
   public OAbstractRecordReplicatedTask() {
   }
 
-  public OAbstractRecordReplicatedTask(final ORecordId iRid, final ORecordVersion iVersion) {
+  public OAbstractRecordReplicatedTask(final ORecordId iRid, final int iVersion) {
     this.rid = iRid;
     this.version = iVersion;
   }
@@ -62,11 +60,11 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
     this.rid = rid;
   }
 
-  public ORecordVersion getVersion() {
+  public int getVersion() {
     return version;
   }
 
-  public void setVersion(ORecordVersion version) {
+  public void setVersion(int version) {
     this.version = version;
   }
 
@@ -75,18 +73,14 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
     out.writeUTF(rid.toString());
-    if (version == null)
-      version = OVersionFactory.instance().createUntrackedVersion();
-    version.getSerializer().writeTo(out, version);
+    out.writeInt(version);
     out.writeBoolean(inTx);
   }
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
     rid = new ORecordId(in.readUTF());
-    if (version == null)
-      version = OVersionFactory.instance().createUntrackedVersion();
-    version.getSerializer().readFrom(in, version);
+    version = in.readInt();
     inTx = in.readBoolean();
   }
 

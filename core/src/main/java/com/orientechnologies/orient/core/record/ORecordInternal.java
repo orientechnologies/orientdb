@@ -25,14 +25,13 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODirtyManager;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
-import com.orientechnologies.orient.core.version.ORecordVersion;
 
 public class ORecordInternal {
 
   /**
    * Internal only. Fills in one shot the record.
    */
-  public static ORecordAbstract fill(final ORecord record, final ORID iRid, final ORecordVersion iVersion, final byte[] iBuffer,
+  public static ORecordAbstract fill(final ORecord record, final ORID iRid, final int iVersion, final byte[] iBuffer,
       final boolean iDirty) {
     ORecordAbstract rec = (ORecordAbstract) record;
     rec.fill(iRid, iVersion, iBuffer, iDirty);
@@ -135,6 +134,7 @@ public class ORecordInternal {
   public static void track(ORecord pointer, OIdentifiable pointed) {
     ((ORecordAbstract) pointer).track(pointed);
   }
+
   public static void unTrack(ORecord pointer, OIdentifiable pointed) {
     ((ORecordAbstract) pointer).unTrack(pointed);
   }

@@ -40,8 +40,6 @@ import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
-import com.orientechnologies.orient.core.version.ORecordVersion;
-import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.object.db.OObjectLazyList;
 import com.orientechnologies.orient.object.db.OObjectLazyMap;
 import com.orientechnologies.orient.object.db.OObjectLazySet;
@@ -75,17 +73,17 @@ import java.util.Set;
  */
 public class OObjectProxyMethodHandler implements MethodHandler {
 
-  protected final Map<String, ORecordVersion> loadedFields;
-  protected final Set<ORID>                   orphans = new HashSet<ORID>();
-  protected ODocument                         doc;
-  protected ProxyObject                       parentObject;
+  protected final Map<String, Integer> loadedFields;
+  protected final Set<ORID>            orphans = new HashSet<ORID>();
+  protected ODocument                  doc;
+  protected ProxyObject                parentObject;
 
   public OObjectProxyMethodHandler(ODocument iDocument) {
     doc = iDocument;
     final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
     if (db.getDatabaseOwner() instanceof ODatabaseObject && !((ODatabaseObject) db.getDatabaseOwner()).isLazyLoading())
       doc.detach();
-    loadedFields = new HashMap<String, ORecordVersion>();
+    loadedFields = new HashMap<String, Integer>();
   }
 
   public ODocument getDoc() {
@@ -127,8 +125,8 @@ public class OObjectProxyMethodHandler implements MethodHandler {
    * @throws IllegalAccessException
    * @throws NoSuchMethodException
    */
-  public void detach(final Object self, final boolean nonProxiedInstance) throws NoSuchMethodException, IllegalAccessException,
-      InvocationTargetException {
+  public void detach(final Object self, final boolean nonProxiedInstance)
+      throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
 
     final Class<?> selfClass = self.getClass();
 
@@ -142,7 +140,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
       OObjectEntitySerializer.setFieldValue(OObjectEntitySerializer.getField(fieldName, selfClass), self, value);
     }
     OObjectEntitySerializer.setIdField(selfClass, self, doc.getIdentity());
-    OObjectEntitySerializer.setVersionField(selfClass, self, doc.getRecordVersion().copy());
+    OObjectEntitySerializer.setVersionField(selfClass, self, doc.getVersion());
   }
 
   /**
@@ -196,7 +194,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
       }
     }
     OObjectEntitySerializer.setIdField(selfClass, self, doc.getIdentity());
-    OObjectEntitySerializer.setVersionField(selfClass, self, doc.getRecordVersion().copy());
+    OObjectEntitySerializer.setVersionField(selfClass, self, doc.getVersion());
   }
 
   /**
@@ -210,8 +208,8 @@ public class OObjectProxyMethodHandler implements MethodHandler {
    * @throws InvocationTargetException
    * @throws NoSuchMethodException
    */
-  public void attach(final Object self) throws IllegalArgumentException, IllegalAccessException, NoSuchMethodException,
-      InvocationTargetException {
+  public void attach(final Object self)
+      throws IllegalArgumentException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
     for (Class<?> currentClass = self.getClass(); currentClass != Object.class;) {
       if (Proxy.class.isAssignableFrom(currentClass)) {
         currentClass = currentClass.getSuperclass();
@@ -260,21 +258,21 @@ public class OObjectProxyMethodHandler implements MethodHandler {
             if (((OObjectLazyMultivalueElement<?>) value).getUnderlying() != doc.field(fieldName))
               loadedFields.remove(fieldName);
           } else {
-            loadedFields.put(fieldName, doc.getRecordVersion().copy());
+            loadedFields.put(fieldName, doc.getVersion());
           }
         }
       } catch (IllegalArgumentException e) {
-        throw OException.wrapException(
-            new OSerializationException("Error updating object after save of class " + proxiedObject.getClass()), e);
+        throw OException
+            .wrapException(new OSerializationException("Error updating object after save of class " + proxiedObject.getClass()), e);
       } catch (IllegalAccessException e) {
-        throw OException.wrapException(
-            new OSerializationException("Error updating object after save of class " + proxiedObject.getClass()), e);
+        throw OException
+            .wrapException(new OSerializationException("Error updating object after save of class " + proxiedObject.getClass()), e);
       } catch (NoSuchMethodException e) {
-        throw OException.wrapException(
-            new OSerializationException("Error updating object after save of class " + proxiedObject.getClass()), e);
+        throw OException
+            .wrapException(new OSerializationException("Error updating object after save of class " + proxiedObject.getClass()), e);
       } catch (InvocationTargetException e) {
-        throw OException.wrapException(
-            new OSerializationException("Error updating object after save of class " + proxiedObject.getClass()), e);
+        throw OException
+            .wrapException(new OSerializationException("Error updating object after save of class " + proxiedObject.getClass()), e);
       }
     }
 
@@ -298,7 +296,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
     } else if (OObjectEntitySerializer.isVersionField(m.getDeclaringClass(), fieldName)) {
       idOrVersionField = true;
       if (docRID.isValid() && !docRID.isTemporary())
-        OObjectEntitySerializer.setVersionField(m.getDeclaringClass(), self, doc.getRecordVersion().copy());
+        OObjectEntitySerializer.setVersionField(m.getDeclaringClass(), self, doc.getVersion());
     } else
       idOrVersionField = false;
 
@@ -306,9 +304,9 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 
     value = getValue(self, fieldName, idOrVersionField, value);
     if (docRID.isValid() && !docRID.isTemporary())
-      loadedFields.put(fieldName, doc.getRecordVersion().copy());
+      loadedFields.put(fieldName, doc.getVersion());
     else
-      loadedFields.put(fieldName, OVersionFactory.instance().createVersion());
+      loadedFields.put(fieldName, 0);
 
     return value;
   }
@@ -324,7 +322,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
     if (!idOrVersionField) {
       if (value == null) {
         if (!iIgnoreLoadedFields && loadedFields.containsKey(fieldName)
-            && loadedFields.get(fieldName).compareTo(doc.getRecordVersion()) == 0) {
+            && loadedFields.get(fieldName).compareTo(doc.getVersion()) == 0) {
           return null;
         } else {
           final Object docValue = getDocFieldValue(self, fieldName);
@@ -335,8 +333,8 @@ public class OObjectProxyMethodHandler implements MethodHandler {
       } else {
         if (((value instanceof Collection<?> || value instanceof Map<?, ?>) && !(value instanceof OObjectLazyMultivalueElement))
             || value.getClass().isArray()) {
-          final Class<?> genericMultiValueType = OReflectionHelper.getGenericMultivalueType(OObjectEntitySerializer.getField(
-              fieldName, self.getClass()));
+          final Class<?> genericMultiValueType = OReflectionHelper
+              .getGenericMultivalueType(OObjectEntitySerializer.getField(fieldName, self.getClass()));
           if (genericMultiValueType == null || !OReflectionHelper.isJavaType(genericMultiValueType)) {
             final Field f = OObjectEntitySerializer.getField(fieldName, self.getClass());
             if (OObjectEntitySerializer.isSerializedType(f) && !(value instanceof OObjectLazyCustomSerializer)) {
@@ -356,8 +354,8 @@ public class OObjectProxyMethodHandler implements MethodHandler {
                 if (schemaClass != null)
                   schemaProperty = schemaClass.getProperty(fieldName);
 
-                doc.field(fieldName, OObjectEntitySerializer.typeToStream(value, schemaProperty != null ? schemaProperty.getType()
-                    : null, getDatabase(), doc));
+                doc.field(fieldName, OObjectEntitySerializer.typeToStream(value,
+                    schemaProperty != null ? schemaProperty.getType() : null, getDatabase(), doc));
               } else
                 doc.field(fieldName, value);
 
@@ -365,12 +363,11 @@ public class OObjectProxyMethodHandler implements MethodHandler {
               value = manageArrayFieldObject(OObjectEntitySerializer.getField(fieldName, self.getClass()), self, docValue);
               Method setMethod = getSetMethod(self.getClass().getSuperclass(), getSetterFieldName(fieldName), value);
               setMethod.invoke(self, value);
-            } else if ((value instanceof Set || value instanceof Map)
-                && loadedFields.get(fieldName).compareTo(doc.getRecordVersion()) < 0
+            } else if ((value instanceof Set || value instanceof Map) && loadedFields.get(fieldName).compareTo(doc.getVersion()) < 0
                 && !OReflectionHelper.isJavaType(genericMultiValueType)) {
               if (value instanceof Set)
-                value = new OObjectLazySet(self, (Set<OIdentifiable>) docValue, OObjectEntitySerializer.isCascadeDeleteField(
-                    self.getClass(), fieldName));
+                value = new OObjectLazySet(self, (Set<OIdentifiable>) docValue,
+                    OObjectEntitySerializer.isCascadeDeleteField(self.getClass(), fieldName));
               else
                 value = new OObjectLazyMap(self, (Map<Object, OIdentifiable>) docValue,
                     OObjectEntitySerializer.isCascadeDeleteField(self.getClass(), fieldName));
@@ -378,7 +375,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
               setMethod.invoke(self, value);
             }
           }
-        } else if (!loadedFields.containsKey(fieldName) || loadedFields.get(fieldName).compareTo(doc.getRecordVersion()) < 0) {
+        } else if (!loadedFields.containsKey(fieldName) || loadedFields.get(fieldName).compareTo(doc.getVersion()) < 0) {
           final Object docValue = getDocFieldValue(self, fieldName);
           if (docValue != null && !docValue.equals(value)) {
             value = lazyLoadField(self, fieldName, docValue, value);
@@ -409,8 +406,8 @@ public class OObjectProxyMethodHandler implements MethodHandler {
       return doc.field(fieldName, value, type);
   }
 
-  protected Object manageObjectCollections(final Object self, final String fieldName, Object value) throws NoSuchMethodException,
-      IllegalAccessException, InvocationTargetException {
+  protected Object manageObjectCollections(final Object self, final String fieldName, Object value)
+      throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
     boolean customSerialization = false;
     final Field f = OObjectEntitySerializer.getField(fieldName, self.getClass());
     if (OObjectEntitySerializer.isSerializedType(f)) {
@@ -437,16 +434,18 @@ public class OObjectProxyMethodHandler implements MethodHandler {
           docList = new ArrayList<Object>();
           setDocFieldValue(fieldName, docList, OType.EMBEDDEDLIST);
         }
-        value = new OObjectCustomSerializerList(OObjectEntitySerializer.getSerializedType(OObjectEntitySerializer.getField(
-            fieldName, self.getClass())), doc, docList, (List<?>) value);
+        value = new OObjectCustomSerializerList(
+            OObjectEntitySerializer.getSerializedType(OObjectEntitySerializer.getField(fieldName, self.getClass())), doc, docList,
+            (List<?>) value);
       } else if (value instanceof Set) {
         Set<Object> docSet = doc.field(fieldName, OType.EMBEDDEDSET);
         if (docSet == null) {
           docSet = new HashSet<Object>();
           setDocFieldValue(fieldName, docSet, OType.EMBEDDEDSET);
         }
-        value = new OObjectCustomSerializerSet(OObjectEntitySerializer.getSerializedType(OObjectEntitySerializer.getField(
-            fieldName, self.getClass())), doc, docSet, (Set<?>) value);
+        value = new OObjectCustomSerializerSet(
+            OObjectEntitySerializer.getSerializedType(OObjectEntitySerializer.getField(fieldName, self.getClass())), doc, docSet,
+            (Set<?>) value);
       }
     } else if (value instanceof Map<?, ?>) {
       Map<Object, Object> docMap = doc.field(fieldName, OType.EMBEDDEDMAP);
@@ -454,8 +453,9 @@ public class OObjectProxyMethodHandler implements MethodHandler {
         docMap = new HashMap<Object, Object>();
         setDocFieldValue(fieldName, docMap, OType.EMBEDDEDMAP);
       }
-      value = new OObjectCustomSerializerMap(OObjectEntitySerializer.getSerializedType(OObjectEntitySerializer.getField(fieldName,
-          self.getClass())), doc, docMap, (Map<Object, Object>) value);
+      value = new OObjectCustomSerializerMap(
+          OObjectEntitySerializer.getSerializedType(OObjectEntitySerializer.getField(fieldName, self.getClass())), doc, docMap,
+          (Map<Object, Object>) value);
     } else if (value.getClass().isArray()) {
       value = manageArraySave(fieldName, (Object[]) value);
     }
@@ -601,8 +601,8 @@ public class OObjectProxyMethodHandler implements MethodHandler {
         } else if (isFieldUpdate) {
           docSet.clear();
         }
-        value = new OObjectLazySet(self, docSet, (Set<?>) value, OObjectEntitySerializer.isCascadeDeleteField(self.getClass(),
-            f.getName()));
+        value = new OObjectLazySet(self, docSet, (Set<?>) value,
+            OObjectEntitySerializer.isCascadeDeleteField(self.getClass(), f.getName()));
       }
     }
     if (!((ODatabaseObject) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner()).isLazyLoading())
@@ -640,8 +640,8 @@ public class OObjectProxyMethodHandler implements MethodHandler {
     } else if (docValue.getClass().isArray() && !docValue.getClass().getComponentType().isPrimitive()) {
       docValue = manageArrayLoad(docValue, f);
     } else if (customSerialization) {
-      docValue = OObjectEntitySerializer.deserializeFieldValue(OObjectEntitySerializer.getField(fieldName, self.getClass())
-          .getType(), docValue);
+      docValue = OObjectEntitySerializer
+          .deserializeFieldValue(OObjectEntitySerializer.getField(fieldName, self.getClass()).getType(), docValue);
     } else {
       if (f.getType().isEnum()) {
         if (docValue instanceof Number)
@@ -690,8 +690,8 @@ public class OObjectProxyMethodHandler implements MethodHandler {
     if (value instanceof ORecordLazyMap
         || (value instanceof OTrackedMap<?> && (genericType == null || !OReflectionHelper.isJavaType(genericType))
             && !customSerialization && (genericType == null || !genericType.isEnum()))) {
-      value = new OObjectLazyMap(self, (OTrackedMap<?>) value, OObjectEntitySerializer.isCascadeDeleteField(self.getClass(),
-          f.getName()));
+      value = new OObjectLazyMap(self, (OTrackedMap<?>) value,
+          OObjectEntitySerializer.isCascadeDeleteField(self.getClass(), f.getName()));
     } else if (customSerialization) {
       value = new OObjectCustomSerializerMap<TYPE>(OObjectEntitySerializer.getSerializedType(f), doc, (Map<Object, Object>) value);
     } else if (genericType != null && genericType.isEnum()) {
@@ -706,10 +706,9 @@ public class OObjectProxyMethodHandler implements MethodHandler {
     if (value instanceof ORecordLazyList
         || (value instanceof OTrackedList<?> && (genericType == null || !OReflectionHelper.isJavaType(genericType))
             && !customSerialization && (genericType == null || !genericType.isEnum()))) {
-      value = new OObjectLazyList(self, (List<OIdentifiable>) value, OObjectEntitySerializer.isCascadeDeleteField(self.getClass(),
-          f.getName()));
-    } else if (value instanceof ORecordLazySet
-        || value instanceof OMVRBTreeRIDSet
+      value = new OObjectLazyList(self, (List<OIdentifiable>) value,
+          OObjectEntitySerializer.isCascadeDeleteField(self.getClass(), f.getName()));
+    } else if (value instanceof ORecordLazySet || value instanceof OMVRBTreeRIDSet
         || (value instanceof OTrackedSet<?> && (genericType == null || !OReflectionHelper.isJavaType(genericType))
             && !customSerialization && (genericType == null || !genericType.isEnum()))) {
       value = new OObjectLazySet(self, (Set) value, OObjectEntitySerializer.isCascadeDeleteField(self.getClass(), f.getName()));
@@ -784,8 +783,8 @@ public class OObjectProxyMethodHandler implements MethodHandler {
           orphans.add(((OIdentifiable) oldValue).getIdentity());
         setDocFieldValue(fieldName, valueToSet, OObjectEntitySerializer.getTypeByClass(self.getClass(), fieldName));
       } else if (((valueToSet instanceof Collection<?> || valueToSet instanceof Map<?, ?>)) || valueToSet.getClass().isArray()) {
-        Class<?> genericMultiValueType = OReflectionHelper.getGenericMultivalueType(OObjectEntitySerializer.getField(fieldName,
-            self.getClass()));
+        Class<?> genericMultiValueType = OReflectionHelper
+            .getGenericMultivalueType(OObjectEntitySerializer.getField(fieldName, self.getClass()));
         if (genericMultiValueType != null && !OReflectionHelper.isJavaType(genericMultiValueType)) {
           if (!(valueToSet instanceof OObjectLazyMultivalueElement)) {
             if (valueToSet instanceof Collection<?>) {
@@ -808,8 +807,9 @@ public class OObjectProxyMethodHandler implements MethodHandler {
           }
         } else {
           if (OObjectEntitySerializer.isToSerialize(valueToSet.getClass())) {
-            setDocFieldValue(fieldName, OObjectEntitySerializer.serializeFieldValue(
-                OObjectEntitySerializer.getField(fieldName, self.getClass()).getType(), valueToSet),
+            setDocFieldValue(
+                fieldName, OObjectEntitySerializer
+                    .serializeFieldValue(OObjectEntitySerializer.getField(fieldName, self.getClass()).getType(), valueToSet),
                 OObjectEntitySerializer.getTypeByClass(self.getClass(), fieldName));
           } else {
             if (valueToSet.getClass().isArray()) {
@@ -818,8 +818,9 @@ public class OObjectProxyMethodHandler implements MethodHandler {
               if (schemaClass != null)
                 schemaProperty = schemaClass.getProperty(fieldName);
 
-              setDocFieldValue(fieldName, OObjectEntitySerializer.typeToStream(valueToSet,
-                  schemaProperty != null ? schemaProperty.getType() : null, getDatabase(), doc),
+              setDocFieldValue(
+                  fieldName, OObjectEntitySerializer.typeToStream(valueToSet,
+                      schemaProperty != null ? schemaProperty.getType() : null, getDatabase(), doc),
                   OObjectEntitySerializer.getTypeByClass(self.getClass(), fieldName));
             } else
               setDocFieldValue(fieldName, valueToSet, OObjectEntitySerializer.getTypeByClass(self.getClass(), fieldName));
@@ -829,8 +830,9 @@ public class OObjectProxyMethodHandler implements MethodHandler {
         setDocFieldValue(fieldName, ((Enum) valueToSet).name(), OObjectEntitySerializer.getTypeByClass(self.getClass(), fieldName));
       } else {
         if (OObjectEntitySerializer.isToSerialize(valueToSet.getClass())) {
-          setDocFieldValue(fieldName, OObjectEntitySerializer.serializeFieldValue(
-              OObjectEntitySerializer.getField(fieldName, self.getClass()).getType(), valueToSet),
+          setDocFieldValue(
+              fieldName, OObjectEntitySerializer
+                  .serializeFieldValue(OObjectEntitySerializer.getField(fieldName, self.getClass()).getType(), valueToSet),
               OObjectEntitySerializer.getTypeByClass(self.getClass(), fieldName));
         } else if (getDatabase().getEntityManager().getEntityClass(valueToSet.getClass().getSimpleName()) != null
             && !valueToSet.getClass().isEnum()) {
@@ -844,7 +846,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
           setDocFieldValue(fieldName, valueToSet, OObjectEntitySerializer.getTypeByClass(self.getClass(), fieldName));
         }
       }
-      loadedFields.put(fieldName, doc.getRecordVersion().copy());
+      loadedFields.put(fieldName, doc.getVersion());
       setDirty();
     } else {
       OLogManager.instance().warn(this,

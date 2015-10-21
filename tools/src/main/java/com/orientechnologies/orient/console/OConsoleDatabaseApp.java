@@ -19,14 +19,6 @@
  */
 package com.orientechnologies.orient.console;
 
-import java.io.*;
-import java.lang.reflect.Array;
-import java.util.*;
-import java.util.Map.Entry;
-
-import sun.misc.Signal;
-import sun.misc.SignalHandler;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.console.TTYConsoleReader;
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
@@ -95,6 +87,13 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginated
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedClusterDebug;
 import com.orientechnologies.orient.server.config.OServerConfigurationManager;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
+import sun.misc.Signal;
+import sun.misc.SignalHandler;
+
+import java.io.*;
+import java.lang.reflect.Array;
+import java.util.*;
+import java.util.Map.Entry;
 
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutputListener, OProgressListener {
   protected static final int    DEFAULT_WIDTH        = 150;
@@ -2224,7 +2223,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   public void reloadRecordInternal(String iRecordId, String iFetchPlan) {
     checkForDatabase();
 
-    currentRecord = currentDatabase.executeReadRecord(new ORecordId(iRecordId), null, null, iFetchPlan, true, false, false,
+    currentRecord = currentDatabase.executeReadRecord(new ORecordId(iRecordId), null, -1, iFetchPlan, true, false, false,
         OStorage.LOCKING_STRATEGY.NONE, new ODatabaseDocumentTx.SimpleRecordReader());
     displayRecord(null);
 
@@ -2564,8 +2563,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     else if (currentRecord instanceof ODocument) {
       ODocument rec = (ODocument) currentRecord;
       message("\n+-------------------------------------------------------------------------------------------------+");
-      message("\n| Document - @class: %-37s @rid: %-15s @version: %-6s |", rec.getClassName(), rec.getIdentity().toString(), rec
-          .getRecordVersion().toString());
+      message("\n| Document - @class: %-37s @rid: %-15s @version: %-6d |", rec.getClassName(), rec.getIdentity().toString(), rec
+          .getVersion());
       message("\n+-------------------------------------------------------------------------------------------------+");
       message("\n| %24s | %-68s |", "Name", "Value");
       message("\n+-------------------------------------------------------------------------------------------------+");
@@ -2589,7 +2588,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     } else if (currentRecord instanceof ORecordBytes) {
       ORecordBytes rec = (ORecordBytes) currentRecord;
       message("\n+-------------------------------------------------------------------------------------------------+");
-      message("\n| Bytes    - @rid: %s @version: %s", rec.getIdentity().toString(), rec.getRecordVersion().toString());
+      message("\n| Bytes    - @rid: %s @version: %d", rec.getIdentity().toString(), rec.getVersion());
       message("\n+-------------------------------------------------------------------------------------------------+");
 
       final byte[] value = rec.toStream();
@@ -2600,8 +2599,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     } else {
       message("\n+-------------------------------------------------------------------------------------------------+");
-      message("\n| %s - record id: %s   v.%s", currentRecord.getClass().getSimpleName(), currentRecord.getIdentity().toString(),
-          currentRecord.getRecordVersion().toString());
+      message("\n| %s - record id: %s   v.%d", currentRecord.getClass().getSimpleName(), currentRecord.getIdentity().toString(),
+          currentRecord.getVersion());
     }
     message("\n+-------------------------------------------------------------------------------------------------+");
     out.println();

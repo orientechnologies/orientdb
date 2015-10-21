@@ -19,6 +19,19 @@
  */
 package com.orientechnologies.orient.server.network.protocol.binary;
 
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
+import java.net.SocketException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.UUID;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
@@ -86,8 +99,6 @@ import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
-import com.orientechnologies.orient.core.version.ORecordVersion;
-import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryServer;
 import com.orientechnologies.orient.server.OClientConnection;
@@ -99,19 +110,6 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
-
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.net.Socket;
-import java.net.SocketException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.UUID;
 
 public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected OClientConnection connection;
@@ -606,7 +604,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     final String indexName = channel.readString();
 
     ODocument document = new ODocument();
-    fillRecord(new ORecordId(), channel.readBytes(), OVersionFactory.instance().createVersion(), document, connection.database);
+    fillRecord(new ORecordId(), channel.readBytes(), 0, document, connection.database);
     Object key = document.field("key");
     final String fetchPlan = channel.readString();
     final OIndex<?> index = connection.database.getMetadata().getIndexManager().getIndex(indexName);
@@ -1302,7 +1300,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
             channel.writeRID(entry.getValue().getIdentity());
 
             // IF THE NEW OBJECT HAS VERSION > 0 MEANS THAT HAS BEEN UPDATED IN THE SAME TX. THIS HAPPENS FOR GRAPHS
-            if (entry.getValue().getRecordVersion().getCounter() > 0)
+            if (entry.getValue().getVersion() > 0)
               tx.getUpdatedRecords().put((ORecordId) entry.getValue().getIdentity(), entry.getValue());
           }
 
@@ -1310,7 +1308,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
           channel.writeInt(tx.getUpdatedRecords().size());
           for (Entry<ORecordId, ORecord> entry : tx.getUpdatedRecords().entrySet()) {
             channel.writeRID(entry.getKey());
-            channel.writeVersion(entry.getValue().getRecordVersion());
+            channel.writeVersion(entry.getValue().getVersion());
           }
 
           if (connection.data.protocolVersion >= 20)
@@ -1575,7 +1573,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       return;
 
     final ORID rid = channel.readRID();
-    final ORecordVersion version = channel.readVersion();
+    final int version = channel.readVersion();
     final byte mode = channel.readByte();
 
     final int result = deleteRecord(connection.database, rid, version);
@@ -1620,7 +1618,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       return;
 
     final ORID rid = channel.readRID();
-    final ORecordVersion version = channel.readVersion();
+    final int version = channel.readVersion();
     final byte mode = channel.readByte();
 
     final int result = cleanOutRecord(connection.database, rid, version);
@@ -1657,11 +1655,11 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     if (connection.data.protocolVersion >= 23)
       updateContent = channel.readBoolean();
     final byte[] buffer = channel.readBytes();
-    final ORecordVersion version = channel.readVersion();
+    final int version = channel.readVersion();
     final byte recordType = channel.readByte();
     final byte mode = channel.readByte();
 
-    final ORecordVersion newVersion = updateRecord(connection.database, rid, buffer, version, recordType, updateContent);
+    final int newVersion = updateRecord(connection.database, rid, buffer, version, recordType, updateContent);
 
     if (mode < 2) {
       beginResponse();
@@ -1699,7 +1697,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         if (connection.data.protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_25)
           channel.writeShort((short) record.getIdentity().getClusterId());
         channel.writeLong(record.getIdentity().getClusterPosition());
-        channel.writeVersion(record.getRecordVersion());
+        channel.writeVersion(record.getVersion());
 
         if (connection.data.protocolVersion >= 20)
           sendCollectionChanges();
@@ -1720,7 +1718,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       if (metadata != null) {
         sendOk(clientTxId);
         channel.writeRID(metadata.getRecordId());
-        channel.writeVersion(metadata.getRecordVersion());
+        channel.writeVersion(metadata.getVersion());
       } else {
         throw new ODatabaseException(String.format("Record metadata for RID: %s, Not found", rid));
       }
@@ -1754,11 +1752,11 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         channel.writeByte((byte) 1);
         if (connection.data.protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_27) {
           channel.writeBytes(connection.database.getStorage().getConfiguration().toStream(connection.data.protocolVersion));
-          channel.writeVersion(OVersionFactory.instance().createVersion());
+          channel.writeVersion(0);
           channel.writeByte(ORecordBytes.RECORD_TYPE);
         } else {
           channel.writeByte(ORecordBytes.RECORD_TYPE);
-          channel.writeVersion(OVersionFactory.instance().createVersion());
+          channel.writeVersion(0);
           channel.writeBytes(connection.database.getStorage().getConfiguration().toStream(connection.data.protocolVersion));
         }
         channel.writeByte((byte) 0); // NO MORE RECORDS
@@ -1780,11 +1778,11 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
           int length = trimCsvSerializedContent(bytes);
           if (connection.data.protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_27) {
             channel.writeBytes(bytes, length);
-            channel.writeVersion(record.getRecordVersion());
+            channel.writeVersion(record.getVersion());
             channel.writeByte(ORecordInternal.getRecordType(record));
           } else {
             channel.writeByte(ORecordInternal.getRecordType(record));
-            channel.writeVersion(record.getRecordVersion());
+            channel.writeVersion(record.getVersion());
             channel.writeBytes(bytes, length);
           }
 
@@ -1832,7 +1830,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       return;
 
     final ORecordId rid = channel.readRID();
-    final ORecordVersion recordVersion = channel.readVersion();
+    final int recordVersion = channel.readVersion();
     final String fetchPlanString = channel.readString();
 
     boolean ignoreCache = channel.readByte() == 1;
@@ -1848,11 +1846,11 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         channel.writeByte((byte) 1);
         if (connection.data.protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_27) {
           channel.writeBytes(connection.database.getStorage().getConfiguration().toStream(connection.data.protocolVersion));
-          channel.writeVersion(OVersionFactory.instance().createVersion());
+          channel.writeVersion(0);
           channel.writeByte(ORecordBytes.RECORD_TYPE);
         } else {
           channel.writeByte(ORecordBytes.RECORD_TYPE);
-          channel.writeVersion(OVersionFactory.instance().createVersion());
+          channel.writeVersion(0);
           channel.writeBytes(connection.database.getStorage().getConfiguration().toStream(connection.data.protocolVersion));
         }
         channel.writeByte((byte) 0); // NO MORE RECORDS
@@ -1873,7 +1871,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
           int length = trimCsvSerializedContent(bytes);
 
           channel.writeByte(ORecordInternal.getRecordType(record));
-          channel.writeVersion(record.getRecordVersion());
+          channel.writeVersion(record.getVersion());
           channel.writeBytes(bytes, length);
 
           if (fetchPlanString.length() > 0) {

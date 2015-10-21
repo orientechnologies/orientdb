@@ -16,6 +16,12 @@
  */
 package com.orientechnologies.orient.core.fetch.json;
 
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.Date;
+import java.util.Set;
+import java.util.Stack;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
@@ -30,12 +36,6 @@ import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON.FormatSettings;
-
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.util.Date;
-import java.util.Set;
-import java.util.Stack;
 
 /**
  * @author luca.molino
@@ -92,8 +92,8 @@ public class OJSONFetchContext implements OFetchContext {
       collectionStack.add(iRootRecord);
       settings.indentLevel++;
     } catch (IOException e) {
-      throw OException.wrapException(new OFetchException("Error writing collection field " + iFieldName + " of record "
-          + iRootRecord.getIdentity()), e);
+      throw OException.wrapException(
+          new OFetchException("Error writing collection field " + iFieldName + " of record " + iRootRecord.getIdentity()), e);
     }
   }
 
@@ -103,8 +103,8 @@ public class OJSONFetchContext implements OFetchContext {
       jsonWriter.endCollection(settings.indentLevel, true);
       collectionStack.pop();
     } catch (IOException e) {
-      throw OException.wrapException(new OFetchException("Error writing collection field " + iFieldName + " of record "
-          + iRootRecord.getIdentity()), e);
+      throw OException.wrapException(
+          new OFetchException("Error writing collection field " + iFieldName + " of record " + iRootRecord.getIdentity()), e);
     }
   }
 
@@ -191,20 +191,20 @@ public class OJSONFetchContext implements OFetchContext {
     boolean firstAttribute = true;
 
     if (settings.includeType) {
-      json.writeAttribute(firstAttribute ? settings.indentLevel : 1, firstAttribute, ODocumentHelper.ATTRIBUTE_TYPE, ""
-          + (char) ORecordInternal.getRecordType(record));
+      json.writeAttribute(firstAttribute ? settings.indentLevel : 1, firstAttribute, ODocumentHelper.ATTRIBUTE_TYPE,
+          "" + (char) ORecordInternal.getRecordType(record));
       if (settings.attribSameRow)
         firstAttribute = false;
     }
     if (settings.includeId && record.getIdentity() != null && record.getIdentity().isValid()) {
-      json.writeAttribute(!firstAttribute ? settings.indentLevel : 1, firstAttribute, ODocumentHelper.ATTRIBUTE_RID, record
-          .getIdentity().toString());
+      json.writeAttribute(!firstAttribute ? settings.indentLevel : 1, firstAttribute, ODocumentHelper.ATTRIBUTE_RID,
+          record.getIdentity().toString());
       if (settings.attribSameRow)
         firstAttribute = false;
     }
     if (settings.includeVer) {
-      json.writeAttribute(firstAttribute ? settings.indentLevel : 1, firstAttribute, ODocumentHelper.ATTRIBUTE_VERSION, record
-          .getRecordVersion().getCounter());
+      json.writeAttribute(firstAttribute ? settings.indentLevel : 1, firstAttribute, ODocumentHelper.ATTRIBUTE_VERSION,
+          record.getVersion());
       if (settings.attribSameRow)
         firstAttribute = false;
     }

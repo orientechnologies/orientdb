@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -38,7 +37,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
-import com.orientechnologies.orient.core.version.ORecordVersion;
 
 import java.util.Collection;
 import java.util.LinkedList;
@@ -85,7 +83,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
     if (iRid.isNew())
       return null;
 
-    return database.executeReadRecord((ORecordId) iRid, iRecord, null, iFetchPlan, ignoreCache, !ignoreCache, loadTombstone,
+    return database.executeReadRecord((ORecordId) iRid, iRecord, -1, iFetchPlan, ignoreCache, !ignoreCache, loadTombstone,
         iLockingStrategy, new ODatabaseDocumentTx.SimpleRecordReader());
   }
 
@@ -95,7 +93,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
     if (iRid.isNew())
       return null;
 
-    return database.executeReadRecord((ORecordId) iRid, iRecord, null, iFetchPlan, ignoreCache, iUpdateCache, loadTombstone,
+    return database.executeReadRecord((ORecordId) iRid, iRecord, -1, iFetchPlan, ignoreCache, iUpdateCache, loadTombstone,
         iLockingStrategy, new ODatabaseDocumentTx.SimpleRecordReader());
   }
 
@@ -103,7 +101,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
     if (iRid.isNew())
       return null;
 
-    return database.executeReadRecord((ORecordId) iRid, iRecord, null, iFetchPlan, ignoreCache, !ignoreCache, false,
+    return database.executeReadRecord((ORecordId) iRid, iRecord, -1, iFetchPlan, ignoreCache, !ignoreCache, false,
         OStorage.LOCKING_STRATEGY.NONE, new ODatabaseDocumentTx.SimpleRecordReader());
   }
 
@@ -125,7 +123,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
         recordReader = new ODatabaseDocumentTx.LatestVersionRecordReader();
       }
 
-      final ORecord loadedRecord = database.executeReadRecord((ORecordId) rid, record, null, fetchPlan, ignoreCache, !ignoreCache,
+      final ORecord loadedRecord = database.executeReadRecord((ORecordId) rid, record, -1, fetchPlan, ignoreCache, !ignoreCache,
           false, OStorage.LOCKING_STRATEGY.NONE, recordReader);
 
       if (force) {
@@ -143,7 +141,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
   }
 
   @Override
-  public ORecord loadRecordIfVersionIsNotLatest(ORID rid, ORecordVersion recordVersion, String fetchPlan, boolean ignoreCache)
+  public ORecord loadRecordIfVersionIsNotLatest(ORID rid, int recordVersion, String fetchPlan, boolean ignoreCache)
       throws ORecordNotFoundException {
     if (rid.isNew())
       return null;
@@ -161,19 +159,19 @@ public class OTransactionNoTx extends OTransactionAbstract {
    * @param iRecordUpdatedCallback
    */
   public ORecord saveRecord(final ORecord iRecord, final String iClusterName, final OPERATION_MODE iMode, boolean iForceCreate,
-      final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
+      final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<Integer> iRecordUpdatedCallback) {
     try {
 
       ORecord toRet = null;
       ODirtyManager dirtyManager = ORecordInternal.getDirtyManager(iRecord);
       Set<ORecord> newRecord = dirtyManager.getNewRecord();
-      Set<ORecord> updatedRecord = dirtyManager.getUpdateRecord();
+      Set<ORecord> updatedRecord = dirtyManager.getUpdateRecords();
       dirtyManager.cleanForSave();
       if (newRecord != null) {
         for (ORecord rec : newRecord) {
           if (rec.getIdentity().isNew() && rec instanceof ODocument) {
-            ORecord ret = saveNew((ODocument) rec, dirtyManager, iClusterName, iRecord, iMode, iForceCreate,
-                iRecordCreatedCallback, iRecordUpdatedCallback);
+            ORecord ret = saveNew((ODocument) rec, dirtyManager, iClusterName, iRecord, iMode, iForceCreate, iRecordCreatedCallback,
+                iRecordUpdatedCallback);
             if (ret != null)
               toRet = ret;
           }
@@ -182,33 +180,32 @@ public class OTransactionNoTx extends OTransactionAbstract {
       if (updatedRecord != null) {
         for (ORecord rec : updatedRecord) {
           if (rec == iRecord) {
-            toRet = database.executeSaveRecord(rec, iClusterName, rec.getRecordVersion(), iMode, iForceCreate,
-                iRecordCreatedCallback, iRecordUpdatedCallback);
+            toRet = database.executeSaveRecord(rec, iClusterName, rec.getVersion(), iMode, iForceCreate, iRecordCreatedCallback,
+                iRecordUpdatedCallback);
           } else
-            database.executeSaveRecord(rec, getClusterName(rec), rec.getRecordVersion(), OPERATION_MODE.SYNCHRONOUS, false, null,
-                null);
+            database.executeSaveRecord(rec, getClusterName(rec), rec.getVersion(), OPERATION_MODE.SYNCHRONOUS, false, null, null);
         }
       }
 
       if (toRet != null)
         return toRet;
       else
-        return database.executeSaveRecord(iRecord, iClusterName, iRecord.getRecordVersion(), iMode, iForceCreate,
-            iRecordCreatedCallback, iRecordUpdatedCallback);
+        return database.executeSaveRecord(iRecord, iClusterName, iRecord.getVersion(), iMode, iForceCreate, iRecordCreatedCallback,
+            iRecordUpdatedCallback);
     } catch (Exception e) {
       // REMOVE IT FROM THE CACHE TO AVOID DIRTY RECORDS
       final ORecordId rid = (ORecordId) iRecord.getIdentity();
       if (rid.isValid())
         database.getLocalCache().freeRecord(rid);
 
-      throw OException.wrapException(new ODatabaseException("Error during saving of record" + iRecord != null ? " with rid "
-          + iRecord.getIdentity() : ""), e);
+      throw OException.wrapException(
+          new ODatabaseException("Error during saving of record" + iRecord != null ? " with rid " + iRecord.getIdentity() : ""), e);
     }
   }
 
   public ORecord saveNew(ODocument document, ODirtyManager manager, String iClusterName, ORecord original,
       final OPERATION_MODE iMode, boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
-      ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
+      ORecordCallback<Integer> iRecordUpdatedCallback) {
     ORecord toRet = null;
     LinkedList<ODocument> path = new LinkedList<ODocument>();
     ORecord next = document;
@@ -239,16 +236,16 @@ public class OTransactionNoTx extends OTransactionAbstract {
           }
         } else {
           if (next == original)
-            toRet = database.executeSaveRecord(next, iClusterName, next.getRecordVersion(), iMode, iForceCreate,
-                iRecordCreatedCallback, iRecordUpdatedCallback);
+            toRet = database.executeSaveRecord(next, iClusterName, next.getVersion(), iMode, iForceCreate, iRecordCreatedCallback,
+                iRecordUpdatedCallback);
           else
-            database.executeSaveRecord(next, getClusterName(next), next.getRecordVersion(), OPERATION_MODE.SYNCHRONOUS, false,
-                null, null);
+            database.executeSaveRecord(next, getClusterName(next), next.getVersion(), OPERATION_MODE.SYNCHRONOUS, false, null,
+                null);
           next = path.pollFirst();
         }
 
       } else {
-        database.executeSaveRecord(next, null, next.getRecordVersion(), iMode, false, null, null);
+        database.executeSaveRecord(next, null, next.getVersion(), iMode, false, null, null);
         next = path.pollFirst();
       }
     } while (next != null);
@@ -270,7 +267,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
       return;
 
     try {
-      database.executeDeleteRecord(iRecord, iRecord.getRecordVersion(), true, iMode, false);
+      database.executeDeleteRecord(iRecord, iRecord.getVersion(), true, iMode, false);
     } catch (Exception e) {
       // REMOVE IT FROM THE CACHE TO AVOID DIRTY RECORDS
       final ORecordId rid = (ORecordId) iRecord.getIdentity();
@@ -279,8 +276,9 @@ public class OTransactionNoTx extends OTransactionAbstract {
 
       if (e instanceof RuntimeException)
         throw (RuntimeException) e;
-      throw OException.wrapException(new ODatabaseException("Error during deletion of record" + iRecord != null ? " with rid "
-          + iRecord.getIdentity() : ""), e);
+      throw OException.wrapException(
+          new ODatabaseException("Error during deletion of record" + iRecord != null ? " with rid " + iRecord.getIdentity() : ""),
+          e);
     }
   }
 

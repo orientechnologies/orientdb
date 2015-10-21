@@ -19,18 +19,6 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.Lock;
-
 import com.hazelcast.core.IQueue;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.util.OPair;
@@ -56,6 +44,18 @@ import com.orientechnologies.orient.server.distributed.task.OResurrectRecordTask
 import com.orientechnologies.orient.server.distributed.task.OSQLCommandTask;
 import com.orientechnologies.orient.server.distributed.task.OTxTask;
 import com.orientechnologies.orient.server.distributed.task.OUpdateRecordTask;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Hazelcast implementation of distributed peer. There is one instance per database. Each node creates own instance to talk with
@@ -210,9 +210,9 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       return waitForResponse(iRequest, currentResponseMgr);
 
     } catch (Exception e) {
-      throw OException
-          .wrapException(new ODistributedException("Error on executing distributed request (" + iRequest + ") against database '"
-              + databaseName + (iClusterNames != null ? "." + iClusterNames : "") + "' to nodes " + iNodes), e);
+      throw OException.wrapException(new ODistributedException("Error on executing distributed request (" + iRequest
+          + ") against database '" + databaseName + (iClusterNames != null ? "." + iClusterNames : "") + "' to nodes " + iNodes),
+          e);
     }
   }
 
@@ -559,7 +559,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
             "- cannot update deleted record %s, database could be not aligned", ((OUpdateRecordTask) task).getRid());
       else
         // EXECUTE ONLY IF VERSIONS DIFFER
-        executeLastPendingRequest = !rec.getRecordVersion().equals(((OUpdateRecordTask) task).getVersion());
+        executeLastPendingRequest = rec.getVersion() != ((OUpdateRecordTask) task).getVersion();
     } else if (task instanceof OCreateRecordTask) {
       // EXECUTE ONLY IF THE RECORD HASN'T BEEN CREATED YET
       executeLastPendingRequest = ((OCreateRecordTask) task).getRid().getRecord() == null;

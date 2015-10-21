@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import java.io.IOException;
-
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
@@ -28,7 +26,8 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.version.ORecordVersion;
+
+import java.io.IOException;
 
 /**
  * Represents an offline cluster, created with the "alter cluster X status offline" command. To restore the original cluster assure
@@ -90,13 +89,11 @@ public class OOfflineCluster implements OCluster {
       if (stringValue == null)
         throw new IllegalStateException("Value of attribute is null.");
 
-      return storageLocal
-          .setClusterStatus(id, OStorageClusterConfiguration.STATUS.valueOf(stringValue.toUpperCase(storageLocal.getConfiguration()
-              .getLocaleInstance())));
+      return storageLocal.setClusterStatus(id, OStorageClusterConfiguration.STATUS.valueOf(stringValue.toUpperCase(storageLocal.getConfiguration().getLocaleInstance())));
     }
     default:
-      throw new IllegalArgumentException("Runtime change of attribute '" + attribute + " is not supported on Offline cluster "
-          + getName());
+      throw new IllegalArgumentException(
+          "Runtime change of attribute '" + attribute + " is not supported on Offline cluster " + getName());
     }
   }
 
@@ -106,18 +103,8 @@ public class OOfflineCluster implements OCluster {
   }
 
   @Override
-  public void convertToTombstone(long iPosition) throws IOException {
-
-  }
-
-  @Override
   public long getTombstonesCount() {
     return 0;
-  }
-
-  @Override
-  public boolean hasTombstonesSupport() {
-    return false;
   }
 
   @Override
@@ -126,7 +113,7 @@ public class OOfflineCluster implements OCluster {
   }
 
   @Override
-  public OPhysicalPosition createRecord(byte[] content, ORecordVersion recordVersion, byte recordType) throws IOException {
+  public OPhysicalPosition createRecord(byte[] content, int recordVersion, byte recordType) throws IOException {
     throw new OOfflineClusterException("Cannot create a new record on offline cluster '" + name + "'");
   }
 
@@ -136,7 +123,7 @@ public class OOfflineCluster implements OCluster {
   }
 
   @Override
-  public void updateRecord(long clusterPosition, byte[] content, ORecordVersion recordVersion, byte recordType) throws IOException {
+  public void updateRecord(long clusterPosition, byte[] content, int recordVersion, byte recordType) throws IOException {
     throw new OOfflineClusterException("Cannot update a record on offline cluster '" + name + "'");
   }
 
@@ -146,8 +133,8 @@ public class OOfflineCluster implements OCluster {
   }
 
   @Override
-  public ORawBuffer readRecordIfVersionIsNotLatest(long clusterPosition, ORecordVersion recordVersion) throws IOException,
-      ORecordNotFoundException {
+  public ORawBuffer readRecordIfVersionIsNotLatest(long clusterPosition, int recordVersion)
+      throws IOException, ORecordNotFoundException {
     throw new OOfflineClusterException("Cannot read a record from the offline cluster '" + name + "'");
   }
 

@@ -19,6 +19,11 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
+import java.io.Serializable;
+import java.util.Queue;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.TimeUnit;
+
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.IMap;
 import com.hazelcast.core.IQueue;
@@ -45,11 +50,6 @@ import com.orientechnologies.orient.server.distributed.task.OSQLCommandTask;
 import com.orientechnologies.orient.server.distributed.task.OTxTask;
 import com.orientechnologies.orient.server.distributed.task.OUpdateRecordTask;
 
-import java.io.Serializable;
-import java.util.Queue;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.TimeUnit;
-
 /**
  * Hazelcast implementation of distributed peer. There is one instance per database. Each node creates own instance to talk with
  * each others.
@@ -66,7 +66,7 @@ public class ODistributedWorker extends Thread {
   protected final String                              databaseName;
   protected final IQueue                              requestQueue;
   protected Queue<ODistributedRequest>                localQueue          = new ArrayBlockingQueue<ODistributedRequest>(
-                                                                              LOCAL_QUEUE_MAXSIZE);
+      LOCAL_QUEUE_MAXSIZE);
   protected volatile ODatabaseDocumentTx              database;
   protected volatile OUser                            lastUser;
   protected boolean                                   restoringMessages;
@@ -370,7 +370,7 @@ public class ODistributedWorker extends Thread {
             "- cannot update deleted record %s, database could be not aligned", ((OUpdateRecordTask) task).getRid());
       else
         // EXECUTE ONLY IF VERSIONS DIFFER
-        executeLastPendingRequest = !rec.getRecordVersion().equals(((OUpdateRecordTask) task).getVersion());
+        executeLastPendingRequest = rec.getVersion() != ((OUpdateRecordTask) task).getVersion();
     } else if (task instanceof OCreateRecordTask) {
       // EXECUTE ONLY IF THE RECORD HASN'T BEEN CREATED YET
       executeLastPendingRequest = ((OCreateRecordTask) task).getRid().getRecord() == null;
@@ -414,8 +414,8 @@ public class ODistributedWorker extends Thread {
 
     try {
       // GET THE SENDER'S RESPONSE QUEUE
-      final IQueue queue = msgService.getQueue(OHazelcastDistributedMessageService.getResponseQueueName(iRequest
-          .getSenderNodeName()));
+      final IQueue queue = msgService
+          .getQueue(OHazelcastDistributedMessageService.getResponseQueueName(iRequest.getSenderNodeName()));
 
       if (!queue.offer(response, OGlobalConfiguration.DISTRIBUTED_QUEUE_TIMEOUT.getValueAsLong(), TimeUnit.MILLISECONDS))
         throw new ODistributedException("Timeout on dispatching response to the thread queue " + iRequest.getSenderNodeName());

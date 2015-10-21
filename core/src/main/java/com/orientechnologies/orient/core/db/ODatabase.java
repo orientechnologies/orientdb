@@ -39,7 +39,6 @@ import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.util.OBackupable;
-import com.orientechnologies.orient.core.version.ORecordVersion;
 
 import java.io.Closeable;
 import java.util.Collection;
@@ -433,8 +432,6 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    */
   void freeze(boolean throwException);
 
-
-
   enum OPERATION_MODE {
     SYNCHRONOUS, ASYNCHRONOUS, ASYNCHRONOUS_NOANSWER
   }
@@ -629,7 +626,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * @param iRecordUpdatedCallback
    */
   <RET extends T> RET save(T iObject, OPERATION_MODE iMode, boolean iForceCreate,
-      ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback);
+      ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<Integer> iRecordUpdatedCallback);
 
   /**
    * Saves an entity in the specified cluster in synchronous mode. If the entity is not dirty, then the operation will be ignored.
@@ -660,7 +657,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * @param iRecordUpdatedCallback
    */
   <RET extends T> RET save(T iObject, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
-      ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback);
+      ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<Integer> iRecordUpdatedCallback);
 
   /**
    * Deletes an entity from the database in synchronous mode.
@@ -689,7 +686,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    *          for MVCC
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
-  ODatabase<T> delete(ORID iRID, ORecordVersion iVersion);
+  ODatabase<T> delete(ORID iRID, int iVersion);
 
   /**
    * Hides records content by putting tombstone on the records position but does not delete record itself.
@@ -711,7 +708,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
 
   boolean hide(ORID rid);
 
-  ODatabase<T> cleanOutRecord(ORID rid, ORecordVersion version);
+  ODatabase<T> cleanOutRecord(ORID rid, int version);
 
   /**
    * Return active transaction. Cannot be null. If no transaction is active, then a OTransactionNoTx instance is returned.

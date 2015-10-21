@@ -19,16 +19,6 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
-import java.io.ByteArrayOutputStream;
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.lang.ref.WeakReference;
-import java.util.*;
-import java.util.Map.Entry;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
@@ -68,6 +58,7 @@ import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordListener;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
+import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.ONetworkThreadLocalSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -77,7 +68,16 @@ import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
-import com.orientechnologies.orient.core.version.ORecordVersion;
+
+import java.io.ByteArrayOutputStream;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.lang.ref.WeakReference;
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * Document representation to handle values dynamically. Can be used in schema-less, schema-mixed and schema-full modes. Fields can
@@ -383,7 +383,7 @@ public class ODocument extends ORecordAbstract
       }
     }
 
-    if (p.isReadonly() && iRecord instanceof ODocument && !iRecord.getRecordVersion().isTombstone()) {
+    if (p.isReadonly() && iRecord instanceof ODocument && !ORecordVersionHelper.isTombstone(iRecord.getVersion())) {
       if (entry != null && (entry.changed || entry.timeLine != null) && !entry.created) {
         // check if the field is actually changed by equal.
         // this is due to a limitation in the merge algorithm used server side marking all non simple fields as dirty
@@ -992,14 +992,14 @@ public class ODocument extends ORecordAbstract
       return this;
     } else if (ODocumentHelper.ATTRIBUTE_VERSION.equals(iFieldName)) {
       if (iPropertyValue != null) {
-        int v = _recordVersion.getCounter();
+        int v = _recordVersion;
 
         if (iPropertyValue instanceof Number)
           v = ((Number) iPropertyValue).intValue();
         else
           Integer.parseInt(iPropertyValue.toString());
 
-        _recordVersion.setCounter(v);
+        _recordVersion = v;
       }
       return this;
     }
@@ -1893,8 +1893,7 @@ public class ODocument extends ORecordAbstract
     stream.writeInt(-1);
     stream.writeInt(idBuffer.length);
     stream.write(idBuffer);
-
-    _recordVersion.getSerializer().writeTo(stream, _recordVersion);
+    stream.writeInt(_recordVersion);
 
     final byte[] content = toStream();
     stream.writeInt(content.length);
@@ -1916,7 +1915,7 @@ public class ODocument extends ORecordAbstract
     stream.readFully(idBuffer);
     _recordId.fromStream(idBuffer);
 
-    _recordVersion.getSerializer().readFrom(stream, _recordVersion);
+    _recordVersion = stream.readInt();
 
     final int len = stream.readInt();
     final byte[] content = new byte[len];
@@ -2176,7 +2175,7 @@ public class ODocument extends ORecordAbstract
   }
 
   @Override
-  protected ORecordAbstract fill(ORID iRid, ORecordVersion iVersion, byte[] iBuffer, boolean iDirty) {
+  protected ORecordAbstract fill(final ORID iRid, final int iVersion, final byte[] iBuffer, final boolean iDirty) {
     _schema = null;
     fetchSchemaIfCan();
     return super.fill(iRid, iVersion, iBuffer, iDirty);

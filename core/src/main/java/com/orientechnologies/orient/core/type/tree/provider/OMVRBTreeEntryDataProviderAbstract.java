@@ -36,21 +36,20 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.version.OVersionFactory;
 
-public abstract class OMVRBTreeEntryDataProviderAbstract<K, V> implements OMVRBTreeEntryDataProvider<K, V>, OSerializableStream,
-    ORecordListener {
-  private static final long                         serialVersionUID = 1L;
+public abstract class OMVRBTreeEntryDataProviderAbstract<K, V>
+    implements OMVRBTreeEntryDataProvider<K, V>, OSerializableStream, ORecordListener {
+  private static final long serialVersionUID = 1L;
 
-  protected final OMVRBTreeProviderAbstract<K, V>   treeDataProvider;
+  protected final OMVRBTreeProviderAbstract<K, V> treeDataProvider;
 
-  protected int                                     size             = 0;
-  protected int                                     pageSize;
+  protected int size = 0;
+  protected int pageSize;
 
   protected ORecordId                               parentRid;
   protected ORecordId                               leftRid;
   protected ORecordId                               rightRid;
-  protected boolean                                 color            = OMVRBTree.RED;
+  protected boolean                                 color = OMVRBTree.RED;
   protected ORecordBytesLazy                        record;
   protected OMemoryStream                           stream;
   protected WeakReference<OIdentityChangedListener> identityChangedListener;
@@ -179,20 +178,18 @@ public abstract class OMVRBTreeEntryDataProviderAbstract<K, V> implements OMVRBT
     record.fromStream(toStream());
     if (record.getIdentity().isValid())
       // UPDATE IT WITHOUT VERSION CHECK SINCE ALL IT'S LOCKED
-      record.getRecordVersion().copyFrom(
-          iStorage.updateRecord((ORecordId) record.getIdentity(), true, record.toStream(),
-              OVersionFactory.instance().createUntrackedVersion(), ORecordInternal.getRecordType(record), (byte) 0, null)
-              .getResult());
+      ORecordInternal.setVersion(record, iStorage.updateRecord((ORecordId) record.getIdentity(), true, record.toStream(), -1,
+          ORecordInternal.getRecordType(record), (byte) 0, null).getResult());
     else {
       // CREATE IT
       if (record.getIdentity().getClusterId() == ORID.CLUSTER_ID_INVALID)
         ((ORecordId) record.getIdentity()).clusterId = treeDataProvider.clusterId;
 
-      final OPhysicalPosition ppos = iStorage.createRecord((ORecordId) record.getIdentity(), record.toStream(),
-          OVersionFactory.instance().createVersion(), ORecordInternal.getRecordType(record), (byte) 0, null).getResult();
+      final OPhysicalPosition ppos = iStorage.createRecord((ORecordId) record.getIdentity(), record.toStream(), 0,
+          ORecordInternal.getRecordType(record), (byte) 0, null).getResult();
 
       ORecordInternal.setIdentity(record, record.getIdentity().getClusterId(), ppos.clusterPosition);
-      record.getRecordVersion().copyFrom(ppos.recordVersion);
+      ORecordInternal.setVersion(record, ppos.recordVersion);
     }
     ORecordInternal.unsetDirty(record);
 
@@ -215,7 +212,7 @@ public abstract class OMVRBTreeEntryDataProviderAbstract<K, V> implements OMVRBT
 
   protected void delete(final OStorage iSt) {
     ORecordListenerManager.removeListener(record, this);
-    iSt.deleteRecord((ORecordId) record.getIdentity(), record.getRecordVersion(), (byte) 0, null);
+    iSt.deleteRecord((ORecordId) record.getIdentity(), record.getVersion(), (byte) 0, null);
   }
 
   public void onEvent(ORecord record, ORecordListener.EVENT event) {

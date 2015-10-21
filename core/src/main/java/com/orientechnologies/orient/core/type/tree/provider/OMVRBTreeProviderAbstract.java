@@ -33,19 +33,18 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.version.OVersionFactory;
 
 public abstract class OMVRBTreeProviderAbstract<K, V> implements OMVRBTreeProvider<K, V>, OSerializableStream {
   private static final long serialVersionUID = 1L;
 
-  protected final String    clusterName;
-  protected final int       clusterId;
-  protected final ORecord   record;
-  protected final OStorage  storage;
-  protected int             size;
-  protected int             pageSize;
-  protected ORecordId       root;
-  protected int             keySize          = 1;
+  protected final String   clusterName;
+  protected final int      clusterId;
+  protected final ORecord  record;
+  protected final OStorage storage;
+  protected int            size;
+  protected int            pageSize;
+  protected ORecordId      root;
+  protected int            keySize = 1;
 
   public OMVRBTreeProviderAbstract(final ORecord iRecord, final OStorage iStorage, final String iClusterName) {
     storage = iStorage;
@@ -115,7 +114,7 @@ public abstract class OMVRBTreeProviderAbstract<K, V> implements OMVRBTreeProvid
 
   /**
    * Set the tree as dirty. This happens on change of root.
-   * 
+   *
    * @return
    */
   public boolean setDirty() {
@@ -157,7 +156,7 @@ public abstract class OMVRBTreeProviderAbstract<K, V> implements OMVRBTreeProvid
     ORawBuffer raw = iSt.readRecord((ORecordId) record.getIdentity(), null, false, null).getResult();
     if (raw == null)
       throw new OConfigurationException("Cannot load map with id " + record.getIdentity());
-    record.getRecordVersion().copyFrom(raw.version);
+    ORecordInternal.setVersion(record, raw.version);
     fromStream(raw.buffer);
   }
 
@@ -184,18 +183,16 @@ public abstract class OMVRBTreeProviderAbstract<K, V> implements OMVRBTreeProvid
     record.fromStream(toStream());
     if (record.getIdentity().isValid())
       // UPDATE IT WITHOUT VERSION CHECK SINCE ALL IT'S LOCKED
-      record.getRecordVersion().copyFrom(
-          iSt.updateRecord((ORecordId) record.getIdentity(), true, record.toStream(),
-              OVersionFactory.instance().createUntrackedVersion(), ORecordInternal.getRecordType(record), (byte) 0, null)
-              .getResult());
+      ORecordInternal.setVersion(record, iSt.updateRecord((ORecordId) record.getIdentity(), true, record.toStream(), -1,
+          ORecordInternal.getRecordType(record), (byte) 0, null).getResult());
     else {
       // CREATE IT
       if (record.getIdentity().getClusterId() == ORID.CLUSTER_ID_INVALID)
         ((ORecordId) record.getIdentity()).clusterId = clusterId;
 
-      final OPhysicalPosition ppos = iSt.createRecord((ORecordId) record.getIdentity(), record.toStream(),
-          OVersionFactory.instance().createVersion(), ORecordInternal.getRecordType(record), (byte) 0, null).getResult();
-      record.getRecordVersion().copyFrom(ppos.recordVersion);
+      final OPhysicalPosition ppos = iSt.createRecord((ORecordId) record.getIdentity(), record.toStream(), 0,
+          ORecordInternal.getRecordType(record), (byte) 0, null).getResult();
+      ORecordInternal.setVersion(record, ppos.recordVersion);
 
     }
     ORecordInternal.unsetDirty(record);
@@ -220,7 +217,7 @@ public abstract class OMVRBTreeProviderAbstract<K, V> implements OMVRBTreeProvid
   }
 
   protected void delete(final OStorage iSt) {
-    iSt.deleteRecord((ORecordId) record.getIdentity(), record.getRecordVersion(), (byte) 0, null);
+    iSt.deleteRecord((ORecordId) record.getIdentity(), record.getVersion(), (byte) 0, null);
   }
 
   public String toString() {
