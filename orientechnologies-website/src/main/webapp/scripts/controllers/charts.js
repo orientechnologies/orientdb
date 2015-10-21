@@ -2,7 +2,7 @@
 
 
 angular.module('webappApp')
-  .controller('ChartsCtrl', function ($scope, Organization, $q) {
+  .controller('ChartsCtrl', function ($scope, $location, Organization, $q) {
 
     $scope.showYear=true;
     $scope.showMonth=true;
@@ -296,6 +296,10 @@ angular.module('webappApp')
           height: 1000
         }
       };
+      chartData.data.onclick = function(d, element){
+        $location.path("/issues").search({q: "is:open client:\""+chartData.data.columns[0][d.x+1]+"\""});
+      }
+
 
       var committers = [];
 
