@@ -1812,6 +1812,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
               "Retrying to connect to remote server #" + (retry + 1) + "/" + currentMaxRetry + "...");
 
         // FORCE RESET OF THREAD DATA (SERVER URL + SESSION ID)
+        if(exception instanceof  OSecurityException)
+          //TOKEN validation exception forcing reopen.
+          clearToken();
         setSessionId(null, -1, null);
 
         // REACQUIRE DB SESSION ID

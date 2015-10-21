@@ -1163,12 +1163,12 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
       checkEmbedded(getDatabase().getStorage());
 
-      deleteDefaultCluster(cls);
 
       for (OClass superClass : cls.getSuperClasses()) {
         // REMOVE DEPENDENCY FROM SUPERCLASS
         ((OClassImpl) superClass).removeBaseClassInternal(cls);
       }
+      deleteDefaultCluster(cls);
 
       dropClassIndexes(cls);
 
