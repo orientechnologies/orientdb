@@ -20,6 +20,20 @@
 
 package com.orientechnologies.orient.core.storage.impl.local;
 
+import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.nio.charset.Charset;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
+
 import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
@@ -79,6 +93,7 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.record.impl.ODirtyManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
@@ -110,22 +125,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTxListener;
-import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
-import java.io.*;
-import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
-import java.nio.channels.FileChannel;
-import java.nio.charset.Charset;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
 
 /**
  * @author Andrey Lomakin
@@ -3215,6 +3215,64 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     }
   }
 
+  /**
+   * Returns the requested records. The returned order could be different than the requested.
+   *
+   * @param iRids
+   *          Set of rids to load in one shot
+   */
+  public List<OPair<ORecordId, ORawBuffer>> readRecords(final Set<ORecordId> iRids) {
+    checkOpeness();
+
+    final List<OPair<ORecordId, ORawBuffer>> records = new ArrayList<OPair<ORecordId, ORawBuffer>>();
+
+    if (iRids == null || iRids.isEmpty())
+      return records;
+
+    if (transaction.get() != null) {
+      for (ORecordId rid : iRids) {
+        if (!rid.isPersistent())
+          throw new IllegalArgumentException(
+              "Cannot read record " + rid + " since the position is invalid in database '" + name + '\'');
+
+        records.add(new OPair<ORecordId, ORawBuffer>(rid, doReadRecord(getClusterById(rid.clusterId), rid)));
+      }
+      return records;
+    }
+
+    // CREATE GROUP OF RIDS PER CLUSTER TO REDUCE LOCKS
+    final Map<Integer, List<ORecordId>> ridsPerCluster = getRidsGroupedByCluster(iRids);
+
+    stateLock.acquireReadLock();
+    try {
+      dataLock.acquireSharedLock();
+      try {
+
+        for (Map.Entry<Integer, List<ORecordId>> entry : ridsPerCluster.entrySet()) {
+          final int clusterId = entry.getKey();
+          final OCluster clusterSegment = getClusterById(clusterId);
+
+          for (ORecordId rid : entry.getValue()) {
+
+            lockManager.acquireLock(rid, OLockManager.LOCK.SHARED);
+            try {
+              records.add(new OPair<ORecordId, ORawBuffer>(rid, doReadRecord(clusterSegment, rid)));
+            } finally {
+              lockManager.releaseLock(this, rid, OLockManager.LOCK.SHARED);
+            }
+          }
+        }
+
+      } finally {
+        dataLock.releaseSharedLock();
+      }
+    } finally {
+      stateLock.releaseReadLock();
+    }
+
+    return records;
+  }
+
   private void endStorageTx() throws IOException {
     atomicOperationsManager.endAtomicOperation(false, null);
 
@@ -3732,7 +3790,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       // MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
       if (v < -2) {
         // OVERWRITE VERSION: THIS IS USED IN CASE OF FIX OF RECORDS IN DISTRIBUTED MODE
-        version.set( ORecordVersionHelper.clearRollbackMode(v) );
+        version.set(ORecordVersionHelper.clearRollbackMode(v));
         iDatabaseVersion.set(version.get());
 
       } else if (v != iDatabaseVersion.get()) {
@@ -4334,5 +4392,18 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     protected ORID getImmutableResourceId(ORID iResourceId) {
       return new ORecordId(iResourceId);
     }
+  }
+
+  protected Map<Integer, List<ORecordId>> getRidsGroupedByCluster(final Set<ORecordId> iRids) {
+    final Map<Integer, List<ORecordId>> ridsPerCluster = new HashMap<Integer, List<ORecordId>>();
+    for (ORecordId rid : iRids) {
+      List<ORecordId> rids = ridsPerCluster.get(rid.clusterId);
+      if (rids == null) {
+        rids = new ArrayList<ORecordId>(iRids.size());
+        ridsPerCluster.put(rid.clusterId, rids);
+      }
+      rids.add(rid);
+    }
+    return ridsPerCluster;
   }
 }

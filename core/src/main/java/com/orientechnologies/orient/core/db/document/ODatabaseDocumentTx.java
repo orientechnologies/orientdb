@@ -25,6 +25,7 @@ import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCommonConst;
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCommandCacheHook;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
@@ -95,6 +96,7 @@ import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
@@ -379,7 +381,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
 
       componentsFactory = getStorage().getComponentsFactory();
       sbTreeCollectionManager = getStorage().getSBtreeCollectionManager();
-
       localCache.startup();
 
       getStorage().getConfiguration().setRecordSerializer(getSerializer().toString());
@@ -1624,6 +1625,64 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
   public <RET extends ORecord> RET load(final ORecord iRecord, final String iFetchPlan, final boolean iIgnoreCache) {
     return (RET) executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, -1, iFetchPlan, iIgnoreCache, !iIgnoreCache, false,
         OStorage.LOCKING_STRATEGY.NONE, new SimpleRecordReader());
+  }
+
+  /**
+   * This method is internal, it can be subject to signature change or be removed, do not use.
+   *
+   * @Internal
+   */
+  public Set<ORecord> executeReadRecords(final Set<ORecordId> iRids, final boolean ignoreCache) {
+    checkOpeness();
+    checkIfActive();
+
+    getMetadata().makeThreadLocalSchemaSnapshot();
+    ORecordSerializationContext.pushContext();
+    try {
+
+      final Set<ORecord> records = new HashSet<ORecord>(iRids.size() > 0 ? iRids.size() : 1);
+
+      if (iRids == null || iRids.isEmpty())
+        return records;
+
+      final Set<ORecordId> rids = new HashSet<ORecordId>(iRids);
+
+      for (Iterator<ORecordId> it = rids.iterator(); it.hasNext();) {
+        final ORecordId rid = it.next();
+
+        // SEARCH IN LOCAL TX
+        ORecord record = getTransaction().getRecord(rid);
+        if (record == OTransactionRealAbstract.DELETED_RECORD) {
+          // DELETED IN TX
+          it.remove();
+          continue;
+        }
+
+        if (record == null && !ignoreCache)
+          // SEARCH INTO THE CACHE
+          record = getLocalCache().findRecord(rid);
+
+        if (record != null) {
+          // FOUND FROM CACHE
+          records.add(record);
+          it.remove();
+        }
+      }
+
+      final List<OPair<ORecordId, ORawBuffer>> rawRecords = ((OAbstractPaginatedStorage) storage).readRecords(rids);
+      for (OPair<ORecordId, ORawBuffer> entry : rawRecords) {
+        // NO SAME RECORD TYPE: CAN'T REUSE OLD ONE BUT CREATE A NEW ONE FOR IT
+        final ORecord record = Orient.instance().getRecordFactoryManager().newInstance(entry.value.recordType);
+        ORecordInternal.fill(record, entry.key, entry.value.version, entry.value.buffer, false);
+        records.add(record);
+      }
+
+      return records;
+
+    } finally {
+      ORecordSerializationContext.pullContext();
+      getMetadata().clearThreadLocalSchemaSnapshot();
+    }
   }
 
   /**
