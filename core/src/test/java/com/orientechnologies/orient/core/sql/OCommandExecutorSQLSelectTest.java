@@ -148,6 +148,13 @@ public class OCommandExecutorSQLSelectTest {
     initExpandSkipLimit(db);
 
     initMassiveOrderSkipLimit(db);
+    initDatesSet(db);
+  }
+
+  private void initDatesSet(ODatabaseDocumentTx db) {
+    db.command(new OCommandSQL("create class OCommandExecutorSQLSelectTest_datesSet")).execute();
+    db.command(new OCommandSQL("create property OCommandExecutorSQLSelectTest_datesSet.foo embeddedlist date")).execute();
+    db.command(new OCommandSQL("insert into OCommandExecutorSQLSelectTest_datesSet set foo = ['2015-10-21']")).execute();
   }
 
   private void initMassiveOrderSkipLimit(ODatabaseDocumentTx db) {
@@ -843,6 +850,15 @@ public class OCommandExecutorSQLSelectTest {
       ODocument doc = results.get(i);
       assertEquals(doc.field("name"), "admin");
     }
+  }
+
+  @Test
+  public void testDatesListContainsString() {
+    //issue #3526
+    OSQLSynchQuery sql = new OSQLSynchQuery("select from OCommandExecutorSQLSelectTest_datesSet where foo contains '2015-10-21'");
+
+    List<ODocument> results = db.query(sql);
+    assertEquals(results.size(), 1);
   }
 
   private long indexUsages(ODatabaseDocumentTx db) {

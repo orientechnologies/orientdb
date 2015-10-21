@@ -22,16 +22,17 @@ package com.orientechnologies.orient.core.sql.operator;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexCursorCollectionValue;
-import com.orientechnologies.orient.core.index.OIndexCursorSingleValue;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexDefinitionMultiValue;
-import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
+
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -92,8 +93,23 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
         }
       } else {
         // CHECK AGAINST A SINGLE VALUE
+        OType type =null;
+
+        if(iCondition.getLeft() instanceof OSQLFilterItemField && ((OSQLFilterItemField) iCondition.getLeft()).isFieldChain() && ((OSQLFilterItemField) iCondition.getLeft()).getFieldChain().getItemCount()==1){
+          String fieldName = ((OSQLFilterItemField) iCondition.getLeft()).getFieldChain().getItemName(0);
+          if(fieldName!=null) {
+            Object record = iRecord.getRecord();
+            if (record instanceof ODocument) {
+              OProperty property = ((ODocument) record).getSchemaClass()
+                  .getProperty(fieldName);
+              if(property!=null && property.getType().isMultiValue()){
+                type = property.getLinkedType();
+              }
+            }
+          }
+        }
         for (final Object o : iterable) {
-          if (OQueryOperatorEquals.equals(iRight, o))
+          if (OQueryOperatorEquals.equals(iRight, o, type))
             return true;
         }
       }
