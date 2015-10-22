@@ -1697,7 +1697,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
       if (iRids == null || iRids.isEmpty())
         return records;
 
-      final Set<ORecordId> rids = new HashSet<ORecordId>(iRids);
+      final Collection<ORecordId> rids = new ArrayList<ORecordId>(iRids);
 
       for (Iterator<ORecordId> it = rids.iterator(); it.hasNext();) {
         final ORecordId rid = it.next();
@@ -1721,7 +1721,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
         }
       }
 
-      final List<OPair<ORecordId, ORawBuffer>> rawRecords = ((OAbstractPaginatedStorage) storage).readRecords(rids);
+      final Collection<OPair<ORecordId, ORawBuffer>> rawRecords = ((OAbstractPaginatedStorage) storage).readRecords(rids);
       for (OPair<ORecordId, ORawBuffer> entry : rawRecords) {
         // NO SAME RECORD TYPE: CAN'T REUSE OLD ONE BUT CREATE A NEW ONE FOR IT
         final ORecord record = Orient.instance().getRecordFactoryManager().newInstance(entry.value.recordType);

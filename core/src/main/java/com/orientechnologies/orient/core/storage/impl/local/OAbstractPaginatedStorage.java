@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -847,7 +848,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
    * @param iRids
    *          Set of rids to load in one shot
    */
-  public List<OPair<ORecordId, ORawBuffer>> readRecords(final Set<ORecordId> iRids) {
+  public Collection<OPair<ORecordId, ORawBuffer>> readRecords(final Collection<ORecordId> iRids) {
     checkOpeness();
 
     final List<OPair<ORecordId, ORawBuffer>> records = new ArrayList<OPair<ORecordId, ORawBuffer>>();
@@ -906,7 +907,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     return records;
   }
 
-  protected Map<Integer, List<ORecordId>> getRidsGroupedByCluster(Set<ORecordId> iRids) {
+  protected Map<Integer, List<ORecordId>> getRidsGroupedByCluster(Collection<ORecordId> iRids) {
     final Map<Integer, List<ORecordId>> ridsPerCluster = new HashMap<Integer, List<ORecordId>>();
     for (ORecordId rid : iRids) {
       List<ORecordId> rids = ridsPerCluster.get(rid.clusterId);
