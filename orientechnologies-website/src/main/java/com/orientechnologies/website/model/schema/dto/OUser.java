@@ -1,6 +1,7 @@
 package com.orientechnologies.website.model.schema.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -9,6 +10,8 @@ import java.util.Collection;
 /**
  * Created by Enrico Risa on 20/10/14.
  */
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class OUser implements UserDetails {
 
   @JsonIgnore

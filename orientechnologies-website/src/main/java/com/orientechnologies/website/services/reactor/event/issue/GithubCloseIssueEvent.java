@@ -37,12 +37,15 @@ public class GithubCloseIssueEvent implements GithubIssueEvent {
     ODocument issue = payload.field("issue");
     ODocument repository = payload.field("repository");
     OUser sender = findUser(payload, "sender");
-    GIssue gIssue = GIssue.fromDoc(issue);
-    String repoName = repository.field(ORepository.NAME.toString());
-    Issue issueDto = repositoryRepository.findIssueByRepoAndNumber(repoName, gIssue.getNumber());
-    issueDto.setClosedAt(gIssue.getClosedAt());
-    issueDto.setUpdatedAt(gIssue.getUpdatedAt());
-    issueService.changeState(issueDto, gIssue.getState().name(), sender, true);
+    if (issue != null) {
+
+      GIssue gIssue = GIssue.fromDoc(issue);
+      String repoName = repository.field(ORepository.NAME.toString());
+      Issue issueDto = repositoryRepository.findIssueByRepoAndNumber(repoName, gIssue.getNumber());
+      issueDto.setClosedAt(gIssue.getClosedAt());
+      issueDto.setUpdatedAt(gIssue.getUpdatedAt());
+      issueService.changeState(issueDto, gIssue.getState().name(), sender, true);
+    }
 
   }
 

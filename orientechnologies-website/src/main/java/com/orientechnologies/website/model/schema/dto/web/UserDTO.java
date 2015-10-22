@@ -1,5 +1,6 @@
 package com.orientechnologies.website.model.schema.dto.web;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.orientechnologies.website.model.schema.dto.Client;
 import com.orientechnologies.website.model.schema.dto.OUser;
 import com.orientechnologies.website.model.schema.dto.Organization;
@@ -10,6 +11,7 @@ import java.util.List;
 /**
  * Created by Enrico Risa on 26/11/14.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class UserDTO extends OUser {
 
   public List<Repository>   repositories;
