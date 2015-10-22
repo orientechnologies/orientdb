@@ -916,7 +916,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   }
 
   protected void sendError(final int iClientTxId, final Throwable t) throws IOException {
-    t.printStackTrace();
     channel.acquireWriteLock();
     try {
 
@@ -1179,17 +1178,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     checkStorageExistence(dbName);
     connection.database = getDatabaseInstance(dbName, dbType, storageType);
     createDatabase(connection.database, null, null);
-
-    if (Boolean.TRUE.equals(tokenBased)) {
-      this.tokenBytes = tokenHandler.getSignedBinaryToken(connection.database, connection.database.getUser(), connection.data);
-      // TODO: do not use the parse split getSignedBinaryToken in two methods.
-      try {
-        this.token = tokenHandler.parseBinaryToken(this.tokenBytes);
-        getServer().getClientConnectionManager().connect(this, connection, tokenBytes, token);
-      } catch (Exception e) {
-        throw OException.wrapException(new OSystemException("Cannot connect to the server using provided token"), e);
-      }
-    }
 
     beginResponse();
     try {
@@ -1977,12 +1965,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     if (Boolean.TRUE.equals(tokenBased) && token != null && requestType != OChannelBinaryProtocol.REQUEST_CONNECT
         && requestType != OChannelBinaryProtocol.REQUEST_DB_OPEN) {
       // TODO: Check if the token is expiring and if it is send a new token
-      if(requestType == OChannelBinaryProtocol.REQUEST_DB_CREATE){
-        channel.writeBytes(tokenBytes);
-      }else {
-        byte[] renewedToken = tokenHandler.renewIfNeeded(token);
-        channel.writeBytes(renewedToken);
-      }
+      byte[] renewedToken = tokenHandler.renewIfNeeded(token);
+      channel.writeBytes(renewedToken);
     }
   }
 
