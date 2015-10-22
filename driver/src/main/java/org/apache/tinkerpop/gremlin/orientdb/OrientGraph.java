@@ -68,6 +68,11 @@ public final class OrientGraph implements Graph {
             config.getBoolean(CONFIG_OPEN, true));
     }
 
+    public OrientGraph(ODatabaseDocumentTx database) {
+        this.url = database.getURL();
+        this.database = database;
+    }
+
     @Override
     public Features features() {
         return ODBFeatures.OrientFeatures.INSTANCE;
