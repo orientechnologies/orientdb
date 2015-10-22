@@ -90,34 +90,7 @@
                 <exclude.test.5>empty.java</exclude.test.5>
                 <exclude.test.6>empty.java</exclude.test.6>
             </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>findbugs-maven-plugin</artifactId>
-                        <version>3.0.1</version>
-                        <configuration>
-                            <effort>Max</effort>
-                            <threshold>Low</threshold>
-                            <xmlOutput>true</xmlOutput>
-                            <findbugsXmlOutput>true</findbugsXmlOutput>
-                            <includeFilterFile>findbugs_filter.xml</includeFilterFile>
-                        </configuration>
-                        <executions>
-                            <!--
-                                Ensures that FindBugs inspects source code when project is compiled.
-                            -->
-                            <execution>
-                                <id>analyze-compile</id>
-                                <phase>compile</phase>
-                                <goals>
-                                    <goal>check</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
+
         </profile>
         <profile>
             <id>release</id>
@@ -135,34 +108,7 @@
                 <exclude.test.5>empty.java</exclude.test.5>
                 <exclude.test.6>empty.java</exclude.test.6>
             </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>findbugs-maven-plugin</artifactId>
-                        <version>3.0.1</version>
-                        <configuration>
-                            <effort>Max</effort>
-                            <threshold>Low</threshold>
-                            <xmlOutput>true</xmlOutput>
-                            <findbugsXmlOutput>true</findbugsXmlOutput>
-                            <includeFilterFile>findbugs_filter.xml</includeFilterFile>
-                        </configuration>
-                        <executions>
-                            <!--
-                                Ensures that FindBugs inspects source code when project is compiled.
-                            -->
-                            <execution>
-                                <id>analyze-compile</id>
-                                <phase>compile</phase>
-                                <goals>
-                                    <goal>check</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
+
         </profile>
         <profile>
             <id>localDeploy</id>

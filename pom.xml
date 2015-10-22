@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+s<?xml version="1.0"?>
 
 <!-- ~ Copyright 2010-2013 Orient Technologies LTD ~ ~ Licensed under the 
     Apache License, Version 2.0 (the "License"); ~ you may not use this file 
@@ -48,22 +48,10 @@
             <timezone>+1</timezone>
         </developer>
         <developer>
-            <id>enisher</id>
-            <name>Artem Orobets</name>
-            <email>a.orobets@orientechnologies.com</email>
-            <organization>Orientechnologies</organization>
-            <organizationUrl>http://www.orientechnologies.com</organizationUrl>
-            <roles>
-                <role>architect</role>
-                <role>developer</role>
-            </roles>
-            <timezone>+2</timezone>
-        </developer>
-        <developer>
             <id>lomakin.andrey</id>
             <name>Andrey Lomakin</name>
-            <email>a.lomakin@orientechnologies.com</email>
             <organization>Orientechnologies</organization>
+            <email>a.lomakin@orientechnologies.com</email>
             <organizationUrl>http://www.orientechnologies.com</organizationUrl>
             <roles>
                 <role>architect</role>
@@ -72,9 +60,32 @@
             <timezone>+2</timezone>
         </developer>
         <developer>
-            <id>molino.luca</id>
-            <name>Luca Molino</name>
-            <email>molino.luca@gmail.com</email>
+            <id>e.risa</id>
+            <name>Enrico Risa</name>
+            <email>e.risa@orientechnologies.com</email>
+            <organizationUrl>http://www.orientechnologies.com</organizationUrl>
+            <roles>
+                <role>architect</role>
+                <role>developer</role>
+            </roles>
+            <timezone>+1</timezone>
+        </developer>
+        <developer>
+            <id>l.aquila</id>
+            <name>Luigi Dell'Aquila</name>
+            <email>l.dellaquila@orientechnologies.com</email>
+            <organizationUrl>http://www.orientechnologies.com</organizationUrl>
+            <roles>
+                <role>architect</role>
+                <role>developer</role>
+            </roles>
+            <timezone>+1</timezone>
+        </developer>
+        <developer>
+            <id>e.tagliaferri</id>
+            <name>Emanuale Tagliaferri</name>
+            <email>l.tagliaferri@orientechnologies.com</email>
+            <organizationUrl>http://www.orientechnologies.com</organizationUrl>
             <roles>
                 <role>architect</role>
                 <role>developer</role>
