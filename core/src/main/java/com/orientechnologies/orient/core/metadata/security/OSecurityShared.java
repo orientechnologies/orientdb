@@ -43,6 +43,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -55,46 +56,46 @@ import java.util.concurrent.atomic.AtomicLong;
  * 
  */
 public class OSecurityShared implements OSecurity, OCloseable {
-  private final AtomicLong        version                = new AtomicLong();
+  private final AtomicLong version = new AtomicLong();
 
-  public static final String      RESTRICTED_CLASSNAME   = "ORestricted";
-  public static final String      IDENTITY_CLASSNAME     = "OIdentity";
-
-  /**
-   * Uses the ORestrictedOperation ENUM instead.
-   */
-  @Deprecated
-  public static final String      ALLOW_ALL_FIELD        = ORestrictedOperation.ALLOW_ALL.getFieldName();
+  public static final String RESTRICTED_CLASSNAME = "ORestricted";
+  public static final String IDENTITY_CLASSNAME   = "OIdentity";
 
   /**
    * Uses the ORestrictedOperation ENUM instead.
    */
   @Deprecated
-  public static final String      ALLOW_READ_FIELD       = ORestrictedOperation.ALLOW_READ.getFieldName();
+  public static final String ALLOW_ALL_FIELD = ORestrictedOperation.ALLOW_ALL.getFieldName();
 
   /**
    * Uses the ORestrictedOperation ENUM instead.
    */
   @Deprecated
-  public static final String      ALLOW_UPDATE_FIELD     = ORestrictedOperation.ALLOW_UPDATE.getFieldName();
+  public static final String ALLOW_READ_FIELD = ORestrictedOperation.ALLOW_READ.getFieldName();
 
   /**
    * Uses the ORestrictedOperation ENUM instead.
    */
   @Deprecated
-  public static final String      ALLOW_DELETE_FIELD     = ORestrictedOperation.ALLOW_DELETE.getFieldName();
+  public static final String ALLOW_UPDATE_FIELD = ORestrictedOperation.ALLOW_UPDATE.getFieldName();
 
-  public static final String      ONCREATE_IDENTITY_TYPE = "onCreate.identityType";
-  public static final String      ONCREATE_FIELD         = "onCreate.fields";
+  /**
+   * Uses the ORestrictedOperation ENUM instead.
+   */
+  @Deprecated
+  public static final String ALLOW_DELETE_FIELD = ORestrictedOperation.ALLOW_DELETE.getFieldName();
 
-  public static final Set<String> ALLOW_FIELDS           = new HashSet<String>() {
-                                                           {
-                                                             add(ORestrictedOperation.ALLOW_ALL.getFieldName());
-                                                             add(ORestrictedOperation.ALLOW_READ.getFieldName());
-                                                             add(ORestrictedOperation.ALLOW_UPDATE.getFieldName());
-                                                             add(ORestrictedOperation.ALLOW_DELETE.getFieldName());
-                                                           }
-                                                         };
+  public static final String ONCREATE_IDENTITY_TYPE = "onCreate.identityType";
+  public static final String ONCREATE_FIELD         = "onCreate.fields";
+
+  public static final Set<String> ALLOW_FIELDS = Collections.unmodifiableSet(new HashSet<String>() {
+    {
+      add(ORestrictedOperation.ALLOW_ALL.getFieldName());
+      add(ORestrictedOperation.ALLOW_READ.getFieldName());
+      add(ORestrictedOperation.ALLOW_UPDATE.getFieldName());
+      add(ORestrictedOperation.ALLOW_DELETE.getFieldName());
+    }
+  });
 
   public OSecurityShared() {
   }

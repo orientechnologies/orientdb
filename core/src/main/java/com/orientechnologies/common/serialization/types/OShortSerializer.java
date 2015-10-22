@@ -40,7 +40,7 @@ public class OShortSerializer implements OBinarySerializer<Short> {
    */
   public static final int               SHORT_SIZE = 2;
   private static final OBinaryConverter CONVERTER  = OBinaryConverterFactory.getConverter();
-  public static OShortSerializer        INSTANCE   = new OShortSerializer();
+  public static final OShortSerializer        INSTANCE   = new OShortSerializer();
 
   public int getObjectSize(Short object, Object... hints) {
     return SHORT_SIZE;

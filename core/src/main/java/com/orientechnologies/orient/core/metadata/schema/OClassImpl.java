@@ -19,9 +19,6 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.io.IOException;
-import java.util.*;
-
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.common.util.OCommonConst;
@@ -65,6 +62,9 @@ import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
+
+import java.io.IOException;
+import java.util.*;
 
 /**
  * Schema Class implementation.
@@ -395,10 +395,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
     final List<OClass> classes = new ArrayList<OClass>(classNames.size());
     final OSchema schema = getDatabase().getMetadata().getSchema();
-    if (classNames != null) {
-      for (String className : classNames) {
-        classes.add(schema.getClass(className));
-      }
+    for (String className : classNames) {
+      classes.add(schema.getClass(className));
     }
     return setSuperClasses(classes);
   }
@@ -1745,7 +1743,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       final OIndexDefinition indexDefinition = OIndexDefinitionFactory.createIndexDefinition(this, Arrays.asList(fields),
           extractFieldTypes(fields), null, type, algorithm);
 
-      return getDatabase().getMetadata().getIndexManager().createIndex(name, type, indexDefinition, polymorphicClusterIds, progressListener, metadata, algorithm);
+      return getDatabase().getMetadata().getIndexManager().createIndex(name, type, indexDefinition, polymorphicClusterIds,
+          progressListener, metadata, algorithm);
     } finally {
       releaseSchemaReadLock();
     }

@@ -20,11 +20,6 @@
 
 package com.orientechnologies.orient.core.serialization.serializer.binary.impl;
 
-import static com.orientechnologies.orient.core.serialization.OBinaryProtocol.bytes2long;
-import static com.orientechnologies.orient.core.serialization.OBinaryProtocol.bytes2short;
-import static com.orientechnologies.orient.core.serialization.OBinaryProtocol.long2bytes;
-import static com.orientechnologies.orient.core.serialization.OBinaryProtocol.short2bytes;
-
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
@@ -33,6 +28,11 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
+
+import static com.orientechnologies.orient.core.serialization.OBinaryProtocol.bytes2long;
+import static com.orientechnologies.orient.core.serialization.OBinaryProtocol.bytes2short;
+import static com.orientechnologies.orient.core.serialization.OBinaryProtocol.long2bytes;
+import static com.orientechnologies.orient.core.serialization.OBinaryProtocol.short2bytes;
 
 /**
  * Serializer for {@link com.orientechnologies.orient.core.metadata.schema.OType#LINK}
@@ -44,7 +44,7 @@ public class OLinkSerializer implements OBinarySerializer<OIdentifiable> {
   public static final byte      ID               = 9;
   private static final int      CLUSTER_POS_SIZE = OLongSerializer.LONG_SIZE;
   public static final int       RID_SIZE         = OShortSerializer.SHORT_SIZE + CLUSTER_POS_SIZE;
-  public static OLinkSerializer INSTANCE         = new OLinkSerializer();
+  public static final OLinkSerializer INSTANCE         = new OLinkSerializer();
 
   public int getObjectSize(final OIdentifiable rid, Object... hints) {
     return RID_SIZE;

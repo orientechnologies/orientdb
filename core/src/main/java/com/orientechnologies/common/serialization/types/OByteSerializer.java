@@ -33,9 +33,9 @@ public class OByteSerializer implements OBinarySerializer<Byte> {
   /**
    * size of byte value in bytes
    */
-  public static final int       BYTE_SIZE = 1;
-  public static final byte      ID        = 2;
-  public static OByteSerializer INSTANCE  = new OByteSerializer();
+  public static final int             BYTE_SIZE = 1;
+  public static final byte            ID        = 2;
+  public static final OByteSerializer INSTANCE  = new OByteSerializer();
 
   public int getObjectSize(Byte object, Object... hints) {
     return BYTE_SIZE;

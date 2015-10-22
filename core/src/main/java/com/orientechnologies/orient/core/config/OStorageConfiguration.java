@@ -19,21 +19,6 @@
  */
 package com.orientechnologies.orient.core.config;
 
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.conflict.ORecordConflictStrategyFactory;
-import com.orientechnologies.orient.core.exception.OSerializationException;
-import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.id.OImmutableRecordId;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.metadata.schema.clusterselection.ORoundRobinClusterSelectionStrategy;
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-import com.orientechnologies.orient.core.serialization.OSerializableStream;
-import com.orientechnologies.orient.core.sql.parser.OStatement;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
-
 import java.io.IOException;
 import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
@@ -48,6 +33,21 @@ import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.conflict.ORecordConflictStrategyFactory;
+import com.orientechnologies.orient.core.exception.OSerializationException;
+import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.id.OImmutableRecordId;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.schema.clusterselection.ORoundRobinClusterSelectionStrategy;
+import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+import com.orientechnologies.orient.core.serialization.OSerializableStream;
+import com.orientechnologies.orient.core.sql.parser.OStatement;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
 /**
  * Versions:
@@ -928,9 +928,9 @@ public class OStorageConfiguration implements OSerializableStream {
     private final int                 keySize;
     private final Map<String, String> engineProperties;
 
-    public IndexEngineData(String name, String algorithm, Boolean durableInNonTxMode, int version, byte valueSerializerId,
-        byte keySerializedId, boolean isAutomatic, OType[] keyTypes, boolean nullValuesSupport, int keySize,
-        Map<String, String> engineProperties) {
+    public IndexEngineData(final String name, final String algorithm, final Boolean durableInNonTxMode, final int version,
+        final byte valueSerializerId, final byte keySerializedId, final boolean isAutomatic, final OType[] keyTypes,
+        final boolean nullValuesSupport, final int keySize, final Map<String, String> engineProperties) {
       this.name = name;
       this.algorithm = algorithm;
       this.durableInNonTxMode = durableInNonTxMode;

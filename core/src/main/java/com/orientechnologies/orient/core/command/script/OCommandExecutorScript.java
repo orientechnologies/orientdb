@@ -132,6 +132,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
 
         request.setCompiledScript(compiledScript);
       }
+
       final Bindings binding = scriptManager.bind(compiledScript.getEngine().getBindings(ScriptContext.ENGINE_SCOPE),
           (ODatabaseDocumentTx) db, iContext, iArgs);
 

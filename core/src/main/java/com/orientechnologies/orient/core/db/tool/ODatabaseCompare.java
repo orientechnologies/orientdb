@@ -19,14 +19,6 @@
  */
 package com.orientechnologies.orient.core.db.tool;
 
-import static com.orientechnologies.orient.core.record.impl.ODocumentHelper.makeDbCall;
-
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Set;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -50,6 +42,15 @@ import com.orientechnologies.orient.core.record.impl.ODocumentHelper.ODbRelatedC
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Set;
+
+import static com.orientechnologies.orient.core.record.impl.ODocumentHelper.makeDbCall;
 
 public class ODatabaseCompare extends ODatabaseImpExpAbstract {
   private OStorage              storage1;
@@ -620,6 +621,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
     return true;
   }
 
+  @SuppressFBWarnings("NP_NULL_ON_SOME_PATH")
   private boolean compareRecords(ODocumentHelper.RIDMapper ridMapper) {
     listener.onMessage("\nStarting deep comparison record by record. This may take a few minutes. Wait please...");
 

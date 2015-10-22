@@ -94,7 +94,7 @@ public class ORuntimeResult {
         }
 
         final Object projectionValue;
-        if (v.equals("*")) {
+        if (v != null && v.equals("*")) {
           // COPY ALL
           inputDocument.copyTo(iValue);
           // CONTINUE WITH NEXT ITEM

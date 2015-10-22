@@ -31,7 +31,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALCh
 public class ONullSerializer implements OBinarySerializer<Object> {
 
   public static final byte      ID       = 11;
-  public static ONullSerializer INSTANCE = new ONullSerializer();
+  public static final  ONullSerializer INSTANCE = new ONullSerializer();
 
   public int getObjectSize(final Object object, Object... hints) {
     return 0;

@@ -16,13 +16,6 @@
 
 package com.orientechnologies.orient.core.schedule;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Map;
-import java.util.Map.Entry;
-
-import javax.script.*;
-
 import com.orientechnologies.common.concur.resource.OPartitionedObjectPool;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -39,24 +32,34 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.schedule.OSchedulerListener.SCHEDULER_STATUS;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 
+import javax.script.Bindings;
+import javax.script.Invocable;
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
+import javax.script.ScriptException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Map;
+import java.util.Map.Entry;
+
 /**
  * @author henryzhao81-at-gmail.com
  * @since Mar 28, 2013
  */
 
 public class OScheduler extends ODocumentWrapper implements Runnable {
-  public final static String        CLASSNAME      = "OSchedule";
+  public final static String CLASSNAME = "OSchedule";
 
-  public static String              PROP_NAME      = "name";
-  public static String              PROP_RULE      = "rule";
-  public static String              PROP_ARGUMENTS = "arguments";
-  public static String              PROP_STATUS    = "status";
-  public static String              PROP_FUNC      = "function";
-  public static String              PROP_STARTTIME = "starttime";
-  public static String              PROP_STARTED   = "start";
+  public static final String PROP_NAME      = "name";
+  public static final String PROP_RULE      = "rule";
+  public static final String PROP_ARGUMENTS = "arguments";
+  public static final String PROP_STATUS    = "status";
+  public static final String PROP_FUNC      = "function";
+  public static final String PROP_STARTTIME = "starttime";
+  public static final String PROP_STARTED   = "start";
 
   private OFunction                 function;
-  private boolean                   isRunning      = false;
+  private boolean                   isRunning = false;
   private ODatabaseDocumentInternal db;
 
   public OScheduler(ODocument doc) {
@@ -189,8 +192,8 @@ public class OScheduler extends ODocumentWrapper implements Runnable {
       throw OException.wrapException(
           new OCommandScriptException("Error on execution of the script", this.function.getName(), e.getColumnNumber()), e);
     } catch (NoSuchMethodException e) {
-      throw OException
-          .wrapException(new OCommandScriptException("Error on execution of the script", this.function.getName(), 0), e);
+      throw OException.wrapException(new OCommandScriptException("Error on execution of the script", this.function.getName(), 0),
+          e);
     } catch (OCommandScriptException e) {
       throw e;
     } catch (Exception ex) {

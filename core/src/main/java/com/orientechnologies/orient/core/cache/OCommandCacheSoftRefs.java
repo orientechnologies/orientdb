@@ -69,8 +69,7 @@ public class OCommandCacheSoftRefs implements OCommandCache {
   private int                   minExecutionTime = OGlobalConfiguration.COMMAND_CACHE_MIN_EXECUTION_TIME.getValueAsInteger();
   private int                   maxResultsetSize = OGlobalConfiguration.COMMAND_CACHE_MAX_RESULSET_SIZE.getValueAsInteger();
 
-  private STRATEGY              evictStrategy    = STRATEGY.valueOf(OGlobalConfiguration.COMMAND_CACHE_EVICT_STRATEGY
-                                                     .getValueAsString());
+  private STRATEGY evictStrategy = STRATEGY.valueOf(OGlobalConfiguration.COMMAND_CACHE_EVICT_STRATEGY.getValueAsString());
 
   public OCommandCacheSoftRefs(final String iDatabaseName) {
     databaseName = iDatabaseName;
@@ -188,7 +187,8 @@ public class OCommandCacheSoftRefs implements OCommandCache {
 
       cache.put(key, value);
 
-      clusters.addAll(iInvolvedClusters);
+      if (iInvolvedClusters != null)
+        clusters.addAll(iInvolvedClusters);
     }
   }
 

@@ -53,7 +53,7 @@ public enum OErrorCode {
   }
 
   public void throwException(String message, Throwable parent) {
-    String fullMessage = String.format("%1$06d_%2$06d - %3", category.code, code, message);
+    final String fullMessage = String.format("%1$06d_%2$06d - %s", category.code, code, message);
     try {
       throw exceptionClass.getConstructor(String.class, Exception.class).newInstance(fullMessage, parent);
     } catch (InstantiationException e) {

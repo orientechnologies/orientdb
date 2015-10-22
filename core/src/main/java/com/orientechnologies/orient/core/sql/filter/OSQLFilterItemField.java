@@ -93,7 +93,7 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
 
   public OSQLFilterItemField(final OBaseParser iQueryToParse, final String iName, final OClass iClass) {
     super(iQueryToParse, iName);
-    collate = getCollateForField(iClass, name);
+    collate = getCollateForField(iClass, iName);
   }
 
   public Object getValue(final OIdentifiable iRecord, final Object iCurrentResult, final OCommandContext iContext) {

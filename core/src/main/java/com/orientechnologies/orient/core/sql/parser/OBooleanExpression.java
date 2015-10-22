@@ -14,7 +14,7 @@ import java.util.Map;
  */
 public abstract class OBooleanExpression extends SimpleNode {
 
-  public static OBooleanExpression TRUE = new OBooleanExpression(0) {
+  public static final OBooleanExpression TRUE = new OBooleanExpression(0) {
     @Override
     public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
       return true;
@@ -43,7 +43,7 @@ public abstract class OBooleanExpression extends SimpleNode {
     }
   };
 
-  public static OBooleanExpression FALSE = new OBooleanExpression(0) {
+  public static final OBooleanExpression FALSE = new OBooleanExpression(0) {
     @Override
     public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
       return false;
