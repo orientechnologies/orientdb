@@ -2,6 +2,7 @@ package com.orientechnologies.orient.client.remote;
 
 import com.orientechnologies.common.concur.resource.OResourcePool;
 import com.orientechnologies.common.concur.resource.OResourcePoolListener;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -61,7 +62,7 @@ public class ORemoteConnectionPool extends ORemoteConnectionPushListener impleme
       throw e;
     } catch (Exception e) {
       OLogManager.instance().debug(this, "Error on connecting to %s", e, iServerURL);
-      throw new OIOException("Error on connecting to " + iServerURL, e);
+      throw OException.wrapException(new OIOException("Error on connecting to " + iServerURL), e);
     }
   }
 
