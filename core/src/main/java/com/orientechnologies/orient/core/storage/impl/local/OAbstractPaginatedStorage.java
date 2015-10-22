@@ -20,20 +20,6 @@
 
 package com.orientechnologies.orient.core.storage.impl.local;
 
-import java.io.*;
-import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
-import java.nio.channels.FileChannel;
-import java.nio.charset.Charset;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
-
 import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
@@ -126,6 +112,20 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTxListener;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
+import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.nio.charset.Charset;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 /**
  * @author Andrey Lomakin
@@ -3221,7 +3221,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
    * @param iRids
    *          Set of rids to load in one shot
    */
-  public List<OPair<ORecordId, ORawBuffer>> readRecords(final Set<ORecordId> iRids) {
+  public Collection<OPair<ORecordId, ORawBuffer>> readRecords(final Collection<ORecordId> iRids) {
     checkOpeness();
 
     final List<OPair<ORecordId, ORawBuffer>> records = new ArrayList<OPair<ORecordId, ORawBuffer>>();
@@ -4394,7 +4394,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     }
   }
 
-  protected Map<Integer, List<ORecordId>> getRidsGroupedByCluster(final Set<ORecordId> iRids) {
+  protected Map<Integer, List<ORecordId>> getRidsGroupedByCluster(final Collection<ORecordId> iRids) {
     final Map<Integer, List<ORecordId>> ridsPerCluster = new HashMap<Integer, List<ORecordId>>();
     for (ORecordId rid : iRids) {
       List<ORecordId> rids = ridsPerCluster.get(rid.clusterId);
