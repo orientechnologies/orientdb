@@ -1721,7 +1721,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
         }
       }
 
-      final Collection<OPair<ORecordId, ORawBuffer>> rawRecords = ((OAbstractPaginatedStorage) storage).readRecords(rids);
+      final Collection<OPair<ORecordId, ORawBuffer>> rawRecords = ((OAbstractPaginatedStorage) storage.getUnderlying()).readRecords(rids);
       for (OPair<ORecordId, ORawBuffer> entry : rawRecords) {
         // NO SAME RECORD TYPE: CAN'T REUSE OLD ONE BUT CREATE A NEW ONE FOR IT
         final ORecord record = Orient.instance().getRecordFactoryManager().newInstance(entry.value.recordType);
