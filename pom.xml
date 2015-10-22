@@ -1,4 +1,4 @@
-s<?xml version="1.0"?>
+<?xml version="1.0"?>
 
 <!-- ~ Copyright 2010-2013 Orient Technologies LTD ~ ~ Licensed under the 
     Apache License, Version 2.0 (the "License"); ~ you may not use this file 
@@ -590,7 +590,7 @@ s<?xml version="1.0"?>
         <profile>
             <id>findbugs</id>
             <activation>
-                <activeByDefault>fale</activeByDefault>
+                <activeByDefault>false</activeByDefault>
             </activation>
             <build>
                 <plugins>
