@@ -6,8 +6,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.util.Collection;
 import java.util.HashSet;
-import java.util.Set;
 
 public class ODatabaseDocumentTxTest {
 
@@ -30,14 +30,14 @@ public class ODatabaseDocumentTxTest {
         rids.add((ORecordId) rec2.getIdentity());
       }
 
-      Set<ORecord> result = db.executeReadRecords(rids, false);
+      Collection<ORecord> result = db.executeReadRecords(rids, false);
       Assert.assertEquals(result.size(), 200);
 
       for (ORecord rec : result) {
         Assert.assertTrue(rec instanceof ODocument);
       }
 
-      Set<ORecord> result2 = db.executeReadRecords(rids, true);
+      Collection<ORecord> result2 = db.executeReadRecords(rids, true);
       Assert.assertEquals(result2.size(), 200);
 
       for (ORecord rec : result2) {
