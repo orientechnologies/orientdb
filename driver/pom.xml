@@ -15,6 +15,13 @@
             <url>http://michaelpollmeier.com</url>
         </developer>
     </developers>
+    <contributors>
+        <contributor>
+            <name>Marvin Froeder</name>
+            <email>velo br at gmail dot com</email>
+            <url>about.me/velo</url>
+        </contributor>
+    </contributors>
     <licenses>
         <license>
             <name>Apache 2</name>
@@ -40,19 +47,19 @@
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-client</artifactId>
-            <version>2.1.2</version>
+            <version>2.1.4</version>
         </dependency>
         <!-- TESTING -->
          <dependency>
              <groupId>org.apache.tinkerpop</groupId>
              <artifactId>gremlin-test</artifactId>
-             <version>3.0.0.M9-incubating</version>
+             <version>3.0.1-incubating</version>
              <scope>test</scope>
          </dependency>
          <dependency>
              <groupId>org.apache.tinkerpop</groupId>
              <artifactId>gremlin-groovy-test</artifactId>
-             <version>3.0.0.M9-incubating</version>
+             <version>3.0.1-incubating</version>
              <scope>test</scope>
          </dependency>
         <dependency>
