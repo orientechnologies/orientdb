@@ -20,6 +20,13 @@
 
 package com.orientechnologies.orient.core.db.document;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.concurrent.Callable;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.log.OLogManager;
@@ -110,13 +117,6 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OSimpleVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.Callable;
 
 @SuppressWarnings("unchecked")
 public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>implements ODatabaseDocumentInternal {
@@ -1684,7 +1684,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
    *
    * @Internal
    */
-  public Set<ORecord> executeReadRecords(final Set<ORecordId> iRids, final boolean ignoreCache) {
+  public Collection<ORecord> executeReadRecords(final Collection<ORecordId> iRids, final boolean ignoreCache) {
     checkOpeness();
     checkIfActive();
 
@@ -1692,7 +1692,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
     ORecordSerializationContext.pushContext();
     try {
 
-      final Set<ORecord> records = new HashSet<ORecord>(iRids.size() > 0 ? iRids.size() : 1);
+      final List<ORecord> records = new ArrayList<ORecord>(iRids.size() > 0 ? iRids.size() : 1);
 
       if (iRids == null || iRids.isEmpty())
         return records;
