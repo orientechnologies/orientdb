@@ -46,29 +46,32 @@ public class GitHubCommentedEvent implements GithubCommentEvent {
 
     final GComment gComment = GComment.fromDoc(commentDoc);
     String repoName = repository.field(ORepository.NAME.toString());
-    Integer issueNumber = issue.field(OIssue.NUMBER.toString());
+    if (issue != null) {
+      Integer issueNumber = issue.field(OIssue.NUMBER.toString());
 
-    Issue issueDto = repositoryRepository.findIssueByRepoAndNumber(repoName, issueNumber);
+      // sleep 2 sec. wait until the issue is created.
+      try {
+        Thread.sleep(2000);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+      Issue issueDto = repositoryRepository.findIssueByRepoAndNumber(repoName, issueNumber);
 
-    Comment comment = commentRepository.findByIssueAndCommentId(issueDto, gComment.getId());
+      Comment comment = commentRepository.findByIssueAndCommentId(issueDto, gComment.getId());
 
-    try {
-      Thread.sleep(1000);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
-    if (comment == null) {
-      comment = new Comment();
-      comment.setCommentId(gComment.getId());
-      comment.setBody(gComment.getBody());
-      GUser user = gComment.getUser();
-      comment.setUser(userRepository.findUserOrCreateByLogin(user.getLogin(), user.getId()));
-      comment.setCreatedAt(gComment.getCreatedAt());
-      comment.setUpdatedAt(gComment.getUpdatedAt());
-      comment = commentRepository.save(comment);
-      issueService.commentIssue(issueDto, comment, false);
+      if (comment == null) {
+        comment = new Comment();
+        comment.setCommentId(gComment.getId());
+        comment.setBody(gComment.getBody());
+        GUser user = gComment.getUser();
+        comment.setUser(userRepository.findUserOrCreateByLogin(user.getLogin(), user.getId()));
+        comment.setCreatedAt(gComment.getCreatedAt());
+        comment.setUpdatedAt(gComment.getUpdatedAt());
+        comment = commentRepository.save(comment);
+        issueService.commentIssue(issueDto, comment, false);
 
-      eventManager.pushInternalEvent(IssueCommentedEvent.EVENT, comment);
+        eventManager.pushInternalEvent(IssueCommentedEvent.EVENT, comment);
+      }
     }
   }
 

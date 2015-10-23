@@ -55,27 +55,36 @@ public class GithubLabelEvent implements GithubIssueEvent {
     ODocument repository = payload.field("repository");
     String organizationName = organization.field("login");
 
-    final GLabel label1 = GLabel.fromDoc(label);
-    String repoName = repository.field(ORepository.NAME.toString());
-    Integer issueNumber = issue.field(OIssue.NUMBER.toString());
+    if (issue != null) {
 
-    Issue issueDto = repositoryRepository.findIssueByRepoAndNumber(repoName, issueNumber);
-
-    Label l = repositoryRepository.findLabelsByRepoAndName(repoName, label1.getName());
-    if (l == null) {
-      Repository r = orgRepository.findOrganizationRepository(organizationName, repoName);
-      l = new Label();
-      l.setColor(label1.getColor());
-      l.setName(label1.getName());
-      l = labelRepository.save(l);
-      repositoryService.addLabel(r, l);
-    }
-    issueService.addLabels(issueDto, new ArrayList<String>() {
-      {
-        add(label1.getName());
+      // sleep 2 sec. wait until the issue is created.
+      try {
+        Thread.sleep(2000);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
       }
-    }, findUser(payload), true, false);
-    issueRepository.save(issueDto);
+      final GLabel label1 = GLabel.fromDoc(label);
+      String repoName = repository.field(ORepository.NAME.toString());
+      Integer issueNumber = issue.field(OIssue.NUMBER.toString());
+
+      Issue issueDto = repositoryRepository.findIssueByRepoAndNumber(repoName, issueNumber);
+
+      Label l = repositoryRepository.findLabelsByRepoAndName(repoName, label1.getName());
+      if (l == null) {
+        Repository r = orgRepository.findOrganizationRepository(organizationName, repoName);
+        l = new Label();
+        l.setColor(label1.getColor());
+        l.setName(label1.getName());
+        l = labelRepository.save(l);
+        repositoryService.addLabel(r, l);
+      }
+      issueService.addLabels(issueDto, new ArrayList<String>() {
+        {
+          add(label1.getName());
+        }
+      }, findUser(payload), true, false);
+      issueRepository.save(issueDto);
+    }
   }
 
   @Override

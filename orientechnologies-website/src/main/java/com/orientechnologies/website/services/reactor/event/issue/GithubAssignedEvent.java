@@ -41,14 +41,16 @@ public class GithubAssignedEvent implements GithubIssueEvent {
     OUser assignee = findUser(payload, "assignee");
     String repoName = repository.field(ORepository.NAME.toString());
     Integer issueNumber = issue.field(OIssue.NUMBER.toString());
-    try {
-      Thread.sleep(1000);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
-    Issue issueDto = repositoryRepository.findIssueByRepoAndNumber(repoName, issueNumber);
-    issueService.assign(issueDto, assignee, sender, true);
 
+    if (issue != null) {
+      try {
+        Thread.sleep(2000);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+      Issue issueDto = repositoryRepository.findIssueByRepoAndNumber(repoName, issueNumber);
+      issueService.assign(issueDto, assignee, sender, true);
+    }
   }
 
   @Override
