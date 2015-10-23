@@ -109,7 +109,7 @@ public class OPlaceholder implements OIdentifiable, Externalizable {
   @Override
   public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
     rid = (ORecordId) in.readObject();
-    recordVersion = (Integer) in.readObject();
+    recordVersion = in.readInt();
   }
 
   @Override
