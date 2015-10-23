@@ -91,11 +91,6 @@ public class OGeometryCollectionShapeBuilder extends OComplexShapeBuilder<ShapeC
   }
 
   @Override
-  public ShapeCollection<Shape> fromText(String wkt) {
-    return null;
-  }
-
-  @Override
   public ODocument toDoc(ShapeCollection<Shape> shapes) {
 
     ODocument doc = new ODocument(getName());

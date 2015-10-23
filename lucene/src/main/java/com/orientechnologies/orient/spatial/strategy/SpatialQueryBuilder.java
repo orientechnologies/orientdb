@@ -42,6 +42,7 @@ public class SpatialQueryBuilder extends SpatialQueryBuilderAbstract {
     operators.put("within", new SpatialQueryBuilderWithin(manager, factory));
     operators.put("contains", new SpatialQueryBuilderContains(manager, factory));
     operators.put("near", new SpatialQueryBuilderNear(manager, factory));
+    operators.put(SpatialQueryBuilderDWithin.NAME, new SpatialQueryBuilderDWithin(manager, factory));
     operators.put("intersects", new SpatialQueryBuilderIntersects(manager, factory));
     operators.put("&&", new SpatialQueryBuilderOverlap(manager, factory));
   }

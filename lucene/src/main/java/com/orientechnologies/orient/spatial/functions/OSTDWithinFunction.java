@@ -20,13 +20,11 @@ package com.orientechnologies.orient.spatial.functions;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ridbag.DoubleReferenceItem;
 import com.orientechnologies.orient.core.sql.parser.OBinaryCompareOperator;
 import com.orientechnologies.orient.core.sql.parser.OExpression;
 import com.orientechnologies.orient.core.sql.parser.OFromClause;
-import com.orientechnologies.orient.spatial.strategy.SpatialQueryBuilderWithin;
+import com.orientechnologies.orient.spatial.strategy.SpatialQueryBuilderDWithin;
 import com.spatial4j.core.shape.Shape;
-import com.spatial4j.core.shape.SpatialRelation;
 
 import java.util.Collection;
 
@@ -49,9 +47,9 @@ public class OSTDWithinFunction extends OSpatialFunctionAbstract {
 
     Shape shape1 = factory.fromObject(iParams[1]);
 
-      Double distance = (Double) iParams[2];
+    Double distance = (Double) iParams[2];
 
-    return factory.operation().isWithInDistance(shape, shape1,distance);
+    return factory.operation().isWithInDistance(shape, shape1, distance);
   }
 
   @Override
@@ -75,6 +73,6 @@ public class OSTDWithinFunction extends OSpatialFunctionAbstract {
 
   @Override
   protected String operator() {
-    return SpatialQueryBuilderWithin.NAME;
+    return SpatialQueryBuilderDWithin.NAME;
   }
 }

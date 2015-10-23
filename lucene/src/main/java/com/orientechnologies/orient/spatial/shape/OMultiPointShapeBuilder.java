@@ -66,11 +66,6 @@ public class OMultiPointShapeBuilder extends OComplexShapeBuilder<JtsGeometry> {
   }
 
   @Override
-  public JtsGeometry fromText(String wkt) {
-    return null;
-  }
-
-  @Override
   public ODocument toDoc(final JtsGeometry shape) {
     final MultiPoint geom = (MultiPoint) shape.getGeom();
 

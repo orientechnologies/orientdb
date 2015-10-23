@@ -16,13 +16,13 @@
 package com.orientechnologies.orient.spatial.shape;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.spatial4j.core.context.SpatialContext;
 import com.spatial4j.core.context.jts.JtsSpatialContext;
 import com.spatial4j.core.context.jts.JtsSpatialContextFactory;
 import com.spatial4j.core.io.jts.JtsWktShapeParser;
+import com.spatial4j.core.shape.Rectangle;
 import com.spatial4j.core.shape.Shape;
 import com.spatial4j.core.shape.jts.JtsGeometry;
 import com.vividsolutions.jts.geom.Geometry;
@@ -77,16 +77,6 @@ public abstract class OShapeBuilder<T extends Shape> {
     return fromDoc(doc);
   }
 
-  @Deprecated
-  public T makeShape(OCompositeKey key, SpatialContext ctx) {
-    throw new UnsupportedOperationException();
-  };
-
-  @Deprecated
-  public boolean canHandle(OCompositeKey key) {
-    return false;
-  };
-
   public abstract void initClazz(ODatabaseDocumentTx db);
 
   public String asText(T shape) {
@@ -131,12 +121,7 @@ public abstract class OShapeBuilder<T extends Shape> {
   }
 
   public JtsGeometry toShape(Geometry geometry) {
-    JtsGeometry jtsGeometry = new JtsGeometry(geometry, SPATIAL_CONTEXT, false, false);
-    // if (autoValidateJtsGeometry)
-    // jtsGeometry.validate();
-    // if (autoIndexJtsGeometry)
-    // jtsGeometry.index();
-    return jtsGeometry;
+    return SPATIAL_CONTEXT.makeShape(geometry);
   }
 
   protected OClass superClass(ODatabaseDocumentTx db) {
@@ -144,13 +129,19 @@ public abstract class OShapeBuilder<T extends Shape> {
   }
 
   public T fromText(String wkt) throws ParseException {
-    return (T) SPATIAL_CONTEXT.getWktShapeParser().parse(wkt);
+    T entity = (T) SPATIAL_CONTEXT.getWktShapeParser().parse(wkt);
+
+    if (entity instanceof Rectangle) {
+      Geometry geometryFrom = SPATIAL_CONTEXT.getGeometryFrom(entity);
+      entity = (T) SPATIAL_CONTEXT.makeShape(geometryFrom);
+    }
+    return entity;
   }
 
   public abstract ODocument toDoc(T shape);
 
   public ODocument toDoc(String wkt) throws ParseException {
-    T parsed = (T) SPATIAL_CONTEXT.getWktShapeParser().parse(wkt);
+    T parsed = fromText(wkt);
     return toDoc(parsed);
   }
 

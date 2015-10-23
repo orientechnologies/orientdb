@@ -99,11 +99,6 @@ public class OPolygonShapeBuilder extends OComplexShapeBuilder<JtsGeometry> {
   }
 
   @Override
-  public JtsGeometry fromText(String wkt) {
-    return null;
-  }
-
-  @Override
   public ODocument toDoc(JtsGeometry shape) {
 
     ODocument doc = new ODocument(getName());

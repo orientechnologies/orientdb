@@ -17,9 +17,7 @@
 package com.orientechnologies.orient.spatial.shape;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.spatial4j.core.context.SpatialContext;
 import com.spatial4j.core.shape.Point;
 import com.spatial4j.core.shape.Rectangle;
 import com.spatial4j.core.shape.Shape;
@@ -62,21 +60,6 @@ public class OShapeFactory extends OComplexShapeBuilder {
   }
 
   @Override
-  public Shape makeShape(OCompositeKey key, SpatialContext ctx) {
-    for (OShapeBuilder f : factories.values()) {
-      if (f.canHandle(key)) {
-        return f.makeShape(key, ctx);
-      }
-    }
-    return null;
-  }
-
-  @Override
-  public boolean canHandle(OCompositeKey key) {
-    return false;
-  }
-
-  @Override
   public void initClazz(ODatabaseDocumentTx db) {
     for (OShapeBuilder f : factories.values()) {
       f.initClazz(db);
@@ -100,7 +83,6 @@ public class OShapeFactory extends OComplexShapeBuilder {
       try {
         return fromText((String) obj);
       } catch (ParseException e) {
-        // TODO handle parse shape exception
         e.printStackTrace();
       }
     }
@@ -182,7 +164,7 @@ public class OShapeFactory extends OComplexShapeBuilder {
         doc = factories.get("OMultiPolygon").toDoc(createMultiPolygon(collection));
       } else if (isMultiPoint(collection)) {
         doc = factories.get("OMultiPoint").toDoc(createMultiPoint(collection));
-      } else  if (isMultiLine(collection)) {
+      } else if (isMultiLine(collection)) {
         doc = factories.get("OMultiLineString").toDoc(createMultiLine(collection));
       } else {
         doc = factories.get("OGeometryCollection").toDoc(shape);

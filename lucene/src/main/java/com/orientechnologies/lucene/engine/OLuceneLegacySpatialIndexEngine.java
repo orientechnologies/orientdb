@@ -32,6 +32,8 @@ import com.orientechnologies.orient.core.index.OIndexEngineException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.spatial.shape.OShapeBuilder;
+import com.orientechnologies.orient.spatial.shape.legacy.OShapeBuilderLegacy;
+import com.orientechnologies.orient.spatial.shape.legacy.OShapeBuilderLegacyImpl;
 import com.spatial4j.core.distance.DistanceUtils;
 import com.spatial4j.core.shape.Point;
 import com.spatial4j.core.shape.Shape;
@@ -54,6 +56,8 @@ import java.util.Set;
  * Created by Enrico Risa on 26/09/15.
  */
 public class OLuceneLegacySpatialIndexEngine extends OLuceneSpatialIndexEngineAbstract {
+
+  OShapeBuilderLegacy legacyBuilder = OShapeBuilderLegacyImpl.INSTANCE; ;
 
   public OLuceneLegacySpatialIndexEngine(String indexName, OShapeBuilder factory) {
     super(indexName, factory);
@@ -99,7 +103,7 @@ public class OLuceneLegacySpatialIndexEngine extends OLuceneSpatialIndexEngineAb
 
     Set<OIdentifiable> result = new HashSet<OIdentifiable>();
 
-    Shape shape = factory.makeShape(key, ctx);
+    Shape shape = legacyBuilder.makeShape(key, ctx);
     if (shape == null)
       return null;
     SpatialArgs args = new SpatialArgs(SpatialOperation.IsWithin, shape);
@@ -148,7 +152,7 @@ public class OLuceneLegacySpatialIndexEngine extends OLuceneSpatialIndexEngineAb
       OCompositeKey compositeKey = (OCompositeKey) key;
       Collection<OIdentifiable> container = (Collection<OIdentifiable>) value;
       for (OIdentifiable oIdentifiable : container) {
-        addDocument(newGeoDocument(oIdentifiable, factory.makeShape(compositeKey, ctx)));
+        addDocument(newGeoDocument(oIdentifiable, legacyBuilder.makeShape(compositeKey, ctx)));
       }
     } else {
 

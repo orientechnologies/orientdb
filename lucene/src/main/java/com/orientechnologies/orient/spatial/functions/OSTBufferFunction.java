@@ -54,6 +54,6 @@ public class OSTBufferFunction extends OSQLFunctionAbstract {
 
   @Override
   public String getSyntax() {
-    return "ST_AsBinary(<doc>)";
+    return "ST_AsBuffer(<doc>)";
   }
 }

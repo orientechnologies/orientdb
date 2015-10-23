@@ -51,11 +51,6 @@ public class OLineStringShapeBuilder extends OComplexShapeBuilder<JtsGeometry> {
   }
 
   @Override
-  public JtsGeometry fromText(String wkt) {
-    return null;
-  }
-
-  @Override
   public JtsGeometry fromDoc(ODocument document) {
 
     validate(document);

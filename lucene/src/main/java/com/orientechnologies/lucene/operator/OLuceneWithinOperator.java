@@ -17,7 +17,6 @@
 package com.orientechnologies.lucene.operator;
 
 import com.orientechnologies.lucene.collections.OSpatialCompositeKey;
-import com.orientechnologies.orient.spatial.shape.OShapeFactory;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -29,6 +28,8 @@ import com.orientechnologies.orient.core.sql.OIndexSearchResult;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.operator.OIndexReuseType;
 import com.orientechnologies.orient.core.sql.operator.OQueryTargetOperator;
+import com.orientechnologies.orient.spatial.shape.legacy.OShapeBuilderLegacy;
+import com.orientechnologies.orient.spatial.shape.legacy.OShapeBuilderLegacyImpl;
 import com.spatial4j.core.context.SpatialContext;
 import com.spatial4j.core.shape.Shape;
 import com.spatial4j.core.shape.SpatialRelation;
@@ -39,7 +40,7 @@ import java.util.List;
 
 public class OLuceneWithinOperator extends OQueryTargetOperator {
 
-  OShapeFactory shapeFactory = OShapeFactory.INSTANCE;
+  OShapeBuilderLegacy shapeFactory = OShapeBuilderLegacyImpl.INSTANCE;
 
   public OLuceneWithinOperator() {
     super("WITHIN", 5, false);
@@ -81,8 +82,7 @@ public class OLuceneWithinOperator extends OQueryTargetOperator {
     if (indexResult == null || indexResult instanceof OIdentifiable)
       cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, new OSpatialCompositeKey(keyParams));
     else
-      cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult), new OSpatialCompositeKey(
-          keyParams));
+      cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult), new OSpatialCompositeKey(keyParams));
 
     iContext.setVariable("$luceneIndex", true);
     return cursor;

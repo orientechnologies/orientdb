@@ -86,8 +86,4 @@ public class OMultiPolygonShapeBuilder extends OPolygonShapeBuilder {
     return doc;
   }
 
-  @Override
-  public JtsGeometry fromText(String wkt) {
-    return null;
-  }
 }
