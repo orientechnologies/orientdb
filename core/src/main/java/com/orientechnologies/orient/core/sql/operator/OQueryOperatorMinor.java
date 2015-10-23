@@ -20,6 +20,8 @@
 package com.orientechnologies.orient.core.sql.operator;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
@@ -46,8 +48,13 @@ import java.util.List;
  */
 public class OQueryOperatorMinor extends OQueryOperatorEqualityNotNulls {
 
+  private boolean binaryEvaluate=false;
+
   public OQueryOperatorMinor() {
     super("<", 5, false);
+    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    if (db != null)
+      binaryEvaluate = db.getSerializer().getSupportBinaryEvaluate();
   }
 
   @Override
@@ -138,6 +145,6 @@ public class OQueryOperatorMinor extends OQueryOperatorEqualityNotNulls {
 
   @Override
   public boolean isSupportingBinaryEvaluate() {
-    return true;
+    return binaryEvaluate;
   }
 }

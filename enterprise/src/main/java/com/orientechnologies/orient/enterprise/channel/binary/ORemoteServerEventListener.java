@@ -28,10 +28,5 @@ import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
  * 
  */
 public interface ORemoteServerEventListener {
-  public void onRequest(final byte iRequestCode, Object obj);
-
-  public void registerLiveListener(Integer id, OLiveResultListener listener);
-
-  public void unregisterLiveListener(Integer id);
-
+  void onRequest(final byte iRequestCode, Object obj);
 }

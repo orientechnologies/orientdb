@@ -137,4 +137,8 @@ public class ORecordSerializerBinary implements ORecordSerializer {
     return container.fitBytes();
   }
 
+  @Override
+  public boolean getSupportBinaryEvaluate() {
+    return true;
+  }
 }

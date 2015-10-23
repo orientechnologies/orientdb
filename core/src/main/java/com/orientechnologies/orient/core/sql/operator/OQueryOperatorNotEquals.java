@@ -20,6 +20,8 @@
 package com.orientechnologies.orient.core.sql.operator;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.OBinaryField;
@@ -28,25 +30,28 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 
 /**
  * NOT EQUALS operator.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 public class OQueryOperatorNotEquals extends OQueryOperatorEqualityNotNulls {
 
+  private boolean binaryEvaluate = false;
+
   public OQueryOperatorNotEquals() {
     super("<>", 5, false);
+    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    if (db != null)
+      binaryEvaluate = db.getSerializer().getSupportBinaryEvaluate();
   }
 
   @Override
-  protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
-      final Object iRight, OCommandContext iContext) {
+  protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft, final Object iRight, OCommandContext iContext) {
     return !OQueryOperatorEquals.equals(iLeft, iRight);
   }
 
   @Override
   public boolean isSupportingBinaryEvaluate() {
-    return true;
+    return binaryEvaluate;
   }
 
   @Override

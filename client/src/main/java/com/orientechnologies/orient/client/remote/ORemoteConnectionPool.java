@@ -16,17 +16,17 @@ import java.util.Map;
 /**
  * Created by tglman on 01/10/15.
  */
-public class ORemoteConnectionPool extends ORemoteConnectionPushListener implements OResourcePoolListener<String, OChannelBinaryAsynchClient>, OChannelListener {
+public class ORemoteConnectionPool implements OResourcePoolListener<String, OChannelBinaryAsynchClient>, OChannelListener {
 
 
   private OResourcePool<String, OChannelBinaryAsynchClient> pool;
+  private ORemoteConnectionPushListener listener = new ORemoteConnectionPushListener();
 
   public ORemoteConnectionPool(int iMaxResources) {
     pool = new OResourcePool<String, OChannelBinaryAsynchClient>(iMaxResources, this);
   }
 
-  protected OChannelBinaryAsynchClient createNetworkConnection(String iServerURL, final OContextConfiguration clientConfiguration, Map<String, Object> iAdditionalArg)
-    throws OIOException {
+  protected OChannelBinaryAsynchClient createNetworkConnection(String iServerURL, final OContextConfiguration clientConfiguration, Map<String, Object> iAdditionalArg) throws OIOException {
     if (iServerURL == null)
       throw new IllegalArgumentException("server url is null");
 
@@ -50,7 +50,7 @@ public class ORemoteConnectionPool extends ORemoteConnectionPushListener impleme
       final String remoteHost = serverURL.substring(0, sepPos);
       final int remotePort = Integer.parseInt(serverURL.substring(sepPos + 1));
 
-      final OChannelBinaryAsynchClient ch = new OChannelBinaryAsynchClient(remoteHost, remotePort, databaseName, clientConfiguration, OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION, this);
+      final OChannelBinaryAsynchClient ch = new OChannelBinaryAsynchClient(remoteHost, remotePort, databaseName, clientConfiguration, OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION, listener);
 
       // REGISTER MYSELF AS LISTENER TO REMOVE THE CHANNEL FROM THE POOL IN CASE OF CLOSING
       ch.registerListener(this);
@@ -91,4 +91,9 @@ public class ORemoteConnectionPool extends ORemoteConnectionPushListener impleme
 
   }
 
+  public OChannelBinaryAsynchClient acquire(String iServerURL, long timeout, OContextConfiguration clientConfiguration, Map<String, Object> iConfiguration, OStorageRemoteAsynchEventListener iListener) {
+    OChannelBinaryAsynchClient ret = pool.getResource(iServerURL, timeout, clientConfiguration, iConfiguration);
+    listener.addListener(this, ret, iListener);
+    return ret;
+  }
 }

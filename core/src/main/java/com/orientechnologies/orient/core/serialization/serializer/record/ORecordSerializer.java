@@ -34,4 +34,6 @@ public interface ORecordSerializer {
   int getMinSupportedVersion();
 
   String[] getFieldNames(byte[] iSource);
+
+  boolean getSupportBinaryEvaluate();
 }
