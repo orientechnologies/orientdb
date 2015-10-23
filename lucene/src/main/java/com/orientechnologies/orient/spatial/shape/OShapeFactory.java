@@ -182,7 +182,7 @@ public class OShapeFactory extends OComplexShapeBuilder {
         doc = factories.get("OMultiPolygon").toDoc(createMultiPolygon(collection));
       } else if (isMultiPoint(collection)) {
         doc = factories.get("OMultiPoint").toDoc(createMultiPoint(collection));
-      } else if (isMultiLine(collection)) {
+      } else  if (isMultiLine(collection)) {
         doc = factories.get("OMultiLineString").toDoc(createMultiLine(collection));
       } else {
         doc = factories.get("OGeometryCollection").toDoc(shape);

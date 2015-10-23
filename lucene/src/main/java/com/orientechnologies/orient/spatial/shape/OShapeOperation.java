@@ -27,5 +27,7 @@ public interface OShapeOperation {
 
   public double distance(Shape s1, Shape s2);
 
+  public boolean isWithInDistance(Shape s1, Shape s2, Double dist);
+
   public boolean intersect(Shape s1,Shape s2);
 }
