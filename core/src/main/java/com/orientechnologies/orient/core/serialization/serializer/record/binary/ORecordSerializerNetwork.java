@@ -130,4 +130,8 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
     return container.fitBytes();
   }
 
+  public boolean getSupportBinaryEvaluate() {
+    return false;
+  }
+
 }

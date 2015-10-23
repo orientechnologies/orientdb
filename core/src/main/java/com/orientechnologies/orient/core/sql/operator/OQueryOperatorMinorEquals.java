@@ -20,6 +20,8 @@
 package com.orientechnologies.orient.core.sql.operator;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
@@ -40,20 +42,23 @@ import java.util.List;
 
 /**
  * MINOR EQUALS operator.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 public class OQueryOperatorMinorEquals extends OQueryOperatorEqualityNotNulls {
 
+  private boolean binaryEvaluate = true;
+
   public OQueryOperatorMinorEquals() {
     super("<=", 5, false);
+    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    if (db != null)
+      binaryEvaluate = db.getSerializer().getSupportBinaryEvaluate();
   }
 
   @Override
   @SuppressWarnings("unchecked")
-  protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
-      final Object iRight, OCommandContext iContext) {
+  protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft, final Object iRight, OCommandContext iContext) {
     final Object right = OType.convert(iRight, iLeft.getClass());
     if (right == null)
       return false;
@@ -123,8 +128,7 @@ public class OQueryOperatorMinorEquals extends OQueryOperatorEqualityNotNulls {
       if (iRight instanceof ORID)
         return (ORID) iRight;
       else {
-        if (iRight instanceof OSQLFilterItemParameter
-            && ((OSQLFilterItemParameter) iRight).getValue(null, null, null) instanceof ORID)
+        if (iRight instanceof OSQLFilterItemParameter && ((OSQLFilterItemParameter) iRight).getValue(null, null, null) instanceof ORID)
           return (ORID) ((OSQLFilterItemParameter) iRight).getValue(null, null, null);
       }
 
@@ -138,6 +142,6 @@ public class OQueryOperatorMinorEquals extends OQueryOperatorEqualityNotNulls {
 
   @Override
   public boolean isSupportingBinaryEvaluate() {
-    return true;
+    return binaryEvaluate;
   }
 }

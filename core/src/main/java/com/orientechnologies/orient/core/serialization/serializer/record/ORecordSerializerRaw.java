@@ -74,4 +74,8 @@ public class ORecordSerializerRaw implements ORecordSerializer {
       throw OException.wrapException(new OSerializationException(message), e);
     }
   }
+
+  public boolean getSupportBinaryEvaluate() {
+    return false;
+  }
 }
