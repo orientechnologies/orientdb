@@ -40,6 +40,13 @@ public class OShapeOperationImpl implements OShapeOperation {
   }
 
   @Override
+  public boolean isWithInDistance(Shape s1, Shape s2, Double dist) {
+    Geometry geometry = factory.toGeometry(s1);
+    Geometry geometry1 = factory.toGeometry(s2);
+    return geometry.isWithinDistance(geometry1, dist) ;
+  }
+
+  @Override
   public boolean intersect(Shape s1, Shape s2) {
     Geometry geometry = factory.toGeometry(s1);
     Geometry geometry1 = factory.toGeometry(s2);
