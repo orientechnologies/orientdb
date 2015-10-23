@@ -21,10 +21,15 @@ package com.orientechnologies.lucene.test.geo.functions;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.spatial.shape.OShapeFactory;
+import com.spatial4j.core.shape.Shape;
+import com.spatial4j.core.shape.jts.JtsGeometry;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+import com.vividsolutions.jts.geom.Polygon;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.text.ParseException;
 import java.util.List;
 
 /**
@@ -51,7 +56,7 @@ public class LuceneSpatialMiscFunctionsTest {
     }
   }
 
-    // TODO reanable and check byte[]
+  // TODO reanable and check byte[]
   @Test(enabled = false)
   public void testAsBinary() {
 
@@ -124,7 +129,7 @@ public class LuceneSpatialMiscFunctionsTest {
     }
   }
 
-    // todo check distance
+  // todo check distance
   @Test
   public void testDistance() {
 
@@ -177,4 +182,14 @@ public class LuceneSpatialMiscFunctionsTest {
     }
   }
 
+  @Test
+  public void testWktPolygon() throws ParseException {
+
+    Shape shape = OShapeFactory.INSTANCE.fromObject("POLYGON((0 0, 10 0, 10 5, 0 5, 0 0))");
+
+    Assert.assertEquals(shape instanceof JtsGeometry, true);
+
+    JtsGeometry geom = (JtsGeometry) shape;
+    Assert.assertEquals(geom.getGeom() instanceof Polygon, true);
+  }
 }

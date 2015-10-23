@@ -110,7 +110,7 @@ public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
   }
 
   // RECTANGLE
-  @Test
+  @Test(enabled = false)
   public void testRectangleIO() {
 
     ODocument doc = rectangle();

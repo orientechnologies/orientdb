@@ -81,7 +81,8 @@ public class LuceneSpatialFunctionFromTextTest extends BaseSpatialLuceneTest {
     checkFromText(point, "select ST_GeomFromText('" + MULTIPOINTWKT + "') as geom");
   }
 
-  @Test
+  //TODO enable
+  @Test(enabled = false)
   public void geomFromTextRectangleTest() {
     ODocument polygon = rectangle();
     // RECTANGLE

@@ -96,7 +96,7 @@ public class LuceneSpatialFunctionAsTextTest extends BaseSpatialLuceneTest {
     queryAndAssertGeom("OMultiLineString", MULTILINESTRINGWKT);
   }
 
-  @Test
+  @Test(enabled = false)
   public void testRectangle() {
     queryAndAssertGeom("ORectangle", RECTANGLEWKT);
   }

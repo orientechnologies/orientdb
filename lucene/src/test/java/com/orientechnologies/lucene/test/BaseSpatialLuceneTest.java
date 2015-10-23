@@ -233,13 +233,18 @@ public abstract class BaseSpatialLuceneTest extends BaseLuceneTest {
   }
 
   protected ODocument rectangle() {
-    ODocument polygon = new ODocument("ORectangle");
-    polygon.field("coordinates", new ArrayList<Double>() {
+    ODocument polygon = new ODocument("OPolygon");
+    polygon.field("coordinates", new ArrayList<List<List<Double>>>() {
       {
-        add(-45d);
-        add(-30d);
-        add(45d);
-        add(30d);
+        add(new ArrayList<List<Double>>() {
+          {
+            add(Arrays.asList(-45d, -30d));
+            add(Arrays.asList(-45d, 30d));
+            add(Arrays.asList(45d, 30d));
+            add(Arrays.asList(45d, 30d));
+            add(Arrays.asList(-45d, -30d));
+          }
+        });
       }
     });
     return polygon;
