@@ -707,18 +707,6 @@ public class OStorageRemoteThread implements OStorageProxy {
     return delegate.callInLock(iCallable, iExclusiveLock);
   }
 
-  public ORemoteServerEventListener getRemoteServerEventListener() {
-    return delegate.getAsynchEventListener();
-  }
-
-  public void setRemoteServerEventListener(final ORemoteServerEventListener iListener) {
-    delegate.setAsynchEventListener(iListener);
-  }
-
-  public void removeRemoteServerEventListener() {
-    delegate.removeRemoteServerEventListener();
-  }
-
   @Override
   public void checkForClusterPermissions(final String iClusterName) {
     delegate.checkForClusterPermissions(iClusterName);

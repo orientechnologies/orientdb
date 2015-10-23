@@ -41,15 +41,15 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Manages network connections against OrientDB servers. All the connection pools are managed in a Map<url,pool>, but in the future
  * we could have a unique pool per sever and manage database connections over the protocol.
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ORemoteConnectionManager {
-  public static final String                                                                   PARAM_MAX_POOL = "maxpool";
+  public static final String PARAM_MAX_POOL = "maxpool";
 
   protected final ConcurrentHashMap<String, ORemoteConnectionPool> connections;
-  protected final long                                                                         timeout;
-  protected ORemoteConnectionPushListener                                                      listener;
+  protected final long                                             timeout;
+  protected       ORemoteConnectionPushListener                    listener;
 
   public ORemoteConnectionManager(final int iMaxConnectionPerURL, final long iTimeout) {
     connections = new ConcurrentHashMap<String, ORemoteConnectionPool>();
@@ -64,8 +64,7 @@ public class ORemoteConnectionManager {
     connections.clear();
   }
 
-  public OChannelBinaryAsynchClient acquire(String iServerURL, final OContextConfiguration clientConfiguration,
-      final Map<String, Object> iConfiguration, final ORemoteServerEventListener iListener) {
+  public OChannelBinaryAsynchClient acquire(String iServerURL, final OContextConfiguration clientConfiguration, final Map<String, Object> iConfiguration, final OStorageRemoteAsynchEventListener iListener) {
     ORemoteConnectionPool pool = connections.get(iServerURL);
     if (pool == null) {
       int maxPool = OGlobalConfiguration.CLIENT_CHANNEL_MAX_POOL.getValueAsInteger();
@@ -83,11 +82,10 @@ public class ORemoteConnectionManager {
         pool = prev;
       }
     }
-    pool.addListener(iListener);
 
     try {
       // RETURN THE RESOURCE
-      OChannelBinaryAsynchClient ret = pool.getPool().getResource(iServerURL, timeout, clientConfiguration, iConfiguration);
+      OChannelBinaryAsynchClient ret = pool.acquire(iServerURL, timeout, clientConfiguration, iConfiguration, iListener);
       return ret;
 
     } catch (RuntimeException e) {
@@ -153,7 +151,7 @@ public class ORemoteConnectionManager {
     return pool.getPool().getAvailableResources();
   }
 
-  public int getReusableConnections(final String url){
+  public int getReusableConnections(final String url) {
     final ORemoteConnectionPool pool = connections.get(url);
     if (pool == null)
       return 0;
@@ -189,4 +187,9 @@ public class ORemoteConnectionManager {
       }
     pool.getPool().close();
   }
+
+  public ORemoteConnectionPool getPool(String url) {
+    return connections.get(url);
+  }
+
 }
