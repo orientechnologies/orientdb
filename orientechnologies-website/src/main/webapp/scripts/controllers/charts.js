@@ -336,6 +336,8 @@ angular.module('webappApp')
           }
         });
 
+        chartData.size.height = members.length * 40;
+
         members.forEach(function (item, idx, ar) {
 
           chartData.data.columns[0][idx + 1] = item;
