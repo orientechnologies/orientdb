@@ -126,7 +126,12 @@ public class OSQLHelper {
         if (parts == null || parts.size() != 2)
           throw new OCommandSQLParsingException("Map found but entries are not defined as <key>:<value>");
 
-        map.put(parseValue(parts.get(0), iContext), parseValue(parts.get(1), iContext));
+        Object key = OStringSerializerHelper.decode(parseValue(parts.get(0), iContext).toString());
+        Object value = parseValue(parts.get(1), iContext);
+        if(value instanceof String){
+          value = OStringSerializerHelper.decode(value.toString());
+        }
+        map.put(key, value);
       }
 
       if (map.containsKey(ODocumentHelper.ATTRIBUTE_TYPE))
