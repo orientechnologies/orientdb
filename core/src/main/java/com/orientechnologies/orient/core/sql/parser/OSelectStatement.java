@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClassDescendentOrder;
@@ -18,7 +17,6 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 
 public class OSelectStatement extends OStatement {
@@ -216,23 +214,7 @@ public class OSelectStatement extends OStatement {
   }
 
   public void validate(OrientSql.ValidationStats stats) throws OCommandSQLParsingException {
-    if (this.target == null || this.target.item == null || this.target.item.cluster != null || this.target.item.clusterList != null
-        || this.target.item.metadata != null || this.target.item.modifier != null || this.target.item.rids.size() > 0
-        || this.target.item.statement != null || !(isClassTarget(this.target) || isIndexTarget(this.target))) {
-      if (stats.luceneCount > 0) {
-        throw new OQueryParsingException("LUCENE condition is allowed only when query target is a Class or an Index");
-      }
-    }
-
-    if (whereClause != null && whereClause.baseExpression.getNumberOfExternalCalculations() > 1) {
-      StringBuilder exceptionText = new StringBuilder();
-      exceptionText.append("Incompatible conditions found: \n");
-      List<Object> conditions = whereClause.baseExpression.getExternalCalculationConditions();
-      for (Object condition : conditions) {
-        exceptionText.append(condition.toString() + "\n");
-      }
-      throw new OQueryParsingException(exceptionText.toString());
-    }
+    
   }
 
   private boolean isClassTarget(OFromClause target) {
