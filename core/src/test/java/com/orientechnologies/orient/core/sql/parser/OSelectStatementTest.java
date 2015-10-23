@@ -444,7 +444,7 @@ public class OSelectStatementTest {
     checkRightSyntax("select from test order by (something asc),(somethingElse desc)");
   }
 
-  @Test()
+  @Test( enabled = false)
   public void testMultipleLucene() {
     checkRightSyntax("select from Foo where a lucene 'a'");
     checkWrongSyntax("select from Foo where a lucene 'a' and b lucene 'a'");
