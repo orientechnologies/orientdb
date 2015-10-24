@@ -19,6 +19,7 @@
 package com.orientechnologies.lucene.collections;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract;
 import com.orientechnologies.lucene.query.QueryContext;
 import com.orientechnologies.lucene.tx.OLuceneTxChangesAbstract;
@@ -39,12 +40,14 @@ import java.util.Set;
  */
 public class OLuceneTxResultSet extends OLuceneAbstractResultSet {
 
+  private final String indexName;
   protected int deletedMatchCount = 0;
 
-  public OLuceneTxResultSet(OLuceneIndexEngineAbstract manager, QueryContext queryContext) {
+  public OLuceneTxResultSet(OLuceneIndexEngine manager, QueryContext queryContext) {
     super(manager, queryContext);
 
     deletedMatchCount = calculateDeletedMatch();
+    indexName =manager.indexName();
   }
 
   private int calculateDeletedMatch() {
@@ -102,7 +105,7 @@ public class OLuceneTxResultSet extends OLuceneAbstractResultSet {
       index = 0;
       localIndex = 0;
       array = topDocs.scoreDocs;
-      manager.sendTotalHits(queryContext.context, topDocs.totalHits - deletedMatchCount);
+      OLuceneIndexEngineAbstract.sendTotalHits(indexName,queryContext.context, topDocs.totalHits - deletedMatchCount);
     }
 
     @Override

@@ -18,13 +18,19 @@ package com.orientechnologies.lucene;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.lucene.builder.ODocBuilder;
+import com.orientechnologies.lucene.builder.OQueryBuilderImpl;
+import com.orientechnologies.lucene.engine.OLuceneStorage;
+import com.orientechnologies.lucene.engine.OLuceneFullTextExpIndexEngine;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngineDelegate;
+import com.orientechnologies.lucene.index.OLuceneFullTextExpIndex;
 import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
 import com.orientechnologies.lucene.index.OLuceneSpatialIndex;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -39,22 +45,20 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.spatial.shape.OShapeFactory;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleListener {
 
-  public static final String          LUCENE_ALGORITHM = "LUCENE";
+  public static final String LUCENE_ALGORITHM = "LUCENE";
 
-  private static final Set<String>    TYPES;
-  private static final Set<String>    ALGORITHMS;
+  private static final Set<String> TYPES;
+  private static final Set<String> ALGORITHMS;
 
   static {
     final Set<String> types = new HashSet<String>();
     types.add(OClass.INDEX_TYPE.FULLTEXT.toString());
     types.add(OClass.INDEX_TYPE.SPATIAL.toString());
+    types.add(OClass.INDEX_TYPE.FULLTEXTEXP.toString());
     TYPES = Collections.unmodifiableSet(types);
   }
 
@@ -64,7 +68,9 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
     ALGORITHMS = Collections.unmodifiableSet(algorithms);
   }
 
-  private final OLuceneSpatialManager spatialManager;
+  private final Map<String, OIndexInternal>                    db2luceneindexes;
+  private final Map<ODatabaseDocumentInternal, OLuceneStorage> db2luceneEngine;
+  private final OLuceneSpatialManager                          spatialManager;
 
   public OLuceneIndexFactory() {
     this(false);
@@ -72,8 +78,10 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
 
   public OLuceneIndexFactory(boolean manual) {
     spatialManager = new OLuceneSpatialManager(OShapeFactory.INSTANCE);
-    if (!manual)
-      Orient.instance().addDbLifecycleListener(this);
+    if (!manual) Orient.instance().addDbLifecycleListener(this);
+
+    db2luceneindexes = new HashMap<String, OIndexInternal>();
+    db2luceneEngine = new HashMap<ODatabaseDocumentInternal, OLuceneStorage>();
   }
 
   @Override
@@ -93,30 +101,62 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
 
   @Override
   public OIndexInternal<?> createIndex(String name, ODatabaseDocumentInternal database, String indexType, String algorithm,
-      String valueContainerAlgorithm, ODocument metadata, int version) throws OConfigurationException {
+                                       String valueContainerAlgorithm, ODocument metadata, int version)
+      throws OConfigurationException {
 
     OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
 
     OBinarySerializer<?> objectSerializer = storage.getComponentsFactory().binarySerializerFactory
         .getObjectSerializer(OLuceneMockSpatialSerializer.INSTANCE.getId());
+
     if (objectSerializer == null) {
-      storage.getComponentsFactory().binarySerializerFactory.registerSerializer(OLuceneMockSpatialSerializer.INSTANCE,
-          OType.EMBEDDED);
+      storage.getComponentsFactory().binarySerializerFactory
+          .registerSerializer(OLuceneMockSpatialSerializer.INSTANCE, OType.EMBEDDED);
     }
 
-    if (metadata == null)
-      metadata = new ODocument().field("analyzer", StandardAnalyzer.class.getName());
+    if (metadata == null) metadata = new ODocument().field("analyzer", StandardAnalyzer.class.getName());
+
     if (OClass.INDEX_TYPE.FULLTEXT.toString().equals(indexType)) {
       return new OLuceneFullTextIndex(name, indexType, LUCENE_ALGORITHM, version, storage, valueContainerAlgorithm, metadata);
     } else if (OClass.INDEX_TYPE.SPATIAL.toString().equals(indexType)) {
       return new OLuceneSpatialIndex(name, indexType, LUCENE_ALGORITHM, version, storage, valueContainerAlgorithm, metadata);
+    } else if (OClass.INDEX_TYPE.FULLTEXTEXP.toString().equals(indexType)) {
+
+      OLogManager.instance()
+                 .info(this, "create index - database:: %s , indexName:: %s , algo:: %s , valuecontalgo:: %s", database.getName(),
+                       name, algorithm, valueContainerAlgorithm);
+      if (!db2luceneindexes.containsKey(database.getName())) db2luceneindexes.put(name, new OLuceneFullTextExpIndex(name, indexType,
+                                                                                                                    LUCENE_ALGORITHM,
+                                                                                                                    version,
+                                                                                                                    storage,
+                                                                                                                    valueContainerAlgorithm,
+                                                                                                                    metadata));
+
+      return new OLuceneFullTextExpIndex(name, indexType, LUCENE_ALGORITHM, version, storage, valueContainerAlgorithm, metadata);
+
     }
     throw new OConfigurationException("Unsupported type : " + algorithm);
   }
 
   @Override
-  public OIndexEngine createIndexEngine(String name, Boolean durableInNonTxMode, OStorage storage, int version,
-      Map<String, String> engineProperties) {
+  public OIndexEngine createIndexEngine(String algorithm, String name, Boolean durableInNonTxMode, OStorage storage, int version,
+                                        Map<String, String> engineProperties) {
+
+    if (LUCENE_ALGORITHM.equalsIgnoreCase(algorithm)) {
+      final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+
+      OLogManager.instance()
+                 .info(this, "CREATE ENGINE database:: %s , name:: %s , algoritmh:: %s", database.getName(), name, algorithm);
+      if (!db2luceneEngine.containsKey(database)) {
+        OLogManager.instance()
+                   .info(this, "REGISTERING name:: %s , algoritmh:: %s , engProps:: %s", name, algorithm, engineProperties);
+
+        db2luceneEngine.put(database, new OLuceneStorage(name, new ODocBuilder(), new OQueryBuilderImpl()));
+
+      }
+      return new OLuceneFullTextExpIndexEngine(name, db2luceneEngine.get(database), new ODocBuilder(), new OQueryBuilderImpl());
+    }
+
     return new OLuceneIndexEngineDelegate(name, durableInNonTxMode, storage, version);
   }
 

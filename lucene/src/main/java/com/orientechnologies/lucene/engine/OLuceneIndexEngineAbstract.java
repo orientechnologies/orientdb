@@ -303,6 +303,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
       return (Analyzer) constructor.newInstance();
     } catch (ClassNotFoundException e) {
+
       throw OException.wrapException(new OIndexException("Analyzer: " + analyzerFQN + " not found"), e);
     } catch (NoSuchMethodException e) {
       Class classAnalyzer = null;
@@ -311,6 +312,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
         return (Analyzer) classAnalyzer.newInstance();
 
       } catch (Throwable e1) {
+
         throw OException.wrapException(new OIndexException("Couldn't instantiate analyzer:  public constructor  not found"), e);
       }
 
@@ -320,6 +322,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     return new StandardAnalyzer();
   }
 
+  @Override
   public void initIndex(String indexName, String indexType, OIndexDefinition indexDefinition, boolean isAutomatic,
       ODocument metadata) {
 
@@ -350,6 +353,11 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on initializing Lucene index", e);
     }
+  }
+
+  @Override
+  public String indexName() {
+    return indexName;
   }
 
   private void checkCollectionIndex(OIndexDefinition indexDefinition) {
@@ -444,7 +452,8 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     flush();
   }
 
-  public void sendTotalHits(OCommandContext context, int totalHits) {
+  //TODO: move to utility class
+  public static void sendTotalHits(String indexName,OCommandContext context, int totalHits) {
     if (context != null) {
 
       if (context.getVariable("totalHits") == null) {
@@ -456,7 +465,8 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     }
   }
 
-  public void sendLookupTime(OCommandContext context, final TopDocs docs, final Integer limit, long startFetching) {
+  //TODO: move to utility class
+  public static void sendLookupTime(String indexName ,OCommandContext context, final TopDocs docs, final Integer limit, long startFetching) {
     if (context != null) {
 
       final long finalTime = System.currentTimeMillis() - startFetching;

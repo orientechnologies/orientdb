@@ -19,6 +19,7 @@
 package com.orientechnologies.lucene.collections;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract;
 import com.orientechnologies.lucene.query.QueryContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -35,103 +36,105 @@ import java.util.Set;
  */
 public abstract class OLuceneAbstractResultSet implements Set<OIdentifiable> {
 
-  protected TopDocs                    topDocs;
-  protected Query                      query;
-  protected OLuceneIndexEngineAbstract manager;
-  protected QueryContext               queryContext;
-  protected static Integer             PAGE_SIZE = 10000;
+    protected static Integer PAGE_SIZE = 10000;
+    protected final String indexName;
+    protected TopDocs topDocs;
+    protected Query query;
+    protected OLuceneIndexEngine manager;
+    protected QueryContext queryContext;
 
-  public OLuceneAbstractResultSet(OLuceneIndexEngineAbstract manager, QueryContext queryContext) {
-    this.manager = manager;
-    this.queryContext = queryContext;
-    this.query = enhanceQuery(queryContext.query);
+    public OLuceneAbstractResultSet(OLuceneIndexEngine manager, QueryContext queryContext) {
+        this.manager = manager;
+        this.queryContext = queryContext;
+        this.query = enhanceQuery(queryContext.query);
 
-    fetchFirstBatch();
-  }
-
-  protected Query enhanceQuery(Query query) {
-    return query;
-  }
-
-  protected void fetchFirstBatch() {
-    try {
-
-      switch (queryContext.cfg) {
-
-      case NO_FILTER_NO_SORT:
-        topDocs = queryContext.getSearcher().search(query, PAGE_SIZE);
-        break;
-      case FILTER_SORT:
-        topDocs = queryContext.getSearcher().search(query, queryContext.filter, PAGE_SIZE, queryContext.sort);
-        break;
-      case FILTER:
-        topDocs = queryContext.getSearcher().search(query, queryContext.filter, PAGE_SIZE);
-        break;
-      case SORT:
-        topDocs = queryContext.getSearcher().search(query, PAGE_SIZE, queryContext.sort);
-        break;
-      }
-    } catch (IOException e) {
-      OLogManager.instance().error(this, "Error on fetching document by query '%s' to Lucene index", e, query);
+        indexName = manager.indexName();
+        fetchFirstBatch();
     }
-  }
 
-  @Override
-  public boolean isEmpty() {
-    return size() == 0;
-  }
+    protected Query enhanceQuery(Query query) {
+        return query;
+    }
 
-  @Override
-  public boolean contains(Object o) {
-    throw new UnsupportedOperationException();
-  }
+    protected void fetchFirstBatch() {
+        try {
 
-  @Override
-  public <T> T[] toArray(T[] a) {
-    throw new UnsupportedOperationException();
-  }
+            switch (queryContext.cfg) {
 
-  @Override
-  public Object[] toArray() {
-    throw new UnsupportedOperationException();
-  }
+                case NO_FILTER_NO_SORT:
+                    topDocs = queryContext.getSearcher().search(query, PAGE_SIZE);
+                    break;
+                case FILTER_SORT:
+                    topDocs = queryContext.getSearcher().search(query, queryContext.filter, PAGE_SIZE, queryContext.sort);
+                    break;
+                case FILTER:
+                    topDocs = queryContext.getSearcher().search(query, queryContext.filter, PAGE_SIZE);
+                    break;
+                case SORT:
+                    topDocs = queryContext.getSearcher().search(query, PAGE_SIZE, queryContext.sort);
+                    break;
+            }
+        } catch (IOException e) {
+            OLogManager.instance().error(this, "Error on fetching document by query '%s' to Lucene index", e, query);
+        }
+    }
 
-  @Override
-  public boolean add(OIdentifiable oIdentifiable) {
-    throw new UnsupportedOperationException();
-  }
+    @Override
+    public boolean isEmpty() {
+        return size() == 0;
+    }
 
-  @Override
-  public boolean remove(Object o) {
-    throw new UnsupportedOperationException();
-  }
+    @Override
+    public boolean contains(Object o) {
+        throw new UnsupportedOperationException();
+    }
 
-  @Override
-  public boolean containsAll(Collection<?> c) {
-    throw new UnsupportedOperationException();
-  }
+    @Override
+    public <T> T[] toArray(T[] a) {
+        throw new UnsupportedOperationException();
+    }
 
-  @Override
-  public boolean addAll(Collection<? extends OIdentifiable> c) {
-    throw new UnsupportedOperationException();
-  }
+    @Override
+    public Object[] toArray() {
+        throw new UnsupportedOperationException();
+    }
 
-  @Override
-  public boolean retainAll(Collection<?> c) {
-    throw new UnsupportedOperationException();
-  }
+    @Override
+    public boolean add(OIdentifiable oIdentifiable) {
+        throw new UnsupportedOperationException();
+    }
 
-  @Override
-  public boolean removeAll(Collection<?> c) {
-    throw new UnsupportedOperationException();
-  }
+    @Override
+    public boolean remove(Object o) {
+        throw new UnsupportedOperationException();
+    }
 
-  @Override
-  public void clear() {
-    throw new UnsupportedOperationException();
-  }
+    @Override
+    public boolean containsAll(Collection<?> c) {
+        throw new UnsupportedOperationException();
+    }
 
-  public void sendLookupTime(OCommandContext commandContext, long start) {
-    manager.sendLookupTime(commandContext, topDocs, -1, start);
-  }
+    @Override
+    public boolean addAll(Collection<? extends OIdentifiable> c) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean retainAll(Collection<?> c) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean removeAll(Collection<?> c) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void clear() {
+        throw new UnsupportedOperationException();
+    }
+
+    public void sendLookupTime(OCommandContext commandContext, long start) {
+        OLuceneIndexEngineAbstract.sendLookupTime(indexName, commandContext, topDocs, -1, start);
+    }
 }

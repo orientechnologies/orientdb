@@ -16,18 +16,13 @@
 
 package com.orientechnologies.lucene;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.spatial.shape.OShapeFactory;
-import org.apache.lucene.util.Version;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.functions.OLuceneFunctionsFactory;
 import com.orientechnologies.lucene.operator.OLuceneOperatorFactory;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexes;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
@@ -36,6 +31,7 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 import com.orientechnologies.orient.spatial.functions.OSpatialFunctionsFactory;
+import org.apache.lucene.util.Version;
 
 public class OLuceneIndexPlugin extends OServerPluginAbstract implements ODatabaseLifecycleListener {
 
@@ -51,16 +47,16 @@ public class OLuceneIndexPlugin extends OServerPluginAbstract implements ODataba
 
   @Override
   public void startup() {
-    super.startup();
-    Orient.instance().addDbLifecycleListener(this);
+    //    super.startup();
+    //    Orient.instance().addDbLifecycleListener(this);
 
-    OIndexes.registerFactory(new OLuceneIndexFactory(true));
+    //    OIndexes.registerFactory(new OLuceneIndexFactory(true));
 
-    registerOperators();
+    //    registerOperators();
 
-    registerFunctions();
+    //    registerFunctions();
 
-    spatialManager = new OLuceneSpatialManager(OShapeFactory.INSTANCE);
+    //    spatialManager = new OLuceneSpatialManager(OShapeFactory.INSTANCE);
     OLogManager.instance().info(this, "Lucene index plugin installed and active. Lucene version: %s", Version.LATEST);
   }
 
