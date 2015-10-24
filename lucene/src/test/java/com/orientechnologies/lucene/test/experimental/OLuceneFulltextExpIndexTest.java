@@ -26,7 +26,7 @@ import java.util.logging.Level;
 /**
  * Created by frank on 9/30/15.
  */
-@Test
+@Test(enabled = false)
 public class OLuceneFulltextExpIndexTest extends BaseLuceneTest {
 
   public OLuceneFulltextExpIndexTest() {
