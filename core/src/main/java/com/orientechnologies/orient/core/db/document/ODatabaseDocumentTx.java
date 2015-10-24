@@ -1322,6 +1322,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
 
     case CONFLICTSTRATEGY:
       return storage.getConfiguration().getConflictStrategy();
+    case VALIDATION:
+      return isValidationEnabled();
     }
 
     return null;
