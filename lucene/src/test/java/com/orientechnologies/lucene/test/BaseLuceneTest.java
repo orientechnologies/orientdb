@@ -110,9 +110,19 @@ public abstract class BaseLuceneTest {
     String javaExec = System.getProperty("java.home") + "/bin/java";
     System.setProperty("ORIENTDB_HOME", buildDirectory);
 
-    // "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
-    ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-classpath", System.getProperty("java.class.path"),
-        "-DORIENTDB_HOME=" + buildDirectory, RemoteDBRunner.class.getName(), getDatabaseName(), "" + drop);
+    final String testMode = System.getProperty("orient.server.testMode");
+    final String testPort = System.getProperty("orient.server.port");
+
+    final ProcessBuilder processBuilder;
+    if (testMode != null && testPort != null) {
+      processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-classpath", System.getProperty("java.class.path"),
+          "-DORIENTDB_HOME=" + buildDirectory, "-Dorient.server.testMode=" + testMode, "-Dorient.server.port=" + testPort,
+          RemoteDBRunner.class.getName(), getDatabaseName(), "" + drop);
+
+    } else {
+      processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-classpath", System.getProperty("java.class.path"),
+          "-DORIENTDB_HOME=" + buildDirectory, RemoteDBRunner.class.getName(), getDatabaseName(), "" + drop);
+    }
 
     process = processBuilder.start();
     BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
