@@ -28,6 +28,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -41,8 +42,8 @@ import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEvent
 
 public class OStorageRemoteAsynchEventListener implements ORemoteServerEventListener {
 
-  private Map<Integer, OLiveResultListener>        liveQueryListeners = new ConcurrentHashMap<Integer, OLiveResultListener>();
-  private Map<ORemoteConnectionPool, Set<Integer>> poolLiveQuery      = new ConcurrentHashMap<ORemoteConnectionPool, Set<Integer>>();
+  private Map<Integer, OLiveResultListener>                  liveQueryListeners = new ConcurrentHashMap<Integer, OLiveResultListener>();
+  private ConcurrentMap<ORemoteConnectionPool, Set<Integer>> poolLiveQuery      = new ConcurrentHashMap<ORemoteConnectionPool, Set<Integer>>();
 
   private OStorageRemote storage;
 
