@@ -23,6 +23,8 @@ package com.orientechnologies.orient.client.remote;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -121,6 +123,12 @@ public class OStorageRemoteAsynchEventListener implements ORemoteServerEventList
   public void registerLiveListener(ORemoteConnectionPool pool, Integer id, OLiveResultListener listener) {
     this.liveQueryListeners.put(id, listener);
     Set<Integer> res = this.poolLiveQuery.get(pool);
+    if (res == null) {
+      res = Collections.synchronizedSet(new HashSet<Integer>());
+      Set<Integer> prev = poolLiveQuery.putIfAbsent(pool, res);
+      if (prev != null)
+        res = prev;
+    }
     res.add(id);
   }
 
