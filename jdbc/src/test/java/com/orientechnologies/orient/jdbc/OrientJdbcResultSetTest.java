@@ -6,9 +6,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.Types;
 
-import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
 
@@ -18,13 +16,13 @@ public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
     ResultSet rs = conn.createStatement().executeQuery("SELECT stringKey, intKey, text, length, date FROM Item");
 
     ResultSetMetaData metaData = rs.getMetaData();
-    assertThat(metaData, is(notNullValue()));
+    assertThat(metaData).isNotNull();
 
-    assertThat(metaData.getColumnType(1), equalTo(Types.VARCHAR));
-    assertThat(metaData.getColumnType(2), equalTo(Types.INTEGER));
-    assertThat(metaData.getColumnType(3), equalTo(Types.VARCHAR));
-    assertThat(metaData.getColumnType(4), equalTo(Types.BIGINT));
-    assertThat(metaData.getColumnType(5), equalTo(Types.TIMESTAMP));
+    assertThat(metaData.getColumnType(1)).isEqualTo(Types.VARCHAR);
+    assertThat(metaData.getColumnType(2)).isEqualTo(Types.INTEGER);
+    assertThat(metaData.getColumnType(3)).isEqualTo(Types.VARCHAR);
+    assertThat(metaData.getColumnType(4)).isEqualTo(Types.BIGINT);
+    assertThat(metaData.getColumnType(5)).isEqualTo(Types.TIMESTAMP);
   }
 
   @Test
@@ -33,10 +31,10 @@ public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
     ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM Author limit 10");
     int size = 0;
     while (rs.next()) {
-      assertThat(rs.getDouble("rating"), is(notNullValue()));
+      assertThat(rs.getDouble("rating")).isNotNull();
       size++;
     }
-    assertEquals(size, 10);
+    assertThat(size).isEqualTo(10);
   }
 
   @Test
@@ -45,10 +43,10 @@ public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
     ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM Author limit 10");
     int count = 0;
     while (rs.next()) {
-      assertThat(rs.getDouble("uuid"), is(notNullValue()));
+      assertThat(rs.getDouble("uuid")).isNotNull();
       count++;
     }
-    assertThat(10, equalTo(count));
+    assertThat(count).isEqualTo(10);
   }
 
   @Test
@@ -56,6 +54,6 @@ public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
 
     ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM Author where false = true");
 
-    assertThat(rs.next(), is(false));
+    assertThat(rs.next()).isFalse();
   }
 }

@@ -6,10 +6,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Properties;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.sameInstance;
-import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class OrientDataSourceTest extends OrientJdbcBaseTest {
 
@@ -23,9 +20,9 @@ public class OrientDataSourceTest extends OrientJdbcBaseTest {
 
     Connection conn = ds.getConnection();
 
-    assertThat(conn, is(notNullValue()));
+    assertThat(conn).isNotNull();
     conn.close();
-    assertThat(conn.isClosed(), is(true));
+    assertThat(conn.isClosed()).isTrue();
 
   }
 
@@ -45,20 +42,19 @@ public class OrientDataSourceTest extends OrientJdbcBaseTest {
     //pool size is 1: database should be the same on different connection
     //NOTE: not safe in production!
     OrientJdbcConnection conn = (OrientJdbcConnection) ds.getConnection(info);
-    assertThat(conn, is(notNullValue()));
+    assertThat(conn).isNotNull();
 
     OrientJdbcConnection conn2 = (OrientJdbcConnection) ds.getConnection(info);
-    assertThat(conn2, is(notNullValue()));
+    assertThat(conn2).isNotNull();
     conn.getDatabase();
 
-    assertThat(conn.getDatabase(), is(sameInstance(conn2.getDatabase())));
+    assertThat(conn.getDatabase()).isSameAs(conn2.getDatabase());
 
     conn.close();
-    assertThat(conn.isClosed(), is(true));
+    assertThat(conn.isClosed()).isTrue();
 
     conn2.close();
-    assertThat(conn2.isClosed(), is(true));
-
+    assertThat(conn2.isClosed()).isTrue();
 
   }
 

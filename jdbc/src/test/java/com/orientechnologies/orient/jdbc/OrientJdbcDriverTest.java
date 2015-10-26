@@ -7,9 +7,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
 
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.junit.Assert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class OrientJdbcDriverTest extends OrientJdbcBaseTest {
 
@@ -18,8 +16,8 @@ public class OrientJdbcDriverTest extends OrientJdbcBaseTest {
 
     Driver drv = new OrientJdbcDriver();
 
-    assertThat(drv.acceptsURL("jdbc:orient:local:./working/db/test"), is(true));
-    assertThat(drv.acceptsURL("local:./working/db/test"), is(false));
+    assertThat(drv.acceptsURL("jdbc:orient:local:./working/db/test")).isTrue();
+    assertThat(drv.acceptsURL("local:./working/db/test")).isFalse();
   }
 
   @Test
@@ -31,8 +29,8 @@ public class OrientJdbcDriverTest extends OrientJdbcBaseTest {
 
     OrientJdbcConnection conn = (OrientJdbcConnection) DriverManager.getConnection("jdbc:orient:memory:test", info);
 
-    assertThat(conn, is(notNullValue()));
+    assertThat(conn).isNotNull();
     conn.close();
-    assertThat(conn.isClosed(), is(true));
+    assertThat(conn.isClosed()).isTrue();
   }
 }
