@@ -11,9 +11,20 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
   ];
 
 
-  GraphConfig.get().then(function (data) {
-    $scope.graphConfig = data;
-  })
+  if (Database.hasClass(GraphConfig.CLAZZ)) {
+    GraphConfig.get().then(function (data) {
+      $scope.graphConfig = data;
+      Bookmarks.getAll(Database.getName());
+    })
+  } else {
+    GraphConfig.init().then(function () {
+      var newCfg = DocumentApi.createNewDoc(GraphConfig.CLAZZ);
+      GraphConfig.set(newCfg).then(function (data) {
+        $scope.graphConfig = data;
+        Bookmarks.getAll(Database.getName());
+      })
+    });
+  }
   Aside.show({
     scope: $scope,
     title: "Bookmarks",
@@ -40,15 +51,7 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
   $scope.toggleBookmarks = function () {
     Aside.toggle();
   }
-
-
-  if (Database.hasClass(Bookmarks.CLAZZ)) {
-    Bookmarks.getAll(Database.getName());
-  } else {
-    Bookmarks.init(Database.getName()).then(function () {
-      Bookmarks.getAll(Database.getName());
-    });
-  }
+  
 
   $scope.hideSettings = $scope.config.get("hideSettings");
 
