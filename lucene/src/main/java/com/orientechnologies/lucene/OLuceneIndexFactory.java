@@ -142,22 +142,23 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
   public OIndexEngine createIndexEngine(String algorithm, String name, Boolean durableInNonTxMode, OStorage storage, int version,
                                         Map<String, String> engineProperties) {
 
-    if (LUCENE_ALGORITHM.equalsIgnoreCase(algorithm)) {
-      final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-
-      OLogManager.instance()
-                 .info(this, "CREATE ENGINE database:: %s , name:: %s , algoritmh:: %s", database.getName(), name, algorithm);
-      if (!db2luceneEngine.containsKey(database)) {
-        OLogManager.instance()
-                   .info(this, "REGISTERING name:: %s , algoritmh:: %s , engProps:: %s", name, algorithm, engineProperties);
-
-        db2luceneEngine.put(database, new OLuceneStorage(name, new ODocBuilder(), new OQueryBuilderImpl()));
-
-      }
-      return new OLuceneFullTextExpIndexEngine(name, db2luceneEngine.get(database), new ODocBuilder(), new OQueryBuilderImpl());
-    }
-
     return new OLuceneIndexEngineDelegate(name, durableInNonTxMode, storage, version);
+
+//    if (LUCENE_ALGORITHM.equalsIgnoreCase(algorithm)) {
+//      final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+//
+//      OLogManager.instance()
+//                 .info(this, "CREATE ENGINE database:: %s , name:: %s , algoritmh:: %s", database.getName(), name, algorithm);
+//      if (!db2luceneEngine.containsKey(database)) {
+//        OLogManager.instance()
+//                   .info(this, "REGISTERING name:: %s , algoritmh:: %s , engProps:: %s", name, algorithm, engineProperties);
+//
+//        db2luceneEngine.put(database, new OLuceneStorage(name, new ODocBuilder(), new OQueryBuilderImpl()));
+//
+//      }
+//      return new OLuceneFullTextExpIndexEngine(name, db2luceneEngine.get(database), new ODocBuilder(), new OQueryBuilderImpl());
+//    }
+
   }
 
   @Override
