@@ -571,6 +571,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
             new OCreateRecordTask(iRecordId, iContent, iRecordVersion, iRecordType)));
       }
 
+      // UPDATE RID WITH NEW POSITION
+      iRecordId.clusterPosition = localResult.getResult().clusterPosition;
+
       return localResult;
 
     } catch (ONeedRetryException e) {
