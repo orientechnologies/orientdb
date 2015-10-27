@@ -33,15 +33,8 @@ import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.object.OLazyObjectMapInterface;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ORecordElement.STATUS;
-import com.orientechnologies.orient.core.db.record.ORecordLazyList;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
-import com.orientechnologies.orient.core.db.record.ORecordLazySet;
-import com.orientechnologies.orient.core.db.record.OTrackedList;
-import com.orientechnologies.orient.core.db.record.OTrackedMap;
-import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.entity.OEntityManagerInternal;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -448,6 +441,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       final OStringBuilderSerializable coll;
 
       if (!(iValue instanceof OMVRBTreeRIDSet)) {
+        if(iValue instanceof OAutoConvertToRecord)
+          ((OAutoConvertToRecord)iValue).setAutoConvertToRecord(false);
         // FIRST TIME: CONVERT THE ENTIRE COLLECTION
         coll = new OMVRBTreeRIDSet(iRecord, (Collection<OIdentifiable>) iValue);
 
