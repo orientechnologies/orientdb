@@ -22,24 +22,22 @@ import java.util.*;
  */
 public class OCSVExtractor extends OAbstractSourceExtractor {
 
-  private static String       NULL_STRING     = "NULL";
-  protected OExtractedItem    next;
-  private Map<String, OType>  columnTypes     = new HashMap<String, OType>();
-  private long                skipFrom        = -1;
-  private long                skipTo          = -1;
-  private Character           stringCharacter = '"';
-  private boolean             unicode         = true;
+  private static String NULL_STRING = "NULL";
+  protected OExtractedItem next;
+  private Map<String, OType> columnTypes     = new HashMap<String, OType>();
+  private long               skipFrom        = -1;
+  private long               skipTo          = -1;
+  private Character          stringCharacter = '"';
+  private boolean            unicode         = true;
   private Iterator<CSVRecord> recordIterator;
   private CSVFormat           csvFormat;
-  private String              nullValue       = NULL_STRING;
-  private String              dateFormat      = "yyyy-MM-dd";
+  private String nullValue  = NULL_STRING;
+  private String dateFormat = "yyyy-MM-dd";
 
   @Override
   public ODocument getConfiguration() {
-    return new ODocument()
-        .fromJSON("{parameters:["
-            + getCommonConfigurationParameters()
-            + ",{separator:{optional:true,description:'Column separator'}},"
+    return new ODocument().fromJSON(
+        "{parameters:[" + getCommonConfigurationParameters() + ",{separator:{optional:true,description:'Column separator'}},"
             + "{columnsOnFirstLine:{optional:true,description:'Columns are described in the first line'}},"
             + "{columns:{optional:true,description:'Columns array containing names, and optionally type after : (e.g.: name:String, age:int'}},"
             + "{nullValue:{optional:true,description:'Value to consider as NULL_STRING. Default is NULL'}},"
@@ -69,7 +67,7 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
     csvFormat = CSVFormat.newFormat(',').withNullString(NULL_STRING).withEscape('\\').withQuote('"');
 
     if (iConfiguration.containsField("predefinedFormat")) {
-      csvFormat = CSVFormat.valueOf(iConfiguration.<String> field("predefinedFormat").toUpperCase());
+      csvFormat = CSVFormat.valueOf(iConfiguration.<String>field("predefinedFormat").toUpperCase());
     }
 
     if (iConfiguration.containsField("separator")) {
@@ -77,7 +75,7 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
     }
 
     if (iConfiguration.containsField("dateFormat")) {
-      dateFormat = iConfiguration.<String> field("dateFormat");
+      dateFormat = iConfiguration.<String>field("dateFormat");
     }
 
     if (iConfiguration.containsField("ignoreEmptyLines")) {
@@ -86,8 +84,8 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
     }
 
     if (iConfiguration.containsField("columnsOnFirstLine")) {
-      boolean columnsOnFirstLine = (Boolean) iConfiguration.field("columnsOnFirstLine");
-      if (columnsOnFirstLine == true) {
+      Boolean columnsOnFirstLine = (Boolean) iConfiguration.field("columnsOnFirstLine");
+      if (columnsOnFirstLine.equals(Boolean.TRUE)) {
         csvFormat = csvFormat.withHeader();
       }
     } else {
@@ -121,7 +119,7 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
     }
 
     if (iConfiguration.containsField("nullValue")) {
-      nullValue = iConfiguration.<String> field("nullValue");
+      nullValue = iConfiguration.<String>field("nullValue");
       csvFormat = csvFormat.withNullString(nullValue);
     }
 

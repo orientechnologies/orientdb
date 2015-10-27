@@ -110,7 +110,7 @@ public class OETLProcessor {
     processor.execute();
   }
 
-  protected static OETLProcessor parseConfigAndParameters(String[] args) {
+  public static OETLProcessor parseConfigAndParameters(String[] args) {
     final OCommandContext context = createDefaultContext();
 
     ODocument configuration = new ODocument().fromJSON("{}");

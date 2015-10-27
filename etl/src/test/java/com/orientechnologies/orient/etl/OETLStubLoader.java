@@ -28,14 +28,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * ETL Mock loader to check the result in tests.
- * 
+ * ETL Stub loader to check the result in tests.
+ *
  * @author Luca Garulli on 27/11/14.
  */
-public class TestLoader extends OAbstractLoader {
+public class OETLStubLoader extends OAbstractLoader {
   public final List<ODocument> loadedRecords = new ArrayList<ODocument>();
 
-  public TestLoader() {
+  public OETLStubLoader() {
   }
 
   @Override
