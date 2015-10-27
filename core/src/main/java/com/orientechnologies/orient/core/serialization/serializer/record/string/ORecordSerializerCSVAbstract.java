@@ -630,7 +630,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
         if (iType == OType.EMBEDDEDLIST)
           coll = (Collection<?>) new ORecordLazyList().setStreamedContent(new StringBuilder(value));
         else {
-          final OMVRBTreeRIDSet set = new OMVRBTreeRIDSet();
+          final OMVRBTreeRIDSet set = new OMVRBTreeRIDSet(iDocument);
           set.setAutoConvertToRecord(false);
           set.fromStream(new StringBuilder(value));
           return set;
