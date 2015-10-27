@@ -598,7 +598,12 @@ public class OSelectStatementTest {
   @Test
   public void testRecordAttributeAsAlias() {
     checkRightSyntax("select @rid as @rid from foo ");
+  }
 
+  @Test
+  public void testParamWithMatches() {
+    //issue #5229
+    checkRightSyntax("select from Person where name matches :param1");
   }
 
   private void printTree(String s) {

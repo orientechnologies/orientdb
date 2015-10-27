@@ -2438,6 +2438,8 @@ OBooleanExpression MatchesCondition():
     	    ( token = <STRING_LITERAL> {jjtThis.right = token.image;} )
     	    |
     	    ( token = <CHARACTER_LITERAL> {jjtThis.right = token.image;} )
+    	    |
+    	    ( jjtThis.rightParam = InputParameter() )
     	)
     )
 
