@@ -53,7 +53,8 @@ public class LuceneSpatialQueryTest extends BaseLuceneTest {
   }
 
   public LuceneSpatialQueryTest(boolean remote) {
-    super(remote);
+
+    //super(remote);
   }
 
   @Override

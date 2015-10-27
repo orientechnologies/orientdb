@@ -26,11 +26,10 @@ import java.util.logging.Level;
 /**
  * Created by frank on 9/30/15.
  */
-@Test(enabled = false)
-public class OLuceneFulltextExpIndexTest extends BaseLuceneTest {
+@Test(enabled = false) public class OLuceneFulltextExpIndexTest extends BaseLuceneTest {
 
   public OLuceneFulltextExpIndexTest() {
-    super(false);
+    //    super(false);
   }
 
   @Override
@@ -52,11 +51,11 @@ public class OLuceneFulltextExpIndexTest extends BaseLuceneTest {
     song.createProperty("author", OType.STRING);
     song.createProperty("lyrics", OType.STRING);
 
-    databaseDocumentTx.command(
-        new OCommandSQL("create index Song.all on Song (title,author,lyrics) FULLTEXTEXP ENGINE LUCENE METADATA {"
-            + "\"title_index_analyzer\":\"" + StandardAnalyzer.class.getName() +"\" , "
-            + "\"author_index_analyzer\":\"" + StandardAnalyzer.class.getName() +"\" , "
-            + "\"lyrics_index_analyzer\":\"" + EnglishAnalyzer.class.getName() + "\"}")).execute();
+    databaseDocumentTx.command(new OCommandSQL(
+            "create index Song.all on Song (title,author,lyrics) FULLTEXTEXP ENGINE LUCENE METADATA {"
+                + "\"title_index_analyzer\":\"" + StandardAnalyzer.class.getName() + "\" , " + "\"author_index_analyzer\":\""
+                + StandardAnalyzer.class.getName() + "\" , " + "\"lyrics_index_analyzer\":\"" + EnglishAnalyzer.class.getName()
+                + "\"}")).execute();
 
     // databaseDocumentTx.command(
     // new OCommandSQL("create index Song.title on Song (title) FULLTEXTEXP ENGINE LUCENE METADATA {\"index_analyzer\":\""
@@ -88,24 +87,22 @@ public class OLuceneFulltextExpIndexTest extends BaseLuceneTest {
 
     Assert.assertEquals(index.field("lyrics_index_analyzer"), EnglishAnalyzer.class.getName());
 
-
-    List<ODocument> docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
-            "select * from Song where [title] LUCENE \"Song.title:mountain\""));
+    List<ODocument> docs = databaseDocumentTx
+        .query(new OSQLSynchQuery<ODocument>("select * from Song where [title] LUCENE \"Song.title:mountain\""));
 
     Assert.assertEquals(docs.size(), 4);
 
-//    docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>("select * from Song where [author] LUCENE (author:Fabbio)"));
-//
-//    Assert.assertEquals(docs.size(), 87);
-//
-//    // not WORK BECAUSE IT USES only the first index
-//    // String query = "select * from Song where [title] LUCENE \"(title:mountain)\"  and [author] LUCENE \"(author:Fabbio)\""
-//    String query = "select * from Song where [title] LUCENE_EXP (title:mountain)  and author = 'Fabbio'";
-//    docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
-//
-//    Assert.assertEquals(docs.size(), 1);
+    //    docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>("select * from Song where [author] LUCENE (author:Fabbio)"));
+    //
+    //    Assert.assertEquals(docs.size(), 87);
+    //
+    //    // not WORK BECAUSE IT USES only the first index
+    //    // String query = "select * from Song where [title] LUCENE \"(title:mountain)\"  and [author] LUCENE \"(author:Fabbio)\""
+    //    String query = "select * from Song where [title] LUCENE_EXP (title:mountain)  and author = 'Fabbio'";
+    //    docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
+    //
+    //    Assert.assertEquals(docs.size(), 1);
 
   }
-
 
 }

@@ -36,7 +36,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class LuceneCreateJavaApi extends BaseLuceneTest {
 
   public LuceneCreateJavaApi() {
-    super(false);
+
+    //super(false);
   }
 
   @Override

@@ -40,11 +40,12 @@ import java.util.List;
 public class LuceneSingleFieldEmbeddedTest extends BaseLuceneTest {
 
   public LuceneSingleFieldEmbeddedTest() {
-    super(false);
+    super();
+
   }
 
   public LuceneSingleFieldEmbeddedTest(boolean remote) {
-    super(remote);
+    //super(remote);
   }
 
   @Test

@@ -36,11 +36,12 @@ import java.util.Collection;
  * Created by enricorisa on 28/06/14.
  */
 // Renable when solved killing issue
-//@Test(groups = "remote",enabled = false)
+@Test(groups = "remote", enabled = false)
 public class LuceneInsertIntegrityRemoteTest extends BaseLuceneTest {
 
   public LuceneInsertIntegrityRemoteTest() {
-    super(true);
+    super();
+    //super(true);
   }
 
   @Override
@@ -64,7 +65,7 @@ public class LuceneInsertIntegrityRemoteTest extends BaseLuceneTest {
     deInitDB();
   }
 
-  @Test
+  @Test(enabled = false)
   public void testInsertUpdateWithIndex() throws Exception {
 
     databaseDocumentTx.getMetadata().reload();

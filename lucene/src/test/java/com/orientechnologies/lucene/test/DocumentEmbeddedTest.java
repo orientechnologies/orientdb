@@ -41,7 +41,8 @@ public class DocumentEmbeddedTest extends BaseLuceneTest {
     }
 
     public DocumentEmbeddedTest(boolean remote) {
-        super(remote);
+
+//        super(remote);
     }
 
     @BeforeClass
