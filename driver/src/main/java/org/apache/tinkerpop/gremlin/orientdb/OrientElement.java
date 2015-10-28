@@ -2,14 +2,19 @@ package org.apache.tinkerpop.gremlin.orientdb;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
+import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Element;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Property;
+import org.apache.tinkerpop.gremlin.structure.Vertex;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -17,6 +22,14 @@ import java.util.stream.Stream;
 
 
 public class OrientElement implements Element {
+
+    private static final Map<String, String> INTERNAL_CLASSES_TO_TINKERPOP_CLASSES;
+    static {
+        INTERNAL_CLASSES_TO_TINKERPOP_CLASSES = new HashMap<>();
+        INTERNAL_CLASSES_TO_TINKERPOP_CLASSES.put(OImmutableClass.VERTEX_CLASS_NAME, Vertex.DEFAULT_LABEL);
+        INTERNAL_CLASSES_TO_TINKERPOP_CLASSES.put(OImmutableClass.EDGE_CLASS_NAME, Edge.DEFAULT_LABEL);
+    }
+
     protected OIdentifiable rawElement;
     protected OrientGraph graph;
 
@@ -34,7 +47,7 @@ public class OrientElement implements Element {
     public String label() {
         String internalClassName = getRawDocument().getClassName();
         // User labels on edges/vertices are prepended with E_ or V_ . The user should not see that.
-        return internalClassName.length() == 1 ? internalClassName : internalClassName.substring(2);
+        return internalClassName.length() == 1 ? INTERNAL_CLASSES_TO_TINKERPOP_CLASSES.get(internalClassName) : internalClassName.substring(2);
     }
 
     public Graph graph() {

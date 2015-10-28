@@ -17,10 +17,12 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.tinkerpop.gremlin.structure.*;
 import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
+import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Strings.isNullOrEmpty;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -28,13 +30,14 @@ import java.util.List;
 public final class OrientVertex extends OrientElement implements Vertex {
     public static final String CONNECTION_OUT_PREFIX = OrientGraphUtils.CONNECTION_OUT + "_";
     public static final String CONNECTION_IN_PREFIX  = OrientGraphUtils.CONNECTION_IN + "_";
+    private static final List<String> INTERNAL_FIELDS = Arrays.asList("@rid", "@class");
 
     public OrientVertex(final OrientGraph graph, final OIdentifiable rawElement) {
         super(graph, rawElement);
     }
 
     public OrientVertex(OrientGraph graph, String className) {
-        super(graph, createRawElement(graph, className));
+        this(graph, createRawElement(graph, className ));
     }
 
     protected static ODocument createRawElement(OrientGraph graph, String className) {
@@ -90,7 +93,8 @@ public final class OrientVertex extends OrientElement implements Vertex {
 
     public <V> Iterator<VertexProperty<V>> properties(final String... propertyKeys) {
         Iterator<? extends Property<V>> properties = super.properties(propertyKeys);
-        return StreamUtils.asStream(properties).map(p ->
+        return StreamUtils.asStream(properties).filter(p ->
+            !INTERNAL_FIELDS.contains(p.key()) ).map(p ->
             (VertexProperty<V>) new OrientVertexProperty<>( p.key(), p.value(), (OrientVertex) p.element())
         ).iterator();
     }
@@ -119,11 +123,7 @@ public final class OrientVertex extends OrientElement implements Vertex {
 
     @Override
     public String toString() {
-        String labelPart = "";
-
-        if(!label().equals(OImmutableClass.VERTEX_CLASS_NAME))
-            labelPart = "(" + label() + ")";
-        return "v" + labelPart + "[" + id() + "]";
+        return StringFactory.vertexString(this);
     }
 
     @Override
@@ -132,6 +132,8 @@ public final class OrientVertex extends OrientElement implements Vertex {
             throw new IllegalArgumentException("destination vertex is null");
         
         checkArgument(!isNullOrEmpty(label), "label is invalid");
+
+        if (ElementHelper.getIdValue(keyValues).isPresent()) throw Vertex.Exceptions.userSuppliedIdsNotSupported();
 
 //        if (checkDeletedInTx())
 //            throw new IllegalStateException("The vertex " + getIdentity() + " has been deleted");
