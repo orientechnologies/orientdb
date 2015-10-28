@@ -2,15 +2,17 @@ package org.apache.tinkerpop.gremlin.orientdb;
 
 import org.apache.tinkerpop.gremlin.structure.Element;
 import org.apache.tinkerpop.gremlin.structure.Property;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+
+import com.orientechnologies.orient.core.record.impl.ODocument;
+
 import java.util.NoSuchElementException;
 
 public class OrientProperty<V> implements Property<V> {
     protected String key;
     protected V value;
-    protected Element element;
+    protected OrientElement element;
 
-    public OrientProperty(String key, V value, Element element) {
+    public OrientProperty(String key, V value, OrientElement element) {
         this.key = key;
         this.value = value;
         this.element = element;
@@ -38,7 +40,9 @@ public class OrientProperty<V> implements Property<V> {
 
     @Override
     public void remove() {
-        throw new NotImplementedException();
+        ODocument doc = element.getRawDocument();
+        doc.removeField(key);
+        doc.save();
     }
 
     @Override

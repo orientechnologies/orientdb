@@ -11,7 +11,7 @@ import java.util.Iterator;
 public class OrientVertexProperty<V> extends OrientProperty<V> implements VertexProperty<V> {
     protected Vertex vertex;
 
-    public OrientVertexProperty(String key, V value, Vertex vertex) {
+    public OrientVertexProperty(String key, V value, OrientVertex vertex) {
         super(key, value, vertex);
         this.vertex = vertex;
     }
@@ -36,10 +36,4 @@ public class OrientVertexProperty<V> extends OrientProperty<V> implements Vertex
         return vertex;
     }
 
-    @Override
-    public void remove() {
-        ODocument doc = ((OrientVertex) vertex).getRawDocument();
-        doc.removeField(key);
-        doc.save();
-    }
 }

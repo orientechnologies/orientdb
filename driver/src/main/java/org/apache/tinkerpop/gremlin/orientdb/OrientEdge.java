@@ -1,40 +1,50 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
 import org.apache.tinkerpop.gremlin.structure.Direction;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Property;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 
 public class OrientEdge extends OrientElement implements Edge {
+	
+	private static final List<String> INTERNAL_FIELDS = Arrays.asList("@rid", "@class", "in", "out");
+	
     protected OIdentifiable   vOut;
     protected OIdentifiable   vIn;
     protected String          label;
 
-    public OrientEdge(OrientGraph graph, OIdentifiable rawElement) {
+    public OrientEdge(OrientGraph graph, OIdentifiable rawElement, final OIdentifiable out, final OIdentifiable in, final String iLabel) {
         super(graph, rawElement);
+        vOut = checkNotNull(out);
+        vIn = checkNotNull(in);
+        label = checkNotNull(iLabel);
     }
 
-    public OrientEdge(OrientGraph graph, String className) {
-        super(graph, createRawElement(graph, className));
+    public OrientEdge(OrientGraph graph, String className, final OIdentifiable out, final OIdentifiable in, final String iLabel) {
+        this(graph, createRawElement(graph, className), out, in, iLabel);
     }
 
-    protected OrientEdge(final OrientGraph graph, final OIdentifiable out, final OIdentifiable in, final String iLabel) {
-        super(graph, null);
-        vOut = out;
-        vIn = in;
-        label = iLabel;
+    public OrientEdge(OrientGraph graph, final OIdentifiable out, final OIdentifiable in, final String iLabel) {
+      this(graph, (OIdentifiable) null, out, in, iLabel);
     }
 
-    public OrientEdge(OrientGraph graph, OIdentifiable rawEdge, String label) {
-        super(graph, rawEdge);
-        this.label = label;
+    public OrientEdge(OrientGraph graph, ODocument rawDocument, String label) {
+        this(graph, rawDocument, rawDocument.field("out", OIdentifiable.class), rawDocument.field("in", OIdentifiable.class), label);
+    }
+
+    public OrientEdge(OrientGraph graph, ODocument rawDocument)
+    {
+      this(graph, rawDocument, rawDocument.getClassName());
     }
 
     public static OIdentifiable getConnection(final ODocument iEdgeRecord, final Direction iDirection) {
@@ -48,13 +58,23 @@ public class OrientEdge extends OrientElement implements Edge {
 
     @Override
     public Iterator<Vertex> vertices(Direction direction) {
-        throw new NotImplementedException();
+      switch (direction)
+      {
+      case OUT:
+        return graph.vertices(vOut.getIdentity());
+      case IN:
+        return graph.vertices(vIn.getIdentity());
+      case BOTH:
+      default:
+        return graph.vertices(vOut.getIdentity(), vIn.getIdentity());
+      }
     }
 
     public <V> Iterator<Property<V>> properties(final String... propertyKeys) {
         Iterator<? extends Property<V>> properties = super.properties(propertyKeys);
-        return StreamUtils.asStream(properties).map(p ->
-            (Property<V>) new OrientProperty<>(p.key(), p.value(), p.element())
+        return StreamUtils.asStream(properties).filter(p ->
+        	!INTERNAL_FIELDS.contains(p.key()) ).map(p ->
+            (Property<V>) p
         ).iterator();
     }
 
@@ -107,14 +127,6 @@ public class OrientEdge extends OrientElement implements Edge {
 
     @Override
     public String toString() {
-        String labelPart = "";
-        if(!label().equals(OImmutableClass.EDGE_CLASS_NAME))
-            labelPart = "(" + label() + ")";
-
-        String verticesPart = "";
-//        String verticesPart = "|| In: " + getInVertex() + " || Out: " + getOutVertex();
-//        String verticesPart = "[" + getOutVertex().getIdentity() + "->" + getInVertex().getIdentity() + "]";
-
-        return "e" + labelPart + "[" + id() + "]" + verticesPart;
+        return StringFactory.edgeString(this);
     }
 }

@@ -13,8 +13,13 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.tinkerpop.gremlin.structure.*;
+import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Strings.isNullOrEmpty;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -86,7 +91,7 @@ public final class OrientVertex extends OrientElement implements Vertex {
     public <V> Iterator<VertexProperty<V>> properties(final String... propertyKeys) {
         Iterator<? extends Property<V>> properties = super.properties(propertyKeys);
         return StreamUtils.asStream(properties).map(p ->
-            (VertexProperty<V>) new OrientVertexProperty<>( p.key(), p.value(), (Vertex) p.element())
+            (VertexProperty<V>) new OrientVertexProperty<>( p.key(), p.value(), (OrientVertex) p.element())
         ).iterator();
     }
 
@@ -125,6 +130,8 @@ public final class OrientVertex extends OrientElement implements Vertex {
     public Edge addEdge(String label, Vertex inVertex, Object... keyValues) {
         if (inVertex == null)
             throw new IllegalArgumentException("destination vertex is null");
+        
+        checkArgument(!isNullOrEmpty(label), "label is invalid");
 
 //        if (checkDeletedInTx())
 //            throw new IllegalStateException("The vertex " + getIdentity() + " has been deleted");
@@ -164,7 +171,9 @@ public final class OrientVertex extends OrientElement implements Vertex {
         // CREATE THE EDGE DOCUMENT TO STORE FIELDS TOO
         String className = label.equals(OImmutableClass.EDGE_CLASS_NAME) ?
             OImmutableClass.EDGE_CLASS_NAME : OImmutableClass.EDGE_CLASS_NAME + "_" + label;
-        edge = new OrientEdge(graph, className/*, fields*/);
+        edge = new OrientEdge(graph, className, outDocument, inDocument, label);
+        ElementHelper.attachProperties(edge, keyValues);
+
         //TODO: support inMemoryReferences
 //        if (settings.isKeepInMemoryReferences())
 //            edge.getRecord().fields(OrientBaseGraph.CONNECTION_OUT, rawElement.getIdentity(), OrientBaseGraph.CONNECTION_IN, inDocument.getIdentity());
