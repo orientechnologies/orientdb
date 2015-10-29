@@ -21,11 +21,13 @@ package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.annotations.AfterClass;
@@ -35,6 +37,7 @@ import org.testng.annotations.Test;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import static org.testng.Assert.*;
 
@@ -168,6 +171,14 @@ public class OCommandExecutorSQLSelectTest {
     initExpandSkipLimit(db);
     initMassiveOrderSkipLimit(db);
     initDatesSet(db);
+
+    initMatchesWithRegex(db);
+  }
+
+  private void initMatchesWithRegex(ODatabaseInternal<ORecord> db) {
+    db.command(new OCommandSQL("CREATE class matchesstuff")).execute();
+
+    db.command(new OCommandSQL("insert into matchesstuff (name, foo) values ('admin[name]', 1)")).execute();
   }
 
   private void initDatesSet(ODatabaseDocumentTx db) {
@@ -870,6 +881,19 @@ public class OCommandExecutorSQLSelectTest {
     params.put("param1", "adm.*");
     OSQLSynchQuery sql = new OSQLSynchQuery("select from OUser where name matches :param1");
     List<ODocument> results = db.query(sql, params);
+    assertEquals(results.size(), 1);
+  }
+
+  @Test
+  public void testParamWithMatchesQuoteRegex(){
+    //issue #5229
+    Map<String, Object> params = new HashMap<String, Object>();
+    params.put("param1", ".*admin[name].*");//will not work
+    OSQLSynchQuery sql = new OSQLSynchQuery("select from matchesstuff where name matches :param1");
+    List<ODocument> results = db.query(sql, params);
+    assertEquals(results.size(), 0);
+    params.put("param1", Pattern.quote("admin[name]") + ".*");//should work
+    results = db.query(sql, params);
     assertEquals(results.size(), 1);
   }
 

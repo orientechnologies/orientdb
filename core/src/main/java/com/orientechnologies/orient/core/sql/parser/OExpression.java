@@ -111,7 +111,22 @@ public class OExpression extends SimpleNode {
   }
 
   public static String encode(String s) {
-    return s.replaceAll("\"", "\\\\\"");
+    StringBuilder builder = new StringBuilder(s.length());
+    for(char c:s.toCharArray()){
+      if(c=='\n'){
+        builder.append("\\n");
+        continue;
+      }
+      if(c=='\t'){
+        builder.append("\\t");
+        continue;
+      }
+      if(c=='\\' || c == '"'){
+        builder.append("\\");
+      }
+      builder.append(c);
+    }
+    return builder.toString();
   }
 
   public boolean supportsBasicCalculation() {
@@ -126,6 +141,26 @@ public class OExpression extends SimpleNode {
       return ((OMathExpression) value).isIndexedFunctionCall();
     }
     return false;
+  }
+
+  public static String encodeSingle(String s) {
+
+    StringBuilder builder = new StringBuilder(s.length());
+    for(char c:s.toCharArray()){
+      if(c=='\n'){
+        builder.append("\\n");
+        continue;
+      }
+      if(c=='\t'){
+        builder.append("\\t");
+        continue;
+      }
+      if(c=='\\' || c == '\''){
+        builder.append("\\");
+      }
+      builder.append(c);
+    }
+    return builder.toString();
   }
 
   public long estimateIndexedFunction(OFromClause target, OCommandContext context, OBinaryCompareOperator operator, Object right) {
