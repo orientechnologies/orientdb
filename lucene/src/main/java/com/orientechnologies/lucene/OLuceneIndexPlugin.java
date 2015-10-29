@@ -45,14 +45,14 @@ public class OLuceneIndexPlugin extends OServerPluginAbstract implements ODataba
   @Override
   public void startup() {
     super.startup();
-    Orient.instance().addDbLifecycleListener(this);
-
-    OIndexes.registerFactory(new OLuceneIndexFactory(true));
-    OSQLEngine.registerOperator(new OLuceneTextOperator());
-    OSQLEngine.registerOperator(new OLuceneWithinOperator());
-    OSQLEngine.registerOperator(new OLuceneNearOperator());
-    OLogManager.instance().info(this, "Lucene index plugin installed and active. Lucene version: %s",
-        OLuceneIndexManagerAbstract.LUCENE_VERSION);
+//    Orient.instance().addDbLifecycleListener(this);
+//
+//    OIndexes.registerFactory(new OLuceneIndexFactory(true));
+//    OSQLEngine.registerOperator(new OLuceneTextOperator());
+//    OSQLEngine.registerOperator(new OLuceneWithinOperator());
+//    OSQLEngine.registerOperator(new OLuceneNearOperator());
+//    OLogManager.instance().info(this, "Lucene index plugin installed and active. Lucene version: %s",
+//        OLuceneIndexManagerAbstract.LUCENE_VERSION);
   }
 
   @Override
