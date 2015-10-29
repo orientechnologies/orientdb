@@ -48,8 +48,8 @@ import java.util.*;
 public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
   protected OLuceneFacetManager facetManager;
-  private DocBuilder            builder;
-  private OQueryBuilder         queryBuilder;
+  private   DocBuilder          builder;
+  private   OQueryBuilder       queryBuilder;
 
   public OLuceneFullTextIndexEngine(String idxName, DocBuilder builder, OQueryBuilder queryBuilder) {
     super(idxName);
@@ -124,8 +124,8 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
     Collection<OIdentifiable> container = (Collection<OIdentifiable>) value;
     for (OIdentifiable oIdentifiable : container) {
       Document doc = new Document();
-      doc.add(OLuceneIndexType.createField(RID, oIdentifiable.getIdentity().toString(), Field.Store.YES,
-          Field.Index.NOT_ANALYZED_NO_NORMS));
+      doc.add(OLuceneIndexType
+                  .createField(RID, oIdentifiable.getIdentity().toString(), Field.Store.YES, Field.Index.NOT_ANALYZED_NO_NORMS));
       int i = 0;
       if (index.isAutomatic()) {
         putInAutomaticIndex(key, doc, i);
@@ -213,7 +213,8 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   }
 
   @Override
-  public void onRecordAddedToResultSet(QueryContext queryContext, OContextualRecordId recordId, Document ret, final ScoreDoc score) {
+  public void onRecordAddedToResultSet(QueryContext queryContext, OContextualRecordId recordId, Document ret,
+                                       final ScoreDoc score) {
     recordId.setContext(new HashMap<String, Object>() {
       {
         put("score", score.score);
@@ -233,12 +234,13 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
   @Override
   public OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
-      boolean ascSortOrder, ValuesTransformer transformer) {
+                                            boolean ascSortOrder, ValuesTransformer transformer) {
     return new LuceneIndexCursor((LuceneResultSet) get(rangeFrom), rangeFrom);
   }
 
   @Override
-  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
+                                          ValuesTransformer transformer) {
     return null;
   }
 
@@ -299,8 +301,8 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
   public class LuceneIndexCursor implements OIndexCursor {
 
-    private final Object            key;
-    private LuceneResultSet         resultSet;
+    private final Object          key;
+    private       LuceneResultSet resultSet;
 
     private Iterator<OIdentifiable> iterator;
 

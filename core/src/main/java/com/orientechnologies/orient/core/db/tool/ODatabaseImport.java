@@ -237,7 +237,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       final Set result;
 
       if (value instanceof OMVRBTreeRIDSet) {
-        OMVRBTreeRIDSet ridSet = new OMVRBTreeRIDSet();
+        OMVRBTreeRIDSet ridSet = new OMVRBTreeRIDSet(((OMVRBTreeRIDSet)value).getOwner());
         ridSet.setAutoConvertToRecord(false);
 
         result = ridSet;

@@ -19,6 +19,7 @@
 package com.orientechnologies.lucene.collections;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract;
 import com.orientechnologies.lucene.query.QueryContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -35,7 +36,7 @@ import java.util.Iterator;
  */
 public class LuceneResultSet extends OLuceneAbstractResultSet {
 
-  public LuceneResultSet(OLuceneIndexEngineAbstract manager, QueryContext queryContext) {
+  public LuceneResultSet(OLuceneIndexEngine manager, QueryContext queryContext) {
     super(manager, queryContext);
   }
 
@@ -63,7 +64,7 @@ public class LuceneResultSet extends OLuceneAbstractResultSet {
       index = 0;
       localIndex = 0;
       array = topDocs.scoreDocs;
-      manager.sendTotalHits(queryContext.context, topDocs.totalHits);
+      OLuceneIndexEngineAbstract.sendTotalHits(indexName,queryContext.context, topDocs.totalHits);
     }
 
     @Override

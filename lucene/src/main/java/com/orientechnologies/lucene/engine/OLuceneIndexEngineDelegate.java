@@ -21,11 +21,14 @@ package com.orientechnologies.lucene.engine;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.lucene.builder.ODocBuilder;
 import com.orientechnologies.lucene.builder.OQueryBuilderImpl;
+import com.orientechnologies.lucene.query.QueryContext;
 import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexKeyCursor;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -34,6 +37,7 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreDoc;
 
 import java.io.IOException;
 
@@ -47,6 +51,7 @@ public class OLuceneIndexEngineDelegate implements OLuceneIndexEngine {
   private final OStorage     storage;
   private final int          version;
   private OLuceneIndexEngine delegate;
+  private String indexName;
 
   public OLuceneIndexEngineDelegate(String name, Boolean durableInNonTxMode, OStorage storage, int version) {
 
@@ -186,19 +191,30 @@ public class OLuceneIndexEngineDelegate implements OLuceneIndexEngine {
   @Override
   public void initIndex(String indexName, String indexType, OIndexDefinition indexDefinition, boolean isAutomatic,
       ODocument metadata) {
+    this.indexName = indexName;
 
-    if (indexType.equalsIgnoreCase("SPATIAL")) {
+    if (OClass.INDEX_TYPE.SPATIAL.name().equalsIgnoreCase(indexType)) {
       if (indexDefinition.getFields().size() > 1) {
         delegate = new OLuceneLegacySpatialIndexEngine(indexName, OShapeFactory.INSTANCE);
       } else {
         delegate = new OLuceneGeoSpatialIndexEngine(indexName, OShapeFactory.INSTANCE);
       }
 
-    } else if (indexType.equalsIgnoreCase("FULLTEXT")) {
+    } else if (OClass.INDEX_TYPE.FULLTEXT.name().equalsIgnoreCase(indexType)) {
       delegate = new OLuceneFullTextIndexEngine(indexName, new ODocBuilder(), new OQueryBuilderImpl());
     }
 
     delegate.initIndex(indexName, indexType, indexDefinition, isAutomatic, metadata);
+  }
+
+  @Override
+  public String indexName() {
+    return indexName;
+  }
+
+  @Override
+  public void onRecordAddedToResultSet(QueryContext queryContext, OContextualRecordId recordId, Document ret, ScoreDoc score) {
+    delegate.onRecordAddedToResultSet(queryContext,recordId,ret,score);
   }
 
   @Override

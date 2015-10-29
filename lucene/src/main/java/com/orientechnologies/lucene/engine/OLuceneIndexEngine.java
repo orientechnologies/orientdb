@@ -18,8 +18,10 @@
 
 package com.orientechnologies.lucene.engine;
 
+import com.orientechnologies.lucene.query.QueryContext;
 import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.OContextualRecordId;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 
@@ -28,6 +30,7 @@ import com.orientechnologies.orient.core.index.OIndexEngine;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreDoc;
 
 import java.io.IOException;
 
@@ -38,6 +41,11 @@ public interface OLuceneIndexEngine extends OIndexEngine {
 
   public void initIndex(String indexName, String indexType, OIndexDefinition indexDefinition, boolean isAutomatic,
       ODocument metadata);
+
+  public String indexName();
+
+  public abstract void onRecordAddedToResultSet(QueryContext queryContext, OContextualRecordId recordId, Document ret,
+                                                ScoreDoc score);
 
   public Document buildDocument(Object key, OIdentifiable value);
 

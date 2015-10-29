@@ -605,6 +605,12 @@ public class OSelectStatementTest {
 
   }
 
+  @Test
+  public void testParamWithMatches() {
+    //issue #5229
+    checkRightSyntax("select from Person where name matches :param1");
+  }
+
 
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);

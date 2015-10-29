@@ -6,40 +6,39 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
-import static org.junit.Assert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class OrientJdbcStatementTest extends OrientJdbcBaseTest {
 
   @Test
   public void shouldCreateStatement() throws Exception {
     Statement stmt = conn.createStatement();
-    assertThat(stmt, is(notNullValue()));
+    assertThat(stmt).isNotNull();
+    ;
     stmt.close();
-    assertThat(stmt.isClosed(), is(true));
+    assertThat(stmt.isClosed()).isTrue();
 
   }
 
   @Test
   public void shouldReturnEmptyResultSetOnEmptyQuery() throws SQLException {
     Statement stmt = conn.createStatement();
-    assertThat(stmt.execute(""), is(false));
-    assertThat(stmt.getResultSet(), is(nullValue()));
-    assertThat(stmt.getMoreResults(), is(false));
+    assertThat(stmt.execute("")).isFalse();
+    assertThat(stmt.getResultSet()).isNull();
+    ;
+    assertThat(stmt.getMoreResults()).isFalse();
   }
 
   @Test
   public void shouldExectuteSelectOne() throws SQLException {
 
     Statement st = conn.createStatement();
-    assertThat(st.execute("select 1"), is(true));
-    assertThat(st.getResultSet(), is(notNullValue()));
+    assertThat(st.execute("select 1")).isTrue();
+    assertThat(st.getResultSet()).isNotNull();
     ResultSet resultSet = st.getResultSet();
     resultSet.first();
-    assertThat(resultSet.getInt("1"), is(1));
-    assertThat(st.getMoreResults(), is(false));
+    assertThat(resultSet.getInt("1")).isEqualTo(1);
+    assertThat(st.getMoreResults()).isFalse();
 
   }
 

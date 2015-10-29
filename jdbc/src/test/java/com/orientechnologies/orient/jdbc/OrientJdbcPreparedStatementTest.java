@@ -6,39 +6,38 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class OrientJdbcPreparedStatementTest extends OrientJdbcBaseTest {
 
   @Test
   public void shouldCreateStatement() throws Exception {
     PreparedStatement stmt = conn.prepareStatement("SELECT * FROM Item WHERE stringKey = ? OR intKey = ?");
-    assertThat(stmt, is(notNullValue()));
+    assertThat(stmt).isNotNull();
     stmt.close();
-    assertThat(stmt.isClosed(), is(true));
+    assertThat(stmt.isClosed()).isTrue();
 
   }
 
   @Test
   public void shouldReturnEmptyResultSetOnEmptyQuery() throws SQLException {
     PreparedStatement stmt = conn.prepareStatement("");
-    assertThat(stmt.execute(""), is(false));
+    assertThat(stmt.execute("")).isFalse();
 
-    assertThat(stmt.getResultSet(), is(nullValue()));
-    assertThat(stmt.getMoreResults(), is(false));
+    assertThat(stmt.getResultSet()).isNull();
+    assertThat(stmt.getMoreResults()).isFalse();
   }
 
   @Test
   public void shouldExectuteSelectOne() throws SQLException {
     PreparedStatement stmt = conn.prepareStatement("select 1");
-    assertThat(stmt.execute(), is(true));
-    assertNotNull(stmt.getResultSet());
+    assertThat(stmt.execute()).isTrue();
+    assertThat(stmt.getResultSet()).isNotNull();
     ResultSet resultSet = stmt.getResultSet();
     resultSet.first();
     int one = resultSet.getInt("1");
-    assertThat(one, is(1));
-    assertThat(stmt.getMoreResults(), is(false));
+    assertThat(one).isEqualTo(1);
+    assertThat(stmt.getMoreResults()).isFalse();
 
   }
 
@@ -50,7 +49,7 @@ public class OrientJdbcPreparedStatementTest extends OrientJdbcBaseTest {
     statement.setString(1, "testval");
     int rowsInserted = statement.executeUpdate();
 
-    assertThat(rowsInserted, equalTo(1));
+    assertThat(rowsInserted).isEqualTo(1);
   }
 
   @Test
@@ -63,7 +62,7 @@ public class OrientJdbcPreparedStatementTest extends OrientJdbcBaseTest {
     statement.setString(1, "testval");
     int rowsInserted = statement.executeUpdate();
 
-    assertThat(rowsInserted, equalTo(2));
+    assertThat(rowsInserted).isEqualTo(2);
   }
 
   @Test
@@ -76,32 +75,32 @@ public class OrientJdbcPreparedStatementTest extends OrientJdbcBaseTest {
     statement.setInt(1, 0);
     int rowsDeleted = statement.executeUpdate();
 
-    assertThat(rowsDeleted, equalTo(2));
+    assertThat(rowsDeleted).isEqualTo(2);
   }
 
   @Test
   public void shouldExecutePreparedStatement() throws Exception {
     PreparedStatement stmt = conn.prepareStatement("SELECT  " + "FROM Item " + "WHERE stringKey = ? OR intKey = ?");
-    assertNotNull(stmt);
 
+    assertThat(stmt).isNotNull();
     stmt.setString(1, "1");
     stmt.setInt(2, 1);
 
     ResultSet rs = stmt.executeQuery();
-    assertThat(rs.next(), is(true));
+    assertThat(rs.next()).isTrue();
 
     // assertThat(rs.getInt("@version"), equalTo(0));
 
-    assertThat(rs.getString("@class"), equalTo("Item"));
+    assertThat(rs.getString("@class")).isEqualToIgnoringCase("Item");
 
-    assertThat(rs.getString("stringKey"), equalTo("1"));
-    assertThat(rs.getInt("intKey"), equalTo(1));
+    assertThat(rs.getString("stringKey")).isEqualTo("1");
+    assertThat(rs.getInt("intKey")).isEqualTo(1);
     //
     // assertThat(rs.getDate("date").toString(), equalTo(new java.sql.Date(System.currentTimeMillis()).toString()));
     // assertThat(rs.getDate("time").toString(), equalTo(new java.sql.Date(System.currentTimeMillis()).toString()));
 
     stmt.close();
-    assertThat(stmt.isClosed(), is(true));
+    assertThat(stmt.isClosed()).isTrue();
 
   }
 
@@ -115,6 +114,6 @@ public class OrientJdbcPreparedStatementTest extends OrientJdbcBaseTest {
 
     // Let's verify the previous process
     ResultSet resultSet = conn.createStatement().executeQuery("SELECT count(*) FROM insertable WHERE id = 'someRandomUid'");
-    assertThat(resultSet.getInt(1), equalTo(1));
+    assertThat(resultSet.getInt(1)).isEqualTo(1);
   }
 }

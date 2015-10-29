@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.jdbc;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -86,7 +88,7 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
 
     final String keywordsStr = metaData.getSQLKeywords();
     assertNotNull(keywordsStr);
-    assertThat(Arrays.asList(keywordsStr.toUpperCase().split(",\\s*")), hasItem("TRAVERSE"));
+    assertThat(Arrays.asList(keywordsStr.toUpperCase().split(",\\s*"))).contains("TRAVERSE");
   }
 
   @Test
@@ -95,35 +97,35 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
 
     ResultSetMetaData metaData = rs.getMetaData();
 
-      int cc = metaData.getColumnCount();
-      Set<String> colset = new HashSet<String>();
-      List<Map<String, Object>> columns = new ArrayList<Map<String, Object>>(cc);
-      for (int i = 1; i <= cc; i++) {
-        String name = metaData.getColumnLabel(i);
-        if (colset.contains(name))
-          continue;
-        colset.add(name);
-        Map<String, Object> field = new HashMap<String, Object>();
-        field.put("name", name);
+    int cc = metaData.getColumnCount();
+    Set<String> colset = new HashSet<String>();
+    List<Map<String, Object>> columns = new ArrayList<Map<String, Object>>(cc);
+    for (int i = 1; i <= cc; i++) {
+      String name = metaData.getColumnLabel(i);
+      if (colset.contains(name))
+        continue;
+      colset.add(name);
+      Map<String, Object> field = new HashMap<String, Object>();
+      field.put("name", name);
 
-        try {
-          String catalog = metaData.getCatalogName(i);
-          String schema = metaData.getSchemaName(i);
-          String table = metaData.getTableName(i);
-          ResultSet rsmc = conn.getMetaData().getColumns(catalog, schema, table, name);
-          while (rsmc.next()) {
-            field.put("description", rsmc.getString("REMARKS"));
-            break;
-          }
-        } catch (SQLException se) {
-          se.printStackTrace();
+      try {
+        String catalog = metaData.getCatalogName(i);
+        String schema = metaData.getSchemaName(i);
+        String table = metaData.getTableName(i);
+        ResultSet rsmc = conn.getMetaData().getColumns(catalog, schema, table, name);
+        while (rsmc.next()) {
+          field.put("description", rsmc.getString("REMARKS"));
+          break;
         }
-        columns.add(field);
+      } catch (SQLException se) {
+        se.printStackTrace();
       }
+      columns.add(field);
+    }
 
-      for (Map<String, Object> c : columns) {
-        System.out.println(c);
-      }
+    for (Map<String, Object> c : columns) {
+      System.out.println(c);
+    }
   }
 
   @Test
@@ -131,7 +133,7 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
     ResultSet rs = this.metaData.getTables(null, null, null, null);
     int tableCount = rsSizeOf(rs);
 
-    assertThat(tableCount, is(14));
+    assertThat(tableCount).isEqualTo(14);
 
   }
 
@@ -153,7 +155,7 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
     }
     rs = this.metaData.getTables(null, null, null, tableTypes.toArray(new String[2]));
     int tableCount = rsSizeOf(rs);
-    assertThat(tableCount, is(14));
+    assertThat(tableCount).isEqualTo(14);
   }
 
   @Test
@@ -161,28 +163,28 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
     final ResultSet rs = this.metaData.getTables(null, null, null, new String[0]);
     int tableCount = rsSizeOf(rs);
 
-    assertThat(tableCount,is(0));
+    assertThat(tableCount).isEqualTo(0);
   }
 
   @Test
   public void getSingleTable() throws SQLException {
     ResultSet rs = this.metaData.getTables(null, null, "ouser", null);
 
-    assertThat(rsSizeOf(rs), is(1));
+    assertThat(rsSizeOf(rs)).isEqualTo(1);
   }
 
   @Test
   public void shouldGetSingleColumnOfArticle() throws SQLException {
     ResultSet rs = this.metaData.getColumns(null, null, "Article", "uuid");
 
-    assertThat(rsSizeOf(rs), is(1));
+    assertThat(rsSizeOf(rs)).isEqualTo(1);
   }
 
   @Test
   public void shouldGetAllColumnsOfArticle() throws SQLException {
     ResultSet rs = this.metaData.getColumns(null, null, "Article", null);
 
-    assertThat(rsSizeOf(rs),is(5));
+    assertThat(rsSizeOf(rs)).isEqualTo(5);
   }
 
   @Test

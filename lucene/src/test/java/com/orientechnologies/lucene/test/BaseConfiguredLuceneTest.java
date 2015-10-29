@@ -31,7 +31,7 @@ public abstract class BaseConfiguredLuceneTest extends BaseLuceneTest {
   }
 
   public BaseConfiguredLuceneTest(boolean remote) {
-    super(remote);
+//    super(remote);
   }
 
   @BeforeClass

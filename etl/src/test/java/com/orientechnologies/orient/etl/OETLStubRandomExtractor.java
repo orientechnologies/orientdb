@@ -32,7 +32,7 @@ import java.util.Random;
  * 
  * @author Luca Garulli on 27/11/14.
  */
-public class RandomExtractor extends OAbstractExtractor {
+public class OETLStubRandomExtractor extends OAbstractExtractor {
   private long current = 0;
   private int  fields;
   private long items;

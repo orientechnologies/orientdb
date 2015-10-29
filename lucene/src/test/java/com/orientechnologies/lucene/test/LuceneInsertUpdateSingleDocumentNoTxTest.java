@@ -43,7 +43,8 @@ public class LuceneInsertUpdateSingleDocumentNoTxTest extends BaseLuceneTest {
   }
 
   public LuceneInsertUpdateSingleDocumentNoTxTest(boolean remote) {
-    super(remote);
+
+    //super(remote);
   }
 
   @Override

@@ -2,6 +2,8 @@ package com.orientechnologies.orient.server.distributed.asynch;
 
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import junit.framework.Assert;
 
 import java.util.concurrent.CountDownLatch;
 
@@ -38,7 +40,8 @@ public class TestAsyncReplMode2ServersOverflow extends BareBoneBase2ServerTest {
     try {
       int i = 0;
       for (; i < TOTAL; ++i) {
-        graph.addVertex(null);
+        final OrientVertex v = graph.addVertex(null);
+        Assert.assertTrue(v.getIdentity().isPersistent());
       }
 
     } catch (Throwable e) {
