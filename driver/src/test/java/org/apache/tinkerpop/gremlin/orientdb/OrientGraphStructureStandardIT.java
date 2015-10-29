@@ -6,5 +6,5 @@ import org.junit.runner.RunWith;
 
 @RunWith(StructureStandardSuite.class)
 @GraphProviderClass(provider = OrientGraphProvider.class, graph = OrientGraph.class)
-public class OrientGraphStructureStandardTest {
+public class OrientGraphStructureStandardIT {
 }
