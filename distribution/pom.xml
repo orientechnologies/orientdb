@@ -151,6 +151,7 @@
                                     <goal>single</goal>
                                 </goals>
                                 <configuration>
+                                    <appendAssemblyId>false</appendAssemblyId>
                                     <descriptors>
                                         <descriptor>${basedir}/src/main/assembly/copy.xml</descriptor>
                                     </descriptors>
