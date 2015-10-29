@@ -36,7 +36,7 @@
         <jdkVersion>1.6</jdkVersion>
         <javac.src.version>1.6</javac.src.version>
         <javac.target.version>1.6</javac.target.version>
-        <orientdb.version>${version}</orientdb.version>
+        <orientdb.version>${project.version}</orientdb.version>
         <lucene.version>4.7.0</lucene.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
