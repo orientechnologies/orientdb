@@ -611,6 +611,12 @@ public class OSelectStatementTest {
     checkRightSyntax("select from Person where name matches :param1");
   }
 
+  @Test
+  public void testInstanceOfE(){
+    //issue #5212
+    checkRightSyntax("select from Friend where @class instanceof 'E'");
+  }
+
 
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);
