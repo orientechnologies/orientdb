@@ -131,6 +131,7 @@
                             <goal>single</goal>
                         </goals>
                         <configuration>
+                            <appendAssemblyId>false</appendAssemblyId>
                             <descriptors>
                                 <descriptor>${basedir}/src/main/assembly/bin.xml</descriptor>
                             </descriptors>
