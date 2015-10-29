@@ -88,6 +88,11 @@
             <artifactId>orientdb-lucene</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-jdbc</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
