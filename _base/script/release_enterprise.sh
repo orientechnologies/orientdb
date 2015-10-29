@@ -11,12 +11,12 @@ cp -R distribution/target/orientdb-community-$1-distribution.dir/orientdb-commun
 
 DIR=distribution/target/orientdb-community-$1-distribution.dir/orientdb-enterprise-$1/
 
-cp ../drivers/orientdb-jdbc/target/orientdb-jdbc-$1.jar $DIR/lib/
+#cp ../drivers/orientdb-jdbc/target/orientdb-jdbc-$1.jar $DIR/lib/
 
-cp ../modules/orientdb-lucene/target/orientdb-lucene-$1-dist.jar $DIR/plugins/
+#cp ../modules/orientdb-lucene/target/orientdb-lucene-$1-dist.jar $DIR/plugins/
 
-cp ../modules/orientdb-etl/target/orientdb-etl-$1.jar $DIR/lib/
-cp ../modules/orientdb-etl/script/oetl.* $DIR/bin/
+#cp ../modules/orientdb-etl/target/orientdb-etl-$1.jar $DIR/lib/
+#cp ../modules/orientdb-etl/script/oetl.* $DIR/bin/
 
 cp ../../orientdb-enterprise/agent/target/agent-$1.zip $DIR/plugins/
 
