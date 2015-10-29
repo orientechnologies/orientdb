@@ -7,6 +7,8 @@ import org.apache.tinkerpop.gremlin.structure.Element;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Property;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -21,8 +23,8 @@ public class OrientElement implements Element {
     public OrientElement(final OrientGraph graph, final OIdentifiable rawElement) {
         if (rawElement == null)
             throw new IllegalArgumentException("rawElement must not be null!");
-        this.graph = graph;
-        this.rawElement = rawElement;
+        this.graph = checkNotNull(graph);
+        this.rawElement = checkNotNull(rawElement);
     }
 
     public Object id() {
@@ -88,4 +90,34 @@ public class OrientElement implements Element {
     public OIdentifiable getRawElement() {
         return rawElement;
     }
+
+    @Override
+    public int hashCode()
+    {
+      final int prime = 73;
+      int result = 1;
+      result = prime * result + ((rawElement == null) ? 0 : rawElement.hashCode());
+      return result;
+    }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+      if (this == obj)
+        return true;
+      if (obj == null)
+        return false;
+      if (getClass() != obj.getClass())
+        return false;
+      OrientElement other = (OrientElement) obj;
+      if (rawElement == null)
+      {
+        if (other.rawElement != null)
+          return false;
+      }
+      else if (!rawElement.equals(other.rawElement))
+        return false;
+      return true;
+    }
+
 }
