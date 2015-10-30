@@ -51,15 +51,7 @@ import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Executes a TRAVERSE crossing records. Returns a List<OIdentifiable> containing all the traversed records that match the WHERE
@@ -80,21 +72,21 @@ import java.util.Set;
  * @author Luca Garulli
  */
 @SuppressWarnings("unchecked")
-public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecutorSQLAbstract implements
-    OCommandDistributedReplicateRequest, Iterable<OIdentifiable>, OIterableRecordSource {
-  protected static final String               KEYWORD_FROM_2FIND = " " + KEYWORD_FROM + " ";
-  protected static final String               KEYWORD_LET_2FIND  = " " + KEYWORD_LET + " ";
+public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecutorSQLAbstract
+    implements OCommandDistributedReplicateRequest, Iterable<OIdentifiable>, OIterableRecordSource {
+  protected static final String KEYWORD_FROM_2FIND = " " + KEYWORD_FROM + " ";
+  protected static final String KEYWORD_LET_2FIND  = " " + KEYWORD_LET + " ";
 
   protected OSQLAsynchQuery<ODocument>        request;
   protected OSQLTarget                        parsedTarget;
   protected OSQLFilter                        compiledFilter;
-  protected Map<String, Object>               let                = null;
+  protected Map<String, Object>               let           = null;
   protected Iterator<? extends OIdentifiable> target;
   protected Iterable<OIdentifiable>           tempResult;
   protected int                               resultCount;
-  protected int                               serialTempRID      = 0;
-  protected int                               skip               = 0;
-  protected boolean                           lazyIteration      = true;
+  protected int                               serialTempRID = 0;
+  protected int                               skip          = 0;
+  protected boolean                           lazyIteration = true;
 
   private static final class IndexValuesIterator implements Iterator<OIdentifiable> {
     private OIndexCursor  indexCursor;
@@ -246,7 +238,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
           if (!(d instanceof OIdentifiable))
             // NON-DOCUMENT AS RESULT, COMES FROM EXPAND? CREATE A DOCUMENT AT THE FLY
             d = new ODocument().field("value", d);
-          else if (!(d instanceof ORID || d instanceof ORecord))
+          else
             d = ((OIdentifiable) d).getRecord();
 
           if (limit > -1 && fetched >= limit)
@@ -346,7 +338,8 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     }
 
     if (limit == 0)
-      throwParsingException("Invalid LIMIT value setted to ZERO. Use -1 to ignore the limit or use a positive number. Example: LIMIT 10");
+      throwParsingException(
+          "Invalid LIMIT value setted to ZERO. Use -1 to ignore the limit or use a positive number. Example: LIMIT 10");
 
     return limit;
   }
@@ -369,13 +362,13 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
       skip = Integer.parseInt(word);
 
     } catch (Exception e) {
-      throwParsingException("Invalid SKIP value setted to '" + word
-          + "' but it should be a valid positive integer. Example: SKIP 10");
+      throwParsingException(
+          "Invalid SKIP value setted to '" + word + "' but it should be a valid positive integer. Example: SKIP 10");
     }
 
     if (skip < 0)
-      throwParsingException("Invalid SKIP value setted to the negative number '" + word
-          + "'. Only positive numbers are valid. Example: SKIP 10");
+      throwParsingException(
+          "Invalid SKIP value setted to the negative number '" + word + "'. Only positive numbers are valid. Example: SKIP 10");
 
     return skip;
   }
@@ -469,8 +462,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
       return new ORecordIteratorClass<ORecord>(database, database, iCls.getName(), iPolymorphic, isUseCache()).setRange(range[0],
           range[1]);
     else
-      return new ORecordIteratorClassDescendentOrder<ORecord>(database, database, iCls.getName(), iPolymorphic)
-          .setRange(range[0], range[1]);
+      return new ORecordIteratorClassDescendentOrder<ORecord>(database, database, iCls.getName(), iPolymorphic).setRange(range[0], range[1]);
   }
 
   protected boolean isUseCache() {
@@ -680,5 +672,42 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
   public void setCompiledFilter(final OSQLFilter compiledFilter) {
     this.compiledFilter = compiledFilter;
+  }
+
+  @Override
+  public Object mergeResults(Map<String, Object> results) throws Exception {
+
+    if (results.isEmpty())
+      return null;
+
+    // TODO: DELEGATE MERGE AT EVERY COMMAND
+    final ArrayList<Object> mergedResult = new ArrayList<Object>();
+
+    final Object firstResult = results.values().iterator().next();
+
+    for (Map.Entry<String, Object> entry : results.entrySet()) {
+      final String nodeName = entry.getKey();
+      final Object nodeResult = entry.getValue();
+
+      if (nodeResult instanceof Collection)
+        mergedResult.addAll((Collection<?>) nodeResult);
+      else if (nodeResult instanceof Exception)
+        // RECEIVED EXCEPTION
+        throw (Exception) nodeResult;
+      else
+        mergedResult.add(nodeResult);
+    }
+
+    Object result = null;
+
+    if (firstResult instanceof OResultSet) {
+      // REUSE THE SAME RESULTSET TO AVOID DUPLICATES
+      ((OResultSet) firstResult).clear();
+      ((OResultSet) firstResult).addAll(mergedResult);
+      result = firstResult;
+    } else
+      result = new ArrayList<Object>(mergedResult);
+
+    return result;
   }
 }

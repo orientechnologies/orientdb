@@ -323,4 +323,21 @@ public class OCommandExecutorSQLUpdateTest {
 
     db.close();
   }
+
+  @Test
+  public void testQuotesInJson() throws Exception {
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLUpdateTestQuotesInJson");
+    db.create();
+
+    db.command(new OCommandSQL("CREATE class testquotesinjson")).execute();
+    db.command(new OCommandSQL("UPDATE testquotesinjson SET value = {\"f12\":'test\\\\'} UPSERT WHERE key = \"test\"")).execute();
+//    db.command(new OCommandSQL("update V set value.f12 = 'asdf\\\\' WHERE key = \"test\"")).execute();
+
+
+
+    ODocument queried = (ODocument) db.query(new OSQLSynchQuery<Object>("SELECT FROM testquotesinjson")).get(0);
+    assertEquals(queried.field("value.f12"), "test\\");
+
+    db.close();
+  }
 }

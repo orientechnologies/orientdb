@@ -54,6 +54,15 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
     super("=", 5, false);
   }
 
+  public static boolean equals(final Object iLeft, final Object iRight, OType type) {
+    if(type==null){
+      return equals(iLeft, iRight);
+    }
+    Object left = OType.convert(iLeft, type.getDefaultJavaType());
+    Object right = OType.convert(iRight, type.getDefaultJavaType());
+    return equals(left, right);
+  }
+
   public static boolean equals(final Object iLeft, final Object iRight) {
     if (iLeft == null || iRight == null)
       return false;

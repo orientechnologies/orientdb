@@ -75,7 +75,17 @@ public class OCommandScript extends OCommandRequestTextAbstract {
   public OSerializableStream fromStream(byte[] iStream) throws OSerializationException {
     final OMemoryStream buffer = new OMemoryStream(iStream);
     language = buffer.getAsString();
-    executionMode = OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE.valueOf(buffer.getAsString());
+
+    // FIX TO HANDLE USAGE OF EXECUTION MODE STARTING FROM v2.1.3
+    final int currPosition = buffer.getPosition();
+    final String value = buffer.getAsString();
+    try {
+      executionMode = OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE.valueOf(value);
+    } catch (IllegalArgumentException e) {
+      // OLD VERSION: RESET TO THE OLD POSITION
+      buffer.setPosition(currPosition);
+    }
+
     fromStream(buffer);
     return this;
   }

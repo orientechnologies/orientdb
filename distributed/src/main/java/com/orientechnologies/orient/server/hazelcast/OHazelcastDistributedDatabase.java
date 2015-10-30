@@ -19,6 +19,18 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
+
 import com.hazelcast.core.IQueue;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.Orient;
@@ -43,18 +55,6 @@ import com.orientechnologies.orient.server.distributed.task.OResurrectRecordTask
 import com.orientechnologies.orient.server.distributed.task.OSQLCommandTask;
 import com.orientechnologies.orient.server.distributed.task.OTxTask;
 import com.orientechnologies.orient.server.distributed.task.OUpdateRecordTask;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.Lock;
 
 /**
  * Hazelcast implementation of distributed peer. There is one instance per database. Each node creates own instance to talk with
@@ -91,8 +91,8 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
     // CREATE 2 QUEUES FOR GENERIC REQUESTS + INSERT ONLY
     msgService.getQueue(OHazelcastDistributedMessageService.getRequestQueueName(getLocalNodeName(), databaseName));
-    msgService.getQueue(OHazelcastDistributedMessageService.getRequestQueueName(getLocalNodeName(), databaseName
-        + OCreateRecordTask.SUFFIX_QUEUE_NAME));
+    msgService.getQueue(OHazelcastDistributedMessageService.getRequestQueueName(getLocalNodeName(),
+        databaseName + OCreateRecordTask.SUFFIX_QUEUE_NAME));
   }
 
   @Override
@@ -156,9 +156,8 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
     // CREATE THE RESPONSE MANAGER
     final ODistributedResponseManager currentResponseMgr = new ODistributedResponseManager(manager, iRequest, iNodes,
-        expectedSynchronousResponses, quorum, waitLocalNode,
-        iRequest.getTask().getSynchronousTimeout(expectedSynchronousResponses), iRequest.getTask().getTotalTimeout(queueSize),
-        groupByResponse);
+        expectedSynchronousResponses, quorum, waitLocalNode, iRequest.getTask().getSynchronousTimeout(expectedSynchronousResponses),
+        iRequest.getTask().getTotalTimeout(queueSize), groupByResponse);
 
     final long timeout = OGlobalConfiguration.DISTRIBUTED_QUEUE_TIMEOUT.getValueAsLong();
 
@@ -204,11 +203,8 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       if (ODistributedServerLog.isDebugEnabled())
         ODistributedServerLog.debug(this, getLocalNodeName(), iNodes.toString(), DIRECTION.OUT, "sent request %s", iRequest);
 
-      Orient
-          .instance()
-          .getProfiler()
-          .updateCounter("distributed.db." + databaseName + ".msgSent", "Number of replication messages sent from current node",
-              +1, "distributed.db.*.msgSent");
+      Orient.instance().getProfiler().updateCounter("distributed.db." + databaseName + ".msgSent",
+          "Number of replication messages sent from current node", +1, "distributed.db.*.msgSent");
 
       return waitForResponse(iRequest, currentResponseMgr);
 
@@ -337,8 +333,8 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
         || srvStatus == ODistributedServerManager.NODE_STATUS.SHUTTINGDOWN) {
       ODistributedServerLog.error(this, getLocalNodeName(), null, DIRECTION.OUT,
           "Local server is not online (status='%s'). Request %s will be ignored", srvStatus, iRequest);
-      throw new ODistributedException("Local server is not online (status='" + srvStatus + "'). Request " + iRequest
-          + " will be ignored");
+      throw new ODistributedException(
+          "Local server is not online (status='" + srvStatus + "'). Request " + iRequest + " will be ignored");
     }
   }
 
@@ -476,7 +472,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     final Lock lock = manager.getLock("orientdb." + databaseName + ".cfg");
     lock.lock();
     try {
-
+      // GET LAST VERSION IN LOCK
       final ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
 
       boolean distribCfgDirty = false;
@@ -486,7 +482,8 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
         // SET THE NODE.DB AS OFFLINE, READY TO BE SYNCHRONIZED
         manager.setDatabaseStatus(getLocalNodeName(), databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
 
-        ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "adding node '%s' in partition: db=%s %s", getLocalNodeName(), databaseName, foundPartition);
+        ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "adding node '%s' in partition: db=%s %s",
+            getLocalNodeName(), databaseName, foundPartition);
 
         distribCfgDirty = true;
       }
@@ -499,7 +496,8 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
           final String currentMaster = cfg.getMasterServer(c);
 
           if (!getLocalNodeName().equals(currentMaster)) {
-            ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE, "changing mastership of cluster '%s' from node '%s' to '%s'", c, currentMaster, getLocalNodeName());
+            ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE,
+                "changing mastership of cluster '%s' from node '%s' to '%s'", c, currentMaster, getLocalNodeName());
             cfg.setMasterServer(c, getLocalNodeName());
             distribCfgDirty = true;
           }
@@ -509,7 +507,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       if (distribCfgDirty)
         manager.updateCachedDatabaseConfiguration(databaseName, cfg.serialize(), true, true);
 
-    }finally {
+    } finally {
       lock.unlock();
     }
   }
@@ -518,8 +516,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     final Lock lock = manager.getLock("orientdb." + databaseName + ".cfg");
     lock.lock();
     try {
-
-      // GET DATABASE CFG
+      // GET LAST VERSION IN LOCK
       final ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
 
       if (!cfg.isHotAlignment()) {
@@ -529,8 +526,8 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
               "removing node '%s' in partitions: db=%s %s", iNode, databaseName, foundPartition);
 
           msgService.removeQueue(OHazelcastDistributedMessageService.getRequestQueueName(iNode, databaseName));
-          msgService.removeQueue(OHazelcastDistributedMessageService.getRequestQueueName(iNode, databaseName
-              + OCreateRecordTask.SUFFIX_QUEUE_NAME));
+          msgService.removeQueue(
+              OHazelcastDistributedMessageService.getRequestQueueName(iNode, databaseName + OCreateRecordTask.SUFFIX_QUEUE_NAME));
         }
 
         // CHANGED: RE-DEPLOY IT

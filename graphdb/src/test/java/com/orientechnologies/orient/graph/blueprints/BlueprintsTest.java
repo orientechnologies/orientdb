@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.graph.blueprints;
 
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.tinkerpop.blueprints.impls.orient.*;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -11,10 +13,6 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.impls.orient.OrientEdge;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphQuery;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class BlueprintsTest {
   private static String      DB_URL = "memory:" + BlueprintsTest.class.getSimpleName();
@@ -54,6 +52,37 @@ public class BlueprintsTest {
     vertices = ((OrientGraphQuery) graph.query()).labels("SubVertex").vertices();
     Assert.assertTrue(vertices.iterator().hasNext());
     Assert.assertEquals(vertices.iterator().next().getProperty("key"), "subtype");
+  }
+
+  @Test
+  public void testPolymorphicVertex() {
+    if (graph.getVertexType("Node") == null) {
+      OrientVertexType node = graph.createVertexType("Node");
+      node.createProperty("name", OType.STRING);
+
+    }
+
+    if (graph.getVertexType("SubNode") == null) {
+      OrientVertexType subNode = graph.createVertexType("SubNode");
+      subNode.addSuperClass(graph.getVertexType("Node"));
+    }
+
+    graph.begin();
+    Vertex v = graph.addVertex("class:SubNode");
+    v.setProperty("name", "subtype");
+    Assert.assertEquals(((OrientVertex) v).getRecord().getSchemaClass().getName(), "SubNode");
+
+    // TEST QUERY AGAINST SUB-TYPE IN TX
+    Iterable<Vertex> vertices = graph.getVertices("Node.name", "subtype");
+    Assert.assertTrue(vertices.iterator().hasNext());
+    Assert.assertEquals(vertices.iterator().next().getProperty("name"), "subtype");
+
+    graph.commit();
+
+    // TEST QUERY AGAINST SUB-TYPE NON IN TX
+    vertices = graph.getVertices("Node.name", "subtype");
+    Assert.assertTrue(vertices.iterator().hasNext());
+    Assert.assertEquals(vertices.iterator().next().getProperty("name"), "subtype");
   }
 
   @Test

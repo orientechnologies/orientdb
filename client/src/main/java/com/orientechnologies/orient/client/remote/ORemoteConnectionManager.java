@@ -83,7 +83,7 @@ public class ORemoteConnectionManager implements OChannelListener {
 
             @Override
             public boolean reuseResource(final String iKey, final Object[] iAdditionalArgs, final OChannelBinaryAsynchClient iValue) {
-              return true;
+              return iValue.isConnected();
             }
 
           });

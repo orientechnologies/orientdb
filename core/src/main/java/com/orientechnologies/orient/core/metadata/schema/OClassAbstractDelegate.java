@@ -466,4 +466,19 @@ public abstract class OClassAbstractDelegate implements OClass {
   public float getClassOverSize() {
     return delegate.getClassOverSize();
   }
+
+  @Override
+  public String toString() {
+    return delegate.toString();
+  }
+
+  @Override
+  public boolean equals(final Object obj) {
+    return delegate.equals(obj);
+  }
+
+  @Override
+  public int hashCode() {
+    return delegate.hashCode();
+  }
 }

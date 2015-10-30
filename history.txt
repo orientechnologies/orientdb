@@ -27,6 +27,17 @@
 This document contains the last changes of OrientDB Community Edition.
 
 -----------------------------------------------------------------------------------------------------------------------------------
+VERSION 2.1.5 - (October, 29 2015)
+- Core (27): https://github.com/orientechnologies/orientdb/issues?q=milestone%3A2.1.5
+
+Starting from this release, ETL, Lucene and JDBC repositories are part of the core.
+
+-----------------------------------------------------------------------------------------------------------------------------------
+VERSION 2.1.4 - (October, 13 2015)
+- Core (32): https://github.com/orientechnologies/orientdb/issues?q=milestone%3A2.1.4+is%3Aclosed
+- Lucene(2): https://github.com/orientechnologies/orientdb-lucene/issues?q=milestone%3A2.1.4+is%3Aclosed
+
+-----------------------------------------------------------------------------------------------------------------------------------
 VERSION 2.1.3 - (October, 4 2015)
 - Core (42): https://github.com/orientechnologies/orientdb/issues?page=2&q=milestone%3A2.1.3
 - ETL (4)..: https://github.com/orientechnologies/orientdb-etl/issues?q=milestone%3A2.1.3

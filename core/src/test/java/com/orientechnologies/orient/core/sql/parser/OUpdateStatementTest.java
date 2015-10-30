@@ -11,7 +11,8 @@ import static org.testng.Assert.fail;
 public class OUpdateStatementTest {
 
   protected SimpleNode checkRightSyntax(String query) {
-    return checkSyntax(query, true);
+    SimpleNode result = checkSyntax(query, true);
+    return checkSyntax(result.toString(), true);
   }
 
   protected SimpleNode checkWrongSyntax(String query) {
@@ -81,6 +82,10 @@ public class OUpdateStatementTest {
 
   public void testDecrement() {
     checkRightSyntax("update  Foo set a -= 2");
+  }
+
+  public void testQuotedJson() {
+    checkRightSyntax("UPDATE V SET key = \"test\", value = {\"f12\":\"test\\\\\"} UPSERT WHERE key = \"test\"");
   }
 
   public void testTargetQuery() {

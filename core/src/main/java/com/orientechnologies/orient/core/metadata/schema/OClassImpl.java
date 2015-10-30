@@ -19,9 +19,6 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.io.IOException;
-import java.util.*;
-
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.common.util.OCommonConst;
@@ -38,12 +35,7 @@ import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexDefinitionFactory;
-import com.orientechnologies.orient.core.index.OIndexException;
-import com.orientechnologies.orient.core.index.OIndexManager;
-import com.orientechnologies.orient.core.index.OIndexManagerProxy;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
@@ -57,14 +49,13 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
-import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
+import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
+
+import java.io.IOException;
+import java.util.*;
 
 /**
  * Schema Class implementation.
@@ -91,20 +82,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   private Map<String, String>                customFields;
   private volatile OClusterSelectionStrategy clusterSelection;                                          // @SINCE 1.7
   private volatile int                       hashCode;
-
-  private static Set<String>                 reserved                = new HashSet<String>();
-  static {
-    // reserved.add("select");
-    reserved.add("traverse");
-    reserved.add("insert");
-    reserved.add("update");
-    reserved.add("delete");
-    reserved.add("from");
-    reserved.add("where");
-    reserved.add("skip");
-    reserved.add("limit");
-    reserved.add("timeout");
-  }
 
   /**
    * Constructor used in unmarshalling.
@@ -2093,7 +2070,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   private int createClusterIfNeeded(String nameOrId) {
-    String[] parts = nameOrId.split(" ");
+    final String[] parts = nameOrId.split(" ");
     int clId = getClusterId(parts[0]);
 
     if (clId == NOT_EXISTENT_CLUSTER_ID) {
@@ -2256,15 +2233,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
     if (propertyName == null || propertyName.length() == 0)
       throw new OSchemaException("Property name is null or empty");
-
-    if (Character.isDigit(propertyName.charAt(0)))
-      throw new OSchemaException("Found invalid name for property '" + propertyName + "': it cannot start with numbers");
-
-    if (reserved.contains(propertyName.toLowerCase())) {
-      throw new OSchemaException("Error creating schema: '" + propertyName
-          + "' is a reserved keyword, it cannot be used as a property name");
-    }
-
+    
     if (getDatabase().getStorage().getConfiguration().isStrictSql()) {
       validatePropertyName(propertyName);
     }

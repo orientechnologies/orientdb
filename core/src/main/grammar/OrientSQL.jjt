@@ -58,14 +58,42 @@ public class OrientSql {
 
 PARSER_END(OrientSql)
 
+
 SKIP :
 {
   " "
 | "\t"
 | "\n"
 | "\r"
+| "\f"
 }
 
+/* COMMENTS */
+
+MORE :
+{
+  <"/**" ~["/"]> { input_stream.backup(1); } : IN_FORMAL_COMMENT
+|
+  "/*" : IN_MULTI_LINE_COMMENT
+}
+
+<IN_FORMAL_COMMENT>
+SPECIAL_TOKEN :
+{
+  <FORMAL_COMMENT: "*/" > : DEFAULT
+}
+
+<IN_MULTI_LINE_COMMENT>
+SPECIAL_TOKEN :
+{
+  <MULTI_LINE_COMMENT: "*/" > : DEFAULT
+}
+
+<IN_FORMAL_COMMENT,IN_MULTI_LINE_COMMENT>
+MORE :
+{
+  < ~[] >
+}
 
 /* reserved words */
 TOKEN:
@@ -1503,10 +1531,17 @@ OArrayRangeSelector ArrayRangeSelector():
 
 
 String Alias():
-{ OIdentifier identifier; }
 {
-	identifier = Identifier()
-	{return identifier.getValue();}
+    OIdentifier identifier = null;
+    ORecordAttribute recordAttribute = null;
+}
+{
+    (
+        identifier = Identifier()
+        |
+        recordAttribute = RecordAttribute()
+    )
+	{return identifier!=null?identifier.getValue():recordAttribute.name;}
 }
 
 ORecordAttribute RecordAttribute():
@@ -2217,7 +2252,13 @@ OBooleanExpression InstanceofCondition():
 }
 {
     (
-        jjtThis.left = Expression() <INSTANCEOF> ( jjtThis.right = Identifier() | token = <STRING_LITERAL> { jjtThis.rightString = token.image; } )
+        jjtThis.left = Expression() <INSTANCEOF> (
+           jjtThis.right = Identifier()
+           |
+           token = <STRING_LITERAL> { jjtThis.rightString = token.image; }
+           |
+           token = <CHARACTER_LITERAL> { jjtThis.rightString = token.image; }
+        )
     )
     {return jjtThis;}
 }
@@ -2403,6 +2444,8 @@ OBooleanExpression MatchesCondition():
     	    ( token = <STRING_LITERAL> {jjtThis.right = token.image;} )
     	    |
     	    ( token = <CHARACTER_LITERAL> {jjtThis.right = token.image;} )
+    	    |
+    	    ( jjtThis.rightParam = InputParameter() )
     	)
     )
 

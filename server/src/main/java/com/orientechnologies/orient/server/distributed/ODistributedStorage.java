@@ -60,7 +60,6 @@ import com.orientechnologies.orient.core.sql.OCommandExecutorSQLDelegate;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
-import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
@@ -98,18 +97,18 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ODistributedStorage implements OStorage, OFreezableStorage, OAutoshardedStorage {
-  protected final OServer                                                   serverInstance;
-  protected final ODistributedServerManager                                 dManager;
-  protected final OAbstractPaginatedStorage                                 wrapped;
+  protected final OServer                   serverInstance;
+  protected final ODistributedServerManager dManager;
+  protected final OAbstractPaginatedStorage wrapped;
 
   protected final TimerTask                                                 purgeDeletedRecordsTask;
   protected final ConcurrentHashMap<ORecordId, OPair<Long, ORecordVersion>> deletedRecords  = new ConcurrentHashMap<ORecordId, OPair<Long, ORecordVersion>>();
   protected final AtomicLong                                                lastOperationId = new AtomicLong();
 
-  protected final BlockingQueue<OAsynchDistributedOperation>                asynchronousOperationsQueue;
-  protected final Thread                                                    asynchWorker;
-  protected volatile boolean                                                running         = true;
-  protected volatile File                                                   lastValidBackup = null;
+  protected final BlockingQueue<OAsynchDistributedOperation> asynchronousOperationsQueue;
+  protected final Thread                                     asynchWorker;
+  protected volatile boolean                                 running         = true;
+  protected volatile File                                    lastValidBackup = null;
 
   public ODistributedStorage(final OServer iServer, final OAbstractPaginatedStorage wrapped) {
     this.serverInstance = iServer;
@@ -162,9 +161,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
           try {
             final OAsynchDistributedOperation operation = asynchronousOperationsQueue.take();
 
-            final Object result = dManager.sendRequest(operation.getDatabaseName(), operation.getClusterNames(), operation
-                .getNodes(), operation.getTask(), operation.getCallback() != null ? EXECUTION_MODE.RESPONSE
-                : EXECUTION_MODE.NO_RESPONSE);
+            final Object result = dManager.sendRequest(operation.getDatabaseName(), operation.getClusterNames(),
+                operation.getNodes(), operation.getTask(),
+                operation.getCallback() != null ? EXECUTION_MODE.RESPONSE : EXECUTION_MODE.NO_RESPONSE);
 
             if (operation.getCallback() != null)
               operation.getCallback().call(result);
@@ -238,8 +237,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     executor.setProgressListener(iCommand.getProgressListener());
     executor.parse(iCommand);
 
-    final OCommandExecutor exec = executor instanceof OCommandExecutorSQLDelegate ? ((OCommandExecutorSQLDelegate) executor)
-        .getDelegate() : executor;
+    final OCommandExecutor exec = executor instanceof OCommandExecutorSQLDelegate
+        ? ((OCommandExecutorSQLDelegate) executor).getDelegate() : executor;
 
     if (!exec.isIdempotent())
       checkNodeIsMaster(localNodeName, dbCfg);
@@ -293,29 +292,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
             // MIX & FILTER RESULT SET AVOIDING DUPLICATES
             // TODO: ONCE OPTIMIZED (SEE ABOVE) AVOID TO FILTER HERE
 
-            final ArrayList<Object> set = new ArrayList<Object>();
-            for (Map.Entry<String, Object> entry : ((Map<String, Object>) results).entrySet()) {
-              final Object nodeResult = entry.getValue();
-              if (nodeResult instanceof Collection)
-                set.addAll((Collection<?>) nodeResult);
-              else if (nodeResult instanceof Exception)
-                // RECEIVED EXCEPTION
-                throw (Exception) nodeResult;
-              else
-                set.add(nodeResult);
-            }
-
-            if (result instanceof OResultSet) {
-              // REUSE THE SAME RESULTSET TO AVOID DUPLICATES
-              ((OResultSet) result).clear();
-              ((OResultSet) result).addAll(set);
-            } else
-              result = new ArrayList<Object>(set);
+            result = exec.mergeResults(results);
           }
 
         } else {
-          final OAbstractCommandTask task = iCommand instanceof OCommandScript ? new OScriptTask(iCommand) : new OSQLCommandTask(
-              iCommand, new HashSet<String>());
+          final OAbstractCommandTask task = iCommand instanceof OCommandScript ? new OScriptTask(iCommand)
+              : new OSQLCommandTask(iCommand, new HashSet<String>());
           task.setResultStrategy(OAbstractRemoteTask.RESULT_STRATEGY.ANY);
 
           final Collection<String> nodes = dbCfg.getServers(involvedClusters);
@@ -375,8 +357,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       } else {
 
-        final OAbstractCommandTask task = iCommand instanceof OCommandScript ? new OScriptTask(iCommand) : new OSQLCommandTask(
-            iCommand, c.getValue());
+        final OAbstractCommandTask task = iCommand instanceof OCommandScript ? new OScriptTask(iCommand)
+            : new OSQLCommandTask(iCommand, c.getValue());
         task.setResultStrategy(OAbstractRemoteTask.RESULT_STRATEGY.ANY);
 
         nodes.clear();
@@ -531,13 +513,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         }
 
         if (!masterNode.equals(localNodeName))
-          throw new ODistributedException("Error on inserting into cluster '" + clusterName + "' where local node '"
-              + localNodeName + "' is not the master of it, but it's '" + masterNode + "'");
+          throw new ODistributedException("Error on inserting into cluster '" + clusterName + "' where local node '" + localNodeName
+              + "' is not the master of it, but it's '" + masterNode + "'");
 
-        OLogManager.instance().warn(
-            this,
-            "Local node '" + localNodeName + "' is not the master for cluster '" + clusterName + "' (it's '" + masterNode
-                + "'). Switching to a valid cluster of the same class: '" + newClusterName + "'");
+        OLogManager.instance().warn(this, "Local node '" + localNodeName + "' is not the master for cluster '" + clusterName
+            + "' (it's '" + masterNode + "'). Switching to a valid cluster of the same class: '" + newClusterName + "'");
 
         clusterName = newClusterName;
       }
@@ -560,8 +540,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         final OPlaceholder masterPlaceholder = (OPlaceholder) masterResult;
         iRecordId.copyFrom(masterPlaceholder.getIdentity());
 
-        return new OStorageOperationResult<OPhysicalPosition>(new OPhysicalPosition(masterPlaceholder.getIdentity()
-            .getClusterPosition(), masterPlaceholder.getRecordVersion()));
+        return new OStorageOperationResult<OPhysicalPosition>(
+            new OPhysicalPosition(masterPlaceholder.getIdentity().getClusterPosition(), masterPlaceholder.getRecordVersion()));
       }
 
       // ASYNCHRONOUS CALL: EXECUTE LOCALLY AND THEN DISTRIBUTE
@@ -590,6 +570,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         asynchronousExecution(new OAsynchDistributedOperation(getName(), Collections.singleton(clusterName), nodes,
             new OCreateRecordTask(iRecordId, iContent, iRecordVersion, iRecordType)));
       }
+
+      // UPDATE RID WITH NEW POSITION
+      iRecordId.clusterPosition = localResult.getResult().clusterPosition;
 
       return localResult;
 
@@ -628,8 +611,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       }
 
       // DISTRIBUTE IT
-      final Object result = dManager.sendRequest(getName(), Collections.singleton(clusterName), nodes, new OReadRecordTask(
-          iRecordId), EXECUTION_MODE.RESPONSE);
+      final Object result = dManager.sendRequest(getName(), Collections.singleton(clusterName), nodes,
+          new OReadRecordTask(iRecordId), EXECUTION_MODE.RESPONSE);
 
       if (result instanceof ONeedRetryException)
         throw (ONeedRetryException) result;
@@ -739,9 +722,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         final OStorageOperationResult<ORawBuffer> previousContent = readRecord(iRecordId, null, false, null);
 
         // REPLICATE IT
-        final Object result = dManager.sendRequest(getName(), Collections.singleton(clusterName), nodes, new OUpdateRecordTask(
-            iRecordId, previousContent.getResult().getBuffer(), previousContent.getResult().version, iContent, iVersion,
-            iRecordType), EXECUTION_MODE.RESPONSE);
+        final Object result = dManager.sendRequest(
+            getName(), Collections.singleton(clusterName), nodes, new OUpdateRecordTask(iRecordId,
+                previousContent.getResult().getBuffer(), previousContent.getResult().version, iContent, iVersion, iRecordType),
+            EXECUTION_MODE.RESPONSE);
 
         if (result instanceof ONeedRetryException)
           throw (ONeedRetryException) result;
@@ -774,9 +758,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         // LOAD PREVIOUS CONTENT TO BE USED IN CASE OF UNDO
         final OStorageOperationResult<ORawBuffer> previousContent = readRecord(iRecordId, null, false, null);
 
-        asynchronousExecution(new OAsynchDistributedOperation(getName(), Collections.singleton(clusterName), nodes,
-            new OUpdateRecordTask(iRecordId, previousContent.getResult().getBuffer(), previousContent.getResult().version,
-                iContent, iVersion, iRecordType)));
+        asynchronousExecution(
+            new OAsynchDistributedOperation(getName(), Collections.singleton(clusterName), nodes, new OUpdateRecordTask(iRecordId,
+                previousContent.getResult().getBuffer(), previousContent.getResult().version, iContent, iVersion, iRecordType)));
       }
 
       return localResult;
@@ -827,8 +811,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       if (executionModeSynch) {
         // REPLICATE IT
-        final Object result = dManager.sendRequest(getName(), Collections.singleton(clusterName), nodes, new ODeleteRecordTask(
-            iRecordId, iVersion), EXECUTION_MODE.RESPONSE);
+        final Object result = dManager.sendRequest(getName(), Collections.singleton(clusterName), nodes,
+            new ODeleteRecordTask(iRecordId, iVersion), EXECUTION_MODE.RESPONSE);
 
         if (result instanceof ONeedRetryException)
           throw (ONeedRetryException) result;
@@ -1133,14 +1117,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
                     }
 
                   } catch (Exception e) {
-                    ODistributedServerLog
-                        .error(
-                            this,
-                            localNodeName,
-                            null,
-                            ODistributedServerLog.DIRECTION.NONE,
-                            "async distributed transaction failed, cannot revert local transaction. Current node could have a not aligned database. Remote answer: %s",
-                            e, iArgument);
+                    ODistributedServerLog.error(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
+                        "async distributed transaction failed, cannot revert local transaction. Current node could have a not aligned database. Remote answer: %s",
+                        e, iArgument);
                     throw new OTransactionException(
                         "Error on execution async distributed transaction, the database could be inconsistent",
                         (Throwable) iArgument);
@@ -1161,8 +1140,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
                 ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
                     "async distributed transaction error, received unknown response type: %s", iArgument);
 
-              throw new OTransactionException("Error on committing async distributed transaction, received unknown response type "
-                  + iArgument);
+              throw new OTransactionException(
+                  "Error on committing async distributed transaction, received unknown response type " + iArgument);
             }
           }));
       }
@@ -1296,8 +1275,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         final Object result = command(commandSQL);
         if (result != null && ((Integer) result).intValue() != clId) {
           OLogManager.instance().warn(this,
-              "Error on creating cluster on distributed nodes: ids are different (local=%d and remote=%d). Retrying %d/%d...",
-              clId, ((Integer) result).intValue(), retry, 10);
+              "Error on creating cluster on distributed nodes: ids are different (local=%d and remote=%d). Retrying %d/%d...", clId,
+              ((Integer) result).intValue(), retry, 10);
 
           wrapped.dropCluster(clId, false);
 
