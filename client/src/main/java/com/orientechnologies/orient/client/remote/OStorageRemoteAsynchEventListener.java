@@ -20,16 +20,6 @@
 
 package com.orientechnologies.orient.client.remote;
 
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
-import java.io.IOException;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -39,6 +29,16 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEventListener;
+
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 public class OStorageRemoteAsynchEventListener implements ORemoteServerEventListener {
 
@@ -57,7 +57,8 @@ public class OStorageRemoteAsynchEventListener implements ORemoteServerEventList
 
       if (OLogManager.instance().isDebugEnabled()) {
         synchronized (storage.getClusterConfiguration()) {
-          OLogManager.instance().debug(this, "Received new cluster configuration: %s", storage.getClusterConfiguration().toJSON("prettyPrint"));
+          OLogManager.instance().debug(this, "Received new cluster configuration: %s",
+              storage.getClusterConfiguration().toJSON("prettyPrint"));
         }
       }
     } else if (iRequestCode == OChannelBinaryProtocol.REQUEST_PUSH_LIVE_QUERY) {
@@ -138,11 +139,12 @@ public class OStorageRemoteAsynchEventListener implements ORemoteServerEventList
   }
 
   public void onEndUsedConnections(ORemoteConnectionPool pool) {
-    Set<Integer> res = this.poolLiveQuery.get(pool);
-    for (Integer query : res) {
-      OLiveResultListener liveQuery = this.liveQueryListeners.remove(query);
-      liveQuery.onError(query);
-    }
+    final Set<Integer> res = this.poolLiveQuery.get(pool);
+    if (res != null)
+      for (Integer query : res) {
+        OLiveResultListener liveQuery = this.liveQueryListeners.remove(query);
+        liveQuery.onError(query);
+      }
 
   }
 }
