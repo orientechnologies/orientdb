@@ -551,6 +551,12 @@ public enum OGlobalConfiguration {
       Long.class, 15000l),
 
   /**
+   * @Since 2.2.0
+   */
+  DISTRIBUTED_PUBLISH_NODE_STATUS_EVERY("distributed.publishNodeStatusEvery",
+      "Time in ms to publish the node status on distributed map. Set to 0 to disable such refresh of node configuration", Long.class, 5000l),
+
+  /**
    * @Since 2.1.3
    */
   @OApi(maturity = OApi.MATURITY.NEW) DISTRIBUTED_QUEUE_MAXSIZE("distributed.queueMaxSize",

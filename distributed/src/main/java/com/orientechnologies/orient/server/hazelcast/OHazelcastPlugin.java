@@ -166,10 +166,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         }
       }
 
-      // PUBLISH LOCAL NODE CFG
-      ODocument cfg = getLocalNodeConfiguration();
-      ORecordInternal.setRecordSerializer(cfg, ODatabaseDocumentTx.getDefaultSerializer());
-      configurationMap.put(CONFIG_NODE_PREFIX + nodeId, cfg);
+      publishLocalNodeConfiguration();
 
       if (!configurationMap.containsKey(CONFIG_NODE_PREFIX + nodeId)) {
         // NODE NOT REGISTERED, FORCING SHUTTING DOWN
@@ -186,10 +183,27 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       // REGISTER CURRENT MEMBERS
       setNodeStatus(NODE_STATUS.ONLINE);
 
+      publishLocalNodeConfiguration();
+
+      final long delay = OGlobalConfiguration.DISTRIBUTED_PUBLISH_NODE_STATUS_EVERY.getValueAsLong();
+      if (delay > 0)
+        Orient.instance().scheduleTask(new TimerTask() {
+          @Override
+          public void run() {
+            publishLocalNodeConfiguration();
+          }
+        }, delay, delay);
+
     } catch (Exception e) {
       ODistributedServerLog.error(this, localNodeName, null, DIRECTION.NONE, "Error on starting distributed plugin", e);
       System.exit(1);
     }
+  }
+
+  protected void publishLocalNodeConfiguration() {
+    final ODocument cfg = getLocalNodeConfiguration();
+    ORecordInternal.setRecordSerializer(cfg, ODatabaseDocumentTx.getDefaultSerializer());
+    getConfigurationMap().put(CONFIG_NODE_PREFIX + nodeId, cfg);
   }
 
   @Override
@@ -273,6 +287,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     nodeCfg.field("id", getLocalNodeId());
     nodeCfg.field("name", getLocalNodeName());
     nodeCfg.field("startedOn", startedOn);
+    nodeCfg.field("status", getNodeStatus());
+    nodeCfg.field("connections", serverInstance.getClientConnectionManager().getTotal());
 
     List<Map<String, Object>> listeners = new ArrayList<Map<String, Object>>();
     nodeCfg.field("listeners", listeners, OType.EMBEDDEDLIST);
@@ -285,6 +301,15 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       listenerCfg.put("listen", listener.getListeningAddress(true));
     }
     nodeCfg.field("databases", getManagedDatabases());
+
+    final long maxMem = Runtime.getRuntime().maxMemory();
+    final long totMem = Runtime.getRuntime().totalMemory();
+    final long freeMem = Runtime.getRuntime().freeMemory();
+    final long usedMem = totMem - freeMem;
+
+    nodeCfg.field("usedMemory", usedMem);
+    nodeCfg.field("freeMemory", freeMem);
+    nodeCfg.field("maxMemory", maxMem);
 
     return nodeCfg;
   }
