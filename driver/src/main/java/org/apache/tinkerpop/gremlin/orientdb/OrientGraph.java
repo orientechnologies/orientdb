@@ -402,40 +402,14 @@ public final class OrientGraph implements Graph {
             config.setProperty("metadata", defaultMetadata);
     }
 
-    /**
-     * Creates an automatic indexing structure for indexing provided key for element class.
-     *
-     * @param key           the key to create the index for
-     * @param label         the element label
-     * @param configuration a collection of parameters for the underlying index implementation:
-     *                      <ul>
-     *                      <li>"type" is the index type between the supported types (UNIQUE, NOTUNIQUE, FULLTEXT). The default type is NOT_UNIQUE
-     *                      <li>"class" is the class to index when it's a custom type derived by Vertex (V) or Edge (E)
-     *                      <li>"keytype" to use a key type different by OType.STRING,</li>
-     *                      </li>
-     *                      </ul>
-     * @param <T>           the element class specification
-     */
+
     public <T extends Element> void createVertexIndex(final String key, final String label, final Configuration configuration) {
         String className = OrientVertexType.CLASS_NAME + "_" + label;
         createVertexClass(className);
         createIndex(key, className, configuration);
     }
 
-    /**
-     * Creates an automatic indexing structure for indexing provided key for element class.
-     *
-     * @param key           the key to create the index for
-     * @param label         the element label
-     * @param configuration a collection of parameters for the underlying index implementation:
-     *                      <ul>
-     *                      <li>"type" is the index type between the supported types (UNIQUE, NOTUNIQUE, FULLTEXT). The default type is NOT_UNIQUE
-     *                      <li>"class" is the class to index when it's a custom type derived by Vertex (V) or Edge (E)
-     *                      <li>"keytype" to use a key type different by OType.STRING,</li>
-     *                      </li>
-     *                      </ul>
-     * @param <T>           the element class specification
-     */
+
     public <T extends Element> void createEdgeIndex(final String key, final String label, final Configuration configuration) {
         String className = OrientEdgeType.CLASS_NAME + "_" + label;
         createEdgeClass(className);
