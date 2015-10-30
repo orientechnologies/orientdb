@@ -55,12 +55,17 @@ public class ORecordSerializerBinaryDebug extends ORecordSerializerBinaryV0 {
           final int id = (len * -1) - 1;
           debugProperty.globalId = id;
           prop = schema.getGlobalPropertyById(id);
-          fieldName = prop.getName();
           valuePos = readInteger(bytes);
-          if (prop.getType() != OType.ANY)
-            type = prop.getType();
-          else
-            type = readOType(bytes);
+          debugProperty.valuePos = valuePos;
+          if (prop != null) {
+            fieldName = prop.getName();
+            if (prop.getType() != OType.ANY)
+              type = prop.getType();
+            else
+              type = readOType(bytes);
+          } else {
+            continue;
+          }
         }
         debugProperty.name = fieldName;
         debugProperty.type = type;
