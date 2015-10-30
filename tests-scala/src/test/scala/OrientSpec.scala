@@ -138,6 +138,19 @@ class OrientSpec extends WordSpec with ShouldMatchers with BeforeAndAfterEach {
       v1.outE("label1").toList() should have length 0
     }
 
+    "do not delete entry if there are multiple edges" in {
+      val v1 = graph.addVertex()
+      val v2 = graph.addVertex()
+      val e1 = v1.addEdge("label1", v2)
+      val e2 = v1.addEdge("label1", v1)
+
+      graph.E(e1.id).toList should have length 1
+      graph.E(e1.id).head().remove()
+      graph.E(e1.id).toList should have length 0
+
+      v1.outE("label1").toList() should have length 1
+    }
+
     "be removed if vertex is deleted" in {
       val v1 = graph.addVertex()
       val v2 = graph.addVertex()
