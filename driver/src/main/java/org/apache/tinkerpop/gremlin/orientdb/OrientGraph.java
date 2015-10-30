@@ -425,9 +425,8 @@ public final class OrientGraph implements Graph {
      * @param configuration a collection of parameters for the underlying index implementation:
      *                      <ul>
      *                      <li>"type" is the index type between the supported types (UNIQUE, NOTUNIQUE, FULLTEXT). The default type is NOT_UNIQUE
-     *                      <li>"class" is the class to index when it's a custom type derived by Vertex (V) or Edge (E)
+     *                      <li>"class" is the class to index when it's a custom type derived by Vertex (V) or Edge (E)</li>
      *                      <li>"keytype" to use a key type different by OType.STRING,</li>
-     *                      </li>
      *                      </ul>
      * @param <T>           the element class specification
      */
@@ -445,9 +444,8 @@ public final class OrientGraph implements Graph {
      * @param configuration a collection of parameters for the underlying index implementation:
      *                      <ul>
      *                      <li>"type" is the index type between the supported types (UNIQUE, NOTUNIQUE, FULLTEXT). The default type is NOT_UNIQUE
-     *                      <li>"class" is the class to index when it's a custom type derived by Vertex (V) or Edge (E)
+     *                      <li>"class" is the class to index when it's a custom type derived by Vertex (V) or Edge (E)</li>
      *                      <li>"keytype" to use a key type different by OType.STRING,</li>
-     *                      </li>
      *                      </ul>
      * @param <T>           the element class specification
      */
