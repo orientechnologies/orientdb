@@ -129,4 +129,41 @@ public class OrientEdge extends OrientElement implements Edge {
     public String toString() {
         return StringFactory.edgeString(this);
     }
+
+	@Override
+	public int hashCode() {
+		final int prime = 73;
+		int result = super.hashCode();
+		result = prime * result + ((label == null) ? 0 : label.hashCode());
+		result = prime * result + ((vIn == null) ? 0 : vIn.hashCode());
+		result = prime * result + ((vOut == null) ? 0 : vOut.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!super.equals(obj))
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		OrientEdge other = (OrientEdge) obj;
+		if (label == null) {
+			if (other.label != null)
+				return false;
+		} else if (!label.equals(other.label))
+			return false;
+		if (vIn == null) {
+			if (other.vIn != null)
+				return false;
+		} else if (!vIn.equals(other.vIn))
+			return false;
+		if (vOut == null) {
+			if (other.vOut != null)
+				return false;
+		} else if (!vOut.equals(other.vOut))
+			return false;
+		return true;
+	}
 }

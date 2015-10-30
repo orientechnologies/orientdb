@@ -3,7 +3,14 @@ package org.apache.tinkerpop.gremlin.orientdb;
 import org.apache.commons.configuration.Configuration;
 import org.apache.tinkerpop.gremlin.AbstractGraphProvider;
 import org.apache.tinkerpop.gremlin.LoadGraphWith;
+import org.apache.tinkerpop.gremlin.structure.Element;
 import org.apache.tinkerpop.gremlin.structure.Graph;
+import org.hamcrest.Matchers;
+import org.junit.Assume;
+
+import com.orientechnologies.orient.core.id.ORecordId;
+
+import static org.hamcrest.Matchers.equalTo;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -21,8 +28,12 @@ public class OrientGraphProvider extends AbstractGraphProvider {
     @Override
     public Set<Class> getImplementations() {
         return new HashSet<Class>() {{
-//            add(OrientEdge.class);
-            //TODO: other classes
+            add(OrientEdge.class);
+            add(OrientElement.class);
+            add(OrientGraph.class);
+            add(OrientProperty.class);
+            add(OrientVertex.class);
+            add(OrientVertexProperty.class);
         }};
     }
 
@@ -30,4 +41,5 @@ public class OrientGraphProvider extends AbstractGraphProvider {
     public void clear(Graph graph, Configuration configuration) throws Exception {
         if (graph != null) graph.close();
     }
+
 }

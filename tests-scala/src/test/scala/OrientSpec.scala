@@ -59,14 +59,13 @@ class OrientSpec extends WordSpec with ShouldMatchers with BeforeAndAfterEach {
       }
     }
 
-    "using labels" in {
+    "use labels" in {
       val v1 = graph.addVertex("label1")
       val v2 = graph.addVertex("label2")
       val v3 = graph.addVertex()
 
       val labels = graph.V.label.toSet
-      // labels should have size 3
-      labels should contain("V")
+      // labels should have size 2
       labels should contain("label1")
       labels should contain("label2")
     }
