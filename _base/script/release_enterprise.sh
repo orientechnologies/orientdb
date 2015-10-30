@@ -7,9 +7,9 @@ fi
 
 echo "Releasing OrientDB Enterprise $1..."
 
-cp -R distribution/target/orientdb-community-$1-distribution.dir/orientdb-community-$1/ distribution/target/orientdb-community-$1-distribution.dir/orientdb-enterprise-$1/
+cp -R distribution/target/orientdb-community-$1.dir/orientdb-community-$1/ distribution/target/orientdb-community-$1.dir/orientdb-enterprise-$1/
 
-DIR=distribution/target/orientdb-community-$1-distribution.dir/orientdb-enterprise-$1/
+DIR=distribution/target/orientdb-community-$1.dir/orientdb-enterprise-$1/
 
 #cp ../drivers/orientdb-jdbc/target/orientdb-jdbc-$1.jar $DIR/lib/
 
@@ -24,7 +24,7 @@ cd distribution/target/
 rm orientdb-enterprise-$1.tar.gz 
 rm orientdb-enterprise-$1.zip
 
-cd orientdb-community-$1-distribution.dir
+cd orientdb-community-$1.dir
 rm `find . -name ".DS_Store" -print`
 rm `find . -name "*.wal" -print`
 
