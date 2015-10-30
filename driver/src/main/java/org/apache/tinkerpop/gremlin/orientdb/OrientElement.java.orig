@@ -21,7 +21,8 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 
-public abstract class OrientElement implements Element {
+<<<<<<< HEAD
+public class OrientElement implements Element {
 
     private static final Map<String, String> INTERNAL_CLASSES_TO_TINKERPOP_CLASSES;
     static {
@@ -30,6 +31,9 @@ public abstract class OrientElement implements Element {
         INTERNAL_CLASSES_TO_TINKERPOP_CLASSES.put(OImmutableClass.EDGE_CLASS_NAME, Edge.DEFAULT_LABEL);
     }
 
+=======
+public abstract class OrientElement implements Element {
+>>>>>>> update-vertexes
     protected OIdentifiable rawElement;
     protected OrientGraph graph;
 

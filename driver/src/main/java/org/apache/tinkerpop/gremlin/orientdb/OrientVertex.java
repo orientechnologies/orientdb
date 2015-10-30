@@ -4,6 +4,7 @@ import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
@@ -130,7 +131,6 @@ public final class OrientVertex extends OrientElement implements Vertex {
     public Edge addEdge(String label, Vertex inVertex, Object... keyValues) {
         if (inVertex == null)
             throw new IllegalArgumentException("destination vertex is null");
-        
         checkArgument(!isNullOrEmpty(label), "label is invalid");
 
         if (ElementHelper.getIdValue(keyValues).isPresent()) throw Vertex.Exceptions.userSuppliedIdsNotSupported();
@@ -188,7 +188,6 @@ public final class OrientVertex extends OrientElement implements Vertex {
 //            from = from.getIdentity();
 //            to = to.getIdentity();
 //        }
-
         createLink(outDocument, edge.getRawElement(), outFieldName);
         createLink(inDocument, edge.getRawElement(), inFieldName);
 
@@ -200,7 +199,22 @@ public final class OrientVertex extends OrientElement implements Vertex {
         return edge;
     }
 
-    public String getConnectionFieldName(final Direction iDirection, final String iClassName) {
+    public void remove() {
+        ODocument doc = getRawDocument();
+        if (doc.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
+            doc.load();
+        }
+
+        Iterator<Edge> allEdges =  edges(Direction.BOTH, "E");
+        while(allEdges.hasNext()) {
+            allEdges.next().remove();
+        }
+
+        doc.delete();
+    }
+
+
+    public static String getConnectionFieldName(final Direction iDirection, final String iClassName) {
         if (iDirection == null || iDirection == Direction.BOTH)
             throw new IllegalArgumentException("Direction not valid");
 
@@ -284,9 +298,9 @@ public final class OrientVertex extends OrientElement implements Vertex {
         return out;
     }
 
+
     public Iterator<Edge> edges(final Direction direction, String... edgeLabels) {
         final ODocument doc = getRawDocument();
-
 //        edgeLabels = OrientGraphUtils.getEdgeClassNames(graph, edgeLabels);
 //        edgeLabels = (String[]) Stream.of(edgeLabels).map(OrientGraphUtils::encodeClassName).toArray();
 
@@ -324,7 +338,8 @@ public final class OrientVertex extends OrientElement implements Vertex {
                             iterable.add(new OrientEdgeIterator(this, iDestination, coll, coll.iterator(), connection, edgeLabels, -1));
                     }
                 } else if (fieldValue instanceof ORidBag) {
-                    iterable.add(new OrientEdgeIterator(this, iDestination, fieldValue, ((ORidBag) fieldValue).rawIterator(), connection, edgeLabels, ((ORidBag) fieldValue).size()));
+                    ORidBag bag = (ORidBag) fieldValue;
+                    iterable.add(new OrientEdgeIterator(this, iDestination, fieldValue, bag.rawIterator(), connection, edgeLabels, ((ORidBag) fieldValue).size()));
                 }
             }
         }
