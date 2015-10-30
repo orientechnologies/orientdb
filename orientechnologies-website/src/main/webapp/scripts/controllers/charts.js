@@ -41,7 +41,7 @@ angular.module('webappApp')
       $scope.showYear=false;
       $scope.showMonth=false;
       $scope.showClientOnly=false;
-      $scope.showIssueType=true;
+      $scope.showIssueType=false;
       $scope.currentChart = chartFunction;
       chartFunction();
     }
@@ -54,6 +54,7 @@ angular.module('webappApp')
     $scope.issues  = function() {
 
       $scope.showClientOnly=true;
+      $scope.showIssueType=true;
 
       $scope.chartTitle = 'Total Open/closed issues';
 
