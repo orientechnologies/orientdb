@@ -690,14 +690,18 @@ public class OrganizationController extends ExceptionController {
    *          supported: monthly, daily
    * @return
    */
-  @RequestMapping(value = "{name}/reports/openIssuesPerInterval/{interval}/{clientOnly}", method = RequestMethod.GET)
+  @RequestMapping(value = "{name}/reports/openIssuesPerInterval/{interval}/{clientOnly}/{label}", method = RequestMethod.GET)
   @ResponseStatus(HttpStatus.OK)
   public ResponseEntity<List<SimpleReportPoint>> openIssuesPerInterval(@PathVariable("name") String name,
-      @PathVariable("interval") String interval, @PathVariable("clientOnly") boolean clientOnly) {
+      @PathVariable("interval") String interval, @PathVariable("clientOnly") boolean clientOnly, @PathVariable("label") String label) {
     if (securityManager.isCurrentMember(name)) {
 
-      List<SimpleReportPoint> result = getIssueNumberSequence(name, interval,
-          issue -> issue.getCreatedAt() != null && (clientOnly ? issue.getClient() != null : true),
+      Label labelObj = new Label();
+      labelObj.setName(label);
+
+      List<SimpleReportPoint> result = getIssueNumberSequence(name, interval, issue -> issue.getCreatedAt() != null
+          && (clientOnly ? issue.getClient() != null : true)
+          && (label == null || "all".equals(label) ? true : issue.getLabels() != null && issue.getLabels().contains(labelObj)),
           issue -> issue.getCreatedAt());
 
       return new ResponseEntity<List<SimpleReportPoint>>(result, HttpStatus.OK);
@@ -716,16 +720,19 @@ public class OrganizationController extends ExceptionController {
    *          supported: monthly, daily
    * @return
    */
-  @RequestMapping(value = "{name}/reports/closedIssuesPerInterval/{interval}/{clientOnly}", method = RequestMethod.GET)
+  @RequestMapping(value = "{name}/reports/closedIssuesPerInterval/{interval}/{clientOnly}/{label}", method = RequestMethod.GET)
   @ResponseStatus(HttpStatus.OK)
   public ResponseEntity<List<SimpleReportPoint>> closedIssuesPerInterval(@PathVariable("name") String name,
-      @PathVariable("interval") String interval, @PathVariable("clientOnly") boolean clientOnly) {
+      @PathVariable("interval") String interval, @PathVariable("clientOnly") boolean clientOnly, @PathVariable("label") String label) {
     if (securityManager.isCurrentMember(name)) {
+      Label labelObj = new Label();
+      labelObj.setName(label);
 
       List<SimpleReportPoint> result = getIssueNumberSequence(name, interval,
-          issue -> issue.getClosedAt() != null && issue.isClosed() && (clientOnly ? issue.getClient() != null : true),
+          issue -> issue.getClosedAt() != null && issue.isClosed() && (clientOnly ? issue.getClient() != null : true)
+              && (label == null || "all".equals(label) ? true : issue.getLabels() != null && issue.getLabels().contains(labelObj)),
           issue -> issue.getClosedAt());
-      
+
       return new ResponseEntity<List<SimpleReportPoint>>(result, HttpStatus.OK);
     } else {
       return new ResponseEntity<List<SimpleReportPoint>>(HttpStatus.NOT_FOUND);
@@ -733,14 +740,20 @@ public class OrganizationController extends ExceptionController {
   }
 
   /**
-   *  return number of issues per timestamp, filtered by a filter and aggregated by a criterion
-   * @param name organization name
-   * @param interval "monthly" or "daily"
-   * @param filter a filter to filter issues
-   * @param groupBy a grouping criterion
+   * return number of issues per timestamp, filtered by a filter and aggregated by a criterion
+   * 
+   * @param name
+   *          organization name
+   * @param interval
+   *          "monthly" or "daily"
+   * @param filter
+   *          a filter to filter issues
+   * @param groupBy
+   *          a grouping criterion
    * @return
    */
-  private List<SimpleReportPoint> getIssueNumberSequence(String name, String interval, Predicate<Issue> filter, Function<Issue, Date> groupBy) {
+  private List<SimpleReportPoint> getIssueNumberSequence(String name, String interval, Predicate<Issue> filter,
+      Function<Issue, Date> groupBy) {
 
     List<Issue> all = orgRepository.findOrganizationIssues(name);
 

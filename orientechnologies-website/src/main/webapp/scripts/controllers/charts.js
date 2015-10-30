@@ -7,6 +7,7 @@ angular.module('webappApp')
     $scope.showYear=true;
     $scope.showMonth=true;
     $scope.showClientOnly=true;
+    $scope.showIssueType=true;
 
 
 
@@ -21,12 +22,26 @@ angular.module('webappApp')
     $scope.date = {year:new Date().getFullYear(), month:new Date().getMonth()+1};
     $scope.clientOnly = false;
     $scope.chartTitle = "";
+    $scope.issueType = null;
+
+    $scope.issueTypes = [];
+    Organization.all("labels").getList().then(function (data) {
+      var found = [];
+      $scope.issueTypes = data.plain().filter(function(item){
+        if(found.indexOf(item.name) == -1){
+          found.push(item.name);
+          return true;
+        }
+        return false;
+      });
+    });
 
 
     $scope.chart = function(chartFunction) {
       $scope.showYear=false;
       $scope.showMonth=false;
       $scope.showClientOnly=false;
+      $scope.showIssueType=true;
       $scope.currentChart = chartFunction;
       chartFunction();
     }
@@ -59,8 +74,11 @@ angular.module('webappApp')
 
       var chart = c3.generate(chartData);
 
+      var label = ($scope.issueType == null? false:$scope.issueType.name) || "all";
+      label = encodeURI(label);
 
-      Organization.all("reports/openIssuesPerInterval/monthly/"+$scope.clientOnly).getList().then(function (data) {
+
+      Organization.all("reports/openIssuesPerInterval/monthly/"+$scope.clientOnly+"/"+label).getList().then(function (data) {
         var chartData  = {columns:[["x"], ["still open"], ["new"], ["closed"]]};
         var total = 0;
         data.forEach(function (item, idx, ar) {
@@ -68,21 +86,17 @@ angular.module('webappApp')
           total += monthly;
           chartData.columns[0][idx + 1] = item['label'] + "-01";
           chartData.columns[2][idx + 1] = monthly;
-
-          console.log("open: "+total+" new: "+monthly);
         });
 
-        Organization.all("reports/closedIssuesPerInterval/monthly/"+$scope.clientOnly).getList().then(function (data) {
+        Organization.all("reports/closedIssuesPerInterval/monthly/"+$scope.clientOnly+"/"+label).getList().then(function (data) {
 
           data.forEach(function (item, idx2, ar) {
             var value = parseInt(item.value, 10);
-            console.log("closed: "+value+" ("+chartData.columns[1][idx2 + 1]+" - "+value+")");
             if(idx2>1){
               chartData.columns[1][idx2 + 1] = chartData.columns[1][idx2] + chartData.columns[2][idx2 + 1] - value;
             }else{
               chartData.columns[1][idx2 + 1] = chartData.columns[2][idx2 + 1] - value;
             }
-            console.log("still open: "+chartData.columns[1][idx2 + 1]);
             chartData.columns[3][idx2 + 1] = value;
 
           });

@@ -16,6 +16,9 @@
     <div class="col-md-2">
       <div class="form-group" ng-show="showMonth"><label class="control-label">Month </label><select class="form-control" ng-model="date.month" ng-options="month for month in months" ng-change="chart(currentChart)"></select></div>
     </div>
+    <div class="col-md-3">
+      <div class="form-group" ng-show="showIssueType"><label class="control-label">Issue type </label><select class="form-control" ng-model="issueType" ng-options="issueType.name for issueType in issueTypes | orderBy: 'name'" ng-change="chart(currentChart)"></select></div>
+    </div>
   </div>
   <div class="row">
     <h3 id="chart-title">{{chartTitle}}</h3>
