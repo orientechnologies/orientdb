@@ -37,7 +37,12 @@ public class OTraverseProjectionItem extends SimpleNode {
   }
 
   public void replaceParameters(Map<Object, Object> params) {
-
+    if(base!=null){
+      base.replaceParameters(params);
+    }
+    if(modifier!=null){
+      modifier.replaceParameters(params);
+    }
   }
 }
 /* JavaCC - OriginalChecksum=0c562254fd4d11266edc0504fd36fc99 (do not edit this line) */
