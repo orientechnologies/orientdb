@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -695,32 +696,10 @@ public class OrganizationController extends ExceptionController {
       @PathVariable("interval") String interval, @PathVariable("clientOnly") boolean clientOnly) {
     if (securityManager.isCurrentMember(name)) {
 
-      List<Issue> all = orgRepository.findOrganizationIssues(name);
+      List<SimpleReportPoint> result = getIssueNumberSequence(name, interval,
+          issue -> issue.getCreatedAt() != null && (clientOnly ? issue.getClient() != null : true),
+          issue -> issue.getCreatedAt());
 
-      final DateFormat df;
-      if ("monthly".equals(interval)) {
-        df = new SimpleDateFormat("yyyy-MM");
-      } else {// daily
-        df = new SimpleDateFormat("yyyy-MM-dd");
-      }
-
-      List<SimpleReportPoint> result = all.stream().filter(issue -> issue.getCreatedAt() != null)
-          .filter(issue -> clientOnly ? issue.getClient() != null : true)
-          .collect(Collectors.groupingBy(issue -> df.format(issue.getCreatedAt()), Collectors.counting())).entrySet().stream()
-          .map(foo -> {
-            try {
-              return new SimpleReportPoint(foo.getKey(), df.parse(foo.getKey()), foo.getValue().doubleValue());
-            } catch (Exception e) {
-              return null;
-            }
-          }).collect(Collectors.toList());
-
-      Collections.sort(result, new Comparator<SimpleReportPoint>() {
-        @Override
-        public int compare(SimpleReportPoint o1, SimpleReportPoint o2) {
-          return o1.getDate().compareTo(o2.getDate());
-        }
-      });
       return new ResponseEntity<List<SimpleReportPoint>>(result, HttpStatus.OK);
     } else {
       return new ResponseEntity<List<SimpleReportPoint>>(HttpStatus.NOT_FOUND);
@@ -743,36 +722,86 @@ public class OrganizationController extends ExceptionController {
       @PathVariable("interval") String interval, @PathVariable("clientOnly") boolean clientOnly) {
     if (securityManager.isCurrentMember(name)) {
 
-      List<Issue> all = orgRepository.findOrganizationIssues(name);
-
-      final DateFormat df;
-      if ("monthly".equals(interval)) {
-        df = new SimpleDateFormat("yyyy-MM");
-      } else {// daily
-        df = new SimpleDateFormat("yyyy-MM-dd");
-      }
-
-      List<SimpleReportPoint> result = all.stream().filter(issue -> issue.getClosedAt() != null && issue.isClosed())
-          .filter(issue -> clientOnly ? issue.getClient() != null : true)
-          .collect(Collectors.groupingBy(issue -> df.format(issue.getClosedAt()), Collectors.counting())).entrySet().stream()
-          .map(foo -> {
-            try {
-              return new SimpleReportPoint(foo.getKey(), df.parse(foo.getKey()), foo.getValue().doubleValue());
-            } catch (Exception e) {
-              return null;
-            }
-          }).collect(Collectors.toList());
-
-      Collections.sort(result, new Comparator<SimpleReportPoint>() {
-        @Override
-        public int compare(SimpleReportPoint o1, SimpleReportPoint o2) {
-          return o1.getDate().compareTo(o2.getDate());
-        }
-      });
+      List<SimpleReportPoint> result = getIssueNumberSequence(name, interval,
+          issue -> issue.getClosedAt() != null && issue.isClosed() && (clientOnly ? issue.getClient() != null : true),
+          issue -> issue.getClosedAt());
+      
       return new ResponseEntity<List<SimpleReportPoint>>(result, HttpStatus.OK);
     } else {
       return new ResponseEntity<List<SimpleReportPoint>>(HttpStatus.NOT_FOUND);
     }
+  }
+
+  /**
+   *  return number of issues per timestamp, filtered by a filter and aggregated by a criterion
+   * @param name organization name
+   * @param interval "monthly" or "daily"
+   * @param filter a filter to filter issues
+   * @param groupBy a grouping criterion
+   * @return
+   */
+  private List<SimpleReportPoint> getIssueNumberSequence(String name, String interval, Predicate<Issue> filter, Function<Issue, Date> groupBy) {
+
+    List<Issue> all = orgRepository.findOrganizationIssues(name);
+
+    Map<String, SimpleReportPoint> zeros;
+    final DateFormat df;
+    if ("monthly".equals(interval)) {
+      df = new SimpleDateFormat("yyyy-MM");
+      zeros = populateEmptyTimeSeries(Calendar.MONTH);
+    } else {// daily
+      df = new SimpleDateFormat("yyyy-MM-dd");
+      zeros = populateEmptyTimeSeries(Calendar.DAY_OF_YEAR);
+    }
+
+    Map<String, SimpleReportPoint> map = all.stream().filter(filter)
+        .collect(Collectors.groupingBy(issue -> df.format(groupBy.apply(issue)), Collectors.counting())).entrySet().stream()
+        .map(foo -> {
+          try {
+            return new SimpleReportPoint(foo.getKey(), df.parse(foo.getKey()), foo.getValue().doubleValue());
+          } catch (Exception e) {
+            return null;
+          }
+        }).collect(Collectors.toMap(SimpleReportPoint::getLabel, Function.identity()));
+
+    zeros.putAll(map);
+    List<SimpleReportPoint> result = new ArrayList<>();
+    result.addAll(zeros.values());
+
+    Collections.sort(result, new Comparator<SimpleReportPoint>() {
+      @Override
+      public int compare(SimpleReportPoint o1, SimpleReportPoint o2) {
+        return o1.getDate().compareTo(o2.getDate());
+      }
+    });
+    return result;
+
+  }
+
+  private Map<String, SimpleReportPoint> populateEmptyTimeSeries(int calendarClassConstantForIncrement) {
+    final DateFormat df;
+    if (calendarClassConstantForIncrement == Calendar.MONTH) {
+      df = new SimpleDateFormat("yyyy-MM");
+    } else {// daily
+      df = new SimpleDateFormat("yyyy-MM-dd");
+    }
+    Map<String, SimpleReportPoint> result = new HashMap<>();
+    Calendar today = new GregorianCalendar();
+    Calendar nextMonth = new GregorianCalendar();
+    nextMonth.set(Calendar.DAY_OF_MONTH, 1);
+    nextMonth.set(Calendar.MONTH, Calendar.JANUARY);
+    nextMonth.set(Calendar.YEAR, 2012);
+    while (nextMonth.getTimeInMillis() < today.getTimeInMillis()) {
+      SimpleReportPoint point = new SimpleReportPoint();
+      point.setDate(nextMonth.getTime());
+      String label = df.format(nextMonth.getTime());
+      point.setLabel(label);
+      point.setValue(0d);
+      nextMonth.add(calendarClassConstantForIncrement, 1);
+      result.put(label, point);
+    }
+
+    return result;
   }
 
   @RequestMapping(value = "{name}/reports/issuesPerDeveloper/{clientOnly}", method = RequestMethod.GET)
@@ -940,12 +969,8 @@ public class OrganizationController extends ExceptionController {
     if (securityManager.isCurrentMember(name)) {
       List<Issue> all = orgRepository.findOrganizationIssues(name);
 
-      List<SimpleReportPoint> result = all
-          .stream()
-          .filter(issue -> issue.getClient() != null)
-          .collect(
-              Collectors.groupingBy(issue -> issue.getClient().getName(),
-                  Collectors.counting())).entrySet().stream()
+      List<SimpleReportPoint> result = all.stream().filter(issue -> issue.getClient() != null)
+          .collect(Collectors.groupingBy(issue -> issue.getClient().getName(), Collectors.counting())).entrySet().stream()
           .map(foo -> new SimpleReportPoint(foo.getKey(), null, foo.getValue().doubleValue())
 
           ).collect(Collectors.toList());
@@ -963,13 +988,8 @@ public class OrganizationController extends ExceptionController {
     if (securityManager.isCurrentMember(name)) {
       List<Issue> all = orgRepository.findOrganizationIssues(name);
 
-      List<SimpleReportPoint> result = all
-          .stream()
-          .filter(issue ->issue.getClient() != null)
-          .filter(issue -> !issue.isClosed())
-          .collect(
-              Collectors.groupingBy(issue -> issue.getClient().getName(),
-                  Collectors.counting())).entrySet().stream()
+      List<SimpleReportPoint> result = all.stream().filter(issue -> issue.getClient() != null).filter(issue -> !issue.isClosed())
+          .collect(Collectors.groupingBy(issue -> issue.getClient().getName(), Collectors.counting())).entrySet().stream()
           .map(foo -> new SimpleReportPoint(foo.getKey(), null, foo.getValue().doubleValue())
 
           ).collect(Collectors.toList());
@@ -987,13 +1007,8 @@ public class OrganizationController extends ExceptionController {
     if (securityManager.isCurrentMember(name)) {
       List<Issue> all = orgRepository.findOrganizationIssues(name);
 
-      List<SimpleReportPoint> result = all
-          .stream()
-          .filter(issue -> issue.getClient() != null)
-          .filter(issue -> issue.isClosed())
-          .collect(
-              Collectors.groupingBy(issue -> issue.getClient().getName(),
-                  Collectors.counting())).entrySet().stream()
+      List<SimpleReportPoint> result = all.stream().filter(issue -> issue.getClient() != null).filter(issue -> issue.isClosed())
+          .collect(Collectors.groupingBy(issue -> issue.getClient().getName(), Collectors.counting())).entrySet().stream()
           .map(foo -> new SimpleReportPoint(foo.getKey(), null, foo.getValue().doubleValue())
 
           ).collect(Collectors.toList());
