@@ -202,6 +202,12 @@ public final class OrientVertex extends OrientElement implements Vertex {
         if (doc.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
             doc.load();
         }
+
+        Iterator<Edge> allEdges =  edges(Direction.BOTH, "E");
+        while(allEdges.hasNext()) {
+            allEdges.next().remove();
+        }
+
         doc.delete();
     }
 

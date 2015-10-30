@@ -118,22 +118,6 @@ class OrientSpec extends WordSpec with ShouldMatchers with BeforeAndAfterEach {
       graph.E(e.id).value(testProperty).head shouldBe "testValue1"
     }
 
-    "remove edge" in {
-      val v1 = graph.addVertex()
-      val v2 = graph.addVertex()
-      val e = v1.addEdge("label1", v2)
-
-//      e.setProperty(testProperty, "testValue1")
-//
-//      e.property(testProperty).value shouldBe "testValue1"
-//      graph.E(e.id).value(testProperty).head shouldBe "testValue1"
-
-      println(v1.outE("label1").headOption)
-      v1.outE("label1").headOption shouldBe Some(e)
-      v1.outE("label1").headOption foreach(e => e.remove)
-      v1.outE("label1").toList should have length 0
-    }
-
     "set property during creation" in {
       val v1 = graph.addVertex()
       val v2 = graph.addVertex()
@@ -153,6 +137,20 @@ class OrientSpec extends WordSpec with ShouldMatchers with BeforeAndAfterEach {
       graph.E(e1.id).toList should have length 0
 
       v1.outE("label1").toList() should have length 0
+    }
+
+    "be removed if vertex is deleted" in {
+      val v1 = graph.addVertex()
+      val v2 = graph.addVertex()
+      val e1 = v1.addEdge("label1", v2)
+      val e2 = v2.addEdge("label2", v1)
+
+      v2.inE("label1").toList() should have length 1
+      v2.outE("label2").toList() should have length 1
+
+      v1.remove();
+      v2.inE("label1").toList() should have length 0
+      v2.outE("label2").toList() should have length 0
     }
   }
 
