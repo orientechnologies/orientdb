@@ -1276,7 +1276,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       final OStorage stg = currentDatabase.getStorage();
 
       if (stg instanceof OStorageRemoteThread) {
-        dumpDistributedConfiguration(true);
+        listServers();
       }
 
       listProperties();
