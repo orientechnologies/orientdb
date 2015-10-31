@@ -2658,12 +2658,14 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       return;
     else if (currentRecord instanceof ODocument) {
       ODocument rec = (ODocument) currentRecord;
-      message("\n+-------------------------------------------------------------------------------------------------+");
-      message("\n| Document - @class: %-37s @rid: %-15s @version: %-6d |", rec.getClassName(), rec.getIdentity().toString(),
-          rec.getVersion());
-      message("\n+-------------------------------------------------------------------------------------------------+");
+      if (rec.getClassName() != null || rec.getIdentity().isValid()) {
+        message("\n+-------------------------------------------------------------------------------------------------+");
+        message("\n| Document - @class: %-37s @rid: %-15s @version: %-6d |", rec.getClassName(), rec.getIdentity().toString(),
+            rec.getVersion());
+      }
+      message("\n+--------------------------+----------------------------------------------------------------------+");
       message("\n| %24s | %-68s |", "Name", "Value");
-      message("\n+-------------------------------------------------------------------------------------------------+");
+      message("\n+--------------------------+----------------------------------------------------------------------+");
       Object value;
       for (String fieldName : rec.fieldNames()) {
         value = rec.field(fieldName);
