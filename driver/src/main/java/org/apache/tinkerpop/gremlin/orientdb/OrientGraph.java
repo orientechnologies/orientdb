@@ -53,6 +53,16 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 @Graph.OptIn(Graph.OptIn.SUITE_STRUCTURE_STANDARD)
+@Graph.OptIn(Graph.OptIn.SUITE_STRUCTURE_INTEGRATE)
+@Graph.OptIn(Graph.OptIn.SUITE_STRUCTURE_PERFORMANCE)
+@Graph.OptIn(Graph.OptIn.SUITE_PROCESS_STANDARD)
+@Graph.OptIn(Graph.OptIn.SUITE_PROCESS_COMPUTER)
+@Graph.OptIn(Graph.OptIn.SUITE_PROCESS_PERFORMANCE)
+@Graph.OptIn(Graph.OptIn.SUITE_GROOVY_PROCESS_STANDARD)
+@Graph.OptIn(Graph.OptIn.SUITE_GROOVY_PROCESS_COMPUTER)
+@Graph.OptIn(Graph.OptIn.SUITE_GROOVY_ENVIRONMENT)
+@Graph.OptIn(Graph.OptIn.SUITE_GROOVY_ENVIRONMENT_INTEGRATE)
+@Graph.OptIn(Graph.OptIn.SUITE_GROOVY_ENVIRONMENT_PERFORMANCE)
 public final class OrientGraph implements Graph {
     static {
         TraversalStrategies.GlobalCache.registerStrategies(
