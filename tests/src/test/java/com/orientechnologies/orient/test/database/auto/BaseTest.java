@@ -5,6 +5,8 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -94,7 +96,7 @@ public abstract class BaseTest<T extends ODatabase> {
 
   @AfterClass
   public void afterClass() throws Exception {
-    if( !autoManageDatabase )
+    if (!autoManageDatabase)
       return;
 
     if (dropDb) {
@@ -205,5 +207,14 @@ public abstract class BaseTest<T extends ODatabase> {
 
   protected void setDropDb(final boolean dropDb) {
     this.dropDb = dropDb;
+  }
+
+  protected boolean skipTestIfRemote() {
+    final OStorage stg = ((ODatabaseDocumentTx) database).getStorage().getUnderlying();
+
+    if (!(stg instanceof OAbstractPaginatedStorage))
+      // ONLY PLOCAL AND MEMORY STORAGES SUPPORTED
+      return true;
+    return false;
   }
 }
