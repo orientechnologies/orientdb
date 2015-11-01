@@ -942,9 +942,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
       sendErrorDetails(current);
 
-      if (connection != null) {
-        serializeExceptionObject(current);
-      }
+      serializeExceptionObject(current);
+
 
       channel.flush();
 
