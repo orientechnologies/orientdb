@@ -134,6 +134,7 @@
             <class name="com.orientechnologies.orient.test.database.auto.SQLCreateVertexTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLDeleteEdgeTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SequenceTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.SQLBatchTest"/>
         </classes>
     </test>
     <test name="other-commands">
