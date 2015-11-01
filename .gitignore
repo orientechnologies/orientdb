@@ -49,3 +49,7 @@ local.properties
 ### m2e ###
 .classpath
 .project
+
+
+### jvm (https://github.com/caarlos0/jvm) ###
+.java-version
