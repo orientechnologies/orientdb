@@ -154,6 +154,7 @@
                     <testFailureIgnore>true</testFailureIgnore>
                     <redirectTestOutputToFile>true</redirectTestOutputToFile>
                     <argLine>${argLine} -Xmx2G</argLine>
+                    <reuseForks>false</reuseForks>
                 </configuration>
             </plugin>
             <plugin>
