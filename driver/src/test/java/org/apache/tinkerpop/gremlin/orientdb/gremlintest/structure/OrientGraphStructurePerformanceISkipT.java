@@ -34,6 +34,6 @@ import org.junit.runner.RunWith;
  */
 @RunWith(StructurePerformanceSuite.class)
 @GraphProviderClass(provider = OrientGraphProvider.class, graph = OrientGraph.class)
-public class OrientGraphStructurePerformanceIT {
+public class OrientGraphStructurePerformanceISkipT {
 
 }
