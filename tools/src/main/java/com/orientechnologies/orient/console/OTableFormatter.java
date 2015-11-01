@@ -61,7 +61,7 @@ public class OTableFormatter {
       if (iAfterDump != null)
         iAfterDump.call(record);
 
-      if (limit > -1 && fetched >= limit) {
+      if (limit > -1 && fetched > limit) {
         printHeaderLine(columns);
         out.message("\nLIMIT EXCEEDED: resultset contains more items not displayed (limit=" + limit + ")");
         return;
@@ -198,7 +198,7 @@ public class OTableFormatter {
 
   /**
    * Fill the column map computing the maximum size for a field.
-   * 
+   *
    * @param resultSet
    * @param limit
    * @return
