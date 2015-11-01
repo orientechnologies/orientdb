@@ -7,6 +7,12 @@
     <name>Apache TinkerPop :: OrientDB Gremlin</name>
     <description>TinkerPop3 driver for OrientDB</description>
     <url>https://github.com/mpollmeier/orientdb-gremlin/</url>
+    
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    </properties>
+    
     <developers>
         <developer>
             <name>Michael Pollmeier</name>
@@ -96,10 +102,40 @@
         </resources>
         <plugins>
             <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.7.5.201505241946</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.eluder.coveralls</groupId>
+                <artifactId>coveralls-maven-plugin</artifactId>
+                <version>4.0.0</version>
+                <executions>
+                    <execution>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <repoToken>VydEbanRpaocFLETAHcF2qUZohD4tXJ6e</repoToken>
+                </configuration>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
-                    <skipTests>false</skipTests>
+                    <redirectTestOutputToFile>true</redirectTestOutputToFile>
+                    <argLine>${argLine} -Xmx2G</argLine>
                 </configuration>
             </plugin>
             <plugin>
@@ -116,7 +152,7 @@
                 <configuration>
                     <testFailureIgnore>true</testFailureIgnore>
                     <redirectTestOutputToFile>true</redirectTestOutputToFile>
-                    <argLine>-Xmx2G</argLine>
+                    <argLine>${argLine} -Xmx2G</argLine>
                 </configuration>
             </plugin>
             <plugin>
