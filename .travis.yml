@@ -1,0 +1,8 @@
+language: java
+
+jdk:
+  - oraclejdk8
+  - oraclejdk9
+
+after_success:
+  - mvn resources:resources jacoco:merge jacoco:report coveralls:report -DrepoToken=VydEbanRpaocFLETAHcF2qUZohD4tXJ6e -Pcoveralls -N -B
