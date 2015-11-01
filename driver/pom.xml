@@ -116,6 +116,7 @@
                 <configuration>
                     <testFailureIgnore>true</testFailureIgnore>
                     <redirectTestOutputToFile>true</redirectTestOutputToFile>
+                    <argLine>-Xmx2G</argLine>
                 </configuration>
             </plugin>
             <plugin>

@@ -4,7 +4,7 @@ jdk:
   - oraclejdk8
 
 install:
-  - mvn -version
+  - mvn install -DskipTests=true -q -f driver/pom.xml
 
 script:
   - mvn install -B -f driver/pom.xml
