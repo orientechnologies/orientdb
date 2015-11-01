@@ -127,6 +127,7 @@
                     </execution>
                 </executions>
                 <configuration>
+                    <skip>${skipTests}</skip>
                     <repoToken>VydEbanRpaocFLETAHcF2qUZohD4tXJ6e</repoToken>
                 </configuration>
             </plugin>
