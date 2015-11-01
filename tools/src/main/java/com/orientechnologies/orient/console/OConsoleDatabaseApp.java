@@ -247,7 +247,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     message("OK");
 
-    listServers();
+    final ODocument distribCfg = getDistributedConfiguration();
+    if (distribCfg != null)
+      listServers();
   }
 
   @ConsoleCommand(aliases = {
@@ -816,21 +818,27 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     iQueryText = "select " + iQueryText;
 
-    final int limit;
+    final int queryLimit;
+    final int displayLimit;
     if (iQueryText.contains("limit")) {
-      limit = -1;
+      queryLimit = -1;
+      displayLimit = -1;
     } else {
-      limit = Integer.parseInt(properties.get("limit"));
+      // USE LIMIT + 1 TO DISCOVER IF MORE ITEMS ARE PRESENT
+      displayLimit = Integer.parseInt(properties.get("limit"));
+      queryLimit = displayLimit + 1;
     }
 
     final long start = System.currentTimeMillis();
-    setResultset((List<OIdentifiable>) currentDatabase.query(new OSQLSynchQuery<ODocument>(iQueryText, limit).setFetchPlan("*:0")));
+    setResultset(
+        (List<OIdentifiable>) currentDatabase.query(new OSQLSynchQuery<ODocument>(iQueryText, queryLimit).setFetchPlan("*:0")));
 
     float elapsedSeconds = getElapsedSecs(start);
 
-    dumpResultSet(limit);
+    dumpResultSet(displayLimit);
 
-    message("\n\n" + currentResultSet.size() + " item(s) found. Query executed in " + elapsedSeconds + " sec(s).");
+    long tot = displayLimit > -1 ? Math.min(currentResultSet.size(), displayLimit) : currentResultSet.size();
+    message("\n\n" + tot + " item(s) found. Query executed in " + elapsedSeconds + " sec(s).");
   }
 
   @ConsoleCommand(splitInWords = false, description = "Move from current record by evaluating a predicate against current record")
@@ -1128,11 +1136,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     resetResultSet();
 
-    final int limit = Integer.parseInt(properties.get("limit"));
+    final OIdentifiableIterator<?> it = currentDatabase.browseClass(iClassName);
 
-    OIdentifiableIterator<?> it = currentDatabase.browseClass(iClassName);
-
-    browseRecords(limit, it);
+    browseRecords(it);
   }
 
   @ConsoleCommand(description = "Browse all records of a cluster", onlineHelp = "Console-Command-Browse-Cluster")
@@ -1142,11 +1148,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     resetResultSet();
 
-    final int limit = Integer.parseInt(properties.get("limit"));
-
     final ORecordIteratorCluster<?> it = currentDatabase.browseCluster(iClusterName);
 
-    browseRecords(limit, it);
+    browseRecords(it);
   }
 
   @ConsoleCommand(aliases = {
@@ -1339,6 +1343,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     }
 
     message("\nCLASS '" + cls.getName() + "'\n");
+
+    final long count = currentDatabase.countClass(cls.getName(), false);
+    message("\nRecords..............: " + count);
 
     if (cls.getShortName() != null)
       message("\nAlias................: " + cls.getShortName());
@@ -1672,9 +1679,14 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   public void listServers() {
     message("\n\nCONFIGURED SERVERS");
 
+    final ODocument distribCfg = getDistributedConfiguration();
+    if (distribCfg == null) {
+      message("\n\nDistributed configuration is not active, cannot retrieve server list");
+      return;
+    }
+
     final List<OIdentifiable> servers = new ArrayList<OIdentifiable>();
 
-    final ODocument distribCfg = getDistributedConfiguration();
     final Collection<ODocument> members = distribCfg.field("members");
 
     if (members != null)
@@ -2713,7 +2725,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     }
   }
 
-  private void browseRecords(final int limit, final OIdentifiableIterator<?> it) {
+  private void browseRecords(final OIdentifiableIterator<?> it) {
+    final int limit = Integer.parseInt(properties.get("limit"));
+
     final OTableFormatter tableFormatter = new OTableFormatter(this).setMaxWidthSize(getWindowSize())
         .setMaxMultiValueEntries(maxMultiValueEntries);
 
