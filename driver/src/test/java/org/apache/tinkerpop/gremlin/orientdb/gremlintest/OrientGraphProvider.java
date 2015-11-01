@@ -1,4 +1,4 @@
-package org.apache.tinkerpop.gremlin.orientdb;
+package org.apache.tinkerpop.gremlin.orientdb.gremlintest;
 
 import org.apache.commons.configuration.Configuration;
 import org.apache.tinkerpop.gremlin.AbstractGraphProvider;
@@ -16,6 +16,17 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import org.apache.commons.configuration.Configuration;
+import org.apache.tinkerpop.gremlin.AbstractGraphProvider;
+import org.apache.tinkerpop.gremlin.LoadGraphWith;
+import org.apache.tinkerpop.gremlin.orientdb.OrientEdge;
+import org.apache.tinkerpop.gremlin.orientdb.OrientElement;
+import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
+import org.apache.tinkerpop.gremlin.orientdb.OrientProperty;
+import org.apache.tinkerpop.gremlin.orientdb.OrientVertex;
+import org.apache.tinkerpop.gremlin.orientdb.OrientVertexProperty;
+import org.apache.tinkerpop.gremlin.structure.Graph;
 
 public class OrientGraphProvider extends AbstractGraphProvider {
     @Override
