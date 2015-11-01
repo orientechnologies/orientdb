@@ -93,6 +93,7 @@
             <artifactId>rexster-core</artifactId>
             <version>${blueprints.version}</version>
             <scope>provided</scope>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>com.tinkerpop.blueprints</groupId>
@@ -104,11 +105,13 @@
             <groupId>com.tinkerpop.gremlin</groupId>
             <artifactId>gremlin-java</artifactId>
             <version>${blueprints.version}</version>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>com.tinkerpop.gremlin</groupId>
             <artifactId>gremlin-groovy</artifactId>
             <version>${blueprints.version}</version>
+            <optional>true</optional>
         </dependency>
     </dependencies>
     <build>

@@ -22,7 +22,6 @@ package com.orientechnologies.orient.graph.gremlin;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandManager;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -52,7 +51,7 @@ import java.util.Map.Entry;
 
 public class OGremlinHelper {
   private static final String                     PARAM_OUTPUT = "output";
-  private static GremlinGroovyScriptEngineFactory factory      = new GremlinGroovyScriptEngineFactory();
+  private static GremlinGroovyScriptEngineFactory factory;
   private static OGremlinHelper                   instance     = new OGremlinHelper();
 
   private int                                     maxPool      = 50;
@@ -62,9 +61,17 @@ public class OGremlinHelper {
   }
 
   public OGremlinHelper() {
+    try {
+      factory = new GremlinGroovyScriptEngineFactory();
+    }catch( java.lang.NoClassDefFoundError e ){
+      OLogManager.instance().warn(this, "GREMLIN language not available (not in classpath)");
+    }
     OCommandManager.instance().registerRequester("gremlin", OCommandGremlin.class);
     OCommandManager.instance().registerExecutor(OCommandGremlin.class, OCommandGremlinExecutor.class);
-    final long timeout = OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.getValueAsLong();
+  }
+
+  public static boolean isGremlinAvailable(){
+    return factory != null;
   }
 
   @SuppressWarnings("unchecked")
