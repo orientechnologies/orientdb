@@ -1,29 +1,5 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
-import static org.apache.tinkerpop.gremlin.orientdb.StreamUtils.asStream;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
-
-import org.apache.commons.configuration.Configuration;
-import org.apache.commons.lang.NotImplementedException;
-import org.apache.tinkerpop.gremlin.orientdb.traversal.strategy.optimization.OrientGraphStepStrategy;
-import org.apache.tinkerpop.gremlin.process.computer.GraphComputer;
-import org.apache.tinkerpop.gremlin.process.traversal.TraversalStrategies;
-import org.apache.tinkerpop.gremlin.structure.Edge;
-import org.apache.tinkerpop.gremlin.structure.Element;
-import org.apache.tinkerpop.gremlin.structure.Graph;
-import org.apache.tinkerpop.gremlin.structure.Transaction;
-import org.apache.tinkerpop.gremlin.structure.Vertex;
-import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
@@ -39,18 +15,27 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.index.OPropertyIndexDefinition;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
-import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.NotImplementedException;
+import org.apache.tinkerpop.gremlin.orientdb.traversal.strategy.optimization.OrientGraphStepStrategy;
+import org.apache.tinkerpop.gremlin.process.computer.GraphComputer;
+import org.apache.tinkerpop.gremlin.process.traversal.TraversalStrategies;
+import org.apache.tinkerpop.gremlin.structure.*;
+import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
+
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+
+import static org.apache.tinkerpop.gremlin.orientdb.StreamUtils.asStream;
 
 @Graph.OptIn(Graph.OptIn.SUITE_STRUCTURE_STANDARD)
 @Graph.OptIn(Graph.OptIn.SUITE_STRUCTURE_INTEGRATE)
@@ -427,46 +412,21 @@ public final class OrientGraph implements Graph {
             config.setProperty("metadata", defaultMetadata);
     }
 
-    /**
-     * Creates an automatic indexing structure for indexing provided key for element class.
-     *
-     * @param key           the key to create the index for
-     * @param label         the element label
-     * @param configuration a collection of parameters for the underlying index implementation:
-     *                      <ul>
-     *                      <li>"type" is the index type between the supported types (UNIQUE, NOTUNIQUE, FULLTEXT). The default type is NOT_UNIQUE
-     *                      <li>"class" is the class to index when it's a custom type derived by Vertex (V) or Edge (E)
-     *                      <li>"keytype" to use a key type different by OType.STRING,</li>
-     *                      </li>
-     *                      </ul>
-     * @param <T>           the element class specification
-     */
+
     public <T extends Element> void createVertexIndex(final String key, final String label, final Configuration configuration) {
         String className = OrientVertexType.CLASS_NAME + "_" + label;
         createVertexClass(className);
         createIndex(key, className, configuration);
     }
 
-    /**
-     * Creates an automatic indexing structure for indexing provided key for element class.
-     *
-     * @param key           the key to create the index for
-     * @param label         the element label
-     * @param configuration a collection of parameters for the underlying index implementation:
-     *                      <ul>
-     *                      <li>"type" is the index type between the supported types (UNIQUE, NOTUNIQUE, FULLTEXT). The default type is NOT_UNIQUE
-     *                      <li>"class" is the class to index when it's a custom type derived by Vertex (V) or Edge (E)
-     *                      <li>"keytype" to use a key type different by OType.STRING,</li>
-     *                      </li>
-     *                      </ul>
-     * @param <T>           the element class specification
-     */
+
     public <T extends Element> void createEdgeIndex(final String key, final String label, final Configuration configuration) {
         String className = OrientEdgeType.CLASS_NAME + "_" + label;
         createEdgeClass(className);
         createIndex(key, className, configuration);
     }
 
+    @SuppressWarnings({"rawtypes"})
     private <T extends Element> void createIndex(final String key, String className, final Configuration configuration) {
         makeActive();
 

@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 
-public class OrientElement implements Element {
+public abstract class OrientElement implements Element {
 
     private static final Map<String, String> INTERNAL_CLASSES_TO_TINKERPOP_CLASSES;
     static {
@@ -59,14 +59,6 @@ public class OrientElement implements Element {
         doc.field(key, value);
         doc.save();
         return new OrientProperty<>(key, value, this);
-    }
-
-    public void remove() {
-        ODocument doc = getRawDocument();
-        if (doc.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
-            doc.load();
-        }
-        doc.delete();
     }
 
     public <V> Iterator<? extends Property<V>> properties(final String... propertyKeys) {
