@@ -20,13 +20,6 @@
 
 package com.orientechnologies.orient.core.db.document;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.Callable;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.listener.OListenerManger;
@@ -112,6 +105,13 @@ import com.orientechnologies.orient.core.tx.OTransactionNoTx;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.concurrent.Callable;
 
 @SuppressWarnings("unchecked")
 public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>implements ODatabaseDocumentInternal {
@@ -2832,7 +2832,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
    */
   @Deprecated
   public void setCurrentDatabaseInThreadLocal() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(this);
+    activateOnCurrentThread();
   }
 
   /**
@@ -2840,13 +2840,16 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
    */
   @Override
   public ODatabaseDocumentTx activateOnCurrentThread() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(this);
+    final ODatabaseRecordThreadLocal tl = ODatabaseRecordThreadLocal.INSTANCE;
+    if (tl != null)
+      tl.set(this);
     return this;
   }
 
   @Override
   public boolean isActiveOnCurrentThread() {
-    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseRecordThreadLocal tl = ODatabaseRecordThreadLocal.INSTANCE;
+    final ODatabaseDocumentInternal db = tl != null ? tl.getIfDefined() : null;
     return db == this;
   }
 
@@ -3086,7 +3089,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
   }
 
   public void checkIfActive() {
-    final ODatabaseDocumentInternal currentDatabase = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseRecordThreadLocal tl = ODatabaseRecordThreadLocal.INSTANCE;
+    final ODatabaseDocumentInternal currentDatabase = tl != null ? tl.get() : null;
     if (currentDatabase != this)
       throw new IllegalStateException("Current database instance (" + toString() + ") is not active on current thread ("
           + Thread.currentThread() + "). Current active database is: " + currentDatabase);
