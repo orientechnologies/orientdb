@@ -38,6 +38,12 @@ public final class OrientGraphFactory {
         return getNoTx(true, true);
     }
 
+    public OrientGraph getTx() {
+        // TODO add transaction enabled setting? Otherwise getTx should fail for 
+        // graphs that were created using getNoTx()
+        return OrientGraph.open(getConfiguration(true, true));
+    }
+
     protected Configuration getConfiguration(boolean create, boolean open) {
         return new BaseConfiguration() {{
             setProperty(Graph.GRAPH, OrientGraph.class.getName());

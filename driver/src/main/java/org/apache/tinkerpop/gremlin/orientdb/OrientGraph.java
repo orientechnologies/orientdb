@@ -89,8 +89,6 @@ public final class OrientGraph implements Graph {
     }
 
     public void makeActive() {
-//        activeGraph.set(this);
-
         final ODatabaseDocument tlDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
         if (database != null && tlDb != database) {
             database.activateOnCurrentThread();
@@ -284,8 +282,61 @@ public final class OrientGraph implements Graph {
     @Override
     public Transaction tx() {
         makeActive();
-        throw new NotImplementedException();
+        return new OrientTransaction(this);
     }
+
+    /**
+     * Checks if the Graph has been closed.
+     *
+     * @return True if it is closed, otherwise false
+     */
+    public boolean isClosed() {
+        makeActive();
+        return database == null || database.isClosed();
+    }
+
+    public void begin() {
+        makeActive();
+
+        final boolean txBegun = database.getTransaction().isActive();
+        if (!txBegun) {
+            database.begin();
+            // TODO use setting to determine behavior settings.isUseLog()
+            database.getTransaction().setUsingLog(true);
+        }
+    }
+
+    public void commit() {
+        makeActive();
+
+        if (database == null) {
+            return;
+        }
+
+        database.commit();
+        if (isAutoStartTx()) {
+            begin();
+        }
+    }
+
+    public void rollback() {
+        makeActive();
+
+        if (database == null) {
+            return;
+        }
+
+        database.rollback();
+        if (isAutoStartTx()) {
+            begin();
+        }
+    }
+
+    public boolean isAutoStartTx() {
+        // TODO use configuration to determine behavior
+        return true;
+    }
+
 
     @Override
     public Variables variables() {

@@ -3,6 +3,7 @@ package org.apache.tinkerpop.gremlin.orientdb;
 import org.apache.tinkerpop.gremlin.structure.Graph.Features;
 import org.apache.tinkerpop.gremlin.structure.Graph.Features.VertexFeatures;
 import org.apache.tinkerpop.gremlin.structure.Graph.Features.VertexPropertyFeatures;
+import org.apache.tinkerpop.gremlin.structure.Graph.Features.VertexFeatures;
 import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
 
 public class ODBFeatures {
@@ -107,7 +108,7 @@ public class ODBFeatures {
 
         @Override
         public boolean supportsTransactions() {
-            return false;
+            return true;
         }
 
         @Override
