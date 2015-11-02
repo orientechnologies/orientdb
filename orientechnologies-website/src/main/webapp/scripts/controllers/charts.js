@@ -124,7 +124,7 @@ angular.module('webappApp')
       var chartData = {
         data: {
           x: "x",
-          columns: [ ['x'], ["open in month"], ["closed in month"], ["total still open"]],
+          columns: [ ['x'], ["open in month"],  ["total still open"], ["closed in month"]],
           type: "bar"
         },
         bar: {
@@ -171,59 +171,48 @@ angular.module('webappApp')
 
 
         members.forEach(function (item, idx, ar) {
-
           chartData.data.columns[0][idx + 1] = item;
           chartData.data.columns[1][idx + 1] = 0;
+          chartData.data.columns[2][idx + 1] = 0;
+          chartData.data.columns[3][idx + 1] = 0;
         });
 
 
-        var chart = c3.generate(chartData);
+
 
         Organization.all("reports/openIssuesPerDeveloper/"+$scope.clientOnly).getList().then(function (data) {
-          var chartData  = {columns:[["total still open"]]};
-          members.forEach(function (item, idx, ar) {
-            chartData.columns[0][idx+1] = 0;
-          });
+
           data.forEach(function (item, idx, ar) {
             var index = members.indexOf(item.label);
             if(index != -1) {
-              chartData.columns[0][index+1] = parseInt(item.value, 10);
+              chartData.data.columns[2][index+1] = parseInt(item.value, 10);
             }
           });
 
-          chart.load(chartData);
+          Organization.all("reports/closedIssuesPerDeveloper/"+year+"/"+month+"/"+$scope.clientOnly).getList().then(function (data) {
+            data.forEach(function (item, idx, ar) {
+              var index = members.indexOf(item.label);
+              if(index != -1) {
+                chartData.data.columns[3][index+1] = parseInt(item.value, 10);
+              }
+            });
+
+            Organization.all("reports/openIssuesPerDeveloper/"+year+"/"+month+"/"+$scope.clientOnly).getList().then(function (data) {
+              data.forEach(function (item, idx, ar) {
+                var index = members.indexOf(item.label);
+                if(index != -1) {
+                  chartData.data.columns[1][index+1] = parseInt(item.value, 10);
+                }
+              });
+              var chart = c3.generate(chartData);
+            });
+          });
         });
 
 
-        Organization.all("reports/openIssuesPerDeveloper/"+year+"/"+month+"/"+$scope.clientOnly).getList().then(function (data) {
-          var chartData  = {columns:[["open in month"]]};
-          members.forEach(function (item, idx, ar) {
-            chartData.columns[0][idx+1] = 0;
-          });
-          data.forEach(function (item, idx, ar) {
-            var index = members.indexOf(item.label);
-            if(index != -1) {
-              chartData.columns[0][index+1] = parseInt(item.value, 10);
-            }
-          });
 
-          chart.load(chartData);
-        });
 
-        Organization.all("reports/closedIssuesPerDeveloper/"+year+"/"+month+"/"+$scope.clientOnly).getList().then(function (data) {
-          var chartData  = {columns:[["closed in month"]]};
-          members.forEach(function (item, idx, ar) {
-            chartData.columns[0][idx+1] = 0;
-          });
-          data.forEach(function (item, idx, ar) {
-            var index = members.indexOf(item.label);
-            if(index != -1) {
-              chartData.columns[0][index+1] = parseInt(item.value, 10);
-            }
-          });
 
-          chart.load(chartData);
-        });
 
       });
 
