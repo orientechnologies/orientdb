@@ -306,6 +306,12 @@ angular.module('webappApp')
     //-------------- open/closed per client ---------------------
     //-----------------------------------------------------------
     $scope.openClosedPerClient  = function() {
+
+      $scope.showIssueType=true;
+
+      var label = ($scope.issueType == null? false:$scope.issueType.name) || "all";
+      label = encodeURI(label);
+
       var chartData = {
         data: {
           x: "x",
@@ -328,7 +334,12 @@ angular.module('webappApp')
         }
       };
       chartData.data.onclick = function(d, element){
-        $location.path("/issues").search({q: "is:open client:\""+chartData.data.columns[0][d.x+1]+"\""});
+
+        var queryString = "is:open client:\""+chartData.data.columns[0][d.x+1]+"\"";
+        if($scope.issueType != null){
+          queryString+=(" label:\""+$scope.issueType.name+"\"");
+        }
+        $location.path("/issues").search({q: queryString});
         $scope.$apply();
       }
 
@@ -361,7 +372,7 @@ angular.module('webappApp')
 
         var chart = c3.generate(chartData);
 
-        Organization.all("reports/issuesPerClient").getList().then(function (data) {
+        Organization.all("reports/issuesPerClient/"+label).getList().then(function (data) {
           var chartData  = {columns:[["total"]]};
           members.forEach(function (item, idx, ar) {
             chartData.columns[0][idx+1] = 0;
@@ -375,7 +386,7 @@ angular.module('webappApp')
 
           chart.load(chartData);
 
-          Organization.all("reports/openIssuesPerClient").getList().then(function (data) {
+          Organization.all("reports/openIssuesPerClient/"+label).getList().then(function (data) {
             var chartData  = {columns:[["open"]]};
             members.forEach(function (item, idx, ar) {
               chartData.columns[0][idx+1] = 0;
@@ -389,7 +400,7 @@ angular.module('webappApp')
 
             chart.load(chartData);
 
-            Organization.all("reports/closedIssuesPerClient").getList().then(function (data) {
+            Organization.all("reports/closedIssuesPerClient/"+label).getList().then(function (data) {
               var chartData  = {columns:[["closed"]]};
               members.forEach(function (item, idx, ar) {
                 chartData.columns[0][idx+1] = 0;
