@@ -210,7 +210,7 @@ public final class OrientVertex extends OrientElement implements Vertex {
             allEdges.next().remove();
         }
 
-        doc.delete();
+        doc.getDatabase().delete(doc.getIdentity());
     }
 
 

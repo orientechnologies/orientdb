@@ -98,7 +98,7 @@ public class OrientEdge extends OrientElement implements Edge {
 
         removeLink(Direction.IN);
         removeLink(Direction.OUT);
-        doc.delete();
+        doc.getDatabase().delete(doc.getIdentity());
     }
 
     private void removeLink( Direction direction) {
