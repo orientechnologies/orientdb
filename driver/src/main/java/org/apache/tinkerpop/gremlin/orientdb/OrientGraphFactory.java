@@ -31,7 +31,7 @@ public final class OrientGraphFactory {
      */
     //TODO: allow to open with these properties
     public OrientGraph getNoTx(boolean create, boolean open) {
-        return OrientGraph.open(getConfiguration(create, open));
+        return OrientGraph.open(getConfiguration(create, open, false));
     }
 
     public OrientGraph getNoTx() {
@@ -39,12 +39,10 @@ public final class OrientGraphFactory {
     }
 
     public OrientGraph getTx() {
-        // TODO add transaction enabled setting? Otherwise getTx should fail for 
-        // graphs that were created using getNoTx()
-        return OrientGraph.open(getConfiguration(true, true));
+        return OrientGraph.open(getConfiguration(true, true, true));
     }
 
-    protected Configuration getConfiguration(boolean create, boolean open) {
+    protected Configuration getConfiguration(boolean create, boolean open, boolean transactional) {
         return new BaseConfiguration() {{
             setProperty(Graph.GRAPH, OrientGraph.class.getName());
             setProperty(OrientGraph.CONFIG_URL, url);
@@ -52,6 +50,7 @@ public final class OrientGraphFactory {
             setProperty(OrientGraph.CONFIG_PASS, password);
             setProperty(OrientGraph.CONFIG_CREATE, create);
             setProperty(OrientGraph.CONFIG_OPEN, open);
+            setProperty(OrientGraph.CONFIG_TRANSACTIONAL, transactional);
         }};
     }
 

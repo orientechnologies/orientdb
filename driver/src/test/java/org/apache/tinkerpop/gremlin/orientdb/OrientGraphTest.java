@@ -6,7 +6,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Graph;
@@ -80,11 +79,32 @@ public class OrientGraphTest {
 
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void testGraphTransactionOnNoTrxOrientGraph() throws Exception {
+
+        Object id;
+        try (Graph graph = graphFactory.getTx()) {
+            try (Transaction tx = graph.tx()) {
+                tx.onClose(COMMIT);
+                Vertex vertex = graph.addVertex();
+                id = vertex.id();
+                vertex.property("test", TEST_VALUE);
+            }
+        }
+        assertNotNull("A vertex should have been created in the first transaction", id);
+
         try (Graph graph = graphFactory.getNoTx()) {
-            graph.tx();
-            fail("It should not be possible to access the transaction object when using a no trx graph");
+            try (Transaction tx = graph.tx()) {
+                tx.onClose(ROLLBACK);
+                Vertex vertex = graph.vertices(id).next();
+                assertNotNull(vertex);
+                vertex.property("test", "changed");
+            }
+        }
+
+        try (Graph graph = graphFactory.getTx()) {
+            Vertex vertex = graph.vertices(id).next();
+            assertEquals("The property value should have been changed since the graph was used in noTx mode and all actions are atomic.", "changed", vertex.value("test"));
         }
     }
 

@@ -61,8 +61,10 @@ public final class OrientGraph implements Graph {
     public static String CONFIG_PASS = "orient-pass";
     public static String CONFIG_CREATE = "orient-create";
     public static String CONFIG_OPEN = "orient-open";
+    public static String CONFIG_TRANSACTIONAL = "orient-transactional";
 
     protected final ODatabaseDocumentTx database;
+    protected final Configuration config;
     protected final String url;
 
     public static OrientGraph open(final Configuration configuration) {
@@ -70,6 +72,7 @@ public final class OrientGraph implements Graph {
     }
 
     public OrientGraph(Configuration config) {
+        this.config = config;
         this.url = config.getString(CONFIG_URL, "memory:test-" + Math.random());
         this.database = getDatabase(url,
             config.getString(CONFIG_USER, "admin"),
@@ -78,12 +81,6 @@ public final class OrientGraph implements Graph {
             config.getBoolean(CONFIG_OPEN, true));
     }
 
-    public OrientGraph(ODatabaseDocumentTx database) {
-        this.url = database.getURL();
-        this.database = database;
-    }
-
-    @Override
     public Features features() {
         return ODBFeatures.OrientFeatures.INSTANCE;
     }
@@ -309,6 +306,9 @@ public final class OrientGraph implements Graph {
     public void commit() {
         makeActive();
 
+        if (!config.getBoolean(CONFIG_TRANSACTIONAL)) {
+            return;
+        }
         if (database == null) {
             return;
         }
@@ -321,6 +321,10 @@ public final class OrientGraph implements Graph {
 
     public void rollback() {
         makeActive();
+        
+        if (!config.getBoolean(CONFIG_TRANSACTIONAL)) {
+            return;
+        }
 
         if (database == null) {
             return;
