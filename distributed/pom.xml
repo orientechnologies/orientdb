@@ -29,6 +29,7 @@
         <groupId>com.orientechnologies</groupId>
         <artifactId>orientdb-parent</artifactId>
         <version>2.2.0-SNAPSHOT</version>
+        <relativePath>../</relativePath>
     </parent>
 
     <artifactId>orientdb-distributed</artifactId>
@@ -91,6 +92,13 @@
     </profiles>
 
     <dependencies>
+
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-test-commons</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-server</artifactId>
@@ -108,12 +116,6 @@
             <artifactId>orientdb-graphdb</artifactId>
             <version>${project.version}</version>
             <!-- SET SCOPE=RUNTIME TO ENABLE STARTING DISTRIBUTED SERVER IN IDE (IntelliJ)-->
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.10</version>
             <scope>test</scope>
         </dependency>
         <dependency>

@@ -175,6 +175,7 @@
         <maven.compiler.target>1.6</maven.compiler.target>
         <maven.build.timestamp.format>yyyy-MM-dd HH:mm:ssZ</maven.build.timestamp.format>
         <implementation.build>${scmBranch}@r${buildNumber}</implementation.build>
+        <blueprints.version>2.6.0</blueprints.version>
         <!-- | Configuration properties for the OSGi maven-bundle-plugin -->
         <osgi.fragment.host/>
         <osgi.export>${project.groupId}.*;version=${project.version};-noimport:=true</osgi.export>
