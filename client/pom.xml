@@ -52,6 +52,7 @@
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-test-commons</artifactId>
             <version>${project.version}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

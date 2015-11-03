@@ -10,7 +10,7 @@
     the specific language governing permissions and ~ limitations under the License. -->
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
@@ -78,6 +78,24 @@
             <artifactId>orientdb-graphdb</artifactId>
             <version>${project.version}</version>
         </dependency>
+
+        <!-- #5256 removed dep from orientdb-graphdb -->
+        <dependency>
+            <groupId>com.tinkerpop.rexster</groupId>
+            <artifactId>rexster-core</artifactId>
+            <version>${blueprints.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.tinkerpop.gremlin</groupId>
+            <artifactId>gremlin-java</artifactId>
+            <version>${blueprints.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.tinkerpop.gremlin</groupId>
+            <artifactId>gremlin-groovy</artifactId>
+            <version>${blueprints.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-etl</artifactId>
@@ -93,6 +111,8 @@
             <artifactId>orientdb-jdbc</artifactId>
             <version>${project.version}</version>
         </dependency>
+
+
     </dependencies>
 
     <profiles>
@@ -129,7 +149,7 @@
                     </plugin>
                 </plugins>
             </build>
-        </profile>    
+        </profile>
         <profile>
             <id>localDeploy</id>
             <activation>
