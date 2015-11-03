@@ -108,7 +108,7 @@ public class ODBFeatures {
 
         @Override
         public boolean supportsTransactions() {
-            return transactionalGraph;
+            return true;
         }
 
         @Override
