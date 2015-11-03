@@ -1,7 +1,6 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
 import org.apache.tinkerpop.gremlin.structure.Graph.Features;
-import org.apache.tinkerpop.gremlin.structure.Graph.Features.VertexFeatures;
 import org.apache.tinkerpop.gremlin.structure.Graph.Features.VertexPropertyFeatures;
 import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
 
@@ -9,14 +8,17 @@ public class ODBFeatures {
 
     public static class OrientFeatures implements Features {
 
-        static final OrientFeatures INSTANCE = new OrientFeatures();
+        static final OrientFeatures INSTANCE_NOTX = new OrientFeatures(false);
+        static final OrientFeatures INSTANCE_TX = new OrientFeatures(true);
 
-        private OrientFeatures() {
+      private OrientGraphFeatures graphFeatures;
+        private OrientFeatures(boolean transactionalGraph) {
+            this.graphFeatures = new OrientGraphFeatures(transactionalGraph);
         }
 
         @Override
         public GraphFeatures graph() {
-            return OrientGraphFeatures.INSTANCE;
+            return graphFeatures;
         }
 
         @Override
@@ -72,8 +74,7 @@ public class ODBFeatures {
         }
 
         @Override
-        public VertexPropertyFeatures properties()
-        {
+        public VertexPropertyFeatures properties() {
             return OrientVertexPropertyFeatures.INSTANCE;
         }
 
@@ -95,9 +96,9 @@ public class ODBFeatures {
 
     public static class OrientGraphFeatures implements Features.GraphFeatures {
 
-        static final OrientGraphFeatures INSTANCE = new OrientGraphFeatures();
-
-        private OrientGraphFeatures() {
+      protected final boolean transactionalGraph;
+        private OrientGraphFeatures(boolean transactionalGraph) {
+            this.transactionalGraph = transactionalGraph;
         }
 
         @Override
@@ -107,7 +108,7 @@ public class ODBFeatures {
 
         @Override
         public boolean supportsTransactions() {
-            return false;
+            return transactionalGraph;
         }
 
         @Override
@@ -138,22 +139,22 @@ public class ODBFeatures {
 
       @Override
       public boolean supportsNumericIds() {
-        return false;
+           return false;
       }
 
       @Override
       public boolean supportsStringIds() {
-        return false;
+           return false;
       }
 
       @Override
       public boolean supportsUserSuppliedIds() {
-        return false;
+           return false;
       }
 
       @Override
       public boolean supportsUuidIds() {
-        return false;
+           return false;
       }
 
       @Override

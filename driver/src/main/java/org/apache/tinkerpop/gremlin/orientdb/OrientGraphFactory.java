@@ -31,14 +31,18 @@ public final class OrientGraphFactory {
      */
     //TODO: allow to open with these properties
     public OrientGraph getNoTx(boolean create, boolean open) {
-        return OrientGraph.open(getConfiguration(create, open));
+        return OrientGraph.open(getConfiguration(create, open, false));
     }
 
     public OrientGraph getNoTx() {
         return getNoTx(true, true);
     }
 
-    protected Configuration getConfiguration(boolean create, boolean open) {
+    public OrientGraph getTx() {
+        return OrientGraph.open(getConfiguration(true, true, true));
+    }
+
+    protected Configuration getConfiguration(boolean create, boolean open, boolean transactional) {
         return new BaseConfiguration() {{
             setProperty(Graph.GRAPH, OrientGraph.class.getName());
             setProperty(OrientGraph.CONFIG_URL, url);
@@ -46,6 +50,7 @@ public final class OrientGraphFactory {
             setProperty(OrientGraph.CONFIG_PASS, password);
             setProperty(OrientGraph.CONFIG_CREATE, create);
             setProperty(OrientGraph.CONFIG_OPEN, open);
+            setProperty(OrientGraph.CONFIG_TRANSACTIONAL, transactional);
         }};
     }
 
