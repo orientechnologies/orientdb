@@ -22,12 +22,11 @@ import com.orientechnologies.lucene.query.QueryContext;
 import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.document.Document;
-
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexEngine;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.document.Document;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
@@ -45,13 +44,17 @@ public interface OLuceneIndexEngine extends OIndexEngine {
   public String indexName();
 
   public abstract void onRecordAddedToResultSet(QueryContext queryContext, OContextualRecordId recordId, Document ret,
-                                                ScoreDoc score);
+      ScoreDoc score);
 
   public Document buildDocument(Object key, OIdentifiable value);
 
   public Query buildQuery(Object query);
 
-  public Analyzer analyzer(String field);
+  //  public Analyzer analyzer(String field);
+
+  public Analyzer indexAnalyzer();
+
+  public Analyzer queryAnalyzer();
 
   public boolean remove(Object key, OIdentifiable value);
 
@@ -64,6 +67,5 @@ public interface OLuceneIndexEngine extends OIndexEngine {
   public OLuceneTxChanges buildTxChanges() throws IOException;
 
   public Query deleteQuery(Object key, OIdentifiable value);
-
 
 }

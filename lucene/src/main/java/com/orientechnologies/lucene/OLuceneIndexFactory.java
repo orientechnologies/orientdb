@@ -50,6 +50,7 @@ import java.util.*;
 public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleListener {
 
   public static final String LUCENE_ALGORITHM = "LUCENE";
+  public static final String LUCENEEXP_ALGORITHM = "LUCENEEXP";
 
   private static final Set<String> TYPES;
   private static final Set<String> ALGORITHMS;
@@ -65,6 +66,7 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
   static {
     final Set<String> algorithms = new HashSet<String>();
     algorithms.add(LUCENE_ALGORITHM);
+    algorithms.add(LUCENEEXP_ALGORITHM);
     ALGORITHMS = Collections.unmodifiableSet(algorithms);
   }
 
@@ -126,13 +128,13 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
                  .info(this, "create index - database:: %s , indexName:: %s , algo:: %s , valuecontalgo:: %s", database.getName(),
                        name, algorithm, valueContainerAlgorithm);
       if (!db2luceneindexes.containsKey(database.getName())) db2luceneindexes.put(name, new OLuceneFullTextExpIndex(name, indexType,
-                                                                                                                    LUCENE_ALGORITHM,
+                                                                                                                    LUCENEEXP_ALGORITHM,
                                                                                                                     version,
                                                                                                                     storage,
                                                                                                                     valueContainerAlgorithm,
                                                                                                                     metadata));
 
-      return new OLuceneFullTextExpIndex(name, indexType, LUCENE_ALGORITHM, version, storage, valueContainerAlgorithm, metadata);
+      return new OLuceneFullTextExpIndex(name, indexType, LUCENEEXP_ALGORITHM, version, storage, valueContainerAlgorithm, metadata);
 
     }
     throw new OConfigurationException("Unsupported type : " + algorithm);
@@ -142,22 +144,22 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
   public OIndexEngine createIndexEngine(String algorithm, String name, Boolean durableInNonTxMode, OStorage storage, int version,
                                         Map<String, String> engineProperties) {
 
-    return new OLuceneIndexEngineDelegate(name, durableInNonTxMode, storage, version);
 
-//    if (LUCENE_ALGORITHM.equalsIgnoreCase(algorithm)) {
-//      final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-//
-//      OLogManager.instance()
-//                 .info(this, "CREATE ENGINE database:: %s , name:: %s , algoritmh:: %s", database.getName(), name, algorithm);
-//      if (!db2luceneEngine.containsKey(database)) {
-//        OLogManager.instance()
-//                   .info(this, "REGISTERING name:: %s , algoritmh:: %s , engProps:: %s", name, algorithm, engineProperties);
-//
-//        db2luceneEngine.put(database, new OLuceneStorage(name, new ODocBuilder(), new OQueryBuilderImpl()));
-//
-//      }
-//      return new OLuceneFullTextExpIndexEngine(name, db2luceneEngine.get(database), new ODocBuilder(), new OQueryBuilderImpl());
-//    }
+    if (LUCENEEXP_ALGORITHM.equalsIgnoreCase(algorithm)) {
+      final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+
+      OLogManager.instance()
+                 .info(this, "CREATE ENGINE database:: %s , name:: %s , algoritmh:: %s", database.getName(), name, algorithm);
+      if (!db2luceneEngine.containsKey(database)) {
+        OLogManager.instance()
+                   .info(this, "REGISTERING name:: %s , algoritmh:: %s , engProps:: %s", name, algorithm, engineProperties);
+
+        db2luceneEngine.put(database, new OLuceneStorage(name, new ODocBuilder(), new OQueryBuilderImpl()));
+
+      }
+      return new OLuceneFullTextExpIndexEngine(name, db2luceneEngine.get(database), new ODocBuilder(), new OQueryBuilderImpl());
+    }
+    return new OLuceneIndexEngineDelegate(name, durableInNonTxMode, storage, version);
 
   }
 

@@ -47,7 +47,7 @@ public class OLuceneTxResultSet extends OLuceneAbstractResultSet {
     super(manager, queryContext);
 
     deletedMatchCount = calculateDeletedMatch();
-    indexName =manager.indexName();
+    indexName = manager.indexName();
   }
 
   private int calculateDeletedMatch() {
@@ -60,10 +60,10 @@ public class OLuceneTxResultSet extends OLuceneAbstractResultSet {
       for (IndexableField field : doc.getFields()) {
 
         if (field.stringValue() != null) {
-          memoryIndex.addField(field.name(), field.stringValue(), manager.analyzer(field.name()));
+          memoryIndex.addField(field.name(), field.stringValue(), manager.indexAnalyzer());
         } else {
           try {
-            memoryIndex.addField(field.name(), field.tokenStream(manager.analyzer(field.name()), null));
+            memoryIndex.addField(field.name(), field.tokenStream(manager.indexAnalyzer(), null));
           } catch (IOException e) {
             e.printStackTrace();
           }
@@ -95,7 +95,7 @@ public class OLuceneTxResultSet extends OLuceneAbstractResultSet {
 
   private class OLuceneResultSetIteratorTx implements Iterator<OIdentifiable> {
 
-    ScoreDoc[]  array;
+    ScoreDoc[] array;
     private int index;
     private int localIndex;
     private int totalHits;
@@ -105,7 +105,7 @@ public class OLuceneTxResultSet extends OLuceneAbstractResultSet {
       index = 0;
       localIndex = 0;
       array = topDocs.scoreDocs;
-      OLuceneIndexEngineAbstract.sendTotalHits(indexName,queryContext.context, topDocs.totalHits - deletedMatchCount);
+      OLuceneIndexEngineAbstract.sendTotalHits(indexName, queryContext.context, topDocs.totalHits - deletedMatchCount);
     }
 
     @Override
@@ -186,8 +186,8 @@ public class OLuceneTxResultSet extends OLuceneAbstractResultSet {
           topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query, PAGE_SIZE);
           break;
         case FILTER_SORT:
-          topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query, queryContext.filter, PAGE_SIZE,
-              queryContext.sort);
+          topDocs = queryContext.getSearcher()
+              .searchAfter(array[array.length - 1], query, queryContext.filter, PAGE_SIZE, queryContext.sort);
           break;
         case FILTER:
           topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query, queryContext.filter, PAGE_SIZE);

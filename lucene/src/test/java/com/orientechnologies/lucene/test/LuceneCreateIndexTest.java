@@ -18,6 +18,7 @@
 
 package com.orientechnologies.lucene.test;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -32,6 +33,7 @@ import org.testng.annotations.Test;
 
 import java.io.InputStream;
 import java.util.List;
+import java.util.logging.Level;
 
 /**
  * Created by enricorisa on 26/09/14.
@@ -40,7 +42,12 @@ import java.util.List;
 public class LuceneCreateIndexTest extends LuceneSingleFieldEmbeddedTest {
 
   public LuceneCreateIndexTest() {
+
+
     this(false);
+    OLogManager.instance().installCustomFormatter();
+    OLogManager.instance().setConsoleLevel(Level.INFO.getName());
+
   }
 
   public LuceneCreateIndexTest(boolean remote) {
@@ -90,9 +97,13 @@ public class LuceneCreateIndexTest extends LuceneSingleFieldEmbeddedTest {
 
     Assert.assertEquals(docs.size(), 87);
 
-    // not WORK BECAUSE IT USES only the first index
-    // String query = "select * from Song where [title] LUCENE \"(title:mountain)\"  and [author] LUCENE \"(author:Fabbio)\""
-    String query = "select * from Song where [title] LUCENE \"(title:mountain)\"  and author = 'Fabbio'";
+
+    String query = "select * from Song where [title] LUCENE \"(title:mountain)\"  and [author] LUCENE \"(author:Fabbio)\"";
+    //String query = "select * from Song where [title] LUCENE \"(title:mountain)\"  and author = 'Fabbio'";
+    docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
+    Assert.assertEquals(docs.size(), 1);
+
+    query = "select * from Song where [title] LUCENE \"(title:mountain)\"  and author = 'Fabbio'";
     docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
 
     Assert.assertEquals(docs.size(), 1);

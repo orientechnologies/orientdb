@@ -51,10 +51,12 @@ public class ODocBuilder implements DocBuilder {
       Object val = formattedKey.get(i);
       i++;
       if (isToStore(f, fieldsToStore).equals(Field.Store.YES)) {
-        doc.add(OLuceneIndexType.createField(f + OLuceneIndexEngineAbstract.STORED, val, Field.Store.YES,
-            Field.Index.NOT_ANALYZED_NO_NORMS));
+        doc.add(OLuceneIndexType
+            .createField(f + OLuceneIndexEngineAbstract.STORED, val, Field.Store.YES, Field.Index.NOT_ANALYZED_NO_NORMS));
       }
       doc.add(OLuceneIndexType.createField(f, val, Field.Store.NO, Field.Index.ANALYZED));
+      //for experimental index
+      doc.add(OLuceneIndexType.createField(definition.getClassName() + "." + f, val, Field.Store.NO, Field.Index.ANALYZED));
     }
     return doc;
   }

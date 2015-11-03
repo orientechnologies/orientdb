@@ -228,8 +228,13 @@ public class OLuceneIndexEngineDelegate implements OLuceneIndexEngine {
   }
 
   @Override
-  public Analyzer analyzer(String field) {
-    return delegate.analyzer(field);
+  public Analyzer indexAnalyzer() {
+    return delegate.indexAnalyzer();
+  }
+
+  @Override
+  public Analyzer queryAnalyzer() {
+    return delegate.queryAnalyzer();
   }
 
   @Override

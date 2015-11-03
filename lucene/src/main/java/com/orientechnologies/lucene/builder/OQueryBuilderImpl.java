@@ -78,7 +78,7 @@ public class OQueryBuilderImpl implements OQueryBuilder {
       return queryParser.parse(key);
 
     } catch (org.apache.lucene.queryparser.classic.ParseException e) {
-      throw new ParseException("");
+      throw new ParseException(e.getMessage());
     }
 
   }

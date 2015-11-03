@@ -283,7 +283,7 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   public Query buildQuery(Object query) {
 
     try {
-      return queryBuilder.query(index, query, mgrWriter.getIndexWriter().getAnalyzer());
+      return queryBuilder.query(index, query, queryAnalyzer());
     } catch (ParseException e) {
 
       throw OException.wrapException(new OIndexEngineException("Error parsing query"), e);

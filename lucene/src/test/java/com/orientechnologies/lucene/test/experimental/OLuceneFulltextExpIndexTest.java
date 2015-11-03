@@ -26,7 +26,8 @@ import java.util.logging.Level;
 /**
  * Created by frank on 9/30/15.
  */
-@Test(enabled = false) public class OLuceneFulltextExpIndexTest extends BaseLuceneTest {
+@Test(enabled = false)
+public class OLuceneFulltextExpIndexTest extends BaseLuceneTest {
 
   public OLuceneFulltextExpIndexTest() {
     //    super(false);
@@ -43,6 +44,9 @@ import java.util.logging.Level;
     OLogManager.instance().setConsoleLevel(Level.INFO.getName());
 
     initDB();
+
+    databaseDocumentTx.command(new OCommandSQL("ALTER DATABASE custom strictSql=false")).execute();
+
     OSchema schema = databaseDocumentTx.getMetadata().getSchema();
     OClass v = schema.getClass("V");
     OClass song = schema.createClass("Song");
@@ -51,15 +55,17 @@ import java.util.logging.Level;
     song.createProperty("author", OType.STRING);
     song.createProperty("lyrics", OType.STRING);
 
+    databaseDocumentTx.setProperty("CUSTOM", "strictSql=false");
     databaseDocumentTx.command(new OCommandSQL(
-            "create index Song.all on Song (title,author,lyrics) FULLTEXTEXP ENGINE LUCENE METADATA {"
-                + "\"title_index_analyzer\":\"" + StandardAnalyzer.class.getName() + "\" , " + "\"author_index_analyzer\":\""
-                + StandardAnalyzer.class.getName() + "\" , " + "\"lyrics_index_analyzer\":\"" + EnglishAnalyzer.class.getName()
-                + "\"}")).execute();
+        "create index Song.all on Song (title,author,lyrics) FULLTEXTEXP ENGINE LUCENEEXP METADATA {"
+            + "\"title_index_analyzer\":\""            + StandardAnalyzer.class.getName() + "\" , "
+            + "\"author_index_analyzer\":\"" + StandardAnalyzer.class.getName() + "\" , "
+            + "\"lyrics_index_analyzer\":\"" + EnglishAnalyzer.class.getName()
+            + "\"}")).execute();
 
-    // databaseDocumentTx.command(
-    // new OCommandSQL("create index Song.title on Song (title) FULLTEXTEXP ENGINE LUCENE METADATA {\"index_analyzer\":\""
-    // + StandardAnalyzer.class.getName() + "\"}")).execute();
+    //     databaseDocumentTx.command(
+    //     new OCommandSQL("create index Song.title on Song (title) FULLTEXTEXP ENGINE LUCENE METADATA {\"index_analyzer\":\""
+    //     + StandardAnalyzer.class.getName() + "\"}")).execute();
     //
     // databaseDocumentTx.command(
     // new OCommandSQL("create index Song.author on Song (author) FULLTEXTEXP ENGINE LUCENE METADATA {\"index_analyzer\":\""
@@ -74,10 +80,10 @@ import java.util.logging.Level;
 
   }
 
-  @AfterClass(enabled = false)
+  @AfterClass(enabled = true)
   public void after() {
 
-    deInitDB();
+    //    deInitDB();
   }
 
   @Test
@@ -86,15 +92,19 @@ import java.util.logging.Level;
     final ODocument index = databaseDocumentTx.getMetadata().getIndexManager().getIndex("Song.all").getMetadata();
 
     Assert.assertEquals(index.field("lyrics_index_analyzer"), EnglishAnalyzer.class.getName());
+    Assert.assertEquals(index.field("author_index_analyzer"), StandardAnalyzer.class.getName());
+    Assert.assertEquals(index.field("title_index_analyzer"), StandardAnalyzer.class.getName());
+    List<ODocument> docs;
 
-    List<ODocument> docs = databaseDocumentTx
-        .query(new OSQLSynchQuery<ODocument>("select * from Song where [title] LUCENE \"Song.title:mountain\""));
+    docs = databaseDocumentTx
+        .query(new OSQLSynchQuery<ODocument>("select * from Song where [title] LUCENEEXP \"Song.title:mountain\""));
 
     Assert.assertEquals(docs.size(), 4);
 
-    //    docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>("select * from Song where [author] LUCENE (author:Fabbio)"));
-    //
-    //    Assert.assertEquals(docs.size(), 87);
+    docs = databaseDocumentTx
+        .query(new OSQLSynchQuery<ODocument>("select * from Song where [author] LUCENEEXP \"Song.author:Fabbio\""));
+
+    Assert.assertEquals(docs.size(), 87);
     //
     //    // not WORK BECAUSE IT USES only the first index
     //    // String query = "select * from Song where [title] LUCENE \"(title:mountain)\"  and [author] LUCENE \"(author:Fabbio)\""

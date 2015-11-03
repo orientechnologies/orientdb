@@ -9,6 +9,7 @@ import com.orientechnologies.lucene.builder.ODocBuilder;
 import com.orientechnologies.lucene.builder.OQueryBuilderImpl;
 import com.orientechnologies.lucene.collections.LuceneResultSetFactory;
 import com.orientechnologies.lucene.collections.OFullTextCompositeKey;
+import com.orientechnologies.lucene.collections.OLuceneAbstractResultSet;
 import com.orientechnologies.lucene.query.QueryContext;
 import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.lucene.tx.OLuceneTxChangesSingleRid;
@@ -42,15 +43,15 @@ import java.util.Set;
  */
 public class OLuceneFullTextExpIndexEngine implements OLuceneIndexEngine, OOrientListener {
 
-  public static final String       RID    = "RID";
-  public static final String       KEY    = "KEY";
-  public static final String       STORED = "_STORED";
+  public static final String RID    = "RID";
+  public static final String KEY    = "KEY";
+  public static final String STORED = "_STORED";
 
-  private final String             name;
-  private final OLuceneStorage     luceneStorage;
+  private final String         name;
+  private final OLuceneStorage luceneStorage;
 
-  private ODocBuilder              docBuilder;
-  private OQueryBuilderImpl        queryBuilder;
+  private ODocBuilder       docBuilder;
+  private OQueryBuilderImpl queryBuilder;
 
   private String                   indexName;
   private String                   indexType;
@@ -92,13 +93,11 @@ public class OLuceneFullTextExpIndexEngine implements OLuceneIndexEngine, OOrien
 
   @Override
   public Document buildDocument(Object key, OIdentifiable value) {
-    OLogManager.instance().debug(this, "buildDocument:: " + key);
     return docBuilder.build(indexContext.definition, key, value, indexContext.fieldsToStore, indexContext.metadata);
   }
 
   @Override
   public Query buildQuery(Object query) {
-    OLogManager.instance().info(this,"build query:: " + query);
     try {
       return queryBuilder.query(indexDefinition, query, luceneStorage.queryAnalyzer());
     } catch (ParseException e) {
@@ -108,11 +107,15 @@ public class OLuceneFullTextExpIndexEngine implements OLuceneIndexEngine, OOrien
   }
 
   @Override
-  public Analyzer analyzer(String field) {
+  public Analyzer queryAnalyzer() {
 
-    OLogManager.instance().info(this, "analyzer:: " + field);
+    return luceneStorage.queryAnalyzer();
+  }
 
-    return luceneStorage.analyzer(field);
+  @Override
+  public Analyzer indexAnalyzer() {
+
+    return luceneStorage.indexAnalyzer();
   }
 
   @Override
@@ -141,19 +144,22 @@ public class OLuceneFullTextExpIndexEngine implements OLuceneIndexEngine, OOrien
       throw OException.wrapException(new OIndexEngineException("Error parsing lucene query"), e);
     }
 
-
   }
 
   private Set<OIdentifiable> getResults(Query query, OCommandContext context, Object key, OLuceneTxChanges changes) {
-    OLogManager.instance().info(this, "getResults");
+    OLogManager.instance().info(this, "getResults:: " + query);
 
     try {
       IndexSearcher searcher = searcher();
       QueryContext queryContext = new QueryContext(context, searcher, query).setChanges(changes);
-//      if (facetManager.supportsFacets()) {
-//        facetManager.addFacetContext(queryContext, key);
-//      }
-      return LuceneResultSetFactory.INSTANCE.create(this, queryContext);
+      //      if (facetManager.supportsFacets()) {
+      //        facetManager.addFacetContext(queryContext, key);
+      //      }
+      OLuceneAbstractResultSet resultSet = LuceneResultSetFactory.INSTANCE.create(this, queryContext);
+
+      OLogManager.instance().info(this, "getResults (restul Set) :: " + resultSet.size());
+
+      return resultSet;
     } catch (IOException e) {
       throw OIOException.wrapException(new OIndexException("Error reading from Lucene index"), e);
     }
@@ -234,7 +240,10 @@ public class OLuceneFullTextExpIndexEngine implements OLuceneIndexEngine, OOrien
 
   @Override
   public Object get(Object key) {
-    return luceneStorage.get(key);
+    OLogManager.instance().info(this, "get");
+    Object inTx = getInTx(key, null);
+
+    return inTx;
   }
 
   @Override
@@ -243,12 +252,12 @@ public class OLuceneFullTextExpIndexEngine implements OLuceneIndexEngine, OOrien
     Collection<OIdentifiable> container = (Collection<OIdentifiable>) value;
     for (OIdentifiable oIdentifiable : container) {
       Document doc = new Document();
-      doc.add(OLuceneIndexType.createField(RID, oIdentifiable.getIdentity().toString(), Field.Store.YES,
-          Field.Index.NOT_ANALYZED_NO_NORMS));
-      doc.add(OLuceneIndexType.createField("CLUSTER", oIdentifiable.getIdentity().getClusterId(), Field.Store.YES,
-          Field.Index.NOT_ANALYZED_NO_NORMS));
-      doc.add(OLuceneIndexType.createField("CLASS", indexContext.indexClass.getName(), Field.Store.YES,
-          Field.Index.NOT_ANALYZED_NO_NORMS));
+      doc.add(OLuceneIndexType
+          .createField(RID, oIdentifiable.getIdentity().toString(), Field.Store.YES, Field.Index.NOT_ANALYZED_NO_NORMS));
+      doc.add(OLuceneIndexType
+          .createField("CLUSTER", oIdentifiable.getIdentity().getClusterId(), Field.Store.YES, Field.Index.NOT_ANALYZED_NO_NORMS));
+      doc.add(OLuceneIndexType
+          .createField("CLASS", indexContext.indexClass.getName(), Field.Store.YES, Field.Index.NOT_ANALYZED_NO_NORMS));
 
       int i = 0;
       if (indexDefinition.isAutomatic()) {
@@ -291,7 +300,6 @@ public class OLuceneFullTextExpIndexEngine implements OLuceneIndexEngine, OOrien
         val = key;
       }
 
-
       if (val != null) {
 
         //FIXME why 2 fields? May we use STORED+ANALYZED?
@@ -299,22 +307,22 @@ public class OLuceneFullTextExpIndexEngine implements OLuceneIndexEngine, OOrien
           doc.add(OLuceneIndexType.createField(indexContext.indexClass.getName() + "." + field + STORED, val, Field.Store.YES,
               Field.Index.NOT_ANALYZED_NO_NORMS));
         }
-        doc.add(OLuceneIndexType.createField(indexContext.indexClass.getName() + "." + field, val, Field.Store.NO,
-            Field.Index.ANALYZED));
+        doc.add(OLuceneIndexType
+            .createField(indexContext.indexClass.getName() + "." + field, val, Field.Store.NO, Field.Index.ANALYZED));
       }
     }
 
   }
 
   @Override
-  public void onRecordAddedToResultSet(QueryContext queryContext, OContextualRecordId recordId, Document ret, final ScoreDoc score) {
+  public void onRecordAddedToResultSet(QueryContext queryContext, OContextualRecordId recordId, Document ret,
+      final ScoreDoc score) {
     recordId.setContext(new HashMap<String, Object>() {
       {
         put("score", score.score);
       }
     });
   }
-
 
   protected Field.Store isToStore(String f) {
     return indexContext.fieldsToStore.get(f) ? Field.Store.YES : Field.Store.NO;
@@ -337,7 +345,8 @@ public class OLuceneFullTextExpIndexEngine implements OLuceneIndexEngine, OOrien
   }
 
   @Override
-  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
+      ValuesTransformer transformer) {
     return null;
   }
 

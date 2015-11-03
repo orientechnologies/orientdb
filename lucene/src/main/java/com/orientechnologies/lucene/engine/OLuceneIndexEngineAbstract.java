@@ -22,6 +22,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.lucene.OLuceneIndexType;
 import com.orientechnologies.lucene.OLuceneMapEntryIterator;
+import com.orientechnologies.lucene.analyzer.OLucenePerFieldAnalyzerWrapper;
 import com.orientechnologies.lucene.query.QueryContext;
 import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.lucene.tx.OLuceneTxChangesMultiRid;
@@ -64,14 +65,14 @@ import java.lang.reflect.Constructor;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdaptiveExternal implements OLuceneIndexEngine,
-    OOrientListener {
+public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdaptiveExternal
+    implements OLuceneIndexEngine, OOrientListener {
 
-  public static final String               RID              = "RID";
-  public static final String               KEY              = "KEY";
-  public static final String               STORED           = "_STORED";
+  public static final String RID    = "RID";
+  public static final String KEY    = "KEY";
+  public static final String STORED = "_STORED";
 
-  public static final String               OLUCENE_BASE_DIR = "luceneIndexes";
+  public static final String OLUCENE_BASE_DIR = "luceneIndexes";
 
   protected SearcherManager                searcherManager;
   protected OIndexDefinition               index;
@@ -82,17 +83,23 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   protected ControlledRealTimeReopenThread nrt;
   protected ODocument                      metadata;
   protected Version                        version;
-  protected Map<String, Boolean>           collectionFields = new HashMap<String, Boolean>();
-  protected TimerTask                      commitTask;
-  protected AtomicBoolean                  closed           = new AtomicBoolean(true);
-  private String                           indexType;
-  private boolean                          rebuilding;
-  private long                             reopenToken;
+  protected Map<String, Boolean> collectionFields = new HashMap<String, Boolean>();
+  protected TimerTask commitTask;
+  protected AtomicBoolean closed = new AtomicBoolean(true);
+  private String                         indexType;
+  private boolean                        rebuilding;
+  private long                           reopenToken;
+  private OLucenePerFieldAnalyzerWrapper indexAnalyzer;
+  private OLucenePerFieldAnalyzerWrapper queryAnalyzer;
 
   public OLuceneIndexEngineAbstract(String indexName) {
-    super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), OGlobalConfiguration.MVRBTREE_TIMEOUT
-        .getValueAsInteger(), true);
+    super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(),
+        OGlobalConfiguration.MVRBTREE_TIMEOUT.getValueAsInteger(), true);
     this.indexName = indexName;
+
+    indexAnalyzer = new OLucenePerFieldAnalyzerWrapper(new StandardAnalyzer());
+    queryAnalyzer = new OLucenePerFieldAnalyzerWrapper(new StandardAnalyzer());
+
   }
 
   @Override
@@ -118,8 +125,9 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     try {
       reopenToken = mgrWriter.deleteDocuments(query);
       if (!mgrWriter.getIndexWriter().hasDeletions()) {
-        OLogManager.instance().error(this, "Error on deleting document by query '%s' to Lucene index",
-            new OIndexException("Error deleting document"), query);
+        OLogManager.instance()
+            .error(this, "Error on deleting document by query '%s' to Lucene index", new OIndexException("Error deleting document"),
+                query);
       }
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on deleting document by query '%s' to Lucene index", e, query);
@@ -453,7 +461,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   }
 
   //TODO: move to utility class
-  public static void sendTotalHits(String indexName,OCommandContext context, int totalHits) {
+  public static void sendTotalHits(String indexName, OCommandContext context, int totalHits) {
     if (context != null) {
 
       if (context.getVariable("totalHits") == null) {
@@ -466,7 +474,8 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   }
 
   //TODO: move to utility class
-  public static void sendLookupTime(String indexName ,OCommandContext context, final TopDocs docs, final Integer limit, long startFetching) {
+  public static void sendLookupTime(String indexName, OCommandContext context, final TopDocs docs, final Integer limit,
+      long startFetching) {
     if (context != null) {
 
       final long finalTime = System.currentTimeMillis() - startFetching;
@@ -523,10 +532,14 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     return indexName;
   }
 
-  // TODO we could chose different analyzer for fields
   @Override
-  public Analyzer analyzer(String field) {
-    return getAnalyzer(metadata);
+  public Analyzer indexAnalyzer() {
+    return indexAnalyzer;
+  }
+
+  @Override
+  public Analyzer queryAnalyzer() {
+    return queryAnalyzer;
   }
 
   @Override
