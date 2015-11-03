@@ -139,7 +139,7 @@
     <storages>
     </storages>
     <users>
-        <user resources="*" password="root" name="root"/>
+        <user resources="*" password="prjhubWins" name="root"/>
         <user resources="connect,server.listDatabases" password="guest"
               name="guest"/>
     </users>

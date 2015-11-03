@@ -9,7 +9,6 @@ import com.orientechnologies.website.services.impl.IssueServiceImpl;
 import org.joda.time.DateTime;
 import org.joda.time.Days;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
@@ -31,7 +30,7 @@ public class AutoCloseDaemon {
   @Autowired
   protected IssueService           issueService;
 
-  @Scheduled(fixedDelay = 12 * 60 * 60 * 1000)
+//  @Scheduled(fixedDelay = 12 * 60 * 60 * 1000)
   public void autoClose() {
 
     Iterable<Organization> organizations = organizationRepository.findAll();
