@@ -64,7 +64,7 @@ public final class OrientGraph implements Graph {
     public static String CONFIG_TRANSACTIONAL = "orient-transactional";
 
     protected final ODatabaseDocumentTx database;
-    protected final Configuration config;
+    protected final Features features;
     protected final String url;
 
     public static OrientGraph open(final Configuration configuration) {
@@ -72,7 +72,11 @@ public final class OrientGraph implements Graph {
     }
 
     public OrientGraph(Configuration config) {
-        this.config = config;
+        if (config.getBoolean(CONFIG_TRANSACTIONAL, false)) {
+            this.features = ODBFeatures.OrientFeatures.INSTANCE_TX;
+        } else {
+            this.features = ODBFeatures.OrientFeatures.INSTANCE_NOTX;
+        }
         this.url = config.getString(CONFIG_URL, "memory:test-" + Math.random());
         this.database = getDatabase(url,
             config.getString(CONFIG_USER, "admin"),
@@ -82,7 +86,7 @@ public final class OrientGraph implements Graph {
     }
 
     public Features features() {
-        return ODBFeatures.OrientFeatures.INSTANCE;
+        return features;
     }
 
     public void makeActive() {
@@ -306,7 +310,7 @@ public final class OrientGraph implements Graph {
     public void commit() {
         makeActive();
 
-        if (!config.getBoolean(CONFIG_TRANSACTIONAL)) {
+        if (!features.graph().supportsTransactions()) {
             return;
         }
         if (database == null) {
@@ -322,7 +326,7 @@ public final class OrientGraph implements Graph {
     public void rollback() {
         makeActive();
         
-        if (!config.getBoolean(CONFIG_TRANSACTIONAL)) {
+        if (!features.graph().supportsTransactions()) {
             return;
         }
 
