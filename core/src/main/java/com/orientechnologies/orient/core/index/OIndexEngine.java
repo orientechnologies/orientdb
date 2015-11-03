@@ -44,14 +44,11 @@ public interface OIndexEngine<V> {
 
   void deleteWithoutLoad(String indexName);
 
-  void load(ORID indexRid, String indexName, OIndexDefinition indexDefinition, OStreamSerializer valueSerializer,
-      boolean isAutomatic);
+  void load(String indexName, OIndexDefinition indexDefinition, OStreamSerializer valueSerializer, boolean isAutomatic);
 
   boolean contains(Object key);
 
   boolean remove(Object key);
-
-  ORID getIdentity();
 
   void clear();
 

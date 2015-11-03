@@ -211,12 +211,11 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
   }
 
   @Override
-  public void load(ORID indexRid, String indexName, OIndexDefinition indexDefinition, OStreamSerializer valueSerializer,
-      boolean isAutomatic) {
+  public void load(String indexName, OIndexDefinition indexDefinition, OStreamSerializer valueSerializer, boolean isAutomatic) {
 
   }
 
-  public void load(ORID indexRid, String indexName, OIndexDefinition indexDefinition, boolean isAutomatic, ODocument metadata) {
+  public void load(String indexName, OIndexDefinition indexDefinition, boolean isAutomatic, ODocument metadata) {
     initIndex(indexName, indexDefinition, null, null, isAutomatic, metadata);
   }
 

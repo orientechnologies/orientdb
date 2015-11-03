@@ -52,18 +52,18 @@ import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
  */
 @SuppressWarnings({ "unchecked", "serial" })
 public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass implements OIndexManager, OCloseable {
-  public static final String                                  CONFIG_INDEXES         = "indexes";
-  public static final String                                  DICTIONARY_NAME        = "dictionary";
+  public static final String CONFIG_INDEXES  = "indexes";
+  public static final String DICTIONARY_NAME = "dictionary";
 
   // values of this Map should be IMMUTABLE !! for thread safety reasons.
-  protected final Map<String, Map<OMultiKey, Set<OIndex<?>>>> classPropertyIndex     = new ConcurrentHashMap<String, Map<OMultiKey, Set<OIndex<?>>>>();
-  protected Map<String, OIndex<?>>                            indexes                = new ConcurrentHashMap<String, OIndex<?>>();
-  protected String                                            defaultClusterName     = OMetadataDefault.CLUSTER_INDEX_NAME;
-  protected String                                            manualClusterName      = OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME;
+  protected final Map<String, Map<OMultiKey, Set<OIndex<?>>>> classPropertyIndex = new ConcurrentHashMap<String, Map<OMultiKey, Set<OIndex<?>>>>();
+  protected Map<String, OIndex<?>>                            indexes            = new ConcurrentHashMap<String, OIndex<?>>();
+  protected String                                            defaultClusterName = OMetadataDefault.CLUSTER_INDEX_NAME;
+  protected String                                            manualClusterName  = OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME;
 
-  protected ReadWriteLock                                     lock                   = new ReentrantReadWriteLock();
+  protected ReadWriteLock lock = new ReentrantReadWriteLock();
 
-  private volatile boolean                                    fullCheckpointOnChange = false;
+  private volatile boolean fullCheckpointOnChange = false;
 
   public OIndexManagerAbstract(final ODatabaseDocument iDatabase) {
     super(new ODocument());
@@ -145,8 +145,8 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
       getDatabase().getStorage().getConfiguration().indexMgrRecordId = document.getIdentity().toString();
       getDatabase().getStorage().getConfiguration().update();
 
-      createIndex(DICTIONARY_NAME, OClass.INDEX_TYPE.DICTIONARY.toString(), new OSimpleKeyIndexDefinition(OType.STRING), null,
-          null, null);
+      createIndex(DICTIONARY_NAME, OClass.INDEX_TYPE.DICTIONARY.toString(), new OSimpleKeyIndexDefinition(OType.STRING), null, null,
+          null);
     } finally {
       releaseExclusiveLock();
     }
@@ -279,15 +279,6 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     } finally {
       releaseExclusiveLock();
     }
-  }
-
-  public OIndex<?> getIndex(final ORID iRID) {
-    for (final OIndex<?> idx : indexes.values()) {
-      if (idx.getIdentity().equals(iRID)) {
-        return idx;
-      }
-    }
-    return null;
   }
 
   public Set<OIndex<?>> getClassInvolvedIndexes(final String className, Collection<String> fields) {

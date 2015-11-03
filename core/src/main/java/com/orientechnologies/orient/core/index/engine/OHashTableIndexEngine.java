@@ -28,13 +28,11 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.index.hashindex.local.OHashIndexBucket;
 import com.orientechnologies.orient.core.index.hashindex.local.OLocalHashTable;
 import com.orientechnologies.orient.core.index.hashindex.local.OMurmurHash3HashFunction;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OSimpleKeySerializer;
@@ -54,7 +52,6 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
   private final OLocalHashTable<Object, V>       hashTable;
   private final OMurmurHash3HashFunction<Object> hashFunction;
 
-  private volatile ORID                          identity;
 
   public OHashTableIndexEngine(String name, Boolean durableInNonTxMode, OAbstractPaginatedStorage storage, int version) {
     hashFunction = new OMurmurHash3HashFunction<Object>();
@@ -91,12 +88,6 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
     } else
       keySerializer = new OSimpleKeySerializer();
 
-    final ODatabaseDocumentInternal database = getDatabase();
-    final ORecordBytes identityRecord = new ORecordBytes();
-    final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
-
-    database.save(identityRecord, clusterIndexName);
-    identity = identityRecord.getIdentity();
 
     hashFunction.setValueSerializer(keySerializer);
     hashTable.create(keySerializer, (OBinarySerializer<V>) valueSerializer, indexDefinition != null ? indexDefinition.getTypes()
@@ -119,9 +110,7 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
   }
 
   @Override
-  public void load(ORID indexRid, String indexName, OIndexDefinition indexDefinition, OStreamSerializer valueSerializer,
-      boolean isAutomatic) {
-    identity = indexRid;
+  public void load(String indexName, OIndexDefinition indexDefinition, OStreamSerializer valueSerializer, boolean isAutomatic) {
     hashTable.load(indexName, indexDefinition != null ? indexDefinition.getTypes() : null, indexDefinition != null
         && !indexDefinition.isNullValuesIgnored());
     hashFunction.setValueSerializer(hashTable.getKeySerializer());
@@ -178,11 +167,6 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
 
       return counter;
     }
-  }
-
-  @Override
-  public ORID getIdentity() {
-    return identity;
   }
 
   @Override

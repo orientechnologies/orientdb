@@ -367,8 +367,8 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
                 addIndexInternal(oldIndex.getInternal());
                 oldIndexes.remove(normalizedName);
               } else if (newIndexMetadata.getIndexDefinition() == null
-                  && d.field(OIndexAbstract.CONFIG_MAP_RID)
-                      .equals(oldIndex.getConfiguration().field(OIndexAbstract.CONFIG_MAP_RID))) {
+                  && ((String)d.field(OIndexAbstract.CONFIG_NAME))
+                      .equalsIgnoreCase((String) oldIndex.getConfiguration().field(OIndexAbstract.CONFIG_NAME))) {
                 // index is manual and index definition was just detected
                 addIndexInternal(oldIndex.getInternal());
                 oldIndexes.remove(normalizedName);

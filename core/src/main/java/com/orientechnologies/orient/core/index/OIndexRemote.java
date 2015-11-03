@@ -73,17 +73,15 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   private final static String   QUERY_DROP                                        = "drop index %s";
   protected final String        databaseName;
   private final String          wrappedType;
-  private final ORID            rid;
   protected OIndexDefinition    indexDefinition;
   protected String              name;
   protected ODocument           configuration;
   protected Set<String>         clustersToIndex;
 
-  public OIndexRemote(final String iName, final String iWrappedType, final ORID iRid, final OIndexDefinition iIndexDefinition,
+  public OIndexRemote(final String iName, final String iWrappedType, final OIndexDefinition iIndexDefinition,
       final ODocument iConfiguration, final Set<String> clustersToIndex) {
     this.name = iName;
     this.wrappedType = iWrappedType;
-    this.rid = iRid;
     this.indexDefinition = iIndexDefinition;
     this.configuration = iConfiguration;
     this.clustersToIndex = new HashSet<String>(clustersToIndex);
@@ -237,10 +235,6 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   @Override
   public ODocument getMetadata() {
     return configuration.field("metadata", OType.EMBEDDED);
-  }
-
-  public ORID getIdentity() {
-    return rid;
   }
 
   public void commit(final ODocument iDocument) {

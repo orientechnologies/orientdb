@@ -32,7 +32,6 @@ import java.util.Set;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -45,9 +44,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public class OIndexRemoteMultiValue extends OIndexRemote<Collection<OIdentifiable>> {
   protected final static String QUERY_GET = "select EXPAND( rid ) from index:%s where key = ?";
 
-  public OIndexRemoteMultiValue(final String iName, final String iWrappedType, final ORID iRid,
-      final OIndexDefinition iIndexDefinition, final ODocument iConfiguration, final Set<String> clustersToIndex) {
-    super(iName, iWrappedType, iRid, iIndexDefinition, iConfiguration, clustersToIndex);
+  public OIndexRemoteMultiValue(final String iName, final String iWrappedType, final OIndexDefinition iIndexDefinition, final ODocument iConfiguration, final Set<String> clustersToIndex) {
+    super(iName, iWrappedType, iIndexDefinition, iConfiguration, clustersToIndex);
   }
 
   public Collection<OIdentifiable> get(final Object iKey) {

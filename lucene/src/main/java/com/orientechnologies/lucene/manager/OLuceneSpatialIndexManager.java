@@ -113,11 +113,6 @@ public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
     }
 
     @Override
-    public ORID getIdentity() {
-        return null;
-    }
-
-    @Override
     public Object get(Object key) {
         try {
             if (key instanceof OSpatialCompositeKey) {
