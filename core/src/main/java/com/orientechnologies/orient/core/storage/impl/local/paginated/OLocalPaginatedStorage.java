@@ -20,7 +20,6 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
@@ -45,11 +44,17 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageVariablePars
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODiskWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
-import sun.misc.IOUtils;
 
-import java.io.*;
-import java.lang.String;
-import java.util.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -191,6 +196,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
       close(true, false);
 
     OZIPCompressionUtil.uncompressDirectory(in, getStoragePath(), iListener);
+
+    open(null, null, null);
   }
 
   @Override

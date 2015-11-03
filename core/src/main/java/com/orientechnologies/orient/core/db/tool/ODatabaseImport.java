@@ -237,7 +237,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       final Set result;
 
       if (value instanceof OMVRBTreeRIDSet) {
-        OMVRBTreeRIDSet ridSet = new OMVRBTreeRIDSet(((OMVRBTreeRIDSet)value).getOwner());
+        OMVRBTreeRIDSet ridSet = new OMVRBTreeRIDSet(((OMVRBTreeRIDSet) value).getOwner());
         ridSet.setAutoConvertToRecord(false);
 
         result = ridSet;
@@ -368,6 +368,13 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   public ODatabaseImport(final ODatabaseDocumentInternal database, final String iFileName, final OCommandOutputListener iListener)
       throws IOException {
     super(database, iFileName, iListener);
+
+    if (iListener == null)
+      listener = new OCommandOutputListener() {
+        @Override
+        public void onMessage(String iText) {
+        }
+      };
 
     InputStream inStream;
     final BufferedInputStream bf = new BufferedInputStream(new FileInputStream(fileName));

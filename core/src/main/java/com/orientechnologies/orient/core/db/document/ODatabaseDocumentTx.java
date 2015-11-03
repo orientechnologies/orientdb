@@ -2738,6 +2738,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
       storage = Orient.instance().loadStorage(url);
 
     getStorage().restore(in, options, callable, iListener);
+
+    getMetadata().reload();
   }
 
   /**

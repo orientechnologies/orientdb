@@ -48,6 +48,10 @@
         <handler class="com.orientechnologies.orient.server.handler.OAutomaticBackup">
             <parameters>
                 <parameter name="enabled" value="false"/>
+                <!-- CAN BE: FULL_BACKUP, INCREMENTAL_BACKUP, EXPORT -->
+                <parameter name="mode" value="FULL_BACKUP"/>
+                <!-- OPTION FOR EXPORT -->
+                <parameter name="exportOptions" value=""/>
                 <parameter name="delay" value="4h"/>
                 <parameter name="firstTime" value="23:00:00"/>
                 <parameter name="target.directory" value="backup"/>
