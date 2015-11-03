@@ -39,13 +39,39 @@ public class ODBFeatures {
 
     public static abstract class OrientElementFeatures implements Features.ElementFeatures {
 
+
+        @Override
+        public boolean supportsAnyIds() {
+            return false;
+        }
+
         @Override
         public boolean supportsCustomIds() {
             return false;
         }
 
         @Override
+        public boolean supportsNumericIds() {
+          return false;
+        }
+
+        @Override
+        public boolean supportsStringIds() {
+          return false;
+        }
+
+        @Override
         public boolean supportsUserSuppliedIds() {
+          return false;
+        }
+
+        @Override
+        public boolean supportsUuidIds() {
+          return false;
+        }
+
+        @Override
+        public boolean willAllowId(Object id) {
             return false;
         }
 
@@ -58,7 +84,6 @@ public class ODBFeatures {
         private OrientVertexFeatures() {
         }
 
-        @Override
         public boolean supportsRemoveVertices() {
             return false;
         }
@@ -85,11 +110,6 @@ public class ODBFeatures {
         static final OrientEdgeFeatures INSTANCE = new OrientEdgeFeatures();
 
         private OrientEdgeFeatures() {
-        }
-
-        @Override
-        public boolean supportsRemoveEdges() {
-            return false;
         }
 
     }
@@ -139,11 +159,6 @@ public class ODBFeatures {
 
       @Override
       public boolean supportsNumericIds() {
-           return false;
-      }
-
-      @Override
-      public boolean supportsStringIds() {
            return false;
       }
 

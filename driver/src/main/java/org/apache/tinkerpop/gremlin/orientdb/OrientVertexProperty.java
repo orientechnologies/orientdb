@@ -1,11 +1,8 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.apache.tinkerpop.gremlin.structure.Property;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.VertexProperty;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.Iterator;
 
@@ -23,13 +20,13 @@ public class OrientVertexProperty<V> extends OrientProperty<V> implements Vertex
     }
 
     @Override
-    public <V> Property<V> property(String key, V value) {
-        throw new NotImplementedException();
+    public <U> Property<U> property(String key, U value) {
+        throw VertexProperty.Exceptions.metaPropertiesNotSupported();
     }
 
     @Override
     public <U> Iterator<Property<U>> properties(String... propertyKeys) {
-        throw new NotImplementedException();
+        throw VertexProperty.Exceptions.metaPropertiesNotSupported();
     }
 
     @Override

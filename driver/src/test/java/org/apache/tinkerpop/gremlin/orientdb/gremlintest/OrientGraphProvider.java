@@ -1,16 +1,6 @@
 package org.apache.tinkerpop.gremlin.orientdb.gremlintest;
 
-import org.apache.commons.configuration.Configuration;
-import org.apache.tinkerpop.gremlin.AbstractGraphProvider;
-import org.apache.tinkerpop.gremlin.LoadGraphWith;
-import org.apache.tinkerpop.gremlin.structure.Element;
-import org.apache.tinkerpop.gremlin.structure.Graph;
-import org.hamcrest.Matchers;
-import org.junit.Assume;
-
-import com.orientechnologies.orient.core.id.ORecordId;
-
-import static org.hamcrest.Matchers.equalTo;
+import static org.junit.Assert.fail;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -29,10 +19,12 @@ import org.apache.tinkerpop.gremlin.orientdb.OrientVertexProperty;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 
 public class OrientGraphProvider extends AbstractGraphProvider {
+
     @Override
     public Map<String, Object> getBaseConfiguration(String graphName, Class<?> test, String testMethodName, LoadGraphWith.GraphData loadGraphWith) {
         return new HashMap<String, Object>() {{
             put(Graph.GRAPH, OrientGraph.class.getName());
+            put("name", graphName);
         }};
     }
 
@@ -51,6 +43,14 @@ public class OrientGraphProvider extends AbstractGraphProvider {
     @Override
     public void clear(Graph graph, Configuration configuration) throws Exception {
         if (graph != null) graph.close();
+    }
+
+    @Override
+    public Graph openTestGraph(Configuration config) {
+        if(config.getString("name").equals("readGraph"))
+            fail("there is some technical limitation on orientDB that makes tests enter in an infinite loop when reading and writing to orientDB");
+
+        return super.openTestGraph(config);
     }
 
 }
