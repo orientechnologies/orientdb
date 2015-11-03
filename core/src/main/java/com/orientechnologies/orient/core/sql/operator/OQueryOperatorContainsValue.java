@@ -19,10 +19,6 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -30,18 +26,17 @@ import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexCursorCollectionValue;
-import com.orientechnologies.orient.core.index.OIndexCursorSingleValue;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexDefinitionMultiValue;
-import com.orientechnologies.orient.core.index.OIndexInternal;
-import com.orientechnologies.orient.core.index.OPropertyMapIndexDefinition;
+import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 /**
  * CONTAINS KEY operator.
@@ -144,6 +139,26 @@ public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls 
     else
       condition = null;
 
+    OType type = null;
+    if (iCondition.getLeft() instanceof OSQLFilterItemField && ((OSQLFilterItemField) iCondition.getLeft()).isFieldChain()
+        && ((OSQLFilterItemField) iCondition.getLeft()).getFieldChain().getItemCount() == 1) {
+      String fieldName = ((OSQLFilterItemField) iCondition.getLeft()).getFieldChain().getItemName(0);
+      if (fieldName != null) {
+        Object record = iRecord.getRecord();
+        if (record instanceof ODocument) {
+          OProperty property = ((ODocument) record).getSchemaClass().getProperty(fieldName);
+          if (property != null && property.getType().isMultiValue()) {
+            type = property.getLinkedType();
+          }
+        }
+      }
+    }
+
+    Object right = iRight;
+    if (type != null) {
+      right = OType.convert(iRight, type.getDefaultJavaType());
+    }
+
     if (iLeft instanceof Map<?, ?>) {
       final Map<String, ?> map = (Map<String, ?>) iLeft;
 
@@ -155,7 +170,7 @@ public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls 
             return true;
         }
       } else
-        return map.containsValue(iRight);
+        return map.containsValue(right);
 
     } else if (iRight instanceof Map<?, ?>) {
       final Map<String, ?> map = (Map<String, ?>) iRight;
