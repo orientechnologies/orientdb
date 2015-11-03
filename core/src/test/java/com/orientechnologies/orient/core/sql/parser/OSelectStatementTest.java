@@ -133,6 +133,9 @@ public class OSelectStatementTest {
     checkWrongSyntax("select Foo where name = 'foo'");
     checkWrongSyntax("select * Foo where name = 'foo'");
 
+    //issue #5221
+    checkRightSyntax("select from $1");
+
   }
 
   @Test

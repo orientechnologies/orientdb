@@ -417,7 +417,7 @@ TOKEN :
 
 TOKEN :
 {
-  < IDENTIFIER: ( (<DOLLAR>)? <LETTER> (<PART_LETTER>)* ) >
+  < IDENTIFIER: ( ((<DOLLAR>) | <LETTER>) (<PART_LETTER>)* ) >
 |
   < QUOTED_IDENTIFIER: ( "`" (~["`"]) (~["`"])*  "`") >
 |
