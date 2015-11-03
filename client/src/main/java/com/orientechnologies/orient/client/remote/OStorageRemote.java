@@ -1783,9 +1783,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           OLogManager.instance().debug(this, "Retrying to connect to remote server #" + (retry + 1) + "/" + currentMaxRetry + "...");
 
         // FORCE RESET OF THREAD DATA (SERVER URL + SESSION ID)
-        if (exception instanceof OSecurityException)
-          //TOKEN validation exception forcing reopen.
-          clearToken();
         setSessionId(null, -1, null);
 
         // REACQUIRE DB SESSION ID
@@ -1906,7 +1903,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     do {
       do {
         try {
-          clearToken();
           network = getAvailableNetwork(currentURL);
           try {
             network.writeByte(OChannelBinaryProtocol.REQUEST_DB_OPEN);
@@ -2132,10 +2128,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     final OChannelBinaryAsynchClient network = getAvailableNetwork(getCurrentServerURL());
     network.writeByte(iCommand);
     network.writeInt(getSessionId());
-    byte[] token = getSessionToken();
-    if (token != null) {
+    byte[] token = tokens.get(network.getServerURL());
+    if(token != null) {
       network.writeBytes(token);
     }
+
     return network;
   }
 
@@ -2168,6 +2165,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         cause = e;
       }
 
+      if (tokens.get(lastURL) == null && getSessionId() > 0) {
+        //TODO: Remove this workaround in favor of a proper per server authentication.
+        setSessionId(lastURL, -1, null);
+        throw new IOException("missing token reconnect required");
+      }
+
       if (network == null) {
         lastURL = useNewServerURL(lastURL);
         if (lastURL == null) {
@@ -2189,7 +2192,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       }
 
     } while (network == null);
-    setSessionId(lastURL, getSessionId(), tokens.get(lastURL));
     return network;
   }
 
