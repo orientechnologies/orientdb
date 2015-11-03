@@ -43,6 +43,7 @@ public class OrientProperty<V> implements Property<V> {
         ODocument doc = element.getRawDocument();
         doc.removeField(key);
         doc.save();
+        this.value = null;
     }
 
     @Override

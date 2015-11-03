@@ -61,8 +61,10 @@ public final class OrientGraph implements Graph {
     public static String CONFIG_PASS = "orient-pass";
     public static String CONFIG_CREATE = "orient-create";
     public static String CONFIG_OPEN = "orient-open";
+    public static String CONFIG_TRANSACTIONAL = "orient-transactional";
 
     protected final ODatabaseDocumentTx database;
+    protected final Features features;
     protected final String url;
 
     public static OrientGraph open(final Configuration configuration) {
@@ -70,6 +72,11 @@ public final class OrientGraph implements Graph {
     }
 
     public OrientGraph(Configuration config) {
+        if (config.getBoolean(CONFIG_TRANSACTIONAL, false)) {
+            this.features = ODBFeatures.OrientFeatures.INSTANCE_TX;
+        } else {
+            this.features = ODBFeatures.OrientFeatures.INSTANCE_NOTX;
+        }
         this.url = config.getString(CONFIG_URL, "memory:test-" + Math.random());
         this.database = getDatabase(url,
             config.getString(CONFIG_USER, "admin"),
@@ -78,19 +85,11 @@ public final class OrientGraph implements Graph {
             config.getBoolean(CONFIG_OPEN, true));
     }
 
-    public OrientGraph(ODatabaseDocumentTx database) {
-        this.url = database.getURL();
-        this.database = database;
-    }
-
-    @Override
     public Features features() {
-        return ODBFeatures.OrientFeatures.INSTANCE;
+        return features;
     }
 
     public void makeActive() {
-//        activeGraph.set(this);
-
         final ODatabaseDocument tlDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
         if (database != null && tlDb != database) {
             database.activateOnCurrentThread();
@@ -284,8 +283,68 @@ public final class OrientGraph implements Graph {
     @Override
     public Transaction tx() {
         makeActive();
-        throw new NotImplementedException();
+        return new OrientTransaction(this);
     }
+
+    /**
+     * Checks if the Graph has been closed.
+     *
+     * @return True if it is closed, otherwise false
+     */
+    public boolean isClosed() {
+        makeActive();
+        return database == null || database.isClosed();
+    }
+
+    public void begin() {
+        makeActive();
+
+        final boolean txBegun = database.getTransaction().isActive();
+        if (!txBegun) {
+            database.begin();
+            // TODO use setting to determine behavior settings.isUseLog()
+            database.getTransaction().setUsingLog(true);
+        }
+    }
+
+    public void commit() {
+        makeActive();
+
+        if (!features.graph().supportsTransactions()) {
+            return;
+        }
+        if (database == null) {
+            return;
+        }
+
+        database.commit();
+        if (isAutoStartTx()) {
+            begin();
+        }
+    }
+
+    public void rollback() {
+        makeActive();
+        
+        if (!features.graph().supportsTransactions()) {
+            return;
+        }
+
+        if (database == null) {
+            return;
+        }
+
+        database.rollback();
+        if (isAutoStartTx()) {
+            begin();
+        }
+    }
+
+    public boolean isAutoStartTx() {
+        // TODO use configuration to determine behavior
+        return true;
+    }
+
 
     @Override
     public Variables variables() {
