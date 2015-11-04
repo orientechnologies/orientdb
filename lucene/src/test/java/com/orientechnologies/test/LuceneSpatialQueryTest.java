@@ -51,7 +51,7 @@ import java.util.zip.ZipFile;
   }
 
   public LuceneSpatialQueryTest(boolean remote) {
-    super(remote);
+    super();
   }
 
   @Override protected String getDatabaseName() {

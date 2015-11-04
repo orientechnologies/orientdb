@@ -43,7 +43,7 @@ public class LuceneCreateIndexTest extends LuceneSingleFieldEmbeddedTest {
   }
 
   public LuceneCreateIndexTest(boolean remote) {
-    super(remote);
+    super();
   }
 
   @Override

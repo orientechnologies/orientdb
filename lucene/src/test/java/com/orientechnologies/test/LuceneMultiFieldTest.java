@@ -47,7 +47,7 @@ public class LuceneMultiFieldTest extends BaseLuceneTest {
   }
 
   public LuceneMultiFieldTest(boolean remote) {
-    super(remote);
+    super();
   }
 
   @Test

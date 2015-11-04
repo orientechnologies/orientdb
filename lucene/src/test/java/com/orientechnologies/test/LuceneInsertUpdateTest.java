@@ -44,7 +44,7 @@ public class LuceneInsertUpdateTest extends BaseLuceneTest {
   }
 
   public LuceneInsertUpdateTest(boolean remote) {
-    super(remote);
+    super();
   }
 
   @Override

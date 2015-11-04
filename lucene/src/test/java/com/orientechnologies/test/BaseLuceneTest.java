@@ -50,13 +50,13 @@ public abstract class BaseLuceneTest {
   private final ExecutorService pool = Executors.newFixedThreadPool(1);
 
   public BaseLuceneTest() {
-    this(false);
+    //this(false);
   }
 
-  public BaseLuceneTest(boolean remote) {
-    this.remote = remote;
-
-  }
+//  public BaseLuceneTest(boolean remote) {
+//    this.remote = remote;
+//
+//  }
 
   @Test(enabled = false)
   public void initDB() {

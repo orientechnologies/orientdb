@@ -40,7 +40,7 @@ import java.util.Collection;
 public class LuceneInsertIntegrityRemoteTest extends BaseLuceneTest {
 
   public LuceneInsertIntegrityRemoteTest() {
-    super(true);
+    super();
   }
 
   @Override

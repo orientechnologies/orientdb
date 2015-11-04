@@ -44,7 +44,7 @@ public class GraphEmbeddedTest extends BaseLuceneTest {
   }
 
   public GraphEmbeddedTest(boolean remote) {
-    super(remote);
+    super();
   }
 
   @BeforeClass

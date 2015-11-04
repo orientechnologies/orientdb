@@ -43,7 +43,7 @@ public class LuceneInsertUpdateSingleDocumentTransactionTest extends BaseLuceneT
   }
 
   public LuceneInsertUpdateSingleDocumentTransactionTest(boolean remote) {
-    super(remote);
+    super();
   }
 
   @Override
