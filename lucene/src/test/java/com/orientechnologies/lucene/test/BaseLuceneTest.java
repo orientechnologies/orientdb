@@ -45,22 +45,22 @@ import java.util.concurrent.Executors;
 public abstract class BaseLuceneTest {
 
   protected ODatabaseDocumentTx databaseDocumentTx;
-  private String                url;
+  private   String              url;
   protected OServer             server;
-  private boolean               remote;
+  private   boolean             remote;
   protected ODatabaseDocumentTx serverDatabase;
-  private Process               process;
+  private   Process             process;
   protected String              buildDirectory;
   private final ExecutorService pool = Executors.newFixedThreadPool(1);
 
   public BaseLuceneTest() {
-//    this(false);
+    //    this(false);
   }
 
-//  public BaseLuceneTest(boolean remote) {
-//    this.remote = remote;
-//
-//  }
+  //  public BaseLuceneTest(boolean remote) {
+  //    this.remote = remote;
+  //
+  //  }
 
   @Test(enabled = false)
   public void initDB() {
@@ -74,39 +74,39 @@ public abstract class BaseLuceneTest {
     if (buildDirectory == null)
       buildDirectory = ".";
 
-    if(remote)
+    if (remote)
       System.out.println("REMOTE IS DISABLED IN LUCENE TESTS");
-//    TODO: understand why remote tests aren't working
-//    if (remote) {
-//      try {
-//
-//        startServer(drop);
-//
-//        url = "remote:localhost/" + getDatabaseName();
-//        databaseDocumentTx = new ODatabaseDocumentTx(url);
-//        databaseDocumentTx.open("admin", "admin");
-//      } catch (Exception e) {
-//        e.printStackTrace();
-//      }
-//    } else {
-      url = "plocal:" + buildDirectory + "/databases/" + getDatabaseName();
-      databaseDocumentTx = new ODatabaseDocumentTx(url);
+    //    TODO: understand why remote tests aren't working
+    //    if (remote) {
+    //      try {
+    //
+    //        startServer(drop);
+    //
+    //        url = "remote:localhost/" + getDatabaseName();
+    //        databaseDocumentTx = new ODatabaseDocumentTx(url);
+    //        databaseDocumentTx.open("admin", "admin");
+    //      } catch (Exception e) {
+    //        e.printStackTrace();
+    //      }
+    //    } else {
+    url = "plocal:" + buildDirectory + "/databases/" + getDatabaseName();
+    databaseDocumentTx = new ODatabaseDocumentTx(url);
 
-      if (databaseDocumentTx.exists()) {
-        databaseDocumentTx.open("admin", "admin");
-        if (drop) {
-          // DROP AND RE-CREATE IT
-          databaseDocumentTx.drop();
-          databaseDocumentTx = new ODatabaseDocumentTx(url);
-          databaseDocumentTx.create();
-        }
-      } else {
-        // CREATE IT
+    if (databaseDocumentTx.exists()) {
+      databaseDocumentTx.open("admin", "admin");
+      if (drop) {
+        // DROP AND RE-CREATE IT
+        databaseDocumentTx.drop();
         databaseDocumentTx = new ODatabaseDocumentTx(url);
         databaseDocumentTx.create();
       }
-      ODatabaseRecordThreadLocal.INSTANCE.set(databaseDocumentTx);
-//    }
+    } else {
+      // CREATE IT
+      databaseDocumentTx = new ODatabaseDocumentTx(url);
+      databaseDocumentTx.create();
+    }
+    ODatabaseRecordThreadLocal.INSTANCE.set(databaseDocumentTx);
+    //    }
   }
 
   protected void startServer(boolean drop) throws IOException, InterruptedException {
@@ -202,35 +202,24 @@ public abstract class BaseLuceneTest {
 
   @Test(enabled = false)
   public void deInitDB() {
-//    if (remote) {
-//      process.destroy();
-//    } else {
-      databaseDocumentTx.drop();
-//    }
+    //    if (remote) {
+    //      process.destroy();
+    //    } else {
+    databaseDocumentTx.drop();
+    //    }
   }
 
   protected String getScriptFromStream(InputStream in) {
     try {
       return OIOUtils.readStreamAsString(in);
     } catch (IOException e) {
+      throw new RuntimeException(e);
     }
-    String script = "";
-    try {
-      BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-      StringBuilder out = new StringBuilder();
-      String line;
-      while ((line = reader.readLine()) != null) {
-        out.append(line + "\n");
-      }
-      script = out.toString();
-      reader.close();
-    } catch (Exception e) {
-
-    }
-    return script;
   }
 
-  protected abstract String getDatabaseName();
+  protected String getDatabaseName(){
+    return getClass().getSimpleName();
+  }
 
   public static final class RemoteDBRunner {
     public static void main(String[] args) throws Exception {

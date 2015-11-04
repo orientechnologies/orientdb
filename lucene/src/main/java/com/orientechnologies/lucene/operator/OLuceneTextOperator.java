@@ -106,15 +106,23 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
     if (index == null) {
       throw new OCommandExecutionException("Cannot evaluate lucene condition without index configuration.");
     }
+
     MemoryIndex memoryIndex = (MemoryIndex) iContext.getVariable("_memoryIndex");
     if (memoryIndex == null) {
       memoryIndex = new MemoryIndex();
       iContext.setVariable("_memoryIndex", memoryIndex);
     }
     memoryIndex.reset();
-    Document doc = index.buildDocument(iLeft);
+
+    Document doc = null;
+    try {
+      doc = index.buildDocument(iLeft);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
 
     for (IndexableField field : doc.getFields()) {
+
       memoryIndex.addField(field.name(), field.stringValue(), index.indexAnalyzer());
     }
     Query query = null;
@@ -128,7 +136,6 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
 
   protected OLuceneFullTextIndex involvedIndex(OIdentifiable iRecord, ODocument iCurrentResult, OSQLFilterCondition iCondition,
       Object iLeft, Object iRight) {
-
 
     ODocument doc = iRecord.getRecord();
     OClass cls = getDatabase().getMetadata().getSchema().getClass(doc.getClassName());
@@ -158,7 +165,6 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
     return idx;
   }
 
-
   private boolean isChained(Object left) {
     if (left instanceof OSQLFilterItemField) {
       OSQLFilterItemField field = (OSQLFilterItemField) left;
@@ -166,6 +172,7 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
     }
     return false;
   }
+
   protected Collection<String> fields(OSQLFilterCondition iCondition) {
 
     Object left = iCondition.getLeft();

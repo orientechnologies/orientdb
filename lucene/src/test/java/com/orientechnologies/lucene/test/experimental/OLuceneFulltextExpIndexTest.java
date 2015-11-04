@@ -86,7 +86,7 @@ public class OLuceneFulltextExpIndexTest extends BaseLuceneTest {
     //    deInitDB();
   }
 
-  @Test
+  @Test(enabled = false)
   public void testName() throws Exception {
 
     final ODocument index = databaseDocumentTx.getMetadata().getIndexManager().getIndex("Song.all").getMetadata();

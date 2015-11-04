@@ -303,7 +303,9 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   }
 
   protected Analyzer getAnalyzer(final ODocument metadata) {
-    final String analyzerFQN = metadata.field("analyzer");
+    String analyzerFQN = metadata.field("analyzer");
+    if (analyzerFQN == null)
+      analyzerFQN = StandardAnalyzer.class.getName();
     try {
 
       final Class classAnalyzer = Class.forName(analyzerFQN);

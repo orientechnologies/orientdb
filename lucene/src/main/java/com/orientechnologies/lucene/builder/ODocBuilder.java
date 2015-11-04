@@ -50,13 +50,15 @@ public class ODocBuilder implements DocBuilder {
     for (String f : definition.getFields()) {
       Object val = formattedKey.get(i);
       i++;
-      if (isToStore(f, fieldsToStore).equals(Field.Store.YES)) {
-        doc.add(OLuceneIndexType
-            .createField(f + OLuceneIndexEngineAbstract.STORED, val, Field.Store.YES, Field.Index.NOT_ANALYZED_NO_NORMS));
+      if (val != null) {
+        if (isToStore(f, fieldsToStore).equals(Field.Store.YES)) {
+          doc.add(OLuceneIndexType
+              .createField(f + OLuceneIndexEngineAbstract.STORED, val, Field.Store.YES, Field.Index.NOT_ANALYZED_NO_NORMS));
+        }
+        doc.add(OLuceneIndexType.createField(f, val, Field.Store.NO, Field.Index.ANALYZED));
+        //for experimental index: prefix with class name and dot: Person.name
+        doc.add(OLuceneIndexType.createField(definition.getClassName() + "." + f, val, Field.Store.NO, Field.Index.ANALYZED));
       }
-      doc.add(OLuceneIndexType.createField(f, val, Field.Store.NO, Field.Index.ANALYZED));
-      //for experimental index
-      doc.add(OLuceneIndexType.createField(definition.getClassName() + "." + f, val, Field.Store.NO, Field.Index.ANALYZED));
     }
     return doc;
   }
@@ -66,7 +68,6 @@ public class ODocBuilder implements DocBuilder {
 
     if (key instanceof OCompositeKey) {
       keys = ((OCompositeKey) key).getKeys();
-
     } else if (key instanceof List) {
       keys = ((List) key);
     } else {
@@ -74,7 +75,7 @@ public class ODocBuilder implements DocBuilder {
       keys.add(key);
     }
 
-    // a sort of pa
+    // a sort of padding
     for (int i = keys.size(); i < definition.getFields().size(); i++) {
       keys.add("");
     }

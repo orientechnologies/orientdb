@@ -21,7 +21,9 @@ package com.orientechnologies.orient.spatial.strategy;
 import com.orientechnologies.lucene.engine.OLuceneSpatialIndexContainer;
 import com.orientechnologies.lucene.query.SpatialQueryContext;
 import com.orientechnologies.orient.spatial.shape.OShapeBuilder;
+import com.orientechnologies.orient.spatial.shape.OShapeFactory;
 import com.spatial4j.core.shape.Shape;
+import com.vividsolutions.jts.geom.Geometry;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.spatial.SpatialStrategy;
@@ -45,11 +47,16 @@ public class SpatialQueryBuilderDWithin extends SpatialQueryBuilderAbstract {
   public SpatialQueryContext build(Map<String, Object> query) throws Exception {
     Shape shape = parseShape(query);
 
+    System.out.println("qui:: " + shape);
     SpatialStrategy strategy = manager.strategy();
     if (isOnlyBB(strategy)) {
       shape = shape.getBoundingBox();
     }
     SpatialArgs args = new SpatialArgs(SpatialOperation.IsWithin, shape);
+
+
+    Geometry geo = OShapeFactory.INSTANCE.toGeometry(shape);
+
     Filter filter = strategy.makeFilter(args);
     return new SpatialQueryContext(null, manager.searcher(), new MatchAllDocsQuery(), filter);
   }
