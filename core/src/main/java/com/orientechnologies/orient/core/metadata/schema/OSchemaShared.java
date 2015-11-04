@@ -28,10 +28,7 @@ import com.orientechnologies.orient.core.OOrientShutdownListener;
 import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -68,9 +65,9 @@ import java.util.concurrent.Callable;
 
 /**
  * Shared schema class. It's shared by all the database instances that point to the same storage.
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
+ *
  */
 @SuppressWarnings("unchecked")
 public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, OCloseable, OOrientStartupListener,
@@ -1168,7 +1165,10 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
         // REMOVE DEPENDENCY FROM SUPERCLASS
         ((OClassImpl) superClass).removeBaseClassInternal(cls);
       }
-      deleteDefaultCluster(cls);
+      for(int id : cls.getClusterIds()) {
+        if(id != -1)
+          deleteCluster(getDatabase(), id);
+      }
 
       dropClassIndexes(cls);
 
@@ -1185,16 +1185,9 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     }
   }
 
-  private void deleteDefaultCluster(final OClass clazz) {
-    final ODatabaseDocumentInternal database = getDatabase();
-    final int clusterId = clazz.getDefaultClusterId();
-    final OCluster cluster = database.getStorage().getClusterById(clusterId);
-
-    if (cluster.getName().equalsIgnoreCase(clazz.getName()))
-      database.getStorage().dropCluster(clusterId, true);
-
-    // FREE THE RECORD CACHE
-    getDatabase().getLocalCache().freeCluster(clusterId);
+  private void deleteCluster(ODatabaseDocumentInternal db,int clusterId){
+    db.getStorage().dropCluster(clusterId, true);
+    db.getLocalCache().freeCluster(clusterId);
   }
 
   private void saveInternal() {
