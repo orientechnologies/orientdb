@@ -2,6 +2,7 @@ package org.apache.tinkerpop.gremlin.orientdb.gremlintest;
 
 import static org.junit.Assert.fail;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -19,6 +20,12 @@ import org.apache.tinkerpop.gremlin.orientdb.OrientVertexProperty;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 
 public class OrientGraphProvider extends AbstractGraphProvider {
+  
+    static {
+        File buildDir = new File("target/builddir");
+        buildDir.mkdirs();
+        System.setProperty("build.dir", buildDir.getAbsolutePath());
+    }
 
     @Override
     public Map<String, Object> getBaseConfiguration(String graphName, Class<?> test, String testMethodName, LoadGraphWith.GraphData loadGraphWith) {
