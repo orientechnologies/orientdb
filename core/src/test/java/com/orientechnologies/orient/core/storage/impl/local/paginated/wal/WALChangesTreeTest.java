@@ -279,7 +279,7 @@ public class WALChangesTreeTest {
       tree.add(value, cstart);
     }
 
-    ODirectMemoryPointer pointer = ODirectMemoryPointerFactory.instance().createPointer(30);
+    ODirectMemoryPointer pointer = ODirectMemoryPointerFactory.instance().createPointer(new byte[30]);
     tree.applyChanges(pointer);
     Assert.assertEquals(pointer.get(0, 30), data);
     pointer.free();
