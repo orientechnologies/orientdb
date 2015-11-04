@@ -39,7 +39,8 @@ import java.util.List;
 public class LuceneMassiveInsertDeleteTest extends BaseLuceneTest {
 
   public LuceneMassiveInsertDeleteTest(boolean remote) {
-    super(remote);
+
+    //super(remote);
   }
 
   public LuceneMassiveInsertDeleteTest() {

@@ -44,7 +44,7 @@ public class LuceneInsertUpdateTransactionTest extends BaseLuceneTest {
   }
 
   public LuceneInsertUpdateTransactionTest(boolean remote) {
-    super(remote);
+    super();
   }
 
   @Override

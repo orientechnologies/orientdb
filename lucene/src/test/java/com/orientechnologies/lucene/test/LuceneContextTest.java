@@ -45,7 +45,7 @@ public class LuceneContextTest extends BaseLuceneTest {
   }
 
   public LuceneContextTest(boolean remote) {
-    super(remote);
+    super();
   }
 
   @Override
