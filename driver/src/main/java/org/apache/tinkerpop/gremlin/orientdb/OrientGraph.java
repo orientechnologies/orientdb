@@ -28,6 +28,8 @@ import org.apache.tinkerpop.gremlin.orientdb.traversal.strategy.optimization.Ori
 import org.apache.tinkerpop.gremlin.process.computer.GraphComputer;
 import org.apache.tinkerpop.gremlin.process.traversal.TraversalStrategies;
 import org.apache.tinkerpop.gremlin.structure.*;
+import org.apache.tinkerpop.gremlin.structure.io.Io;
+import org.apache.tinkerpop.gremlin.structure.io.Io.Builder;
 import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
 
 import java.util.*;
@@ -537,4 +539,10 @@ public final class OrientGraph implements Graph {
         return iCallable.call(this);
     }
 
+    @Override
+    public <I extends Io> I io(Builder<I> builder)
+    {
+        return (I) Graph.super.io(builder.registry(OrientIoRegistry.getInstance()));
+    }
+    
 }
