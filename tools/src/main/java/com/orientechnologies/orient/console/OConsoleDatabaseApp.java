@@ -1730,7 +1730,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       } catch (NoSuchMethodException ignored) {
       }
 
-    out.println(new StringBuilder("Backuping current database to: ").append(iText).append("..."));
+    out.println(new StringBuilder("Backup in progress of current database to: ").append(iText).append("..."));
 
     final String fileName = items.size() <= 0 || items.get(1).charAt(0) == '-' ? null : items.get(1);
 

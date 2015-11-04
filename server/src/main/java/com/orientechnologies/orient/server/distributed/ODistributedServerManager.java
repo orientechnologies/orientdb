@@ -68,7 +68,15 @@ public interface ODistributedServerManager {
 
   void updateLastClusterChange();
 
+  /**
+   * Available means not OFFLINE, so ONLINE or SYNCHRONIZING.
+   */
   boolean isNodeAvailable(String iNodeName, String databaseName);
+
+  /**
+   * Returns true if the node status is ONLINE.
+   */
+  boolean isNodeOnline(String iNodeName, String databaseName);
 
   boolean isOffline();
 

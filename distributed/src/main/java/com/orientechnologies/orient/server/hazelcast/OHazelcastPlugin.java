@@ -80,9 +80,8 @@ import java.util.concurrent.locks.Lock;
 
 /**
  * Hazelcast implementation for clustering.
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
  */
 public class OHazelcastPlugin extends ODistributedAbstractPlugin
     implements MembershipListener, EntryListener<String, Object>, OCommandOutputListener {
@@ -317,9 +316,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
   @Override
   public DB_STATUS getDatabaseStatus(final String iNode, final String iDatabaseName) {
-    // if (!activeNodes.containsKey(iNode))
-    // return DB_STATUS.OFFLINE;
-    //
     final DB_STATUS status = (DB_STATUS) getConfigurationMap()
         .get(OHazelcastPlugin.CONFIG_DBSTATUS_PREFIX + iNode + "." + iDatabaseName);
     return status != null ? status : DB_STATUS.OFFLINE;
@@ -752,6 +748,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   @Override
   public boolean isNodeAvailable(final String iNodeName, final String iDatabaseName) {
     return getDatabaseStatus(iNodeName, iDatabaseName) != DB_STATUS.OFFLINE;
+  }
+
+  @Override
+  public boolean isNodeOnline(final String iNodeName, final String iDatabaseName) {
+    return getDatabaseStatus(iNodeName, iDatabaseName) == DB_STATUS.ONLINE;
   }
 
   public boolean isOffline() {

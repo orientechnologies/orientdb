@@ -19,18 +19,6 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.Lock;
-
 import com.hazelcast.core.IQueue;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.Orient;
@@ -55,6 +43,18 @@ import com.orientechnologies.orient.server.distributed.task.OResurrectRecordTask
 import com.orientechnologies.orient.server.distributed.task.OSQLCommandTask;
 import com.orientechnologies.orient.server.distributed.task.OTxTask;
 import com.orientechnologies.orient.server.distributed.task.OUpdateRecordTask;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Hazelcast implementation of distributed peer. There is one instance per database. Each node creates own instance to talk with
@@ -115,14 +115,14 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
     iRequest.setSenderNodeName(getLocalNodeName());
 
-    int availableNodes;
+    int onlineNodes;
     if (iRequest.getTask().isRequireNodeOnline()) {
       // CHECK THE ONLINE NODES
-      availableNodes = 0;
+      onlineNodes = 0;
       int i = 0;
       for (String node : iNodes) {
-        if (reqQueues[i].getValue() != null && manager.isNodeAvailable(node, databaseName))
-          availableNodes++;
+        if (reqQueues[i].getValue() != null && manager.isNodeOnline(node, databaseName))
+          onlineNodes++;
         else {
           if (ODistributedServerLog.isDebugEnabled())
             ODistributedServerLog.debug(this, getLocalNodeName(), node, DIRECTION.OUT,
@@ -133,20 +133,20 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       }
     } else {
       // EXPECT ANSWER FROM ALL NODES WITH A QUEUE
-      availableNodes = 0;
+      onlineNodes = 0;
       for (OPair<String, IQueue<ODistributedRequest>> q : reqQueues)
         if (q.getValue() != null)
-          availableNodes++;
+          onlineNodes++;
     }
 
-    final int quorum = calculateQuorum(iRequest, iClusterNames, cfg, availableNodes, iExecutionMode);
+    final int quorum = calculateQuorum(iRequest, iClusterNames, cfg, onlineNodes, iExecutionMode);
 
     final int queueSize = iNodes.size();
-    int expectedSynchronousResponses = availableNodes;
+    int expectedSynchronousResponses = onlineNodes;
 
     final boolean groupByResponse;
     if (iRequest.getTask().getResultStrategy() == OAbstractRemoteTask.RESULT_STRATEGY.UNION) {
-      expectedSynchronousResponses = availableNodes;
+      expectedSynchronousResponses = onlineNodes;
       groupByResponse = false;
     } else {
       groupByResponse = true;

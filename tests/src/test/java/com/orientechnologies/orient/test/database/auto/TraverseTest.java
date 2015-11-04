@@ -29,12 +29,14 @@ import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Test
 @SuppressWarnings("unused")
 public class TraverseTest extends DocumentDBBaseTest {
-  private int       totalElements = 0;
+  private int totalElements = 0;
   private ODocument tomCruise;
   private ODocument megRyan;
   private ODocument nicoleKidman;
@@ -256,13 +258,36 @@ public class TraverseTest extends DocumentDBBaseTest {
   public void traverseAndFilterByAttributeThatContainsDotInValue() {
     // issue #4952
     List<ODocument> result1 = database.command(
-        new OSQLSynchQuery<ODocument>("select from ( traverse out_married, in[attributeWithDotValue = 'a.b']  from " + tomCruise.getIdentity() + ")"))
+        new OSQLSynchQuery<ODocument>(
+            "select from ( traverse out_married, in[attributeWithDotValue = 'a.b']  from " + tomCruise.getIdentity() + ")"))
         .execute();
     Assert.assertTrue(result1.size() > 0);
     boolean found = false;
-    for(ODocument doc:result1){
+    for (ODocument doc : result1) {
       String name = doc.field("name");
-      if("Nicole Kidman".equals(name)){
+      if ("Nicole Kidman".equals(name)) {
+        found = true;
+        break;
+      }
+    }
+    Assert.assertTrue(found);
+
+  }
+
+  @Test
+  public void traverseAndFilterWithNamedParam() {
+    // issue #5225
+    Map<String, Object> params = new HashMap<String, Object>();
+    params.put("param1", "a.b");
+    List<ODocument> result1 = database.command(
+        new OSQLSynchQuery<ODocument>(
+            "select from (traverse out_married, in[attributeWithDotValue = :param1]  from " + tomCruise.getIdentity() + ")"))
+        .execute(params);
+    Assert.assertTrue(result1.size() > 0);
+    boolean found = false;
+    for (ODocument doc : result1) {
+      String name = doc.field("name");
+      if ("Nicole Kidman".equals(name)) {
         found = true;
         break;
       }
