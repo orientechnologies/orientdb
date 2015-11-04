@@ -113,8 +113,8 @@
         <module>distributed</module>
         <module>graphdb</module>
         <module>lucene</module>
-        <module>jdbc</module>
         <module>etl</module>
+        <module>jdbc</module>
         <module>distribution</module>
     </modules>
 
