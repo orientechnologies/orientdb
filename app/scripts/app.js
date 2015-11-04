@@ -177,7 +177,8 @@ App.config(function ($routeProvider, $httpProvider, $translateProvider, $transla
           Notification.clear();
           $rootScope.$broadcast("server:down");
 
-        } else if (rejection.status == 401 && rejection.data != "Logged out") {
+        } else if (rejection.status == 401 && checkError401(rejection.data)) {
+          console.log(rejection.data);
           Notification.push({content: rejection.data, error: true, autoHide: false});
         }
         return $q.reject(rejection);
@@ -220,6 +221,17 @@ App.run(function ($rootScope, $interval, DatabaseApi, Notification, Spinner, $te
   $templateCache.put('popover/popover.tpl.html', '<div class="popover"><div class="arrow"></div><h3 class="popover-title" ng-bind="title" ng-show="title"></h3><div class="popover-content" ng-bind-html="content"></div></div>');
 })
 
+var checkError401 = function (data) {
+
+  var valid = true;
+  if (typeof  data == 'string') {
+    valid = data != "Logged out";
+  } else {
+    valid = data.errors[0].content != "Logged out"
+  }
+  return valid;
+
+}
 $('body').on('keyup', function (e) {
 
   if (e.keyCode == 27) {

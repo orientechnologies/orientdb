@@ -51,7 +51,7 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
   $scope.toggleBookmarks = function () {
     Aside.toggle();
   }
-  
+
 
   $scope.hideSettings = $scope.config.get("hideSettings");
 

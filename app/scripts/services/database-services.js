@@ -530,6 +530,22 @@ database.factory('DatabaseApi', function ($http, $resource, $q) {
   var urlWiki = "https://github.com/orientechnologies/orientdb-studio/wiki/Functions";
 
   var resource = $resource(API + 'database/:database');
+
+  resource.sso = false;
+
+
+  resource.isSSO = function () {
+    var deferred = $q.defer();
+
+    $http.get(API + 'sso').success(function (data) {
+      resource.sso = data.enabled;
+      deferred.resolve(data);
+    }).error(function (data) {
+      deferred.reject(data);
+    });
+
+    return deferred.promise;
+  }
   resource.listDatabases = function (callback) {
     var deferred = $q.defer();
     $http.get(API + 'listDatabases').success(function (data) {
@@ -547,9 +563,10 @@ database.factory('DatabaseApi', function ($http, $resource, $q) {
 
   resource.install = function (db, username, password) {
     var deferred = $q.defer();
-    delete $http.defaults.headers.common['Authorization'];
-    $http.defaults.headers.common['Authorization'] = 'Basic ' + Base64.encode(username + ':' + password);
-
+    if (!resource.sso) {
+      delete $http.defaults.headers.common['Authorization'];
+      $http.defaults.headers.common['Authorization'] = 'Basic ' + Base64.encode(username + ':' + password);
+    }
     $http.post(API + 'installDatabase', db.url).success(function (data) {
       deferred.resolve(data);
     }).error(function (data) {
@@ -565,12 +582,16 @@ database.factory('DatabaseApi', function ($http, $resource, $q) {
   }
 
   resource.connect = function (database, username, password, callback, error) {
-    $http.defaults.headers.common['Authorization'] = 'Basic ' + Base64.encode(username + ':' + password);
+    if (!resource.sso) {
+      $http.defaults.headers.common['Authorization'] = 'Basic ' + Base64.encode(username + ':' + password);
+    }
     $http.get(API + 'connect/' + database).success(callback).error(error);
   }
   resource.createDatabase = function (name, type, stype, username, password, callback, error) {
     delete $http.defaults.headers.common['Authorization'];
-    $http.defaults.headers.common['Authorization'] = 'Basic ' + Base64.encode(username + ':' + password);
+    if (!resource.sso) {
+      $http.defaults.headers.common['Authorization'] = 'Basic ' + Base64.encode(username + ':' + password);
+    }
     $http.post(API + 'database/' + name + "/" + stype + "/" + type).success(function (data) {
       delete $http.defaults.headers.common['Authorization'];
       callback(data);
@@ -581,7 +602,9 @@ database.factory('DatabaseApi', function ($http, $resource, $q) {
   resource.deleteDatabase = function (name, username, password) {
     var deferred = $q.defer();
     delete $http.defaults.headers.common['Authorization'];
-    $http.defaults.headers.common['Authorization'] = 'Basic ' + Base64.encode(username + ':' + password);
+    if (!resource.sso) {
+      $http.defaults.headers.common['Authorization'] = 'Basic ' + Base64.encode(username + ':' + password);
+    }
     $http.delete(API + 'database/' + name).success(function (data) {
       deferred.resolve(data);
     }).error(function (data) {
@@ -609,8 +632,7 @@ database.factory('DatabaseApi', function ($http, $resource, $q) {
     $http.get(API + 'supportedLanguages/' + database).success(function (data) {
       deferred.resolve(data);
     }).error(function (err) {
-      deferred.reject(err)
-      ''
+      deferred.reject(err);
     });
     return deferred.promise;
   }
@@ -847,7 +869,7 @@ database.factory('DocumentApi', function ($http, $resource, Database, $q) {
   }
   return resource;
 });
-database.factory('ServerApi', function ($http, $resource,$q) {
+database.factory('ServerApi', function ($http, $resource, $q) {
 
 
   var resource = $resource(API + 'server');

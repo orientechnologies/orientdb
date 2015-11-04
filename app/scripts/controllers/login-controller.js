@@ -5,6 +5,13 @@ login.controller("LoginController", ['$scope', '$rootScope', '$routeParams', '$l
 
   var doc = "http://www.orientdb.com/docs/" + Database.getVersion() + "/Security.html"
   $scope.link = {link: doc};
+
+  $scope.sso = false;
+  DatabaseApi.isSSO().then(function (data) {
+    $scope.sso = data.enabled;
+  }).catch(function (err) {
+
+  })
   DatabaseApi.listDatabases(function (data) {
     $scope.databases = data.databases;
     if ($scope.databases.length > 0) {
@@ -33,8 +40,11 @@ login.controller("LoginController", ['$scope', '$rootScope', '$routeParams', '$l
     modalScope.creating = false;
     modalScope.stype = "plocal";
     modalScope.type = "graph";
-    modalScope.username = "root";
+    if (!$scope.sso) {
+      modalScope.username = "root";
+    }
     modalScope.lightweight = false;
+    modalScope.sso = $scope.sso;
     modalScope.types = ['document', 'graph']
     modalScope.stypes = ['plocal', 'memory']
     var modalPromise = $modal({template: 'views/database/newDatabase.html', scope: modalScope, show: false});
@@ -110,6 +120,7 @@ login.controller("LoginController", ['$scope', '$rootScope', '$routeParams', '$l
   $scope.deleteDb = function () {
     var modalScope = $scope.$new(true);
     modalScope.name = $scope.database;
+    modalScope.sso = $scope.sso;
     var modalPromise = $modal({template: 'views/database/deleteDatabase.html', scope: modalScope, show: false});
     modalScope.delete = function () {
       modalScope.creating = true;
