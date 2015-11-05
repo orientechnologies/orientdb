@@ -51,4 +51,17 @@ public interface ODistributedLifecycleListener {
    *          Node name that left
    */
   void onNodeLeft(String iNode);
+
+  /**
+   * Called upon change of database status on a node. Available statuses are defined in ODistributedServerManager.DB_STATUS.
+   * 
+   * @since 2.2.0
+   * @param iNode
+   *          The node name
+   * @param iDatabaseName
+   *          Database name
+   * @param iNewStatus
+   *          The new status
+   */
+  void onDatabaseChangeStatus(String iNode, String iDatabaseName, ODistributedServerManager.DB_STATUS iNewStatus);
 }

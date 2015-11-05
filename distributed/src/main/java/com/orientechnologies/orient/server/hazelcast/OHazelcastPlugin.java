@@ -347,6 +347,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   @Override
   public void setDatabaseStatus(final String iNode, final String iDatabaseName, final DB_STATUS iStatus) {
     getConfigurationMap().put(OHazelcastPlugin.CONFIG_DBSTATUS_PREFIX + iNode + "." + iDatabaseName, iStatus);
+
+    // NOTIFY DB/NODE IS CHANGING STATUS
+    for (ODistributedLifecycleListener l : listeners) {
+      l.onDatabaseChangeStatus(iNode, iDatabaseName, iStatus);
+    }
   }
 
   @Override

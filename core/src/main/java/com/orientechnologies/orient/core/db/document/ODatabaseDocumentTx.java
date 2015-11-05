@@ -2739,7 +2739,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
 
     getStorage().restore(in, options, callable, iListener);
 
-    getMetadata().reload();
+    if (!isClosed())
+      getMetadata().reload();
   }
 
   /**
