@@ -19,6 +19,8 @@
  */
 package com.orientechnologies.orient.core.sql.filter;
 
+import com.orientechnologies.common.parser.OBaseParser;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -276,12 +278,16 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
       if (word.length() == 0)
         break;
 
+
+      word = word.replaceAll("\\\\", "\\\\\\\\"); //see issue #5229
+
       final String uWord = word.toUpperCase();
 
       final int lastPosition = parserIsEnded() ? parserText.length() : parserGetCurrentPosition();
 
       if (word.length() > 0 && word.charAt(0) == OStringSerializerHelper.EMBEDDED_BEGIN) {
         braces++;
+
 
         // SUB-CONDITION
         parserSetCurrentPosition(lastPosition - word.length() + 1);
@@ -345,6 +351,7 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
             break;
         }
 
+        word = word.replaceAll("\\\\\\\\", "\\\\"); //see issue #5229
         result[i] = OSQLHelper.parseValue(this, this, word, context);
       }
     }
