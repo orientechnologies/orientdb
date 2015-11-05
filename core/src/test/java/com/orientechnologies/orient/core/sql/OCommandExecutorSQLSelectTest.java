@@ -920,6 +920,21 @@ public class OCommandExecutorSQLSelectTest {
     assertEquals(results.size(), 1);
   }
 
+  @Test
+  public void testParamWithMatchesAndNot(){
+    //issue #5229
+    Map<String, Object> params = new HashMap<String, Object>();
+    params.put("param1", "adm.*");
+    params.put("param2", "foo.*");
+    OSQLSynchQuery sql = new OSQLSynchQuery("select from OUser where (name matches :param1 and not (name matches :param2))");
+    List<ODocument> results = db.query(sql, params);
+    assertEquals(results.size(), 1);
+
+    params.put("param1",  Pattern.quote("adm") + ".*");
+    results = db.query(sql, params);
+    assertEquals(results.size(), 1);
+  }
+
   private long indexUsages(ODatabaseDocumentTx db) {
     final long oldIndexUsage;
     try {
