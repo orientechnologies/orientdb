@@ -2,7 +2,6 @@ package com.orientechnologies.orient.jdbc;
 
 import com.orientechnologies.orient.core.OConstants;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.sql.DatabaseMetaData;
@@ -25,7 +24,7 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
   }
 
   @Test
-  @Ignore
+
   public void verifyDriverAndDatabaseVersions() throws SQLException {
 
     assertEquals("memory:test", metaData.getURL());
@@ -43,7 +42,7 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
   }
 
   @Test
-  @Ignore
+
   public void shouldRetrievePrimaryKeysMetadata() throws SQLException {
 
     ResultSet primaryKeys = metaData.getPrimaryKeys(null, null, "Item");
@@ -60,7 +59,7 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
   }
 
   @Test
-  @Ignore
+
   public void shouldRetrieveTableTypes() throws SQLException {
 
     ResultSet tableTypes = metaData.getTableTypes();
@@ -74,7 +73,7 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
   }
 
   @Test
-  @Ignore
+
   public void shouldRetrieveKeywords() throws SQLException {
 
     final String keywordsStr = metaData.getSQLKeywords();
@@ -83,7 +82,7 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
   }
 
   @Test
-  @Ignore
+
   public void getFields() throws SQLException {
     ResultSet rs = conn.createStatement().executeQuery("select from OUser");
 
@@ -121,7 +120,7 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
   }
 
   @Test
-  @Ignore
+
   public void shouldFetchAllTables() throws SQLException {
     ResultSet rs = this.metaData.getTables(null, null, null, null);
     int tableCount = rsSizeOf(rs);
@@ -140,7 +139,6 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
   }
 
   @Test
-  @Ignore
   public void shouldGetAllTablesFilteredByAllTypes() throws SQLException {
     ResultSet rs = this.metaData.getTableTypes();
     List<String> tableTypes = new ArrayList<String>(2);
@@ -153,7 +151,6 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
   }
 
   @Test
-  @Ignore
   public void getNoTablesFilteredByEmptySetOfTypes() throws SQLException {
     final ResultSet rs = this.metaData.getTables(null, null, null, new String[0]);
     int tableCount = rsSizeOf(rs);
@@ -162,7 +159,6 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
   }
 
   @Test
-  @Ignore
   public void getSingleTable() throws SQLException {
     ResultSet rs = this.metaData.getTables(null, null, "ouser", null);
 
@@ -170,7 +166,7 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
   }
 
   @Test
-  @Ignore
+
   public void shouldGetSingleColumnOfArticle() throws SQLException {
     ResultSet rs = this.metaData.getColumns(null, null, "Article", "uuid");
 
@@ -178,7 +174,7 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
   }
 
   @Test
-  @Ignore
+
   public void shouldGetAllColumnsOfArticle() throws SQLException {
     ResultSet rs = this.metaData.getColumns(null, null, "Article", null);
 
@@ -186,7 +182,7 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
   }
 
   @Test
-  @Ignore
+
   //FIXME this is not a test: what is the target?
   public void shouldGetAllFields() throws SQLException {
     ResultSet rsmc = conn.getMetaData().getColumns(null, null, "OUser", null);

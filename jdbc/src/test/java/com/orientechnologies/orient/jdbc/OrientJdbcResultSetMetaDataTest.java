@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.jdbc;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.sql.Date;
@@ -15,7 +14,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
 
   @Test
-  @Ignore
   public void shouldMapReturnTypes() throws Exception {
 
     assertThat(conn.isClosed()).isFalse();
@@ -54,7 +52,6 @@ public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
   }
 
   @Test
-  @Ignore
   public void shouldNavigateResultSet() throws Exception {
 
     assertThat(conn.isClosed()).isFalse();
@@ -88,7 +85,6 @@ public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
   }
 
   @Test
-  @Ignore
   public void shouldReturnResultSetAfterExecute() throws Exception {
 
     assertThat(conn.isClosed()).isFalse();
@@ -103,7 +99,6 @@ public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
   }
 
   @Test
-  @Ignore
   public void shouldNavigateResultSetByMetadata() throws Exception {
 
     assertThat(conn.isClosed()).isFalse();
@@ -129,7 +124,6 @@ public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
   }
 
   @Test
-  @Ignore
   public void shouldMapOrientTypesToJavaSQL() throws Exception {
     assertThat(conn.isClosed()).isFalse();
 
