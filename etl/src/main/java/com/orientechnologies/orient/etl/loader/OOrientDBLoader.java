@@ -307,6 +307,10 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
       pipeline.getDocumentDatabase().commit();
     else
       pipeline.getGraphDatabase().commit();
+
+    if (!wal)
+      // RESTORE WAL IN PREVIOS STATUS
+      OGlobalConfiguration.USE_WAL.setValue(!wal);
   }
 
   @Override
