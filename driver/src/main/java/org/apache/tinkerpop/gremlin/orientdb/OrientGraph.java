@@ -10,6 +10,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManager;
@@ -20,6 +21,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.parser.ORid;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.apache.commons.configuration.Configuration;
@@ -31,12 +33,15 @@ import org.apache.tinkerpop.gremlin.structure.*;
 import org.apache.tinkerpop.gremlin.structure.io.Io;
 import org.apache.tinkerpop.gremlin.structure.io.Io.Builder;
 import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
+import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import static java.util.stream.Collectors.toSet;
 import static org.apache.tinkerpop.gremlin.orientdb.StreamUtils.asStream;
 
 @Graph.OptIn(Graph.OptIn.SUITE_STRUCTURE_STANDARD)
@@ -152,6 +157,10 @@ public final class OrientGraph implements Graph {
 
     @Override
     public Iterator<Vertex> vertices(Object... vertexIds) {
+        Set<Class<?>> edgeIdTypes = Stream.of(vertexIds).map(edgeId -> edgeId.getClass()).collect(toSet());
+        if(edgeIdTypes.size() > 1 && edgeIdTypes.contains(OrientVertex.class))
+            throw Graph.Exceptions.idArgsMustBeEitherIdOrElement();
+
         makeActive();
         return elements(
             OImmutableClass.VERTEX_CLASS_NAME,
@@ -240,6 +249,10 @@ public final class OrientGraph implements Graph {
 
     @Override
     public Iterator<Edge> edges(Object... edgeIds) {
+        Set<Class<?>> edgeIdTypes = Stream.of(edgeIds).map(edgeId -> edgeId.getClass()).collect(toSet());
+        if(edgeIdTypes.size() > 1 && edgeIdTypes.contains(OrientEdge.class))
+            throw Graph.Exceptions.idArgsMustBeEitherIdOrElement();
+
         makeActive();
         return elements(
             OImmutableClass.EDGE_CLASS_NAME,
@@ -254,19 +267,34 @@ public final class OrientGraph implements Graph {
             Iterator<ORecord> itty = new ORecordIteratorClass<>(database, database, elementClass, polymorphic);
             return asStream(itty).map(toA).iterator();
         } else {
-            Stream<ORecordId> ids = Stream.of(elementIds).map(OrientGraph::createRecordId);
-            Stream<ORecord> records = ids.filter(ORecordId::isValid).map(id -> (ORecord) id.getRecord()).filter(r -> r != null);
+            Stream<ORID> ids = Stream.of(elementIds).map(OrientGraph::createRecordId).peek(id -> checkId(id));
+            Stream<ORecord> records = ids.filter(ORID::isValid).map(id -> (ORecord) id.getRecord()).filter(r -> r != null);
             return records.map(toA).iterator();
         }
     }
 
-    protected static ORecordId createRecordId(Object id) {
+    private ORID checkId(ORID id) {
+        if (!id.isValid())
+            throw new IllegalArgumentException("Invalid id " + id);
+        try {
+            database.getRecordMetadata(id);
+        } catch (IllegalArgumentException e) {
+            // bummer, the API force me to break the chain =((
+            // https://github.com/apache/incubator-tinkerpop/commit/34ec9e7f60f15b5dbfa684a8e96668d9bbcb6752#commitcomment-14235497
+            throw Graph.Exceptions.elementNotFound(Edge.class, id);
+        }
+        return id;
+    }
+
+    protected static ORID createRecordId(Object id) {
         if (id instanceof ORecordId)
             return (ORecordId) id;
-        else if (id instanceof String)
+        if (id instanceof String)
             return new ORecordId((String) id);
-        else
-            throw new IllegalArgumentException("Orient IDs have to be a String or ORecordId - you provided a " + id.getClass());
+        if(id instanceof OrientElement)
+            return ((OrientElement) id).id();
+
+        throw new IllegalArgumentException("Orient IDs have to be a String or ORecordId - you provided a " + id.getClass());
     }
 
     protected ODocument getRawDocument(ORecord record) {
@@ -544,5 +572,10 @@ public final class OrientGraph implements Graph {
     {
         return (I) Graph.super.io(builder.registry(OrientIoRegistry.getInstance()));
     }
-    
+
+    @Override
+    public String toString() {
+        return StringFactory.graphString(this, database.toString());
+    }
+
 }

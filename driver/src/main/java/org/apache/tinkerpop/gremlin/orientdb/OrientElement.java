@@ -1,6 +1,7 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -40,7 +41,7 @@ public abstract class OrientElement implements Element {
         this.rawElement = checkNotNull(rawElement);
     }
 
-    public Object id() {
+    public ORID id() {
         return rawElement.getIdentity();
     }
 
