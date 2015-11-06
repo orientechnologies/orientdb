@@ -108,7 +108,9 @@ public final class OrientVertex extends OrientElement implements Vertex {
 
     @Override
     public <V> VertexProperty<V> property(String key, V value, Object... keyValues) {
-        throw new NotImplementedException();
+        if(keyValues != null && keyValues.length > 0)
+            throw new NotImplementedException();
+        return this.property(key, value);
     }
 
     @Override
