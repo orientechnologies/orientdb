@@ -999,65 +999,63 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       final List<ORecordOperation> tmpEntries = new ArrayList<ORecordOperation>();
 
-      while (iTx.getCurrentRecordEntries().iterator().hasNext()) {
-        for (ORecordOperation txEntry : iTx.getCurrentRecordEntries())
-          tmpEntries.add(txEntry);
+      for (ORecordOperation txEntry : iTx.getCurrentRecordEntries())
+        tmpEntries.add(txEntry);
 
-        iTx.clearRecordEntries();
+      iTx.clearRecordEntries();
 
-        for (ORecordOperation op : tmpEntries) {
-          final OAbstractRecordReplicatedTask task;
+      for (ORecordOperation op : tmpEntries) {
+        final OAbstractRecordReplicatedTask task;
 
-          final ORecord record = op.getRecord();
+        final ORecord record = op.getRecord();
 
-          final ORecordId rid = (ORecordId) record.getIdentity();
+        final ORecordId rid = (ORecordId) record.getIdentity();
 
-          switch (op.type) {
-          case ORecordOperation.CREATED: {
-            if (rid.isNew()) {
-              // CREATE THE TASK PASSING THE RECORD OR A COPY BASED ON EXECUTION TYPE: IF ASYNCHRONOUS THE COPY PREVENT TO EARLY
-              // ASSIGN CLUSTER IDS
-              final ORecord rec = executionModeSynch ? record : record.copy();
-              task = new OCreateRecordTask(rec);
-              if (record instanceof ODocument)
-                ((ODocument) record).validate();
-              break;
-            }
-            // ELSE TREAT IT AS UPDATE: GO DOWN
-          }
-
-          case ORecordOperation.UPDATED: {
+        switch (op.type) {
+        case ORecordOperation.CREATED: {
+          if (rid.isNew()) {
+            // CREATE THE TASK PASSING THE RECORD OR A COPY BASED ON EXECUTION TYPE: IF ASYNCHRONOUS THE COPY PREVENT TO EARLY
+            // ASSIGN CLUSTER IDS
+            final ORecord rec = executionModeSynch ? record : record.copy();
+            task = new OCreateRecordTask(rec);
             if (record instanceof ODocument)
               ((ODocument) record).validate();
-
-            // LOAD PREVIOUS CONTENT TO BE USED IN CASE OF UNDO
-            final OStorageOperationResult<ORawBuffer> previousContent = wrapped.readRecord(rid, null, false, null);
-
-            if (previousContent.getResult() == null)
-              // DELETED
-              throw new ORecordNotFoundException("Cannot update record '" + rid + "' because has been deleted");
-
-            final int v = executionModeSynch ? record.getVersion() : record.getVersion();
-
-            task = new OUpdateRecordTask(rid, previousContent.getResult().getBuffer(), previousContent.getResult().version,
-                record.toStream(), v, ORecordInternal.getRecordType(record));
-
             break;
           }
-
-          case ORecordOperation.DELETED: {
-            final int v = executionModeSynch ? record.getVersion() : record.getVersion();
-            task = new ODeleteRecordTask(rid, v);
-            break;
-          }
-
-          default:
-            continue;
-          }
-
-          involvedClusters.add(getClusterNameByRID(rid));
-          txTask.add(task);
+          // ELSE TREAT IT AS UPDATE: GO DOWN
         }
+
+        case ORecordOperation.UPDATED: {
+          if (record instanceof ODocument)
+            ((ODocument) record).validate();
+
+          // LOAD PREVIOUS CONTENT TO BE USED IN CASE OF UNDO
+          final OStorageOperationResult<ORawBuffer> previousContent = wrapped.readRecord(rid, null, false, null);
+
+          if (previousContent.getResult() == null)
+            // DELETED
+            throw new ORecordNotFoundException("Cannot update record '" + rid + "' because has been deleted");
+
+          final int v = executionModeSynch ? record.getVersion() : record.getVersion();
+
+          task = new OUpdateRecordTask(rid, previousContent.getResult().getBuffer(), previousContent.getResult().version,
+              record.toStream(), v, ORecordInternal.getRecordType(record));
+
+          break;
+        }
+
+        case ORecordOperation.DELETED: {
+          final int v = executionModeSynch ? record.getVersion() : record.getVersion();
+          task = new ODeleteRecordTask(rid, v);
+          break;
+        }
+
+        default:
+          continue;
+        }
+
+        involvedClusters.add(getClusterNameByRID(rid));
+        txTask.add(task);
       }
 
       OTransactionInternal.setStatus((OTransactionAbstract) iTx, OTransaction.TXSTATUS.COMMITTING);
