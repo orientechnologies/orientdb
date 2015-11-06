@@ -1,10 +1,12 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
+import java.util.Iterator;
+
 import org.apache.tinkerpop.gremlin.structure.Property;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.VertexProperty;
-
-import java.util.Iterator;
+import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
+import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
 
 public class OrientVertexProperty<V> extends OrientProperty<V> implements VertexProperty<V> {
     protected OrientVertex vertex;
@@ -34,29 +36,14 @@ public class OrientVertexProperty<V> extends OrientProperty<V> implements Vertex
         return vertex;
     }
 
-	@Override
-	public int hashCode() {
-		final int prime = 73;
-		int result = super.hashCode();
-		result = prime * result + ((vertex == null) ? 0 : vertex.hashCode());
-		return result;
-	}
+    @Override
+    public String toString() {
+        return StringFactory.propertyString(this);
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (!super.equals(obj))
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		OrientVertexProperty other = (OrientVertexProperty) obj;
-		if (vertex == null) {
-			if (other.vertex != null)
-				return false;
-		} else if (!vertex.equals(other.vertex))
-			return false;
-		return true;
-	}
+    @Override
+    public final boolean equals(final Object object) {
+        return ElementHelper.areEqual(this, object);
+    }
 
 }
