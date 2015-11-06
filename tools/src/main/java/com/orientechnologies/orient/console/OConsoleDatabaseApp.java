@@ -431,7 +431,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     message("\nDropping cluster [" + iClusterName + "] in database " + currentDatabaseName + "...");
 
-    boolean result = currentDatabase.dropCluster(iClusterName, true);
+    boolean result = currentDatabase.dropCluster(iClusterName, false);
 
     if (!result) {
       // TRY TO GET AS CLUSTER ID

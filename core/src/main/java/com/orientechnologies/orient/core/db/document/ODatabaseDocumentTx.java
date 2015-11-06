@@ -1254,6 +1254,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
   @Override
   public boolean dropCluster(final int iClusterId, final boolean iTruncate) {
     checkIfActive();
+
+    checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_DELETE, getClusterNameById(iClusterId));
+
     final OClass clazz = metadata.getSchema().getClassByClusterId(iClusterId);
     if (clazz != null)
       clazz.removeClusterId(iClusterId);
