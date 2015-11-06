@@ -21,7 +21,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.parser.ORid;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.apache.commons.configuration.Configuration;
@@ -37,7 +36,6 @@ import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
 
 import java.util.*;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -73,12 +71,14 @@ public final class OrientGraph implements Graph {
     protected final ODatabaseDocumentTx database;
     protected final Features features;
     protected final String url;
+    private final Configuration configuration;
 
     public static OrientGraph open(final Configuration configuration) {
         return new OrientGraph(configuration);
     }
 
     public OrientGraph(Configuration config) {
+        this.configuration = config;
         if (config.getBoolean(CONFIG_TRANSACTIONAL, false)) {
             this.features = ODBFeatures.OrientFeatures.INSTANCE_TX;
         } else {
@@ -384,8 +384,7 @@ public final class OrientGraph implements Graph {
 
     @Override
     public Configuration configuration() {
-        makeActive();
-        throw new NotImplementedException();
+        return configuration;
     }
 
     @Override
