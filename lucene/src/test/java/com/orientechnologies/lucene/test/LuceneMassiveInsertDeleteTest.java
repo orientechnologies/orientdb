@@ -46,10 +46,6 @@ public class LuceneMassiveInsertDeleteTest extends BaseLuceneTest {
   public LuceneMassiveInsertDeleteTest() {
   }
 
-  @Override
-  protected String getDatabaseName() {
-    return "massiveInsertUpdate";
-  }
 
   @BeforeClass
   public void init() {

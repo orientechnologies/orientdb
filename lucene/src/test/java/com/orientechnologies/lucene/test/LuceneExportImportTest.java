@@ -43,10 +43,7 @@ import java.util.zip.GZIPInputStream;
  */
 public class LuceneExportImportTest extends BaseLuceneTest {
 
-  @Override
-  protected String getDatabaseName() {
-    return "importExport";
-  }
+
 
   @BeforeClass
   public void init() {

@@ -41,10 +41,6 @@ public class LuceneIndexCreateDropTest extends BaseLuceneTest {
     //super(remote);
   }
 
-  @Override
-  protected String getDatabaseName() {
-    return "createDrop";
-  }
 
   @BeforeClass
   public void init() {

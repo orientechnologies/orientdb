@@ -34,7 +34,6 @@ import java.util.List;
 /**
  * Created by Enrico Risa on 22/04/15.
  */
-@Test
 public class LuceneFacetTest extends BaseLuceneTest {
 
   @Test
@@ -141,8 +140,4 @@ public class LuceneFacetTest extends BaseLuceneTest {
     deInitDB();
   }
 
-  @Override
-  protected String getDatabaseName() {
-    return "facetTest";
-  }
 }

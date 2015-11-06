@@ -43,10 +43,6 @@ import java.util.List;
 
 @Test(groups = "embedded")
 public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
-  @Override
-  protected String getDatabaseName() {
-    return "conversionTest";
-  }
 
   @BeforeClass
   public void init() {

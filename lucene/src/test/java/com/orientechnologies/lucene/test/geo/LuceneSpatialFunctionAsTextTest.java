@@ -39,10 +39,6 @@ import java.util.List;
 @Test(groups = "embedded")
 public class LuceneSpatialFunctionAsTextTest extends BaseSpatialLuceneTest {
 
-  @Override
-  protected String getDatabaseName() {
-    return "functionAsText";
-  }
 
   @BeforeClass
   @Override

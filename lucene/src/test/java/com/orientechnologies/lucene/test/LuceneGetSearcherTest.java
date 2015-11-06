@@ -34,10 +34,6 @@ import java.io.IOException;
  * Created by Enrico Risa on 29/04/15.
  */
 public class LuceneGetSearcherTest extends BaseLuceneTest {
-  @Override
-  protected String getDatabaseName() {
-    return "getSearcher";
-  }
 
   @BeforeClass
   public void init() {

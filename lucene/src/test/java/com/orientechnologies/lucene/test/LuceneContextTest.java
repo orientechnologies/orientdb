@@ -47,10 +47,6 @@ public class LuceneContextTest extends BaseLuceneTest {
     //super(remote);
   }
 
-  @Override
-  protected String getDatabaseName() {
-    return "LuceneContext";
-  }
 
   public void testContext() {
     InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql");

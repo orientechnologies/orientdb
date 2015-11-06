@@ -38,10 +38,6 @@ import java.util.List;
 @Test(groups = "embedded")
 public class LuceneMixIndexTest extends BaseLuceneAutoTest {
 
-  @Override
-  protected String getDatabaseName() {
-    return "luceneMixText";
-  }
 
   @BeforeClass
   @Override

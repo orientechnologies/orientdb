@@ -260,8 +260,4 @@ public class LuceneTransactionCompositeQueryTest extends BaseConfiguredLuceneTes
 
   }
 
-  @Override
-  protected String getDatabaseName() {
-    return "transactionQueryCompositeTest";
-  }
 }

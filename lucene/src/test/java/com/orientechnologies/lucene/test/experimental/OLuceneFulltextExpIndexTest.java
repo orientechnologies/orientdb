@@ -30,12 +30,7 @@ import java.util.logging.Level;
 public class OLuceneFulltextExpIndexTest extends BaseLuceneTest {
 
   public OLuceneFulltextExpIndexTest() {
-    //    super(false);
-  }
-
-  @Override
-  protected String getDatabaseName() {
-    return getClass().getSimpleName();
+        super();
   }
 
   @BeforeClass
@@ -58,9 +53,8 @@ public class OLuceneFulltextExpIndexTest extends BaseLuceneTest {
     databaseDocumentTx.setProperty("CUSTOM", "strictSql=false");
     databaseDocumentTx.command(new OCommandSQL(
         "create index Song.all on Song (title,author,lyrics) FULLTEXTEXP ENGINE LUCENEEXP METADATA {"
-            + "\"title_index_analyzer\":\""            + StandardAnalyzer.class.getName() + "\" , "
-            + "\"author_index_analyzer\":\"" + StandardAnalyzer.class.getName() + "\" , "
-            + "\"lyrics_index_analyzer\":\"" + EnglishAnalyzer.class.getName()
+            + "\"title_index_analyzer\":\"" + StandardAnalyzer.class.getName() + "\" , " + "\"author_index_analyzer\":\""
+            + StandardAnalyzer.class.getName() + "\" , " + "\"lyrics_index_analyzer\":\"" + EnglishAnalyzer.class.getName()
             + "\"}")).execute();
 
     //     databaseDocumentTx.command(

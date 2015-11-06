@@ -46,11 +46,6 @@ public class LuceneSpatialLineStringTest extends BaseSpatialLuceneTest {
 
   public static String LINEWKT = "LINESTRING(-149.8871332 61.1484656,-149.8871655 61.1489556,-149.8871569 61.15043,-149.8870366 61.1517722)";
 
-  @Override
-  protected String getDatabaseName() {
-    return "spatialPolygonTest";
-  }
-
   @BeforeClass
   public void init() {
     initDB();
@@ -107,8 +102,9 @@ public class LuceneSpatialLineStringTest extends BaseSpatialLuceneTest {
 
     Assert.assertEquals(index.getSize(), 2);
 
-    databaseDocumentTx.command(
-        new OCommandSQL("insert into Place set name = 'LineString3' , location = ST_GeomFromText('" + LINEWKT + "')")).execute();
+    databaseDocumentTx
+        .command(new OCommandSQL("insert into Place set name = 'LineString3' , location = ST_GeomFromText('" + LINEWKT + "')"))
+        .execute();
 
     Assert.assertEquals(index.getSize(), 3);
     queryLineString();

@@ -49,10 +49,6 @@ public class LuceneListIndexing extends BaseLuceneTest {
     //super(remote);
   }
 
-  @Override
-  protected String getDatabaseName() {
-    return "listIndexing";
-  }
 
   @BeforeClass
   public void init() {

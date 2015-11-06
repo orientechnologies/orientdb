@@ -45,10 +45,6 @@ public class LuceneQueryErrorTest extends BaseLuceneTest {
     //super(remote);
   }
 
-  @Override
-  protected String getDatabaseName() {
-    return "queryError";
-  }
 
   @BeforeClass
   public void init() {

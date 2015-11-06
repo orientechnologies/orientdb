@@ -20,15 +20,11 @@ package com.orientechnologies.lucene.test.geo;
 
 import org.testng.annotations.Test;
 
-@Test(groups = "remote",enabled = false)
+@Test(groups = "remote", enabled = false)
 public class LuceneSpatialQueryRemoteTest extends LuceneSpatialQueryTest {
 
   public LuceneSpatialQueryRemoteTest() {
     super(true);
   }
 
-  @Override
-  protected String getDatabaseName() {
-    return super.getDatabaseName() + "Remote";
-  }
 }

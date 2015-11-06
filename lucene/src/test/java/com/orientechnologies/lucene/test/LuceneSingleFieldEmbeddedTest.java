@@ -93,8 +93,4 @@ public class LuceneSingleFieldEmbeddedTest extends BaseLuceneTest {
   }
 
 
-  @Override
-  protected String getDatabaseName() {
-    return "singleField";
-  }
 }

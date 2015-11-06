@@ -135,8 +135,4 @@ public class LuceneCreateIndexTest extends LuceneSingleFieldEmbeddedTest {
     song.createProperty("author", OType.STRING);
   }
 
-  @Override
-  protected String getDatabaseName() {
-    return "createIndex";
-  }
 }

@@ -47,10 +47,6 @@ public class LuceneInsertUpdateSingleDocumentTransactionTest extends BaseLuceneT
     //super(remote);
   }
 
-  @Override
-  protected String getDatabaseName() {
-    return "insertUpdateTransaction";
-  }
 
   @BeforeClass
   public void init() {

@@ -46,10 +46,6 @@ public class LuceneSkipLimitTest extends BaseLuceneTest {
         //super(remote);
     }
 
-    @Override
-    protected String getDatabaseName() {
-        return "LuceneSkipLimitTest";
-    }
 
     public void testContext() {
         InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql");

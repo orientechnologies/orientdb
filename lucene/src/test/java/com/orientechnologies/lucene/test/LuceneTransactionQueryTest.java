@@ -286,8 +286,4 @@ public class LuceneTransactionQueryTest extends BaseConfiguredLuceneTest {
 
   }
 
-  @Override
-  protected String getDatabaseName() {
-    return "transactionQueryTest";
-  }
 }

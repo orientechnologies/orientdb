@@ -32,10 +32,6 @@ import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 
 @Test(groups = "embedded")
 public class LuceneSpatialClassCreateTest extends BaseLuceneTest {
-  @Override
-  protected String getDatabaseName() {
-    return "clazzCreation";
-  }
 
   @BeforeClass
   public void init() {

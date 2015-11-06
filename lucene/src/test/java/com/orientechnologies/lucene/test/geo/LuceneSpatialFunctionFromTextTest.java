@@ -48,10 +48,6 @@ public class LuceneSpatialFunctionFromTextTest extends BaseSpatialLuceneTest {
     super.deInit();
   }
 
-  @Override
-  protected String getDatabaseName() {
-    return "spatialFunctionAsText";
-  }
 
   @Test
   public void geomFromTextLineStringTest() {
