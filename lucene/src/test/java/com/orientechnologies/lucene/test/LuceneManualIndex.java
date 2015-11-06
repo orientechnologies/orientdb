@@ -33,10 +33,6 @@ import java.util.List;
  */
 public class LuceneManualIndex extends BaseLuceneTest {
 
-  @Override
-  protected String getDatabaseName() {
-    return "manualIndex";
-  }
 
   @BeforeClass
   public void init() {

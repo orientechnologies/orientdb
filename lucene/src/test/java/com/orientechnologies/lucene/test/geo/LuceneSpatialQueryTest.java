@@ -57,11 +57,6 @@ public class LuceneSpatialQueryTest extends BaseLuceneTest {
     //super(remote);
   }
 
-  @Override
-  protected String getDatabaseName() {
-    return "luceneSpatial";
-  }
-
   @BeforeClass
   public void init() {
     initDB();
@@ -94,8 +89,9 @@ public class LuceneSpatialQueryTest extends BaseLuceneTest {
             long maxMemory = runtime.maxMemory();
             long allocatedMemory = runtime.totalMemory();
             long freeMemory = runtime.freeMemory();
-            OLogManager.instance().info(this, "Memory Stats: free [%d], allocated [%d], max [%d] total free [%d]",
-                freeMemory / 1024, allocatedMemory / 1024, maxMemory / 1024, (freeMemory + (maxMemory - allocatedMemory)) / 1024);
+            OLogManager.instance()
+                .info(this, "Memory Stats: free [%d], allocated [%d], max [%d] total free [%d]", freeMemory / 1024,
+                    allocatedMemory / 1024, maxMemory / 1024, (freeMemory + (maxMemory - allocatedMemory)) / 1024);
           }
         }, 10000, 10000);
         if (entry.getName().equals("location.csv")) {

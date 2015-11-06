@@ -53,14 +53,14 @@ public class OIndexFullText extends OIndexMultiValues {
   private static final String  DEF_SEPARATOR_CHARS    = " \r\n\t:;,.|+*/\\=!?[]()";
   private static final String  DEF_IGNORE_CHARS       = "'\"";
   private static final String  DEF_STOP_WORDS         = "the in a at as and or for his her " + "him this that what which while "
-                                                          + "up with be was were is";
+      + "up with be was were is";
   private static int           DEF_MIN_WORD_LENGTH    = 3;
   private boolean              indexRadix;
   private String               separatorChars;
   private String               ignoreChars;
   private int                  minWordLength;
 
-  private Set<String>          stopWords;
+  private Set<String> stopWords;
 
   public OIndexFullText(String name, String typeId, String algorithm, int version, OAbstractPaginatedStorage storage,
       String valueContainerAlgorithm, ODocument metadata) {
@@ -210,14 +210,15 @@ public class OIndexFullText extends OIndexMultiValues {
   }
 
   @Override
-  protected void doConfigurationUpdate(ODocument newConfig) {
-    super.doConfigurationUpdate(newConfig);
+  public ODocument updateConfiguration() {
+    super.updateConfiguration();
+    return ((FullTextIndexConfiguration) configuration).updateFullTextIndexConfiguration(separatorChars, ignoreChars, stopWords,
+        minWordLength, indexRadix);
+  }
 
-    newConfig.field(CONFIG_SEPARATOR_CHARS, separatorChars);
-    newConfig.field(CONFIG_IGNORE_CHARS, ignoreChars);
-    newConfig.field(CONFIG_STOP_WORDS, stopWords);
-    newConfig.field(CONFIG_MIN_WORD_LEN, minWordLength);
-    newConfig.field(CONFIG_INDEX_RADIX, indexRadix);
+  @Override
+  protected IndexConfiguration indexConfigurationInstance(ODocument document) {
+    return new FullTextIndexConfiguration(document);
   }
 
   public boolean canBeUsedInEqualityOperators() {
@@ -329,5 +330,23 @@ public class OIndexFullText extends OIndexMultiValues {
 
       return recs;
     }
+  }
+
+  private final class FullTextIndexConfiguration extends IndexConfiguration {
+    public FullTextIndexConfiguration(ODocument document) {
+      super(document);
+    }
+
+    public synchronized ODocument updateFullTextIndexConfiguration(String separatorChars, String ignoreChars, Set<String> stopWords,
+        int minWordLength, boolean indexRadix) {
+      document.field(CONFIG_SEPARATOR_CHARS, separatorChars);
+      document.field(CONFIG_IGNORE_CHARS, ignoreChars);
+      document.field(CONFIG_STOP_WORDS, stopWords);
+      document.field(CONFIG_MIN_WORD_LEN, minWordLength);
+      document.field(CONFIG_INDEX_RADIX, indexRadix);
+
+      return document;
+    }
+
   }
 }

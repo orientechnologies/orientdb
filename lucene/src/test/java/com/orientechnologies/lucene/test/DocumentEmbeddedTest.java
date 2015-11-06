@@ -101,8 +101,4 @@ public class DocumentEmbeddedTest extends BaseLuceneTest {
     }
 
 
-    @Override
-    protected String getDatabaseName() {
-        return "graphEmbedded";
-    }
 }

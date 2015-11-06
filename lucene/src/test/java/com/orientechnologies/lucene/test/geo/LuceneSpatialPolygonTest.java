@@ -43,10 +43,6 @@ import java.util.Map;
 
 @Test(groups = "embedded")
 public class LuceneSpatialPolygonTest extends BaseSpatialLuceneTest {
-  @Override
-  protected String getDatabaseName() {
-    return "spatialPolygonTest";
-  }
 
   @BeforeClass
   public void init() {

@@ -42,10 +42,6 @@ public class LuceneSpatialPointTest extends BaseSpatialLuceneTest {
 
   private static String PWKT = "POINT(-160.2075374 21.9029803)";
 
-  @Override
-  protected String getDatabaseName() {
-    return "spatialPointTest";
-  }
 
   @BeforeClass
   public void init() {

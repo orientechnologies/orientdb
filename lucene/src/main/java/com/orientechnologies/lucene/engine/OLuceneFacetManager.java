@@ -51,14 +51,14 @@ import java.util.Map;
  */
 public class OLuceneFacetManager {
 
-  public static final String          FACET_FIELDS = "facetFields";
-  protected static final String       FACET        = "_facet";
-  protected TaxonomyWriter            taxonomyWriter;
-  protected FacetsConfig              config       = new FacetsConfig();
-  protected String                    facetField;
+  public static final    String FACET_FIELDS = "facetFields";
+  protected static final String FACET        = "_facet";
+  protected TaxonomyWriter taxonomyWriter;
+  protected FacetsConfig config = new FacetsConfig();
+  protected String                     facetField;
   // protected String facetDim;
-  private OLuceneIndexEngineAbstract owner;
-  private ODocument                   metadata;
+  private   OLuceneIndexEngineAbstract owner;
+  private   ODocument                  metadata;
 
   public OLuceneFacetManager(OLuceneIndexEngineAbstract owner, ODocument metadata) throws IOException {
     this.owner = owner;

@@ -47,11 +47,6 @@ public class LuceneInsertUpdateSingleDocumentNoTxTest extends BaseLuceneTest {
     //super(remote);
   }
 
-  @Override
-  protected String getDatabaseName() {
-    return "insertUpdateTransaction";
-  }
-
   @BeforeClass
   public void init() {
     initDB();

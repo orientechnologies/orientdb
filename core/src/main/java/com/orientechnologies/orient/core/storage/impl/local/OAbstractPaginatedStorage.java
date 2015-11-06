@@ -3710,14 +3710,17 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
       super.close(force, onDelete);
 
-      writeCache.removeLowDiskSpaceListener(this);
+      if (writeCache != null)
+        writeCache.removeLowDiskSpaceListener(this);
+
       if (writeAheadLog != null)
         writeAheadLog.removeFullCheckpointListener(this);
 
-      if (!onDelete)
-        readCache.closeStorage(writeCache);
-      else
-        readCache.deleteStorage(writeCache);
+      if (readCache != null)
+        if (!onDelete)
+          readCache.closeStorage(writeCache);
+        else
+          readCache.deleteStorage(writeCache);
 
       if (writeAheadLog != null) {
         writeAheadLog.close();
@@ -3727,11 +3730,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
       postCloseSteps(onDelete);
 
-      try {
-        atomicOperationsManager.unregisterMBean();
-      } catch (Exception e) {
-        OLogManager.instance().error(this, "MBean for atomic opeations manager cannot be unregistered", e);
-      }
+      if (atomicOperationsManager != null)
+        try {
+          atomicOperationsManager.unregisterMBean();
+        } catch (Exception e) {
+          OLogManager.instance().error(this, "MBean for atomic opeations manager cannot be unregistered", e);
+        }
 
       status = STATUS.CLOSED;
     } catch (IOException e) {

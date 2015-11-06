@@ -82,8 +82,4 @@ public class GraphEmbeddedTest extends BaseLuceneTest {
   }
 
 
-  @Override
-  protected String getDatabaseName() {
-    return "graphEmbedded";
-  }
 }

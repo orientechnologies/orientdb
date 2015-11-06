@@ -48,11 +48,6 @@ public class LuceneInsertUpdateTest extends BaseLuceneTest {
     //super(remote);
   }
 
-  @Override
-  protected String getDatabaseName() {
-    return "insertUpdate";
-  }
-
   @BeforeClass
   public void init() {
     initDB();

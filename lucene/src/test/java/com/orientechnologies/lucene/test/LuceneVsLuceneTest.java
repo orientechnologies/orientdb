@@ -47,7 +47,9 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 /**
@@ -57,11 +59,6 @@ import java.util.List;
 public class LuceneVsLuceneTest extends BaseLuceneTest {
 
   private IndexWriter indexWriter;
-
-  @Override
-  protected String getDatabaseName() {
-    return "LuceneVsLucene";
-  }
 
   @BeforeClass
   public void init() {
@@ -119,8 +116,8 @@ public class LuceneVsLuceneTest extends BaseLuceneTest {
     Query query = new MultiFieldQueryParser(new String[] { "title" }, new StandardAnalyzer()).parse("down the");
     final TopDocs docs = searcher.search(query, Integer.MAX_VALUE);
     ScoreDoc[] hits = docs.scoreDocs;
-    List<ODocument> oDocs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
-        "select *,$score from Song where title LUCENE \"down the\""));
+    List<ODocument> oDocs = databaseDocumentTx
+        .query(new OSQLSynchQuery<ODocument>("select *,$score from Song where title LUCENE \"down the\""));
     Assert.assertEquals(oDocs.size(), hits.length);
 
     int i = 0;
@@ -131,7 +128,6 @@ public class LuceneVsLuceneTest extends BaseLuceneTest {
     reader.close();
 
   }
-
 
   @AfterClass
   public void deInit() {

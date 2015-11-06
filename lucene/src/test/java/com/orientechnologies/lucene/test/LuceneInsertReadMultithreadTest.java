@@ -18,11 +18,6 @@
 
 package com.orientechnologies.lucene.test;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -33,6 +28,10 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 /**
  * Created by enricorisa on 28/06/14.
@@ -45,22 +44,18 @@ public class LuceneInsertReadMultithreadTest extends BaseLuceneTest {
   private final static int RTHREADS = 1;
   private final static int CYCLE    = 100;
 
-  protected String         url      = "";
+  protected String url = "";
 
   public LuceneInsertReadMultithreadTest() {
     super();
-  }
-
-  public LuceneInsertReadMultithreadTest(boolean remote) {
-    //super(remote);
   }
 
   @Test(enabled = false)
   public class LuceneInsertThread implements Runnable {
 
     private ODatabaseDocumentTx db;
-    private int                 cycle     = 0;
-    private int                 commitBuf = 500;
+    private int cycle     = 0;
+    private int commitBuf = 500;
 
     public LuceneInsertThread(int cycle) {
       this.cycle = cycle;
@@ -91,8 +86,8 @@ public class LuceneInsertReadMultithreadTest extends BaseLuceneTest {
   }
 
   public class LuceneReadThread implements Runnable {
-    private final int         cycle;
-    private ODatabaseDocument databaseDocumentTx;
+    private final int               cycle;
+    private       ODatabaseDocument databaseDocumentTx;
 
     public LuceneReadThread(int cycle) {
       this.cycle = cycle;
@@ -113,11 +108,6 @@ public class LuceneInsertReadMultithreadTest extends BaseLuceneTest {
       }
 
     }
-  }
-
-  @Override
-  protected String getDatabaseName() {
-    return "multiThread";
   }
 
   @BeforeClass

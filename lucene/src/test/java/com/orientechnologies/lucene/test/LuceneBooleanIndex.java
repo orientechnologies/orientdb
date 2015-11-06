@@ -43,10 +43,6 @@ import java.util.List;
  */
 public class LuceneBooleanIndex extends BaseLuceneTest {
 
-  @Override
-  protected String getDatabaseName() {
-    return "booleanTest";
-  }
 
   @BeforeClass
   public void init() {

@@ -52,12 +52,15 @@ public class SpatialQueryBuilderDWithin extends SpatialQueryBuilderAbstract {
     if (isOnlyBB(strategy)) {
       shape = shape.getBoundingBox();
     }
-    SpatialArgs args = new SpatialArgs(SpatialOperation.IsWithin, shape);
+    SpatialArgs args1 = new SpatialArgs(SpatialOperation.IsWithin, shape);
+
+//    SpatialArgs args2 = new SpatialArgs(SpatialOperation., shape);
+
 
 
     Geometry geo = OShapeFactory.INSTANCE.toGeometry(shape);
 
-    Filter filter = strategy.makeFilter(args);
+    Filter filter = strategy.makeFilter(args1);
     return new SpatialQueryContext(null, manager.searcher(), new MatchAllDocsQuery(), filter);
   }
 

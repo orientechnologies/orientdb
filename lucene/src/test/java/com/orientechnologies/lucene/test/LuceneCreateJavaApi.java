@@ -40,11 +40,6 @@ public class LuceneCreateJavaApi extends BaseLuceneTest {
     //super(false);
   }
 
-  @Override
-  protected String getDatabaseName() {
-    return "JavaApi";
-  }
-
   @BeforeClass
   public void init() {
     initDB();

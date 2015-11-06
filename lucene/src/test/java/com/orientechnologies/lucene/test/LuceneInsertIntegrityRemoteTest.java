@@ -44,10 +44,6 @@ public class LuceneInsertIntegrityRemoteTest extends BaseLuceneTest {
     //super(true);
   }
 
-  @Override
-  protected String getDatabaseName() {
-    return "insertIntegrity";
-  }
 
   @BeforeClass
   public void init() {

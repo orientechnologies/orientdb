@@ -43,14 +43,6 @@ public class LuceneInsertDeleteTest extends BaseLuceneTest {
     super();
   }
 
-  public LuceneInsertDeleteTest(boolean remote) {
-    //super(remote);
-  }
-
-  @Override
-  protected String getDatabaseName() {
-    return "insertDelete";
-  }
 
   @BeforeClass
   public void init() {

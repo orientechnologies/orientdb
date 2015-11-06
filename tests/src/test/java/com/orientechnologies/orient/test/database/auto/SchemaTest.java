@@ -26,12 +26,12 @@ import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
-import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -497,8 +497,9 @@ public class SchemaTest extends DocumentDBBaseTest {
 
     // TEST CREATE -> EXCEPTION
     try {
-      Object res = database.command(
-          new OCommandSQL("insert into TestOffline set name = 'offline', password = 'offline', status = 'ACTIVE'")).execute();
+      Object res = database
+          .command(new OCommandSQL("insert into TestOffline set name = 'offline', password = 'offline', status = 'ACTIVE'"))
+          .execute();
       Assert.assertTrue(false);
     } catch (OException e) {
 
@@ -638,6 +639,15 @@ public class SchemaTest extends DocumentDBBaseTest {
     }
   }
 
+  @Test
+  public void testDeletionOfDependentClass() {
+    OSchema schema = database.getMetadata().getSchema();
+    OClass oRestricted = schema.getClass(OSecurityShared.RESTRICTED_CLASSNAME);
+    OClass classA = schema.createClass("TestDeletionOfDependentClassA", oRestricted);
+    OClass classB = schema.createClass("TestDeletionOfDependentClassB", classA);
+    schema.dropClass(classB.getName());
+  }
+
   private void swapClusters(ODatabaseDocumentTx databaseDocumentTx, int i) {
     databaseDocumentTx.command(new OCommandSQL("CREATE CLASS TestRenameClusterNew extends TestRenameClusterOriginal")).execute();
 
@@ -659,5 +669,4 @@ public class SchemaTest extends DocumentDBBaseTest {
     ODocument document = result.get(0);
     Assert.assertEquals(document.field("iteration"), i);
   }
-
 }

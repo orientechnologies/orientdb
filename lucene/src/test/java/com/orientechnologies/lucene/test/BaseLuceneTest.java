@@ -28,7 +28,6 @@ import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
-import org.testng.annotations.Test;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -41,7 +40,6 @@ import java.util.concurrent.Executors;
 /**
  * Created by enricorisa on 19/09/14.
  */
-@Test
 public abstract class BaseLuceneTest {
 
   protected ODatabaseDocumentTx databaseDocumentTx;
@@ -54,20 +52,12 @@ public abstract class BaseLuceneTest {
   private final ExecutorService pool = Executors.newFixedThreadPool(1);
 
   public BaseLuceneTest() {
-    //    this(false);
   }
 
-  //  public BaseLuceneTest(boolean remote) {
-  //    this.remote = remote;
-  //
-  //  }
-
-  @Test(enabled = false)
   public void initDB() {
     initDB(true);
   }
 
-  @Test(enabled = false)
   public void initDB(boolean drop) {
 
     buildDirectory = System.getProperty("buildDirectory", ".");
@@ -200,7 +190,6 @@ public abstract class BaseLuceneTest {
     return path;
   }
 
-  @Test(enabled = false)
   public void deInitDB() {
     //    if (remote) {
     //      process.destroy();
@@ -217,7 +206,7 @@ public abstract class BaseLuceneTest {
     }
   }
 
-  protected String getDatabaseName(){
+  protected final String getDatabaseName() {
     return getClass().getSimpleName();
   }
 
