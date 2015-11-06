@@ -51,7 +51,7 @@ public class OLuceneIndexEngineDelegate implements OLuceneIndexEngine {
   private final OStorage     storage;
   private final int          version;
   private OLuceneIndexEngine delegate;
-  private String indexName;
+  private String             indexName;
 
   public OLuceneIndexEngineDelegate(String name, Boolean durableInNonTxMode, OStorage storage, int version) {
 
@@ -144,7 +144,8 @@ public class OLuceneIndexEngineDelegate implements OLuceneIndexEngine {
   }
 
   @Override
-  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
+      ValuesTransformer transformer) {
     return delegate.iterateEntriesMajor(fromKey, isInclusive, ascSortOrder, transformer);
   }
 
@@ -193,18 +194,20 @@ public class OLuceneIndexEngineDelegate implements OLuceneIndexEngine {
       ODocument metadata) {
     this.indexName = indexName;
 
-    if (OClass.INDEX_TYPE.SPATIAL.name().equalsIgnoreCase(indexType)) {
-      if (indexDefinition.getFields().size() > 1) {
-        delegate = new OLuceneLegacySpatialIndexEngine(indexName, OShapeFactory.INSTANCE);
-      } else {
-        delegate = new OLuceneGeoSpatialIndexEngine(indexName, OShapeFactory.INSTANCE);
+    if (delegate == null) {
+      if (OClass.INDEX_TYPE.SPATIAL.name().equalsIgnoreCase(indexType)) {
+        if (indexDefinition.getFields().size() > 1) {
+          delegate = new OLuceneLegacySpatialIndexEngine(indexName, OShapeFactory.INSTANCE);
+        } else {
+          delegate = new OLuceneGeoSpatialIndexEngine(indexName, OShapeFactory.INSTANCE);
+        }
+
+      } else if (OClass.INDEX_TYPE.FULLTEXT.name().equalsIgnoreCase(indexType)) {
+        delegate = new OLuceneFullTextIndexEngine(indexName, new ODocBuilder(), new OQueryBuilderImpl());
       }
 
-    } else if (OClass.INDEX_TYPE.FULLTEXT.name().equalsIgnoreCase(indexType)) {
-      delegate = new OLuceneFullTextIndexEngine(indexName, new ODocBuilder(), new OQueryBuilderImpl());
+      delegate.initIndex(indexName, indexType, indexDefinition, isAutomatic, metadata);
     }
-
-    delegate.initIndex(indexName, indexType, indexDefinition, isAutomatic, metadata);
   }
 
   @Override
@@ -214,7 +217,7 @@ public class OLuceneIndexEngineDelegate implements OLuceneIndexEngine {
 
   @Override
   public void onRecordAddedToResultSet(QueryContext queryContext, OContextualRecordId recordId, Document ret, ScoreDoc score) {
-    delegate.onRecordAddedToResultSet(queryContext,recordId,ret,score);
+    delegate.onRecordAddedToResultSet(queryContext, recordId, ret, score);
   }
 
   @Override
