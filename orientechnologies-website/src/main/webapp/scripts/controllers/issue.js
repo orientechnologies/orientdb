@@ -319,6 +319,7 @@ angular.module('webappApp')
 
     $scope.carriage = true;
 
+    $scope.placeholder = "Leave a comment (Supports Markdown)";
     $scope.types = {
       'Bug': 'bug',
       'Performance': 'performance',
@@ -344,7 +345,7 @@ angular.module('webappApp')
       $scope.isSupport = User.isSupport(ORGANIZATION);
       $scope.client = User.getClient(ORGANIZATION);
 
-      if($scope.isClient && !$scope.isSupport){
+      if ($scope.isClient && !$scope.isSupport) {
         $scope.issue.confidential = true;
       }
       User.environments().then(function (data) {
@@ -389,13 +390,13 @@ angular.module('webappApp')
     $scope.carriage = true;
     $scope.githubIssue = GITHUB + "/" + ORGANIZATION;
 
+    $scope.placeholder = "Leave a Comment (Supports Markdown)";
     var waiting_reply = 'waiting reply';
     var in_progress = 'in progress';
     var question = 'question';
     $scope.number = $routeParams.id;
     var number = $scope.number;
     User.whoami().then(function (data) {
-
 
 
       $scope.isMember = User.isMember(ORGANIZATION);
@@ -414,13 +415,20 @@ angular.module('webappApp')
 
 
       $scope.repo = $scope.issue.repository.name;
+      //if ($scope.issue.confidential) {
+      $scope.url = Repo.one($scope.repo).all("issues").one(number).all('attachments').getRequestedUrl();
+      Repo.one($scope.repo).all("issues").one(number).all('attachments').getList().then(function (data) {
+        $scope.attachments = data.plain();
+      });
+
+      //}
       $scope.githubCommit = GITHUB + "/" + ORGANIZATION + "/" + $scope.repo + "/commit/";
       User.whoami().then(function (data) {
         $scope.isOwner = $scope.issue.user.name == data.name;
-        if($scope.issue.client){
+        if ($scope.issue.client) {
           try {
             $scope.isOwnerClient = $scope.isClient && ($scope.issue.client.clientId == data.clients[0].clientId);
-          } catch(e){
+          } catch (e) {
             $scope.isOwnerClient = false;
           }
         }
@@ -474,17 +482,17 @@ angular.module('webappApp')
 
     }
 
-    initTypologic();
+
     $scope.sync = function () {
       Repo.one($scope.repo).all("issues").one(number).all("sync").post().then(function (data) {
         $route.reload();
       });
     }
-    $scope.escalateIssue = function(){
+    $scope.escalateIssue = function () {
       Repo.one($scope.repo).all("issues").one(number).all("escalate").post().then(function (data) {
         var jacked = humane.create({baseCls: 'humane-jackedup', addnCls: 'humane-jackedup-success'})
         jacked.log("Escalation email has been sent.");
-      }).catch(function(e){
+      }).catch(function (e) {
 
       });
     }
@@ -511,14 +519,14 @@ angular.module('webappApp')
     }
 
 
-    $scope.markAsQuestion = function(){
+    $scope.markAsQuestion = function () {
       $scope.newComment = {}
       $scope.newComment.body = "This is more a question than an issue. Please post it on StackOverflow http://stackoverflow.com/questions/tagged/orientdb"
-      $scope.comment().then(function(data){
+      $scope.comment().then(function (data) {
 
-          $scope.close().then(function(){
-            $scope.addLabel(question);
-          })
+        $scope.close().then(function () {
+          $scope.addLabel(question);
+        })
 
       });
     }

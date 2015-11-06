@@ -1,13 +1,15 @@
 package com.orientechnologies.website.controllers;
 
 import com.orientechnologies.website.configuration.ApiVersion;
+import com.orientechnologies.website.exception.ServiceException;
 import com.orientechnologies.website.helper.SecurityHelper;
 import com.orientechnologies.website.model.schema.dto.*;
 import com.orientechnologies.website.model.schema.dto.web.IssueDTO;
+import com.orientechnologies.website.repository.AttachmentRepository;
 import com.orientechnologies.website.repository.OrganizationRepository;
 import com.orientechnologies.website.repository.RepositoryRepository;
-import com.orientechnologies.website.security.Permissions;
 import com.orientechnologies.website.security.OSecurityManager;
+import com.orientechnologies.website.security.Permissions;
 import com.orientechnologies.website.services.IssueService;
 import com.orientechnologies.website.services.OrganizationService;
 import com.orientechnologies.website.services.RepositoryService;
@@ -18,7 +20,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -43,6 +47,9 @@ public class RepositoryController {
   UserService                    userService;
   @Autowired
   protected IssueService         issueService;
+
+  @Autowired
+  protected AttachmentRepository attachmentRepository;
 
   @Autowired
   protected OSecurityManager     securityManager;
@@ -104,6 +111,35 @@ public class RepositoryController {
     }
     return events != null ? new ResponseEntity<List<Event>>(events, HttpStatus.OK) : new ResponseEntity<List<Event>>(
         HttpStatus.NOT_FOUND);
+  }
+
+  @RequestMapping(value = "{owner}/{repo}/issues/{number}/attachments", method = RequestMethod.GET)
+  public ResponseEntity<List<Attachment>> getSingleIssueAttachments(@PathVariable("owner") String owner,
+      @PathVariable("repo") String repo, @PathVariable("number") Long number) {
+
+    Issue issue = organizationRepository.findSingleOrganizationIssueByRepoAndNumber(owner, repo, number);
+
+    if (Boolean.TRUE.equals(issue.getConfidential())) {
+      return new ResponseEntity<List<Attachment>>(attachmentRepository.findIssueAttachment(owner, issue), HttpStatus.OK);
+    }
+    return new ResponseEntity<List<Attachment>>(HttpStatus.NOT_FOUND);
+  }
+
+  @RequestMapping(value = "{owner}/{repo}/issues/{number}/attachments", method = RequestMethod.POST)
+  public ResponseEntity postSingleIssueAttachment(@PathVariable("owner") String owner, @PathVariable("repo") String repo,
+      @PathVariable("number") Long number, @RequestParam("file") MultipartFile file) {
+
+    Issue issue = organizationRepository.findSingleOrganizationIssueByRepoAndNumber(owner, repo, number);
+    if (Boolean.TRUE.equals(issue.getConfidential())) {
+      try {
+
+        attachmentRepository.attachToIssue(owner, issue, file.getOriginalFilename(), file.getInputStream());
+      } catch (IOException e) {
+        throw ServiceException.create(11, "Error uploading file:" + file.getOriginalFilename());
+      }
+      return new ResponseEntity(HttpStatus.OK);
+    }
+    return new ResponseEntity(HttpStatus.NOT_FOUND);
   }
 
   @Deprecated

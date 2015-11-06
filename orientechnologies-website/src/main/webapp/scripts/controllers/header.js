@@ -1,6 +1,6 @@
 'use strict';
 angular.module('webappApp')
-  .controller('HeaderCtrl', function ($scope, User, BreadCrumb, $location, $rootScope) {
+  .controller('HeaderCtrl', function ($scope, User, BreadCrumb, $location,$route, $rootScope,AccessToken) {
 
     $scope.menuClass = "";
     $scope.breadCrumb = BreadCrumb;
@@ -19,6 +19,10 @@ angular.module('webappApp')
       $scope.menuClass = $scope.menuClass == "" ? "show-menu" : "";
     }
 
+    $scope.logout = function(){
+      AccessToken.set(null)
+      $route.reload();
+    }
     $rootScope.$on('$routeChangeSuccess', function (scope, next, current) {
 
       if (next.$$route.originalPath.indexOf('/rooms') != -1) {

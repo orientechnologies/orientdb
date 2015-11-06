@@ -53,6 +53,49 @@ angular.module('webappApp').directive('autofocus', ['$timeout', function ($timeo
     }
   }
 }]);
+
+angular.module('webappApp').directive('dropzone', ['AccessToken', function (AccessToken) {
+  return {
+    restrict: 'A',
+    scope: {
+      url: "=?url",
+    },
+    link: function ($scope, $element, $attrs) {
+
+      var token = AccessToken.get();
+      $scope.$watch("url", function (val) {
+          if (val) {
+            $element.dropzone({
+              url: val,
+              maxFilesize: 100,
+              paramName: "file",
+              maxThumbnailFilesize: 5,
+              init: function () {
+
+                this.on('success', function (file, json) {
+                });
+
+                this.on('addedfile', function (file) {
+
+                });
+
+                this.on('drop', function (file) {
+                  alert('file');
+                });
+
+              },
+              headers: {
+                "X-AUTH-TOKEN": token
+              }
+            });
+          }
+        }
+      )
+
+    }
+  }
+}])
+;
 angular.module('webappApp').directive('vueEditor', function ($timeout, $compile, $http, $typeahead) {
   return {
     require: '^ngModel',
@@ -68,7 +111,7 @@ angular.module('webappApp').directive('vueEditor', function ($timeout, $compile,
       if ($scope.preview == undefined) {
         $scope.preview = true
       }
-      if($scope.carriage == undefined){
+      if ($scope.carriage == undefined) {
         $scope.carriage = false;
       }
     },

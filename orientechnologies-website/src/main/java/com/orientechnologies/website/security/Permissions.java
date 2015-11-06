@@ -5,6 +5,8 @@ package com.orientechnologies.website.security;
  */
 public class Permissions {
 
-  public static final String ISSUE_LABEL = "hasPermission(#user,#owner,'issue.label')";
+  public static final String ISSUE_LABEL       = "hasPermission(#user,#owner,'issue.label')";
+
+  public static final String ISSUE_ATTACHMENTS = "hasPermission(#user,#owner,'issue.attachments')";
 
 }

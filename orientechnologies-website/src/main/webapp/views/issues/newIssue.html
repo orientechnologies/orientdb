@@ -10,7 +10,7 @@
             <div class="form-group">
               <input type="text" class="form-control" required placeholder="Title" ng-model="issue.title">
             </div>
-            <div class="checkbox"  ng-show="(isMember || isClient || isSupport)" >
+            <div class="checkbox" ng-show="(isMember || isClient || isSupport)">
               <label>
                 <input type="checkbox" placeholder="Private Issue"
                        ng-model="issue.confidential">
@@ -44,19 +44,21 @@
                   <select class="form-control" ng-model="issue.assignee"
                           ng-options="a.name as a.name for a in assignees"></select>
                 </div>
-                <div class="col-md-3" ng-class="{'has-error' : (issue.type == 'bug' || issue.type == 'performance') && issue.version == null}">
+                <div class="col-md-3"
+                     ng-class="{'has-error' : (issue.type == 'bug' || issue.type == 'performance') && issue.version == null}">
                   <label>Affected Version</label>
-                  <select class="form-control"   ng-required="issue.type == 'bug' || issue.type == 'performance'" ng-model="issue.version"
+                  <select class="form-control" ng-required="issue.type == 'bug' || issue.type == 'performance'"
+                          ng-model="issue.version"
                           ng-options="m.number as m.title for m in milestones | orderBy : 'title':true"></select>
                 </div>
                 <div class="col-md-3" ng-hide="!isMember">
                   <label>Resolve in milestone</label>
-                  <select class="form-control"  ng-model="issue.milestone"
+                  <select class="form-control" ng-model="issue.milestone"
                           ng-options="m.number as m.title for m in milestones | orderBy : ['-state','dueOn']"></select>
                 </div>
                 <div class="col-md-3" ng-show="isMember || isSupport">
                   <label>Client</label>
-                  <select class="form-control"  ng-model="issue.client"
+                  <select class="form-control" ng-model="issue.client"
                           ng-options="c.clientId as c.name for c in clients"></select>
                 </div>
               </div>
@@ -65,8 +67,8 @@
               </div>
             </div>
             <div class="form-group">
-              <div vue-editor preview="false"  carriage = "carriage" ng-model="issue.body"></div>
-              <!--<div mkeditor ng-model="issue.body"></div>-->
+              <div vue-editor preview="false" placeholder="placeholder" carriage="carriage"
+                   ng-model="issue.body"></div>
             </div>
             <button type="submit" class="btn btn-success pull-right" ng-disabled="newIssue.$invalid" ng-click="save()">
               Submit new issue

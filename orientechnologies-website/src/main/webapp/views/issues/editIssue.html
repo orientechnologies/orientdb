@@ -15,7 +15,6 @@
       </div>
 
 
-
       <div class="btn-group">
         <button class="btn btn-sm btn-success" ng-disabled="!newTitle" ng-click="changeTitle(newTitle)"
                 ng-show="editingTitle">Save
@@ -33,7 +32,9 @@
         </button>
       </div>
       <div class="btn-group">
-        <a href="javascript:void(0)" ng-show="isMember && !editingTitle && issue.state == 'OPEN' && !issue.client.clientId" ng-click="markAsQuestion()"
+        <a href="javascript:void(0)"
+           ng-show="isMember && !editingTitle && issue.state == 'OPEN' && !issue.client.clientId"
+           ng-click="markAsQuestion()"
            class="btn btn-sm btn-default">Mark as Question</a>
       </div>
       <div class="btn-group">
@@ -155,12 +156,13 @@
         </div>
         <div class="col-md-11">
           <div class="panel panel-default panel-comment">
-            <div class="panel-heading">Leave a Comment</div>
+            <div class="panel-heading">Leave a Comment (Supports Markdown)</div>
             <div class="panel-body">
               <div class="container-fluid">
                 <div class="row">
                   <div class="col-md-12">
-                    <div vue-editor preview="false" carriage="carriage" ng-model="newComment.body"></div>
+                    <div vue-editor preview="false" placeholder="placeholder" carriage="carriage"
+                         ng-model="newComment.body"></div>
                   </div>
                 </div>
                 <div class="row">
@@ -353,7 +355,11 @@
         </div>
 
       </div>
+      <div class="row">
+        <form class="dropzone" dropzone="dropzone" url="url">
 
+        </form>
+      </div>
     </div>
   </div>
 </div>

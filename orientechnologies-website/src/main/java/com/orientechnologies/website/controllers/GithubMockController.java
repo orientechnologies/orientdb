@@ -19,6 +19,7 @@ import reactor.event.Event;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Created by Enrico Risa on 24/06/15.
@@ -160,10 +161,27 @@ public class GithubMockController {
 
     final OUser byGithubToken = userRepository.findByGithubToken(auth.replace("token ", ""));
 
-    comment.setCommentId(1);
+    comment.setCommentId(new Random().nextInt());
     comment.setCreatedAt(new Date());
     comment.setUpdatedAt(new Date());
 
+    runInThread(new Runnable() {
+      @Override
+      public void run() {
+        ODocument doc = new ODocument();
+        doc.field("action", "created");
+        doc.field("organization", new ODocument().field("login", owner));
+        doc.field("repository", new ODocument().field("name", repo));
+        doc.field("issue", new ODocument().field("number", number));
+        doc.field(
+            "comment",
+            new ODocument().field("created_at", comment.getCreatedAt()).field("updated_at", comment.getUpdatedAt())
+                .field("id", comment.getCommentId())
+                .field("user", new ODocument().field("login", byGithubToken.getName()).field("id", byGithubToken.getId())));
+        doc.field("sender", new ODocument().field("login", byGithubToken.getName()).field("id", byGithubToken.getId()));
+        reactor.notify(doc.field("action"), Event.wrap(doc));
+      }
+    });
     return comment;
 
   }
