@@ -43,16 +43,12 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMatches;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
@@ -133,11 +129,14 @@ public class OSQLFilterCondition {
         l = ((OBinaryField) l).copy();
     }
 
+
     if (binaryEvaluation)
       binaryEvaluation = l instanceof OBinaryField && r instanceof OBinaryField;
 
+
     if (!binaryEvaluation) {
-      final OCollate collate = getCollate();
+      // no collate for regular expressions, otherwise quotes will result in no match
+      final OCollate collate = operator instanceof OQueryOperatorMatches ? null : getCollate();
       final Object[] convertedValues = checkForConversion(iCurrentRecord, l, r, collate);
       if (convertedValues != null) {
         l = convertedValues[0];
