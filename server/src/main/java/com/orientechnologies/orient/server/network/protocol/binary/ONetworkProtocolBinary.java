@@ -802,10 +802,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     final String user = channel.readString();
     final String passwd = channel.readString();
     connection.database = (ODatabaseDocumentTx) server.openDatabase(dbURL, user, passwd, connection.data);
-
-    byte[] token = tokenHandler.getSignedBinaryToken(connection.database, connection.database.getUser(), connection.data);
+    byte[] token =null;
 
     if (Boolean.TRUE.equals(tokenBased)) {
+       token = tokenHandler.getSignedBinaryToken(connection.database, connection.database.getUser(), connection.data);
       // TODO: do not use the parse split getSignedBinaryToken in two methods.
       try {
         getServer().getClientConnectionManager().connect(this, connection, token, tokenHandler.parseBinaryToken(token));
