@@ -56,6 +56,8 @@ public abstract class OrientElement implements Element {
     }
 
     public <V> Property<V> property(final String key, final V value) {
+        if(value == null)
+            throw Property.Exceptions.propertyKeyCanNotBeNull();
         ODocument doc = getRawDocument();
         doc.field(key, value);
         doc.save();
