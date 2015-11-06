@@ -1,6 +1,8 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
 import org.apache.tinkerpop.gremlin.structure.Graph.Features;
+import org.apache.tinkerpop.gremlin.structure.Graph.Features.GraphFeatures;
+import org.apache.tinkerpop.gremlin.structure.Graph.Features.VariableFeatures;
 import org.apache.tinkerpop.gremlin.structure.Graph.Features.VertexPropertyFeatures;
 import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
 
@@ -138,6 +140,111 @@ public class ODBFeatures {
 
         @Override
         public boolean supportsThreadedTransactions() {
+            return false;
+        }
+
+        @Override
+        public VariableFeatures variables() {
+            return OrientVariableFeatures.INSTANCE;
+        }
+    }
+
+    public static class OrientVariableFeatures implements Features.VariableFeatures {
+
+        static final OrientVariableFeatures INSTANCE = new OrientVariableFeatures();
+
+        @Override
+        public boolean supportsVariables() {
+            return false;
+        }
+
+        @Override
+        public boolean supportsBooleanArrayValues() {
+            return false;
+        }
+
+        @Override
+        public boolean supportsBooleanValues() {
+            return false;
+        }
+
+        @Override
+        public boolean supportsByteArrayValues() {
+            return false;
+        }
+
+        @Override
+        public boolean supportsByteValues() {
+            return false;
+        }
+
+        @Override
+        public boolean supportsDoubleArrayValues() {
+            return false;
+        }
+
+        @Override
+        public boolean supportsDoubleValues() {
+            return false;
+        }
+
+        @Override
+        public boolean supportsFloatArrayValues() {
+            return false;
+        }
+
+        @Override
+        public boolean supportsFloatValues() {
+            return false;
+        }
+
+        @Override
+        public boolean supportsIntegerArrayValues() {
+            return false;
+        }
+
+        @Override
+        public boolean supportsIntegerValues() {
+            return false;
+        }
+
+        @Override
+        public boolean supportsLongArrayValues() {
+            return false;
+        }
+
+        @Override
+        public boolean supportsLongValues() {
+            return false;
+        }
+
+        @Override
+        public boolean supportsMapValues() {
+            return false;
+        }
+
+        @Override
+        public boolean supportsMixedListValues() {
+            return false;
+        }
+
+        @Override
+        public boolean supportsSerializableValues() {
+            return false;
+        }
+
+        @Override
+        public boolean supportsStringArrayValues() {
+            return false;
+        }
+
+        @Override
+        public boolean supportsStringValues() {
+            return false;
+        }
+
+        @Override
+        public boolean supportsUniformListValues() {
             return false;
         }
 
