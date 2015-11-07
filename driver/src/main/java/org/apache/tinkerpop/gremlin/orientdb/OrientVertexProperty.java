@@ -11,6 +11,11 @@ import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
 public class OrientVertexProperty<V> extends OrientProperty<V> implements VertexProperty<V> {
     protected OrientVertex vertex;
 
+    public OrientVertexProperty(Property<V> property, OrientVertex vertex) {
+        super(property.key(), property.value(), vertex);
+        this.vertex = vertex;
+    }
+
     public OrientVertexProperty(String key, V value, OrientVertex vertex) {
         super(key, value, vertex);
         this.vertex = vertex;

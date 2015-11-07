@@ -56,12 +56,24 @@ public abstract class OrientElement implements Element {
     }
 
     public <V> Property<V> property(final String key, final V value) {
+        if(key == null)
+            throw Property.Exceptions.propertyKeyCanNotBeNull();
         if(value == null)
             throw Property.Exceptions.propertyKeyCanNotBeNull();
+        if(Graph.Hidden.isHidden(key))
+            throw Property.Exceptions.propertyKeyCanNotBeAHiddenKey(key);
+
         ODocument doc = getRawDocument();
         doc.field(key, value);
         doc.save();
         return new OrientProperty<>(key, value, this);
+    }
+
+    public void property(Object... keyValues) {
+        ElementHelper.legalPropertyKeyValueArray(keyValues);
+        if (ElementHelper.getIdValue(keyValues).isPresent()) throw Vertex.Exceptions.userSuppliedIdsNotSupported();
+
+        ElementHelper.attachProperties(this, keyValues);
     }
 
     public <V> Iterator<? extends Property<V>> properties(final String... propertyKeys) {
@@ -77,6 +89,7 @@ public abstract class OrientElement implements Element {
             entries = entries.filter(entry -> keys.contains(entry.getKey()));
         }
 
+        @SuppressWarnings("unchecked")
         Stream<OrientProperty<V>> propertyStream = entries.map(entry -> new OrientProperty<>(entry.getKey(), (V) entry.getValue(), this));
         return propertyStream.iterator();
     }
@@ -108,5 +121,6 @@ public abstract class OrientElement implements Element {
     public final boolean equals(final Object object) {
         return ElementHelper.areEqual(this, object);
     }
+
 
 }
