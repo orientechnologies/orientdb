@@ -94,8 +94,11 @@ public final class OrientVertex extends OrientElement implements Vertex {
 
     public <V> Iterator<VertexProperty<V>> properties(final String... propertyKeys) {
         Iterator<? extends Property<V>> properties = super.properties(propertyKeys);
-        return StreamUtils.asStream(properties).filter(p ->
-            !INTERNAL_FIELDS.contains(p.key()) ).map(p ->
+        return StreamUtils.asStream(properties)
+                .filter(p -> !INTERNAL_FIELDS.contains(p.key()) )
+                .filter(p -> !p.key().startsWith("out_") )
+                .filter(p -> !p.key().startsWith("in_") )
+                .map(p ->
             (VertexProperty<V>) new OrientVertexProperty<>( p.key(), p.value(), (OrientVertex) p.element())
         ).iterator();
     }

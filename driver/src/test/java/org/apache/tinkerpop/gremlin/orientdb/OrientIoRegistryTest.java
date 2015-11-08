@@ -55,4 +55,16 @@ public class OrientIoRegistryTest {
 		assertThat(result, equalTo("{\"clusterId\":32767,\"clusterPosition\":9223372036854775807}"));
 	}
 
+	@Test
+	public void serializeVertex() throws Exception {
+        OrientGraph graph = new OrientGraphFactory("memory:serializer", "root", "root").getNoTx();
+
+        graph.addVertex();
+        StringWriter sw = new StringWriter();
+		objectMapper.writeValue(sw, new ORecordId(ORID.CLUSTER_MAX, Long.MAX_VALUE));
+
+		String result = sw.toString();
+		assertThat(result, equalTo("{\"clusterId\":32767,\"clusterPosition\":9223372036854775807}"));
+	}
+
 }
