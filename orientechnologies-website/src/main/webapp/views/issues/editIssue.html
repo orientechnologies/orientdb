@@ -202,7 +202,7 @@
         </div>
       </div>
     </div>
-    <div class="col-md-2 issue-sidebar">
+    <div class="col-md-3 issue-sidebar">
       <div class="row" ng-show="isMember || isSupport">
         <div class="col-md-12">
           <button class="btn btn-transparent " data-placement="bottom-right" data-auto-close="1"
@@ -355,10 +355,35 @@
         </div>
 
       </div>
-      <div class="row">
+      <div class="row" ng-show="issue.confidential">
+        <div class="col-md-12">
+          <h5 class="text-center">Attachments</h5>
+        </div>
+        <div class="col-md-12">
+          <ul class="list-group">
+            <li ng-repeat="attachment in attachments | orderBy:'-mTime'" class="list-group-item attachment-group-item">
+
+              <span class="badge" ng-click="removeAttachment(attachment)"><i class="fa fa-remove"></i></span>
+              <a href="javascript:void(0)" class="attachment-name" data-trigger="hover" bs-tooltip
+                 data-title="{{attachment.name}} ({{attachment.size | toMB}})" ng-click="downloadAttachment(attachment)"
+                 target="_blank">
+                {{attachment.name}}
+
+              </a>
+            </li>
+          </ul>
+        </div>
+        <div class="col-md-12">
+          <hr>
+        </div>
+
+      </div>
+      <div class="row" ng-show="issue.confidential">
+
         <form class="dropzone" dropzone="dropzone" url="url">
 
         </form>
+
       </div>
     </div>
   </div>

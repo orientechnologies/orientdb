@@ -384,7 +384,7 @@ angular.module('webappApp')
     });
   });
 angular.module('webappApp')
-  .controller('IssueEditCtrl', function ($scope, $routeParams, Organization, Repo, $popover, $route, User, $timeout, $location, $q) {
+  .controller('IssueEditCtrl', function ($scope, $routeParams, Organization, Repo, $popover, $route, User, $timeout, $location, $q, Notification) {
 
 
     $scope.carriage = true;
@@ -415,13 +415,12 @@ angular.module('webappApp')
 
 
       $scope.repo = $scope.issue.repository.name;
-      //if ($scope.issue.confidential) {
-      $scope.url = Repo.one($scope.repo).all("issues").one(number).all('attachments').getRequestedUrl();
-      Repo.one($scope.repo).all("issues").one(number).all('attachments').getList().then(function (data) {
-        $scope.attachments = data.plain();
-      });
-
-      //}
+      if ($scope.issue.confidential) {
+        $scope.url = Repo.one($scope.repo).all("issues").one(number).all('attachments').getRequestedUrl();
+        Repo.one($scope.repo).all("issues").one(number).all('attachments').getList().then(function (data) {
+          $scope.attachments = data.plain();
+        });
+      }
       $scope.githubCommit = GITHUB + "/" + ORGANIZATION + "/" + $scope.repo + "/commit/";
       User.whoami().then(function (data) {
         $scope.isOwner = $scope.issue.user.name == data.name;
@@ -482,6 +481,31 @@ angular.module('webappApp')
 
     }
 
+
+    $scope.removeAttachment = function (attachment) {
+
+      Repo.one($scope.repo).all("issues").one(number).all('attachments').one(encodeURI(attachment.name)).remove().then(function (response) {
+        var idx = $scope.attachments.indexOf(attachment);
+        if (idx != -1) {
+          $scope.attachments.splice(idx, 1);
+          Notification.success("File " + attachment.name + " removed correctly from issue " + $scope.issue.iid + ".")
+        }
+      }).catch(function (error) {
+        var msg = "Error removing file " + attachment.name + ". " + error.statusText + " (" + error.status + ")";
+        Notification.error(msg);
+      })
+    }
+    $scope.downloadAttachment = function (attachment) {
+
+      Repo.one($scope.repo).all("issues").one(number).all('attachments').one(encodeURI(attachment.name)).withHttpConfig({responseType: 'blob'}).get().then(function (response) {
+
+        saveAs(response, attachment.name);
+
+      }).catch(function (error) {
+        var msg = "Error downloading file " + attachment.name + ". " + error.statusText + " (" + error.status + ")";
+        Notification.error(msg);
+      })
+    }
 
     $scope.sync = function () {
       Repo.one($scope.repo).all("issues").one(number).all("sync").post().then(function (data) {
@@ -558,6 +582,16 @@ angular.module('webappApp')
 
       document.dispatchEvent(copyEvent);
     }
+
+    $scope.$on('file-uploaded', function (evt, file) {
+
+      $scope.attachments.push(file);
+      $scope.$apply();
+      Notification.success("File " + file.name + " attached correctly to issue " + $scope.issue.iid + ".")
+    })
+    $scope.$on('file-uploaded-error', function (evt, err, code) {
+      Notification.error(err);
+    })
     $scope.close = function () {
 
 

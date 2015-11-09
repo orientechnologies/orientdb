@@ -8,6 +8,7 @@ public class Attachment {
   public String name;
   public long   size;
   public String type;
+  public long   mTime;
 
   public String getName() {
     return name;
@@ -31,5 +32,13 @@ public class Attachment {
 
   public void setType(String type) {
     this.type = type;
+  }
+
+  public long getmTime() {
+    return mTime;
+  }
+
+  public void setmTime(long mTime) {
+    this.mTime = mTime;
   }
 }

@@ -67,12 +67,15 @@ angular.module('webappApp').directive('dropzone', ['AccessToken', function (Acce
           if (val) {
             $element.dropzone({
               url: val,
-              maxFilesize: 100,
+              maxFilesize: 20,
               paramName: "file",
               maxThumbnailFilesize: 5,
               init: function () {
 
+
                 this.on('success', function (file, json) {
+                  this.removeFile(file);
+                  $scope.$emit('file-uploaded', json);
                 });
 
                 this.on('addedfile', function (file) {
@@ -80,8 +83,12 @@ angular.module('webappApp').directive('dropzone', ['AccessToken', function (Acce
                 });
 
                 this.on('drop', function (file) {
-                  alert('file');
+
                 });
+                this.on('error', function (file, err, errCode) {
+                  $scope.$emit('file-uploaded-error', err, errCode);
+                  this.removeFile(file);
+                })
 
               },
               headers: {

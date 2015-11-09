@@ -26,12 +26,12 @@ public class PathResolverImpl implements PathResolver {
   }
 
   @Override
-  public String resolvePath(FSConfiguration configuration, String organization, Issue issue) {
+  public String resolvePath(FSConfiguration configuration, String organization, Issue issue, String fname) {
     PathResolver pathResolver = resolvers.get(configuration.protocol);
     if (pathResolver == null) {
       throw ServiceException.create(10, "Cannot find resolver for protocol: " + configuration.protocol);
     }
-    return pathResolver.resolvePath(configuration, organization, issue);
+    return pathResolver.resolvePath(configuration, organization, issue, fname);
   }
 
   @Override

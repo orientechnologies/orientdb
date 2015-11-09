@@ -15,8 +15,9 @@ import java.io.IOException;
 public class LocalPathResolver implements PathResolver {
 
   @Override
-  public String resolvePath(FSConfiguration configuration, String organization, Issue issue) {
-    return "file://" + configuration.basePath + "/" + organization + "/" + issue.getClient().getClientId() + "/" + issue.getIid();
+  public String resolvePath(FSConfiguration configuration, String organization, Issue issue, String fname) {
+    return "file://" + configuration.basePath + "/" + organization + "/" + issue.getClient().getClientId() + "/" + issue.getIid()
+        + (fname != null ? "/" + fname : "");
   }
 
   @Override

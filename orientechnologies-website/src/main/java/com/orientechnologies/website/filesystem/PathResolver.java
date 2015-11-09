@@ -12,7 +12,7 @@ import java.io.IOException;
 
 public interface PathResolver {
 
-  public String resolvePath(FSConfiguration configuration, String organization, Issue issue);
+  public String resolvePath(FSConfiguration configuration, String organization, Issue issue, String fname);
 
   public FileSystemManager creteFileSystemManager(FSConfiguration configuration) throws IOException;
 }

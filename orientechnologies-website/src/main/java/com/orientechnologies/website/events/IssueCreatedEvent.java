@@ -3,6 +3,7 @@ package com.orientechnologies.website.events;
 import com.orientechnologies.website.configuration.AppConfig;
 import com.orientechnologies.website.model.schema.dto.Issue;
 import com.orientechnologies.website.model.schema.dto.OUser;
+import com.orientechnologies.website.repository.AttachmentRepository;
 import com.orientechnologies.website.repository.IssueRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -23,18 +24,21 @@ public class IssueCreatedEvent extends EventInternal<Issue> {
 
   @Autowired
   @Lazy
-  protected JavaMailSenderImpl sender;
+  protected JavaMailSenderImpl   sender;
 
   @Autowired
-  protected AppConfig          config;
+  protected AppConfig            config;
 
   @Autowired
-  private IssueRepository      issueRepository;
+  private IssueRepository        issueRepository;
 
   @Autowired
-  private SpringTemplateEngine templateEngine;
+  private SpringTemplateEngine   templateEngine;
 
-  public static String         EVENT = "issue_created";
+  public static String           EVENT = "issue_created";
+
+  @Autowired
+  protected AttachmentRepository attachmentRepository;
 
   @Override
   public String event() {
@@ -50,6 +54,15 @@ public class IssueCreatedEvent extends EventInternal<Issue> {
         issue.getIid());
 
     if (issue != null) {
+
+      if (Boolean.TRUE.equals(issue.getConfidential()) && issue.getClient() != null) {
+        try {
+          attachmentRepository.createIssueFolder(issue.getRepository().getOrganization().getName(), issue);
+        } catch (Exception e) {
+
+        }
+      }
+
       Context context = new Context();
       fillContextVariable(context, issue);
       String htmlContent = templateEngine.process("newIssue.html", context);
