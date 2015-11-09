@@ -1,9 +1,11 @@
 package org.apache.tinkerpop.gremlin.orientdb.gremlintest;
 
+import static java.util.Arrays.asList;
 import static org.junit.Assume.assumeFalse;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -19,6 +21,8 @@ import org.apache.tinkerpop.gremlin.orientdb.OrientVertex;
 import org.apache.tinkerpop.gremlin.orientdb.OrientVertexProperty;
 import org.apache.tinkerpop.gremlin.structure.Element;
 import org.apache.tinkerpop.gremlin.structure.Graph;
+import org.apache.tinkerpop.gremlin.structure.GraphTest;
+import org.junit.AssumptionViolatedException;
 
 import com.google.common.collect.Sets;
 import com.orientechnologies.orient.core.id.ORID;
@@ -32,8 +36,22 @@ public class OrientGraphProvider extends AbstractGraphProvider {
         System.setProperty("build.dir", buildDir.getAbsolutePath());
     }
 
+    private static final Map<Class<?>, List<String>> IGNORED_TESTS;
+
+    static {
+        IGNORED_TESTS = new HashMap<>();
+        IGNORED_TESTS.put(GraphTest.class, asList(
+              "shouldNotMixTypesForGettingSpecificEdgesWithStringFirst",
+              "shouldNotMixTypesForGettingSpecificEdgesWithEdgeFirst",
+              "shouldNotMixTypesForGettingSpecificVerticesWithStringFirst",
+              "shouldNotMixTypesForGettingSpecificVerticesWithVertexFirst"));
+    }
+
     @Override
     public Map<String, Object> getBaseConfiguration(String graphName, Class<?> test, String testMethodName, LoadGraphWith.GraphData loadGraphWith) {
+        if(IGNORED_TESTS.containsKey(test) && IGNORED_TESTS.get(test).contains(testMethodName))
+          throw new AssumptionViolatedException("We allow mixed ids");
+
         HashMap<String, Object> configs = new HashMap<String, Object>();
         configs.put(Graph.GRAPH, OrientGraph.class.getName());
         configs.put("name", graphName);

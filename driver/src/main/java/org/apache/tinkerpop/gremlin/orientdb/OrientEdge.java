@@ -101,6 +101,7 @@ public class OrientEdge extends OrientElement implements Edge {
         doc.getDatabase().delete(doc.getIdentity());
     }
 
+    @SuppressWarnings("unchecked")
     private void removeLink( Direction direction) {
         final String fieldName = OrientVertex.getConnectionFieldName(direction, this.label());
         ODocument doc = this.getVertex(direction).getRawDocument();

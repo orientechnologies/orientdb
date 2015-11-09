@@ -39,7 +39,6 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import static java.util.stream.Collectors.toSet;
 import static org.apache.tinkerpop.gremlin.orientdb.StreamUtils.asStream;
 
 @Graph.OptIn(Graph.OptIn.SUITE_STRUCTURE_STANDARD)
@@ -158,10 +157,6 @@ public final class OrientGraph implements Graph {
 
     @Override
     public Iterator<Vertex> vertices(Object... vertexIds) {
-        Set<Class<?>> edgeIdTypes = Stream.of(vertexIds).map(edgeId -> edgeId.getClass()).collect(toSet());
-        if(edgeIdTypes.size() > 1 && edgeIdTypes.contains(OrientVertex.class))
-            throw Graph.Exceptions.idArgsMustBeEitherIdOrElement();
-
         makeActive();
         return elements(
             OImmutableClass.VERTEX_CLASS_NAME,
@@ -251,10 +246,6 @@ public final class OrientGraph implements Graph {
 
     @Override
     public Iterator<Edge> edges(Object... edgeIds) {
-        Set<Class<?>> edgeIdTypes = Stream.of(edgeIds).map(edgeId -> edgeId.getClass()).collect(toSet());
-        if(edgeIdTypes.size() > 1 && edgeIdTypes.contains(OrientEdge.class))
-            throw Graph.Exceptions.idArgsMustBeEitherIdOrElement();
-
         makeActive();
         return elements(
             OImmutableClass.EDGE_CLASS_NAME,
