@@ -10,6 +10,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManager;
@@ -28,7 +29,10 @@ import org.apache.tinkerpop.gremlin.orientdb.traversal.strategy.optimization.Ori
 import org.apache.tinkerpop.gremlin.process.computer.GraphComputer;
 import org.apache.tinkerpop.gremlin.process.traversal.TraversalStrategies;
 import org.apache.tinkerpop.gremlin.structure.*;
+import org.apache.tinkerpop.gremlin.structure.io.Io;
+import org.apache.tinkerpop.gremlin.structure.io.Io.Builder;
 import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
+import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
 
 import java.util.*;
 import java.util.function.Function;
@@ -66,12 +70,14 @@ public final class OrientGraph implements Graph {
     protected final ODatabaseDocumentTx database;
     protected final Features features;
     protected final String url;
+    private final Configuration configuration;
 
     public static OrientGraph open(final Configuration configuration) {
         return new OrientGraph(configuration);
     }
 
     public OrientGraph(Configuration config) {
+        this.configuration = config;
         if (config.getBoolean(CONFIG_TRANSACTIONAL, false)) {
             this.features = ODBFeatures.OrientFeatures.INSTANCE_TX;
         } else {
@@ -114,6 +120,7 @@ public final class OrientGraph implements Graph {
     @Override
     public Vertex addVertex(Object... keyValues) {
         makeActive();
+
         ElementHelper.legalPropertyKeyValueArray(keyValues);
         if (ElementHelper.getIdValue(keyValues).isPresent()) throw Vertex.Exceptions.userSuppliedIdsNotSupported();
 
@@ -122,7 +129,7 @@ public final class OrientGraph implements Graph {
             OImmutableClass.VERTEX_CLASS_NAME :
             OImmutableClass.VERTEX_CLASS_NAME + "_" + label;
         OrientVertex vertex = new OrientVertex(this, className);
-        ElementHelper.attachProperties(vertex, keyValues);
+        vertex.property(keyValues);
 
         vertex.save();
         return vertex;
@@ -187,7 +194,8 @@ public final class OrientGraph implements Graph {
             } else if (!(indexValue instanceof Iterable<?>)) {
                 indexValue = Collections.singletonList(indexValue);
             }
-            Iterable<ORecordId> iterableIds = (Iterable<ORecordId>) indexValue;
+            @SuppressWarnings("unchecked")
+			Iterable<ORecordId> iterableIds = (Iterable<ORecordId>) indexValue;
             Stream<ORecordId> ids = StreamSupport.stream(iterableIds.spliterator(), false);
             Stream<ORecord> records = ids.map(id -> (ORecord) id.getRecord()).filter(r -> r != null);
             return records.map(r -> new OrientVertex(this, getRawDocument(r)));
@@ -252,19 +260,34 @@ public final class OrientGraph implements Graph {
             Iterator<ORecord> itty = new ORecordIteratorClass<>(database, database, elementClass, polymorphic);
             return asStream(itty).map(toA).iterator();
         } else {
-            Stream<ORecordId> ids = Stream.of(elementIds).map(OrientGraph::createRecordId);
-            Stream<ORecord> records = ids.filter(ORecordId::isValid).map(id -> (ORecord) id.getRecord()).filter(r -> r != null);
+            Stream<ORID> ids = Stream.of(elementIds).map(OrientGraph::createRecordId).peek(id -> checkId(id));
+            Stream<ORecord> records = ids.filter(ORID::isValid).map(id -> (ORecord) id.getRecord()).filter(r -> r != null);
             return records.map(toA).iterator();
         }
     }
 
-    protected static ORecordId createRecordId(Object id) {
+    private ORID checkId(ORID id) {
+        if (!id.isValid())
+            throw new IllegalArgumentException("Invalid id " + id);
+        try {
+            database.getRecordMetadata(id);
+        } catch (IllegalArgumentException e) {
+            // bummer, the API force me to break the chain =((
+            // https://github.com/apache/incubator-tinkerpop/commit/34ec9e7f60f15b5dbfa684a8e96668d9bbcb6752#commitcomment-14235497
+            throw Graph.Exceptions.elementNotFound(Edge.class, id);
+        }
+        return id;
+    }
+
+    protected static ORID createRecordId(Object id) {
         if (id instanceof ORecordId)
             return (ORecordId) id;
-        else if (id instanceof String)
+        if (id instanceof String)
             return new ORecordId((String) id);
-        else
-            throw new IllegalArgumentException("Orient IDs have to be a String or ORecordId - you provided a " + id.getClass());
+        if(id instanceof OrientElement)
+            return ((OrientElement) id).id();
+
+        throw new IllegalArgumentException("Orient IDs have to be a String or ORecordId - you provided a " + id.getClass());
     }
 
     protected ODocument getRawDocument(ORecord record) {
@@ -354,8 +377,7 @@ public final class OrientGraph implements Graph {
 
     @Override
     public Configuration configuration() {
-        makeActive();
-        throw new NotImplementedException();
+        return configuration;
     }
 
     @Override
@@ -444,7 +466,7 @@ public final class OrientGraph implements Graph {
         return new OrientEdgeType(this, cls);
     }
 
-    protected <T> String getClassName(final Class<T> elementClass) {
+    protected <E> String getClassName(final Class<T> elementClass) {
         if (elementClass.isAssignableFrom(Vertex.class))
             return OrientVertexType.CLASS_NAME;
         else if (elementClass.isAssignableFrom(Edge.class))
@@ -472,21 +494,20 @@ public final class OrientGraph implements Graph {
     }
 
 
-    public <T extends Element> void createVertexIndex(final String key, final String label, final Configuration configuration) {
+    public <E extends Element> void createVertexIndex(final String key, final String label, final Configuration configuration) {
         String className = OrientVertexType.CLASS_NAME + "_" + label;
         createVertexClass(className);
         createIndex(key, className, configuration);
     }
 
 
-    public <T extends Element> void createEdgeIndex(final String key, final String label, final Configuration configuration) {
+    public <E extends Element> void createEdgeIndex(final String key, final String label, final Configuration configuration) {
         String className = OrientEdgeType.CLASS_NAME + "_" + label;
         createEdgeClass(className);
         createIndex(key, className, configuration);
     }
 
-    @SuppressWarnings({"rawtypes"})
-    private <T extends Element> void createIndex(final String key, String className, final Configuration configuration) {
+    private <E extends Element> void createIndex(final String key, String className, final Configuration configuration) {
         makeActive();
 
         prepareIndexConfiguration(configuration);
@@ -535,6 +556,18 @@ public final class OrientGraph implements Graph {
                 msg.toString());
         }
         return iCallable.call(this);
+    }
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+	@Override
+    public <I extends Io> I io(Builder<I> builder)
+    {
+        return (I) Graph.super.io(builder.registry(OrientIoRegistry.getInstance()));
+    }
+
+    @Override
+    public String toString() {
+        return StringFactory.graphString(this, database.toString());
     }
 
 }

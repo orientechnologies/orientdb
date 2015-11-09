@@ -94,21 +94,25 @@ public final class OrientVertex extends OrientElement implements Vertex {
 
     public <V> Iterator<VertexProperty<V>> properties(final String... propertyKeys) {
         Iterator<? extends Property<V>> properties = super.properties(propertyKeys);
-        return StreamUtils.asStream(properties).filter(p ->
-            !INTERNAL_FIELDS.contains(p.key()) ).map(p ->
+        return StreamUtils.asStream(properties)
+                .filter(p -> !INTERNAL_FIELDS.contains(p.key()) )
+                .filter(p -> !p.key().startsWith("out_") )
+                .filter(p -> !p.key().startsWith("in_") )
+                .map(p ->
             (VertexProperty<V>) new OrientVertexProperty<>( p.key(), p.value(), (OrientVertex) p.element())
         ).iterator();
     }
 
     @Override
     public <V> VertexProperty<V> property(final String key, final V value) {
-        super.property(key, value);
-        return new OrientVertexProperty<>(key, value, this);
+        return new OrientVertexProperty<>(super.property(key, value), this);
     }
 
     @Override
-    public <V> VertexProperty<V> property(String key, V value, Object... keyValues) {
-        throw new NotImplementedException();
+    public <V> VertexProperty<V> property(final String key, final V value, final Object... keyValues) {
+        if(keyValues != null && keyValues.length > 0)
+            throw new NotImplementedException();
+        return this.property(key, value);
     }
 
     @Override
@@ -133,6 +137,7 @@ public final class OrientVertex extends OrientElement implements Vertex {
             throw new IllegalArgumentException("destination vertex is null");
         checkArgument(!isNullOrEmpty(label), "label is invalid");
 
+        ElementHelper.legalPropertyKeyValueArray(keyValues);
         if (ElementHelper.getIdValue(keyValues).isPresent()) throw Vertex.Exceptions.userSuppliedIdsNotSupported();
 
 //        if (checkDeletedInTx())
@@ -174,7 +179,7 @@ public final class OrientVertex extends OrientElement implements Vertex {
         String className = label.equals(OImmutableClass.EDGE_CLASS_NAME) ?
             OImmutableClass.EDGE_CLASS_NAME : OImmutableClass.EDGE_CLASS_NAME + "_" + label;
         edge = new OrientEdge(graph, className, outDocument, inDocument, label);
-        ElementHelper.attachProperties(edge, keyValues);
+        edge.property(keyValues);
 
         //TODO: support inMemoryReferences
 //        if (settings.isKeepInMemoryReferences())
@@ -232,6 +237,7 @@ public final class OrientVertex extends OrientElement implements Vertex {
     }
 
     // this ugly code was copied from the TP2 implementation
+    @SuppressWarnings("unchecked")
     public Object createLink(final ODocument iFromVertex, final OIdentifiable iTo, final String iFieldName) {
         final Object out;
         OType outType = iFromVertex.fieldType(iFieldName);
@@ -268,8 +274,8 @@ public final class OrientVertex extends OrientElement implements Vertex {
                 throw new IllegalStateException("Type of field provided in schema '" + prop.getType() + "' can not be used for creation to hold several links.");
 //
             if (prop != null && "true".equalsIgnoreCase(prop.getCustom("ordered"))) {
-                final Collection coll = new ORecordLazyList(iFromVertex);
-                coll.add(found);
+                final Collection<OIdentifiable> coll = new ORecordLazyList(iFromVertex);
+                coll.add((OIdentifiable) found);
                 coll.add(iTo);
                 out = coll;
                 outType = OType.LINKLIST;
@@ -287,7 +293,7 @@ public final class OrientVertex extends OrientElement implements Vertex {
         } else if (found instanceof Collection<?>) {
             // USE THE FOUND COLLECTION
             out = null;
-            ((Collection<Object>) found).add(iTo);
+            ((Collection<OIdentifiable>) found).add(iTo);
         } else
             throw new IllegalStateException("Relationship content is invalid on field " + iFieldName + ". Found: " + found);
 
@@ -509,6 +515,5 @@ public final class OrientVertex extends OrientElement implements Vertex {
             // ADD THE VERTEX
             iterable.add(toAdd);
     }
-
 
 }
