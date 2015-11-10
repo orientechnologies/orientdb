@@ -1885,10 +1885,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
         if (isNew)
           // NOTIFY IDENTITY HAS CHANGED
           ORecordInternal.onBeforeIdentityChanged(record);
-        else
-          if (stream == null || stream.length == 0)
-            // ALREADY CREATED AND WAITING FOR THE RIGHT UPDATE (WE'RE IN A TREE/GRAPH)
-            return (RET) record;
 
         if (isNew && rid.clusterId < 0 && storage.isAssigningClusterIds())
           rid.clusterId = clusterName != null ? getClusterIdByName(clusterName) : getDefaultClusterId();
@@ -1901,27 +1897,19 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
 
         checkSecurity(ORule.ResourceGeneric.CLUSTER, wasNew ? ORole.PERMISSION_CREATE : ORole.PERMISSION_UPDATE, clusterName);
 
-        if (stream != null && stream.length > 0) {
-          final ORecordHook.TYPE triggerType = wasNew ? ORecordHook.TYPE.BEFORE_CREATE : ORecordHook.TYPE.BEFORE_UPDATE;
+        final ORecordHook.TYPE triggerType = wasNew ? ORecordHook.TYPE.BEFORE_CREATE : ORecordHook.TYPE.BEFORE_UPDATE;
 
-          final ORecordHook.RESULT hookResult = callbackHooks(triggerType, record);
+        final ORecordHook.RESULT hookResult = callbackHooks(triggerType, record);
 
-          if (hookResult == ORecordHook.RESULT.RECORD_CHANGED) {
-            if (record instanceof ODocument)
-              ((ODocument) record).validate();
-            stream = updateStream(record);
-          } else if (hookResult == ORecordHook.RESULT.SKIP_IO)
-            return (RET) record;
-          else if (hookResult == ORecordHook.RESULT.RECORD_REPLACED)
-            // RETURNED THE REPLACED RECORD
-            return (RET) OHookReplacedRecordThreadLocal.INSTANCE.get();
-        }
-
-        if (wasNew && !isNew)
-          // UPDATE RECORD PREVIOUSLY SERIALIZED AS EMPTY
-          record.setDirty();
-        else if (!record.isDirty())
+        if (hookResult == ORecordHook.RESULT.RECORD_CHANGED) {
+          if (record instanceof ODocument)
+            ((ODocument) record).validate();
+          stream = updateStream(record);
+        } else if (hookResult == ORecordHook.RESULT.SKIP_IO)
           return (RET) record;
+        else if (hookResult == ORecordHook.RESULT.RECORD_REPLACED)
+          // RETURNED THE REPLACED RECORD
+          return (RET) OHookReplacedRecordThreadLocal.INSTANCE.get();
 
         ORecordSaveThreadLocal.setLast(record);
         try {
