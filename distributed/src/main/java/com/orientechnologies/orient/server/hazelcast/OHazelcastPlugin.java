@@ -709,7 +709,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     final String eventNodeName = getNodeName(iEvent.getMember());
 
     if (key.startsWith(CONFIG_NODE_PREFIX)) {
-      ODistributedServerLog.info(this, getLocalNodeName(), eventNodeName, DIRECTION.NONE,
+      ODistributedServerLog.debug(this, getLocalNodeName(), eventNodeName, DIRECTION.NONE,
           "updated node configuration id=%s name=%s", iEvent.getMember(), eventNodeName);
 
       final ODocument cfg = (ODocument) iEvent.getValue();
