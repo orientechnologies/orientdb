@@ -20,20 +20,39 @@
 
 package com.orientechnologies.common.profiler;
 
+import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+
 import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.List;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class OProfiler extends OAbstractProfiler {
 
-  protected final ConcurrentMap<String, Long> counters = new ConcurrentHashMap<String, Long>();
+  protected final ConcurrentMap<String, Long>                    counters      = new ConcurrentLinkedHashMap.Builder().maximumWeightedCapacity(OGlobalConfiguration.PROFILER_MAXVALUES.getValueAsInteger()).build();
+  private final   ConcurrentLinkedHashMap<String, AtomicInteger> tips          = new ConcurrentLinkedHashMap.Builder().maximumWeightedCapacity(OGlobalConfiguration.PROFILER_MAXVALUES.getValueAsInteger()).build();
+  private final   ConcurrentLinkedHashMap<String, Long>          tipsTimestamp = new ConcurrentLinkedHashMap.Builder().maximumWeightedCapacity(OGlobalConfiguration.PROFILER_MAXVALUES.getValueAsInteger()).build();
 
   public OProfiler() {
   }
 
   public OProfiler(final OAbstractProfiler profiler) {
     super(profiler);
+  }
+
+  @Override
+  protected void setTip(final String iMessage, final AtomicInteger counter) {
+    tips.put(iMessage, counter);
+    tipsTimestamp.put(iMessage, System.currentTimeMillis());
+  }
+
+  @Override
+  protected AtomicInteger getTip(final String iMessage) {
+    return tips.get(iMessage);
   }
 
   public void configure(final String iConfiguration) {
@@ -49,7 +68,6 @@ public class OProfiler extends OAbstractProfiler {
   public boolean startRecording() {
     if (super.startRecording()) {
       counters.clear();
-      tips.clear();
       return true;
     }
     return false;
@@ -58,10 +76,40 @@ public class OProfiler extends OAbstractProfiler {
   public boolean stopRecording() {
     if (super.stopRecording()) {
       counters.clear();
-      tips.clear();
       return true;
     }
     return false;
+  }
+
+  @Override
+  public void dump(PrintStream out) {
+    if (recordingFrom<0)
+      return;
+
+    final StringBuilder buffer = new StringBuilder(super.dump());
+
+    if (tips.size() == 0)
+      return;
+
+    buffer.append("TIPS:");
+
+    buffer.append(String.format("\n%100s +------------+", ""));
+    buffer.append(String.format("\n%100s | Value      |", "Name"));
+    buffer.append(String.format("\n%100s +------------+", ""));
+
+    final List<String> names = new ArrayList<String>(tips.keySet());
+    Collections.sort(names);
+
+    for (String n : names) {
+      final AtomicInteger v = tips.get(n);
+      buffer.append(String.format("\n%-100s | %10d |", n, v.intValue()));
+    }
+
+    buffer.append(String.format("\n%100s +------------+", ""));
+
+    out.println(buffer);
+
+    return;
   }
 
   public void updateCounter(final String statName, final String description, final long plus, final String metadata) {
@@ -91,16 +139,6 @@ public class OProfiler extends OAbstractProfiler {
       return -1;
 
     return stat;
-  }
-
-  @Override
-  public String dump() {
-    return super.dump();
-  }
-
-  @Override
-  public void dump(final PrintStream out) {
-    dumpEnvironment(out);
   }
 
   @Override
@@ -146,10 +184,6 @@ public class OProfiler extends OAbstractProfiler {
   @Override
   public Date getLastReset() {
     return null;
-  }
-
-  @Override
-  public void setAutoDump(int iNewValue) {
   }
 
   @Override
