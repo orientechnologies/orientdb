@@ -1074,7 +1074,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         for (int retry = 1; retry <= maxAutoRetry; ++retry) {
           // SYNCHRONOUS CALL: REPLICATE IT
           result = dManager.sendRequest(getName(), involvedClusters, nodes, txTask, EXECUTION_MODE.RESPONSE);
-          if (!processCommitResult(localNodeName, txTask, involvedClusters, tmpEntries, nodes, autoRetryDelay, result))
+          if (!processCommitResult(localNodeName, iTx, txTask, involvedClusters, tmpEntries, nodes, autoRetryDelay, result))
             // RETRY
             continue;
 
@@ -1165,8 +1165,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     }
   }
 
-  protected boolean processCommitResult(String localNodeName, OTxTask txTask, Set<String> involvedClusters,
-      List<ORecordOperation> tmpEntries, Set<String> nodes, int autoRetryDelay, Object result) throws InterruptedException {
+  protected boolean processCommitResult(String localNodeName, OTransaction iTx, OTxTask txTask, Set<String> involvedClusters, List<ORecordOperation> tmpEntries, Set<String> nodes, int autoRetryDelay, Object result) throws InterruptedException {
     if (result instanceof OTxTaskResult) {
       final OTxTaskResult txResult = ((OTxTaskResult) result);
 
@@ -1179,13 +1178,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
         if (task instanceof OCreateRecordTask) {
           final OCreateRecordTask t = (OCreateRecordTask) task;
-          t.getRid().copyFrom(((OPlaceholder) o).getIdentity());
-          t.setVersion(((OPlaceholder) o).getVersion());
-
+          iTx.updateIdentityAfterCommit(t.getRid(),((OPlaceholder) o).getIdentity());
+          ORecordInternal.setVersion( iTx.getRecord(t.getRid()),((OPlaceholder) o).getVersion());
         } else if (task instanceof OUpdateRecordTask) {
           final OUpdateRecordTask t = (OUpdateRecordTask) task;
-          t.setVersion((Integer) o);
-
+          ORecordInternal.setVersion( iTx.getRecord(t.getRid()),(Integer) o);
         } else if (task instanceof ODeleteRecordTask) {
 
         }
