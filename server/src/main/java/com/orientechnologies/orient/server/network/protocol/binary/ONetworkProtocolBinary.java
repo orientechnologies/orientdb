@@ -88,6 +88,7 @@ import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryServer;
+import com.orientechnologies.orient.enterprise.channel.binary.OTokenSecurityException;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerInfo;
@@ -230,7 +231,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
           throw OException.wrapException(new OSystemException("error on token parse"), e);
         }
         if (this.token == null || !this.token.getIsVerified()) {
-          throw new OSecurityException("The token provided is not a valid token, signature does not match");
+          throw new OTokenSecurityException("The token provided is not a valid token, signature does not match");
         }
 
         if (tokenBased == null) {
@@ -238,7 +239,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         }
         if (token != null) {
           if (!tokenHandler.validateBinaryToken(token)) {
-            throw new OSecurityException("The token provided is expired");
+            throw new OTokenSecurityException("The token provided is expired");
           }
           if (connection != null && connection.database != null && !connection.database.isClosed()) {
             connection.database.activateOnCurrentThread();

@@ -73,6 +73,7 @@ import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEventListener;
+import com.orientechnologies.orient.enterprise.channel.binary.OTokenSecurityException;
 
 import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
@@ -1721,7 +1722,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       // Release on concurrent modification exception created some issue. to double check
       if (iNetwork != null)
         engine.getConnectionManager().release(iNetwork);
-
+      if(exception instanceof OTokenSecurityException)
+        clearToken();
       // RE-THROW IT
       throw (OException) exception;
     } else if (!(exception instanceof IOException)) {
