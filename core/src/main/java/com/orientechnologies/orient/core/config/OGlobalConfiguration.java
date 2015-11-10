@@ -19,16 +19,6 @@
 */
 package com.orientechnologies.orient.core.config;
 
-import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.util.OApi;
-import com.orientechnologies.orient.core.OConstants;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.cache.ORecordCacheWeakRefs;
-import com.orientechnologies.orient.core.metadata.OMetadataDefault;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
-import com.orientechnologies.orient.core.storage.cache.local.O2QCache;
-
 import java.io.File;
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
@@ -40,6 +30,16 @@ import java.util.Map.Entry;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
+
+import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OApi;
+import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.cache.ORecordCacheWeakRefs;
+import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
+import com.orientechnologies.orient.core.storage.cache.local.O2QCache;
 
 /**
  * Keeps all configuration settings. At startup assigns the configuration values by reading system properties.
@@ -416,12 +416,14 @@ public enum OGlobalConfiguration {
         }
       }),
 
+  PROFILER_MAXVALUES("profiler.maxValues", "Maximum values to store. Values are managed in a LRU", Integer.class, 200),
+
   // LOG
-      LOG_CONSOLE_LEVEL("log.console.level", "Console logging level.", String.class, "info", new OConfigurationChangeCallback() {
-        public void change(final Object iCurrentValue, final Object iNewValue) {
-          OLogManager.instance().setLevel((String) iNewValue, ConsoleHandler.class);
-        }
-      }),
+  LOG_CONSOLE_LEVEL("log.console.level", "Console logging level.", String.class, "info", new OConfigurationChangeCallback() {
+    public void change(final Object iCurrentValue, final Object iNewValue) {
+      OLogManager.instance().setLevel((String) iNewValue, ConsoleHandler.class);
+    }
+  }),
 
   LOG_FILE_LEVEL("log.file.level", "File logging level.", String.class, "fine", new OConfigurationChangeCallback() {
     public void change(final Object iCurrentValue, final Object iNewValue) {
@@ -554,7 +556,8 @@ public enum OGlobalConfiguration {
    * @Since 2.2.0
    */
   DISTRIBUTED_PUBLISH_NODE_STATUS_EVERY("distributed.publishNodeStatusEvery",
-      "Time in ms to publish the node status on distributed map. Set to 0 to disable such refresh of node configuration", Long.class, 5000l),
+      "Time in ms to publish the node status on distributed map. Set to 0 to disable such refresh of node configuration",
+      Long.class, 5000l),
 
   /**
    * @Since 2.1.3
