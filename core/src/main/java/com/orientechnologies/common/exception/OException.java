@@ -57,4 +57,11 @@ public abstract class OException extends RuntimeException {
   private OException(String message, Throwable cause) {
     super(message, cause);
   }
+
+  public static Throwable getFirstCause(Throwable iRootException) {
+    while (iRootException.getCause() != null)
+      iRootException = iRootException.getCause();
+
+    return iRootException;
+  }
 }

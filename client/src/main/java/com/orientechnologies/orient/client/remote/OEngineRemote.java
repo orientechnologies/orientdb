@@ -21,16 +21,19 @@ package com.orientechnologies.orient.client.remote;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.engine.OEngineAbstract;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.sql.parser.OWait;
 import com.orientechnologies.orient.core.storage.OStorage;
 
+/**
+ * Remote engine implementation.
+ * 
+ * @author Luca Garulli
+ */
 public class OEngineRemote extends OEngineAbstract {
   public static final String                         NAME           = "remote";
   protected static final Map<String, OStorageRemote> sharedStorages = new HashMap<String, OStorageRemote>();
@@ -59,22 +62,8 @@ public class OEngineRemote extends OEngineAbstract {
     }
   }
 
-  public void removeStorage(final String iURL) {
-    synchronized (sharedStorages) {
-      sharedStorages.remove(iURL);
-    }
-  }
-
   @Override
   public void removeStorage(final OStorage iStorage) {
-    synchronized (sharedStorages) {
-      for (Entry<String, OStorageRemote> entry : sharedStorages.entrySet()) {
-        if (entry.getValue() == iStorage) {
-          sharedStorages.remove(entry.getKey());
-          break;
-        }
-      }
-    }
   }
 
   @Override
@@ -82,6 +71,10 @@ public class OEngineRemote extends OEngineAbstract {
     super.shutdown();
     connectionManager.close();
     synchronized (sharedStorages) {
+      for (Map.Entry<String, OStorageRemote> entry : sharedStorages.entrySet()) {
+        entry.getValue().close(true, false);
+      }
+
       sharedStorages.clear();
     }
   }
