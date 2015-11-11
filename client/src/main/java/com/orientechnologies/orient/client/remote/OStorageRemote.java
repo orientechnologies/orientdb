@@ -2026,7 +2026,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     } else
       recordFormat = ORecordSerializerSchemaAware2CSV.NAME;
     if (network.getSrvProtocolVersion() > OChannelBinaryProtocol.PROTOCOL_VERSION_26)
-      network.writeBoolean(OGlobalConfiguration.CLIENT_SESSION_TOKEN_BASED.getValueAsBoolean());
+      network.writeBoolean(true);
   }
 
   /**
