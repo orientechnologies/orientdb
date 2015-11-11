@@ -50,11 +50,12 @@ import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.method.OSQLMethod;
+import com.orientechnologies.orient.core.sql.parser.ORid;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 /**
  * Helper class to manage documents.
- * 
+ *
  * @author Luca Garulli
  */
 public class ODocumentHelper {
@@ -602,7 +603,7 @@ public class ODocumentHelper {
 
   /**
    * Retrieves the value crossing the map with the dotted notation
-   * 
+   *
    * @param iKey
    *          Field(s) to retrieve. If are multiple fields, then the dot must be used as separator
    * @return
@@ -867,8 +868,19 @@ public class ODocumentHelper {
       final ODocument current = (ODocument) iCurrent;
       if (iOther instanceof ORID) {
         if (!current.isDirty()) {
-          if (!current.getIdentity().equals(iOther))
+          ORID id;
+          if (ridMapper != null) {
+            ORID mappedId = ridMapper.map(current.getIdentity());
+            if (mappedId != null)
+              id = mappedId;
+            else
+              id = current.getIdentity();
+          } else
+            id = current.getIdentity();
+
+          if (!id.equals(iOther)) {
             return false;
+          }
         } else {
           final ODocument otherDoc = iOtherDb.load((ORID) iOther);
           if (!ODocumentHelper.hasSameContentOf(current, iMyDb, otherDoc, iOtherDb, ridMapper))
@@ -899,7 +911,7 @@ public class ODocumentHelper {
   /**
    * Makes a deep comparison field by field to check if the passed ODocument instance is identical in the content to the current
    * one. Instead equals() just checks if the RID are the same.
-   * 
+   *
    * @param iOther
    *          ODocument instance
    * @return true if the two document are identical, otherwise false
