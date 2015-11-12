@@ -20,7 +20,7 @@ public abstract class OrientJdbcBaseTest {
 
   @BeforeClass
   public static void loadDriver() throws ClassNotFoundException {
-    forName(OrientJdbcDriver.class.getName());
+//    forName(OrientJdbcDriver.class.getName());
 
   }
 
