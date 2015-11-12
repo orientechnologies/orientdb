@@ -11,7 +11,7 @@ angular.module('webappApp')
   .controller('ChatCtrl', function ($scope, Organization, $routeParams, $route, User, $timeout, BreadCrumb, $location, ChatService, $rootScope, $filter) {
 
     $scope.isNew = false;
-    $scope.placeholder = "Click here to type a message. Enter to send.";
+    $scope.placeholder = "Click here to type a message(Supports Markdown). Enter to send.";
     $scope.clientId = $routeParams.id;
 
     $scope.sending = false;

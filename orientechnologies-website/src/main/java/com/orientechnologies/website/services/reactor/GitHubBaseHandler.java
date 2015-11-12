@@ -5,6 +5,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.website.OrientDBFactory;
+import com.orientechnologies.website.events.EventManager;
 import com.orientechnologies.website.services.reactor.event.GithubEvent;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +29,8 @@ public abstract class GitHubBaseHandler<T> implements GitHubHandler<T> {
   OrientDBFactory                    factory;
   protected Map<String, GithubEvent> events          = new HashMap<String, GithubEvent>();
 
+  @Autowired
+  protected EventManager             eventManager;
   ExecutorService                    executorService = Executors.newFixedThreadPool(10);
 
   public Set<String> handleWhat() {
@@ -65,6 +68,7 @@ public abstract class GitHubBaseHandler<T> implements GitHubHandler<T> {
             if (graph != null)
               graph.shutdown();
             factory.unsetDb();
+            eventManager.fireEvents();
           }
         }
       });

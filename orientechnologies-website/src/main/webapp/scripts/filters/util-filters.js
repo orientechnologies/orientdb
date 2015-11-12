@@ -12,5 +12,10 @@ angular.module('ngUtilFilters', []).filter('toRgbString', function () {
       return "rgb(" + r + "," + g + "," + b + ")";
     }
   }
+}).filter('toMB', function () {
+
+  return function toMB(input, args) {
+    return filesize(input);
+  }
 });
 

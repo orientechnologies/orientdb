@@ -1,24 +1,32 @@
 package com.orientechnologies.website.controllers;
 
 import com.orientechnologies.website.configuration.ApiVersion;
+import com.orientechnologies.website.exception.ServiceException;
 import com.orientechnologies.website.helper.SecurityHelper;
 import com.orientechnologies.website.model.schema.dto.*;
 import com.orientechnologies.website.model.schema.dto.web.IssueDTO;
+import com.orientechnologies.website.repository.AttachmentRepository;
 import com.orientechnologies.website.repository.OrganizationRepository;
 import com.orientechnologies.website.repository.RepositoryRepository;
-import com.orientechnologies.website.security.Permissions;
 import com.orientechnologies.website.security.OSecurityManager;
+import com.orientechnologies.website.security.Permissions;
 import com.orientechnologies.website.services.IssueService;
 import com.orientechnologies.website.services.OrganizationService;
 import com.orientechnologies.website.services.RepositoryService;
 import com.orientechnologies.website.services.UserService;
+import org.apache.commons.vfs2.FileObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -43,6 +51,9 @@ public class RepositoryController {
   UserService                    userService;
   @Autowired
   protected IssueService         issueService;
+
+  @Autowired
+  protected AttachmentRepository attachmentRepository;
 
   @Autowired
   protected OSecurityManager     securityManager;
@@ -104,6 +115,81 @@ public class RepositoryController {
     }
     return events != null ? new ResponseEntity<List<Event>>(events, HttpStatus.OK) : new ResponseEntity<List<Event>>(
         HttpStatus.NOT_FOUND);
+  }
+
+  @RequestMapping(value = "{owner}/{repo}/issues/{number}/attachments", method = RequestMethod.GET)
+  public ResponseEntity<List<Attachment>> getSingleIssueAttachments(@PathVariable("owner") String owner,
+      @PathVariable("repo") String repo, @PathVariable("number") Long number) {
+
+    Issue issue = organizationRepository.findSingleOrganizationIssueByRepoAndNumber(owner, repo, number);
+
+    if (Boolean.TRUE.equals(issue.getConfidential()) && issue.getClient() != null) {
+      return new ResponseEntity<List<Attachment>>(attachmentRepository.findIssueAttachment(owner, issue), HttpStatus.OK);
+    }
+    return new ResponseEntity<List<Attachment>>(HttpStatus.NOT_FOUND);
+  }
+
+  @RequestMapping(value = "{owner}/{repo}/issues/{number}/attachments", method = RequestMethod.POST)
+  public ResponseEntity<Attachment> postSingleIssueAttachment(@PathVariable("owner") String owner,
+      @PathVariable("repo") String repo, @PathVariable("number") Long number, @RequestParam("file") MultipartFile file) {
+
+    Issue issue = organizationRepository.findSingleOrganizationIssueByRepoAndNumber(owner, repo, number);
+    if (Boolean.TRUE.equals(issue.getConfidential())) {
+      try {
+
+        Attachment attachment = attachmentRepository.attachToIssue(owner, issue, file.getOriginalFilename(), file.getInputStream());
+
+        if (attachment != null) {
+          return new ResponseEntity<Attachment>(attachment, HttpStatus.OK);
+        } else {
+          throw ServiceException.create(11, "Error uploading file:" + file.getOriginalFilename());
+        }
+      } catch (IOException e) {
+        throw ServiceException.create(11, "Error uploading file:" + file.getOriginalFilename());
+      }
+    }
+    return new ResponseEntity(HttpStatus.NOT_FOUND);
+  }
+
+  @RequestMapping(value = "{owner}/{repo}/issues/{number}/attachments/{name:.*}", method = RequestMethod.GET)
+  public ResponseEntity<InputStreamResource> getSingleIssueAttachment(@PathVariable("owner") String owner,
+      @PathVariable("repo") String repo, @PathVariable("number") Long number, @PathVariable("name") String name) {
+
+    Issue issue = organizationRepository.findSingleOrganizationIssueByRepoAndNumber(owner, repo, number);
+    if (Boolean.TRUE.equals(issue.getConfidential())) {
+      try {
+
+        FileObject fileObject = attachmentRepository.downloadAttachments(owner, issue, name);
+
+        if (fileObject != null) {
+          HttpHeaders respHeaders = new HttpHeaders();
+          respHeaders.setContentType(MediaType.parseMediaType("application/octet-stream"));
+          respHeaders.setContentLength(fileObject.getContent().getSize());
+          respHeaders.setContentDispositionFormData("attachment", name);
+          InputStreamResource inputStreamResource = new InputStreamResource(fileObject.getContent().getInputStream());
+          return new ResponseEntity<InputStreamResource>(inputStreamResource, respHeaders, HttpStatus.OK);
+        }
+
+        return new ResponseEntity(HttpStatus.NOT_FOUND);
+      } catch (IOException e) {
+        throw ServiceException.create(11, "Error downloading file:" + name);
+      }
+
+    }
+    return new ResponseEntity(HttpStatus.NOT_FOUND);
+  }
+
+  @RequestMapping(value = "{owner}/{repo}/issues/{number}/attachments/{name:.*}", method = RequestMethod.DELETE)
+  public ResponseEntity deleteSingleIssueAttachment(@PathVariable("owner") String owner, @PathVariable("repo") String repo,
+      @PathVariable("number") Long number, @PathVariable("name") String name) {
+
+    Issue issue = organizationRepository.findSingleOrganizationIssueByRepoAndNumber(owner, repo, number);
+    if (Boolean.TRUE.equals(issue.getConfidential())) {
+
+      attachmentRepository.deleteAttachment(owner, issue, name);
+      return new ResponseEntity(HttpStatus.OK);
+    }
+    return new ResponseEntity(HttpStatus.NOT_FOUND);
   }
 
   @Deprecated

@@ -25,10 +25,20 @@
   position: fixed;
   z-index: 1036;
   top: 0;
-  right: 0;
+  right: 1.5em;
   margin: 1em;
   padding: 0;
   height: 2.25em;
+  color: #777;
+}
+.logout-button {
+  position: fixed;
+  z-index: 1036;
+  top: 0;
+  right: 0;
+  margin: 1.2em;
+  padding: 0;
+  height: 2.30em;
   color: #777;
 }
 .settings-button .avatar-container {
