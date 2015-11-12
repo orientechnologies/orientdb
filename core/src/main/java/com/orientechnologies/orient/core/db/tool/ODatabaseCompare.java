@@ -680,6 +680,12 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
                 && rid.equals(new ORecordId(storage2.getConfiguration().schemaRecordId)))
               continue;
 
+            if (rid.clusterId == 0 && rid.clusterPosition == 0) {
+              //Skip the compare of raw structure if the storage type are different, due the fact that are different by definition.
+              if(!storage1.getType().equals(storage2.getType()))
+                continue;
+            }
+
             final ORawBuffer buffer1 = storage1.readRecord(rid, null, true, null).getResult();
             final ORawBuffer buffer2;
             if (ridMapper == null)
