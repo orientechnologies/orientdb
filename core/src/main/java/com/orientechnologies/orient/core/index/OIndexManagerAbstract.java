@@ -284,14 +284,6 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     }
   }
 
-  public OIndex<?> getIndex(final ORID iRID) {
-    for (final OIndex<?> idx : indexes.values()) {
-      if (idx.getIdentity().equals(iRID)) {
-        return idx;
-      }
-    }
-    return null;
-  }
 
   public Set<OIndex<?>> getClassInvolvedIndexes(final String className, Collection<String> fields) {
     fields = normalizeFieldNames(fields);

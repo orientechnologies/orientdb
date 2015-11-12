@@ -30,7 +30,6 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -247,12 +246,12 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
   }
 
   @Override
-  public void load(final ORID indexRid, final String indexName, final OIndexDefinition indexDefinition,
-      final OStreamSerializer valueSerializer, final boolean isAutomatic) {
+  public void load(final String indexName, final OIndexDefinition indexDefinition, final OStreamSerializer valueSerializer,
+      final boolean isAutomatic) {
     initIndex(indexName, indexDefinition, null, valueSerializer, isAutomatic, metadata);
   }
 
-  public void load(final ORID indexRid, final String indexName, final OIndexDefinition indexDefinition, final boolean isAutomatic,
+  public void load(final String indexName, final OIndexDefinition indexDefinition, final boolean isAutomatic,
       final ODocument metadata) {
     initIndex(indexName, indexDefinition, null, null, isAutomatic, metadata);
   }

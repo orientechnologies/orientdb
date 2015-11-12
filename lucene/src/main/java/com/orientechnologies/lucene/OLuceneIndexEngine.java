@@ -20,7 +20,6 @@ import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExter
 import com.orientechnologies.lucene.manager.OLuceneIndexManagerAbstract;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
@@ -76,9 +75,8 @@ public class OLuceneIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
   }
 
   @Override
-  public void load(ORID indexRid, String indexName, OIndexDefinition indexDefinition, OStreamSerializer valueSerializer,
-      boolean isAutomatic) {
-    lucene.load(indexRid, indexName, indexDefinition, isAutomatic, indexMetadata);
+  public void load(String indexName, OIndexDefinition indexDefinition, OStreamSerializer valueSerializer, boolean isAutomatic) {
+    lucene.load(indexName, indexDefinition, isAutomatic, indexMetadata);
   }
 
   @Override
@@ -97,11 +95,6 @@ public class OLuceneIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
       rid = value.getIdentity();
     }
     return lucene.remove(key, rid);
-  }
-
-  @Override
-  public ORID getIdentity() {
-    return lucene.getIdentity();
   }
 
   @Override
