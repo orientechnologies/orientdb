@@ -82,7 +82,6 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
   }
 
   @Test
-
   public void getFields() throws SQLException {
     ResultSet rs = conn.createStatement().executeQuery("select from OUser");
 
