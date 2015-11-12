@@ -33,23 +33,23 @@ public abstract class EventInternal<T> implements Consumer<Event<T>> {
     Set<String> actors = new HashSet<String>();
     for (OUser involvedActor : involvedActors) {
       if (Boolean.TRUE.equals(involvedActor.getWatching())) {
-        if (involvedActor.getEmail() != null && !involvedActor.getEmail().isEmpty()
-            && !involvedActor.getEmail().equals(owner.getEmail())) {
-          actors.add(involvedActor.getEmail());
-        } else if (involvedActor.getWorkingEmail() != null && !involvedActor.getWorkingEmail().isEmpty()
+        if (involvedActor.getWorkingEmail() != null && !involvedActor.getWorkingEmail().isEmpty()
             && !involvedActor.getWorkingEmail().equals(owner.getWorkingEmail())) {
           actors.add(involvedActor.getWorkingEmail());
+        } else if (involvedActor.getEmail() != null && !involvedActor.getEmail().isEmpty()
+            && !involvedActor.getEmail().equals(owner.getEmail())) {
+          actors.add(involvedActor.getEmail());
         }
       }
     }
     for (OUser actorsInIssue : actorsInIssues) {
       if (Boolean.TRUE.equals(actorsInIssue.getNotification())) {
-        if (actorsInIssue.getEmail() != null && !actorsInIssue.getEmail().isEmpty()
-            && !actorsInIssue.getEmail().equals(owner.getEmail())) {
-          actors.add(actorsInIssue.getEmail());
-        } else if (actorsInIssue.getWorkingEmail() != null && !actorsInIssue.getWorkingEmail().isEmpty()
+        if (actorsInIssue.getWorkingEmail() != null && !actorsInIssue.getWorkingEmail().isEmpty()
             && !actorsInIssue.getWorkingEmail().equals(owner.getWorkingEmail())) {
           actors.add(actorsInIssue.getWorkingEmail());
+        } else if (actorsInIssue.getEmail() != null && !actorsInIssue.getEmail().isEmpty()
+            && !actorsInIssue.getEmail().equals(owner.getEmail())) {
+          actors.add(actorsInIssue.getEmail());
         }
       }
     }

@@ -30,7 +30,7 @@ public class AutoCloseDaemon {
   @Autowired
   protected IssueService           issueService;
 
-//  @Scheduled(fixedDelay = 12 * 60 * 60 * 1000)
+  // @Scheduled(fixedDelay = 12 * 60 * 60 * 1000)
   public void autoClose() {
 
     Iterable<Organization> organizations = organizationRepository.findAll();
