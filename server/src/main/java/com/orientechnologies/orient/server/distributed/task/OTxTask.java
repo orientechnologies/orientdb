@@ -129,6 +129,13 @@ public class OTxTask extends OAbstractReplicatedTask {
 
         database.commit();
 
+        for (int i = 0; i < result.results.size(); i++) {
+          Object res = result.results.get(i);
+          if (res instanceof OUpdateRecordTask.VersionPlaceholder) {
+            result.results.set(i, ((OUpdateRecordTask.VersionPlaceholder) res).getVersion());
+          }
+        }
+
         // SEND BACK CHANGED VALUE TO UPDATE
         for (int i = 0; i < result.results.size(); ++i) {
           final Object o = result.results.get(i);

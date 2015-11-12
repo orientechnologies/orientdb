@@ -56,6 +56,16 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
   private transient ORecord record;
   private transient boolean lockRecord = true;
 
+  public class VersionPlaceholder{
+    protected  ORecord record;
+    public VersionPlaceholder(ORecord record){
+      this.record = record;
+    }
+    public int getVersion(){
+      return record.getVersion();
+    }
+  }
+
   public OUpdateRecordTask() {
   }
 
@@ -114,7 +124,11 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
           database.getName(), rid.toString(), loadedRecord.getVersion());
 
       // RETURN THE SAME OBJECT (NOT A COPY), SO AFTER COMMIT THE VERSIONS IS UPDATED AND SENT TO THE CALLER
-      return loadedRecord.getVersion();
+      if (database.getTransaction().isActive()) {
+        return new VersionPlaceholder(loadedRecord);
+      } else {
+        return loadedRecord.getVersion();
+      }
 
     } finally {
       if (!inTx)
