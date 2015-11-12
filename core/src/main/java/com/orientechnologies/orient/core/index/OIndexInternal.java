@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.Collection;
@@ -186,6 +187,8 @@ public interface OIndexInternal<T> extends OIndex<T> {
   public void commit();
 
   public void postCommit();
+
+  public void setType(OType type);
 
   public final class IndexMetadata {
     private final String           name;

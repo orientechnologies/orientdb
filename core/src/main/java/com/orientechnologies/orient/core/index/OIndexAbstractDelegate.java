@@ -20,6 +20,8 @@
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.ODatabaseThreadLocalFactory;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -63,6 +65,7 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
   }
 
   public OIndex<T> put(final Object iKey, final OIdentifiable iValue) {
+    checkForKeyType(iKey);
     return delegate.put(iKey, iValue);
   }
 
@@ -77,6 +80,21 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
   public OIndex<T> clear() {
     return delegate.clear();
   }
+
+  protected void checkForKeyType(final Object iKey) {
+    if (delegate.getDefinition() == null) {
+      // RECOGNIZE THE KEY TYPE AT RUN-TIME
+
+      final OType type = OType.getTypeByClass(iKey.getClass());
+      if (type == null)
+        return;
+
+      OIndexManagerProxy indexManager = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getIndexManager();
+      getInternal().setType(type);
+      indexManager.save();
+    }
+  }
+
 
   @Override
   public OIndexCursor iterateEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,

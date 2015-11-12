@@ -844,7 +844,6 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
 
   protected void putInSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot) {
     // storage will delay real operations till the end of tx
-    checkForKeyType(key);
     put(key, value);
   }
 
@@ -874,18 +873,10 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
     }
   }
 
-  protected void checkForKeyType(final Object iKey) {
-    if (indexDefinition == null) {
-      // RECOGNIZE THE KEY TYPE AT RUN-TIME
-
-      final OType type = OType.getTypeByClass(iKey.getClass());
-      if (type == null)
-        return;
-
-      indexDefinition = new OSimpleKeyIndexDefinition(version, type);
-
-      updateConfiguration();
-    }
+  @Override
+  public void setType(OType type) {
+    indexDefinition = new OSimpleKeyIndexDefinition(version, type);
+    updateConfiguration();
   }
 
   protected ODatabaseDocumentInternal getDatabase() {
