@@ -95,6 +95,7 @@ import com.orientechnologies.orient.server.OServerInfo;
 import com.orientechnologies.orient.server.ShutdownHelper;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
+import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
@@ -256,9 +257,12 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
           if (connection != null) {
             if (requestType != OChannelBinaryProtocol.REQUEST_DB_CLOSE && connection.database == null) {
-              connection.data = tokenHandler.getProtocolDataFromToken(token);
-              String db = token.getDatabase();
-              String type = token.getDatabaseType();
+              final ONetworkProtocolData data = tokenHandler.getProtocolDataFromToken(token);
+              if (data != null)
+                connection.data = data;
+
+              final String db = token.getDatabase();
+              final String type = token.getDatabaseType();
               if (db != null && type != null) {
                 if (connection.data.serverUser) {
                   connection.database = (ODatabaseDocumentTx) server.openDatabase(type + ":" + db, token.getUserName(), null,
@@ -991,8 +995,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       return;
     }
 
-    OLogManager.instance().error(this, "Authentication error of remote client %s:%d: shutdown is aborted.",
-        channel.socket.getInetAddress(), channel.socket.getPort());
+    OLogManager.instance().error(this, "Authentication error of remote client %s:%d: shutdown is aborted.", channel.socket.getInetAddress(), channel.socket.getPort());
 
     sendErrorOrDropConnection(clientTxId, new OSecurityAccessException("Invalid user/password to shutdown the server"));
   }
@@ -1765,8 +1768,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       }
 
     } else {
-      final ORecord record = connection.database.load(rid, fetchPlanString, ignoreCache, loadTombstones,
-          OStorage.LOCKING_STRATEGY.NONE);
+      final ORecord record = connection.database.load(rid, fetchPlanString, ignoreCache, loadTombstones, OStorage.LOCKING_STRATEGY.NONE);
 
       beginResponse();
       try {
@@ -2316,8 +2318,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     try {
       sendOk(clientTxId);
 
-      final OPhysicalPosition[] previousPositions = connection.database.getStorage().floorPhysicalPositions(clusterId,
-          new OPhysicalPosition(clusterPosition));
+      final OPhysicalPosition[] previousPositions = connection.database.getStorage().floorPhysicalPositions(clusterId, new OPhysicalPosition(clusterPosition));
 
       if (previousPositions != null) {
         channel.writeInt(previousPositions.length);
@@ -2347,8 +2348,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     try {
       sendOk(clientTxId);
 
-      OPhysicalPosition[] nextPositions = connection.database.getStorage().higherPhysicalPositions(clusterId,
-          new OPhysicalPosition(clusterPosition));
+      OPhysicalPosition[] nextPositions = connection.database.getStorage().higherPhysicalPositions(clusterId, new OPhysicalPosition(clusterPosition));
 
       if (nextPositions != null) {
 
@@ -2376,8 +2376,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     try {
       sendOk(clientTxId);
 
-      final OPhysicalPosition[] previousPositions = connection.database.getStorage().ceilingPhysicalPositions(clusterId,
-          new OPhysicalPosition(clusterPosition));
+      final OPhysicalPosition[] previousPositions = connection.database.getStorage().ceilingPhysicalPositions(clusterId, new OPhysicalPosition(clusterPosition));
 
       if (previousPositions != null) {
         channel.writeInt(previousPositions.length);
