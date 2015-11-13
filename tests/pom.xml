@@ -119,6 +119,7 @@
                         <testPath>${project.basedir}</testPath>
                         <orient.server.testMode>${orient.server.testMode}</orient.server.testMode>
                         <orient.server.port>${orient.server.port}</orient.server.port>
+                        <storage.diskCache.bufferSize>4096</storage.diskCache.bufferSize>
                     </systemPropertyVariables>
                     <argLine>-Xmx3072m</argLine>
                 </configuration>
