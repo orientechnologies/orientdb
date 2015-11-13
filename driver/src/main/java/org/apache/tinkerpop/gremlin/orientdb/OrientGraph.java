@@ -95,6 +95,10 @@ public final class OrientGraph implements Graph {
         return features;
     }
 
+    public ODatabaseDocumentTx database() {
+        return database;
+    }
+
     public void makeActive() {
         final ODatabaseDocument tlDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
         if (database != null && tlDb != database) {
