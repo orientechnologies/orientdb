@@ -92,11 +92,6 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
   }
 
   @Override
-  public ORID getIdentity() {
-    return null;
-  }
-
-  @Override
   public Object get(Object key) {
     Query q = null;
     try {

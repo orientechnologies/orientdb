@@ -234,11 +234,6 @@ public class OIndexRecorder implements OIndex<OIdentifiable>, OIndexInternal<OId
   }
 
   @Override
-  public ORID getIdentity() {
-    return delegate.getIdentity();
-  }
-
-  @Override
   public OIndexCursor cursor() {
     throw new UnsupportedOperationException("Not allowed operation");
   }

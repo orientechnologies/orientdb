@@ -57,10 +57,10 @@ import java.util.Set;
  * @author Artem Orobets added composite index managemement
  */
 public class OIndexManagerShared extends OIndexManagerAbstract implements OIndexManager {
-  private static final long serialVersionUID      = 1L;
+  private static final long serialVersionUID = 1L;
 
-  protected volatile Thread recreateIndexesThread = null;
-  private volatile boolean  rebuildCompleted      = false;
+  protected volatile Thread  recreateIndexesThread = null;
+  private volatile   boolean rebuildCompleted      = false;
 
   public OIndexManagerShared(final ODatabaseDocument iDatabase) {
     super(iDatabase);
@@ -78,18 +78,12 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
   /**
    * Create a new index with default algorithm.
    *
-   * @param iName
-   *          - name of index
-   * @param iType
-   *          - index type. Specified by plugged index factories.
-   * @param indexDefinition
-   *          metadata that describes index structure
-   * @param clusterIdsToIndex
-   *          ids of clusters that index should track for changes.
-   * @param progressListener
-   *          listener to track task progress.
-   * @param metadata
-   *          document with additional properties that can be used by index engine.
+   * @param iName             - name of index
+   * @param iType             - index type. Specified by plugged index factories.
+   * @param indexDefinition   metadata that describes index structure
+   * @param clusterIdsToIndex ids of clusters that index should track for changes.
+   * @param progressListener  listener to track task progress.
+   * @param metadata          document with additional properties that can be used by index engine.
    * @return a newly created index instance
    */
   public OIndex<?> createIndex(final String iName, final String iType, final OIndexDefinition indexDefinition,
@@ -102,20 +96,13 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
    * <p>
    * May require quite a long time if big amount of data should be indexed.
    *
-   * @param iName
-   *          name of index
-   * @param iType
-   *          index type. Specified by plugged index factories.
-   * @param indexDefinition
-   *          metadata that describes index structure
-   * @param clusterIdsToIndex
-   *          ids of clusters that index should track for changes.
-   * @param progressListener
-   *          listener to track task progress.
-   * @param metadata
-   *          document with additional properties that can be used by index engine.
-   * @param algorithm
-   *          tip to an index factory what algorithm to use
+   * @param iName             name of index
+   * @param iType             index type. Specified by plugged index factories.
+   * @param indexDefinition   metadata that describes index structure
+   * @param clusterIdsToIndex ids of clusters that index should track for changes.
+   * @param progressListener  listener to track task progress.
+   * @param metadata          document with additional properties that can be used by index engine.
+   * @param algorithm         tip to an index factory what algorithm to use
    * @return a newly created index instance
    */
   public OIndex<?> createIndex(final String iName, final String iType, final OIndexDefinition indexDefinition,
@@ -154,8 +141,8 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
       index = OIndexes.createIndex(getDatabase(), iName, iType, algorithm, valueContainerAlgorithm, metadata, -1);
 
       // decide which cluster to use ("index" - for automatic and "manindex" for manual)
-      final String clusterName = indexDefinition != null && indexDefinition.getClassName() != null ? defaultClusterName
-          : manualClusterName;
+      final String clusterName =
+          indexDefinition != null && indexDefinition.getClassName() != null ? defaultClusterName : manualClusterName;
 
       if (progressListener == null)
         // ASSIGN DEFAULT PROGRESS LISTENER
@@ -350,15 +337,15 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
         while (indexConfigurationIterator.hasNext()) {
           final ODocument d = indexConfigurationIterator.next();
           try {
-            final int indexVersion = d.field(OIndexInternal.INDEX_VERSION) == null ? 1 : (Integer) d
-                .field(OIndexInternal.INDEX_VERSION);
+            final int indexVersion =
+                d.field(OIndexInternal.INDEX_VERSION) == null ? 1 : (Integer) d.field(OIndexInternal.INDEX_VERSION);
 
-            OIndexInternal.IndexMetadata newIndexMetadata = OIndexAbstract.loadMetadataInternal(d,
-                (String) d.field(OIndexInternal.CONFIG_TYPE), (String) d.field(OIndexInternal.ALGORITHM),
-                d.<String> field(OIndexInternal.VALUE_CONTAINER_ALGORITHM));
-            index = OIndexes.createIndex(getDatabase(), newIndexMetadata.getName(), newIndexMetadata.getType(),
-                newIndexMetadata.getAlgorithm(), newIndexMetadata.getValueContainerAlgorithm(),
-                (ODocument) d.field(OIndexInternal.METADATA), indexVersion);
+            OIndexInternal.IndexMetadata newIndexMetadata = OIndexAbstract
+                .loadMetadataInternal(d, (String) d.field(OIndexInternal.CONFIG_TYPE), (String) d.field(OIndexInternal.ALGORITHM),
+                    d.<String>field(OIndexInternal.VALUE_CONTAINER_ALGORITHM));
+            index = OIndexes
+                .createIndex(getDatabase(), newIndexMetadata.getName(), newIndexMetadata.getType(), newIndexMetadata.getAlgorithm(),
+                    newIndexMetadata.getValueContainerAlgorithm(), (ODocument) d.field(OIndexInternal.METADATA), indexVersion);
 
             final String normalizedName = newIndexMetadata.getName().toLowerCase();
 
@@ -368,9 +355,8 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
               if (oldIndexMetadata.equals(newIndexMetadata)) {
                 addIndexInternal(oldIndex.getInternal());
                 oldIndexes.remove(normalizedName);
-              } else if (newIndexMetadata.getIndexDefinition() == null
-                  && d.field(OIndexAbstract.CONFIG_MAP_RID)
-                      .equals(oldIndex.getConfiguration().field(OIndexAbstract.CONFIG_MAP_RID))) {
+              } else if (newIndexMetadata.getIndexDefinition() == null && newIndexMetadata.getName().toLowerCase()
+                  .equals(oldIndex.getName().toLowerCase())) {
                 // index is manual and index definition was just detected
                 addIndexInternal(oldIndex.getInternal());
                 oldIndexes.remove(normalizedName);
@@ -458,8 +444,8 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
   private class RecreateIndexesTask implements Runnable {
     private final ODatabaseDocumentTx newDb;
     private final ODocument           doc;
-    private int                       ok;
-    private int                       errors;
+    private       int                 ok;
+    private       int                 errors;
 
     public RecreateIndexesTask(ODatabaseDocumentTx newDb, ODocument doc) {
       this.newDb = newDb;
@@ -542,10 +528,8 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
         OLogManager.instance().info(this, "Rebuild of %s index was successfully finished.", indexName);
       } else {
         errors++;
-        OLogManager.instance().error(
-            this,
-            "Information about index was restored incorrectly, following data were loaded : "
-                + "index name - %s, index definition %s, clusters %s, type %s.", indexName, indexDefinition, clusters, type);
+        OLogManager.instance().error(this, "Information about index was restored incorrectly, following data were loaded : "
+            + "index name - %s, index definition %s, clusters %s, type %s.", indexName, indexDefinition, clusters, type);
       }
     }
 

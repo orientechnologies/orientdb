@@ -262,13 +262,6 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
    */
   public OIndexCursor iterateEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder);
 
-  /**
-   * Returns the Record Identity of the index if persistent.
-   * 
-   * @return Valid ORID if it's persistent, otherwise ORID(-1:-1)
-   */
-  public ORID getIdentity();
-
   public OIndexCursor cursor();
 
   public OIndexCursor descCursor();
