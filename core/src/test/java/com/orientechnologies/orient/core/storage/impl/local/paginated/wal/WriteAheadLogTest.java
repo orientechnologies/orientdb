@@ -765,14 +765,14 @@ public class WriteAheadLogTest {
     OWALRecord walRecord;
 
     while (writtenContent <= 4 * OWALPage.PAGE_SIZE) {
-      int contentSize = random.nextInt(OWALPage.PAGE_SIZE - 1) + 1;
+      int contentSize = random.nextInt(OWALPage.PAGE_SIZE - 1) + 8;
       walRecord = new TestRecord(contentSize, false);
       writeAheadLog.log(walRecord);
 
       writtenContent += contentSize;
     }
 
-    int contentSize = random.nextInt(OWALPage.PAGE_SIZE - 1) + 1;
+    int contentSize = random.nextInt(OWALPage.PAGE_SIZE - 1) + 8;
     walRecord = new TestRecord(contentSize, false);
     OLogSequenceNumber end = writeAheadLog.log(walRecord);
 
