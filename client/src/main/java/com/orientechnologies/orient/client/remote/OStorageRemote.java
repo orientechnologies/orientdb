@@ -19,22 +19,6 @@
  */
 package com.orientechnologies.orient.client.remote;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.FutureTask;
-
-import javax.naming.NamingException;
-import javax.naming.directory.Attribute;
-import javax.naming.directory.Attributes;
-import javax.naming.directory.DirContext;
-import javax.naming.directory.InitialDirContext;
-
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
@@ -59,6 +43,7 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
@@ -66,6 +51,7 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.security.OTokenException;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -89,40 +75,38 @@ import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
+import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.DirContext;
+import javax.naming.directory.InitialDirContext;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
+
 /**
  * This object is bound to each remote ODatabase instances.
  */
 public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
-  public static final String  PARAM_MIN_POOL    = "minpool";
-  public static final String  PARAM_MAX_POOL    = "maxpool";
-  public static final String  PARAM_DB_TYPE     = "dbtype";
-  private static final String DEFAULT_HOST      = "localhost";
-  private static final int    DEFAULT_PORT;
-  private static final int    DEFAULT_SSL_PORT  = 2434;
-  private static final String ADDRESS_SEPARATOR = ";";
-  private static final String DRIVER_NAME       = "OrientDB Java";
+  public static final String  PARAM_CONNECTION_MODE = "connectionMode";
+  public static final String  PARAM_DB_TYPE         = "dbtype";
+  private static final String DEFAULT_HOST          = "localhost";
+  private static final int    DEFAULT_PORT          = 2424;
+  private static final int    DEFAULT_SSL_PORT      = 2434;
+  private static final String ADDRESS_SEPARATOR     = ";";
+  private static final String DRIVER_NAME           = "OrientDB Java";
 
-  static {
-    int serverPort = -1;
-
-    String serverTestMode = System.getProperty("orient.server.testMode", "false");
-    if (serverTestMode.equals("true")) {
-      String serverTestPort = System.getProperty("orient.server.port");
-      if (serverTestPort != null) {
-        try {
-          serverPort = Integer.parseInt(serverTestPort);
-
-        } catch (NumberFormatException e) {
-          serverPort = -1;
-        }
-      }
-    }
-
-    if (serverPort == -1)
-      serverPort = 2424;
-
-    DEFAULT_PORT = serverPort;
+  public enum CONNECTION_MODE {
+    STICKY, ROUND_ROBIN_REQ, ROUND_ROBIN_CONNECT
   }
+
+  private CONNECTION_MODE connectionMode = CONNECTION_MODE.STICKY;
 
   private final OSBTreeCollectionManagerRemote sbTreeCollectionManager = new OSBTreeCollectionManagerRemote();
   protected final List<String>                 serverURLs              = new ArrayList<String>();
@@ -133,14 +117,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   private OContextConfiguration                clientConfiguration;
   private int                                  connectionRetry;
   private int                                  connectionRetryDelay;
-  @Deprecated
-  private int                                  networkPoolCursor       = 0;
   private OCluster[]                           clusters                = OCommonConst.EMPTY_CLUSTER_ARRAY;
   private int                                  defaultClusterId;
-  @Deprecated
-  private int                                  minPool;
-  @Deprecated
-  private int                                  maxPool;
   private OStorageRemoteAsynchEventListener    asynchEventListener;
   private String                               connectionDbType;
   private volatile String                      connectionUserName;
@@ -206,21 +184,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     }
   }
 
-  public void clearToken() {
-    final OStorageRemoteThreadLocal instance = OStorageRemoteThreadLocal.INSTANCE;
-    if (instance != null) {
-      final OStorageRemoteSession tl = instance.get();
-      if (tl.serverURL != null)
-        tokens.remove(tl.serverURL);
-    }
-  }
-
-  public void clearSession() {
-    final OStorageRemoteThreadLocal instance = OStorageRemoteThreadLocal.INSTANCE;
-    if (instance != null)
-      instance.remove();
-  }
-
   public void open(final String iUserName, final String iUserPassword, final Map<String, Object> iOptions) {
 
     stateLock.acquireWriteLock();
@@ -230,9 +193,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           || this.tokens.isEmpty()) {
         connectionUserName = iUserName;
         connectionUserPassword = iUserPassword;
-        connectionOptions = iOptions != null ? new HashMap<String, Object>(iOptions) : null; // CREATE A COPY TO AVOID USER
-        // MANIPULATION
-        // POST OPEN
+        parseOptions(iOptions);
+
         openRemoteDatabase();
 
         final OStorageConfiguration storageConfiguration = new OStorageRemoteConfiguration(this, recordFormat);
@@ -255,6 +217,18 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     } finally {
       stateLock.releaseWriteLock();
     }
+  }
+
+  private void parseOptions(final Map<String, Object> iOptions) {
+    if (iOptions == null || iOptions.size() == 0)
+      return;
+
+    final Object connType = iOptions.get(PARAM_CONNECTION_MODE.toLowerCase());
+    if (connType != null)
+      connectionMode = CONNECTION_MODE.valueOf(connType.toString().toUpperCase());
+
+    // CREATE A COPY TO AVOID POST OPEN MANIPULATION BY USER
+    connectionOptions = new HashMap<String, Object>(iOptions);
   }
 
   @Override
@@ -1730,6 +1704,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
     final Throwable firstCause = OException.getFirstCause(exception);
 
+    final boolean tokenException = firstCause instanceof OTokenException;
+
     // CHECK IF THE EXCEPTION SHOULD BE JUST PROPAGATED
     if (!(firstCause instanceof IOException)) {
       if (exception instanceof OException)
@@ -1741,20 +1717,21 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     }
 
     // IO CAUSE: REMOVE THE CONNECTION FROM THE POOL AND TRY TO RECONNECT TRANSPARENTLY
-    if (iNetwork != null) {
-      OLogManager.instance().warn(this, "Caught I/O errors from %s (local socket=%s), trying to reconnect (error: %s)", iNetwork,
-          iNetwork.getLocalSocketAddress(), firstCause);
-      OLogManager.instance().debug(this, "I/O error stack: ", firstCause);
+    if (!tokenException)
+      if (iNetwork != null) {
+        OLogManager.instance().warn(this, "Caught I/O errors from %s (local socket=%s), trying to reconnect (error: %s)", iNetwork,
+            iNetwork.getLocalSocketAddress(), firstCause);
+        OLogManager.instance().debug(this, "I/O error stack: ", firstCause);
 
-      try {
-        engine.getConnectionManager().remove(iNetwork);
-      } catch (Exception e) {
-        OLogManager.instance().debug(this, "Cannot remove connection from connection manager", e);
+        try {
+          engine.getConnectionManager().remove(iNetwork);
+        } catch (Exception e) {
+          OLogManager.instance().debug(this, "Cannot remove connection from connection manager", e);
+        }
+      } else {
+        OLogManager.instance().warn(this, "Caught I/O errors, trying to reconnect (error: %s)", firstCause.toString());
+        OLogManager.instance().debug(this, "I/O error stack: ", firstCause);
       }
-    } else {
-      OLogManager.instance().warn(this, "Caught I/O errors, trying to reconnect (error: %s)", firstCause.toString());
-      OLogManager.instance().debug(this, "I/O error stack: ", firstCause);
-    }
 
     final long lostConnectionTime = System.currentTimeMillis();
 
@@ -1797,9 +1774,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         // REACQUIRE DB SESSION ID
         final String currentURL = reopenRemoteDatabase();
 
-        OLogManager.instance().warn(this,
-            "Connection re-acquired transparently after %dms and %d retries to server '%s': no errors will be thrown at application level",
-            System.currentTimeMillis() - lostConnectionTime, retry + 1, currentURL);
+        if (!tokenException)
+          OLogManager.instance().warn(this,
+              "Connection re-acquired transparently after %dms and %d retries to server '%s': no errors will be thrown at application level",
+              System.currentTimeMillis() - lostConnectionTime, retry + 1, currentURL);
 
         // RECONNECTED!
         return;
@@ -1821,7 +1799,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         try {
           final byte[] curToken = tokens.get(currentURL);
           if (curToken == null || curToken.length == 0) {
-            return openRemoteDatabase();
+            return openRemoteDatabase(currentURL);
           } else {
             network = getAvailableNetwork(currentURL);
             try {
@@ -1907,10 +1885,15 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         connectionDbType = connectionOptions.get(PARAM_DB_TYPE).toString();
     }
 
-    OChannelBinaryAsynchClient network = null;
-    String currentURL = getCurrentServerURL();
+    final String currentURL = getNextAvailableServerURL(true);
+
+    return openRemoteDatabase(currentURL);
+  }
+
+  protected String openRemoteDatabase(String currentURL) {
     do {
       do {
+        OChannelBinaryAsynchClient network = null;
         try {
           network = getAvailableNetwork(currentURL);
           try {
@@ -2140,7 +2123,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
    * @throws IOException
    */
   protected OChannelBinaryAsynchClient beginRequest(final byte iCommand) throws IOException {
-    final OChannelBinaryAsynchClient network = getAvailableNetwork(getCurrentServerURL());
+    final OChannelBinaryAsynchClient network = getAvailableNetwork(getNextAvailableServerURL(false));
     network.writeByte(iCommand);
     network.writeInt(getSessionId());
     byte[] token = tokens.get(network.getServerURL());
@@ -2151,10 +2134,42 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return network;
   }
 
+  protected String getNextAvailableServerURL(boolean iIsConnectOperation) {
+    String url = null;
+
+    switch (connectionMode) {
+    case STICKY:
+      url = getServerURL();
+      if (url == null)
+        url = getServerURFromList(false);
+      break;
+
+    case ROUND_ROBIN_CONNECT:
+      if (!iIsConnectOperation)
+        url = getServerURL();
+
+      if (url == null)
+        url = getServerURFromList(iIsConnectOperation);
+      break;
+
+    case ROUND_ROBIN_REQ:
+      url = getServerURFromList(true);
+      break;
+
+    default:
+      throw new OConfigurationException("Connection mode " + connectionMode + " is not supported");
+    }
+
+    return url;
+  }
+
   protected String getCurrentServerURL() {
-    String url = getServerURL();
-    if (url != null)
-      return url;
+    return getServerURFromList(false);
+  }
+
+  protected String getServerURFromList(final boolean iNextAvailable) {
+    final OStorageRemoteThreadLocal instance = OStorageRemoteThreadLocal.INSTANCE;
+
     synchronized (serverURLs) {
       if (serverURLs.isEmpty()) {
         parseServerURLs();
@@ -2162,7 +2177,21 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           throw new OStorageException("Cannot create a connection to remote server because url list is empty");
       }
 
-      return serverURLs.get(0) + "/" + getName();
+      // GET CURRENT THREAD INDEX
+      int serverURLIndex = instance.get().serverURLIndex;
+
+      if (iNextAvailable)
+        serverURLIndex++;
+
+      if (serverURLIndex < 0 || serverURLIndex >= serverURLs.size())
+        // RESET INDEX
+        serverURLIndex = 0;
+
+      final String serverURL = serverURLs.get(serverURLIndex) + "/" + getName();
+
+      instance.get().serverURLIndex = serverURLIndex;
+
+      return serverURL;
     }
   }
 
@@ -2183,7 +2212,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       if (tokens.get(lastURL) == null && getSessionId() > 0) {
         // TODO: Remove this workaround in favor of a proper per server authentication.
         setSessionId(lastURL, -1, null);
-        throw new IOException("missing token reconnect required");
+        throw new OTokenException("Missing token, reconnect is required");
       }
 
       if (network == null) {

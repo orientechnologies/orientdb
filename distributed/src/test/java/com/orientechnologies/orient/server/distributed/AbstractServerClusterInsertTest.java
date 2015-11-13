@@ -32,7 +32,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -156,8 +156,8 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
     }
 
     private void checkIndex(ODatabaseDocumentTx database, final String key, final ORID rid) {
-      final List<OIdentifiable> result = database.command(new OCommandSQL("select from index:Person.name where key = ?")).execute(
-          key);
+      final List<OIdentifiable> result = database.command(new OCommandSQL("select from index:Person.name where key = ?"))
+          .execute(key);
       Assert.assertNotNull(result);
       Assert.assertEquals(result.size(), 1);
       Assert.assertNotNull(result.get(0).getRecord());
@@ -167,8 +167,8 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
     private ODocument loadRecord(ODatabaseDocumentTx database, int i) {
       final String uniqueId = serverId + "-" + threadId + "-" + i;
 
-      List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from Person where name = 'Billy" + uniqueId
-          + "'"));
+      List<ODocument> result = database
+          .query(new OSQLSynchQuery<ODocument>("select from Person where name = 'Billy" + uniqueId + "'"));
       if (result.size() == 0)
         Assert.assertTrue("No record found with name = 'Billy" + uniqueId + "'!", false);
       else if (result.size() > 1)
@@ -416,15 +416,6 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
         database = poolFactory.get(getDatabaseURL(server), "admin", "admin").acquire();
         try {
           final int total = (int) database.countClass("Person");
-
-          // if (total != expected) {
-          // // ERROR: DUMP ALL THE RECORDS
-          // result = database.query(new OSQLSynchQuery<OIdentifiable>("select from Person"));
-          // i = 0;
-          // for (ODocument d : result) {
-          // System.out.println((i++) + ": " + d);
-          // }
-          // }
 
           Assert.assertEquals(expected, total);
         } finally {
