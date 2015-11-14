@@ -55,22 +55,22 @@ public abstract class OrientConfigurableGraph {
 
   public class Settings {
 
-    private Boolean                        useLightweightEdges                 = null;
-    private Boolean                        useClassForEdgeLabel                = null;
-    private Boolean                        useClassForVertexLabel              = null;
-    private Boolean                        keepInMemoryReferences              = null;
-    private Boolean                        useVertexFieldsForEdgeLabels        = null;
-    private Boolean                        saveOriginalIds                     = null;
-    private Boolean                        standardElementConstraints          = null;
-    private Boolean                        warnOnForceClosingTx                = null;
-    private Boolean                        autoScaleEdgeType                   = null;
-    private Integer                        edgeContainerEmbedded2TreeThreshold = null;
-    private Integer                        edgeContainerTree2EmbeddedThreshold = null;
-    private THREAD_MODE                    threadMode                          = null;
-    private Boolean                        autoStartTx                         = null;
-    private Boolean                        requireTransaction                  = null;
-    private Boolean                        useLog                              = null;
-    private OStorageRemote.CONNECTION_MODE connectionMode                      = OStorageRemote.CONNECTION_MODE.STICKY;
+    private Boolean                            useLightweightEdges                 = null;
+    private Boolean                            useClassForEdgeLabel                = null;
+    private Boolean                            useClassForVertexLabel              = null;
+    private Boolean                            keepInMemoryReferences              = null;
+    private Boolean                            useVertexFieldsForEdgeLabels        = null;
+    private Boolean                            saveOriginalIds                     = null;
+    private Boolean                            standardElementConstraints          = null;
+    private Boolean                            warnOnForceClosingTx                = null;
+    private Boolean                            autoScaleEdgeType                   = null;
+    private Integer                            edgeContainerEmbedded2TreeThreshold = null;
+    private Integer                            edgeContainerTree2EmbeddedThreshold = null;
+    private THREAD_MODE                        threadMode                          = null;
+    private Boolean                            autoStartTx                         = null;
+    private Boolean                            requireTransaction                  = null;
+    private Boolean                            useLog                              = null;
+    private OStorageRemote.CONNECTION_STRATEGY connectionStrategy                  = OStorageRemote.CONNECTION_STRATEGY.STICKY;
 
     public Settings copy() {
       final Settings copy = new Settings();
@@ -89,7 +89,7 @@ public abstract class OrientConfigurableGraph {
       copy.autoStartTx = autoStartTx;
       copy.requireTransaction = requireTransaction;
       copy.useLog = useLog;
-      copy.connectionMode = connectionMode;
+      copy.connectionStrategy = connectionStrategy;
       return copy;
     }
 
@@ -144,8 +144,8 @@ public abstract class OrientConfigurableGraph {
       if (settings.useLog != null) {
         useLog = settings.useLog;
       }
-      if (settings.connectionMode != null) {
-        connectionMode = settings.connectionMode;
+      if (settings.connectionStrategy != null) {
+        connectionStrategy = settings.connectionStrategy;
       }
     }
 
@@ -204,12 +204,12 @@ public abstract class OrientConfigurableGraph {
 
     }
 
-    public OStorageRemote.CONNECTION_MODE getConnectionMode() {
-      return this.connectionMode;
+    public OStorageRemote.CONNECTION_STRATEGY getConnectionStrategy() {
+      return this.connectionStrategy;
     }
 
-    public void setConnectionMode(final OStorageRemote.CONNECTION_MODE connectionMode) {
-      this.connectionMode = connectionMode;
+    public void setConnectionStrategy(final OStorageRemote.CONNECTION_STRATEGY connectionStrategy) {
+      this.connectionStrategy = connectionStrategy;
     }
 
     /**
@@ -689,12 +689,12 @@ public abstract class OrientConfigurableGraph {
     return this;
   }
 
-  public OStorageRemote.CONNECTION_MODE getConnectionMode() {
-    return this.settings.connectionMode;
+  public OStorageRemote.CONNECTION_STRATEGY getConnectionStrategy() {
+    return this.settings.connectionStrategy;
   }
 
-  public void setConnectionMode(final OStorageRemote.CONNECTION_MODE connectionMode) {
-    this.settings.connectionMode = connectionMode;
+  public void setConnectionStrategy(final OStorageRemote.CONNECTION_STRATEGY connectionStrategy) {
+    this.settings.connectionStrategy = connectionStrategy;
   }
 
   /**

@@ -94,19 +94,19 @@ import java.util.concurrent.FutureTask;
  * This object is bound to each remote ODatabase instances.
  */
 public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
-  public static final String  PARAM_CONNECTION_MODE = "connectionMode";
-  public static final String  PARAM_DB_TYPE         = "dbtype";
-  private static final String DEFAULT_HOST          = "localhost";
-  private static final int    DEFAULT_PORT          = 2424;
-  private static final int    DEFAULT_SSL_PORT      = 2434;
-  private static final String ADDRESS_SEPARATOR     = ";";
-  private static final String DRIVER_NAME           = "OrientDB Java";
+  public static final String  PARAM_CONNECTION_STRATEGY = "connectionStrategy";
+  public static final String  PARAM_DB_TYPE             = "dbtype";
+  private static final String DEFAULT_HOST              = "localhost";
+  private static final int    DEFAULT_PORT              = 2424;
+  private static final int    DEFAULT_SSL_PORT          = 2434;
+  private static final String ADDRESS_SEPARATOR         = ";";
+  private static final String DRIVER_NAME               = "OrientDB Java";
 
-  public enum CONNECTION_MODE {
-    STICKY, ROUND_ROBIN_REQ, ROUND_ROBIN_CONNECT
+  public enum CONNECTION_STRATEGY {
+    STICKY, ROUND_ROBIN_CONNECT, ROUND_ROBIN_REQUEST
   }
 
-  private CONNECTION_MODE connectionMode = CONNECTION_MODE.STICKY;
+  private CONNECTION_STRATEGY connectionStrategy = CONNECTION_STRATEGY.STICKY;
 
   private final OSBTreeCollectionManagerRemote sbTreeCollectionManager = new OSBTreeCollectionManagerRemote();
   protected final List<String>                 serverURLs              = new ArrayList<String>();
@@ -223,9 +223,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     if (iOptions == null || iOptions.size() == 0)
       return;
 
-    final Object connType = iOptions.get(PARAM_CONNECTION_MODE.toLowerCase());
+    final Object connType = iOptions.get(PARAM_CONNECTION_STRATEGY.toLowerCase());
     if (connType != null)
-      connectionMode = CONNECTION_MODE.valueOf(connType.toString().toUpperCase());
+      connectionStrategy = CONNECTION_STRATEGY.valueOf(connType.toString().toUpperCase());
 
     // CREATE A COPY TO AVOID POST OPEN MANIPULATION BY USER
     connectionOptions = new HashMap<String, Object>(iOptions);
@@ -2137,7 +2137,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   protected String getNextAvailableServerURL(boolean iIsConnectOperation) {
     String url = null;
 
-    switch (connectionMode) {
+    switch (connectionStrategy) {
     case STICKY:
       url = getServerURL();
       if (url == null)
@@ -2152,12 +2152,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         url = getServerURFromList(iIsConnectOperation);
       break;
 
-    case ROUND_ROBIN_REQ:
+    case ROUND_ROBIN_REQUEST:
       url = getServerURFromList(true);
       break;
 
     default:
-      throw new OConfigurationException("Connection mode " + connectionMode + " is not supported");
+      throw new OConfigurationException("Connection mode " + connectionStrategy + " is not supported");
     }
 
     return url;

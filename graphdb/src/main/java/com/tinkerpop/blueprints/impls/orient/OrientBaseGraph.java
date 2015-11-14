@@ -1809,8 +1809,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     if (pool == null) {
       database = new ODatabaseDocumentTx(url);
 
-      final OStorageRemote.CONNECTION_MODE connMode = settings.getConnectionMode();
-      database.setProperty(OStorageRemote.PARAM_CONNECTION_MODE, connMode);
+      final OStorageRemote.CONNECTION_STRATEGY connMode = settings.getConnectionStrategy();
+      database.setProperty(OStorageRemote.PARAM_CONNECTION_STRATEGY, connMode);
 
       if (url.startsWith("remote:") || database.exists()) {
         if (database.isClosed())

@@ -125,8 +125,8 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
   public ODatabaseDocumentTx getDatabase(final boolean iCreate, final boolean iOpen) {
     final ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
 
-    final OStorageRemote.CONNECTION_MODE connMode = settings.getConnectionMode();
-    db.setProperty(OStorageRemote.PARAM_CONNECTION_MODE, connMode);
+    final OStorageRemote.CONNECTION_STRATEGY connMode = settings.getConnectionStrategy();
+    db.setProperty(OStorageRemote.PARAM_CONNECTION_STRATEGY, connMode);
 
     if (!db.getURL().startsWith("remote:") && !db.exists()) {
       if (iCreate)
