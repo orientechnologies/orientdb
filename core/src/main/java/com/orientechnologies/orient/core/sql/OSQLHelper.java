@@ -308,15 +308,17 @@ public class OSQLHelper {
 
     // Handle 'in' and 'out' properties for edges
     OClass cls = iDocument.getSchemaClass();
-    boolean isEdge = cls.isSubClassOf(OImmutableClass.EDGE_CLASS_NAME);
-    if (isEdge && ("in".equals(iFieldName) || "out".equals(iFieldName)) &&
-      (iFieldValue instanceof ArrayList)) {
-      ArrayList lst = (ArrayList)iFieldValue;
-      if (lst.size() > 1) {
-        throw new OCommandExecutionException("Can't set property '" + iFieldName +
-          "' of edge class " + cls.getName());
+    if (cls != null) {
+      boolean isEdge = cls.isSubClassOf(OImmutableClass.EDGE_CLASS_NAME);
+      if (isEdge && ("in".equals(iFieldName) || "out".equals(iFieldName)) &&
+        (iFieldValue instanceof ArrayList)) {
+        ArrayList lst = (ArrayList) iFieldValue;
+        if (lst.size() > 1) {
+          throw new OCommandExecutionException("Can't set property '" + iFieldName +
+            "' of edge class " + cls.getName());
+        }
+        return lst.get(0);
       }
-      return lst.get(0);
     }
 
     //
