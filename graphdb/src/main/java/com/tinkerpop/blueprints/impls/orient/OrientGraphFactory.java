@@ -1,11 +1,12 @@
 package com.tinkerpop.blueprints.impls.orient;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-
+import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.intent.OIntent;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class OrientGraphFactory extends OrientConfigurableGraph {
   protected final String                      url;
@@ -123,6 +124,10 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
    */
   public ODatabaseDocumentTx getDatabase(final boolean iCreate, final boolean iOpen) {
     final ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
+
+    final OStorageRemote.CONNECTION_STRATEGY connMode = settings.getConnectionStrategy();
+    db.setProperty(OStorageRemote.PARAM_CONNECTION_STRATEGY, connMode);
+
     if (!db.getURL().startsWith("remote:") && !db.exists()) {
       if (iCreate)
         db.create();

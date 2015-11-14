@@ -10,26 +10,25 @@ import com.orientechnologies.orient.core.id.ORID;
  */
 public interface OToken {
 
-  public boolean getIsVerified();
+  boolean getIsVerified();
 
-  public void setIsVerified(boolean verified);
+  void setIsVerified(boolean verified);
 
-  public boolean getIsValid();
+  boolean getIsValid();
 
-  public void setIsValid(boolean valid);
+  void setIsValid(boolean valid);
 
-  public String getUserName();
+  String getUserName();
 
-  public OUser getUser(ODatabaseDocumentInternal db);
+  OUser getUser(ODatabaseDocumentInternal db);
 
-  public String getDatabase();
+  String getDatabase();
 
-  public String getDatabaseType();
+  String getDatabaseType();
 
-  public ORID getUserId();
+  ORID getUserId();
 
-  public long getExpiry();
+  long getExpiry();
 
-  public void setExpiry(long expiry);
-
+  void setExpiry(long expiry);
 }

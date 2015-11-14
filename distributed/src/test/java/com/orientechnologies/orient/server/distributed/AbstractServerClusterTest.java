@@ -18,9 +18,11 @@ package com.orientechnologies.orient.server.distributed;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.instance.GroupProperties;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import org.junit.Assert;
 
 import java.io.IOException;
@@ -202,12 +204,22 @@ public abstract class AbstractServerClusterTest {
    * @throws IOException
    */
   protected void prepare(final boolean iCopyDatabaseToNodes, final boolean iCreateDatabase) throws IOException {
+    prepare(iCopyDatabaseToNodes, iCreateDatabase, null);
+  }
+
+  /**
+   * Create the database on first node only
+   *
+   * @throws IOException
+   */
+  protected void prepare(final boolean iCopyDatabaseToNodes, final boolean iCreateDatabase,
+      final OCallable<Object, OrientGraphFactory> iCfgCallback) throws IOException {
     // CREATE THE DATABASE
     final Iterator<ServerRun> it = serverInstance.iterator();
     final ServerRun master = it.next();
 
     if (iCreateDatabase) {
-      final OrientBaseGraph graph = master.createDatabase(getDatabaseName());
+      final OrientBaseGraph graph = master.createDatabase(getDatabaseName(), iCfgCallback);
       try {
         onAfterDatabaseCreation(graph);
       } finally {
