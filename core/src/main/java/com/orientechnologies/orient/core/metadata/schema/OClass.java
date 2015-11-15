@@ -19,16 +19,16 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import com.orientechnologies.common.listener.OProgressListener;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Schema class
@@ -55,8 +55,6 @@ public interface OClass extends Comparable<OClass> {
       return automaticIndexable;
     }
   }
-
-  <T> T newInstance() throws InstantiationException, IllegalAccessException;
 
   boolean isAbstract();
 
@@ -113,8 +111,6 @@ public interface OClass extends Comparable<OClass> {
   void dropProperty(String iPropertyName);
 
   boolean existsProperty(String iPropertyName);
-
-  Class<?> getJavaClass();
 
   int getClusterForNewInstance(ODocument doc);
 
@@ -414,15 +410,12 @@ public interface OClass extends Comparable<OClass> {
   Set<OIndex<?>> getClassIndexes();
 
   /**
-   * Internal.
-   * Copy all the indexes for given class, not the inherited ones,
-   * in the collection received as argument.
+   * Internal. Copy all the indexes for given class, not the inherited ones, in the collection received as argument.
    */
   void getClassIndexes(Collection<OIndex<?>> indexes);
 
   /**
-   * Internal.
-   * All indexes for given class and its super classes.
+   * Internal. All indexes for given class and its super classes.
    */
   void getIndexes(Collection<OIndex<?>> indexes);
 

@@ -19,6 +19,14 @@
  */
 package com.orientechnologies.orient.core.db.tool;
 
+import static com.orientechnologies.orient.core.record.impl.ODocumentHelper.makeDbCall;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Set;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -44,27 +52,19 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Set;
-
-import static com.orientechnologies.orient.core.record.impl.ODocumentHelper.makeDbCall;
-
 public class ODatabaseCompare extends ODatabaseImpExpAbstract {
-  private OStorage              storage1;
-  private OStorage              storage2;
+  private OStorage storage1;
+  private OStorage storage2;
 
-  private ODatabaseDocumentTx   databaseDocumentTxOne;
-  private ODatabaseDocumentTx   databaseDocumentTxTwo;
+  private ODatabaseDocumentTx databaseDocumentTxOne;
+  private ODatabaseDocumentTx databaseDocumentTxTwo;
 
-  private boolean               compareEntriesForAutomaticIndexes = false;
-  private boolean               autoDetectExportImportMap         = true;
+  private boolean compareEntriesForAutomaticIndexes = false;
+  private boolean autoDetectExportImportMap         = true;
 
-  private OIndex<OIdentifiable> exportImportHashTable             = null;
-  private int                   differences                       = 0;
-  private boolean               compareIndexMetadata              = false;
+  private OIndex<OIdentifiable> exportImportHashTable = null;
+  private int                   differences           = 0;
+  private boolean               compareIndexMetadata  = false;
 
   public ODatabaseCompare(String iDb1URL, String iDb2URL, final OCommandOutputListener iListener) throws IOException {
     super(null, null, iListener);
@@ -132,8 +132,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
     try {
       ODocumentHelper.RIDMapper ridMapper = null;
       if (autoDetectExportImportMap) {
-        listener
-            .onMessage("\nAuto discovery of mapping between RIDs of exported and imported records is switched on, try to discover mapping data on disk.");
+        listener.onMessage("\nAuto discovery of mapping between RIDs of exported and imported records is switched on, try to discover mapping data on disk.");
         exportImportHashTable = (OIndex<OIdentifiable>) databaseDocumentTxTwo.getMetadata().getIndexManager()
             .getIndex(ODatabaseImport.EXPORT_IMPORT_MAP_NAME);
         if (exportImportHashTable != null) {
@@ -175,10 +174,9 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
         return false;
       }
     } catch (Exception e) {
-      OLogManager.instance()
-          .error(this, "Error on comparing database '%s' against '%s'", e, storage1.getName(), storage2.getName());
-      throw new ODatabaseExportException("Error on comparing database '" + storage1.getName() + "' against '" + storage2.getName()
-          + "'", e);
+      OLogManager.instance().error(this, "Error on comparing database '%s' against '%s'", e, storage1.getName(), storage2.getName());
+      throw new ODatabaseExportException(
+          "Error on comparing database '" + storage1.getName() + "' against '" + storage2.getName() + "'", e);
     } finally {
       storage1.close();
       storage2.close();
@@ -213,11 +211,6 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
         listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same defined custom keys in DB2.");
         ok = false;
       }
-      if ((clazz.getJavaClass() == null && clazz2.getJavaClass() != null)
-          || (clazz.getJavaClass() != null && !clazz.getJavaClass().equals(clazz2.getJavaClass()))) {
-        listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same defined Java class in DB2.");
-        ok = false;
-      }
       if (clazz.getOverSize() != clazz2.getOverSize()) {
         listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same defined overSize in DB2.");
         ok = false;
@@ -235,14 +228,14 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
       for (OProperty prop : clazz.declaredProperties()) {
         OProperty prop2 = clazz2.getProperty(prop.getName());
         if (prop2 == null) {
-          listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as missed property " + prop.getName()
-              + "in DB2.");
+          listener
+              .onMessage("\n- ERR: Class definition for " + clazz.getName() + " as missed property " + prop.getName() + "in DB2.");
           ok = false;
           continue;
         }
         if (prop.getType() != prop2.getType()) {
-          listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same type for property "
-              + prop.getName() + "in DB2. ");
+          listener.onMessage(
+              "\n- ERR: Class definition for " + clazz.getName() + " as not same type for property " + prop.getName() + "in DB2. ");
           ok = false;
         }
 
@@ -254,15 +247,15 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 
         if (prop.getMin() != null) {
           if (!prop.getMin().equals(prop2.getMin())) {
-            listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same min for property "
-                + prop.getName() + "in DB2.");
+            listener.onMessage(
+                "\n- ERR: Class definition for " + clazz.getName() + " as not same min for property " + prop.getName() + "in DB2.");
             ok = false;
           }
         }
         if (prop.getMax() != null) {
           if (!prop.getMax().equals(prop2.getMax())) {
-            listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same max for property "
-                + prop.getName() + "in DB2.");
+            listener.onMessage(
+                "\n- ERR: Class definition for " + clazz.getName() + " as not same max for property " + prop.getName() + "in DB2.");
             ok = false;
           }
         }
@@ -301,8 +294,8 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
           ok = false;
         }
         if (prop.isReadonly() != prop2.isReadonly()) {
-          listener.onMessage("\n- ERR: Class definition for " + clazz.getName()
-              + " as not same readonly flag setting for property " + prop.getName() + "in DB2.");
+          listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same readonly flag setting for property "
+              + prop.getName() + "in DB2.");
           ok = false;
         }
 
@@ -469,8 +462,8 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
           listener.onMessage("\n- ERR: Metadata for index " + indexOne.getName() + " for DB1 is not null but for DB2 is null.");
           listener.onMessage("\n");
           ++differences;
-        } else if (metadataOne != null && metadataTwo != null
-            && !ODocumentHelper.hasSameContentOf(metadataOne, databaseDocumentTxOne, metadataTwo, databaseDocumentTxTwo, ridMapper)) {
+        } else if (metadataOne != null && metadataTwo != null && !ODocumentHelper.hasSameContentOf(metadataOne,
+            databaseDocumentTxOne, metadataTwo, databaseDocumentTxTwo, ridMapper)) {
           ok = false;
           listener.onMessage("\n- ERR: Metadata for index " + indexOne.getName() + " for DB1 and for DB2 are different.");
           makeDbCall(databaseDocumentTxOne, new ODbRelatedCall<Object>() {
@@ -570,8 +563,8 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
     listener.onMessage("\nChecking the number of clusters...");
 
     if (storage1.getClusterNames().size() != storage1.getClusterNames().size()) {
-      listener.onMessage("ERR: cluster sizes are different: " + storage1.getClusterNames().size() + " <-> "
-          + storage1.getClusterNames().size());
+      listener.onMessage(
+          "ERR: cluster sizes are different: " + storage1.getClusterNames().size() + " <-> " + storage1.getClusterNames().size());
       ++differences;
     }
 
@@ -681,8 +674,8 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
               continue;
 
             if (rid.clusterId == 0 && rid.clusterPosition == 0) {
-              //Skip the compare of raw structure if the storage type are different, due the fact that are different by definition.
-              if(!storage1.getType().equals(storage2.getType()))
+              // Skip the compare of raw structure if the storage type are different, due the fact that are different by definition.
+              if (!storage1.getType().equals(storage2.getType()))
                 continue;
             }
 
@@ -718,13 +711,13 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 
               if (buffer1.buffer == null && buffer2.buffer == null) {
               } else if (buffer1.buffer == null && buffer2.buffer != null) {
-                listener.onMessage("\n- ERR: RID=" + clusterId + ":" + position + " content is different: null <-> "
-                    + buffer2.buffer.length);
+                listener.onMessage(
+                    "\n- ERR: RID=" + clusterId + ":" + position + " content is different: null <-> " + buffer2.buffer.length);
                 ++differences;
 
               } else if (buffer1.buffer != null && buffer2.buffer == null) {
-                listener.onMessage("\n- ERR: RID=" + clusterId + ":" + position + " content is different: " + buffer1.buffer.length
-                    + " <-> null");
+                listener.onMessage(
+                    "\n- ERR: RID=" + clusterId + ":" + position + " content is different: " + buffer1.buffer.length + " <-> null");
                 ++differences;
 
               } else {
@@ -817,8 +810,8 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
           listener.onMessage("\n" + recordsCounter + " records were processed for cluster " + clusterName + " ...");
       }
 
-      listener.onMessage("\nCluster comparison was finished, " + recordsCounter + " records were processed for cluster "
-          + clusterName + " ...");
+      listener.onMessage(
+          "\nCluster comparison was finished, " + recordsCounter + " records were processed for cluster " + clusterName + " ...");
     }
 
     return true;

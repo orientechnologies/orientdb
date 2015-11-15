@@ -80,7 +80,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   private int                                defaultClusterId        = NOT_EXISTENT_CLUSTER_ID;
   private String                             name;
   private String                             description;
-  private Class<?>                           javaClass;
   private int[]                              clusterIds;
   private List<OClassImpl>                   superClasses            = new ArrayList<OClassImpl>();
   private int[]                              polymorphicClusterIds;
@@ -207,19 +206,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       return this;
     } finally {
       releaseSchemaWriteLock();
-    }
-  }
-
-  @Override
-  public <T> T newInstance() throws InstantiationException, IllegalAccessException {
-    acquireSchemaReadLock();
-    try {
-      if (javaClass == null)
-        throw new IllegalArgumentException("Cannot create an instance of class '" + name + "' since no Java class was specified");
-
-      return (T) javaClass.newInstance();
-    } finally {
-      releaseSchemaReadLock();
     }
   }
 
@@ -1006,15 +992,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     }
 
     return document;
-  }
-
-  public Class<?> getJavaClass() {
-    acquireSchemaReadLock();
-    try {
-      return javaClass;
-    } finally {
-      releaseSchemaReadLock();
-    }
   }
 
   @Override
