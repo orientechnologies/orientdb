@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
@@ -125,5 +126,9 @@ public class OLuceneIndexPlugin extends OServerPluginAbstract implements ODataba
 
   @Override
   public void onDropClass(final ODatabaseInternal iDatabase, final OClass iClass) {
+  }
+
+  @Override
+  public void onLocalNodeConfigurationRequest(ODocument iConfiguration) {
   }
 }
