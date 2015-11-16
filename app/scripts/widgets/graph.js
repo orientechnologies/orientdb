@@ -166,6 +166,9 @@ graph.directive('c3chart', function ($http, $compile, $timeout, $rootScope) {
     var lastR = null;
     var lastU = null;
     var lastD = null;
+    if (!scope.server) {
+      return;
+    }
     element.id = scope.server.name;
 
     var counter = 0;

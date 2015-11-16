@@ -1,0 +1,232 @@
+<div class="row" ng-controller="LogsController">
+  <div class="col-md-12">
+
+    <form class="form-inline">
+      <div class="form-group">
+        <label for="serverId">Server</label>
+        <select ng-model="server" id="serverId" class="form-control" ng-options="s.name for s in servers">
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="searchIn"> Search in:</label>
+
+        <select ng-model="selectedFile" id="searchIn" class="form-control" ng-options="t for t in files"
+                ng-change="selectType(selectedType)">
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="typeLog"> Type</label>
+        <select ng-model="selectedType" id="typeLog" class="form-control" ng-options="t for t in types"
+                ng-change="selectType(selectedType)">
+          <option value=""></option>
+        </select>
+      </div>
+
+      <div class="form-group">
+
+        <input type="text" class="input-xxlarge form-control search-query" placeholder="Search in Logs"
+               class="form-control" id="searchText"
+               ng-model="selectedSearch">
+      </div>
+
+      <button type="submit" ng-click="search()" class="btn btn-sm">Search</button>
+      <div class="row">
+
+        <div class="col-md-3">
+          <div class="form-group">
+            <label> From</label>
+
+            <div class="input-group date" ng-model='selectedDateFrom'>
+              <input type='text' class='form-control' ng-model='selectedDateFrom'
+                     data-date-format="dd/MM/yyyy" bs-datepicker/>
+              <span class="input-group-btn">
+                  <button class="btn">
+                    <i class="fa fa-calendar">
+                    </i>
+                  </button>
+              </span>
+              <input data-time-format="HH:mm:ss" class="form-control"
+                     bs-timepicker
+                     ng-model='selectedDateFrom' type="text"/>
+                <span class="input-group-btn">
+                  <button class="btn">
+                    <i class="fa fa-clock-o">
+                    </i>
+                  </button>
+                </span>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="form-group">
+            <label> To</label>
+
+            <div class="input-group date" ng-model='selectedDateTo'>
+              <input type='text' class='form-control' ng-model='selectedDateTo'
+                     data-date-format="dd/MM/yyyy" bs-datepicker/>
+              <span class="input-group-btn">
+                  <button class="btn">
+                    <i class="fa fa-calendar">
+                    </i>
+                  </button>
+              </span>
+              <input data-time-format="HH:mm:ss" data-time-type="number" class="form-control"
+                     bs-timepicker
+                     ng-model='selectedDateTo' type="text"/>
+                <span class="input-group-btn"><button class="btn">
+                  <i class="fa fa-clock-o">
+                  </i>
+                </button>
+                </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+  <div class="col-md-12">
+    <form class="form-inline">
+
+
+    </form>
+  </div>
+  <div class="col-md-12">
+
+    <!--<table class="form-search-width">-->
+    <!--<tr>-->
+    <!--<td>-->
+    <!--Date from:-->
+    <!--</td>-->
+    <!--<td>-->
+    <!--<div class="input-append">-->
+    <!--<input type="text" data-date-format="dd/mm/yyyy" bs-datepicker ng-model="selectedDateFrom"-->
+    <!-->
+    <!--<a href="javascript:void(0)" class="btn btn-notification" data-toggle="datepicker"> <i-->
+    <!--class="icon-calendar"></i>-->
+    <!--</a>-->
+
+    <!--</div>-->
+    <!--</td>-->
+    <!--<td>-->
+    <!--Hour from:-->
+    <!--</td>-->
+    <!--<td>-->
+    <!--<div class="input-append">-->
+    <!--<input type="text" bs-timepicker ng-model="selectedHourFrom" ng-disabled="checkDateFrom()">-->
+    <!--<a href="javascript:void(0)" class="btn btn-notification" data-toggle="timepicker"> <i-->
+    <!--class="icon-time"></i>-->
+    <!--</a>-->
+    <!--</div>-->
+    <!--</td>-->
+    <!--<td>-->
+
+    <!--Date to:-->
+    <!--</td>-->
+    <!--<td>-->
+    <!--<div class="input-append">-->
+    <!--<input type="text" data-date-format="dd/mm/yyyy" bs-datepicker ng-model="selectedDateTo"-->
+    <!-->
+    <!--<a href="javascript:void(0)" class="btn btn-notification" data-toggle="datepicker"> <i-->
+    <!--class="icon-calendar"></i>-->
+    <!--</a>-->
+
+    <!--</div>-->
+    <!--</td>-->
+    <!--<td>-->
+    <!--Hour to:-->
+    <!--</td>-->
+    <!--<td>-->
+    <!--<div class="input-append">-->
+    <!--<input type="text" bs-timepicker ng-model="selectedHourTo"-->
+    <!-->
+    <!--<a href="javascript:void(0)" class="btn btn-notification" data-toggle="timepicker"> <i-->
+    <!--class="icon-time"></i>-->
+    <!--</a>-->
+    <!--</div>-->
+    <!--</td>-->
+
+    <!--</tr>-->
+
+    <!--<tr>-->
+
+
+    <!--<td>-->
+    <!--Info:-->
+    <!--</td>-->
+    <!--<td>-->
+    <!--<div class="input-append">-->
+
+
+    <!--<a href="javascript:void(0)" class="btn btn-notification" ng-click="clearSearch()"> <i-->
+    <!--class="icon-remove"></i>-->
+    <!--</a>-->
+    <!--</div>-->
+
+    <!--</td>-->
+    <!--<td>-->
+    <!--</td>-->
+    <!--<td>-->
+    <!--<div>-->
+    <!--<a href="javascript:void(0)" class="btn btn-notification" ng-click="search()"> <i class="icon-search"></i>Search-->
+    <!--</a>-->
+    <!--</div>-->
+
+    <!--</td>-->
+    <!--<td>-->
+
+
+    <!--</td>-->
+
+
+    <!--</tr>-->
+
+    <!--</table>-->
+    <br>
+    <table class="table table-striped table-bordered table-hover table-condensed table-width align-left">
+      <thead>
+      <tr>
+        <th>
+          Day
+        </th>
+        <th>
+          Hour
+        </th>
+        <th>
+          Type
+        </th>
+        <th>
+          File
+        </th>
+        <th>
+          Info
+        </th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr ng-repeat="result in results">
+        <td>
+          {{result['day']}}
+
+        </td>
+        <td>
+          {{result['hour']}}
+
+        </td>
+        <td>
+          {{result['type']}}
+
+        </td>
+        <td>
+          {{result['file']}}
+
+        </td>
+        <td>
+          {{result['info']}}
+
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+</div>

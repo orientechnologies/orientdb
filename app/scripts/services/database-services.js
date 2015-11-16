@@ -1077,51 +1077,6 @@ database.factory('Profiler', function ($http, $resource, $q) {
 });
 
 
-database.factory('Cluster', function ($http, $resource, $q) {
-
-
-  var resource = $resource('');
-
-
-  resource.node = function () {
-
-    var deferred = $q.defer();
-    var text = API + 'distributed/node';
-    $http.get(text).success(function (data) {
-      deferred.resolve(data)
-    }).error(function (data, status, headers, config) {
-      deferred.reject({data: data, status: status});
-    });
-    return deferred.promise;
-  }
-
-
-  resource.database = function (db) {
-
-    var deferred = $q.defer();
-    var text = API + 'distributed/database/' + db;
-    $http.get(text).success(function (data) {
-      deferred.resolve(data)
-    }).error(function (data, status, headers, config) {
-      deferred.reject({data: data, status: status});
-    });
-    return deferred.promise;
-  }
-  resource.stats = function () {
-
-    var deferred = $q.defer();
-    var text = API + 'distributed/stats';
-    $http.get(text).success(function (data) {
-      deferred.resolve(data)
-    }).error(function (data, status, headers, config) {
-      deferred.reject({data: data, status: status});
-    });
-    return deferred.promise;
-  }
-
-
-  return resource
-});
 database.factory('Auditing', function ($http, $resource, $q, CommandApi) {
 
 

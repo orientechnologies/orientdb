@@ -134,7 +134,7 @@ ctrl.controller('MultipleServerController', function ($scope, $rootScope, $locat
       var keys = Object.keys(data.clusterStats);
       var tmpServers = []
       for (var i in keys) {
-        var s = JSON.parse(data.clusterStats[keys[i]]);
+        var s = data.clusterStats[keys[i]];
         s.name = keys[i];
         s.status = "ONLINE"
         tmpServers.push(s);
@@ -178,7 +178,7 @@ ctrl.controller('MultipleServerController', function ($scope, $rootScope, $locat
 
 
       for (var i in keys) {
-        var s = JSON.parse(data.clusterStats[keys[i]]);
+        var s = data.clusterStats[keys[i]];
         s.name = keys[i];
         s.status = "ONLINE"
         $scope.servers.push(s);
@@ -335,7 +335,6 @@ ctrl.controller('SingleServerController', function ($scope, $rootScope, $locatio
   }
 
   $rootScope.$on('server:updated', function (evt, s) {
-
     if (!s.name || s.name == $scope.server.name) {
       var realtime = s['realtime'];
       initParamenters(s.realtime);
@@ -348,7 +347,7 @@ ctrl.controller('SingleServerController', function ($scope, $rootScope, $locatio
 });
 
 
-ctrl.controller("ServerDashboardController", ['$scope', '$routeParams', 'Aside', 'ServerApi', 'ngTableParams', '$q', 'Notification','Database', function ($scope, $routeParams, Aside, ServerApi, ngTableParams, $q, Notification,Database) {
+ctrl.controller("ServerDashboardController", ['$scope', '$routeParams', 'Aside', 'ServerApi', 'ngTableParams', '$q', 'Notification', 'Database', function ($scope, $routeParams, Aside, ServerApi, ngTableParams, $q, Notification, Database) {
 
   Aside.show({
     scope: $scope,
@@ -383,11 +382,16 @@ ctrl.controller("ServerDashboardController", ['$scope', '$routeParams', 'Aside',
 
 
   $scope.menus = [
-    {name: "stats", template: 'stats', icon: 'fa-bar-chart'},
-    //{name: "cluster", template: 'distributed', icon: 'fa-sitemap'},
+    {name: "stats", title: "Dashboard", template: 'stats', icon: 'fa-dashboard'},
+    {name: "general", title: "Servers Management", template: 'general', icon: 'fa-desktop'},
+    {name: "cluster", title: "Cluster Management", template: 'distributed', icon: 'fa-sitemap'},
+    {name: "profiler", title: "Query Profiler", template: 'profiler', icon: 'fa-rocket'},
     {name: "connections", template: 'conn', icon: 'fa-plug'},
-    {name: "configuration", template: 'config', icon: 'fa-cogs'},
-    {name: "storage", template: 'storage', icon: 'fa-database'}
+    {name: "log", title: "Log Inspector", template: 'log', icon: 'fa-bug'},
+    {name: "events", title: "Events Management", template: 'events', icon: 'fa-bell'},
+    {name: "charts", template: 'charts', icon: 'fa-bar-chart'},
+    {name: "configuration", title: "Settings", template: 'config', icon: 'fa-cogs'},
+    {name: "storage", title: "Storages", template: 'storage', icon: 'fa-database'}
   ]
   if ($routeParams.tab) {
 
@@ -485,3 +489,162 @@ ctrl.controller('ClusterController', function ($scope, Cluster, Notification) {
     Notification.push({content: error.data, error: true, autoHide: true});
   })
 })
+
+
+ctrl.controller("LogsController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Spinner', 'Cluster', function ($scope, $http, $location, $routeParams, CommandLogApi, Spinner, Cluster) {
+  $scope.countPage = 1000;
+  $scope.countPageOptions = [100, 500, 1000];
+//  LOG_LEVEL.ERROR.ordinal() 4
+//  LOG_LEVEL.CONFIG.ordinal() 7
+//	LOG_LEVEL.DEBUG.ordinal() 0
+//	LOG_LEVEL.INFO.ordinal() 1
+//	LOG_LEVEL.WARN.ordinal() 3
+  $scope.types = ['CONFIG', 'DEBUG', 'ERROR', 'INFO', 'WARNI'];
+  $scope.files = ['ALL_FILES', 'LAST'];
+  $scope.selectedType = undefined;
+  $scope.selectedFile = 'LAST';
+
+  Cluster.node().then(function (data) {
+    $scope.servers = data.members;
+    if ($scope.servers.length > 0) {
+      $scope.server = $scope.servers[0]
+    }
+  })
+
+  $scope.$watch("server", function (data) {
+
+    if (data) {
+      CommandLogApi.getListFiles({server: $scope.server.name}, function (data) {
+        if (data) {
+          $scope.files = ['ALL_FILES', 'LAST'];
+          $scope.selectedType = undefined;
+          $scope.selectedFile = 'LAST';
+          for (entry in data['files']) {
+            $scope.files.push(data['files'][entry]['name']);
+          }
+          $scope.search();
+        }
+      });
+    }
+  });
+
+  $scope.results = undefined;
+  $scope.selectedSearch = '';
+  $scope.getListFiles = function () {
+    Spinner.start();
+    CommandLogApi.getListFiles({server: $scope.server}, function (data) {
+
+      if (data) {
+        for (entry in data['files']) {
+          $scope.files.push(data['files'][entry]['name']);
+        }
+      }
+      Spinner.stopSpinner();
+    }, function (error) {
+      Spinner.stopSpinner();
+    });
+  }
+  $scope.$watch("countPage", function (data) {
+    if ($scope.resultTotal) {
+      $scope.results = $scope.resultTotal.logs.slice(0, $scope.countPage);
+      $scope.currentPage = 1;
+      $scope.numberOfPage = new Array(Math.ceil($scope.resultTotal.logs.length / $scope.countPage));
+    }
+  });
+  $scope.clear = function () {
+    $scope.queries = new Array;
+  }
+  $scope.switchPage = function (index) {
+    if (index != $scope.currentPage) {
+      $scope.currentPage = index;
+      $scope.results = $scope.resultTotal.logs.slice(
+        (index - 1) * $scope.countPage,
+        index * $scope.countPage
+      );
+    }
+  }
+
+  $scope.checkDateFrom = function () {
+    if ($scope.selectedDateFrom == undefined || $scope.selectedDateFrom == '') {
+      return true;
+    }
+    return false
+  }
+  $scope.checkHourFrom = function () {
+    if ($scope.selectedHourFrom == undefined || $scope.selectedHourFrom == '') {
+      return true;
+    }
+    return false
+  }
+  $scope.checkFile = function () {
+    if ($scope.selectedFile == 'LAST') {
+      return true;
+    }
+    return false;
+  }
+  $scope.previous = function () {
+    if ($scope.currentPage > 1) {
+      $scope.switchPage($scope.currentPage - 1);
+    }
+  }
+  $scope.next = function () {
+
+    if ($scope.currentPage < $scope.numberOfPage.length) {
+      $scope.switchPage($scope.currentPage + 1);
+    }
+  }
+  $scope.search = function () {
+    Spinner.start();
+    var typeofS = undefined;
+    var filess = undefined;
+    if ($scope.selectedFile == undefined || $scope.selectedFile == '') {
+      return;
+    }
+    if ($scope.selectedFile == 'ALL_FILES') {
+      typeofS = 'search';
+    }
+    else if ($scope.selectedFile == 'LAST') {
+      typeofS = 'tail';
+    }
+    else {
+      typeofS = 'file';
+      filess = $scope.selectedFile;
+    }
+    if ($scope.server != undefined) {
+      CommandLogApi.getLastLogs({
+        server: $scope.server.name,
+        file: filess,
+        typeofSearch: typeofS,
+        searchvalue: $scope.selectedSearch,
+        logtype: $scope.selectedType,
+        dateFrom: $scope.selectedDateFrom,
+        dateTo: $scope.selectedDateTo
+      }, function (data) {
+        if (data) {
+          $scope.resultTotal = data;
+          if (data.logs) {
+            $scope.results = data.logs.slice(0, $scope.countPage);
+            $scope.currentPage = 1;
+            $scope.numberOfPage = new Array(Math.ceil(data.logs.length / $scope.countPage));
+          }
+        }
+        Spinner.stopSpinner();
+      }, function (error) {
+        Spinner.stopSpinner();
+      });
+    }
+    else {
+      Spinner.stopSpinner();
+    }
+  }
+  $scope.selectType = function (selectedType) {
+    $scope.selectedType = selectedType;
+  }
+  $scope.clearType = function () {
+    $scope.selectedType = undefined;
+  }
+  $scope.clearSearch = function () {
+    $scope.selectedSearch = undefined;
+  }
+
+}]);
