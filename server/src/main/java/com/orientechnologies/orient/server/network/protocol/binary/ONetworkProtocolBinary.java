@@ -197,7 +197,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   }
 
   private void solveTokenSession() throws IOException {
-    if (requestType == OChannelBinaryProtocol.REQUEST_CONNECT || requestType == OChannelBinaryProtocol.REQUEST_DB_OPEN) {
+    if (requestType == OChannelBinaryProtocol.REQUEST_CONNECT || requestType == OChannelBinaryProtocol.REQUEST_DB_OPEN || requestType == OChannelBinaryProtocol.REQUEST_SHUTDOWN) {
       connection = server.getClientConnectionManager().getConnection(clientTxId, this);
       if (clientTxId < 0) {
         short protocolId = 0;
@@ -927,7 +927,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_ERROR);
       channel.writeInt(iClientTxId);
       if (tokenBased != null && Boolean.TRUE.equals(tokenBased) && requestType != OChannelBinaryProtocol.REQUEST_CONNECT
-          && (requestType != OChannelBinaryProtocol.REQUEST_DB_OPEN || (connection != null && connection.data != null
+          && (requestType != OChannelBinaryProtocol.REQUEST_DB_OPEN && requestType != OChannelBinaryProtocol.REQUEST_SHUTDOWN || (connection != null && connection.data != null
               && connection.data.protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_32)) ||  requestType == OChannelBinaryProtocol.REQUEST_DB_REOPEN) {
         // TODO: Check if the token is expiring and if it is send a new token
 
