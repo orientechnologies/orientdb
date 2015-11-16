@@ -76,8 +76,10 @@ public class OConcurrentModificationException extends ONeedRetryException implem
 
     final OConcurrentModificationException other = (OConcurrentModificationException) obj;
 
-    if (recordOperation == other.recordOperation && rid.equals(other.rid))
-      return databaseVersion == recordVersion;
+    if (recordOperation == other.recordOperation && rid.equals(other.rid)) {
+      if(databaseVersion == other.databaseVersion)
+        return recordOperation == other.recordVersion;
+    }
 
     return false;
   }
