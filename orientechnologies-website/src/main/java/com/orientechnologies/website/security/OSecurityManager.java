@@ -60,6 +60,16 @@ public class OSecurityManager {
     return false;
   }
 
+  public boolean isCurrentClient(String organization, Client c) {
+
+    Client client = userService.getClient(currentUser(), organization);
+
+    if (c != null && client != null) {
+      return c.getClientId() == client.getClientId();
+    }
+    return false;
+  }
+
   public boolean isCurrentClient(String organization) {
 
     Client client = userService.getClient(SecurityHelper.currentUser(), organization);

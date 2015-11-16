@@ -145,6 +145,7 @@ angular.module('webappApp').factory('oauthHttpInterceptor', function ($cookies, 
 });
 
 
+var MAX_ATTACHMENT = 40;
 var API = "v1/"
 var ORGANIZATION = 'orientechnologies';
 //var ORGANIZATION = 'romeshell';

@@ -448,7 +448,7 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
         query = query + "in('HasClient')[@class = 'Client'].supported  = %s";
       } else if ("_all".equalsIgnoreCase(value)) {
         val = true;
-        query = query + "in('HasClient')[@class = 'Client'].supported  = %s";
+        query = query + "in('HasClient')[@class = 'Client'].size()  > 0";
 
       } else {
         query = query + "in('HasClient')[@class = 'Client'].name  IN '%s'";

@@ -67,7 +67,7 @@ angular.module('webappApp').directive('dropzone', ['AccessToken', function (Acce
           if (val) {
             $element.dropzone({
               url: val,
-              maxFilesize: 20,
+              maxFilesize: MAX_ATTACHMENT,
               paramName: "file",
               maxThumbnailFilesize: 5,
               init: function () {

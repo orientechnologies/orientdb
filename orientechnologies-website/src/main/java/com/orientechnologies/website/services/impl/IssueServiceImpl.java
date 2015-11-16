@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Created by Enrico Risa on 27/10/14.
@@ -100,9 +101,11 @@ public class IssueServiceImpl implements IssueService {
         Client client = userService.getClient(comment.getUser(), issue.getRepository().getOrganization().getName());
         if (client != null && client.getClientId() == issue.getClient().getClientId() && issue.getDueTime() == null
             && !issue.isClosed()) {
-          issue.setSlaAt(new Date());
           OUser actor = securityManager.bot(issue.getRepository().getOrganization().getName());
-          changeSlaDueTime(issue, actor, issue.getPriority());
+          if (!isInProgress(issue)) {
+            issue.setSlaAt(new Date());
+            changeSlaDueTime(issue, actor, issue.getPriority());
+          }
           issue = issueRepository.save(issue);
           removeLabel(issue, WAIT_FOR_REPLY, actor, !Boolean.TRUE.equals(issue.getConfidential()));
         }
@@ -162,6 +165,12 @@ public class IssueServiceImpl implements IssueService {
     return WAIT_FOR_REPLY.equals(label) || IN_PROGRESS.equals(label);
   }
 
+  private boolean isInProgress(Issue issue) {
+
+    List<Label> collect = issue.getLabels().stream().filter(i -> IN_PROGRESS.equals(i.getName())).collect(Collectors.toList());
+    return collect.size() > 0;
+  }
+
   private List<Label> labelIssue(Issue issue, List<String> labels, OUser actor, boolean fire) {
     List<Label> lbs = new ArrayList<Label>();
 
@@ -169,7 +178,7 @@ public class IssueServiceImpl implements IssueService {
       Label l = repoRepository.findLabelsByRepoAndName(issue.getRepository().getName(), label);
       if (l != null) {
         lbs.add(l);
-        if (isStopSla(l.getName())) {
+        if (isStopSla(l.getName()) && issue.getDueTime() != null) {
           removeSlaCounting(issue, actor);
         }
       }

@@ -124,7 +124,11 @@ public class RepositoryController {
     Issue issue = organizationRepository.findSingleOrganizationIssueByRepoAndNumber(owner, repo, number);
 
     if (Boolean.TRUE.equals(issue.getConfidential()) && issue.getClient() != null) {
-      return new ResponseEntity<List<Attachment>>(attachmentRepository.findIssueAttachment(owner, issue), HttpStatus.OK);
+
+      if (securityManager.isCurrentMemberOrSupport(owner) || securityManager.isCurrentClient(owner, issue.getClient())) {
+        return new ResponseEntity<List<Attachment>>(attachmentRepository.findIssueAttachment(owner, issue), HttpStatus.OK);
+      }
+
     }
     return new ResponseEntity<List<Attachment>>(HttpStatus.NOT_FOUND);
   }
@@ -134,18 +138,22 @@ public class RepositoryController {
       @PathVariable("repo") String repo, @PathVariable("number") Long number, @RequestParam("file") MultipartFile file) {
 
     Issue issue = organizationRepository.findSingleOrganizationIssueByRepoAndNumber(owner, repo, number);
-    if (Boolean.TRUE.equals(issue.getConfidential())) {
-      try {
+    if (Boolean.TRUE.equals(issue.getConfidential() && issue.getClient() != null)) {
 
-        Attachment attachment = attachmentRepository.attachToIssue(owner, issue, file.getOriginalFilename(), file.getInputStream());
+      if (securityManager.isCurrentMemberOrSupport(owner) || securityManager.isCurrentClient(owner, issue.getClient())) {
 
-        if (attachment != null) {
-          return new ResponseEntity<Attachment>(attachment, HttpStatus.OK);
-        } else {
+        try {
+          Attachment attachment = attachmentRepository.attachToIssue(owner, issue, file.getOriginalFilename(),
+              file.getInputStream());
+
+          if (attachment != null) {
+            return new ResponseEntity<Attachment>(attachment, HttpStatus.OK);
+          } else {
+            throw ServiceException.create(11, "Error uploading file:" + file.getOriginalFilename());
+          }
+        } catch (IOException e) {
           throw ServiceException.create(11, "Error uploading file:" + file.getOriginalFilename());
         }
-      } catch (IOException e) {
-        throw ServiceException.create(11, "Error uploading file:" + file.getOriginalFilename());
       }
     }
     return new ResponseEntity(HttpStatus.NOT_FOUND);
@@ -156,25 +164,26 @@ public class RepositoryController {
       @PathVariable("repo") String repo, @PathVariable("number") Long number, @PathVariable("name") String name) {
 
     Issue issue = organizationRepository.findSingleOrganizationIssueByRepoAndNumber(owner, repo, number);
-    if (Boolean.TRUE.equals(issue.getConfidential())) {
-      try {
+    if (Boolean.TRUE.equals(issue.getConfidential()) && issue.getClient() != null) {
+      if (securityManager.isCurrentMemberOrSupport(owner) || securityManager.isCurrentClient(owner, issue.getClient())) {
+        try {
 
-        FileObject fileObject = attachmentRepository.downloadAttachments(owner, issue, name);
+          FileObject fileObject = attachmentRepository.downloadAttachments(owner, issue, name);
 
-        if (fileObject != null) {
-          HttpHeaders respHeaders = new HttpHeaders();
-          respHeaders.setContentType(MediaType.parseMediaType("application/octet-stream"));
-          respHeaders.setContentLength(fileObject.getContent().getSize());
-          respHeaders.setContentDispositionFormData("attachment", name);
-          InputStreamResource inputStreamResource = new InputStreamResource(fileObject.getContent().getInputStream());
-          return new ResponseEntity<InputStreamResource>(inputStreamResource, respHeaders, HttpStatus.OK);
+          if (fileObject != null) {
+            HttpHeaders respHeaders = new HttpHeaders();
+            respHeaders.setContentType(MediaType.parseMediaType("application/octet-stream"));
+            respHeaders.setContentLength(fileObject.getContent().getSize());
+            respHeaders.setContentDispositionFormData("attachment", name);
+            InputStreamResource inputStreamResource = new InputStreamResource(fileObject.getContent().getInputStream());
+            return new ResponseEntity<InputStreamResource>(inputStreamResource, respHeaders, HttpStatus.OK);
+          }
+
+          return new ResponseEntity(HttpStatus.NOT_FOUND);
+        } catch (IOException e) {
+          throw ServiceException.create(11, "Error downloading file:" + name);
         }
-
-        return new ResponseEntity(HttpStatus.NOT_FOUND);
-      } catch (IOException e) {
-        throw ServiceException.create(11, "Error downloading file:" + name);
       }
-
     }
     return new ResponseEntity(HttpStatus.NOT_FOUND);
   }
@@ -186,8 +195,10 @@ public class RepositoryController {
     Issue issue = organizationRepository.findSingleOrganizationIssueByRepoAndNumber(owner, repo, number);
     if (Boolean.TRUE.equals(issue.getConfidential())) {
 
-      attachmentRepository.deleteAttachment(owner, issue, name);
-      return new ResponseEntity(HttpStatus.OK);
+      if (securityManager.isCurrentMemberOrSupport(owner) || securityManager.isCurrentClient(owner, issue.getClient())) {
+        attachmentRepository.deleteAttachment(owner, issue, name);
+        return new ResponseEntity(HttpStatus.OK);
+      }
     }
     return new ResponseEntity(HttpStatus.NOT_FOUND);
   }

@@ -19,6 +19,23 @@
           </div>
         </div>
       </li>
+      <li class="client-item" ng-click="toggleClient(allClient)"
+          ng-class="{ 'client-selected' : isClientSelected(allClient)  }">
+        <div class="container-fluid">
+          <div class="row">
+            <div class="col-md-1 text-center">
+              <i class="fa fa-check-circle-o" ng-show="isClientSelected(allClient)"></i>
+            </div>
+            <div class="col-md-9">
+              <span class="color" style="background-color: #{{label.color}}"></span>
+              <span>All Clients</span>
+            </div>
+            <div class="col-md-1 text-center">
+              <i class="fa fa-times-circle-o" ng-show="isClientSelected(allClient)"></i>
+            </div>
+          </div>
+        </div>
+      </li>
       <li class="client-item" ng-click="toggleClient(mockClient)"
           ng-class="{ 'client-selected' : isClientSelected(mockClient)  }">
         <div class="container-fluid">

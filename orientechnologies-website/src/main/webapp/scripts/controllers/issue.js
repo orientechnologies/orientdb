@@ -99,6 +99,9 @@ angular.module('webappApp')
           if (!$scope.issue.client && $scope.matched['client'] == "_my") {
             $scope.issue.client = {name: "_my"};
           }
+          if (!$scope.issue.client && $scope.matched['client'] == "_all") {
+            $scope.issue.client = {name: "_all"};
+          }
         })
       }
     });
@@ -387,6 +390,7 @@ angular.module('webappApp')
   .controller('IssueEditCtrl', function ($scope, $routeParams, Organization, Repo, $popover, $route, User, $timeout, $location, $q, Notification) {
 
 
+    $scope.max = MAX_ATTACHMENT;
     $scope.carriage = true;
     $scope.githubIssue = GITHUB + "/" + ORGANIZATION;
 
@@ -961,6 +965,7 @@ angular.module('webappApp')
   .controller('ChangeClientCtrl', function ($scope, $filter) {
 
 
+    $scope.allClient = {name: "_all"}
     $scope.mockClient = {name: "_my"}
     $scope.isClientSelected = function (client) {
       return $scope.issue.client ? client.name == $scope.issue.client.name : false;
