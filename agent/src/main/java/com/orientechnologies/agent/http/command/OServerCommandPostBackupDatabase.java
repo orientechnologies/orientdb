@@ -15,10 +15,7 @@
  */
 package com.orientechnologies.agent.http.command;
 
-import java.net.SocketException;
-import java.util.Date;
-import java.util.List;
-
+import com.orientechnologies.agent.proxy.HttpProxy;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -30,9 +27,14 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
-import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
 
-public class OServerCommandPostBackupDatabase extends OServerCommandAuthenticatedServerAbstract implements OCommandOutputListener {
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.SocketException;
+import java.util.Date;
+import java.util.List;
+
+public class OServerCommandPostBackupDatabase extends OServerCommandDistributedScope implements OCommandOutputListener {
   public OServerCommandPostBackupDatabase() {
     super("database.backup");
   }
@@ -47,25 +49,36 @@ public class OServerCommandPostBackupDatabase extends OServerCommandAuthenticate
     try {
       iRequest.databaseName = urlParts[1];
 
-      final ODatabaseDocumentTx database = getProfiledDatabaseInstance(iRequest);
+      if (isLocalNode(iRequest)) {
 
-      try {
-        iResponse.writeStatus(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION);
-        iResponse.writeHeaders(OHttpUtils.CONTENT_GZIP);
-        iResponse.writeLine("Content-Disposition: attachment; filename=" + database.getName() + ".gz");
-        iResponse.writeLine("Date: " + new Date());
-        iResponse.writeLine(null);
-
-        // TODO
-        database.backup(iResponse.getOutputStream(), null, null, null, 0, 0);
+        final ODatabaseDocumentTx database = getProfiledDatabaseInstance(iRequest);
 
         try {
-          iResponse.flush();
-        } catch (SocketException e) {
+          iResponse.writeStatus(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION);
+          iResponse.writeHeaders(OHttpUtils.CONTENT_GZIP);
+          iResponse.writeLine("Content-Disposition: attachment; filename=" + database.getName() + ".gz");
+          iResponse.writeLine("Date: " + new Date());
+          iResponse.writeLine(null);
+
+          // TODO
+          database.backup(iResponse.getOutputStream(), null, null, null, 0, 0);
+
+          try {
+            iResponse.flush();
+          } catch (SocketException e) {
+          }
+        } finally {
+          if (database != null)
+            database.close();
         }
-      } finally {
-        if (database != null)
-          database.close();
+      } else {
+        proxyRequest(iRequest, iResponse, new HttpProxy.HttpProxyListener() {
+          @Override
+          public void onProxySuccess(OHttpRequest request, OHttpResponse response, InputStream is) throws IOException {
+            iResponse.sendStream(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_GZIP, is, -1,
+                urlParts[1] + ".gz");
+          }
+        });
       }
     } catch (Exception e) {
       iResponse.sendStream(404, "File not found", null, null, 0);
