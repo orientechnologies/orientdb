@@ -17,8 +17,6 @@
  */
 package com.orientechnologies.agent;
 
-import java.util.Map;
-
 import com.orientechnologies.agent.hook.OAuditingHook;
 import com.orientechnologies.agent.hook.OAuditingLoggingThread;
 import com.orientechnologies.agent.http.command.OServerCommandAuditing;
@@ -49,6 +47,8 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
+
+import java.util.Map;
 
 public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabaseLifecycleListener {
   public static final String       EE                         = "ee.";
@@ -194,6 +194,11 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
 
   @Override
   public void onDropClass(final ODatabaseInternal iDatabase, final OClass iClass) {
+
+  }
+
+  @Override
+  public void onLocalNodeConfigurationRequest(ODocument iConfiguration) {
 
   }
 
