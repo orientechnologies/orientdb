@@ -337,6 +337,11 @@ public class OIndexRecorder implements OIndex<OIdentifiable>, OIndexInternal<OId
   }
 
   @Override
+  public void setType(OType type) {
+    throw new UnsupportedOperationException("Not allowed operation");
+  }
+
+  @Override
   public IndexMetadata loadMetadata(ODocument iConfig) {
     throw new UnsupportedOperationException("Not allowed operation");
   }

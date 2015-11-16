@@ -46,12 +46,6 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManager> implement
    * Force reloading of indexes.
    */
   public OIndexManager reload() {
-    if (delegate instanceof OIndexManagerShared) {
-      try {
-        delegate.save();
-      } catch (OConcurrentModificationException e) {
-      }
-    }
     return delegate.load();
   }
 

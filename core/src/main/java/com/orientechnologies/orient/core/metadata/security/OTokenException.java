@@ -17,19 +17,19 @@
   *  * For more information: http://www.orientechnologies.com
   *
   */
-package com.orientechnologies.common.io;
+package com.orientechnologies.orient.core.metadata.security;
 
-import com.orientechnologies.common.exception.OSystemException;
+import java.io.IOException;
 
-public class OIOException extends OSystemException {
+public class OTokenException extends IOException {
 
   private static final long serialVersionUID = -3003977236203691448L;
 
-  public OIOException(OIOException exception) {
+  public OTokenException(OTokenException exception) {
     super(exception);
   }
 
-  public OIOException(String string) {
+  public OTokenException(String string) {
     super(string);
   }
 }

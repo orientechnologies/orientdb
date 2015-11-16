@@ -45,11 +45,11 @@ public class OIndexDictionary extends OIndexOneValue {
     final ODatabase database = getDatabase();
     final boolean txIsActive = database.getTransaction().isActive();
 
-    if (!txIsActive)
+    if (!txIsActive) {
       keyLockManager.acquireExclusiveLock(key);
+    }
 
     try {
-      checkForKeyType(key);
       acquireSharedLock();
       try {
         storage.putIndexValue(indexId, key, value);

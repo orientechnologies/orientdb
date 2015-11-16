@@ -311,6 +311,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     nodeCfg.field("freeMemory", freeMem);
     nodeCfg.field("maxMemory", maxMem);
 
+    onLocalNodeConfigurationRequest(nodeCfg);
+
     return nodeCfg;
   }
 
@@ -430,6 +432,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       // RESTORE ORIGINAL DATABASE INSTANCE IN TL
       ODatabaseRecordThreadLocal.INSTANCE.set(currDb);
     }
+  }
+
+  @Override
+  public void onLocalNodeConfigurationRequest(final ODocument iConfiguration) {
   }
 
   /**

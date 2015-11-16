@@ -248,7 +248,6 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
         for (Map.Entry<Object, Object> snapshotEntry : snapshot.entrySet()) {
           Object key = snapshotEntry.getKey();
           LuceneTxOperations operations = (LuceneTxOperations) snapshotEntry.getValue();
-          checkForKeyType(key);
 
           for (OIdentifiable oIdentifiable : operations.removed) {
             indexEngine.remove(decodeKey(key), oIdentifiable);
@@ -258,7 +257,6 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
         for (Map.Entry<Object, Object> snapshotEntry : snapshot.entrySet()) {
           Object key = snapshotEntry.getKey();
           LuceneTxOperations operations = (LuceneTxOperations) snapshotEntry.getValue();
-          checkForKeyType(key);
 
           indexEngine.put(decodeKey(key), operations.added);
 

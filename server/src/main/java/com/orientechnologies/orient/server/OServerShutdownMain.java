@@ -127,12 +127,7 @@ public class OServerShutdownMain {
     channel.writeString(rootPassword);
     channel.flush();
 
-    if (channel.readByte() == OChannelBinaryProtocol.RESPONSE_STATUS_ERROR) {
-      channel.readInt();
-      channel.readString();
-      throw new ONetworkProtocolException(channel.readString());
-    }
-    channel.readInt();
+    channel.beginResponse(0,false);
   }
 
   public static void main(final String[] iArgs) {

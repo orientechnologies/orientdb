@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Listener Interface to receive callbacks on database usage.
@@ -45,4 +46,12 @@ public interface ODatabaseLifecycleListener {
   void onCreateClass(ODatabaseInternal iDatabase, OClass iClass);
 
   void onDropClass(ODatabaseInternal iDatabase, OClass iClass);
+
+  /**
+   * Event called during the retrieving of distributed configuration, usually at startup and when the cluster shape changes. You can
+   * use this event to enrich the ODocument sent to the client with custom properties.
+   * 
+   * @param iConfiguration
+   */
+  void onLocalNodeConfigurationRequest(ODocument iConfiguration);
 }

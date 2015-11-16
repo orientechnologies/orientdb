@@ -83,6 +83,7 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
 
   @Override
   public OIndexTxAware<T> put(final Object iKey, final OIdentifiable iValue) {
+    checkForKeyType(iKey);
     final ORID rid = iValue.getIdentity();
 
     if (!rid.isValid())
