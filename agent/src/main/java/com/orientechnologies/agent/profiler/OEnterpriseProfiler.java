@@ -18,23 +18,6 @@
 
 package com.orientechnologies.agent.profiler;
 
-import java.io.File;
-import java.io.PrintStream;
-import java.lang.management.ManagementFactory;
-import java.lang.management.RuntimeMXBean;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OProfilerEntry;
@@ -44,6 +27,16 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedLifecycleListener;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.sun.management.OperatingSystemMXBean;
+
+import java.io.File;
+import java.io.PrintStream;
+import java.lang.management.ManagementFactory;
+import java.lang.management.RuntimeMXBean;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Profiling utility class. Handles chronos (times), statistics and counters. By default it's used as Singleton but you can create
@@ -773,8 +766,8 @@ public class OEnterpriseProfiler extends OAbstractProfiler {
                 doc = new ODocument();
                 doc.setTrackingChanges(false);
               }
-              doc.field(distributedManager.getLocalNodeName(), toJSON("realtime", null));
-              ODocumentInternal.clearTrackData(doc);
+              ODocument entries = new ODocument().fromJSON(toJSON("realtime", null));
+              doc.field(distributedManager.getLocalNodeName(), entries.toMap());
               configurationMap.put("clusterStats", doc);
             }
           }
