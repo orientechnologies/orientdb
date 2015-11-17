@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.OOrientListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.engine.OEngine;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -59,6 +60,16 @@ public abstract class BaseLuceneTest {
   }
 
   public void initDB(boolean drop) {
+    String config = System.getProperty("orientdb.test.env");
+
+    String storageType;
+    if ("ci".equals(config) || "release".equals(config))
+      storageType = OEngineLocalPaginated.NAME;
+    else
+      storageType = System.getProperty("storageType");
+
+    if (storageType == null)
+      storageType = OEngineMemory.NAME;
 
     buildDirectory = System.getProperty("buildDirectory", ".");
     if (buildDirectory == null)
@@ -79,7 +90,12 @@ public abstract class BaseLuceneTest {
     //        e.printStackTrace();
     //      }
     //    } else {
-    url = "plocal:" + buildDirectory + "/databases/" + getDatabaseName();
+
+    if (storageType.equals(OEngineLocalPaginated.NAME))
+      url = OEngineLocalPaginated.NAME + ":" + buildDirectory + "/databases/" + getDatabaseName();
+    else
+      url = OEngineMemory.NAME + ":" + getDatabaseName();
+
     databaseDocumentTx = new ODatabaseDocumentTx(url);
 
     if (databaseDocumentTx.exists()) {
@@ -99,7 +115,7 @@ public abstract class BaseLuceneTest {
     //    }
   }
 
-  protected void startServer(boolean drop) throws IOException, InterruptedException {
+  protected void startServer(boolean drop, String storageType) throws IOException, InterruptedException {
     String javaExec = System.getProperty("java.home") + "/bin/java";
     System.setProperty("ORIENTDB_HOME", buildDirectory);
 
@@ -110,11 +126,11 @@ public abstract class BaseLuceneTest {
     if (testMode != null && testPort != null) {
       processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-classpath", System.getProperty("java.class.path"),
           "-DORIENTDB_HOME=" + buildDirectory, "-Dorient.server.testMode=" + testMode, "-Dorient.server.port=" + testPort,
-          RemoteDBRunner.class.getName(), getDatabaseName(), "" + drop);
+          RemoteDBRunner.class.getName(), getDatabaseName(), "" + drop, storageType);
 
     } else {
       processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-classpath", System.getProperty("java.class.path"),
-          "-DORIENTDB_HOME=" + buildDirectory, RemoteDBRunner.class.getName(), getDatabaseName(), "" + drop);
+          "-DORIENTDB_HOME=" + buildDirectory, RemoteDBRunner.class.getName(), getDatabaseName(), "" + drop, storageType);
     }
 
     process = processBuilder.start();
@@ -165,19 +181,6 @@ public abstract class BaseLuceneTest {
     return Runtime.getRuntime().exec("kill " + pid).waitFor();
   }
 
-  protected void restart() {
-
-    process.destroy();
-    try {
-      startServer(false);
-    } catch (IOException e) {
-      e.printStackTrace();
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
-
-  }
-
   protected static String getStoragePath(final String databaseName, final String storageMode) {
     final String path;
     if (storageMode.equals(OEngineLocalPaginated.NAME)) {
@@ -217,7 +220,8 @@ public abstract class BaseLuceneTest {
         OServer server = OServerMain.create();
         server.startup(ClassLoader.getSystemResourceAsStream("orientdb-server-config.xml"));
         server.activate();
-        final ODatabaseDocumentTx db = new ODatabaseDocumentTx(getStoragePath(args[0], "plocal"));
+
+        final ODatabaseDocumentTx db = new ODatabaseDocumentTx(getStoragePath(args[0], args[2]));
 
         if (args.length > 1 && args[1].equals("true")) {
           if (db.exists()) {

@@ -30,7 +30,7 @@ public class TestVertexIndex {
   @Test
   public void testFullTextIndexOnvertex() {
 
-    OrientGraph graph = new OrientGraph("plocal:./target/TestDB", "admin", "admin");
+    OrientGraph graph = new OrientGraph("memory:TestDB", "admin", "admin");
     OrientVertexType vType = graph.getVertexType("V");
 
     vType.createProperty("title", OType.STRING);
