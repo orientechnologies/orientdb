@@ -80,6 +80,54 @@
         </dependency>
     </dependencies>
 
+    <profiles>
+        <profile>
+            <id>development</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <exclude.test.1>**/AutomaticBackupTest.java</exclude.test.1>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>ci</id>
+            <activation>
+                <property>
+                    <name>orientdb.test.env</name>
+                    <value>ci</value>
+                </property>
+            </activation>
+            <properties>
+                <exclude.test.1>empty.java</exclude.test.1>
+            </properties>
+
+        </profile>
+        <profile>
+            <id>release</id>
+            <activation>
+                <property>
+                    <name>orientdb.test.env</name>
+                    <value>release</value>
+                </property>
+            </activation>
+            <properties>
+                <exclude.test.1>empty.java</exclude.test.1>
+            </properties>
+
+        </profile>
+        <profile>
+            <id>localDeploy</id>
+            <activation>
+                <property>
+                    <name>localDeploy</name>
+                </property>
+            </activation>
+        </profile>
+    </profiles>
+
+
     <build>
         <plugins>
             <plugin>
@@ -102,6 +150,9 @@
                         <orient.server.testMode>${orient.server.testMode}</orient.server.testMode>
                         <orient.server.port>${orient.server.port}</orient.server.port>
                     </systemPropertyVariables>
+                    <excludes>
+                        <exclude>${exclude.test.1}</exclude>
+                    </excludes>
                 </configuration>
             </plugin>
         </plugins>
