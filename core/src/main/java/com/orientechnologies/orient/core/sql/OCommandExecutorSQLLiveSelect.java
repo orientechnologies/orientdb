@@ -201,6 +201,7 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
   }
 
   public void onLiveResultEnd() {
+    ((OLiveResultListener) request.getResultListener()).onUnsubscribe(token);
     execDb.close();
   }
 

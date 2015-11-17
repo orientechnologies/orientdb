@@ -36,6 +36,10 @@ public class OLiveCommandExecutorSQLFactory implements OCommandExecutorSQLFactor
 
   private static Map<String, Class<? extends OCommandExecutorSQLAbstract>> COMMANDS = new HashMap<String, Class<? extends OCommandExecutorSQLAbstract>>();
 
+  static {
+    init();
+  }
+
   public static void init() {
     if (COMMANDS.size() == 0) {
       synchronized (OLiveCommandExecutorSQLFactory.class) {

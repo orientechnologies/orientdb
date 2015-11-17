@@ -34,7 +34,10 @@ import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
 /**
  * Created by Luigi Dell'Aquila
+ *
+ * Not needed anymore, keeping the class for backward compatibilty
  */
+@Deprecated
 public class OLiveQueryPlugin extends OServerPluginAbstract implements ODatabaseLifecycleListener {
 
   private boolean enabled = false;
@@ -71,10 +74,6 @@ public class OLiveQueryPlugin extends OServerPluginAbstract implements ODatabase
   @Override
   public void startup() {
     super.startup();
-    if (this.enabled) {
-      OLiveCommandExecutorSQLFactory.init();
-      Orient.instance().addDbLifecycleListener(this);
-    }
   }
 
   @Override
@@ -84,29 +83,10 @@ public class OLiveQueryPlugin extends OServerPluginAbstract implements ODatabase
 
   @Override
   public void onOpen(ODatabaseInternal iDatabase) {
-    if (this.enabled) {
-      if (iDatabase instanceof ODatabaseDocumentTx) {
-        iDatabase.registerHook(new OLiveQueryHook((ODatabaseDocumentTx) iDatabase), ORecordHook.HOOK_POSITION.LAST);
-      }
-    }
   }
 
   @Override
   public void onClose(ODatabaseInternal iDatabase) {
-    if (this.enabled) {
-      if (iDatabase.getHooks() != null) {
-        OLiveQueryHook toUnregister = null;
-        for (Object hook : iDatabase.getHooks().keySet()) {
-          if (hook instanceof OLiveQueryHook) {
-            toUnregister = (OLiveQueryHook) hook;
-            break;
-          }
-        }
-        if (toUnregister != null) {
-          iDatabase.unregisterHook(toUnregister);
-        }
-      }
-    }
   }
 
   @Override

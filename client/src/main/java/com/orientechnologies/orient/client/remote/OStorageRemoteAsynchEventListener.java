@@ -57,8 +57,7 @@ public class OStorageRemoteAsynchEventListener implements ORemoteServerEventList
 
       if (OLogManager.instance().isDebugEnabled()) {
         synchronized (storage.getClusterConfiguration()) {
-          OLogManager.instance().debug(this, "Received new cluster configuration: %s",
-              storage.getClusterConfiguration().toJSON("prettyPrint"));
+          OLogManager.instance().debug(this, "Received new cluster configuration: %s", storage.getClusterConfiguration().toJSON("prettyPrint"));
         }
       }
     } else if (iRequestCode == OChannelBinaryProtocol.REQUEST_PUSH_LIVE_QUERY) {
@@ -66,21 +65,28 @@ public class OStorageRemoteAsynchEventListener implements ORemoteServerEventList
       DataInputStream dis = new DataInputStream(new ByteArrayInputStream(bytes));
       Integer id = null;
       try {
-        byte op = dis.readByte();
-        id = dis.readInt();
+        byte what = dis.readByte();
+        if (what == 'r') {
+          byte op = dis.readByte();
+          id = dis.readInt();
 
-        final ORecord record = Orient.instance().getRecordFactoryManager().newInstance(dis.readByte());
+          final ORecord record = Orient.instance().getRecordFactoryManager().newInstance(dis.readByte());
 
-        final ORecordId rid = readRID(dis);
-        final int version = readVersion(dis);
-        final byte[] content = readBytes(dis);
-        ORecordInternal.fill(record, rid, version, content, false);
+          final int version = readVersion(dis);
+          final ORecordId rid = readRID(dis);
+          final byte[] content = readBytes(dis);
+          ORecordInternal.fill(record, rid, version, content, false);
 
-        OLiveResultListener listener = liveQueryListeners.get(id);
-        if (listener != null) {
-          listener.onLiveResult(id, new ORecordOperation(record, op));
-        } else {
-          OLogManager.instance().warn(this, "Receiving invalid LiveQuery token: " + id);
+          OLiveResultListener listener = liveQueryListeners.get(id);
+          if (listener != null) {
+            listener.onLiveResult(id, new ORecordOperation(record, op));
+          } else {
+            OLogManager.instance().warn(this, "Receiving invalid LiveQuery token: " + id);
+          }
+        } else if (what == 'u') {
+          id = dis.readInt();
+          OLiveResultListener listener = liveQueryListeners.get(id);
+          listener.onUnsubscribe(id);
         }
 
       } catch (IOException e) {
