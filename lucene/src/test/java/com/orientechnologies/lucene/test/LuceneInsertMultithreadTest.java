@@ -20,6 +20,8 @@ package com.orientechnologies.lucene.test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
+import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -35,21 +37,32 @@ import java.util.Collection;
  * Created by enricorisa on 28/06/14.
  */
 
-@Test(groups = "embedded")
-public class LuceneInsertMultithreadTest {
+@Test(groups = "embedded") public class LuceneInsertMultithreadTest {
 
-  private final static int  THREADS  = 10;
-  private final static int  RTHREADS = 1;
-  private final static int  CYCLE    = 100;
+  private final static int THREADS  = 10;
+  private final static int RTHREADS = 1;
+  private final static int CYCLE    = 100;
   private ODatabaseDocument databaseDocumentTx;
 
-  private static String     url;
+  private static String url;
+
   static {
     String buildDirectory = System.getProperty("buildDirectory", ".");
     if (buildDirectory == null)
       buildDirectory = ".";
 
-    url = "plocal:" + buildDirectory + "/multiThread";
+    String config = System.getProperty("orientdb.test.env");
+    String storageType;
+
+    if ("ci".equals(config) || "release".equals(config))
+      storageType = OEngineLocalPaginated.NAME;
+    else
+      storageType = System.getProperty("storageType");
+
+    if (storageType == null)
+      storageType = OEngineMemory.NAME;
+
+    url = storageType + ":" + buildDirectory + "/multiThread";
 
   }
 
@@ -57,14 +70,15 @@ public class LuceneInsertMultithreadTest {
   public static class LuceneInsertThread implements Runnable {
 
     private ODatabaseDocumentTx db;
-    private int                 cycle     = 0;
-    private int                 commitBuf = 500;
+    private int cycle     = 0;
+    private int commitBuf = 500;
 
     public LuceneInsertThread(int cycle) {
       this.cycle = cycle;
     }
 
     @Override
+    @Test(enabled = false)
     public void run() {
 
       db = new ODatabaseDocumentTx(url);
@@ -88,15 +102,18 @@ public class LuceneInsertMultithreadTest {
     }
   }
 
+  @Test(enabled = false)
   public class LuceneReadThread implements Runnable {
-    private final int         cycle;
-    private ODatabaseDocument databaseDocumentTx;
+    private final int               cycle;
+    private       ODatabaseDocument databaseDocumentTx;
 
     public LuceneReadThread(int cycle) {
       this.cycle = cycle;
     }
 
+
     @Override
+    @Test(enabled = false)
     public void run() {
 
       databaseDocumentTx = new ODatabaseDocumentTx(url);

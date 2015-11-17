@@ -72,6 +72,8 @@
                 <exclude.test.4>**/SBTreeTestBigValues.java</exclude.test.4>
                 <exclude.test.5>**/OSBTreeBonsaiLocalTest.java</exclude.test.5>
                 <exclude.test.6>**/LocalPaginatedClusterTest.java</exclude.test.6>
+                <exclude.test.7>**/AutomaticBackupTest.java</exclude.test.7>
+                <exclude.test.8>**/WOWCacheTest.java</exclude.test.8>
             </properties>
         </profile>
 
@@ -90,6 +92,8 @@
                 <exclude.test.4>empty.java</exclude.test.4>
                 <exclude.test.5>empty.java</exclude.test.5>
                 <exclude.test.6>empty.java</exclude.test.6>
+                <exclude.test.7>empty.java</exclude.test.7>
+                <exclude.test.8>empty.java</exclude.test.8>
             </properties>
 
         </profile>
@@ -108,6 +112,8 @@
                 <exclude.test.4>empty.java</exclude.test.4>
                 <exclude.test.5>empty.java</exclude.test.5>
                 <exclude.test.6>empty.java</exclude.test.6>
+                <exclude.test.7>empty.java</exclude.test.7>
+                <exclude.test.8>empty.java</exclude.test.8>
             </properties>
 
         </profile>
@@ -162,6 +168,8 @@
                         <exclude>${exclude.test.4}</exclude>
                         <exclude>${exclude.test.5}</exclude>
                         <exclude>${exclude.test.6}</exclude>
+                        <exclude>${exclude.test.7}</exclude>
+                        <exclude>${exclude.test.8}</exclude>
                     </excludes>
                 </configuration>
             </plugin>
