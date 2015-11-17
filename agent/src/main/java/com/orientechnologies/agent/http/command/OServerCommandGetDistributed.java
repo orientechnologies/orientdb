@@ -32,100 +32,100 @@ import java.util.List;
 import java.util.Map;
 
 public class OServerCommandGetDistributed extends OServerCommandAuthenticatedServerAbstract {
-    private static final String[] NAMES = {"GET|distributed/*"};
+  private static final String[] NAMES = { "GET|distributed/*" };
 
-    public OServerCommandGetDistributed() {
-        super("server.profiler");
+  public OServerCommandGetDistributed() {
+    super("server.profiler");
+  }
+
+  @Override
+  public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
+    final String[] parts = checkSyntax(iRequest.getUrl(), 2, "Syntax error: distributed/<command>/[<id>]");
+
+    iRequest.data.commandInfo = "Distributed information";
+
+    try {
+
+      final String command = parts[1];
+      final String id = parts.length > 2 ? parts[2] : null;
+
+      final ODistributedServerManager manager = server.getDistributedManager();
+
+      if (manager != null) {
+        final ODocument doc;
+
+        if (command.equalsIgnoreCase("node")) {
+
+          doc = manager.getClusterConfiguration();
+          enhanceStats(doc, (ODocument) manager.getConfigurationMap().get("clusterStats"));
+
+        } else if (command.equalsIgnoreCase("queue")) {
+
+          final ODistributedMessageService messageService = manager.getMessageService();
+          if (id == null) {
+            // RETURN QUEUE NAMES
+            final List<String> queues = messageService.getManagedQueueNames();
+            doc = new ODocument();
+            doc.field("queues", queues);
+          } else {
+            doc = messageService.getQueueStats(id);
+          }
+
+        } else if (command.equalsIgnoreCase("database")) {
+
+          ODistributedConfiguration cfg = manager.getDatabaseConfiguration(id);
+          doc = cfg.serialize();
+
+        } else if (command.equalsIgnoreCase("stats")) {
+
+          if (id != null) {
+
+            ODocument clusterStats = (ODocument) manager.getConfigurationMap().get("clusterStats");
+            doc = new ODocument().fromMap(clusterStats.<Map<String, Object>> field(id));
+          } else {
+            doc = manager.getClusterConfiguration();
+            doc.field("clusterStats", manager.getConfigurationMap().get("clusterStats"));
+          }
+
+        } else
+          throw new IllegalArgumentException("Command '" + command + "' not supported");
+
+        iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, doc.toJSON(""), null);
+      } else {
+        throw new OConfigurationException("Seems that the server is not running in distributed mode");
+      }
+    } catch (Exception e) {
+      iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, e, null);
     }
+    return false;
+  }
 
-    @Override
-    public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-        final String[] parts = checkSyntax(iRequest.getUrl(), 2, "Syntax error: distributed/<command>/[<id>]");
+  private void enhanceStats(ODocument doc, ODocument clusterStats) {
 
-        iRequest.data.commandInfo = "Distributed information";
+    Collection<ODocument> documents = doc.field("members");
 
-        try {
+    for (ODocument document : documents) {
+      String name = document.field("name");
 
-            final String command = parts[1];
-            final String id = parts.length > 2 ? parts[2] : null;
+      Map<String, Object> profilerStats = clusterStats.field(name);
+      ODocument dStat = new ODocument().fromMap(profilerStats);
 
-            final ODistributedServerManager manager = server.getDistributedManager();
+      Map<String, Object> eval = (Map) dStat.eval("realtime.hookValues");
 
-            if (manager != null) {
-                final ODocument doc;
-
-                if (command.equalsIgnoreCase("node")) {
-
-                    doc = manager.getClusterConfiguration();
-                    enhanceStats(doc, (ODocument) manager.getConfigurationMap().get("clusterStats"));
-
-                } else if (command.equalsIgnoreCase("queue")) {
-
-                    final ODistributedMessageService messageService = manager.getMessageService();
-                    if (id == null) {
-                        // RETURN QUEUE NAMES
-                        final List<String> queues = messageService.getManagedQueueNames();
-                        doc = new ODocument();
-                        doc.field("queues", queues);
-                    } else {
-                        doc = messageService.getQueueStats(id);
-                    }
-
-                } else if (command.equalsIgnoreCase("database")) {
-
-                    ODistributedConfiguration cfg = manager.getDatabaseConfiguration(id);
-                    doc = cfg.serialize();
-
-                } else if (command.equalsIgnoreCase("stats")) {
-
-                    if (id != null) {
-
-                        ODocument clusterStats = (ODocument) manager.getConfigurationMap().get("clusterStats");
-                        doc = new ODocument().fromMap(clusterStats.<Map<String, Object>>field(id));
-                    } else {
-                        doc = manager.getStats();
-                        doc.field("clusterStats", manager.getConfigurationMap().get("clusterStats"));
-                    }
-
-                } else
-                    throw new IllegalArgumentException("Command '" + command + "' not supported");
-
-                iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, doc.toJSON(""), null);
-            } else {
-                throw new OConfigurationException("Seems that the server is not running in distributed mode");
-            }
-        } catch (Exception e) {
-            iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, e, null);
+      ODocument configuration = new ODocument();
+      document.field("configuration", configuration);
+      for (String key : eval.keySet()) {
+        if (key.startsWith("system.config.")) {
+          configuration.field(key.replace("system.config.", "").replace(".", "_"), eval.get(key));
         }
-        return false;
-    }
-
-    private void enhanceStats(ODocument doc, ODocument clusterStats) {
-
-        Collection<ODocument> documents = doc.field("members");
-
-        for (ODocument document : documents) {
-            String name = document.field("name");
-
-            Map<String,Object> profilerStats = clusterStats.field(name);
-            ODocument dStat = new ODocument().fromMap(profilerStats);
-
-            Map<String, Object> eval = (Map) dStat.eval("realtime.hookValues");
-
-            ODocument configuration = new ODocument();
-            document.field("configuration", configuration);
-            for (String key : eval.keySet()) {
-                if (key.startsWith("system.config.")) {
-                    configuration.field(key.replace("system.config.", "").replace(".", "_"), eval.get(key));
-                }
-            }
-
-        }
+      }
 
     }
 
-    @Override
-    public String[] getNames() {
-        return NAMES;
-    }
+  }
+
+  @Override
+  public String[] getNames() {
+    return NAMES;
+  }
 }
