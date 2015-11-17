@@ -1032,6 +1032,9 @@ span.badge-edge {
 .row-centered {
   text-align: center;
 }
+.row-space {
+  margin-top: 10px;
+}
 
 .col-centered {
   display: inline-block;

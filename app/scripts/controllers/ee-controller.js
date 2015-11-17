@@ -37,6 +37,7 @@ ee.controller('GeneralMonitorController', function ($scope, $location, $routePar
     }
   }
 
+
   Cluster.node().then(function (data) {
     $scope.servers = data.members;
     $scope.server = $scope.servers[0];
@@ -62,23 +63,11 @@ ee.controller('GeneralMonitorController', function ($scope, $location, $routePar
   $scope.editorOptions = {
     lineWrapping: true,
     lineNumbers: true,
+    readOnly: true,
     mode: 'xml'
   };
 
-  $scope.saveConfig = function () {
 
-    $odialog.confirm({
-      title: 'Warning!',
-      body: "You are changing the Configuration for the server " + $scope.server.name + " . The changes will take effect after server restart. Are you sure?",
-      success: function () {
-        Spinner.start();
-        Server.saveConfiguration($scope.server, $scope.configuration, function (data) {
-          Spinner.stop();
-        });
-      }
-    });
-
-  }
   $scope.getServerMetrics = function () {
 
 
@@ -118,22 +107,10 @@ ee.controller('GeneralMonitorController', function ($scope, $location, $routePar
       $scope.attached = server.attached;
 
       $scope.databases = server.databases;
-      //Server.findDatabases(server.name, function (data) {
-      //  $scope.databases = data;
-      //  var db = $scope.databases[0];
-      //  $scope.dbselected = db;
-      //  if (db) {
-      //    $scope.getDbMetrics(db);
-      //  }
-      //
-      //  Server.getConfiguration(server, function (data) {
-      //    $scope.configuration = data.configuration;
-      //  });
-      //  $scope.error = false;
-      //}, function (error) {
-      //  $scope.error = true;
-      //  ContextNotification.push({content: error.data, error: true});
-      //});
+
+      Cluster.configFile(server).then(function (data) {
+        $scope.configuration = data;
+      });
 
     }
   });
@@ -172,7 +149,7 @@ ee.controller('GeneralMonitorController', function ($scope, $location, $routePar
   $scope.downloadDb = function (db) {
     $scope.dbselected = db;
 
-    Cluster.backUp($scope.server,db);
+    Cluster.backUp($scope.server, db);
     //Server.backUpDb($scope.server, db);
   }
   $scope.$watch('dbselected', function (data) {
@@ -181,10 +158,9 @@ ee.controller('GeneralMonitorController', function ($scope, $location, $routePar
       $scope.getDbMetrics(data);
     }
   });
+
   $scope.$watch('databases', function (data) {
 
-    //if (data)
-    //  $scope.getServerMetrics();
   });
 
 
@@ -214,8 +190,75 @@ ee.controller('SinglePollerController', function ($scope, $rootScope, $location,
         polling();
         statsWatching(polling);
       }
-    }, 2000);
+    }, POLLING);
   }
 
   statsWatching(singlePoll);
 })
+
+
+ee.controller('ClusterController', function ($scope, Cluster, Notification, $rootScope, $timeout) {
+
+
+  $scope.polling = true;
+  var clusterPolling = function () {
+    Cluster.stats().then(function (data) {
+
+      $scope.servers = data.members;
+
+      $scope.clusterStats = data.clusterStats;
+      //Object.keys(data.localNode.databases).forEach(function (db) {
+      //  Cluster.database(db).then(function (data) {
+      //    console.log(data);
+      //  })
+      //});
+
+    }).catch(function (error) {
+      Notification.push({content: error.data, error: true, autoHide: true});
+    })
+  }
+  var statsWatching = function (polling) {
+    $timeout(function () {
+      if ($scope.polling) {
+        polling();
+        statsWatching(polling);
+      }
+    }, POLLING);
+  }
+
+  $rootScope.$on("$routeChangeStart", function (event, next, current) {
+    $scope.polling = false;
+  });
+
+  statsWatching(clusterPolling)
+})
+
+
+ee.controller('ClusterOverviewController', function ($scope) {
+
+
+  $scope.operations = 0;
+
+  $scope.activeConnections = 0;
+
+  $scope.requests = 0;
+
+  $scope.latency = 0;
+
+  $scope.cpu = 0;
+  $scope.$watch('clusterStats', function (data) {
+    if (data) {
+
+      var keys = Object.keys(data);
+      var cpu = 0;
+      keys.forEach(function (val) {
+        var realtime = data[val].realtime;
+        var cpuN = realtime['hookValues']['process.runtime.cpu'];
+        cpu += parseFloat(cpuN);
+      })
+
+      $scope.cpu = (cpu / keys.length).toFixed(2);
+      console.log($scope.cpu);
+    }
+  })
+});

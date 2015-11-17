@@ -115,6 +115,32 @@ ee.factory('Cluster', function ($http, $resource, $q) {
     }
     window.open(url);
   }
+  resource.configFile = function (server) {
+    var deferred = $q.defer();
+
+    var url = API + 'configuration';
+    if (server && server.name) {
+      url += '?node=' + server.name;
+    }
+    $http.get(url).success(function (data) {
+      deferred.resolve(data)
+    }).error(function (data, status, headers, config) {
+      deferred.reject({data: data, status: status});
+    });
+
+    return deferred.promise;
+  }
+  resource.topology = function () {
+
+    var deferred = $q.defer();
+    var text = API + 'distributed/topology';
+    $http.get(text).success(function (data) {
+      deferred.resolve(data)
+    }).error(function (data, status, headers, config) {
+      deferred.reject({data: data, status: status});
+    });
+    return deferred.promise;
+  }
   resource.database = function (db) {
 
     var deferred = $q.defer();

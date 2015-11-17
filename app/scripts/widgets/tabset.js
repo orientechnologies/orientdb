@@ -33,7 +33,7 @@ angular.module('bootstrap.tabset', [])
       '<div class="row">' +
       '<div class="nav nav-tabs" ng-transclude></div>' +
       '</div>' +
-      '<div class="row">' +
+      '<div class="row row-space">' +
       '<ng-include src="templateUrl">' +
       '</ng-include></div>' +
       '</div>'

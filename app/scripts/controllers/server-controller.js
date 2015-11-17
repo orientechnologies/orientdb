@@ -223,7 +223,7 @@ ctrl.controller('MultipleServerController', function ($scope, $rootScope, $locat
         polling();
         statsWatching(polling);
       }
-    }, 2000);
+    }, POLLING);
   }
   initMonitoring();
 });
@@ -317,7 +317,6 @@ ctrl.controller('SingleServerController', function ($scope, $rootScope, $locatio
         }
         lastReq = req;
       }
-
       if (realtime['chronos']['distributed.node.latency'])
         $scope.latency = realtime['chronos']['distributed.node.latency'].average;
     }
@@ -470,25 +469,6 @@ ctrl.controller('ServerConnectionController', function ($scope, $filter, ngTable
   })
 })
 
-ctrl.controller('ClusterController', function ($scope, Cluster, Notification) {
-
-
-  Cluster.node().then(function (data) {
-  }).catch(function (error) {
-    Notification.push({content: error.data, error: true, autoHide: true});
-  })
-  Cluster.stats().then(function (data) {
-
-    Object.keys(data.localNode.databases).forEach(function (db) {
-      Cluster.database(db).then(function (data) {
-        console.log(data);
-      })
-    });
-
-  }).catch(function (error) {
-    Notification.push({content: error.data, error: true, autoHide: true});
-  })
-})
 
 
 ctrl.controller("LogsController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Spinner', 'Cluster', function ($scope, $http, $location, $routeParams, CommandLogApi, Spinner, Cluster) {
@@ -504,12 +484,12 @@ ctrl.controller("LogsController", ['$scope', '$http', '$location', '$routeParams
   $scope.selectedType = undefined;
   $scope.selectedFile = 'LAST';
 
-  Cluster.node().then(function (data) {
-    $scope.servers = data.members;
-    if ($scope.servers.length > 0) {
-      $scope.server = $scope.servers[0]
-    }
-  })
+  //Cluster.node().then(function (data) {
+  //  $scope.servers = data.members;
+  //  if ($scope.servers.length > 0) {
+  //    $scope.server = $scope.servers[0]
+  //  }
+  //})
 
   $scope.$watch("server", function (data) {
 
@@ -610,6 +590,8 @@ ctrl.controller("LogsController", ['$scope', '$http', '$location', '$routeParams
       typeofS = 'file';
       filess = $scope.selectedFile;
     }
+
+
     if ($scope.server != undefined) {
       CommandLogApi.getLastLogs({
         server: $scope.server.name,
@@ -621,6 +603,7 @@ ctrl.controller("LogsController", ['$scope', '$http', '$location', '$routeParams
         dateTo: $scope.selectedDateTo
       }, function (data) {
         if (data) {
+
           $scope.resultTotal = data;
           if (data.logs) {
             $scope.results = data.logs.slice(0, $scope.countPage);

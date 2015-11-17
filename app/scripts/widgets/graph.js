@@ -293,3 +293,44 @@ graph.directive('c3chart', function ($http, $compile, $timeout, $rootScope) {
     link: linker
   }
 });
+
+
+graph.directive('c3Gauge', function ($http, $compile, $timeout, $rootScope) {
+  var linker = function ($scope, $element, $attrs) {
+
+
+    $scope.chart = c3.generate({
+      bindto: "#" + $element[0].id,
+      data: {
+        columns: [
+          ['data', 0]
+        ],
+        type: 'gauge'
+      },
+      color: {
+        pattern: ['#FF0000', '#F97600', '#F6C600', '#60B044'], // the three color levels for the percentage values.
+        threshold: {
+          values: [30, 60, 90, 100]
+        }
+      },
+      size: {
+        height: 180
+      }
+    });
+    $scope.$watch('value',function(data){
+      if(data){
+        $scope.chart.load({
+          columns: [['data', data]]
+        });
+      }
+    })
+
+  }
+  return {
+    restrict: 'A',
+    scope: {
+      value: '=value'
+    },
+    link: linker
+  }
+});
