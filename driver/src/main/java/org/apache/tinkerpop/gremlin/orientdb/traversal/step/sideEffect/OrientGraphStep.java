@@ -53,7 +53,7 @@ public class OrientGraphStep<S extends Element> extends GraphStep<S> implements 
                         .collect(Collectors.<Vertex>toList())
                         .iterator();
             } else {
-                OLogManager.instance().warn(this, "scanning through all vertices without using an index");
+                OLogManager.instance().warn(this, "scanning through all vertices without using an index for Traversal " + getTraversal());
                 return this.iteratorList(graph.vertices());
             }
         }
