@@ -77,6 +77,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.*;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceTrigger;
 import com.orientechnologies.orient.core.query.OQuery;
+import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
@@ -210,7 +211,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
 
   /**
    * Sets default serializer. The default serializer is common for all database instances.
-   * 
+   *
    * @param iDefaultSerializer
    *          new default serializer value
    */
@@ -2938,6 +2939,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
     registerHook(new OClassIndexManager(this), ORecordHook.HOOK_POSITION.LAST);
     registerHook(new OSchedulerTrigger(this), ORecordHook.HOOK_POSITION.LAST);
     registerHook(new ORidBagDeleteHook(this), ORecordHook.HOOK_POSITION.LAST);
+    registerHook(new OLiveQueryHook(this), ORecordHook.HOOK_POSITION.LAST);
   }
 
   private void closeOnDelete() {

@@ -32,6 +32,8 @@ import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by luigidellaquila on 13/04/15.
@@ -39,13 +41,16 @@ import java.util.List;
 @Test
 public class OLiveQueryTest {
 
-  static class MyLiveQueryListener implements OLiveResultListener {
+  private CountDownLatch latch = new CountDownLatch(2);
+
+  class MyLiveQueryListener implements OLiveResultListener {
 
     public List<ORecordOperation> ops = new ArrayList<ORecordOperation>();
 
     @Override
     public void onLiveResult(int iLiveToken, ORecordOperation iOp) throws OException {
       ops.add(iOp);
+      latch.countDown();
     }
 
     @Override
@@ -59,13 +64,11 @@ public class OLiveQueryTest {
     }
   }
 
-  @Test(enabled = false)
-  public void testLiveInsert() {
-    OLiveCommandExecutorSQLFactory.init();
+  @Test
+  public void testLiveInsert() throws InterruptedException {
 
     ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OLiveQueryTest");
     db.activateOnCurrentThread();
-    db.registerHook(new OLiveQueryHook(db));
     db.create();
     try {
       db.getMetadata().getSchema().createClass("test");
@@ -86,11 +89,10 @@ public class OLiveQueryTest {
       db.command(new OCommandSQL("live unsubscribe " + token)).execute();
 
       db.command(new OCommandSQL("insert into test set name = 'foo', surname = 'bax'")).execute();
-      try {
-        Thread.sleep(3000);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
+      db.command(new OCommandSQL("insert into test2 set name = 'foo'"));
+      db.command(new OCommandSQL("insert into test set name = 'foo', surname = 'baz'")).execute();
+
+      latch.await(1, TimeUnit.MINUTES);
       Assert.assertEquals(listener.ops.size(), 2);
       for (ORecordOperation doc : listener.ops) {
         Assert.assertEquals(doc.type, ORecordOperation.CREATED);

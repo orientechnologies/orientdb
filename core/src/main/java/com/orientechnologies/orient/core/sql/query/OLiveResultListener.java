@@ -30,11 +30,11 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
  */
 public interface OLiveResultListener {
 
-  public void onLiveResult(int iLiveToken, ORecordOperation iOp) throws OException;
+  void onLiveResult(int iLiveToken, ORecordOperation iOp) throws OException;
 
-  public void onError(int iLiveToken);
+  void onError(int iLiveToken);
 
-  public void onUnsubscribe(int iLiveToken);
+  void onUnsubscribe(int iLiveToken);
 
 
 }
