@@ -551,42 +551,24 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   }
 
   private boolean addResult(MatchContext matchContext, OSQLAsynchQuery<ODocument> request, OCommandContext ctx) {
-    long currentCount = ((OBasicCommandContext) ctx).getResultsProcessed().incrementAndGet();
-    if (limit != null) {
-      long limitValue = limit.num.getValue().longValue();
-      if (limitValue > -1 && limitValue < currentCount) {
-        return false;
-      }
-    }
+
+    ODocument doc = null;
     if (returnsMatches()) {
-      ODocument doc = getDatabase().newInstance();
+      doc = getDatabase().newInstance();
       for (Map.Entry<String, OIdentifiable> entry : matchContext.matched.entrySet()) {
         if (isExplicitAlias(entry.getKey())) {
           doc.field(entry.getKey(), entry.getValue());
         }
       }
-      // Object result = getResult(request);
-
-      if (request.getResultListener() != null) {
-        request.getResultListener().result(doc);
-      }
     } else if (returnsPaths()) {
-      ODocument doc = getDatabase().newInstance();
+      doc = getDatabase().newInstance();
       for (Map.Entry<String, OIdentifiable> entry : matchContext.matched.entrySet()) {
         doc.field(entry.getKey(), entry.getValue());
       }
-      // Object result = getResult(request);
-
-      if (request.getResultListener() != null) {
-        request.getResultListener().result(doc);
-      }
     } else if (returnsJson()) {
-      if (request.getResultListener() != null) {
-        request.getResultListener().result(jsonToDoc(matchContext, ctx));
-      }
-
+      doc = jsonToDoc(matchContext, ctx);
     } else {
-      ODocument doc = getDatabase().newInstance();
+      doc = getDatabase().newInstance();
       int i = 0;
       for (OExpression item : returnItems) {
         OIdentifier returnAliasIdentifier = returnAliases.get(i);
@@ -603,12 +585,22 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
 
         i++;
       }
-      // Object result = getResult(request);
+    }
 
-      if (request.getResultListener() != null) {
+
+    if (request.getResultListener() != null && doc != null) {
+      if(((OBasicCommandContext) context).addToUniqueResult(doc)){
         request.getResultListener().result(doc);
+        long currentCount = ((OBasicCommandContext) ctx).getResultsProcessed().incrementAndGet();
+        if (limit != null) {
+          long limitValue = limit.num.getValue().longValue();
+          if (limitValue > -1 && limitValue <= currentCount) {
+            return false;
+          }
+        }
       }
     }
+
     return true;
   }
 

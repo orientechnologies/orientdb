@@ -55,6 +55,8 @@ public class OMatchStatementExecutionTest {
     initTriangleTest();
 
     initEdgeIndexTest();
+
+    initDiamondTest();
   }
 
   private static void initEdgeIndexTest() {
@@ -198,6 +200,21 @@ public class OMatchStatementExecutionTest {
       db.command(
           new OCommandSQL(
               "CREATE EDGE TriangleE from (select from TriangleV where uid = ?) to (select from TriangleV where uid = ?)"))
+          .execute(edge[0], edge[1]);
+    }
+  }
+
+  private static void initDiamondTest() {
+    db.command(new OCommandSQL("CREATE class DiamondV extends V")).execute();
+    db.command(new OCommandSQL("CREATE class DiamondE extends E")).execute();
+    for (int i = 0; i < 4; i++) {
+      db.command(new OCommandSQL("CREATE VERTEX DiamondV set uid = ?")).execute(i);
+    }
+    int[][] edges = { { 0, 1 }, { 0, 2 }, { 1, 3 }, { 2, 3 } };
+    for (int[] edge : edges) {
+      db.command(
+          new OCommandSQL(
+              "CREATE EDGE DiamondE from (select from DiamondV where uid = ?) to (select from DiamondV where uid = ?)"))
           .execute(edge[0], edge[1]);
     }
   }
@@ -1200,6 +1217,28 @@ public class OMatchStatementExecutionTest {
 //    ODocument doc = result.get(0);
 //    assertEquals("foo", doc.field("name"));
 //    assertEquals(0, doc.field("sub[0].uuid"));
+  }
+
+  @Test
+  public void testUnique() {
+    StringBuilder query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:DiamondV, as: one, where: (uid = 0)}.out('DiamondE').out('DiamondE'){as: two} ");
+    query.append("return one, two");
+
+    List<ODocument> result = db.command(new OCommandSQL(query.toString())).execute();
+    assertEquals(1, result.size());
+
+    query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:DiamondV, as: one, where: (uid = 0)}.out('DiamondE').out('DiamondE'){as: two} ");
+    query.append("return one.uid, two.uid");
+
+    result = db.command(new OCommandSQL(query.toString())).execute();
+    assertEquals(1, result.size());
+    //    ODocument doc = result.get(0);
+    //    assertEquals("foo", doc.field("name"));
+    //    assertEquals(0, doc.field("sub[0].uuid"));
   }
 
   private long indexUsages(ODatabaseDocumentTx db) {
