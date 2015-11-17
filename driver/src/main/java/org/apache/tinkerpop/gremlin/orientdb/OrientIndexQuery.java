@@ -1,29 +1,18 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
-import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
-
+import com.orientechnologies.orient.core.index.OIndex;
 import java.util.Optional;
 
 public class OrientIndexQuery {
-    public final String className;
-    public final String key;
-    public final Object value;
+    public final Optional<Object> value;
+    public final OIndex index;
 
-    public OrientIndexQuery(boolean elementIsVertex, Optional<String> elementLabel, String key, Object value) {
-        String classNamePrefix = elementIsVertex ?
-            OImmutableClass.VERTEX_CLASS_NAME + "_" :
-            OImmutableClass.EDGE_CLASS_NAME + "_";
-
-        this.className = classNamePrefix + elementLabel.orElse("");
-        this.key = key;
+    public OrientIndexQuery(OIndex index, Optional<Object> value) {
+        this.index = index;
         this.value = value;
     }
 
-    public String indexName() {
-        return className + "." + key;
-    }
-
     public String toString() {
-        return "OrientIndexQuery(className=" + className + ", key=" + key + ", value=" + value + ")";
+        return "OrientIndexQuery(index=" + index + ", value=" + value + ")";
     }
 }

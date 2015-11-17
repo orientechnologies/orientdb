@@ -24,7 +24,8 @@ public final class OrientGraphStepStrategy
             return;
 
         final Step<?, ?> startStep = traversal.getStartStep();
-        if (startStep instanceof GraphStep) {
+        // only apply once
+        if (startStep instanceof GraphStep && !(startStep instanceof OrientGraphStep)) {
             final GraphStep<?> originalGraphStep = (GraphStep) startStep;
             final OrientGraphStep<?> orientGraphStep = new OrientGraphStep<>(originalGraphStep);
             TraversalHelper.replaceStep(startStep, (Step) orientGraphStep, traversal);

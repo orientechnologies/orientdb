@@ -1,5 +1,6 @@
 package org.apache.tinkerpop.gremlin.orientdb.traversal.step.sideEffect;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManagerProxy;
@@ -42,12 +43,11 @@ public class OrientGraphStep<S extends Element> extends GraphStep<S> implements 
         if (this.ids != null && this.ids.length > 0) {
             return this.iteratorList(graph.vertices(this.ids));
         } else {
-            Optional<Pair<OIndex, Object>> indexAndValue = findIndex();
-            if (indexAndValue.isPresent()) {
-                OIndex index = indexAndValue.get().getValue0();
-                Object value = indexAndValue.get().getValue1();
-                OLogManager.instance().info(this, "index [" + indexAndValue.get() + "] will be used");
-                Stream<OrientVertex> indexedVertices = graph.getIndexedVertices(index, value);
+            Optional<OrientIndexQuery> indexQueryOption = findIndex();
+            if (indexQueryOption.isPresent()) {
+                OrientIndexQuery indexQuery = indexQueryOption.get();
+                OLogManager.instance().info(this, "using " + indexQuery);
+                Stream<OrientVertex> indexedVertices = graph.getIndexedVertices(indexQuery.index, indexQuery.value);
                 return indexedVertices
                         .filter(vertex -> HasContainer.testAll(vertex, this.hasContainers))
                         .collect(Collectors.<Vertex>toList())
@@ -89,7 +89,8 @@ public class OrientGraphStep<S extends Element> extends GraphStep<S> implements 
         return ((OrientGraph) this.getTraversal().getGraph().get());
     }
 
-    private Optional<Pair<OIndex, Object>> findIndex() {
+    @VisibleForTesting
+    public Optional<OrientIndexQuery> findIndex() {
         final Optional<String> elementLabel = findElementLabelInHasContainers();
         final OrientGraph graph = getGraph();
         final OIndexManagerProxy indexManager = graph.database().getMetadata().getIndexManager();
@@ -116,7 +117,7 @@ public class OrientGraphStep<S extends Element> extends GraphStep<S> implements 
 
             if (keyIndexes.hasNext()) {
                 // TODO: implement algorithm to select best index if there are multiple
-                return Optional.of(new Pair(keyIndexes.next(), value));
+                return Optional.of(new OrientIndexQuery(keyIndexes.next(), Optional.of(value)));
             } else {
               OLogManager.instance().warn(this, "no index found for class=[" + className + "] and key=[" + key + "]");
             }
