@@ -179,20 +179,19 @@ public final class OrientGraph implements Graph {
         return iValue;
     }
 
-    public Stream<OrientVertex> getIndexedVertices(OrientIndexQuery indexReference) {
+    // TODO: make value optional
+    public Stream<OrientVertex> getIndexedVertices(OIndex index, Object value) {
         makeActive();
 
 //        if (iKey.equals("@class"))
 //            return getVerticesOfClass(iValue.toString());
 
-        final OIndex<?> idx = database.getMetadata().getIndexManager().getIndex(indexReference.indexName());
-        Object iValue = indexReference.value;
-        if (idx == null) {
+        if (index == null) {
             // NO INDEX
             return Collections.<OrientVertex>emptyList().stream();
         } else {
-            iValue = convertKey(idx, iValue);
-            Object indexValue = idx.get(iValue);
+            value = convertKey(index, value);
+            Object indexValue = index.get(value);
             if (indexValue == null) {
                 return Collections.<OrientVertex>emptyList().stream();
             } else if (!(indexValue instanceof Iterable<?>)) {

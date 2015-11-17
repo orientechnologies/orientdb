@@ -1,6 +1,9 @@
 package org.apache.tinkerpop.gremlin.orientdb.traversal.step.sideEffect;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexManagerProxy;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import org.apache.tinkerpop.gremlin.orientdb.OrientIndexQuery;
 import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
 import org.apache.tinkerpop.gremlin.orientdb.OrientVertex;
@@ -35,20 +38,24 @@ public class OrientGraphStep<S extends Element> extends GraphStep<S> implements 
 
     private Iterator<? extends Vertex> vertices() {
         final OrientGraph graph = (OrientGraph) this.getTraversal().getGraph().get();
-        final Optional<OrientIndexQuery> indexQuery = getIndexQuery();
 
         if (this.ids != null && this.ids.length > 0) {
             return this.iteratorList(graph.vertices(this.ids));
-        } else if (!indexQuery.isPresent()) {
-            OLogManager.instance().warn(this, "scanning through all vertices without using an index");
-            return this.iteratorList(graph.vertices());
         } else {
-            OLogManager.instance().info(this, "index will be queried with " + indexQuery.get());
-            Stream<OrientVertex> indexedVertices = graph.getIndexedVertices(indexQuery.get());
-            return indexedVertices
-                .filter(vertex -> HasContainer.testAll(vertex, this.hasContainers))
-                .collect(Collectors.<Vertex>toList())
-                .iterator();
+            Optional<Pair<OIndex, Object>> indexAndValue = findIndex();
+            if (indexAndValue.isPresent()) {
+                OIndex index = indexAndValue.get().getValue0();
+                Object value = indexAndValue.get().getValue1();
+                OLogManager.instance().info(this, "index [" + indexAndValue.get() + "] will be used");
+                Stream<OrientVertex> indexedVertices = graph.getIndexedVertices(index, value);
+                return indexedVertices
+                        .filter(vertex -> HasContainer.testAll(vertex, this.hasContainers))
+                        .collect(Collectors.<Vertex>toList())
+                        .iterator();
+            } else {
+                OLogManager.instance().warn(this, "scanning through all vertices without using an index");
+                return this.iteratorList(graph.vertices());
+            }
         }
     }
 
@@ -82,9 +89,11 @@ public class OrientGraphStep<S extends Element> extends GraphStep<S> implements 
         return ((OrientGraph) this.getTraversal().getGraph().get());
     }
 
-    private Optional<OrientIndexQuery> getIndexQuery() {
-        Optional<String> elementLabel = findElementLabelInHasContainers();
-        OrientGraph graph = getGraph();
+    private Optional<Pair<OIndex, Object>> findIndex() {
+        final Optional<String> elementLabel = findElementLabelInHasContainers();
+        final OrientGraph graph = getGraph();
+        final OIndexManagerProxy indexManager = graph.database().getMetadata().getIndexManager();
+
         // find indexed keys only for the element subclass (if present)
         final Set<String> indexedKeys = elementLabel.isPresent() ?
             graph.getIndexedKeys(this.returnClass, elementLabel.get()) :
@@ -97,12 +106,23 @@ public class OrientGraphStep<S extends Element> extends GraphStep<S> implements 
             .map(c -> Optional.of(new Pair<>(c.getKey(), c.getValue())))
             .orElseGet(Optional::empty);
 
-        if (indexedKeyAndValue.isPresent()) {
+        if (elementLabel.isPresent() && indexedKeyAndValue.isPresent()) {
             String key = indexedKeyAndValue.get().getValue0();
             Object value = indexedKeyAndValue.get().getValue1();
-            return Optional.of(new OrientIndexQuery(isVertexStep(), elementLabel, key, value));
-        } else
-            return Optional.empty();
+
+            String className = OImmutableClass.VERTEX_CLASS_NAME + '_' + elementLabel.get();
+            Set<OIndex<?>> classIndexes = indexManager.getClassIndexes(className);
+            Iterator<OIndex<?>> keyIndexes = classIndexes.stream().filter(idx -> idx.getDefinition().getFields().contains(key)).iterator();
+
+            if (keyIndexes.hasNext()) {
+                // TODO: implement algorithm to select best index if there are multiple
+                return Optional.of(new Pair(keyIndexes.next(), value));
+            } else {
+              OLogManager.instance().warn(this, "no index found for class=[" + className + "] and key=[" + key + "]");
+            }
+        }
+
+        return Optional.empty();
     }
 
     @Override
