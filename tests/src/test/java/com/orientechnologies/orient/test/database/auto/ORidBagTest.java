@@ -1,14 +1,17 @@
 package com.orientechnologies.orient.test.database.auto;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -25,8 +28,7 @@ import java.util.*;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
-@Test
-public abstract class ORidBagTest extends DocumentDBBaseTest {
+@Test public abstract class ORidBagTest extends DocumentDBBaseTest {
 
   @Parameters(value = "url")
   public ORidBagTest(@org.testng.annotations.Optional String url) {
@@ -421,6 +423,49 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
 
     assertTrue(rids.isEmpty());
 
+  }
+
+  public void testContentChange() {
+    ODocument document = new ODocument();
+    final ORidBag ridBag = new ORidBag();
+    document.field("ridBag", ridBag);
+    document.save();
+
+    ridBag.add(new ORecordId("#77:10"));
+    Assert.assertTrue(document.isDirty());
+
+    boolean expectCME = false;
+    if (ORecordInternal.isContentChanged(document)) {
+      assertEmbedded(true);
+      expectCME = true;
+    } else {
+      assertEmbedded(false);
+    }
+    document.save();
+
+    ODocument copy = new ODocument();
+    copy.fromStream(document.toStream());
+    ORecordInternal.setIdentity(copy, new ORecordId(document.getIdentity()));
+    ORecordInternal.setVersion(copy, document.getVersion());
+
+    ORidBag copyRidBag = copy.field("ridBag");
+    Assert.assertNotSame(copyRidBag, ridBag);
+
+    copyRidBag.add(new ORecordId("#77:11"));
+    Assert.assertTrue(copy.isDirty());
+    Assert.assertTrue(!document.isDirty());
+
+    ridBag.add(new ORecordId("#77:12"));
+    Assert.assertTrue(document.isDirty());
+
+    document.save();
+
+    try {
+      copy.save();
+      Assert.assertTrue(!expectCME);
+    } catch (OConcurrentModificationException cme) {
+      Assert.assertTrue(expectCME);
+    }
   }
 
   public void testAddAllAndIterator() throws Exception {
@@ -1233,7 +1278,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     Assert.assertNotSame(document, documentCopy);
     Assert.assertTrue(ODocumentHelper.hasSameContentOf(document, database, documentCopy, database, null));
 
-    Iterator<OIdentifiable> iterator = documentCopy.<ORidBag> field("ridBag").iterator();
+    Iterator<OIdentifiable> iterator = documentCopy.<ORidBag>field("ridBag").iterator();
     iterator.next();
     iterator.remove();
 
@@ -1243,7 +1288,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     embeddedList = documentCopy.field("embeddedList");
     ODocument doc = embeddedList.get(0);
 
-    iterator = doc.<ORidBag> field("ridBag").iterator();
+    iterator = doc.<ORidBag>field("ridBag").iterator();
     iterator.next();
     iterator.remove();
 
@@ -1253,25 +1298,25 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     ODocument docToAdd = new ODocument();
     docToAdd.save();
 
-    iterator = documentCopy.<ORidBag> field("ridBag").iterator();
+    iterator = documentCopy.<ORidBag>field("ridBag").iterator();
     iterator.next();
     iterator.remove();
 
-    documentCopy.<ORidBag> field("ridBag").add(docToAdd.getIdentity());
+    documentCopy.<ORidBag>field("ridBag").add(docToAdd.getIdentity());
     Assert.assertTrue(!ODocumentHelper.hasSameContentOf(document, database, documentCopy, database, null));
 
     documentCopy.reload("*:-1", true);
     embeddedList = documentCopy.field("embeddedList");
     doc = embeddedList.get(0);
 
-    iterator = doc.<ORidBag> field("ridBag").iterator();
+    iterator = doc.<ORidBag>field("ridBag").iterator();
     OIdentifiable remvedItem = iterator.next();
     iterator.remove();
-    doc.<ORidBag> field("ridBag").add(docToAdd.getIdentity());
+    doc.<ORidBag>field("ridBag").add(docToAdd.getIdentity());
 
     Assert.assertTrue(!ODocumentHelper.hasSameContentOf(document, database, documentCopy, database, null));
-    doc.<ORidBag> field("ridBag").remove(docToAdd.getIdentity());
-    doc.<ORidBag> field("ridBag").add(remvedItem);
+    doc.<ORidBag>field("ridBag").remove(docToAdd.getIdentity());
+    doc.<ORidBag>field("ridBag").add(remvedItem);
 
     Assert.assertTrue(ODocumentHelper.hasSameContentOf(document, database, documentCopy, database, null));
   }

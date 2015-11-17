@@ -145,6 +145,8 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
       String name = oNetworkProtocolBinary.getRecordSerializerName();
       for (Map.Entry<ORecord, byte[]> entry : lazyDeserialize.entrySet()) {
         ORecord record = entry.getKey();
+        final boolean contentChanged = ORecordInternal.isContentChanged(record);
+
         if (ORecordInternal.getRecordType(record) == ODocument.RECORD_TYPE && !dbSerializerName.equals(name)) {
           try {
             ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(name);
@@ -154,9 +156,13 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
             ONetworkThreadLocalSerializer.setNetworkSerializer(null);
           }
           record.setDirty();
+          ORecordInternal.setContentChanged(record, contentChanged);
+
         } else {
           record.fromStream(entry.getValue());
+
           record.setDirty();
+          ORecordInternal.setContentChanged(record, contentChanged);
         }
       }
 
@@ -175,8 +181,9 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 
         if (entry.getValue().type == ORecordOperation.UPDATED) {
           // SPECIAL CASE FOR UPDATE: WE NEED TO LOAD THE RECORD AND APPLY CHANGES TO GET WORKING HOOKS (LIKE INDEXES)
-
           final ORecord record = entry.getValue().record.getRecord();
+          final boolean contentChanged = ORecordInternal.isContentChanged(record);
+
           final ORecord loadedRecord = record.getIdentity().copy().getRecord();
           if (loadedRecord == null)
             throw new ORecordNotFoundException(record.getIdentity().toString());
@@ -184,14 +191,15 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
           if (ORecordInternal.getRecordType(loadedRecord) == ODocument.RECORD_TYPE
               && ORecordInternal.getRecordType(loadedRecord) == ORecordInternal.getRecordType(record)) {
             ((ODocument) loadedRecord).merge((ODocument) record, false, false);
-            ((ODocument) loadedRecord).setDirty();
+
+            loadedRecord.setDirty();
+            ORecordInternal.setContentChanged(loadedRecord, contentChanged);
 
             ORecordInternal.setVersion(loadedRecord, record.getVersion());
             entry.getValue().record = loadedRecord;
 
             // SAVE THE RECORD TO RETRIEVE THEM FOR THE NEW VERSIONS TO SEND BACK TO THE REQUESTER
             updatedRecords.put((ORecordId) entry.getKey(), entry.getValue().getRecord());
-
           }
         }
 

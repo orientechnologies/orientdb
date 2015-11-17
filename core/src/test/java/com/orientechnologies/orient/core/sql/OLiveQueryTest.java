@@ -64,7 +64,7 @@ public class OLiveQueryTest {
     }
   }
 
-  @Test
+  @Test(enabled = false)
   public void testLiveInsert() throws InterruptedException {
 
     ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OLiveQueryTest");
