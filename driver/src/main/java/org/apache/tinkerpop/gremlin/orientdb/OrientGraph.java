@@ -168,7 +168,7 @@ public final class OrientGraph implements Graph {
             vertexIds);
     }
 
-    protected Object convertKey(final OIndex<?> idx, Object iValue) {
+    protected Object convertValue(final OIndex<?> idx, Object iValue) {
         if (iValue != null) {
             final OType[] types = idx.getKeyTypes();
             if (types.length == 0)
@@ -179,30 +179,32 @@ public final class OrientGraph implements Graph {
         return iValue;
     }
 
-    public Stream<OrientVertex> getIndexedVertices(OrientIndexQuery indexReference) {
+    public Stream<OrientVertex> getIndexedVertices(OIndex index, Optional<Object> valueOption) {
         makeActive();
 
 //        if (iKey.equals("@class"))
 //            return getVerticesOfClass(iValue.toString());
 
-        final OIndex<?> idx = database.getMetadata().getIndexManager().getIndex(indexReference.indexName());
-        Object iValue = indexReference.value;
-        if (idx == null) {
+        if (index == null) {
             // NO INDEX
             return Collections.<OrientVertex>emptyList().stream();
         } else {
-            iValue = convertKey(idx, iValue);
-            Object indexValue = idx.get(iValue);
-            if (indexValue == null) {
-                return Collections.<OrientVertex>emptyList().stream();
-            } else if (!(indexValue instanceof Iterable<?>)) {
-                indexValue = Collections.singletonList(indexValue);
+            if (!valueOption.isPresent()) {
+                return index.cursor().toValues().stream().map(id -> new OrientVertex(this, id));
+            } else {
+                Object value = convertValue(index, valueOption.get());
+                Object indexValue = index.get(value);
+                if (indexValue == null) {
+                    return Collections.<OrientVertex>emptyList().stream();
+                } else if (!(indexValue instanceof Iterable<?>)) {
+                    indexValue = Collections.singletonList(indexValue);
+                }
+                @SuppressWarnings("unchecked")
+                Iterable<ORecordId> iterableIds = (Iterable<ORecordId>) indexValue;
+                Stream<ORecordId> ids = StreamSupport.stream(iterableIds.spliterator(), false);
+                Stream<ORecord> records = ids.map(id -> (ORecord) id.getRecord()).filter(r -> r != null);
+                return records.map(r -> new OrientVertex(this, getRawDocument(r)));
             }
-            @SuppressWarnings("unchecked")
-			Iterable<ORecordId> iterableIds = (Iterable<ORecordId>) indexValue;
-            Stream<ORecordId> ids = StreamSupport.stream(iterableIds.spliterator(), false);
-            Stream<ORecord> records = ids.map(id -> (ORecord) id.getRecord()).filter(r -> r != null);
-            return records.map(r -> new OrientVertex(this, getRawDocument(r)));
         }
     }
 

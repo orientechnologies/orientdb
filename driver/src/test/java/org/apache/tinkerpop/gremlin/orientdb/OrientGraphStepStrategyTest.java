@@ -12,7 +12,7 @@ import static org.junit.Assert.assertEquals;
 
 // copy of TinkerGraphStepStrategyTest
 public class OrientGraphStepStrategyTest {
-    public static final String URL = "memory:" + OrientGraphIndexTests.class.getSimpleName();
+    public static final String URL = "memory:" + OrientGraphStepStrategyTest.class.getSimpleName();
     @Test
     public void shouldFoldInHasContainers() {
         OrientGraph graph = new OrientGraphFactory(URL, "root", "root").getNoTx();
