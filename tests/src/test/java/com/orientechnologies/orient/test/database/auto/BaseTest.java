@@ -84,14 +84,14 @@ public abstract class BaseTest<T extends ODatabase> {
         remoteStorageType = "plocal";
 
       if (ODatabaseHelper.existsDatabase(database, remoteStorageType)) {
-        database.open("admin", "admin");
+        ODatabaseHelper.openDatabase(database);
         ODatabaseHelper.dropDatabase(database, remoteStorageType);
       }
 
       createDatabase();
     }
 
-    database.open("admin", "admin");
+    ODatabaseHelper.openDatabase(database);
   }
 
   @AfterClass
@@ -101,7 +101,7 @@ public abstract class BaseTest<T extends ODatabase> {
 
     if (dropDb) {
       if (database.isClosed())
-        database.open("admin", "admin");
+        ODatabaseHelper.openDatabase(database);
 
       String remoteStorageType = storageType;
       if (storageType.equals("remote"))
@@ -122,7 +122,7 @@ public abstract class BaseTest<T extends ODatabase> {
       return;
 
     if (database.isClosed())
-      database.open("admin", "admin");
+      ODatabaseHelper.openDatabase(database);
   }
 
   @AfterMethod
