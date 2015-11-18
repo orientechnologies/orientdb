@@ -69,7 +69,7 @@ public class OAutomaticBackup extends OServerPluginAbstract {
     FULL_BACKUP, INCREMENTAL_BACKUP, EXPORT
   }
 
-  private String configFile       = "${ORIENTDB_HOME}/config/backup.json";
+  private String configFile       = "${ORIENTDB_HOME}/config/automatic-backup.json";
   private Date   firstTime        = null;
   private long   delay            = -1;
   private int    bufferSize       = 1048576;
@@ -96,7 +96,7 @@ public class OAutomaticBackup extends OServerPluginAbstract {
         final File f = new File(OSystemVariableResolver.resolveSystemVariables(configFile));
         if (!f.exists())
           throw new OConfigurationException(
-              "Automatic backup configuration file '" + configFile + "' not found. Automatic Backup will be disabled");
+              "Automatic Backup configuration file '" + configFile + "' not found. Automatic Backup will be disabled");
         break;
 
         // LEGACY <v2.2: CONVERT ALL SETTINGS IN JSON
@@ -115,7 +115,7 @@ public class OAutomaticBackup extends OServerPluginAbstract {
       else if (param.name.equalsIgnoreCase("target.fileName"))
         configuration.field("targetFileName", param.value);
       else if (param.name.equalsIgnoreCase("bufferSize"))
-        configuration.field("bufferSize", param.value);
+        configuration.field("bufferSize", Integer.parseInt(param.value));
       else if (param.name.equalsIgnoreCase("compressionLevel"))
         configuration.field("compressionLevel", Integer.parseInt(param.value));
       else if (param.name.equalsIgnoreCase("mode"))
@@ -140,7 +140,7 @@ public class OAutomaticBackup extends OServerPluginAbstract {
       // CREATE BACKUP FOLDER(S) IF ANY
       filePath.mkdirs();
 
-    OLogManager.instance().info(this, "Automatic backup plugin installed and active: delay=%dms, firstTime=%s, targetDirectory=%s",
+    OLogManager.instance().info(this, "Automatic Backup plugin installed and active: delay=%dms, firstTime=%s, targetDirectory=%s",
         delay, firstTime, targetDirectory);
 
     final TimerTask timerTask = new TimerTask() {
@@ -231,7 +231,7 @@ public class OAutomaticBackup extends OServerPluginAbstract {
         configuration = new ODocument().fromJSON(configurationContent);
       } catch (IOException e) {
         OException.wrapException(new OConfigurationException(
-            "Cannot load Automatic backup configuration file '" + configFile + "'. Automatic Backup will be disabled"), e);
+            "Cannot load Automatic Backup configuration file '" + configFile + "'. Automatic Backup will be disabled"), e);
       }
 
     } else {
@@ -239,12 +239,14 @@ public class OAutomaticBackup extends OServerPluginAbstract {
       try {
         f.getParentFile().mkdirs();
         f.createNewFile();
-        OIOUtils.writeFile(f, configuration.toJSON());
+        OIOUtils.writeFile(f, configuration.toJSON("prettyPrint"));
+
+        OLogManager.instance().info(this, "Automatic Backup: migrated configuration to file '%s'", f);
       } catch (IOException e) {
         OException
             .wrapException(
                 new OConfigurationException(
-                    "Cannot create Automatic backup configuration file '" + configFile + "'. Automatic Backup will be disabled"),
+                    "Cannot create Automatic Backup configuration file '" + configFile + "'. Automatic Backup will be disabled"),
                 e);
       }
     }
