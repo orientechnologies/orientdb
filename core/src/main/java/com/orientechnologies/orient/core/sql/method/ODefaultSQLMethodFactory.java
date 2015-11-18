@@ -15,10 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql.method;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.functions.coll.OSQLMethodMultiValue;
@@ -40,6 +36,10 @@ import com.orientechnologies.orient.core.sql.method.misc.*;
 import com.orientechnologies.orient.core.sql.method.sequence.OSQLMethodCurrent;
 import com.orientechnologies.orient.core.sql.method.sequence.OSQLMethodNext;
 import com.orientechnologies.orient.core.sql.method.sequence.OSQLMethodReset;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Default method factory.
@@ -86,6 +86,7 @@ public class ODefaultSQLMethodFactory implements OSQLMethodFactory {
     register(OSQLMethodReplace.NAME, new OSQLMethodReplace());
     register(OSQLMethodRight.NAME, new OSQLMethodRight());
     register(OSQLMethodSize.NAME, new OSQLMethodSize());
+    register(OSQLMethodSplit.NAME, new OSQLMethodSplit());
     register(OSQLMethodToLowerCase.NAME, new OSQLMethodToLowerCase());
     register(OSQLMethodToUpperCase.NAME, new OSQLMethodToUpperCase());
     register(OSQLMethodTrim.NAME, new OSQLMethodTrim());
