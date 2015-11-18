@@ -42,8 +42,7 @@ public class AutomaticBackupTest {
       NotCompliantMBeanException, MBeanRegistrationException, IOException {
 
     // SET THE ORIENTDB_HOME DIRECTORY TO CHECK JSON FILE CREATION
-    final File f = File.createTempFile("testBackup", ".test");
-    tempDirectory = f.getParent();
+    tempDirectory = new File("").getAbsolutePath();
     System.setProperty("ORIENTDB_HOME", tempDirectory);
 
     server = new OServer() {
@@ -64,7 +63,7 @@ public class AutomaticBackupTest {
 
   @Before
   public void init() {
-    final File f = new File(OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}/config/backup.json"));
+    final File f = new File(OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}/config/automatic-backup.json"));
     if (f.exists())
       f.delete();
 
@@ -79,9 +78,9 @@ public class AutomaticBackupTest {
 
   @After
   public void deinit() {
-    Assert.assertTrue(new File(tempDirectory + "/config/backup.json").exists());
+    Assert.assertTrue(new File(tempDirectory + "/config/automatic-backup.json").exists());
 
-    new File(tempDirectory + "/config/backup.json").delete();
+    new File(tempDirectory + "/config/automatic-backup.json").delete();
 
     database.activateOnCurrentThread();
     database.drop();
