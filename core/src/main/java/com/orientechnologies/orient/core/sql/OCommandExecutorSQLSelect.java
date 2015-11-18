@@ -646,8 +646,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       return true;
     }
 
-    resultCount++;
-
     if (!addResult(lastRecord, iContext)) {
       return false;
     }
@@ -674,15 +672,19 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   protected boolean addResult(OIdentifiable iRecord, final OCommandContext iContext) {
+    resultCount++;
     if (iRecord == null)
       return true;
 
     if (projections != null || groupByFields != null && !groupByFields.isEmpty()) {
       if (!aggregate) {
         // APPLY PROJECTIONS IN LINE
+
         iRecord = ORuntimeResult.getProjectionResult(getTemporaryRIDCounter(iContext), projections, iContext, iRecord);
-        if (iRecord == null)
+        if (iRecord == null){
+          resultCount--;//record discarded
           return true;
+        }
 
       } else {
         // GROUP BY
