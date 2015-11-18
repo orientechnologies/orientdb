@@ -1074,8 +1074,11 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   public void close() {
     localCache.shutdown();
 
-    if (isClosed())
+    if (isClosed()) {
+      status = STATUS.CLOSED;
       return;
+    }
+
 
     setCurrentDatabaseInThreadLocal();
     try {
