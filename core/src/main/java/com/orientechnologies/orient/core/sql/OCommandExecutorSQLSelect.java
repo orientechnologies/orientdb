@@ -573,8 +573,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
       lastRecord = iRecord;
 
-      resultCount++;
-
       if (!addResult(lastRecord)) {
         return false;
       }
@@ -599,6 +597,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   protected boolean addResult(OIdentifiable iRecord) {
+    resultCount++;
     if (iRecord == null)
       return true;
 
@@ -606,8 +605,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       if (groupedResult == null) {
         // APPLY PROJECTIONS IN LINE
         iRecord = ORuntimeResult.getProjectionResult(getTemporaryRIDCounter(), projections, context, iRecord);
-        if (iRecord == null)
+        if (iRecord == null) {
+          resultCount--;//record discarded
           return true;
+        }
 
       } else {
         // AGGREGATION/GROUP BY
