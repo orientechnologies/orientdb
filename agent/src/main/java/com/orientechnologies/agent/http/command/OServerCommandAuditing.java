@@ -17,87 +17,102 @@
  */
 package com.orientechnologies.agent.http.command;
 
-import com.orientechnologies.agent.DatabaseAuditingResource;
 import com.orientechnologies.agent.OEnterpriseAgent;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.metadata.security.ORule;
-import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
-import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
+import com.orientechnologies.orient.server.security.OSecurityServerUser;
 
-public class OServerCommandAuditing extends OServerCommandAuthenticatedDbAbstract {
+import java.io.IOException;
+import java.util.Collection;
+
+public class OServerCommandAuditing extends OServerCommandDistributedScope {
   private static final String[] NAMES = { "GET|auditing/*", "POST|auditing/*" };
   private OEnterpriseAgent      oEnterpriseAgent;
 
   public OServerCommandAuditing(OEnterpriseAgent oEnterpriseAgent) {
-
+    super("server.profiler");
     this.oEnterpriseAgent = oEnterpriseAgent;
   }
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    final String[] parts = checkSyntax(iRequest.getUrl(), 2, "Syntax error: auditing");
+    final String[] parts = checkSyntax(iRequest.getUrl(), 3, "Syntax error: auditing/<db>/<action>");
 
     iRequest.data.commandInfo = "Auditing information";
 
-    ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
-    OSecurityUser user = db.getUser();
+    String db = parts[1];
+    String action = parts[2];
 
-    if ("GET".equals(iRequest.httpMethod)) {
-      doGet(iRequest, iResponse);
-    } else if ("POST".equals(iRequest.httpMethod)) {
-      doPost(iRequest, iResponse);
+    if (isLocalNode(iRequest)) {
+      if ("GET".equals(iRequest.httpMethod)) {
+        if (action.equalsIgnoreCase("config")) {
+          doGet(iRequest, iResponse, parts[1]);
+        }
+      } else if ("POST".equals(iRequest.httpMethod)) {
+        if (action.equalsIgnoreCase("config")) {
+          doPost(iRequest, iResponse, db);
+        } else if (action.equalsIgnoreCase("query")) {
+          doGetData(iRequest, iResponse, db);
+
+        }
+      }
+    } else {
+      proxyRequest(iRequest, iResponse);
     }
-    // if (user.checkIfAllowed(ORule.ResourceGeneric.valueOf(DatabaseProfilerResource.PROFILER), null, 2) != null) {
-    //
-    // try {
-    //
-    // final String command = parts[1];
-    // final String arg = parts.length > 2 ? parts[2] : null;
-    //
-    // final StringWriter jsonBuffer = new StringWriter();
-    // final OJSONWriter json = new OJSONWriter(jsonBuffer);
-    // json.append(Orient.instance().getProfiler().toJSON("realtime", "db." + db.getName() + ".command"));
-    //
-    // iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, jsonBuffer.toString(), null);
-    //
-    // } catch (Exception e) {
-    // iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, e, null);
-    // }
-    // } else {
-    // iResponse.send(OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
-    // }
     return false;
   }
 
-  private void doPost(OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
+  private void doGetData(OHttpRequest iRequest, OHttpResponse iResponse, String db) throws IOException, InterruptedException {
 
-    ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
-    OSecurityUser user = db.getUser();
-
-    if (user.checkIfAllowed(ORule.ResourceGeneric.valueOf(DatabaseAuditingResource.AUDITING), null, 2) != null) {
-
-      ODocument config = new ODocument().fromJSON(iRequest.content, "noMap");
-      oEnterpriseAgent.auditingListener.changeConfig(db.getName(), config);
-      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, config.toJSON("prettyPrint=true"), null);
-    } else {
-      iResponse.send(OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
-    }
+    ODocument params = new ODocument().fromJSON(iRequest.content);
+    ODatabaseDocumentTx databaseDocumentTx = openAndSet(db);
+    Collection<ODocument> documents = databaseDocumentTx.command(new OSQLSynchQuery<ODocument>(buildQuery(params))).execute(
+        params.toMap());
+    iResponse.writeResult(documents);
   }
 
-  private void doGet(OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
-    OSecurityUser user = db.getUser();
+  protected ODatabaseDocumentTx openAndSet(String dbName) {
+    String s = server.getAvailableStorageNames().get(dbName);
+    ODatabaseDocumentTx databaseDocumentTx = new ODatabaseDocumentTx(s);
+    databaseDocumentTx.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSecurityServerUser.class);
+    databaseDocumentTx.open("root", "nopassword");
 
-    if (user.checkIfAllowed(ORule.ResourceGeneric.valueOf(DatabaseAuditingResource.AUDITING), null, 2) != null) {
-      ODocument config = oEnterpriseAgent.auditingListener.getConfig(db.getName());
-      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, config.toJSON("prettyPrint=true"), null);
-    } else {
-      iResponse.send(OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
-    }
+    ODatabaseRecordThreadLocal.INSTANCE.set(databaseDocumentTx);
+
+    return databaseDocumentTx;
+  }
+
+  private String buildQuery(ODocument params) {
+    String query = "select from :clazz limit :limit";
+
+    String clazz = params.field("clazz");
+    Integer limit = params.field("limit");
+
+    query = query.replace(":clazz", clazz);
+
+    query = query.replace(":limit", "" + limit);
+    return query;
+  }
+
+  private void doPost(OHttpRequest iRequest, OHttpResponse iResponse, String db) throws Exception {
+
+    ODocument config = new ODocument().fromJSON(iRequest.content, "noMap");
+    openAndSet(db);
+    oEnterpriseAgent.auditingListener.changeConfig(db, config);
+    iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, config.toJSON("prettyPrint=true"), null);
+  }
+
+  private void doGet(OHttpRequest iRequest, OHttpResponse iResponse, String db) throws Exception {
+
+    ODocument config = oEnterpriseAgent.auditingListener.getConfig(db);
+    iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, config.toJSON("prettyPrint=true"), null);
+
   }
 
   @Override

@@ -17,18 +17,9 @@
  */
 package com.orientechnologies.agent;
 
-import java.util.Map;
-
 import com.orientechnologies.agent.hook.OAuditingHook;
 import com.orientechnologies.agent.hook.OAuditingLoggingThread;
-import com.orientechnologies.agent.http.command.OServerCommandAuditing;
-import com.orientechnologies.agent.http.command.OServerCommandConfiguration;
-import com.orientechnologies.agent.http.command.OServerCommandGetDeployDb;
-import com.orientechnologies.agent.http.command.OServerCommandGetDistributed;
-import com.orientechnologies.agent.http.command.OServerCommandGetLog;
-import com.orientechnologies.agent.http.command.OServerCommandGetProfiler;
-import com.orientechnologies.agent.http.command.OServerCommandGetSQLProfiler;
-import com.orientechnologies.agent.http.command.OServerCommandPostBackupDatabase;
+import com.orientechnologies.agent.http.command.*;
 import com.orientechnologies.agent.profiler.OEnterpriseProfiler;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
@@ -50,15 +41,15 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
+import java.util.Map;
+
 public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabaseLifecycleListener {
-  public static final String       EE                         = "ee.";
-  private static final String      ORIENDB_ENTERPRISE_VERSION = "2.1"; // CHECK IF THE ORIENTDB COMMUNITY EDITION STARTS WITH THIS
-  public OServer                   server;
-  private String                   license;
-  private String                   version;
-  private boolean                  enabled                    = false;
-  private DatabaseProfilerResource profilerResource;
-  public OAuditingListener         auditingListener;
+  public static final String  EE                         = "ee.";
+  private static final String ORIENDB_ENTERPRISE_VERSION = "2.2"; // CHECK IF THE ORIENTDB COMMUNITY EDITION STARTS WITH THIS
+  public OServer              server;
+  private String              license;
+  private boolean             enabled                    = false;
+  public OAuditingListener    auditingListener;
 
   public OEnterpriseAgent() {
   }
@@ -69,8 +60,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
     for (OServerParameterConfiguration p : iParams) {
       if (p.name.equals("license"))
         license = p.value;
-      if (p.name.equals("version"))
-        version = p.value;
     }
   }
 
@@ -85,7 +74,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
       enabled = true;
       installProfiler();
       installCommands();
-      profilerResource = new DatabaseProfilerResource();
 
       auditingListener = new OAuditingListener(this);
       Orient.instance().addDbLifecycleListener(auditingListener);
@@ -197,6 +185,12 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
 
   }
 
+  // TODO SEND CPU METRICS ON configuration request;
+  @Override
+  public void onLocalNodeConfigurationRequest(ODocument iConfiguration) {
+
+  }
+
   private void installCommands() {
     final OServerNetworkListener listener = server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
     if (listener == null)
@@ -209,6 +203,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
     listener.registerStatelessCommand(new OServerCommandPostBackupDatabase());
     listener.registerStatelessCommand(new OServerCommandGetDeployDb());
     listener.registerStatelessCommand(new OServerCommandGetSQLProfiler());
+    listener.registerStatelessCommand(new OServerCommandPluginManager());
     listener.registerStatelessCommand(new OServerCommandAuditing(this));
   }
 

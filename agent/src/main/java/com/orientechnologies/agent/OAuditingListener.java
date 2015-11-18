@@ -139,6 +139,11 @@ public class OAuditingListener implements ODatabaseLifecycleListener {
 
   }
 
+  @Override
+  public void onLocalNodeConfigurationRequest(ODocument iConfiguration) {
+
+  }
+
   public File getAuditingFileConfig(final String iDatabaseName) {
     return new File(oEnterpriseAgent.server.getDatabaseDirectory() + iDatabaseName + "/" + FILE_AUDITING_DB_CONFIG);
   }

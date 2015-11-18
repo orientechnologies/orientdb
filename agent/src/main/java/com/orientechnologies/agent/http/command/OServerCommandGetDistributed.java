@@ -90,7 +90,7 @@ public class OServerCommandGetDistributed extends OServerCommandAuthenticatedSer
         } else
           throw new IllegalArgumentException("Command '" + command + "' not supported");
 
-        iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, doc.toJSON(""), null);
+        iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, doc.toJSON(""), null);
       } else {
         throw new OConfigurationException("Seems that the server is not running in distributed mode");
       }
