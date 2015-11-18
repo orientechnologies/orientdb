@@ -19,14 +19,6 @@
  */
 package com.orientechnologies.orient.core.db.tool;
 
-import static com.orientechnologies.orient.core.record.impl.ODocumentHelper.makeDbCall;
-
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Set;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -39,7 +31,6 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexKeyCursor;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
-import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -51,6 +42,15 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+
+import static com.orientechnologies.orient.core.record.impl.ODocumentHelper.makeDbCall;
 
 public class ODatabaseCompare extends ODatabaseImpExpAbstract {
   private OStorage storage1;
@@ -132,7 +132,8 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
     try {
       ODocumentHelper.RIDMapper ridMapper = null;
       if (autoDetectExportImportMap) {
-        listener.onMessage("\nAuto discovery of mapping between RIDs of exported and imported records is switched on, try to discover mapping data on disk.");
+        listener.onMessage(
+            "\nAuto discovery of mapping between RIDs of exported and imported records is switched on, try to discover mapping data on disk.");
         exportImportHashTable = (OIndex<OIdentifiable>) databaseDocumentTxTwo.getMetadata().getIndexManager()
             .getIndex(ODatabaseImport.EXPORT_IMPORT_MAP_NAME);
         if (exportImportHashTable != null) {
@@ -162,7 +163,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
       compareRecords(ridMapper);
 
       if (isDocumentDatabases()) {
-        compareSchama();
+        compareSchema();
         compareIndexes(ridMapper);
       }
 
@@ -174,7 +175,8 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
         return false;
       }
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Error on comparing database '%s' against '%s'", e, storage1.getName(), storage2.getName());
+      OLogManager.instance().error(this, "Error on comparing database '%s' against '%s'", e, storage1.getName(),
+          storage2.getName());
       throw new ODatabaseExportException(
           "Error on comparing database '" + storage1.getName() + "' against '" + storage2.getName() + "'", e);
     } finally {
@@ -183,48 +185,55 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
     }
   }
 
-  private void compareSchama() {
-    OSchema schema1 = ((OMetadataInternal) databaseDocumentTxOne.getMetadata()).getImmutableSchemaSnapshot();
-    OSchema schema2 = ((OMetadataInternal) databaseDocumentTxTwo.getMetadata()).getImmutableSchemaSnapshot();
+  private void compareSchema() {
+    OSchema schema1 = databaseDocumentTxOne.getMetadata().getImmutableSchemaSnapshot();
+    OSchema schema2 = databaseDocumentTxTwo.getMetadata().getImmutableSchemaSnapshot();
     boolean ok = true;
     for (OClass clazz : schema1.getClasses()) {
       OClass clazz2 = schema2.getClass(clazz.getName());
+
       if (clazz2 == null) {
         listener.onMessage("\n- ERR: Class definition " + clazz.getName() + " for DB2 is null.");
         continue;
       }
-      if (clazz.getSuperClass() != null) {
-        if (!clazz.getSuperClass().getName().equals(clazz2.getSuperClass().getName())) {
-          listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same superclass in DB2.");
+
+      final List<String> sc1 = clazz.getSuperClassesNames();
+      final List<String> sc2 = clazz2.getSuperClassesNames();
+
+      if (!sc1.isEmpty() || !sc2.isEmpty()) {
+        if (!sc1.containsAll(sc2) || !sc2.containsAll(sc1)) {
+          listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " in DB1 is not equals in superclasses in DB2.");
           ok = false;
         }
       }
       if (!clazz.getClassIndexes().equals(clazz2.getClassIndexes())) {
-        listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same defined indexes in DB2.");
+        listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " in DB1 is not equals in indexes in DB2.");
         ok = false;
       }
       if (!Arrays.equals(clazz.getClusterIds(), clazz2.getClusterIds())) {
-        listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same defined clusters in DB2.");
+        listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " in DB1 is not equals in clusters in DB2.");
         ok = false;
       }
       if (!clazz.getCustomKeys().equals(clazz2.getCustomKeys())) {
-        listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same defined custom keys in DB2.");
+        listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " in DB1 is not equals in custom keys in DB2.");
         ok = false;
       }
       if (clazz.getOverSize() != clazz2.getOverSize()) {
-        listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same defined overSize in DB2.");
+        listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " in DB1 is not equals in overSize in DB2.");
         ok = false;
       }
 
       if (clazz.getDefaultClusterId() != clazz2.getDefaultClusterId()) {
-        listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same defined default cluser id in DB2.");
+        listener
+            .onMessage("\n- ERR: Class definition for " + clazz.getName() + " in DB1 is not equals in default cluser id in DB2.");
         ok = false;
       }
 
-      if (clazz.getSize() != clazz2.getSize()) {
-        listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same defined size in DB2.");
-        ok = false;
-      }
+      // if (clazz.getSize() != clazz2.getSize()) {
+      // listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " in DB1 is not equals in size in DB2.");
+      // ok = false;
+      // }
+
       for (OProperty prop : clazz.declaredProperties()) {
         OProperty prop2 = clazz2.getProperty(prop.getName());
         if (prop2 == null) {

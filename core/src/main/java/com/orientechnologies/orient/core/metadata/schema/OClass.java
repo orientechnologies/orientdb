@@ -19,16 +19,16 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
+import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import com.orientechnologies.common.listener.OProgressListener;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Schema class
@@ -38,7 +38,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 public interface OClass extends Comparable<OClass> {
   enum ATTRIBUTES {
-    NAME, SHORTNAME, SUPERCLASS, SUPERCLASSES, OVERSIZE, STRICTMODE, ADDCLUSTER, REMOVECLUSTER, CUSTOM, ABSTRACT, CLUSTERSELECTION, DESCRIPTION
+    NAME, SHORTNAME, SUPERCLASS, SUPERCLASSES, OVERSIZE, STRICTMODE, ADDCLUSTER, REMOVECLUSTER, CUSTOM, ABSTRACT, CLUSTERSELECTION, DESCRIPTION, ENCRYPTION
   }
 
   enum INDEX_TYPE {

@@ -826,7 +826,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           if (cls.getDefaultClusterId() != classDefClusterId)
             cls.setDefaultClusterId(classDefClusterId);
         } else
-          cls = (OClassImpl) database.getMetadata().getSchema().createClass(className, classDefClusterId);
+          cls = (OClassImpl) database.getMetadata().getSchema().createClass(className, new int[] { classDefClusterId });
 
         if (classClusterIds != null) {
           // REMOVE BRACES

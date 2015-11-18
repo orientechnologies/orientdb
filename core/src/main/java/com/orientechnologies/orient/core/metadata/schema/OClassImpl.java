@@ -55,6 +55,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
+import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -1631,8 +1632,49 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     case DESCRIPTION:
       setDescription(stringValue);
       break;
+    case ENCRYPTION:
+      setEncryption(stringValue);
+      break;
     }
     return this;
+  }
+
+  public OClassImpl setEncryption(final String iValue) {
+    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
+
+    acquireSchemaWriteLock();
+    try {
+      final ODatabaseDocumentInternal database = getDatabase();
+      final OStorage storage = database.getStorage();
+
+      if (storage instanceof OStorageProxy) {
+        final String cmd = String.format("alter class %s encryption %s", name, iValue);
+        database.command(new OCommandSQL(cmd)).execute();
+      } else if (isDistributedCommand()) {
+
+        final String cmd = String.format("alter class %s encryption %s", name, iValue);
+        final OCommandSQL commandSQL = new OCommandSQL(cmd);
+        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
+
+        database.command(commandSQL).execute();
+        setEncryptionInternal(iValue);
+      } else
+        setEncryptionInternal(iValue);
+    } finally {
+      releaseSchemaWriteLock();
+    }
+    return this;
+  }
+
+  protected void setEncryptionInternal(final String iValue) {
+    for (int cl : getClusterIds()) {
+      final OCluster c = getDatabase().getStorage().getClusterById(cl);
+      if (c != null)
+        try {
+          c.set(OCluster.ATTRIBUTES.ENCRYPTION, iValue);
+        } catch (IOException e) {
+        }
+    }
   }
 
   public OPropertyImpl addPropertyInternal(final String name, final OType type, final OType linkedType, final OClass linkedClass,

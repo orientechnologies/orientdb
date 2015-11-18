@@ -35,7 +35,7 @@ import com.orientechnologies.orient.core.sql.functions.coll.OSQLMethodMultiValue
 import com.orientechnologies.orient.core.sql.method.OSQLMethod;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodField;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodFunctionDelegate;
-import com.orientechnologies.orient.core.sql.methods.OSQLMethodRuntime;
+import com.orientechnologies.orient.core.sql.method.OSQLMethodRuntime;
 
 import java.util.ArrayList;
 import java.util.List;

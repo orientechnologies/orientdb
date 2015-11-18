@@ -171,6 +171,25 @@ public class OIOUtils {
 
   }
 
+  public static void writeFile(final File iFile, final String iContent) throws IOException {
+    final FileOutputStream fos = new FileOutputStream(iFile);
+    try {
+      final OutputStreamWriter os = new OutputStreamWriter(fos);
+      try {
+        final BufferedWriter writer = new BufferedWriter(os);
+        try {
+          writer.write(iContent);
+        } finally {
+          writer.close();
+        }
+      } finally {
+        os.close();
+      }
+    } finally {
+      fos.close();
+    }
+  }
+
   public static long copyStream(final InputStream in, final OutputStream out, long iMax) throws IOException {
     if (iMax < 0)
       iMax = Long.MAX_VALUE;

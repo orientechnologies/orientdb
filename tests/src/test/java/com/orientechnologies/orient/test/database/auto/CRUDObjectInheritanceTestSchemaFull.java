@@ -30,7 +30,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
-import com.orientechnologies.orient.object.iterator.OObjectIteratorCluster;
+import com.orientechnologies.orient.object.iterator.OObjectIteratorClass;
 import com.orientechnologies.orient.test.domain.base.IdObject;
 import com.orientechnologies.orient.test.domain.base.Instrument;
 import com.orientechnologies.orient.test.domain.base.Musician;
@@ -58,13 +58,13 @@ import java.util.List;
 
 @Test(groups = { "crud", "object", "schemafull", "inheritanceSchemaFull" })
 public class CRUDObjectInheritanceTestSchemaFull extends ObjectDBBaseTest {
-  protected static final int TOT_RECORDS    = 10;
+  protected static final int TOT_RECORDS = 10;
 
   public static final String buildDirectory = System.getProperty("buildDirectory", ".");
   public static final String EXPORT_DIR     = buildDirectory + File.separator + "objectSchemaTest/database.export.gz";
 
-  protected long             startRecordNumber;
-  private City               redmond        = new City(new Country("Washington"), "Redmond");
+  protected long startRecordNumber;
+  private City   redmond = new City(new Country("Washington"), "Redmond");
 
   @Parameters(value = "url")
   public CRUDObjectInheritanceTestSchemaFull(@Optional String url) {
@@ -133,7 +133,7 @@ public class CRUDObjectInheritanceTestSchemaFull extends ObjectDBBaseTest {
 
   @Test
   public void create() {
-		database.getMetadata().getSchema().reload();
+    database.getMetadata().getSchema().reload();
     database.getMetadata().getSchema().synchronizeSchema();
     database.setAutomaticSchemaGeneration(true);
     database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.business");
@@ -144,7 +144,7 @@ public class CRUDObjectInheritanceTestSchemaFull extends ObjectDBBaseTest {
     if (url.startsWith(OEngineRemote.NAME)) {
       database.getMetadata().reload();
     }
-    startRecordNumber = database.countClusterElements("Company");
+    startRecordNumber = database.countClass("Company");
 
     Company company;
 
@@ -160,7 +160,7 @@ public class CRUDObjectInheritanceTestSchemaFull extends ObjectDBBaseTest {
   public void testCreate() {
     database.setAutomaticSchemaGeneration(true);
 
-    Assert.assertEquals(database.countClusterElements("Company") - startRecordNumber, TOT_RECORDS);
+    Assert.assertEquals(database.countClass("Company") - startRecordNumber, TOT_RECORDS);
   }
 
   @Test(dependsOnMethods = "testCreate")
@@ -205,10 +205,10 @@ public class CRUDObjectInheritanceTestSchemaFull extends ObjectDBBaseTest {
   public void deleteFirst() {
     database.setAutomaticSchemaGeneration(true);
 
-    startRecordNumber = database.countClusterElements("Company");
+    startRecordNumber = database.countClass("Company");
 
     // DELETE ALL THE RECORD IN THE CLUSTER
-    OObjectIteratorCluster<Company> companyClusterIterator = database.browseCluster("Company");
+    OObjectIteratorClass<Company> companyClusterIterator = database.browseClass("Company");
     for (Company obj : companyClusterIterator) {
       if (obj.getId() == 1) {
         database.delete(obj);
@@ -216,8 +216,7 @@ public class CRUDObjectInheritanceTestSchemaFull extends ObjectDBBaseTest {
       }
     }
 
-    Assert.assertEquals(database.countClusterElements("Company"), startRecordNumber - 1);
-
+    Assert.assertEquals(database.countClass("Company"), startRecordNumber - 1);
   }
 
   @Test(dependsOnMethods = "deleteFirst")
@@ -271,8 +270,8 @@ public class CRUDObjectInheritanceTestSchemaFull extends ObjectDBBaseTest {
     database.save(a);
     database.save(b);
 
-    final List<InheritanceTestBaseClass> result1 = database.query(new OSQLSynchQuery<InheritanceTestBaseClass>(
-        "select from InheritanceTestBaseClass"));
+    final List<InheritanceTestBaseClass> result1 = database
+        .query(new OSQLSynchQuery<InheritanceTestBaseClass>("select from InheritanceTestBaseClass"));
     Assert.assertEquals(2, result1.size());
   }
 

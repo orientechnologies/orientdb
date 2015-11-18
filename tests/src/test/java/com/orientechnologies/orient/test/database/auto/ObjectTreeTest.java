@@ -15,25 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.object.metadata.schema.OSchemaProxyObject;
-import javassist.util.proxy.Proxy;
-
-import org.testng.Assert;
-import org.testng.annotations.*;
-
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.object.OObjectSerializer;
@@ -42,6 +23,7 @@ import com.orientechnologies.orient.object.db.OObjectDatabasePool;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 import com.orientechnologies.orient.object.iterator.OObjectIteratorClass;
+import com.orientechnologies.orient.object.metadata.schema.OSchemaProxyObject;
 import com.orientechnologies.orient.object.serialization.OObjectSerializerContext;
 import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper;
 import com.orientechnologies.orient.test.domain.base.Animal;
@@ -60,10 +42,28 @@ import com.orientechnologies.orient.test.domain.business.IdentityChild;
 import com.orientechnologies.orient.test.domain.customserialization.Sec;
 import com.orientechnologies.orient.test.domain.customserialization.SecurityRole;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
+import javassist.util.proxy.Proxy;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 import javax.persistence.Id;
 import javax.persistence.OneToOne;
 import javax.persistence.Version;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Test(groups = { "record-object" })
 public class ObjectTreeTest extends ObjectDBBaseTest {
@@ -206,8 +206,8 @@ public class ObjectTreeTest extends ObjectDBBaseTest {
 
   @Test
   public void testPersonSaving() {
-    final long beginProfiles = database.countClusterElements("Profile");
-    beginCities = database.countClusterElements("City");
+    final long beginProfiles = database.countClass("Profile");
+    beginCities = database.countClass("City");
 
     Country italy = database.newInstance(Country.class, "Italy");
 
@@ -218,12 +218,12 @@ public class ObjectTreeTest extends ObjectDBBaseTest {
     bonaparte.setLocation(database.newInstance(Address.class, "Residence", garibaldi.getLocation().getCity(), "Piazza di Spagna, 111"));
     database.save(bonaparte);
 
-    Assert.assertEquals(database.countClusterElements("Profile"), beginProfiles + 2);
+    Assert.assertEquals(database.countClass("Profile"), beginProfiles + 2);
   }
 
   @Test(dependsOnMethods = "testPersonSaving")
   public void testCitySaving() {
-    Assert.assertEquals(database.countClusterElements("City"), beginCities + 1);
+    Assert.assertEquals(database.countClass("City"), beginCities + 1);
   }
 
   @Test(dependsOnMethods = "testCitySaving")
@@ -270,7 +270,7 @@ public class ObjectTreeTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "testQueryCircular")
   public void testSaveMultiCircular() {
-    startRecordNumber = database.countClusterElements("Profile");
+    startRecordNumber = database.countClass("Profile");
 
     Profile bObama = database.newInstance(Profile.class, "ThePresident", "Barack", "Obama", null);
     bObama.setLocation(database.newInstance(Address.class, "Residence", database.newInstance(City.class, database.newInstance(Country.class, "Hawaii"), "Honolulu"), "unknown"));
@@ -283,7 +283,7 @@ public class ObjectTreeTest extends ObjectDBBaseTest {
   @SuppressWarnings("unchecked")
   @Test(dependsOnMethods = "testSaveMultiCircular")
   public void testQueryMultiCircular() {
-    Assert.assertEquals(database.countClusterElements("Profile"), startRecordNumber + 3);
+    Assert.assertEquals(database.countClass("Profile"), startRecordNumber + 3);
 
     List<ODocument> result = database.getUnderlying().command(new OSQLSynchQuery<ODocument>("select * from Profile where name = 'Barack' and surname = 'Obama'")).execute();
 

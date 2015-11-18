@@ -88,7 +88,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     record = database.newInstance();
 
     if (!database.existsCluster("Account"))
-      database.addCluster("Account");
+      database.getMetadata().getSchema().createClass("Account", 1, null);
 
     startRecordNumber = database.countClusterElements("Account");
 
@@ -101,7 +101,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     Assert.assertEquals(database.countClusterElements("Account"), 0);
 
     if (!database.existsCluster("Company"))
-      database.addCluster("Company");
+      database.getMetadata().getSchema().createClass("Company", 1, null);
   }
 
   @Test(dependsOnMethods = "cleanAll")

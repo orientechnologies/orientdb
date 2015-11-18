@@ -74,8 +74,8 @@ public class SchemaIndexTest extends DocumentDBBaseTest {
       Assert
           .assertTrue(e
               .getMessage()
-              .contains(
-                  "Class 'SchemaSharedIndexSuperTest' cannot be dropped because it has sub classes. Remove the dependencies before trying to drop it again"));
+              .startsWith(
+                  "Class 'SchemaSharedIndexSuperTest' cannot be dropped because it has sub classes"));
     }
 
     database.getMetadata().getSchema().reload();

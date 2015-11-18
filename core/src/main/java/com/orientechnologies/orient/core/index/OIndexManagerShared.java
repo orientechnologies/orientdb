@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OMultiKey;
@@ -33,7 +32,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.hashindex.local.OHashIndexFactory;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -59,11 +57,12 @@ import java.util.Set;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * @author Artem Orobets added composite index managemement
  */
-@SuppressFBWarnings("EQ_DOESNT_OVERRIDE_EQUALS") public class OIndexManagerShared extends OIndexManagerAbstract {
+@SuppressFBWarnings("EQ_DOESNT_OVERRIDE_EQUALS")
+public class OIndexManagerShared extends OIndexManagerAbstract {
   private static final long serialVersionUID = 1L;
 
-  protected volatile transient Thread  recreateIndexesThread = null;
-  private volatile             boolean rebuildCompleted      = false;
+  protected volatile transient Thread recreateIndexesThread = null;
+  private volatile boolean            rebuildCompleted      = false;
 
   public OIndexManagerShared(final ODatabaseDocument iDatabase) {
     super(iDatabase);
@@ -82,12 +81,18 @@ import java.util.Set;
   /**
    * Create a new index with default algorithm.
    *
-   * @param iName             - name of index
-   * @param iType             - index type. Specified by plugged index factories.
-   * @param indexDefinition   metadata that describes index structure
-   * @param clusterIdsToIndex ids of clusters that index should track for changes.
-   * @param progressListener  listener to track task progress.
-   * @param metadata          document with additional properties that can be used by index engine.
+   * @param iName
+   *          - name of index
+   * @param iType
+   *          - index type. Specified by plugged index factories.
+   * @param indexDefinition
+   *          metadata that describes index structure
+   * @param clusterIdsToIndex
+   *          ids of clusters that index should track for changes.
+   * @param progressListener
+   *          listener to track task progress.
+   * @param metadata
+   *          document with additional properties that can be used by index engine.
    * @return a newly created index instance
    */
   public OIndex<?> createIndex(final String iName, final String iType, final OIndexDefinition indexDefinition,
@@ -100,13 +105,20 @@ import java.util.Set;
    * <p>
    * May require quite a long time if big amount of data should be indexed.
    *
-   * @param iName             name of index
-   * @param type              index type. Specified by plugged index factories.
-   * @param indexDefinition   metadata that describes index structure
-   * @param clusterIdsToIndex ids of clusters that index should track for changes.
-   * @param progressListener  listener to track task progress.
-   * @param metadata          document with additional properties that can be used by index engine.
-   * @param algorithm         tip to an index factory what algorithm to use
+   * @param iName
+   *          name of index
+   * @param type
+   *          index type. Specified by plugged index factories.
+   * @param indexDefinition
+   *          metadata that describes index structure
+   * @param clusterIdsToIndex
+   *          ids of clusters that index should track for changes.
+   * @param progressListener
+   *          listener to track task progress.
+   * @param metadata
+   *          document with additional properties that can be used by index engine.
+   * @param algorithm
+   *          tip to an index factory what algorithm to use
    * @return a newly created index instance
    */
   public OIndex<?> createIndex(final String iName, String type, final OIndexDefinition indexDefinition,
@@ -149,8 +161,8 @@ import java.util.Set;
       }
 
       // decide which cluster to use ("index" - for automatic and "manindex" for manual)
-      final String clusterName =
-          indexDefinition != null && indexDefinition.getClassName() != null ? defaultClusterName : manualClusterName;
+      final String clusterName = indexDefinition != null && indexDefinition.getClassName() != null ? defaultClusterName
+          : manualClusterName;
 
       index = OIndexes.createIndex(getDatabase(), iName, type, algorithm, valueContainerAlgorithm, metadata, -1);
       if (progressListener == null)
@@ -237,7 +249,8 @@ import java.util.Set;
   /**
    * Binds POJO to ODocument.
    */
-  @Override public ODocument toStream() {
+  @Override
+  public ODocument toStream() {
     acquireExclusiveLock();
     try {
       document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
@@ -261,7 +274,8 @@ import java.util.Set;
     }
   }
 
-  @Override public void recreateIndexes() {
+  @Override
+  public void recreateIndexes() {
     acquireExclusiveLock();
     try {
       if (recreateIndexesThread != null && recreateIndexesThread.isAlive())
@@ -291,7 +305,8 @@ import java.util.Set;
     }
   }
 
-  @Override public void waitTillIndexRestore() {
+  @Override
+  public void waitTillIndexRestore() {
     if (recreateIndexesThread != null && recreateIndexesThread.isAlive()) {
       if (Thread.currentThread().equals(recreateIndexesThread))
         return;
@@ -321,7 +336,8 @@ import java.util.Set;
     return false;
   }
 
-  @Override protected void fromStream() {
+  @Override
+  protected void fromStream() {
     acquireExclusiveLock();
     try {
       final Map<String, OIndex<?>> oldIndexes = new HashMap<String, OIndex<?>>(indexes);
@@ -337,16 +353,16 @@ import java.util.Set;
         while (indexConfigurationIterator.hasNext()) {
           final ODocument d = indexConfigurationIterator.next();
           try {
-            final int indexVersion =
-                d.field(OIndexInternal.INDEX_VERSION) == null ? 1 : (Integer) d.field(OIndexInternal.INDEX_VERSION);
+            final int indexVersion = d.field(OIndexInternal.INDEX_VERSION) == null ? 1
+                : (Integer) d.field(OIndexInternal.INDEX_VERSION);
 
-            OIndexInternal.IndexMetadata newIndexMetadata = OIndexAbstract
-                .loadMetadataInternal(d, (String) d.field(OIndexInternal.CONFIG_TYPE), (String) d.field(OIndexInternal.ALGORITHM),
-                    d.<String>field(OIndexInternal.VALUE_CONTAINER_ALGORITHM));
+            OIndexInternal.IndexMetadata newIndexMetadata = OIndexAbstract.loadMetadataInternal(d,
+                (String) d.field(OIndexInternal.CONFIG_TYPE), (String) d.field(OIndexInternal.ALGORITHM),
+                d.<String> field(OIndexInternal.VALUE_CONTAINER_ALGORITHM));
 
-            index = OIndexes
-                .createIndex(getDatabase(), newIndexMetadata.getName(), newIndexMetadata.getType(), newIndexMetadata.getAlgorithm(),
-                    newIndexMetadata.getValueContainerAlgorithm(), (ODocument) d.field(OIndexInternal.METADATA), indexVersion);
+            index = OIndexes.createIndex(getDatabase(), newIndexMetadata.getName(), newIndexMetadata.getType(),
+                newIndexMetadata.getAlgorithm(), newIndexMetadata.getValueContainerAlgorithm(),
+                (ODocument) d.field(OIndexInternal.METADATA), indexVersion);
 
             final String normalizedName = newIndexMetadata.getName().toLowerCase(locale);
 
@@ -448,15 +464,16 @@ import java.util.Set;
   private class RecreateIndexesTask implements Runnable {
     private final ODatabaseDocumentTx newDb;
     private final ODocument           doc;
-    private       int                 ok;
-    private       int                 errors;
+    private int                       ok;
+    private int                       errors;
 
     public RecreateIndexesTask(ODatabaseDocumentTx newDb, ODocument doc) {
       this.newDb = newDb;
       this.doc = doc;
     }
 
-    @Override public void run() {
+    @Override
+    public void run() {
       try {
         setUpDatabase();
 
@@ -494,6 +511,25 @@ import java.util.Set;
 
     private void recreateIndex(ODocument idx) {
       final OIndexInternal<?> index = createIndex(idx);
+
+      try {
+        index.delete();
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "Error on removing index '%s' on rebuilding. Trying removing index files (Cause: %s)",
+            index.getName(), e);
+
+        // TRY DELETING ALL THE FILES RELATIVE TO THE INDEX
+        for (Iterator<OIndexFactory> it = OIndexes.getAllFactories(); it.hasNext();) {
+          try {
+            final OIndexFactory indexFactory = it.next();
+            final OIndexEngine engine = indexFactory.createIndexEngine(null, index.getName(), false, getDatabase().getStorage(), 0,
+                null);
+
+            engine.deleteWithoutLoad(index.getName());
+          } catch (Exception e2) {
+          }
+        }
+      }
 
       OIndexInternal.IndexMetadata indexMetadata = index.loadMetadata(idx);
       OIndexDefinition indexDefinition = indexMetadata.getIndexDefinition();

@@ -94,7 +94,7 @@ public class OCommandExecutorSQLSelectTest {
     db.command(new OCommandSQL("insert into bar (name, foo) values ('n', 4)")).execute();
     db.command(new OCommandSQL("insert into bar (name, foo) values ('o', 5)")).execute();
 
-    db.command(new OCommandSQL("CREATE class ridsorttest")).execute();
+    db.command(new OCommandSQL("CREATE class ridsorttest clusters 1")).execute();
     db.command(new OCommandSQL("CREATE property ridsorttest.name INTEGER")).execute();
     db.command(new OCommandSQL("CREATE index ridsorttest_name on ridsorttest (name) NOTUNIQUE")).execute();
 
@@ -143,7 +143,7 @@ public class OCommandExecutorSQLSelectTest {
     // /*** from issue #2743
     OSchema schema = db.getMetadata().getSchema();
     if (!schema.existsClass("alphabet")) {
-      schema.createClass("alphabet");
+      schema.createClass("alphabet", 1, null);
     }
 
     ORecordIteratorClass<ODocument> iter = db.browseClass("alphabet");
@@ -173,12 +173,22 @@ public class OCommandExecutorSQLSelectTest {
     initDatesSet(db);
 
     initMatchesWithRegex(db);
+    initDistinctLimit(db);
   }
 
   private void initMatchesWithRegex(ODatabaseInternal<ORecord> db) {
     db.command(new OCommandSQL("CREATE class matchesstuff")).execute();
 
     db.command(new OCommandSQL("insert into matchesstuff (name, foo) values ('admin[name]', 1)")).execute();
+  }
+
+  private void initDistinctLimit(ODatabaseInternal<ORecord> db) {
+    db.command(new OCommandSQL("CREATE class DistinctLimit")).execute();
+
+    db.command(new OCommandSQL("insert into DistinctLimit (name, foo) values ('one', 1)")).execute();
+    db.command(new OCommandSQL("insert into DistinctLimit (name, foo) values ('one', 1)")).execute();
+    db.command(new OCommandSQL("insert into DistinctLimit (name, foo) values ('two', 2)")).execute();
+    db.command(new OCommandSQL("insert into DistinctLimit (name, foo) values ('two', 2)")).execute();
   }
 
   private void initDatesSet(ODatabaseDocumentTx db) {
@@ -188,7 +198,7 @@ public class OCommandExecutorSQLSelectTest {
   }
 
   private void initMassiveOrderSkipLimit(ODatabaseDocumentTx db) {
-    db.getMetadata().getSchema().createClass("MassiveOrderSkipLimit");
+    db.getMetadata().getSchema().createClass("MassiveOrderSkipLimit", 1, null);
     db.declareIntent(new OIntentMassiveInsert());
     String fieldValue = "laskdf lkajsd flaksjdf laksjd flakjsd flkasjd flkajsd flkajsd flkajsd flkajsd flkajsd flkjas;lkj a;ldskjf laksdj asdklasdjf lskdaj fladsd";
     for (int i = 0; i < ORDER_SKIP_LIMIT_ITEMS; i++) {
@@ -207,7 +217,7 @@ public class OCommandExecutorSQLSelectTest {
   }
 
   private void initExpandSkipLimit(ODatabaseDocumentTx db) {
-    db.getMetadata().getSchema().createClass("ExpandSkipLimit");
+    db.command(new OCommandSQL("create class ExpandSkipLimit clusters 1")).execute();
 
     for (int i = 0; i < 5; i++) {
       ODocument doc = new ODocument("ExpandSkipLimit");
@@ -935,6 +945,26 @@ public class OCommandExecutorSQLSelectTest {
     params.put("param1",  Pattern.quote("adm") + ".*");
     results = db.query(sql, params);
     assertEquals(results.size(), 1);
+  }
+
+  @Test
+  public void testDistinctLimit(){
+    OSQLSynchQuery sql = new OSQLSynchQuery("select distinct(name) from DistinctLimit limit 1");
+    List<ODocument> results = db.query(sql);
+    assertEquals(results.size(), 1);
+
+    sql = new OSQLSynchQuery("select distinct(name) from DistinctLimit limit 2");
+    results = db.query(sql);
+    assertEquals(results.size(), 2);
+
+    sql = new OSQLSynchQuery("select distinct(name) from DistinctLimit limit 3");
+    results = db.query(sql);
+    assertEquals(results.size(), 2);
+
+    sql = new OSQLSynchQuery("select distinct(name) from DistinctLimit limit -1");
+    results = db.query(sql);
+    assertEquals(results.size(), 2);
+
   }
 
   private long indexUsages(ODatabaseDocumentTx db) {

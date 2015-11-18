@@ -35,7 +35,7 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodField;
-import com.orientechnologies.orient.core.sql.methods.OSQLMethodRuntime;
+import com.orientechnologies.orient.core.sql.method.OSQLMethodRuntime;
 
 import java.util.ArrayList;
 import java.util.Collection;

@@ -33,7 +33,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.OBinaryField;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodField;
-import com.orientechnologies.orient.core.sql.methods.OSQLMethodRuntime;
+import com.orientechnologies.orient.core.sql.method.OSQLMethodRuntime;
 
 import java.util.Set;
 
