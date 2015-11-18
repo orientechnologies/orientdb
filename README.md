@@ -13,3 +13,11 @@ The main area that need some more work is index lookups - currently it does find
 
 ## Usage
 Have a look at the tests-scala which demonstrates the usage. There's also an orientdb example project in [gremlin-scala-examples](https://github.com/mpollmeier/gremlin-scala-examples).
+
+## Labels and classes
+Vertices and Edges are stored as classes based on their label. In order to allow vertices and edges to use the same label, the driver prepends `V_` or `E_` in the class name:
+* vertex with label `user` -> classname `V_user`
+* edge with label `user` -> classname `E_user`
+
+## Migrations
+You might want to use [orientdb-migrations](https://github.com/springnz/orientdb-migrations) to create a schema with indexes etc. 
