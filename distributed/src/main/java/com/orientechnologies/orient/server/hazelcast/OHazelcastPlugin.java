@@ -1012,7 +1012,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
     // MOVE DIRECTORY TO ../backup/databases/<db-name>
     final String backupDirectory = OGlobalConfiguration.DISTRIBUTED_BACKUP_DIRECTORY.getValueAsString();
-    if (backupDirectory == null || backupDirectory.isEmpty())
+    if (backupDirectory == null || backupDirectory.trim().isEmpty())
       // SKIP BACKUP
       return;
 

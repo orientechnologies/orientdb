@@ -15,15 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -43,6 +34,14 @@ import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * If some of the tests start to fail then check cluster number in queries, e.g #7:1. It can be because the order of clusters could
@@ -67,12 +66,20 @@ public class SQLSelectTest extends AbstractSelectTest {
   @BeforeClass
   public void init() {
     if (!database.getMetadata().getSchema().existsClass("Profile")) {
-      database.getMetadata().getSchema().createClass("Profile");
+      database.getMetadata().getSchema().createClass("Profile",1,null);
 
       for (int i = 0; i < 1000; ++i) {
         database.newInstance("Profile").field("test", i).field("name", "N" + i).save();
       }
     }
+
+    if (!database.getMetadata().getSchema().existsClass("company")) {
+      database.getMetadata().getSchema().createClass("company",1,null);
+      for (int i = 0; i < 20; ++i)
+        new ODocument("company").field("id", i).save();
+    }
+
+    database.getMetadata().getSchema().getOrCreateClass("Account");
   }
 
   @Test
@@ -1121,20 +1128,24 @@ public class SQLSelectTest extends AbstractSelectTest {
   @Test
   public void testBetweenWithParameters() {
 
-    final List<ODocument> result = executeQuery("select * from company where id between ? and ?", database, 4, 7);
-    Assert.assertEquals(result.size(), 4);
+    final List<ODocument> result = executeQuery("select * from company where id between ? and ? and salary is not null", database, 4, 7);
+
+    System.out.println("testBetweenWithParameters:");
+    for (ODocument d : result)
+      System.out.println(d);
+
+    Assert.assertEquals(result.size(), 4, "Found: " + result);
 
     final List<Integer> resultsList = new ArrayList<Integer>(Arrays.asList(4, 5, 6, 7));
     for (final ODocument record : result) {
       resultsList.remove(record.<Integer> field("id"));
     }
-
   }
 
   @Test
   public void testInWithParameters() {
 
-    final List<ODocument> result = executeQuery("select * from company where id in [?, ?, ?, ?]", database, 4, 5, 6, 7);
+    final List<ODocument> result = executeQuery("select * from company where id in [?, ?, ?, ?] and salary is not null", database, 4, 5, 6, 7);
 
     Assert.assertEquals(result.size(), 4);
 
@@ -1150,7 +1161,7 @@ public class SQLSelectTest extends AbstractSelectTest {
 
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("id", 4);
-    final List<ODocument> result = executeQuery("select * from company where id = :id", database, params);
+    final List<ODocument> result = executeQuery("select * from company where id = :id and salary is not null", database, params);
 
     Assert.assertEquals(result.size(), 1);
   }
@@ -1320,7 +1331,7 @@ public class SQLSelectTest extends AbstractSelectTest {
 
   @Test
   public void testSelectFromListParameter() {
-    OClass placeClass = database.getMetadata().getSchema().createClass("Place");
+    OClass placeClass = database.getMetadata().getSchema().createClass("Place",1,null);
     placeClass.createProperty("id", OType.STRING);
     placeClass.createProperty("descr", OType.STRING);
     placeClass.createIndex("place_id_index", INDEX_TYPE.UNIQUE, "id");
@@ -1349,7 +1360,7 @@ public class SQLSelectTest extends AbstractSelectTest {
 
   @Test
   public void testSelectRidFromListParameter() {
-    OClass placeClass = database.getMetadata().getSchema().createClass("Place");
+    OClass placeClass = database.getMetadata().getSchema().createClass("Place",1,null);
     placeClass.createProperty("id", OType.STRING);
     placeClass.createProperty("descr", OType.STRING);
     placeClass.createIndex("place_id_index", INDEX_TYPE.UNIQUE, "id");
@@ -1379,8 +1390,8 @@ public class SQLSelectTest extends AbstractSelectTest {
 
   @Test
   public void testSelectRidInList() {
-    OClass placeClass = database.getMetadata().getSchema().createClass("Place");
-    database.getMetadata().getSchema().createClass("FamousPlace", placeClass);
+    OClass placeClass = database.getMetadata().getSchema().createClass("Place",1,null);
+    database.getMetadata().getSchema().createClass("FamousPlace", 1, placeClass);
 
     ODocument firstPlace = new ODocument("Place");
     database.save(firstPlace);
@@ -1407,21 +1418,13 @@ public class SQLSelectTest extends AbstractSelectTest {
   public void testMapKeys() {
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("id", 4);
-    final List<ODocument> result = executeQuery("select * from company where id = :id", database, params);
+    final List<ODocument> result = executeQuery("select * from company where id = :id and salary is not null", database, params);
 
     Assert.assertEquals(result.size(), 1);
   }
 
   @Test
   public void queryAsynch() {
-    if (!database.getMetadata().getSchema().existsClass("company")) {
-      database.getMetadata().getSchema().getOrCreateClass("company");
-      for (int i = 0; i < 20; ++i)
-        new ODocument("company").field("id", i).save();
-    }
-
-    database.getMetadata().getSchema().getOrCreateClass("Account");
-
     final String sqlOne = "select * from company where id between 4 and 7";
     final String sqlTwo = "select $names let $names = (select EXPAND( addresses.city ) as city from Account where addresses.size() > 0 )";
 

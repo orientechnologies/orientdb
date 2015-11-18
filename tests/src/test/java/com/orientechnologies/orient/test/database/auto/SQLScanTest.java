@@ -48,6 +48,8 @@ public class SQLScanTest extends DocumentDBBaseTest {
     if (skipTestIfRemote())
       return;
 
+    database.getMetadata().getSchema().createClass("TestScan", 1, null);
+
     for (int i = 0; i < 10000; ++i) {
       new ODocument("TestScan").field("id", i).field("age", i % 10).save();
     }

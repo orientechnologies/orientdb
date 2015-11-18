@@ -16,21 +16,13 @@
  */
 package com.orientechnologies.orient.object.metadata.schema;
 
-import java.lang.reflect.Field;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import javassist.util.proxy.Proxy;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.reflection.OReflectionHelper;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.entity.OEntityManager;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
@@ -43,6 +35,13 @@ import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
+import javassist.util.proxy.Proxy;
+
+import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author luca.molino
@@ -72,11 +71,6 @@ public class OSchemaProxyObject implements OSchema {
   }
 
   @Override
-  public OClass createClass(Class<?> iClass, int iDefaultClusterId) {
-    return underlying.createClass(iClass, iDefaultClusterId);
-  }
-
-  @Override
   public OClass createClass(String iClassName) {
     return underlying.createClass(iClassName);
   }
@@ -89,16 +83,6 @@ public class OSchemaProxyObject implements OSchema {
   @Override
   public OClass createClass(String iClassName, OClass... superClasses) {
     return underlying.createClass(iClassName, superClasses);
-  }
-
-  @Override
-  public OClass createClass(String iClassName, int iDefaultClusterId) {
-    return underlying.createClass(iClassName, iDefaultClusterId);
-  }
-
-  @Override
-  public OClass createClass(String iClassName, OClass iSuperClass, int iDefaultClusterId) {
-    return underlying.createClass(iClassName, iSuperClass, iDefaultClusterId);
   }
 
   @Override
@@ -205,6 +189,11 @@ public class OSchemaProxyObject implements OSchema {
   @Override
   public Set<OClass> getClassesRelyOnCluster(String iClusterName) {
     return underlying.getClassesRelyOnCluster(iClusterName);
+  }
+
+  @Override
+  public OClass createClass(String className, int clusters, OClass... superClasses) {
+    return underlying.createClass(className, clusters, superClasses);
   }
 
   public OSchema getUnderlying() {
@@ -456,7 +445,8 @@ public class OSchemaProxyObject implements OSchema {
     }
   }
 
-  protected static void generateLinkProperty(ODatabaseDocument database, OClass schema, String field, OType t, Class<?> linkedClazz) {
+  protected static void generateLinkProperty(ODatabaseDocument database, OClass schema, String field, OType t,
+      Class<?> linkedClazz) {
     OClass linkedClass = database.getMetadata().getSchema().getClass(linkedClazz);
     if (linkedClass == null) {
       OObjectEntitySerializer.registerClass(linkedClazz);

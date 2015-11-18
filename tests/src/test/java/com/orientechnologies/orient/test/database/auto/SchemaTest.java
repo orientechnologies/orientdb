@@ -410,9 +410,9 @@ public class SchemaTest extends DocumentDBBaseTest {
 
       database.reload();
 
-      Assert.assertFalse(database.existsCluster("multipleclusters"));
+      Assert.assertTrue(database.existsCluster("multipleclusters"));
 
-      for (int i = 0; i < 3; ++i) {
+      for (int i = 1; i < 3; ++i) {
         Assert.assertTrue(database.existsCluster("multipleclusters_" + i));
       }
 
@@ -421,7 +421,8 @@ public class SchemaTest extends DocumentDBBaseTest {
       }
 
       // CHECK THERE ARE 2 RECORDS IN EACH CLUSTER (ROUND-ROBIN STRATEGY)
-      for (int i = 0; i < 3; ++i) {
+      Assert.assertEquals(database.countClusterElements(database.getClusterIdByName("multipleclusters")), 2);
+      for (int i = 1; i < 3; ++i) {
         Assert.assertEquals(database.countClusterElements(database.getClusterIdByName("multipleclusters_" + i)), 2);
       }
 
@@ -442,7 +443,7 @@ public class SchemaTest extends DocumentDBBaseTest {
 
     } finally {
       // RESTORE DEFAULT
-      database.command(new OCommandSQL("alter database minimumclusters 1")).execute();
+      database.command(new OCommandSQL("alter database minimumclusters 0")).execute();
 
     }
   }
@@ -475,7 +476,7 @@ public class SchemaTest extends DocumentDBBaseTest {
     Assert.assertFalse(changed);
 
     // PUT IT OFFLINE
-    changed = database.command(new OCommandSQL("alter cluster TestOffline status offline")).execute();
+    changed = database.command(new OCommandSQL("alter cluster TestOffline* status offline")).execute();
     Assert.assertTrue(changed);
 
     // NO DATA?
@@ -484,7 +485,7 @@ public class SchemaTest extends DocumentDBBaseTest {
     Assert.assertTrue(result.isEmpty());
 
     // TEST NO EFFECTS
-    changed = database.command(new OCommandSQL("alter cluster TestOffline status offline")).execute();
+    changed = database.command(new OCommandSQL("alter cluster TestOffline* status offline")).execute();
     Assert.assertFalse(changed);
 
     // TEST SAVING OF OFFLINE STATUS

@@ -15,20 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import static com.orientechnologies.DatabaseAbstractTest.getEnvironment;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.Vector;
-
-import org.testng.Assert;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.DatabaseAbstractTest;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -46,6 +32,19 @@ import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.test.domain.business.Account;
 import com.orientechnologies.orient.test.domain.business.Address;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import org.testng.Assert;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.Vector;
+
+import static com.orientechnologies.DatabaseAbstractTest.getEnvironment;
 
 @Test
 public class TransactionConsistencyTest extends DocumentDBBaseTest {
@@ -338,8 +337,8 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
   public void createLinkInTx() {
     database = new ODatabaseDocumentTx(url).open("admin", "admin");
 
-    OClass profile = database.getMetadata().getSchema().createClass("MyProfile", database.addCluster("myprofile"));
-    OClass edge = database.getMetadata().getSchema().createClass("MyEdge", database.addCluster("myedge"));
+    OClass profile = database.getMetadata().getSchema().createClass("MyProfile", 1, null);
+    OClass edge = database.getMetadata().getSchema().createClass("MyEdge", 1, null);
     profile.createProperty("name", OType.STRING).setMin("3").setMax("30").createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
     profile.createProperty("surname", OType.STRING).setMin("3").setMax("30");
     profile.createProperty("in", OType.LINKSET, edge);

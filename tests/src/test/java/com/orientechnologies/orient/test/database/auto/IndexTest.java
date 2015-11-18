@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.DatabaseAbstractTest;
-import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.client.remote.OStorageRemoteThread;
 import com.orientechnologies.orient.core.Orient;
@@ -25,7 +24,12 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexFactory;
+import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.index.OIndexes;
+import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
@@ -40,7 +44,6 @@ import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
-import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 import com.orientechnologies.orient.test.database.base.OrientTest;
 import com.orientechnologies.orient.test.domain.business.Account;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
@@ -48,7 +51,6 @@ import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
-
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Optional;
@@ -673,8 +675,8 @@ public class IndexTest extends ObjectDBBaseTest {
     db.open("admin", "admin");
 
     if (!db.getMetadata().getSchema().existsClass("TestClass")) {
-      OClass testClass = db.getMetadata().getSchema().createClass("TestClass");
-      OClass testLinkClass = db.getMetadata().getSchema().createClass("TestLinkClass");
+      OClass testClass = db.getMetadata().getSchema().createClass("TestClass",1,null);
+      OClass testLinkClass = db.getMetadata().getSchema().createClass("TestLinkClass",1,null);
       testClass.createProperty("testLink", OType.LINK, testLinkClass).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
       testClass.createProperty("name", OType.STRING).createIndex(OClass.INDEX_TYPE.UNIQUE);
       testLinkClass.createProperty("testBoolean", OType.BOOLEAN);
@@ -731,7 +733,7 @@ public class IndexTest extends ObjectDBBaseTest {
     ODatabaseDocument db = new ODatabaseDocumentTx(database.getURL());
     db.open("admin", "admin");
 
-    OClass pClass = db.getMetadata().getSchema().createClass("Person2");
+    OClass pClass = db.getMetadata().getSchema().createClass("Person2",1,null);
     pClass.createProperty("firstName", OType.STRING);
     pClass.createProperty("lastName", OType.STRING);
     pClass.createProperty("age", OType.INTEGER);
@@ -751,7 +753,7 @@ public class IndexTest extends ObjectDBBaseTest {
     db.open("admin", "admin");
 
     if (!db.getMetadata().getSchema().existsClass("MyFruit")) {
-      OClass fruitClass = db.getMetadata().getSchema().createClass("MyFruit");
+      OClass fruitClass = db.getMetadata().getSchema().createClass("MyFruit",1,null);
       fruitClass.createProperty("name", OType.STRING);
       fruitClass.createProperty("color", OType.STRING);
 
@@ -803,7 +805,7 @@ public class IndexTest extends ObjectDBBaseTest {
     db.open("admin", "admin");
 
     if (!db.getMetadata().getSchema().existsClass("IndexTestTerm")) {
-      final OClass termClass = db.getMetadata().getSchema().createClass("IndexTestTerm");
+      final OClass termClass = db.getMetadata().getSchema().createClass("IndexTestTerm",1,null);
       termClass.createProperty("label", OType.STRING);
       termClass.createIndex("idxTerm", INDEX_TYPE.UNIQUE, "label");
 
@@ -824,7 +826,7 @@ public class IndexTest extends ObjectDBBaseTest {
     db.open("admin", "admin");
 
     if (!db.getMetadata().getSchema().existsClass("TransactionUniqueIndexTest")) {
-      final OClass termClass = db.getMetadata().getSchema().createClass("TransactionUniqueIndexTest");
+      final OClass termClass = db.getMetadata().getSchema().createClass("TransactionUniqueIndexTest",1,null);
       termClass.createProperty("label", OType.STRING);
       termClass.createIndex("idxTransactionUniqueIndexTest", INDEX_TYPE.UNIQUE, "label");
       db.getMetadata().getSchema().save();
@@ -860,7 +862,7 @@ public class IndexTest extends ObjectDBBaseTest {
     db.open("admin", "admin");
 
     if (!db.getMetadata().getSchema().existsClass("TransactionUniqueIndexTest")) {
-      final OClass termClass = db.getMetadata().getSchema().createClass("TransactionUniqueIndexTest");
+      final OClass termClass = db.getMetadata().getSchema().createClass("TransactionUniqueIndexTest",1,null);
       termClass.createProperty("label", OType.STRING);
       termClass.createIndex("idxTransactionUniqueIndexTest", INDEX_TYPE.UNIQUE, "label");
       db.getMetadata().getSchema().save();
@@ -897,7 +899,7 @@ public class IndexTest extends ObjectDBBaseTest {
     db.open("admin", "admin");
 
     if (!db.getMetadata().getSchema().existsClass("TransactionUniqueIndexWithDotTest")) {
-      final OClass termClass = db.getMetadata().getSchema().createClass("TransactionUniqueIndexWithDotTest");
+      final OClass termClass = db.getMetadata().getSchema().createClass("TransactionUniqueIndexWithDotTest",1,null);
       termClass.createProperty("label", OType.STRING).createIndex(INDEX_TYPE.UNIQUE);
       db.getMetadata().getSchema().save();
     }
@@ -937,7 +939,7 @@ public class IndexTest extends ObjectDBBaseTest {
     db.open("admin", "admin");
 
     if (!db.getMetadata().getSchema().existsClass("TransactionUniqueIndexWithDotTest")) {
-      final OClass termClass = db.getMetadata().getSchema().createClass("TransactionUniqueIndexWithDotTest");
+      final OClass termClass = db.getMetadata().getSchema().createClass("TransactionUniqueIndexWithDotTest",1,null);
       termClass.createProperty("label", OType.STRING).createIndex(INDEX_TYPE.UNIQUE);
       db.getMetadata().getSchema().save();
     }
@@ -1003,9 +1005,9 @@ public class IndexTest extends ObjectDBBaseTest {
       db.open("admin", "admin");
 
       if (!db.getMetadata().getSchema().existsClass("BaseTestClass")) {
-        OClass baseClass = db.getMetadata().getSchema().createClass("BaseTestClass");
-        OClass childClass = db.getMetadata().getSchema().createClass("ChildTestClass");
-        OClass anotherChildClass = db.getMetadata().getSchema().createClass("AnotherChildTestClass");
+        OClass baseClass = db.getMetadata().getSchema().createClass("BaseTestClass",1,null);
+        OClass childClass = db.getMetadata().getSchema().createClass("ChildTestClass",1,null);
+        OClass anotherChildClass = db.getMetadata().getSchema().createClass("AnotherChildTestClass",1,null);
 
         if (!baseClass.isSuperClassOf(childClass))
           childClass.setSuperClass(baseClass);
@@ -1056,7 +1058,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
     ODatabaseDocumentTx db = (ODatabaseDocumentTx) database.getUnderlying();
 
-    database.getMetadata().getSchema().createClass("ManualIndexTxClass");
+    database.getMetadata().getSchema().createClass("ManualIndexTxClass",1,null);
 
     OIndexManager idxManager = db.getMetadata().getIndexManager();
     OIndexFactory indexFactory = OIndexes.getFactory("UNIQUE", null);
@@ -1099,7 +1101,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
     ODatabaseDocumentTx db = (ODatabaseDocumentTx) database.getUnderlying();
 
-    database.getMetadata().getSchema().createClass("ManualIndexTxRecursiveStoreClass");
+    database.getMetadata().getSchema().createClass("ManualIndexTxRecursiveStoreClass",1,null);
 
     OIndexManager idxManager = db.getMetadata().getIndexManager();
     OIndexFactory factory = OIndexes.getFactory("UNIQUE", null);
@@ -1258,8 +1260,8 @@ public class IndexTest extends ObjectDBBaseTest {
 
   @Test
   public void testIndexInCompositeQuery() {
-    OClass classOne = database.getMetadata().getSchema().createClass("CompoundSQLIndexTest1");
-    OClass classTwo = database.getMetadata().getSchema().createClass("CompoundSQLIndexTest2");
+    OClass classOne = database.getMetadata().getSchema().createClass("CompoundSQLIndexTest1",1,null);
+    OClass classTwo = database.getMetadata().getSchema().createClass("CompoundSQLIndexTest2",1,null);
 
     classTwo.createProperty("address", OType.LINK, classOne);
 
@@ -1286,7 +1288,7 @@ public class IndexTest extends ObjectDBBaseTest {
     ODatabaseDocumentTx databaseDocumentTx = (ODatabaseDocumentTx) database.getUnderlying();
 
     final OSchema schema = databaseDocumentTx.getMetadata().getSchema();
-    final OClass indexWithLimitAndOffset = schema.createClass("IndexWithLimitAndOffsetClass");
+    final OClass indexWithLimitAndOffset = schema.createClass("IndexWithLimitAndOffsetClass", 1, null);
     indexWithLimitAndOffset.createProperty("val", OType.INTEGER);
     indexWithLimitAndOffset.createProperty("index", OType.INTEGER);
 
@@ -1315,7 +1317,7 @@ public class IndexTest extends ObjectDBBaseTest {
     ODatabaseDocumentTx databaseDocumentTx = (ODatabaseDocumentTx) database.getUnderlying();
 
     final OSchema schema = databaseDocumentTx.getMetadata().getSchema();
-    final OClass indexPaginationTest = schema.createClass("IndexPaginationTestClass");
+    final OClass indexPaginationTest = schema.createClass("IndexPaginationTestClass",1,null);
     indexPaginationTest.createProperty("prop", OType.INTEGER);
     indexPaginationTest.createIndex("IndexPaginationTest", INDEX_TYPE.UNIQUE, "prop", "@rid");
 
@@ -1374,7 +1376,7 @@ public class IndexTest extends ObjectDBBaseTest {
     ODatabaseDocumentTx databaseDocumentTx = (ODatabaseDocumentTx) database.getUnderlying();
 
     final OSchema schema = databaseDocumentTx.getMetadata().getSchema();
-    final OClass indexPaginationTest = schema.createClass("IndexPaginationTestDescOrderClass");
+    final OClass indexPaginationTest = schema.createClass("IndexPaginationTestDescOrderClass",1,null);
     indexPaginationTest.createProperty("prop", OType.INTEGER);
     indexPaginationTest.createIndex("IndexPaginationTestDescOrder", INDEX_TYPE.UNIQUE, "prop", "@rid");
 
@@ -1434,7 +1436,7 @@ public class IndexTest extends ObjectDBBaseTest {
     final ODatabaseDocumentTx databaseDocumentTx = (ODatabaseDocumentTx) database.getUnderlying();
 
     final OSchema schema = databaseDocumentTx.getMetadata().getSchema();
-    final OClass clazz = schema.createClass("NullIndexKeysSupport");
+    final OClass clazz = schema.createClass("NullIndexKeysSupport",1,null);
     clazz.createProperty("nullField", OType.STRING);
 
     ODocument metadata = new ODocument();
@@ -1474,7 +1476,7 @@ public class IndexTest extends ObjectDBBaseTest {
     final ODatabaseDocumentTx databaseDocumentTx = (ODatabaseDocumentTx) database.getUnderlying();
 
     final OSchema schema = databaseDocumentTx.getMetadata().getSchema();
-    final OClass clazz = schema.createClass("NullHashIndexKeysSupport");
+    final OClass clazz = schema.createClass("NullHashIndexKeysSupport", 1, null);
     clazz.createProperty("nullField", OType.STRING);
 
     ODocument metadata = new ODocument();
@@ -1516,7 +1518,7 @@ public class IndexTest extends ObjectDBBaseTest {
     final ODatabaseDocumentTx databaseDocumentTx = (ODatabaseDocumentTx) database.getUnderlying();
 
     final OSchema schema = databaseDocumentTx.getMetadata().getSchema();
-    final OClass clazz = schema.createClass("NullIndexKeysSupportInTx");
+    final OClass clazz = schema.createClass("NullIndexKeysSupportInTx",1,null);
     clazz.createProperty("nullField", OType.STRING);
 
     ODocument metadata = new ODocument();
@@ -1566,7 +1568,7 @@ public class IndexTest extends ObjectDBBaseTest {
     final ODatabaseDocumentTx databaseDocumentTx = (ODatabaseDocumentTx) database.getUnderlying();
 
     final OSchema schema = databaseDocumentTx.getMetadata().getSchema();
-    final OClass clazz = schema.createClass("NullIndexKeysSupportInMiddleTx");
+    final OClass clazz = schema.createClass("NullIndexKeysSupportInMiddleTx",1,null);
     clazz.createProperty("nullField", OType.STRING);
 
     ODocument metadata = new ODocument();
@@ -1651,7 +1653,7 @@ public class IndexTest extends ObjectDBBaseTest {
       return;
 
     final OSchema schema = database.getMetadata().getSchema();
-    OClass clazz = schema.createClass("ValuesContainerIsRemovedIfIndexIsRemovedClass");
+    OClass clazz = schema.createClass("ValuesContainerIsRemovedIfIndexIsRemovedClass",1,null);
     clazz.createProperty("val", OType.STRING);
 
     database
@@ -1731,7 +1733,7 @@ public class IndexTest extends ObjectDBBaseTest {
   }
 
   public void testEmptyNotUniqueIndex() {
-    OClass emptyNotUniqueIndexClazz = database.getMetadata().getSchema().createClass("EmptyNotUniqueIndexTest");
+    OClass emptyNotUniqueIndexClazz = database.getMetadata().getSchema().createClass("EmptyNotUniqueIndexTest",1,null);
     emptyNotUniqueIndexClazz.createProperty("prop", OType.STRING);
 
     final OIndex notUniqueIndex = emptyNotUniqueIndexClazz.createIndex("EmptyNotUniqueIndexTestIndex",

@@ -94,7 +94,7 @@ public class OCommandExecutorSQLSelectTest {
     db.command(new OCommandSQL("insert into bar (name, foo) values ('n', 4)")).execute();
     db.command(new OCommandSQL("insert into bar (name, foo) values ('o', 5)")).execute();
 
-    db.command(new OCommandSQL("CREATE class ridsorttest")).execute();
+    db.command(new OCommandSQL("CREATE class ridsorttest clusters 1")).execute();
     db.command(new OCommandSQL("CREATE property ridsorttest.name INTEGER")).execute();
     db.command(new OCommandSQL("CREATE index ridsorttest_name on ridsorttest (name) NOTUNIQUE")).execute();
 
@@ -143,7 +143,7 @@ public class OCommandExecutorSQLSelectTest {
     // /*** from issue #2743
     OSchema schema = db.getMetadata().getSchema();
     if (!schema.existsClass("alphabet")) {
-      schema.createClass("alphabet");
+      schema.createClass("alphabet", 1, null);
     }
 
     ORecordIteratorClass<ODocument> iter = db.browseClass("alphabet");
@@ -188,7 +188,7 @@ public class OCommandExecutorSQLSelectTest {
   }
 
   private void initMassiveOrderSkipLimit(ODatabaseDocumentTx db) {
-    db.getMetadata().getSchema().createClass("MassiveOrderSkipLimit");
+    db.getMetadata().getSchema().createClass("MassiveOrderSkipLimit", 1, null);
     db.declareIntent(new OIntentMassiveInsert());
     String fieldValue = "laskdf lkajsd flaksjdf laksjd flakjsd flkasjd flkajsd flkajsd flkajsd flkajsd flkajsd flkjas;lkj a;ldskjf laksdj asdklasdjf lskdaj fladsd";
     for (int i = 0; i < ORDER_SKIP_LIMIT_ITEMS; i++) {
@@ -207,7 +207,7 @@ public class OCommandExecutorSQLSelectTest {
   }
 
   private void initExpandSkipLimit(ODatabaseDocumentTx db) {
-    db.getMetadata().getSchema().createClass("ExpandSkipLimit");
+    db.command(new OCommandSQL("create class ExpandSkipLimit clusters 1")).execute();
 
     for (int i = 0; i < 5; i++) {
       ODocument doc = new ODocument("ExpandSkipLimit");
