@@ -52,4 +52,11 @@ public class OException extends RuntimeException {
 
     return myMsg.equals(otherMsg);
   }
+
+  public static Throwable getFirstCause(Throwable iRootException) {
+    while (iRootException.getCause() != null)
+      iRootException = iRootException.getCause();
+
+    return iRootException;
+  }
 }

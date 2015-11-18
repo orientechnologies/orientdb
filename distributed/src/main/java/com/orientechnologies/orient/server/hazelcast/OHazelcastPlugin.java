@@ -976,7 +976,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     Orient.instance().unregisterStorageByName(iDatabaseName);
 
     final String backupDirectory = OGlobalConfiguration.DISTRIBUTED_BACKUP_DIRECTORY.getValueAsString();
-    if (backupDirectory == null)
+    if (backupDirectory == null || backupDirectory.trim().isEmpty())
       // SKIP BACKUP
       return;
 

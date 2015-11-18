@@ -480,7 +480,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       final List<String> foundPartition = cfg.addNewNodeInServerList(getLocalNodeName());
       if (foundPartition != null) {
         // SET THE NODE.DB AS OFFLINE, READY TO BE SYNCHRONIZED
-        manager.setDatabaseStatus(getLocalNodeName(), databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
+        manager.setDatabaseStatus(getLocalNodeName(), databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
 
         ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "adding node '%s' in partition: db=%s %s",
             getLocalNodeName(), databaseName, foundPartition);
