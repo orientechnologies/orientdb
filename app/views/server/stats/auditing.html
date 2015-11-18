@@ -1,0 +1,21 @@
+<div class="row" ng-controller="AuditingController">
+
+
+  <div class="row menu-audit">
+    <div class="col-md-12 text-center">
+      <ul class="nav nav-pills center-pills">
+        <li role="presentation" ng-click="active = 'log'" ng-class="{ 'active' :  active == 'log'}"><a
+          href="javascript:void(0)">Auditing log</a></li>
+        <li role="presentation" ng-click="active = 'config'"
+            ng-class="{ 'active' :  active == 'config'}"><a
+          href="javascript:void(0)">Configuration</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="row">
+
+    <div class="col-md-12">
+      <ng-include src="template"></ng-include>
+    </div>
+  </div>
+</div>

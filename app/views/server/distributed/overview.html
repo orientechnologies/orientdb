@@ -21,26 +21,20 @@
         <div class="row">
 
           <div class="col-md-4">
-             <div id="cpu-gauge" c3-gauge value="cpu"></div>
+            <div id="cpu-gauge" c3-gauge value="cpu"></div>
 
             <div class="chart-label">
               <span>CPU</span>
             </div>
           </div>
           <div class="col-md-4">
-             <span class="chart" easypiechart percent="ramPercent" options="ramOptions">
-			    <span class="percent" ng-bind="ramPercent"></span>
-		    </span>
-
+            <div id="ram-gauge" c3-gauge value="ram"></div>
             <div class="chart-label">
               <span>RAM</span>
             </div>
           </div>
           <div class="col-md-4">
-             <span class="chart" easypiechart percent="diskPercent" options="diskOptions">
-			    <span class="percent" ng-bind="diskPercent"></span>
-		    </span>
-
+            <div id="disk-gauge" c3-gauge value="disk"></div>
             <div class="chart-label">
               <span>DISK</span>
             </div>
@@ -49,7 +43,7 @@
         <hr>
         <div class="row">
           <div class="col-md-6">
-            <b>Status:</b> <span ng-class="getStatusLabel(server.status)">{{ server.status }}</span>
+            <b>Status:</b> <span ng-class="getStatusLabel(server.status)">{{ status }}</span>
 
             <a ng-show="!agent" href="javascript:void(0)" tabindex="1"
                data-trigger="focus" data-placement="bottom"

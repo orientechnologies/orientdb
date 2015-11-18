@@ -151,12 +151,26 @@ ctrl.controller('MultipleServerController', function ($scope, $rootScope, $locat
       })
 
       $scope.serverClass = calculateSpan($scope.servers);
+
+      $scope.height = calculateChartHeight($scope.servers);
     }).catch(function (e) {
 
     });
 
   }
 
+  var calculateChartHeight = function (servers) {
+    if (servers.length == 1) {
+      return 150;
+    }
+    if (servers.length == 2) {
+      return 100;
+    }
+    if (servers.length > 2) {
+      return 80;
+    }
+    return 150;
+  }
   var calculateSpan = function (servers) {
 
     if (servers.length == 1) {
@@ -386,15 +400,13 @@ ctrl.controller("ServerDashboardController", ['$scope', '$routeParams', 'Aside',
     {name: "cluster", title: "Cluster Management", template: 'distributed', icon: 'fa-sitemap'},
     {name: "profiler", title: "Query Profiler", template: 'profiler', icon: 'fa-rocket'},
     {name: "connections", template: 'conn', icon: 'fa-plug'},
-    {name: "log", title: "Log Inspector", template: 'log', icon: 'fa-bug'},
+    {name: "auditing", title: "Auditing", template: 'auditing', icon: 'fa-headphones'},
+    {name: "plugins", title: "Plugins Management", template: 'plugins', icon: 'fa-plug'},
     {name: "events", title: "Events Management", template: 'events', icon: 'fa-bell'},
-    {name: "charts", template: 'charts', icon: 'fa-bar-chart'},
     {name: "configuration", title: "Settings", template: 'config', icon: 'fa-cogs'},
     {name: "storage", title: "Storages", template: 'storage', icon: 'fa-database'}
   ]
   if ($routeParams.tab) {
-
-
     $scope.menus.forEach(function (e) {
       if (e.name == $routeParams.tab) {
         $scope.active = e.template;
@@ -468,7 +480,6 @@ ctrl.controller('ServerConnectionController', function ($scope, $filter, ngTable
     }
   })
 })
-
 
 
 ctrl.controller("LogsController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Spinner', 'Cluster', function ($scope, $http, $location, $routeParams, CommandLogApi, Spinner, Cluster) {

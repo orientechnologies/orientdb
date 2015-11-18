@@ -167,3 +167,163 @@ ee.factory('Cluster', function ($http, $resource, $q) {
 
   return resource
 });
+
+
+ee.factory('Profiler', function ($http, $resource, $q) {
+
+
+  var resource = $resource('');
+
+
+  resource.profilerData = function (params) {
+
+    var deferred = $q.defer();
+    var text = API + 'sqlProfiler/' + params.db;
+
+    if (params.server) {
+      text += "?node=" + params.server;
+    }
+    $http.get(text).success(function (data) {
+      deferred.resolve(data)
+    }).error(function (data, status, headers, config) {
+      deferred.reject({data: data, status: status});
+    });
+    return deferred.promise;
+  }
+
+  resource.realtime = function () {
+    var deferred = $q.defer();
+    var text = API + 'profiler/realtime';
+    $http.get(text).success(function (data) {
+      deferred.resolve(data)
+    }).error(function (data, status, headers, config) {
+      deferred.reject({data: data, status: status});
+    });
+    return deferred.promise;
+  }
+  return resource
+});
+
+
+ee.factory('Auditing', function ($http, $resource, $q, CommandApi) {
+
+  var resource = $resource('');
+
+
+  resource.getConfig = function (params) {
+
+    var deferred = $q.defer();
+    var text = API + 'auditing/' + params.db + "/config";
+    $http.get(text).success(function (data) {
+      deferred.resolve(data)
+    }).error(function (data, status, headers, config) {
+      deferred.reject({data: data, status: status});
+    });
+    return deferred.promise;
+  }
+  resource.saveConfig = function (params, cfg) {
+    var deferred = $q.defer();
+    var text = API + 'auditing/' + params.db + "/config";
+    $http.post(text, cfg).success(function (data) {
+      deferred.resolve(data)
+    }).error(function (data, status, headers, config) {
+      deferred.reject({data: data, status: status});
+    });
+    return deferred.promise;
+  }
+  resource.query = function (params, args) {
+
+    var deferred = $q.defer();
+
+
+    var text = API + 'auditing/' + params.db + "/query";
+    $http.post(text, args).success(function (data) {
+      deferred.resolve(data)
+    }).error(function (data, status, headers, config) {
+      deferred.reject({data: data, status: status});
+    });
+
+    //var query = "select from {{clazz}} {{where}} order by date desc limit {{limit}} fetchPlan user:1";
+    //args.where = "";
+    //
+    //if (args.user) {
+    //  args.where += " user.name = '{{user}}' and"
+    //}
+    //if (args.record) {
+    //  args.where += " record  = '{{record}}' and"
+    //}
+    //if (args.operation) {
+    //  args.where += " operation  = '{{operation}}' and"
+    //}
+    //if (args.from) {
+    //  args.where += " date  > '{{from}}' and"
+    //}
+    //if (args.to) {
+    //  args.where += " date  < '{{to}}' and"
+    //}
+    //if (args.note) {
+    //  args.where += " note like '%{{note}}%' and"
+    //}
+    //if (args.where != "") {
+    //  var n = args.where.lastIndexOf("and");
+    //  args.where = " where " + args.where.substring(0, n);
+    //}
+    //var queryText = S(query).template(args).s;
+    //if (args.where != "") {
+    //  queryText = S(queryText).template(args).s
+    //}
+    //var params = {
+    //  database: database,
+    //  text: queryText,
+    //  language: 'sql',
+    //  verbose: false
+    //}
+    //CommandApi.queryText(params, function (data) {
+    //  deferred.resolve(data)
+    //}, function (data) {
+    //  deferred.reject(data);
+    //})
+
+
+    return deferred.promise;
+  }
+  return resource
+});
+
+
+ee.factory('Plugins', function ($http, $q) {
+
+
+  var plugins = {}
+
+  plugins.all = function (server) {
+
+    var deferred = $q.defer();
+    var url = API + 'plugins';
+    if (server) {
+      url += '?node=' + server;
+    }
+    $http.get(url).success(function (data) {
+      deferred.resolve(data)
+    }).error(function (data, status, headers, config) {
+      deferred.reject({data: data, status: status});
+    });
+    return deferred.promise;
+
+  }
+
+  plugins.saveConfig = function (server, name, config) {
+    var deferred = $q.defer();
+    var url = API + 'plugins/' + name;
+    if (server) {
+      url += '?node=' + server;
+    }
+    $http.put(url, config).success(function (data) {
+      deferred.resolve(data)
+    }).error(function (data, status, headers, config) {
+      deferred.reject({data: data, status: status});
+    });
+    return deferred.promise;
+  }
+  return plugins;
+})

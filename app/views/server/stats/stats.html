@@ -8,43 +8,29 @@
               <div class="col-md-12">
                 {{ server.name }}
               </div>
-              <!--<div class="col-md-6">-->
-              <!--<div class="pull-right">-->
-              <!--<a href="javascript:void(0)" class="btn btn-small" ng-show="!server.attached"-->
-              <!--ng-click="enableServer(server)"><i-->
-              <!--class="icon-play"></i></a>-->
-              <!--<a href="javascript:void(0)" class="btn btn-small" ng-show="server.attached"-->
-              <!--ng-click="disableServer(server)"><i-->
-              <!--class="icon-pause"></i></a>-->
-              <!--</div>-->
-              <!--</div>-->
+
 
             </div>
             <div class="row">
 
               <div class="col-md-4">
-             <span class="chart" easypiechart percent="cpuPercent" options="cpuOptions">
-			          <span class="percent" ng-bind="cpuPercent"></span>
-		        </span>
+
+                <div id="{{'cpu-gauge-' + server.name}}" c3-gauge value="cpuPercent" height="height"></div>
 
                 <div class="chart-label">
                   <span>CPU</span>
                 </div>
               </div>
               <div class="col-md-4">
-             <span class="chart" easypiechart percent="ramPercent" options="ramOptions">
-			    <span class="percent" ng-bind="ramPercent"></span>
-		    </span>
 
+                <div id="{{'ram-gauge-' + server.name}}" c3-gauge value="ramPercent" height="height"></div>
                 <div class="chart-label">
                   <span>RAM</span>
                 </div>
               </div>
               <div class="col-md-4">
-             <span class="chart" easypiechart percent="diskPercent" options="diskOptions">
-			    <span class="percent" ng-bind="diskPercent"></span>
-		    </span>
 
+                <div id="{{'disk-gauge-' + server.name}}" c3-gauge value="diskPercent" height="height"></div>
                 <div class="chart-label">
                   <span>DISK</span>
                 </div>
