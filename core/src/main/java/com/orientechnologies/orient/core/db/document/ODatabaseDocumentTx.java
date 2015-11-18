@@ -1111,8 +1111,11 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
 
     localCache.shutdown();
 
-    if (isClosed())
+    if (isClosed()) {
+      status = STATUS.CLOSED;
       return;
+    }
+
 
     try {
       commit(true);
