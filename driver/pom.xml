@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.michaelpollmeier</groupId>
     <artifactId>orientdb-gremlin</artifactId>
-    <version>3.0.0.M9</version>
+    <version>3.0.0.M10-SNAPSHOT</version>
     <name>Apache TinkerPop :: OrientDB Gremlin</name>
     <description>TinkerPop3 driver for OrientDB</description>
     <url>https://github.com/mpollmeier/orientdb-gremlin/</url>
