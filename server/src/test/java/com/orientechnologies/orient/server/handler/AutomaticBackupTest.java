@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server.handler;
 
 import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -33,11 +34,18 @@ public class AutomaticBackupTest {
   private final static String BACKUPDIR = "target/backup";
   private static final String URL       = "plocal:target/" + DBNAME;
   private static final String URL2      = "plocal:target/" + DBNAME + "2";
+  private final String        tempDirectory;
   private ODatabaseDocumentTx database;
   private final OServer       server;
 
   public AutomaticBackupTest() throws ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException,
-      NotCompliantMBeanException, MBeanRegistrationException {
+      NotCompliantMBeanException, MBeanRegistrationException, IOException {
+
+    // SET THE ORIENTDB_HOME DIRECTORY TO CHECK JSON FILE CREATION
+    final File f = File.createTempFile("testBackup", ".test");
+    tempDirectory = f.getParent();
+    System.setProperty("ORIENTDB_HOME", tempDirectory);
+
     server = new OServer() {
       @Override
       public Map<String, String> getAvailableStorageNames() {
@@ -56,6 +64,10 @@ public class AutomaticBackupTest {
 
   @Before
   public void init() {
+    final File f = new File(OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}/config/backup.json"));
+    if (f.exists())
+      f.delete();
+
     database = new ODatabaseDocumentTx(URL);
     if (database.exists())
       database.open("admin", "admin").drop();
@@ -67,6 +79,10 @@ public class AutomaticBackupTest {
 
   @After
   public void deinit() {
+    Assert.assertTrue(new File(tempDirectory + "/config/backup.json").exists());
+
+    new File(tempDirectory + "/config/backup.json").delete();
+
     database.activateOnCurrentThread();
     database.drop();
   }
@@ -74,6 +90,9 @@ public class AutomaticBackupTest {
   @Test
   public void testFullBackup() throws IOException, ClassNotFoundException, MalformedObjectNameException,
       InstanceAlreadyExistsException, NotCompliantMBeanException, MBeanRegistrationException {
+    if (new File(BACKUPDIR + "/fullBackup.zip").exists())
+      new File(BACKUPDIR + "/fullBackup.zip").delete();
+
     final OAutomaticBackup aBackup = new OAutomaticBackup();
 
     final OServerParameterConfiguration[] config = new OServerParameterConfiguration[] {
@@ -106,6 +125,9 @@ public class AutomaticBackupTest {
   @Test
   public void testIncrementalBackup() throws IOException, ClassNotFoundException, MalformedObjectNameException,
       InstanceAlreadyExistsException, NotCompliantMBeanException, MBeanRegistrationException {
+    if (new File(BACKUPDIR + "/" + DBNAME).exists())
+      OFileUtils.deleteRecursively(new File(BACKUPDIR + "/" + DBNAME));
+
     final OAutomaticBackup aBackup = new OAutomaticBackup();
 
     final OServerParameterConfiguration[] config = new OServerParameterConfiguration[] {
@@ -137,6 +159,9 @@ public class AutomaticBackupTest {
   @Test
   public void testExport() throws IOException, ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException,
       NotCompliantMBeanException, MBeanRegistrationException {
+    if (new File(BACKUPDIR + "/fullExport.json.gz").exists())
+      new File(BACKUPDIR + "/fullExport.json.gz").delete();
+
     final OAutomaticBackup aBackup = new OAutomaticBackup();
 
     final OServerParameterConfiguration[] config = new OServerParameterConfiguration[] {
@@ -144,7 +169,7 @@ public class AutomaticBackupTest {
             new SimpleDateFormat("HH:mm:ss").format(new Date(System.currentTimeMillis() + 2000))),
         new OServerParameterConfiguration("delay", "1d"), new OServerParameterConfiguration("mode", "EXPORT"),
         new OServerParameterConfiguration("target.directory", BACKUPDIR),
-        new OServerParameterConfiguration("target.fileName", "fullBackup.json.gz") };
+        new OServerParameterConfiguration("target.fileName", "fullExport.json.gz") };
 
     aBackup.config(server, config);
 
@@ -161,7 +186,7 @@ public class AutomaticBackupTest {
       database2.open("admin", "admin").drop();
     database2.create();
 
-    new ODatabaseImport(database2, BACKUPDIR + "/" + "fullBackup.json.gz", null).importDatabase();
+    new ODatabaseImport(database2, BACKUPDIR + "/fullExport.json.gz", null).importDatabase();
 
     Assert.assertEquals(database2.countClass("TestBackup"), 1);
   }
