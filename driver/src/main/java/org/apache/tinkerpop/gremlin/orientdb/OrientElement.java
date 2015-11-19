@@ -59,7 +59,7 @@ public abstract class OrientElement implements Element {
         if(key == null)
             throw Property.Exceptions.propertyKeyCanNotBeNull();
         if(value == null)
-            throw Property.Exceptions.propertyKeyCanNotBeNull();
+            throw Property.Exceptions.propertyValueCanNotBeNull();
         if(Graph.Hidden.isHidden(key))
             throw Property.Exceptions.propertyKeyCanNotBeAHiddenKey(key);
 
