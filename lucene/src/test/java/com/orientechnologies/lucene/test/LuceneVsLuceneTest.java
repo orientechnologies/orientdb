@@ -18,7 +18,7 @@
 
 package com.orientechnologies.lucene.test;
 
-import com.orientechnologies.lucene.utils.OLuceneIndexUtils;
+import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -132,7 +132,7 @@ public class LuceneVsLuceneTest extends BaseLuceneTest {
   @AfterClass
   public void deInit() {
     deInitDB();
-    OLuceneIndexUtils.deleteFolder(getPath());
+    OFileUtils.deleteRecursively(getPath());
   }
 
 }

@@ -26,11 +26,11 @@ import java.util.logging.Level;
 /**
  * Created by frank on 9/30/15.
  */
-@Test(enabled = false)
+@Test(groups = "embedded")
 public class OLuceneFulltextExpIndexTest extends BaseLuceneTest {
 
   public OLuceneFulltextExpIndexTest() {
-        super();
+    super();
   }
 
   @BeforeClass
@@ -77,10 +77,10 @@ public class OLuceneFulltextExpIndexTest extends BaseLuceneTest {
   @AfterClass(enabled = true)
   public void after() {
 
-    //    deInitDB();
+    deInitDB();
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void testName() throws Exception {
 
     final ODocument index = databaseDocumentTx.getMetadata().getIndexManager().getIndex("Song.all").getMetadata();
@@ -95,11 +95,11 @@ public class OLuceneFulltextExpIndexTest extends BaseLuceneTest {
 
     Assert.assertEquals(docs.size(), 4);
 
-    docs = databaseDocumentTx
-        .query(new OSQLSynchQuery<ODocument>("select * from Song where [author] LUCENEEXP \"Song.author:Fabbio\""));
+//    docs = databaseDocumentTx
+//        .query(new OSQLSynchQuery<ODocument>("select * from Song where [author] LUCENEEXP \"Song.author:Fabbio\""));
 
-    Assert.assertEquals(docs.size(), 87);
-    //
+//    Assert.assertEquals(docs.size(), 87);
+      //
     //    // not WORK BECAUSE IT USES only the first index
     //    // String query = "select * from Song where [title] LUCENE \"(title:mountain)\"  and [author] LUCENE \"(author:Fabbio)\""
     //    String query = "select * from Song where [title] LUCENE_EXP (title:mountain)  and author = 'Fabbio'";
@@ -109,4 +109,16 @@ public class OLuceneFulltextExpIndexTest extends BaseLuceneTest {
 
   }
 
+  @Test
+  public void testName2() throws Exception {
+    List<ODocument> docs = databaseDocumentTx
+        .query(new OSQLSynchQuery<ODocument>("select * from Song where [title,author] LUCENEEXP \"Song.author:Fabbio\""));
+
+
+//     docs = databaseDocumentTx
+//        .query(new OSQLSynchQuery<ODocument>("select * from Song where author LUCENEEXP \"Fabbio\""));
+
+        Assert.assertEquals(docs.size(), 87);
+
+  }
 }

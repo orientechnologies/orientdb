@@ -119,6 +119,12 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
   }
 
   private void reOpen() throws IOException {
+
+    if (mgrWriter != null) {
+      OLogManager.instance().info(this, "index storage is openm don't reopen");
+
+      return;
+    }
     ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.get();
 
     final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
@@ -151,7 +157,6 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
     flush();
 
     OLogManager.instance().info(this, "REOPEN DONE");
-
   }
 
   public IndexWriter createIndexWriter(Directory directory) throws IOException {
@@ -227,19 +232,6 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
     }
   }
 
-  public Document buildDocument(Object key, OIdentifiable value) {
-
-    OLogManager.instance().info(this, "ERROR: NEVER CALL HEREbuild document for:: " + value.getIdentity());
-
-    // return builder.build(index, key, value, indexFields, metadata);
-
-    return new Document();
-  }
-
-  public Query buildQuery(Object query) {
-    return null;
-  }
-
   public boolean remove(Object key, OIdentifiable value) {
     return false;
   }
@@ -263,14 +255,11 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
 
     throw new RuntimeException("DON'T CALL ME");
 
-    /*
-     * if (isCollectionDelete()) { return new OLuceneTxChangesMultiRid(this, createIndexWriter(new RAMDirectory())); } else { return
-     * new OLuceneTxChangesSingleRid(this, createIndexWriter(new RAMDirectory())); }
-     */
-
   }
 
-  public Query deleteQuery(Object key, OIdentifiable value) {
+  public Query deleteQuery(String indexName, Object key, OIdentifiable value) {
+
+    OLogManager.instance().info(this, "delete with query in index::  " + indexName);
     return null;
   }
 
@@ -291,8 +280,9 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
 
   }
 
-  public void delete() {
-    OLogManager.instance().info(this, "DELETING:: ");
+  public void delete(String indexName) {
+    OLogManager.instance().info(this, "DELETING:: " + indexName);
+
   }
 
   public void deleteWithoutLoad(String indexName) {
@@ -314,8 +304,8 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
     return false;
   }
 
-  public void clear() {
-
+  public void clear(String indexName) {
+    OLogManager.instance().info(this, "clear index:: " + indexName);
   }
 
   public void close() {
@@ -423,6 +413,7 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
     OLogManager.instance().info(this, "ENGINE SHUTDONW");
 
     close();
+
   }
 
   @Override

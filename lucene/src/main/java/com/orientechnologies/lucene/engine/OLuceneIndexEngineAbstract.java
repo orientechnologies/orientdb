@@ -18,6 +18,7 @@ package com.orientechnologies.lucene.engine;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.lucene.OLuceneIndexType;
@@ -27,7 +28,6 @@ import com.orientechnologies.lucene.query.QueryContext;
 import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.lucene.tx.OLuceneTxChangesMultiRid;
 import com.orientechnologies.lucene.tx.OLuceneTxChangesSingleRid;
-import com.orientechnologies.lucene.utils.OLuceneIndexUtils;
 import com.orientechnologies.orient.core.OOrientListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -175,22 +175,23 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
         OLocalPaginatedStorage localAbstract = (OLocalPaginatedStorage) storageLocalAbstract;
 
         File f = new File(getIndexPath(localAbstract, indexName));
-        OLuceneIndexUtils.deleteFolder(f);
+        OFileUtils.deleteRecursively(f);
         f = new File(getIndexBasePath(localAbstract));
-        OLuceneIndexUtils.deleteFolderIfEmpty(f);
+        OFileUtils.deleteFolderIfEmpty(f);
       }
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on deleting Lucene index", e);
     }
   }
 
+  @Override
   public void delete() {
     if (mgrWriter == null)
       // INDEX NOT COMPLETELY INITIALIZED, SKIP IT
       return;
 
     try {
-      if (mgrWriter.getIndexWriter() != null) {
+      if (mgrWriter != null && mgrWriter.getIndexWriter() != null) {
         closeIndex();
       }
       ODatabaseDocumentInternal database = getDatabase();
@@ -199,9 +200,9 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
         final OLocalPaginatedStorage localAbstract = (OLocalPaginatedStorage) storageLocalAbstract;
         File f = new File(getIndexPath(localAbstract));
-        OLuceneIndexUtils.deleteFolder(f);
+        OFileUtils.deleteRecursively(f);
         f = new File(getIndexBasePath(localAbstract));
-        OLuceneIndexUtils.deleteFolderIfEmpty(f);
+        OFileUtils.deleteFolderIfEmpty(f);
       }
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on deleting Lucene index", e);
@@ -219,6 +220,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     return new HashSet<Map.Entry<Object, V>>().iterator();
   }
 
+  @Override
   public void clear() {
     try {
       reopenToken = mgrWriter.deleteAll();
@@ -496,12 +498,13 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     }
   }
 
-  private String getIndexPath(OLocalPaginatedStorage storageLocalAbstract, String indexName) {
-    return storageLocalAbstract.getStoragePath() + File.separator + OLUCENE_BASE_DIR + File.separator + indexName;
-  }
 
   private String getIndexPath(OLocalPaginatedStorage storageLocalAbstract) {
     return getIndexPath(storageLocalAbstract, indexName);
+  }
+
+  private String getIndexPath(OLocalPaginatedStorage storageLocalAbstract, String indexName) {
+    return storageLocalAbstract.getStoragePath() + File.separator + OLUCENE_BASE_DIR + File.separator + indexName;
   }
 
   protected String getIndexBasePath(OLocalPaginatedStorage storageLocalAbstract) {

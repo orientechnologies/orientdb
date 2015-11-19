@@ -107,6 +107,11 @@ public class OLuceneExpTextOperator extends OQueryTargetOperator {
   public Object evaluateRecord(OIdentifiable iRecord, ODocument iCurrentResult, OSQLFilterCondition iCondition, Object iLeft,
       Object iRight, OCommandContext iContext) {
 
+
+//    OLogManager.instance().info(this, "condition left:: " + iCondition.getLeft());
+//    OLogManager.instance().info(this, "condition op:: " + iCondition.getOperator());
+//    OLogManager.instance().info(this, "condition right:: " + iCondition.getRight());
+
     OLuceneFullTextExpIndex index = involvedIndex(iRecord, iCurrentResult, iCondition, iLeft, iRight);
 
     if (index == null) {
@@ -118,17 +123,26 @@ public class OLuceneExpTextOperator extends OQueryTargetOperator {
       iContext.setVariable("_memoryIndex", memoryIndex);
     }
     memoryIndex.reset();
+
+
     Document doc = index.buildDocument(iLeft);
 
+//    OLogManager.instance().info(this, "----");
+
     for (IndexableField field : doc.getFields()) {
+
+//      OLogManager.instance().info(this, "name:: " + field.name() + " value :: " + field.stringValue());
       memoryIndex.addField(field.name(), field.stringValue(), index.indexAnalyzer());
     }
     Query query = null;
     try {
+
       query = index.buildQuery(iRight);
+
     } catch (ParseException e) {
       OLogManager.instance().error(this, "error occurred while building query", e);
     }
+
     return memoryIndex.search(query) > 0.0f;
   }
 
@@ -151,7 +165,10 @@ public class OLuceneExpTextOperator extends OQueryTargetOperator {
         cls = oClass;
       }
     }
-    Set<OIndex<?>> classInvolvedIndexes = cls.getInvolvedIndexes(fields(iCondition));
+    Collection<String> fields = fields(iCondition);
+
+    Set<OIndex<?>> classInvolvedIndexes = cls.getIndexes();
+
     OLuceneFullTextExpIndex idx = null;
     for (OIndex<?> classInvolvedIndex : classInvolvedIndexes) {
 
@@ -160,6 +177,7 @@ public class OLuceneExpTextOperator extends OQueryTargetOperator {
         break;
       }
     }
+
     return idx;
   }
 

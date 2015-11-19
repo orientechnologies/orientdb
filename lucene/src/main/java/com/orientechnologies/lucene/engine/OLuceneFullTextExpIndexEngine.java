@@ -181,7 +181,7 @@ public class OLuceneFullTextExpIndexEngine implements OLuceneIndexEngine, OOrien
 
   @Override
   public Query deleteQuery(Object key, OIdentifiable value) {
-    return luceneStorage.deleteQuery(key, value);
+    return luceneStorage.deleteQuery(indexName, key, value);
   }
 
   @Override
@@ -202,7 +202,8 @@ public class OLuceneFullTextExpIndexEngine implements OLuceneIndexEngine, OOrien
 
   @Override
   public void delete() {
-    // NOOP
+    OLogManager.instance().info(this,"DELETE Called");
+    luceneStorage.delete(indexName);
   }
 
   @Override
@@ -228,14 +229,14 @@ public class OLuceneFullTextExpIndexEngine implements OLuceneIndexEngine, OOrien
 
   @Override
   public void clear() {
-    luceneStorage.clear();
+    luceneStorage.clear(indexName);
   }
 
   @Override
   public void close() {
 
     OLogManager.instance().info(this, "CLOSE ::: proxy close");
-    luceneStorage.close();
+//    luceneStorage.close();
   }
 
   @Override

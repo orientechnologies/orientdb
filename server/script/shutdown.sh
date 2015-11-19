@@ -52,12 +52,21 @@ LOG_FILE=$ORIENTDB_HOME/config/orientdb-server-log.properties
 LOG_LEVEL=warning
 WWW_PATH=$ORIENTDB_HOME/www
 JAVA_OPTS=-Djava.awt.headless=true
+ORIENTDB_PID=$ORIENTDB_HOME/bin/orient.pid
 
-"$JAVA" -client $JAVA_OPTS -Dorientdb.config.file="$CONFIG_FILE" -cp "$ORIENTDB_HOME/lib/orientdb-tools-@VERSION@.jar:$ORIENTDB_HOME/lib/*" com.orientechnologies.orient.server.OServerShutdownMain $*
+if [ -f "$ORIENTDB_PID" ]; then
+    echo "pid file detected, killing process"
+    kill -15 `cat "$ORIENTDB_PID"` >/dev/null 2>&1
+    rm "$ORIENTDB_PID"
+else
+    "$JAVA" -client $JAVA_OPTS -Dorientdb.config.file="$CONFIG_FILE" \
+        -cp "$ORIENTDB_HOME/lib/orientdb-tools-@VERSION@.jar:$ORIENTDB_HOME/lib/*" \
+        com.orientechnologies.orient.server.OServerShutdownMain $*
 
-if [ "x$wait" = "xyes" ] ; then
-  while true ; do
-    ps -ef | grep java | grep $ORIENTDB_HOME/lib/orientdb-server > /dev/null || break
-    sleep 1;
-  done
+    if [ "x$wait" = "xyes" ] ; then
+      while true ; do
+        ps -ef | grep java | grep $ORIENTDB_HOME/lib/orientdb-server > /dev/null || break
+        sleep 1;
+      done
+    fi
 fi
