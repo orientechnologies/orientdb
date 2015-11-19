@@ -11,6 +11,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <gremlin.version>3.0.2-incubating</gremlin.version>
     </properties>
     
     <developers>
@@ -42,12 +43,12 @@
         <dependency>
             <groupId>org.apache.tinkerpop</groupId>
             <artifactId>gremlin-core</artifactId>
-            <version>3.0.2-incubating</version>
+            <version>${gremlin.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.tinkerpop</groupId>
             <artifactId>gremlin-groovy</artifactId>
-            <version>3.0.2-incubating</version>
+            <version>${gremlin.version}</version>
         </dependency>
         <dependency>
             <groupId>com.orientechnologies</groupId>
@@ -58,13 +59,13 @@
         <dependency>
             <groupId>org.apache.tinkerpop</groupId>
             <artifactId>gremlin-test</artifactId>
-            <version>3.0.2-incubating</version>
+            <version>${gremlin.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.tinkerpop</groupId>
             <artifactId>gremlin-groovy-test</artifactId>
-            <version>3.0.2-incubating</version>
+            <version>${gremlin.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
