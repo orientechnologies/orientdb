@@ -112,7 +112,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     final ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
 
     // TODO: REALLY STILL MATTERS THE NUMBER OF THE QUEUES?
-    final OPair<String, IQueue<ODistributedRequest>>[] reqQueues = getRequestQueues(databaseName, iNodes, iRequest.getTask());
+    final OPair<String, IQueue>[] reqQueues = getRequestQueues(databaseName, iNodes, iRequest.getTask());
 
     iRequest.setSenderNodeName(getLocalNodeName());
 
@@ -135,7 +135,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     } else {
       // EXPECT ANSWER FROM ALL NODES WITH A QUEUE
       onlineNodes = 0;
-      for (OPair<String, IQueue<ODistributedRequest>> q : reqQueues)
+      for (OPair<String, IQueue> q : reqQueues)
         if (q.getValue() != null)
           onlineNodes++;
     }
@@ -179,7 +179,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
         // TODO: CAN I MOVE THIS OUTSIDE?
         msgService.registerRequest(iRequest.getId(), currentResponseMgr);
 
-        for (OPair<String, IQueue<ODistributedRequest>> entry : reqQueues) {
+        for (OPair<String, IQueue> entry : reqQueues) {
           final IQueue queue = entry.getValue();
 
           if (queue != null) {
@@ -188,7 +188,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
                   "queue has too many messages (%d), treating the node as in stall: trying to restart it...", queue.size());
               queue.clear();
 
-              manager.unjoinNode(entry.getKey());
+              manager.disconnectNode(entry.getKey());
 
             } else {
               // SEND THE MESSAGE
@@ -224,7 +224,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       Callable<Void> iCallback) {
     // CREATE A QUEUE PER DATABASE REQUESTS
     final String queueName = OHazelcastDistributedMessageService.getRequestQueueName(getLocalNodeName(), databaseName);
-    final IQueue<ODistributedRequest> requestQueue = msgService.getQueue(queueName);
+    final IQueue requestQueue = msgService.getQueue(queueName);
 
     final ODistributedWorker listenerThread = unqueuePendingMessages(iRestoreMessages, iUnqueuePendingMessages, queueName,
         requestQueue);
@@ -311,7 +311,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
   }
 
   protected ODistributedWorker unqueuePendingMessages(boolean iRestoreMessages, boolean iUnqueuePendingMessages, String queueName,
-      IQueue<ODistributedRequest> requestQueue) {
+      IQueue requestQueue) {
     if (ODistributedServerLog.isDebugEnabled())
       ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE, "listening for incoming requests on queue: %s",
           queueName);
@@ -420,17 +420,17 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     return currentResponseMgr.getFinalResponse();
   }
 
-  protected OPair<String, IQueue<ODistributedRequest>>[] getRequestQueues(final String iDatabaseName,
-      final Collection<String> nodes, final OAbstractRemoteTask iTask) {
-    final OPair<String, IQueue<ODistributedRequest>>[] queues = new OPair[nodes.size()];
+  protected OPair<String, IQueue>[] getRequestQueues(final String iDatabaseName, final Collection<String> nodes,
+      final OAbstractRemoteTask iTask) {
+    final OPair<String, IQueue>[] queues = new OPair[nodes.size()];
 
     int i = 0;
 
     // GET ALL THE EXISTENT QUEUES
     for (String node : nodes) {
       final String queueName = OHazelcastDistributedMessageService.getRequestQueueName(node, iDatabaseName);
-      final IQueue<ODistributedRequest> queue = msgService.getQueue(queueName);
-      queues[i++] = new OPair<String, IQueue<ODistributedRequest>>(node, queue);
+      final IQueue queue = msgService.getQueue(queueName);
+      queues[i++] = new OPair<String, IQueue>(node, queue);
     }
 
     return queues;
