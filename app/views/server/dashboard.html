@@ -1,8 +1,7 @@
-<div class="h1">
-  {{current.title | capitalize}}
+<div class="admin-header">
+  <h2> {{current.title | capitalize}}</h2>
 </div>
-<div class="panel panel-default panel-orient">
-
+<div class="card">
   <div class="row">
     <div class="col-md-12 dashboard-container">
       <ng-include src="getTemplate(active)"></ng-include>

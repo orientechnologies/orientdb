@@ -29,14 +29,7 @@ angular.module('bootstrap.tabset', [])
           tabs.push(tab);
         };
       },
-      template: '<div class="row">' +
-      '<div class="row">' +
-      '<div class="nav nav-tabs" ng-transclude></div>' +
-      '</div>' +
-      '<div class="row row-space">' +
-      '<ng-include src="templateUrl">' +
-      '</ng-include></div>' +
-      '</div>'
+      templateUrl: 'views/widget/tabset.html'
     };
   })
   .directive('tab', function () {
@@ -61,8 +54,6 @@ angular.module('bootstrap.tabset', [])
           }
         });
       },
-      template: '<li ng-class="{active: selected}">' +
-      '<a href="" ng-click="select()">{{ title }}</a>' +
-      '</li>'
+      templateUrl: 'views/widget/tab.html'
     };
   });

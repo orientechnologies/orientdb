@@ -28,39 +28,28 @@ angular.module('header.controller', ['database.services']).controller("HeaderCon
         {name: "security", link: '#/database/' + data + '/security', icon: 'fa fa-user', show: true},
         {name: "graph", link: '#/database/' + data + '/graph', icon: 'fa fa-circle-o', show: true},
         {name: "functions", link: '#/database/' + data + '/functions', icon: 'fa fa-code', show: true},
-        {name: "DB", link: '#/database/' + data + '/db', icon: 'fa fa-database', show: true},
-        {
-          name: "profiler",
-          link: '#/database/' + data + '/profiler',
-          icon: 'fa fa-rocket',
-          ee: true,
-          show: true,
-          help: 'agent.notFound'
-        },
-        {
-          name: "auditing",
-          link: '#/database/' + data + '/auditing',
-          icon: 'fa fa-headphones',
-          ee: true,
-          show: true,
-          help: 'agent.notFound'
-        },
+        {name: "DB", link: '#/database/' + data + '/db', icon: 'fa fa-database', show: true}
+        //{
+        //  name: "profiler",
+        //  link: '#/database/' + data + '/profiler',
+        //  icon: 'fa fa-rocket',
+        //  ee: true,
+        //  show: true,
+        //  help: 'agent.notFound'
+        //},
+        //{
+        //  name: "auditing",
+        //  link: '#/database/' + data + '/auditing',
+        //  icon: 'fa fa-headphones',
+        //  ee: true,
+        //  show: true,
+        //  help: 'agent.notFound'
+        //},
 
       ];
 
       $scope.setSelected();
 
-      Profiler.profilerData(data).then(function (data) {
-
-      }).catch(function (error) {
-        if (error.status == 405) {
-          $scope.menus.forEach(function (e) {
-            if (e.ee) {
-              e.show = false;
-            }
-          })
-        }
-      });
 
     }
   });

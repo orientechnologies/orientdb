@@ -362,16 +362,16 @@ ctrl.controller('SingleServerController', function ($scope, $rootScope, $locatio
 
 ctrl.controller("ServerDashboardController", ['$scope', '$routeParams', 'Aside', 'ServerApi', 'ngTableParams', '$q', 'Notification', 'Database', function ($scope, $routeParams, Aside, ServerApi, ngTableParams, $q, Notification, Database) {
 
-  Aside.show({
-    scope: $scope,
-    title: "",
-    template: 'views/server/dashboardAside.html',
-    show: true,
-    absolute: false,
-    small: true,
-    sticky: true,
-    cls: 'oaside-small'
-  });
+  //Aside.show({
+  //  scope: $scope,
+  //  title: "",
+  //  template: 'views/server/dashboardAside.html',
+  //  show: true,
+  //  absolute: false,
+  //  small: true,
+  //  sticky: true,
+  //  cls: 'oaside-small'
+  //});
 
 
   $scope.version = Database.getVersion();

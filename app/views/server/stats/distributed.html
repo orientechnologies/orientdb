@@ -1,15 +1,18 @@
-<div ng-controller="ClusterController">
+<div class="container-fluid" ng-controller="ClusterController">
 
 
-  <div class="col-md-12 well">
-    <h4>Active nodes: {{ servers.length }}</h4>
+  <div class="row">
+    <div class="col-md-12 studio-well">
+      <h4>Active nodes: {{ servers.length }}</h4>
+    </div>
   </div>
-
-  <div class="col-md-12">
-    <tabset>
-      <tab title="Overview" template-url="views/server/distributed/overview.html"></tab>
-      <tab title="Databases" template-url="views/server/distributed/databases.html"></tab>
-      <tab title="Queues" template-url="views/server/distributed/queues.html"></tab>
-    </tabset>
+  <div class="row row-space">
+    <div class="col-md-12">
+      <tabset>
+        <tab title="Overview" template-url="views/server/distributed/overview.html"></tab>
+        <tab title="Databases" template-url="views/server/distributed/databases.html"></tab>
+        <tab title="Queues" template-url="views/server/distributed/queues.html"></tab>
+      </tabset>
+    </div>
   </div>
 </div>

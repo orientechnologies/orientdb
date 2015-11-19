@@ -218,8 +218,10 @@ ee.controller('ClusterController', function ($scope, Cluster, Notification, $roo
 })
 
 
-ee.controller('ClusterOverviewController', function ($scope) {
+ee.controller('ClusterOverviewController', function ($scope, $rootScope) {
 
+
+  $scope.height = 100;
 
   $scope.status = 'ONLINE';
   $scope.operations = 0;
@@ -236,12 +238,18 @@ ee.controller('ClusterOverviewController', function ($scope) {
   $scope.disk = 0;
   $scope.ram = 0;
 
+  $scope.server = {name: "orientdb-cluster"};
   var lastRequest = null;
   var lastOps = null;
 
   $scope.$watch('clusterStats', function (data) {
     if (data) {
 
+
+      var clusterCrud = {
+        name: "orientdb-cluster",
+        realtime: {chronos: {}}
+      }
       var keys = Object.keys(data);
       var cpu = 0;
       var diskTotal = 0;
@@ -286,8 +294,17 @@ ee.controller('ClusterOverviewController', function ($scope) {
         var ops = 0;
         keys.forEach(function (k) {
           ops += realtime['chronos'][k].entries;
+
+          if (!clusterCrud.realtime['chronos'][k]) {
+            clusterCrud.realtime['chronos'][k] = {};
+            clusterCrud.realtime['chronos'][k]['entries'] = realtime['chronos'][k].entries;
+          } else {
+            clusterCrud.realtime['chronos'][k]['entries'] += realtime['chronos'][k].entries;
+          }
         });
         operations += ops;
+
+
       })
 
       $scope.cpu = (cpu / keys.length).toFixed(2);
@@ -312,6 +329,9 @@ ee.controller('ClusterOverviewController', function ($scope) {
         $scope.operations = Math.abs(lastOps - operations);
       }
       lastOps = operations;
+
+
+      $rootScope.$broadcast('server:updated', clusterCrud);
     }
   })
 });
@@ -526,7 +546,8 @@ ee.controller('PluginsController', function ($scope, Plugins, Cluster, Notificat
   };
 
   $scope.customTemplate = {
-    'mail': 'views/server/plugins/mail.html'
+    'mail': 'views/server/plugins/mail.html',
+    'automaticBackup': 'views/server/plugins/automaticBackup.html'
   }
   $scope.dirty = false;
   $scope.selectPlugin = function (plugin) {
@@ -584,17 +605,107 @@ ee.controller('PluginsController', function ($scope, Plugins, Cluster, Notificat
       Notification.push({content: error.data, error: true, autoHide: true});
     });
   }
+
+  $scope.applyAll = function () {
+    Plugins.saveConfig('_all', $scope.selectedPlugin.name, $scope.selectedConfiguration).then(function (data) {
+      $scope.dirty = false;
+      $scope.selectedPlugin.configuration = data;
+      Notification.push({content: "Plugin configuration saved correctly in all Servers", autoHide: true});
+    }).catch(function (error) {
+
+      Notification.push({content: error.data, error: true, autoHide: true});
+    });
+  }
 })
 
-ee.controller('MailController', function ($scope) {
+ee.controller('MailController', function ($scope, $modal, Database) {
 
 
+  $scope.mailWiki = Database.resolveWiki("Mail-Plugin.html");
+  ;
+  $scope.removeProfile = function () {
+
+    var idx = $scope.profiles.indexOf($scope.profile);
+
+    $scope.profiles.splice(idx, 1);
+
+    if ($scope.profiles.length > 0) {
+      $scope.profile = $scope.profiles[0];
+    } else {
+      $scope.profile = null;
+    }
+  }
+
+  $scope.addProfile = function () {
+    var modalScope = $scope.$new(true);
+
+    modalScope.newProfile = {name: ''};
+
+    var modalPromise = $modal({template: 'views/server/plugins/newProfile.html', scope: modalScope, show: false});
+
+    modalScope.createProfile = function () {
+      $scope.profiles.push(modalPromise.$scope.newProfile);
+
+      $scope.profile = modalPromise.$scope.newProfile;
+      modalPromise.hide();
+    }
+
+
+    modalPromise.$promise.then(modalPromise.show);
+
+  }
   $scope.$watch('selectedPlugin', function (data) {
-    if (data) {
+    if (data && data.name == 'mail') {
       $scope.profiles = $scope.selectedConfiguration.profiles;
       $scope.profile = $scope.profiles[0]
 
+    } else {
+      $scope.profiles = []
+      $scope.profile = null;
     }
   })
 
 });
+
+
+ee.controller('AutomaticBackupController', function ($scope, $modal, Database) {
+
+
+  $scope.wiki = Database.resolveWiki("Automatic-Backup.html");
+
+
+  $scope.modes = ["FULL_BACKUP", "INCREMENTAL_BACKUP", "EXPORT"];
+
+  $scope.$watch('selectedPlugin', function (data) {
+    if (data) {
+      $scope.config = $scope.selectedConfiguration;
+    }
+  })
+
+
+});
+
+ee.controller('EEDashboardController', function ($scope, $rootScope) {
+
+
+  $rootScope.$on('servermgmt:open', function () {
+    $scope.show = "ee-view-show";
+  })
+  $rootScope.$on('servermgmt:close', function () {
+    $scope.show = "";
+  })
+
+  $scope.menus = [
+    {name: "stats", title: "Dashboard", template: 'stats', icon: 'fa-dashboard'},
+    {name: "general", title: "Servers Management", template: 'general', icon: 'fa-desktop'},
+    {name: "cluster", title: "Cluster Management", template: 'distributed', icon: 'fa-sitemap'},
+    {name: "profiler", title: "Query Profiler", template: 'profiler', icon: 'fa-rocket'},
+    {name: "auditing", title: "Auditing", template: 'auditing', icon: 'fa-headphones'},
+    {name: "plugins", title: "Plugins Management", template: 'plugins', icon: 'fa-plug'},
+    {name: "events", title: "Events Management", template: 'events', icon: 'fa-bell'},
+    {name: "configuration", title: "Settings", template: 'config', icon: 'fa-cogs'},
+    {name: "storage", title: "Storages", template: 'storage', icon: 'fa-database'}
+  ]
+})
+
+

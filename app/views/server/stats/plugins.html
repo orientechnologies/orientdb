@@ -1,18 +1,30 @@
 <div ng-controller="PluginsController">
   <div class="row row-space">
-    <div class="col-md-12 well">
-      <div class="col-md-4">
-        <form class="form-horizontal">
-          <div class="form-group ">
-            <label class="col-md-2 control-label">Server </label>
-
-            <div class="col-md-6">
-              <select id="serverOnline" ng-model="server" class="form-control "
-                      ng-options="s.name for s in servers"
-                      data-placeholder="Pick a Server"></select>
-            </div>
+    <div class="col-md-12">
+      <form class="form-horizontal studio-well">
+        <div class="form-group">
+          <label class="col-md-1 control-label">Server </label>
+          <div class="col-md-2">
+            <select id="serverOnline" ng-model="server" class="form-control "
+                    ng-options="s.name for s in servers"
+                    data-placeholder="Pick a Server"></select>
           </div>
-        </form>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="row row-space">
+    <div class="col-md-6">
+      <h5>Available plugins on {{server.name}} server</h5>
+    </div>
+    <div class="col-md-6">
+      <div class="pull-right">
+        <button class="btn btn-sm btn-primary" ng-click="saveConfiguration()"><i
+          class="fa fa-save"></i> Apply plugin config
+        </button>
+        <button class="btn btn-sm btn-warning" ng-click="applyAll()"><i
+          class="fa fa-sitemap"></i> Apply plugin configuration in all Servers
+        </button>
       </div>
     </div>
   </div>
@@ -34,11 +46,6 @@
       </table>
     </div>
     <div class="col-md-8">
-      <div>
-        <button  class="btn btn-sm btn-primary" ng-click="saveConfiguration()"><i
-          class="fa fa-save"></i> Save plugin configuration
-        </button>
-      </div>
       <div ng-show="!isCustomPlugin()">
       <textarea jsontext ui-codemirror="editorOptions"
                 ng-model="selectedConfiguration"></textarea>

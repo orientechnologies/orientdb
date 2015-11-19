@@ -5,7 +5,9 @@ html {
 body {
   height: 100%;
   font-size: 13px;
-  background-color: #E7E9EB;
+  color: #4c4f53;
+  background-color: #edecec;
+  font-family: 'Source Sans Pro',sans-serif;
 }
 
 .header {
@@ -1034,6 +1036,12 @@ span.badge-edge {
 }
 .row-space {
   margin-top: 10px;
+}
+.row-space-2x {
+  margin-top: 20px;
+}
+.row-space-4x {
+  margin-top: 40px;
 }
 
 .col-centered {

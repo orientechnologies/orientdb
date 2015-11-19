@@ -1,41 +1,29 @@
-<div class="col-md-12" ng-controller="ClusterOverviewController">
-  <ul class="thumbnails">
-    <li class="">
-      <div class="thumbnail server-thumb">
-        <div class="row">
-          <div class="col-md-12">
-            {{ server.name }}
-          </div>
-          <!--<div class="col-md-6">-->
-          <!--<div class="pull-right">-->
-          <!--<a href="javascript:void(0)" class="btn btn-small" ng-show="!server.attached"-->
-          <!--ng-click="enableServer(server)"><i-->
-          <!--class="icon-play"></i></a>-->
-          <!--<a href="javascript:void(0)" class="btn btn-small" ng-show="server.attached"-->
-          <!--ng-click="disableServer(server)"><i-->
-          <!--class="icon-pause"></i></a>-->
-          <!--</div>-->
-          <!--</div>-->
+<div ng-controller="ClusterOverviewController">
+  <div class="col-md-6">
+    <div class="panel panel-default">
 
-        </div>
-        <div class="row">
+      <div class="panel-heading">
+        <b> Cluster Health</b></div>
+      <div class="panel-body">
 
+
+        <div class="row">
           <div class="col-md-4">
-            <div id="cpu-gauge" c3-gauge value="cpu"></div>
+            <div id="cpu-gauge" c3-gauge value="cpu" height="height"></div>
 
-            <div class="chart-label">
+            <div class="chart-label text-center">
               <span>CPU</span>
             </div>
           </div>
           <div class="col-md-4">
-            <div id="ram-gauge" c3-gauge value="ram"></div>
-            <div class="chart-label">
+            <div id="ram-gauge" c3-gauge value="ram" height="height"></div>
+            <div class="chart-label text-center">
               <span>RAM</span>
             </div>
           </div>
           <div class="col-md-4">
-            <div id="disk-gauge" c3-gauge value="disk"></div>
-            <div class="chart-label">
+            <div id="disk-gauge" c3-gauge value="disk" height="height"></div>
+            <div class="chart-label text-center">
               <span>DISK</span>
             </div>
           </div>
@@ -73,6 +61,20 @@
           </div>
         </div>
       </div>
-    </li>
-  </ul>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+
+    <div class="panel panel-default">
+
+      <div class="panel-heading">
+        <b> Cluster CRUD Operations</b>
+      </div>
+      <div class="panel-body">
+        <div id="orientdb-cluster" c3chart></div>
+      </div>
+    </div>
+
+  </div>
 </div>

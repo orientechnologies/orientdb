@@ -188,6 +188,9 @@ graph.directive('c3chart', function ($http, $compile, $timeout, $rootScope) {
         point: {
           show: false
         },
+        size: {
+          height: 250
+        },
         axis: {
           x: {
             type: 'timeseries',
@@ -198,11 +201,7 @@ graph.directive('c3chart', function ($http, $compile, $timeout, $rootScope) {
               format: '%H:%M:%S',
             }
           },
-          y: {
-            label: {
-              text: 'Server ' + scope.server.name + ' CRUD'
-            }
-          }
+          y: {}
         }
       });
 

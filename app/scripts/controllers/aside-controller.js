@@ -23,6 +23,13 @@ aside.controller("AsideManagerController", ['$scope', '$routeParams', '$http', '
       }
     }
   })
+
+  $rootScope.$on('servermgmt:open',function(){
+    $scope.containerClass = "app-view";
+  })
+  $rootScope.$on('servermgmt:close',function(){
+    $scope.containerClass = "";
+  })
   $rootScope.$on('aside:close', function () {
     $scope.asideClass = "";
     $scope.containerClass = "";

@@ -88,6 +88,9 @@ database.factory('Database', function (DatabaseApi, localStorageService) {
     setWiki: function (urlWiki) {
       current.wiki = wikiBase + urlWiki;
     },
+    resolveWiki: function (urlWiki) {
+      return wikiBase + urlWiki;
+    },
     getMappingFor: function (type) {
       return this.mapping[type];
     },

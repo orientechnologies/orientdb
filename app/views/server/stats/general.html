@@ -1,12 +1,11 @@
 <div class="container-fluid" ng-controller="GeneralMonitorController">
 
 
-
-  <div class="row well" style="width: 96%">
+  <div class="row studio-well">
 
     <div class="col-md-2">
 
-      <label>Server: </label>
+      <label>Server </label>
       <select id="serverOnline" ng-model="server" class="form-control" ng-options="s.name for s in servers"
               data-placeholder="Pick a Server"></select>
     </div>
@@ -29,7 +28,7 @@
         <div class="row">
           <i class="icon-angle-right"></i> Java version: <b>{{server.configuration.java_version}}</b>
         </div>
-        <div>
+        <div class="row">
           <i class="icon-angle-right"></i> Os name: <b>{{server.configuration.os_name}} </b>
         </div>
         <div class="row">
@@ -53,11 +52,14 @@
     </div>
   </div>
 
-  <tabset ng-show="!error && attached">
-    <tab title="Overview" template-url="views/server/general/overview.html"></tab>
-    <tab title="Databases" template-url="views/server/general/db.html"></tab>
-    <tab title="Warnings" template-url="views/server/general/warnings.html"></tab>
-    <tab title="Logs" template-url="views/server/general/log.html"></tab>
-    <tab title="Configuration" template-url="views/server/general/configuration.html"></tab>
-  </tabset>
+  <div class="row row-space">
+    <tabset ng-show="!error && attached">
+      <tab title="Overview" template-url="views/server/general/overview.html"></tab>
+      <tab title="Connections" template-url="views/server/general/conn.html"></tab>
+      <tab title="Databases" template-url="views/server/general/db.html"></tab>
+      <tab title="Warnings" template-url="views/server/general/warnings.html"></tab>
+      <tab title="Logs" template-url="views/server/general/log.html"></tab>
+      <tab title="Configuration" template-url="views/server/general/configuration.html"></tab>
+    </tabset>
+  </div>
 </div>

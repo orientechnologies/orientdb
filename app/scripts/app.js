@@ -201,6 +201,11 @@ App.run(function ($rootScope, $interval, DatabaseApi, Notification, Spinner, $te
         $rootScope.bodyClass = 'normal-page';
         break;
     }
+    if (currentRoute.$$route.controller === 'ServerDashboardController') {
+      $rootScope.$emit("servermgmt:open");
+    } else {
+      $rootScope.$emit("servermgmt:close");
+    }
     if (oldRoute && currentRoute.originalPath != oldRoute.originalPath) {
       Notification.clear();
     }
