@@ -1,6 +1,7 @@
 package com.orientechnologies.agent.http.command;
 
 import com.orientechnologies.agent.proxy.HttpProxy;
+import com.orientechnologies.agent.proxy.HttpProxyListener;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
@@ -12,6 +13,8 @@ import java.io.IOException;
  * Created by Enrico Risa on 16/11/15.
  */
 public abstract class OServerCommandDistributedScope extends OServerCommandAuthenticatedServerAbstract {
+
+  HttpProxy proxy = new HttpProxy();
 
   protected OServerCommandDistributedScope(String iRequiredResource) {
     super(iRequiredResource);
@@ -30,12 +33,18 @@ public abstract class OServerCommandDistributedScope extends OServerCommandAuthe
   }
 
   public void proxyRequest(OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
-    proxyRequest(iRequest,iResponse,null);
+    proxyRequest(iRequest, iResponse, null);
   }
-  public void proxyRequest(OHttpRequest iRequest, OHttpResponse iResponse,HttpProxy.HttpProxyListener listener) throws IOException {
+
+  public void proxyRequest(OHttpRequest iRequest, OHttpResponse iResponse, HttpProxyListener listener) throws IOException {
 
     ODistributedServerManager manager = server.getDistributedManager();
     String node = iRequest.getParameter("node");
-    HttpProxy.proxyRequest(manager, node, iRequest, iResponse,listener);
+    if ("_all".equalsIgnoreCase(node)) {
+      proxy.broadcastRequest(manager, iRequest, iResponse);
+    } else {
+      proxy.proxyRequest(manager, node, iRequest, iResponse, listener);
+    }
   }
+
 }
