@@ -172,9 +172,9 @@ public class RepositoryController {
 
           if (fileObject != null) {
             HttpHeaders respHeaders = new HttpHeaders();
-            respHeaders.setContentType(MediaType.parseMediaType("application/octet-stream"));
+            respHeaders.setContentType(MediaType.parseMediaType("application/force-download"));
             respHeaders.setContentLength(fileObject.getContent().getSize());
-            respHeaders.setContentDispositionFormData("attachment", name);
+            respHeaders.set("Content-Disposition", "attachment; filename=" + name);
             InputStreamResource inputStreamResource = new InputStreamResource(fileObject.getContent().getInputStream());
             return new ResponseEntity<InputStreamResource>(inputStreamResource, respHeaders, HttpStatus.OK);
           }
