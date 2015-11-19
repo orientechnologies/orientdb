@@ -5,7 +5,7 @@
     <artifactId>orientdb-gremlin</artifactId>
     <version>3.0.2.incubating.1-SNAPSHOT</version>
     <name>Apache TinkerPop :: OrientDB Gremlin</name>
-    <description>TinkerPop3 driver for OrientDB</description>
+    <description>TinkerPop3 Graph Structure Implementation for OrientDB</description>
     <url>https://github.com/mpollmeier/orientdb-gremlin/</url>
     
     <properties>
