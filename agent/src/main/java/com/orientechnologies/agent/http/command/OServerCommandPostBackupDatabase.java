@@ -15,7 +15,7 @@
  */
 package com.orientechnologies.agent.http.command;
 
-import com.orientechnologies.agent.proxy.HttpProxy;
+import com.orientechnologies.agent.proxy.HttpProxyListener;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -72,11 +72,17 @@ public class OServerCommandPostBackupDatabase extends OServerCommandDistributedS
             database.close();
         }
       } else {
-        proxyRequest(iRequest, iResponse, new HttpProxy.HttpProxyListener() {
+        proxyRequest(iRequest, iResponse, new HttpProxyListener() {
           @Override
           public void onProxySuccess(OHttpRequest request, OHttpResponse response, InputStream is) throws IOException {
             iResponse.sendStream(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_GZIP, is, -1,
                 urlParts[1] + ".gz");
+          }
+
+          @Override
+          public void onProxyError(OHttpRequest request, OHttpResponse response, InputStream is, int code, Exception e)
+              throws IOException {
+            iResponse.send(code, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_JSON, e, null);
           }
         });
       }

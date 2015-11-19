@@ -17,7 +17,7 @@
  */
 package com.orientechnologies.agent.http.command;
 
-import com.orientechnologies.agent.proxy.HttpProxy;
+import com.orientechnologies.agent.proxy.HttpProxyListener;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
@@ -66,10 +66,16 @@ public class OServerCommandConfiguration extends OServerCommandDistributedScope 
         iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, e, null);
       }
     } else {
-      proxyRequest(iRequest, iResponse, new HttpProxy.HttpProxyListener() {
+      proxyRequest(iRequest, iResponse, new HttpProxyListener() {
         @Override
         public void onProxySuccess(OHttpRequest request, OHttpResponse response, InputStream is) throws IOException {
           response.sendStream(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, "text/xml", is, -1);
+        }
+
+        @Override
+        public void onProxyError(OHttpRequest request, OHttpResponse iResponse, InputStream is, int code, Exception e)
+            throws IOException {
+          iResponse.send(code, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_JSON, e, null);
         }
       });
     }
