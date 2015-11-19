@@ -28,6 +28,7 @@ import java.util.Set;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.hazelcast.collection.impl.queue.QueueService;
 import com.hazelcast.config.QueueConfig;
 import com.hazelcast.core.DistributedObject;
 import com.hazelcast.core.HazelcastException;
@@ -35,7 +36,6 @@ import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.IAtomicLong;
 import com.hazelcast.core.IQueue;
 import com.hazelcast.monitor.LocalQueueStats;
-import com.hazelcast.queue.impl.QueueService;
 import com.hazelcast.spi.exception.DistributedObjectDestroyedException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -61,7 +61,7 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
   public static final String                                           NODE_QUEUE_REQUEST_POSTFIX  = ".request";
   public static final String                                           NODE_QUEUE_RESPONSE_POSTFIX = ".response";
   protected final OHazelcastPlugin                                     manager;
-  protected final IQueue<ODistributedResponse>                         nodeResponseQueue;
+  protected final IQueue                                               nodeResponseQueue;
   protected final ConcurrentHashMap<Long, ODistributedResponseManager> responsesByRequestIds;
   protected final TimerTask                                            asynchMessageManager;
   protected Map<String, OHazelcastDistributedDatabase>                 databases                   = new ConcurrentHashMap<String, OHazelcastDistributedDatabase>();
@@ -107,7 +107,7 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
           String senderNode = null;
           ODistributedResponse message = null;
           try {
-            message = nodeResponseQueue.take();
+            message = (ODistributedResponse) nodeResponseQueue.take();
 
             if (message != null) {
               senderNode = message.getSenderNodeName();
@@ -245,7 +245,7 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
 
   @Override
   public ODocument getQueueStats(final String iQueueName) {
-    final IQueue<Object> queue = manager.getHazelcastInstance().getQueue(iQueueName);
+    final IQueue queue = manager.getHazelcastInstance().getQueue(iQueueName);
     if (queue == null)
       throw new IllegalArgumentException("Queue '" + iQueueName + "' not found");
 
@@ -393,8 +393,7 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
     }
   }
 
-  protected boolean checkForPendingMessages(final IQueue<?> iQueue, final String iQueueName,
-      final boolean iUnqueuePendingMessages) {
+  protected boolean checkForPendingMessages(final IQueue iQueue, final String iQueueName, final boolean iUnqueuePendingMessages) {
     final int queueSize = iQueue.size();
     if (queueSize > 0) {
       if (!iUnqueuePendingMessages) {
@@ -418,7 +417,7 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
    */
   public <T> IQueue<T> getQueue(final String iQueueName) {
     // configureQueue(iQueueName, 0, 0);
-    return manager.getHazelcastInstance().getQueue(iQueueName);
+    return (IQueue<T>) manager.getHazelcastInstance().getQueue(iQueueName);
   }
 
   protected void configureQueue(final String iQueueName, final int synchReplica, final int asynchReplica) {
@@ -431,7 +430,7 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
    * Removes the queue. Hazelcast doesn't allow to remove the queue, so now we just clear it.
    */
   protected void removeQueue(final String iQueueName) {
-    final IQueue<?> queue = manager.getHazelcastInstance().getQueue(iQueueName);
+    final IQueue queue = manager.getHazelcastInstance().getQueue(iQueueName);
     if (queue != null) {
       ODistributedServerLog.info(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
           "removing queue '%s' containing %d messages", iQueueName, queue.size());

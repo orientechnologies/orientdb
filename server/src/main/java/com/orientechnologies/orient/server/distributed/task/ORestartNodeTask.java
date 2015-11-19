@@ -47,7 +47,7 @@ public class ORestartNodeTask extends OAbstractRemoteTask {
   public Object execute(final OServer iServer, final ODistributedServerManager iManager, final ODatabaseDocumentTx database)
       throws Exception {
 
-    ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.IN,
+    ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.IN,
         "restarting server...");
 
     Orient.instance().scheduleTask(new TimerTask() {
@@ -56,7 +56,7 @@ public class ORestartNodeTask extends OAbstractRemoteTask {
         try {
           iServer.restart();
         } catch (Exception e) {
-          ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.IN,
+          ODistributedServerLog.error(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.IN,
               "error on restarting server", e);
         }
       }

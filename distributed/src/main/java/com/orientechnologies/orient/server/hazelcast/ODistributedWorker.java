@@ -36,7 +36,6 @@ import com.orientechnologies.orient.server.distributed.ODiscardedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
-import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
@@ -67,15 +66,15 @@ public class ODistributedWorker extends Thread {
   protected final OHazelcastPlugin                    manager;
   protected final OHazelcastDistributedMessageService msgService;
   protected final String                              databaseName;
-  protected final IQueue<ODistributedRequest>         requestQueue;
+  protected final IQueue                              requestQueue;
   protected Queue<ODistributedRequest>                localQueue          = new ArrayBlockingQueue<ODistributedRequest>(
-                                                                              LOCAL_QUEUE_MAXSIZE);
+      LOCAL_QUEUE_MAXSIZE);
   protected volatile ODatabaseDocumentTx              database;
   protected volatile OUser                            lastUser;
   protected boolean                                   restoringMessages;
   protected volatile boolean                          running             = true;
 
-  public ODistributedWorker(final OHazelcastDistributedDatabase iDistributed, final IQueue<ODistributedRequest> iRequestQueue,
+  public ODistributedWorker(final OHazelcastDistributedDatabase iDistributed, final IQueue iRequestQueue,
       final String iDatabaseName, final int i, final boolean iRestoringMessages) {
     setName("OrientDB DistributedWorker node=" + iDistributed.getLocalNodeName() + " db=" + iDatabaseName + " id=" + i);
     distributed = iDistributed;
@@ -155,8 +154,8 @@ public class ODistributedWorker extends Thread {
   public void initDatabaseInstance() {
     if (database == null) {
       // OPEN IT
-      final OServerUserConfiguration replicatorUser = manager.getServerInstance().getUser(
-          ODistributedAbstractPlugin.REPLICATOR_USER);
+      final OServerUserConfiguration replicatorUser = manager.getServerInstance()
+          .getUser(ODistributedAbstractPlugin.REPLICATOR_USER);
       database = (ODatabaseDocumentTx) manager.getServerInstance().openDatabase("document", databaseName, replicatorUser.name,
           replicatorUser.password);
 
@@ -165,8 +164,8 @@ public class ODistributedWorker extends Thread {
 
     } else if (database.isClosed()) {
       // DATABASE CLOSED, REOPEN IT
-      final OServerUserConfiguration replicatorUser = manager.getServerInstance().getUser(
-          ODistributedAbstractPlugin.REPLICATOR_USER);
+      final OServerUserConfiguration replicatorUser = manager.getServerInstance()
+          .getUser(ODistributedAbstractPlugin.REPLICATOR_USER);
       database.open(replicatorUser.name, replicatorUser.password);
 
       // AVOID RELOADING DB INFORMATION BECAUSE OF DEADLOCKS
@@ -247,7 +246,7 @@ public class ODistributedWorker extends Thread {
   protected ODistributedRequest nextMessage() throws InterruptedException {
     while (localQueue.isEmpty()) {
       // WAIT FOR THE FIRST MESSAGE
-      localQueue.offer(requestQueue.take());
+      localQueue.offer((ODistributedRequest) requestQueue.take());
 
       // READ MULTIPLE MSGS IN ONE SHOT BY USING LOCAL QUEUE TO IMPROVE PERFORMANCE
       requestQueue.drainTo(localQueue, LOCAL_QUEUE_MAXSIZE - 1);
@@ -427,8 +426,8 @@ public class ODistributedWorker extends Thread {
 
     try {
       // GET THE SENDER'S RESPONSE QUEUE
-      final IQueue<ODistributedResponse> queue = msgService.getQueue(OHazelcastDistributedMessageService
-          .getResponseQueueName(iRequest.getSenderNodeName()));
+      final IQueue queue = msgService
+          .getQueue(OHazelcastDistributedMessageService.getResponseQueueName(iRequest.getSenderNodeName()));
 
       if (!queue.offer(response, OGlobalConfiguration.DISTRIBUTED_QUEUE_TIMEOUT.getValueAsLong(), TimeUnit.MILLISECONDS))
         throw new ODistributedException("Timeout on dispatching response to the thread queue " + iRequest.getSenderNodeName());

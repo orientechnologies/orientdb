@@ -504,7 +504,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       if (!queueName.startsWith(OHazelcastDistributedMessageService.NODE_QUEUE_PREFIX))
         continue;
 
-      final IQueue<Object> queue = hazelcastInstance.getQueue(queueName);
+      final IQueue queue = hazelcastInstance.getQueue(queueName);
 
       final String[] names = queueName.split("\\.");
 
@@ -1641,7 +1641,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     return this;
   }
 
-  public void unjoinNode(final String iNode) {
+  public void disconnectNode(final String iNode) {
     final Set<String> databases = new HashSet<String>();
 
     for (Map.Entry<String, Object> entry : getConfigurationMap().entrySet()) {
@@ -1659,8 +1659,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       getConfigurationMap().put(k, DB_STATUS.OFFLINE);
 
     // GET THE SENDER'S RESPONSE QUEUE
-    final IQueue<ODistributedResponse> queue = messageService
-        .getQueue(OHazelcastDistributedMessageService.getResponseQueueName(iNode));
+    final IQueue queue = messageService.getQueue(OHazelcastDistributedMessageService.getResponseQueueName(iNode));
+
+    ODistributedServerLog.warn(this, nodeName, null, DIRECTION.NONE, "sending request of restarting node '%s'...", iNode);
 
     final OHazelcastDistributedResponse response = new OHazelcastDistributedResponse(-1, nodeName, iNode, new ORestartNodeTask());
 
