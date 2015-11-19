@@ -21,7 +21,6 @@ public class OSecurityManagerTest {
     hash = securityManager.createHash("password", OSecurityManager.PBKDF2_ALGORITHM, true);
 
     assertThat(securityManager.checkPassword("password", hash)).isTrue();
-
   }
 
   @Test
@@ -35,7 +34,6 @@ public class OSecurityManagerTest {
     hash = securityManager.createHash("password", OSecurityManager.PBKDF2_ALGORITHM, true);
 
     assertThat(securityManager.checkPassword(hash, hash)).isFalse();
-
   }
 
   @Test
@@ -46,7 +44,6 @@ public class OSecurityManagerTest {
     String hash = securityManager.createHashWithSalt("password");
 
     assertThat(securityManager.checkPasswordWithSalt("password", hash)).isTrue();
-
   }
 
   @Test
@@ -56,6 +53,5 @@ public class OSecurityManagerTest {
 
     String hash = securityManager.createHashWithSalt("password");
     assertThat(securityManager.checkPasswordWithSalt(hash, hash)).isFalse();
-
   }
 }
