@@ -23,19 +23,19 @@ public class OAuditingListener implements ODatabaseLifecycleListener {
 
   private Map<String, OAuditingHook> hooks;
 
-  protected static final String      DEFAULT_FILE_AUDITING_DB_CONFIG = "default-auditing-config.json";
-  protected static final String      FILE_AUDITING_DB_CONFIG         = "auditing-config.json";
-  private OEnterpriseAgent           oEnterpriseAgent;
+  protected static final String DEFAULT_FILE_AUDITING_DB_CONFIG = "default-auditing-config.json";
+  protected static final String FILE_AUDITING_DB_CONFIG         = "auditing-config.json";
+  private OEnterpriseAgent      enterpriseAgent;
 
   public OAuditingListener(final OEnterpriseAgent iEnterpriseAgent) {
-    this.oEnterpriseAgent = iEnterpriseAgent;
+    this.enterpriseAgent = iEnterpriseAgent;
     hooks = new ConcurrentHashMap<String, OAuditingHook>(20);
     Orient.instance().addDbLifecycleListener(this);
   }
 
   @Override
   public PRIORITY getPriority() {
-    return PRIORITY.REGULAR;
+    return PRIORITY.LAST;
   }
 
   @Override
@@ -53,8 +53,8 @@ public class OAuditingListener implements ODatabaseLifecycleListener {
       content = getContent(auditingFileConfig);
 
     } else {
-      final InputStream resourceAsStream = OEnterpriseAgent.class.getClassLoader().getResourceAsStream(
-          DEFAULT_FILE_AUDITING_DB_CONFIG);
+      final InputStream resourceAsStream = OEnterpriseAgent.class.getClassLoader()
+          .getResourceAsStream(DEFAULT_FILE_AUDITING_DB_CONFIG);
       content = getString(resourceAsStream);
       try {
         auditingFileConfig.getParentFile().mkdirs();
@@ -139,8 +139,12 @@ public class OAuditingListener implements ODatabaseLifecycleListener {
 
   }
 
+  @Override
+  public void onLocalNodeConfigurationRequest(ODocument iConfiguration) {
+  }
+
   public File getAuditingFileConfig(final String iDatabaseName) {
-    return new File(oEnterpriseAgent.server.getDatabaseDirectory() + iDatabaseName + "/" + FILE_AUDITING_DB_CONFIG);
+    return new File(enterpriseAgent.server.getDatabaseDirectory() + iDatabaseName + "/" + FILE_AUDITING_DB_CONFIG);
   }
 
   public void changeConfig(final String iDatabaseName, final ODocument cfg) throws IOException {
