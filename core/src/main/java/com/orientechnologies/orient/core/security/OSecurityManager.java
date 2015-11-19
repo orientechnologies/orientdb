@@ -37,20 +37,20 @@ import java.util.Collections;
 import java.util.Map;
 
 public class OSecurityManager {
-  public static final String            HASH_ALGORITHM          = "SHA-256";
-  public static final String            HASH_ALGORITHM_PREFIX   = "{" + HASH_ALGORITHM + "}";
+  public static final String HASH_ALGORITHM        = "SHA-256";
+  public static final String HASH_ALGORITHM_PREFIX = "{" + HASH_ALGORITHM + "}";
 
-  public static final String            PBKDF2_ALGORITHM        = "PBKDF2WithHmacSHA1";
-  public static final String            PBKDF2_ALGORITHM_PREFIX = "{" + PBKDF2_ALGORITHM + "}";
+  public static final String PBKDF2_ALGORITHM        = "PBKDF2WithHmacSHA1";
+  public static final String PBKDF2_ALGORITHM_PREFIX = "{" + PBKDF2_ALGORITHM + "}";
 
-  public static final int               SALT_SIZE               = 24;
-  public static final int               HASH_SIZE               = 24;
+  public static final int SALT_SIZE = 24;
+  public static final int HASH_SIZE = 24;
 
-  private static final OSecurityManager instance                = new OSecurityManager();
+  private static final OSecurityManager instance = new OSecurityManager();
 
-  private MessageDigest                 md;
+  private MessageDigest md;
 
-  private static Map<String, byte[]>    SALT_CACHE              = null;
+  private static Map<String, byte[]> SALT_CACHE = null;
 
   static {
     final int cacheSize = OGlobalConfiguration.SECURITY_USER_PASSWORD_SALT_CACHE_SIZE.getValueAsInteger();
@@ -67,8 +67,8 @@ public class OSecurityManager {
     }
   }
 
-  public static String createHash(final String iInput, String iAlgorithm) throws NoSuchAlgorithmException,
-      UnsupportedEncodingException {
+  public static String createHash(final String iInput, String iAlgorithm)
+      throws NoSuchAlgorithmException, UnsupportedEncodingException {
     if (iAlgorithm == null)
       iAlgorithm = HASH_ALGORITHM;
 
@@ -83,19 +83,27 @@ public class OSecurityManager {
 
   /**
    * Checks if an hash string matches a password, based on the algorithm found on hash string.
+   * Password can be given in plain text format or as hash string with the algorithm as prefix in the format <code>{ALGORITHM}-HASH</code>.
    *
-   * @param iHash
-   *          Hash string. Can contain the algorithm as prefix in the format <code>{ALGORITHM}-HASH</code>.
-   * @param iPassword
-   * @return
+   * @param iHash     Hash string. Can contain the algorithm as prefix in the format <code>{ALGORITHM}-HASH</code>.
+   * @param iPassword plain text password <b>or</b> hash string with <b>MANDATORY</b> algorithm as prefix in the format <code>{ALGORITHM}-HASH</code>.
+   * @return true if checked, false otherwise
    */
   public boolean checkPassword(final String iPassword, final String iHash) {
     if (iHash.startsWith(HASH_ALGORITHM_PREFIX)) {
       final String s = iHash.substring(HASH_ALGORITHM_PREFIX.length());
+
+      if (iPassword.startsWith(HASH_ALGORITHM_PREFIX))
+        return iPassword.substring(HASH_ALGORITHM_PREFIX.length()).equals(s);
+
       return createSHA256(iPassword).equals(s);
 
     } else if (iHash.startsWith(PBKDF2_ALGORITHM_PREFIX)) {
       final String s = iHash.substring(PBKDF2_ALGORITHM_PREFIX.length());
+
+      if (iPassword.startsWith(PBKDF2_ALGORITHM_PREFIX))
+        return iPassword.substring(PBKDF2_ALGORITHM_PREFIX.length()).equals(s);
+
       return checkPasswordWithSalt(iPassword, s);
     }
 
@@ -109,10 +117,8 @@ public class OSecurityManager {
   /**
    * Hashes the input string.
    *
-   * @param iInput
-   *          String to hash
-   * @param iIncludeAlgorithm
-   *          Include the algorithm used or not
+   * @param iInput            String to hash
+   * @param iIncludeAlgorithm Include the algorithm used or not
    * @return
    */
   public String createHash(final String iInput, final String iAlgorithm, final boolean iIncludeAlgorithm) {
@@ -182,8 +188,17 @@ public class OSecurityManager {
     final byte[] salt = hexToByteArray(params[1]);
     final int iterations = Integer.parseInt(params[2]);
 
-    final byte[] testHash = getPbkdf2(iPassword, salt, iterations, hash.length);
-    return compareHash(hash, testHash);
+    if (iPassword.split(":").length == 1) {
+      final byte[] testHash = getPbkdf2(iPassword, salt, iterations, hash.length);
+      return compareHash(hash, testHash);
+    }
+
+    final String[] passwordParts = iPassword.split(":");
+    final byte[] passwrodHash = hexToByteArray(passwordParts[0]);
+    final byte[] passwordSalt = hexToByteArray(passwordParts[1]);
+    final int passwordIterations = Integer.parseInt(passwordParts[2]);
+
+    return compareHash(hash,passwrodHash);
   }
 
   private byte[] getPbkdf2(final String iPassword, final byte[] salt, final int iterations, final int bytes) {
