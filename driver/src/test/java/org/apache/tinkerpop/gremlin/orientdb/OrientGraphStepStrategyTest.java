@@ -32,8 +32,8 @@ public class OrientGraphStepStrategyTest {
         assertEquals(OrientGraphStep.class, traversal.getStartStep().getClass());
         assertEquals(OrientGraphStep.class, traversal.getEndStep().getClass());
         assertEquals(1, ((OrientGraphStep) traversal.getStartStep()).getHasContainers().size());
-        assertEquals("name", ((OrientGraphStep<?>) traversal.getStartStep()).getHasContainers().get(0).getKey());
-        assertEquals("marko", ((OrientGraphStep<?>) traversal.getStartStep()).getHasContainers().get(0).getValue());
+        assertEquals("name", ((OrientGraphStep<?,?>) traversal.getStartStep()).getHasContainers().get(0).getKey());
+        assertEquals("marko", ((OrientGraphStep<?,?>) traversal.getStartStep()).getHasContainers().get(0).getValue());
         ////
         traversal = g.V().has("name", "marko").has("age", P.gt(20)).asAdmin();
         System.out.println("STEPS:");
@@ -61,8 +61,8 @@ public class OrientGraphStepStrategyTest {
         assertEquals(3, traversal.getSteps().size());
         assertEquals(OrientGraphStep.class, traversal.getStartStep().getClass());
         assertEquals(1, ((OrientGraphStep) traversal.getStartStep()).getHasContainers().size());
-        assertEquals("name", ((OrientGraphStep<?>) traversal.getStartStep()).getHasContainers().get(0).getKey());
-        assertEquals("marko", ((OrientGraphStep<?>) traversal.getStartStep()).getHasContainers().get(0).getValue());
+        assertEquals("name", ((OrientGraphStep<?,?>) traversal.getStartStep()).getHasContainers().get(0).getKey());
+        assertEquals("marko", ((OrientGraphStep<?,?>) traversal.getStartStep()).getHasContainers().get(0).getValue());
         assertEquals(HasStep.class, traversal.getEndStep().getClass());
     }
 

@@ -5,13 +5,13 @@ import org.apache.tinkerpop.gremlin.process.traversal.Step;
 import org.apache.tinkerpop.gremlin.process.traversal.Traversal;
 import org.apache.tinkerpop.gremlin.process.traversal.TraversalStrategy;
 import org.apache.tinkerpop.gremlin.process.traversal.step.HasContainerHolder;
-import org.apache.tinkerpop.gremlin.process.traversal.step.sideEffect.GraphStep;
+import org.apache.tinkerpop.gremlin.process.traversal.step.map.GraphStep;
 import org.apache.tinkerpop.gremlin.process.traversal.strategy.AbstractTraversalStrategy;
 import org.apache.tinkerpop.gremlin.process.traversal.util.TraversalHelper;
 
 public final class OrientGraphStepStrategy
-        extends AbstractTraversalStrategy<TraversalStrategy.VendorOptimizationStrategy>
-        implements TraversalStrategy.VendorOptimizationStrategy {
+        extends AbstractTraversalStrategy<TraversalStrategy.ProviderOptimizationStrategy>
+        implements TraversalStrategy.ProviderOptimizationStrategy {
 
     private static final OrientGraphStepStrategy INSTANCE = new OrientGraphStepStrategy();
 
@@ -26,8 +26,8 @@ public final class OrientGraphStepStrategy
         final Step<?, ?> startStep = traversal.getStartStep();
         // only apply once
         if (startStep instanceof GraphStep && !(startStep instanceof OrientGraphStep)) {
-            final GraphStep<?> originalGraphStep = (GraphStep) startStep;
-            final OrientGraphStep<?> orientGraphStep = new OrientGraphStep<>(originalGraphStep);
+            final GraphStep<?,?> originalGraphStep = (GraphStep) startStep;
+            final OrientGraphStep<?,?> orientGraphStep = new OrientGraphStep<>(originalGraphStep);
             TraversalHelper.replaceStep(startStep, (Step) orientGraphStep, traversal);
 
             Step<?, ?> currentStep = orientGraphStep.getNextStep();
