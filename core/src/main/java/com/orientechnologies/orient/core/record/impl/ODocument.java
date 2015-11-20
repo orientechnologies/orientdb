@@ -2456,8 +2456,12 @@ public class ODocument extends ORecordAbstract
 
   private void fillTrackedCollection(Collection<Object> dest, Collection<Object> source) {
     for (Object cur : source) {
-      if (cur instanceof ODocument)
-        ((ODocument) cur).convertAllMultiValuesToTrackedVersions();
+      if (cur instanceof ODocument) {
+        final ODocument curDoc = (ODocument)cur;
+        if (curDoc != this) {
+          curDoc.convertAllMultiValuesToTrackedVersions();
+        }
+      }
       else if (cur instanceof List) {
         List<Object> newList = new OTrackedList<Object>(this);
         fillTrackedCollection(newList, (Collection<Object>) cur);
