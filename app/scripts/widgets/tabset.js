@@ -6,8 +6,11 @@ angular.module('bootstrap.tabset', [])
       restrict: 'E',
       replace: true,
       transclude: true,
+
       controller: function ($scope) {
         $scope.templateUrl = '';
+        $scope.clazz = $scope.clazz || 'tabs-style-line';
+
         var tabs = $scope.tabs = [];
         var controller = this;
 
@@ -16,6 +19,10 @@ angular.module('bootstrap.tabset', [])
             tab.selected = false;
           });
           tab.selected = true;
+          if (tab.context) {
+            $scope.$broadcast('context:changed', tab.context);
+          }
+
         };
 
         this.setTabTemplate = function (templateUrl) {
@@ -29,7 +36,16 @@ angular.module('bootstrap.tabset', [])
           tabs.push(tab);
         };
       },
-      templateUrl: 'views/widget/tabset.html'
+      template: '<div class="tabs {{clazz}}">' +
+      '<nav>' +
+      '<ul ng-transclude></ul>' +
+      '</nav>' +
+      '<div class="row row-space"></div>' +
+      '<div class="row row-space">' +
+      '<ng-include src="templateUrl">' +
+      '</ng-include>' +
+      '</div>' +
+      '</div>'
     };
   })
   .directive('tab', function () {
@@ -39,7 +55,9 @@ angular.module('bootstrap.tabset', [])
       require: '^tabset',
       scope: {
         title: '@',
-        templateUrl: '@'
+        templateUrl: '@',
+        context: '=?context',
+        icon: '=?icon'
       },
       link: function (scope, element, attrs, tabsetController) {
         tabsetController.addTab(scope);
@@ -54,6 +72,11 @@ angular.module('bootstrap.tabset', [])
           }
         });
       },
-      templateUrl: 'views/widget/tab.html'
+      template: '<li ng-class="{\'tab-current\': selected}">' +
+      '<a href="" ng-click="select()">' +
+      '<i class="fa {{icon}}"></i>' +
+      '<span> {{ title | capitalize }}</span>' +
+      '</a>' +
+      '</li>'
     };
   });

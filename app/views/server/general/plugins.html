@@ -1,0 +1,26 @@
+<div ng-controller="PluginsController">
+
+  <div class="row row-space">
+
+  </div>
+
+  <div class="row row-space">
+    <tabset clazz="clazz">
+      <tab ng-repeat="plugin in plugins" context="plugin" title="{{plugin.name}}"
+           template-url=" {{pluginTemplate(plugin)}}"></tab>
+    </tabset>
+  </div>
+
+  <div class="row row-space">
+    <div class="col-md-6 col-md-offset-3">
+      <div class="pull-right">
+        <button class="btn btn-sm btn-primary" ng-click="saveConfiguration()"><i
+          class="fa fa-save"></i> Save config
+        </button>
+        <button class="btn btn-sm btn-warning" ng-click="applyAll()"><i
+          class="fa fa-sitemap"></i> Save config in all Servers
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

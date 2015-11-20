@@ -7,7 +7,7 @@ body {
   font-size: 13px;
   color: #4c4f53;
   background-color: #edecec;
-  font-family: 'Source Sans Pro',sans-serif;
+  font-family: 'Source Sans Pro', sans-serif;
 }
 
 .header {
@@ -559,12 +559,35 @@ ul.horizontallist, ol.horizontallist {
 
 }
 
-.table th {
-  background: none repeat scroll 0 0 #DDDDDD;
-  border-color: #C4C4C4;
-  padding-bottom: 2px;
-  padding-top: 2px;
-  position: relative;
+.table > thead:first-child > tr:first-child > th {
+  border-top: 2px solid #e8e9e9;
+}
+
+.table > thead > tr > th:first-child {
+  border-left: none;
+}
+
+.table > thead > tr > th:last-child {
+  border-right: none;
+}
+
+.table > thead > tr > th {
+  /*background: none repeat scroll 0 0 #DDDDDD;*/
+  /*border-color: #C4C4C4;*/
+  /*padding-bottom: 2px;*/
+  /*padding-top: 2px;*/
+  /*position: relative;*/
+
+  background: 0 0;
+  text-align: left;
+  font-size: 12px;
+  border-width: 1px 1px 1px 0;
+  -webkit-border-image: -webkit-linear-gradient(bottom, #d7dbdb, #fff) 1 100%;
+  border-bottom: 2px solid #e8e9e9;
+  border-top: 2px solid #e8e9e9;
+
+  border-left: 1px solid #e8e9e9;
+  border-right: 1px solid #e8e9e9;
 }
 
 .popoverForm {
@@ -1034,12 +1057,15 @@ span.badge-edge {
 .row-centered {
   text-align: center;
 }
+
 .row-space {
   margin-top: 10px;
 }
+
 .row-space-2x {
   margin-top: 20px;
 }
+
 .row-space-4x {
   margin-top: 40px;
 }
@@ -1145,6 +1171,52 @@ span.badge-edge {
 
 .table-responsive {
   overflow: auto;
+}
+
+.table-fixed {
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  height: 500px; /* this can vary */
+}
+
+.table-fixed thead {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.table-fixed tbody {
+  overflow-y: scroll;
+  display: inline-block;
+}
+
+.table-fixed thead > tr, .table-fixed tbody > tr, .table-fixed tfoot > tr {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+}
+
+.table-fixed thead, .table-fixed tfoot {
+  flex-shrink: 0;
+}
+
+.table-fixed th, .table-fixed tbody td {
+  width: 20%; /* this can vary */
+  overflow-x: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+}
+
+.table-fixed tfoot {
+  display: inline-block;
+}
+
+.table-fixed tfoot td {
+  width: 100%;
+  display: inline-block;
 }
 
 .daside-list a.list-group-item {

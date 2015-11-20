@@ -5,7 +5,7 @@
       <form class="form-inline studio-well">
         <div class="form-group">
           <label>Server </label>
-          <select id="serverOnline" ng-model="server" class="form-control" ng-options="s.name for s in servers"
+          <select id="serverOnline" ng-model="server" class="form-control " ng-options="s.name for s in servers"
                   data-placeholder="Pick a Server"></select>
         </div>
         <div class="form-group">
@@ -67,6 +67,7 @@
           <th st-sort="max">Max</th>
           <th st-sort="min">Min</th>
           <th st-sort="last">Last</th>
+          <th st-sort="lastExecution">Last Execution</th>
         </tr>
         <!--<tr>-->
         <!--<th colspan="5"><input st-search=""  class="form-control" placeholder="global search ..." type="text"/></th>-->
@@ -83,6 +84,7 @@
           <td>{{row.max}}</td>
           <td>{{row.min}}</td>
           <td>{{row.last}}</td>
+          <td>{{row.lastExecution | formatDate}}</td>
         </tr>
         </tbody>
       </table>

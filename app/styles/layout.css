@@ -860,9 +860,17 @@ div.users-ui div.container-fluid, div.role-ui div.container-fluid {
   box-shadow: inset 0 -2px #d1d3d2;
 }
 
+.tabs nav li a {
+  color: #74777b;
+}
+
+.tabs nav li.tab-current a {
+  color: #74777b;
+}
+
 .tabs nav a span {
   vertical-align: middle;
-  font-size: 0.75em;
+  font-size: 1em;
 }
 
 .tabs nav a {
@@ -930,10 +938,84 @@ div.users-ui div.container-fluid, div.role-ui div.container-fluid {
   transition: color 0.3s, box-shadow 0.3s;
 }
 
-.tabs-style-line nav a:hover, .tabs-style-line nav a:focus {
+.tabs-style-line nav a:hover, .tabs-style-line > nav a:focus {
   box-shadow: inset 0 -2px #74777b;
 }
 
+.tabs-style-underline > nav {
+  background: #fff;
+}
+
+.tabs-style-linebox nav ul li {
+  margin: 0 0.5em;
+  -webkit-flex: none;
+  flex: none;
+}
+
+.tabs-style-linebox nav a {
+  padding: 1em 2em;
+  color: #74777b;
+  font-weight: 700;
+  -webkit-transition: color 0.3s;
+  transition: color 0.3s;
+}
+
+.tabs-style-linebox nav a:hover,
+.tabs-style-linebox nav a:focus {
+  color: #2CC185;
+  box-shadow: none;
+}
+
+.tabs-style-linebox nav li.tab-current a {
+  color: #fff;
+}
+
+.tabs-style-linebox nav a::after {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  background: #d2d8d6;
+  content: '';
+  -webkit-transition: background-color 0.3s, -webkit-transform 0.3s;
+  transition: background-color 0.3s, transform 0.3s;
+  -webkit-transition-timing-function: ease, cubic-bezier(0.7, 0, 0.3, 1);
+  transition-timing-function: ease, cubic-bezier(0.7, 0, 0.3, 1);
+  -webkit-transform: translate3d(0, 100%, 0) translate3d(0, -3px, 0);
+  transform: translate3d(0, 100%, 0) translate3d(0, -3px, 0);
+}
+
+.tabs-style-linebox nav ul {
+  box-shadow: none;
+}
+
+.tabs-style-linebox nav li.tab-current a::after {
+  -webkit-transform: translate3d(0, 0, 0);
+  transform: translate3d(0, 0, 0);
+}
+
+.tabs-style-linebox nav a:hover::after,
+.tabs-style-linebox nav a:focus::after,
+.tabs-style-linebox nav li.tab-current a::after {
+  background: #2CC185;
+}
+
+@media screen and (max-width: 58em) {
+  .tabs-style-linebox nav ul {
+    display: block;
+    box-shadow: none;
+  }
+
+  .tabs-style-linebox nav ul li {
+    display: block;
+    -webkit-flex: none;
+    flex: none;
+  }
+}
+
+/*END TAB*/
 .admin-header {
   padding-bottom: 5px;
   margin: 5px 0 5px;
@@ -961,4 +1043,13 @@ div.users-ui div.container-fluid, div.role-ui div.container-fluid {
   background: #fff;
   box-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
   margin-bottom: 30px;
+}
+
+.row  span.title {
+  background-color: #2CC185;
+  color: white;
+  font-size: 1.5em;
+  padding: 5px;
+  font-weight: 700;
+  line-height: 1;
 }

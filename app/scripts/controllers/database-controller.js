@@ -1,5 +1,5 @@
 var dbModule = angular.module('database.controller', ['database.services', 'bookmarks.services']);
-dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'localStorageService', 'Spinner', '$modal', '$q', '$window', 'Bookmarks', 'Notification', 'Aside', 'BrowseConfig', '$timeout', 'GraphConfig', 'BatchApi', function ($scope, $routeParams, $location, Database, CommandApi, localStorageService, Spinner, $modal, $q, $window, Bookmarks, Notification, Aside, BrowseConfig, $timeout, GraphConfig, BatchApi) {
+dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'localStorageService', 'Spinner', '$modal', '$q', '$window', 'Bookmarks', 'Notification', 'Aside', 'BrowseConfig', '$timeout', 'GraphConfig', 'BatchApi', 'DocumentApi', function ($scope, $routeParams, $location, Database, CommandApi, localStorageService, Spinner, $modal, $q, $window, Bookmarks, Notification, Aside, BrowseConfig, $timeout, GraphConfig, BatchApi, DocumentApi) {
 
   $scope.database = Database;
   $scope.limit = 20;
@@ -413,8 +413,8 @@ dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$l
     var link = '#/database/' + dbName + '/schema/editclass/' + value.replace('#', '');
     return link
   }
-  $scope.otherwise = function (doc,value, header) {
-    return !$scope.isRid(value) && !$scope.isRids(value) && !$scope.isClass(header) && !$scope.isBinary(doc,header);
+  $scope.otherwise = function (doc, value, header) {
+    return !$scope.isRid(value) && !$scope.isRids(value) && !$scope.isClass(header) && !$scope.isBinary(doc, header);
   }
   $scope.isBinary = function (doc, header) {
     var t = Database.findTypeFromFieldTipes(doc, header)

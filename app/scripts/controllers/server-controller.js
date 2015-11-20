@@ -362,36 +362,9 @@ ctrl.controller('SingleServerController', function ($scope, $rootScope, $locatio
 
 ctrl.controller("ServerDashboardController", ['$scope', '$routeParams', 'Aside', 'ServerApi', 'ngTableParams', '$q', 'Notification', 'Database', function ($scope, $routeParams, Aside, ServerApi, ngTableParams, $q, Notification, Database) {
 
-  //Aside.show({
-  //  scope: $scope,
-  //  title: "",
-  //  template: 'views/server/dashboardAside.html',
-  //  show: true,
-  //  absolute: false,
-  //  small: true,
-  //  sticky: true,
-  //  cls: 'oaside-small'
-  //});
-
-
   $scope.version = Database.getVersion();
 
   $scope.dirtyProperties = [];
-  ServerApi.getServerInfo(function (data) {
-    $scope.connections = data.connections;
-    $scope.properties = data.properties;
-    $scope.storages = data.storages;
-
-    $scope.globalProperties = data.globalProperties;
-
-    if ($scope.globalProperties) {
-      $scope.oldGlobal = $scope.globalProperties.filter(function (p) {
-        return p.canChange;
-      })
-    }
-
-
-  });
 
 
   $scope.menus = [
@@ -446,39 +419,21 @@ ctrl.controller("ServerDashboardController", ['$scope', '$routeParams', 'Aside',
 
 }]);
 
-ctrl.controller('ServerConnectionController', function ($scope, $filter, ngTableParams) {
+ctrl.controller('ServerConnectionController', function ($scope, $filter, ngTableParams, Cluster) {
 
 
   $scope.init = false;
 
-  $scope.$watch('connections', function () {
-    if ($scope.connections) {
-      $scope.tableParams = new ngTableParams({
-        page: 1,            // show first page
-        count: 10          // count per page
 
-      }, {
-        total: $scope.connections.length, // length of data
-        getData: function ($defer, params) {
-//            use build-in angular filter
-          var emtpy = !params.orderBy() || params.orderBy().length == 0;
+  $scope.$watch('server', function (server) {
 
-          var orderedData = $scope.query ?
-            $filter('filter')($scope.connections, $scope.query) :
-            $scope.connections;
-          orderedData = (params.sorting() && !emtpy) ?
-            $filter('orderBy')(orderedData, params.orderBy()) :
-            orderedData;
-          $defer.resolve(orderedData.slice((params.page() - 1) * params.count(), params.page() * params.count()));
-          $scope.init = true;
-        }
-      });
-      $scope.$watch("query", function (e) {
-        if (e || $scope.init)
-          $scope.tableParams.reload();
-      });
-    }
-  })
+    Cluster.infoServer(server).then(function (info) {
+      $scope.connections = info.connections;
+    }).catch(function (err) {
+      console.log(err);
+    })
+  });
+
 })
 
 
@@ -506,6 +461,8 @@ ctrl.controller("LogsController", ['$scope', '$http', '$location', '$routeParams
 
     if (data) {
       CommandLogApi.getListFiles({server: $scope.server.name}, function (data) {
+
+
         if (data) {
           $scope.files = ['ALL_FILES', 'LAST'];
           $scope.selectedType = undefined;
@@ -613,6 +570,7 @@ ctrl.controller("LogsController", ['$scope', '$http', '$location', '$routeParams
         dateFrom: $scope.selectedDateFrom,
         dateTo: $scope.selectedDateTo
       }, function (data) {
+
         if (data) {
 
           $scope.resultTotal = data;

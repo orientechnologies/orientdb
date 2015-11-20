@@ -190,12 +190,9 @@ ee.controller('ClusterController', function ($scope, Cluster, Notification, $roo
 
       $scope.servers = data.members;
 
+
       $scope.clusterStats = data.clusterStats;
-      //Object.keys(data.localNode.databases).forEach(function (db) {
-      //  Cluster.database(db).then(function (data) {
-      //    console.log(data);
-      //  })
-      //});
+      $rootScope.$broadcast("server-list", $scope.servers);
 
     }).catch(function (error) {
       Notification.push({content: error.data, error: true, autoHide: true});
@@ -549,56 +546,44 @@ ee.controller('PluginsController', function ($scope, Plugins, Cluster, Notificat
     'mail': 'views/server/plugins/mail.html',
     'automaticBackup': 'views/server/plugins/automaticBackup.html'
   }
+  $scope.clazz = 'tabs-style-linebox';
   $scope.dirty = false;
   $scope.selectPlugin = function (plugin) {
     $scope.selectedPlugin = plugin;
-    $scope.selectedConfiguration = JSON.stringify(plugin.configuration);
-  }
-  Cluster.node().then(function (data) {
-    $scope.servers = data.members;
-    $scope.server = $scope.servers[0];
-
-  });
-
-  $scope.getTemplate = function () {
-    if ($scope.selectedPlugin) {
-      return $scope.customTemplate[$scope.selectedPlugin.name];
-    }
+    $scope.currentEditingPlugin = angular.copy($scope.selectedPlugin);
   }
 
-  $scope.isCustomPlugin = function () {
 
-    if ($scope.selectedPlugin) {
-      return $scope.customTemplate[$scope.selectedPlugin.name];
-    }
-    return false;
+  $scope.pluginTemplate = function (plugin) {
+
+    var pluginTpl = $scope.customTemplate[plugin.name];
+
+    return pluginTpl || 'test';
   }
+
   $scope.$watch('server', function (server) {
+
     if (server) {
       Plugins.all(server.name).then(function (data) {
         $scope.plugins = data.plugins;
         $scope.selectedPlugin = $scope.plugins[0];
-        $scope.selectedConfiguration = angular.copy($scope.selectedPlugin.configuration);
-        $scope.originalConfiguration = JSON.stringify($scope.selectedPlugin.configuration);
+        $scope.currentEditingPlugin = angular.copy($scope.selectedPlugin);
       })
     }
   })
-  $scope.$watch('selectedConfiguration', function (newVal) {
-    if (newVal) {
-      if (JSON.stringify(newVal) != $scope.originalConfiguration) {
-        $scope.dirty = true;
-      } else {
-        $scope.dirty = false;
-      }
-    }
 
+  $scope.$on('context:changed', function (evt, context) {
+    $scope.selectPlugin(context);
   })
 
   $scope.saveConfiguration = function () {
 
-    Plugins.saveConfig($scope.server.name, $scope.selectedPlugin.name, $scope.selectedConfiguration).then(function (data) {
+
+    Plugins.saveConfig($scope.server.name, $scope.selectedPlugin.name, $scope.currentEditingPlugin.configuration).then(function (data) {
       $scope.dirty = false;
       $scope.selectedPlugin.configuration = data;
+      $scope.selectPlugin($scope.selectedPlugin);
+
       Notification.push({content: "Plugin configuration saved correctly.", autoHide: true});
     }).catch(function (error) {
 
@@ -607,9 +592,10 @@ ee.controller('PluginsController', function ($scope, Plugins, Cluster, Notificat
   }
 
   $scope.applyAll = function () {
-    Plugins.saveConfig('_all', $scope.selectedPlugin.name, $scope.selectedConfiguration).then(function (data) {
+    Plugins.saveConfig('_all', $scope.selectedPlugin.name, $scope.currentEditingPlugin.configuration).then(function (data) {
       $scope.dirty = false;
       $scope.selectedPlugin.configuration = data;
+      $scope.selectPlugin($scope.selectedPlugin);
       Notification.push({content: "Plugin configuration saved correctly in all Servers", autoHide: true});
     }).catch(function (error) {
 
@@ -654,9 +640,9 @@ ee.controller('MailController', function ($scope, $modal, Database) {
     modalPromise.$promise.then(modalPromise.show);
 
   }
-  $scope.$watch('selectedPlugin', function (data) {
+  $scope.$watch('currentEditingPlugin', function (data) {
     if (data && data.name == 'mail') {
-      $scope.profiles = $scope.selectedConfiguration.profiles;
+      $scope.profiles = data.configuration.profiles;
       $scope.profile = $scope.profiles[0]
 
     } else {
@@ -676,9 +662,11 @@ ee.controller('AutomaticBackupController', function ($scope, $modal, Database) {
 
   $scope.modes = ["FULL_BACKUP", "INCREMENTAL_BACKUP", "EXPORT"];
 
-  $scope.$watch('selectedPlugin', function (data) {
-    if (data) {
-      $scope.config = $scope.selectedConfiguration;
+  $scope.$watch('currentEditingPlugin', function (data) {
+
+    if (data && data.name == 'automaticBackup') {
+
+      $scope.config = data.configuration;
     }
   })
 
@@ -701,7 +689,6 @@ ee.controller('EEDashboardController', function ($scope, $rootScope) {
     {name: "cluster", title: "Cluster Management", template: 'distributed', icon: 'fa-sitemap'},
     {name: "profiler", title: "Query Profiler", template: 'profiler', icon: 'fa-rocket'},
     {name: "auditing", title: "Auditing", template: 'auditing', icon: 'fa-headphones'},
-    {name: "plugins", title: "Plugins Management", template: 'plugins', icon: 'fa-plug'},
     {name: "events", title: "Events Management", template: 'events', icon: 'fa-bell'},
     {name: "configuration", title: "Settings", template: 'config', icon: 'fa-cogs'},
     {name: "storage", title: "Storages", template: 'storage', icon: 'fa-database'}
@@ -709,3 +696,84 @@ ee.controller('EEDashboardController', function ($scope, $rootScope) {
 })
 
 
+ee.controller('DatabasesController', function ($scope, $rootScope) {
+
+
+  $scope.$watch("server", function (server) {
+
+    if (server) {
+      server.attached = true;
+      $scope.attached = server.attached;
+
+      $scope.databases = server.databases;
+
+    }
+  });
+
+})
+
+ee.controller("WarningsController", function ($scope, $rootScope) {
+
+
+  $rootScope.$on('server:updated', function (evt, data) {
+
+
+    var keyTips = data.realtime.tips;
+    var keys = Object.keys(keyTips)
+    var tips = new Array;
+    keys.forEach(function (k) {
+      var o = {warning: k, count: keyTips[k].count, time: keyTips[k].time}
+      tips.push(o);
+    })
+
+    $scope.tips = tips;
+  });
+
+});
+
+ee.controller('ClusterDBController', function ($scope, $rootScope) {
+
+
+  $scope.clazz = 'tabs-style-linebox';
+  $scope.icon = 'fa-database';
+
+  $scope.databases = null;
+  $scope.$on('context:changed', function (evt, context) {
+    $scope.$broadcast('db-chosen', {name: context, servers: $scope.databases[context]});
+  })
+  $scope.$on('server-list', function (evt, servers) {
+    if (!$scope.databases) {
+      $scope.databases = {};
+      servers.forEach(function (s) {
+        s.databases.forEach(function (db) {
+          if (!$scope.databases[db]) {
+            $scope.databases[db] = [];
+          }
+          $scope.databases[db].push(s);
+        })
+      })
+    }
+  })
+
+})
+
+ee.controller('ClusterSingleDBController', function ($scope, Cluster) {
+
+  $scope.$on('db-chosen', function (evt, db) {
+
+    Cluster.database(db.name).then(function (data) {
+      $scope.config = data;
+      $scope.name = db.name;
+    })
+
+
+  })
+
+  $scope.saveConfig = function () {
+
+    Cluster.saveDBConfig({name: $scope.name, config: $scope.config}).then(function () {
+
+    })
+
+  }
+})

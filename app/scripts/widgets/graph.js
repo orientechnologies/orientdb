@@ -308,7 +308,7 @@ graph.directive('c3Gauge', function ($http, $compile, $timeout, $rootScope) {
           type: 'gauge'
         },
         color: {
-          pattern: ['#FF0000', '#F97600', '#F6C600', '#60B044'], // the three color levels for the percentage values.
+          pattern: ['#60B044', '#F6C600', '#F97600', '#FF0000'], // the three color levels for the percentage values.
           threshold: {
             values: [30, 60, 90, 100]
           }

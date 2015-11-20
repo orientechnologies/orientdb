@@ -3,6 +3,16 @@
 
   <div class="row studio-well">
 
+
+    <!--<ui-select ng-model="server" theme="selectize">-->
+      <!--<ui-select-match>-->
+        <!--{{$select.selected.name}}-->
+      <!--</ui-select-match>-->
+      <!--<ui-select-choices repeat="server in servers ">-->
+        <!--<span ng-bind-html="server.name "></span>-->
+        <!--<small ng-bind-html="server.email "></small>-->
+      <!--</ui-select-choices>-->
+    <!--</ui-select>-->
     <div class="col-md-2">
 
       <label>Server </label>
@@ -59,6 +69,7 @@
       <tab title="Databases" template-url="views/server/general/db.html"></tab>
       <tab title="Warnings" template-url="views/server/general/warnings.html"></tab>
       <tab title="Logs" template-url="views/server/general/log.html"></tab>
+      <tab title="Plugins" template-url="views/server/general/plugins.html"></tab>
       <tab title="Configuration" template-url="views/server/general/configuration.html"></tab>
     </tabset>
   </div>

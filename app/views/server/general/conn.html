@@ -34,7 +34,7 @@
   <div class="row">
     <div class="col-md-12">
       <div class="table-responsive">
-        <table ng-table="tableParams" show-filter="true"
+        <table st-table="connections"
                class="table table-striped table-bordered table-condensed ng-table-responsive ">
 
           <thead>
@@ -60,7 +60,7 @@
           </tr>
           </thead>
           <tbody>
-          <tr ng-repeat="conn in  $data track by $index">
+          <tr ng-repeat="conn in  connections  | filter:query">
             <td>{{conn.sessionId}}</td>
             <td>{{ conn.connectionId }}</td>
             <td>{{ conn.remoteAddress }}</td>
@@ -89,6 +89,7 @@
           </tr>
           </tbody>
         </table>
+
       </div>
     </div>
   </div>

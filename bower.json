@@ -18,7 +18,7 @@
     "angular-local-storage": "0.1.5",
     "moment": "latest",
     "moment-jdateformatparser": "latest",
-    "angular-ui-bootstrap-bower": "0.10.0",
+    "angular-ui-bootstrap-bower": "0.14.3",
     "spin.js": "2.0.0",
     "angular-spectrum-colorpicker ": "1.0.13",
     "angular-ui-select2": "~0.0.5",
@@ -39,7 +39,9 @@
     "angular-smart-table": "~2.0.1",
     "jquery.easy-pie-chart": "~2.1.6",
     "angular-datatables": "~0.4.3",
-    "c3js-chart": "~0.4.10"
+    "c3js-chart": "~0.4.10",
+    "angular-ui-select": "~0.13.2",
+    "selectize": "~0.12.1"
   },
   "devDependencies": {
     "angular-mocks": "~1.0.5",
