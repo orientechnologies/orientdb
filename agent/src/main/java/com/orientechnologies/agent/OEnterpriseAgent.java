@@ -197,13 +197,14 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
       throw new OConfigurationException("HTTP listener not found");
 
     listener.registerStatelessCommand(new OServerCommandGetProfiler());
-    listener.registerStatelessCommand(new OServerCommandGetDistributed());
+    listener.registerStatelessCommand(new OServerCommandDistributedManager());
     listener.registerStatelessCommand(new OServerCommandGetLog());
     listener.registerStatelessCommand(new OServerCommandConfiguration());
     listener.registerStatelessCommand(new OServerCommandPostBackupDatabase());
     listener.registerStatelessCommand(new OServerCommandGetDeployDb());
     listener.registerStatelessCommand(new OServerCommandGetSQLProfiler());
     listener.registerStatelessCommand(new OServerCommandPluginManager());
+    listener.registerStatelessCommand(new OServerCommandGetNode());
     listener.registerStatelessCommand(new OServerCommandAuditing(this));
   }
 
@@ -213,7 +214,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
       throw new OConfigurationException("HTTP listener not found");
 
     listener.unregisterStatelessCommand(OServerCommandGetProfiler.class);
-    listener.unregisterStatelessCommand(OServerCommandGetDistributed.class);
+    listener.unregisterStatelessCommand(OServerCommandDistributedManager.class);
     listener.unregisterStatelessCommand(OServerCommandGetLog.class);
     listener.unregisterStatelessCommand(OServerCommandConfiguration.class);
     listener.unregisterStatelessCommand(OServerCommandPostBackupDatabase.class);
