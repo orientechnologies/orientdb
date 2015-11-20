@@ -17,28 +17,13 @@
   *  * For more information: http://www.orientechnologies.com
   *
   */
-
-package com.orientechnologies.orient.core.command;
-
-import com.orientechnologies.orient.core.replication.OAsyncReplicationError;
-import com.orientechnologies.orient.core.replication.OAsyncReplicationOk;
-
-import java.util.Set;
+package com.orientechnologies.orient.core.replication;
 
 /**
- * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
- * @since 7/2/14
+ * Interface to catch asynchronous replication operation successfully completed.
+ *
+ * @author Luca Garulli
  */
-public interface ODistributedCommand {
-  Set<String> nodesToExclude();
-
-  /**
-   * Defines a callback to call in case of the asynchronous replication succeed.
-   */
-  ODistributedCommand onAsyncReplicationOk(OAsyncReplicationOk iCallback);
-
-  /**
-   * Defines a callback to call in case of error during the asynchronous replication.
-   */
-  ODistributedCommand onAsyncReplicationError(OAsyncReplicationError iCallback);
+public interface OAsyncReplicationOk {
+  void onAsyncReplicationOk();
 }

@@ -17,28 +17,22 @@
   *  * For more information: http://www.orientechnologies.com
   *
   */
-
-package com.orientechnologies.orient.core.command;
-
-import com.orientechnologies.orient.core.replication.OAsyncReplicationError;
-import com.orientechnologies.orient.core.replication.OAsyncReplicationOk;
-
-import java.util.Set;
+package com.orientechnologies.orient.core.replication;
 
 /**
- * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
- * @since 7/2/14
+ * Interface to catch errors on asynchronous replication.
+ *
+ * @author Luca Garulli
  */
-public interface ODistributedCommand {
-  Set<String> nodesToExclude();
+public interface OAsyncReplicationError {
+  enum ACTION {IGNORE, RETRY}
 
   /**
-   * Defines a callback to call in case of the asynchronous replication succeed.
+   * Callback called in case of error during asynchronous replication.
+   *
+   * @param iException The exception caught
+   * @param iRetry     The number of retries so far. At every retry, this number is incremented.
+   * @return RETRY to retry the operation, otherwise IGNORE
    */
-  ODistributedCommand onAsyncReplicationOk(OAsyncReplicationOk iCallback);
-
-  /**
-   * Defines a callback to call in case of error during the asynchronous replication.
-   */
-  ODistributedCommand onAsyncReplicationError(OAsyncReplicationError iCallback);
+  ACTION onAsyncReplicationError(Throwable iException, int iRetry);
 }
