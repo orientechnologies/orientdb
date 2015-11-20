@@ -37,7 +37,7 @@ public class OUpdateStatement extends OStatement {
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
-    builder.append("UPDATE ");
+    builder.append(getStatementType());
     if (targetRid != null) {
       targetRid.toString(params, builder);
     } else if (targetClass != null) {
@@ -89,6 +89,9 @@ public class OUpdateStatement extends OStatement {
     }
   }
 
+  protected String getStatementType() {
+    return "UPDATE";
+  }
 
 }
 /* JavaCC - OriginalChecksum=093091d7273f1073ad49f2a2bf709a53 (do not edit this line) */

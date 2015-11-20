@@ -1208,6 +1208,44 @@ ODeleteEdgeStatement DeleteEdgeWhereStatement():
      {return jjtThis;}
 }
 
+OUpdateEdgeStatement UpdateEdgeStatement():
+{ OUpdateOperations lastOperations; }
+{
+  (
+	<UPDATE>
+	<EDGE>
+	(
+		jjtThis.targetRid = Rid()
+		|
+		jjtThis.targetClass = Identifier()
+		|
+		jjtThis.targetCluster = Cluster()
+		|
+		jjtThis.targetIndex = IndexIdentifier()
+		|
+		(
+			<LPAREN>
+			jjtThis.targetQuery = QueryStatement()
+			<RPAREN>
+		)
+	)
+	( lastOperations = UpdateOperations() { jjtThis.operations.add(lastOperations); } )+
+	[ <UPSERT> { jjtThis.upsert = true; } ]
+	[
+		<RETURN>
+		( <BEFORE> { jjtThis.returnBefore = true; } | <AFTER> { jjtThis.returnAfter = true; } )
+		[
+			jjtThis.returnProjection = Projection()
+		]
+	]
+	[ <WHERE> jjtThis.whereClause = WhereClause() ]
+	[ <LOCK> <RECORD> { jjtThis.lockRecord = true; } ]
+	[ jjtThis.limit = Limit() ]
+	[ jjtThis.timeout = Timeout() ]
+  )
+  {return jjtThis;}
+}
+
 OUpdateStatement UpdateStatement():
 { OUpdateOperations lastOperations; }
 {

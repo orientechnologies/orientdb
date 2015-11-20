@@ -86,6 +86,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
   private OClass                                clazz             = null;
   private DISTRIBUTED_EXECUTION_MODE            distributedMode;
 
+  private boolean                               updateEdge        = false;
+
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLUpdate parse(final OCommandRequest iRequest) {
     final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
@@ -94,6 +96,9 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
     String originalQuery = queryText;
     try {
       queryText = preParse(queryText, iRequest);
+      if (isUpdateEdge()) {
+        queryText = queryText.replaceFirst("EDGE ", "");//work-around to use UPDATE syntax without having to
+      }
       textRequest.setText(queryText);
 
       final ODatabaseDocument database = getDatabase();
@@ -119,6 +124,11 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
       clazz = extractClassFromTarget(subjectName);
 
       String word = parserNextWord(true);
+
+      if(word!=null && word.equals("EDGE")){
+        updateEdge = true;
+        word = parserNextWord(true);
+      }
 
       if (parserIsEnded()
           || (!word.equals(KEYWORD_SET) && !word.equals(KEYWORD_ADD) && !word.equals(KEYWORD_PUT) && !word.equals(KEYWORD_REMOVE)
@@ -197,6 +207,10 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
     return this;
   }
 
+  private boolean isUpdateEdge() {
+    return updateEdge;
+  }
+
   public Object execute(final Map<Object, Object> iArgs) {
     if (subjectName == null)
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
@@ -263,6 +277,9 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
   public boolean result(final Object iRecord) {
     final ODocument record = ((OIdentifiable) iRecord).getRecord();
 
+    if (isUpdateEdge() && !isRecordInstanceOf(iRecord, "E")) {
+      throw new OCommandExecutionException("Using UPDATE EDGE on a record that is not an instance of E");
+    }
     if (compiledFilter != null) {
       // ADDITIONAL FILTERING
       if (!(Boolean) compiledFilter.evaluate(record, null, context))
@@ -282,6 +299,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
     updated |= handleRemoveEntries(record);
 
     if (updated) {
+      handleUpdateEdge(record);
       record.setDirty();
       record.save();
       returnHandler.afterUpdate(record);
@@ -290,6 +308,80 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
 
     return true;
   }
+
+  /**
+   * checks if an object is an OIdentifiable and an instance of a particular (schema) class
+   * @param iRecord The record object
+   * @param orientClass The schema class
+   * @return
+   */
+  private boolean isRecordInstanceOf(Object iRecord, String orientClass) {
+    if (iRecord == null) {
+      return false;
+    }
+    if (!(iRecord instanceof OIdentifiable)) {
+      return false;
+    }
+    ODocument record = ((OIdentifiable) iRecord).getRecord();
+    if (iRecord == null) {
+      return false;
+    }
+    return (record.getSchemaClass().isSubClassOf(orientClass));
+  }
+
+
+  /**
+   * handles vertex consistency after an UPDATE EDGE
+   * @param record the edge record
+   */
+  private void handleUpdateEdge(ODocument record) {
+    Object currentOut = record.field("out");
+    Object currentIn = record.field("in");
+
+    Object prevOut = record.getOriginalValue("out");
+    Object prevIn = record.getOriginalValue("in");
+
+    validateOutInForEdge(record, currentOut, currentIn);
+
+    changeVertexEdgePointer(record, (OIdentifiable)prevIn, (OIdentifiable)currentIn, "in");
+    changeVertexEdgePointer(record, (OIdentifiable)prevOut, (OIdentifiable)currentOut, "out");
+  }
+
+  /**
+   * updates old and new vertices connected to an edge after out/in update on the edge itself
+   * @param edge the edge
+   * @param prevVertex the previously connected vertex
+   * @param currentVertex the currently connected vertex
+   * @param direction the direction ("out" or "in")
+   */
+  private void changeVertexEdgePointer(ODocument edge, OIdentifiable prevVertex, OIdentifiable currentVertex, String direction){
+    if (prevVertex != null && !prevVertex.equals(currentVertex)) {
+      String vertexFieldName = direction+"_" + edge.getClassName();
+      ODocument prevOutDoc = ((OIdentifiable) prevVertex).getRecord();
+      ORidBag prevBag = prevOutDoc.field(vertexFieldName);
+      if(prevBag!=null) {
+        prevBag.remove(edge);
+      }
+
+      ODocument currentVertexDoc = ((OIdentifiable) currentVertex).getRecord();
+      ORidBag currentBag = currentVertexDoc.field(vertexFieldName);
+      if(currentBag == null){
+        currentBag = new ORidBag();
+        currentVertexDoc.field(vertexFieldName, currentBag);
+      }
+      currentBag.add(edge);
+    }
+  }
+
+  private void validateOutInForEdge(ODocument record, Object currentOut, Object currentIn) {
+    if(!isRecordInstanceOf(currentOut, "V")){
+      throw new OCommandExecutionException("Error updating edge: 'out' is not a vertex - " + currentOut + "");
+    }
+    if(!isRecordInstanceOf(currentIn, "V")){
+      throw new OCommandExecutionException("Error updating edge: 'in' is not a vertex - " + currentIn + "");
+    }
+  }
+
 
   @Override
   public String getSyntax() {
