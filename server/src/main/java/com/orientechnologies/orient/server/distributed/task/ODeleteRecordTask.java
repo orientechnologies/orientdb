@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
@@ -52,7 +51,7 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
   public ODeleteRecordTask() {
   }
 
-  public ODeleteRecordTask(final ORecordId iRid, final ORecordVersion iVersion) {
+  public ODeleteRecordTask(final ORecordId iRid, final int iVersion) {
     super(iRid, iVersion);
   }
 
@@ -64,8 +63,8 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
   @Override
   public Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
       throws Exception {
-    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), null, DIRECTION.IN, "delete record %s/%s v.%s",
-        database.getName(), rid.toString(), version.toString());
+    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), null, DIRECTION.IN, "delete record %s/%s v.%d",
+        database.getName(), rid.toString(), version);
 
     // TRY LOCKING RECORD
     final ODistributedDatabase ddb = iManager.getMessageService().getDatabase(database.getName());
@@ -78,11 +77,11 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
       final ORecord record = database.load(rid);
       if (record != null) {
         if (delayed)
-          if (record.getRecordVersion().equals(version))
+          if (record.getVersion() == version)
             // POSTPONE DELETION TO BE UNDO IN CASE QUORUM IS NOT RESPECTED
             ((ODistributedStorage) database.getStorage()).pushDeletedRecord(rid, version);
           else
-            throw new OConcurrentModificationException(rid, record.getRecordVersion(), version, ORecordOperation.DELETED);
+            throw new OConcurrentModificationException(rid, record.getVersion(), version, ORecordOperation.DELETED);
         else
           // DELETE IT RIGHT NOW
           record.delete();

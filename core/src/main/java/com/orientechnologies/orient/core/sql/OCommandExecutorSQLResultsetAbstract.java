@@ -53,15 +53,8 @@ import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Executes a TRAVERSE crossing records. Returns a List<OIdentifiable> containing all the traversed records that match the WHERE
@@ -94,7 +87,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
   protected Iterator<? extends OIdentifiable> target;
   protected Iterable<OIdentifiable>           tempResult;
   protected int                               resultCount;
-  protected int                               serialTempRID      = 0;
+  protected AtomicInteger                     serialTempRID      = new AtomicInteger(0);
   protected int                               skip               = 0;
   protected boolean                           lazyIteration      = true;
 
@@ -256,7 +249,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
             if (!(d instanceof OIdentifiable))
               // NON-DOCUMENT AS RESULT, COMES FROM EXPAND? CREATE A DOCUMENT AT THE FLY
               d = new ODocument().field("value", d);
-            else if (!(d instanceof ORID || d instanceof ORecord))
+            else
               d = ((OIdentifiable) d).getRecord();
 
             if (limit > -1 && fetched >= limit)
@@ -285,7 +278,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     return request.getResultListener().result(rec);
   }
 
-  protected boolean handleResult(final OIdentifiable iRecord, OCommandContext iContext) {
+  protected boolean handleResult(final OIdentifiable iRecord, final OCommandContext iContext) {
     if (iRecord != null) {
       resultCount++;
 
@@ -479,8 +472,8 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
       return new ORecordIteratorClass<ORecord>(database, database, iCls.getName(), iPolymorphic, isUseCache()).setRange(range[0],
           range[1]);
     else
-      return new ORecordIteratorClassDescendentOrder<ORecord>(database, database, iCls.getName(), iPolymorphic)
-          .setRange(range[0], range[1]);
+      return new ORecordIteratorClassDescendentOrder<ORecord>(database, database, iCls.getName(), iPolymorphic).setRange(range[0],
+          range[1]);
   }
 
   protected boolean isUseCache() {
@@ -695,5 +688,41 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
   @Override
   public boolean isCacheable() {
     return true;
+  }
+  
+  public Object mergeResults(Map<String, Object> results) throws Exception {
+
+    if (results.isEmpty())
+      return null;
+
+    // TODO: DELEGATE MERGE AT EVERY COMMAND
+    final ArrayList<Object> mergedResult = new ArrayList<Object>();
+
+    final Object firstResult = results.values().iterator().next();
+
+    for (Map.Entry<String, Object> entry : results.entrySet()) {
+      final String nodeName = entry.getKey();
+      final Object nodeResult = entry.getValue();
+
+      if (nodeResult instanceof Collection)
+        mergedResult.addAll((Collection<?>) nodeResult);
+      else if (nodeResult instanceof Exception)
+        // RECEIVED EXCEPTION
+        throw (Exception) nodeResult;
+      else
+        mergedResult.add(nodeResult);
+    }
+
+    Object result = null;
+
+    if (firstResult instanceof OResultSet) {
+      // REUSE THE SAME RESULTSET TO AVOID DUPLICATES
+      ((OResultSet) firstResult).clear();
+      ((OResultSet) firstResult).addAll(mergedResult);
+      result = firstResult;
+    } else
+      result = new ArrayList<Object>(mergedResult);
+
+    return result;
   }
 }

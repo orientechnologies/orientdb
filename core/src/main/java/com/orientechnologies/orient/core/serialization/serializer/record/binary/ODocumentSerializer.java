@@ -20,14 +20,28 @@
 
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public interface ODocumentSerializer {
 
-  public void serialize(ODocument document, BytesContainer bytes, boolean iClassOnly);
+  void serialize(ODocument document, BytesContainer bytes, boolean iClassOnly);
 
-  public void deserialize(ODocument document, BytesContainer bytes);
+  int serializeValue(BytesContainer bytes, Object value, OType type, OType linkedType);
 
-  public void deserializePartial(final ODocument document, final BytesContainer bytes, final String[] iFields);
+  void deserialize(ODocument document, BytesContainer bytes);
 
+  void deserializePartial(ODocument document, BytesContainer bytes, String[] iFields);
+
+  Object deserializeValue(BytesContainer bytes, OType type, ODocument ownerDocument);
+
+  OBinaryField deserializeField(BytesContainer bytes, OClass iClass, String iFieldName);
+
+  OBinaryComparator getComparator();
+
+  /**
+   * Returns the array of field names with no values.
+   */
+  String[] getFieldNames(BytesContainer iBytes);
 }

@@ -19,25 +19,23 @@
  */
 package com.orientechnologies.orient.client.remote;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.index.OIndexManager;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Remote administration class of OrientDB Server instances.
@@ -99,7 +97,7 @@ public class OServerAdmin {
       }
 
       try {
-        storage.beginResponse(network);
+        network.beginResponse(getSessionId(), false);
         sessionId = network.readInt();
         sessionToken = network.readBytes();
         if (sessionToken.length == 0) {
@@ -113,9 +111,11 @@ public class OServerAdmin {
       }
 
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Cannot connect to the remote server/database '%s'", e, OStorageException.class,
-          storage.getURL());
       storage.close(true, false);
+
+      final String message = "Cannot connect to the remote server/database '" + storage.getURL() + "'";
+      OLogManager.instance().error(this, message, e);
+      throw OException.wrapException(new OStorageException(message), e);
     }
     return this;
   }
@@ -142,9 +142,36 @@ public class OServerAdmin {
 
     } catch (Exception e) {
       storage.close(true, false);
-      throw new OStorageException("Cannot retrieve the configuration list", e);
+      throw OException.wrapException(new OStorageException("Cannot retrieve the configuration list"), e);
     }
     return (Map<String, String>) result.field("databases");
+  }
+
+  /**
+   * Returns the server information in form of document.
+   *
+   * @throws IOException
+   */
+  @SuppressWarnings("unchecked")
+  public synchronized ODocument getServerInfo() throws IOException {
+
+    final ODocument result = new ODocument();
+    try {
+      final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_SERVER_INFO);
+      storage.endRequest(network);
+
+      try {
+        storage.beginResponse(network);
+        result.fromJSON(network.readString());
+      } finally {
+        storage.endResponse(network);
+      }
+
+    } catch (Exception e) {
+      storage.close(true, false);
+      throw OException.wrapException(new OStorageException("Cannot retrieve server information"), e);
+    }
+    return result;
   }
 
   public int getSessionId() {
@@ -190,7 +217,9 @@ public class OServerAdmin {
 
     try {
       if (iDatabaseName == null || iDatabaseName.length() <= 0) {
-        OLogManager.instance().error(this, "Cannot create unnamed remote storage. Check your syntax", OStorageException.class);
+        final String message = "Cannot create unnamed remote storage. Check your syntax";
+        OLogManager.instance().error(this, message);
+        throw new OStorageException(message);
       } else {
         if (iStorageMode == null)
           iStorageMode = "csv";
@@ -210,8 +239,12 @@ public class OServerAdmin {
       }
 
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Cannot create the remote storage: " + storage.getName(), e, OStorageException.class);
       storage.close(true, false);
+
+      final String message = "Cannot create the remote storage: " + storage.getName();
+      OLogManager.instance().error(this, message, e);
+
+      throw OException.wrapException(new OStorageException(message), e);
     }
     return this;
   }
@@ -255,7 +288,8 @@ public class OServerAdmin {
 
     } catch (Exception e) {
       storage.close(true, false);
-      throw new OStorageException("Error on checking existence of the remote storage: " + storage.getName(), e);
+      throw OException.wrapException(
+          new OStorageException("Error on checking existence of the remote storage: " + storage.getName()), e);
     }
   }
 
@@ -315,7 +349,7 @@ public class OServerAdmin {
       } catch (OModificationOperationProhibitedException oope) {
         retry = handleDBFreeze();
       } catch (Exception e) {
-        throw new OStorageException("Cannot delete the remote storage: " + storage.getName(), e);
+        throw OException.wrapException(new OStorageException("Cannot delete the remote storage: " + storage.getName()), e);
       }
 
     final Set<OStorage> underlyingStorages = new HashSet<OStorage>();
@@ -371,7 +405,7 @@ public class OServerAdmin {
 
       storage.getResponse(network);
     } catch (Exception e) {
-      throw new OStorageException("Cannot freeze the remote storage: " + storage.getName(), e);
+      throw OException.wrapException(new OStorageException("Cannot freeze the remote storage: " + storage.getName()), e);
     }
 
     return this;
@@ -400,7 +434,7 @@ public class OServerAdmin {
 
       storage.getResponse(network);
     } catch (Exception e) {
-      throw new OStorageException("Cannot release the remote storage: " + storage.getName(), e);
+      throw OException.wrapException(new OStorageException("Cannot release the remote storage: " + storage.getName()), e);
     }
 
     return this;
@@ -435,7 +469,8 @@ public class OServerAdmin {
     } catch (IllegalArgumentException e) {
       throw e;
     } catch (Exception e) {
-      throw new OStorageException("Cannot freeze the remote cluster " + clusterId + " on storage: " + storage.getName(), e);
+      throw OException.wrapException(new OStorageException("Cannot freeze the remote cluster " + clusterId + " on storage: "
+          + storage.getName()), e);
     }
 
     return this;
@@ -469,7 +504,8 @@ public class OServerAdmin {
     } catch (IllegalArgumentException e) {
       throw e;
     } catch (Exception e) {
-      throw new OStorageException("Cannot release the remote cluster " + clusterId + " on storage: " + storage.getName(), e);
+      throw OException.wrapException(new OStorageException("Cannot release the remote cluster " + clusterId + " on storage: "
+          + storage.getName()), e);
     }
 
     return this;
@@ -520,7 +556,7 @@ public class OServerAdmin {
       OLogManager.instance().debug(this, "Database '%s' has been copied to the server '%s'", databaseName, iRemoteName);
 
     } catch (Exception e) {
-      throw new OStorageException("Cannot copy the database: " + databaseName, e);
+      throw OException.wrapException(new OStorageException("Cannot copy the database: " + databaseName), e);
     }
 
     return this;
@@ -545,7 +581,7 @@ public class OServerAdmin {
 
     } catch (Exception e) {
       storage.close(true, false);
-      throw new OStorageException("Cannot retrieve the configuration list", e);
+      throw OException.wrapException(new OStorageException("Cannot retrieve the configuration list"), e);
     }
     return config;
   }
@@ -566,7 +602,7 @@ public class OServerAdmin {
 
     } catch (Exception e) {
       storage.close(true, false);
-      throw new OStorageException("Cannot retrieve the configuration value: " + config.getKey(), e);
+      throw OException.wrapException(new OStorageException("Cannot retrieve the configuration value: " + config.getKey()), e);
     }
   }
 
@@ -582,7 +618,7 @@ public class OServerAdmin {
 
     } catch (Exception e) {
       storage.close(true, false);
-      throw new OStorageException("Cannot set the configuration value: " + config.getKey(), e);
+      throw OException.wrapException(new OStorageException("Cannot set the configuration value: " + config.getKey()), e);
     }
     return this;
   }
@@ -631,11 +667,11 @@ public class OServerAdmin {
       } catch (IOException e) {
         if (network != null)
           storage.getEngine().getConnectionManager().remove(network);
-        throw new OStorageException("Error on executing  '" + iActivity + "'", e);
+        throw OException.wrapException(new OStorageException("Error on executing  '" + iActivity + "'"), e);
       } catch (Exception e2) {
         if (network != null)
           storage.getEngine().getConnectionManager().release(network);
-        throw new OStorageException("Error on executing  '" + iActivity + "'", e2);
+        throw OException.wrapException(new OStorageException("Error on executing  '" + iActivity + "'"), e2);
       }
     }
     return null;

@@ -1,47 +1,48 @@
 /*
-      *
-      *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-      *  *
-      *  *  Licensed under the Apache License, Version 2.0 (the "License");
-      *  *  you may not use this file except in compliance with the License.
-      *  *  You may obtain a copy of the License at
-      *  *
-      *  *       http://www.apache.org/licenses/LICENSE-2.0
-      *  *
-      *  *  Unless required by applicable law or agreed to in writing, software
-      *  *  distributed under the License is distributed on an "AS IS" BASIS,
-      *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-      *  *  See the License for the specific language governing permissions and
-      *  *  limitations under the License.
-      *  *
-      *  * For more information: http://www.orientechnologies.com
-      *
-      */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.server;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
- import com.orientechnologies.orient.client.db.ODatabaseHelper;
- import com.orientechnologies.orient.core.config.OContextConfiguration;
- import com.orientechnologies.orient.core.exception.OConfigurationException;
- import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
- import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClientSynch;
- import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
- import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
- import com.orientechnologies.orient.server.config.OServerConfiguration;
- import com.orientechnologies.orient.server.config.OServerConfigurationLoaderXml;
- import com.orientechnologies.orient.server.config.OServerNetworkListenerConfiguration;
- import com.orientechnologies.orient.server.config.OServerUserConfiguration;
- import com.orientechnologies.orient.server.network.OServerNetworkListener;
+import com.orientechnologies.orient.client.db.ODatabaseHelper;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClientSynch;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
+import com.orientechnologies.orient.server.config.OServerConfiguration;
+import com.orientechnologies.orient.server.config.OServerConfigurationLoaderXml;
+import com.orientechnologies.orient.server.config.OServerNetworkListenerConfiguration;
+import com.orientechnologies.orient.server.config.OServerUserConfiguration;
+import com.orientechnologies.orient.server.network.OServerNetworkListener;
 
- import java.io.IOException;
- import java.util.Arrays;
+import java.io.IOException;
+import java.util.Arrays;
 
 /**
-  * Sends a shutdown command to the server.
-  *
-  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
-  *
-  */
+ * Sends a shutdown command to the server.
+ *
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ *
+ */
 public class OServerShutdownMain {
   public String                           networkAddress;
   public int[]                            networkPort;
@@ -53,8 +54,8 @@ public class OServerShutdownMain {
   private String                          rootUser;
   private String                          rootPassword;
 
-  public OServerShutdownMain(final String iServerAddress, final String iServerPorts,
-                             final String iRootUser, final String iRootPassword) {
+  public OServerShutdownMain(final String iServerAddress, final String iServerPorts, final String iRootUser,
+      final String iRootPassword) {
     contextConfig = new OContextConfiguration();
 
     try {
@@ -90,7 +91,10 @@ public class OServerShutdownMain {
       }
 
     } catch (IOException e) {
-      OLogManager.instance().error(this, "Error on reading server configuration", OConfigurationException.class);
+      final String message = "Error on reading server configuration";
+      OLogManager.instance().error(this, message);
+
+      throw OException.wrapException(new OConfigurationException(message), e);
     }
   }
 
@@ -123,12 +127,7 @@ public class OServerShutdownMain {
     channel.writeString(rootPassword);
     channel.flush();
 
-    if (channel.readByte() == OChannelBinaryProtocol.RESPONSE_STATUS_ERROR) {
-      channel.readInt();
-      channel.readString();
-      throw new ONetworkProtocolException(channel.readString());
-    }
-    channel.readInt();
+    channel.beginResponse(0,false);
   }
 
   public static void main(final String[] iArgs) {

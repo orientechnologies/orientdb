@@ -22,6 +22,7 @@ package com.orientechnologies.orient.enterprise.channel.binary;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -65,7 +66,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
 
   public OChannelBinaryAsynchClient(final String remoteHost, final int remotePort, final String iDatabaseName,
       final OContextConfiguration iConfig, final int protocolVersion, final ORemoteServerEventListener asynchEventListener)
-      throws IOException {
+          throws IOException {
     super(OSocketFactory.instance(iConfig).createSocket(), iConfig);
     try {
 
@@ -96,13 +97,12 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
 
         srvProtocolVersion = readShort();
       } catch (IOException e) {
-        throw new ONetworkProtocolException("Cannot read protocol version from remote server " + socket.getRemoteSocketAddress()
-            + ": " + e);
+        throw new ONetworkProtocolException(
+            "Cannot read protocol version from remote server " + socket.getRemoteSocketAddress() + ": " + e);
       }
 
       if (srvProtocolVersion != protocolVersion) {
-        OLogManager.instance().warn(
-            this,
+        OLogManager.instance().warn(this,
             "The Client driver version is different than Server version: client=" + protocolVersion + ", server="
                 + srvProtocolVersion
                 + ". You could not use the full features of the newer version. Assure to have the same versions on both");
@@ -136,21 +136,18 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
 
     } catch (Exception e) {
       // UNABLE TO REPRODUCE THE SAME SERVER-SIZE EXCEPTION: THROW A STORAGE EXCEPTION
-      rootException = new OStorageException(iMessage, iPrevious);
+      rootException = OException.wrapException(new OStorageException(iMessage), iPrevious);
     }
 
     if (c != null)
       try {
-        final Throwable e;
+        final Exception cause;
         if (c.getParameterTypes().length > 1)
-          e = (Throwable) c.newInstance(iMessage, iPrevious);
+          cause = (Exception) c.newInstance(iMessage, iPrevious);
         else
-          e = (Throwable) c.newInstance(iMessage);
+          cause = (Exception) c.newInstance(iMessage);
 
-        if (e instanceof RuntimeException)
-          rootException = (RuntimeException) e;
-        else
-          rootException = new OException(e);
+        rootException = OException.wrapException(new OSystemException("Data processing exception"), cause);
       } catch (InstantiationException ignored) {
       } catch (IllegalAccessException ignored) {
       } catch (InvocationTargetException ignored) {
@@ -168,11 +165,11 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     releaseWriteLock();
   }
 
-  public byte[] beginResponse(final int iRequesterId, boolean token) throws IOException {
+  public byte[] beginResponse(final int iRequesterId, final boolean token) throws IOException {
     return beginResponse(iRequesterId, timeout, token);
   }
 
-  public byte[] beginResponse(final int iRequesterId, final long iTimeout, boolean token) throws IOException {
+  public byte[] beginResponse(final int iRequesterId, final long iTimeout, final boolean token) throws IOException {
     try {
       int unreadResponse = 0;
       final long startClock = iTimeout > 0 ? System.currentTimeMillis() : 0;
@@ -188,8 +185,6 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
 
         if (!isConnected()) {
           releaseReadLock();
-          readLock = false;
-
           throw new IOException("Channel is closed");
         }
 
@@ -291,7 +286,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     return null;
   }
 
-  public void endResponse() {
+  public void endResponse() throws IOException {
     channelRead = false;
 
     // WAKE UP ALL THE WAITING THREADS
@@ -301,13 +296,13 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
       // IGNORE IT
       OLogManager.instance().debug(this, "Error on signaling waiting clients after reading response");
     }
-
     try {
       releaseReadLock();
     } catch (IllegalMonitorStateException e) {
       // IGNORE IT
       OLogManager.instance().debug(this, "Error on unlocking network channel after reading response");
     }
+
   }
 
   @Override
@@ -418,13 +413,15 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
   }
 
   private void setReadResponseTimeout() throws SocketException {
-    if (socket != null && socket.isConnected() && !socket.isClosed())
-      socket.setSoTimeout(socketTimeout);
+    final Socket s = socket;
+    if (s != null && s.isConnected() && !s.isClosed())
+      s.setSoTimeout(socketTimeout);
   }
 
   private void setWaitResponseTimeout() throws SocketException {
-    if (socket != null)
-      socket.setSoTimeout(OGlobalConfiguration.NETWORK_REQUEST_TIMEOUT.getValueAsInteger());
+    final Socket s = socket;
+    if (s != null)
+      s.setSoTimeout(OGlobalConfiguration.NETWORK_REQUEST_TIMEOUT.getValueAsInteger());
   }
 
   private void throwSerializedException(final byte[] serializedException) throws IOException {
@@ -435,19 +432,38 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     try {
       throwable = objectInputStream.readObject();
     } catch (ClassNotFoundException e) {
-      OLogManager.instance().error(this, "Error during exception serialization", e);
+      OLogManager.instance().error(this, "Error during exception deserialization", e);
     }
 
     objectInputStream.close();
 
-    if (throwable instanceof OException)
-      throw (OException) throwable;
-    else if (throwable instanceof Throwable)
-      // WRAP IT
-      throw new OResponseProcessingException("Exception during response processing", (Throwable) throwable);
+    if (throwable instanceof OException) {
+      try {
+        final Class<? extends OException> cls = (Class<? extends OException>) throwable.getClass();
+        final Constructor<? extends OException> constructor;
+        constructor = cls.getConstructor(cls);
+        final OException proxyInstance = constructor.newInstance(throwable);
+
+        throw proxyInstance;
+
+      } catch (NoSuchMethodException e) {
+        OLogManager.instance().error(this, "Error during exception deserialization", e);
+      } catch (InvocationTargetException e) {
+        OLogManager.instance().error(this, "Error during exception deserialization", e);
+      } catch (InstantiationException e) {
+        OLogManager.instance().error(this, "Error during exception deserialization", e);
+      } catch (IllegalAccessException e) {
+        OLogManager.instance().error(this, "Error during exception deserialization", e);
+      }
+    }
+
+    if (throwable instanceof Throwable) {
+      throw new OResponseProcessingException("Exception during response processing");
+    }
+    // WRAP IT
+
     else
-      OLogManager.instance().error(
-          this,
+      OLogManager.instance().error(this,
           "Error during exception serialization, serialized exception is not Throwable, exception type is "
               + (throwable != null ? throwable.getClass().getName() : "null"));
   }

@@ -15,12 +15,26 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javassist.util.proxy.Proxy;
+
+import org.testng.Assert;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.test.domain.base.EnumTest;
 import com.orientechnologies.orient.test.domain.base.JavaAttachDetachTestClass;
@@ -30,19 +44,6 @@ import com.orientechnologies.orient.test.domain.business.Child;
 import com.orientechnologies.orient.test.domain.business.City;
 import com.orientechnologies.orient.test.domain.business.Country;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
-import javassist.util.proxy.Proxy;
-import org.testng.Assert;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 @Test(groups = { "object", "detachingSchemaFull" }, dependsOnGroups = "treeSchemaFull")
 public class ObjectDetachingTestSchemaFull extends ObjectDBBaseTest {
@@ -123,14 +124,14 @@ public class ObjectDetachingTestSchemaFull extends ObjectDBBaseTest {
       database.save(c);
 
       // CHECK VERSION
-      Assert.assertTrue(((ORecordVersion) c.getVersion()).getCounter() > 0);
+      Assert.assertTrue(((Integer) c.getVersion()) > 0);
     }
 
     // BROWSE ALL THE OBJECTS
     for (Country c : (List<Country>) database.query(new OSQLSynchQuery<Object>("select from Country where name = 'Austria v1'"))) {
       Assert.assertNotNull(c.getId());
       Assert.assertNotNull(c.getVersion());
-      Assert.assertTrue(((ORecordVersion) c.getVersion()).getCounter() > 0);
+      Assert.assertTrue(((Integer) c.getVersion()) > 0);
     }
   }
 
@@ -204,7 +205,7 @@ public class ObjectDetachingTestSchemaFull extends ObjectDBBaseTest {
     Assert.assertNotNull(country.getId());
     Assert.assertNotNull(country.getVersion());
 
-    ORecordVersion initVersion = ((ORecordVersion) country.getVersion()).copy();
+    int initVersion = ((Integer) country.getVersion());
 
     database.begin();
     Country loaded = (Country) database.load((ORecordId) country.getId());
@@ -221,7 +222,7 @@ public class ObjectDetachingTestSchemaFull extends ObjectDBBaseTest {
     Assert.assertEquals((Object) database.getRecordByUserObject(loaded, false),
         (Object) database.getRecordByUserObject(country, false));
     Assert.assertEquals(loaded.getId(), country.getId());
-    Assert.assertEquals(((ORecordVersion) loaded.getVersion()).getCounter(), initVersion.getCounter() + 1);
+    Assert.assertEquals((int) (Integer) loaded.getVersion(), initVersion + 1);
     Assert.assertEquals(loaded.getName(), newName);
   }
 
@@ -234,7 +235,7 @@ public class ObjectDetachingTestSchemaFull extends ObjectDBBaseTest {
     Assert.assertNotNull(country.getId());
     Assert.assertNotNull(country.getVersion());
 
-    ORecordVersion initVersion = (ORecordVersion) country.getVersion();
+    int initVersion = (Integer) country.getVersion();
 
     database.begin();
     Country loaded = (Country) database.load((ORecordId) country.getId());
@@ -248,7 +249,7 @@ public class ObjectDetachingTestSchemaFull extends ObjectDBBaseTest {
 
     loaded = database.load((ORecordId) country.getId());
     Assert.assertNotSame(database.getRecordByUserObject(loaded, false), database.getRecordByUserObject(country, false));
-    Assert.assertEquals(loaded.getVersion(), initVersion);
+    Assert.assertEquals((Integer) loaded.getVersion(), (Integer)initVersion);
     Assert.assertEquals(loaded.getName(), initialCountryName);
   }
 

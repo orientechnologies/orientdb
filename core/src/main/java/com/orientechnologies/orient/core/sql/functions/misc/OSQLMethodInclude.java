@@ -19,15 +19,15 @@
   */
 package com.orientechnologies.orient.core.sql.functions.misc;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.method.misc.OAbstractSQLMethod;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Filter the content by including only some fields. If the content is a document, then creates a copy with only the included
@@ -80,7 +80,7 @@ public class OSQLMethodInclude extends OAbstractSQLMethod {
       } else if (OMultiValue.isMultiValue(iThis)) {
         // ACT ON MULTIPLE DOCUMENTS
         final List<Object> result = new ArrayList<Object>(OMultiValue.getSize(iThis));
-        for (Object o : OMultiValue.getMultiValueIterable(iThis)) {
+        for (Object o : OMultiValue.getMultiValueIterable(iThis, false)) {
           if (o instanceof OIdentifiable) {
             result.add(copy((ODocument) ((OIdentifiable) o).getRecord(), iParams));
           }

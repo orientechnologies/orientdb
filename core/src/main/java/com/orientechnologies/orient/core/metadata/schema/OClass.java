@@ -38,12 +38,12 @@ import java.util.Set;
  */
 public interface OClass extends Comparable<OClass> {
   enum ATTRIBUTES {
-    NAME, SHORTNAME, SUPERCLASS, SUPERCLASSES, OVERSIZE, STRICTMODE, ADDCLUSTER, REMOVECLUSTER, CUSTOM, ABSTRACT, CLUSTERSELECTION, DESCRIPTION
+    NAME, SHORTNAME, SUPERCLASS, SUPERCLASSES, OVERSIZE, STRICTMODE, ADDCLUSTER, REMOVECLUSTER, CUSTOM, ABSTRACT, CLUSTERSELECTION, DESCRIPTION, ENCRYPTION
   }
 
   enum INDEX_TYPE {
     UNIQUE(true), NOTUNIQUE(true), FULLTEXT(true), DICTIONARY(false), PROXY(true), UNIQUE_HASH_INDEX(true), NOTUNIQUE_HASH_INDEX(
-        true), FULLTEXT_HASH_INDEX(true), DICTIONARY_HASH_INDEX(false), SPATIAL(true);
+        true), FULLTEXT_HASH_INDEX(true), DICTIONARY_HASH_INDEX(false), SPATIAL(true), FULLTEXTEXP(true);
 
     private boolean automaticIndexable;
 
@@ -55,8 +55,6 @@ public interface OClass extends Comparable<OClass> {
       return automaticIndexable;
     }
   }
-
-  <T> T newInstance() throws InstantiationException, IllegalAccessException;
 
   boolean isAbstract();
 
@@ -113,8 +111,6 @@ public interface OClass extends Comparable<OClass> {
   void dropProperty(String iPropertyName);
 
   boolean existsProperty(String iPropertyName);
-
-  Class<?> getJavaClass();
 
   int getClusterForNewInstance(ODocument doc);
 
@@ -414,15 +410,12 @@ public interface OClass extends Comparable<OClass> {
   Set<OIndex<?>> getClassIndexes();
 
   /**
-   * Internal.
-   * Copy all the indexes for given class, not the inherited ones,
-   * in the collection received as argument.
+   * Internal. Copy all the indexes for given class, not the inherited ones, in the collection received as argument.
    */
   void getClassIndexes(Collection<OIndex<?>> indexes);
 
   /**
-   * Internal.
-   * All indexes for given class and its super classes.
+   * Internal. All indexes for given class and its super classes.
    */
   void getIndexes(Collection<OIndex<?>> indexes);
 

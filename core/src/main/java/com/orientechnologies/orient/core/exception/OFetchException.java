@@ -22,14 +22,14 @@ import com.orientechnologies.common.exception.OException;
  * @author luca.molino
  * 
  */
-public class OFetchException extends OException {
-	private static final long	serialVersionUID	= 7247597939953323863L;
+public class OFetchException extends OCoreException {
+  private static final long serialVersionUID = 7247597939953323863L;
 
-	public OFetchException(String message, Throwable cause) {
-		super(message, cause);
-	}
+  public OFetchException(OFetchException exception) {
+    super(exception);
+  }
 
-	public OFetchException(String message) {
-		super(message);
-	}
+  public OFetchException(String message) {
+    super(message);
+  }
 }

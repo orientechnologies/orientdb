@@ -20,5 +20,12 @@ public class OFirstLevelExpression extends OMathExpression {
   protected boolean supportsBasicCalculation() {
     return super.supportsBasicCalculation();
   }
+
+  public boolean isBaseIdentifier() {
+    if (value instanceof OIdentifier) {
+      return true;
+    }
+    return false;
+  }
 }
 /* JavaCC - OriginalChecksum=30dc1016b686d4841bbd57d6e6c0bfbd (do not edit this line) */

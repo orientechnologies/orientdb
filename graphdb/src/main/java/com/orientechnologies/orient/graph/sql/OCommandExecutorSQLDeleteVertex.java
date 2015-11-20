@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.graph.sql;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
@@ -122,7 +123,7 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
           try {
             limit = Integer.parseInt(word);
           } catch (Exception e) {
-            throw new OCommandSQLParsingException("Invalid LIMIT: " + word, e);
+            throw OException.wrapException(new OCommandSQLParsingException("Invalid LIMIT: " + word), e);
           }
         } else if (word.equals(KEYWORD_RETURN)) {
           returning = parseReturn();

@@ -66,7 +66,6 @@ public class OInsertStatementTest {
     checkRightSyntax("insert into foo set bar = (insert into foo set a = 'foo') ");
   }
 
-
   public void testInsertEmbeddedDocs() {
     checkRightSyntax("INSERT INTO Activity SET user = #14:1, story = #18:2, `like` = { \n"
         + "      count: 0, \n"

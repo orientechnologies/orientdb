@@ -19,23 +19,9 @@
  */
 package com.orientechnologies.orient.server;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.locks.ReentrantLock;
-
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MalformedObjectNameException;
-import javax.management.NotCompliantMBeanException;
-
 import com.orientechnologies.common.console.OConsoleReader;
 import com.orientechnologies.common.console.ODefaultConsoleReader;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -76,6 +62,25 @@ import com.orientechnologies.orient.server.plugin.OServerPluginManager;
 import com.orientechnologies.orient.server.security.OSecurityServerUser;
 import com.orientechnologies.orient.server.token.OTokenHandlerImpl;
 
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.MBeanRegistrationException;
+import javax.management.MalformedObjectNameException;
+import javax.management.NotCompliantMBeanException;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.locks.ReentrantLock;
+
 public class OServer {
   private static final String                              ROOT_PASSWORD_VAR      = "ORIENTDB_ROOT_PASSWORD";
   private static ThreadGroup                               threadGroup;
@@ -114,7 +119,7 @@ public class OServer {
 
     serverRootDirectory = OSystemVariableResolver.resolveSystemVariables("${" + Orient.ORIENTDB_HOME + "}", ".");
 
-    OLogManager.installCustomFormatter();
+    OLogManager.instance().installCustomFormatter();
 
     defaultSettings();
 
@@ -159,6 +164,13 @@ public class OServer {
 
   public void saveConfiguration() throws IOException {
     serverCfg.saveConfiguration();
+  }
+
+  public void restart() throws ClassNotFoundException, InvocationTargetException, InstantiationException, NoSuchMethodException,
+      IllegalAccessException {
+    shutdown();
+    startup(serverCfg.getConfiguration());
+    activate();
   }
 
   /**
@@ -247,10 +259,10 @@ public class OServer {
       return startupFromConfiguration();
 
     } catch (IOException e) {
-      OLogManager.instance().error(this, "Error on reading server configuration from file: " + iConfigurationFile, e,
-          OConfigurationException.class);
+      final String message = "Error on reading server configuration from file: " + iConfigurationFile;
+      OLogManager.instance().error(this, message, e);
+      throw OException.wrapException(new OConfigurationException(message), e);
     }
-    return this;
   }
 
   public OServer startup(final String iConfiguration) throws InstantiationException, IllegalAccessException,
@@ -346,7 +358,10 @@ public class OServer {
         loadUsers();
         loadDatabases();
       } catch (IOException e) {
-        OLogManager.instance().error(this, "Error on reading server configuration", e, OConfigurationException.class);
+        final String message = "Error on reading server configuration";
+        OLogManager.instance().error(this, message, e);
+
+        throw OException.wrapException(new OConfigurationException(message), e);
       }
 
       registerPlugins();
@@ -686,7 +701,7 @@ public class OServer {
   }
 
   public Collection<OServerPluginInfo> getPlugins() {
-    return pluginManager.getPlugins();
+    return pluginManager != null ? pluginManager.getPlugins() : null;
   }
 
   public OContextConfiguration getContextConfiguration() {
@@ -764,13 +779,13 @@ public class OServer {
     final String path = getStoragePath(iDbUrl);
 
     final ODatabaseInternal<?> database = new ODatabaseDocumentTx(path);
-
-    if (database.isClosed())
-      if (database.getStorage() instanceof ODirectMemoryStorage)
+    if (database.isClosed()) {
+      final OStorage storage = database.getStorage();
+      if (storage instanceof ODirectMemoryStorage && !storage.exists())
         database.create();
-      else {
+      else
         database.open(iToken);
-      }
+    }
 
     return database;
   }
@@ -796,7 +811,7 @@ public class OServer {
       final ONetworkProtocolData data, final boolean iBypassAccess) {
     final OStorage storage = database.getStorage();
     if (database.isClosed()) {
-      if (database.getStorage() instanceof ODirectMemoryStorage && !storage.exists()) {
+      if (storage instanceof ODirectMemoryStorage && !storage.exists()) {
         try {
           database.create();
         } catch (OStorageException e) {

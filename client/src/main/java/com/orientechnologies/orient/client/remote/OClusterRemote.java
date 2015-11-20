@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.version.ORecordVersion;
 
 import java.io.IOException;
 
@@ -87,7 +86,7 @@ public class OClusterRemote implements OCluster {
   }
 
   @Override
-  public OPhysicalPosition createRecord(byte[] content, ORecordVersion recordVersion, byte recordType) throws IOException {
+  public OPhysicalPosition createRecord(byte[] content, int recordVersion, byte recordType) throws IOException {
     throw new UnsupportedOperationException("createRecord");
   }
 
@@ -97,7 +96,7 @@ public class OClusterRemote implements OCluster {
   }
 
   @Override
-  public void updateRecord(long clusterPosition, byte[] content, ORecordVersion recordVersion, byte recordType) throws IOException {
+  public void updateRecord(long clusterPosition, byte[] content, int recordVersion, byte recordType) throws IOException {
     throw new UnsupportedOperationException("updateRecord");
   }
 
@@ -107,7 +106,7 @@ public class OClusterRemote implements OCluster {
   }
 
   @Override
-  public ORawBuffer readRecordIfVersionIsNotLatest(long clusterPosition, ORecordVersion recordVersion) throws IOException,
+  public ORawBuffer readRecordIfVersionIsNotLatest(long clusterPosition, int recordVersion) throws IOException,
       ORecordNotFoundException {
     throw new UnsupportedOperationException("readRecordIfVersionIsNotLatest");
   }
@@ -143,16 +142,6 @@ public class OClusterRemote implements OCluster {
   @Override
   public long getTombstonesCount() {
     throw new UnsupportedOperationException("getTombstonesCount()");
-  }
-
-  @Override
-  public void convertToTombstone(long iPosition) throws IOException {
-    throw new UnsupportedOperationException("convertToTombstone()");
-  }
-
-  @Override
-  public boolean hasTombstonesSupport() {
-    throw new UnsupportedOperationException("hasTombstonesSupport()");
   }
 
   public long getFirstPosition() {
@@ -214,11 +203,6 @@ public class OClusterRemote implements OCluster {
   @Override
   public OPhysicalPosition[] floorPositions(OPhysicalPosition position) throws IOException {
     throw new UnsupportedOperationException("floorPositions()");
-  }
-
-  @Override
-  public boolean useWal() {
-    throw new UnsupportedOperationException("useWal()");
   }
 
   @Override

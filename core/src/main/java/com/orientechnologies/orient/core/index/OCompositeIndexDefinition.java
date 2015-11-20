@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
@@ -464,15 +465,15 @@ public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
 
       setNullValuesIgnored(!Boolean.FALSE.equals(document.<Boolean> field("nullValuesIgnored")));
     } catch (final ClassNotFoundException e) {
-      throw new OIndexException("Error during composite index deserialization", e);
+      throw OException.wrapException(new OIndexException("Error during composite index deserialization"), e);
     } catch (final NoSuchMethodException e) {
-      throw new OIndexException("Error during composite index deserialization", e);
+      throw OException.wrapException(new OIndexException("Error during composite index deserialization"), e);
     } catch (final InvocationTargetException e) {
-      throw new OIndexException("Error during composite index deserialization", e);
+      throw OException.wrapException(new OIndexException("Error during composite index deserialization"), e);
     } catch (final InstantiationException e) {
-      throw new OIndexException("Error during composite index deserialization", e);
+      throw OException.wrapException(new OIndexException("Error during composite index deserialization"), e);
     } catch (final IllegalAccessException e) {
-      throw new OIndexException("Error during composite index deserialization", e);
+      throw OException.wrapException(new OIndexException("Error during composite index deserialization"), e);
     }
   }
 

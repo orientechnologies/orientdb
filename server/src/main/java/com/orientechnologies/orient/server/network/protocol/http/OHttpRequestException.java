@@ -19,21 +19,17 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http;
 
-import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.exception.OSystemException;
 
-public class OHttpRequestException extends OException {
+public class OHttpRequestException extends OSystemException {
 
   private static final long serialVersionUID = 12132321321321L;
 
-  public OHttpRequestException() {
-    super();
+  public OHttpRequestException(OHttpRequestException exception) {
+    super(exception);
   }
 
   public OHttpRequestException(String message) {
     super(message);
-  }
-
-  public OHttpRequestException(Throwable cause) {
-    super(cause);
   }
 }

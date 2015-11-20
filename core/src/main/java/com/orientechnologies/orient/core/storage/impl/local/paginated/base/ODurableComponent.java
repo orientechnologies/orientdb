@@ -20,8 +20,6 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.base;
 
-import java.io.IOException;
-
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
@@ -29,7 +27,9 @@ import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
+
+import java.io.IOException;
 
 /**
  * Base class for all durable data structures, that is data structures state of which can be consistently restored after system
@@ -108,7 +108,7 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
   }
 
   protected OAtomicOperation startAtomicOperation() throws IOException {
-    return atomicOperationsManager.startAtomicOperation(this, false);
+    return atomicOperationsManager.startAtomicOperation(this);
   }
 
   protected OWALChangesTree getChangesTree(OAtomicOperation atomicOperation, OCacheEntry entry) {
@@ -125,12 +125,17 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     return atomicOperation.filledUpTo(fileId);
   }
 
-  protected OCacheEntry loadPage(OAtomicOperation atomicOperation, long fileId, long pageIndex, boolean checkPinnedPages)
-      throws IOException {
-    if (atomicOperation == null)
-      return readCache.load(fileId, pageIndex, checkPinnedPages, writeCache);
+  protected OCacheEntry loadPage(final OAtomicOperation atomicOperation, final long fileId, final long pageIndex,
+      final boolean checkPinnedPages) throws IOException {
+    return loadPage(atomicOperation, fileId, pageIndex, checkPinnedPages, 0);
+  }
 
-    return atomicOperation.loadPage(fileId, pageIndex, checkPinnedPages);
+  protected OCacheEntry loadPage(OAtomicOperation atomicOperation, long fileId, long pageIndex, boolean checkPinnedPages,
+      final int prefetchPages) throws IOException {
+    if (atomicOperation == null)
+      return readCache.load(fileId, pageIndex, checkPinnedPages, writeCache, prefetchPages);
+
+    return atomicOperation.loadPage(fileId, pageIndex, checkPinnedPages, prefetchPages);
   }
 
   protected void pinPage(OAtomicOperation atomicOperation, OCacheEntry cacheEntry) throws IOException {

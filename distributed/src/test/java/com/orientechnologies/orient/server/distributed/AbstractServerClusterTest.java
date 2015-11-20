@@ -18,9 +18,11 @@ package com.orientechnologies.orient.server.distributed;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.instance.GroupProperties;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import org.junit.Assert;
 
 import java.io.IOException;
@@ -32,11 +34,11 @@ import java.util.List;
  * Test class that creates and executes distributed operations against a cluster of servers created in the same JVM.
  */
 public abstract class AbstractServerClusterTest {
-  protected int             delayServerStartup = 0;
-  protected int             delayServerAlign   = 0;
-  protected String          rootDirectory      = "target/servers/";
+  protected int    delayServerStartup = 0;
+  protected int    delayServerAlign   = 0;
+  protected String rootDirectory      = "target/servers/";
 
-  protected List<ServerRun> serverInstance     = new ArrayList<ServerRun>();
+  protected List<ServerRun> serverInstance = new ArrayList<ServerRun>();
 
   protected AbstractServerClusterTest() {
   }
@@ -93,9 +95,12 @@ public abstract class AbstractServerClusterTest {
 
     try {
 
-      for (ServerRun server : serverInstance) {
+      for (final ServerRun server : serverInstance) {
         banner("STARTING SERVER -> " + server.getServerId() + "...");
+
         server.startServer(getDistributedServerConfiguration(server));
+
+        onServerStarting(server);
 
         if (delayServerStartup > 0)
           try {
@@ -108,8 +113,8 @@ public abstract class AbstractServerClusterTest {
 
       if (delayServerAlign > 0)
         try {
-          System.out.println("Server started, waiting for synchronization (" + (delayServerAlign * serverInstance.size() / 1000)
-              + "secs)...");
+          System.out.println(
+              "Server started, waiting for synchronization (" + (delayServerAlign * serverInstance.size() / 1000) + "secs)...");
           Thread.sleep(delayServerAlign * serverInstance.size());
         } catch (InterruptedException e) {
         }
@@ -160,8 +165,11 @@ public abstract class AbstractServerClusterTest {
 
   protected void log(final String iMessage) {
     OLogManager.instance().flush();
-    System.out.println("\n"+iMessage);
+    System.out.println("\n" + iMessage);
     System.out.flush();
+  }
+
+  protected void onServerStarting(ServerRun server) {
   }
 
   protected void onServerStarted(ServerRun server) {
@@ -196,12 +204,22 @@ public abstract class AbstractServerClusterTest {
    * @throws IOException
    */
   protected void prepare(final boolean iCopyDatabaseToNodes, final boolean iCreateDatabase) throws IOException {
+    prepare(iCopyDatabaseToNodes, iCreateDatabase, null);
+  }
+
+  /**
+   * Create the database on first node only
+   *
+   * @throws IOException
+   */
+  protected void prepare(final boolean iCopyDatabaseToNodes, final boolean iCreateDatabase,
+      final OCallable<Object, OrientGraphFactory> iCfgCallback) throws IOException {
     // CREATE THE DATABASE
     final Iterator<ServerRun> it = serverInstance.iterator();
     final ServerRun master = it.next();
 
     if (iCreateDatabase) {
-      final OrientBaseGraph graph = master.createDatabase(getDatabaseName());
+      final OrientBaseGraph graph = master.createDatabase(getDatabaseName(), iCfgCallback);
       try {
         onAfterDatabaseCreation(graph);
       } finally {

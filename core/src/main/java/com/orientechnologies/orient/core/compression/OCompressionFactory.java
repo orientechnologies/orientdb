@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.core.compression;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.compression.impl.OGZIPCompression;
 import com.orientechnologies.orient.core.compression.impl.OHighZIPCompression;
@@ -71,7 +72,7 @@ public class OCompressionFactory {
           compression.configure(iOptions);
 
         } catch (Exception e) {
-          throw new OSecurityException("Cannot instantiate compression algorithm '" + name + "'", e);
+          throw OException.wrapException(new OSecurityException("Cannot instantiate compression algorithm '" + name + "'"), e);
         }
       } else
         throw new OSecurityException("Compression with name '" + name + "' is absent");

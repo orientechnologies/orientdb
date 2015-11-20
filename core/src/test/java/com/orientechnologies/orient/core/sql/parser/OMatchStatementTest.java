@@ -59,13 +59,22 @@ public class OMatchStatementTest {
   }
 
   @Test
+  public void testArrowsNoBrackets() {
+    checkWrongSyntax("MATCH {}-->-->{as:foo} RETURN foo");
+  }
+
+  @Test
   public void testSingleMethodAndFilter() {
     checkRightSyntax("MATCH {class: 'V', as: foo}.out(){class: 'V', as: bar} RETURN foo");
+    checkRightSyntax("MATCH {class: 'V', as: foo}-E->{class: 'V', as: bar} RETURN foo");
+    checkRightSyntax("MATCH {class: 'V', as: foo}-->{class: 'V', as: bar} RETURN foo");
   }
 
   @Test
   public void testLongPath() {
     checkRightSyntax("MATCH {class: 'V', as: foo}.out().in('foo').both('bar').out(){as: bar} RETURN foo");
+
+    checkRightSyntax("MATCH {class: 'V', as: foo}-->{}<-foo-{}-bar-{}-->{as: bar} RETURN foo");
   }
 
   @Test
@@ -109,10 +118,27 @@ public class OMatchStatementTest {
   }
 
   @Test
+  public void testMultiPathArrows() {
+    StringBuilder query = new StringBuilder();
+    query.append("MATCH {}");
+    query.append("  .(-->{}<--{class:'v'}--){maxDepth: 3}-->{} return foo");
+    System.out.println(query);
+    checkRightSyntax(query.toString());
+  }
+
+  @Test
   public void testMultipleMatches() {
     String query = "MATCH {class: 'V', as: foo}.out(){class: 'V', as: bar}, ";
     query += " {class: 'V', as: foo}.out(){class: 'V', as: bar},";
     query += " {class: 'V', as: foo}.out(){class: 'V', as: bar} RETURN foo";
+    checkRightSyntax(query);
+  }
+
+  @Test
+  public void testMultipleMatchesArrow() {
+    String query = "MATCH {class: 'V', as: foo}-->{class: 'V', as: bar}, ";
+    query += " {class: 'V', as: foo}-->{class: 'V', as: bar},";
+    query += " {class: 'V', as: foo}-->{class: 'V', as: bar} RETURN foo";
     checkRightSyntax(query);
   }
 
@@ -123,9 +149,20 @@ public class OMatchStatementTest {
   }
 
   @Test
+  public void testWhileArrow() {
+    checkRightSyntax("MATCH {class: 'V', as: foo}-->{while:($depth<4), as:bar} RETURN bar ");
+  }
+
+  @Test
   public void testLimit() {
     checkRightSyntax("MATCH {class: 'V'} RETURN foo limit 10");
   }
+
+  @Test
+  public void testReturnJson() {
+    checkRightSyntax("MATCH {class: 'V'} RETURN {'name':'foo', 'value': bar}");
+  }
+
 
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);

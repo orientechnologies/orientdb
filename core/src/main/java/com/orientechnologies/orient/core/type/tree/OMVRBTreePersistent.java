@@ -20,18 +20,21 @@
 package com.orientechnologies.orient.core.type.tree;
 
 import com.orientechnologies.common.collection.OLimitedMap;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTree;
 import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTreeEntry;
 import com.orientechnologies.orient.core.memory.OLowMemoryException;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeProvider;
 
@@ -269,7 +272,10 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
       }
 
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Error on unload the tree: " + dataProvider, e, OStorageException.class);
+      final String message = "Error on unload the tree: " + dataProvider;
+      OLogManager.instance().error(this, message, e);
+
+      throw OException.wrapException(new OStorageException(message), e);
     } finally {
       PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.unload"), "Unload a MVRBTree", timer);
     }
@@ -458,7 +464,6 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
   public V put(final K key, final V value) {
     optimize();
     final long timer = PROFILER.startChrono();
-
     try {
       final V v = internalPut(key, value);
       commitChanges();
@@ -551,7 +556,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
         saveTreeNode();
 
     } catch (IOException e) {
-      throw new OStorageException("Error on saving the tree", e);
+      throw OException.wrapException(new OStorageException("Error on saving the tree"), e);
     } finally {
 
       PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.commitChanges"), "Commit pending changes to a MVRBTree", timer);
@@ -703,19 +708,11 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
   protected V internalPut(final K key, final V value) throws OLowMemoryException {
     ORecord rec;
 
-    if (key instanceof ORecord) {
-      // RECORD KEY: ASSURE IT'S PERSISTENT TO AVOID STORING INVALID RIDs
-      rec = (ORecord) key;
-      if (!rec.getIdentity().isValid())
-        rec.save();
-    }
+    if(key instanceof OIdentifiable)
+      ORecordInternal.track(getOwner(), (OIdentifiable) key);
 
-    if (value instanceof ORecord) {
-      // RECORD VALUE: ASSURE IT'S PERSISTENT TO AVOID STORING INVALID RIDs
-      rec = (ORecord) value;
-      if (!rec.getIdentity().isValid())
-        rec.save();
-    }
+    if(value instanceof OIdentifiable)
+      ORecordInternal.track(getOwner(), (OIdentifiable) value);
 
     for (int i = 0; i < OPTIMIZE_MAX_RETRY; ++i) {
       try {

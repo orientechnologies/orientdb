@@ -36,8 +36,6 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
-import com.orientechnologies.orient.core.version.ORecordVersion;
-import com.orientechnologies.orient.core.version.OVersionFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -49,17 +47,17 @@ import java.util.WeakHashMap;
 
 @SuppressWarnings({ "unchecked", "serial" })
 public abstract class ORecordAbstract implements ORecord {
-  protected ORecordId                            _recordId;
-  protected ORecordVersion                       _recordVersion             = OVersionFactory.instance().createVersion();
+  protected ORecordId _recordId;
+  protected int       _recordVersion = 0;
 
-  protected byte[]                               _source;
-  protected int                                  _size;
+  protected byte[] _source;
+  protected int    _size;
 
-  protected transient ORecordSerializer          _recordFormat;
-  protected boolean                              _dirty                     = true;
-  protected boolean                              _contentChanged            = true;
-  protected ORecordElement.STATUS                _status                    = ORecordElement.STATUS.LOADED;
-  protected transient Set<ORecordListener>       _listeners                 = null;
+  protected transient ORecordSerializer    _recordFormat;
+  protected boolean                        _dirty          = true;
+  protected boolean                        _contentChanged = true;
+  protected ORecordElement.STATUS          _status         = ORecordElement.STATUS.LOADED;
+  protected transient Set<ORecordListener> _listeners      = null;
 
   private transient Set<OIdentityChangeListener> newIdentityChangeListeners = null;
   protected ODirtyManager                        _dirtyManager;
@@ -103,7 +101,7 @@ public abstract class ORecordAbstract implements ORecord {
 
   public ORecordAbstract reset() {
     _status = ORecordElement.STATUS.LOADED;
-    _recordVersion.reset();
+    _recordVersion = 0;
     _size = 0;
 
     _source = null;
@@ -128,6 +126,7 @@ public abstract class ORecordAbstract implements ORecord {
   public ORecordAbstract fromStream(final byte[] iRecordBuffer) {
     _dirty = false;
     _contentChanged = false;
+    _dirtyManager = null;
     if (ONetworkThreadLocalSerializer.getNetworkSerializer() != null) {
       ONetworkThreadLocalSerializer.getNetworkSerializer().fromStream(iRecordBuffer, this, null);
       _source = null;
@@ -197,22 +196,16 @@ public abstract class ORecordAbstract implements ORecord {
 
   @Override
   public String toString() {
-    return (_recordId.isValid() ? _recordId : "") + (_source != null ? Arrays.toString(_source) : "[]") + " v"
-        + _recordVersion.toString();
+    return (_recordId.isValid() ? _recordId : "") + (_source != null ? Arrays.toString(_source) : "[]") + " v" + _recordVersion;
   }
 
   public int getVersion() {
     // checkForLoading();
-    return _recordVersion.getCounter();
+    return _recordVersion;
   }
 
   protected void setVersion(final int iVersion) {
-    _recordVersion.setCounter(iVersion);
-  }
-
-  public ORecordVersion getRecordVersion() {
-    // checkForLoading();
-    return _recordVersion;
+    _recordVersion = iVersion;
   }
 
   public ORecordAbstract unload() {
@@ -235,7 +228,7 @@ public abstract class ORecordAbstract implements ORecord {
 
       return result;
     } catch (Exception e) {
-      throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' not found", e);
+      throw OException.wrapException(new ORecordNotFoundException("The record with id '" + getIdentity() + "' not found"), e);
     }
   }
 
@@ -273,7 +266,7 @@ public abstract class ORecordAbstract implements ORecord {
     } catch (OException e) {
       throw e;
     } catch (Exception e) {
-      throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' not found", e);
+      throw OException.wrapException(new ORecordNotFoundException("The record with id '" + getIdentity() + "' not found"), e);
     }
   }
 
@@ -306,8 +299,8 @@ public abstract class ORecordAbstract implements ORecord {
 
   @Override
   public void lock(final boolean iExclusive) {
-    ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction()
-        .lockRecord(this, iExclusive ? OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK : OStorage.LOCKING_STRATEGY.SHARED_LOCK);
+    ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction().lockRecord(this,
+        iExclusive ? OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK : OStorage.LOCKING_STRATEGY.SHARED_LOCK);
   }
 
   @Override
@@ -371,25 +364,28 @@ public abstract class ORecordAbstract implements ORecord {
     cloned._source = _source;
     cloned._size = _size;
     cloned._recordId = _recordId.copy();
-    cloned._recordVersion = _recordVersion.copy();
+    cloned._recordVersion = _recordVersion;
     cloned._status = _status;
     cloned._recordFormat = _recordFormat;
     cloned._listeners = null;
     cloned._dirty = false;
     cloned._contentChanged = false;
+    cloned._dirtyManager = null;
     return cloned;
   }
 
-  protected ORecordAbstract fill(final ORID iRid, final ORecordVersion iVersion, final byte[] iBuffer, boolean iDirty) {
+  protected ORecordAbstract fill(final ORID iRid, final int iVersion, final byte[] iBuffer, boolean iDirty) {
     _recordId.clusterId = iRid.getClusterId();
     _recordId.clusterPosition = iRid.getClusterPosition();
-    _recordVersion.copyFrom(iVersion);
+    _recordVersion = iVersion;
     _status = ORecordElement.STATUS.LOADED;
     _source = iBuffer;
     _size = iBuffer != null ? iBuffer.length : 0;
     if (_source != null && _source.length > 0) {
       _dirty = iDirty;
       _contentChanged = iDirty;
+      if (!iDirty && _dirtyManager != null)
+        _dirtyManager.removePointed(this);
     }
 
     return this;
@@ -408,7 +404,8 @@ public abstract class ORecordAbstract implements ORecord {
   protected void unsetDirty() {
     _contentChanged = false;
     _dirty = false;
-    _dirtyManager = null;
+    if (_dirtyManager != null)
+      _dirtyManager.removePointed(this);
   }
 
   protected abstract byte getRecordType();

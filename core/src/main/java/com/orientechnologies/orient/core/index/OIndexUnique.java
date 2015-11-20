@@ -47,12 +47,12 @@ public class OIndexUnique extends OIndexOneValue {
     final ODatabase database = getDatabase();
     final boolean txIsActive = database.getTransaction().isActive();
 
-    if (!txIsActive)
+    if (!txIsActive) {
       keyLockManager.acquireExclusiveLock(key);
+    }
 
     try {
 
-      checkForKeyType(key);
       acquireSharedLock();
       try {
         final OIdentifiable value = (OIdentifiable) storage.getIndexValue(indexId, key);

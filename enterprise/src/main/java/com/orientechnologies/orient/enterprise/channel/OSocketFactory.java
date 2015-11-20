@@ -31,169 +31,156 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 
 public class OSocketFactory {
 
-	SocketFactory socketFactory;
-	boolean useSSL = false;
-	SSLContext context = null;
-	OContextConfiguration config;
+  SocketFactory         socketFactory;
+  boolean               useSSL             = false;
+  SSLContext            context            = null;
+  OContextConfiguration config;
 
-	private String keyStorePath = null;
-	private String keyStorePassword = null;
-	private String keyStoreType = KeyStore.getDefaultType();
-	private String trustStorePath = null;
-	private String trustStorePassword = null;
-	private String trustStoreType = KeyStore.getDefaultType();
+  private String        keyStorePath       = null;
+  private String        keyStorePassword   = null;
+  private String        keyStoreType       = KeyStore.getDefaultType();
+  private String        trustStorePath     = null;
+  private String        trustStorePassword = null;
+  private String        trustStoreType     = KeyStore.getDefaultType();
 
-	private OSocketFactory(OContextConfiguration iConfig) {
-		config = iConfig;
+  private OSocketFactory(OContextConfiguration iConfig) {
+    config = iConfig;
 
-		useSSL = iConfig.getValueAsBoolean(OGlobalConfiguration.CLIENT_USE_SSL);
-		keyStorePath = (String) iConfig
-				.getValue(OGlobalConfiguration.CLIENT_SSL_KEYSTORE);
-		keyStorePassword = (String) iConfig
-				.getValue(OGlobalConfiguration.CLIENT_SSL_KEYSTORE_PASSWORD);
-		trustStorePath = (String) iConfig
-				.getValue(OGlobalConfiguration.CLIENT_SSL_TRUSTSTORE);
-		trustStorePassword = (String) iConfig
-				.getValue(OGlobalConfiguration.CLIENT_SSL_TRUSTSTORE_PASSWORD);
-	}
+    useSSL = iConfig.getValueAsBoolean(OGlobalConfiguration.CLIENT_USE_SSL);
+    keyStorePath = (String) iConfig.getValue(OGlobalConfiguration.CLIENT_SSL_KEYSTORE);
+    keyStorePassword = (String) iConfig.getValue(OGlobalConfiguration.CLIENT_SSL_KEYSTORE_PASSWORD);
+    trustStorePath = (String) iConfig.getValue(OGlobalConfiguration.CLIENT_SSL_TRUSTSTORE);
+    trustStorePassword = (String) iConfig.getValue(OGlobalConfiguration.CLIENT_SSL_TRUSTSTORE_PASSWORD);
+  }
 
-	public static OSocketFactory instance(final OContextConfiguration iConfig) {
-		return new OSocketFactory(iConfig);
-	}
+  public static OSocketFactory instance(final OContextConfiguration iConfig) {
+    return new OSocketFactory(iConfig);
+  }
 
-	private SocketFactory getBackingFactory() {
-		if (socketFactory == null) {
-			if (useSSL) {
-				socketFactory = getSSLContext().getSocketFactory();
-			} else {
-				socketFactory = SocketFactory.getDefault();
-			}
-		}
-		return socketFactory;
-	}
+  private SocketFactory getBackingFactory() {
+    if (socketFactory == null) {
+      if (useSSL) {
+        socketFactory = getSSLContext().getSocketFactory();
+      } else {
+        socketFactory = SocketFactory.getDefault();
+      }
+    }
+    return socketFactory;
+  }
 
-	protected SSLContext getSSLContext() {
-		if (context == null) {			
-			context = createSSLContext();
-		}
-		return context;
-	}
+  protected SSLContext getSSLContext() {
+    if (context == null) {
+      context = createSSLContext();
+    }
+    return context;
+  }
 
-	protected SSLContext createSSLContext() {
-		try {
-			if (keyStorePath != null && trustStorePath != null) {
-				if (keyStorePassword == null || keyStorePassword.equals("")) {
-					throw new OConfigurationException("Please provide a keystore password");
-				}
-				if (trustStorePassword == null || trustStorePassword.equals("")) {
-					throw new OConfigurationException("Please provide a truststore password");
-				}
-				
-				SSLContext context = SSLContext.getInstance("TLS");
+  protected SSLContext createSSLContext() {
+    try {
+      if (keyStorePath != null && trustStorePath != null) {
+        if (keyStorePassword == null || keyStorePassword.equals("")) {
+          throw new OConfigurationException("Please provide a keystore password");
+        }
+        if (trustStorePassword == null || trustStorePassword.equals("")) {
+          throw new OConfigurationException("Please provide a truststore password");
+        }
 
-				KeyManagerFactory kmf = KeyManagerFactory
-						.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+        SSLContext context = SSLContext.getInstance("TLS");
 
-				KeyStore keyStore = KeyStore.getInstance(keyStoreType);
-				char[] keyStorePass = keyStorePassword.toCharArray();
-				keyStore.load(getAsStream(keyStorePath), keyStorePass);
+        KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
 
-				kmf.init(keyStore, keyStorePass);
+        KeyStore keyStore = KeyStore.getInstance(keyStoreType);
+        char[] keyStorePass = keyStorePassword.toCharArray();
+        keyStore.load(getAsStream(keyStorePath), keyStorePass);
 
-				TrustManagerFactory tmf = null;
-				if (trustStorePath != null) {
-					tmf = TrustManagerFactory.getInstance(TrustManagerFactory
-							.getDefaultAlgorithm());
-					KeyStore trustStore = KeyStore.getInstance(trustStoreType);
-					char[] trustStorePass = trustStorePassword.toCharArray();
-					trustStore
-							.load(getAsStream(trustStorePath), trustStorePass);
-					tmf.init(trustStore);
-				}
+        kmf.init(keyStore, keyStorePass);
 
-				context.init(kmf.getKeyManagers(),
-						(tmf == null ? null : tmf.getTrustManagers()), null);
+        TrustManagerFactory tmf = null;
+        if (trustStorePath != null) {
+          tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+          KeyStore trustStore = KeyStore.getInstance(trustStoreType);
+          char[] trustStorePass = trustStorePassword.toCharArray();
+          trustStore.load(getAsStream(trustStorePath), trustStorePass);
+          tmf.init(trustStore);
+        }
 
-				return context;
-			} else {
-				return SSLContext.getDefault();
-			}
-		} catch (Exception e) {
-			throw new OConfigurationException("Failed to create ssl context", e);
-		}
+        context.init(kmf.getKeyManagers(), (tmf == null ? null : tmf.getTrustManagers()), null);
 
-	}
+        return context;
+      } else {
+        return SSLContext.getDefault();
+      }
+    } catch (Exception e) {
+      throw OException.wrapException(new OConfigurationException("Failed to create ssl context"), e);
+    }
 
-	protected InputStream getAsStream(String path) throws IOException {
+  }
 
-		InputStream input = null;
+  protected InputStream getAsStream(String path) throws IOException {
 
-		try {
-			URL url = new URL(path);
-			input = url.openStream();
-		} catch (MalformedURLException ignore) {
-			input = null;
-		}
+    InputStream input = null;
 
-		if (input == null) {
-			input = getClass().getResourceAsStream(path);
-		}
+    try {
+      URL url = new URL(path);
+      input = url.openStream();
+    } catch (MalformedURLException ignore) {
+      input = null;
+    }
 
-		if (input == null) {
-			input = getClass().getClassLoader().getResourceAsStream(path);
-		}
+    if (input == null) {
+      input = getClass().getResourceAsStream(path);
+    }
 
-		if (input == null) {
-			try {
-				input = new FileInputStream(path);
-			} catch (FileNotFoundException e) {
-				input = null;
-			}
-		}
+    if (input == null) {
+      input = getClass().getClassLoader().getResourceAsStream(path);
+    }
 
-		if (input == null) {
-			throw new java.io.IOException("Could not load resource from path: "
-					+ path);
-		}
+    if (input == null) {
+      try {
+        input = new FileInputStream(path);
+      } catch (FileNotFoundException e) {
+        input = null;
+      }
+    }
 
-		return input;
-	}
+    if (input == null) {
+      throw new java.io.IOException("Could not load resource from path: " + path);
+    }
 
-	private Socket configureSocket(Socket socket) throws SocketException {
+    return input;
+  }
 
-		// Add possible timeouts?
-		return socket;
-	}
+  private Socket configureSocket(Socket socket) throws SocketException {
 
-	public Socket createSocket() throws IOException {
-		return configureSocket(getBackingFactory().createSocket());
-	}
+    // Add possible timeouts?
+    return socket;
+  }
 
-	public Socket createSocket(String host, int port) throws IOException,
-			UnknownHostException {
-		return configureSocket(getBackingFactory().createSocket(host, port));
-	}
+  public Socket createSocket() throws IOException {
+    return configureSocket(getBackingFactory().createSocket());
+  }
 
-	public Socket createSocket(InetAddress host, int port) throws IOException {
-		return configureSocket(getBackingFactory().createSocket(host, port));
-	}
+  public Socket createSocket(String host, int port) throws IOException, UnknownHostException {
+    return configureSocket(getBackingFactory().createSocket(host, port));
+  }
 
-	public Socket createSocket(String host, int port, InetAddress localHost,
-			int localPort) throws IOException, UnknownHostException {
-		return configureSocket(getBackingFactory().createSocket(host, port,
-				localHost, localPort));
-	}
+  public Socket createSocket(InetAddress host, int port) throws IOException {
+    return configureSocket(getBackingFactory().createSocket(host, port));
+  }
 
-	public Socket createSocket(InetAddress address, int port,
-			InetAddress localAddress, int localPort) throws IOException {
-		return configureSocket(getBackingFactory().createSocket(address, port,
-				localAddress, localPort));
-	}
+  public Socket createSocket(String host, int port, InetAddress localHost, int localPort) throws IOException, UnknownHostException {
+    return configureSocket(getBackingFactory().createSocket(host, port, localHost, localPort));
+  }
+
+  public Socket createSocket(InetAddress address, int port, InetAddress localAddress, int localPort) throws IOException {
+    return configureSocket(getBackingFactory().createSocket(address, port, localAddress, localPort));
+  }
 
 }

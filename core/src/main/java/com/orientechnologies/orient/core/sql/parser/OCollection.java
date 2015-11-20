@@ -2,6 +2,9 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +38,12 @@ public class OCollection extends SimpleNode {
     builder.append("]");
   }
 
-
+  public Object execute(OIdentifiable iCurrentRecord, OCommandContext ctx) {
+    List<Object> result = new ArrayList<Object>();
+    for (OExpression exp : expressions) {
+      result.add(exp.execute(iCurrentRecord, ctx));
+    }
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=c93b20138b2ae58c5f76e458c34b5946 (do not edit this line) */

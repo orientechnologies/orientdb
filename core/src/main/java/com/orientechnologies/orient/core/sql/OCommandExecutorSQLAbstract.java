@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext.TIMEOUT_STRATEGY;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
@@ -33,10 +34,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
 import com.orientechnologies.orient.core.sql.parser.OStatementCache;
-import com.orientechnologies.orient.core.sql.parser.OrientSql;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
@@ -100,6 +98,10 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
 
   protected void throwParsingException(final String iText) {
     throw new OCommandSQLParsingException(iText, parserText, parserGetPreviousPosition());
+  }
+
+  protected void throwParsingException(final String iText, Exception e) {
+    throw OException.wrapException(new OCommandSQLParsingException(iText, parserText, parserGetPreviousPosition()), e);
   }
 
   /**
@@ -222,20 +224,20 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
     final boolean strict = getDatabase().getStorage().getConfiguration().isStrictSql();
 
     if (strict) {
-      final InputStream is = new ByteArrayInputStream(queryText.getBytes());
-      final OrientSql osql = new OrientSql(is);
+      try {
+        final OStatement result = OStatementCache.get(queryText, getDatabase());
+        preParsedStatement = result;
 
-      final OStatement result = OStatementCache.get(queryText, getDatabase());
-      preParsedStatement = result;
-
-      if (iRequest instanceof OCommandRequestAbstract) {
-        final Map<Object, Object> params = ((OCommandRequestAbstract) iRequest).getParameters();
-        StringBuilder builder = new StringBuilder();
-        result.toString(params, builder);
-        return builder.toString();
+        if (iRequest instanceof OCommandRequestAbstract) {
+          final Map<Object, Object> params = ((OCommandRequestAbstract) iRequest).getParameters();
+          StringBuilder builder = new StringBuilder();
+          result.toString(params, builder);
+          return builder.toString();
+        }
+        return result.toString();
+      } catch (Exception e) {
+        throwParsingException("Error parsing query: \n" + queryText + "\n" + e.getMessage(), e);
       }
-
-      return result.toString();
 
     }
     return queryText;

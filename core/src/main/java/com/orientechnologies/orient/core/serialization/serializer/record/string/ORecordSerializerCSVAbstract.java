@@ -22,29 +22,21 @@ package com.orientechnologies.orient.core.serialization.serializer.record.string
 import com.orientechnologies.common.collection.OLazyIterator;
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.annotation.OAfterSerialization;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.object.OLazyObjectMapInterface;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ORecordElement.STATUS;
-import com.orientechnologies.orient.core.db.record.ORecordLazyList;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
-import com.orientechnologies.orient.core.db.record.ORecordLazySet;
-import com.orientechnologies.orient.core.db.record.OTrackedList;
-import com.orientechnologies.orient.core.db.record.OTrackedMap;
-import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.entity.OEntityManagerInternal;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -55,7 +47,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
-import com.orientechnologies.orient.core.serialization.serializer.ONetworkThreadLocalSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.object.OObjectSerializerHelperManager;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringBuilderSerializable;
@@ -96,7 +87,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       // JUST THE REFERENCE
       rid = (ORID) iLinked;
 
-      assert rid.getIdentity().isValid() || (ODatabaseRecordThreadLocal.INSTANCE.get().getStorage() instanceof OStorageProxy) : "Impossible to serialize invalid link "+ rid.getIdentity();
+      assert rid.getIdentity().isValid() || (ODatabaseRecordThreadLocal.INSTANCE.get().getStorage() instanceof OStorageProxy) : "Impossible to serialize invalid link "
+          + rid.getIdentity();
       resultRid = rid;
     } else {
       if (iLinked instanceof String)
@@ -116,7 +108,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       ORecord iLinkedRecord = ((OIdentifiable) iLinked).getRecord();
       rid = iLinkedRecord.getIdentity();
 
-      assert rid.getIdentity().isValid() || (ODatabaseRecordThreadLocal.INSTANCE.get().getStorage() instanceof OStorageProxy) : "Impossible to serialize invalid link "+ rid.getIdentity();
+      assert rid.getIdentity().isValid() || (ODatabaseRecordThreadLocal.INSTANCE.get().getStorage() instanceof OStorageProxy) : "Impossible to serialize invalid link "
+          + rid.getIdentity();
 
       final ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.get();
       if (iParentRecord != null) {
@@ -296,8 +289,9 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
           try {
             map.put(key, mapValueObject);
           } catch (ClassCastException e) {
-            throw new OSerializationException("Cannot load map because the type was not the expected: key=" + key + "(type "
-                + key.getClass().toString() + "), value=" + mapValueObject + "(type " + key.getClass() + ")", e);
+            throw OException.wrapException(new OSerializationException(
+                "Cannot load map because the type was not the expected: key=" + key + "(type " + key.getClass().toString()
+                    + "), value=" + mapValueObject + "(type " + key.getClass() + ")"), e);
           }
         }
 
@@ -360,7 +354,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
           coll = new ORecordLazyList(iRecord);
 
           if (iValue.getClass().isArray()) {
-            Iterable<Object> iterab = OMultiValue.getMultiValueIterable(iValue);
+            Iterable<Object> iterab = OMultiValue.getMultiValueIterable(iValue, false);
             for (Object i : iterab) {
               coll.add((OIdentifiable) i);
             }
@@ -418,6 +412,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       final OStringBuilderSerializable coll;
 
       if (!(iValue instanceof OMVRBTreeRIDSet)) {
+        if(iValue instanceof OAutoConvertToRecord)
+          ((OAutoConvertToRecord)iValue).setAutoConvertToRecord(false);
         // FIRST TIME: CONVERT THE ENTIRE COLLECTION
         coll = new OMVRBTreeRIDSet(iRecord, (Collection<OIdentifiable>) iValue);
 
@@ -634,7 +630,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
         if (iType == OType.EMBEDDEDLIST)
           coll = (Collection<?>) new ORecordLazyList().setStreamedContent(new StringBuilder(value));
         else {
-          final OMVRBTreeRIDSet set = new OMVRBTreeRIDSet();
+          final OMVRBTreeRIDSet set = new OMVRBTreeRIDSet(iDocument);
           set.setAutoConvertToRecord(false);
           set.fromStream(new StringBuilder(value));
           return set;
@@ -711,7 +707,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       final Map<ODocument, Boolean> iMarshalledRecords, final boolean iSaveOnlyDirty, final boolean iSet) {
     iOutput.append(iSet ? OStringSerializerHelper.SET_BEGIN : OStringSerializerHelper.LIST_BEGIN);
 
-    final Iterator<Object> iterator = OMultiValue.getMultiValueIterator(iValue);
+    final Iterator<Object> iterator = OMultiValue.getMultiValueIterator(iValue, false);
 
     OType linkedType = iLinkedType;
 
@@ -754,12 +750,13 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
         if (id instanceof ODocument) {
           doc = (ODocument) id;
 
-          if(doc.hasOwners())
+          if (doc.hasOwners())
             linkedType = OType.EMBEDDED;
-          
-          assert linkedType == OType.EMBEDDED || id.getIdentity().isValid() || (ODatabaseRecordThreadLocal.INSTANCE.get()
-              .getStorage() instanceof OStorageProxy) : "Impossible to serialize invalid link " + id.getIdentity();
-          
+
+          assert linkedType == OType.EMBEDDED || id.getIdentity().isValid()
+              || (ODatabaseRecordThreadLocal.INSTANCE.get().getStorage() instanceof OStorageProxy) : "Impossible to serialize invalid link "
+              + id.getIdentity();
+
           linkedClass = ODocumentInternal.getImmutableSchemaClass(doc);
         } else
           linkedClass = null;

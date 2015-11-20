@@ -19,14 +19,14 @@
  */
 package com.orientechnologies.orient.core.storage.cache;
 
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointerFactory;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
-import com.orientechnologies.common.directmemory.ODirectMemoryPointerFactory;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 
 /**
  * @author Andrey Lomakin
@@ -51,7 +51,8 @@ public class OCachePointer {
   private final long                  fileId;
   private final long                  pageIndex;
 
-  public OCachePointer(ODirectMemoryPointer dataPointer, OLogSequenceNumber lastFlushedLsn, long fileId, long pageIndex) {
+  public OCachePointer(final ODirectMemoryPointer dataPointer, final OLogSequenceNumber lastFlushedLsn, final long fileId,
+      final long pageIndex) {
     this.lastFlushedLsn = lastFlushedLsn;
     this.dataPointer = dataPointer;
 
@@ -59,7 +60,7 @@ public class OCachePointer {
     this.pageIndex = pageIndex;
   }
 
-  public OCachePointer(byte[] data, OLogSequenceNumber lastFlushedLsn, long fileId, long pageIndex) {
+  public OCachePointer(final byte[] data, final OLogSequenceNumber lastFlushedLsn, final long fileId, final long pageIndex) {
     this.lastFlushedLsn = lastFlushedLsn;
     dataPointer = ODirectMemoryPointerFactory.instance().createPointer(data);
 
@@ -83,7 +84,7 @@ public class OCachePointer {
     return lastFlushedLsn;
   }
 
-  public void setLastFlushedLsn(OLogSequenceNumber lastFlushedLsn) {
+  public void setLastFlushedLsn(final OLogSequenceNumber lastFlushedLsn) {
     this.lastFlushedLsn = lastFlushedLsn;
   }
 

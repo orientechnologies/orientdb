@@ -1,27 +1,28 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.type.tree.provider;
 
 import java.io.IOException;
 import java.util.Arrays;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSerializationException;
@@ -113,7 +114,7 @@ public class OMVRBTreeRIDEntryProvider extends OMVRBTreeEntryDataProviderAbstrac
     try {
       itemToStream(iValue, iIndex);
     } catch (IOException e) {
-      throw new OSerializationException("Cannot serialize entryRID object: " + this, e);
+      throw OException.wrapException(new OSerializationException("Cannot serialize entryRID object: " + this), e);
     }
 
     if (rids != null)
@@ -133,7 +134,7 @@ public class OMVRBTreeRIDEntryProvider extends OMVRBTreeEntryDataProviderAbstrac
     try {
       itemToStream(iKey, iIndex);
     } catch (IOException e) {
-      throw new OSerializationException("Cannot serialize entryRID object: " + this, e);
+      throw OException.wrapException(new OSerializationException("Cannot serialize entryRID object: " + this), e);
     }
 
     if (rids != null)
@@ -226,7 +227,7 @@ public class OMVRBTreeRIDEntryProvider extends OMVRBTreeEntryDataProviderAbstrac
             itemToStream(rids[i], i);
 
     } catch (IOException e) {
-      throw new OSerializationException("Cannot serialize tree entry RID node: " + this, e);
+      throw OException.wrapException(new OSerializationException("Cannot serialize tree entry RID node: " + this), e);
     }
 
     // RETURN DIRECTLY THE UNDERLYING BUFFER SINCE IT'S FIXED

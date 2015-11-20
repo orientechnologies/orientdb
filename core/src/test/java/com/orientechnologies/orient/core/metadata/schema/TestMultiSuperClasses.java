@@ -122,7 +122,7 @@ public class TestMultiSuperClasses {
     assertTrue(cClass.isSubClassOf(bClass));
   }
 
-  @Test(expectedExceptions = { OSchemaException.class }, expectedExceptionsMessageRegExp = ".*recursion.*")
+  @Test(expectedExceptions = { OSchemaException.class }, expectedExceptionsMessageRegExp = "(?s).*recursion.*")
   public void testPreventionOfCycles() {
     final OSchema oSchema = db.getMetadata().getSchema();
     OClass aClass = oSchema.createAbstractClass("cycleA");
@@ -143,7 +143,7 @@ public class TestMultiSuperClasses {
     assertTrue(cClass.existsProperty("property"));
   }
 
-  @Test(expectedExceptions = { OSchemaException.class }, expectedExceptionsMessageRegExp = ".*conflict.*")
+  @Test(expectedExceptions = { OSchemaException.class }, expectedExceptionsMessageRegExp = "(?s).*conflict.*")
   public void testParametersImpactBadScenario() {
     final OSchema oSchema = db.getMetadata().getSchema();
     OClass aClass = oSchema.createAbstractClass("impactBadA");

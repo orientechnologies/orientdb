@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
 
@@ -76,7 +77,7 @@ public class OClusterEntryIterator implements Iterator<OPhysicalPosition> {
 
       return result;
     } catch (IOException e) {
-      throw new ODatabaseException("Cannot read next record of cluster", e);
+      throw OException.wrapException(new ODatabaseException("Cannot read next record of cluster"), e);
     }
   }
 

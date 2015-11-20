@@ -1,5 +1,10 @@
 package com.orientechnologies.orient.core.record.impl;
 
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
@@ -8,17 +13,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
-
 public class ODirtyManager {
 
   private ODirtyManager                       overrider;
   private Map<ODocument, List<OIdentifiable>> references;
   private Set<ORecord>                        newRecord;
-  private Set<ORecord>                        updateRecord;
+  private Set<ORecord>                        updateRecords;
 
   public void setDirty(ORecord record) {
     ODirtyManager real = getReal();
@@ -27,9 +27,9 @@ public class ODirtyManager {
         real.newRecord = Collections.newSetFromMap(new IdentityHashMap<ORecord, Boolean>());
       real.newRecord.add(record);
     } else {
-      if (real.updateRecord == null)
-        real.updateRecord = Collections.newSetFromMap(new IdentityHashMap<ORecord, Boolean>());
-      real.updateRecord.add(record);
+      if (real.updateRecords == null)
+        real.updateRecords = Collections.newSetFromMap(new IdentityHashMap<ORecord, Boolean>());
+      real.updateRecords.add(record);
     }
   }
 
@@ -47,8 +47,8 @@ public class ODirtyManager {
     return getReal().newRecord;
   }
 
-  public Set<ORecord> getUpdateRecord() {
-    return getReal().updateRecord;
+  public Set<ORecord> getUpdateRecords() {
+    return getReal().updateRecords;
   }
 
   public Map<ODocument, List<OIdentifiable>> getReferences() {
@@ -70,10 +70,10 @@ public class ODirtyManager {
         newRecord = Collections.newSetFromMap(new IdentityHashMap<ORecord, Boolean>());
       this.newRecord.addAll(toMerge.getNewRecord());
     }
-    if (toMerge.getUpdateRecord() != null) {
-      if (updateRecord == null)
-        updateRecord = Collections.newSetFromMap(new IdentityHashMap<ORecord, Boolean>());
-      this.updateRecord.addAll(toMerge.getUpdateRecord());
+    if (toMerge.getUpdateRecords() != null) {
+      if (updateRecords == null)
+        updateRecords = Collections.newSetFromMap(new IdentityHashMap<ORecord, Boolean>());
+      this.updateRecords.addAll(toMerge.getUpdateRecords());
     }
     if (toMerge.getReferences() != null) {
       if (references == null)
@@ -162,14 +162,14 @@ public class ODirtyManager {
       return;
     real.overrider = oDirtyManager;
     real.newRecord = null;
-    real.updateRecord = null;
+    real.updateRecords = null;
     real.references = null;
   }
 
   public void cleanForSave() {
     ODirtyManager real = getReal();
     real.newRecord = null;
-    real.updateRecord = null;
+    real.updateRecords = null;
   }
 
   public List<OIdentifiable> getPointed(ORecord rec) {
@@ -179,9 +179,19 @@ public class ODirtyManager {
     return real.references.get(rec);
   }
 
-  public void removeNew(ODocument oDocument) {
+  public void removeNew(ORecord record) {
     ODirtyManager real = getReal();
     if (real.newRecord != null)
-      real.newRecord.remove(oDocument);
+      real.newRecord.remove(record);
   }
+
+  public void removePointed(ORecord record) {
+    ODirtyManager real = getReal();
+    if (real.references != null) {
+      real.references.remove(record);
+      if (real.references.size() == 0)
+        references = null;
+    }
+  }
+
 }

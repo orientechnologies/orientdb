@@ -19,17 +19,19 @@
  */
 package com.orientechnologies.common.concur;
 
+import com.orientechnologies.common.exception.OSystemException;
+
 /**
  * Timeout exception. The acquiring of a shared resource caused a timeout.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OTimeoutException extends ONeedRetryException {
+public class OTimeoutException extends OSystemException {
   private static final long serialVersionUID = 1L;
 
-  public OTimeoutException() {
-    super();
+  public OTimeoutException(OTimeoutException exception) {
+    super(exception);
   }
 
   public OTimeoutException(final String message) {

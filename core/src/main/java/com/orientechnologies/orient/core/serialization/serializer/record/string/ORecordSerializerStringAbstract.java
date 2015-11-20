@@ -661,6 +661,11 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
     return fromString(iSource, (ORecord) ODatabaseRecordThreadLocal.INSTANCE.get().newInstance(), null);
   }
 
+  @Override
+  public String[] getFieldNames(byte[] iSource) {
+    return null;
+  }
+
   public ORecord fromStream(final byte[] iSource, final ORecord iRecord, final String[] iFields) {
     final long timer = PROFILER.startChrono();
 
@@ -677,8 +682,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
     final long timer = PROFILER.startChrono();
 
     try {
-      return OBinaryProtocol.string2bytes(toString(iRecord, new StringBuilder(2048), null, null,
-          OSerializationSetThreadLocal.INSTANCE.get(), iOnlyDelta, true).toString());
+      return OBinaryProtocol.string2bytes(toString(iRecord, new StringBuilder(2048), null, null, OSerializationSetThreadLocal.INSTANCE.get(), iOnlyDelta, true).toString());
     } finally {
 
       PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.toStream"), "Serialize record to stream", timer);
@@ -688,4 +692,8 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
   protected abstract StringBuilder toString(final ORecord iRecord, final StringBuilder iOutput, final String iFormat,
       final OUserObject2RecordHandler iObjHandler, final Map<ODocument, Boolean> iMarshalledRecords, boolean iOnlyDelta,
       boolean autoDetectCollectionType);
+
+  public boolean getSupportBinaryEvaluate() {
+    return false;
+  }
 }

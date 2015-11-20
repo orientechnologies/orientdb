@@ -2302,8 +2302,6 @@ public class CRUDObjectPhysicalTestSchemaFull extends ObjectDBBaseTest {
 
     } catch (OCommandSQLParsingException e) {
       Assert.assertTrue(true);
-    } catch (OResponseProcessingException e) {
-      Assert.assertTrue(e.getCause() instanceof OQueryParsingException);
     }
   }
 

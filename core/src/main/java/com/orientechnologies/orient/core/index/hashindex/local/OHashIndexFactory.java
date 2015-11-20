@@ -109,7 +109,7 @@ public class OHashIndexFactory implements OIndexFactory {
   }
 
   @Override
-  public OIndexEngine createIndexEngine(String name, Boolean durableInNonTxMode, OStorage storage, int version,
+  public OIndexEngine createIndexEngine(String algoritm ,String name, Boolean durableInNonTxMode, OStorage storage, int version,
       Map<String, String> engineProperties) {
     OIndexEngine indexEngine;
 

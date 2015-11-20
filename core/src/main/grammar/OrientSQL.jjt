@@ -64,6 +64,34 @@ SKIP :
 | "\t"
 | "\n"
 | "\r"
+| "\f"
+}
+
+/* COMMENTS */
+
+MORE :
+{
+  <"/**" ~["/"]> { input_stream.backup(1); } : IN_FORMAL_COMMENT
+|
+  "/*" : IN_MULTI_LINE_COMMENT
+}
+
+<IN_FORMAL_COMMENT>
+SPECIAL_TOKEN :
+{
+  <FORMAL_COMMENT: "*/" > : DEFAULT
+}
+
+<IN_MULTI_LINE_COMMENT>
+SPECIAL_TOKEN :
+{
+  <MULTI_LINE_COMMENT: "*/" > : DEFAULT
+}
+
+<IN_FORMAL_COMMENT,IN_MULTI_LINE_COMMENT>
+MORE :
+{
+  < ~[] >
 }
 
 
@@ -389,7 +417,7 @@ TOKEN :
 
 TOKEN :
 {
-  < IDENTIFIER: ( (<DOLLAR>)? <LETTER> (<PART_LETTER>)* ) >
+  < IDENTIFIER: ( ((<DOLLAR>) | <LETTER>) (<PART_LETTER>)* ) >
 |
   < QUOTED_IDENTIFIER: ( "`" (~["`"]) (~["`"])*  "`") >
 |
@@ -2445,7 +2473,13 @@ OBooleanExpression InstanceofCondition():
 }
 {
     (
-        jjtThis.left = Expression() <INSTANCEOF> ( jjtThis.right = Identifier() | token = <STRING_LITERAL> { jjtThis.rightString = token.image; } )
+        jjtThis.left = Expression() <INSTANCEOF> (
+		   jjtThis.right = Identifier()
+		   |
+		   token = <STRING_LITERAL> { jjtThis.rightString = token.image; }
+		   |
+		   token = <CHARACTER_LITERAL> { jjtThis.rightString = token.image; }
+		)
     )
     {return jjtThis;}
 }
@@ -2631,6 +2665,8 @@ OBooleanExpression MatchesCondition():
     	    ( token = <STRING_LITERAL> {jjtThis.right = token.image;} )
     	    |
     	    ( token = <CHARACTER_LITERAL> {jjtThis.right = token.image;} )
+    	    |
+            ( jjtThis.rightParam = InputParameter() )
     	)
     )
 
@@ -2989,11 +3025,22 @@ OMatchExpression MatchExpression():
         jjtThis.origin = MatchFilter()
         (
             (
-                LOOKAHEAD(2)
+                LOOKAHEAD(3)
                 nextItem = MatchPathItem()
                 |
-                LOOKAHEAD(2)
+                LOOKAHEAD(3)
+                nextItem = MultiMatchPathItemArrows()
+                |
+                LOOKAHEAD(3)
                 nextItem = MultiMatchPathItem()
+                |
+                LOOKAHEAD(OutPathItem())
+                nextItem = OutPathItem()
+                |
+                nextItem = InPathItem()
+                |
+                LOOKAHEAD(BothPathItem())
+                nextItem = BothPathItem()
             )
             { jjtThis.items.add(nextItem); }
         )*
@@ -3025,8 +3072,11 @@ OMatchPathItem MultiMatchPathItem():
     (
         <DOT>
         <LPAREN>
-        nextItem = MatchPathItemFirst() { jjtThis.items.add(nextItem); }
         (
+            nextItem = MatchPathItemFirst() { jjtThis.items.add(nextItem); }
+        )
+        (
+            LOOKAHEAD(MatchPathItem())
             nextItem = MatchPathItem() { jjtThis.items.add(nextItem); }
         )*
         <RPAREN>
@@ -3034,6 +3084,36 @@ OMatchPathItem MultiMatchPathItem():
     ){ return jjtThis; }
 }
 
+OMatchPathItem MultiMatchPathItemArrows():
+{
+    OMatchPathItem prevItem = null;
+    OMatchPathItem nextItem = null;
+}
+{
+    (
+        <DOT>
+        <LPAREN>
+        (
+            (
+                LOOKAHEAD( OutPathItemOpt() )
+                nextItem = OutPathItemOpt()  { jjtThis.items.add(nextItem); }
+                |
+                LOOKAHEAD( InPathItemOpt() )
+                nextItem = InPathItemOpt()  { jjtThis.items.add(nextItem); }
+                |
+                LOOKAHEAD( BothPathItemOpt() )
+                nextItem = BothPathItemOpt()  { jjtThis.items.add(nextItem); }
+            ){
+                if(prevItem !=null && prevItem.filter == null){
+                    throw new OQueryParsingException("MATCH sub-pattern with no square brackets");
+                }
+                prevItem = nextItem;
+            }
+        )+
+        <RPAREN>
+        [ jjtThis.filter = MatchFilter() ]
+    ){ return jjtThis; }
+}
 
 OMatchFilter MatchFilter():
 { OMatchFilterItem lastItem = null; }
@@ -3088,4 +3168,189 @@ OMatchFilterItem MatchFilterItem():
         )
     )
     { return jjtThis; }
+}
+
+OMatchPathItem OutPathItem():
+{ OIdentifier edgeName = null; }
+{
+
+        (
+            (
+                <MINUS>
+                [edgeName = Identifier()]
+                <MINUS>
+            )
+            |
+            <DECR>
+        )
+        <GT>
+        jjtThis.filter = MatchFilter()
+
+    {
+     if(edgeName==null){
+        edgeName = new OIdentifier(-1);
+        edgeName.value = "E";
+     }
+     jjtThis.method = new OMethodCall(-1);
+     jjtThis.method.methodName = new OIdentifier(-1);
+     jjtThis.method.methodName.value = "out";
+     OExpression exp = new OExpression(-1);
+     exp.value = edgeName.value;
+     jjtThis.method.params.add(exp);
+     return jjtThis;
+    }
+}
+
+OMatchPathItem InPathItem():
+{ OIdentifier edgeName = null; }
+{
+
+        <LT>
+        (
+            (
+                <MINUS>
+                [edgeName = Identifier()]
+                <MINUS>
+            )
+            |
+            <DECR>
+        )
+        jjtThis.filter = MatchFilter()
+
+    {
+     if(edgeName==null){
+        edgeName = new OIdentifier(-1);
+        edgeName.value = "E";
+     }
+     jjtThis.method = new OMethodCall(-1);
+     jjtThis.method.methodName = new OIdentifier(-1);
+     jjtThis.method.methodName.value = "in";
+     OExpression exp = new OExpression(-1);
+     exp.value = edgeName.value;
+     jjtThis.method.params.add(exp);
+     return jjtThis;
+    }
+}
+
+OMatchPathItem BothPathItem():
+{ OIdentifier edgeName = null; }
+{
+
+        (
+            (
+                <MINUS>
+                [edgeName = Identifier()]
+                <MINUS>
+            )
+            |
+            <DECR>
+        )
+        jjtThis.filter = MatchFilter()
+
+    {
+     if(edgeName==null){
+        edgeName = new OIdentifier(-1);
+        edgeName.value = "E";
+     }
+     jjtThis.method = new OMethodCall(-1);
+     jjtThis.method.methodName = new OIdentifier(-1);
+     jjtThis.method.methodName.value = "both";
+     OExpression exp = new OExpression(-1);
+     exp.value = edgeName.value;
+     jjtThis.method.params.add(exp);
+     return jjtThis;
+    }
+}
+
+
+OMatchPathItem OutPathItemOpt():
+{ OIdentifier edgeName = null; }
+{
+
+        (
+            (
+                <MINUS>
+                [edgeName = Identifier()]
+                <MINUS>
+            )
+            |
+            <DECR>
+        )
+        <GT>
+        [jjtThis.filter = MatchFilter()]
+
+    {
+     if(edgeName==null){
+        edgeName = new OIdentifier(-1);
+        edgeName.value = "E";
+     }
+     jjtThis.method = new OMethodCall(-1);
+     jjtThis.method.methodName = new OIdentifier(-1);
+     jjtThis.method.methodName.value = "out";
+     OExpression exp = new OExpression(-1);
+     exp.value = edgeName.value;
+     jjtThis.method.params.add(exp);
+     return jjtThis;
+    }
+}
+
+OMatchPathItem InPathItemOpt():
+{ OIdentifier edgeName = null; }
+{
+
+        <LT>
+        (
+            (
+                <MINUS>
+                [edgeName = Identifier()]
+                <MINUS>
+            )
+            |
+            <DECR>
+        )
+        [jjtThis.filter = MatchFilter()]
+
+    {
+     if(edgeName==null){
+        edgeName = new OIdentifier(-1);
+        edgeName.value = "E";
+     }
+     jjtThis.method = new OMethodCall(-1);
+     jjtThis.method.methodName = new OIdentifier(-1);
+     jjtThis.method.methodName.value = "in";
+     OExpression exp = new OExpression(-1);
+     exp.value = edgeName.value;
+     jjtThis.method.params.add(exp);
+     return jjtThis;
+    }
+}
+
+OMatchPathItem BothPathItemOpt():
+{ OIdentifier edgeName = null; }
+{
+
+        (
+            (
+                <MINUS>
+                [edgeName = Identifier()]
+                <MINUS>
+            )
+            |
+            <DECR>
+        )
+        [jjtThis.filter = MatchFilter()]
+
+    {
+     if(edgeName==null){
+        edgeName = new OIdentifier(-1);
+        edgeName.value = "E";
+     }
+     jjtThis.method = new OMethodCall(-1);
+     jjtThis.method.methodName = new OIdentifier(-1);
+     jjtThis.method.methodName.value = "both";
+     OExpression exp = new OExpression(-1);
+     exp.value = edgeName.value;
+     jjtThis.method.params.add(exp);
+     return jjtThis;
+    }
 }

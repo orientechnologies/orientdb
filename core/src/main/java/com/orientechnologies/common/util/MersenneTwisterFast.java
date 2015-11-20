@@ -21,6 +21,7 @@
 package com.orientechnologies.common.util;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.exception.OSystemException;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -221,7 +222,8 @@ public class MersenneTwisterFast implements Serializable, Cloneable {
       f.mag01 = (int[]) (mag01.clone());
       return f;
     } catch (CloneNotSupportedException e) {
-      throw new OException(e);
+      throw OException.wrapException(new OSystemException("Can not clone " + MersenneTwisterFast.class.getSimpleName()
+          + " instance"), e);
     } // should never happen
   }
 

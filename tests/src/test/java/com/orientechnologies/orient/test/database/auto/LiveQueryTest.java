@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * only for remote usage (it requires registered LiveQuery plugin)
@@ -40,10 +41,12 @@ import java.util.concurrent.CountDownLatch;
 public class LiveQueryTest extends DocumentDBBaseTest implements OCommandOutputListener {
 
   private final CountDownLatch latch = new CountDownLatch(2);
+  private CountDownLatch unLatch = new CountDownLatch(1);
 
   class MyLiveQueryListener implements OLiveResultListener {
 
     public List<ORecordOperation> ops = new ArrayList<ORecordOperation>();
+    public int unsubscribe;
 
     @Override
     public void onLiveResult(int iLiveToken, ORecordOperation iOp) throws OException {
@@ -56,6 +59,8 @@ public class LiveQueryTest extends DocumentDBBaseTest implements OCommandOutputL
     }
 
     @Override public void onUnsubscribe(int iLiveToken) {
+      unsubscribe = iLiveToken;
+      unLatch.countDown();
 
     }
   }
@@ -66,7 +71,7 @@ public class LiveQueryTest extends DocumentDBBaseTest implements OCommandOutputL
   }
 
   @Test(enabled = false)
-  public void checkLiveQuery1() throws IOException {
+  public void checkLiveQuery1() throws IOException, InterruptedException {
     final String className1 = "LiveQueryTest1_1";
     final String className2 = "LiveQueryTest1_2";
     database.getMetadata().getSchema().createClass(className1);
@@ -77,31 +82,23 @@ public class LiveQueryTest extends DocumentDBBaseTest implements OCommandOutputL
     OResultSet<ODocument> tokens = database.query(new OLiveQuery<ODocument>("live select from " + className1, listener));
     Assert.assertEquals(tokens.size(), 1);
     ODocument tokenDoc = tokens.get(0);
-    Integer token = tokenDoc.field("token");
+    int token = tokenDoc.field("token");
     Assert.assertNotNull(token);
 
     database.command(new OCommandSQL("insert into " + className1 + " set name = 'foo', surname = 'bar'")).execute();
     database.command(new OCommandSQL("insert into  " + className1 + " set name = 'foo', surname = 'baz'")).execute();
     database.command(new OCommandSQL("insert into " + className2 + " set name = 'foo'"));
-    try {
-      latch.await();
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
+    latch.await(1, TimeUnit.MINUTES);
 
     database.command(new OCommandSQL("live unsubscribe " + token)).execute();
     database.command(new OCommandSQL("insert into " + className1 + " set name = 'foo', surname = 'bax'")).execute();
-
-    try {
-      Thread.sleep(3000);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
     Assert.assertEquals(listener.ops.size(), 2);
     for (ORecordOperation doc : listener.ops) {
       Assert.assertEquals(doc.type, ORecordOperation.CREATED);
       Assert.assertEquals(((ODocument) doc.record).field("name"), "foo");
     }
+    unLatch.await(1, TimeUnit.MINUTES);
+    Assert.assertEquals(listener.unsubscribe,token);
   }
 
   @Override

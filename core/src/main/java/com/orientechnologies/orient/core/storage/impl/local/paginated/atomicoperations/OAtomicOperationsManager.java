@@ -115,14 +115,14 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     this.writeCache = storage.getWriteCache();
   }
 
-  public OAtomicOperation startAtomicOperation(ODurableComponent durableComponent, boolean rollbackOnlyMode) throws IOException {
+  public OAtomicOperation startAtomicOperation(ODurableComponent durableComponent) throws IOException {
     if (durableComponent != null)
-      return startAtomicOperation(durableComponent.getFullName(), rollbackOnlyMode);
+      return startAtomicOperation(durableComponent.getFullName());
 
-    return startAtomicOperation((String) null, rollbackOnlyMode);
+    return startAtomicOperation((String) null);
   }
 
-  public OAtomicOperation startAtomicOperation(String fullName, boolean rollbackOnlyMode) throws IOException {
+  public OAtomicOperation startAtomicOperation(String fullName) throws IOException {
     if (writeAheadLog == null)
       return null;
 
@@ -159,14 +159,9 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     assert freezeRequests.get() >= 0;
 
     final OOperationUnitId unitId = OOperationUnitId.generateId();
-    final OLogSequenceNumber lsn;
+    final OLogSequenceNumber lsn = writeAheadLog.logAtomicOperationStartRecord(true, unitId);
 
-    if (!rollbackOnlyMode)
-      lsn = writeAheadLog.logAtomicOperationStartRecord(true, unitId);
-    else
-      lsn = null;
-
-    operation = new OAtomicOperation(lsn, unitId, readCache, writeCache, storage.getId(), rollbackOnlyMode);
+    operation = new OAtomicOperation(lsn, unitId, readCache, writeCache, storage.getId());
     currentOperation.set(operation);
 
     if (trackAtomicOperations) {
@@ -355,7 +350,8 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
 
       atomicOperationsCount.decrement();
 
-      throw new ONestedRollbackException(writer.toString(), exception);
+      final ONestedRollbackException nre = new ONestedRollbackException(writer.toString());
+      throw OException.wrapException(nre, exception);
     }
 
     final int counter = operation.decrementCounter();
@@ -365,8 +361,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       if (!operation.isRollback())
         operation.commitChanges(writeAheadLog);
 
-      if (!operation.isRollbackOnlyMode())
-        writeAheadLog.logAtomicOperationEndRecord(operation.getOperationUnitId(), rollback, operation.getStartLSN());
+      writeAheadLog.logAtomicOperationEndRecord(operation.getOperationUnitId(), rollback, operation.getStartLSN());
 
       currentOperation.set(null);
 
@@ -424,13 +419,13 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
           server.registerMBean(this, mbeanName);
 
       } catch (MalformedObjectNameException e) {
-        throw new OStorageException("Error during registration of atomic manager MBean", e);
+        throw OException.wrapException(new OStorageException("Error during registration of atomic manager MBean"), e);
       } catch (InstanceAlreadyExistsException e) {
-        throw new OStorageException("Error during registration of atomic manager MBean", e);
+        throw OException.wrapException(new OStorageException("Error during registration of atomic manager MBean"), e);
       } catch (MBeanRegistrationException e) {
-        throw new OStorageException("Error during registration of atomic manager MBean", e);
+        throw OException.wrapException(new OStorageException("Error during registration of atomic manager MBean"), e);
       } catch (NotCompliantMBeanException e) {
-        throw new OStorageException("Error during registration of atomic manager MBean", e);
+        throw OException.wrapException(new OStorageException("Error during registration of atomic manager MBean"), e);
       }
     }
   }
@@ -446,11 +441,11 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
         final ObjectName mbeanName = new ObjectName(getMBeanName());
         server.unregisterMBean(mbeanName);
       } catch (MalformedObjectNameException e) {
-        throw new OStorageException("Error during unregistration of atomic manager MBean", e);
+        throw OException.wrapException(new OStorageException("Error during unregistration of atomic manager MBean"), e);
       } catch (InstanceNotFoundException e) {
-        throw new OStorageException("Error during unregistration of atomic manager MBean", e);
+        throw OException.wrapException(new OStorageException("Error during unregistration of atomic manager MBean"), e);
       } catch (MBeanRegistrationException e) {
-        throw new OStorageException("Error during unregistration of atomic manager MBean", e);
+        throw OException.wrapException(new OStorageException("Error during unregistration of atomic manager MBean"), e);
       }
     }
   }

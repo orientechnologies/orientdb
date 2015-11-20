@@ -18,11 +18,21 @@
 
 package com.orientechnologies.orient.core.index;
 
-import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.exception.OErrorCode;
+import com.orientechnologies.orient.core.exception.OCoreException;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 
-public class OIndexEngineException extends OException {
+public class OIndexEngineException extends OCoreException {
 
-  public OIndexEngineException(final String message, final Throwable cause) {
-    super(message, cause);
+  public OIndexEngineException(OIndexEngineException exception) {
+    super(exception);
+  }
+
+  public OIndexEngineException(String message, String componentName) {
+    super(message, componentName);
+  }
+
+  public OIndexEngineException(String message) {
+    super(message);
   }
 }

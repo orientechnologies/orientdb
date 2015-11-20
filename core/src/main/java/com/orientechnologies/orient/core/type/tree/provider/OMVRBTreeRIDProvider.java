@@ -149,11 +149,6 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
           // PERSISTENT RIDS
           boolean first = true;
           for (OIdentifiable rid : tree.keySet()) {
-            if (rid instanceof ORecord) {
-              final ORecord record = (ORecord) rid;
-              if (record.isDirty())
-                record.save();
-            }
 
             if (!first)
               buffer.append(OStringSerializerHelper.COLLECTION_SEPARATOR);

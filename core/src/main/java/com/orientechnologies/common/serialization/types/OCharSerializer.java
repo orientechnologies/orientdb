@@ -38,7 +38,7 @@ public class OCharSerializer implements OBinarySerializer<Character> {
   public static final int               CHAR_SIZE        = 2;
   public static final byte              ID               = 3;
   private static final OBinaryConverter BINARY_CONVERTER = OBinaryConverterFactory.getConverter();
-  public static OCharSerializer         INSTANCE         = new OCharSerializer();
+  public static final OCharSerializer         INSTANCE         = new OCharSerializer();
 
   public int getObjectSize(final Character object, Object... hints) {
     return CHAR_SIZE;

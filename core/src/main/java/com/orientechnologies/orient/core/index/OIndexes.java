@@ -15,10 +15,6 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import static com.orientechnologies.common.util.OClassLoaderHelper.lookupProviderWithOrientClassLoader;
-
-import java.util.*;
-
 import com.orientechnologies.common.util.OCollections;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -26,6 +22,10 @@ import com.orientechnologies.orient.core.index.hashindex.local.OHashIndexFactory
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
+
+import java.util.*;
+
+import static com.orientechnologies.common.util.OClassLoaderHelper.lookupProviderWithOrientClassLoader;
 
 /**
  * Utility class to create indexes. New OIndexFactory can be registered
@@ -148,6 +148,11 @@ public final class OIndexes {
    */
   public static OIndexInternal<?> createIndex(ODatabaseDocumentInternal database, String name, String indexType, String algorithm,
       String valueContainerAlgorithm, ODocument metadata, int version) throws OConfigurationException, OIndexException {
+    if (indexType.equalsIgnoreCase(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name())
+        || indexType.equalsIgnoreCase(OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.name())
+        || indexType.equalsIgnoreCase(OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.name()))
+      algorithm = OHashIndexFactory.HASH_INDEX_ALGORITHM;
+
     findFactoryByAlgorithm(algorithm);
 
     Iterator<OIndexFactory> ite;
@@ -182,7 +187,7 @@ public final class OIndexes {
 
     final OIndexFactory factory = findFactoryByAlgorithm(algorithm);
 
-    return factory.createIndexEngine(name, durableInNonTxMode, storage, version, indexProperties);
+    return factory.createIndexEngine(algorithm,name, durableInNonTxMode, storage, version, indexProperties);
   }
 
   public static String chooseDefaultIndexAlgorithm(String type) {

@@ -29,6 +29,7 @@ import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
@@ -46,8 +47,8 @@ public class OLiveQueryHook extends ODocumentHookAbstract implements ODatabaseLi
   static class OLiveQueryOps implements OCloseable {
 
     protected Map<ODatabaseDocument, List<ORecordOperation>> pendingOps  = new ConcurrentHashMap<ODatabaseDocument, List<ORecordOperation>>();
-    OLiveQueryQueueThread                                    queueThread = new OLiveQueryQueueThread();
-    Object                                                   threadLock  = new Object();
+    private OLiveQueryQueueThread                            queueThread = new OLiveQueryQueueThread();
+    private Object                                           threadLock  = new Object();
 
     @Override
     public void close() {
@@ -77,6 +78,10 @@ public class OLiveQueryHook extends ODocumentHookAbstract implements ODatabaseLi
   }
 
   public static Integer subscribe(Integer token, OLiveQueryListener iListener, ODatabaseInternal db) {
+    if(Boolean.FALSE.equals(db.getConfiguration().getValue(OGlobalConfiguration.QUERY_LIVE_SUPPORT))) {
+      OLogManager.instance().warn(db,"Live query support is disabled impossible to subscribe a listener, set '%s' to true for enable the live query support", OGlobalConfiguration.QUERY_LIVE_SUPPORT.getKey());
+      return -1;
+    }
     OLiveQueryOps ops = getOpsReference(db);
     synchronized (ops.threadLock) {
       if (!ops.queueThread.isAlive()) {
@@ -89,6 +94,10 @@ public class OLiveQueryHook extends ODocumentHookAbstract implements ODatabaseLi
   }
 
   public static void unsubscribe(Integer id, ODatabaseInternal db) {
+    if(Boolean.FALSE.equals(db.getConfiguration().getValue(OGlobalConfiguration.QUERY_LIVE_SUPPORT))) {
+      OLogManager.instance().warn(db, "Live query support is disabled impossible to unsubscribe a listener, set '%s' to true for enable the live query support", OGlobalConfiguration.QUERY_LIVE_SUPPORT.getKey());
+      return;
+    }
     try {
       OLiveQueryOps ops = getOpsReference(db);
       synchronized (ops.threadLock) {
@@ -106,6 +115,8 @@ public class OLiveQueryHook extends ODocumentHookAbstract implements ODatabaseLi
 
   @Override
   public void onDelete(ODatabase iDatabase) {
+    if(Boolean.FALSE.equals(database.getConfiguration().getValue(OGlobalConfiguration.QUERY_LIVE_SUPPORT)))
+      return ;
     OLiveQueryOps ops = getOpsReference((ODatabaseInternal) iDatabase);
     synchronized (ops.pendingOps) {
       ops.pendingOps.remove(iDatabase);
@@ -129,6 +140,8 @@ public class OLiveQueryHook extends ODocumentHookAbstract implements ODatabaseLi
 
   @Override
   public void onAfterTxRollback(ODatabase iDatabase) {
+    if(Boolean.FALSE.equals(database.getConfiguration().getValue(OGlobalConfiguration.QUERY_LIVE_SUPPORT)))
+      return ;
     OLiveQueryOps ops = getOpsReference((ODatabaseInternal) iDatabase);
     synchronized (ops.pendingOps) {
       ops.pendingOps.remove(iDatabase);
@@ -142,6 +155,8 @@ public class OLiveQueryHook extends ODocumentHookAbstract implements ODatabaseLi
 
   @Override
   public void onAfterTxCommit(ODatabase iDatabase) {
+    if(Boolean.FALSE.equals(database.getConfiguration().getValue(OGlobalConfiguration.QUERY_LIVE_SUPPORT)))
+      return ;
     OLiveQueryOps ops = getOpsReference((ODatabaseInternal) iDatabase);
     List<ORecordOperation> list;
     synchronized (ops.pendingOps) {
@@ -157,6 +172,8 @@ public class OLiveQueryHook extends ODocumentHookAbstract implements ODatabaseLi
 
   @Override
   public void onClose(ODatabase iDatabase) {
+    if(Boolean.FALSE.equals(database.getConfiguration().getValue(OGlobalConfiguration.QUERY_LIVE_SUPPORT)))
+      return ;
     OLiveQueryOps ops = getOpsReference((ODatabaseInternal) iDatabase);
     synchronized (ops.pendingOps) {
       ops.pendingOps.remove(iDatabase);
@@ -190,8 +207,12 @@ public class OLiveQueryHook extends ODocumentHookAbstract implements ODatabaseLi
   }
 
   protected void addOp(ODocument iDocument, byte iType) {
+    if(Boolean.FALSE.equals(database.getConfiguration().getValue(OGlobalConfiguration.QUERY_LIVE_SUPPORT)))
+      return ;
     ODatabaseDocument db = database;
     OLiveQueryOps ops = getOpsReference((ODatabaseInternal) db);
+    if(!ops.queueThread.hasListeners())
+      return;
     if (db.getTransaction() == null || !db.getTransaction().isActive()) {
 
       // TODO synchronize

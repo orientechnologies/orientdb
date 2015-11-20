@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.object.serialization;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.reflection.OReflectionHelper;
@@ -54,9 +55,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.object.OObjectSerializerHelperManager;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
-import com.orientechnologies.orient.core.version.ORecordVersion;
-import com.orientechnologies.orient.core.version.OSimpleVersion;
-import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.object.db.ODatabasePojoAbstract;
 import com.orientechnologies.orient.object.db.OObjectLazyList;
 import com.orientechnologies.orient.object.db.OObjectLazyMap;
@@ -81,7 +79,7 @@ import java.util.Set;
 @SuppressWarnings("unchecked")
 /**
  * Helper class to manage POJO by using the reflection.
- *  
+ * 
  * @author Luca Garulli
  * @author Luca Molino
  * @author Jacques Desodt
@@ -169,7 +167,7 @@ public class OObjectSerializerHelper {
       else
         return ((Method) o).getReturnType();
     } catch (Exception e) {
-      throw new OSchemaException("Cannot get the value of the property: " + iProperty, e);
+      throw OException.wrapException(new OSchemaException("Cannot get the value of the property: " + iProperty), e);
     }
   }
 
@@ -199,7 +197,7 @@ public class OObjectSerializerHelper {
         return ((Field) o).get(iPojo);
       return null;
     } catch (Exception e) {
-      throw new OSchemaException("Cannot get the value of the property: " + iProperty, e);
+      throw OException.wrapException(new OSchemaException("Cannot get the value of the property: " + iProperty), e);
     }
   }
 
@@ -221,8 +219,9 @@ public class OObjectSerializerHelper {
 
     } catch (Exception e) {
 
-      throw new OSchemaException(
-          "Cannot set the value '" + iValue + "' to the property '" + iProperty + "' for the pojo: " + iPojo, e);
+      throw OException.wrapException(
+          new OSchemaException("Cannot set the value '" + iValue + "' to the property '" + iProperty + "' for the pojo: " + iPojo),
+          e);
     }
   }
 
@@ -296,7 +295,7 @@ public class OObjectSerializerHelper {
     return fieldIds.get(iPojo.getClass()) != null;
   }
 
-  public static String setObjectVersion(final ORecordVersion iVersion, final Object iPojo) {
+  public static String setObjectVersion(final int iVersion, final Object iPojo) {
     if (iPojo == null)
       return null;
 
@@ -309,18 +308,12 @@ public class OObjectSerializerHelper {
 
       final String vFieldName = vField.getName();
 
-      if (Number.class.isAssignableFrom(fieldType)) {
-        if (iVersion instanceof OSimpleVersion)
-          setFieldValue(iPojo, vFieldName, iVersion.getCounter());
-        else
-          OLogManager
-              .instance()
-              .warn(OObjectSerializerHelper.class,
-                  "@Version field can't be declared as Number in distributed mode. Should be one of following: String, Object, ORecordVersion");
+      if (Integer.TYPE.isAssignableFrom(fieldType)) {
+        setFieldValue(iPojo, vFieldName, iVersion);
+      } else if (Number.class.isAssignableFrom(fieldType)) {
+        setFieldValue(iPojo, vFieldName, iVersion);
       } else if (fieldType.equals(String.class))
         setFieldValue(iPojo, vFieldName, String.valueOf(iVersion));
-      else if (fieldType.equals(Object.class) || ORecordVersion.class.isAssignableFrom(fieldType))
-        setFieldValue(iPojo, vFieldName, iVersion);
       else
         OLogManager.instance().warn(OObjectSerializerHelper.class,
             "@Version field has been declared as %s while the supported are: Number, String, Object", fieldType);
@@ -329,39 +322,30 @@ public class OObjectSerializerHelper {
     return null;
   }
 
-  public static ORecordVersion getObjectVersion(final Object iPojo) {
+  public static int getObjectVersion(final Object iPojo) {
     getClassFields(iPojo.getClass());
     final Field idField = fieldVersions.get(iPojo.getClass());
     if (idField != null) {
       final Object ver = getFieldValue(iPojo, idField.getName());
 
-      final ORecordVersion version = convertVersion(ver);
-      if (version != null)
-        return version;
+      return convertVersion(ver);
     }
     throw new OObjectNotDetachedException("Cannot retrieve the object's VERSION for '" + iPojo + "' because has not been detached");
   }
 
-  private static ORecordVersion convertVersion(final Object ver) {
+  private static int convertVersion(final Object ver) {
     if (ver != null) {
-      if (ver instanceof ORecordVersion) {
-        return (ORecordVersion) ver;
-      } else if (ver instanceof Number) {
-        final ORecordVersion version = OVersionFactory.instance().createVersion();
-        if (version instanceof OSimpleVersion) {
-          // TREATS AS CLUSTER POSITION
-          version.setCounter(((Number) ver).intValue());
-          return version;
-        }
+      if (ver instanceof Number) {
+        // TREATS AS CLUSTER POSITION
+        return ((Number) ver).intValue();
+
       } else if (ver instanceof String) {
-        final ORecordVersion version = OVersionFactory.instance().createVersion();
-        version.getSerializer().fromString((String) ver, version);
-        return version;
+        return Integer.parseInt((String) ver);
       } else
         OLogManager.instance().warn(OObjectSerializerHelper.class,
             "@Version field has been declared as %s while the supported are: Number, String, Object", ver.getClass());
     }
-    return null;
+    return -1;
   }
 
   public static String getObjectVersionFieldName(final Object iPojo) {
@@ -438,16 +422,13 @@ public class OObjectSerializerHelper {
       versionConfigured = true;
       Object ver = getFieldValue(iPojo, vField.getName());
 
-      final ORecordVersion version = convertVersion(ver);
-      if (version != null)
-        iRecord.getRecordVersion().copyFrom(version);
+      final int version = convertVersion(ver);
+      ORecordInternal.setVersion(iRecord, version);
     }
 
     if (db.isMVCC() && !versionConfigured && db.getTransaction() instanceof OTransactionOptimistic)
-      throw new OTransactionException(
-          "Cannot involve an object of class '"
-              + pojoClass
-              + "' in an Optimistic Transaction commit because it does not define @Version or @OVersion and therefore cannot handle MVCC");
+      throw new OTransactionException("Cannot involve an object of class '" + pojoClass
+          + "' in an Optimistic Transaction commit because it does not define @Version or @OVersion and therefore cannot handle MVCC");
 
     // SET OBJECT CLASS
     iRecord.setClassName(schemaClass != null ? schemaClass.getName() : null);
@@ -659,8 +640,8 @@ public class OObjectSerializerHelper {
       }
     } else if (iMultiValue instanceof List<?>) {
       for (int i = 0; i < sourceValues.size(); i++) {
-        ((List<Object>) result).add(typeToStream(((List<?>) sourceValues).get(i), linkedType, iEntityManager, iObj2RecHandler, db,
-            null, iSaveOnlyDirty));
+        ((List<Object>) result).add(
+            typeToStream(((List<?>) sourceValues).get(i), linkedType, iEntityManager, iObj2RecHandler, db, null, iSaveOnlyDirty));
       }
     } else {
       if (iMultiValue instanceof OObjectLazyMap<?>) {
@@ -720,8 +701,11 @@ public class OObjectSerializerHelper {
         else
           m.invoke(iPojo);
       } catch (Exception e) {
-        throw new OConfigurationException("Error on executing user callback '" + m.getName() + "' annotated with '"
-            + iAnnotation.getSimpleName() + "'", e);
+        throw OException
+            .wrapException(
+                new OConfigurationException(
+                    "Error on executing user callback '" + m.getName() + "' annotated with '" + iAnnotation.getSimpleName() + "'"),
+                e);
       }
   }
 
@@ -820,8 +804,7 @@ public class OObjectSerializerHelper {
           if (fieldType.isPrimitive())
             OLogManager.instance().warn(OObjectSerializerHelper.class, "Field '%s' cannot be a literal to manage the Version",
                 f.toString());
-          else if (fieldType != String.class && fieldType != Object.class && !ORecordVersion.class.isAssignableFrom(fieldType)
-              && !Number.class.isAssignableFrom(fieldType))
+          else if (fieldType != String.class && fieldType != Object.class && !Number.class.isAssignableFrom(fieldType))
             OLogManager.instance().warn(OObjectSerializerHelper.class, "Field '%s' cannot be managed as type: %s", f.toString(),
                 fieldType);
         }
@@ -919,7 +902,7 @@ public class OObjectSerializerHelper {
 
   private static void setFieldFromDocument(final ODocument iDocument, final Object iPojo, final Field iField) throws Exception {
     final String idFieldName = OObjectSerializerHelper.setObjectID(iDocument.getIdentity(), iPojo);
-    final String vFieldName = OObjectSerializerHelper.setObjectVersion(iDocument.getRecordVersion(), iPojo);
+    final String vFieldName = OObjectSerializerHelper.setObjectVersion(iDocument.getVersion(), iPojo);
     final String fieldName = iField.getName();
     // Don't assign id and version fields, used by Orient
     if (!fieldName.equals(idFieldName) && !fieldName.equals(vFieldName)) {

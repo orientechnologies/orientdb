@@ -22,6 +22,7 @@ package com.orientechnologies.common.io;
 import com.orientechnologies.common.util.OPatternConst;
 
 import java.io.*;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -128,7 +129,7 @@ public class OIOUtils {
     Calendar calParsed = Calendar.getInstance();
     calParsed.setTime(df.parse(iTime));
     Calendar cal = Calendar.getInstance();
-    cal.set(Calendar.HOUR, calParsed.get(Calendar.HOUR));
+    cal.set(Calendar.HOUR_OF_DAY, calParsed.get(Calendar.HOUR_OF_DAY));
     cal.set(Calendar.MINUTE, calParsed.get(Calendar.MINUTE));
     cal.set(Calendar.SECOND, calParsed.get(Calendar.SECOND));
     cal.set(Calendar.MILLISECOND, 0);
@@ -139,9 +140,17 @@ public class OIOUtils {
     return readStreamAsString(new FileInputStream(iFile));
   }
 
+  public static String readFileAsString(final File iFile, Charset iCharset) throws IOException {
+    return readStreamAsString(new FileInputStream(iFile), iCharset);
+  }
+
   public static String readStreamAsString(final InputStream iStream) throws IOException {
+    return readStreamAsString(iStream, StandardCharsets.UTF_8);
+  }
+
+  public static String readStreamAsString(final InputStream iStream, Charset iCharset) throws IOException {
     final StringBuffer fileData = new StringBuffer(1000);
-    final BufferedReader reader = new BufferedReader(new InputStreamReader(iStream, StandardCharsets.UTF_8));
+    final BufferedReader reader = new BufferedReader(new InputStreamReader(iStream, iCharset));
     try {
       final char[] buf = new char[1024];
       int numRead = 0;
@@ -159,6 +168,26 @@ public class OIOUtils {
       reader.close();
     }
     return fileData.toString();
+
+  }
+
+  public static void writeFile(final File iFile, final String iContent) throws IOException {
+    final FileOutputStream fos = new FileOutputStream(iFile);
+    try {
+      final OutputStreamWriter os = new OutputStreamWriter(fos);
+      try {
+        final BufferedWriter writer = new BufferedWriter(os);
+        try {
+          writer.write(iContent);
+        } finally {
+          writer.close();
+        }
+      } finally {
+        os.close();
+      }
+    } finally {
+      fos.close();
+    }
   }
 
   public static long copyStream(final InputStream in, final OutputStream out, long iMax) throws IOException {

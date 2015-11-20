@@ -49,11 +49,14 @@ public class OGraphServerHandler extends OServerPluginAbstract implements OScrip
         graphPoolMax = Integer.parseInt(param.value);
     }
 
-    enabled = true;
-    OLogManager.instance().info(this, "Installing GREMLIN language v.%s - graph.pool.max=%d", OGremlinHelper.getEngineVersion(),
-        graphPoolMax);
+    if (OGremlinHelper.isGremlinAvailable()) {
+      enabled = true;
+      OLogManager.instance().info(this, "Installed GREMLIN language v.%s - graph.pool.max=%d", OGremlinHelper.getEngineVersion(),
+          graphPoolMax);
 
-    Orient.instance().getScriptManager().registerInjection(this);
+      Orient.instance().getScriptManager().registerInjection(this);
+    } else
+      enabled = false;
   }
 
   @Override

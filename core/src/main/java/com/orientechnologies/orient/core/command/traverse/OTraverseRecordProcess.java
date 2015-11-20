@@ -146,7 +146,7 @@ public class OTraverseRecordProcess extends OTraverseAbstractProcess<OIdentifiab
           if (fieldValue instanceof ORecordLazyMultiValue)
             coll = ((ORecordLazyMultiValue) fieldValue).rawIterator();
           else
-            coll = OMultiValue.getMultiValueIterator(fieldValue);
+            coll = OMultiValue.getMultiValueIterator(fieldValue, false);
 
           subProcess = new OTraverseMultiValueProcess(command, (Iterator<Object>) coll, getPath().appendField(field.toString()));
         } else if (fieldValue instanceof OIdentifiable && ((OIdentifiable) fieldValue).getRecord() instanceof ODocument) {

@@ -26,8 +26,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
-import com.orientechnologies.orient.core.version.ORecordVersion;
-import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
 
 import java.io.DataInputStream;
@@ -236,10 +234,8 @@ public abstract class OChannelBinary extends OChannel {
     return new ORecordId(clusterId, clusterPosition);
   }
 
-  public ORecordVersion readVersion() throws IOException {
-    final ORecordVersion version = OVersionFactory.instance().createVersion();
-    version.setCounter(readInt());
-    return version;
+  public int readVersion() throws IOException {
+    return readInt();
   }
 
   public OChannelBinary writeByte(final byte iContent) throws IOException {
@@ -349,8 +345,8 @@ public abstract class OChannelBinary extends OChannel {
     writeLong(iRID.getClusterPosition());
   }
 
-  public void writeVersion(final ORecordVersion version) throws IOException {
-    writeInt(version.getCounter());
+  public void writeVersion(final int version) throws IOException {
+    writeInt(version);
   }
 
   public void clearInput() throws IOException {
@@ -368,11 +364,12 @@ public abstract class OChannelBinary extends OChannel {
     }
     updateMetricReceivedBytes(i);
 
-    OLogManager.instance().error(
-        this,
-        "Received unread response from " + socket.getRemoteSocketAddress()
-            + " probably corrupted data from the network connection. Cleared dirty data in the buffer (" + i + " bytes): ["
-            + dirtyBuffer + (i > dirtyBuffer.length() ? "..." : "") + "]", OIOException.class);
+    final String message = "Received unread response from " + socket.getRemoteSocketAddress()
+        + " probably corrupted data from the network connection. Cleared dirty data in the buffer (" + i + " bytes): ["
+        + dirtyBuffer + (i > dirtyBuffer.length() ? "..." : "") + "]";
+    OLogManager.instance().error(this, message);
+    throw new OIOException(message);
+
   }
 
   @Override

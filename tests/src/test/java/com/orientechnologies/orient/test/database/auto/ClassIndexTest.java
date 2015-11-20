@@ -100,13 +100,12 @@ public class ClassIndexTest extends DocumentDBBaseTest {
       oClass.createIndex("ClassIndex:TestPropertyOne", OClass.INDEX_TYPE.UNIQUE, "fOne");
       fail();
     } catch (Exception e) {
-      if (e instanceof OResponseProcessingException)
-        e = (Exception) e.getCause();
 
-      if (e.getCause() != null)
-        e = (Exception) e.getCause();
+      Throwable cause = e;
+      while (cause.getCause() != null)
+        cause = cause.getCause();
 
-      assertTrue(e instanceof IllegalArgumentException);
+      assertTrue(cause instanceof IllegalArgumentException);
     }
   }
 
@@ -435,9 +434,6 @@ public class ClassIndexTest extends DocumentDBBaseTest {
     try {
       oClass.createIndex("ClassIndexTestPropertyWrongSpecifierEmbeddedMap", OClass.INDEX_TYPE.UNIQUE, "fEmbeddedMap by ttt");
     } catch (Exception e) {
-      if (e instanceof OResponseProcessingException)
-        e = (Exception) ((OResponseProcessingException) e).getCause();
-
       Assert.assertTrue(e instanceof IllegalArgumentException);
       exceptionIsThrown = true;
       assertEquals(e.getMessage(), "Illegal field name format, should be '<property> [by key|value]' but was 'fEmbeddedMap by ttt'");
@@ -1216,8 +1212,7 @@ public class ClassIndexTest extends DocumentDBBaseTest {
     assertEquals(inClass.getClassIndex("ClassIndexInTestPropertyOne").getName(), result.getName());
 
     final Set<OIndex<?>> indexes = inClass.getIndexes();
-    final OPropertyIndexDefinition propertyIndexDefinition = new OPropertyIndexDefinition("ClassIndexInTest", "fOne",
-        OType.INTEGER);
+    final OPropertyIndexDefinition propertyIndexDefinition = new OPropertyIndexDefinition("ClassIndexInTest", "fOne", OType.INTEGER);
 
     assertEquals(indexes.size(), 1);
 
@@ -1239,8 +1234,6 @@ public class ClassIndexTest extends DocumentDBBaseTest {
     try {
       oClass.createIndex("ClassIndexTestProxyIndex", OClass.INDEX_TYPE.PROXY, "fOne");
       Assert.fail();
-    } catch (OResponseProcessingException e) {
-      Assert.assertTrue(e.getCause() instanceof OIndexException);
     } catch (OIndexException e) {
       Assert.assertTrue(true);
     }
@@ -1251,8 +1244,6 @@ public class ClassIndexTest extends DocumentDBBaseTest {
     try {
       oClass.createIndex("ClassIndexTestFulltextIndex", OClass.INDEX_TYPE.FULLTEXT, "fSix", "fSeven");
       Assert.fail();
-    } catch (OResponseProcessingException e) {
-      Assert.assertTrue(e.getCause() instanceof OIndexException);
     } catch (OIndexException e) {
       Assert.assertTrue(true);
     }
@@ -1292,8 +1283,9 @@ public class ClassIndexTest extends DocumentDBBaseTest {
           "fEmbeddedMapWithoutLinkedType by value");
       fail();
     } catch (OIndexException e) {
-      assertEquals(e.getMessage(), "Linked type was not provided. "
-          + "You should provide linked type for embedded collections that are going to be indexed.");
+      assertTrue(e.getMessage().contains(
+          "Linked type was not provided. "
+              + "You should provide linked type for embedded collections that are going to be indexed."));
     }
   }
 

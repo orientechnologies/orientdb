@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.Orient;
@@ -126,7 +127,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
     try {
       serverInstance.dropUser("replicator");
     } catch (IOException e) {
-      throw new OConfigurationException("Error on deleting 'replicator' user", e);
+      throw OException.wrapException(new OConfigurationException("Error on deleting 'replicator' user"), e);
     }
   }
 
@@ -244,11 +245,13 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
       ODocument oldCfg = cachedDatabaseConfiguration.get(iDatabaseName);
       Integer oldVersion = oldCfg != null ? (Integer) oldCfg.field("version") : null;
       if (oldVersion == null)
-        oldVersion = 1;
+        oldVersion = 0;
 
       Integer currVersion = (Integer) cfg.field("version");
       if (currVersion == null)
-        currVersion = 1;
+        currVersion = 0;
+
+      final boolean modified = currVersion >= oldVersion;
 
       if (oldCfg != null && oldVersion > currVersion) {
         // NO CHANGE, SKIP IT
@@ -295,8 +298,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
             }
         }
       }
+      return modified;
     }
-    return true;
   }
 
   public ODistributedConfiguration getDatabaseConfiguration(final String iDatabaseName) {

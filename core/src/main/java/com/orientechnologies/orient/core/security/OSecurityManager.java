@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.security;
 
 import com.orientechnologies.common.collection.OLRUCache;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -149,10 +150,11 @@ public class OSecurityManager {
     try {
       return md.digest(iInput.getBytes("UTF-8"));
     } catch (UnsupportedEncodingException e) {
-      OLogManager.instance().error(this, "The requested encoding is not supported: cannot execute security checks", e,
-          OConfigurationException.class);
+      final String message = "The requested encoding is not supported: cannot execute security checks";
+      OLogManager.instance().error(this, message, e);
+
+      throw OException.wrapException(new OConfigurationException(message), e);
     }
-    return null;
   }
 
   public String createHashWithSalt(final String iPassword) {
@@ -210,7 +212,7 @@ public class OSecurityManager {
 
       return encoded;
     } catch (Exception e) {
-      throw new OSecurityException("Cannot create a key with '" + PBKDF2_ALGORITHM + "' algorithm", e);
+      throw OException.wrapException(new OSecurityException("Cannot create a key with '" + PBKDF2_ALGORITHM + "' algorithm"), e);
     }
   }
 

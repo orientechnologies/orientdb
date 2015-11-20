@@ -52,6 +52,27 @@
             <fileMode>755</fileMode>
             <filtered>true</filtered>
         </fileSet>
+        <!--
+         | copy etl scripts
+        -->
+        <fileSet>
+            <directory>${basedir}/../etl/script</directory>
+            <outputDirectory>bin</outputDirectory>
+            <includes>
+                <include>*.bat</include>
+            </includes>
+            <fileMode>644</fileMode>
+            <filtered>true</filtered>
+        </fileSet>
+        <fileSet>
+            <directory>${basedir}/../etl/script</directory>
+            <outputDirectory>bin</outputDirectory>
+            <includes>
+                <include>*.sh</include>
+            </includes>
+            <fileMode>755</fileMode>
+            <filtered>true</filtered>
+        </fileSet>
 
         <!--
          | copy tools scripts
@@ -141,7 +162,7 @@
         <fileSet>
             <directory>${basedir}/../server/config/cert</directory>
             <outputDirectory>config/cert</outputDirectory>
-        </fileSet>        
+        </fileSet>
 
         <!--
          | Plugins

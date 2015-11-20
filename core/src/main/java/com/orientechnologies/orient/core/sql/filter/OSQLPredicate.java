@@ -19,13 +19,9 @@
  */
 package com.orientechnologies.orient.core.sql.filter;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import com.orientechnologies.common.parser.OBaseParser;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandPredicate;
@@ -41,6 +37,13 @@ import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorNot;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Parses text in SQL format and build a tree of conditions.
@@ -101,11 +104,13 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
     } catch (OQueryParsingException e) {
       if (e.getText() == null)
         // QUERY EXCEPTION BUT WITHOUT TEXT: NEST IT
-        throw new OQueryParsingException("Error on parsing query", parserText, parserGetCurrentPosition(), e);
+        throw OException.wrapException(
+            new OQueryParsingException("Error on parsing query", parserText, parserGetCurrentPosition()), e);
 
       throw e;
-    } catch (Throwable t) {
-      throw new OQueryParsingException("Error on parsing query", parserText, parserGetCurrentPosition(), t);
+    } catch (Exception t) {
+      throw OException.wrapException(new OQueryParsingException("Error on parsing query", parserText, parserGetCurrentPosition()),
+          t);
     }
     return this;
   }
@@ -255,7 +260,8 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
         // CONFIGURE COULD INSTANTIATE A NEW OBJECT: ACT AS A FACTORY
         return op.configure(params);
       } catch (Exception e) {
-        throw new OQueryParsingException("Syntax error using the operator '" + op.toString() + "'. Syntax is: " + op.getSyntax(), e);
+        throw OException.wrapException(new OQueryParsingException("Syntax error using the operator '" + op.toString()
+            + "'. Syntax is: " + op.getSyntax()), e);
       }
     } else
       parserMoveCurrentPosition(+1);
@@ -272,12 +278,16 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
       if (word.length() == 0)
         break;
 
+
+      word = word.replaceAll("\\\\", "\\\\\\\\"); //see issue #5229
+
       final String uWord = word.toUpperCase();
 
       final int lastPosition = parserIsEnded() ? parserText.length() : parserGetCurrentPosition();
 
       if (word.length() > 0 && word.charAt(0) == OStringSerializerHelper.EMBEDDED_BEGIN) {
         braces++;
+
 
         // SUB-CONDITION
         parserSetCurrentPosition(lastPosition - word.length() + 1);
@@ -304,11 +314,11 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
 
       } else if (uWord.startsWith(OSQLFilterItemFieldAll.NAME + OStringSerializerHelper.EMBEDDED_BEGIN)) {
 
-        result[i] = new OSQLFilterItemFieldAll(this, word);
+        result[i] = new OSQLFilterItemFieldAll(this, word, null);
 
       } else if (uWord.startsWith(OSQLFilterItemFieldAny.NAME + OStringSerializerHelper.EMBEDDED_BEGIN)) {
 
-        result[i] = new OSQLFilterItemFieldAny(this, word);
+        result[i] = new OSQLFilterItemFieldAny(this, word, null);
 
       } else {
 
@@ -341,6 +351,7 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
             break;
         }
 
+        word = word.replaceAll("\\\\\\\\", "\\\\"); //see issue #5229
         result[i] = OSQLHelper.parseValue(this, this, word, context);
       }
     }

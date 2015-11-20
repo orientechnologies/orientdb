@@ -19,17 +19,13 @@
   */
 package com.orientechnologies.orient.core.exception;
 
-import com.orientechnologies.common.exception.OException;
-
-public class OTransactionException extends OException {
+public class OTransactionException extends OCoreException {
 
 	private static final long	serialVersionUID	= 2347493191705052402L;
 
-	public OTransactionException(){}
-
-	public OTransactionException(String message, Throwable cause) {
-		super(message, cause);
-	}
+  public OTransactionException(OTransactionException exception) {
+    super(exception);
+  }
 
 	public OTransactionException(String message) {
 		super(message);

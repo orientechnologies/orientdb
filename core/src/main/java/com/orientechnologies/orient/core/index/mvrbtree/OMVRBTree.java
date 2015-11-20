@@ -30,6 +30,7 @@ import com.orientechnologies.common.collection.ONavigableSet;
 import com.orientechnologies.common.collection.OSimpleImmutableEntry;
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.index.OAlwaysGreaterKey;
 import com.orientechnologies.orient.core.index.OAlwaysLessKey;
@@ -47,7 +48,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  */
 @SuppressWarnings({ "unchecked", "serial" })
 @SuppressFBWarnings(value = { "IT_NO_SUCH_ELEMENT", "SE_BAD_FIELD" })
-public abstract class OMVRBTree<K, V> extends AbstractMap<K, V>implements ONavigableMap<K, V>, Cloneable, java.io.Serializable {
+public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavigableMap<K, V>, Cloneable, java.io.Serializable {
   public static final boolean              RED                 = false;
   public static final boolean              BLACK               = true;
   private static final OAlwaysLessKey      ALWAYS_LESS_KEY     = new OAlwaysLessKey();
@@ -94,8 +95,8 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V>implements ONavig
      * Any partially matched key will be used as search result.
      */
     NONE, /**
-           * The biggest partially matched key will be used as search result.
-           */
+     * The biggest partially matched key will be used as search result.
+     */
     HIGHEST_BOUNDARY,
 
     /**
@@ -105,7 +106,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V>implements ONavig
   }
 
   @SuppressWarnings("rawtypes")
-  static final class KeySet<E> extends AbstractSet<E>implements ONavigableSet<E> {
+  static final class KeySet<E> extends AbstractSet<E> implements ONavigableSet<E> {
     private final ONavigableMap<E, Object> m;
 
     KeySet(ONavigableMap<E, Object> map) {
@@ -224,11 +225,11 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V>implements ONavig
   /**
    * @serial include
    */
-  static abstract class NavigableSubMap<K, V> extends AbstractMap<K, V>implements ONavigableMap<K, V>, java.io.Serializable {
+  static abstract class NavigableSubMap<K, V> extends AbstractMap<K, V> implements ONavigableMap<K, V>, java.io.Serializable {
     /**
      * The backing map.
      */
-    final OMVRBTree<K, V> m;
+    final OMVRBTree<K, V>         m;
 
     /**
      * Endpoints are represented as triples (fromStart, lo, loInclusive) and (toEnd, hi, hiInclusive). If fromStart is true, then
@@ -239,11 +240,11 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V>implements ONavig
     final boolean                 fromStart, toEnd;
     final boolean                 loInclusive, hiInclusive;
     // Views
-    transient ONavigableMap<K, V> descendingMapView = null;
+    transient ONavigableMap<K, V> descendingMapView   = null;
 
     // internal utilities
-    transient EntrySetView entrySetView        = null;
-    transient KeySet<K>    navigableKeySetView = null;
+    transient EntrySetView        entrySetView        = null;
+    transient KeySet<K>           navigableKeySetView = null;
 
     abstract class EntrySetView extends AbstractSet<Map.Entry<K, V>> {
       private transient int size = -1, sizeModCount;
@@ -518,14 +519,14 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V>implements ONavig
     }
 
     final OMVRBTreeEntryPosition<K, V> absLowest() {
-      OMVRBTreeEntry<K, V> e = (fromStart ? m.getFirstEntry()
-          : (loInclusive ? m.getCeilingEntry(lo, PartialSearchMode.LOWEST_BOUNDARY) : m.getHigherEntry(lo)));
+      OMVRBTreeEntry<K, V> e = (fromStart ? m.getFirstEntry() : (loInclusive ? m.getCeilingEntry(lo,
+          PartialSearchMode.LOWEST_BOUNDARY) : m.getHigherEntry(lo)));
       return (e == null || tooHigh(e.getKey())) ? null : new OMVRBTreeEntryPosition<K, V>(e);
     }
 
     final OMVRBTreeEntryPosition<K, V> absHighest() {
-      OMVRBTreeEntry<K, V> e = (toEnd ? m.getLastEntry()
-          : (hiInclusive ? m.getFloorEntry(hi, PartialSearchMode.HIGHEST_BOUNDARY) : m.getLowerEntry(hi)));
+      OMVRBTreeEntry<K, V> e = (toEnd ? m.getLastEntry() : (hiInclusive ? m.getFloorEntry(hi, PartialSearchMode.HIGHEST_BOUNDARY)
+          : m.getLowerEntry(hi)));
       return (e == null || tooLow(e.getKey())) ? null : new OMVRBTreeEntryPosition<K, V>(e);
     }
 
@@ -561,9 +562,8 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V>implements ONavig
      * Returns the absolute high fence for ascending traversal
      */
     final OMVRBTreeEntryPosition<K, V> absHighFence() {
-      return (toEnd ? null
-          : new OMVRBTreeEntryPosition<K, V>(
-              hiInclusive ? m.getHigherEntry(hi) : m.getCeilingEntry(hi, PartialSearchMode.LOWEST_BOUNDARY)));
+      return (toEnd ? null : new OMVRBTreeEntryPosition<K, V>(hiInclusive ? m.getHigherEntry(hi) : m.getCeilingEntry(hi,
+          PartialSearchMode.LOWEST_BOUNDARY)));
     }
 
     // public methods
@@ -572,9 +572,8 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V>implements ONavig
      * Return the absolute low fence for descending traversal
      */
     final OMVRBTreeEntryPosition<K, V> absLowFence() {
-      return (fromStart ? null
-          : new OMVRBTreeEntryPosition<K, V>(
-              loInclusive ? m.getLowerEntry(lo) : m.getFloorEntry(lo, PartialSearchMode.HIGHEST_BOUNDARY)));
+      return (fromStart ? null : new OMVRBTreeEntryPosition<K, V>(loInclusive ? m.getLowerEntry(lo) : m.getFloorEntry(lo,
+          PartialSearchMode.HIGHEST_BOUNDARY)));
     }
 
     abstract OMVRBTreeEntry<K, V> subLowest();
@@ -769,8 +768,8 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V>implements ONavig
 
     public ONavigableMap<K, V> descendingMap() {
       ONavigableMap<K, V> mv = descendingMapView;
-      return (mv != null) ? mv
-          : (descendingMapView = new DescendingSubMap<K, V>(m, fromStart, lo, loInclusive, toEnd, hi, hiInclusive));
+      return (mv != null) ? mv : (descendingMapView = new DescendingSubMap<K, V>(m, fromStart, lo, loInclusive, toEnd, hi,
+          hiInclusive));
     }
 
     @Override
@@ -866,8 +865,8 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V>implements ONavig
 
     public ONavigableMap<K, V> descendingMap() {
       ONavigableMap<K, V> mv = descendingMapView;
-      return (mv != null) ? mv
-          : (descendingMapView = new AscendingSubMap<K, V>(m, fromStart, lo, loInclusive, toEnd, hi, hiInclusive));
+      return (mv != null) ? mv : (descendingMapView = new AscendingSubMap<K, V>(m, fromStart, lo, loInclusive, toEnd, hi,
+          hiInclusive));
     }
 
     @Override
@@ -1730,10 +1729,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V>implements ONavig
     if (pageItemFound)
       // MATCH, RETURN THE NEXT ONE
       return next(p);
-    else
-      if (pageIndex < p.getSize())
-        // NOT MATCHED, POSITION IS ALREADY TO THE NEXT ONE
-        return p;
+    else if (pageIndex < p.getSize())
+      // NOT MATCHED, POSITION IS ALREADY TO THE NEXT ONE
+      return p;
 
     return null;
   }
@@ -1922,7 +1920,8 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V>implements ONavig
     try {
       clone = (OMVRBTree<K, V>) super.clone();
     } catch (CloneNotSupportedException e) {
-      throw new OException(e);
+      throw OException
+          .wrapException(new OSystemException("Can not clone instance of " + getClass().getSimpleName() + " object"), e);
     }
 
     // Put clone into "virgin" state (except for comparator)
@@ -2882,8 +2881,8 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V>implements ONavig
    *          the level at which nodes should be red. Must be equal to computeRedLevel for tree of this size.
    */
   private final OMVRBTreeEntry<K, V> buildFromSorted(final int level, final int lo, final int hi, final int redLevel,
-      final Iterator<?> it, final java.io.ObjectInputStream str, final V defaultVal)
-          throws java.io.IOException, ClassNotFoundException {
+      final Iterator<?> it, final java.io.ObjectInputStream str, final V defaultVal) throws java.io.IOException,
+      ClassNotFoundException {
     /*
      * Strategy: The root is the middlemost element. To get to it, we have to first recursively construct the entire left subtree,
      * so as to grab all of its elements. We can then proceed with right subtree.

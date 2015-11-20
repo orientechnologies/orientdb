@@ -159,6 +159,12 @@ public class OFileUtils {
     }
   }
 
+  public static void deleteFolderIfEmpty(final File dir) {
+    if (dir != null && dir.listFiles() != null && dir.listFiles().length == 0) {
+      deleteRecursively(dir);
+    }
+  }
+
   @SuppressWarnings("resource")
   public static final void copyFile(final File source, final File destination) throws IOException {
     FileChannel sourceChannel = new FileInputStream(source).getChannel();

@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.db.tool;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
@@ -72,7 +73,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
-import com.orientechnologies.orient.core.version.OVersionFactory;
 
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
@@ -101,29 +101,29 @@ import java.util.zip.GZIPInputStream;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ODatabaseImport extends ODatabaseImpExpAbstract {
-  public static final String         EXPORT_IMPORT_MAP_NAME          = "___exportImportRIDMap";
-  public static final int            IMPORT_RECORD_DUMP_LAP_EVERY_MS = 5000;
+  public static final String EXPORT_IMPORT_MAP_NAME          = "___exportImportRIDMap";
+  public static final int    IMPORT_RECORD_DUMP_LAP_EVERY_MS = 5000;
 
-  private Map<OPropertyImpl, String> linkedClasses                   = new HashMap<OPropertyImpl, String>();
-  private Map<OClass, List<String>>  superClasses                    = new HashMap<OClass, List<String>>();
+  private Map<OPropertyImpl, String> linkedClasses   = new HashMap<OPropertyImpl, String>();
+  private Map<OClass, List<String>>  superClasses    = new HashMap<OClass, List<String>>();
   private OJSONReader                jsonReader;
   private ORecord                    record;
-  private boolean                    schemaImported                  = false;
-  private int                        exporterVersion                 = -1;
+  private boolean                    schemaImported  = false;
+  private int                        exporterVersion = -1;
   private ORID                       schemaRecordId;
   private ORID                       indexMgrRecordId;
 
-  private boolean                    deleteRIDMapping                = true;
+  private boolean deleteRIDMapping = true;
 
-  private OIndex<OIdentifiable>      exportImportHashTable;
+  private OIndex<OIdentifiable> exportImportHashTable;
 
-  private boolean                    preserveClusterIDs              = true;
-  private boolean                    migrateLinks                    = true;
-  private boolean                    merge                           = false;
-  private boolean                    rebuildIndexes                  = true;
+  private boolean preserveClusterIDs = true;
+  private boolean migrateLinks       = true;
+  private boolean merge              = false;
+  private boolean rebuildIndexes     = true;
 
-  private Set<String>                indexesToRebuild                = new HashSet<String>();
-  private Map<String, String>        convertedClassNames             = new HashMap<String, String>();
+  private Set<String>         indexesToRebuild    = new HashSet<String>();
+  private Map<String, String> convertedClassNames = new HashMap<String, String>();
 
   private interface ValuesConverter<T> {
     T convert(T value);
@@ -237,7 +237,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       final Set result;
 
       if (value instanceof OMVRBTreeRIDSet) {
-        OMVRBTreeRIDSet ridSet = new OMVRBTreeRIDSet();
+        OMVRBTreeRIDSet ridSet = new OMVRBTreeRIDSet(((OMVRBTreeRIDSet) value).getOwner());
         ridSet.setAutoConvertToRecord(false);
 
         result = ridSet;
@@ -345,7 +345,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   private static final class LinkConverter implements ValuesConverter<OIdentifiable> {
     public static final LinkConverter INSTANCE = new LinkConverter();
 
-    private OIndex<OIdentifiable>     exportImportHashTable;
+    private OIndex<OIdentifiable> exportImportHashTable;
 
     @Override
     public OIdentifiable convert(OIdentifiable value) {
@@ -369,6 +369,13 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       throws IOException {
     super(database, iFileName, iListener);
 
+    if (iListener == null)
+      listener = new OCommandOutputListener() {
+        @Override
+        public void onMessage(String iText) {
+        }
+      };
+
     InputStream inStream;
     final BufferedInputStream bf = new BufferedInputStream(new FileInputStream(fileName));
     bf.mark(1024);
@@ -386,8 +393,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     database.declareIntent(new OIntentMassiveInsert());
   }
 
-  public ODatabaseImport(final ODatabaseDocumentInternal database, final InputStream iStream, final OCommandOutputListener iListener)
-      throws IOException {
+  public ODatabaseImport(final ODatabaseDocumentInternal database, final InputStream iStream,
+      final OCommandOutputListener iListener) throws IOException {
     super(database, "streaming", iListener);
     jsonReader = new OJSONReader(new InputStreamReader(iStream));
     database.declareIntent(new OIntentMassiveInsert());
@@ -565,8 +572,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   }
 
   protected void removeDefaultClusters() {
-    listener.onMessage("\nWARN: Exported database does not support manual index separation."
-        + " Manual index cluster will be dropped.");
+    listener.onMessage(
+        "\nWARN: Exported database does not support manual index separation." + " Manual index cluster will be dropped.");
 
     // In v4 new cluster for manual indexes has been implemented. To keep database consistent we should shift back
     // all clusters and recreate cluster for manual indexes in the end.
@@ -819,7 +826,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           if (cls.getDefaultClusterId() != classDefClusterId)
             cls.setDefaultClusterId(classDefClusterId);
         } else
-          cls = (OClassImpl) database.getMetadata().getSchema().createClass(className, classDefClusterId);
+          cls = (OClassImpl) database.getMetadata().getSchema().createClass(className, new int[] { classDefClusterId });
 
         if (classClusterIds != null) {
           // REMOVE BRACES
@@ -849,7 +856,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
             cls.setStrictMode(Boolean.parseBoolean(strictMode));
           } else if (value.equals("\"short-name\"")) {
             final String shortName = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
-            cls.setShortName(shortName);
+            if (!cls.getName().equalsIgnoreCase(shortName))
+              cls.setShortName(shortName);
           } else if (value.equals("\"super-class\"")) {
             // @compatibility <2.1 SINGLE CLASS ONLY
             final String classSuper = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
@@ -1092,8 +1100,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         type = "PHYSICAL";
 
       if (jsonReader.lastChar() == ',') {
-        rid = new ORecordId(jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"rid\"")
-            .readString(OJSONReader.NEXT_IN_OBJECT));
+        rid = new ORecordId(
+            jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"rid\"").readString(OJSONReader.NEXT_IN_OBJECT));
       } else
         rid = null;
 
@@ -1118,20 +1126,19 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
             database.addCluster("temp_" + clusterId, null);
             clusterId = database.addCluster(name);
           } else
-            throw new OConfigurationException("Imported cluster '" + name + "' has id=" + clusterId
-                + " different from the original: " + id + ". To continue the import drop the cluster '"
-                + database.getClusterNameById(clusterId - 1) + "' that has " + database.countClusterElements(clusterId - 1)
-                + " records");
+            throw new OConfigurationException(
+                "Imported cluster '" + name + "' has id=" + clusterId + " different from the original: " + id
+                    + ". To continue the import drop the cluster '" + database.getClusterNameById(clusterId - 1) + "' that has "
+                    + database.countClusterElements(clusterId - 1) + " records");
         } else {
           database.dropCluster(clusterId, false);
           database.addCluster(name, id, null);
         }
       }
 
-      if (name != null
-          && !(name.equalsIgnoreCase(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME)
-              || name.equalsIgnoreCase(OMetadataDefault.CLUSTER_INTERNAL_NAME) || name
-                .equalsIgnoreCase(OMetadataDefault.CLUSTER_INDEX_NAME))) {
+      if (name != null && !(name.equalsIgnoreCase(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME)
+          || name.equalsIgnoreCase(OMetadataDefault.CLUSTER_INTERNAL_NAME)
+          || name.equalsIgnoreCase(OMetadataDefault.CLUSTER_INDEX_NAME))) {
         if (!merge)
           database.command(new OCommandSQL("truncate cluster " + name)).execute();
 
@@ -1211,11 +1218,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     OIndexFactory factory = OIndexes.getFactory(OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString(),
         OHashIndexFactory.HASH_INDEX_ALGORITHM);
 
-    exportImportHashTable = (OIndex<OIdentifiable>) database
-        .getMetadata()
-        .getIndexManager()
-        .createIndex(EXPORT_IMPORT_MAP_NAME, OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString(),
-            new OSimpleKeyIndexDefinition(factory.getLastVersion(), OType.LINK), null, null, null);
+    exportImportHashTable = (OIndex<OIdentifiable>) database.getMetadata().getIndexManager().createIndex(EXPORT_IMPORT_MAP_NAME,
+        OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString(), new OSimpleKeyIndexDefinition(factory.getLastVersion(), OType.LINK),
+        null, null, null);
 
     jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
 
@@ -1300,7 +1305,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
             // OVERWRITE CLASS NAME WITH NEW NAME
             record = ORecordSerializerJSON.INSTANCE.fromString(value, record, null);
           }
-        }
+        } else
+          throw OException.wrapException(new ODatabaseImportException("Error on importing record"), e);
       }
 
       if (schemaImported && record.getIdentity().equals(schemaRecordId)) {
@@ -1350,7 +1356,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       final int clusterId = rid.getClusterId();
 
       if ((clusterId != manualIndexCluster && clusterId != internalCluster && clusterId != indexCluster)) {
-        record.getRecordVersion().copyFrom(OVersionFactory.instance().createVersion());
+        ORecordInternal.setVersion(record, 0);
         record.setDirty();
         ORecordInternal.setIdentity(record, new ORecordId());
 
@@ -1366,10 +1372,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
     } catch (Exception t) {
       if (record != null)
-        OLogManager.instance().error(
-            this,
-            "Error importing record " + record.getIdentity() + ". Source line " + jsonReader.getLineNumber() + ", column "
-                + jsonReader.getColumnNumber());
+        OLogManager.instance().error(this, "Error importing record " + record.getIdentity() + ". Source line "
+            + jsonReader.getLineNumber() + ", column " + jsonReader.getColumnNumber());
       else
         OLogManager.instance().error(this,
             "Error importing record. Source line " + jsonReader.getLineNumber() + ", column " + jsonReader.getColumnNumber());

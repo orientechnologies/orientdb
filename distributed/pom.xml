@@ -29,6 +29,7 @@
         <groupId>com.orientechnologies</groupId>
         <artifactId>orientdb-parent</artifactId>
         <version>2.2.0-SNAPSHOT</version>
+        <relativePath>../</relativePath>
     </parent>
 
     <artifactId>orientdb-distributed</artifactId>
@@ -42,7 +43,7 @@
         <osgi.import>com.hazelcast.*;resolution:=optional,*</osgi.import>
         <osgi.export>com.orientechnologies.orient.server.hazelcast.*</osgi.export>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <argLine>-ea -Xmx2048m -Dindex.flushAfterCreate=false
+        <argLine>-ea -Xmx2048m -Dstorage.diskCache.bufferSize=4096 -Dindex.flushAfterCreate=false
             -Dstorage.makeFullCheckpointAfterCreate=false
             -Dstorage.makeFullCheckpointAfterOpen=false
             -Dstorage.makeFullCheckpointAfterClusterCreate=false
@@ -91,6 +92,13 @@
     </profiles>
 
     <dependencies>
+
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-test-commons</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-server</artifactId>
@@ -111,15 +119,14 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.10</version>
-            <scope>test</scope>
+            <groupId>com.hazelcast</groupId>
+            <artifactId>hazelcast</artifactId>
+            <version>3.5.3</version>
         </dependency>
         <dependency>
             <groupId>com.hazelcast</groupId>
-            <artifactId>hazelcast-all</artifactId>
-            <version>3.5.1</version>
+            <artifactId>hazelcast-cloud</artifactId>
+            <version>3.5.3</version>
         </dependency>
     </dependencies>
 

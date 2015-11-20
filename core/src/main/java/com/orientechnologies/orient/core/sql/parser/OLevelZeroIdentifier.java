@@ -39,6 +39,12 @@ public class OLevelZeroIdentifier extends SimpleNode {
     if (functionCall != null) {
       return functionCall.execute(iCurrentRecord, ctx);
     }
+    if (collection != null) {
+      return collection.execute(iCurrentRecord, ctx);
+    }
+    if (Boolean.TRUE.equals(self)) {
+      return iCurrentRecord;
+    }
     throw new UnsupportedOperationException();
   }
 

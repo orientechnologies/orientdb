@@ -161,6 +161,10 @@ public class OSQLNonBlockingQuery<T extends Object> extends OSQLQuery<T> impleme
       return null;
     }
 
+    public boolean isIdempotent() {
+      return false;
+    }
+
     @Override
     public Future set(int index, Future element) {
       return null;
@@ -274,6 +278,11 @@ public class OSQLNonBlockingQuery<T extends Object> extends OSQLQuery<T> impleme
     } else {
       throw new RuntimeException("cannot run non blocking query with non tx db");// TODO
     }
+  }
+
+  @Override
+  public boolean isIdempotent() {
+    return false;
   }
 
   @Override

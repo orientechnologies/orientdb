@@ -40,7 +40,7 @@ public class ODoubleSerializer implements OBinarySerializer<Double> {
    */
   public static final int               DOUBLE_SIZE = 8;
   private static final OBinaryConverter CONVERTER   = OBinaryConverterFactory.getConverter();
-  public static ODoubleSerializer       INSTANCE    = new ODoubleSerializer();
+  public static final ODoubleSerializer       INSTANCE    = new ODoubleSerializer();
 
   public int getObjectSize(Double object, Object... hints) {
     return DOUBLE_SIZE;

@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
@@ -74,7 +75,8 @@ public class OMVRBTreeRIDSet implements Set<OIdentifiable>, OTrackedMultiValue<O
   }
 
   public OMVRBTreeRIDSet(final ORecord iOwner, final Collection<OIdentifiable> iInitValues) {
-    this((OMVRBTreeRID) new OMVRBTreeRID(iInitValues).setOwner(iOwner));
+    this((OMVRBTreeRID) new OMVRBTreeRID().setOwner(iOwner));
+    tree.putAll(iInitValues);
   }
 
   public OMVRBTreeRIDSet(final OMVRBTreeRID iProvider) {
@@ -122,13 +124,13 @@ public class OMVRBTreeRIDSet implements Set<OIdentifiable>, OTrackedMultiValue<O
   }
 
   public boolean add(final OIdentifiable e) {
+
     return tree.put(e, null) == null;
   }
 
   public boolean remove(final Object o) {
     if (o == null)
       return clearDeletedRecords();
-
     return tree.remove(o) != null;
   }
 
@@ -265,4 +267,10 @@ public class OMVRBTreeRIDSet implements Set<OIdentifiable>, OTrackedMultiValue<O
   public void setAutoConvertToRecord(final boolean convertToRecord) {
     tree.setAutoConvertToRecord(convertToRecord);
   }
+
+  public ORecord getOwner() {
+    return tree.getOwner();
+  }
+
+
 }

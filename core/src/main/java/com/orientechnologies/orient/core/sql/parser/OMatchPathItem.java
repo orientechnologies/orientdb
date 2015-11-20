@@ -103,7 +103,18 @@ public class OMatchPathItem extends SimpleNode {
 
   protected Iterable<OIdentifiable> traversePatternEdge(OMatchStatement.MatchContext matchContext, OIdentifiable startingPoint,
       OCommandContext iCommandContext) {
-    Object qR = this.method.execute(startingPoint, iCommandContext);
+
+    Iterable possibleResults = null;
+    if(filter!=null) {
+      OIdentifiable matchedNode = matchContext.matched.get(filter.getAlias());
+      if (matchedNode != null) {
+        possibleResults = Collections.singleton(matchedNode);
+      } else {
+        possibleResults = matchContext.candidates == null ? null : matchContext.candidates.get(filter.getAlias());
+      }
+    }
+
+    Object qR = this.method.execute(startingPoint, possibleResults, iCommandContext);
     return (qR instanceof Iterable) ? (Iterable) qR : Collections.singleton(qR);
   }
 }

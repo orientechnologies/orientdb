@@ -19,30 +19,28 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.version.ORecordVersion;
-import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 
 public class OReadRecordIfNotLatestTask extends OAbstractRemoteTask {
   private static final long serialVersionUID = 1L;
 
-  protected ORecordId       rid;
-  protected ORecordVersion  recordVersion;
+  protected ORecordId rid;
+  protected int       recordVersion;
 
   public OReadRecordIfNotLatestTask() {
   }
 
-  public OReadRecordIfNotLatestTask(final ORecordId iRid, ORecordVersion recordVersion) {
+  public OReadRecordIfNotLatestTask(final ORecordId iRid, final int recordVersion) {
     rid = iRid;
     this.recordVersion = recordVersion;
   }
@@ -61,16 +59,13 @@ public class OReadRecordIfNotLatestTask extends OAbstractRemoteTask {
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
     out.writeUTF(rid.toString());
-    recordVersion.getSerializer().writeTo(out, recordVersion);
+    out.writeInt(recordVersion);
   }
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
     rid = new ORecordId(in.readUTF());
-
-    recordVersion = OVersionFactory.instance().createVersion();
-    recordVersion.getSerializer().readFrom(in, recordVersion);
-
+    recordVersion = in.readInt();
   }
 
   public OCommandDistributedReplicateRequest.QUORUM_TYPE getQuorumType() {

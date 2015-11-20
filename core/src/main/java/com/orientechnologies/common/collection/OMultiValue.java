@@ -23,6 +23,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OResettable;
 import com.orientechnologies.common.util.OSizeable;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -242,7 +243,7 @@ public class OMultiValue {
   }
 
   /**
-   * Returns an <code>Iterable<Object></code> object to browse the multi-value instance (array, collection or map)
+   * Returns an <code>Iterable<Object></code> object to browse the multi-value instance (array, collection or map).
    * 
    * @param iObject
    *          Multi-value object (array, collection or map)
@@ -270,8 +271,80 @@ public class OMultiValue {
   }
 
   /**
+   * Returns an <code>Iterable<Object></code> object to browse the multi-value instance (array, collection or map).
+   * 
+   * @param iObject
+   *          Multi-value object (array, collection or map)
+   * @param iForceConvertRecord
+   *          allow to force settings to convert RIDs to records while browsing.
+   */
+  public static Iterable<Object> getMultiValueIterable(final Object iObject, final boolean iForceConvertRecord) {
+    if (iObject == null)
+      return null;
+
+    if (!iForceConvertRecord && iObject instanceof ORecordLazyMultiValue
+        && ((ORecordLazyMultiValue) iObject).isAutoConvertToRecord() != iForceConvertRecord) {
+      // RETURN THE LOW LEVEL ITERATOR
+      return new Iterable() {
+        @Override
+        public Iterator<?> iterator() {
+          return ((ORecordLazyMultiValue) iObject).rawIterator();
+        }
+      };
+    }
+
+    if (iObject instanceof Iterable<?> && !(iObject instanceof ODocument))
+      return (Iterable<Object>) iObject;
+    else if (iObject instanceof Collection<?>)
+      return ((Collection<Object>) iObject);
+    else if (iObject instanceof Map<?, ?>)
+      return ((Map<?, Object>) iObject).values();
+    else if (iObject.getClass().isArray())
+      return new OIterableObjectArray<Object>(iObject);
+    else if (iObject instanceof Iterator<?>) {
+      final List<Object> temp = new ArrayList<Object>();
+      for (Iterator<Object> it = (Iterator<Object>) iObject; it.hasNext();)
+        temp.add(it.next());
+      return temp;
+    }
+
+    return new OIterableObject<Object>(iObject);
+  }
+
+  /**
    * Returns an <code>Iterator<Object></code> object to browse the multi-value instance (array, collection or map)
    * 
+   * @param iObject
+   *          Multi-value object (array, collection or map)
+   * @param iForceConvertRecord
+   *          allow to force settings to convert RIDs to records while browsing.
+   */
+
+  public static Iterator<Object> getMultiValueIterator(final Object iObject, final boolean iForceConvertRecord) {
+    if (iObject == null)
+      return null;
+
+    if (!iForceConvertRecord && iObject instanceof ORecordLazyMultiValue
+        && ((ORecordLazyMultiValue) iObject).isAutoConvertToRecord() != iForceConvertRecord)
+      // RETURN THE LOW LEVEL ITERATOR
+      return (Iterator) ((ORecordLazyMultiValue) iObject).rawIterator();
+
+    if (iObject instanceof Iterator<?>)
+      return (Iterator<Object>) iObject;
+
+    if (iObject instanceof Iterable<?>)
+      return ((Iterable<Object>) iObject).iterator();
+    if (iObject instanceof Map<?, ?>)
+      return ((Map<?, Object>) iObject).values().iterator();
+    if (iObject.getClass().isArray())
+      return new OIterableObjectArray<Object>(iObject).iterator();
+
+    return new OIterableObject<Object>(iObject);
+  }
+
+  /**
+   * Returns an <code>Iterator<Object></code> object to browse the multi-value instance (array, collection or map)
+   *
    * @param iObject
    *          Multi-value object (array, collection or map)
    */
@@ -386,7 +459,7 @@ public class OMultiValue {
 
         if (!(iToAdd instanceof Map) && isMultiValue(iToAdd)) {
           // COLLECTION - COLLECTION
-          for (Object o : getMultiValueIterable(iToAdd)) {
+          for (Object o : getMultiValueIterable(iToAdd, false)) {
             if (!(o instanceof Map) && isMultiValue(o))
               add(coll, o);
             else
@@ -660,12 +733,12 @@ public class OMultiValue {
       // CREATE STATIC ARRAY AND FILL IT
       result = (T[]) Array.newInstance(iClass, getSize(iValue));
       int i = 0;
-      for (Iterator<T> it = (Iterator<T>) getMultiValueIterator(iValue); it.hasNext(); ++i)
+      for (Iterator<T> it = (Iterator<T>) getMultiValueIterator(iValue, false); it.hasNext(); ++i)
         result[i] = (T) convert(it.next(), iCallback);
     } else if (isIterable(iValue)) {
       // SIZE UNKNOWN: USE A LIST AS TEMPORARY OBJECT
       final List<T> temp = new ArrayList<T>();
-      for (Iterator<T> it = (Iterator<T>) getMultiValueIterator(iValue); it.hasNext();)
+      for (Iterator<T> it = (Iterator<T>) getMultiValueIterator(iValue, false); it.hasNext();)
         temp.add((T) convert(it.next(), iCallback));
 
       if (iClass.equals(Object.class))

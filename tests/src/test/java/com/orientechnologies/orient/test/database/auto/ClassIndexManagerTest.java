@@ -119,9 +119,6 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     try {
       docTwo.field("prop1", "a");
       docTwo.save();
-    } catch (OResponseProcessingException e) {
-      Assert.assertTrue(e.getCause() instanceof ORecordDuplicatedException);
-      exceptionThrown = true;
     } catch (ORecordDuplicatedException e) {
       exceptionThrown = true;
     }
@@ -163,9 +160,6 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     try {
       docTwo.field("prop0", "a");
       docTwo.save();
-    } catch (OResponseProcessingException e) {
-      Assert.assertTrue(e.getCause() instanceof ORecordDuplicatedException);
-      exceptionThrown = true;
     } catch (ORecordDuplicatedException e) {
       exceptionThrown = true;
     }
@@ -186,9 +180,6 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     try {
       docTwo.field("prop1", "a");
       docTwo.save();
-    } catch (OResponseProcessingException e) {
-      Assert.assertTrue(e.getCause() instanceof ORecordDuplicatedException);
-      exceptionThrown = true;
     } catch (ORecordDuplicatedException e) {
       exceptionThrown = true;
     }

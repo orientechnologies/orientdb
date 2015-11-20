@@ -20,7 +20,7 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -42,11 +42,19 @@ import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODiskWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 
-import java.io.*;
-import java.lang.String;
-import java.util.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -61,16 +69,15 @@ import java.util.zip.ZipOutputStream;
  */
 public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements OFreezableStorage {
 
-  public static final int                  WAL_BACKUP_ITERATION_STEP = 2;
-  private static String[]                  ALL_FILE_EXTENSIONS       = { ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx", ".ocs",
-      ".oef", ".oem", ".oet", ODiskWriteAheadLog.WAL_SEGMENT_EXTENSION, ODiskWriteAheadLog.MASTER_RECORD_EXTENSION,
+  private static String[]                  ALL_FILE_EXTENSIONS = { ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx", ".ocs", ".oef",
+      ".oem", ".oet", ODiskWriteAheadLog.WAL_SEGMENT_EXTENSION, ODiskWriteAheadLog.MASTER_RECORD_EXTENSION,
       OHashTableIndexEngine.BUCKET_FILE_EXTENSION, OHashTableIndexEngine.METADATA_FILE_EXTENSION,
       OHashTableIndexEngine.TREE_FILE_EXTENSION, OHashTableIndexEngine.NULL_BUCKET_FILE_EXTENSION,
       OClusterPositionMap.DEF_EXTENSION, OSBTreeIndexEngine.DATA_FILE_EXTENSION, OWOWCache.NAME_ID_MAP_EXTENSION,
       OIndexRIDContainer.INDEX_FILE_EXTENSION, OSBTreeCollectionManagerShared.DEFAULT_EXTENSION,
-      OSBTreeIndexEngine.NULL_BUCKET_FILE_EXTENSION                 };
+      OSBTreeIndexEngine.NULL_BUCKET_FILE_EXTENSION           };
 
-  private static final int                 ONE_KB                    = 1024;
+  private static final int                 ONE_KB              = 1024;
 
   private final int                        DELETE_MAX_RETRIES;
   private final int                        DELETE_WAIT_TIME;
@@ -189,82 +196,52 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
       close(true, false);
 
     OZIPCompressionUtil.uncompressDirectory(in, getStoragePath(), iListener);
+
+    open(null, null, null);
   }
 
   @Override
-  protected void finalizeIncrementalBackup(ZipOutputStream zipOutputStream, long startSegment) throws IOException {
-    File[] nonActiveSegments = writeAheadLog.nonActiveSegments(startSegment);
+  protected OLogSequenceNumber copyWALToIncrementalBackup(ZipOutputStream zipOutputStream, long startSegment) throws IOException {
 
-    int n = 0;
-    int i = 0;
-    boolean newSegment = false;
+    File[] nonActiveSegments;
 
-    long freezeId = -1;
-
+    OLogSequenceNumber lastLSN;
+    long freezeId = getAtomicOperationsManager().freezeAtomicOperations(null, null);
     try {
-      while (true) {
-        for (; i < WAL_BACKUP_ITERATION_STEP * (n + 1) && i < nonActiveSegments.length; i++) {
-          final File nonActiveSegment = nonActiveSegments[i];
-          final FileInputStream fileInputStream = new FileInputStream(nonActiveSegment);
-          try {
-            final BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
-            try {
-              final ZipEntry entry = new ZipEntry(nonActiveSegment.getName());
-              zipOutputStream.putNextEntry(entry);
-              try {
-                final byte[] buffer = new byte[4096];
-
-                int br = 0;
-
-                while ((br = bufferedInputStream.read(buffer)) >= 0) {
-                  zipOutputStream.write(buffer, 0, br);
-                }
-              } finally {
-                zipOutputStream.closeEntry();
-              }
-            } finally {
-              bufferedInputStream.close();
-            }
-          } finally {
-            fileInputStream.close();
-          }
-        }
-
-        final File[] updatedNonActiveSegments = writeAheadLog.nonActiveSegments(startSegment);
-
-        if (freezeId < 0 && updatedNonActiveSegments.length > nonActiveSegments.length + WAL_BACKUP_ITERATION_STEP) {
-          OLogManager.instance().warn(this,
-              "Incremental backup can not keep up with grow of write ahead log , write operations will be blocked");
-
-          freezeId = getAtomicOperationsManager().freezeAtomicOperations(OModificationOperationProhibitedException.class,
-              "Incremental backup can not keep up with grow of write ahead log , write operations are blocked");
-        }
-
-        nonActiveSegments = updatedNonActiveSegments;
-
-        if (i >= nonActiveSegments.length) {
-          if (newSegment)
-            break;
-
-          if (freezeId < 0) {
-            freezeId = getAtomicOperationsManager().freezeAtomicOperations(OModificationOperationProhibitedException.class,
-                "Incremental backup in progress");
-          }
-
-          writeAheadLog.newSegment();
-          newSegment = true;
-
-          nonActiveSegments = writeAheadLog.nonActiveSegments(startSegment);
-        }
-
-        n++;
-      }
-
+      lastLSN = writeAheadLog.end();
+      writeAheadLog.newSegment();
+      nonActiveSegments = writeAheadLog.nonActiveSegments(startSegment);
     } finally {
-      if (freezeId >= 0)
-        getAtomicOperationsManager().releaseAtomicOperations(freezeId);
+      getAtomicOperationsManager().releaseAtomicOperations(freezeId);
     }
 
+    for (final File nonActiveSegment : nonActiveSegments) {
+      final FileInputStream fileInputStream = new FileInputStream(nonActiveSegment);
+      try {
+        final BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
+        try {
+          final ZipEntry entry = new ZipEntry(nonActiveSegment.getName());
+          zipOutputStream.putNextEntry(entry);
+          try {
+            final byte[] buffer = new byte[4096];
+
+            int br = 0;
+
+            while ((br = bufferedInputStream.read(buffer)) >= 0) {
+              zipOutputStream.write(buffer, 0, br);
+            }
+          } finally {
+            zipOutputStream.closeEntry();
+          }
+        } finally {
+          bufferedInputStream.close();
+        }
+      } finally {
+        fileInputStream.close();
+      }
+    }
+
+    return lastLSN;
   }
 
   @Override
@@ -275,8 +252,13 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
   @Override
   protected File createWalTempDirectory() {
     final File walDirectory = new File(getStoragePath(), "walIncrementalBackupRestoreDirectory");
+
+    if (walDirectory.exists()) {
+      OFileUtils.deleteRecursively(walDirectory);
+    }
+
     if (!walDirectory.mkdirs())
-      throw new OStorageException("Can not create temprary directory to store files created during incremental backup");
+      throw new OStorageException("Can not create temporary directory to store files created during incremental backup");
 
     return walDirectory;
   }
@@ -373,7 +355,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
       }
     } catch (InterruptedException e) {
       Thread.interrupted();
-      throw new OStorageException("Error on closing of storage '" + name, e);
+      throw OException.wrapException(new OStorageException("Error on closing of storage '" + name), e);
     }
   }
 

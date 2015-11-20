@@ -20,11 +20,11 @@
 
 package com.orientechnologies.common.serialization.types;
 
-import java.util.Calendar;
-import java.util.Date;
-
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
+
+import java.util.Calendar;
+import java.util.Date;
 
 /**
  * Serializer for {@link Date} type, it serializes it without time part.
@@ -35,7 +35,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALCh
 public class ODateSerializer implements OBinarySerializer<Date> {
 
   public static final byte      ID       = 4;
-  public static ODateSerializer INSTANCE = new ODateSerializer();
+  public static final ODateSerializer INSTANCE = new ODateSerializer();
 
   public int getObjectSize(Date object, Object... hints) {
     return OLongSerializer.LONG_SIZE;

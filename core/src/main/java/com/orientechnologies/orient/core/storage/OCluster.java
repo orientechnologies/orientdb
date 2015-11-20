@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.storage;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.version.ORecordVersion;
 
 import java.io.IOException;
 
@@ -50,11 +49,7 @@ public interface OCluster {
 
   String encryption();
 
-  void convertToTombstone(long iPosition) throws IOException;
-
   long getTombstonesCount();
-
-  boolean hasTombstonesSupport();
 
   /**
    * Truncates the cluster content. All the entries will be removed.
@@ -63,15 +58,15 @@ public interface OCluster {
    */
   void truncate() throws IOException;
 
-  OPhysicalPosition createRecord(byte[] content, ORecordVersion recordVersion, byte recordType) throws IOException;
+  OPhysicalPosition createRecord(byte[] content, int recordVersion, byte recordType) throws IOException;
 
   boolean deleteRecord(long clusterPosition) throws IOException;
 
-  void updateRecord(long clusterPosition, byte[] content, ORecordVersion recordVersion, byte recordType) throws IOException;
+  void updateRecord(long clusterPosition, byte[] content, int recordVersion, byte recordType) throws IOException;
 
   ORawBuffer readRecord(long clusterPosition) throws IOException;
 
-  ORawBuffer readRecordIfVersionIsNotLatest(long clusterPosition, ORecordVersion recordVersion) throws IOException,
+  ORawBuffer readRecordIfVersionIsNotLatest(long clusterPosition, int recordVersion) throws IOException,
       ORecordNotFoundException;
 
   boolean exists();
@@ -103,8 +98,6 @@ public interface OCluster {
    * @return
    */
   long getRecordsSize() throws IOException;
-
-  boolean useWal();
 
   float recordGrowFactor();
 

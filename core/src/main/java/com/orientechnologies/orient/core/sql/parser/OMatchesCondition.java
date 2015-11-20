@@ -12,6 +12,7 @@ import java.util.Map;
 public class OMatchesCondition extends OBooleanExpression {
   protected OExpression expression;
   protected String      right;
+  protected OInputParameter rightParam;
 
   public OMatchesCondition(int id) {
     super(id);
@@ -34,7 +35,11 @@ public class OMatchesCondition extends OBooleanExpression {
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     expression.toString(params, builder);
     builder.append(" MATCHES ");
-    builder.append(right);
+    if(right!=null) {
+      builder.append(right);
+    }else{
+      rightParam.toString(params, builder);
+    }
   }
 
   @Override

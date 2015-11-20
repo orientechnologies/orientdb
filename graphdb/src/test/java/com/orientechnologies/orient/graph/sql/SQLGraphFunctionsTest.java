@@ -15,15 +15,6 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
-import java.util.List;
-
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
-
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -33,6 +24,14 @@ import com.orientechnologies.orient.graph.gremlin.OGremlinHelper;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+
+import java.util.List;
 
 @RunWith(JUnit4.class)
 public class SQLGraphFunctionsTest {
@@ -95,8 +94,8 @@ public class SQLGraphFunctionsTest {
     graph.setAutoStartTx(false);
     graph.commit();
 
-    graph.command(new OCommandSQL("create class tc1 extends V")).execute();
-    graph.command(new OCommandSQL("create class edge1 extends E")).execute();
+    graph.command(new OCommandSQL("create class tc1 extends V clusters 1")).execute();
+    graph.command(new OCommandSQL("create class edge1 extends E clusters 1")).execute();
 
     graph.setAutoStartTx(true);
 

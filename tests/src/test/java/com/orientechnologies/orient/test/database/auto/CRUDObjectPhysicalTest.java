@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -35,10 +34,8 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
-import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 import com.orientechnologies.orient.object.db.OObjectDatabasePool;
 import com.orientechnologies.orient.object.iterator.OObjectIteratorClass;
-import com.orientechnologies.orient.object.iterator.OObjectIteratorCluster;
 import com.orientechnologies.orient.test.domain.base.*;
 import com.orientechnologies.orient.test.domain.business.Account;
 import com.orientechnologies.orient.test.domain.business.Address;
@@ -90,7 +87,7 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.whiz");
     database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.base");
 
-    startRecordNumber = database.countClusterElements("Account");
+    startRecordNumber = database.countClass("Account");
 
     Account account;
 
@@ -110,7 +107,7 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "testReleasedPoolDatabase")
   public void testCreate() {
-    Assert.assertEquals(database.countClusterElements("Account") - startRecordNumber, TOT_RECORDS);
+    Assert.assertEquals(database.countClass("Account") - startRecordNumber, TOT_RECORDS);
   }
 
   @Test(dependsOnMethods = "testCreate")
@@ -1800,8 +1797,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     boolean throwedEx = false;
     try {
       p.getList().add(new Object());
-    } catch (Throwable ose) {
-      if (ose instanceof ODatabaseException && ose.getCause() instanceof OSerializationException)
+    } catch (Exception ose) {
+      if (ose instanceof OSerializationException || ose.getCause() instanceof OSerializationException)
         throwedEx = true;
     }
     Assert.assertTrue(throwedEx);
@@ -2091,7 +2088,7 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
   public void update() {
     int i = 0;
     Account a;
-    for (Object o : database.browseCluster("Account").setFetchPlan("*:1")) {
+    for (Object o : database.browseClass("Account").setFetchPlan("*:1")) {
       a = (Account) o;
 
       if (i % 2 == 0)
@@ -2109,7 +2106,7 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
   public void testUpdate() {
     int i = 0;
     Account a;
-    for (OObjectIteratorCluster<Account> iterator = database.browseCluster("Account"); iterator.hasNext();) {
+    for (OObjectIteratorClass<Account> iterator = database.browseClass("Account"); iterator.hasNext();) {
       iterator.setFetchPlan("*:1");
       a = iterator.next();
 
@@ -2205,15 +2202,15 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
   public void deleteFirst() {
     database.getMetadata().getSchema().reload();
 
-    startRecordNumber = database.countClusterElements("Account");
+    startRecordNumber = database.countClass("Account");
 
-    // DELETE ALL THE RECORD IN THE CLUSTER
-    for (Object obj : database.browseCluster("Account")) {
+    // DELETE ALL THE RECORD IN THE CLASS
+    for (Object obj : database.browseClass("Account")) {
       database.delete(obj);
       break;
     }
 
-    Assert.assertEquals(database.countClusterElements("Account"), startRecordNumber - 1);
+    Assert.assertEquals(database.countClass("Account"), startRecordNumber - 1);
   }
 
   @Test
@@ -2295,8 +2292,6 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
 
       List<Profile> result = database.command(query).execute(params);
       Assert.fail();
-    } catch (OResponseProcessingException e) {
-      Assert.assertTrue(e.getCause() instanceof OQueryParsingException);
     } catch (OCommandSQLParsingException e) {
       Assert.assertTrue(true);
     }

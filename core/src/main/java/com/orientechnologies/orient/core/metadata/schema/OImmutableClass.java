@@ -1,4 +1,34 @@
+/*
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.metadata.schema;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -14,34 +44,22 @@ import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.schedule.OScheduler;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 10/21/14
  */
 public class OImmutableClass implements OClass {
-  public static final String              EDGE_CLASS_NAME   = "E";
-  public static final String              VERTEX_CLASS_NAME = "V";
-  private boolean                         inited            = false;
-  private final boolean                   isAbstract;
-  private final boolean                   strictMode;
+  public static final String EDGE_CLASS_NAME   = "E";
+  public static final String VERTEX_CLASS_NAME = "V";
+  private boolean            inited            = false;
+  private final boolean      isAbstract;
+  private final boolean      strictMode;
 
   private final String                    name;
   private final String                    streamAbleName;
   private final Map<String, OProperty>    properties;
   private Map<String, OProperty>          allPropertiesMap;
   private Collection<OProperty>           allProperties;
-  private final Class<?>                  javaClass;
   private final OClusterSelectionStrategy clusterSelection;
   private final int                       defaultClusterId;
   private final int[]                     clusterIds;
@@ -54,19 +72,19 @@ public class OImmutableClass implements OClass {
   private final Map<String, String>       customFields;
   private final String                    description;
 
-  private final OImmutableSchema          schema;
+  private final OImmutableSchema      schema;
   // do not do it volatile it is already SAFE TO USE IT in MT mode.
-  private final List<OImmutableClass>     superClasses;
+  private final List<OImmutableClass> superClasses;
   // do not do it volatile it is already SAFE TO USE IT in MT mode.
-  private Collection<OImmutableClass>     subclasses;
-  private boolean                         restricted;
-  private boolean                         isVertexType;
-  private boolean                         isEdgeType;
-  private boolean                         triggered;
-  private boolean                         function;
-  private boolean                         scheduler;
-  private boolean                         ouser;
-  private boolean                         orole;
+  private Collection<OImmutableClass> subclasses;
+  private boolean                     restricted;
+  private boolean                     isVertexType;
+  private boolean                     isEdgeType;
+  private boolean                     triggered;
+  private boolean                     function;
+  private boolean                     scheduler;
+  private boolean                     ouser;
+  private boolean                     orole;
 
   public OImmutableClass(OClass oClass, OImmutableSchema schema) {
     isAbstract = oClass.isAbstract();
@@ -90,7 +108,6 @@ public class OImmutableClass implements OClass {
     overSize = oClass.getOverSize();
     classOverSize = oClass.getClassOverSize();
     shortName = oClass.getShortName();
-    javaClass = oClass.getJavaClass();
 
     properties = new HashMap<String, OProperty>();
     for (OProperty p : oClass.declaredProperties())
@@ -134,11 +151,6 @@ public class OImmutableClass implements OClass {
       this.orole = isSubClassOf(ORole.CLASS_NAME);
       inited = true;
     }
-  }
-
-  @Override
-  public <T> T newInstance() throws InstantiationException, IllegalAccessException {
-    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -297,11 +309,6 @@ public class OImmutableClass implements OClass {
         return true;
     }
     return false;
-  }
-
-  @Override
-  public Class<?> getJavaClass() {
-    return javaClass;
   }
 
   @Override
@@ -499,12 +506,12 @@ public class OImmutableClass implements OClass {
   public OClass setShortName(String shortName) {
     throw new UnsupportedOperationException();
   }
-  
+
   @Override
   public String getDescription() {
     return description;
   }
-  
+
   @Override
   public OClass setDescription(String iDescription) {
     throw new UnsupportedOperationException();

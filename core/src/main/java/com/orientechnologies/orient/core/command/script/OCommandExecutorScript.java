@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.command.script;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.concur.resource.OPartitionedObjectPool;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OContextVariableResolver;
@@ -69,8 +70,9 @@ import java.util.Random;
  * 
  */
 public class OCommandExecutorScript extends OCommandExecutorAbstract implements OCommandDistributedReplicateRequest {
-  private static final int MAX_DELAY = 100;
-  protected OCommandScript request;
+  private static final int             MAX_DELAY     = 100;
+  protected OCommandScript             request;
+  protected DISTRIBUTED_EXECUTION_MODE executionMode = DISTRIBUTED_EXECUTION_MODE.LOCAL;
 
   public OCommandExecutorScript() {
   }
@@ -78,11 +80,12 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
   @SuppressWarnings("unchecked")
   public OCommandExecutorScript parse(final OCommandRequest iRequest) {
     request = (OCommandScript) iRequest;
+    executionMode = ((OCommandScript) iRequest).getExecutionMode();
     return this;
   }
 
   public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
-    return DISTRIBUTED_EXECUTION_MODE.LOCAL;
+    return executionMode;
   }
 
   public Object execute(final Map<Object, Object> iArgs) {
@@ -129,6 +132,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
 
         request.setCompiledScript(compiledScript);
       }
+
       final Bindings binding = scriptManager.bind(compiledScript.getEngine().getBindings(ScriptContext.ENGINE_SCOPE),
           (ODatabaseDocumentTx) db, iContext, iArgs);
 
@@ -137,7 +141,8 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
 
         return OCommandExecutorUtility.transformResult(ob);
       } catch (ScriptException e) {
-        throw new OCommandScriptException("Error on execution of the script", request.getText(), e.getColumnNumber(), e);
+        throw OException.wrapException(
+            new OCommandScriptException("Error on execution of the script", request.getText(), e.getColumnNumber()), e);
 
       } finally {
         scriptManager.unbind(binding, iContext, iArgs);
@@ -155,7 +160,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
       return executeSQLScript(parserText, db);
 
     } catch (IOException e) {
-      throw new OCommandExecutionException("Error on executing command: " + parserText, e);
+      throw OException.wrapException(new OCommandExecutionException("Error on executing command: " + parserText), e);
     }
   }
 

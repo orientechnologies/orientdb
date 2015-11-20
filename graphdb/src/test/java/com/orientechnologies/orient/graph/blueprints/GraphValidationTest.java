@@ -18,6 +18,7 @@
 
 package com.orientechnologies.orient.graph.blueprints;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -27,6 +28,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.tinkerpop.blueprints.Direction;
+import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
@@ -121,6 +123,40 @@ public class GraphValidationTest {
     }
   }
 
+  @Test
+  public void edgesCannotBeVertices() {
+    OrientGraphNoTx gNoTx = new OrientGraphNoTx(URL, "admin", "admin");
+    try {
+      gNoTx.createVertexType("TestV");
+      gNoTx.createEdgeType("TestE");
+
+      OrientVertex v = gNoTx.addVertex("class:TestV");
+      OrientVertex loadedV = gNoTx.getVertex(v.getIdentity());
+      try {
+        OrientEdge e = gNoTx.getEdge(v.getIdentity().toString());
+        Assert.fail();
+      } catch (IllegalArgumentException e) {
+        // OK
+      }
+    } finally {
+      gNoTx.shutdown();
+    }
+
+    OrientGraph g = new OrientGraph(URL, "admin", "admin");
+    try {
+      OrientVertex v = g.addVertex("class:TestV");
+      OrientVertex loadedV = g.getVertex(v.getIdentity().toString());
+      try {
+        OrientEdge e = g.getEdge(v.getIdentity());
+        Assert.fail();
+      } catch (IllegalArgumentException e) {
+        // OK
+      }
+    } finally {
+      g.shutdown();
+    }
+  }
+
   private void setupSchema() {
     OrientGraphNoTx graphNoTx = new OrientGraphNoTx(URL, "admin", "admin");
     try {
@@ -146,5 +182,4 @@ public class GraphValidationTest {
       graphNoTx.shutdown();
     }
   }
-
 }

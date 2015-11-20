@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.network;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -74,7 +75,10 @@ public class OServerNetworkListener extends Thread {
     try {
       protocolVersion = iProtocol.newInstance().getVersion();
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Error on reading protocol version for %s", e, ONetworkProtocolException.class, iProtocol);
+      final String message = "Error on reading protocol version for " + iProtocol;
+      OLogManager.instance().error(this, message, e);
+
+      throw OException.wrapException(new ONetworkProtocolException(message), e);
     }
 
     listen(iHostName, iHostPortRange, iProtocolName, iProtocol);
@@ -305,26 +309,7 @@ public class OServerNetworkListener extends Thread {
   private void listen(final String iHostName, final String iHostPortRange, final String iProtocolName,
       Class<? extends ONetworkProtocol> protocolClass) {
 
-    int[] ports = null;
-    if (protocolClass.equals(ONetworkProtocolBinary.class)) {
-      String serverTestMode = System.getProperty("orient.server.testMode", "false");
-      if (serverTestMode.equals("true")) {
-        String serverTestPort = System.getProperty("orient.server.port");
-        if (serverTestPort != null) {
-          try {
-            int serverPort = Integer.parseInt(serverTestPort);
-            ports = new int[] { serverPort };
-          } catch (NumberFormatException e) {
-            ports = null;
-          }
-        }
-      }
-    }
-
-    if (ports == null)
-      ports = getPorts(iHostPortRange);
-
-    for (int port : ports) {
+    for (int port : getPorts(iHostPortRange)) {
       inboundAddr = new InetSocketAddress(iHostName, port);
       try {
         serverSocket = socketFactory.createServerSocket(port, 0, InetAddress.getByName(iHostName));

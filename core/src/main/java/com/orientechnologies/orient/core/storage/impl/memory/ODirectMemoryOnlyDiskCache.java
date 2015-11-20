@@ -25,14 +25,21 @@ import com.orientechnologies.common.directmemory.ODirectMemoryPointerFactory;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.storage.cache.*;
+import com.orientechnologies.orient.core.storage.cache.OAbstractWriteCache;
+import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
+import com.orientechnologies.orient.core.storage.cache.OCachePointer;
+import com.orientechnologies.orient.core.storage.cache.OPageDataVerificationError;
+import com.orientechnologies.orient.core.storage.cache.OReadCache;
+import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -156,7 +163,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
-  public OCacheEntry load(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache) {
+  public OCacheEntry load(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache, final int prefetchPages) {
     int intId = extractFileId(fileId);
 
     final MemoryFile memoryFile = getFile(intId);
@@ -534,6 +541,11 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
+  public OCachePointer[] loadPages(long fileId, long pageIndex, int prefetchPages) throws IOException {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public long getExclusiveWriteCachePagesSize() {
     return 0;
   }
@@ -570,7 +582,9 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
     metadataLock.lock();
     try {
       for (Map.Entry<String, Integer> entry : fileNameIdMap.entrySet()) {
-        result.put(entry.getKey(), composeFileId(id, entry.getValue()));
+        if (entry.getValue() > 0) {
+          result.put(entry.getKey(), composeFileId(id, entry.getValue()));
+        }
       }
     } finally {
       metadataLock.unlock();

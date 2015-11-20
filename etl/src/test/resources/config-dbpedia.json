@@ -1,0 +1,75 @@
+{
+  "config": {
+    "log": "info",
+    "fileDirectory": "/temp/datasets/dbpedia_csv/",
+    "fileName": "Person.csv.gz",
+    "parallel": false
+  },
+  "begin": [
+    {
+      "let": {
+        "name": "$filePath",
+        "expression": "$fileDirectory.append( $fileName )"
+      }
+    },
+    {
+      let: {
+        "name": "$className",
+        "expression": "$fileName.substring( 0, $fileName.indexOf('.') )"
+      }
+    }
+  ],
+  "source": {
+    "file": {
+      "path": "$filePath",
+      "lock": true
+    }
+  },
+  "extractor": {
+    "row": {}
+  },
+  "transformers": [
+    {
+      "csv": {
+        "separator": ",",
+        "nullValue": "NULL",
+        "skipFrom": 1,
+        "skipTo": 3
+      }
+    },
+    {
+      "merge": {
+        "joinFieldName": "URI",
+        "lookup": "V.URI"
+      }
+    },
+    {
+      "vertex": {
+        "class": "$className"
+      }
+    }
+  ],
+  "loader": {
+    "orientdb": {
+      "dbURL": "plocal:/temp/databases/dbpedia",
+      "dbUser": "admin",
+      "dbPassword": "admin",
+      "dbAutoCreateProperties": false,
+      "dbAutoDropIfExists": true,
+      "dbAutoCreate": true,
+      "tx": false,
+      "wal": false,
+      "batchCommit": 1000,
+      "dbType": "graph",
+      "indexes": [
+        {
+          "class": "V",
+          "fields": [
+            "URI:string"
+          ],
+          "type": "UNIQUE"
+        }
+      ]
+    }
+  }
+}

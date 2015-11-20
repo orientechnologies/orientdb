@@ -70,9 +70,6 @@ public class ODistributedResponseManager {
   public ODistributedResponseManager(final ODistributedServerManager iManager, final ODistributedRequest iRequest,
       final Collection<String> expectedResponses, final int iExpectedSynchronousResponses, final int iQuorum,
       final boolean iWaitForLocalNode, final long iSynchTimeout, final long iTotalTimeout, final boolean iGroupResponsesByResult) {
-    assert iSynchTimeout > 0;
-    assert iTotalTimeout > 0;
-
     this.dManager = iManager;
     this.request = iRequest;
     this.sentOn = System.currentTimeMillis();
@@ -494,16 +491,16 @@ public class ODistributedResponseManager {
       final ODistributedConfiguration dbConfig = dManager.getDatabaseConfiguration(getDatabaseName());
       if (!dbConfig.getFailureAvailableNodesLessQuorum("*")) {
         // CHECK IF ANY NODE IS OFFLINE
-        int availableNodes = 0;
+        int onlineNodes = 0;
         for (Map.Entry<String, Object> r : responses.entrySet()) {
-          if (dManager.isNodeAvailable(r.getKey(), getDatabaseName()))
-            availableNodes++;
+          if (dManager.isNodeOnline(r.getKey(), getDatabaseName()))
+            onlineNodes++;
         }
 
-        if (availableNodes < quorum) {
+        if (onlineNodes < quorum) {
           ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
               "overridden quorum (%d) for request (%s) because available nodes (%d) are less than quorum, received responses: %s",
-              quorum, request, availableNodes, responses);
+              quorum, request, onlineNodes, responses);
           return true;
         }
       }

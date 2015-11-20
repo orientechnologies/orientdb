@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.exception.OSystemException;
 
 /**
  * Exception thrown during distributed operation between cluster nodes.
@@ -27,22 +28,15 @@ import com.orientechnologies.common.exception.OException;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  *
  */
-public class ODistributedException extends OException {
+public class ODistributedException extends OSystemException {
   private static final long serialVersionUID = 1L;
 
-  public ODistributedException() {
-  }
-
-  public ODistributedException(String message, Throwable cause) {
-    super(message, cause);
+  public ODistributedException(ODistributedException exception) {
+    super(exception);
   }
 
   public ODistributedException(String message) {
     super(message);
-  }
-
-  public ODistributedException(Throwable cause) {
-    super(cause);
   }
 
   @Override

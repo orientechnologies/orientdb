@@ -35,11 +35,15 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodField;
-import com.orientechnologies.orient.core.sql.methods.OSQLMethodRuntime;
-import com.orientechnologies.orient.core.sql.sequence.OSQLSequenceItem;
+import com.orientechnologies.orient.core.sql.method.OSQLMethodRuntime;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * Handles runtime results.
@@ -81,6 +85,7 @@ public class ORuntimeResult {
 
       for (Entry<String, Object> projection : iProjections.entrySet()) {
         final String prjName = projection.getKey();
+
         final Object v = projection.getValue();
 
         if (v == null && prjName != null) {
@@ -89,7 +94,7 @@ public class ORuntimeResult {
         }
 
         final Object projectionValue;
-        if (v.equals("*")) {
+        if (v != null && v.equals("*")) {
           // COPY ALL
           inputDocument.copyTo(iValue);
           // CONTINUE WITH NEXT ITEM
@@ -115,9 +120,6 @@ public class ORuntimeResult {
         } else if (v instanceof OSQLFunctionRuntime) {
           final OSQLFunctionRuntime f = (OSQLFunctionRuntime) v;
           projectionValue = f.execute(inputDocument, inputDocument, iValue, iContext);
-        } else if (v instanceof OSQLSequenceItem) {
-          final OSQLSequenceItem s = (OSQLSequenceItem) v;
-          projectionValue = s.getValue(iRecord, null, iContext);
         } else {
           if (v == null) {
             // SIMPLE NULL VALUE: SET IT IN DOCUMENT
@@ -174,7 +176,6 @@ public class ORuntimeResult {
 
           } else
             iValue.field(prjName, projectionValue);
-
       }
     }
 
@@ -226,8 +227,11 @@ public class ORuntimeResult {
         ORuntimeResult.applyRecord(ORuntimeResult.createProjectionDocument(iId), iProjections, iContext, iRecord), iProjections);
   }
 
-  public void applyRecord(final OIdentifiable iRecord) {
-    applyRecord(value, projections, context, iRecord);
+  public ODocument applyRecord(final OIdentifiable iRecord) {
+    // SYNCHRONIZE ACCESS TO AVOID CONTENTION ON THE SAME INSTANCE
+    synchronized (this) {
+      return applyRecord(value, projections, context, iRecord);
+    }
   }
 
   /**

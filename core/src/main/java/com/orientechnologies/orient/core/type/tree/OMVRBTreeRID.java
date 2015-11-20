@@ -36,7 +36,9 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTreeEntry;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeProvider;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDEntryProvider;
@@ -67,8 +69,7 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
   }
 
   public OMVRBTreeRID(int binaryThreshold) {
-    this(new OMVRBTreeRIDProvider(null, ODatabaseRecordThreadLocal.INSTANCE.get().getClusterIdByName(
-        OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME), binaryThreshold));
+    this(new OMVRBTreeRIDProvider(null, ODatabaseRecordThreadLocal.INSTANCE.get().getClusterIdByName(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME), binaryThreshold));
   }
 
   public OMVRBTreeRID(final ODocument iRecord) {
@@ -180,7 +181,7 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 
   public OIdentifiable remove(final Object o) {
     final OIdentifiable removed;
-
+    ORecordInternal.unTrack(getOwner(), (OIdentifiable) o);
     if (hasNewItems() && newEntries.containsKey(o)) {
       // REMOVE IT INSIDE NEW ITEMS MAP
       removed = (OIdentifiable) o;
@@ -421,9 +422,6 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
       final Set<ORecord> temp = new HashSet<ORecord>(newEntries.keySet());
 
       for (ORecord record : temp) {
-        if (record.getIdentity().isNew())
-          record.save();
-
         if (!record.getIdentity().isNew()) {
           // SAVED CORRECTLY (=NO IN TX): MOVE IT INTO THE PERSISTENT TREE
           if (newEntries != null) {
@@ -434,6 +432,9 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 
           // PUT THE ITEM INTO THE TREE
           internalPut(record.getIdentity(), null);
+        } else {
+          assert record.getIdentity().isValid() || (ODatabaseRecordThreadLocal.INSTANCE.get()
+                                                    .getStorage() instanceof OStorageProxy) : "Impossible to serialize invalid link " + record.getIdentity();
         }
       }
 

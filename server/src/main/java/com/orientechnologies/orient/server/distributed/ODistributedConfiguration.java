@@ -34,8 +34,9 @@ import java.util.*;
  * 
  */
 public class ODistributedConfiguration {
-  public static final String NEW_NODE_TAG = "<NEW_NODE>";
-  private ODocument          configuration;
+  public static final String       NEW_NODE_TAG         = "<NEW_NODE>";
+  private static final Set<String> DEFAULT_CLUSTER_NAME = Collections.singleton("*");
+  private ODocument                configuration;
 
   public enum ROLES {
     MASTER, REPLICA
@@ -55,13 +56,6 @@ public class ODistributedConfiguration {
     synchronized (configuration) {
       final Collection<String> servers = getClusterConfiguration(iClusterName).field("servers");
       if (servers != null && !servers.isEmpty()) {
-        // int otherServers = 0;
-        //
-        // for (String s : servers)
-        // if (!s.equals(NEW_NODE_TAG) && !s.equals(iLocalNode))
-        // otherServers++;
-        // TEMPORARY PATCH TO FIX OPTIMIZATION OF RUNNING AS SINGLE SERVER
-        // return otherServers > 0;
         return true;
       }
       return false;
@@ -114,8 +108,8 @@ public class ODistributedConfiguration {
       if (value == null) {
         value = configuration.field("writeQuorum");
         if (value == null) {
-          OLogManager.instance()
-              .warn(this, "writeQuorum setting not found for cluster=%s in distributed-config.json", iClusterName);
+          OLogManager.instance().warn(this, "writeQuorum setting not found for cluster=%s in distributed-config.json",
+              iClusterName);
           return 2;
         }
       }
@@ -216,7 +210,7 @@ public class ODistributedConfiguration {
   public Map<String, Collection<String>> getServerClusterMap(Collection<String> iClusterNames, final String iLocalNode) {
     synchronized (configuration) {
       if (iClusterNames == null || iClusterNames.isEmpty())
-        iClusterNames = Collections.singleton("*");
+        iClusterNames = DEFAULT_CLUSTER_NAME;
 
       final Map<String, Collection<String>> servers = new HashMap<String, Collection<String>>(iClusterNames.size());
 
@@ -239,9 +233,14 @@ public class ODistributedConfiguration {
       if (iClusterNames.size() == 1) {
         final List<String> serverList = getClusterConfiguration(iClusterNames.iterator().next()).field("servers");
 
-        // PICK THE FIRST ONE
-        servers.put(serverList.get(0), iClusterNames);
-        return servers;
+        for (String s : serverList) {
+          if (NEW_NODE_TAG.equalsIgnoreCase(s))
+            continue;
+
+          // PICK THE FIRST ONE
+          servers.put(s, iClusterNames);
+          return servers;
+        }
       }
 
       // GROUP BY SERVER WITH THE NUMBER OF CLUSTERS
@@ -249,6 +248,9 @@ public class ODistributedConfiguration {
       for (String p : iClusterNames) {
         final List<String> serverList = getClusterConfiguration(p).field("servers");
         for (String s : serverList) {
+          if (NEW_NODE_TAG.equalsIgnoreCase(s))
+            continue;
+
           Collection<String> clustersInServer = serverMap.get(s);
           if (clustersInServer == null) {
             clustersInServer = new HashSet<String>();
@@ -308,7 +310,7 @@ public class ODistributedConfiguration {
   public String getLocalCluster(Collection<String> iClusterNames, final String iLocalNode) {
     synchronized (configuration) {
       if (iClusterNames == null || iClusterNames.isEmpty())
-        iClusterNames = Collections.singleton("*");
+        iClusterNames = DEFAULT_CLUSTER_NAME;
 
       for (String p : iClusterNames) {
         final String masterServer = getMasterServer(p);
@@ -331,7 +333,7 @@ public class ODistributedConfiguration {
   public Set<String> getServers(Collection<String> iClusterNames) {
     synchronized (configuration) {
       if (iClusterNames == null || iClusterNames.isEmpty())
-        iClusterNames = Collections.singleton("*");
+        iClusterNames = DEFAULT_CLUSTER_NAME;
 
       final Set<String> partitions = new HashSet<String>(iClusterNames.size());
       for (String p : iClusterNames) {
@@ -367,6 +369,25 @@ public class ODistributedConfiguration {
         return filteredServerList;
       }
       return Collections.EMPTY_LIST;
+    }
+  }
+
+  /**
+   * Returns the complete list of servers found in configuration.
+   */
+  public Set<String> getAllConfiguredServers() {
+    synchronized (configuration) {
+      final Set<String> servers = new HashSet<String>();
+
+      for (String p : getClusterNames()) {
+        final List<String> serverList = getClusterConfiguration(p).field("servers");
+        if (serverList != null) {
+          for (String s : serverList)
+            if (!s.equals(NEW_NODE_TAG))
+              servers.add(s);
+        }
+      }
+      return servers;
     }
   }
 

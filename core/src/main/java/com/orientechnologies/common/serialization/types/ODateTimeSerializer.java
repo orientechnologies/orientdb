@@ -34,7 +34,7 @@ import java.util.Date;
  */
 public class ODateTimeSerializer implements OBinarySerializer<Date> {
   public static final byte          ID       = 5;
-  public static ODateTimeSerializer INSTANCE = new ODateTimeSerializer();
+  public static final ODateTimeSerializer INSTANCE = new ODateTimeSerializer();
 
   public int getObjectSize(Date object, Object... hints) {
     return OLongSerializer.LONG_SIZE;

@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.sql.filter;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandPredicate;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -57,12 +58,14 @@ public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
       if (e.getText() == null)
       // QUERY EXCEPTION BUT WITHOUT TEXT: NEST IT
       {
-        throw new OQueryParsingException("Error on parsing query", parserText, parserGetCurrentPosition(), e);
+        throw OException.wrapException(
+            new OQueryParsingException("Error on parsing query", parserText, parserGetCurrentPosition()), e);
       }
 
       throw e;
-    } catch (Throwable t) {
-      throw new OQueryParsingException("Error on parsing query", parserText, parserGetCurrentPosition(), t);
+    } catch (Exception e) {
+      throw OException.wrapException(new OQueryParsingException("Error on parsing query", parserText, parserGetCurrentPosition()),
+          e);
     }
 
     this.rootCondition = resetOperatorPrecedence(rootCondition);

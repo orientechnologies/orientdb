@@ -19,27 +19,27 @@
    */
 package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
-import java.io.IOException;
- import java.util.ArrayList;
- import java.util.Collection;
- import java.util.HashMap;
- import java.util.Map;
- import java.util.Map.Entry;
-
 import com.orientechnologies.common.util.OPatternConst;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
- import com.orientechnologies.orient.core.id.ORecordId;
- import com.orientechnologies.orient.core.index.OIndex;
- import com.orientechnologies.orient.core.metadata.schema.OClass;
- import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
- import com.orientechnologies.orient.core.metadata.schema.OType;
- import com.orientechnologies.orient.core.record.impl.ODocument;
- import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
- import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
- import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
- import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
- import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
- import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
+import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 @SuppressWarnings("unchecked")
  public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstract {
@@ -208,7 +208,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
      } else if ("del".equals(operation)) {
        iRequest.data.commandInfo = "Studio delete cluster";
 
-       db.dropCluster(rid, true);
+       db.dropCluster(rid, false);
 
        iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Cluster " + fields.get("name")
            + "' deleted successfully", null);

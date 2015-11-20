@@ -33,7 +33,6 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
-import com.orientechnologies.orient.core.version.OVersionFactory;
 
 import java.io.IOException;
 import java.text.DecimalFormatSymbols;
@@ -72,9 +71,12 @@ import java.util.concurrent.ConcurrentMap;
  */
 @SuppressWarnings("serial")
 public class OStorageConfiguration implements OSerializableStream {
-  public static final ORecordId                           CONFIG_RID                    = new OImmutableRecordId(0, 0);
+  public static final ORecordId CONFIG_RID = new OImmutableRecordId(0, 0);
 
-  public static final String                              DEFAULT_CHARSET               = "UTF-8";
+  public static final String DEFAULT_CHARSET         = "UTF-8";
+  public static final String DEFAULT_DATE_FORMAT     = "yyyy-MM-dd";
+  public static final String DEFAULT_DATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
+
   private String                                          charset;
   public static final int                                 CURRENT_VERSION               = 16;
   public static final int                                 CURRENT_BINARY_FORMAT_VERSION = 12;
@@ -129,8 +131,8 @@ public class OStorageConfiguration implements OSerializableStream {
     schemaRecordId = null;
     dictionaryRecordId = null;
     indexMgrRecordId = null;
-    dateFormat = "yyyy-MM-dd";
-    dateTimeFormat = "yyyy-MM-dd HH:mm:ss";
+    dateFormat = DEFAULT_DATE_FORMAT;
+    dateTimeFormat = DEFAULT_DATETIME_FORMAT;
     binaryFormatVersion = 0;
     clusters = Collections.synchronizedList(new ArrayList<OStorageClusterConfiguration>());
     localeLanguage = Locale.getDefault().getLanguage();
@@ -140,7 +142,7 @@ public class OStorageConfiguration implements OSerializableStream {
     unusualSymbols = null;
     clusterSelection = null;
     conflictStrategy = null;
-    minimumClusters = 1;
+    minimumClusters = 0; // 0 = AUTOMATIC
     recordSerializer = null;
     recordSerializerVersion = 0;
     strictSQL = false;
@@ -174,8 +176,8 @@ public class OStorageConfiguration implements OSerializableStream {
   public OStorageConfiguration load(final Map<String, Object> iProperties) throws OSerializationException {
     initConfiguration();
 
-    final String compressionMethod = (String) iProperties.get(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getKey()
-        .toLowerCase());
+    final String compressionMethod = (String) iProperties
+        .get(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getKey().toLowerCase());
     if (compressionMethod != null)
       // SAVE COMPRESSION METHOD IN CONFIGURATION
       configuration.setValue(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD, compressionMethod);
@@ -211,8 +213,7 @@ public class OStorageConfiguration implements OSerializableStream {
 
   public void update() throws OSerializationException {
     final byte[] record = toStream();
-    storage.updateRecord(CONFIG_RID, true, record, OVersionFactory.instance().createUntrackedVersion(), ORecordBytes.RECORD_TYPE,
-        0, null);
+    storage.updateRecord(CONFIG_RID, true, record, -1, ORecordBytes.RECORD_TYPE, 0, null);
   }
 
   public boolean isEmpty() {
@@ -469,8 +470,8 @@ public class OStorageConfiguration implements OSerializableStream {
           }
         }
 
-        final IndexEngineData indexEngineData = new IndexEngineData(name, algorithm, durableInNonTxMode, version,
-            valueSerializerId, keySerializerId, isAutomatic, types, nullValuesSupport, keySize, engineProperties);
+        final IndexEngineData indexEngineData = new IndexEngineData(name, algorithm, durableInNonTxMode, version, valueSerializerId,
+            keySerializerId, isAutomatic, types, nullValuesSupport, keySize, engineProperties);
 
         indexEngines.put(name.toLowerCase(getLocaleInstance()), indexEngineData);
       }
@@ -625,8 +626,7 @@ public class OStorageConfiguration implements OSerializableStream {
   }
 
   public void create() throws IOException {
-    storage.createRecord(CONFIG_RID, new byte[] { 0, 0, 0, 0 }, OVersionFactory.instance().createVersion(),
-        ORecordBytes.RECORD_TYPE, (byte) 0, null);
+    storage.createRecord(CONFIG_RID, new byte[] { 0, 0, 0, 0 }, 0, ORecordBytes.RECORD_TYPE, (byte) 0, null);
   }
 
   public void synch() throws IOException {
@@ -656,14 +656,14 @@ public class OStorageConfiguration implements OSerializableStream {
 
   public void addIndexEngine(String name, IndexEngineData engineData) {
     if (indexEngines.containsKey(name))
-      throw new IllegalArgumentException("Index engine with name " + engineData.name
-          + " already contained in database configuration");
+      throw new IllegalArgumentException(
+          "Index engine with name " + engineData.name + " already contained in database configuration");
 
     final IndexEngineData oldEngine = indexEngines.putIfAbsent(name, engineData);
 
     if (oldEngine != null)
-      throw new IllegalArgumentException("Index engine with name " + engineData.name
-          + " already contained in database configuration");
+      throw new IllegalArgumentException(
+          "Index engine with name " + engineData.name + " already contained in database configuration");
 
     update();
   }
@@ -829,20 +829,20 @@ public class OStorageConfiguration implements OSerializableStream {
   }
 
   protected void bindPropertiesToContext(final Map<String, Object> iProperties) {
-    final String compressionMethod = iProperties != null ? (String) iProperties.get(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD
-        .getKey().toLowerCase()) : null;
+    final String compressionMethod = iProperties != null
+        ? (String) iProperties.get(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getKey().toLowerCase()) : null;
     if (compressionMethod != null)
       // SAVE COMPRESSION METHOD IN CONFIGURATION
       getContextConfiguration().setValue(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD, compressionMethod);
 
-    final String encryptionMethod = iProperties != null ? (String) iProperties.get(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD
-        .getKey().toLowerCase()) : null;
+    final String encryptionMethod = iProperties != null
+        ? (String) iProperties.get(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD.getKey().toLowerCase()) : null;
     if (encryptionMethod != null)
       // SAVE ENCRYPTION METHOD IN CONFIGURATION
       getContextConfiguration().setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD, encryptionMethod);
 
-    final String encryptionKey = iProperties != null ? (String) iProperties.get(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY
-        .getKey().toLowerCase()) : null;
+    final String encryptionKey = iProperties != null
+        ? (String) iProperties.get(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey().toLowerCase()) : null;
     if (encryptionKey != null)
       // SAVE ENCRYPTION KEY IN CONFIGURATION
       getContextConfiguration().setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY, encryptionKey);
@@ -928,9 +928,9 @@ public class OStorageConfiguration implements OSerializableStream {
     private final int                 keySize;
     private final Map<String, String> engineProperties;
 
-    public IndexEngineData(String name, String algorithm, Boolean durableInNonTxMode, int version, byte valueSerializerId,
-        byte keySerializedId, boolean isAutomatic, OType[] keyTypes, boolean nullValuesSupport, int keySize,
-        Map<String, String> engineProperties) {
+    public IndexEngineData(final String name, final String algorithm, final Boolean durableInNonTxMode, final int version,
+        final byte valueSerializerId, final byte keySerializedId, final boolean isAutomatic, final OType[] keyTypes,
+        final boolean nullValuesSupport, final int keySize, final Map<String, String> engineProperties) {
       this.name = name;
       this.algorithm = algorithm;
       this.durableInNonTxMode = durableInNonTxMode;

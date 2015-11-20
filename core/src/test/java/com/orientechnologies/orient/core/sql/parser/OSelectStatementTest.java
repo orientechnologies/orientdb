@@ -6,6 +6,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 
 import static org.testng.Assert.*;
@@ -72,6 +73,25 @@ public class OSelectStatementTest {
   }
 
   @Test
+  public void testComments() {
+    checkRightSyntax("select from Foo");
+
+    checkRightSyntax("select /* aaa bbb ccc*/from Foo");
+    checkRightSyntax("select /* aaa bbb \nccc*/from Foo");
+    checkRightSyntax("select /** aaa bbb ccc**/from Foo");
+    checkRightSyntax("select /** aaa bbb ccc*/from Foo");
+
+    checkRightSyntax("/* aaa bbb ccc*/select from Foo");
+    checkRightSyntax("select from Foo/* aaa bbb ccc*/");
+    checkRightSyntax("/* aaa bbb ccc*/select from Foo/* aaa bbb ccc*/");
+
+    checkWrongSyntax("select /** aaa bbb */ccc*/from Foo");
+
+    checkWrongSyntax("select /**  /*aaa bbb */ccc*/from Foo");
+    checkWrongSyntax("*/ select from Foo");
+  }
+
+  @Test
   public void testSimpleSelect() {
     checkRightSyntax("select from Foo");
     checkRightSyntax("select * from Foo");
@@ -112,6 +132,9 @@ public class OSelectStatementTest {
     checkWrongSyntax("select * from Foo bar where name = 'foo'");
     checkWrongSyntax("select Foo where name = 'foo'");
     checkWrongSyntax("select * Foo where name = 'foo'");
+
+    //issue #5221
+    checkRightSyntax("select from $1");
 
   }
 
@@ -424,7 +447,7 @@ public class OSelectStatementTest {
     checkRightSyntax("select from test order by (something asc),(somethingElse desc)");
   }
 
-  @Test()
+  @Test( enabled = false)
   public void testMultipleLucene() {
     checkRightSyntax("select from Foo where a lucene 'a'");
     checkWrongSyntax("select from Foo where a lucene 'a' and b lucene 'a'");
@@ -573,6 +596,30 @@ public class OSelectStatementTest {
     checkRightSyntax("select from ouser timeout 1 return");
 
   }
+
+  @Test
+  public void testFlatten() {
+    OSelectStatement stm = (OSelectStatement)checkRightSyntax("select from ouser where name = 'foo'");
+    List<OAndBlock> flattended = stm.whereClause.flatten();
+    assertTrue(((OBinaryCondition) flattended.get(0).subBlocks.get(0)).left.isBaseIdentifier());
+    assertFalse(((OBinaryCondition) flattended.get(0).subBlocks.get(0)).right.isBaseIdentifier());
+    assertFalse(((OBinaryCondition) flattended.get(0).subBlocks.get(0)).left.isEarlyCalculated());
+    assertTrue(((OBinaryCondition) flattended.get(0).subBlocks.get(0)).right.isEarlyCalculated());
+
+  }
+
+  @Test
+  public void testParamWithMatches() {
+    //issue #5229
+    checkRightSyntax("select from Person where name matches :param1");
+  }
+
+  @Test
+  public void testInstanceOfE(){
+    //issue #5212
+    checkRightSyntax("select from Friend where @class instanceof 'E'");
+  }
+
 
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);

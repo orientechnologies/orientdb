@@ -82,5 +82,12 @@ public class ONotBlock extends OBooleanExpression {
     }
     return sub.getIndexedFunctionConditions(iSchemaClass, database);
   }
+
+  @Override public List<OAndBlock> flatten() {
+    if(!negate){
+      return sub.flatten();
+    }
+    return super.flatten();
+  }
 }
 /* JavaCC - OriginalChecksum=1926313b3f854235aaa20811c22d583b (do not edit this line) */

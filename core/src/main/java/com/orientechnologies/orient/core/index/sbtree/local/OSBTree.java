@@ -30,17 +30,16 @@ import java.util.List;
 import java.util.Map;
 
 import com.orientechnologies.common.comparator.ODefaultComparator;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.index.OAlwaysGreaterKey;
 import com.orientechnologies.orient.core.index.OAlwaysLessKey;
 import com.orientechnologies.orient.core.index.OCompositeKey;
-import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.iterator.OEmptyMapEntryIterator;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
@@ -116,7 +115,7 @@ public class OSBTree<K, V> extends ODurableComponent {
     try {
       atomicOperation = startAtomicOperation();
     } catch (IOException e) {
-      throw new OIndexException("Error during sbtree creation", e);
+      throw OException.wrapException(new OSBTreeException("Error during sbtree creation", this), e);
     }
 
     acquireExclusiveLock();
@@ -158,7 +157,7 @@ public class OSBTree<K, V> extends ODurableComponent {
       } catch (IOException e1) {
         OLogManager.instance().error(this, "Error during sbtree data rollback", e1);
       }
-      throw new OSBTreeException("Error creation of sbtree with name" + getName(), e);
+      throw OException.wrapException(new OSBTreeException("Error creation of sbtree with name " + getName(), this), e);
     } catch (RuntimeException e) {
       try {
         endAtomicOperation(true, e);
@@ -218,7 +217,7 @@ public class OSBTree<K, V> extends ODurableComponent {
         releaseSharedLock();
       }
     } catch (IOException e) {
-      throw new OSBTreeException("Error during retrieving  of sbtree with name " + getName(), e);
+      throw OException.wrapException(new OSBTreeException("Error during retrieving  of sbtree with name " + getName(), this), e);
     } finally {
       atomicOperationsManager.releaseReadLock(this);
     }
@@ -229,7 +228,7 @@ public class OSBTree<K, V> extends ODurableComponent {
     try {
       atomicOperation = startAtomicOperation();
     } catch (IOException e) {
-      throw new OIndexException("Error during sbtree entrie put", e);
+      throw OException.wrapException(new OSBTreeException("Error during sbtree entrie put", this), e);
     }
 
     acquireExclusiveLock();
@@ -242,7 +241,7 @@ public class OSBTree<K, V> extends ODurableComponent {
         final int valueSize = valueSerializer.getObjectSize(value);
         if (keySize > MAX_KEY_SIZE)
           throw new OSBTreeException("Key size is more than allowed, operation was canceled. Current key size " + keySize
-              + ", allowed  " + MAX_KEY_SIZE);
+              + ", allowed  " + MAX_KEY_SIZE, this);
 
         final boolean createLinkToTheValue = valueSize > MAX_EMBEDDED_VALUE_SIZE;
 
@@ -348,7 +347,8 @@ public class OSBTree<K, V> extends ODurableComponent {
       endAtomicOperation(false, null);
     } catch (IOException e) {
       rollback(e);
-      throw new OSBTreeException("Error during index update with key " + key + " and value " + value, e);
+      throw OException.wrapException(
+          new OSBTreeException("Error during index update with key " + key + " and value " + value, this), e);
     } catch (RuntimeException e) {
       rollback(e);
       throw e;
@@ -366,7 +366,7 @@ public class OSBTree<K, V> extends ODurableComponent {
         readCache.closeFile(nullBucketFileId, flush, writeCache);
 
     } catch (IOException e) {
-      throw new OSBTreeException("Error during close of index " + getName(), e);
+      throw OException.wrapException(new OSBTreeException("Error during close of index " + getName(), this), e);
     } finally {
       releaseExclusiveLock();
     }
@@ -381,7 +381,7 @@ public class OSBTree<K, V> extends ODurableComponent {
     try {
       atomicOperation = startAtomicOperation();
     } catch (IOException e) {
-      throw new OIndexException("Error during sbtree clear", e);
+      throw OException.wrapException(new OSBTreeException("Error during sbtree clear", this), e);
     }
 
     acquireExclusiveLock();
@@ -412,7 +412,7 @@ public class OSBTree<K, V> extends ODurableComponent {
     } catch (IOException e) {
       rollback(e);
 
-      throw new OSBTreeException("Error during clear of sbtree with name " + getName(), e);
+      throw OException.wrapException(new OSBTreeException("Error during clear of sbtree with name " + getName(), this), e);
     } catch (RuntimeException e) {
       rollback(e);
       throw e;
@@ -426,7 +426,7 @@ public class OSBTree<K, V> extends ODurableComponent {
     try {
       atomicOperation = startAtomicOperation();
     } catch (IOException e) {
-      throw new OIndexException("Error during sbtree deletion", e);
+      throw OException.wrapException(new OSBTreeException("Error during sbtree deletion", this), e);
     }
 
     acquireExclusiveLock();
@@ -439,10 +439,10 @@ public class OSBTree<K, V> extends ODurableComponent {
       endAtomicOperation(false, null);
     } catch (IOException e) {
       rollback(e);
-      throw new OSBTreeException("Error during delete of sbtree with name " + getName(), e);
+      throw OException.wrapException(new OSBTreeException("Error during delete of sbtree with name " + getName(), this), e);
     } catch (Exception e) {
       rollback(e);
-      throw new OSBTreeException("Error during delete of sbtree with name " + getName(), e);
+      throw OException.wrapException(new OSBTreeException("Error during delete of sbtree with name " + getName(), this), e);
     } finally {
       releaseExclusiveLock();
     }
@@ -453,7 +453,7 @@ public class OSBTree<K, V> extends ODurableComponent {
     try {
       atomicOperation = startAtomicOperation();
     } catch (IOException e) {
-      throw new OIndexException("Error during sbtree deletion", e);
+      throw OException.wrapException(new OSBTreeException("Error during sbtree deletion", this), e);
     }
 
     acquireExclusiveLock();
@@ -471,10 +471,10 @@ public class OSBTree<K, V> extends ODurableComponent {
       endAtomicOperation(false, null);
     } catch (IOException ioe) {
       rollback(ioe);
-      throw new OSBTreeException("Exception during deletion of sbtree " + getName(), ioe);
+      throw OException.wrapException(new OSBTreeException("Exception during deletion of sbtree " + getName(), this), ioe);
     } catch (Exception e) {
       rollback(e);
-      throw new OSBTreeException("Exception during deletion of sbtree " + getName(), e);
+      throw OException.wrapException(new OSBTreeException("Exception during deletion of sbtree " + getName(), this), e);
     } finally {
       releaseExclusiveLock();
     }
@@ -501,7 +501,7 @@ public class OSBTree<K, V> extends ODurableComponent {
       this.keySerializer = keySerializer;
       this.valueSerializer = valueSerializer;
     } catch (IOException e) {
-      throw new OSBTreeException("Exception during loading of sbtree " + name, e);
+      throw OException.wrapException(new OSBTreeException("Exception during loading of sbtree " + name, this), e);
     } finally {
       releaseExclusiveLock();
     }
@@ -526,7 +526,7 @@ public class OSBTree<K, V> extends ODurableComponent {
         releaseSharedLock();
       }
     } catch (IOException e) {
-      throw new OSBTreeException("Error during retrieving of size of index " + getName(), e);
+      throw OException.wrapException(new OSBTreeException("Error during retrieving of size of index " + getName(), this), e);
     } finally {
       atomicOperationsManager.releaseReadLock(this);
     }
@@ -537,7 +537,7 @@ public class OSBTree<K, V> extends ODurableComponent {
     try {
       atomicOperation = startAtomicOperation();
     } catch (IOException e) {
-      throw new OIndexException("Error during sbtree entrie remove", e);
+      throw OException.wrapException(new OSBTreeException("Error during sbtree entrie remove", this), e);
     }
 
     acquireExclusiveLock();
@@ -607,7 +607,8 @@ public class OSBTree<K, V> extends ODurableComponent {
     } catch (IOException e) {
       rollback(e);
 
-      throw new OSBTreeException("Error during removing key " + key + " from sbtree " + getName(), e);
+      throw OException.wrapException(new OSBTreeException("Error during removing key " + key + " from sbtree " + getName(), this),
+          e);
     } catch (RuntimeException e) {
       rollback(e);
       throw e;
@@ -631,7 +632,8 @@ public class OSBTree<K, V> extends ODurableComponent {
         releaseSharedLock();
       }
     } catch (IOException ioe) {
-      throw new OSBTreeException("Error during iteration of minor values for key " + key + " in sbtree " + getName(), ioe);
+      throw OException.wrapException(new OSBTreeException("Error during iteration of minor values for key " + key + " in sbtree "
+          + getName(), this), ioe);
     } finally {
       atomicOperationsManager.releaseReadLock(this);
     }
@@ -652,7 +654,8 @@ public class OSBTree<K, V> extends ODurableComponent {
         releaseSharedLock();
       }
     } catch (IOException ioe) {
-      throw new OSBTreeException("Error during iteration of major values for key " + key + " in sbtree " + getName(), ioe);
+      throw OException.wrapException(new OSBTreeException("Error during iteration of major values for key " + key + " in sbtree "
+          + getName(), this), ioe);
     } finally {
       atomicOperationsManager.releaseReadLock(this);
     }
@@ -681,7 +684,7 @@ public class OSBTree<K, V> extends ODurableComponent {
         releaseSharedLock();
       }
     } catch (IOException e) {
-      throw new OSBTreeException("Error during finding first key in sbtree [" + getName() + "]", e);
+      throw OException.wrapException(new OSBTreeException("Error during finding first key in sbtree [" + getName() + "]", this), e);
     } finally {
       atomicOperationsManager.releaseReadLock(this);
     }
@@ -710,7 +713,7 @@ public class OSBTree<K, V> extends ODurableComponent {
         releaseSharedLock();
       }
     } catch (IOException e) {
-      throw new OSBTreeException("Error during finding last key in sbtree [" + getName() + "]", e);
+      throw OException.wrapException(new OSBTreeException("Error during finding last key in sbtree [" + getName() + "]", this), e);
     } finally {
       atomicOperationsManager.releaseReadLock(this);
     }
@@ -736,7 +739,7 @@ public class OSBTree<K, V> extends ODurableComponent {
         releaseSharedLock();
       }
     } catch (IOException e) {
-      throw new OSBTreeException("Error during finding first key in sbtree [" + getName() + "]", e);
+      throw OException.wrapException(new OSBTreeException("Error during finding first key in sbtree [" + getName() + "]", this), e);
     } finally {
       atomicOperationsManager.releaseReadLock(this);
     }
@@ -757,8 +760,8 @@ public class OSBTree<K, V> extends ODurableComponent {
         releaseSharedLock();
       }
     } catch (IOException ioe) {
-      throw new OSBTreeException("Error during fetch of values between key " + keyFrom + " and key " + keyTo + " in sbtree "
-          + getName(), ioe);
+      throw OException.wrapException(new OSBTreeException("Error during fetch of values between key " + keyFrom + " and key "
+          + keyTo + " in sbtree " + getName(), this), ioe);
     } finally {
       atomicOperationsManager.releaseReadLock(this);
     }
@@ -780,12 +783,12 @@ public class OSBTree<K, V> extends ODurableComponent {
 
   @Override
   protected OAtomicOperation startAtomicOperation() throws IOException {
-    return atomicOperationsManager.startAtomicOperation(this, !durableInNonTxMode);
+    return atomicOperationsManager.startAtomicOperation(this);
   }
 
   private void checkNullSupport(K key) {
     if (key == null && !nullPointerSupport)
-      throw new OSBTreeException("Null keys are not supported.");
+      throw new OSBTreeException("Null keys are not supported.", this);
   }
 
   private void removeLinkedValue(long removedLink, OAtomicOperation atomicOperation) throws IOException {
@@ -1004,7 +1007,7 @@ public class OSBTree<K, V> extends ODurableComponent {
 
       return new OSBTreeCursorForward(searchResult.getLastPathItem(), searchResult.itemIndex, null, key, false, inclusive);
     } catch (IOException e) {
-      throw new OSBTreeException("Error during finding first key in sbtree [" + getName() + "]", e);
+      throw OException.wrapException(new OSBTreeException("Error during finding first key in sbtree [" + getName() + "]", this), e);
     } finally {
       releaseSharedLock();
     }
@@ -1068,7 +1071,7 @@ public class OSBTree<K, V> extends ODurableComponent {
         };
 
     } catch (IOException e) {
-      throw new OSBTreeException("Error during finding last key in sbtree [" + getName() + "]", e);
+      throw OException.wrapException(new OSBTreeException("Error during finding last key in sbtree [" + getName() + "]", this), e);
     } finally {
       releaseSharedLock();
     }
@@ -1516,7 +1519,8 @@ public class OSBTree<K, V> extends ODurableComponent {
     while (true) {
       if (path.size() > MAX_PATH_LENGTH)
         throw new OSBTreeException(
-            "We reached max level of depth of SBTree but still found nothing, seems like tree is in corrupted state. You should rebuild index related to given query.");
+            "We reached max level of depth of SBTree but still found nothing, seems like tree is in corrupted state. You should rebuild index related to given query.",
+            this);
 
       path.add(pageIndex);
       final OCacheEntry bucketEntry = loadPage(atomicOperation, fileId, pageIndex, false);
@@ -1743,7 +1747,7 @@ public class OSBTree<K, V> extends ODurableComponent {
           releaseSharedLock();
         }
       } catch (IOException e) {
-        throw new OSBTreeException("Error during element iteration", e);
+        throw OException.wrapException(new OSBTreeException("Error during element iteration", OSBTree.this), e);
       } finally {
         atomicOperationsManager.releaseReadLock(OSBTree.this);
       }
@@ -1846,7 +1850,7 @@ public class OSBTree<K, V> extends ODurableComponent {
           releaseSharedLock();
         }
       } catch (IOException e) {
-        throw new OSBTreeException("Error during element iteration", e);
+        throw OException.wrapException(new OSBTreeException("Error during element iteration", OSBTree.this), e);
       } finally {
         atomicOperationsManager.releaseReadLock(OSBTree.this);
       }
@@ -1948,7 +1952,7 @@ public class OSBTree<K, V> extends ODurableComponent {
           releaseSharedLock();
         }
       } catch (IOException e) {
-        throw new OSBTreeException("Error during element iteration", e);
+        throw OException.wrapException(new OSBTreeException("Error during element iteration", OSBTree.this), e);
       } finally {
         atomicOperationsManager.releaseReadLock(OSBTree.this);
       }
