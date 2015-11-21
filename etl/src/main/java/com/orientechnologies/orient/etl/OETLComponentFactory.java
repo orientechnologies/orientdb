@@ -62,6 +62,7 @@ public class OETLComponentFactory {
     registerExtractor(OJDBCExtractor.class);
     registerExtractor(ORowExtractor.class);
     registerExtractor(OJsonExtractor.class);
+    registerExtractor(OXmlExtractor.class);
     registerExtractor(OCSVExtractor.class);
 
     registerTransformer(OBlockTransformer.class);

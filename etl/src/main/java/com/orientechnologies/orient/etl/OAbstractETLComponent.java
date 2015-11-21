@@ -153,7 +153,7 @@ public abstract class OAbstractETLComponent implements OETLComponent {
 
   protected void log(final OETLProcessor.LOG_LEVELS iLevel, String iText, final Object... iArgs) {
     if (logLevel.ordinal() >= iLevel.ordinal()) {
-      final Long extractedNum = (Long) context.getVariable("extractedNum");
+      final Long extractedNum = context != null ? (Long) context.getVariable("extractedNum") : null;
       if (extractedNum != null)
         System.out.println("[" + extractedNum + ":" + getName() + "] " + iLevel + " " + String.format(iText, iArgs));
       else
