@@ -134,11 +134,6 @@ public class ODBFeatures {
         }
 
         @Override
-        public boolean supportsPersistence() {
-            return false;
-        }
-
-        @Override
         public boolean supportsThreadedTransactions() {
             return false;
         }
