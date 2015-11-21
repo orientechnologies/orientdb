@@ -1,23 +1,22 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
+import java.util.NoSuchElementException;
+
 import org.apache.tinkerpop.gremlin.structure.Element;
 import org.apache.tinkerpop.gremlin.structure.Property;
 import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
 import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
 
-import com.orientechnologies.orient.core.record.impl.ODocument;
+public class OrientVertexPropertyProperty<U> implements Property<U> {
 
-import java.util.NoSuchElementException;
+    private final String key;
+    private final U value;
+    private final OrientVertexProperty<?> source;
 
-public class OrientProperty<V> implements Property<V> {
-    protected String key;
-    protected V value;
-    protected OrientElement element;
-
-    public OrientProperty(String key, V value, OrientElement element) {
+    public OrientVertexPropertyProperty(String key, U value, OrientVertexProperty<?> orientVertexProperty) {
         this.key = key;
         this.value = value;
-        this.element = element;
+        this.source = orientVertexProperty;
     }
 
     @Override
@@ -26,7 +25,7 @@ public class OrientProperty<V> implements Property<V> {
     }
 
     @Override
-    public V value() throws NoSuchElementException {
+    public U value() throws NoSuchElementException {
         return value;
     }
 
@@ -37,15 +36,12 @@ public class OrientProperty<V> implements Property<V> {
 
     @Override
     public Element element() {
-        return this.element;
+        return source;
     }
 
     @Override
     public void remove() {
-        ODocument doc = element.getRawDocument();
-        doc.removeField(key);
-        doc.save();
-        this.value = null;
+        source.getMetadataDocument().removeField(key);
     }
 
     @Override

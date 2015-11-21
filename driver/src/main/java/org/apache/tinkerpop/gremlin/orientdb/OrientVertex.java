@@ -98,6 +98,7 @@ public final class OrientVertex extends OrientElement implements Vertex {
                 .filter(p -> !INTERNAL_FIELDS.contains(p.key()) )
                 .filter(p -> !p.key().startsWith("out_") )
                 .filter(p -> !p.key().startsWith("in_") )
+                .filter(p -> !p.key().startsWith("_meta_") )
                 .map(p ->
             (VertexProperty<V>) new OrientVertexProperty<>( p.key(), p.value(), (OrientVertex) p.element())
         ).iterator();
