@@ -36,28 +36,30 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
 
 public class OXmlExtractor extends OAbstractSourceExtractor {
-  protected OExtractedItem next;
-  private boolean attributesAsNodes = false;
-  private int     skipFirstLevels   = 0;
+  protected List               items           = new ArrayList();
+  private   Collection<String> tagsAsAttribute = new HashSet<String>();
+  private String rootNode;
 
   @Override
   public void configure(OETLProcessor iProcessor, ODocument iConfiguration, OCommandContext iContext) {
     super.configure(iProcessor, iConfiguration, iContext);
 
-    if (iConfiguration.containsField("attributesAsNodes"))
-      attributesAsNodes = (Boolean) iConfiguration.field("attributesAsNodes");
+    if (iConfiguration.containsField("rootNode"))
+      rootNode = (String) iConfiguration.field("rootNode");
 
-    if (iConfiguration.containsField("skipFirstLevels"))
-      skipFirstLevels = (Integer) iConfiguration.field("skipFirstLevels");
+    if (iConfiguration.containsField("tagsAsAttribute"))
+      tagsAsAttribute = (Collection<String>) iConfiguration.field("tagsAsAttribute");
   }
 
   @Override
   public boolean hasNext() {
-    return next != null;
+    return current<items.size();
   }
 
   @Override
@@ -65,11 +67,7 @@ public class OXmlExtractor extends OAbstractSourceExtractor {
     if (!hasNext())
       throw new NoSuchElementException("EOF");
 
-    try {
-      return next;
-    } finally {
-      next = null;
-    }
+    return new OExtractedItem(current, items.get((int) current++));
   }
 
   @Override
@@ -85,8 +83,11 @@ public class OXmlExtractor extends OAbstractSourceExtractor {
       final Document xmlDocument = dBuilder.parse(is);
       xmlDocument.getDocumentElement().normalize();
 
-      final ODocument doc = xml2doc(xmlDocument);
-      next = new OExtractedItem(current++, doc);
+      final Object res = xml2doc(xmlDocument);
+      if (res instanceof Collection)
+        items.addAll((Collection) res);
+      else
+        items.add(res);
 
     } catch (ParserConfigurationException e) {
       throw new OExtractorException("[XML extractor] error on creating XML parser", e);
@@ -96,12 +97,13 @@ public class OXmlExtractor extends OAbstractSourceExtractor {
 
   }
 
-  private ODocument xml2doc(final Node xmlDocument) {
-    return xml2doc(xmlDocument, 0);
+  private Object xml2doc(final Node xmlDocument) {
+    return xml2doc(xmlDocument, "", 0);
   }
 
-  private ODocument xml2doc(final Node xmlDocument, final int iLevel) {
+  private Object xml2doc(final Node xmlDocument, final String iPath, final int iLevel) {
     final ODocument doc = new ODocument();
+    Object result = doc;
 
     final NamedNodeMap attrs = xmlDocument.getAttributes();
     if (attrs != null)
@@ -117,34 +119,54 @@ public class OXmlExtractor extends OAbstractSourceExtractor {
       }
 
     final NodeList children = xmlDocument.getChildNodes();
-    if (children != null)
+    if (children != null) {
       for (int i = 0; i<children.getLength(); ++i) {
         final Node child = children.item(i);
         switch (child.getNodeType()) {
         case Node.ELEMENT_NODE: {
           final Element element = (Element) child;
-          ODocument linked = xml2doc(element, iLevel + 1);
 
-          final Object previous = doc.field(element.getNodeName());
-          if (previous != null) {
-            List list;
-            if (previous instanceof List) {
-              list = (List) previous;
-            } else {
-              // TRANSFORM IN A LIST
-              list = new ArrayList();
-              list.add(previous);
-              doc.field(element.getNodeName(), list, OType.EMBEDDEDLIST);
+          final String path = iPath.isEmpty() ? element.getNodeName() : iPath + "." + element.getNodeName();
+
+          if (tagsAsAttribute.contains(iPath)) {
+
+            final NodeList subChildren = element.getChildNodes();
+            if (subChildren.getLength()>0) {
+              final Node fieldContent = subChildren.item(0);
+              doc.field(element.getNodeName(), fieldContent.getTextContent());
             }
-            list.add(linked);
-          } else
-            doc.field(element.getNodeName(), linked, OType.EMBEDDED);
+
+          } else {
+
+            final Object sub = xml2doc(element, path, iLevel + 1);
+
+            final Object previous = doc.field(element.getNodeName());
+            if (previous != null) {
+              List list;
+              if (previous instanceof List) {
+                list = (List) previous;
+              } else {
+                // TRANSFORM IN A LIST
+                list = new ArrayList();
+                list.add(previous);
+                doc.field(element.getNodeName(), list, OType.EMBEDDEDLIST);
+              }
+              list.add(sub);
+            } else
+              doc.field(element.getNodeName(), sub, OType.EMBEDDED);
+
+            if (rootNode != null && rootNode.startsWith(path))
+              // SKIP
+              result = doc.field(element.getNodeName());
+          }
 
           break;
         }
         }
       }
-    return doc;
+    }
+
+    return result;
   }
 
   @Override
