@@ -234,6 +234,67 @@ ee.factory('Profiler', function ($http, $resource, $q) {
 });
 
 
+ee.factory('CommandCache', function ($http, $q) {
+
+
+  var resource = {}
+
+
+  /*
+   Get Cache configuration
+   */
+  resource.config = function (params) {
+
+    var deferred = $q.defer();
+    var text = API + 'commandCache/' + params.db;
+    if (params.server) {
+      text += "?node=" + params.server;
+    }
+    $http.get(text).success(function (data) {
+      deferred.resolve(data)
+    }).error(function (data, status, headers, config) {
+      deferred.reject({data: data, status: status});
+    });
+    return deferred.promise;
+  }
+
+  /*
+   Enable cache
+   */
+  resource.enable = function (params) {
+    var deferred = $q.defer();
+    var url = API + 'commandCache/' + params.db + "/enable";
+    if (params.server) {
+      url += "?node=" + params.server;
+    }
+    $http.put(url).success(function (data) {
+      deferred.resolve(data)
+    }).error(function (data, status, headers, config) {
+      deferred.reject({data: data, status: status});
+    });
+    return deferred.promise;
+  }
+
+  /*
+   Disable cache
+   */
+  resource.disable = function (params) {
+    var deferred = $q.defer();
+    var url = API + 'commandCache/' + params.db + "/disable";
+    if (params.server) {
+      url += "?node=" + params.server;
+    }
+    $http.put(url).success(function (data) {
+      deferred.resolve(data)
+    }).error(function (data, status, headers, config) {
+      deferred.reject({data: data, status: status});
+    });
+    return deferred.promise;
+  }
+  return resource;
+
+});
+
 ee.factory('Auditing', function ($http, $resource, $q, CommandApi) {
 
   var resource = $resource('');

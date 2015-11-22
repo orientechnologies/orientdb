@@ -1,0 +1,39 @@
+<div class="col-md-12">
+  <form class="studio-well">
+    <div class="row">
+      <div class="col-md-2">
+        <div class="checkbox">
+          <label>
+            <input type="checkbox" ng-model="cache.enabled" ng-change="changeEnable()">
+            Enabled
+          </label>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="form-group">
+          <label class="control-label">
+            Cache Size
+          </label>
+          <input type="number" class="form-control" ng-model="cache.size">
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="form-group">
+          <label class="control-label">
+            Cache Max Size
+          </label>
+          <input type="number" class="form-control" ng-model="cache.maxSize">
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="form-group">
+          <label class="control-label">
+            Evict Strategy
+          </label>
+          <select ng-options="s for s in strategies" class="form-control" ng-model="cache.evictStrategy">
+          </select>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>

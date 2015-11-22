@@ -1,0 +1,75 @@
+<div class="col-md-12">
+  <div class="row row-space-2x">
+
+    <div class="col-md-6">
+      <form class="form-search">
+        <div class="input-group">
+          <input type="text" class="input-xxlarge form-control search-query" ng-model="query"
+                 placeholder="Search query">
+                        <span class="input-group-btn">
+                        <button type="submit" class="btn" ng-click="">
+                          <i class="fa fa-search"></i>
+                        </button>
+                            </span>
+        </div>
+      </form>
+    </div>
+    <div class="col-md-6">
+      <div class="btn-toolbar pull-right">
+        <div class="btn-group">
+          <button href="javascript:void(0)" class="btn btn-primary btn-sm"
+                  ng-click="refresh()"><i
+            class="fa fa-refresh"></i>
+            Refresh
+          </button>
+
+        </div>
+        <div class="btn-group">
+          <button href="javascript:void(0)" class="btn btn-primary btn-sm"
+                  ng-click="refresh()"><i
+            class="fa fa-eraser"></i>
+            Clear
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  <div class="row row-space-2x">
+    <div class="col-md-12">
+      <table st-table="profiles" st-safe-src="safeCopy" class="table table-hover table-profiles">
+        <thead>
+        <tr>
+          <th>Type</th>
+          <th>Command</th>
+          <th>Users</th>
+          <th st-sort="entries">Entries</th>
+          <th st-sort="average">Average</th>
+          <th st-sort="total">Total</th>
+          <th st-sort="max">Max</th>
+          <th st-sort="min">Min</th>
+          <th st-sort="last">Last</th>
+          <th st-sort="lastExecution">Last Execution</th>
+        </tr>
+        <!--<tr>-->
+        <!--<th colspan="5"><input st-search=""  class="form-control" placeholder="global search ..." type="text"/></th>-->
+        <!--</tr>-->
+        </thead>
+        <tbody>
+        <tr ng-repeat="row in profiles | filter:query">
+          <td>{{row.name | ctype}}</td>
+          <td>{{row.name | cname}}</td>
+          <td>{{row.users}}</td>
+          <td>{{row.entries}}</td>
+          <td>{{row.average}}</td>
+          <td>{{row.total}}</td>
+          <td>{{row.max}}</td>
+          <td>{{row.min}}</td>
+          <td>{{row.last}}</td>
+          <td>{{row.lastExecution | formatDate}}</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

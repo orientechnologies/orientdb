@@ -1053,3 +1053,32 @@ div.users-ui div.container-fluid, div.role-ui div.container-fluid {
   font-weight: 700;
   line-height: 1;
 }
+
+/*BUTTONS*/
+.btn.sharp {
+  border-radius:0;
+}
+.btn {
+
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.btn:focus, .btn:active:focus, .btn.active:focus {
+  outline: 0 none;
+}
+
+.btn-primary {
+  border: 0 none;
+  background: #0099cc;
+  color: #ffffff;
+}
+
+.btn-primary:hover, .btn-primary:focus, .btn-primary:active, .btn-primary.active, .open > .dropdown-toggle.btn-primary {
+  background: #33a6cc;
+}
+
+.btn-primary:active, .btn-primary.active {
+  background: #007299;
+  box-shadow: none;
+}

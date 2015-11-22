@@ -334,17 +334,15 @@ ee.controller('ClusterOverviewController', function ($scope, $rootScope) {
 });
 
 
-ee.controller("ProfilerController", ['$scope', 'Profiler', 'Cluster', 'Spinner', 'Notification', function ($scope, Profiler, Cluster, Spinner, Notification) {
+ee.controller("ProfilerController", ['$scope', 'Profiler', 'Cluster', 'Spinner', 'Notification', 'CommandCache', function ($scope, Profiler, Cluster, Spinner, Notification, CommandCache) {
 
+
+  $scope.strategies = ["INVALIDATE_ALL", "PER_CLUSTER"];
 
   Cluster.node().then(function (data) {
     $scope.servers = data.members;
     $scope.server = $scope.servers[0];
 
-    if ($scope.server.databases.length > 0) {
-      $scope.db = $scope.server.databases[0];
-      $scope.refresh();
-    }
   });
 
   $scope.itemsByPage = 4;
@@ -368,7 +366,38 @@ ee.controller("ProfilerController", ['$scope', 'Profiler', 'Cluster', 'Spinner',
     })
   }
 
+  $scope.$watch('server', function (server) {
+    if (server) {
+      if ($scope.server.databases.length > 0) {
+        $scope.db = $scope.server.databases[0];
+      }
+    }
+  });
+  $scope.$watch('db', function (db) {
 
+    if (db) {
+      $scope.refresh();
+
+      CommandCache.config({server: $scope.server.name, db: $scope.db}).then(function (data) {
+        $scope.cache = data;
+      });
+    }
+  });
+
+  $scope.changeEnable = function () {
+
+
+    if ($scope.cache.enabled) {
+
+      CommandCache.enable({server: $scope.server.name, db: $scope.db}).then(function () {
+
+      });
+    } else {
+      CommandCache.disable({server: $scope.server.name, db: $scope.db}).then(function () {
+
+      });
+    }
+  }
   $scope.flatten = function (result, metricName) {
     var commands = new Array;
     Object.keys(result).forEach(function (e, i, a) {
