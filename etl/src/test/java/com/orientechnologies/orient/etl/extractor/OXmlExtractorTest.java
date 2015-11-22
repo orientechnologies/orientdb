@@ -57,10 +57,12 @@ public class OXmlExtractorTest extends ETLBaseTest {
     final ODocument ferrari = it.next();
     assertNotNull(ferrari);
     assertEquals("Ferrari", ferrari.field("name"));
+    assertEquals("red", ferrari.field("color"));
 
     final ODocument maserati = it.next();
     assertNotNull(maserati);
     assertEquals("Maserati", maserati.field("name"));
+    assertEquals("black", maserati.field("color"));
 
     System.out.println(doc.toJSON("prettyPrint"));
   }
