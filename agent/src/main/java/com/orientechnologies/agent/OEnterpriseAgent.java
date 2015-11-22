@@ -17,6 +17,7 @@
  */
 package com.orientechnologies.agent;
 
+import com.orientechnologies.agent.event.*;
 import com.orientechnologies.agent.hook.OAuditingHook;
 import com.orientechnologies.agent.hook.OAuditingLoggingThread;
 import com.orientechnologies.agent.http.command.*;
@@ -29,6 +30,7 @@ import com.orientechnologies.common.profiler.OProfilerStub;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -74,7 +76,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
       enabled = true;
       installProfiler();
       installCommands();
-
+      registerExecutors();
       auditingListener = new OAuditingListener(this);
       Orient.instance().addDbLifecycleListener(auditingListener);
 
@@ -205,7 +207,9 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
     listener.registerStatelessCommand(new OServerCommandGetSQLProfiler());
     listener.registerStatelessCommand(new OServerCommandPluginManager());
     listener.registerStatelessCommand(new OServerCommandGetNode());
+    listener.registerStatelessCommand(new OServerCommandQueryCacheManager());
     listener.registerStatelessCommand(new OServerCommandAuditing(this));
+
   }
 
   private void uninstallCommands() {
@@ -237,6 +241,15 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
     Orient.instance().getProfiler().startup();
 
     currentProfiler.shutdown();
+  }
+
+  private void registerExecutors() {
+    OEventController.getInstance().register(new OEventMetricMailExecutor());
+    OEventController.getInstance().register(new OEventLogMailExecutor());
+    OEventController.getInstance().register(new OEventLogFunctionExecutor());
+    OEventController.getInstance().register(new OEventMetricFunctionExecutor());
+    OEventController.getInstance().register(new OEventLogHttpExecutor());
+    OEventController.getInstance().register(new OEventMetricHttpExecutor());
   }
 
   private boolean checkLicense() {

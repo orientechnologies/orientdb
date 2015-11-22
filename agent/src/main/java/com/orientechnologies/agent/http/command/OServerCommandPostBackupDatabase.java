@@ -17,13 +17,7 @@ package com.orientechnologies.agent.http.command;
 
 import com.orientechnologies.agent.proxy.HttpProxyListener;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.security.OUser;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -32,7 +26,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.SocketException;
 import java.util.Date;
-import java.util.List;
 
 public class OServerCommandPostBackupDatabase extends OServerCommandDistributedScope implements OCommandOutputListener {
   public OServerCommandPostBackupDatabase() {
@@ -92,28 +85,7 @@ public class OServerCommandPostBackupDatabase extends OServerCommandDistributedS
     return false;
   }
 
-  protected ODatabaseDocumentTx getProfiledDatabaseInstance(final OHttpRequest iRequest) throws InterruptedException {
-    // after authentication, if current login user is different compare with current DB user, reset DB user to login user
-    ODatabaseDocumentInternal localDatabase = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
 
-    if (localDatabase == null) {
-      final List<String> parts = OStringSerializerHelper.split(iRequest.authorization, ':');
-      localDatabase = (ODatabaseDocumentTx) server.openDatabase(iRequest.databaseName, parts.get(0), parts.get(1));
-    } else {
-
-      String currentUserId = iRequest.data.currentUserId;
-      if (currentUserId != null && currentUserId.length() > 0 && localDatabase != null && localDatabase.getUser() != null) {
-        if (!currentUserId.equals(localDatabase.getUser().getIdentity().toString())) {
-          ODocument userDoc = localDatabase.load(new ORecordId(currentUserId));
-          localDatabase.setUser(new OUser(userDoc));
-        }
-      }
-    }
-
-    iRequest.data.lastDatabase = localDatabase.getName();
-    iRequest.data.lastUser = localDatabase.getUser() != null ? localDatabase.getUser().getName() : null;
-    return (ODatabaseDocumentTx) ((ODatabaseDocumentInternal) localDatabase).getDatabaseOwner();
-  }
 
   @Override
   public void onMessage(String iText) {
