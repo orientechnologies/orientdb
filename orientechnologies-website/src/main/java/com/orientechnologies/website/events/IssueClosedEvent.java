@@ -75,11 +75,7 @@ public class IssueClosedEvent extends EventInternal<IssueEvent> {
         try {
           mailMessage.setTo(actor);
           mailMessage.setFrom(comment.getActor().getName());
-          if (issue.getClient() != null) {
-            mailMessage.setSubject("[PrjHub!] " + issue.getTitle());
-          } else {
-            mailMessage.setSubject("[PrjHub] " + issue.getTitle());
-          }
+          mailMessage.setSubject(fillSubjectTags(issue));
           mailMessage.setText(htmlContent);
           sender.send(mailMessage);
         } catch (Exception e) {

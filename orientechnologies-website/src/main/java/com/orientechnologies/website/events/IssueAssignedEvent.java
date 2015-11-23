@@ -57,11 +57,7 @@ public class IssueAssignedEvent extends EventInternal<IssueEvent> {
       try {
         mailMessage.setTo(assignee.getEmail());
         mailMessage.setFrom(comment.getActor().getName());
-        if (issue.getClient() != null) {
-          mailMessage.setSubject("[PrjHub!] " + issue.getTitle());
-        } else {
-          mailMessage.setSubject("[PrjHub] " + issue.getTitle());
-        }
+        mailMessage.setSubject(fillSubjectTags(issue));
         mailMessage.setText(htmlContent);
         sender.send(mailMessage);
       } catch (Exception e) {

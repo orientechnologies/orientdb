@@ -94,4 +94,27 @@ public abstract class EventInternal<T> implements Consumer<Event<T>> {
     }
     return text;
   }
+
+  protected String fillSubjectTags(Issue issue) {
+    return prjHubTag(issue) + assigneeTag(issue) + " " + titleTag(issue);
+  }
+
+  private String assigneeTag(Issue issue) {
+    if (issue.getAssignee() != null) {
+      return "[" + issue.getAssignee().getUsername() + "]";
+    }
+    return "[NotAssigned]";
+  }
+
+  private String prjHubTag(Issue issue) {
+    if (issue.getClient() != null) {
+      return "[PrjHub!]";
+    } else {
+      return "[PrjHub]";
+    }
+  }
+
+  private String titleTag(Issue issue) {
+    return issue.getTitle();
+  }
 }

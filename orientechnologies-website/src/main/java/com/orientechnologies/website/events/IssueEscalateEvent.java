@@ -53,8 +53,7 @@ public class IssueEscalateEvent extends EventInternal<Map<String, Object>> {
     SimpleMailMessage mailMessage = new SimpleMailMessage();
     mailMessage.setTo(config.escalateMil);
     mailMessage.setFrom(user.getName());
-    String subject = "[PrjHub!] " + issue.getTitle();
-    mailMessage.setSubject(subject);
+    mailMessage.setSubject(fillSubjectTags(issue));
     mailMessage.setText(htmlContent);
     sender.send(mailMessage);
   }
