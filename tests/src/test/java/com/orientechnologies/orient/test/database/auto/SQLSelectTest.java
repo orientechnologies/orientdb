@@ -1276,7 +1276,6 @@ public class SQLSelectTest extends AbstractSelectTest {
 
     result = database.query(
         new OSQLSynchQuery<ODocument>("select * from " + facClass.getName() + " where context = 'test' order by date DESC", 1));
->>>>>>> 733ed2c... Added another test case to demonstrate issue #5002 with no success
 
     Calendar bigger = Calendar.getInstance();
     bigger.setTime((Date) result.get(0).field("date", Date.class));
