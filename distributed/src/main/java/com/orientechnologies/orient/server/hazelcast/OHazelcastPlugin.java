@@ -476,6 +476,15 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   @Override
   public void onDrop(final ODatabaseInternal iDatabase) {
     super.onDrop(iDatabase);
+
+    final String dbName = iDatabase.getName();
+
+    getConfigurationMap().remove(OHazelcastPlugin.CONFIG_DBSTATUS_PREFIX + getLocalNodeName() + "." + dbName);
+
+    final int availableNodes = getAvailableNodes(dbName);
+    if (availableNodes == 0)
+      // LAST NODE HOLDING THE DATABASE, DELETE DISTRIBUTED CFG TOO
+      getConfigurationMap().remove(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + dbName);
   }
 
   @SuppressWarnings("unchecked")
@@ -737,12 +746,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
   @Override
   public void mapEvicted(MapEvent event) {
-
   }
 
   @Override
   public void mapCleared(MapEvent event) {
-
   }
 
   @Override
@@ -1245,8 +1252,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         }
       }
 
-      if (distributedCfgDirty)
-        updateCachedDatabaseConfiguration(databaseName, cfg.serialize(), true, true);
+      if (distributedCfgDirty) {
+        final boolean deployToCluster = isNodeOnline(getLocalNodeName(), databaseName);
+
+        updateCachedDatabaseConfiguration(databaseName, cfg.serialize(), true, deployToCluster);
+      }
 
     } finally {
       lock.unlock();

@@ -61,7 +61,6 @@ import java.util.concurrent.locks.Lock;
  * each others.
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- *
  */
 public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
@@ -115,29 +114,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
     iRequest.setSenderNodeName(getLocalNodeName());
 
-    int onlineNodes;
-    if (iRequest.getTask().isRequireNodeOnline()) {
-      // CHECK THE ONLINE NODES
-      onlineNodes = 0;
-      int i = 0;
-      for (String node : iNodes) {
-        if (reqQueues[i].getValue() != null && manager.isNodeOnline(node, databaseName))
-          onlineNodes++;
-        else {
-          if (ODistributedServerLog.isDebugEnabled())
-            ODistributedServerLog.debug(this, getLocalNodeName(), node, DIRECTION.OUT,
-                "skip expected response from node '%s' for request %s because it's not online (queue=%s)", node, iRequest,
-                reqQueues[i].getValue() != null);
-        }
-        ++i;
-      }
-    } else {
-      // EXPECT ANSWER FROM ALL NODES WITH A QUEUE
-      onlineNodes = 0;
-      for (OPair<String, IQueue> q : reqQueues)
-        if (q.getValue() != null)
-          onlineNodes++;
-    }
+    final int onlineNodes = getOnlineNodes(iRequest, iNodes, databaseName, reqQueues);
 
     final int quorum = calculateQuorum(iRequest, iClusterNames, cfg, onlineNodes, iExecutionMode);
 
@@ -212,6 +189,34 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       throw new ODistributedException("Error on executing distributed request (" + iRequest + ") against database '" + databaseName
           + (iClusterNames != null ? "." + iClusterNames : "") + "' to nodes " + iNodes, e);
     }
+  }
+
+  protected int getOnlineNodes(final ODistributedRequest iRequest, final Collection<String> iNodes, final String databaseName,
+      OPair<String, IQueue>[] reqQueues) {
+    int onlineNodes;
+    if (iRequest.getTask().isRequireNodeOnline()) {
+      // CHECK THE ONLINE NODES
+      onlineNodes = 0;
+      int i = 0;
+      for (String node : iNodes) {
+        if (reqQueues[i].getValue() != null && manager.isNodeOnline(node, databaseName))
+          onlineNodes++;
+        else {
+          if (ODistributedServerLog.isDebugEnabled())
+            ODistributedServerLog.debug(this, getLocalNodeName(), node, DIRECTION.OUT,
+                "skip expected response from node '%s' for request %s because it's not online (queue=%s)", node, iRequest,
+                reqQueues[i].getValue() != null);
+        }
+        ++i;
+      }
+    } else {
+      // EXPECT ANSWER FROM ALL NODES WITH A QUEUE
+      onlineNodes = 0;
+      for (OPair<String, IQueue> q : reqQueues)
+        if (q.getValue() != null)
+          onlineNodes++;
+    }
+    return onlineNodes;
   }
 
   public boolean isRestoringMessages() {
