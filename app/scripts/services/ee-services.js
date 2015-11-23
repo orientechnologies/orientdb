@@ -220,6 +220,16 @@ ee.factory('Profiler', function ($http, $resource, $q) {
     return deferred.promise;
   }
 
+  resource.metadata = function(){
+    var deferred = $q.defer();
+    var text = API + 'profiler/metadata';
+    $http.get(text).success(function (data) {
+      deferred.resolve(data)
+    }).error(function (data, status, headers, config) {
+      deferred.reject({data: data, status: status});
+    });
+    return deferred.promise;
+  }
   resource.realtime = function () {
     var deferred = $q.defer();
     var text = API + 'profiler/realtime';
@@ -402,6 +412,20 @@ ee.factory('Plugins', function ($http, $q) {
 
   }
 
+  plugins.one = function (params) {
+    var deferred = $q.defer();
+    var url = API + 'plugins/' + params.plugin;
+    if (params.server) {
+      url += '?node=' + params.server;
+    }
+    $http.get(url).success(function (data) {
+      deferred.resolve(data)
+    }).error(function (data, status, headers, config) {
+      deferred.reject({data: data, status: status});
+    });
+    return deferred.promise;
+
+  }
   plugins.saveConfig = function (server, name, config) {
     var deferred = $q.defer();
     var url = API + 'plugins/' + name;

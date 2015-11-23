@@ -594,7 +594,9 @@ ee.controller('PluginsController', function ($scope, Plugins, Cluster, Notificat
 
     if (server) {
       Plugins.all(server.name).then(function (data) {
-        $scope.plugins = data.plugins;
+        $scope.plugins = data.plugins.filter(function (p) {
+          return p.name != 'ee-events';
+        });
         $scope.selectedPlugin = $scope.plugins[0];
         $scope.currentEditingPlugin = angular.copy($scope.selectedPlugin);
       })
@@ -806,3 +808,80 @@ ee.controller('ClusterSingleDBController', function ($scope, Cluster) {
 
   }
 })
+
+ee.controller('EventsController', function ($scope, Plugins, $modal, Cluster, Profiler) {
+
+  var PNAME = "ee-events";
+
+
+  $scope.alertValues = [">=", "<="];
+
+  $scope.parameters = ["value", "entries", "min", "max", "average", "total"];
+
+  $scope.levels = ['OFFLINE', 'ONLINE'];
+
+  $scope.eventWhen = ['MetricWhen', 'LogWhen'];
+
+  $scope.eventWhat = ['MailWhat'];
+
+  Plugins.one({plugin: 'mail'}).then(function (plugin) {
+    $scope.profiles = plugin.profiles;
+  });
+
+  Profiler.metadata().then(function (data) {
+    $scope.metadata = data.metadata;
+  });
+  Cluster.node().then(function (data) {
+    $scope.servers = data.members;
+    Plugins.one({plugin: PNAME}).then(function (plugin) {
+      $scope.config = plugin;
+      $scope.events = plugin.events;
+    });
+  });
+
+
+  $scope.addEvent = function () {
+    $scope.events.push({name: 'New Event', when: {name: $scope.eventWhen[0]}, what: {name: $scope.eventWhat[0]}});
+  }
+  $scope.dropEvent = function (e) {
+    var idx = $scope.events.indexOf(e);
+    $scope.events.splice(idx, 1);
+  }
+
+
+  $scope.configureWhen = function (when) {
+
+    var modalScope = $scope.$new(true);
+
+    modalScope.eventWhen = when;
+    modalScope.levels = $scope.levels;
+    modalScope.servers = $scope.servers;
+    modalScope.metadata = $scope.metadata;
+    modalScope.parameters = $scope.parameters;
+    modalScope.alertValues = $scope.alertValues;
+
+    var modalPromise = $modal({
+      template: 'views/server/distributed/events/' + when.name.toLowerCase().trim() + '.html',
+      scope: modalScope
+    });
+
+    modalPromise.$promise.then(modalPromise.show);
+  }
+  $scope.configureWhat = function (what) {
+
+    var modalScope = $scope.$new(true);
+
+    modalScope.eventWhat = what;
+    modalScope.profiles = $scope.profiles;
+    var modalPromise = $modal({
+      template: 'views/server/distributed/events/' + what.name.toLowerCase().trim() + '.html',
+      scope: modalScope
+    });
+    modalPromise.$promise.then(modalPromise.show);
+  }
+  $scope.saveConfig = function () {
+    Plugins.saveConfig("_all", PNAME, $scope.config).then(function (data) {
+      console.log(data);
+    })
+  }
+});

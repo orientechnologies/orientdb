@@ -1,0 +1,64 @@
+<div class="modal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h3>
+          <i class="fa fa-envelope"></i>
+          Mail Alert
+        </h3>
+
+      </div>
+      <div class="modal-body">
+        <form name="mailwhatform">
+          <fieldset class="form_mailwhat">
+
+            <div class="form-group">
+              <label>Mail Profile:</label>
+              <select ng-model="eventWhat.profile" ng-options="p.name as p.name for p in profiles" class="form-control">
+                <option value=""></option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>From:</label>
+              <input type="email" id="fromAddress" class="form-control" name="name" placeholder="from"
+                     ng-model="eventWhat['fromAddress']" required>
+            </div>
+            <div class="form-group">
+              <label>To:</label>
+              <input type="email" id="toAddress" name="name" class="form-control" placeholder="to"
+                     ng-model="eventWhat['toAddress']" required>
+            </div>
+            <div class="form-group">
+              <label>Cc:</label>
+              <input type="email" id="cc" name="name" class="form-control" placeholder="cc"
+                     ng-model="eventWhat['cc']">
+            </div>
+            <div class="form-group">
+              <label>Bcc:</label>
+              <input type="email" id="bcc" name="name" class="form-control" placeholder="bcc"
+                     ng-model="eventWhat['bcc']">
+            </div>
+            <div class="form-group">
+              <label>Subject:</label>
+              <input type="text" id="subject" name="name" class="form-control" class="input-block-level"
+                     placeholder="subject"
+                     ng-model="eventWhat['subject']" required>
+            </div>
+            <div class="form-group">
+              <label>Body:</label>
+                <textarea rows="3" id="description" name="body" class="form-control"
+                          style="height: 200px" placeholder="body" ng-model="eventWhat['body']" required></textarea>
+            </div>
+          </fieldset>
+        </form>
+
+      </div>
+
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-primary" ng-disabled="mailwhatform.$invalid" ng-click="$hide()">Submit
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
