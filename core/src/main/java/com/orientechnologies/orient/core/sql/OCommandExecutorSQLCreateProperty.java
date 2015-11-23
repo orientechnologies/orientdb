@@ -106,9 +106,11 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
     case EMBEDDED:
     case EMBEDDEDMAP:
     case EMBEDDEDLIST:
+    case EMBEDDEDSET:
     case LINK:
     case LINKMAP:
     case LINKLIST:
+    case LINKSET:
     	// See if the parsed word is a keyword if it is not, then we assume it to 
     	// be the linked type/class.
     	// TODO handle escaped strings.
