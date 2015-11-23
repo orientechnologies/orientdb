@@ -110,6 +110,7 @@ public class EventHelper {
 
     Map<String, Object> configuration = new HashMap<String, Object>();
 
+    String profile = "default";
     String subject = what.field("subject");
     String address = what.field("toAddress");
     String fromAddress = what.field("fromAddress");
@@ -117,11 +118,16 @@ public class EventHelper {
     String bcc = what.field("bcc");
     String body = what.field("body");
 
-    body = replaceText(body2name, body);
-    body = replaceMarkers(body);
+    if (body != null) {
+      body = replaceText(body2name, body);
+      body = replaceMarkers(body);
+    }
     configuration.put("to", address);
     configuration.put("from", fromAddress);
-    configuration.put("profile", "enterprise");
+    if (what.field("profile") != null) {
+      profile = what.field("profile");
+    }
+    configuration.put("profile", profile);
     configuration.put("message", body);
     configuration.put("cc", cc);
     configuration.put("bcc", bcc);

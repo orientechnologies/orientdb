@@ -42,10 +42,10 @@ public abstract class OEventMetricExecutor implements OEventExecutor {
 
     if (metricName.equalsIgnoreCase(whenMetricName)) {
 
-      if (whenOperator.equalsIgnoreCase("Greater Than") && metricValueD >= whenValue) {
+      if (whenOperator.equalsIgnoreCase(">=") && metricValueD >= whenValue) {
         return true;
       }
-      if (whenOperator.equalsIgnoreCase("Lesser Than") && metricValueD <= whenValue) {
+      if (whenOperator.equalsIgnoreCase("<=") && metricValueD <= whenValue) {
         return true;
       }
     }
