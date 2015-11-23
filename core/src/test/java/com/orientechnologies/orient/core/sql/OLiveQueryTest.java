@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.sql;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OLiveQuery;
 import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
@@ -64,7 +63,6 @@ public class OLiveQueryTest {
     }
   }
 
-  @Test(enabled = false)
   public void testLiveInsert() throws InterruptedException {
 
     ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OLiveQueryTest");
