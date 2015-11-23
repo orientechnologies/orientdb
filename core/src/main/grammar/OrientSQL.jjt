@@ -423,6 +423,8 @@ TOKEN :
 |
   < CLUSTER_IDENTIFIER: <CLUSTER> <COLON> <IDENTIFIER>  >
 |
+  < CLUSTER_NUMBER_IDENTIFIER: <CLUSTER> <COLON> <INTEGER_LITERAL>  >
+|
   < METADATA_IDENTIFIER: "metadata:" <IDENTIFIER>  >
 |
   < #LETTER:
@@ -1925,6 +1927,8 @@ OCluster Cluster():
 {
     (
 	    cName = <CLUSTER_IDENTIFIER> {jjtThis.clusterName = cName.image.split(":")[1];}
+	    |
+	    cName = <CLUSTER_NUMBER_IDENTIFIER> {jjtThis.clusterNumber = Integer.parseInt(cName.image.split(":")[1]);}
 	)
     { return jjtThis; }
 }

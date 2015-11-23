@@ -615,6 +615,11 @@ public class OSelectStatementTest {
     checkRightSyntax("select from Friend where @class instanceof 'E'");
   }
 
+  @Test
+  public void testSelectFromClusterNumber(){
+    checkRightSyntax("select from cluster:12");
+  }
+
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);
     try {
