@@ -34,7 +34,7 @@ import java.util.Collection;
  * Created by Enrico Risa on 18/11/15.
  */
 public class OServerCommandPluginManager extends OServerCommandDistributedScope {
-  private static final String[] NAMES = { "GET|plugins", "PUT|plugins/*" };
+  private static final String[] NAMES = { "GET|plugins", "GET|plugins/*", "PUT|plugins/*" };
 
   public OServerCommandPluginManager() {
     super("server.profiler");
@@ -45,16 +45,42 @@ public class OServerCommandPluginManager extends OServerCommandDistributedScope 
     final String[] parts = checkSyntax(iRequest.getUrl(), 1, "Syntax error: plugins");
 
     if (isLocalNode(iRequest)) {
-      if (parts.length == 1) {
-        doGetPlugins(iResponse);
+
+      if ("GET".equalsIgnoreCase(iRequest.httpMethod)) {
+        if (parts.length == 1) {
+          doGetPlugins(iResponse);
+        }
+        if (parts.length == 2) {
+          doGetPlugin(iResponse, parts[1]);
+        }
+      } else if ("PUT".equalsIgnoreCase(iRequest.httpMethod)) {
+        if (parts.length == 2) {
+          doUpdatePluginCfg(iRequest, iResponse, parts[1]);
+        }
       }
-      if (parts.length == 2) {
-        doUpdatePluginCfg(iRequest, iResponse, parts[1]);
-      }
+
     } else {
       proxyRequest(iRequest, iResponse);
     }
     return false;
+  }
+
+  private void doGetPlugin(OHttpResponse iResponse, String name) throws IOException {
+
+    OServerPluginInfo pluginByName = server.getPluginManager().getPluginByName(name);
+
+    if (pluginByName == null) {
+      throw new IllegalArgumentException("Cannot find plugin with name: " + name);
+    }
+    OServerPlugin instance = pluginByName.getInstance();
+
+    if (instance instanceof OServerPluginConfigurable) {
+
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, ((OServerPluginConfigurable) instance).getConfig()
+          .toJSON("prettyPrint"), null);
+    } else {
+      throw new IllegalArgumentException("Plugin with name: " + name + " is not configurable.");
+    }
   }
 
   private void doUpdatePluginCfg(OHttpRequest iRequest, OHttpResponse iResponse, String pluginName) throws IOException {

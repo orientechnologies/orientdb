@@ -21,6 +21,7 @@ import com.orientechnologies.agent.event.*;
 import com.orientechnologies.agent.hook.OAuditingHook;
 import com.orientechnologies.agent.hook.OAuditingLoggingThread;
 import com.orientechnologies.agent.http.command.*;
+import com.orientechnologies.agent.plugins.OEventPlugin;
 import com.orientechnologies.agent.profiler.OEnterpriseProfiler;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
@@ -30,7 +31,6 @@ import com.orientechnologies.common.profiler.OProfilerStub;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -42,6 +42,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
+import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 
 import java.util.Map;
 
@@ -76,7 +77,9 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
       enabled = true;
       installProfiler();
       installCommands();
-      registerExecutors();
+
+      installPlugins();
+
       auditingListener = new OAuditingListener(this);
       Orient.instance().addDbLifecycleListener(auditingListener);
 
@@ -120,6 +123,16 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
       installer.start();
       Orient.instance().addDbLifecycleListener(this);
     }
+  }
+
+  private void installPlugins() {
+
+    OEventPlugin eventPlugin = new OEventPlugin();
+
+    eventPlugin.config(server, null);
+    eventPlugin.startup();
+    server.getPluginManager().registerPlugin(
+        new OServerPluginInfo(eventPlugin.getName(), null, null, null, eventPlugin, null, 0, null));
   }
 
   @Override
@@ -243,14 +256,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
     currentProfiler.shutdown();
   }
 
-  private void registerExecutors() {
-    OEventController.getInstance().register(new OEventMetricMailExecutor());
-    OEventController.getInstance().register(new OEventLogMailExecutor());
-    OEventController.getInstance().register(new OEventLogFunctionExecutor());
-    OEventController.getInstance().register(new OEventMetricFunctionExecutor());
-    OEventController.getInstance().register(new OEventLogHttpExecutor());
-    OEventController.getInstance().register(new OEventMetricHttpExecutor());
-  }
+
 
   private boolean checkLicense() {
 

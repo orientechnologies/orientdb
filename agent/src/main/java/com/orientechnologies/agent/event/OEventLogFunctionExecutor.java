@@ -28,6 +28,7 @@ import javax.script.Invocable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 import java.util.List;
+import java.util.Map;
 
 @EventConfig(when = "LogWhen", what = "FunctionWhat")
 public class OEventLogFunctionExecutor extends OEventLogExecutor {
@@ -40,14 +41,15 @@ public class OEventLogFunctionExecutor extends OEventLogExecutor {
   public void execute(ODocument source, ODocument when, ODocument what) {
 
     // pre-conditions
-    fillMapResolve(source, when);
+
     if (canExecute(source, when)) {
-      executeFunction(what);
+      Map<String, Object> params = fillMapResolve(source, when);
+      executeFunction(what, params);
     }
   }
 
   @SuppressWarnings("restriction")
-  private void executeFunction(ODocument what) {
+  private void executeFunction(ODocument what, Map<String, Object> params) {
 
     String language = what.field("language");
     String name = what.field("name");
@@ -58,7 +60,7 @@ public class OEventLogFunctionExecutor extends OEventLogExecutor {
       args = new Object[iArgs.size()];
       int i = 0;
       for (Object arg : iArgs)
-        args[i++] = EventHelper.resolve(getBody2name(), arg);
+        args[i++] = EventHelper.resolve(params, arg);
     }
 
     final OScriptManager scriptManager = Orient.instance().getScriptManager();

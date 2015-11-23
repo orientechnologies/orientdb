@@ -43,19 +43,19 @@ public class OEventLogMailExecutor extends OEventLogExecutor {
 
     // pre-conditions
     if (canExecute(source, when)) {
-      fillMapResolve(source, when);
-      mailEvent(what);
+      Map<String, Object> params = fillMapResolve(source, when);
+      mailEvent(what, params);
     }
   }
 
-  public void mailEvent(ODocument what) {
+  public void mailEvent(ODocument what, Map<String, Object> params) {
     if (mailPlugin == null) {
 
       mailPlugin = OServerMain.server().getPluginByClass(OMailPlugin.class);
 
     }
 
-    Map<String, Object> configuration = EventHelper.createConfiguration(what, getBody2name());
+    Map<String, Object> configuration = EventHelper.createConfiguration(what, params);
 
     try {
       OLogManager.instance().info(this, "EMAIL sending email: %s", configuration);
