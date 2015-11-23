@@ -37,7 +37,6 @@ public class OrientGraphProvider extends AbstractGraphProvider {
     }
 
     private static final Map<Class<?>, List<String>> IGNORED_TESTS;
-
     static {
         IGNORED_TESTS = new HashMap<>();
         IGNORED_TESTS.put(GraphTest.class, asList(
@@ -55,6 +54,8 @@ public class OrientGraphProvider extends AbstractGraphProvider {
         HashMap<String, Object> configs = new HashMap<String, Object>();
         configs.put(Graph.GRAPH, OrientGraph.class.getName());
         configs.put("name", graphName);
+        if(testMethodName .equals("shouldPersistDataOnClose"))
+        	configs.put(OrientGraph.CONFIG_URL, "memory:test-" + graphName + "-" + test.getSimpleName() + "-" + testMethodName);
         return configs;
     }
 
