@@ -96,11 +96,6 @@ public class ODBFeatures {
         }
 
         @Override
-        public boolean supportsMetaProperties() {
-            return false;
-        }
-
-        @Override
         public VertexPropertyFeatures properties() {
             return OrientVertexPropertyFeatures.INSTANCE;
         }
