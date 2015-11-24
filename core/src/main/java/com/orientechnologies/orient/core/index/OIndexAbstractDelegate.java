@@ -139,9 +139,6 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
     return delegate.getMetadata();
   }
 
-  public ORID getIdentity() {
-    return delegate.getIdentity();
-  }
 
   public long rebuild() {
     return delegate.rebuild();

@@ -73,7 +73,6 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
  * @author Luca Garulli
  */
 public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientStartupListener, OOrientShutdownListener {
-  protected static final String                 CONFIG_MAP_RID   = "mapRid";
   protected static final String                 CONFIG_CLUSTERS  = "clusters";
   protected final OModificationLock             modificationLock = new OModificationLock();
   protected final OIndexEngine<T>               indexEngine;
@@ -286,23 +285,20 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
       algorithm = indexMetadata.getAlgorithm();
       valueContainerAlgorithm = indexMetadata.getValueContainerAlgorithm();
 
-      final ORID rid = config.field(CONFIG_MAP_RID, ORID.class);
-
       try {
-        indexEngine.load(rid, name, indexDefinition, determineValueSerializer(), isAutomatic());
+        indexEngine.load(name, indexDefinition, determineValueSerializer(), isAutomatic());
       } catch (Exception e) {
         OLogManager.instance().error(this, "Error during load of index '%s'", e, name != null ? name : "null");
 
         if (isAutomatic() && getStorage() instanceof OAbstractPaginatedStorage) {
           // AUTOMATIC REBUILD IT
-          OLogManager.instance()
-              .warn(this, "Cannot load index '%s' from storage (rid=%s): rebuilt it from scratch", getName(), rid);
+          OLogManager.instance().warn(this, "Cannot load index '%s' from storage rebuilt it from scratch", getName());
           try {
             rebuild();
           } catch (Throwable t) {
             OLogManager.instance().error(this,
-                "Cannot rebuild index '%s' from storage (rid=%s) because '" + t + "'. The index will be removed in configuration",
-                e, getName(), rid);
+                "Cannot rebuild index '%s' from storage because '" + t + "'. The index will be removed in configuration", e,
+                getName());
             // REMOVE IT
             return false;
           }
@@ -341,15 +337,6 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
     } finally {
       if (!txIsActive)
         keyLockManager.releaseSharedLock(key);
-    }
-  }
-
-  public ORID getIdentity() {
-    acquireSharedLock();
-    try {
-      return indexEngine.getIdentity();
-    } finally {
-      releaseSharedLock();
     }
   }
 
@@ -750,7 +737,6 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
     }
 
     newConfig.field(CONFIG_CLUSTERS, clustersToIndex, OType.EMBEDDEDSET);
-    newConfig.field(CONFIG_MAP_RID, indexEngine.getIdentity());
     newConfig.field(ALGORITHM, algorithm);
     newConfig.field(VALUE_CONTAINER_ALGORITHM, valueContainerAlgorithm);
   }

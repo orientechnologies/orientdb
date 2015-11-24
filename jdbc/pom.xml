@@ -23,7 +23,7 @@
     <parent>
         <groupId>com.orientechnologies</groupId>
         <artifactId>orientdb-parent</artifactId>
-        <version>2.1.5-SNAPSHOT</version>
+        <version>2.1.6</version>
         <relativePath>../</relativePath>
     </parent>
 
@@ -83,13 +83,16 @@
             </plugin>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>2.4</version>
+                <version>2.6</version>
                 <configuration>
-                    <finalName>${project.artifactId}-${project.version}-all</finalName>
-                    <appendAssemblyId>false</appendAssemblyId>
-                    <descriptorRefs>
-                        <descriptorRef>jar-with-dependencies</descriptorRef>
-                    </descriptorRefs>
+                    <descriptors>
+                        <descriptor>src/assembly/all.xml</descriptor>
+                    </descriptors>
+                    <!--<finalName>${project.artifactId}-${project.version}-all</finalName>-->
+                    <!--<appendAssemblyId>false</appendAssemblyId>-->
+                    <!--<descriptorRefs>-->
+                        <!--<descriptorRef>jar-with-dependencies</descriptorRef>-->
+                    <!--</descriptorRefs>-->
                 </configuration>
                 <executions>
                     <execution>

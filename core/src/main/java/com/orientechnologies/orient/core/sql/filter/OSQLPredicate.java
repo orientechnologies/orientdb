@@ -19,13 +19,6 @@
  */
 package com.orientechnologies.orient.core.sql.filter;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandPredicate;
@@ -41,6 +34,8 @@ import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorNot;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+
+import java.util.*;
 
 /**
  * Parses text in SQL format and build a tree of conditions.
@@ -272,12 +267,15 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
       if (word.length() == 0)
         break;
 
+      word = word.replaceAll("\\\\", "\\\\\\\\");
+
       final String uWord = word.toUpperCase();
 
       final int lastPosition = parserIsEnded() ? parserText.length() : parserGetCurrentPosition();
 
       if (word.length() > 0 && word.charAt(0) == OStringSerializerHelper.EMBEDDED_BEGIN) {
         braces++;
+
 
         // SUB-CONDITION
         parserSetCurrentPosition(lastPosition - word.length() + 1);
@@ -341,6 +339,7 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
             break;
         }
 
+        word = word.replaceAll("\\\\\\\\", "\\\\");
         result[i] = OSQLHelper.parseValue(this, this, word, context);
       }
     }

@@ -53,8 +53,7 @@ public class ORemoteIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void load(ORID indexRid, String indexName, OIndexDefinition indexDefinition, OStreamSerializer valueSerializer,
-      boolean isAutomatic) {
+  public void load(String indexName, OIndexDefinition indexDefinition, OStreamSerializer valueSerializer, boolean isAutomatic) {
   }
 
   @Override
@@ -67,10 +66,6 @@ public class ORemoteIndexEngine implements OIndexEngine {
     return false;
   }
 
-  @Override
-  public ORID getIdentity() {
-    return null;
-  }
 
   @Override
   public void clear() {

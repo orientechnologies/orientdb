@@ -23,7 +23,6 @@
 				<multicast-port>2434</multicast-port>
 			</multicast>
             <tcp-ip enabled="true">
-				<connection-timeout-seconds>1</connection-timeout-seconds>
                 <member>127.0.0.1:2434</member>
                 <member>127.0.0.1:2435</member>
                 <member>127.0.0.1:2436</member>

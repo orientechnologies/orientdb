@@ -15,17 +15,14 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import junit.framework.Assert;
-
 import org.junit.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
 
 /**
- * Distributed test on drop database and further create that must raise an error.
+ * Distributed test on drop + recreate database.
  */
-public class DistributedDbDropCannotCreateTest extends AbstractServerClusterTxTest {
+public class DistributedDbDropAndReCreateTest extends AbstractServerClusterTxTest {
   final static int SERVERS = 2;
 
   @Test
@@ -46,15 +43,8 @@ public class DistributedDbDropCannotCreateTest extends AbstractServerClusterTxTe
       db.drop();
 
       banner("RE-CREATING DATABASE ON SERVER " + s.getServerId());
-      try {
-        db.create();
-        Assert.fail("Creation of database after drop was allowed");
 
-      } catch (ODatabaseException e) {
-        Assert.assertTrue(e.getCause() instanceof ODistributedException);
-        Assert.assertEquals(e.getCause().getMessage(),
-            "Cannot create a new database with the same name of one available distributed");
-      }
+      db.create();
     }
   }
 

@@ -31,7 +31,7 @@ import org.testng.annotations.BeforeClass;
 public class LuceneCreateJavaApi extends BaseLuceneTest {
 
   public LuceneCreateJavaApi() {
-    super(true);
+    super();
   }
 
   @Override

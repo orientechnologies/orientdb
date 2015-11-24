@@ -45,7 +45,7 @@ public class LuceneListIndexing extends BaseLuceneTest {
   }
 
   public LuceneListIndexing(boolean remote) {
-    super(remote);
+    super();
   }
 
   @Override

@@ -409,7 +409,7 @@ TOKEN :
 
 TOKEN :
 {
-  < IDENTIFIER: ( (<DOLLAR>)? <LETTER> (<PART_LETTER>)* ) >
+  < IDENTIFIER: ( ((<DOLLAR>) | <LETTER>) (<PART_LETTER>)* ) >
 |
   < QUOTED_IDENTIFIER: ( "`" (~["`"]) (~["`"])*  "`") >
 |
@@ -422,6 +422,8 @@ TOKEN :
   < INDEXVALUESDESC_IDENTIFIER: ( "I" | "i") ( "N" | "n") ( "D" | "d") ( "E" | "e") ( "X" | "x") ( "V" | "v") ( "A" | "a") ( "L" | "l") ( "U" | "u") ( "E" | "e") ( "S" | "s") ( "D" | "d") ( "E" | "e") ( "S" | "s") ( "C" | "c") ":" <IDENTIFIER> ( ( <DOT> | <MINUS> ) <IDENTIFIER> )*  >
 |
   < CLUSTER_IDENTIFIER: <CLUSTER> <COLON> <IDENTIFIER>  >
+|
+  < CLUSTER_NUMBER_IDENTIFIER: <CLUSTER> <COLON> <INTEGER_LITERAL>  >
 |
   < METADATA_IDENTIFIER: "metadata:" <IDENTIFIER>  >
 |
@@ -1925,6 +1927,8 @@ OCluster Cluster():
 {
     (
 	    cName = <CLUSTER_IDENTIFIER> {jjtThis.clusterName = cName.image.split(":")[1];}
+	    |
+	    cName = <CLUSTER_NUMBER_IDENTIFIER> {jjtThis.clusterNumber = Integer.parseInt(cName.image.split(":")[1]);}
 	)
     { return jjtThis; }
 }

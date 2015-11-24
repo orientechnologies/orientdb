@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -154,12 +155,22 @@ public class OCommandExecutorSQLSelectTest {
     initDatesSet(db);
 
     initMatchesWithRegex(db);
+    initDistinctLimit(db);
   }
 
   private void initMatchesWithRegex(ODatabaseInternal<ORecord> db) {
     db.command(new OCommandSQL("CREATE class matchesstuff")).execute();
 
     db.command(new OCommandSQL("insert into matchesstuff (name, foo) values ('admin[name]', 1)")).execute();
+  }
+
+  private void initDistinctLimit(ODatabaseInternal<ORecord> db) {
+    db.command(new OCommandSQL("CREATE class DistinctLimit")).execute();
+
+    db.command(new OCommandSQL("insert into DistinctLimit (name, foo) values ('one', 1)")).execute();
+    db.command(new OCommandSQL("insert into DistinctLimit (name, foo) values ('one', 1)")).execute();
+    db.command(new OCommandSQL("insert into DistinctLimit (name, foo) values ('two', 2)")).execute();
+    db.command(new OCommandSQL("insert into DistinctLimit (name, foo) values ('two', 2)")).execute();
   }
 
   private void initDatesSet(ODatabaseDocumentTx db) {
@@ -895,6 +906,73 @@ public class OCommandExecutorSQLSelectTest {
     assertEquals(results.size(), 1);
   }
 
+  @Test
+  public void testMatchesWithQuotes(){
+    //issue #5229
+    String pattern = Pattern.quote("adm")+".*";
+    OSQLSynchQuery sql = new OSQLSynchQuery("SELECT FROM matchesstuff WHERE (name matches ?)");
+    List<ODocument> results = db.query(sql, pattern);
+    assertEquals(results.size(), 1);
+  }
+
+  @Test
+  public void testMatchesWithQuotes2(){
+    //issue #5229
+    OSQLSynchQuery sql = new OSQLSynchQuery("SELECT FROM matchesstuff WHERE (name matches '\\\\Qadm\\\\E.*' and not ( name matches '(.*)foo(.*)' ) )");
+    List<ODocument> results = db.query(sql);
+    assertEquals(results.size(), 1);
+  }
+
+  @Test
+  public void testMatchesWithQuotes3(){
+    //issue #5229
+    OSQLSynchQuery sql = new OSQLSynchQuery("SELECT FROM matchesstuff WHERE (name matches '\\\\Qadm\\\\E.*' and  ( name matches '\\\\Qadmin\\\\E.*' ) )");
+    List<ODocument> results = db.query(sql);
+    assertEquals(results.size(), 1);
+  }
+
+  @Test
+  public void testParamWithMatchesAndNot(){
+    //issue #5229
+    Map<String, Object> params = new HashMap<String, Object>();
+    params.put("param1", "adm.*");
+    params.put("param2", "foo.*");
+    OSQLSynchQuery sql = new OSQLSynchQuery("select from OUser where (name matches :param1 and not (name matches :param2))");
+    List<ODocument> results = db.query(sql, params);
+    assertEquals(results.size(), 1);
+
+    params.put("param1",  Pattern.quote("adm") + ".*");
+    results = db.query(sql, params);
+    assertEquals(results.size(), 1);
+  }
+
+  @Test
+  public void testDistinctLimit(){
+    OSQLSynchQuery sql = new OSQLSynchQuery("select distinct(name) from DistinctLimit limit 1");
+    List<ODocument> results = db.query(sql);
+    assertEquals(results.size(), 1);
+
+    sql = new OSQLSynchQuery("select distinct(name) from DistinctLimit limit 2");
+    results = db.query(sql);
+    assertEquals(results.size(), 2);
+
+    sql = new OSQLSynchQuery("select distinct(name) from DistinctLimit limit 3");
+    results = db.query(sql);
+    assertEquals(results.size(), 2);
+
+    sql = new OSQLSynchQuery("select distinct(name) from DistinctLimit limit -1");
+    results = db.query(sql);
+    assertEquals(results.size(), 2);
+  }
+
+  @Test
+  public void testSelectFromClusterNumber() {
+    OClass clazz = db.getMetadata().getSchema().getClass("DistinctLimit");
+    int firstCluster = clazz.getClusterIds()[0];
+    OSQLSynchQuery sql = new OSQLSynchQuery("select from cluster:" + firstCluster + " limit 1");
+    List<ODocument> results = db.query(sql);
+    assertEquals(results.size(), 1);
+  }
 
   private long indexUsages(ODatabaseDocumentTx db) {
     final long oldIndexUsage;

@@ -128,6 +128,9 @@ public class OSelectStatementTest {
     checkWrongSyntax("select Foo where name = 'foo'");
     checkWrongSyntax("select * Foo where name = 'foo'");
 
+    //issue #5221
+    checkRightSyntax("select $1 let $1 = (select from Foo where name = 'foo')");
+
   }
 
   @Test
@@ -610,6 +613,11 @@ public class OSelectStatementTest {
   public void testInstanceOfE(){
     //issue #5212
     checkRightSyntax("select from Friend where @class instanceof 'E'");
+  }
+
+  @Test
+  public void testSelectFromClusterNumber(){
+    checkRightSyntax("select from cluster:12");
   }
 
   private void printTree(String s) {

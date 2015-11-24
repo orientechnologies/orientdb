@@ -114,6 +114,9 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
       // CLUSTER EXHAUSTED, TRY WITH THE PREVIOUS ONE
       currentClusterIdx--;
 
+      if (currentClusterIdx < 0)
+        break;
+
       updateClusterRange();
     }
 

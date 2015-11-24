@@ -72,13 +72,7 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
   public Iterator<OIdentifiable> iterator() {
     return new OLazyRecordIterator(new OLazyIterator<OIdentifiable>() {
       {
-        ORecordElement cur = null;
-        if (sourceRecord != null)
-          cur = sourceRecord.getOwner();
-        if (!(cur instanceof ODocument))
-          cur = sourceRecord;
-
-        if (OSerializationSetThreadLocal.check((ODocument) cur)) {
+        if (!OSerializationSetThreadLocal.INSTANCE.get().isEmpty()) {
           iter = new HashSet<Entry<OIdentifiable, Object>>(ORecordLazySet.super.map.entrySet()).iterator();
         } else
           iter = ORecordLazySet.super.map.entrySet().iterator();
