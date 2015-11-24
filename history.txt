@@ -27,6 +27,10 @@
 This document contains the last changes of OrientDB Community Edition.
 
 -----------------------------------------------------------------------------------------------------------------------------------
+VERSION 2.1.6 - (November, 23 2015)
+- Core (30): https://github.com/orientechnologies/orientdb/issues?q=milestone%3A2.1.6
+
+-----------------------------------------------------------------------------------------------------------------------------------
 VERSION 2.1.5 - (October, 29 2015)
 - Core (27): https://github.com/orientechnologies/orientdb/issues?q=milestone%3A2.1.5
 
