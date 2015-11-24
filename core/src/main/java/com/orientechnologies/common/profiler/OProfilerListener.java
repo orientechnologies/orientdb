@@ -27,4 +27,6 @@ public interface OProfilerListener {
   public void onUpdateCounter(String iName, long counter, long recordingFrom, long recordingTo);
 
   public void onUpdateChrono(OProfilerEntry chrono);
+
+  public void onSnapshotCreated(Object snapshot);
 }
