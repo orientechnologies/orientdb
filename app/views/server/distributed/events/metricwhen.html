@@ -24,6 +24,9 @@
               </select>
             </div>
 
+            <div class="form-group studio-well-tips">
+              <span>{{metadata[eventWhen.type].description}}</span>
+            </div>
             <div class="form-group">
               <label>Parameter:</label>
               <select class="form-control" ng-model="eventWhen['parameter']"
@@ -42,7 +45,7 @@
 
             <div class="form-group">
               <label>Value:</label>
-              <input type="text" class="form-control" ng-model="eventWhen['value']">
+              <input type="number" class="form-control" ng-model="eventWhen['value']">
             </div>
 
           </fieldset>

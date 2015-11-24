@@ -16,22 +16,20 @@ notification.factory('Notification', function ($timeout, $rootScope) {
       this.warnings.splice(0, this.warnings.length);
 
 
+      var n;
       if (notification.error) {
         if (typeof notification.content != 'string') {
           notification.content = notification.content.errors[0].content;
         }
-        this.errors.push(notification);
+        noty({text: notification.content, layout: 'bottom', type: 'error', theme: 'relax'});
       } else if (notification.warning) {
-        this.warnings.push(notification);
+        n = noty({text: notification.content, layout: 'bottom', type: 'warning', theme: 'relax'});
+      } else {
+        n = noty({text: notification.content, layout: 'bottom', type: 'success', theme: 'relax'});
       }
-      else {
-        this.notifications.push(notification);
-      }
-      var self = this;
-      if (!notification.error) {
-        self.stopTimer();
-        self.startTimer();
-      }
+      $timeout(function () {
+        n.close();
+      }, 4000);
     },
     startTimer: function () {
       var self = this;

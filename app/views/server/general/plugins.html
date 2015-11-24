@@ -5,6 +5,7 @@
   </div>
 
   <div class="row row-space">
+
     <tabset clazz="clazz">
       <tab ng-repeat="plugin in plugins" context="plugin" title="{{plugin.name}}"
            template-url=" {{pluginTemplate(plugin)}}"></tab>

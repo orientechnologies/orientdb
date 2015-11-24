@@ -1030,6 +1030,11 @@ div.users-ui div.container-fluid, div.role-ui div.container-fluid {
   padding: 20px;
   border-left: 3px solid #a3a3a3;
 }
+.studio-well-tips {
+  background-color: #f4f4f4;
+  padding: 10px;
+  border-left: 3px solid #2CC185;
+}
 
 .field-set {
   border-radius: 6px;

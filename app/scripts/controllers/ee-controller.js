@@ -809,7 +809,7 @@ ee.controller('ClusterSingleDBController', function ($scope, Cluster) {
   }
 })
 
-ee.controller('EventsController', function ($scope, Plugins, $modal, Cluster, Profiler) {
+ee.controller('EventsController', function ($scope, Plugins, $modal, Cluster, Profiler, Notification) {
 
   var PNAME = "ee-events";
 
@@ -860,6 +860,26 @@ ee.controller('EventsController', function ($scope, Plugins, $modal, Cluster, Pr
     modalScope.parameters = $scope.parameters;
     modalScope.alertValues = $scope.alertValues;
 
+
+    if (when.name === 'MetricWhen') {
+
+      modalScope.$watch('eventWhen.type', function (data, old) {
+
+        if (data) {
+          if (modalScope.metadata[data].type === 'CHRONO') {
+            modalScope.parameters = ["entries", "min", "max", "average", "total"];
+          } else {
+            modalScope.parameters = ["value"];
+          }
+          if (modalScope.eventWhen.parameter) {
+
+            if (!old || old != data) {
+              modalScope.eventWhen.parameter = null;
+            }
+          }
+        }
+      })
+    }
     var modalPromise = $modal({
       template: 'views/server/distributed/events/' + when.name.toLowerCase().trim() + '.html',
       scope: modalScope
@@ -881,7 +901,41 @@ ee.controller('EventsController', function ($scope, Plugins, $modal, Cluster, Pr
   }
   $scope.saveConfig = function () {
     Plugins.saveConfig("_all", PNAME, $scope.config).then(function (data) {
-      console.log(data);
+      Notification.push({content: "Events configuration saved correctly", autoHide: true});
     })
   }
+});
+
+ee.controller('MetricsController', function ($scope, Cluster) {
+
+  $scope.clazz = 'tabs-style-linebox';
+
+
+  $scope.$watch('server', function (server) {
+
+    Cluster.stats(server.name).then(function (data) {
+
+      $scope.chronos = Object.keys(data.realtime.chronos).filter(function (k) {
+        return k.match(/db.*command/g) == null;
+      }).map(function (k) {
+        var obj = {};
+        angular.copy(data.realtime.chronos[k], obj);
+        obj.name = k;
+        return obj
+      });
+
+      $scope.counters = Object.keys(data.realtime.counters).map(function (k) {
+        var obj = {};
+        obj.name = k;
+        obj.value = data.realtime.counters[k];
+        return obj
+      });
+      $scope.hookValues = Object.keys(data.realtime.hookValues).map(function (k) {
+        var obj = {};
+        obj.name = k;
+        obj.value = data.realtime.hookValues[k];
+        return obj
+      });
+    })
+  })
 });
