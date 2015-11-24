@@ -114,6 +114,13 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.Callable;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.concurrent.Callable;
+
 @SuppressWarnings("unchecked")
 public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>implements ODatabaseDocumentInternal {
 
@@ -527,12 +534,15 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
 
   public void callOnDropListeners() {
     // WAKE UP DB LIFECYCLE LISTENER
-    for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
+    for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();) {
+      activateOnCurrentThread();
       it.next().onDrop(getDatabaseOwner());
+    }
 
     // WAKE UP LISTENERS
     for (ODatabaseListener listener : getListenersCopy())
       try {
+        activateOnCurrentThread();
         listener.onDelete(getDatabaseOwner());
       } catch (Throwable t) {
         t.printStackTrace();
