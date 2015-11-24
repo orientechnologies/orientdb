@@ -6,6 +6,7 @@ import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseFactory;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -69,27 +70,58 @@ public final class OrientGraph implements Graph {
 
     protected final ODatabaseDocumentTx database;
     protected final Features features;
-    protected final String url;
-    private final Configuration configuration;
+//    protected final String url;
+    protected final Configuration configuration;
+    protected final OPartitionedDatabasePool pool;
 
-    public static OrientGraph open(final Configuration configuration) {
-        return new OrientGraph(configuration);
-    }
-
-    public OrientGraph(Configuration config) {
-        this.configuration = config;
-        if (config.getBoolean(CONFIG_TRANSACTIONAL, false)) {
+    public OrientGraph(final ODatabaseDocumentTx database, final Configuration configuration) {
+        this.pool = null;
+        this.database = database;
+        this.configuration = configuration;
+        if (configuration.getBoolean(CONFIG_TRANSACTIONAL, false)) {
             this.features = ODBFeatures.OrientFeatures.INSTANCE_TX;
         } else {
             this.features = ODBFeatures.OrientFeatures.INSTANCE_NOTX;
         }
-        this.url = config.getString(CONFIG_URL, "memory:test-" + Math.random());
-        this.database = getDatabase(url,
-            config.getString(CONFIG_USER, "admin"),
-            config.getString(CONFIG_PASS, "admin"),
-            config.getBoolean(CONFIG_CREATE, true),
-            config.getBoolean(CONFIG_OPEN, true));
+//        this.url = config.getString(CONFIG_URL, "memory:test-" + Math.random());
+//        this.database = getDatabase(url,
+//            config.getString(CONFIG_USER, "admin"),
+//            config.getString(CONFIG_PASS, "admin"),
+//            config.getBoolean(CONFIG_CREATE, true),
+//            config.getBoolean(CONFIG_OPEN, true));
     }
+
+    public OrientGraph(final OPartitionedDatabasePool pool, final Configuration configuration) {
+        this.pool = pool;
+        this.database = pool.acquire();
+        makeActive();
+        this.configuration = configuration;
+        if (configuration.getBoolean(CONFIG_TRANSACTIONAL, false)) {
+            this.features = ODBFeatures.OrientFeatures.INSTANCE_TX;
+        } else {
+            this.features = ODBFeatures.OrientFeatures.INSTANCE_NOTX;
+        }
+//        this.url = config.getString(CONFIG_URL, "memory:test-" + Math.random());
+//        this.database = getDatabase(url,
+//            config.getString(CONFIG_USER, "admin"),
+//            config.getString(CONFIG_PASS, "admin"),
+//            config.getBoolean(CONFIG_CREATE, true),
+//            config.getBoolean(CONFIG_OPEN, true));
+    }
+
+//    /**
+//     * @param create if true automatically creates database if database with given URL does not exist
+//     * @param open   if true automatically opens the database
+//     */
+//    protected ODatabaseDocumentTx getDatabase(String url, String user, String password, boolean create, boolean open) {
+//        final ODatabaseDocumentTx db = new ODatabaseFactory().createDatabase("graph", url);
+//        if (!db.getURL().startsWith("remote:") && !db.exists()) {
+//            if (create) db.create();
+//            else if (open) throw new ODatabaseException("Database '" + url + "' not found");
+//        } else if (open) db.open(user, password);
+//
+//        return db;
+//    }
 
     public Features features() {
         return features;
@@ -105,20 +137,6 @@ public final class OrientGraph implements Graph {
             database.activateOnCurrentThread();
             ODatabaseRecordThreadLocal.INSTANCE.set(database);
         }
-    }
-
-    /**
-     * @param create if true automatically creates database if database with given URL does not exist
-     * @param open   if true automatically opens the database
-     */
-    protected ODatabaseDocumentTx getDatabase(String url, String user, String password, boolean create, boolean open) {
-        final ODatabaseDocumentTx db = new ODatabaseFactory().createDatabase("graph", url);
-        if (!db.getURL().startsWith("remote:") && !db.exists()) {
-            if (create) db.create();
-            else if (open) throw new ODatabaseException("Database '" + url + "' not found");
-        } else if (open) db.open(user, password);
-
-        return db;
     }
 
     @Override
@@ -390,6 +408,7 @@ public final class OrientGraph implements Graph {
     public void close() throws Exception {
         makeActive();
         boolean commitTx = true;
+        String url = database.getURL();
 
         try {
             if (!database.isClosed() && commitTx) {
