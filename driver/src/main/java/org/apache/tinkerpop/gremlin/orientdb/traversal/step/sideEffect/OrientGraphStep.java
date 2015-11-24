@@ -53,7 +53,7 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E> imple
             Optional<OrientIndexQuery> indexQueryOption = findIndex();
             if (indexQueryOption.isPresent()) {
                 OrientIndexQuery indexQuery = indexQueryOption.get();
-                OLogManager.instance().info(this, "using " + indexQuery);
+                OLogManager.instance().debug(this, "using " + indexQuery);
                 Stream<OrientVertex> indexedVertices = graph.getIndexedVertices(indexQuery.index, indexQuery.value);
                 return indexedVertices
                         .filter(vertex -> HasContainer.testAll(vertex, this.hasContainers))
