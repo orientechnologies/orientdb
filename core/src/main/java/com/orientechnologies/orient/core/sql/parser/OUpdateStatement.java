@@ -90,7 +90,7 @@ public class OUpdateStatement extends OStatement {
   }
 
   protected String getStatementType() {
-    return "UPDATE";
+    return "UPDATE ";
   }
 
 }

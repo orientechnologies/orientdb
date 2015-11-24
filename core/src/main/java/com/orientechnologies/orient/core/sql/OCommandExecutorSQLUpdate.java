@@ -335,6 +335,9 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
    * @param record the edge record
    */
   private void handleUpdateEdge(ODocument record) {
+    if(!updateEdge){
+      return;
+    }
     Object currentOut = record.field("out");
     Object currentIn = record.field("in");
 
