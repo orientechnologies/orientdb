@@ -182,7 +182,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
                 ODistributedServerLog.error(this, dManager != null ? dManager.getLocalNodeName() : "?", null, ODistributedServerLog.DIRECTION.OUT, "Error on executing asynchronous operation", e);
           }
         }
-        ODistributedServerLog.warn(this, dManager != null ? dManager.getLocalNodeName() : "?", null, ODistributedServerLog.DIRECTION.NONE, "Shutdown asynchronous queue worker completed");
+        ODistributedServerLog.warn(this, dManager != null ? dManager.getLocalNodeName() : "?", null, ODistributedServerLog.DIRECTION.NONE, "Shutdown asynchronous queue worker for database '%s' completed", wrapped.getName());
       }
     };
     asynchWorker.setName("OrientDB Distributed asynch ops node=" + getNodeId() + " db=" + getName());
