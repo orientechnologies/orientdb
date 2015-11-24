@@ -1,8 +1,8 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
-import org.apache.tinkerpop.gremlin.structure.util.AbstractTransaction;
+import org.apache.tinkerpop.gremlin.structure.util.AbstractThreadLocalTransaction;
 
-public class OrientTransaction extends AbstractTransaction {
+public class OrientTransaction extends AbstractThreadLocalTransaction {
 
     protected OrientGraph graph;
 

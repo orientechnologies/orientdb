@@ -1,16 +1,21 @@
 package org.apache.tinkerpop.gremlin.orientdb.traversal.step.sideEffect;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexManagerProxy;
-import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
-import org.apache.tinkerpop.gremlin.orientdb.OrientIndexQuery;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
+import org.apache.tinkerpop.gremlin.orientdb.OrientIndexQuery;
 import org.apache.tinkerpop.gremlin.orientdb.OrientVertex;
 import org.apache.tinkerpop.gremlin.process.traversal.Compare;
 import org.apache.tinkerpop.gremlin.process.traversal.step.HasContainerHolder;
-import org.apache.tinkerpop.gremlin.process.traversal.step.sideEffect.GraphStep;
+import org.apache.tinkerpop.gremlin.process.traversal.step.map.GraphStep;
 import org.apache.tinkerpop.gremlin.process.traversal.step.util.HasContainer;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Element;
@@ -19,18 +24,20 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
 import org.javatuples.Pair;
 
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import com.google.common.annotations.VisibleForTesting;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexManagerProxy;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 
-public class OrientGraphStep<S extends Element> extends GraphStep<S> implements HasContainerHolder {
+public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E> implements HasContainerHolder {
 
     private final List<HasContainer> hasContainers = new ArrayList<>();
 
-    public OrientGraphStep(final GraphStep<S> originalGraphStep) {
-        super(originalGraphStep.getTraversal(), originalGraphStep.getReturnClass(), originalGraphStep.getIds());
+    public OrientGraphStep(final GraphStep<S, E> originalGraphStep) {
+        super(originalGraphStep.getTraversal(), originalGraphStep.getReturnClass(), originalGraphStep.isStartStep(), originalGraphStep.getIds());
         originalGraphStep.getLabels().forEach(this::addLabel);
-        this.setIteratorSupplier(() -> (Iterator<S>) (isVertexStep() ? this.vertices() : this.edges()));
+        this.setIteratorSupplier(() -> (Iterator<E>) (isVertexStep() ? this.vertices() : this.edges()));
     }
 
     private boolean isVertexStep() {

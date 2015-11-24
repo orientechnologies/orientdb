@@ -11,8 +11,8 @@ import org.javatuples.Pair;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.fasterxml.jackson.databind.Module;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.tinkerpop.shaded.jackson.databind.Module;
+import org.apache.tinkerpop.shaded.jackson.databind.ObjectMapper;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 
