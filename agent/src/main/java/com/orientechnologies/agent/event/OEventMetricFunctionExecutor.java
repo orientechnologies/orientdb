@@ -28,7 +28,7 @@ import javax.script.Invocable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
-@EventConfig(when = "MetricsWhen", what = "FunctionWhat")
+@EventConfig(when = "MetricWhen", what = "FunctionWhat")
 public class OEventMetricFunctionExecutor extends OEventMetricExecutor {
 
   public OEventMetricFunctionExecutor() {

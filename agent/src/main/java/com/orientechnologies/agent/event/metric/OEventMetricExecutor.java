@@ -30,22 +30,22 @@ public abstract class OEventMetricExecutor implements OEventExecutor {
 
   public boolean canExecute(ODocument source, ODocument when) {
 
-    String whenMetricName = when.field("name");
+    String whenMetricName = when.field("type");
     String whenOperator = when.field("operator");
     String whenParameter = when.field("parameter");
-    Double whenValue = when.field("value"); // Integer
+    Number whenValue = (Number) OType.convert(when.field("value"), Number.class); // Integer
 
     String metricName = source.field("name");
 
     Object metricValue = source.field(whenParameter);
-    Double metricValueD = (Double) OType.convert(metricValue, Double.class);
+    Number metricValueD = (Number) OType.convert(metricValue, Number.class);
 
     if (metricName.equalsIgnoreCase(whenMetricName)) {
 
-      if (whenOperator.equalsIgnoreCase(">=") && metricValueD >= whenValue) {
+      if (whenOperator.equalsIgnoreCase(">=") && metricValueD.doubleValue() >= whenValue.doubleValue()) {
         return true;
       }
-      if (whenOperator.equalsIgnoreCase("<=") && metricValueD <= whenValue) {
+      if (whenOperator.equalsIgnoreCase("<=") && metricValueD.doubleValue() <= whenValue.doubleValue()) {
         return true;
       }
     }

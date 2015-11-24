@@ -27,7 +27,7 @@ import com.orientechnologies.orient.server.plugin.mail.OMailPlugin;
 import javax.mail.MessagingException;
 import java.util.Map;
 
-@EventConfig(when = "MetricsWhen", what = "MailWhat")
+@EventConfig(when = "MetricWhen", what = "MailWhat")
 public class OEventMetricMailExecutor extends OEventMetricExecutor {
   private OMailPlugin mailPlugin;
 

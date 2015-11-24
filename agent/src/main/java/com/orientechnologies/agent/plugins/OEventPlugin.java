@@ -20,10 +20,14 @@ package com.orientechnologies.agent.plugins;
 
 import com.orientechnologies.agent.event.OEvent;
 import com.orientechnologies.agent.event.OEventController;
+import com.orientechnologies.agent.profiler.OProfilerData;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
+import com.orientechnologies.common.profiler.OProfilerEntry;
+import com.orientechnologies.common.profiler.OProfilerListener;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
@@ -50,21 +54,26 @@ public class OEventPlugin extends OServerPluginAbstract implements OServerPlugin
 
   @Override
   public ODocument getConfig() {
-    return configuration;
+    synchronized (this) {
+      return configuration;
+    }
   }
 
   @Override
   public void changeConfig(ODocument document) {
 
-    ODocument oldConfig = configuration;
-    configuration = document;
+    synchronized (this) {
+      ODocument oldConfig = configuration;
+      configuration = document;
 
-    try {
-      writeConfiguration();
-    } catch (IOException e) {
-      OException.wrapException(new OConfigurationException("Cannot Write EventConfiguration configuration file '" + configFile
-          + "'. Restoring old configuration."), e);
-      configuration = oldConfig;
+      try {
+        writeConfiguration();
+      } catch (IOException e) {
+        OException.wrapException(new OConfigurationException("Cannot Write EventConfiguration configuration file '" + configFile
+            + "'. Restoring old configuration."), e);
+        configuration = oldConfig;
+      }
+
     }
   }
 
@@ -111,7 +120,7 @@ public class OEventPlugin extends OServerPluginAbstract implements OServerPlugin
             + "'. Events Plugin will be disabled"), e);
       }
     }
-    eventController = new OEventController(configuration);
+    eventController = new OEventController(this);
     eventController.setDaemon(true);
     eventController.start();
 
@@ -122,6 +131,23 @@ public class OEventPlugin extends OServerPluginAbstract implements OServerPlugin
 
     ODistributedServerManager distributedManager = server.getDistributedManager();
 
+    Orient.instance().getProfiler().registerListener(new OProfilerListener() {
+      @Override
+      public void onUpdateCounter(String iName, long counter, long recordingFrom, long recordingTo) {
+        // Do noting
+      }
+
+      @Override
+      public void onUpdateChrono(OProfilerEntry chrono) {
+        // Do noting
+      }
+
+      @Override
+      public void onSnapshotCreated(Object snapshot) {
+        eventController.analyzeSnapshot((OProfilerData) snapshot);
+
+      }
+    });
     distributedManager.registerLifecycleListener(new ODistributedLifecycleListener() {
       @Override
       public boolean onNodeJoining(String iNode) {

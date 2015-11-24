@@ -21,6 +21,7 @@ package com.orientechnologies.agent.profiler;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OProfilerEntry;
+import com.orientechnologies.common.profiler.OProfilerListener;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.server.OServer;
@@ -181,6 +182,9 @@ public class OEnterpriseProfiler extends OAbstractProfiler {
         lastSnapshot.endRecording();
         snapshots.add(lastSnapshot);
 
+        for (OProfilerListener listener : listeners) {
+          listener.onSnapshotCreated(lastSnapshot);
+        }
         lastSnapshot = new OProfilerData();
 
         while (snapshots.size() >= maxSnapshots && maxSnapshots > 0) {
@@ -209,6 +213,12 @@ public class OEnterpriseProfiler extends OAbstractProfiler {
       if (lastSnapshot != null)
         lastSnapshot.updateCounter(iName, iPlus);
       realTime.updateCounter(iName, iPlus);
+
+      long counter = realTime.getCounter(iName);
+      for (OProfilerListener listener : listeners) {
+        listener.onUpdateCounter(iName, counter, realTime.getRecordingFrom(), System.currentTimeMillis());
+      }
+
     } finally {
       releaseSharedLock();
     }
@@ -398,7 +408,13 @@ public class OEnterpriseProfiler extends OAbstractProfiler {
 
       if (lastSnapshot != null)
         lastSnapshot.stopChrono(iName, iStartTime, iPayload, user);
-      return realTime.stopChrono(iName, iStartTime, iPayload, user);
+
+      long stopChrono = realTime.stopChrono(iName, iStartTime, iPayload, user);
+      OProfilerEntry chrono = realTime.getChrono(iName);
+      for (OProfilerListener listener : listeners) {
+        listener.onUpdateChrono(chrono);
+      }
+      return stopChrono;
 
     } finally {
       releaseSharedLock();

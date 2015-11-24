@@ -62,7 +62,7 @@ public class OEventLogMailExecutor extends OEventLogExecutor {
 
       mailPlugin.send(configuration);
     } catch (MessagingException e) {
-      e.printStackTrace();
+      OLogManager.instance().warn(this, "Cannot send mail with configuration: %s", e, configuration);
     } catch (Exception e) {
       e.printStackTrace();
     }
