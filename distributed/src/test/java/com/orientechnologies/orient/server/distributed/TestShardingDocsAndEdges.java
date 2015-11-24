@@ -129,6 +129,7 @@ public class TestShardingDocsAndEdges extends AbstractServerClusterTest {
         }
       }
     } finally {
+      db.activateOnCurrentThread();
       db.close();
     }
     return resultSet;
