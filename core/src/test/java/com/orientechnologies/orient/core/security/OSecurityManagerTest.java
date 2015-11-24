@@ -1,8 +1,8 @@
 package com.orientechnologies.orient.core.security;
 
-import org.testng.annotations.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
+
+import org.testng.annotations.Test;
 
 /**
  * Created by frank on 19/11/2015.
@@ -21,7 +21,6 @@ public class OSecurityManagerTest {
     hash = securityManager.createHash("password", OSecurityManager.PBKDF2_ALGORITHM, true);
 
     assertThat(securityManager.checkPassword("password", hash)).isTrue();
-
   }
 
   @Test
@@ -30,13 +29,14 @@ public class OSecurityManagerTest {
     OSecurityManager securityManager = OSecurityManager.instance();
 
     String hash = securityManager.createHash("password", OSecurityManager.HASH_ALGORITHM, true);
-    assertThat(securityManager.checkPassword(hash, hash)).isTrue();
+    assertThat(securityManager.checkPassword(hash, hash)).isFalse();
 
     hash = securityManager.createHash("password", OSecurityManager.PBKDF2_ALGORITHM, true);
 
-    assertThat(securityManager.checkPassword(hash, hash)).isTrue();
+    assertThat(securityManager.checkPassword(hash, hash)).isFalse();
+  }
 
-  } @Test
+  @Test
   public void shouldCheckPlainPasswordAgainstHashWithSalt() throws Exception {
 
     OSecurityManager securityManager = OSecurityManager.instance();
@@ -44,8 +44,6 @@ public class OSecurityManagerTest {
     String hash = securityManager.createHashWithSalt("password");
 
     assertThat(securityManager.checkPasswordWithSalt("password", hash)).isTrue();
-
-
   }
 
   @Test
@@ -54,8 +52,6 @@ public class OSecurityManagerTest {
     OSecurityManager securityManager = OSecurityManager.instance();
 
     String hash = securityManager.createHashWithSalt("password");
-    assertThat(securityManager.checkPasswordWithSalt(hash, hash)).isTrue();
-
-
+    assertThat(securityManager.checkPasswordWithSalt(hash, hash)).isFalse();
   }
 }

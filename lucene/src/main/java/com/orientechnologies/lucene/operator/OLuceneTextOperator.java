@@ -88,6 +88,8 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
   @Override
   public OIndexSearchResult getOIndexSearchResult(OClass iSchemaClass, OSQLFilterCondition iCondition,
       List<OIndexSearchResult> iIndexSearchResults, OCommandContext context) {
+
+    //FIXME questo non trova l'indice se l'ordine e' errato
     return OLuceneOperatorUtil.buildOIndexSearchResult(iSchemaClass, iCondition, iIndexSearchResults, context);
   }
 
@@ -121,8 +123,8 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
       e.printStackTrace();
     }
 
-    for (IndexableField field : doc.getFields()) {
 
+    for (IndexableField field : doc.getFields()) {
       memoryIndex.addField(field.name(), field.stringValue(), index.indexAnalyzer());
     }
     Query query = null;
@@ -173,6 +175,7 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
     return false;
   }
 
+  //restituisce una lista di nomi
   protected Collection<String> fields(OSQLFilterCondition iCondition) {
 
     Object left = iCondition.getLeft();

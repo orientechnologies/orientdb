@@ -44,7 +44,7 @@ public class OLuceneFullTextExpIndex extends OLuceneIndexNotUnique implements OL
       @Override
       public Document callEngine(OIndexEngine engine) {
 
-        OLogManager.instance().info(this,"callback buildDoc:: " + key);
+//        OLogManager.instance().info(this,"callback buildDoc:: " + key);
         OLuceneFullTextExpIndexEngine indexEngine = (OLuceneFullTextExpIndexEngine) engine;
         return indexEngine.buildDocument(key, null);
       }

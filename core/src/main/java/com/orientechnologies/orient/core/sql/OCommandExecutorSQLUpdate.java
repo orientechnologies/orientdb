@@ -67,6 +67,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
   private static final String                   KEYWORD_INCREMENT = "INCREMENT";
   private static final String                   KEYWORD_MERGE     = "MERGE";
   private static final String                   KEYWORD_UPSERT    = "UPSERT";
+  private static final String                   KEYWORD_EDGE      = "EDGE";
   private static final Object                   EMPTY_VALUE       = new Object();
   private List<OPair<String, Object>>           setEntries        = new ArrayList<OPair<String, Object>>();
   private List<OPair<String, Object>>           addEntries        = new ArrayList<OPair<String, Object>>();
@@ -118,25 +119,25 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
       parserRequiredKeyword(KEYWORD_UPDATE);
 
       subjectName = parserRequiredWord(false, "Invalid target", " =><,\r\n");
-      if (subjectName == null)
+      if (subjectName == null) {
         throwSyntaxErrorException("Invalid subject name. Expected cluster, class, index or sub-query");
+      }
+      if(subjectName.equalsIgnoreCase("EDGE")){
+        updateEdge = true;
+        subjectName = parserRequiredWord(false, "Invalid target", " =><,\r\n");
+      }
 
       clazz = extractClassFromTarget(subjectName);
 
       String word = parserNextWord(true);
 
-      if(word!=null && word.equals("EDGE")){
-        updateEdge = true;
-        word = parserNextWord(true);
-      }
-
       if (parserIsEnded()
           || (!word.equals(KEYWORD_SET) && !word.equals(KEYWORD_ADD) && !word.equals(KEYWORD_PUT) && !word.equals(KEYWORD_REMOVE)
               && !word.equals(KEYWORD_INCREMENT) && !word.equals(KEYWORD_CONTENT) && !word.equals(KEYWORD_MERGE)
-              && !word.equals(KEYWORD_LOCK) && !word.equals(KEYWORD_RETURN) && !word.equals(KEYWORD_UPSERT)))
+              && !word.equals(KEYWORD_LOCK) && !word.equals(KEYWORD_RETURN) && !word.equals(KEYWORD_UPSERT) && !word.equals(KEYWORD_EDGE)))
         throwSyntaxErrorException("Expected keyword " + KEYWORD_SET + "," + KEYWORD_ADD + "," + KEYWORD_CONTENT + ","
             + KEYWORD_MERGE + "," + KEYWORD_PUT + "," + KEYWORD_REMOVE + "," + KEYWORD_INCREMENT + "," + KEYWORD_LOCK + " or "
-            + KEYWORD_RETURN + " or " + KEYWORD_UPSERT);
+            + KEYWORD_RETURN + " or " + KEYWORD_UPSERT+ " or " + KEYWORD_EDGE);
 
       while ((!parserIsEnded() && !parserGetLastWord().equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE))
           || parserGetLastWord().equals(KEYWORD_UPSERT)) {
@@ -200,6 +201,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
 
       if (upsertMode && !additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE))
         throwSyntaxErrorException("Upsert only works with WHERE keyword");
+      if (upsertMode && updateEdge)
+        throwSyntaxErrorException("Upsert is not supported with UPDATE EDGE");
     } finally {
       textRequest.setText(originalQuery);
     }

@@ -26,15 +26,18 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class OProfilerStub extends OAbstractProfiler {
 
-  protected final ConcurrentMap<String, Long>                    counters      = new ConcurrentLinkedHashMap.Builder().maximumWeightedCapacity(OGlobalConfiguration.PROFILER_MAXVALUES.getValueAsInteger()).build();
-  private final   ConcurrentLinkedHashMap<String, AtomicInteger> tips          = new ConcurrentLinkedHashMap.Builder().maximumWeightedCapacity(OGlobalConfiguration.PROFILER_MAXVALUES.getValueAsInteger()).build();
-  private final   ConcurrentLinkedHashMap<String, Long>          tipsTimestamp = new ConcurrentLinkedHashMap.Builder().maximumWeightedCapacity(OGlobalConfiguration.PROFILER_MAXVALUES.getValueAsInteger()).build();
+  protected Map<String, Long>          counters      = new HashMap<String, Long>();
+  protected Map<String, AtomicInteger> tips          = new HashMap<String, AtomicInteger>();
+  protected Map<String, Long>          tipsTimestamp = new HashMap<String, Long>();
 
   public OProfilerStub() {
   }
@@ -65,6 +68,13 @@ public class OProfilerStub extends OAbstractProfiler {
   }
 
   public boolean startRecording() {
+    counters = new ConcurrentLinkedHashMap.Builder()
+        .maximumWeightedCapacity(OGlobalConfiguration.PROFILER_MAXVALUES.getValueAsInteger()).build();
+    tips = new ConcurrentLinkedHashMap.Builder()
+        .maximumWeightedCapacity(OGlobalConfiguration.PROFILER_MAXVALUES.getValueAsInteger()).build();
+    tipsTimestamp = new ConcurrentLinkedHashMap.Builder()
+        .maximumWeightedCapacity(OGlobalConfiguration.PROFILER_MAXVALUES.getValueAsInteger()).build();
+
     if (super.startRecording()) {
       counters.clear();
       return true;

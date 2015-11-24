@@ -18,9 +18,9 @@
 
 package com.orientechnologies.lucene.engine;
 
+import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.query.QueryContext;
-import com.orientechnologies.lucene.utils.OLuceneIndexUtils;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndexEngineException;
@@ -109,9 +109,9 @@ public class OLuceneFacetManager {
     final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
     if (storageLocalAbstract instanceof OLocalPaginatedStorage) {
       File f = new File(getIndexFacetPath((OLocalPaginatedStorage) storageLocalAbstract));
-      OLuceneIndexUtils.deleteFolder(f);
+      OFileUtils.deleteRecursively(f);
       f = new File(owner.getIndexBasePath((OLocalPaginatedStorage) storageLocalAbstract));
-      OLuceneIndexUtils.deleteFolderIfEmpty(f);
+      OFileUtils.deleteFolderIfEmpty(f);
     }
   }
 
