@@ -36,6 +36,9 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 import java.util.List;
 
+import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.DEBUG;
+import static com.orientechnologies.orient.etl.loader.OOrientDBLoader.DB_TYPE.DOCUMENT;
+
 /**
  * ETL Loader that saves record into OrientDB database.
  */
@@ -56,7 +59,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
   protected boolean         tx                         = false;
   protected int             batchCommit                = 0;
   protected long            batchCounter               = 0;
-  protected DB_TYPE         dbType                     = DB_TYPE.DOCUMENT;
+  protected DB_TYPE         dbType                     = DOCUMENT;
   protected boolean         wal                        = true;
   protected Boolean         txUseLog                   = null;
 
@@ -73,7 +76,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
       return;
 
     if (dbAutoCreateProperties) {
-      if (dbType == DB_TYPE.DOCUMENT) {
+      if (dbType == DOCUMENT) {
         if (input instanceof ODocument) {
           final ODocument doc = (ODocument) input;
           final ODatabaseDocumentTx documentDatabase = pipeline.getDocumentDatabase();
@@ -130,7 +133,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
       }
     }
 
-    if (tx && dbType == DB_TYPE.DOCUMENT) {
+    if (tx && dbType == DOCUMENT) {
       final ODatabaseDocumentTx documentDatabase = pipeline.getDocumentDatabase();
       if (!documentDatabase.getTransaction().isActive()) {
         // BEGIN THE TRANSACTION FIRST
@@ -168,11 +171,13 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
 
     if (batchCommit > 0) {
       if (batchCounter > batchCommit) {
-        if (dbType == DB_TYPE.DOCUMENT) {
+        if (dbType == DOCUMENT) {
           final ODatabaseDocumentTx documentDatabase = pipeline.getDocumentDatabase();
+          log(DEBUG, "committing batch");
           documentDatabase.commit();
           beginTransaction(documentDatabase);
         } else {
+          log(DEBUG, "committing batch");
           pipeline.getGraphDatabase().commit();
         }
         batchCounter = 0;
@@ -272,7 +277,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
       }
 
       if (documentDatabase.exists()) {
-        log(OETLProcessor.LOG_LEVELS.DEBUG, "Opening database '%s'...", dbURL);
+        log(DEBUG, "Opening database '%s'...", dbURL);
         documentDatabase.open(dbUser, dbPassword);
       } else if (dbAutoCreate) {
         documentDatabase.create();
@@ -323,7 +328,8 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
 
   @Override
   public void end() {
-    if (dbType == DB_TYPE.DOCUMENT)
+      log(OETLProcessor.LOG_LEVELS.INFO, "committing");
+    if (dbType == DOCUMENT)
       pipeline.getDocumentDatabase().commit();
     else
       pipeline.getGraphDatabase().commit();
@@ -336,13 +342,13 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
 
   @Override
   public String getUnit() {
-    return dbType == DB_TYPE.DOCUMENT ? "documents" : "vertices";
+    return dbType == DOCUMENT ? "documents" : "vertices";
   }
 
   @Override
   public void rollback() {
     if (tx)
-      if (dbType == DB_TYPE.DOCUMENT) {
+      if (dbType == DOCUMENT) {
         final ODatabaseDocumentTx documentDatabase = pipeline.getDocumentDatabase();
         if (documentDatabase.getTransaction().isActive())
           documentDatabase.rollback();
@@ -359,7 +365,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
       } catch (OSchemaException e) {
       }
 
-      log(OETLProcessor.LOG_LEVELS.DEBUG, "created property [%s.%s] of type [%s]", cls.getName(), f, fType);
+      log(DEBUG, "created property [%s.%s] of type [%s]", cls.getName(), f, fType);
     }
   }
 
@@ -396,13 +402,13 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
         if (clusters != null)
           OClassImpl.addClusters(schemaClass, clusters);
 
-        log(OETLProcessor.LOG_LEVELS.DEBUG, "%s: found %d %s in class '%s'", getName(), schemaClass.count(), getUnit(), className);
+        log(DEBUG, "%s: found %d %s in class '%s'", getName(), schemaClass.count(), getUnit(), className);
       }
     }
 
     if (className != null) {
       schemaClass = getOrCreateClass(className, null);
-      log(OETLProcessor.LOG_LEVELS.DEBUG, "%s: found %d %s in class '%s'", getName(), schemaClass.count(), getUnit(), className);
+      log(DEBUG, "%s: found %d %s in class '%s'", getName(), schemaClass.count(), getUnit(), className);
     }
 
     if (indexes != null) {
@@ -410,7 +416,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
         OIndex index;
 
         final ODocument metadata = (ODocument) resolve(idx.field("metadata"));
-        log(OETLProcessor.LOG_LEVELS.DEBUG, "%s: found metadata field '%s'", getName(), metadata);
+        log(DEBUG, "%s: found metadata field '%s'", getName(), metadata);
 
         String idxName = (String) resolve(idx.field("name"));
         if (idxName != null) {
@@ -449,7 +455,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
             final OType type = OType.valueOf(fieldType);
 
             cls.createProperty(fieldNameParts[0], type);
-            log(OETLProcessor.LOG_LEVELS.DEBUG, "- OrientDBLoader: created property '%s.%s' of type: %s", idxClass,
+            log(DEBUG, "- OrientDBLoader: created property '%s.%s' of type: %s", idxClass,
                 fieldNameParts[0], fieldNameParts[1]);
           }
 
@@ -472,7 +478,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
           continue;
 
         index = cls.createIndex(idxName, idxType, null, metadata, fields);
-        log(OETLProcessor.LOG_LEVELS.DEBUG, "- OrientDocumentLoader: created index '%s' type '%s' against Class '%s', fields %s",
+        log(DEBUG, "- OrientDocumentLoader: created index '%s' type '%s' against Class '%s', fields %s",
             idxName, idxType, idxClass, idxFields);
       }
     }
@@ -482,7 +488,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
   protected OClass getOrCreateClass(final String iClassName, final String iSuperClass) {
     OClass cls;
 
-    if (dbType == DB_TYPE.DOCUMENT) {
+    if (dbType == DOCUMENT) {
       // DOCUMENT
       final ODatabaseDocumentTx documentDatabase = pipeline.getDocumentDatabase();
       if (documentDatabase.getMetadata().getSchema().existsClass(iClassName))
@@ -494,10 +500,10 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
             throw new OLoaderException("Cannot find super class '" + iSuperClass + "'");
 
           cls = documentDatabase.getMetadata().getSchema().createClass(iClassName, superClass);
-          log(OETLProcessor.LOG_LEVELS.DEBUG, "- OrientDBLoader: created class '%s' extends '%s'", iClassName, iSuperClass);
+          log(DEBUG, "- OrientDBLoader: created class '%s' extends '%s'", iClassName, iSuperClass);
         } else {
           cls = documentDatabase.getMetadata().getSchema().createClass(iClassName);
-          log(OETLProcessor.LOG_LEVELS.DEBUG, "- OrientDBLoader: created class '%s'", iClassName);
+          log(DEBUG, "- OrientDBLoader: created class '%s'", iClassName);
         }
       }
     } else {
@@ -515,16 +521,16 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
           if (graphDatabase.getVertexBaseType().isSuperClassOf(superClass)) {
             // VERTEX
             cls = graphDatabase.createVertexType(iClassName, superClass);
-            log(OETLProcessor.LOG_LEVELS.DEBUG, "- OrientDBLoader: created vertex class '%s' extends '%s'", iClassName, iSuperClass);
+            log(DEBUG, "- OrientDBLoader: created vertex class '%s' extends '%s'", iClassName, iSuperClass);
           } else {
             // EDGE
             cls = graphDatabase.createEdgeType(iClassName, superClass);
-            log(OETLProcessor.LOG_LEVELS.DEBUG, "- OrientDBLoader: created edge class '%s' extends '%s'", iClassName, iSuperClass);
+            log(DEBUG, "- OrientDBLoader: created edge class '%s' extends '%s'", iClassName, iSuperClass);
           }
         } else {
           // ALWAYS CREATE SUB-VERTEX
           cls = graphDatabase.createVertexType(iClassName);
-          log(OETLProcessor.LOG_LEVELS.DEBUG, "- OrientDBLoader: created vertex class '%s'", iClassName);
+          log(DEBUG, "- OrientDBLoader: created vertex class '%s'", iClassName);
         }
       }
     }
