@@ -334,7 +334,7 @@ ee.controller('ClusterOverviewController', function ($scope, $rootScope) {
 });
 
 
-ee.controller("ProfilerController", ['$scope', 'Profiler', 'Cluster', 'Spinner', 'Notification', 'CommandCache', 'Database','scroller', function ($scope, Profiler, Cluster, Spinner, Notification, CommandCache, Database,scroller) {
+ee.controller("ProfilerController", ['$scope', 'Profiler', 'Cluster', 'Spinner', 'Notification', 'CommandCache', 'Database', 'scroller', function ($scope, Profiler, Cluster, Spinner, Notification, CommandCache, Database, scroller) {
 
 
   $scope.strategies = ["INVALIDATE_ALL", "PER_CLUSTER"];
@@ -366,6 +366,12 @@ ee.controller("ProfilerController", ['$scope', 'Profiler', 'Cluster', 'Spinner',
     })
   }
 
+  $scope.reset = function () {
+
+    Profiler.reset({server: $scope.server.name, db: $scope.db}).then(function (data) {
+      $scope.refresh();
+    })
+  }
   $scope.$watch('server', function (server) {
     if (server) {
       if ($scope.server.databases.length > 0) {
@@ -410,6 +416,15 @@ ee.controller("ProfilerController", ['$scope', 'Profiler', 'Cluster', 'Spinner',
     });
   }
 
+  $scope.purgeCache = function () {
+
+    CommandCache.purge({server: $scope.server.name, db: $scope.db}).then(function () {
+      Notification.push({content: "Command Cache purged", autoHide: true});
+      CommandCache.results({server: $scope.server.name, db: $scope.db}).then(function (data) {
+        $scope.results = data.results;
+      });
+    });
+  }
 
   $scope.fetchResults = function (q) {
     $scope.resultsSet = null;
@@ -449,6 +464,7 @@ ee.controller("AuditingController", ['$scope', 'Auditing', 'Cluster', 'Spinner',
 
   $scope.active = 'log';
 
+  $scope.logs = [];
   $scope.query = {
     limit: 100
   }
@@ -460,14 +476,16 @@ ee.controller("AuditingController", ['$scope', 'Auditing', 'Cluster', 'Spinner',
     if ($scope.server.databases.length > 0) {
       $scope.db = $scope.server.databases[0];
 
-      initConfig();
     }
   });
 
-  $scope.template = 'views/database/auditing/log.html';
+  $scope.itemsByPage = 10;
+
+  $scope.template = 'views/server/stats/auditing/log.html';
 
   var initConfig = function () {
     Auditing.getConfig({db: $scope.db}).then(function (data) {
+
       $scope.config = data;
       var cls = $scope.config.classes;
       $scope.classes = Object.keys(cls).filter(function (k) {
@@ -486,24 +504,9 @@ ee.controller("AuditingController", ['$scope', 'Auditing', 'Cluster', 'Spinner',
       $scope.query.clazz = $scope.config.auditClassName;
 
       Spinner.start();
-      Auditing.query({db: $scope.db}, $scope.query).then(function (data) {
+      Auditing.query({db: $scope.db, query: $scope.query}).then(function (data) {
         $scope.logs = data.result;
 
-        $scope.tableParams = new ngTableParams({
-          page: 1,            // show first page
-          count: 10          // count per page
-
-        }, {
-          total: $scope.logs.length, // length of data
-          getData: function ($defer, params) {
-//            use build-in angular filter
-            var emtpy = !params.orderBy() || params.orderBy().length == 0;
-            var orderedData = (params.sorting() && !emtpy) ?
-              $filter('orderBy')($scope.logs, params.orderBy()) :
-              $scope.logs;
-            $defer.resolve(orderedData.slice((params.page() - 1) * params.count(), params.page() * params.count()));
-          }
-        });
         Spinner.stopSpinner();
       }).catch(function (error) {
         Spinner.stopSpinner();
@@ -511,10 +514,15 @@ ee.controller("AuditingController", ['$scope', 'Auditing', 'Cluster', 'Spinner',
     });
   }
 
+  $scope.$watch("db", function (db) {
+    if (db) {
+      initConfig();
+    }
+  })
   $scope.resetFilter = function () {
     $scope.query = {
       limit: 100,
-      clazz: $scope.config.auditClassName
+      clazz: $scope.auditClassName
     }
   }
   $scope.save = function () {
@@ -528,10 +536,11 @@ ee.controller("AuditingController", ['$scope', 'Auditing', 'Cluster', 'Spinner',
 
   $scope.filter = function () {
     Spinner.start();
-    Auditing.query(Database.getName(), $scope.query).then(function (data) {
+    Auditing.query({db: $scope.db, query: $scope.query}).then(function (data) {
+
       $scope.logs = data.result;
-      $scope.tableParams.total($scope.logs.length);
-      $scope.tableParams.reload();
+      //$scope.tableParams.total($scope.logs.length);
+      //$scope.tableParams.reload();
       Spinner.stopSpinner();
     }).catch(function (error) {
       Spinner.stopSpinner();
@@ -540,15 +549,15 @@ ee.controller("AuditingController", ['$scope', 'Auditing', 'Cluster', 'Spinner',
   $scope.$watch("active", function (val) {
     switch (val) {
       case "config":
-        $scope.template = 'views/database/auditing/config.html';
+        $scope.template = 'views/server/stats/auditing/config.html';
         break;
       case "log":
-        $scope.template = 'views/database/auditing/log.html';
+        $scope.template = 'views/server/stats/auditing/log.html';
         break;
     }
   })
   $scope.delete = function (k) {
-    delete $scope.config.classes[k];
+    delete $scope.classes[k];
   }
   $scope.addCommand = function () {
     if (!$scope.config.commands) {

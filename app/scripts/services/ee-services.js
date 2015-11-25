@@ -219,6 +219,21 @@ ee.factory('Profiler', function ($http, $resource, $q) {
     });
     return deferred.promise;
   }
+  resource.reset = function (params) {
+
+    var deferred = $q.defer();
+    var text = API + 'sqlProfiler/' + params.db + '/reset';
+
+    if (params.server) {
+      text += "?node=" + params.server;
+    }
+    $http.post(text).success(function (data) {
+      deferred.resolve(data)
+    }).error(function (data, status, headers, config) {
+      deferred.reject({data: data, status: status});
+    });
+    return deferred.promise;
+  }
 
   resource.metadata = function () {
     var deferred = $q.defer();
@@ -261,6 +276,24 @@ ee.factory('CommandCache', function ($http, $q) {
       text += "?node=" + params.server;
     }
     $http.get(text).success(function (data) {
+      deferred.resolve(data)
+    }).error(function (data, status, headers, config) {
+      deferred.reject({data: data, status: status});
+    });
+    return deferred.promise;
+  }
+
+  /*
+   Get Cache configuration
+   */
+  resource.purge = function (params) {
+
+    var deferred = $q.defer();
+    var text = API + 'commandCache/' + params.db + '/purge';
+    if (params.server) {
+      text += "?node=" + params.server;
+    }
+    $http.post(text).success(function (data) {
       deferred.resolve(data)
     }).error(function (data, status, headers, config) {
       deferred.reject({data: data, status: status});
@@ -383,13 +416,13 @@ ee.factory('Auditing', function ($http, $resource, $q, CommandApi) {
     });
     return deferred.promise;
   }
-  resource.query = function (params, args) {
+  resource.query = function (params) {
 
     var deferred = $q.defer();
 
 
     var text = API + 'auditing/' + params.db + "/query";
-    $http.post(text, args).success(function (data) {
+    $http.post(text, params.query).success(function (data) {
       deferred.resolve(data)
     }).error(function (data, status, headers, config) {
       deferred.reject({data: data, status: status});

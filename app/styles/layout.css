@@ -946,14 +946,14 @@ div.users-ui div.container-fluid, div.role-ui div.container-fluid {
   background: #fff;
 }
 
-.tabs-style-linebox nav ul li {
+.tabs-style-linebox > nav ul li {
   margin: 0 0.5em;
   -webkit-flex: none;
   flex: none;
 }
 
-.tabs-style-linebox nav a {
-  padding: 1em 2em;
+.tabs-style-linebox > nav a {
+  padding: 0.2em 1em;
   color: #74777b;
   font-weight: 700;
   -webkit-transition: color 0.3s;

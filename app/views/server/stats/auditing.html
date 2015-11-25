@@ -1,21 +1,29 @@
 <div class="row" ng-controller="AuditingController">
 
 
-  <div class="row menu-audit">
-    <div class="col-md-12 text-center">
-      <ul class="nav nav-pills center-pills">
-        <li role="presentation" ng-click="active = 'log'" ng-class="{ 'active' :  active == 'log'}"><a
-          href="javascript:void(0)">Auditing log</a></li>
-        <li role="presentation" ng-click="active = 'config'"
-            ng-class="{ 'active' :  active == 'config'}"><a
-          href="javascript:void(0)">Configuration</a></li>
-      </ul>
-    </div>
+  <div class="col-md-12">
+    <form class="form-inline studio-well">
+      <div class="form-group">
+        <label>Server </label>
+        <select id="serverOnline" ng-model="server" class="form-control " ng-options="s.name for s in servers"
+                data-placeholder="Pick a Server"></select>
+      </div>
+      <div class="form-group">
+        <label>Database </label>
+        <select id="databasesOnline" ng-model="db" class="form-control" ng-options="db for db in server.databases"
+                data-placeholder="Pick a Server"></select>
+      </div>
+    </form>
   </div>
-  <div class="row">
 
-    <div class="col-md-12">
-      <ng-include src="template"></ng-include>
-    </div>
+  <div class="col-md-12">
+    <tabset>
+      <tab title="Auditing Log"
+           template-url="views/server/stats/auditing/log.html">
+      </tab>
+      <tab title="Auditing Configuration"
+           template-url="views/server/stats/auditing/config.html">
+      </tab>
+    </tabset>
   </div>
 </div>

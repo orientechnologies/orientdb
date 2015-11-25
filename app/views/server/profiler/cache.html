@@ -20,7 +20,7 @@
           </div>
           <div class="col-md-4">
             <div class="btn-group">
-              <button class="btn btn-primary" ng-click="saveConfig()">Save Config</button>
+              <button class="btn btn-primary btn-sm" ng-click="saveConfig()">Save Config</button>
             </div>
           </div>
         </div>
@@ -71,6 +71,17 @@
       </form>
     </div>
 
+    <div class="col-md-8">
+      <div class="btn-toolbar pull-right">
+        <div class="btn-group">
+          <button href="javascript:void(0)" class="btn btn-primary btn-sm"
+                  ng-click="purgeCache()"><i
+            class="fa fa-eraser"></i>
+            Purge Cache
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
   <div class="row row-space-2x">
     <div class="col-md-12">

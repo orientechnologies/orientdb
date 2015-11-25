@@ -99,7 +99,7 @@ filterModule.filter('formatArray', function () {
 })
 filterModule.filter('formatDate', function () {
   return function (input) {
-    return moment(input).format('D/M/YY - h:mm:ss');
+    return moment(input).format('D/M/YY - H:mm:ss');
   }
 })
 filterModule.filter('operation', function () {
