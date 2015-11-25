@@ -710,7 +710,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       allResults.add(iRecord);
     }
     boolean result = true;
-    if ((fullySortedByIndex || orderedFields.isEmpty()) && expandTarget == null && unwindFields == null) {
+    if (allowsStreamedResult()) {
       // SEND THE RESULT INLINE
       if (request.getResultListener() != null)
         for (OIdentifiable iRes : allResults) {
@@ -764,6 +764,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     }
 
     return getProjectionGroup(fieldValue, iContext).applyRecord(iRecord);
+  }
+
+  private boolean allowsStreamedResult() {
+    return (fullySortedByIndex || orderedFields.isEmpty()) && expandTarget == null && unwindFields == null;
   }
 
   /**
@@ -2511,7 +2515,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     try {
 
       if (tempResult == null) {
-        tempResult = new ArrayList<OIdentifiable>();
+          tempResult = new ArrayList<OIdentifiable>();
         if (expandTarget instanceof OSQLFilterItemVariable) {
           Object r = ((OSQLFilterItemVariable) expandTarget).getValue(null, null, context);
           if (r != null) {
@@ -2523,7 +2527,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
               }
             }
           }
-        } else if (expandTarget instanceof OSQLFunctionRuntime) {
+        } else if (expandTarget instanceof OSQLFunctionRuntime && !hasFieldItemParams((OSQLFunctionRuntime) expandTarget)) {
           if (((OSQLFunctionRuntime) expandTarget).aggregateResults()) {
             throw new OCommandExecutionException("Unsupported operation: aggregate function in expand(" + expandTarget + ")");
           } else {
@@ -2538,6 +2542,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           }
         }
       } else {
+        if(tempResult==null){
+          tempResult = new ArrayList<OIdentifiable>();
+        }
         final OMultiCollectionIterator<OIdentifiable> finalResult = new OMultiCollectionIterator<OIdentifiable>();
 
         if (orderedFields == null || orderedFields.size() == 0) {
@@ -2583,6 +2590,19 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       context.setVariable("expandElapsed", (System.currentTimeMillis() - startExpand));
     }
 
+  }
+
+  private boolean hasFieldItemParams(OSQLFunctionRuntime expandTarget) {
+    Object[] params = expandTarget.getConfiguredParameters();
+    if(params==null){
+      return false;
+    }
+    for(Object o:params){
+      if(o instanceof OSQLFilterItemField){
+        return true;
+      }
+    }
+    return false;
   }
 
   private void searchInIndex() {

@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -965,6 +966,15 @@ public class OCommandExecutorSQLSelectTest {
     results = db.query(sql);
     assertEquals(results.size(), 2);
 
+  }
+
+  @Test
+  public void testSelectFromClusterNumber(){
+    OClass clazz = db.getMetadata().getSchema().getClass("DistinctLimit");
+    int clusterId = clazz.getClusterIds()[0];
+    OSQLSynchQuery sql = new OSQLSynchQuery("select from cluster:"+clusterId+" limit 1");
+    List<ODocument> results = db.query(sql);
+    assertEquals(results.size(), 1);
   }
 
   private long indexUsages(ODatabaseDocumentTx db) {

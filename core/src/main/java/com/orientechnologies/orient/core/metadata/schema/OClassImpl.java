@@ -178,7 +178,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   @Override
-  public OClass setClusterSelection(OClusterSelectionStrategy clusterSelection) {
+  public OClass setClusterSelection(final OClusterSelectionStrategy clusterSelection) {
     return setClusterSelection(clusterSelection.getName());
   }
 
@@ -1908,6 +1908,11 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   public void setClusterSelectionInternal(final String clusterSelection) {
+    // AVOID TO CHECK THIS IN LOCK TO AVOID RE-GENERATION OF IMMUTABLE SCHEMAS
+    if(this.clusterSelection.getName().equals(clusterSelection))
+      // NO CHANGES
+      return;
+
     acquireSchemaWriteLock();
     try {
       checkEmbedded();
@@ -1918,11 +1923,16 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     }
   }
 
-  public void setClusterSelectionInternal(final OClusterSelectionStrategy clusterSelection) {
+  public void setClusterSelectionInternal(final OClusterSelectionStrategy iClusterSelection) {
+    // AVOID TO CHECK THIS IN LOCK TO AVOID RE-GENERATION OF IMMUTABLE SCHEMAS
+    if(this.clusterSelection.getName().equals(iClusterSelection.getName()))
+      // NO CHANGES
+      return;
+
     acquireSchemaWriteLock();
     try {
       checkEmbedded();
-      this.clusterSelection = clusterSelection;
+      this.clusterSelection = iClusterSelection;
     } finally {
       releaseSchemaWriteLock(false);
     }

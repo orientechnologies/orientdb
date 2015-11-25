@@ -37,6 +37,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
+import com.orientechnologies.orient.server.plugin.OServerPluginConfigurable;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -57,7 +58,7 @@ import java.util.TimerTask;
  * 
  * @author Luca Garulli
  */
-public class OAutomaticBackup extends OServerPluginAbstract {
+public class OAutomaticBackup extends OServerPluginAbstract implements OServerPluginConfigurable {
 
   private ODocument configuration;
 
@@ -69,13 +70,13 @@ public class OAutomaticBackup extends OServerPluginAbstract {
     FULL_BACKUP, INCREMENTAL_BACKUP, EXPORT
   }
 
-  private String configFile       = "${ORIENTDB_HOME}/config/automatic-backup.json";
-  private Date   firstTime        = null;
-  private long   delay            = -1;
-  private int    bufferSize       = 1048576;
-  private int    compressionLevel = 9;
-  private MODE   mode             = MODE.FULL_BACKUP;
-  private String exportOptions;
+  private String      configFile       = "${ORIENTDB_HOME}/config/automatic-backup.json";
+  private Date        firstTime        = null;
+  private long        delay            = -1;
+  private int         bufferSize       = 1048576;
+  private int         compressionLevel = 9;
+  private MODE        mode             = MODE.FULL_BACKUP;
+  private String      exportOptions;
 
   private String      targetDirectory  = "backup";
   private String      targetFileName;
@@ -95,8 +96,8 @@ public class OAutomaticBackup extends OServerPluginAbstract {
 
         final File f = new File(OSystemVariableResolver.resolveSystemVariables(configFile));
         if (!f.exists())
-          throw new OConfigurationException(
-              "Automatic Backup configuration file '" + configFile + "' not found. Automatic Backup will be disabled");
+          throw new OConfigurationException("Automatic Backup configuration file '" + configFile
+              + "' not found. Automatic Backup will be disabled");
         break;
 
         // LEGACY <v2.2: CONVERT ALL SETTINGS IN JSON
@@ -230,8 +231,8 @@ public class OAutomaticBackup extends OServerPluginAbstract {
         final String configurationContent = OIOUtils.readFileAsString(f);
         configuration = new ODocument().fromJSON(configurationContent);
       } catch (IOException e) {
-        OException.wrapException(new OConfigurationException(
-            "Cannot load Automatic Backup configuration file '" + configFile + "'. Automatic Backup will be disabled"), e);
+        OException.wrapException(new OConfigurationException("Cannot load Automatic Backup configuration file '" + configFile
+            + "'. Automatic Backup will be disabled"), e);
       }
 
     } else {
@@ -243,11 +244,8 @@ public class OAutomaticBackup extends OServerPluginAbstract {
 
         OLogManager.instance().info(this, "Automatic Backup: migrated configuration to file '%s'", f);
       } catch (IOException e) {
-        OException
-            .wrapException(
-                new OConfigurationException(
-                    "Cannot create Automatic Backup configuration file '" + configFile + "'. Automatic Backup will be disabled"),
-                e);
+        OException.wrapException(new OConfigurationException("Cannot create Automatic Backup configuration file '" + configFile
+            + "'. Automatic Backup will be disabled"), e);
       }
     }
 
@@ -272,8 +270,8 @@ public class OAutomaticBackup extends OServerPluginAbstract {
             firstTime = cal.getTime();
           }
         } catch (ParseException e) {
-          throw OException
-              .wrapException(new OConfigurationException("Parameter 'firstTime' has invalid format, expected: HH:mm:ss"), e);
+          throw OException.wrapException(
+              new OConfigurationException("Parameter 'firstTime' has invalid format, expected: HH:mm:ss"), e);
         }
       } else if (settingName.equalsIgnoreCase("targetDirectory"))
         targetDirectory = settingValueAsString;
@@ -355,5 +353,17 @@ public class OAutomaticBackup extends OServerPluginAbstract {
   @Override
   public String getName() {
     return "automaticBackup";
+  }
+
+  @Override
+  public ODocument getConfig() {
+    return configuration;
+  }
+
+
+  // TODO change current config and restart the automatic backup plugin
+  @Override
+  public void changeConfig(ODocument document) {
+
   }
 }

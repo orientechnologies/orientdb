@@ -37,22 +37,20 @@ import javax.management.ObjectName;
 import java.io.File;
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public abstract class OAbstractProfiler extends OSharedResourceAbstract
-    implements OProfiler, OOrientStartupListener, OProfilerMXBean {
+public abstract class OAbstractProfiler extends OSharedResourceAbstract implements OProfiler, OOrientStartupListener,
+    OProfilerMXBean {
 
   protected final Map<String, OProfilerHookValue>        hooks         = new ConcurrentHashMap<String, OProfilerHookValue>();
   protected final ConcurrentHashMap<String, String>      dictionary    = new ConcurrentHashMap<String, String>();
   protected final ConcurrentHashMap<String, METRIC_TYPE> types         = new ConcurrentHashMap<String, METRIC_TYPE>();
   protected long                                         recordingFrom = -1;
   protected TimerTask                                    autoDumpTask;
+  protected List<OProfilerListener>                      listeners     = new ArrayList<OProfilerListener>();
 
   public interface OProfilerHookValue {
     Object getValue();
@@ -82,14 +80,20 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
             final long suggestedDiskCache = OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong()
                 + (jvmMaxMemory - suggestedMaxHeap) / OFileUtils.MEGABYTE;
 
-            OLogManager.instance().info(this,
-                "Database '%s' uses %,dMB/%,dMB of DISKCACHE memory, while Heap is not completely used (usedHeap=%dMB maxHeap=%dMB). To improve performance set maxHeap to %dMB and DISKCACHE to %dMB",
-                s.getName(), totalDiskCacheUsedMemory, maxDiskCacheUsedMemory, jvmTotMemory / OFileUtils.MEGABYTE,
-                jvmMaxMemory / OFileUtils.MEGABYTE, suggestedMaxHeap / OFileUtils.MEGABYTE, suggestedDiskCache);
+            OLogManager
+                .instance()
+                .info(
+                    this,
+                    "Database '%s' uses %,dMB/%,dMB of DISKCACHE memory, while Heap is not completely used (usedHeap=%dMB maxHeap=%dMB). To improve performance set maxHeap to %dMB and DISKCACHE to %dMB",
+                    s.getName(), totalDiskCacheUsedMemory, maxDiskCacheUsedMemory, jvmTotMemory / OFileUtils.MEGABYTE,
+                    jvmMaxMemory / OFileUtils.MEGABYTE, suggestedMaxHeap / OFileUtils.MEGABYTE, suggestedDiskCache);
 
-            OLogManager.instance().info(this,
-                "-> Open server.sh (or server.bat on Windows) and change the following variables: 1) MAXHEAP=-Xmx%dM 2) MAXDISKCACHE=%d",
-                suggestedMaxHeap / OFileUtils.MEGABYTE, suggestedDiskCache);
+            OLogManager
+                .instance()
+                .info(
+                    this,
+                    "-> Open server.sh (or server.bat on Windows) and change the following variables: 1) MAXHEAP=-Xmx%dM 2) MAXDISKCACHE=%d",
+                    suggestedMaxHeap / OFileUtils.MEGABYTE, suggestedDiskCache);
           }
         }
       }
@@ -137,13 +141,13 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
         final long osTotalMem = ((Number) mbs.getAttribute(osMBeanName, "TotalPhysicalMemorySize")).longValue();
         final long osUsedMem = osTotalMem - ((Number) mbs.getAttribute(osMBeanName, "FreePhysicalMemorySize")).longValue();
 
-        buffer.append(
-            String.format("OrientDB Memory profiler: HEAP=%s of %s - DISKCACHE (%s dbs)=%s of %s - OS=%s of %s - FS=%s of %s",
-                OFileUtils.getSizeAsString(runtime.totalMemory() - runtime.freeMemory()),
-                OFileUtils.getSizeAsString(runtime.maxMemory()), stgs, OFileUtils.getSizeAsString(diskCacheUsed),
-                OFileUtils.getSizeAsString(diskCacheTotal), OFileUtils.getSizeAsString(osUsedMem),
-                OFileUtils.getSizeAsString(osTotalMem), OFileUtils.getSizeAsString(freeSpaceInMB),
-                OFileUtils.getSizeAsString(totalSpaceInMB)));
+        buffer.append(String.format(
+            "OrientDB Memory profiler: HEAP=%s of %s - DISKCACHE (%s dbs)=%s of %s - OS=%s of %s - FS=%s of %s",
+            OFileUtils.getSizeAsString(runtime.totalMemory() - runtime.freeMemory()),
+            OFileUtils.getSizeAsString(runtime.maxMemory()), stgs, OFileUtils.getSizeAsString(diskCacheUsed),
+            OFileUtils.getSizeAsString(diskCacheTotal), OFileUtils.getSizeAsString(osUsedMem),
+            OFileUtils.getSizeAsString(osTotalMem), OFileUtils.getSizeAsString(freeSpaceInMB),
+            OFileUtils.getSizeAsString(totalSpaceInMB)));
         return buffer.toString();
       }
     } catch (Exception e) {
@@ -292,12 +296,12 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
         public void run() {
           final StringBuilder output = new StringBuilder();
 
-          output.append(
-              "\n*******************************************************************************************************************************************");
+          output
+              .append("\n*******************************************************************************************************************************************");
           output.append("\nPROFILER AUTO DUMP OUTPUT (to disabled it set 'profiler.autoDump.interval' = 0):\n");
           output.append(dump());
-          output.append(
-              "\n*******************************************************************************************************************************************");
+          output
+              .append("\n*******************************************************************************************************************************************");
 
           OLogManager.instance().info(null, output.toString());
         }
@@ -383,5 +387,15 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
   protected void updateMetadata(final String iName, final String iDescription, final METRIC_TYPE iType) {
     if (iDescription != null && dictionary.putIfAbsent(iName, iDescription) == null)
       types.put(iName, iType);
+  }
+
+  @Override
+  public void registerListener(OProfilerListener listener) {
+    listeners.add(listener);
+  }
+
+  @Override
+  public void unregisterListener(OProfilerListener listener) {
+    listeners.remove(listener);
   }
 }

@@ -67,6 +67,7 @@ public class OCommandExecutorSQLCreatePropertyTest {
     assertFalse(nameProperty.isReadonly());
 
     db.close();
+    db.drop();
   }
   
   @Test
@@ -95,6 +96,7 @@ public class OCommandExecutorSQLCreatePropertyTest {
     assertFalse(nameProperty.isReadonly());
 
     db.close();
+    db.drop();
   }
   
   @Test
@@ -122,6 +124,7 @@ public class OCommandExecutorSQLCreatePropertyTest {
     assertFalse(nameProperty.isReadonly());
 
     db.close();
+    db.drop();
   }
   
   @Test
@@ -147,6 +150,7 @@ public class OCommandExecutorSQLCreatePropertyTest {
     assertFalse(nameProperty.isReadonly());
 
     db.close();
+    db.drop();
   } 
   
   @Test
@@ -172,6 +176,7 @@ public class OCommandExecutorSQLCreatePropertyTest {
     assertFalse(nameProperty.isReadonly());
 
     db.close();
+    db.drop();
   } 
   
   @Test
@@ -197,6 +202,7 @@ public class OCommandExecutorSQLCreatePropertyTest {
     assertTrue(nameProperty.isReadonly());
 
     db.close();
+    db.drop();
   }
   
   @Test
@@ -224,6 +230,7 @@ public class OCommandExecutorSQLCreatePropertyTest {
     assertFalse(nameProperty.isReadonly());
 
     db.close();
+    db.drop();
   }
   
   @Test
@@ -248,6 +255,7 @@ public class OCommandExecutorSQLCreatePropertyTest {
     assertEquals(nameProperty.getLinkedType(), OType.STRING);
 
     db.close();
+    db.drop();
   }
   
   @Test
@@ -275,5 +283,6 @@ public class OCommandExecutorSQLCreatePropertyTest {
     assertTrue(nameProperty.isReadonly());
 
     db.close();
+    db.drop();
   }
 }
