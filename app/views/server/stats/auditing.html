@@ -2,28 +2,36 @@
 
 
   <div class="col-md-12">
-    <form class="form-inline studio-well">
-      <div class="form-group">
-        <label>Server </label>
-        <select id="serverOnline" ng-model="server" class="form-control " ng-options="s.name for s in servers"
-                data-placeholder="Pick a Server"></select>
+    <div class="row row-space">
+      <div class="col-md-12">
+        <form class="form-inline studio-well">
+          <div class="form-group">
+            <label>Server </label>
+            <select id="serverOnline" ng-model="server" class="form-control " ng-options="s.name for s in servers"
+                    data-placeholder="Pick a Server"></select>
+          </div>
+          <div class="form-group">
+            <label>Database </label>
+            <select id="databasesOnline" ng-model="db" class="form-control" ng-options="db for db in server.databases"
+                    data-placeholder="Pick a Server"></select>
+          </div>
+        </form>
       </div>
-      <div class="form-group">
-        <label>Database </label>
-        <select id="databasesOnline" ng-model="db" class="form-control" ng-options="db for db in server.databases"
-                data-placeholder="Pick a Server"></select>
-      </div>
-    </form>
+    </div>
   </div>
 
   <div class="col-md-12">
-    <tabset>
-      <tab title="Auditing Log"
-           template-url="views/server/stats/auditing/log.html">
-      </tab>
-      <tab title="Auditing Configuration"
-           template-url="views/server/stats/auditing/config.html">
-      </tab>
-    </tabset>
+    <div class="row row-space">
+      <div class="col-md-12">
+        <tabset>
+          <tab title="Auditing Log"
+               template-url="views/server/stats/auditing/log.html">
+          </tab>
+          <tab title="Auditing Configuration"
+               template-url="views/server/stats/auditing/config.html">
+          </tab>
+        </tabset>
+      </div>
+    </div>
   </div>
 </div>

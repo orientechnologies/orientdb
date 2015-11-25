@@ -422,6 +422,8 @@ ee.controller("ProfilerController", ['$scope', 'Profiler', 'Cluster', 'Spinner',
       Notification.push({content: "Command Cache purged", autoHide: true});
       CommandCache.results({server: $scope.server.name, db: $scope.db}).then(function (data) {
         $scope.results = data.results;
+        $scope.resultsSet = null;
+        $scope.headers = null;
       });
     });
   }

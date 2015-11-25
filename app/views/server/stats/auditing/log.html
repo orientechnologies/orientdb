@@ -1,104 +1,101 @@
-<div class="container-fluid">
-  <hr/>
-  <div class="row">
-    <div class="col-md-12">
-      <form name="form" ng-submit="filter()">
+<div class="col-md-12">
+  <div class="row row-space">
+    <div class="col-md-12 ">
+      <form name="form" class="studio-well" ng-submit="filter()">
         <div class="form-group">
+          <div class="row">
+            <div class="col-md-3">
+              <label>User</label>
+              <input type="text" class="form-control" ng-model="query.user">
+            </div>
+            <div class="col-md-3">
+              <label>Operation</label>
+              <select class="form-control" ng-model="query.operation">
+                <option>--Select Operation--</option>
+                <option value="3">Create</option>
+                <option value="0">Read</option>
+                <option value="1">Update</option>
+                <option value="2">Delete</option>
+                <option value="4">Command</option>
+              </select>
+            </div>
 
-          <div class="col-md-3">
-            <label>User</label>
-            <input type="text" class="form-control" ng-model="query.user">
-          </div>
-          <div class="col-md-3">
-            <label>Operation</label>
-            <select class="form-control" ng-model="query.operation">
-              <option>--Select Operation--</option>
-              <option value="3">Create</option>
-              <option value="0">Read</option>
-              <option value="1">Update</option>
-              <option value="2">Delete</option>
-              <option value="4">Command</option>
-            </select>
-          </div>
+            <div class="col-md-3">
+              <label>Date from</label>
 
-          <div class="col-md-3">
-            <label>Date from</label>
-
-            <div class="input-group date" ng-model='query.from'>
-              <input type='text' class='form-control' ng-model='query.from'
-                     data-date-format="dd/MM/yyyy" bs-datepicker/>
+              <div class="input-group date" ng-model='query.from'>
+                <input type='text' class='form-control' ng-model='query.from'
+                       data-date-format="dd/MM/yyyy" bs-datepicker/>
                 <span class="input-group-btn">
                     <button class="btn">
                       <i class="fa fa-calendar">
                       </i>
                     </button>
                 </span>
-              <input data-time-format="HH:mm" class="form-control" bs-timepicker
-                     ng-model='query.from' type="text"/>
+                <input data-time-format="HH:mm" class="form-control" bs-timepicker
+                       ng-model='query.from' type="text"/>
               <span class="input-group-btn">
                   <button class="btn">
                     <i class="fa fa-clock-o">
                     </i>
                   </button>
               </span>
+              </div>
+
             </div>
+            <div class="col-md-3">
+              <label>Date To</label>
 
-          </div>
-          <div class="col-md-3">
-            <label>Date To</label>
-
-            <div class="input-group date" ng-model='query.to'>
-              <input type='text' class='form-control' ng-model='query.to'
-                     data-date-format="dd/MM/yyyy" bs-datepicker/>
+              <div class="input-group date" ng-model='query.to'>
+                <input type='text' class='form-control' ng-model='query.to'
+                       data-date-format="dd/MM/yyyy" bs-datepicker/>
                 <span class="input-group-btn">
                     <button class="btn">
                       <i class="fa fa-calendar">
                       </i>
                     </button>
                 </span>
-              <input data-time-format="HH:mm" class="form-control" bs-timepicker
-                     ng-model='query.to' type="text"/>
+                <input data-time-format="HH:mm" class="form-control" bs-timepicker
+                       ng-model='query.to' type="text"/>
               <span class="input-group-btn">
                   <button class="btn">
                     <i class="fa fa-clock-o">
                     </i>
                   </button>
               </span>
+              </div>
             </div>
           </div>
-          <div class="col-md-3">
-            <label>Note</label>
-            <input type="text" class="form-control" ng-model="query.note">
-          </div>
-          <div class="col-md-3">
-            <label>Record</label>
-            <input type="text" class="form-control" ng-model="query.record">
-          </div>
-
-          <div class="col-md-3">
-            <label>Limit</label>
-            <input type="number" class="form-control" ng-model="query.limit">
-          </div>
-
-          <div class="col-md-3">
-            <br/>
-
-            <div class="btn-group">
-              <button class="btn" ng-click="resetFilter()"><i class="fa fa-eraser"> Clear Filter</i></button>
+          <div class="row row-space">
+            <div class="col-md-3">
+              <label>Note</label>
+              <input type="text" class="form-control" ng-model="query.note">
             </div>
-            <div class="btn-group">
-              <button class="btn" type="submit"><i class="fa fa-search"> Search</i></button>
+            <div class="col-md-3">
+              <label>Record</label>
+              <input type="text" class="form-control" ng-model="query.record">
+            </div>
+
+            <div class="col-md-3">
+              <label>Limit</label>
+              <input type="number" class="form-control" ng-model="query.limit">
+            </div>
+
+            <div class="col-md-3">
+              <div class="btn-group">
+                <button class="btn btn-sm" ng-click="resetFilter()"><i class="fa fa-eraser"> Clear Filter</i></button>
+              </div>
+              <div class="btn-group">
+                <button class="btn btn-sm" type="submit"><i class="fa fa-search"> Search</i></button>
+              </div>
             </div>
           </div>
         </div>
       </form>
     </div>
   </div>
-  <hr/>
-
-  <div class="row">
+  <div class="row row-space">
     <div class="col-md-12">
-
       <table st-table="displayedLogs" st-safe-src="logs" class="table">
         <thead>
         <tr>

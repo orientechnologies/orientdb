@@ -1,19 +1,11 @@
 <div class="container-fluid">
   <div class="row">
     <div class="col-md-12">
-      <div class="btn-group pull-right">
-        <button class="btn btn-sm btn-primary" ng-click="save()"><i class="fa fa-save"></i> Save</button>
-      </div>
+
     </div>
   </div>
-  <div class="row">
-    <div class="col-md-12">
-      <div class="page-header">
-        <h4>Class Auditing</h4>
-      </div>
-    </div>
-  </div>
-  <div class="row audit-form-controls">
+
+  <div class="row studio-well">
     <div class="col-md-6">
       <form class="form-inline">
         <div class="form-group">
@@ -23,15 +15,28 @@
       </form>
     </div>
     <div class="col-md-6">
-      <div class="pull-right">
-        <div class="btn-group">
-          <button class="btn btn-sm btn-success" ng-click="addClass()"><i class="fa fa-plus-circle"></i> Add Class
-          </button>
+      <div class="btn-group pull-right">
+        <button class="btn btn-sm btn-primary" ng-click="save()"><i class="fa fa-save"></i> Save</button>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <div class="page-header">
+        <div class="row">
+          <div class="col-md-10">
+            <h4>Class Auditing</h4>
+          </div>
+          <div class="col-md-2">
+            <div class="btn-group pull-right">
+              <button class="btn btn-sm btn-success" ng-click="addClass()"><i class="fa fa-plus-circle"></i> Add Class
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </div>
-  <hr/>
   <div class="row">
     <div class="col-md-12">
       <table class="table">
@@ -72,7 +77,7 @@
               <div class="form-group">
                 <input type="checkbox" ng-model="v.onCreateEnabled">
               </div>
-              <div class="form-group">
+              <div class="form-group form-group-sm">
                 <textarea class="form-control" placeholder="Message" ng-disabled="!v.onCreateEnabled"
                           ng-model="v.onCreateMessage"></textarea>
               </div>
@@ -83,7 +88,7 @@
               <div class="form-group">
                 <input type="checkbox" ng-model="v.onReadEnabled">
               </div>
-              <div class="form-group">
+              <div class="form-group form-group-sm">
                 <textarea class="form-control" placeholder="Message" ng-disabled="!v.onReadEnabled"
                           ng-model="v.onReadMessage"></textarea>
               </div>
@@ -94,7 +99,7 @@
               <div class="form-group">
                 <input type="checkbox" ng-model="v.onUpdateEnabled">
               </div>
-              <div class="form-group">
+              <div class="form-group form-group-sm">
                 <textarea class="form-control" placeholder="Message" ng-disabled="!v.onUpdateEnabled"
                           ng-model="v.onUpdateMessage"></textarea>
 
@@ -108,7 +113,7 @@
               <div class="form-group">
                 <input type="checkbox" ng-model="v.onDeleteEnabled">
               </div>
-              <div class="form-group">
+              <div class="form-group form-group-sm">
                 <textarea class="form-control" placeholder="Message" ng-disabled="!v.onDeleteEnabled"
                           ng-model="v.onDeleteMessage"></textarea>
               </div>
@@ -117,7 +122,7 @@
           <td><input type="checkbox" ng-model="v.polymorphic"></td>
           <td>
             <div class="btn-group">
-              <button ng-click="delete(k)" class="btn btn-sm btn-danger"> Delete</button>
+              <button ng-click="delete(k)" class="btn btn-xs btn-danger"><i class="fa fa-remove"></i></button>
             </div>
           </td>
         </tr>
@@ -128,20 +133,23 @@
   <div class="row">
     <div class="col-md-12">
       <div class="page-header">
-        <h4>Command Auditing</h4>
-      </div>
-    </div>
-  </div>
-  <div class="row audit-form-controls">
-    <div class="col-md-12">
-      <div class="pull-right">
-        <div class="btn-group">
-          <button class="btn btn-sm btn-success" ng-click="addCommand()"><i class="fa fa-plus-circle"></i> Add Command
-          </button>
+        <div class="row">
+          <div class="col-md-10">
+            <h4>Command Auditing</h4>
+          </div>
+          <div class="col-md-2">
+            <div class="btn-group pull-right">
+              <button class="btn btn-sm btn-success" ng-click="addCommand()"><i class="fa fa-plus-circle"></i> Add
+                Command
+              </button>
+            </div>
+          </div>
         </div>
+
       </div>
     </div>
   </div>
+
   <div class="row">
     <div class="col-md-12">
       <table class="table">
@@ -172,7 +180,8 @@
           </td>
           <td>
             <div class="btn-group">
-              <button ng-click="deleteCommand($index)" class="btn btn-sm btn-danger"> Delete</button>
+              <button ng-click="deleteCommand($index)" class="btn btn-xs btn-danger"><i class="fa fa-remove"></i>
+              </button>
             </div>
           </td>
         </tr>
