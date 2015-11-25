@@ -19,6 +19,9 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
+import java.io.IOException;
+import java.util.*;
+
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.common.util.OCommonConst;
@@ -63,9 +66,6 @@ import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
-
-import java.io.IOException;
-import java.util.*;
 
 /**
  * Schema Class implementation.
@@ -1909,7 +1909,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
   public void setClusterSelectionInternal(final String clusterSelection) {
     // AVOID TO CHECK THIS IN LOCK TO AVOID RE-GENERATION OF IMMUTABLE SCHEMAS
-    if(this.clusterSelection.getName().equals(clusterSelection))
+    if (this.clusterSelection.getName().equals(clusterSelection))
       // NO CHANGES
       return;
 
@@ -1925,7 +1925,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
   public void setClusterSelectionInternal(final OClusterSelectionStrategy iClusterSelection) {
     // AVOID TO CHECK THIS IN LOCK TO AVOID RE-GENERATION OF IMMUTABLE SCHEMAS
-    if(this.clusterSelection.getName().equals(iClusterSelection.getName()))
+    if (this.clusterSelection.getName().equals(iClusterSelection.getName()))
       // NO CHANGES
       return;
 
@@ -2477,8 +2477,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     for (OProperty property : baseClassProperties) {
       OProperty thisProperty = getProperty(property.getName());
       if (thisProperty != null && thisProperty.getType().equals(property.getType())) {
-        throw new OSchemaException("Cannot add base class '" + baseClass.getName() + "', because of parameter conflict: "
-            + thisProperty + " vs " + property);
+        throw new OSchemaException("Cannot add base class '" + baseClass.getName() + "', because of property conflict: '"
+            + thisProperty + "' vs '" + property + "'");
       }
     }
   }
@@ -2494,7 +2494,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
           final String property = entry.getKey();
           final OProperty existingProperty = commulative.get(property);
           if (!existingProperty.getType().equals(entry.getValue().getType())) {
-            throw new OSchemaException("Properties conflict detected: [" + existingProperty + "] vs [" + entry.getValue() + "]");
+            throw new OSchemaException("Properties conflict detected: '" + existingProperty + "] vs [" + entry.getValue() + "]");
           }
         }
       }
