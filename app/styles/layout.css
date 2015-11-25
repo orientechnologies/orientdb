@@ -848,13 +848,13 @@ div.users-ui div.container-fluid, div.role-ui div.container-fluid {
 
 }
 
-.tabs nav {
+.tabs > nav  {
   text-align: center;
   font-weight: 300;
   font-size: 1.25em;
 }
 
-.tabs-style-line nav ul {
+.tabs-style-line > nav ul {
   padding: 0 2em;
   max-width: none;
   box-shadow: inset 0 -2px #d1d3d2;
@@ -873,7 +873,7 @@ div.users-ui div.container-fluid, div.role-ui div.container-fluid {
   font-size: 1em;
 }
 
-.tabs nav a {
+.tabs > nav a {
   position: relative;
   display: block;
   overflow: hidden;
@@ -884,7 +884,7 @@ div.users-ui div.container-fluid, div.role-ui div.container-fluid {
   line-height: 2.5;
 }
 
-.tabs nav ul {
+.tabs > nav ul {
   position: relative;
   display: -ms-flexbox;
   display: -webkit-flex;
@@ -907,7 +907,7 @@ div.users-ui div.container-fluid, div.role-ui div.container-fluid {
   justify-content: center;
 }
 
-.tabs nav ul li {
+.tabs > nav ul li {
   position: relative;
   z-index: 1;
   display: block;
@@ -924,7 +924,7 @@ div.users-ui div.container-fluid, div.role-ui div.container-fluid {
   color: #2CC185;
 }
 
-.tabs-style-line nav a {
+.tabs-style-line > nav a {
   padding: 0.7em 0.4em;
   box-shadow: inset 0 -2px #d1d3d2;
   color: #74777b;
@@ -938,7 +938,7 @@ div.users-ui div.container-fluid, div.role-ui div.container-fluid {
   transition: color 0.3s, box-shadow 0.3s;
 }
 
-.tabs-style-line nav a:hover, .tabs-style-line > nav a:focus {
+.tabs-style-line > nav a:hover, .tabs-style-line > nav a:focus {
   box-shadow: inset 0 -2px #74777b;
 }
 
@@ -1032,7 +1032,7 @@ div.users-ui div.container-fluid, div.role-ui div.container-fluid {
 }
 .studio-well-tips {
   background-color: #f4f4f4;
-  padding: 10px;
+  padding: px;
   border-left: 3px solid #2CC185;
 }
 

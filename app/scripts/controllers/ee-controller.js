@@ -334,7 +334,7 @@ ee.controller('ClusterOverviewController', function ($scope, $rootScope) {
 });
 
 
-ee.controller("ProfilerController", ['$scope', 'Profiler', 'Cluster', 'Spinner', 'Notification', 'CommandCache', function ($scope, Profiler, Cluster, Spinner, Notification, CommandCache) {
+ee.controller("ProfilerController", ['$scope', 'Profiler', 'Cluster', 'Spinner', 'Notification', 'CommandCache', 'Database','scroller', function ($scope, Profiler, Cluster, Spinner, Notification, CommandCache, Database,scroller) {
 
 
   $scope.strategies = ["INVALIDATE_ALL", "PER_CLUSTER"];
@@ -381,6 +381,10 @@ ee.controller("ProfilerController", ['$scope', 'Profiler', 'Cluster', 'Spinner',
       CommandCache.config({server: $scope.server.name, db: $scope.db}).then(function (data) {
         $scope.cache = data;
       });
+
+      CommandCache.results({server: $scope.server.name, db: $scope.db}).then(function (data) {
+        $scope.results = data.results;
+      });
     }
   });
 
@@ -391,12 +395,34 @@ ee.controller("ProfilerController", ['$scope', 'Profiler', 'Cluster', 'Spinner',
 
       CommandCache.enable({server: $scope.server.name, db: $scope.db}).then(function () {
 
+        Notification.push({content: "Command Cache enabled", autoHide: true});
       });
     } else {
       CommandCache.disable({server: $scope.server.name, db: $scope.db}).then(function () {
-
+        Notification.push({content: "Command Cache disabled", autoHide: true});
       });
     }
+  }
+
+  $scope.saveConfig = function () {
+    CommandCache.saveConfig({server: $scope.server.name, db: $scope.db, config: $scope.cache}).then(function () {
+      Notification.push({content: "Command Cache configuration saved correctly", autoHide: true});
+    });
+  }
+
+
+  $scope.fetchResults = function (q) {
+    $scope.resultsSet = null;
+    $scope.headers = null;
+    CommandCache.queryResults({server: $scope.server.name, db: $scope.db, query: q.query}).then(function (data) {
+
+      $scope.headers = Database.getPropertyTableFromResults(data.result);
+      $scope.resultsSet = data.result;
+
+      $scope.itemsByPage = 10;
+      var someElement = angular.element(document.getElementById('results-id'));
+      scroller.scrollToElement(someElement, 0, 2000);
+    });
   }
   $scope.flatten = function (result, metricName) {
     var commands = new Array;

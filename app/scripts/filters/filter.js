@@ -125,3 +125,12 @@ filterModule.filter('operation', function () {
     return "";
   };
 });
+
+filterModule.filter('qtype', function () {
+
+  return function (input, args) {
+    var index = input.indexOf(".");
+    var lastIndex = input.lastIndexOf('.');
+    return input.substring(index + 1, lastIndex);
+  };
+});

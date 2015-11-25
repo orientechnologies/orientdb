@@ -220,7 +220,7 @@ ee.factory('Profiler', function ($http, $resource, $q) {
     return deferred.promise;
   }
 
-  resource.metadata = function(){
+  resource.metadata = function () {
     var deferred = $q.defer();
     var text = API + 'profiler/metadata';
     $http.get(text).success(function (data) {
@@ -261,6 +261,58 @@ ee.factory('CommandCache', function ($http, $q) {
       text += "?node=" + params.server;
     }
     $http.get(text).success(function (data) {
+      deferred.resolve(data)
+    }).error(function (data, status, headers, config) {
+      deferred.reject({data: data, status: status});
+    });
+    return deferred.promise;
+  }
+
+  /*
+   Get Cache results
+   */
+  resource.results = function (params) {
+
+    var deferred = $q.defer();
+    var text = API + 'commandCache/' + params.db + '/results';
+    if (params.server) {
+      text += "?node=" + params.server;
+    }
+    $http.get(text).success(function (data) {
+      deferred.resolve(data)
+    }).error(function (data, status, headers, config) {
+      deferred.reject({data: data, status: status});
+    });
+    return deferred.promise;
+  }
+
+  /*
+   Get Cache results set
+   */
+  resource.queryResults = function (params) {
+    var deferred = $q.defer();
+    var text = API + 'commandCache/' + params.db + '/results';
+    if (params.server) {
+      text += "?node=" + params.server;
+    }
+    $http.post(text, {query: params.query}).success(function (data) {
+      deferred.resolve(data)
+    }).error(function (data, status, headers, config) {
+      deferred.reject({data: data, status: status});
+    });
+    return deferred.promise;
+  }
+  /*
+   Save Cache configuration
+   */
+  resource.saveConfig = function (params) {
+
+    var deferred = $q.defer();
+    var text = API + 'commandCache/' + params.db;
+    if (params.server) {
+      text += "?node=" + params.server;
+    }
+    $http.put(text, params.config).success(function (data) {
       deferred.resolve(data)
     }).error(function (data, status, headers, config) {
       deferred.reject({data: data, status: status});
