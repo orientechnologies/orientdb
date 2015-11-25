@@ -107,7 +107,9 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
         }
       }
 
-      csvFormat = csvFormat.withHeader(columnNames.toArray(new String[] {}));
+      log(OETLProcessor.LOG_LEVELS.INFO, "column types: %s", columnTypes);
+      String[] header = columnTypes.keySet().toArray(new String[] {});
+      csvFormat = csvFormat.withHeader(header);
 
     }
     if (iConfiguration.containsField("skipFrom")) {
@@ -138,6 +140,7 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
     try {
 
       CSVParser parser = new CSVParser(iReader, csvFormat);
+
       recordIterator = parser.iterator();
     } catch (IOException e) {
       throw new OExtractorException(e);
