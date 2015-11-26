@@ -27,17 +27,15 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class OProfiler extends OAbstractProfiler {
 
-  protected Map<String, Long>          counters      = new HashMap<String, Long>();
-  protected Map<String, AtomicInteger> tips          = new HashMap<String, AtomicInteger>();
-  protected Map<String, Long>          tipsTimestamp = new HashMap<String, Long>();
+  protected  ConcurrentMap<String, Long>                    counters      = new ConcurrentLinkedHashMap.Builder().maximumWeightedCapacity(OGlobalConfiguration.PROFILER_MAXVALUES.getValueAsInteger()).build();
+  private    ConcurrentLinkedHashMap<String, AtomicInteger> tips          = new ConcurrentLinkedHashMap.Builder().maximumWeightedCapacity(OGlobalConfiguration.PROFILER_MAXVALUES.getValueAsInteger()).build();
+  private    ConcurrentLinkedHashMap<String, Long>          tipsTimestamp = new ConcurrentLinkedHashMap.Builder().maximumWeightedCapacity(OGlobalConfiguration.PROFILER_MAXVALUES.getValueAsInteger()).build();
 
   public OProfiler() {
   }
@@ -136,34 +134,12 @@ public class OProfiler extends OAbstractProfiler {
       oldValue = counters.get(statName);
 
       if (oldValue == null) {
-        if (!counters.containsKey(statName))
-          counters.put(statName, 0L);
+        counters.putIfAbsent(statName, 0L);
         oldValue = counters.get(statName);
       }
 
       newValue = oldValue + plus;
-    } while (!replace(statName, oldValue, newValue));
-  }
-
-  /**
-   * utility method that mimic java8 map.replace call.
-   * Code copied from jdk
-   * TODO: replace with java8 call when we switch
-   * @param key
-   * @param oldValue
-   * @param newValue
-   * @return
-   */
-  private boolean replace(String key,Long oldValue, Long  newValue) {
-
-    Object curValue = counters.get(key);
-    if (!Objects.equals(curValue, oldValue) ||
-        (curValue == null && !counters.containsKey(key))) {
-      return false;
-    }
-    counters.put(key, newValue);
-    return true;
-
+    } while (!counters.replace(statName, oldValue, newValue));
   }
 
   public long getCounter(final String statName) {
