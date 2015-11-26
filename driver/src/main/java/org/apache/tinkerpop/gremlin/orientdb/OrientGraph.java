@@ -70,7 +70,6 @@ public final class OrientGraph implements Graph {
 
     protected final ODatabaseDocumentTx database;
     protected final Features features;
-//    protected final String url;
     protected final Configuration configuration;
     protected final OPartitionedDatabasePool pool;
 
@@ -83,12 +82,6 @@ public final class OrientGraph implements Graph {
         } else {
             this.features = ODBFeatures.OrientFeatures.INSTANCE_NOTX;
         }
-//        this.url = config.getString(CONFIG_URL, "memory:test-" + Math.random());
-//        this.database = getDatabase(url,
-//            config.getString(CONFIG_USER, "admin"),
-//            config.getString(CONFIG_PASS, "admin"),
-//            config.getBoolean(CONFIG_CREATE, true),
-//            config.getBoolean(CONFIG_OPEN, true));
     }
 
     public OrientGraph(final OPartitionedDatabasePool pool, final Configuration configuration) {
@@ -101,27 +94,7 @@ public final class OrientGraph implements Graph {
         } else {
             this.features = ODBFeatures.OrientFeatures.INSTANCE_NOTX;
         }
-//        this.url = config.getString(CONFIG_URL, "memory:test-" + Math.random());
-//        this.database = getDatabase(url,
-//            config.getString(CONFIG_USER, "admin"),
-//            config.getString(CONFIG_PASS, "admin"),
-//            config.getBoolean(CONFIG_CREATE, true),
-//            config.getBoolean(CONFIG_OPEN, true));
     }
-
-//    /**
-//     * @param create if true automatically creates database if database with given URL does not exist
-//     * @param open   if true automatically opens the database
-//     */
-//    protected ODatabaseDocumentTx getDatabase(String url, String user, String password, boolean create, boolean open) {
-//        final ODatabaseDocumentTx db = new ODatabaseFactory().createDatabase("graph", url);
-//        if (!db.getURL().startsWith("remote:") && !db.exists()) {
-//            if (create) db.create();
-//            else if (open) throw new ODatabaseException("Database '" + url + "' not found");
-//        } else if (open) db.open(user, password);
-//
-//        return db;
-//    }
 
     public Features features() {
         return features;
