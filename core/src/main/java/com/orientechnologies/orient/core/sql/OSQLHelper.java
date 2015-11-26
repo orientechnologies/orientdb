@@ -352,7 +352,14 @@ public class OSQLHelper {
                     fieldValue = null;
                 }
               }
+            } else if (immutableClass.isEdgeType() && ("out".equals(fieldName) || "in".equals(fieldName)) &&
+              (fieldValue instanceof List)) {
+              List lst = (List)fieldValue;
+              if (lst.size() == 1) {
+                fieldValue = lst.get(0);
+              }
             }
+
           }
 
           if (OMultiValue.isMultiValue(fieldValue)) {
