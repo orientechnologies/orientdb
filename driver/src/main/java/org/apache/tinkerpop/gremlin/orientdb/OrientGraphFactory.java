@@ -122,23 +122,8 @@ public final class OrientGraphFactory {
         return this;
     }
 
-    /**
-     * Returns the number of available instances in the pool.
-     */
-    public int getAvailableInstancesInPool() {
-        if (pool != null)
-            return pool.getAvailableConnections();
-        return 0;
-    }
-
-    /**
-     * Returns the total number of instances created in the pool.
-     */
-    public int getCreatedInstancesInPool() {
-        if (pool != null)
-            return pool.getCreatedInstances();
-
-        return 0;
+    public OPartitionedDatabasePool pool() {
+        return pool;
     }
 
     /**

@@ -45,7 +45,7 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E> imple
     }
 
     private Iterator<? extends Vertex> vertices() {
-        final OrientGraph graph = (OrientGraph) this.getTraversal().getGraph().get();
+        final OrientGraph graph = getGraph();
 
         if (this.ids != null && this.ids.length > 0) {
             return this.iteratorList(graph.vertices(this.ids));
@@ -68,7 +68,7 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E> imple
 
     //TODO: indexed edges
     private Iterator<? extends Edge> edges() {
-        final OrientGraph graph = (OrientGraph) this.getTraversal().getGraph().get();
+        final OrientGraph graph = getGraph();
         if (this.ids != null && this.ids.length > 0) {
             return this.iteratorList(graph.edges(this.ids));
         } else {
@@ -93,7 +93,7 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E> imple
     }
 
     private OrientGraph getGraph() {
-        return ((OrientGraph) this.getTraversal().getGraph().get());
+        return (OrientGraph) this.getTraversal().getGraph().get();
     }
 
     @VisibleForTesting
