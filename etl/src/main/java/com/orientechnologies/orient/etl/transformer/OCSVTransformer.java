@@ -23,7 +23,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.etl.OETLProcessor;
-import sun.misc.FloatConsts;
 
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -48,7 +47,7 @@ public class OCSVTransformer extends OAbstractTransformer {
   private boolean      unicode            = true;
 
   public static boolean isFinite(final float value) {
-    return Math.abs(value) <= FloatConsts.MAX_VALUE;
+    return Math.abs(value) <= Float.MAX_VALUE;
   }
 
   @Override
@@ -253,7 +252,7 @@ public class OCSVTransformer extends OAbstractTransformer {
    * choosing Java 1.8 as minimal supported
    **/
   protected boolean isFinite(Float f) {
-    return Math.abs(f) <= FloatConsts.MAX_VALUE;
+    return Math.abs(f) <= Float.MAX_VALUE;
   }
 
   // TODO Test, and double doubleqoutes case

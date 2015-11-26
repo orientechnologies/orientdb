@@ -33,8 +33,8 @@ public class OMergeTransformer extends OAbstractLookupTransformer {
     return new ODocument().fromJSON("{parameters:[" + getCommonConfigurationParameters() + ","
         + "{joinFieldName:{optional:false,description:'field name containing the value to join'}},"
         + "{lookup:{optional:false,description:'<Class>.<property> or Query to execute'}},"
-        + "{unresolvedLinkAction:{optional:true,description:'action when a unresolved link is found',values:"
-        + stringArray2Json(ACTION.values()) + "}}]," + "input:['ODocument'],output:'ODocument'}");
+        + "{unresolvedLinkAction:{optional:true,description:'action when a unresolved link is found',values:" + stringArray2Json(
+        ACTION.values()) + "}}]," + "input:['ODocument'],output:'ODocument'}");
   }
 
   @Override
@@ -49,7 +49,24 @@ public class OMergeTransformer extends OAbstractLookupTransformer {
 
     log(OETLProcessor.LOG_LEVELS.DEBUG, "joinValue=%s, lookupResult=%s", joinValue, result);
 
-    if (result == null || OMultiValue.getSize(result) == 0) {
+    if (result != null) {
+      if (result instanceof OIdentifiable) {
+        ((ODocument) result).merge((ODocument) input, true, false);
+        log(OETLProcessor.LOG_LEVELS.DEBUG, "merged record %s with found record=%s", result, input);
+        return result;
+
+      } else if (OMultiValue.isMultiValue(result) && OMultiValue.getSize(result) == 1) {
+        final Object firstValue = OMultiValue.getFirstValue(result);
+        ((ODocument) firstValue).merge((ODocument) ((OIdentifiable) input).getRecord(), true, false);
+        log(OETLProcessor.LOG_LEVELS.DEBUG, "merged record %s with found record=%s", firstValue, input);
+        return firstValue;
+      } else if (OMultiValue.isMultiValue(result) && OMultiValue.getSize(result) > 1) {
+        throw new OETLProcessHaltedException(
+            "[Merge transformer] Multiple results returned from join for value '" + joinValue + "'");
+      }
+    } else {
+
+      log(OETLProcessor.LOG_LEVELS.DEBUG, "unresolved link!!! %s", OMultiValue.getSize(result));
       // APPLY THE STRATEGY DEFINED IN unresolvedLinkAction
       switch (unresolvedLinkAction) {
       case NOTHING:
@@ -67,13 +84,6 @@ public class OMergeTransformer extends OAbstractLookupTransformer {
       case HALT:
         throw new OETLProcessHaltedException("[Merge transformer] Cannot resolve join for value '" + joinValue + "'");
       }
-    } else if (OMultiValue.getSize(result) > 1)
-      throw new OETLProcessHaltedException("[Merge transformer] Multiple results returned from join for value '" + joinValue + "'");
-    else {
-      final Object o = OMultiValue.getFirstValue(result);
-      ((ODocument) o).merge((ODocument) ((OIdentifiable) input).getRecord(), true, false);
-      log(OETLProcessor.LOG_LEVELS.DEBUG, "merged record %s with found record=%s", result, input);
-      return o;
     }
 
     return input;

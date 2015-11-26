@@ -54,18 +54,21 @@ WWW_PATH=$ORIENTDB_HOME/www
 JAVA_OPTS=-Djava.awt.headless=true
 ORIENTDB_PID=$ORIENTDB_HOME/bin/orient.pid
 
-if [ -f "$ORIENTDB_PID" ]; then
+PARAMS=$*
+
+if [ -f "$ORIENTDB_PID" ] && [ "${#PARAMS}" -eq 0 ] ; then
     echo "pid file detected, killing process"
     kill -15 `cat "$ORIENTDB_PID"` >/dev/null 2>&1
     rm "$ORIENTDB_PID"
 else
+    echo "pid file not present or params detected"
     "$JAVA" -client $JAVA_OPTS -Dorientdb.config.file="$CONFIG_FILE" \
         -cp "$ORIENTDB_HOME/lib/orientdb-tools-@VERSION@.jar:$ORIENTDB_HOME/lib/*" \
         com.orientechnologies.orient.server.OServerShutdownMain $*
 
     if [ "x$wait" = "xyes" ] ; then
       while true ; do
-        ps -ef | grep java | grep $ORIENTDB_HOME/lib/orientdb-server > /dev/null || break
+        ps auxw | grep java | grep $ORIENTDB_HOME/lib/orientdb-server > /dev/null || break
         sleep 1;
       done
     fi
