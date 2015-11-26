@@ -56,6 +56,7 @@
             -Ddb.makeFullCheckpointOnIndexChange=false
             -Ddb.makeFullCheckpointOnSchemaChange=false
             -Dsecurity.userPasswordSaltIterations=10
+            -Dmemory.directMemory.trackMode=true
         </argLine>
     </properties>
 

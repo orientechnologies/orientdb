@@ -45,6 +45,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <argLine>-ea -Xmx2048m -Dstorage.diskCache.bufferSize=4096 -Dindex.flushAfterCreate=false
             -Dstorage.makeFullCheckpointAfterCreate=false
+            -Dmemory.directMemory.trackMode=true
             -Dstorage.makeFullCheckpointAfterOpen=false
             -Dstorage.makeFullCheckpointAfterClusterCreate=false
             -Dstorage.wal.syncOnPageFlush=false
