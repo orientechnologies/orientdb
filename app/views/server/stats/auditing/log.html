@@ -21,19 +21,34 @@
             </div>
 
             <div class="col-md-3">
+              <label>Note</label>
+              <input type="text" class="form-control" ng-model="query.note">
+            </div>
+            <div class="col-md-3">
+              <label>Record</label>
+              <input type="text" class="form-control" ng-model="query.record">
+            </div>
+
+
+          </div>
+          <div class="row row-space">
+
+            <div class="col-md-3">
               <label>Date from</label>
 
-              <div class="input-group date" ng-model='query.from'>
-                <input type='text' class='form-control' ng-model='query.from'
-                       data-date-format="dd/MM/yyyy" bs-datepicker/>
+              <div class="input-group date">
+                <input type="text" class="form-control" ng-model="query.fromDate"
+                       data-date-format="dd/MM/yyyy" data-autoclose="1" data-date-type="number" data-max-date="today"
+                       name="date1" bs-datepicker>
+
                 <span class="input-group-btn">
                     <button class="btn">
                       <i class="fa fa-calendar">
                       </i>
                     </button>
                 </span>
-                <input data-time-format="HH:mm" class="form-control" bs-timepicker
-                       ng-model='query.from' type="text"/>
+                <input data-time-format="HH:mm" class="form-control" data-time-type="number" bs-timepicker
+                       ng-model='query.fromDate' type="text"/>
               <span class="input-group-btn">
                   <button class="btn">
                     <i class="fa fa-clock-o">
@@ -46,36 +61,28 @@
             <div class="col-md-3">
               <label>Date To</label>
 
-              <div class="input-group date" ng-model='query.to'>
-                <input type='text' class='form-control' ng-model='query.to'
-                       data-date-format="dd/MM/yyyy" bs-datepicker/>
+
+              <div class="input-group date">
+
+                <input type="text" class="form-control" ng-model="query.toDate"
+                       data-date-format="dd/MM/yyyy" data-autoclose="1" data-date-type="number" data-max-date="today"
+                       name="date2" bs-datepicker>
                 <span class="input-group-btn">
                     <button class="btn">
                       <i class="fa fa-calendar">
                       </i>
                     </button>
                 </span>
-                <input data-time-format="HH:mm" class="form-control" bs-timepicker
-                       ng-model='query.to' type="text"/>
-              <span class="input-group-btn">
-                  <button class="btn">
-                    <i class="fa fa-clock-o">
-                    </i>
-                  </button>
-              </span>
+                <input data-time-format="HH:mm" class="form-control" data-time-type="number" bs-timepicker
+                       ng-model='query.toDate' type="text"/>
+                <span class="input-group-btn">
+                <button class="btn">
+                  <i class="fa fa-clock-o">
+                  </i>
+                </button>
+                </span>
               </div>
             </div>
-          </div>
-          <div class="row row-space">
-            <div class="col-md-3">
-              <label>Note</label>
-              <input type="text" class="form-control" ng-model="query.note">
-            </div>
-            <div class="col-md-3">
-              <label>Record</label>
-              <input type="text" class="form-control" ng-model="query.record">
-            </div>
-
             <div class="col-md-3">
               <label>Limit</label>
               <input type="number" class="form-control" ng-model="query.limit">

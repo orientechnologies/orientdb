@@ -538,6 +538,7 @@ ee.controller("AuditingController", ['$scope', 'Auditing', 'Cluster', 'Spinner',
 
   $scope.filter = function () {
     Spinner.start();
+    console.log($scope.query);
     Auditing.query({db: $scope.db, query: $scope.query}).then(function (data) {
 
       $scope.logs = data.result;
