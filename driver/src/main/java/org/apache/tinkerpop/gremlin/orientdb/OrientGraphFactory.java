@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.db.ODatabaseFactory;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.apache.tinkerpop.gremlin.structure.Graph;
@@ -62,7 +63,29 @@ public final class OrientGraphFactory {
         } else {
             g = new OrientGraph(getDatabase(create, open), config);
         }
+        initGraph(g);
         return g;
+    }
+
+    protected void initGraph(OrientGraph g) {
+        final ODatabaseDocumentTx db = g.getRawDatabase();
+        boolean txActive = db.getTransaction().isActive();
+
+        if (txActive)
+            // COMMIT TX BEFORE ANY SCHEMA CHANGES
+            db.commit();
+
+        OSchema schema = db.getMetadata().getSchema();
+        if (!schema.existsClass(OrientVertexType.CLASS_NAME))
+            schema.createClass(OrientVertexType.CLASS_NAME).setOverSize(2);
+        if (!schema.existsClass(OrientEdgeType.CLASS_NAME))
+            schema.createClass(OrientEdgeType.CLASS_NAME);
+
+        if (txActive) {
+            // REOPEN IT AGAIN
+            db.begin();
+//            db.getTransaction().setUsingLog(settings.isUseLog());
+        }
     }
 
     protected Configuration getConfiguration(boolean create, boolean open, boolean transactional) {
@@ -90,4 +113,42 @@ public final class OrientGraphFactory {
 
         return db;
     }
+
+    /**
+     * Setting up the factory to use database pool instead of creation a new instance of database connection each time.
+     */
+    public OrientGraphFactory setupPool(final int max) {
+        pool = new OPartitionedDatabasePool(url, user, password, max).setAutoCreate(true);
+        return this;
+    }
+
+    /**
+     * Returns the number of available instances in the pool.
+     */
+    public int getAvailableInstancesInPool() {
+        if (pool != null)
+            return pool.getAvailableConnections();
+        return 0;
+    }
+
+    /**
+     * Returns the total number of instances created in the pool.
+     */
+    public int getCreatedInstancesInPool() {
+        if (pool != null)
+            return pool.getCreatedInstances();
+
+        return 0;
+    }
+
+    /**
+     * Closes all pooled databases and clear the pool.
+     */
+    public void close() {
+        if (pool != null)
+            pool.close();
+
+        pool = null;
+    }
+
 }
