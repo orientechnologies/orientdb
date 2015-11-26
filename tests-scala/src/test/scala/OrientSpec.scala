@@ -9,7 +9,9 @@ import scala.collection.JavaConversions._
 
 class OrientSpec extends WordSpec with ShouldMatchers with BeforeAndAfterEach {
 
-  val graph = new OrientGraphFactory(s"memory:test-${math.random}").getNoTx.asScala
+  val graph = new OrientGraphFactory(s"memory:test-${math.random}")
+    .setupPool(5)
+    .getNoTx.asScala
   //  val graph = new OrientGraphFactory("remote:localhost/graphtest", "root", "root").getNoTx().asScala
   val testLabel = "testLabel"
   val testProperty = Key[String]("testProperty")
