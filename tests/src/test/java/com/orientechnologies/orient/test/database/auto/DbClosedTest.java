@@ -89,7 +89,11 @@ public class DbClosedTest extends DocumentDBBaseTest {
   }
 
   @Test
-  public void testMemoryLeaks() {
-    Assert.assertEquals(0, ODirectMemoryPointerFactory.instance().getDetectedLeaks(), 0, "Memory leaks are detected");
+  public void testMemoryLeaks() throws Exception {
+    System.gc();
+    Thread.sleep(1000);
+
+    Assert.assertEquals(0, ODirectMemoryPointerFactory.instance().getDetectedLeaks(), 0,
+        "Memory leaks are detected. " + "For more details check console output.");
   }
 }
