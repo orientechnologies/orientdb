@@ -84,13 +84,15 @@ public class OLiveQueryTest {
       db.command(new OCommandSQL("insert into test set name = 'foo', surname = 'baz'")).execute();
       db.command(new OCommandSQL("insert into test2 set name = 'foo'")).execute();
 
+      latch.await(1, TimeUnit.MINUTES);
+
       db.command(new OCommandSQL("live unsubscribe " + token)).execute();
 
       db.command(new OCommandSQL("insert into test set name = 'foo', surname = 'bax'")).execute();
       db.command(new OCommandSQL("insert into test2 set name = 'foo'"));
       db.command(new OCommandSQL("insert into test set name = 'foo', surname = 'baz'")).execute();
 
-      latch.await(1, TimeUnit.MINUTES);
+
       Assert.assertEquals(listener.ops.size(), 2);
       for (ORecordOperation doc : listener.ops) {
         Assert.assertEquals(doc.type, ORecordOperation.CREATED);
