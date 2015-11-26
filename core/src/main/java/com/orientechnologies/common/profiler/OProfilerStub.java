@@ -29,8 +29,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class OProfilerStub extends OAbstractProfiler {
@@ -92,7 +90,7 @@ public class OProfilerStub extends OAbstractProfiler {
 
   @Override
   public String dump() {
-    if (recordingFrom<0)
+    if (recordingFrom < 0)
       return "<no recording>";
 
     final StringBuilder buffer = new StringBuilder(super.dump());
