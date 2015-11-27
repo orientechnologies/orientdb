@@ -1,4 +1,4 @@
-language: java
+language: scala
 
 jdk:
   - oraclejdk8
@@ -8,6 +8,4 @@ install:
 
 script:
   - mvn install -B -f driver/pom.xml
-
-after_success:
   - cd tests-scala ; sbt test
