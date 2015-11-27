@@ -758,6 +758,7 @@ ee.controller('EEDashboardController', function ($scope, $rootScope) {
     {name: "cluster", title: "Cluster Management", template: 'distributed', icon: 'fa-sitemap'},
     {name: "profiler", title: "Query Profiler", template: 'profiler', icon: 'fa-rocket'},
     {name: "auditing", title: "Auditing", template: 'auditing', icon: 'fa-headphones'},
+    {name: "teleporter", title: "Teleporter", template: 'teleporter', icon: 'fa-usb'},
     {name: "events", title: "Events Management", template: 'events', icon: 'fa-bell'},
     {name: "configuration", title: "Settings", template: 'config', icon: 'fa-cogs'},
     {name: "storage", title: "Storages", template: 'storage', icon: 'fa-database'}
@@ -976,4 +977,78 @@ ee.controller('MetricsController', function ($scope, Cluster) {
       });
     })
   })
+});
+
+ee.controller('TeleporterController', function ($scope, Teleporter, $timeout) {
+
+
+  $scope.editorOptions = {
+    lineWrapping: true,
+    lineNumbers: true,
+    viewportMargin: 20
+  };
+
+  $scope.levels = [{"0": "NO"}, {"1": "DEBUG"}, {"2": "INFO"}, {"3": "WARNING"}, {"4": "ERROR"}];
+  $scope.strategies = ["naive", "naive-aggregate"];
+  $scope.nameResolvers = ["original", "java"];
+  $scope.mappers = ['basicDBMapper', 'hibernate']
+  $scope.config = {
+    "driver": "PostgreSQL",
+    "jurl": "jdbc:postgresql://<HOST>:<PORT>/<DB>",
+    "username": "",
+    "password": "",
+    "outDbUrl": "",
+    "strategy": "naive",
+    "mapper": "basicDBMapper",
+    "xmlPath": "",
+    "nameResolver": "original",
+    "level": "2",
+    "includes": [],
+    "excludes": []
+  }
+
+
+  $scope.includedClasses = [];
+  $scope.excludedClasses = [];
+
+  $scope.changeDriver = function () {
+
+    $scope.config.jurl = $scope.drivers[$scope.config.driver].format;
+  }
+  Teleporter.drivers({}).then(function (data) {
+    $scope.drivers = data;
+  })
+  var polling = false;
+  $scope.launch = function () {
+    $scope.config.includes = $scope.includedClasses.map(function (c) {
+      return c.text;
+    })
+    $scope.config.excludes = $scope.excludedClasses.map(function (c) {
+      return c.text;
+    })
+    //console.log($scope.config)
+    Teleporter.launch({config: $scope.config}).then(function (data) {
+      polling = true;
+      status();
+    });
+  }
+
+
+  var status = function () {
+
+    if (polling) {
+      Teleporter.status({}).then(function (data) {
+        $scope.status = data;
+        if (data.jobs.length > 0) {
+          $scope.job = data.jobs[0];
+        } else {
+          $scope.job = null;
+        }
+        $timeout(status, 2000);
+      })
+    }
+  }
+
+  status();
+
 });

@@ -1,0 +1,107 @@
+<div class="row" ng-controller="TeleporterController">
+  <div class="col-md-12">
+
+    <form class="form-horizontal">
+
+      <div class="form-group">
+        <label class="col-sm-2 control-label">Driver</label>
+
+        <div class="col-sm-10">
+          <select ng-model="config.driver" class="form-control"
+                  ng-options="key as key for (key, value) in drivers" ng-change="changeDriver()"></select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-2 control-label">URL</label>
+
+        <div class="col-sm-10">
+          <input type="text" class="form-control" ng-model="config.jurl" placeholder="JDBC URL">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-2 control-label">User Name</label>
+
+        <div class="col-sm-10">
+          <input type="text" ng-model="config.username" class="form-control" placeholder="User Name">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-2 control-label">Password</label>
+
+        <div class="col-sm-10">
+          <input type="password" ng-model="config.password" class="form-control" placeholder="Password">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-2 control-label">OrientDB URL</label>
+
+        <div class="col-sm-10">
+          <input type="text" ng-model="config.outDbUrl" class="form-control" placeholder="OrientDB URL">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-2 control-label">Strategy</label>
+
+        <div class="col-sm-10">
+          <select ng-options="s for s in strategies" class="form-control" ng-model="config.strategy"></select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-2 control-label">Mapper</label>
+
+        <div class="col-sm-10">
+          <select ng-options="s for s in mappers" class="form-control" ng-model="config.mapper"></select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-2 control-label">XML Path</label>
+
+        <div class="col-sm-10">
+          <input type="text" class="form-control" placeholder="XML Path">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-2 control-label">Name Resolver</label>
+
+        <div class="col-sm-10">
+          <select ng-options="s for s in nameResolvers" class="form-control" ng-model="config.nameResolver"></select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-2 control-label">Log Level</label>
+
+        <div class="col-sm-10">
+          <select ng-options="key as value[key] for (key,value) in levels" class="form-control"
+                  ng-model="config.level"></select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-2 control-label">Included Tables</label>
+
+        <div class="col-sm-10">
+          <!--<input type="text" class="form-control" placeholder="Included Tables">-->
+          <tags-input data-placeholder="Included Table" ng-model="includedClasses"></tags-input>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-2 control-label">Excluded Tables</label>
+
+        <div class="col-sm-10">
+          <!--<input type="text" class="form-control" placeholder="Excluded Table">-->
+          <tags-input data-placeholder="Excluded Table" ng-model="excludedClasses"></tags-input>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="col-sm-offset-2 col-sm-10">
+          <button type="submit" ng-click="launch()" class="btn btn-default">Launch</button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div class="col-md-12">
+
+    <textarea ui-codemirror="editorOptions" ng-model="job.log"></textarea>
+    <!--<p ng-repeat="j in job.logs track by $index"> {{j}}</p>-->
+  </div>
+</div>
