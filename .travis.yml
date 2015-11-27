@@ -10,4 +10,4 @@ script:
   - mvn install -B -f driver/pom.xml
 
 after_success:
-  - sbt -version
+  - cd tests-scala ; sbt test
