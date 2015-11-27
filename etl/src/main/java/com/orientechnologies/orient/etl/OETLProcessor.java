@@ -133,7 +133,7 @@ public class OETLProcessor {
       }
     }
 
-    // override with args passes by command line
+    // override with args passed by command line
     for (final String arg : args) {
       if (arg.charAt(0) == '-') {
         final String[] parts = arg.substring(1).split("=");
@@ -178,71 +178,123 @@ public class OETLProcessor {
     init();
 
     try {
-      String name;
+      configureBeginBlocks(iBeginBlocks, iContext);
 
-      // BEGIN BLOCKS
-      beginBlocks = new ArrayList<OBlock>();
-      if (iBeginBlocks != null)
-        for (ODocument block : iBeginBlocks) {
-          name = block.fieldNames()[0];
-          final OBlock b = factory.getBlock(name);
-          beginBlocks.add(b);
-          configureComponent(b, (ODocument) block.field(name), iContext);
-          //Execution is necessary to resolve let blocks and provide resolved variables to other components
-          b.execute();
-        }
+      configureSource(iSource, iContext);
 
-      if (iSource != null) {
-        // SOURCE
-        name = iSource.fieldNames()[0];
-        source = factory.getSource(name);
-        configureComponent(source, (ODocument) iSource.field(name), iContext);
-      } else {
-        source = factory.getSource("input");
-      }
+      configureExtractors(iExtractor, iContext);
 
-      // EXTRACTOR
-      name = iExtractor.fieldNames()[0];
-      extractor = factory.getExtractor(name);
-      configureComponent(extractor, (ODocument) iExtractor.field(name), iContext);
+      configureLoader(iLoader, iContext);
 
-      if (iLoader != null) {
-        // LOADER
-        name = iLoader.fieldNames()[0];
-        loader = factory.getLoader(name);
-        configureComponent(loader, (ODocument) iLoader.field(name), iContext);
-      } else {
-        loader = factory.getLoader("output");
-      }
+      configureTransformers(iTransformers, iContext);
 
-      // TRANSFORMERS
-      transformers = new ArrayList<OTransformer>();
-      if (iTransformers != null) {
-        for (ODocument t : iTransformers) {
-          name = t.fieldNames()[0];
-          final OTransformer tr = factory.getTransformer(name);
-          transformers.add(tr);
-          configureComponent(tr, (ODocument) t.field(name), iContext);
-        }
-      }
+      configureEndBlocks(iEndBlocks, iContext);
 
-      // END BLOCKS
-      endBlocks = new ArrayList<OBlock>();
-      if (iEndBlocks != null) {
-        for (ODocument block : iEndBlocks) {
-          name = block.fieldNames()[0];
-          final OBlock b = factory.getBlock(name);
-          endBlocks.add(b);
-          configureComponent(b, (ODocument) block.field(name), iContext);
-        }
-      }
-
-      // analyzeFlow();
+      //isn't working right now
+      //      analyzeFlow();
 
     } catch (Exception e) {
       throw OException.wrapException(new OConfigurationException("Error on creating ETL processor"), e);
     }
     return this;
+  }
+
+  protected void init() {
+    final String cfgLog = (String) context.getVariable("log");
+    if (cfgLog != null)
+      logLevel = LOG_LEVELS.valueOf(cfgLog.toUpperCase());
+
+    final Boolean cfgHaltOnError = (Boolean) context.getVariable("haltOnError");
+    if (cfgHaltOnError != null)
+      haltOnError = cfgHaltOnError;
+
+    final Object parallelSetting = context.getVariable("parallel");
+    if (parallelSetting != null)
+      parallel = (Boolean) parallelSetting;
+
+    if (parallel) {
+      final int cores = Runtime.getRuntime().availableProcessors();
+      threads = new Thread[cores];
+      for (int i = 0; i < cores; ++i) {
+        threads[i] = new Thread("OrientDB ETL Pipeline-" + i);
+      }
+    }
+  }
+
+  private void configureEndBlocks(Collection<ODocument> iEndBlocks, OCommandContext iContext)
+      throws IllegalAccessException, InstantiationException {
+    String name;// END BLOCKS
+    endBlocks = new ArrayList<OBlock>();
+    if (iEndBlocks != null) {
+      for (ODocument block : iEndBlocks) {
+        name = block.fieldNames()[0];
+        final OBlock b = factory.getBlock(name);
+        endBlocks.add(b);
+        configureComponent(b, (ODocument) block.field(name), iContext);
+      }
+    }
+  }
+
+  private void configureTransformers(Collection<ODocument> iTransformers, OCommandContext iContext)
+      throws IllegalAccessException, InstantiationException {
+    String name;// TRANSFORMERS
+    transformers = new ArrayList<OTransformer>();
+    if (iTransformers != null) {
+      for (ODocument t : iTransformers) {
+        name = t.fieldNames()[0];
+        final OTransformer tr = factory.getTransformer(name);
+        transformers.add(tr);
+        configureComponent(tr, (ODocument) t.field(name), iContext);
+      }
+    }
+  }
+
+  private void configureLoader(ODocument iLoader, OCommandContext iContext) throws IllegalAccessException, InstantiationException {
+    String name;
+    if (iLoader != null) {
+      // LOADER
+      name = iLoader.fieldNames()[0];
+      loader = factory.getLoader(name);
+      configureComponent(loader, (ODocument) iLoader.field(name), iContext);
+    } else {
+      loader = factory.getLoader("output");
+    }
+  }
+
+  private void configureExtractors(ODocument iExtractor, OCommandContext iContext)
+      throws IllegalAccessException, InstantiationException {
+    String name;// EXTRACTOR
+    name = iExtractor.fieldNames()[0];
+    extractor = factory.getExtractor(name);
+    configureComponent(extractor, (ODocument) iExtractor.field(name), iContext);
+  }
+
+  private void configureSource(ODocument iSource, OCommandContext iContext) throws IllegalAccessException, InstantiationException {
+    String name;
+    if (iSource != null) {
+      // SOURCE
+      name = iSource.fieldNames()[0];
+      source = factory.getSource(name);
+      configureComponent(source, (ODocument) iSource.field(name), iContext);
+    } else {
+      source = factory.getSource("input");
+    }
+  }
+
+  private void configureBeginBlocks(Collection<ODocument> iBeginBlocks, OCommandContext iContext)
+      throws IllegalAccessException, InstantiationException {
+    String name;// BEGIN BLOCKS
+    beginBlocks = new ArrayList<OBlock>();
+    if (iBeginBlocks != null) {
+      for (ODocument block : iBeginBlocks) {
+        name = block.fieldNames()[0];
+        final OBlock b = factory.getBlock(name);
+        beginBlocks.add(b);
+        configureComponent(b, (ODocument) block.field(name), iContext);
+        //Execution is necessary to resolve let blocks and provide resolved variables to other components
+        b.execute();
+      }
+    }
   }
 
   public OETLComponentFactory getFactory() {
@@ -575,27 +627,7 @@ public class OETLProcessor {
 
   }
 
-  protected void init() {
-    final String cfgLog = (String) context.getVariable("log");
-    if (cfgLog != null)
-      logLevel = LOG_LEVELS.valueOf(cfgLog.toUpperCase());
 
-    final Boolean cfgHaltOnError = (Boolean) context.getVariable("haltOnError");
-    if (cfgHaltOnError != null)
-      haltOnError = cfgHaltOnError;
-
-    final Object parallelSetting = context.getVariable("parallel");
-    if (parallelSetting != null)
-      parallel = (Boolean) parallelSetting;
-
-    if (parallel) {
-      final int cores = Runtime.getRuntime().availableProcessors();
-      threads = new Thread[cores];
-      for (int i = 0; i < cores; ++i) {
-        threads[i] = new Thread("OrientDB ETL Pipeline-" + i);
-      }
-    }
-  }
 
   public enum LOG_LEVELS {
     NONE, ERROR, INFO, DEBUG
