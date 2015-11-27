@@ -7,13 +7,13 @@
     <name>Apache TinkerPop :: OrientDB Gremlin</name>
     <description>TinkerPop3 Graph Structure Implementation for OrientDB</description>
     <url>https://github.com/mpollmeier/orientdb-gremlin/</url>
-    
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <gremlin.version>3.1.0-incubating</gremlin.version>
     </properties>
-    
+
     <developers>
         <developer>
             <name>Michael Pollmeier</name>
@@ -53,7 +53,7 @@
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-client</artifactId>
-            <version>2.1.5</version>
+            <version>2.1.6</version>
         </dependency>
         <!-- TESTING -->
         <dependency>
@@ -156,10 +156,13 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <testFailureIgnore>true</testFailureIgnore>
                     <redirectTestOutputToFile>true</redirectTestOutputToFile>
                     <argLine>${argLine} -Xmx2G</argLine>
                     <reuseForks>false</reuseForks>
+                    <excludes>
+                        <!-- there is a bug on greemlin groovy tests, we shall revisit this after TINKERPOP3-984 is release -->
+                        <exclude>**/*Groovy*.java</exclude>
+                    </excludes>
                 </configuration>
             </plugin>
             <plugin>

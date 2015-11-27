@@ -86,10 +86,6 @@ public class ODBFeatures {
         private OrientVertexFeatures() {
         }
 
-        public boolean supportsRemoveVertices() {
-            return false;
-        }
-
         @Override
         public boolean supportsMultiProperties() {
             return false;
