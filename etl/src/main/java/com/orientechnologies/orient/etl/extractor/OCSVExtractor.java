@@ -45,7 +45,7 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
             + "{quote:{optional:true,description:'String character delimiter. Use \"\" to do not use any delimitator'}},"
             + "{ignoreEmptyLines:{optional:true,description:'Ignore empty lines',type:'boolean'}},"
             + "{skipFrom:{optional:true,description:'Line number where start to skip',type:'int'}},"
-            + "{skipTo:{optional:true,description:'Line number where skip ends',type:'int'}}"
+            + "{skipTo:{optional:true,description:'Line number where skip ends',type:'int'}},"
             + "{predefinedFormat:{optional:true,description:'Name of standard csv format (from Apache commons-csv): DEFAULT, EXCEL, MYSQL, RFC4180, TDF',type:'String'}}"
             + "],input:['String'],output:'ODocument'}");
   }
