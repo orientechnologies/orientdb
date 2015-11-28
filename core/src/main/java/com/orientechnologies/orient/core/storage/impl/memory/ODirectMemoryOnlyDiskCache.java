@@ -226,6 +226,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
 
   @Override
   public void close(long fileId, boolean flush) {
+    truncateFile(fileId);
   }
 
   @Override
@@ -281,6 +282,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
 
   @Override
   public long[] close() {
+    clear();
     return new long[0];
   }
 
@@ -313,6 +315,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
 
   @Override
   public void closeStorage(OWriteCache writeCache) throws IOException {
+    close();
   }
 
   @Override
@@ -421,7 +424,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
           OCacheEntry oldCacheEntry = content.putIfAbsent(index, cacheEntry);
 
           if (oldCacheEntry != null) {
-            cacheEntry.getCachePointer().decrementReferrer();
+            cachePointer.decrementReferrer();
             index = -1;
           }
         } while (index < 0);
