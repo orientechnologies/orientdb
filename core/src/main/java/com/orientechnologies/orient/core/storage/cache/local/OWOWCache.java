@@ -1287,7 +1287,6 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
       final ODirectMemoryPointer pointer = ODirectMemoryPointerFactory.instance().createPointer(content);
       dataPointer = new OCachePointer(pointer, lastLsn, fileId, pageIndex);
-      dataPointer.incrementReadersReferrer();
 
     } else
       dataPointer = null;
