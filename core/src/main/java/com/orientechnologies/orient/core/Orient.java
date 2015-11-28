@@ -256,7 +256,6 @@ public class Orient extends OListenerManger<OOrientListener> {
           OLogManager.instance().error(this, "Error on startup", e);
         }
 
-      ODirectMemoryPointerFactory.instance().onShutdown();
     } finally {
       engineLock.writeLock().unlock();
     }
@@ -332,6 +331,8 @@ public class Orient extends OListenerManger<OOrientListener> {
       }
 
       System.gc();
+
+      ODirectMemoryPointerFactory.instance().onShutdown();
 
       OLogManager.instance().info(this, "OrientDB Engine shutdown complete");
       OLogManager.instance().flush();
