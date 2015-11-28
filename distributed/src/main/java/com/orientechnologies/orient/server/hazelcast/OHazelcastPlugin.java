@@ -26,6 +26,7 @@ import com.orientechnologies.common.console.DefaultConsoleReader;
 import com.orientechnologies.common.console.OConsoleReader;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.util.OArrays;
@@ -982,7 +983,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     Orient.instance().unregisterStorageByName(iDatabaseName);
 
     final String backupDirectory = OGlobalConfiguration.DISTRIBUTED_BACKUP_DIRECTORY.getValueAsString();
-    if (backupDirectory == null || backupDirectory.trim().isEmpty())
+    if (backupDirectory == null || OIOUtils.getStringContent(backupDirectory).trim().isEmpty())
       // SKIP BACKUP
       return;
 
@@ -1008,11 +1009,13 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     final File oldDirectory = new File(dbPath);
     if (!oldDirectory.renameTo(backupFullPath)) {
       ODistributedServerLog.error(this, getLocalNodeName(), null, DIRECTION.NONE,
-          "error on moving existent database '%s' located in '%s' to '%s'. Try to move the database directory manually and retry",
+          "error on moving existent database '%s' located in '%s' to '%s'. Deleting old database...",
           iDatabaseName, dbPath, backupFullPath);
 
-      throw new ODistributedException("Error on moving existent database '" + iDatabaseName + "' located in '" + dbPath + "' to '"
-          + backupFullPath + "'. Try to move the database directory manually and retry");
+      // throw new ODistributedException("Error on moving existent database '" + iDatabaseName + "' located in '" + dbPath + "' to
+      // '"
+      // + backupFullPath + "'. Try to move the database directory manually and retry");
+      OFileUtils.deleteRecursively(oldDirectory);
     }
   }
 
