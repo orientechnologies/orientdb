@@ -587,20 +587,19 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
       // UNLOCK ANY PENDING LOCKS
       if (messageService != null)
-        for (String dbName : messageService.getDatabases())
+        for (String dbName : messageService.getDatabases()) {
           messageService.getDatabase(dbName).unlockRecords(nodeName);
 
-      // UNREGISTER DB STATUSES
-      for (Iterator<String> it = getConfigurationMap().keySet().iterator(); it.hasNext();) {
-        final String n = it.next();
-
-        if (n.startsWith(CONFIG_DBSTATUS_PREFIX))
-          if (n.substring(CONFIG_DBSTATUS_PREFIX.length()).equals(nodeName)) {
-            ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
-                "removing dbstatus for the node %s that just left: %s", nodeName, n);
-            it.remove();
+          // UNREGISTER DB STATUSES. INSIDE TRY/CATCH TO AVOID HZ EXCEPTIONS
+          try {
+            if (getConfigurationMap().remove(CONFIG_DBSTATUS_PREFIX + nodeName + "." + dbName) != null) {
+              ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
+                  "removed dbstatus for '%s.%s' that just left: %s", nodeName, dbName);
+            }
+          } catch (Exception e) {
+            OLogManager.instance().debug(this, "error on removing dbstatus for '%s.%s'", nodeName, dbName);
           }
-      }
+        }
 
       activeNodes.remove(nodeName);
 
