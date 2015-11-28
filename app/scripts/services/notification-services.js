@@ -28,7 +28,8 @@ notification.factory('Notification', function ($timeout, $rootScope) {
         n = noty({text: notification.content, layout: 'bottom', type: 'success', theme: 'relax'});
       }
       $timeout(function () {
-        n.close();
+        if (n)
+          n.close();
       }, 4000);
     },
     startTimer: function () {

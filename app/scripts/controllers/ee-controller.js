@@ -979,20 +979,25 @@ ee.controller('MetricsController', function ($scope, Cluster) {
   })
 });
 
-ee.controller('TeleporterController', function ($scope, Teleporter, $timeout) {
+ee.controller('TeleporterController', function ($scope, Teleporter, $timeout, Notification) {
 
 
   $scope.editorOptions = {
     lineWrapping: true,
     lineNumbers: true,
-    viewportMargin: 20
+    viewportMargin: 20,
+
+    onLoad: function (cm) {
+      $scope.cm = cm;
+      cm.setSize("100%", 400);
+    }
   };
 
   $scope.levels = [{"0": "NO"}, {"1": "DEBUG"}, {"2": "INFO"}, {"3": "WARNING"}, {"4": "ERROR"}];
   $scope.strategies = ["naive", "naive-aggregate"];
   $scope.nameResolvers = ["original", "java"];
   $scope.mappers = ['basicDBMapper', 'hibernate']
-  $scope.config = {
+  $scope.defaultConfig = {
     "driver": "PostgreSQL",
     "jurl": "jdbc:postgresql://<HOST>:<PORT>/<DB>",
     "username": "",
@@ -1008,6 +1013,8 @@ ee.controller('TeleporterController', function ($scope, Teleporter, $timeout) {
   }
 
 
+  $scope.config = angular.copy($scope.defaultConfig);
+
   $scope.includedClasses = [];
   $scope.excludedClasses = [];
 
@@ -1018,7 +1025,8 @@ ee.controller('TeleporterController', function ($scope, Teleporter, $timeout) {
   Teleporter.drivers({}).then(function (data) {
     $scope.drivers = data;
   })
-  var polling = false;
+  $scope.finished = false;
+  $scope.running = true;
   $scope.launch = function () {
     $scope.config.includes = $scope.includedClasses.map(function (c) {
       return c.text;
@@ -1028,23 +1036,53 @@ ee.controller('TeleporterController', function ($scope, Teleporter, $timeout) {
     })
     //console.log($scope.config)
     Teleporter.launch({config: $scope.config}).then(function (data) {
-      polling = true;
+      $scope.running = true;
       status();
+    });
+  }
+
+  $scope.testConnection = function () {
+    $scope.config.includes = $scope.includedClasses.map(function (c) {
+      return c.text;
+    })
+    $scope.config.excludes = $scope.excludedClasses.map(function (c) {
+      return c.text;
+    })
+    Teleporter.test({config: $scope.config}).then(function (data) {
+      Notification.push({content: "Connection is alive", autoHide: true});
+    }).catch(function (error) {
+      Notification.push({content: error.data, error: true, autoHide: true});
     });
   }
 
 
   var status = function () {
 
-    if (polling) {
+    if ($scope.running) {
       Teleporter.status({}).then(function (data) {
         $scope.status = data;
         if (data.jobs.length > 0) {
-          $scope.job = data.jobs[0];
+
+
+          if ($scope.job && $scope.job.log) {
+            $scope.job.status = data.jobs[0].status;
+            var pos = CodeMirror.Pos($scope.cm.lastLine());
+            var log = data.jobs[0].log.replace($scope.job.log, "");
+            $scope.cm.replaceRange(log, pos);
+          } else {
+            $scope.job = data.jobs[0];
+          }
+
+          $timeout(function () {
+            $scope.cm.scrollTo(0, $scope.cm.getScrollInfo().height);
+          })
         } else {
-          $scope.job = null;
+          if ($scope.job) {
+            $scope.finished = true;
+          }
+          $scope.running = false;
         }
-        $timeout(status, 2000);
+        $timeout(status, 3000);
       })
     }
   }

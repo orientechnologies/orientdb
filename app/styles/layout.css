@@ -848,7 +848,7 @@ div.users-ui div.container-fluid, div.role-ui div.container-fluid {
 
 }
 
-.tabs > nav  {
+.tabs > nav {
   text-align: center;
   font-weight: 300;
   font-size: 1.25em;
@@ -1030,12 +1030,17 @@ div.users-ui div.container-fluid, div.role-ui div.container-fluid {
   padding: 20px;
   border-left: 3px solid #a3a3a3;
 }
+
 .studio-well-tips {
   background-color: #f4f4f4;
-  padding: px;
+  padding: 20px;
   border-left: 3px solid #2CC185;
 }
-
+.studio-well-tips-sm {
+  background-color: #f4f4f4;
+  padding: 10px;
+  border-left: 3px solid #2CC185;
+}
 .field-set {
   border-radius: 6px;
   color: inherit;
@@ -1050,7 +1055,7 @@ div.users-ui div.container-fluid, div.role-ui div.container-fluid {
   margin-bottom: 30px;
 }
 
-.row  span.title {
+.row span.title {
   background-color: #2CC185;
   color: white;
   font-size: 1.5em;
@@ -1061,8 +1066,9 @@ div.users-ui div.container-fluid, div.role-ui div.container-fluid {
 
 /*BUTTONS*/
 .btn.sharp {
-  border-radius:0;
+  border-radius: 0;
 }
+
 .btn {
 
   font-weight: 700;
@@ -1073,8 +1079,12 @@ div.users-ui div.container-fluid, div.role-ui div.container-fluid {
   outline: 0 none;
 }
 
-.btn-primary {
+.btn-primary, .btn-warning, .btn-success, .btn-danger, .btn-default {
   border: 0 none;
+}
+
+.btn-primary {
+
   background: #0099cc;
   color: #ffffff;
 }
@@ -1086,4 +1096,7 @@ div.users-ui div.container-fluid, div.role-ui div.container-fluid {
 .btn-primary:active, .btn-primary.active {
   background: #007299;
   box-shadow: none;
+}
+.studio-well-tips-sm .tab {
+  padding-left: 20px;
 }

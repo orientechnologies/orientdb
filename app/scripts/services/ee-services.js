@@ -507,6 +507,21 @@ ee.factory('Teleporter', function ($http, $q) {
     return deferred.promise;
   };
 
+  teleporter.test = function (params) {
+
+    var deferred = $q.defer();
+    var url = API + 'teleporter/test';
+    if (params.server) {
+      url += '?node=' + params.server;
+    }
+    $http.post(url, params.config).success(function (data) {
+      deferred.resolve(data)
+    }).error(function (data, status, headers, config) {
+      deferred.reject({data: data, status: status});
+    });
+    return deferred.promise;
+  };
+
   teleporter.drivers = function (params) {
     var deferred = $q.defer();
     var url = API + 'teleporter/drivers';

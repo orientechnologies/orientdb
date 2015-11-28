@@ -27,7 +27,7 @@
     "ng-table": "0.3.3",
     "animate.css": "3.1.1",
     "bootstrap": "3.3.5",
-    "font-awesome": "4.4.0",
+    "font-awesome": "4.5.0",
     "angular-motion": "0.3.2",
     "bootstrap-additions": "0.2.3",
     "fontIconPicker": "2.0.0",
@@ -55,6 +55,7 @@
     "angular-translate": "2.2.0",
     "angular-motion": "^0.3.3",
     "codemirror": "4.5.0",
-    "angular-mocks": "~1.0.5"
+    "angular-mocks": "~1.0.5",
+    "font-awesome": "4.5.0"
   }
 }
