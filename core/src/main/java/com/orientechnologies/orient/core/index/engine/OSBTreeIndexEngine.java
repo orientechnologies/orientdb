@@ -20,18 +20,23 @@
 
 package com.orientechnologies.orient.core.index.engine;
 
-import java.util.Iterator;
-import java.util.Map;
-
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OIndexAbstractCursor;
+import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexEngine;
+import com.orientechnologies.orient.core.index.OIndexKeyCursor;
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTree;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  * @author Andrey Lomakin
@@ -65,7 +70,7 @@ public class OSBTreeIndexEngine extends OSharedResourceAdaptiveExternal implemen
   }
 
   @Override
-  public void init() {
+  public void init(String indexName, String indexType, OIndexDefinition indexDefinition, boolean isAutomatic, ODocument metadata) {
   }
 
   @Override
@@ -85,7 +90,7 @@ public class OSBTreeIndexEngine extends OSharedResourceAdaptiveExternal implemen
 
   @Override
   public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-      OBinarySerializer keySerializer, int keySize) {
+                        OBinarySerializer keySerializer, int keySize, ODocument metadata) {
     acquireExclusiveLock();
     try {
       sbTree.create(keySerializer, valueSerializer, keyTypes, keySize, nullPointerSupport);

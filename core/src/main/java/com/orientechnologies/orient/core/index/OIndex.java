@@ -278,4 +278,6 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
   Object getFirstKey();
 
   Object getLastKey();
+
+  int getIndexId();
 }

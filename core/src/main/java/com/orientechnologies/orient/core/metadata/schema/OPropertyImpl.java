@@ -20,16 +20,7 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import com.orientechnologies.common.comparator.OCaseInsentiveComparator;
 import com.orientechnologies.common.exception.OException;
@@ -46,8 +37,8 @@ import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.index.OIndexMetadata;
 import com.orientechnologies.orient.core.index.OPropertyIndexDefinition;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
@@ -67,14 +58,14 @@ import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
  * 
  */
 public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty {
-  private final OClassImpl    owner;
+  private final OClassImpl owner;
 
   // private String name;
   // private OType type;
 
-  private OType               linkedType;
-  private OClass              linkedClass;
-  transient private String    linkedClassName;
+  private OType            linkedType;
+  private OClass           linkedClass;
+  transient private String linkedClassName;
 
   private String              description;
   private boolean             mandatory;
@@ -88,7 +79,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   private OCollate            collate = new ODefaultCollate();
   private OGlobalProperty     globalRef;
 
-  private volatile int        hashCode;
+  private volatile int hashCode;
 
   @Deprecated
   OPropertyImpl(final OClassImpl owner, final String name, final OType type) {
@@ -233,8 +224,8 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
           if (definition instanceof OPropertyIndexDefinition) {
             relatedIndexes.add(index);
           } else {
-            throw new IllegalArgumentException("This operation applicable only for property indexes. " + index.getName() + " is "
-                + index.getDefinition());
+            throw new IllegalArgumentException(
+                "This operation applicable only for property indexes. " + index.getName() + " is " + index.getDefinition());
           }
         }
       }
@@ -1085,8 +1076,8 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     regexp = (String) (document.containsField("regexp") ? document.field("regexp") : null);
     linkedClassName = (String) (document.containsField("linkedClass") ? document.field("linkedClass") : null);
     linkedType = document.field("linkedType") != null ? OType.getById(((Integer) document.field("linkedType")).byteValue()) : null;
-    customFields = (Map<String, String>) (document.containsField("customFields") ? document
-        .field("customFields", OType.EMBEDDEDMAP) : null);
+    customFields = (Map<String, String>) (document.containsField("customFields") ? document.field("customFields", OType.EMBEDDEDMAP)
+        : null);
     description = (String) (document.containsField("description") ? document.field("description") : null);
   }
 
@@ -1366,8 +1357,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
           final OIndexManager indexManager = database.getMetadata().getIndexManager();
 
           for (OIndex<?> indexToRecreate : indexesToRecreate) {
-            final OIndexInternal.IndexMetadata indexMetadata = indexToRecreate.getInternal().loadMetadata(
-                indexToRecreate.getConfiguration());
+            final OIndexMetadata indexMetadata = indexToRecreate.getInternal().loadMetadata(indexToRecreate.getConfiguration());
 
             final ODocument metadata = indexToRecreate.getMetadata();
             final List<String> fields = indexMetadata.getIndexDefinition().getFields();
@@ -1398,8 +1388,8 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
         try {
           getDatabase().getStorage().getConfiguration().getDateTimeFormatInstance().parse(iDateAsString);
         } catch (ParseException e) {
-          throw OException.wrapException(new OSchemaException("Invalid datetime format while formatting date '" + iDateAsString
-              + "'"), e);
+          throw OException
+              .wrapException(new OSchemaException("Invalid datetime format while formatting date '" + iDateAsString + "'"), e);
         }
       }
   }

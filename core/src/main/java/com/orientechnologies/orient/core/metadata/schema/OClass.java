@@ -424,6 +424,11 @@ public interface OClass extends Comparable<OClass> {
    */
   Set<OIndex<?>> getIndexes();
 
+  /**
+   * Returns the auto sharding index configured for the class if any.
+   */
+  OIndex<?> getAutoShardingIndex();
+
   String getCustom(String iName);
 
   OClass setCustom(String iName, String iValue);

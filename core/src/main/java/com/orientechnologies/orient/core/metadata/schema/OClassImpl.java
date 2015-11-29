@@ -19,9 +19,6 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.io.IOException;
-import java.util.*;
-
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.common.util.OCommonConst;
@@ -55,6 +52,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
+import com.orientechnologies.orient.core.sharding.OAutoShardingClusterSelectionStrategy;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
@@ -66,6 +64,9 @@ import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
+
+import java.io.IOException;
+import java.util.*;
 
 /**
  * Schema Class implementation.
@@ -90,6 +91,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   private boolean                            strictMode              = false;                           // @SINCE v1.0rc8
   private boolean                            abstractClass           = false;                           // @SINCE v1.2.0
   private Map<String, String>                customFields;
+  private OIndex                             autoShardingIndex;
   private volatile OClusterSelectionStrategy clusterSelection;                                          // @SINCE 1.7
   private volatile int                       hashCode;
 
@@ -111,13 +113,12 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   /**
    * Constructor used in unmarshalling.
    */
-  protected OClassImpl(final OSchemaShared iOwner) {
-    this(iOwner, new ODocument().setTrackingChanges(false));
+  protected OClassImpl(final OSchemaShared iOwner, final String iName) {
+    this(iOwner, new ODocument().setTrackingChanges(false), iName);
   }
 
   protected OClassImpl(final OSchemaShared iOwner, final String iName, final int[] iClusterIds) {
-    this(iOwner);
-    name = iName;
+    this(iOwner, iName);
     setClusterIds(iClusterIds);
     defaultClusterId = iClusterIds[0];
     if (defaultClusterId == NOT_EXISTENT_CLUSTER_ID)
@@ -134,9 +135,14 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   /**
    * Constructor used in unmarshalling.
    */
-  protected OClassImpl(final OSchemaShared iOwner, final ODocument iDocument) {
+  protected OClassImpl(final OSchemaShared iOwner, final ODocument iDocument, final String iName) {
+    name = iName;
     document = iDocument;
     owner = iOwner;
+  }
+
+  public void setAutoShardingIndex(final OIndex<?> iAutoShardingIndex){
+    autoShardingIndex = iAutoShardingIndex;
   }
 
   public static int[] readableClusters(final ODatabaseDocument iDatabase, final int[] iClusterIds) {
@@ -145,7 +151,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     boolean all = true;
     for (int clusterId : iClusterIds) {
       try {
-        String clusterName = iDatabase.getClusterNameById(clusterId);
+        final String clusterName = iDatabase.getClusterNameById(clusterId);
         iDatabase.checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_READ, clusterName);
         listOfReadableIds.add(clusterId);
       } catch (OSecurityAccessException securityException) {
@@ -158,7 +164,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       // JUST RETURN INPUT ARRAY (FASTER)
       return iClusterIds;
 
-    int[] readableClusterIds = new int[listOfReadableIds.size()];
+    final int[] readableClusterIds = new int[listOfReadableIds.size()];
     int index = 0;
     for (int clusterId : listOfReadableIds) {
       readableClusterIds[index++] = clusterId;
@@ -1870,7 +1876,12 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   @Override
-  public void getIndexes(Collection<OIndex<?>> indexes) {
+  public OIndex<?> getAutoShardingIndex() {
+    return autoShardingIndex;
+  }
+
+  @Override
+  public void getIndexes(final Collection<OIndex<?>> indexes) {
     acquireSchemaReadLock();
     try {
       getClassIndexes(indexes);

@@ -1,5 +1,19 @@
 package com.orientechnologies.lucene.engine;
 
+import java.io.IOException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
+
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.store.RAMDirectory;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
@@ -29,19 +43,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.parser.ParseException;
 import com.orientechnologies.orient.core.storage.OStorage;
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.store.RAMDirectory;
-
-import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
 
 /**
  * Created by frank on 10/8/15.
@@ -52,7 +53,7 @@ public class OLuceneFullTextExpIndexEngine implements OLuceneIndexEngine, OOrien
   public static final String KEY    = "KEY";
   public static final String STORED = "_STORED";
 
-  private final String         name;
+  private String               name;
   private final OLuceneStorage luceneStorage;
 
   private ODocBuilder       docBuilder;
@@ -65,7 +66,7 @@ public class OLuceneFullTextExpIndexEngine implements OLuceneIndexEngine, OOrien
   private OLuceneClassIndexContext indexContext;
 
   public OLuceneFullTextExpIndexEngine(String name, OLuceneStorage luceneStorage, ODocBuilder oDocBuilder,
-                                       OQueryBuilderImpl oQueryBuilder) {
+      OQueryBuilderImpl oQueryBuilder) {
     this.name = name;
     this.luceneStorage = luceneStorage;
     this.docBuilder = oDocBuilder;
@@ -73,7 +74,9 @@ public class OLuceneFullTextExpIndexEngine implements OLuceneIndexEngine, OOrien
   }
 
   @Override
-  public void initIndex(String indexType, OIndexDefinition indexDefinition, boolean isAutomatic, ODocument indexMetadata) {
+  public void init(String indexName, String indexType, OIndexDefinition indexDefinition, boolean isAutomatic,
+      ODocument indexMetadata) {
+    this.name = indexName;
     this.indexType = indexType;
     this.indexDefinition = indexDefinition;
     this.isAutomatic = isAutomatic;
@@ -91,7 +94,7 @@ public class OLuceneFullTextExpIndexEngine implements OLuceneIndexEngine, OOrien
 
   @Override
   public void onRecordAddedToResultSet(QueryContext queryContext, OContextualRecordId recordId, Document ret,
-                                       final ScoreDoc score) {
+      final ScoreDoc score) {
     recordId.setContext(new HashMap<String, Object>() {
       {
         put("score", score.score);
@@ -164,7 +167,6 @@ public class OLuceneFullTextExpIndexEngine implements OLuceneIndexEngine, OOrien
 
     OLogManager.instance().info(this, "buildTxChanges");
     return new OLuceneTxChangesSingleRid(this, luceneStorage.createIndexWriter(new RAMDirectory()));
-
   }
 
   @Override
@@ -177,18 +179,13 @@ public class OLuceneFullTextExpIndexEngine implements OLuceneIndexEngine, OOrien
   }
 
   @Override
-  public void init() {
-    luceneStorage.init();
-  }
-
-  @Override
   public void flush() {
     luceneStorage.flush();
   }
 
   @Override
   public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-                     OBinarySerializer keySerializer, int keySize) {
+      OBinarySerializer keySerializer, int keySize, ODocument metadata) {
     luceneStorage.create(valueSerializer, isAutomatic, keyTypes, nullPointerSupport, keySerializer, keySize);
   }
 
@@ -205,7 +202,7 @@ public class OLuceneFullTextExpIndexEngine implements OLuceneIndexEngine, OOrien
 
   @Override
   public void load(String indexName, OBinarySerializer valueSerializer, boolean isAutomatic, OBinarySerializer keySerializer,
-                   OType[] keyTypes, boolean nullPointerSupport, int keySize) {
+      OType[] keyTypes, boolean nullPointerSupport, int keySize) {
     luceneStorage.load(indexName, valueSerializer, isAutomatic, keySerializer, keyTypes, nullPointerSupport, keySize);
   }
 
@@ -228,7 +225,7 @@ public class OLuceneFullTextExpIndexEngine implements OLuceneIndexEngine, OOrien
   public void close() {
 
     OLogManager.instance().info(this, "CLOSE ::: proxy close");
-    //    luceneStorage.close();
+    // luceneStorage.close();
   }
 
   @Override
@@ -245,9 +242,9 @@ public class OLuceneFullTextExpIndexEngine implements OLuceneIndexEngine, OOrien
     try {
       IndexSearcher searcher = searcher();
       QueryContext queryContext = new QueryContext(context, searcher, query).setChanges(changes);
-      //      if (facetManager.supportsFacets()) {
-      //        facetManager.addFacetContext(queryContext, key);
-      //      }
+      // if (facetManager.supportsFacets()) {
+      // facetManager.addFacetContext(queryContext, key);
+      // }
       OLuceneAbstractResultSet resultSet = LuceneResultSetFactory.INSTANCE.create(this, queryContext);
 
       OLogManager.instance().info(this, "getResults (restul Set) :: " + resultSet.size());
@@ -265,13 +262,12 @@ public class OLuceneFullTextExpIndexEngine implements OLuceneIndexEngine, OOrien
     Collection<OIdentifiable> container = (Collection<OIdentifiable>) value;
     for (OIdentifiable oIdentifiable : container) {
       Document doc = new Document();
-      doc.add(OLuceneIndexType
-                  .createField(RID, oIdentifiable.getIdentity().toString(), Field.Store.YES, Field.Index.NOT_ANALYZED_NO_NORMS));
-      doc.add(OLuceneIndexType
-                  .createField("CLUSTER", oIdentifiable.getIdentity().getClusterId(), Field.Store.YES,
-                               Field.Index.NOT_ANALYZED_NO_NORMS));
-      doc.add(OLuceneIndexType
-                  .createField("CLASS", indexContext.indexClass.getName(), Field.Store.YES, Field.Index.NOT_ANALYZED_NO_NORMS));
+      doc.add(OLuceneIndexType.createField(RID, oIdentifiable.getIdentity().toString(), Field.Store.YES,
+          Field.Index.NOT_ANALYZED_NO_NORMS));
+      doc.add(OLuceneIndexType.createField("CLUSTER", oIdentifiable.getIdentity().getClusterId(), Field.Store.YES,
+          Field.Index.NOT_ANALYZED_NO_NORMS));
+      doc.add(OLuceneIndexType.createField("CLASS", indexContext.indexClass.getName(), Field.Store.YES,
+          Field.Index.NOT_ANALYZED_NO_NORMS));
 
       int i = 0;
       if (indexDefinition.isAutomatic()) {
@@ -295,13 +291,13 @@ public class OLuceneFullTextExpIndexEngine implements OLuceneIndexEngine, OOrien
 
       if (val != null) {
 
-        //FIXME why 2 fields? May we use STORED+ANALYZED?
+        // FIXME why 2 fields? May we use STORED+ANALYZED?
         if (isToStore(field).equals(Field.Store.YES)) {
           doc.add(OLuceneIndexType.createField(indexContext.indexClass.getName() + "." + field + STORED, val, Field.Store.YES,
-                                               Field.Index.NOT_ANALYZED_NO_NORMS));
+              Field.Index.NOT_ANALYZED_NO_NORMS));
         }
-        doc.add(OLuceneIndexType
-                    .createField(indexContext.indexClass.getName() + "." + field, val, Field.Store.NO, Field.Index.ANALYZED));
+        doc.add(OLuceneIndexType.createField(indexContext.indexClass.getName() + "." + field, val, Field.Store.NO,
+            Field.Index.ANALYZED));
       }
     }
 
@@ -323,13 +319,13 @@ public class OLuceneFullTextExpIndexEngine implements OLuceneIndexEngine, OOrien
 
   @Override
   public OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
-                                            boolean ascSortOrder, ValuesTransformer transformer) {
+      boolean ascSortOrder, ValuesTransformer transformer) {
     return null;
   }
 
   @Override
   public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
-                                          ValuesTransformer transformer) {
+      ValuesTransformer transformer) {
     return null;
   }
 

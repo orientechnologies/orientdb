@@ -20,28 +20,24 @@
 
 package com.orientechnologies.orient.core.index;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
-
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
+
+import java.util.Collection;
 
 /**
  * @author Andrey Lomakin
  * @since 6/29/13
  */
 public interface OIndexEngine {
-  void init();
+  void init(String indexName, String indexType, OIndexDefinition indexDefinition, boolean isAutomatic, ODocument metadata);
 
   void flush();
 
   void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-      OBinarySerializer keySerializer, int keySize);
+                 OBinarySerializer keySerializer, int keySize, ODocument metadata);
 
   void delete();
 

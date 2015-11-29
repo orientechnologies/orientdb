@@ -49,12 +49,11 @@ import com.orientechnologies.orient.core.schedule.OScheduler;
  * @since 10/21/14
  */
 public class OImmutableClass implements OClass {
-  public static final String EDGE_CLASS_NAME   = "E";
-  public static final String VERTEX_CLASS_NAME = "V";
-  private boolean            inited            = false;
-  private final boolean      isAbstract;
-  private final boolean      strictMode;
-
+  public static final String              EDGE_CLASS_NAME   = "E";
+  public static final String              VERTEX_CLASS_NAME = "V";
+  private boolean                         inited            = false;
+  private final boolean                   isAbstract;
+  private final boolean                   strictMode;
   private final String                    name;
   private final String                    streamAbleName;
   private final Map<String, OProperty>    properties;
@@ -85,8 +84,9 @@ public class OImmutableClass implements OClass {
   private boolean                     scheduler;
   private boolean                     ouser;
   private boolean                     orole;
+  private OIndex<?>                   autoShardingIndex;
 
-  public OImmutableClass(OClass oClass, OImmutableSchema schema) {
+  public OImmutableClass(final OClass oClass, final OImmutableSchema schema) {
     isAbstract = oClass.isAbstract();
     strictMode = oClass.isStrictMode();
     this.schema = schema;
@@ -119,6 +119,7 @@ public class OImmutableClass implements OClass {
 
     this.customFields = Collections.unmodifiableMap(customFields);
     this.description = oClass.getDescription();
+    this.autoShardingIndex = oClass.getAutoShardingIndex();
   }
 
   public void init() {
@@ -660,6 +661,10 @@ public class OImmutableClass implements OClass {
     Set<OIndex<?>> indexes = new HashSet<OIndex<?>>();
     getIndexes(indexes);
     return indexes;
+  }
+
+  @Override public OIndex<?> getAutoShardingIndex() {
+    return autoShardingIndex;
   }
 
   @Override

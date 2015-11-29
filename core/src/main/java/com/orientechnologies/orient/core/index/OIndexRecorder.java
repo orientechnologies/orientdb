@@ -280,6 +280,10 @@ public class OIndexRecorder implements OIndex<OIdentifiable>, OIndexInternal<OId
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
+  @Override public int getIndexId() {
+    return delegate.getIndexId();
+  }
+
   @Override
   public int compareTo(OIndex<OIdentifiable> o) {
     throw new UnsupportedOperationException("Not allowed operation");
@@ -342,7 +346,7 @@ public class OIndexRecorder implements OIndex<OIdentifiable>, OIndexInternal<OId
   }
 
   @Override
-  public IndexMetadata loadMetadata(ODocument iConfig) {
+  public OIndexMetadata loadMetadata(ODocument iConfig) {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 

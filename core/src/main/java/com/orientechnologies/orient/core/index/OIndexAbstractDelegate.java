@@ -240,6 +240,10 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
     return delegate.getLastKey();
   }
 
+  @Override public int getIndexId() {
+    return delegate.getIndexId();
+  }
+
   @Override
   public OIndexCursor cursor() {
     return delegate.cursor();

@@ -70,24 +70,24 @@ import static com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract.RID
 
 public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements OOrientListener {
 
-  private final String              name;
-  protected     OLuceneFacetManager facetManager;
-  protected     TimerTask           commitTask;
-  protected AtomicBoolean closed = new AtomicBoolean(true);
-  protected TrackingIndexWriter                   mgrWriter;
-  protected SearcherManager                       searcherManager;
-  protected ControlledRealTimeReopenThread        nrt;
-  private   DocBuilder                            builder;
-  private   OQueryBuilder                         queryBuilder;
-  private   Map<String, OLuceneClassIndexContext> oindexes;
-  private   long                                  reopenToken;
+  private final String                          name;
+  protected OLuceneFacetManager                 facetManager;
+  protected TimerTask                           commitTask;
+  protected AtomicBoolean                       closed = new AtomicBoolean(true);
+  protected TrackingIndexWriter                 mgrWriter;
+  protected SearcherManager                     searcherManager;
+  protected ControlledRealTimeReopenThread      nrt;
+  private DocBuilder                            builder;
+  private OQueryBuilder                         queryBuilder;
+  private Map<String, OLuceneClassIndexContext> oindexes;
+  private long                                  reopenToken;
 
   private OLucenePerFieldAnalyzerWrapper indexAnalyzer;
   private OLucenePerFieldAnalyzerWrapper queryAnalyzer;
 
   public OLuceneStorage(String name, DocBuilder builder, OQueryBuilder queryBuilder) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(),
-          OGlobalConfiguration.MVRBTREE_TIMEOUT.getValueAsInteger(), true);
+        OGlobalConfiguration.MVRBTREE_TIMEOUT.getValueAsInteger(), true);
     this.name = name;
     this.builder = builder;
     this.queryBuilder = queryBuilder;
@@ -193,7 +193,6 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
 
   public void flush() {
     commit();
-
   }
 
   private String getIndexPath(OLocalPaginatedStorage storageLocalAbstract, String indexName) {
@@ -207,18 +206,17 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
 
     initializerAnalyzers(indexContext.indexClass, indexContext.metadata);
 
-    OLogManager.instance()
-               .info(this, "DONE INIT initIndex:: indexAnalyzer::  " + indexAnalyzer + " queryanalzer:: " + queryAnalyzer);
-
+    OLogManager.instance().info(this,
+        "DONE INIT initIndex:: indexAnalyzer::  " + indexAnalyzer + " queryAnalyzer:: " + queryAnalyzer);
   }
 
   private void initializerAnalyzers(OClass indexClass, ODocument metadata) {
     for (String meta : metadata.fieldNames()) {
       String fieldName = meta.substring(0, meta.indexOf("_"));
       if (meta.contains("index"))
-        indexAnalyzer.add(indexClass.getName() + "." + fieldName, buildAnalyzer(metadata.<String>field(meta)));
+        indexAnalyzer.add(indexClass.getName() + "." + fieldName, buildAnalyzer(metadata.<String> field(meta)));
       else if (meta.contains("query"))
-        queryAnalyzer.add(indexClass.getName() + "." + fieldName, buildAnalyzer(metadata.<String>field(meta)));
+        queryAnalyzer.add(indexClass.getName() + "." + fieldName, buildAnalyzer(metadata.<String> field(meta)));
     }
   }
 
@@ -286,7 +284,7 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
   }
 
   public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-                     OBinarySerializer keySerializer, int keySize) {
+      OBinarySerializer keySerializer, int keySize) {
 
     OLogManager.instance().info(this, "CREATE:: ");
 
@@ -348,7 +346,7 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
   }
 
   public void load(String indexName, OBinarySerializer valueSerializer, boolean isAutomatic, OBinarySerializer keySerializer,
-                   OType[] keyTypes, boolean nullPointerSupport, int keySize) {
+      OType[] keyTypes, boolean nullPointerSupport, int keySize) {
 
     OLogManager.instance().info(this, "LOAD:: " + indexName);
   }
@@ -384,12 +382,12 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
   }
 
   public OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
-                                            boolean ascSortOrder, ValuesTransformer transformer) {
+      boolean ascSortOrder, ValuesTransformer transformer) {
     return null;
   }
 
   public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
-                                          ValuesTransformer transformer) {
+      ValuesTransformer transformer) {
     return null;
   }
 
