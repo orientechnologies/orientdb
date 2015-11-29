@@ -40,4 +40,4 @@
 
 com.orientechnologies.orient.core.index.ODefaultIndexFactory
 com.orientechnologies.orient.core.index.hashindex.local.OHashIndexFactory
-com.orientechnologies.orient.core.sharding.OAutoShardingIndexFactory
+com.orientechnologies.orient.core.sharding.auto.OAutoShardingIndexFactory

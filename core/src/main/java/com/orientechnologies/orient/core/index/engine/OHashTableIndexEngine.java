@@ -43,6 +43,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Andrey Lomakin
@@ -94,7 +95,7 @@ public final class OHashTableIndexEngine implements OIndexEngine {
 
   @Override
   public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-                        OBinarySerializer keySerializer, int keySize, ODocument metadata) {
+                        OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, ODocument metadata) {
     hashFunction.setValueSerializer(keySerializer);
 
     hashTable.create(keySerializer, valueSerializer, keyTypes, nullPointerSupport);

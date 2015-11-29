@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.Collection;
+import java.util.Set;
 
 /**
  * @author Andrey Lomakin
@@ -37,7 +38,7 @@ public interface OIndexEngine {
   void flush();
 
   void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-                 OBinarySerializer keySerializer, int keySize, ODocument metadata);
+                 OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, ODocument metadata);
 
   void delete();
 

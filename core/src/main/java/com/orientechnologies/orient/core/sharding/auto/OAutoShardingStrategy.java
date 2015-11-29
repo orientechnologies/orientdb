@@ -17,7 +17,7 @@
  *  * For more information: http://www.orientechnologies.com
  *
  */
-package com.orientechnologies.orient.core.sharding;
+package com.orientechnologies.orient.core.sharding.auto;
 
 /**
  * Auto-sharding strategy interface.
