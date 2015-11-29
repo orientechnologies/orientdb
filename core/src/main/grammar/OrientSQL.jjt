@@ -1215,7 +1215,8 @@ ODeleteEdgeStatement DeleteEdgeWhereStatement():
 }
 
 OUpdateEdgeStatement UpdateEdgeStatement():
-{ OUpdateOperations lastOperations; }
+{ OUpdateOperations lastOperations;
+ ORid lastRid;}
 {
   (
 	<UPDATE>
@@ -1228,6 +1229,14 @@ OUpdateEdgeStatement UpdateEdgeStatement():
 		jjtThis.targetCluster = Cluster()
 		|
 		jjtThis.targetIndex = IndexIdentifier()
+		|
+		(
+			<LBRACKET> {jjtThis.targetRids = new ArrayList<ORid>();}
+			lastRid = Rid() { jjtThis.targetRids.add(lastRid); }
+			(
+				<COMMA> lastRid = Rid() { jjtThis.targetRids.add(lastRid); }
+			)* <RBRACKET>
+		)
 		|
 		(
 			<LPAREN>
@@ -1253,7 +1262,8 @@ OUpdateEdgeStatement UpdateEdgeStatement():
 }
 
 OUpdateStatement UpdateStatement():
-{ OUpdateOperations lastOperations; }
+{ OUpdateOperations lastOperations;
+ ORid lastRid;}
 {
     (
     	<UPDATE>
@@ -1265,6 +1275,14 @@ OUpdateStatement UpdateStatement():
     		jjtThis.targetCluster = Cluster()
     		|
     		jjtThis.targetIndex = IndexIdentifier()
+    		|
+    		(
+				<LBRACKET> {jjtThis.targetRids = new ArrayList<ORid>();}
+				lastRid = Rid() { jjtThis.targetRids.add(lastRid); }
+				(
+					<COMMA> lastRid = Rid() { jjtThis.targetRids.add(lastRid); }
+				)* <RBRACKET>
+			)
     		|
     		(
     		    <LPAREN>
