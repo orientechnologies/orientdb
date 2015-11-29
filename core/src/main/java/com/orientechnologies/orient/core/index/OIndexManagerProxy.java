@@ -19,18 +19,16 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.Collection;
-import java.util.Set;
-
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OProxedResource;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
-import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
+
+import java.util.Collection;
+import java.util.Set;
 
 public class OIndexManagerProxy extends OProxedResource<OIndexManager> implements OIndexManager {
 
@@ -132,6 +130,10 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManager> implement
 
   public OIndex<?> getClassIndex(final String className, final String indexName) {
     return delegate.getClassIndex(className, indexName);
+  }
+
+  public OIndex<?> getClassAutoShardingIndex(final String className) {
+    return delegate.getClassAutoShardingIndex(className);
   }
 
   @Override

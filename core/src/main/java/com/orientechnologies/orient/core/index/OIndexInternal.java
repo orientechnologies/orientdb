@@ -23,7 +23,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.Collection;
-import java.util.Set;
 
 /**
  * Interface to handle index.
@@ -33,19 +32,18 @@ import java.util.Set;
  */
 public interface OIndexInternal<T> extends OIndex<T> {
 
-  public static final String CONFIG_KEYTYPE            = "keyType";
-  public static final String CONFIG_AUTOMATIC          = "automatic";
+  String CONFIG_KEYTYPE            = "keyType";
+  String CONFIG_AUTOMATIC          = "automatic";
+  String CONFIG_TYPE               = "type";
+  String ALGORITHM                 = "algorithm";
+  String VALUE_CONTAINER_ALGORITHM = "valueContainerAlgorithm";
+  String CONFIG_NAME               = "name";
+  String INDEX_DEFINITION          = "indexDefinition";
+  String INDEX_DEFINITION_CLASS    = "indexDefinitionClass";
+  String INDEX_VERSION             = "indexVersion";
+  String METADATA                  = "metadata";
 
-  public static final String CONFIG_TYPE               = "type";
-  public static final String ALGORITHM                 = "algorithm";
-  public static final String VALUE_CONTAINER_ALGORITHM = "valueContainerAlgorithm";
-  public static final String CONFIG_NAME               = "name";
-  public static final String INDEX_DEFINITION          = "indexDefinition";
-  public static final String INDEX_DEFINITION_CLASS    = "indexDefinitionClass";
-  public static final String INDEX_VERSION             = "indexVersion";
-  public static final String METADATA                  = "metadata";
-
-  public Object getCollatingValue(final Object key);
+  Object getCollatingValue(final Object key);
 
   /**
    * Loads the index giving the configuration.
@@ -54,7 +52,7 @@ public interface OIndexInternal<T> extends OIndex<T> {
    *          ODocument instance containing the configuration
    * 
    */
-  public boolean loadFromConfiguration(ODocument iConfig);
+  boolean loadFromConfiguration(ODocument iConfig);
 
   /**
    * Saves the index configuration to disk.
@@ -62,7 +60,7 @@ public interface OIndexInternal<T> extends OIndex<T> {
    * @return The configuration as ODocument instance
    * @see #getConfiguration()
    */
-  public ODocument updateConfiguration();
+  ODocument updateConfiguration();
 
   /**
    * Add given cluster to the list of clusters that should be automatically indexed.
@@ -71,7 +69,7 @@ public interface OIndexInternal<T> extends OIndex<T> {
    *          Cluster to add.
    * @return Current index instance.
    */
-  public OIndex<T> addCluster(final String iClusterName);
+  OIndex<T> addCluster(final String iClusterName);
 
   /**
    * Remove given cluster from the list of clusters that should be automatically indexed.
@@ -80,7 +78,7 @@ public interface OIndexInternal<T> extends OIndex<T> {
    *          Cluster to remove.
    * @return Current index instance.
    */
-  public OIndex<T> removeCluster(final String iClusterName);
+  OIndex<T> removeCluster(final String iClusterName);
 
   /**
    * Indicates whether given index can be used to calculate result of
@@ -90,9 +88,9 @@ public interface OIndexInternal<T> extends OIndex<T> {
    *         {@link com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquality} operators.
    * 
    */
-  public boolean canBeUsedInEqualityOperators();
+  boolean canBeUsedInEqualityOperators();
 
-  public boolean hasRangeQuerySupport();
+  boolean hasRangeQuerySupport();
 
   /**
    * Applies exclusive lock on keys which prevents read/modification of this keys in following methods:
@@ -174,95 +172,19 @@ public interface OIndexInternal<T> extends OIndex<T> {
    */
   void releaseKeysForUpdateNoTx(Collection<Object> keys);
 
-  public IndexMetadata loadMetadata(ODocument iConfig);
+  OIndexMetadata loadMetadata(ODocument iConfig);
 
-  public void setRebuildingFlag();
+  void setRebuildingFlag();
 
-  public void close();
+  void close();
 
-  public void preCommit();
+  void preCommit();
 
   void addTxOperation(ODocument operationDocument);
 
-  public void commit();
+  void commit();
 
-  public void postCommit();
+  void postCommit();
 
-  public void setType(OType type);
-
-  public final class IndexMetadata {
-    private final String           name;
-    private final OIndexDefinition indexDefinition;
-    private final Set<String>      clustersToIndex;
-    private final String           type;
-    private final String           algorithm;
-    private final String           valueContainerAlgorithm;
-
-    public IndexMetadata(String name, OIndexDefinition indexDefinition, Set<String> clustersToIndex, String type, String algorithm,
-        String valueContainerAlgorithm) {
-      this.name = name;
-      this.indexDefinition = indexDefinition;
-      this.clustersToIndex = clustersToIndex;
-      this.type = type;
-      this.algorithm = algorithm;
-      this.valueContainerAlgorithm = valueContainerAlgorithm;
-    }
-
-    public String getName() {
-      return name;
-    }
-
-    public OIndexDefinition getIndexDefinition() {
-      return indexDefinition;
-    }
-
-    public Set<String> getClustersToIndex() {
-      return clustersToIndex;
-    }
-
-    public String getType() {
-      return type;
-    }
-
-    public String getAlgorithm() {
-      return algorithm;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o)
-        return true;
-      if (o == null || getClass() != o.getClass())
-        return false;
-
-      IndexMetadata that = (IndexMetadata) o;
-
-      if (algorithm != null ? !algorithm.equals(that.algorithm) : that.algorithm != null)
-        return false;
-      if (!clustersToIndex.equals(that.clustersToIndex))
-        return false;
-      if (indexDefinition != null ? !indexDefinition.equals(that.indexDefinition) : that.indexDefinition != null)
-        return false;
-      if (!name.equals(that.name))
-        return false;
-      if (!type.equals(that.type))
-        return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = name.hashCode();
-      result = 31 * result + (indexDefinition != null ? indexDefinition.hashCode() : 0);
-      result = 31 * result + clustersToIndex.hashCode();
-      result = 31 * result + type.hashCode();
-      result = 31 * result + (algorithm != null ? algorithm.hashCode() : 0);
-      return result;
-    }
-
-    public String getValueContainerAlgorithm() {
-      return valueContainerAlgorithm;
-    }
-  }
+  void setType(OType type);
 }

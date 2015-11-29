@@ -56,8 +56,8 @@ import java.util.Set;
 public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
   protected OLuceneFacetManager facetManager;
-  private   DocBuilder          builder;
-  private   OQueryBuilder       queryBuilder;
+  private DocBuilder            builder;
+  private OQueryBuilder         queryBuilder;
 
   public OLuceneFullTextIndexEngine(String idxName, DocBuilder builder, OQueryBuilder queryBuilder) {
     super(idxName);
@@ -84,15 +84,9 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
     iwc.setOpenMode(IndexWriterConfig.OpenMode.APPEND);
 
     // TODO: use writer config params to tune writer behaviour
-
     OLogManager.instance().debug(this, "Opening Lucene index in '%s'...", directory);
 
     return new IndexWriter(directory, iwc);
-  }
-
-  @Override
-  public void init() {
-
   }
 
   @Override
@@ -130,8 +124,8 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
     Collection<OIdentifiable> container = (Collection<OIdentifiable>) value;
     for (OIdentifiable oIdentifiable : container) {
       Document doc = new Document();
-      doc.add(OLuceneIndexType
-          .createField(RID, oIdentifiable.getIdentity().toString(), Field.Store.YES, Field.Index.NOT_ANALYZED_NO_NORMS));
+      doc.add(OLuceneIndexType.createField(RID, oIdentifiable.getIdentity().toString(), Field.Store.YES,
+          Field.Index.NOT_ANALYZED_NO_NORMS));
       int i = 0;
       if (index.isAutomatic()) {
         putInAutomaticIndex(key, doc, i);
@@ -307,8 +301,8 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
   public class LuceneIndexCursor implements OIndexCursor {
 
-    private final Object          key;
-    private       LuceneResultSet resultSet;
+    private final Object    key;
+    private LuceneResultSet resultSet;
 
     private Iterator<OIdentifiable> iterator;
 

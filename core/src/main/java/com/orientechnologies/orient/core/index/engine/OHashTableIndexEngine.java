@@ -19,40 +19,49 @@
  */
 package com.orientechnologies.orient.core.index.engine;
 
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Map;
-
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.index.*;
-import com.orientechnologies.orient.core.index.hashindex.local.*;
+import com.orientechnologies.orient.core.index.OIndexAbstractCursor;
+import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexEngine;
+import com.orientechnologies.orient.core.index.OIndexKeyCursor;
+import com.orientechnologies.orient.core.index.hashindex.local.OHashIndexBucket;
+import com.orientechnologies.orient.core.index.hashindex.local.OHashTable;
+import com.orientechnologies.orient.core.index.hashindex.local.OLocalHashTable;
+import com.orientechnologies.orient.core.index.hashindex.local.OLocalHashTable20;
+import com.orientechnologies.orient.core.index.hashindex.local.OMurmurHash3HashFunction;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  * @author Andrey Lomakin
  * @since 15.07.13
  */
 public final class OHashTableIndexEngine implements OIndexEngine {
-  public static final int                        VERSION                    = 2;
+  public static final int VERSION = 2;
 
-  public static final String                     METADATA_FILE_EXTENSION    = ".him";
-  public static final String                     TREE_FILE_EXTENSION        = ".hit";
-  public static final String                     BUCKET_FILE_EXTENSION      = ".hib";
-  public static final String                     NULL_BUCKET_FILE_EXTENSION = ".hnb";
+  public static final String METADATA_FILE_EXTENSION    = ".him";
+  public static final String TREE_FILE_EXTENSION        = ".hit";
+  public static final String BUCKET_FILE_EXTENSION      = ".hib";
+  public static final String NULL_BUCKET_FILE_EXTENSION = ".hnb";
 
   private final OHashTable<Object, Object>       hashTable;
   private final OMurmurHash3HashFunction<Object> hashFunction;
 
-  private int                                    version;
+  private int version;
 
-  private final String                           name;
+  private final String name;
 
   public OHashTableIndexEngine(String name, Boolean durableInNonTxMode, OAbstractPaginatedStorage storage, int version) {
     hashFunction = new OMurmurHash3HashFunction<Object>();
@@ -75,7 +84,7 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void init() {
+  public void init(String indexName, String indexType, OIndexDefinition indexDefinition, boolean isAutomatic, ODocument metadata) {
   }
 
   @Override
@@ -85,7 +94,7 @@ public final class OHashTableIndexEngine implements OIndexEngine {
 
   @Override
   public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-      OBinarySerializer keySerializer, int keySize) {
+                        OBinarySerializer keySerializer, int keySize, ODocument metadata) {
     hashFunction.setValueSerializer(keySerializer);
 
     hashTable.create(keySerializer, valueSerializer, keyTypes, nullPointerSupport);
@@ -183,7 +192,8 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
+      ValuesTransformer transformer) {
     throw new UnsupportedOperationException("iterateEntriesMajor");
   }
 
@@ -205,11 +215,11 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   @Override
   public OIndexCursor cursor(final ValuesTransformer valuesTransformer) {
     return new OIndexAbstractCursor() {
-      private int                                      nextEntriesIndex;
+      private int nextEntriesIndex;
       private OHashIndexBucket.Entry<Object, Object>[] entries;
 
-      private Iterator<OIdentifiable>                  currentIterator = new OEmptyIterator<OIdentifiable>();
-      private Object                                   currentKey;
+      private Iterator<OIdentifiable> currentIterator = new OEmptyIterator<OIdentifiable>();
+      private Object currentKey;
 
       {
         OHashIndexBucket.Entry<Object, Object> firstEntry = hashTable.firstEntry();
@@ -288,11 +298,11 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   @Override
   public OIndexCursor descCursor(final ValuesTransformer valuesTransformer) {
     return new OIndexAbstractCursor() {
-      private int                                      nextEntriesIndex;
+      private int nextEntriesIndex;
       private OHashIndexBucket.Entry<Object, Object>[] entries;
 
-      private Iterator<OIdentifiable>                  currentIterator = new OEmptyIterator<OIdentifiable>();
-      private Object                                   currentKey;
+      private Iterator<OIdentifiable> currentIterator = new OEmptyIterator<OIdentifiable>();
+      private Object currentKey;
 
       {
         OHashIndexBucket.Entry<Object, Object> lastEntry = hashTable.lastEntry();
@@ -371,7 +381,7 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   @Override
   public OIndexKeyCursor keyCursor() {
     return new OIndexKeyCursor() {
-      private int                                      nextEntriesIndex;
+      private int nextEntriesIndex;
       private OHashIndexBucket.Entry<Object, Object>[] entries;
 
       {

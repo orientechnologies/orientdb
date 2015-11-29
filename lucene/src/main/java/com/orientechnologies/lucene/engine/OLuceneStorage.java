@@ -68,17 +68,17 @@ import static com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract.RID
 
 public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements OOrientListener {
 
-  private final String              name;
-  protected     OLuceneFacetManager facetManager;
-  protected     TimerTask           commitTask;
-  protected AtomicBoolean closed = new AtomicBoolean(true);
-  protected TrackingIndexWriter                   mgrWriter;
-  protected SearcherManager                       searcherManager;
-  protected ControlledRealTimeReopenThread        nrt;
-  private   DocBuilder                            builder;
-  private   OQueryBuilder                         queryBuilder;
-  private   Map<String, OLuceneClassIndexContext> oindexes;
-  private   long                                  reopenToken;
+  private final String                          name;
+  protected OLuceneFacetManager                 facetManager;
+  protected TimerTask                           commitTask;
+  protected AtomicBoolean                       closed = new AtomicBoolean(true);
+  protected TrackingIndexWriter                 mgrWriter;
+  protected SearcherManager                     searcherManager;
+  protected ControlledRealTimeReopenThread      nrt;
+  private DocBuilder                            builder;
+  private OQueryBuilder                         queryBuilder;
+  private Map<String, OLuceneClassIndexContext> oindexes;
+  private long                                  reopenToken;
 
   private OLucenePerFieldAnalyzerWrapper indexAnalyzer;
   private OLucenePerFieldAnalyzerWrapper queryAnalyzer;
@@ -179,8 +179,8 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
 
     initializerAnalyzers(indexContext.indexClass, indexContext.metadata);
 
-    OLogManager.instance()
-        .info(this, "DONE INIT initIndex:: indexAnalyzer::  " + indexAnalyzer + " queryanalzer:: " + queryAnalyzer);
+    OLogManager.instance().info(this,
+        "DONE INIT initIndex:: indexAnalyzer::  " + indexAnalyzer + " queryanalzer:: " + queryAnalyzer);
 
   }
 
@@ -188,9 +188,9 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
     for (String meta : metadata.fieldNames()) {
       String fieldName = meta.substring(0, meta.indexOf("_"));
       if (meta.contains("index"))
-        indexAnalyzer.add(indexClass.getName() + "." + fieldName, buildAnalyzer(metadata.<String>field(meta)));
+        indexAnalyzer.add(indexClass.getName() + "." + fieldName, buildAnalyzer(metadata.<String> field(meta)));
       else if (meta.contains("query"))
-        queryAnalyzer.add(indexClass.getName() + "." + fieldName, buildAnalyzer(metadata.<String>field(meta)));
+        queryAnalyzer.add(indexClass.getName() + "." + fieldName, buildAnalyzer(metadata.<String> field(meta)));
     }
   }
 
@@ -263,14 +263,8 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
     return null;
   }
 
-  public void init() {
-    OLogManager.instance().info(this, "INIT");
-
-  }
-
   public void flush() {
     commit();
-
   }
 
   public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,

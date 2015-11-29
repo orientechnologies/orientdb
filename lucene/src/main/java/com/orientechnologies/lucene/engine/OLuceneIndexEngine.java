@@ -18,51 +18,46 @@
 
 package com.orientechnologies.lucene.engine;
 
-import com.orientechnologies.lucene.query.QueryContext;
-import com.orientechnologies.lucene.tx.OLuceneTxChanges;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.OContextualRecordId;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexEngine;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.io.IOException;
+
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 
-import java.io.IOException;
+import com.orientechnologies.lucene.query.QueryContext;
+import com.orientechnologies.lucene.tx.OLuceneTxChanges;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.OContextualRecordId;
+import com.orientechnologies.orient.core.index.OIndexEngine;
 
 /**
  * Created by Enrico Risa on 04/09/15.
  */
 public interface OLuceneIndexEngine extends OIndexEngine {
 
-  public void initIndex(String indexType, OIndexDefinition indexDefinition, boolean isAutomatic, ODocument metadata);
+  String indexName();
 
-  public String indexName();
+  void onRecordAddedToResultSet(QueryContext queryContext, OContextualRecordId recordId, Document ret, ScoreDoc score);
 
-  public abstract void onRecordAddedToResultSet(QueryContext queryContext, OContextualRecordId recordId, Document ret,
-      ScoreDoc score);
+  Document buildDocument(Object key, OIdentifiable value);
 
-  public Document buildDocument(Object key, OIdentifiable value);
+  Query buildQuery(Object query);
 
-  public Query buildQuery(Object query);
+  Analyzer indexAnalyzer();
 
-  public Analyzer indexAnalyzer();
+  Analyzer queryAnalyzer();
 
-  public Analyzer queryAnalyzer();
+  boolean remove(Object key, OIdentifiable value);
 
-  public boolean remove(Object key, OIdentifiable value);
+  IndexSearcher searcher() throws IOException;
 
-  public IndexSearcher searcher() throws IOException;
+  Object getInTx(Object key, OLuceneTxChanges changes);
 
-  public Object getInTx(Object key, OLuceneTxChanges changes);
+  long sizeInTx(OLuceneTxChanges changes);
 
-  public long sizeInTx(OLuceneTxChanges changes);
+  OLuceneTxChanges buildTxChanges() throws IOException;
 
-  public OLuceneTxChanges buildTxChanges() throws IOException;
-
-  public Query deleteQuery(Object key, OIdentifiable value);
-
+  Query deleteQuery(Object key, OIdentifiable value);
 }

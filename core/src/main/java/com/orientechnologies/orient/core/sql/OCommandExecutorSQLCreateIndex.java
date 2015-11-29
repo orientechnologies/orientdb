@@ -289,7 +289,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
 
   @Override
   public String getSyntax() {
-    return "CREATE INDEX <name> [ON <class-name> (prop-names [COLLATE <collate>])] <type> [<key-type>] [METADATA {JSON Index Metadata Document}]";
+    return "CREATE INDEX <name> [ON <class-name> (prop-names [COLLATE <collate>])] <type> [<key-type>] [ENGINE <engine>] [METADATA {JSON Index Metadata Document}]";
   }
 
   private OClass findClass(String part) {

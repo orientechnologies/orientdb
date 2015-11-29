@@ -18,6 +18,14 @@
 
 package com.orientechnologies.lucene.engine;
 
+import java.io.IOException;
+
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreDoc;
+
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.lucene.builder.ODocBuilder;
 import com.orientechnologies.lucene.builder.OQueryBuilderImpl;
@@ -32,25 +40,18 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.ScoreDoc;
-
-import java.io.IOException;
 
 /**
  * Created by Enrico Risa on 04/09/15.
  */
 public class OLuceneIndexEngineDelegate implements OLuceneIndexEngine {
 
-  //  private final String             name;
-  private final Boolean            durableInNonTxMode;
-  private final OStorage           storage;
-  private final int                version;
-  private       OLuceneIndexEngine delegate;
-  private final String             indexName;
+  // private final String name;
+  private final Boolean      durableInNonTxMode;
+  private final OStorage     storage;
+  private final int          version;
+  private OLuceneIndexEngine delegate;
+  private String             indexName;
 
   public OLuceneIndexEngineDelegate(String name, Boolean durableInNonTxMode, OStorage storage, int version) {
 
@@ -61,18 +62,13 @@ public class OLuceneIndexEngineDelegate implements OLuceneIndexEngine {
   }
 
   @Override
-  public void init() {
-    delegate.init();
-  }
-
-  @Override
   public void flush() {
     delegate.flush();
   }
 
   @Override
   public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-                     OBinarySerializer keySerializer, int keySize) {
+      OBinarySerializer keySerializer, int keySize, ODocument metadata) {
   }
 
   @Override
@@ -88,7 +84,7 @@ public class OLuceneIndexEngineDelegate implements OLuceneIndexEngine {
 
   @Override
   public void load(String indexName, OBinarySerializer valueSerializer, boolean isAutomatic, OBinarySerializer keySerializer,
-                   OType[] keyTypes, boolean nullPointerSupport, int keySize) {
+      OType[] keyTypes, boolean nullPointerSupport, int keySize) {
     if (delegate != null)
       delegate.load(indexName, valueSerializer, isAutomatic, keySerializer, keyTypes, nullPointerSupport, keySize);
   }
@@ -138,13 +134,13 @@ public class OLuceneIndexEngineDelegate implements OLuceneIndexEngine {
 
   @Override
   public OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
-                                            boolean ascSortOrder, ValuesTransformer transformer) {
+      boolean ascSortOrder, ValuesTransformer transformer) {
     return delegate.iterateEntriesBetween(rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder, transformer);
   }
 
   @Override
   public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
-                                          ValuesTransformer transformer) {
+      ValuesTransformer transformer) {
     return delegate.iterateEntriesMajor(fromKey, isInclusive, ascSortOrder, transformer);
   }
 
@@ -189,14 +185,15 @@ public class OLuceneIndexEngineDelegate implements OLuceneIndexEngine {
   }
 
   @Override
-  public void initIndex(String indexType, OIndexDefinition indexDefinition, boolean isAutomatic, ODocument metadata) {
+  public void init(String indexName, String indexType, OIndexDefinition indexDefinition, boolean isAutomatic, ODocument metadata) {
+    this.indexName = indexName;
+
     if (delegate == null) {
-      if (OClass.INDEX_TYPE.FULLTEXT.name()
-                                    .equalsIgnoreCase(indexType)) {
+      if (OClass.INDEX_TYPE.FULLTEXT.name().equalsIgnoreCase(indexType)) {
         delegate = new OLuceneFullTextIndexEngine(indexName, new ODocBuilder(), new OQueryBuilderImpl());
       }
 
-      delegate.initIndex(indexType, indexDefinition, isAutomatic, metadata);
+      delegate.init(indexName, indexType, indexDefinition, isAutomatic, metadata);
     }
   }
 

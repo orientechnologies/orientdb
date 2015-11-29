@@ -16,16 +16,16 @@
 
 package com.orientechnologies.orient.core.metadata.schema;
 
+import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import com.orientechnologies.common.listener.OProgressListener;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Abstract Delegate for OClass interface.
@@ -41,6 +41,10 @@ public abstract class OClassAbstractDelegate implements OClass {
       throw new IllegalArgumentException("Class is null");
 
     this.delegate = delegate;
+  }
+
+  @Override public OIndex<?> getAutoShardingIndex() {
+    return delegate.getAutoShardingIndex();
   }
 
   @Override

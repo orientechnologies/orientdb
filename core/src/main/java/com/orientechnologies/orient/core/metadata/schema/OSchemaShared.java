@@ -696,7 +696,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass
       Collection<ODocument> storedClasses = document.field("classes");
       for (ODocument c : storedClasses) {
 
-        cls = new OClassImpl(this, c);
+        cls = new OClassImpl(this, c, (String) c.field("name"));
         cls.fromStream();
 
         if (classes.containsKey(cls.getName().toLowerCase())) {
