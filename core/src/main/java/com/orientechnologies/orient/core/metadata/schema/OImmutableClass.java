@@ -19,17 +19,6 @@
   */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -43,6 +32,17 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.schedule.OScheduler;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
@@ -119,7 +119,6 @@ public class OImmutableClass implements OClass {
 
     this.customFields = Collections.unmodifiableMap(customFields);
     this.description = oClass.getDescription();
-    this.autoShardingIndex = oClass.getAutoShardingIndex();
   }
 
   public void init() {
@@ -150,8 +149,13 @@ public class OImmutableClass implements OClass {
       this.scheduler = isSubClassOf(OScheduler.CLASSNAME);
       this.ouser = isSubClassOf(OUser.CLASS_NAME);
       this.orole = isSubClassOf(ORole.CLASS_NAME);
-      inited = true;
+
+      final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      this.autoShardingIndex = db != null && db.getMetadata() != null && db.getMetadata().getIndexManager() != null
+          ? db.getMetadata().getIndexManager().getClassAutoShardingIndex(name) : null;
     }
+
+    inited = true;
   }
 
   @Override
@@ -663,7 +667,8 @@ public class OImmutableClass implements OClass {
     return indexes;
   }
 
-  @Override public OIndex<?> getAutoShardingIndex() {
+  @Override
+  public OIndex<?> getAutoShardingIndex() {
     return autoShardingIndex;
   }
 

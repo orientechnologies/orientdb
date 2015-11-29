@@ -20,6 +20,25 @@
 
 package com.orientechnologies.orient.core.storage.cache.local.twoq;
 
+import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.util.Collections;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.InstanceNotFoundException;
+import javax.management.MBeanRegistrationException;
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.NotCompliantMBeanException;
+import javax.management.ObjectName;
+
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.ONewLockManager;
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
@@ -36,27 +55,9 @@ import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
-import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OStoragePerformanceStatistic;
-
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.InstanceNotFoundException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.NotCompliantMBeanException;
-import javax.management.ObjectName;
-import java.io.IOException;
-import java.lang.management.ManagementFactory;
-import java.util.Collections;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
 
 /**
  * @author Andrey Lomakin
@@ -69,8 +70,8 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
   public static final int MAX_PERCENT_OF_PINED_PAGES = 50;
 
   /**
-   * Minimum size of memory which may be allocated by cache (in pages).
-   * This parameter is used only if related flag is set in constrictor of cache.
+   * Minimum size of memory which may be allocated by cache (in pages). This parameter is used only if related flag is set in
+   * constrictor of cache.
    */
   public static final int MIN_CACHE_SIZE = 256;
 
@@ -102,14 +103,18 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
 
   private final AtomicBoolean coldPagesRemovalInProgress = new AtomicBoolean();
 
-  private final       AtomicBoolean mbeanIsRegistered = new AtomicBoolean();
-  public static final String        MBEAN_NAME        = "com.orientechnologies.orient.core.storage.cache.local:type=O2QCacheMXBean";
+  private final AtomicBoolean mbeanIsRegistered = new AtomicBoolean();
+  public static final String  MBEAN_NAME        = "com.orientechnologies.orient.core.storage.cache.local:type=O2QCacheMXBean";
 
   /**
-   * @param readCacheMaxMemory   Maximum amount of direct memory which can allocated  by disk cache in bytes.
-   * @param pageSize             Cache page size in bytes.
-   * @param checkMinSize         If this flat is set size of cache may be {@link #MIN_CACHE_SIZE} or bigger.
-   * @param percentOfPinnedPages Maximum percent of pinned pages which may be hold by this cache.
+   * @param readCacheMaxMemory
+   *          Maximum amount of direct memory which can allocated by disk cache in bytes.
+   * @param pageSize
+   *          Cache page size in bytes.
+   * @param checkMinSize
+   *          If this flat is set size of cache may be {@link #MIN_CACHE_SIZE} or bigger.
+   * @param percentOfPinnedPages
+   *          Maximum percent of pinned pages which may be hold by this cache.
    * @see #MAX_PERCENT_OF_PINED_PAGES
    */
   public O2QCache(final long readCacheMaxMemory, final int pageSize, final boolean checkMinSize, final int percentOfPinnedPages) {
@@ -264,9 +269,10 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
     MemoryData memoryData = memoryDataContainer.get();
 
     if ((100 * (memoryData.pinnedPages + 1)) / memoryData.maxSize > percentOfPinnedPages) {
-      OLogManager.instance().warn(this, "Maximum amount of pinned pages is reached , given page " + cacheEntry +
-          " will not be marked as pinned which may lead to performance degradation. You may consider to increase percent of pined pages "
-          + "by changing of property " + OGlobalConfiguration.DISK_CACHE_PINNED_PAGES.getKey());
+      OLogManager.instance().warn(this,
+          "Maximum amount of pinned pages is reached , given page " + cacheEntry
+              + " will not be marked as pinned which may lead to performance degradation. You may consider to increase percent of pined pages "
+              + "by changing of property " + OGlobalConfiguration.DISK_CACHE_PINNED_PAGES.getKey());
 
       return;
     }
@@ -300,11 +306,13 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
   }
 
   /**
-   * Changes amount of memory which may be used by given cache.
-   * This method may consume many resources if amount of memory provided in parameter is much less than current amount of memory.
+   * Changes amount of memory which may be used by given cache. This method may consume many resources if amount of memory provided
+   * in parameter is much less than current amount of memory.
    *
-   * @param readCacheMaxMemory New maximum size of cache in bytes.
-   * @throws IllegalStateException In case of new size of disk cache is too small to hold existing pinned pages.
+   * @param readCacheMaxMemory
+   *          New maximum size of cache in bytes.
+   * @throws IllegalStateException
+   *           In case of new size of disk cache is too small to hold existing pinned pages.
    */
   public void changeMaximumAmountOfMemory(final long readCacheMaxMemory) throws IllegalStateException {
     MemoryData memoryData;
@@ -328,8 +336,8 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
     if (newMemorySize < memoryData.maxSize)
       removeColdestPagesIfNeeded();
 
-    OLogManager.instance()
-        .info(this, "Disk cache size was changed from " + memoryData.maxSize + " pages to " + newMemorySize + " pages");
+    OLogManager.instance().info(this,
+        "Disk cache size was changed from " + memoryData.maxSize + " pages to " + newMemorySize + " pages");
   }
 
   @Override
@@ -357,7 +365,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
         if (cacheResult.removeColdPages)
           removeColdestPagesIfNeeded();
       } catch (RuntimeException e) {
-        assert !cacheResult.cacheEntry.isDirty();
+        assert!cacheResult.cacheEntry.isDirty();
 
         release(cacheResult.cacheEntry, writeCache, storagePerformanceStatistic);
         throw e;
@@ -474,7 +482,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
         if (cacheResult.removeColdPages)
           removeColdestPagesIfNeeded();
       } catch (RuntimeException e) {
-        assert !cacheResult.cacheEntry.isDirty();
+        assert!cacheResult.cacheEntry.isDirty();
 
         release(cacheResult.cacheEntry, writeCache, storagePerformanceStatistic);
         throw e;
@@ -838,7 +846,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
 
     assert dataPointer != null;
     assert cacheEntry.getCachePointer() == null;
-    assert !cacheEntry.isDirty();
+    assert!cacheEntry.isDirty();
 
     cacheEntry.setCachePointer(dataPointer);
 
@@ -999,7 +1007,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
           throw new OAllCacheEntriesAreUsedException("All records in aIn queue in 2q cache are used!");
         } else {
           assert removedFromAInEntry.getUsagesCount() == 0;
-          assert !removedFromAInEntry.isDirty();
+          assert!removedFromAInEntry.isDirty();
 
           final OCachePointer cachePointer = removedFromAInEntry.getCachePointer();
           cachePointer.decrementReadersReferrer();
@@ -1013,7 +1021,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
 
           assert removedEntry.getUsagesCount() == 0;
           assert removedEntry.getCachePointer() == null;
-          assert !removedEntry.isDirty();
+          assert!removedEntry.isDirty();
 
           Set<Long> pageEntries = filePages.get(removedEntry.getFileId());
           pageEntries.remove(removedEntry.getPageIndex());
@@ -1025,7 +1033,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
           throw new OAllCacheEntriesAreUsedException("All records in aIn queue in 2q cache are used!");
         } else {
           assert removedEntry.getUsagesCount() == 0;
-          assert !removedEntry.isDirty();
+          assert!removedEntry.isDirty();
 
           final OCachePointer cachePointer = removedEntry.getCachePointer();
           cachePointer.decrementReadersReferrer();
@@ -1063,7 +1071,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
               if (removedFromAInEntry.getUsagesCount() > 0)
                 continue;
 
-              assert !removedFromAInEntry.isDirty();
+              assert!removedFromAInEntry.isDirty();
 
               a1in.remove(removedFromAInEntry.getFileId(), removedFromAInEntry.getPageIndex());
 
@@ -1094,7 +1102,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
 
               assert removedEntry.getUsagesCount() == 0;
               assert removedEntry.getCachePointer() == null;
-              assert !removedEntry.isDirty();
+              assert!removedEntry.isDirty();
 
               Set<Long> pageEntries = filePages.get(removedEntry.getFileId());
               pageEntries.remove(removedEntry.getPageIndex());
@@ -1121,7 +1129,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
               if (removedEntry.getUsagesCount() > 0)
                 continue;
 
-              assert !removedEntry.isDirty();
+              assert!removedEntry.isDirty();
 
               am.remove(removedEntry.getFileId(), removedEntry.getPageIndex());
 
@@ -1288,8 +1296,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
   }
 
   /**
-   * That is immutable class which contains information
-   * about current memory limits for 2Q cache.
+   * That is immutable class which contains information about current memory limits for 2Q cache.
    * <p>
    * This class is needed to change all parameters atomically when cache memory limits are changed outside of 2Q cache.
    */

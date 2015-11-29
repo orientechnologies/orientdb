@@ -208,6 +208,14 @@ public class OSchemaShared extends ODocumentWrapperNoClass
     }
   }
 
+  @Override
+  public void onPostIndexManagement() {
+    for (OClass c : classes.values()) {
+      if (c instanceof OClassImpl)
+        ((OClassImpl) c).onPostIndexManagement();
+    }
+  }
+
   public OClass createClass(final Class<?> clazz) {
     OClass result;
 
