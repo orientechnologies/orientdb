@@ -91,6 +91,11 @@ public class OUpdateEdgeStatementTest {
     checkRightSyntax("update edge (select from (traverse References from ( select from Node WHERE Email = 'julia@local'  ) ) WHERE @class = 'Node' and $depth <= 1 and Active = true ) set Points = 0 RETURN BEFORE $current.Points");
   }
 
+  public void testTargetMultipleRids() {
+    checkRightSyntax("update EDGE [#9:0, #9:1] set foo = 'bar'");
+  }
+
+
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);
     try {
