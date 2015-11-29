@@ -8,6 +8,7 @@ import java.util.Map;
 
 public class OUpdateStatement extends OStatement {
   protected ORid                    targetRid;
+  protected List<ORid>              targetRids;
   protected OIdentifier             targetClass;
   protected OCluster                targetCluster;
   protected OIndexIdentifier        targetIndex;
@@ -42,6 +43,15 @@ public class OUpdateStatement extends OStatement {
     result.append("UPDATE ");
     if (targetRid != null) {
       result.append(targetRid.toString());
+    }else if (targetRids != null) {
+      result.append("[");
+      for(int i=0;i< targetRids.size();i++){
+        if(i>0){
+          result.append(", ");
+        }
+        result.append(targetRids.get(i));
+      }
+      result.append("]");
     } else if (targetClass != null) {
       result.append(targetClass.toString());
     } else if (targetCluster != null) {
