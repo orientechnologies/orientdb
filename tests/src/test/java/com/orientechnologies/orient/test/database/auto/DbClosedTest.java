@@ -15,7 +15,9 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import com.orientechnologies.common.directmemory.ODirectMemoryPointerFactory;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
+import org.testng.Assert;
 import org.testng.annotations.*;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -84,5 +86,14 @@ public class DbClosedTest extends DocumentDBBaseTest {
       final ODatabase db = new ODatabaseDocumentTx(url).open("admin", "admin");
       db.close();
     }
+  }
+
+  @Test
+  public void testMemoryLeaks() throws Exception {
+    System.gc();
+    Thread.sleep(1000);
+
+    Assert.assertEquals(0, ODirectMemoryPointerFactory.instance().getDetectedLeaks(), 0,
+        "Memory leaks are detected. " + "For more details check console output.");
   }
 }

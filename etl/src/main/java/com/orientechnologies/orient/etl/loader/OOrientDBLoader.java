@@ -65,7 +65,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
   protected long            batchCounter               = 0;
   protected DB_TYPE         dbType                     = DOCUMENT;
   protected boolean         wal                        = true;
-  protected Boolean         txUseLog                   = null;
+  protected boolean         txUseLog                   = false;
 
   protected enum DB_TYPE {
     DOCUMENT, GRAPH
@@ -83,7 +83,6 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
       if (dbType == DOCUMENT) {
         if (input instanceof ODocument) {
           final ODocument doc = (ODocument) input;
-          final ODatabaseDocumentTx documentDatabase = pipeline.getDocumentDatabase();
           final OClass cls;
           if (className != null)
             cls = getOrCreateClass(className, null);
@@ -192,8 +191,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
 
   private void beginTransaction(final ODatabaseDocumentTx db) {
     db.begin();
-    if (txUseLog != null)
-      db.getTransaction().setUsingLog(txUseLog);
+    db.getTransaction().setUsingLog(txUseLog);
   }
 
   @Override
@@ -268,8 +266,8 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
       }
     }
 
-    if (!wal)
-      OGlobalConfiguration.USE_WAL.setValue(wal);
+    //use wal or not
+    OGlobalConfiguration.USE_WAL.setValue(wal);
 
     switch (dbType) {
     case DOCUMENT:

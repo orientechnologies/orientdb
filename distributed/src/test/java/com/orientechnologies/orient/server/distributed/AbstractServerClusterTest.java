@@ -15,6 +15,13 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+import org.junit.Assert;
+
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.instance.GroupProperties;
 import com.orientechnologies.common.log.OLogManager;
@@ -23,20 +30,15 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-import org.junit.Assert;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 
 /**
  * Test class that creates and executes distributed operations against a cluster of servers created in the same JVM.
  */
 public abstract class AbstractServerClusterTest {
-  protected int    delayServerStartup = 0;
-  protected int    delayServerAlign   = 0;
-  protected String rootDirectory      = "target/servers/";
+  protected int     delayServerStartup     = 0;
+  protected int     delayServerAlign       = 0;
+  protected String  rootDirectory          = "target/servers/";
+  protected boolean startupNodesInSequence = true;
 
   protected List<ServerRun> serverInstance = new ArrayList<ServerRun>();
 
@@ -95,20 +97,35 @@ public abstract class AbstractServerClusterTest {
 
     try {
 
-      for (final ServerRun server : serverInstance) {
-        banner("STARTING SERVER -> " + server.getServerId() + "...");
+      if (startupNodesInSequence) {
+        for (ServerRun server : serverInstance) {
+          banner("STARTING SERVER -> " + server.getServerId() + "...");
+          server.startServer(getDistributedServerConfiguration(server));
 
-        server.startServer(getDistributedServerConfiguration(server));
+          if (delayServerStartup > 0)
+            try {
+              Thread.sleep(delayServerStartup * serverInstance.size());
+            } catch (InterruptedException e) {
+            }
 
-        onServerStarting(server);
-
-        if (delayServerStartup > 0)
-          try {
-            Thread.sleep(delayServerStartup * serverInstance.size());
-          } catch (InterruptedException e) {
-          }
-
-        onServerStarted(server);
+          onServerStarted(server);
+        }
+      } else {
+        for (final ServerRun server : serverInstance) {
+          final Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+              banner("STARTING SERVER -> " + server.getServerId() + "...");
+              try {
+                server.startServer(getDistributedServerConfiguration(server));
+                onServerStarted(server);
+              } catch (Exception e) {
+                e.printStackTrace();
+              }
+            }
+          });
+          thread.start();
+        }
       }
 
       if (delayServerAlign > 0)

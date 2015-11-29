@@ -115,7 +115,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
     iRequest.setSenderNodeName(getLocalNodeName());
 
-    final int onlineNodes = getOnlineNodes(iRequest, iNodes, databaseName, reqQueues);
+    final int onlineNodes = getAvailableNodes(iRequest, iNodes, databaseName, reqQueues);
 
     final int quorum = calculateQuorum(iRequest, iClusterNames, cfg, onlineNodes, iExecutionMode);
 
@@ -193,7 +193,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     }
   }
 
-  protected int getOnlineNodes(final ODistributedRequest iRequest, final Collection<String> iNodes, final String databaseName,
+  protected int getAvailableNodes(final ODistributedRequest iRequest, final Collection<String> iNodes, final String databaseName,
       OPair<String, IQueue>[] reqQueues) {
     int onlineNodes;
     if (iRequest.getTask().isRequireNodeOnline()) {
@@ -201,7 +201,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       onlineNodes = 0;
       int i = 0;
       for (String node : iNodes) {
-        if (reqQueues[i].getValue() != null && manager.isNodeOnline(node, databaseName))
+        if (reqQueues[i].getValue() != null && manager.isNodeAvailable(node, databaseName))
           onlineNodes++;
         else {
           if (ODistributedServerLog.isDebugEnabled())

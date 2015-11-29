@@ -12,4 +12,6 @@ public interface ODirectMemoryMXBean {
   long getSizeInMB();
 
   long getSizeInGB();
+
+  int getDetectedLeaks();
 }

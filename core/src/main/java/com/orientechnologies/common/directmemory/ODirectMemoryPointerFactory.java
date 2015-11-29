@@ -1,47 +1,49 @@
 package com.orientechnologies.common.directmemory;
 
 import com.orientechnologies.common.concur.lock.ODistributedCounter;
+import com.orientechnologies.common.concur.lock.OInterruptedException;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.OOrientShutdownListener;
 import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 
 import javax.management.*;
+import java.io.StringWriter;
 import java.lang.management.ManagementFactory;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author Andrey Lomakin <lomakin.andrey@gmail.com>.
  * @since 9/8/2015
  */
-public class ODirectMemoryPointerFactory extends NotificationBroadcasterSupport implements ODirectMemoryMXBean,
-    OOrientStartupListener, OOrientShutdownListener {
+public class ODirectMemoryPointerFactory extends NotificationBroadcasterSupport implements ODirectMemoryMXBean {
 
-  public static final String                       MBEAN_NAME        = "com.orientechnologies.common.directmemory:type=ODirectMemoryMXBean";
+  public static final String MBEAN_NAME = "com.orientechnologies.common.directmemory:type=ODirectMemoryMXBean";
 
-  private static final ODirectMemoryPointerFactory INSTANCE          = new ODirectMemoryPointerFactory();
+  private static final ODirectMemoryPointerFactory INSTANCE = new ODirectMemoryPointerFactory();
 
-  private final boolean                            isTracked         = OGlobalConfiguration.DIRECT_MEMORY_TRACK_MODE
-                                                                         .getValueAsBoolean();
-  private final boolean                            safeMode          = OGlobalConfiguration.DIRECT_MEMORY_SAFE_MODE
-                                                                         .getValueAsBoolean();
-  private final ODirectMemory                      directMemory      = ODirectMemoryFactory.INSTANCE.directMemory();
+  private final boolean       isTracked    = OGlobalConfiguration.DIRECT_MEMORY_TRACK_MODE.getValueAsBoolean();
+  private final boolean       safeMode     = OGlobalConfiguration.DIRECT_MEMORY_SAFE_MODE.getValueAsBoolean();
+  private final ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
 
-  private final ODistributedCounter                memorySize        = new ODistributedCounter();
-  private final AtomicLong                         sequenceNumber    = new AtomicLong();
+  private final ODistributedCounter memorySize     = new ODistributedCounter();
+  private final AtomicLong          sequenceNumber = new AtomicLong();
 
-  private final AtomicBoolean                      mbeanIsRegistered = new AtomicBoolean();
+  private final AtomicBoolean mbeanIsRegistered = new AtomicBoolean();
+  private final AtomicInteger detectedLeaks     = new AtomicInteger();
 
   public static ODirectMemoryPointerFactory instance() {
     return INSTANCE;
   }
 
   public ODirectMemoryPointerFactory() {
-    Orient.instance().registerWeakOrientShutdownListener(this);
-    Orient.instance().registerWeakOrientStartupListener(this);
-
     try {
       registerMBean();
     } catch (RuntimeException e) {
@@ -50,16 +52,30 @@ public class ODirectMemoryPointerFactory extends NotificationBroadcasterSupport 
 
   }
 
-  @Override
   public void onShutdown() {
+    if (isTracked) {
+      System.gc();
+      try {
+        Thread.sleep(1000);
+      } catch (InterruptedException ie) {
+        throw OException
+            .wrapException(new OInterruptedException("Process was interrupted during final phase of memory leak detection"), ie);
+      }
+    }
+
     try {
       unregisterMBean();
     } catch (RuntimeException e) {
       OLogManager.instance().error(this, "Error during unregistration of direct memory MBean", e);
     }
+
+    assert detectedLeaks.get() == 0 : detectedLeaks.get() + " memory leaks are detected for full information check console output";
   }
 
-  @Override
+  public int getDetectedLeaks() {
+    return detectedLeaks.get();
+  }
+
   public void onStartup() {
     try {
       registerMBean();
@@ -134,6 +150,22 @@ public class ODirectMemoryPointerFactory extends NotificationBroadcasterSupport 
     notification.setUserData(allocationStackTrace);
 
     sendNotification(notification);
+
+    final StringWriter writer = new StringWriter();
+
+    writer.append("Memory leak is detected \r\n");
+    writer.append("Stack trace were leaked pointer was allocated: \r\n");
+    writer.append("------------------------------------------------------------------------------------------------\r\n");
+    for (int i = 1; i < allocationStackTrace.length; i++) {
+      writer.append("\tat ").append(allocationStackTrace[i].toString()).append("\r\n");
+    }
+
+    writer.append("\r\n\r\n");
+    writer.append("-------------------------------------------------------------------------------------------------\r\n");
+
+    OLogManager.instance().error(this, writer.toString());
+
+    detectedLeaks.incrementAndGet();
   }
 
   public void memoryFreed(final long pageSize) {
