@@ -1,10 +1,12 @@
 package com.orientechnologies.orient.core.sql;
 
+
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -13,6 +15,8 @@ import java.util.List;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
+import java.util.Collection;
+import java.util.Map;
 
 @Test
 public class OCommandExecutorSQLScriptTest {
@@ -85,5 +89,103 @@ public class OCommandExecutorSQLScriptTest {
   private OProfiler getProfilerInstance() throws Exception {
     return Orient.instance().getProfiler();
 
+  }
+
+  @Test
+  public void testIf1() throws Exception {
+    StringBuilder script = new StringBuilder();
+
+    script.append("let $a = select 1 as one\n");
+    script.append("if($a[0].one = 1){\n");
+    script.append(" return OK\n");
+    script.append("}\n");
+    script.append("return FAIL\n");
+    Object qResult = db.command(new OCommandScript("sql", script.toString())).execute();
+
+    Assert.assertNotNull(qResult);
+    Assert.assertEquals(qResult, "OK");
+  }
+
+
+  @Test
+  public void testIf2() throws Exception {
+    StringBuilder script = new StringBuilder();
+
+    script.append("let $a = select 1 as one\n");
+    script.append("if    ($a[0].one = 1)   { \n");
+    script.append(" return OK\n");
+    script.append("     }      \n");
+    script.append("return FAIL\n");
+    Object qResult = db.command(new OCommandScript("sql", script.toString())).execute();
+
+    Assert.assertNotNull(qResult);
+    Assert.assertEquals(qResult, "OK");
+  }
+
+  @Test
+  public void testNestedIf2() throws Exception {
+    StringBuilder script = new StringBuilder();
+
+    script.append("let $a = select 1 as one\n");
+    script.append("if($a[0].one = 1){\n");
+    script.append("    if($a[0].one = 'zz'){\n");
+    script.append("      return FAIL\n");
+    script.append("    }\n");
+    script.append("  return OK\n");
+    script.append("}\n");
+    script.append("return FAIL\n");
+    Object qResult = db.command(new OCommandScript("sql", script.toString())).execute();
+
+    Assert.assertNotNull(qResult);
+    Assert.assertEquals(qResult, "OK");
+  }
+
+  @Test
+  public void testNestedIf3() throws Exception {
+    StringBuilder script = new StringBuilder();
+
+    script.append("let $a = select 1 as one\n");
+    script.append("if($a[0].one = 'zz'){\n");
+    script.append("    if($a[0].one = 1){\n");
+    script.append("      return FAIL\n");
+    script.append("    }\n");
+    script.append("  return FAIL\n");
+    script.append("}\n");
+    script.append("return OK\n");
+    Object qResult = db.command(new OCommandScript("sql", script.toString())).execute();
+
+    Assert.assertNotNull(qResult);
+    Assert.assertEquals(qResult, "OK");
+  }
+
+  @Test
+  public void testIfRealQuery() throws Exception {
+    StringBuilder script = new StringBuilder();
+
+    script.append("let $a = select from foo\n");
+    script.append("if($a is not null and $a.size() = 3){\n");
+    script.append("  return $a\n");
+    script.append("}\n");
+    script.append("return FAIL\n");
+    Object qResult = db.command(new OCommandScript("sql", script.toString())).execute();
+
+    Assert.assertNotNull(qResult);
+    Assert.assertEquals(((List)qResult).size(), 3);
+  }
+
+  @Test
+  public void testIfMultipleStatements() throws Exception {
+    StringBuilder script = new StringBuilder();
+
+    script.append("let $a = select 1 as one\n");
+    script.append("if($a[0].one = 1){\n");
+    script.append("  let $b = select 'OK' as ok\n");
+    script.append("  return $b[0].ok\n");
+    script.append("}\n");
+    script.append("return FAIL\n");
+    Object qResult = db.command(new OCommandScript("sql", script.toString())).execute();
+
+    Assert.assertNotNull(qResult);
+    Assert.assertEquals(qResult, "OK");
   }
 }

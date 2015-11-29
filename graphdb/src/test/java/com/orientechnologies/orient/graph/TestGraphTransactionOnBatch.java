@@ -46,7 +46,7 @@ public class TestGraphTransactionOnBatch {
       db.command(
           new OCommandScript(
               "sql",
-              "BEGIN \n LET a = create vertex Test SET id = \"12345678\" \n LET b = create vertex Test SET id = \"4kkrPhGe\" \n LET c =create vertex Test SET id = \"4kkrPhGe\" \n RETURN $b \n COMMIT"))
+              "BEGIN \n LET a = create vertex Test SET id = \"12345678\" \n LET b = create vertex Test SET id = \"4kkrPhGe\" \n LET c =create vertex Test SET id = \"4kkrPhGe\" \n COMMIT \n RETURN $b "))
           .execute();
       Assert.fail("expected record duplicate exception");
     } catch (ORecordDuplicatedException ex) {
@@ -56,7 +56,7 @@ public class TestGraphTransactionOnBatch {
       db.command(
           new OCommandScript(
               "sql",
-              "BEGIN \n LET a = create vertex Test content {\"id\": \"12345678\"} \n LET b = create vertex Test content {\"id\": \"4kkrPhGe\"} \n LET c =create vertex Test content { \"id\": \"4kkrPhGe\"} \n RETURN $b \n COMMIT"))
+              "BEGIN \n LET a = create vertex Test content {\"id\": \"12345678\"} \n LET b = create vertex Test content {\"id\": \"4kkrPhGe\"} \n LET c =create vertex Test content { \"id\": \"4kkrPhGe\"} \n COMMIT \n RETURN $b "))
           .execute();
       Assert.fail("expected record duplicate exception");
     } catch (ORecordDuplicatedException ex) {
