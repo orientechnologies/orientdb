@@ -274,7 +274,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   protected void openIndexes() {
     OCurrentStorageComponentsFactory cf = componentsFactory;
     if (cf == null)
-      throw new OStorageException("Stroage " + name + " is not properly initialized");
+      throw new OStorageException("Storage '" + name + "' is not properly initialized");
 
     final Set<String> indexNames = configuration.indexEngines();
     for (String indexName : indexNames) {
@@ -292,7 +292,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         indexEngines.add(engine);
       } catch (RuntimeException e) {
         OLogManager.instance().error(this,
-            "Index " + engineData.getName() + " can not be created and will be removed from configuration");
+            "Index '" + engineData.getName() + "' cannot be created and will be removed from configuration");
 
         engine.deleteWithoutLoad(engineData.getName());
       }

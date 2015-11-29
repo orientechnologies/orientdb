@@ -119,6 +119,11 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared>implements OSche
   }
 
   @Override
+  public void onPostIndexManagement() {
+    delegate.onPostIndexManagement();
+  }
+
+  @Override
   public OClass createAbstractClass(final String iClassName) {
 
     return delegate.createAbstractClass(iClassName);

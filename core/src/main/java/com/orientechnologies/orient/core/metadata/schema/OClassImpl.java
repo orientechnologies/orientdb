@@ -42,6 +42,7 @@ import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.index.OIndexManagerProxy;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
+import com.orientechnologies.orient.core.metadata.schema.clusterselection.ORoundRobinClusterSelectionStrategy;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
@@ -52,6 +53,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
+import com.orientechnologies.orient.core.sharding.auto.OAutoShardingClusterSelectionStrategy;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
@@ -90,7 +92,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   private boolean                            strictMode              = false;                           // @SINCE v1.0rc8
   private boolean                            abstractClass           = false;                           // @SINCE v1.2.0
   private Map<String, String>                customFields;
-  private OIndex                             autoShardingIndex;
   private volatile OClusterSelectionStrategy clusterSelection;                                          // @SINCE 1.7
   private volatile int                       hashCode;
 
@@ -138,10 +139,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     name = iName;
     document = iDocument;
     owner = iOwner;
-  }
-
-  public void setAutoShardingIndex(final OIndex<?> iAutoShardingIndex){
-    autoShardingIndex = iAutoShardingIndex;
   }
 
   public static int[] readableClusters(final ODatabaseDocument iDatabase, final int[] iClusterIds) {
@@ -1760,6 +1757,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       throw new OIndexException("List of fields to index cannot be empty.");
     }
 
+    final OIndexDefinition indexDefinition;
+
     acquireSchemaReadLock();
     try {
       for (final String fieldToIndex : fields) {
@@ -1770,14 +1769,15 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
               + "' because field: '" + fieldName + "' is absent in class definition.");
       }
 
-      final OIndexDefinition indexDefinition = OIndexDefinitionFactory.createIndexDefinition(this, Arrays.asList(fields),
-          extractFieldTypes(fields), null, type, algorithm);
+      indexDefinition = OIndexDefinitionFactory.createIndexDefinition(this, Arrays.asList(fields), extractFieldTypes(fields), null,
+          type, algorithm);
 
-      return getDatabase().getMetadata().getIndexManager().createIndex(name, type, indexDefinition, polymorphicClusterIds,
-          progressListener, metadata, algorithm);
     } finally {
       releaseSchemaReadLock();
     }
+
+    return getDatabase().getMetadata().getIndexManager().createIndex(name, type, indexDefinition, polymorphicClusterIds,
+        progressListener, metadata, algorithm);
   }
 
   public boolean areIndexed(final String... fields) {
@@ -1876,7 +1876,18 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
   @Override
   public OIndex<?> getAutoShardingIndex() {
-    return autoShardingIndex;
+    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    return db != null ? db.getMetadata().getIndexManager().getClassAutoShardingIndex(name) : null;
+  }
+
+  public void onPostIndexManagement() {
+    final OIndex<?> autoShardingIndex = getAutoShardingIndex();
+    if (autoShardingIndex != null) {
+      // OVERRIDE CLUSTER SELECTION
+      setClusterSelectionInternal(new OAutoShardingClusterSelectionStrategy(this, autoShardingIndex));
+    } else if (clusterSelection instanceof OAutoShardingClusterSelectionStrategy)
+      // REMOVE AUTO SHARDING CLUSTER SELECTION
+      setClusterSelectionInternal(new ORoundRobinClusterSelectionStrategy());
   }
 
   @Override
@@ -2626,5 +2637,4 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     return getDatabase().getStorage() instanceof OAutoshardedStorage
         && OScenarioThreadLocal.INSTANCE.get() != OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED;
   }
-
 }
