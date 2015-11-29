@@ -19,6 +19,7 @@
 package com.orientechnologies.lucene.engine;
 
 import java.io.IOException;
+import java.util.Set;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
@@ -68,7 +69,7 @@ public class OLuceneIndexEngineDelegate implements OLuceneIndexEngine {
 
   @Override
   public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-      OBinarySerializer keySerializer, int keySize, ODocument metadata) {
+      OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, ODocument metadata) {
   }
 
   @Override

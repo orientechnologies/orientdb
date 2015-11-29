@@ -229,7 +229,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
       final Boolean durableInNonTxMode = isDurableInNonTxMode();
 
       indexId = storage.addIndexEngine(name, algorithm, type, indexDefinition, valueSerializer, isAutomatic(), durableInNonTxMode,
-          version, getEngineProperties(), metadata);
+          version, getEngineProperties(), clustersToIndex, metadata);
       assert indexId >= 0;
 
       onIndexEngineChange(indexId);
@@ -424,7 +424,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
       removeValuesContainer();
 
       indexId = storage.addIndexEngine(name, algorithm, type, indexDefinition, determineValueSerializer(), isAutomatic(),
-          isDurableInNonTxMode(), version, getEngineProperties(), metadata);
+          isDurableInNonTxMode(), version, getEngineProperties(), clustersToIndex, metadata);
 
       onIndexEngineChange(indexId);
 

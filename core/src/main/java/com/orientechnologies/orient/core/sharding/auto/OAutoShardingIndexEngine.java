@@ -17,7 +17,7 @@
  *  * For more information: http://www.orientechnologies.com
  *
  */
-package com.orientechnologies.orient.core.sharding;
+package com.orientechnologies.orient.core.sharding.auto;
 
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -35,12 +35,15 @@ import com.orientechnologies.orient.core.index.hashindex.local.OLocalHashTable;
 import com.orientechnologies.orient.core.index.hashindex.local.OMurmurHash3HashFunction;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Index engine implementation that relies on multiple hash indexes partitioned by key.
@@ -49,20 +52,20 @@ import java.util.List;
  */
 public final class OAutoShardingIndexEngine implements OIndexEngine {
   public static final int    VERSION                             = 1;
-  public static final String METADATA_FILE_EXTENSION             = ".smet";
-  public static final String SUBINDEX_METADATA_FILE_EXTENSION    = ".shim";
-  public static final String SUBINDEX_TREE_FILE_EXTENSION        = ".shit";
-  public static final String SUBINDEX_BUCKET_FILE_EXTENSION      = ".shib";
-  public static final String SUBINDEX_NULL_BUCKET_FILE_EXTENSION = ".shnb";
+  public static final String METADATA_FILE_EXTENSION             = ".asmm";
+  public static final String SUBINDEX_METADATA_FILE_EXTENSION    = ".asm";
+  public static final String SUBINDEX_TREE_FILE_EXTENSION        = ".ast";
+  public static final String SUBINDEX_BUCKET_FILE_EXTENSION      = ".asb";
+  public static final String SUBINDEX_NULL_BUCKET_FILE_EXTENSION = ".asn";
 
   private final OAbstractPaginatedStorage        storage;
   private final boolean                          durableInNonTx;
   private final OMurmurHash3HashFunction<Object> hashFunction;
   private List<OHashTable<Object, Object>>       partitions;
-  private       OAutoShardingStrategy strategy;
-  private       int                   version;
-  private final String                name;
-  private       int                   partitionSize;
+  private OAutoShardingStrategy                  strategy;
+  private int                                    version;
+  private final String                           name;
+  private int                                    partitionSize;
 
   public OAutoShardingIndexEngine(final String iName, final Boolean iDurableInNonTxMode, final OAbstractPaginatedStorage iStorage,
       final int iVersion) {
@@ -87,24 +90,34 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
     return strategy;
   }
 
-
   @Override
-  public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-      OBinarySerializer keySerializer, int keySize, ODocument metadata) {
+  public void create(final OBinarySerializer valueSerializer, final boolean isAutomatic, final OType[] keyTypes,
+      final boolean nullPointerSupport, final OBinarySerializer keySerializer, final int keySize, final Set<String> clustersToIndex,
+      ODocument metadata) {
+
     this.strategy = new OAutoShardingMurmurStrategy(keySerializer);
     this.hashFunction.setValueSerializer(keySerializer);
+    this.partitionSize = clustersToIndex.size();
 
-    // FILE METADATA
-    final File fileMetadata = new File(name + METADATA_FILE_EXTENSION);
-    if (fileMetadata.exists())
-      fileMetadata.delete();
-    try {
-      OIOUtils.writeFile(fileMetadata, metadata.toJSON());
-    } catch (IOException e1) {
-      throw new OConfigurationException("Cannot create sharded index metadata file '" + fileMetadata + "'");
+    final OStorage storage = getDatabase().getStorage().getUnderlying();
+    if (storage instanceof OLocalPaginatedStorage) {
+      // WRITE INDEX METADATA INFORMATION
+      final String path = ((OLocalPaginatedStorage) storage).getStoragePath();
+
+      final File fileMetadata = new File(path + "/" + name + METADATA_FILE_EXTENSION);
+      if (fileMetadata.exists())
+        fileMetadata.delete();
+      try {
+        if (metadata == null)
+          metadata = new ODocument();
+        metadata.field("partitions", partitionSize);
+        OIOUtils.writeFile(fileMetadata, metadata.toJSON());
+      } catch (IOException e1) {
+        throw new OConfigurationException("Cannot create sharded index metadata file '" + fileMetadata + "'");
+      }
     }
 
-    init(metadata);
+    init();
     for (OHashTable<Object, Object> p : partitions)
       p.create(keySerializer, valueSerializer, keyTypes, nullPointerSupport);
   }
@@ -115,17 +128,24 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
 
     this.strategy = new OAutoShardingMurmurStrategy(keySerializer);
 
-    // FILE METADATA
-    final File fileMetadata = new File(name + METADATA_FILE_EXTENSION);
-    if (!fileMetadata.exists())
-      throw new OConfigurationException("Cannot find sharded index metadata file '" + fileMetadata + "'");
-    try {
-      final ODocument metadata = new ODocument();
-      metadata.fromJSON(OIOUtils.readFileAsString(fileMetadata));
-      init(metadata);
+    final OStorage storage = getDatabase().getStorage().getUnderlying();
+    if (storage instanceof OLocalPaginatedStorage) {
+      // LOAD INDEX METADATA INFORMATION
+      final String path = ((OLocalPaginatedStorage) storage).getStoragePath();
 
-    } catch (IOException e1) {
-      throw new OConfigurationException("Cannot load sharded index metadata file '" + fileMetadata + "'");
+      final File fileMetadata = new File(path + "/" + name + METADATA_FILE_EXTENSION);
+
+      if (!fileMetadata.exists())
+        throw new OConfigurationException("Cannot find sharded index metadata file '" + fileMetadata + "'");
+      try {
+        final ODocument metadata = new ODocument();
+        metadata.fromJSON(OIOUtils.readFileAsString(fileMetadata));
+        partitionSize = metadata.field("partitions");
+        init();
+
+      } catch (IOException e1) {
+        throw new OConfigurationException("Cannot load sharded index metadata file '" + fileMetadata + "'");
+      }
     }
 
     int i = 0;
@@ -158,11 +178,9 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
       final boolean isAutomatic, final ODocument metadata) {
   }
 
-  private void init(final ODocument metadata) {
-    if (metadata == null || !metadata.containsField("partitions"))
-      throw new IllegalArgumentException("Index metadata does not contain 'partitions' field");
-
-    partitionSize = metadata.field("partitions");
+  private void init() {
+    if (partitions != null)
+      return;
 
     partitions = new ArrayList<OHashTable<Object, Object>>();
     for (int i = 0; i < partitionSize; ++i) {

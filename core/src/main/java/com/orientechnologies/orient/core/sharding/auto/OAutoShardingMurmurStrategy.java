@@ -17,7 +17,7 @@
  *  * For more information: http://www.orientechnologies.com
  *
  */
-package com.orientechnologies.orient.core.sharding;
+package com.orientechnologies.orient.core.sharding.auto;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.index.hashindex.local.OMurmurHash3HashFunction;

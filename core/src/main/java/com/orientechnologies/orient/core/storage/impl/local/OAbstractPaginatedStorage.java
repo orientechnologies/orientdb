@@ -1410,7 +1410,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
   public int addIndexEngine(String engineName, final String algorithm, final String indexType,
       final OIndexDefinition indexDefinition, final OBinarySerializer valueSerializer, final boolean isAutomatic,
-      final Boolean durableInNonTxMode, final int version, final Map<String, String> engineProperties, final ODocument metadata) {
+      final Boolean durableInNonTxMode, final int version, final Map<String, String> engineProperties,
+      final Set<String> clustersToIndex, final ODocument metadata) {
     checkOpeness();
 
     stateLock.acquireWriteLock();
@@ -1444,7 +1445,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
       final OIndexEngine engine = OIndexes.createIndexEngine(originalName, algorithm, indexType, durableInNonTxMode, this, version,
           engineProperties);
-      engine.create(valueSerializer, isAutomatic, keyTypes, nullValuesSupport, keySerializer, keySize, metadata);
+      engine.create(valueSerializer, isAutomatic, keyTypes, nullValuesSupport, keySerializer, keySize, clustersToIndex, metadata);
 
       indexEngineNameMap.put(engineName, engine);
 
