@@ -448,6 +448,11 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       if (rebuildIndexes)
         rebuildIndexes();
 
+      // This is needed to insure functions loaded into an open
+      // in memory database are available after the import.
+      // see issue #5245
+      database.getMetadata().reload();
+      
       database.getStorage().synch();
       database.setStatus(STATUS.OPEN);
 
