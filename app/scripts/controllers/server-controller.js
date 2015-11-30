@@ -267,16 +267,17 @@ ctrl.controller('SingleServerController', function ($scope, $rootScope, $locatio
 
   function initParamenters(realtime) {
     if (realtime) {
-      var maxMemory = realtime['hookValues']['process.runtime.maxMemory'];
-      var totalMemory = realtime['hookValues']['process.runtime.totalMemory'];
-      var availableMemory = realtime['hookValues']['process.runtime.availableMemory'];
-      // console.log("------");
-      // console.log("Max : " + maxMemory);
-      // console.log("Total : " + totalMemory);
-      // console.log("Available : " + availableMemory);
-      // console.log("------");
+
+      // RAM
+      var maxMemory = realtime['statistics']['process.runtime.maxMemory'].last;
+      var totalMemory = realtime['statistics']['process.runtime.totalMemory'].last;
+      var availableMemory = realtime['statistics']['process.runtime.availableMemory'].last;
+
 
       var used = totalMemory - availableMemory;
+
+      $scope.usedRam = used;
+      $scope.maxRam = maxMemory;
       $scope.ramPercent = Math.floor(((used * 100) / maxMemory));
       $scope.anotherPercent = -45;
       $scope.ramOptions = {
@@ -298,7 +299,9 @@ ctrl.controller('SingleServerController', function ($scope, $rootScope, $locatio
       };
       $scope.tips = Object.keys(realtime['tips']).length;
 
-      var cpu = realtime['hookValues']['process.runtime.cpu'];
+
+      // CPU
+      var cpu = realtime['statistics']['process.runtime.cpu'].last;
       $scope.cpuPercent = parseFloat(cpu).toFixed(2);
 
       $scope.cpuOptions = {
@@ -307,6 +310,19 @@ ctrl.controller('SingleServerController', function ($scope, $rootScope, $locatio
         lineWidth: 3,
         lineCap: 'butt'
       };
+
+      // DISK CACHE
+
+      var maxDiskCache = realtime['statistics']['process.runtime.diskCacheTotal'].last;
+      var totalDiskCache = realtime['statistics']['process.runtime.diskCacheUsed'].last;
+
+
+      $scope.maxDiskCacke = maxDiskCache;
+      $scope.totalDiskCache = totalDiskCache;
+
+      $scope.diskCache = Math.floor((totalDiskCache * 100) / maxDiskCache);
+
+
       $scope.connections = realtime['hookValues']['server.connections.actives'];
 
       var keys = Object.keys(realtime['chronos']).filter(function (k) {

@@ -134,3 +134,10 @@ filterModule.filter('qtype', function () {
     return input.substring(index + 1, lastIndex);
   };
 });
+
+
+filterModule.filter('toSizeString', function () {
+  return function (input, args) {
+    return filesize(input);
+  }
+})

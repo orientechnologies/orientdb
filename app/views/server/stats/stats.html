@@ -9,7 +9,7 @@
 
           <div class="row">
 
-            <div class="col-md-4">
+            <div class="col-md-3">
 
               <div id="{{'cpu-gauge-' + server.name}}" c3-gauge value="cpuPercent" height="height"></div>
 
@@ -17,14 +17,25 @@
                 <span>CPU</span>
               </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
 
               <div id="{{'ram-gauge-' + server.name}}" c3-gauge value="ramPercent" height="height"></div>
               <div class="chart-label text-center">
                 <span>RAM</span>
+                <br>
+                <span><b>{{usedRam | toSizeString}} / {{maxRam | toSizeString}}</b></span>
               </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
+
+              <div id="{{'disk-cache-gauge-' + server.name}}" c3-gauge value="diskCache" height="height"></div>
+              <div class="chart-label text-center">
+                <span>DISK CACHE</span>
+                <br>
+                <span><b>{{totalDiskCache | toSizeString}} / {{maxDiskCacke | toSizeString}}</b></span>
+              </div>
+            </div>
+            <div class="col-md-3">
 
               <div id="{{'disk-gauge-' + server.name}}" c3-gauge value="diskPercent" height="height"></div>
               <div class="chart-label text-center">

@@ -258,10 +258,12 @@ ee.controller('ClusterOverviewController', function ($scope, $rootScope) {
       var requests = 0;
       var latency = 0;
       var operations = 0;
+      var maxDiskCache = 0;
+      var totalDiskCache = 0;
       keys.forEach(function (val) {
         var realtime = data[val].realtime;
         // CPU
-        var cpuN = realtime['hookValues']['process.runtime.cpu'];
+        var cpuN = realtime['statistics']['process.runtime.cpu'].last;
         cpu += parseFloat(cpuN);
         // DISK
         diskTotal += realtime['hookValues']['system.disk./.totalSpace'];
@@ -269,9 +271,13 @@ ee.controller('ClusterOverviewController', function ($scope, $rootScope) {
 
         // RAM
 
-        maxMemory += realtime['hookValues']['process.runtime.maxMemory'];
-        totalMemory += realtime['hookValues']['process.runtime.totalMemory'];
-        availableMemory += realtime['hookValues']['process.runtime.availableMemory'];
+        maxMemory += realtime['statistics']['process.runtime.maxMemory'].last;
+        totalMemory += realtime['statistics']['process.runtime.totalMemory'].last;
+        availableMemory += realtime['statistics']['process.runtime.availableMemory'].last;
+
+
+        maxDiskCache +=realtime['statistics']['process.runtime.diskCacheTotal'].last;
+        totalDiskCache += realtime['statistics']['process.runtime.diskCacheUsed'].last;
 
         // CONNECTIONS
 
@@ -311,7 +317,15 @@ ee.controller('ClusterOverviewController', function ($scope, $rootScope) {
 
       var used = totalMemory - availableMemory;
 
+      $scope.maxRam = maxMemory;
+      $scope.usedRam = used;
+
       $scope.ram = Math.floor(((used * 100) / maxMemory));
+
+      $scope.maxDiskCacke = maxDiskCache;
+      $scope.totalDiskCache = totalDiskCache;
+
+      $scope.diskCache = Math.floor((totalDiskCache * 100) / maxDiskCache);
 
       $scope.activeConnections = connections;
 
@@ -905,7 +919,8 @@ ee.controller('EventsController', function ($scope, Plugins, $modal, Cluster, Pr
       modalScope.$watch('eventWhen.type', function (data, old) {
 
         if (data) {
-          if (modalScope.metadata[data].type === 'CHRONO') {
+          var type = modalScope.metadata[data].type;
+          if (type === 'CHRONO' || type === 'STAT') {
             modalScope.parameters = ["entries", "min", "max", "average", "total"];
           } else {
             modalScope.parameters = ["value"];
@@ -959,6 +974,14 @@ ee.controller('MetricsController', function ($scope, Cluster) {
       }).map(function (k) {
         var obj = {};
         angular.copy(data.realtime.chronos[k], obj);
+        obj.name = k;
+        return obj
+      });
+
+
+      $scope.stats = Object.keys(data.realtime.statistics).map(function (k) {
+        var obj = {};
+        angular.copy(data.realtime.statistics[k], obj);
         obj.name = k;
         return obj
       });
