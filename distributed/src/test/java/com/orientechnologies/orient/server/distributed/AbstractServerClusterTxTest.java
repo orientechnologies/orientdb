@@ -16,9 +16,10 @@
 
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.orient.core.command.script.OCommandScript;
+import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 
@@ -47,53 +48,65 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
         final ODatabaseDocumentTx database = poolFactory.get(databaseUrl, "admin", "admin").acquire();
 
         try {
-          if ((i + 1) % 100 == 0)
-            System.out.println(
-                "\nWriter " + database.getURL() + "(thread=" + threadId + ") managed " + (i + 1) + "/" + count + " records so far");
-
           final int id = baseCount + i;
-          database.begin();
-          try {
-            ODocument person = createRecord(database, id);
-            updateRecord(database, person);
-            checkRecord(database, person);
-            deleteRecord(database, person);
-            checkRecordIsDeleted(database, person);
 
-            person = createRecord(database, id);
-            updateRecord(database, person);
-            checkRecord(database, person);
+          int retry = 0;
 
-            // ASSURE THE UPDATE IS EXECUTED CORRECTLY IN TX
-            String sql = "UPDATE Person SET PostalCode = \"78001\" WHERE id = \"" + person.field("id") + "\"";
-            OCommandScript cmdScript = new OCommandScript("sql", sql);
-            database.command(cmdScript).execute();
+          for (retry = 0; retry < maxRetries; retry++) {
+            if ((i + 1) % 100 == 0)
+              System.out.println("\nWriter " + database.getURL() + "(thread=" + threadId + ") managed " + (i + 1) + "/" + count
+                  + " records so far");
 
-            database.commit();
+            database.begin();
+            try {
+              ODocument person = createRecord(database, id);
+              updateRecord(database, person);
+              checkRecord(database, person);
+              deleteRecord(database, person);
+              checkRecordIsDeleted(database, person);
 
-          } catch (ORecordDuplicatedException e) {
-            // IGNORE IT
-          } catch (ODistributedException e) {
-            if (!(e.getCause() instanceof ORecordDuplicatedException)) {
-              database.rollback();
-              throw e;
+              person = createRecord(database, id);
+              updateRecord(database, person);
+              checkRecord(database, person);
+
+              database.commit();
+
+              if (delayWriter > 0)
+                Thread.sleep(delayWriter);
+
+              // OK
+              break;
+
+            } catch (InterruptedException e) {
+              System.out.println("Writer received interrupt (db=" + database.getURL());
+              Thread.currentThread().interrupt();
+              break;
+            } catch (ORecordDuplicatedException e) {
+              // IGNORE IT
+            } catch (OTransactionException e) {
+              if (e.getCause() instanceof ORecordDuplicatedException)
+                // IGNORE IT
+                ;
+              else
+                throw e;
+            } catch (ONeedRetryException e) {
+              System.out.println("Writer received exception (db=" + database.getURL());
+
+              if (retry >= maxRetries)
+                e.printStackTrace();
+
+              break;
+            } catch (ODistributedException e) {
+              if (!(e.getCause() instanceof ORecordDuplicatedException)) {
+                database.rollback();
+                throw e;
+              }
+            } catch (Throwable e) {
+              System.out.println("Writer received exception (db=" + database.getURL());
+              e.printStackTrace();
+              return null;
             }
-          } catch (Exception e) {
-            database.rollback();
-            throw e;
           }
-
-          if (delayWriter > 0)
-            Thread.sleep(delayWriter);
-
-        } catch (InterruptedException e) {
-          System.out.println("Writer received interrupt (db=" + database.getURL());
-          Thread.currentThread().interrupt();
-          break;
-        } catch (Exception e) {
-          System.out.println("Writer received exception (db=" + database.getURL());
-          e.printStackTrace();
-          break;
         } finally {
           runningWriters.countDown();
           database.close();
