@@ -131,24 +131,25 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
 
     Collection<ODocument> documents = doc.field("members");
 
-    for (ODocument document : documents) {
-      String name = document.field("name");
+    if (clusterStats != null) {
+      for (ODocument document : documents) {
+        String name = document.field("name");
 
-      Map<String, Object> profilerStats = clusterStats.field(name);
-      ODocument dStat = new ODocument().fromMap(profilerStats);
+        Map<String, Object> profilerStats = clusterStats.field(name);
+        ODocument dStat = new ODocument().fromMap(profilerStats);
 
-      Map<String, Object> eval = (Map) dStat.eval("realtime.hookValues");
+        Map<String, Object> eval = (Map) dStat.eval("realtime.hookValues");
 
-      ODocument configuration = new ODocument();
-      document.field("configuration", configuration);
-      for (String key : eval.keySet()) {
-        if (key.startsWith("system.config.")) {
-          configuration.field(key.replace("system.config.", "").replace(".", "_"), eval.get(key));
+        ODocument configuration = new ODocument();
+        document.field("configuration", configuration);
+        for (String key : eval.keySet()) {
+          if (key.startsWith("system.config.")) {
+            configuration.field(key.replace("system.config.", "").replace(".", "_"), eval.get(key));
+          }
         }
+
       }
-
     }
-
   }
 
   @Override

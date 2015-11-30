@@ -64,6 +64,9 @@ public class OAuditingLoggingThread extends Thread {
 
       } catch (InterruptedException e) {
         // IGNORE AND SOFTLY EXIT
+
+      } catch (Exception e) {
+        e.printStackTrace();
       }
     }
 

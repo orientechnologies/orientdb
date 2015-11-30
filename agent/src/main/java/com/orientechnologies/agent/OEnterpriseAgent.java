@@ -17,13 +17,10 @@
  */
 package com.orientechnologies.agent;
 
-import com.orientechnologies.agent.event.*;
 import com.orientechnologies.agent.hook.OAuditingHook;
-import com.orientechnologies.agent.hook.OAuditingLoggingThread;
 import com.orientechnologies.agent.http.command.*;
 import com.orientechnologies.agent.plugins.OEventPlugin;
 import com.orientechnologies.agent.profiler.OEnterpriseProfiler;
-import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
 import com.orientechnologies.common.profiler.OProfiler;
@@ -154,16 +151,16 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
    */
   @Override
   public void onOpen(final ODatabaseInternal iDatabase) {
-    if (iDatabase.getProperty(OAuditingLoggingThread.FROM_AUDITING) != null)
-      // DON'T INSTALL HOOK ON THE DB OPEN INSIDE THE AUDITING THREAD
-      return;
-
-    final String dbUrl = OSystemVariableResolver.resolveSystemVariables(iDatabase.getURL());
-
-    // REGISTER AUDITING
-    final ODocument auditingCfg = new ODocument();
-    final OAuditingHook auditing = new OAuditingHook(auditingCfg);
-    iDatabase.registerHook(auditing);
+    // if (iDatabase.getProperty(OAuditingLoggingThread.FROM_AUDITING) != null)
+    // // DON'T INSTALL HOOK ON THE DB OPEN INSIDE THE AUDITING THREAD
+    // return;
+    //
+    // final String dbUrl = OSystemVariableResolver.resolveSystemVariables(iDatabase.getURL());
+    //
+    // // REGISTER AUDITING
+    // final ODocument auditingCfg = new ODocument();
+    // final OAuditingHook auditing = new OAuditingHook(auditingCfg);
+    // iDatabase.registerHook(auditing);
   }
 
   @Override
@@ -176,10 +173,10 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
    */
   @Override
   public void onClose(final ODatabaseInternal iDatabase) {
-    final Map<ORecordHook, ORecordHook.HOOK_POSITION> hooks = iDatabase.getHooks();
-    for (ORecordHook h : hooks.keySet())
-      if (h instanceof OAuditingHook)
-        ((OAuditingHook) h).shutdown(true);
+    // final Map<ORecordHook, ORecordHook.HOOK_POSITION> hooks = iDatabase.getHooks();
+    // for (ORecordHook h : hooks.keySet())
+    // if (h instanceof OAuditingHook)
+    // ((OAuditingHook) h).shutdown(true);
   }
 
   @Override
@@ -203,6 +200,12 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
   // TODO SEND CPU METRICS ON configuration request;
   @Override
   public void onLocalNodeConfigurationRequest(ODocument iConfiguration) {
+
+    OProfiler profiler = Orient.instance().getProfiler();
+
+    if (profiler instanceof OEnterpriseProfiler) {
+      iConfiguration.field("cpu", ((OEnterpriseProfiler) profiler).cpuUsage());
+    }
 
   }
 
@@ -256,30 +259,12 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
     currentProfiler.shutdown();
   }
 
-
-
   private boolean checkLicense() {
-
-    // final int dayLeft = OL.checkDate(license);
-    final int dayLeft = 50;
 
     System.out.printf("\n\n********************************************************************");
     System.out.printf("\n*                 ORIENTDB  -  ENTERPRISE EDITION                  *");
     System.out.printf("\n*                                                                  *");
-    // System.out.printf("\n*            " + OConstants.COPYRIGHT + "           *");
     System.out.printf("\n********************************************************************");
-
-    Orient
-        .instance()
-        .getProfiler()
-        .registerHookValue(Orient.instance().getProfiler().getSystemMetric("config.license"), "Enterprise License",
-            OProfiler.METRIC_TYPE.TEXT, new OProfilerHookValue() {
-
-              @Override
-              public Object getValue() {
-                return license;
-              }
-            });
     Orient
         .instance()
         .getProfiler()
@@ -289,17 +274,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
               @Override
               public Object getValue() {
                 return ORIENDB_ENTERPRISE_VERSION;
-              }
-            });
-    Orient
-        .instance()
-        .getProfiler()
-        .registerHookValue(Orient.instance().getProfiler().getSystemMetric("config.dayLeft"), "Enterprise License Day Left",
-            OProfiler.METRIC_TYPE.TEXT, new OProfilerHookValue() {
-
-              @Override
-              public Object getValue() {
-                return dayLeft;
               }
             });
 

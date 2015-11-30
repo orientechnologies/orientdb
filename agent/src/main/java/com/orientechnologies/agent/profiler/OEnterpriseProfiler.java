@@ -22,8 +22,12 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OProfilerEntry;
 import com.orientechnologies.common.profiler.OProfilerListener;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedLifecycleListener;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
@@ -33,6 +37,8 @@ import java.io.File;
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -638,52 +644,35 @@ public class OEnterpriseProfiler extends OAbstractProfiler {
         return System.getProperty("java.version");
       }
     });
-    registerHookValue(getProcessMetric("runtime.availableMemory"), "Available memory for the process", METRIC_TYPE.SIZE,
-        new OProfilerHookValue() {
-          @Override
-          public Object getValue() {
-            return Runtime.getRuntime().freeMemory();
-          }
-        });
-    registerHookValue(getProcessMetric("runtime.maxMemory"), "Maximum memory usable for the process", METRIC_TYPE.SIZE,
-        new OProfilerHookValue() {
-          @Override
-          public Object getValue() {
-            return Runtime.getRuntime().maxMemory();
-          }
-        });
-    registerHookValue(getProcessMetric("runtime.totalMemory"), "Total memory used by the process", METRIC_TYPE.SIZE,
-        new OProfilerHookValue() {
-          @Override
-          public Object getValue() {
-            return Runtime.getRuntime().totalMemory();
-          }
-        });
-
-    registerHookValue(getProcessMetric("runtime.cpu"), "Total cpu used by the process", METRIC_TYPE.SIZE, new OProfilerHookValue() {
-      @Override
-      public Object getValue() {
-
-        OperatingSystemMXBean operatingSystemMXBean = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
-        RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();
-        int availableProcessors = operatingSystemMXBean.getAvailableProcessors();
-        long prevUpTime = runtimeMXBean.getUptime();
-        long prevProcessCpuTime = operatingSystemMXBean.getProcessCpuTime();
-        double cpuUsage;
-        try {
-          Thread.sleep(500);
-        } catch (Exception ignored) {
-        }
-
-        operatingSystemMXBean = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
-        long upTime = runtimeMXBean.getUptime();
-        long processCpuTime = operatingSystemMXBean.getProcessCpuTime();
-        long elapsedCpu = processCpuTime - prevProcessCpuTime;
-        long elapsedTime = upTime - prevUpTime;
-        cpuUsage = Math.min(99F, elapsedCpu / (elapsedTime * 10000F * availableProcessors));
-        return "" + cpuUsage;
-      }
-    });
+    // registerHookValue(getProcessMetric("runtime.availableMemory"), "Available memory for the process", METRIC_TYPE.SIZE,
+    // new OProfilerHookValue() {
+    // @Override
+    // public Object getValue() {
+    // return Runtime.getRuntime().freeMemory();
+    // }
+    // });
+    // registerHookValue(getProcessMetric("runtime.maxMemory"), "Maximum memory usable for the process", METRIC_TYPE.SIZE,
+    // new OProfilerHookValue() {
+    // @Override
+    // public Object getValue() {
+    // return Runtime.getRuntime().maxMemory();
+    // }
+    // });
+    // registerHookValue(getProcessMetric("runtime.totalMemory"), "Total memory used by the process", METRIC_TYPE.SIZE,
+    // new OProfilerHookValue() {
+    // @Override
+    // public Object getValue() {
+    // return Runtime.getRuntime().totalMemory();
+    // }
+    // });
+    //
+    // registerHookValue(getProcessMetric("runtime.cpu"), "Total cpu used by the process", METRIC_TYPE.SIZE, new
+    // OProfilerHookValue() {
+    // @Override
+    // public Object getValue() {
+    // return "" + cpuUsage();
+    // }
+    // });
 
     final File[] roots = File.listRoots();
     for (final File root : roots) {
@@ -729,7 +718,7 @@ public class OEnterpriseProfiler extends OAbstractProfiler {
         }
       }
     };
-    // timer.schedule(autoPause, KEEP_ALIVE, KEEP_ALIVE);
+    timer.schedule(autoPause, KEEP_ALIVE, KEEP_ALIVE);
 
     if (server.getDistributedManager() != null) {
       final ODistributedServerManager distributedManager = server.getDistributedManager();
@@ -770,10 +759,13 @@ public class OEnterpriseProfiler extends OAbstractProfiler {
       public void run() {
         if (!Boolean.TRUE.equals(paused.get())) {
 
+          updateStats();
           synchronized (server) {
+
             ODistributedServerManager distributedManager = server.getDistributedManager();
 
-            if (distributedManager != null) {
+            String localNodeName = distributedManager.getLocalNodeName();
+            if (distributedManager != null && distributedManager.isEnabled()) {
               Map<String, Object> configurationMap = distributedManager.getConfigurationMap();
 
               ODocument doc = (ODocument) configurationMap.get("clusterStats");
@@ -782,14 +774,76 @@ public class OEnterpriseProfiler extends OAbstractProfiler {
                 doc = new ODocument();
                 doc.setTrackingChanges(false);
               }
-              ODocument entries = new ODocument().fromJSON(toJSON("realtime", null));
-              doc.field(distributedManager.getLocalNodeName(), entries.toMap());
-              configurationMap.put("clusterStats", doc);
+              try {
+                ODocument entries = new ODocument().fromJSON(toJSON("realtime", null));
+                doc.field(localNodeName, entries.toMap());
+                configurationMap.put("clusterStats", doc);
+              } catch (Exception e) {
+                OLogManager.instance().debug(this, "Cannot publish realtime stats for node %s", e, localNodeName);
+              }
+
             }
           }
         }
       }
     };
     timer.schedule(autoPublish, 2000, 2000);
+  }
+
+  private void updateStats() {
+
+    double cpuUsage = cpuUsage();
+    updateStat(getProcessMetric("runtime.cpu"), "Total cpu used by the process", (long) (cpuUsage * 100));
+    updateStat(getProcessMetric("runtime.availableMemory"), "Available memory for the process", Runtime.getRuntime().freeMemory());
+    updateStat(getProcessMetric("runtime.maxMemory"), "Maximum memory usable for the process", Runtime.getRuntime().maxMemory());
+    updateStat(getProcessMetric("runtime.totalMemory"), "Total memory used by the process", Runtime.getRuntime().totalMemory());
+
+    long diskCacheUsed = 0;
+    long diskCacheTotal = 0;
+    for (OStorage stg : Orient.instance().getStorages()) {
+      if (stg instanceof OLocalPaginatedStorage) {
+        diskCacheUsed += ((OLocalPaginatedStorage) stg).getReadCache().getUsedMemory();
+        diskCacheTotal += OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024;
+        break;
+      }
+    }
+    updateStat(getProcessMetric("runtime.diskCacheTotal"), "Max disk cache for the process", diskCacheTotal);
+    updateStat(getProcessMetric("runtime.diskCacheUsed"), "Total disk cache used by the process", diskCacheUsed);
+  }
+
+  public double cpuUsage() {
+    OperatingSystemMXBean operatingSystemMXBean = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+
+    try {
+
+      Method cpuMethod = operatingSystemMXBean.getClass().getDeclaredMethod("getProcessCpuLoad");
+      cpuMethod.setAccessible(true);
+      Double invoke = (Double) cpuMethod.invoke(operatingSystemMXBean);
+      return invoke;
+    } catch (NoSuchMethodException e) {
+
+    } catch (InvocationTargetException e) {
+
+    } catch (IllegalAccessException e) {
+
+    }
+    double cpuUsage;
+    RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();
+    int availableProcessors = operatingSystemMXBean.getAvailableProcessors();
+    long prevUpTime = runtimeMXBean.getUptime();
+    long prevProcessCpuTime = operatingSystemMXBean.getProcessCpuTime();
+    // FALLBACK
+    try {
+      Thread.sleep(500);
+    } catch (Exception ignored) {
+    }
+
+    operatingSystemMXBean = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+    long upTime = runtimeMXBean.getUptime();
+    long processCpuTime = operatingSystemMXBean.getProcessCpuTime();
+    long elapsedCpu = processCpuTime - prevProcessCpuTime;
+    long elapsedTime = upTime - prevUpTime;
+    cpuUsage = Math.min(99F, elapsedCpu / (elapsedTime * 10000F * availableProcessors));
+    return cpuUsage;
   }
 }

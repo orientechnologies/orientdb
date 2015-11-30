@@ -139,6 +139,22 @@ public class OEventController extends Thread {
           return metric;
         }
         break;
+      case STAT:
+
+        OProfilerEntry stat = profilerData.getStat(type);
+
+        if (stat != null) {
+          ODocument metric = new ODocument();
+          metric.field("name", stat.name);
+          metric.field("entries", stat.entries);
+          metric.field("average", stat.average);
+          metric.field("max", stat.max);
+          metric.field("min", stat.min);
+          metric.field("last", stat.last);
+          metric.field("total", stat.total);
+          return metric;
+        }
+
       case COUNTER:
       }
     }

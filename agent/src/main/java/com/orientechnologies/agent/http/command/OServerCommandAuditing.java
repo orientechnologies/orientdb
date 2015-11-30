@@ -18,18 +18,17 @@
 package com.orientechnologies.agent.http.command;
 
 import com.orientechnologies.agent.OEnterpriseAgent;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
-import com.orientechnologies.orient.server.security.OSecurityServerUser;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 public class OServerCommandAuditing extends OServerCommandDistributedScope {
   private static final String[] NAMES = { "GET|auditing/*", "POST|auditing/*" };
@@ -71,47 +70,96 @@ public class OServerCommandAuditing extends OServerCommandDistributedScope {
   private void doGetData(OHttpRequest iRequest, OHttpResponse iResponse, String db) throws IOException, InterruptedException {
 
     ODocument params = new ODocument().fromJSON(iRequest.content);
-    ODatabaseDocumentTx databaseDocumentTx = openAndSet(db);
-    Collection<ODocument> documents = databaseDocumentTx.command(new OSQLSynchQuery<ODocument>(buildQuery(params))).execute(
-        params.toMap());
+
+    iRequest.databaseName = db;
+    ODatabaseDocumentTx databaseDocumentTx = getProfiledDatabaseInstance(iRequest);
+
+    String clazz = params.field("clazz");
+    Collection<ODocument> documents = new ArrayList<ODocument>();
+    if (databaseDocumentTx.getMetadata().getSchema().existsClass(clazz)) {
+      documents = databaseDocumentTx.command(new OSQLSynchQuery<ODocument>(buildQuery(params))).execute(params.toMap());
+    }
     iResponse.writeResult(documents);
   }
 
-  protected ODatabaseDocumentTx openAndSet(String dbName) {
-    String s = server.getAvailableStorageNames().get(dbName);
-    ODatabaseDocumentTx databaseDocumentTx = new ODatabaseDocumentTx(s);
-    databaseDocumentTx.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSecurityServerUser.class);
-    databaseDocumentTx.open("root", "nopassword");
-
-    ODatabaseRecordThreadLocal.INSTANCE.set(databaseDocumentTx);
-
-    return databaseDocumentTx;
-  }
-
   private String buildQuery(ODocument params) {
-    String query = "select from :clazz limit :limit";
+    String query = "select user.name as username,* from :clazz :where order by date desc limit :limit";
 
+    List<String> whereConditions = new ArrayList<String>();
     String clazz = params.field("clazz");
     Integer limit = params.field("limit");
 
     query = query.replace(":clazz", clazz);
 
+    if (isNotNullNotEmpty(params, "operation")) {
+      whereConditions.add("operation = :operation");
+    }
+    if (isNotNullNotEmpty(params, "user")) {
+      whereConditions.add("user.name = :user");
+    }
+    if (isNotNullNotEmpty(params, "record")) {
+      whereConditions.add("record = :record");
+    }
+    if (isNotNullNotEmpty(params, "note")) {
+      String note = params.field("note");
+      note = "%" + note + "%";
+      params.field("note", note);
+      whereConditions.add("note LIKE :note");
+    }
+    if (params.containsField("fromDate")) {
+      whereConditions.add("date > :fromDate");
+    }
+    if (params.containsField("toDate")) {
+      whereConditions.add("date < :toDate");
+    }
+    query = query.replace(":where", buildWhere(whereConditions));
+
     query = query.replace(":limit", "" + limit);
     return query;
+  }
+
+  private boolean isNotNullNotEmpty(ODocument params, String field) {
+
+    boolean valid = params.field(field) != null;
+    if (valid) {
+      Object val = params.field(field);
+
+      if (val instanceof String) {
+        valid = !((String) val).isEmpty();
+      }
+    }
+    return valid;
+  }
+
+  private String buildWhere(List<String> whereConditions) {
+    String where = "";
+    int i = 0;
+    for (String whereCondition : whereConditions) {
+      if (i != 0) {
+        where += " and ";
+      } else {
+        where += "where ";
+      }
+      where += whereCondition;
+      i++;
+    }
+    return where;
   }
 
   private void doPost(OHttpRequest iRequest, OHttpResponse iResponse, String db) throws Exception {
 
     ODocument config = new ODocument().fromJSON(iRequest.content, "noMap");
-    openAndSet(db);
+    iRequest.databaseName = db;
+    getProfiledDatabaseInstance(iRequest);
     oEnterpriseAgent.auditingListener.changeConfig(db, config);
-    iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, config.toJSON("prettyPrint=true"), null);
+    iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, config.toJSON("prettyPrint"), null);
   }
 
   private void doGet(OHttpRequest iRequest, OHttpResponse iResponse, String db) throws Exception {
-
+    iRequest.databaseName = db;
+    getProfiledDatabaseInstance(iRequest);
     ODocument config = oEnterpriseAgent.auditingListener.getConfig(db);
-    iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, config.toJSON("prettyPrint=true"), null);
+    iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, config.toJSON("prettyPrint"), null);
 
   }
 

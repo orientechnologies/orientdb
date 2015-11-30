@@ -198,6 +198,7 @@ public class OProfilerData {
         firstItem = false;
       else
         buffer.append(',');
+      buffer.append(String.format(Locale.ENGLISH, "\"%s\":", OIOUtils.encode(k)));
       stats.get(k).toJSON(buffer);
     }
     buffer.append("}");

@@ -26,7 +26,7 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import java.io.StringWriter;
 
 public class OServerCommandGetSQLProfiler extends OServerCommandDistributedScope {
-  private static final String[] NAMES = { "GET|sqlProfiler/*" };
+  private static final String[] NAMES = { "GET|sqlProfiler/*", "POST|sqlProfiler/*" };
 
   public OServerCommandGetSQLProfiler() {
     super("server.profiler");
@@ -42,11 +42,16 @@ public class OServerCommandGetSQLProfiler extends OServerCommandDistributedScope
 
       if (isLocalNode(iRequest)) {
         final String db = parts[1];
-        final StringWriter jsonBuffer = new StringWriter();
-        final OJSONWriter json = new OJSONWriter(jsonBuffer);
-        json.append(Orient.instance().getProfiler().toJSON("realtime", "db." + db + ".command"));
+        if ("GET".equalsIgnoreCase(iRequest.httpMethod)) {
+          final StringWriter jsonBuffer = new StringWriter();
+          final OJSONWriter json = new OJSONWriter(jsonBuffer);
+          json.append(Orient.instance().getProfiler().toJSON("realtime", "db." + db + ".command"));
 
-        iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, jsonBuffer.toString(), null);
+          iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, jsonBuffer.toString(), null);
+        } else if ("POST".equalsIgnoreCase(iRequest.httpMethod)) {
+          Orient.instance().getProfiler().resetRealtime("db." + db + ".command");
+          iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, null, null);
+        }
       } else {
         proxyRequest(iRequest, iResponse);
       }
