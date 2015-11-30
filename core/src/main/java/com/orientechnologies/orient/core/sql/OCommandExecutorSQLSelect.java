@@ -2140,7 +2140,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             if (!OIndexSearchResult.isIndexEqualityOperator(operator)) {
               final String lastFiled = searchResult.lastField.getItemName(searchResult.lastField.getItemCount() - 1);
               final String relatedIndexField = indexDefinition.getFields().get(searchResult.fieldValuePairs.size());
-                OLogManager.instance().info(this,"last field:: " + lastFiled + " related:: " + relatedIndexField);
               if (!lastFiled.equals(relatedIndexField)) {
                 continue;
               }

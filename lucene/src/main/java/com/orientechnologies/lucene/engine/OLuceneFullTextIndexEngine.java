@@ -60,8 +60,8 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   @Override
   public IndexWriter createIndexWriter(Directory directory) throws IOException {
 
-    Analyzer analyzer = getAnalyzer(metadata);
-    IndexWriterConfig iwc = new IndexWriterConfig(analyzer);
+    configureAnalyzers(metadata);
+    IndexWriterConfig iwc = new IndexWriterConfig(indexAnalyzer());
     iwc.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
 
     facetManager = new OLuceneFacetManager(this, metadata);
@@ -73,8 +73,8 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
   @Override
   public IndexWriter openIndexWriter(Directory directory) throws IOException {
-    Analyzer analyzer = getAnalyzer(metadata);
-    IndexWriterConfig iwc = new IndexWriterConfig(analyzer);
+     configureAnalyzers(metadata);
+    IndexWriterConfig iwc = new IndexWriterConfig(indexAnalyzer());
     iwc.setOpenMode(IndexWriterConfig.OpenMode.APPEND);
 
     // TODO: use writer config params to tune writer behaviour
@@ -108,7 +108,7 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   public Object getInTx(Object key, OLuceneTxChanges changes) {
     Query q = null;
     try {
-      q = queryBuilder.query(index, key, mgrWriter.getIndexWriter().getAnalyzer());
+      q = queryBuilder.query(index, key, queryAnalyzer());
       OCommandContext context = null;
       if (key instanceof OFullTextCompositeKey) {
         context = ((OFullTextCompositeKey) key).getContext();
