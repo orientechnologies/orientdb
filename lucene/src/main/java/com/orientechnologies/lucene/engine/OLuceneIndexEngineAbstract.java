@@ -53,7 +53,12 @@ import org.apache.lucene.document.Field;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.TrackingIndexWriter;
-import org.apache.lucene.search.*;
+import org.apache.lucene.search.ControlledRealTimeReopenThread;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.SearcherManager;
+import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.NIOFSDirectory;
 import org.apache.lucene.store.RAMDirectory;
@@ -62,7 +67,12 @@ import org.apache.lucene.util.Version;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdaptiveExternal
@@ -304,10 +314,52 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     this.rebuilding = rebuilding;
   }
 
-  protected Analyzer getAnalyzer(final ODocument metadata) {
-    String analyzerFQN = metadata.field("analyzer");
-    if (analyzerFQN == null)
-      analyzerFQN = StandardAnalyzer.class.getName();
+  protected void configureAnalyzers(final ODocument metadata) {
+    String defaultAnalyzerFQN = metadata.field("analyzer");
+
+    //default analyzer for all fields
+    if (defaultAnalyzerFQN != null) {
+      for (String field : index.getFields()) {
+        indexAnalyzer.add(field, buildAnalyzer(defaultAnalyzerFQN));
+        queryAnalyzer.add(field, buildAnalyzer(defaultAnalyzerFQN));
+      }
+    }
+    String indexAnalyzerFQN = metadata.field("index_analyzer");
+
+    //default analyzer for indexing
+    if (indexAnalyzerFQN != null) {
+      for (String field : index.getFields()) {
+        indexAnalyzer.add(field, buildAnalyzer(indexAnalyzerFQN));
+      }
+    }
+
+    String queryAnalyzerFQN = metadata.field("query_analyzer");
+
+    //default analyzer for query
+    if (queryAnalyzerFQN != null) {
+      for (String field : index.getFields()) {
+        queryAnalyzer.add(field, buildAnalyzer(queryAnalyzerFQN));
+      }
+    }
+
+
+    //specialized for each field
+    for (String meta : metadata.fieldNames()) {
+      if (meta.contains("index") || meta.contains("query")) {
+        String fieldName = meta.substring(0, meta.indexOf("_"));
+        if (meta.contains("index")) {
+          indexAnalyzer.add(fieldName, buildAnalyzer(metadata.<String>field(meta)));
+        } else if (meta.contains("query")) {
+          queryAnalyzer.add(fieldName, buildAnalyzer(metadata.<String>field(meta)));
+        }
+      }
+    }
+
+  }
+
+  private Analyzer buildAnalyzer(String analyzerFQN) {
+
+    OLogManager.instance().debug(this, "looking for analyzer::  " + analyzerFQN);
     try {
 
       final Class classAnalyzer = Class.forName(analyzerFQN);
@@ -315,7 +367,6 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
       return (Analyzer) constructor.newInstance();
     } catch (ClassNotFoundException e) {
-
       throw OException.wrapException(new OIndexException("Analyzer: " + analyzerFQN + " not found"), e);
     } catch (NoSuchMethodException e) {
       Class classAnalyzer = null;
@@ -324,7 +375,6 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
         return (Analyzer) classAnalyzer.newInstance();
 
       } catch (Throwable e1) {
-
         throw OException.wrapException(new OIndexException("Couldn't instantiate analyzer:  public constructor  not found"), e);
       }
 
@@ -497,7 +547,6 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
       });
     }
   }
-
 
   private String getIndexPath(OLocalPaginatedStorage storageLocalAbstract) {
     return getIndexPath(storageLocalAbstract, indexName);

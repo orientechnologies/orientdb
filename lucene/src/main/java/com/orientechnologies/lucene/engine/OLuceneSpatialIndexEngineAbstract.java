@@ -76,16 +76,16 @@ public abstract class OLuceneSpatialIndexEngineAbstract extends OLuceneIndexEngi
 
   @Override
   public IndexWriter openIndexWriter(Directory directory) throws IOException {
-    Analyzer analyzer = getAnalyzer(metadata);
-    IndexWriterConfig iwc = new IndexWriterConfig(analyzer);
+    configureAnalyzers(metadata);
+    IndexWriterConfig iwc = new IndexWriterConfig(indexAnalyzer());
     iwc.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
     return new IndexWriter(directory, iwc);
   }
 
   @Override
   public IndexWriter createIndexWriter(Directory directory) throws IOException {
-    Analyzer analyzer = getAnalyzer(metadata);
-    IndexWriterConfig iwc = new IndexWriterConfig(analyzer);
+    configureAnalyzers(metadata);
+    IndexWriterConfig iwc = new IndexWriterConfig(indexAnalyzer());
     iwc.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
     return new IndexWriter(directory, iwc);
   }
