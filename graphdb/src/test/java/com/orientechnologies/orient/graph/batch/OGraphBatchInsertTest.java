@@ -1,19 +1,16 @@
 package com.orientechnologies.orient.graph.batch;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import com.orientechnologies.orient.core.storage.OStorage;
-import junit.framework.TestCase;
-
-import org.junit.Test;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import junit.framework.TestCase;
+import org.junit.Test;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Luigi Dell'Aquila (l.dellaquila-at-orientechnologies.com)
@@ -190,13 +187,6 @@ public class OGraphBatchInsertTest extends TestCase {
 
     batch.end();
     
-
-		ODatabaseDocumentTx databaseDocumentTx = new ODatabaseDocumentTx(dbUrl);
-		databaseDocumentTx.open("admin", "admin");
-		OStorage storage = databaseDocumentTx.getStorage();
-		databaseDocumentTx.close();
-		storage.close(true, false);
-
 		OrientGraph g = new OrientGraph(dbUrl, "admin", "admin");
 
     Iterable<Vertex> result = g.command(
@@ -224,12 +214,6 @@ public class OGraphBatchInsertTest extends TestCase {
     batch.setVertexProperties(4L, vertexProps);
 
     batch.end();
-
-		ODatabaseDocumentTx databaseDocumentTx = new ODatabaseDocumentTx(dbUrl);
-		databaseDocumentTx.open("admin", "admin");
-		OStorage storage = databaseDocumentTx.getStorage();
-		databaseDocumentTx.close();
-		storage.close(true, false);
 
     OrientGraph g = new OrientGraph(dbUrl, "admin", "admin");
 
