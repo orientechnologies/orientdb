@@ -46,136 +46,136 @@ import java.util.ArrayList;
  */
 public class OEventPlugin extends OServerPluginAbstract implements OServerPluginConfigurable {
 
-  private String             configFile = "${ORIENTDB_HOME}/config/events.json";
+    private String             configFile = "${ORIENTDB_HOME}/config/events.json";
 
-  private ODocument          configuration;
-  private OServer            server;
-  protected OEventController eventController;
+    private ODocument          configuration;
+    private OServer            server;
+    protected OEventController eventController;
 
-  @Override
-  public ODocument getConfig() {
-    synchronized (this) {
-      return configuration;
+    @Override
+    public ODocument getConfig() {
+        synchronized (this) {
+            return configuration;
+        }
     }
-  }
 
-  @Override
-  public void changeConfig(ODocument document) {
+    @Override
+    public void changeConfig(ODocument document) {
 
-    synchronized (this) {
-      ODocument oldConfig = configuration;
-      configuration = document;
+        synchronized (this) {
+            ODocument oldConfig = configuration;
+            configuration = document;
 
-      try {
-        writeConfiguration();
-      } catch (IOException e) {
-        OException.wrapException(new OConfigurationException("Cannot Write EventConfiguration configuration file '" + configFile
-            + "'. Restoring old configuration."), e);
-        configuration = oldConfig;
-      }
+            try {
+                writeConfiguration();
+            } catch (IOException e) {
+                OException.wrapException(new OConfigurationException("Cannot Write EventConfiguration configuration file '" + configFile
+                        + "'. Restoring old configuration."), e);
+                configuration = oldConfig;
+            }
 
+        }
     }
-  }
 
-  public void writeConfiguration() throws IOException {
+    public void writeConfiguration() throws IOException {
 
-    final File f = new File(OSystemVariableResolver.resolveSystemVariables(configFile));
+        final File f = new File(OSystemVariableResolver.resolveSystemVariables(configFile));
 
-    OIOUtils.writeFile(f, configuration.toJSON("prettyPrint"));
-  }
-
-  @Override
-  public String getName() {
-    return "ee-events";
-  }
-
-  @Override
-  public void config(OServer oServer, OServerParameterConfiguration[] iParams) {
-    super.config(oServer, iParams);
-
-    this.server = oServer;
-    configuration = new ODocument();
-    configuration.field("events", new ArrayList<ODocument>());
-
-    final File f = new File(OSystemVariableResolver.resolveSystemVariables(configFile));
-
-    if (f.exists()) {
-      // READ THE FILE
-      try {
-        final String configurationContent = OIOUtils.readFileAsString(f);
-        configuration = new ODocument().fromJSON(configurationContent);
-      } catch (IOException e) {
-        OException.wrapException(new OConfigurationException("Cannot load Events configuration file '" + configFile
-            + "'. Events  Plugin will be disabled"), e);
-      }
-    } else {
-      try {
-        f.getParentFile().mkdirs();
-        f.createNewFile();
         OIOUtils.writeFile(f, configuration.toJSON("prettyPrint"));
-
-        OLogManager.instance().info(this, "Events plugin: created configuration to file '%s'", f);
-      } catch (IOException e) {
-        OException.wrapException(new OConfigurationException("Cannot create Events plugin configuration file '" + configFile
-            + "'. Events Plugin will be disabled"), e);
-      }
     }
-    eventController = new OEventController(this);
-    eventController.setDaemon(true);
-    eventController.start();
 
-  }
+    @Override
+    public String getName() {
+        return "ee-events";
+    }
 
-  @Override
-  public void startup() {
+    @Override
+    public void config(OServer oServer, OServerParameterConfiguration[] iParams) {
+        super.config(oServer, iParams);
 
-    ODistributedServerManager distributedManager = server.getDistributedManager();
+        this.server = oServer;
+        configuration = new ODocument();
+        configuration.field("events", new ArrayList<ODocument>());
 
-    Orient.instance().getProfiler().registerListener(new OProfilerListener() {
-      @Override
-      public void onUpdateCounter(String iName, long counter, long recordingFrom, long recordingTo) {
-        // Do noting
-      }
+        final File f = new File(OSystemVariableResolver.resolveSystemVariables(configFile));
 
-      @Override
-      public void onUpdateChrono(OProfilerEntry chrono) {
-        // Do noting
-      }
+        if (f.exists()) {
+            // READ THE FILE
+            try {
+                final String configurationContent = OIOUtils.readFileAsString(f);
+                configuration = new ODocument().fromJSON(configurationContent);
+            } catch (IOException e) {
+                OException.wrapException(new OConfigurationException("Cannot load Events configuration file '" + configFile
+                        + "'. Events  Plugin will be disabled"), e);
+            }
+        } else {
+            try {
+                f.getParentFile().mkdirs();
+                f.createNewFile();
+                OIOUtils.writeFile(f, configuration.toJSON("prettyPrint"));
 
-      @Override
-      public void onSnapshotCreated(Object snapshot) {
-        eventController.analyzeSnapshot((OProfilerData) snapshot);
+                OLogManager.instance().info(this, "Events plugin: created configuration to file '%s'", f);
+            } catch (IOException e) {
+                OException.wrapException(new OConfigurationException("Cannot create Events plugin configuration file '" + configFile
+                        + "'. Events Plugin will be disabled"), e);
+            }
+        }
+        eventController = new OEventController(this);
+        eventController.setDaemon(true);
+        eventController.start();
 
-      }
-    });
-    distributedManager.registerLifecycleListener(new ODistributedLifecycleListener() {
-      @Override
-      public boolean onNodeJoining(String iNode) {
+    }
 
-        return false;
-      }
+    @Override
+    public void startup() {
 
-      @Override
-      public void onNodeJoined(String iNode) {
-        eventController.broadcast(OEvent.EVENT_TYPE.LOG_WHEN, new ODocument().field("server", iNode).field("message", "ONLINE"));
-      }
+        ODistributedServerManager distributedManager = server.getDistributedManager();
 
-      @Override
-      public void onNodeLeft(String iNode) {
-        eventController.broadcast(OEvent.EVENT_TYPE.LOG_WHEN, new ODocument().field("server", iNode).field("message", "OFFLINE"));
-      }
+        Orient.instance().getProfiler().registerListener(new OProfilerListener() {
+            @Override
+            public void onUpdateCounter(String iName, long counter, long recordingFrom, long recordingTo) {
+                // Do noting
+            }
 
-      @Override
-      public void onDatabaseChangeStatus(String iNode, String iDatabaseName, ODistributedServerManager.DB_STATUS iNewStatus) {
+            @Override
+            public void onUpdateChrono(OProfilerEntry chrono) {
+                // Do noting
+            }
 
-      }
-    });
+            @Override
+            public void onSnapshotCreated(Object snapshot) {
+                eventController.analyzeSnapshot((OProfilerData) snapshot);
 
-  }
+            }
+        });
+        distributedManager.registerLifecycleListener(new ODistributedLifecycleListener() {
+            @Override
+            public boolean onNodeJoining(String iNode) {
 
-  @Override
-  public void shutdown() {
+                return false;
+            }
 
-    eventController.interrupt();
-  }
+            @Override
+            public void onNodeJoined(String iNode) {
+                eventController.broadcast(OEvent.EVENT_TYPE.LOG_WHEN, new ODocument().field("server", iNode).field("message", "ONLINE"));
+            }
+
+            @Override
+            public void onNodeLeft(String iNode) {
+                eventController.broadcast(OEvent.EVENT_TYPE.LOG_WHEN, new ODocument().field("server", iNode).field("message", "OFFLINE"));
+            }
+
+            @Override
+            public void onDatabaseChangeStatus(String iNode, String iDatabaseName, ODistributedServerManager.DB_STATUS iNewStatus) {
+
+            }
+        });
+
+    }
+
+    @Override
+    public void shutdown() {
+
+        eventController.interrupt();
+    }
 }

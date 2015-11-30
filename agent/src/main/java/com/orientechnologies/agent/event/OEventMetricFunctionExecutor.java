@@ -31,60 +31,61 @@ import javax.script.ScriptException;
 @EventConfig(when = "MetricWhen", what = "FunctionWhat")
 public class OEventMetricFunctionExecutor extends OEventMetricExecutor {
 
-  public OEventMetricFunctionExecutor() {
+    public OEventMetricFunctionExecutor() {
 
-  }
-
-  @Override
-  public void execute(ODocument source, ODocument when, ODocument what) {
-
-    fillMapResolve(source, when);
-    // pre-conditions
-    if (canExecute(source, when)) {
-      executeFunction(what);
-    }
-  }
-
-  private void executeFunction(ODocument what) {
-
-    OFunction fun = new OFunction(what);
-    String language = what.field("language");
-    String name = what.field("name");
-    Object[] iArgs = what.field("parameters");
-
-    Object[] args = null;
-    if (iArgs != null) {
-      args = new Object[iArgs.length];
-      int i = 0;
-      for (Object arg : iArgs)
-        args[i++] = EventHelper.resolve(getBody2name(), arg);
     }
 
-    final OScriptManager scriptManager = Orient.instance().getScriptManager();
-    final ScriptEngine scriptEngine = scriptManager.getEngine(language);
+    @Override
+    public void execute(ODocument source, ODocument when, ODocument what) {
 
-    try {
-      // COMPILE FUNCTION LIBRARY
-      final String lib = scriptManager.getFunctionDefinition(fun);
-      if (lib != null)
-        try {
-          scriptEngine.eval(lib);
-        } catch (ScriptException e) {
-          scriptManager.throwErrorMessage(e, lib);
+        fillMapResolve(source, when);
+        // pre-conditions
+        if (canExecute(source, when)) {
+            executeFunction(what);
+        }
+    }
+
+    private void executeFunction(ODocument what) {
+
+        OFunction fun = new OFunction(what);
+        String language = what.field("language");
+        String name = what.field("name");
+        Object[] iArgs = what.field("parameters");
+
+        Object[] args = null;
+        if (iArgs != null) {
+            args = new Object[iArgs.length];
+            int i = 0;
+            for (Object arg : iArgs)
+                args[i++] = EventHelper.resolve(getBody2name(), arg);
         }
 
-      if (scriptEngine instanceof Invocable) {
-        final Invocable invocableEngine = (Invocable) scriptEngine;
+        final OScriptManager scriptManager = Orient.instance().getScriptManager();
+        final ScriptEngine scriptEngine = scriptManager.getEngine(language);
+
         try {
-          invocableEngine.invokeFunction(name, args);
-        } catch (ScriptException e) {
-          e.printStackTrace();
-        } catch (NoSuchMethodException e) {
-          e.printStackTrace();
+            // COMPILE FUNCTION LIBRARY
+            final String lib = scriptManager.getFunctionDefinition(fun);
+            if (lib != null)
+                try {
+                    scriptEngine.eval(lib);
+                } catch (ScriptException e) {
+                    scriptManager.throwErrorMessage(e, lib);
+                }
+
+            if (scriptEngine instanceof Invocable) {
+                final Invocable invocableEngine = (Invocable) scriptEngine;
+                try {
+                    invocableEngine.invokeFunction(name, args);
+                } catch (ScriptException e) {
+                    e.printStackTrace();
+                } catch (NoSuchMethodException e) {
+                    e.printStackTrace();
+                }
+            }
+        } catch (OCommandScriptException e) {
+            throw e;
         }
-      }
-    } catch (OCommandScriptException e) {
-      throw e;
     }
-  }
 }
+
