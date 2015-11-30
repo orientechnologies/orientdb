@@ -14,6 +14,8 @@ import org.apache.tinkerpop.gremlin.structure.Transaction;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.junit.Test;
 
+import java.util.Iterator;
+
 public class OrientGraphTest {
 
     protected OrientGraphFactory graphFactory = new OrientGraphFactory("memory:tinkerpop");
@@ -155,6 +157,23 @@ public class OrientGraphTest {
             assertEquals(vertexB.id(), in.id());
             graph.close();
         }
+    }
 
+    @Test
+    public void testStaticIterator() throws Exception {
+        try (Graph graph = graphFactory.getTx()) {
+            Vertex v1 = graph.addVertex();
+
+            Iterator<Vertex> iterator = graph.vertices();
+
+            // v2 should not be returned by the Iterator
+            Vertex v2 = graph.addVertex();
+
+            assertTrue(iterator.hasNext());
+            assertEquals(v1, iterator.next());
+            assertFalse(iterator.hasNext());
+
+            graph.close();
+        }
     }
 }
