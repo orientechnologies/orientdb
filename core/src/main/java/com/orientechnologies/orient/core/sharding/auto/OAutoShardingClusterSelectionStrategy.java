@@ -63,7 +63,7 @@ public class OAutoShardingClusterSelectionStrategy implements OClusterSelectionS
   }
 
   public int getCluster(final OClass clazz, final ODocument doc) {
-    final String fieldValue = doc.field(indexedFields.get(0));
+    final Object fieldValue = doc.field(indexedFields.get(0));
 
     return clusters[((OAutoShardingIndexEngine) indexEngine).getStrategy().getPartitionsId(fieldValue, clusters.length)];
   }

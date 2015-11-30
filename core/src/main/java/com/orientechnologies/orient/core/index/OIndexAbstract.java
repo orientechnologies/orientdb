@@ -580,11 +580,11 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
       storage.deleteIndexEngine(indexId);
 
       // REMOVE THE INDEX ALSO FROM CLASS MAP
-      if (getDatabase().getMetadata() != null)
+      if (getDatabase().getMetadata() != null) {
         getDatabase().getMetadata().getIndexManager().removeClassPropertyIndex(this);
+      }
 
       removeValuesContainer();
-
       return this;
 
     } finally {
