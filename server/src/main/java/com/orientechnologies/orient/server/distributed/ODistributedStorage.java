@@ -547,6 +547,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       final OStorageOperationResult<OPhysicalPosition> localResult;
 
       localResult = (OStorageOperationResult<OPhysicalPosition>) ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
+
         @Override
         public Object call() throws Exception {
           // USE THE DATABASE TO CALL HOOKS
@@ -575,14 +576,23 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       return localResult;
 
-    } catch (ONeedRetryException e) {
+    } catch (
+
+    ONeedRetryException e)
+
+    {
       // PASS THROUGH
       throw e;
-    } catch (Exception e) {
+    } catch (
+
+    Exception e)
+
+    {
       handleDistributedException("Cannot route CREATE_RECORD operation for %s to the distributed node", e, iRecordId);
       // UNREACHABLE
       return null;
     }
+
   }
 
   public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRecordId, final String iFetchPlan,
@@ -747,6 +757,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       final OStorageOperationResult<Integer> localResult;
 
       localResult = (OStorageOperationResult<Integer>) ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
+
         @Override
         public Object call() throws Exception {
           // USE THE DATABASE TO CALL HOOKS
@@ -762,6 +773,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       nodes.remove(localNodeName);
       if (!nodes.isEmpty()) {
+
         // LOAD PREVIOUS CONTENT TO BE USED IN CASE OF UNDO
         final OStorageOperationResult<ORawBuffer> previousContent = readRecord(iRecordId, null, false, null);
 
@@ -772,17 +784,22 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       return localResult;
 
-    } catch (ONeedRetryException e) {
+    } catch (
+
+    ONeedRetryException e) {
       // PASS THROUGH
       throw e;
     } catch (Exception e) {
+
       handleDistributedException("Cannot route UPDATE_RECORD operation for %s to the distributed node", e, iRecordId);
       // UNREACHABLE
       return null;
     }
+
   }
 
   @Override
+
   public OStorageOperationResult<Boolean> deleteRecord(final ORecordId iRecordId, final int iVersion, final int iMode,
       final ORecordCallback<Boolean> iCallback) {
     resetLastValidBackup();
@@ -834,6 +851,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       final OStorageOperationResult<Boolean> localResult;
 
       localResult = (OStorageOperationResult<Boolean>) ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
+
         @Override
         public Object call() throws Exception {
           // USE THE DATABASE TO CALL HOOKS
@@ -854,14 +872,18 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       return localResult;
 
-    } catch (ONeedRetryException e) {
+    } catch (
+
+    ONeedRetryException e) {
       // PASS THROUGH
       throw e;
     } catch (Exception e) {
+
       handleDistributedException("Cannot route DELETE_RECORD operation for %s to the distributed node", e, iRecordId);
       // UNREACHABLE
       return null;
     }
+
   }
 
   @Override
@@ -1041,7 +1063,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
             throw new ORecordNotFoundException("Cannot update record '" + rid + "' because has been deleted");
 
           final int v = executionModeSynch ? record.getVersion() : record.getVersion();
-
           task = new OUpdateRecordTask(rid, previousContent.getResult().getBuffer(), previousContent.getResult().version,
               record.toStream(), v, ORecordInternal.getRecordType(record));
 
@@ -1095,6 +1116,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       // ASYNCH
       ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
+
         @Override
         public Object call() throws Exception {
           ((OTransactionRealAbstract) iTx).restore();
@@ -1108,6 +1130,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         if (executionModeSynch)
           dManager.sendRequest(getName(), involvedClusters, nodes, txTask, EXECUTION_MODE.RESPONSE);
         else {
+
           // MANAGE REPLICATION CALLBACK
           final OAsyncReplicationOk onAsyncReplicationOk = OExecutionThreadLocal.INSTANCE.get().onAsyncReplicationOk;
           final OAsyncReplicationError onAsyncReplicationError = getAsyncReplicationError();
@@ -1181,11 +1204,15 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         }
       }
 
-    } catch (OValidationException e) {
+    } catch (
+
+    OValidationException e) {
       throw e;
     } catch (Exception e) {
+
       handleDistributedException("Cannot route TX operation against distributed node", e);
     }
+
   }
 
   protected boolean processCommitResult(String localNodeName, OTransaction iTx, OTxTask txTask, Set<String> involvedClusters,
