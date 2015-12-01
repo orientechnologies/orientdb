@@ -103,15 +103,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   protected final ODistributedServerManager dManager;
   protected final OAbstractPaginatedStorage wrapped;
 
-<<<<<<< HEAD
   protected final TimerTask purgeDeletedRecordsTask;
   protected final ConcurrentHashMap<ORecordId, OPair<Long, Integer>> deletedRecords  = new ConcurrentHashMap<ORecordId, OPair<Long, Integer>>();
   protected final AtomicLong                                         lastOperationId = new AtomicLong();
-=======
-  protected final TimerTask                                                 purgeDeletedRecordsTask;
-  protected final ConcurrentHashMap<ORecordId, OPair<Long, ORecordVersion>> deletedRecords  = new ConcurrentHashMap<ORecordId, OPair<Long, ORecordVersion>>();
-  protected final AtomicLong                                                lastOperationId = new AtomicLong();
->>>>>>> 5db0482... Fixed issue about backup on distributed node github:5758
 
   protected final BlockingQueue<OAsynchDistributedOperation> asynchronousOperationsQueue;
   protected final Thread                                     asynchWorker;
@@ -130,13 +124,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       @Override
       public void run() {
         final long now = System.currentTimeMillis();
-<<<<<<< HEAD
         for (Iterator<Map.Entry<ORecordId, OPair<Long, Integer>>> it = deletedRecords.entrySet().iterator(); it.hasNext(); ) {
           final Map.Entry<ORecordId, OPair<Long, Integer>> entry = it.next();
-=======
-        for (Iterator<Map.Entry<ORecordId, OPair<Long, ORecordVersion>>> it = deletedRecords.entrySet().iterator(); it.hasNext();) {
-          final Map.Entry<ORecordId, OPair<Long, ORecordVersion>> entry = it.next();
->>>>>>> 5db0482... Fixed issue about backup on distributed node github:5758
 
           try {
             final ORecordId rid = entry.getKey();
@@ -469,12 +458,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     return executeLocally;
   }
 
-<<<<<<< HEAD
   public OStorageOperationResult<OPhysicalPosition> createRecord(final ORecordId iRecordId, final byte[] iContent, final int iRecordVersion, final byte iRecordType, final int iMode, final ORecordCallback<Long> iCallback) {
-=======
-  public OStorageOperationResult<OPhysicalPosition> createRecord(final ORecordId iRecordId, final byte[] iContent,
-      final ORecordVersion iRecordVersion, final byte iRecordType, final int iMode, final ORecordCallback<Long> iCallback) {
->>>>>>> 5db0482... Fixed issue about backup on distributed node github:5758
     resetLastValidBackup();
 
     if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.RUNNING_DISTRIBUTED)
@@ -553,12 +537,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         final OPlaceholder masterPlaceholder = (OPlaceholder) masterResult;
         iRecordId.copyFrom(masterPlaceholder.getIdentity());
 
-<<<<<<< HEAD
         return new OStorageOperationResult<OPhysicalPosition>(new OPhysicalPosition(masterPlaceholder.getIdentity().getClusterPosition(), masterPlaceholder.getVersion()));
-=======
-        return new OStorageOperationResult<OPhysicalPosition>(
-            new OPhysicalPosition(masterPlaceholder.getIdentity().getClusterPosition(), masterPlaceholder.getRecordVersion()));
->>>>>>> 5db0482... Fixed issue about backup on distributed node github:5758
       }
 
       // ASYNCHRONOUS CALL: EXECUTE LOCALLY AND THEN DISTRIBUTE
@@ -649,13 +628,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   }
 
   @Override
-<<<<<<< HEAD
   public OStorageOperationResult<ORawBuffer> readRecordIfVersionIsNotLatest(final ORecordId rid, final String fetchPlan, final boolean ignoreCache, final int recordVersion) throws ORecordNotFoundException {
-=======
-  public OStorageOperationResult<ORawBuffer> readRecordIfVersionIsNotLatest(final ORecordId rid, final String fetchPlan,
-      final boolean ignoreCache, final ORecordVersion recordVersion) throws ORecordNotFoundException {
->>>>>>> 5db0482... Fixed issue about backup on distributed node github:5758
-
     if (deletedRecords.get(rid) != null)
       // DELETED
       throw new ORecordNotFoundException("Record " + rid + " was not found");
@@ -699,18 +672,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   }
 
   @Override
-<<<<<<< HEAD
   public OSBTreeCollectionManager getSBtreeCollectionManager() {
     return wrapped.getSBtreeCollectionManager();
   }
 
   @Override
   public OStorageOperationResult<Integer> updateRecord(final ORecordId iRecordId, final boolean updateContent, final byte[] iContent, final int iVersion, final byte iRecordType, final int iMode, final ORecordCallback<Integer> iCallback) {
-=======
-  public OStorageOperationResult<ORecordVersion> updateRecord(final ORecordId iRecordId, final boolean updateContent,
-      final byte[] iContent, final ORecordVersion iVersion, final byte iRecordType, final int iMode,
-      final ORecordCallback<ORecordVersion> iCallback) {
->>>>>>> 5db0482... Fixed issue about backup on distributed node github:5758
     resetLastValidBackup();
 
     if (deletedRecords.get(iRecordId) != null)
@@ -808,12 +775,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   }
 
   @Override
-<<<<<<< HEAD
   public OStorageOperationResult<Boolean> deleteRecord(final ORecordId iRecordId, final int iVersion, final int iMode, final ORecordCallback<Boolean> iCallback) {
-=======
-  public OStorageOperationResult<Boolean> deleteRecord(final ORecordId iRecordId, final ORecordVersion iVersion, final int iMode,
-      final ORecordCallback<Boolean> iCallback) {
->>>>>>> 5db0482... Fixed issue about backup on distributed node github:5758
     resetLastValidBackup();
 
     if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.RUNNING_DISTRIBUTED)
@@ -1068,13 +1030,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
             // DELETED
             throw new ORecordNotFoundException("Cannot update record '" + rid + "' because has been deleted");
 
-<<<<<<< HEAD
           final int v = executionModeSynch ? record.getVersion() : record.getVersion();
-=======
-            task = new OUpdateRecordTask(rid, previousContent.getResult().getBuffer(), previousContent.getResult().version,
-                record.toStream(), v, ORecordInternal.getRecordType(record));
->>>>>>> 5db0482... Fixed issue about backup on distributed node github:5758
-
           task = new OUpdateRecordTask(rid, previousContent.getResult().getBuffer(), previousContent.getResult().version, record.toStream(), v, ORecordInternal.getRecordType(record));
 
           break;
@@ -1174,17 +1130,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
                       }
 
                     } catch (Exception e) {
-<<<<<<< HEAD
                       ODistributedServerLog.error(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE, "async distributed transaction failed, cannot revert local transaction. Current node could have a not aligned database. Remote answer: %s", e, iArgument);
                       throw OException.wrapException(new OTransactionException("Error on execution async distributed transaction, the database could be inconsistent"), (Exception) iArgument);
-=======
-                      ODistributedServerLog.error(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
-                          "async distributed transaction failed, cannot revert local transaction. Current node could have a not aligned database. Remote answer: %s",
-                          e, iArgument);
-                      throw new OTransactionException(
-                          "Error on execution async distributed transaction, the database could be inconsistent",
-                          (Throwable) iArgument);
->>>>>>> 5db0482... Fixed issue about backup on distributed node github:5758
                     }
 
                   if (ODistributedServerLog.isDebugEnabled())
@@ -1223,39 +1170,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     }
   }
 
-<<<<<<< HEAD
   protected boolean processCommitResult(String localNodeName, OTransaction iTx, OTxTask txTask, Set<String> involvedClusters, List<ORecordOperation> tmpEntries, Set<String> nodes, int autoRetryDelay, Object result) throws InterruptedException {
-=======
-  protected OAsyncReplicationError getAsyncReplicationError() {
-    if (OExecutionThreadLocal.INSTANCE.get().onAsyncReplicationError != null) {
-
-      final OAsyncReplicationError subCallback = OExecutionThreadLocal.INSTANCE.get().onAsyncReplicationError;
-      final ODatabaseDocumentTx currentDatabase = (ODatabaseDocumentTx) ODatabaseRecordThreadLocal.INSTANCE.get();
-      final ODatabaseDocumentTx copyDatabase = currentDatabase.copy();
-      currentDatabase.activateOnCurrentThread();
-
-      return new OAsyncReplicationError() {
-        @Override
-        public ACTION onAsyncReplicationError(final Throwable iException, final int iRetry) {
-          copyDatabase.activateOnCurrentThread();
-          switch (subCallback.onAsyncReplicationError(iException, iRetry)) {
-          case RETRY:
-            break;
-
-          case IGNORE:
-
-          }
-
-          return ACTION.IGNORE;
-        }
-      };
-    } else
-      return null;
-  }
-
-  protected boolean processCommitResult(String localNodeName, OTxTask txTask, Set<String> involvedClusters,
-      List<ORecordOperation> tmpEntries, Set<String> nodes, int autoRetryDelay, Object result) throws InterruptedException {
->>>>>>> 5db0482... Fixed issue about backup on distributed node github:5758
     if (result instanceof OTxTaskResult) {
       final OTxTaskResult txResult = ((OTxTaskResult) result);
 

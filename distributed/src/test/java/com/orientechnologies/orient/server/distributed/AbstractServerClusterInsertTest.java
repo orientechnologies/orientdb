@@ -165,11 +165,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
       Assert.assertEquals(doc.field("updated"), Boolean.TRUE);
     }
 
-<<<<<<< HEAD
     private void checkIndex(ODatabaseDocumentTx database, final String key, final ORID rid) {
-=======
-    protected void checkIndex(ODatabaseDocumentTx database, final String key, final ORID rid) {
->>>>>>> 5db0482... Fixed issue about backup on distributed node github:5758
       final List<OIdentifiable> result = database.command(new OCommandSQL("select from index:Person.name where key = ?"))
           .execute(key);
       Assert.assertNotNull(result);
