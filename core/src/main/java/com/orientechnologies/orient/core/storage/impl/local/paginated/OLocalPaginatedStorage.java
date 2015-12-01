@@ -20,24 +20,6 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
@@ -62,6 +44,24 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageVariablePars
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODiskWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * @author Andrey Lomakin
@@ -344,11 +344,12 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
 
   @Override
   protected void preCloseSteps() throws IOException {
-    try {
-      ((OWOWCache) writeCache).unregisterMBean();
-    } catch (Exception e) {
-      OLogManager.instance().error(this, "MBean for write cache cannot be unregistered", e);
-    }
+    if (writeCache != null)
+      try {
+        ((OWOWCache) writeCache).unregisterMBean();
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "MBean for write cache cannot be unregistered", e);
+      }
 
     try {
       if (writeAheadLog != null) {
