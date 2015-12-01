@@ -84,7 +84,7 @@ public class OrientdbEdgeTest {
       OFileUtils.deleteRecursively(file);
     file.mkdirs();
 
-    server = OServerMain.create();
+    server = new OServer(false);
     server
         .startup("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
             + "<orient-server>\n"

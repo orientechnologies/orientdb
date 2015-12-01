@@ -42,7 +42,7 @@ public class OServerShutdownMainTest {
     conf.network.listeners = new ArrayList<OServerNetworkListenerConfiguration>();
     conf.network.listeners.add(new OServerNetworkListenerConfiguration());
 
-    server = OServerMain.create();
+    server = new OServer(false);
     server.startup(conf);
     server.activate();
 

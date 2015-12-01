@@ -248,4 +248,11 @@ public interface OStorage extends OBackupable, OSharedContainer {
   void incrementalBackup(String backupDirectory);
 
   void restoreFromIncrementalBackup(String filePath);
+
+  /**
+   * This method is called in {@link com.orientechnologies.orient.core.Orient#shutdown()} method.
+   * For most of the storages it means that storage will be merely closed, but sometimes additional operations are need to be
+   * taken in account.
+   */
+  void shutdown();
 }

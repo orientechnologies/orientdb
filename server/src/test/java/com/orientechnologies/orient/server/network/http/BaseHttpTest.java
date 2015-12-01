@@ -63,7 +63,7 @@ public abstract class BaseHttpTest {
 
   protected void startServer() throws Exception {
     if (server == null) {
-      server = OServerMain.create();
+      server = new OServer(false);
       server.startup(getClass().getResourceAsStream(getServerCfg()));
       server.activate();
     }

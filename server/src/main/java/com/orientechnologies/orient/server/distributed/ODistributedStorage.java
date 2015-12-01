@@ -1544,6 +1544,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     return dManager != null ? dManager.getLocalNodeName() : "?";
   }
 
+  @Override
+  public void shutdown() {
+    close(true, false);
+  }
+
   public void shutdownAsynchronousWorker() {
     running = false;
     asynchWorker.interrupt();
