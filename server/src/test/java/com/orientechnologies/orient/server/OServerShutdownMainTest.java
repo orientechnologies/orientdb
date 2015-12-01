@@ -24,13 +24,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class OServerShutdownMainTest {
 
   private OServer server;
+  private boolean allowJvmShutdownPrev;
+  private String  prevPassword;
+  private String  prevOrientHome;
 
   @BeforeMethod
   public void startupOserver() throws Exception {
-    OLogManager.instance().setConsoleLevel(Level.OFF.getName());
-    System.setProperty("ORIENTDB_ROOT_PASSWORD", "rootPassword");
-    System.setProperty("ORIENTDB_HOME", "./target/testhome");
 
+    OLogManager.instance().setConsoleLevel(Level.OFF.getName());
+    prevPassword = System.setProperty("ORIENTDB_ROOT_PASSWORD", "rootPassword");
+    prevOrientHome = System.setProperty("ORIENTDB_HOME", "./target/testhome");
+
+    allowJvmShutdownPrev = OGlobalConfiguration.ENVIRONMENT_ALLOW_JVM_SHUTDOWN.getValueAsBoolean();
     OGlobalConfiguration.ENVIRONMENT_ALLOW_JVM_SHUTDOWN.setValue(false);
     OServerConfiguration conf = new OServerConfiguration();
     conf.network = new OServerNetworkConfiguration();
@@ -54,6 +59,14 @@ public class OServerShutdownMainTest {
   public void tearDown() throws Exception {
     if (server.isActive())
       server.shutdown();
+
+    //invariants
+    OGlobalConfiguration.ENVIRONMENT_ALLOW_JVM_SHUTDOWN.setValue(allowJvmShutdownPrev);
+
+    if (prevOrientHome != null)
+      System.setProperty("ORIENTDB_HOME", prevOrientHome);
+    if (prevPassword != null)
+      System.setProperty("ORIENTDB_ROOT_PASSWORD", prevPassword);
 
   }
 
