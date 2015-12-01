@@ -30,11 +30,23 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.sql.*;
+import com.orientechnologies.orient.core.sql.OCommandExecutorSQLRetryAbstract;
+import com.orientechnologies.orient.core.sql.OCommandParameters;
+import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+import com.orientechnologies.orient.core.sql.OSQLEngine;
+import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
-import com.tinkerpop.blueprints.impls.orient.*;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientEdge;
+import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * SQL CREATE EDGE command.
@@ -42,8 +54,8 @@ import java.util.*;
  * @author Luca Garulli
  */
 public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstract implements OCommandDistributedReplicateRequest {
-  public static final String          NAME          = "CREATE EDGE";
-  private static final String         KEYWORD_BATCH = "BATCH";
+  public static final String  NAME          = "CREATE EDGE";
+  private static final String KEYWORD_BATCH = "BATCH";
 
   private String                      from;
   private String                      to;
@@ -51,7 +63,7 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstr
   private String                      edgeLabel;
   private String                      clusterName;
   private List<OPair<String, Object>> fields;
-  private int                         batch         = 100;
+  private int                         batch = 100;
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLCreateEdge parse(final OCommandRequest iRequest) {
@@ -62,7 +74,7 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstr
     try {
       // System.out.println("NEW PARSER FROM: " + queryText);
       queryText = preParse(queryText, iRequest);
-      // System.out.println("NEW PARSER   TO: " + queryText);
+      // System.out.println("NEW PARSER TO: " + queryText);
       textRequest.setText(queryText);
 
       final ODatabaseDocument database = getDatabase();
@@ -141,9 +153,10 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstr
     if (clazz == null)
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
-    return OGraphCommandExecutorSQLFactory.runInTx(new OGraphCommandExecutorSQLFactory.GraphCallBack<List<Object>>() {
+    return OGraphCommandExecutorSQLFactory.runInConfiguredTxMode(new OGraphCommandExecutorSQLFactory.GraphCallBack<List<Object>>() {
       @Override
       public List<Object> call(OrientBaseGraph graph) {
+
         final Set<OIdentifiable> fromIds = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), from, context, iArgs);
         final Set<OIdentifiable> toIds = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), to, context, iArgs);
 
@@ -161,8 +174,6 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstr
             } else {
               toVertex = graph.getVertex(to);
             }
-
-            final String clsName = clazz.getName();
 
             if (fields != null)
               // EVALUATE FIELDS
@@ -218,8 +229,10 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstr
             edges.add(edge);
 
             if (batch > 0 && edges.size() % batch == 0) {
-              graph.commit();
-              ((OrientGraph) graph).begin();
+              if (graph instanceof OrientGraph) {
+                graph.commit();
+                ((OrientGraph) graph).begin();
+              }
             }
           }
         }

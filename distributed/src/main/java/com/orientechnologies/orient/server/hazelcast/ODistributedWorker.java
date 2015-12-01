@@ -28,11 +28,8 @@ import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.IMap;
 import com.hazelcast.core.IQueue;
 import com.hazelcast.spi.exception.DistributedObjectDestroyedException;
-<<<<<<< HEAD
-import com.orientechnologies.common.exception.OException;
-=======
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
->>>>>>> 5db0482... Fixed issue about backup on distributed node github:5758
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;

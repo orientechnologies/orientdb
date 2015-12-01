@@ -9,35 +9,53 @@ import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class BlueprintsConcurrentAddEdgeTest {
-  private static final int                                VERTEXES_COUNT    = 100000;
-  private static final int                                EDGES_COUNT       = 5 * VERTEXES_COUNT;
-  private static final int                                THREADS           = 16;
-  private static final String                             URL               = "plocal:./target/databases/blueprintsConcurrentAddEdgeTest";
+public class BlueprintsConcurrentAddEdgeTestNoTx {
+  protected static final int    VERTEXES_COUNT = 1000;
+  protected static final int    EDGES_COUNT    = 5 * VERTEXES_COUNT;
+  protected static final int    THREADS        = 16;
+  protected static final String URL            = "plocal:./target/databases/blueprintsConcurrentAddEdgeTest";
 
-  private final ConcurrentSkipListMap<String, TestVertex> vertexesToCreate  = new ConcurrentSkipListMap<String, TestVertex>();
-  private final List<TestVertex>                          vertexes          = new ArrayList<TestVertex>();
-  private final List<TestEdge>                            edges             = new ArrayList<TestEdge>();
+  protected final ConcurrentSkipListMap<String, TestVertex> vertexesToCreate = new ConcurrentSkipListMap<String, TestVertex>();
+  protected final List<TestVertex>                          vertexes         = new ArrayList<TestVertex>();
+  protected final List<TestEdge>                            edges            = new ArrayList<TestEdge>();
 
-  private AtomicInteger                                   indexCollisions   = new AtomicInteger();
-  private AtomicInteger                                   versionCollisions = new AtomicInteger();
-  private CountDownLatch                                  latch             = new CountDownLatch(1);
-  private final Random                                    random            = new Random();
+  protected AtomicInteger  indexCollisions   = new AtomicInteger();
+  protected AtomicInteger  versionCollisions = new AtomicInteger();
+  protected CountDownLatch latch             = new CountDownLatch(1);
+  protected final Random   random            = new Random();
+
+  protected OrientBaseGraph getGraph() {
+    return new OrientGraphNoTx(URL);
+  }
 
   @Test
-  @Ignore
   public void testCreateEdge() throws Exception {
+    OrientBaseGraph graph = getGraph();
+    graph.drop();
+
     generateVertexes();
     generateEdges();
     initGraph();
@@ -45,7 +63,7 @@ public class BlueprintsConcurrentAddEdgeTest {
     addEdgesConcurrently();
     assertGraph();
 
-    OrientGraph graph = new OrientGraph(URL);
+    graph = getGraph();
     graph.drop();
   }
 
@@ -81,7 +99,7 @@ public class BlueprintsConcurrentAddEdgeTest {
   }
 
   private void initGraph() {
-    OrientGraph graph = new OrientGraph(URL);
+    OrientBaseGraph graph = getGraph();
     graph.setAutoStartTx(false);
     graph.commit();
 
@@ -98,6 +116,8 @@ public class BlueprintsConcurrentAddEdgeTest {
   private void addEdgesConcurrently() throws Exception {
     ExecutorService executorService = Executors.newCachedThreadPool();
 
+    final long beginTime = System.currentTimeMillis();
+
     List<Future<Void>> futures = new ArrayList<Future<Void>>();
     for (int i = 0; i < THREADS; i++)
       futures.add(executorService.submit(new ConcurrentGraphCreator()));
@@ -107,20 +127,21 @@ public class BlueprintsConcurrentAddEdgeTest {
     for (Future<Void> future : futures)
       future.get();
 
-    System.out.println("Graph was created used threads : " + THREADS + " duplication exceptions : " + indexCollisions.get()
-        + " version exceptions : " + versionCollisions.get() + " vertexes : " + VERTEXES_COUNT + " edges : " + EDGES_COUNT);
+    System.out.println("Graph was created used threads: " + THREADS + " duplication exceptions: " + indexCollisions.get()
+        + " version exceptions: " + versionCollisions.get() + " vertexes: " + VERTEXES_COUNT + " edges: " + EDGES_COUNT
+        + " time: " + (System.currentTimeMillis() - beginTime));
   }
 
   private void assertGraph() {
-    OrientGraph graph = new OrientGraph(URL);
+    OrientBaseGraph graph = getGraph();
     graph.setUseLightweightEdges(false);
 
     Assert.assertEquals(VERTEXES_COUNT, graph.countVertices("TestVertex"));
     Assert.assertEquals(EDGES_COUNT, graph.countEdges("TestEdge"));
 
     for (TestVertex vertex : vertexes) {
-      Iterable<Vertex> vertexes = graph.command(
-          new OSQLSynchQuery<Vertex>("select from TestVertex where uuid = '" + vertex.uuid + "'")).execute();
+      Iterable<Vertex> vertexes = graph
+          .command(new OSQLSynchQuery<Vertex>("select from TestVertex where uuid = '" + vertex.uuid + "'")).execute();
 
       Assert.assertTrue(vertexes.iterator().hasNext());
     }
@@ -133,8 +154,8 @@ public class BlueprintsConcurrentAddEdgeTest {
     }
 
     for (TestVertex vertex : vertexes) {
-      Iterable<Vertex> vertexes = graph.command(
-          new OSQLSynchQuery<Vertex>("select from TestVertex where uuid = '" + vertex.uuid + "'")).execute();
+      Iterable<Vertex> vertexes = graph
+          .command(new OSQLSynchQuery<Vertex>("select from TestVertex where uuid = '" + vertex.uuid + "'")).execute();
 
       Assert.assertTrue(vertexes.iterator().hasNext());
 
@@ -177,7 +198,7 @@ public class BlueprintsConcurrentAddEdgeTest {
   }
 
   private class TestVertex {
-    private String        uuid;
+    private String uuid;
 
     private Set<TestEdge> outEdges;
     private Set<TestEdge> inEdges;
@@ -213,7 +234,7 @@ public class BlueprintsConcurrentAddEdgeTest {
   private class ConcurrentGraphCreator implements Callable<Void> {
     @Override
     public Void call() throws Exception {
-      OrientGraph graph = new OrientGraph(URL);
+      OrientBaseGraph graph = getGraph();
       latch.await();
       final int startIndex = random.nextInt(vertexes.size());
 
@@ -229,8 +250,8 @@ public class BlueprintsConcurrentAddEdgeTest {
             boolean success = false;
             while (!success)
               try {
-                Iterable<Vertex> vertexes = graph.command(
-                    new OSQLSynchQuery<Vertex>("select from TestVertex where uuid = '" + fromVertex.uuid + "'")).execute();
+                Iterable<Vertex> vertexes = graph
+                    .command(new OSQLSynchQuery<Vertex>("select from TestVertex where uuid = '" + fromVertex.uuid + "'")).execute();
 
                 Vertex gFromVertex;
 
@@ -239,8 +260,9 @@ public class BlueprintsConcurrentAddEdgeTest {
                 if (!gVertexesIterator.hasNext()) {
                   graph.command(new OCommandSQL("CREATE VERTEX TestVertex SET uuid = '" + fromVertex.uuid + "'")).execute();
 
-                  vertexes = graph.command(
-                      new OSQLSynchQuery<Vertex>("select from TestVertex where uuid = '" + fromVertex.uuid + "'")).execute();
+                  vertexes = graph
+                      .command(new OSQLSynchQuery<Vertex>("select from TestVertex where uuid = '" + fromVertex.uuid + "'"))
+                      .execute();
                   gVertexesIterator = vertexes.iterator();
                   gFromVertex = gVertexesIterator.next();
                 } else {
@@ -255,8 +277,8 @@ public class BlueprintsConcurrentAddEdgeTest {
                 gVertexesIterator = vertexes.iterator();
                 if (!gVertexesIterator.hasNext()) {
                   graph.command(new OCommandSQL("CREATE VERTEX TestVertex SET uuid = '" + toVertex.uuid + "'")).execute();
-                  vertexes = graph.command(
-                      new OSQLSynchQuery<Vertex>("select from TestVertex where uuid = '" + toVertex.uuid + "'")).execute();
+                  vertexes = graph
+                      .command(new OSQLSynchQuery<Vertex>("select from TestVertex where uuid = '" + toVertex.uuid + "'")).execute();
 
                   gVertexesIterator = vertexes.iterator();
                   gToVertex = gVertexesIterator.next();
@@ -266,13 +288,12 @@ public class BlueprintsConcurrentAddEdgeTest {
 
                 Edge gEdge;
 
-                Iterable<Edge> edges = graph.command(
-                    new OSQLSynchQuery<Edge>("select from TestEdge where uuid = '" + edge.uuid + "'")).execute();
+                Iterable<Edge> edges = graph
+                    .command(new OSQLSynchQuery<Edge>("select from TestEdge where uuid = '" + edge.uuid + "'")).execute();
 
                 if (!edges.iterator().hasNext()) {
-                  graph.command(
-                      new OCommandSQL("CREATE EDGE TestEdge FROM " + gFromVertex.getId() + " TO " + gToVertex.getId()
-                          + " SET uuid = '" + edge.uuid + "'")).execute();
+                  graph.command(new OCommandSQL("CREATE EDGE TestEdge FROM " + gFromVertex.getId() + " TO " + gToVertex.getId()
+                      + " SET uuid = '" + edge.uuid + "'")).execute();
                 }
 
                 graph.commit();
@@ -295,8 +316,8 @@ public class BlueprintsConcurrentAddEdgeTest {
             boolean success = false;
             while (!success)
               try {
-                Iterable<Vertex> vertexes = graph.command(
-                    new OSQLSynchQuery<Vertex>("select from TestVertex where uuid = '" + fromVertex.uuid + "'")).execute();
+                Iterable<Vertex> vertexes = graph
+                    .command(new OSQLSynchQuery<Vertex>("select from TestVertex where uuid = '" + fromVertex.uuid + "'")).execute();
 
                 Iterator<Vertex> gVertexesIterator = vertexes.iterator();
 

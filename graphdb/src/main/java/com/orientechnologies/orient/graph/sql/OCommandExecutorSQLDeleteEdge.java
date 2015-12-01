@@ -41,30 +41,40 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.impls.orient.*;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientEdge;
+import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * SQL DELETE EDGE command.
  * 
  * @author Luca Garulli
  */
-public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstract implements OCommandDistributedReplicateRequest,
-    OCommandResultListener {
-  public static final String  NAME          = "DELETE EDGE";
-  private static final String KEYWORD_BATCH = "BATCH";
-  private List<ORecordId>     rids;
-  private String              fromExpr;
-  private String              toExpr;
-  private int                 removed       = 0;
-  private OCommandRequest     query;
-  private OSQLFilter          compiledFilter;
-  private OrientGraph         graph;
-  private String              label;
-  private OModifiableBoolean  shutdownFlag  = new OModifiableBoolean();
-  private boolean             txAlreadyBegun;
-  private int                 batch         = 100;
+public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstract
+    implements OCommandDistributedReplicateRequest, OCommandResultListener {
+  public static final String               NAME          = "DELETE EDGE";
+  private static final String              KEYWORD_BATCH = "BATCH";
+  private List<ORecordId>                  rids;
+  private String                           fromExpr;
+  private String                           toExpr;
+  private int                              removed       = 0;
+  private OCommandRequest                  query;
+  private OSQLFilter                       compiledFilter;
+  private AtomicReference<OrientBaseGraph> currentGraph  = new AtomicReference<OrientBaseGraph>();
+  private String                           label;
+  private OModifiableBoolean               shutdownFlag  = new OModifiableBoolean();
+  private boolean                          txAlreadyBegun;
+  private int                              batch         = 100;
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLDeleteEdge parse(final OCommandRequest iRequest) {
@@ -76,7 +86,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
     try {
       // System.out.println("NEW PARSER FROM: " + queryText);
       queryText = preParse(queryText, iRequest);
-      // System.out.println("NEW PARSER   TO: " + queryText);
+      // System.out.println("NEW PARSER TO: " + queryText);
       textRequest.setText(queryText);
 
       init((OCommandRequestText) iRequest);
@@ -199,11 +209,10 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
     for (int r = 0; r < retry; ++r) {
       try {
         txAlreadyBegun = getDatabase().getTransaction().isActive();
-        graph = OGraphCommandExecutorSQLFactory.getGraph(true, shutdownFlag);
 
         if (rids != null) {
           // REMOVE PUNCTUAL RID
-          OGraphCommandExecutorSQLFactory.runInTx(graph, new OGraphCommandExecutorSQLFactory.GraphCallBack<Object>() {
+          OGraphCommandExecutorSQLFactory.runInConfiguredTxMode(new OGraphCommandExecutorSQLFactory.GraphCallBack<Object>() {
             @Override
             public Object call(OrientBaseGraph graph) {
               for (ORecordId rid : rids) {
@@ -223,7 +232,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
           // MULTIPLE EDGES
           final Set<OrientEdge> edges = new HashSet<OrientEdge>();
           if (query == null) {
-            OGraphCommandExecutorSQLFactory.runInTx(graph, new OGraphCommandExecutorSQLFactory.GraphCallBack<Object>() {
+            OGraphCommandExecutorSQLFactory.runInConfiguredTxMode(new OGraphCommandExecutorSQLFactory.GraphCallBack<Object>() {
               @Override
               public Object call(OrientBaseGraph graph) {
                 Set<OIdentifiable> fromIds = null;
@@ -298,8 +307,16 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
             end();
 
           } else {
-            query.setContext(getContext());
-            query.execute(iArgs);
+            OGraphCommandExecutorSQLFactory.runInConfiguredTxMode(new OGraphCommandExecutorSQLFactory.GraphCallBack<OrientGraph>() {
+              @Override
+              public OrientGraph call(final OrientBaseGraph iGraph) {
+                // TARGET IS A CLASS + OPTIONAL CONDITION
+                currentGraph.set(iGraph);
+                query.setContext(getContext());
+                query.execute(iArgs);
+                return null;
+              }
+            });
           }
         }
 
@@ -335,7 +352,9 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
     }
 
     if (id.getIdentity().isValid()) {
-      final OrientEdge e = graph.getEdge(id);
+      final OrientBaseGraph g = currentGraph.get();
+
+      final OrientEdge e = g.getEdge(id);
 
       for (int retry = 0; retry < 20; ++retry) {
         try {
@@ -343,8 +362,10 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
             e.remove();
 
             if (!txAlreadyBegun && batch > 0 && (removed + 1) % batch == 0) {
-              graph.commit();
-              graph.begin();
+              if (g instanceof OrientGraph) {
+                g.commit();
+                ((OrientGraph) g).begin();
+              }
             }
 
             removed++;
@@ -370,12 +391,13 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
 
   @Override
   public void end() {
-    if (graph != null) {
+    final OrientBaseGraph g = currentGraph.get();
+    if (g != null) {
       if (!txAlreadyBegun) {
-        graph.commit();
+        g.commit();
 
         if (shutdownFlag.getValue())
-          graph.shutdown(false);
+          g.shutdown(false);
       }
     }
   }

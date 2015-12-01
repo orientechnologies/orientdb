@@ -175,9 +175,10 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
     } else if (found instanceof ORidBag) {
       // ADD THE LINK TO THE COLLECTION
       out = null;
-      ((ORidBag) found).add(iTo);
-    } else if (found instanceof Collection<?>) {
 
+      ((ORidBag) found).add(iTo);
+
+    } else if (found instanceof Collection<?>) {
       // USE THE FOUND COLLECTION
       out = null;
       ((Collection<Object>) found).add(iTo);
@@ -902,100 +903,12 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
     if (inVertex == null)
       throw new IllegalArgumentException("destination vertex is null");
 
-    if (checkDeletedInTx())
-      throw new IllegalStateException("The vertex " + getIdentity() + " has been deleted");
-
-    if (inVertex.checkDeletedInTx())
-      throw new IllegalStateException("The vertex " + inVertex.getIdentity() + " has been deleted");
-
-    final OrientBaseGraph graph = setCurrentGraphInThreadLocal();
+    final OrientBaseGraph graph = getGraph();
     if (graph != null)
-      graph.autoStartTransaction();
+      return graph.addEdge(this, label, inVertex, iClassName, iClusterName, fields);
 
-    // TEMPORARY STATIC LOCK TO AVOID MT PROBLEMS AGAINST OMVRBTreeRID
-    final ODocument outDocument = getRecord();
-    if (outDocument == null)
-      throw new IllegalArgumentException("source vertex is invalid (rid=" + getIdentity() + ")");
-
-    if (!ODocumentInternal.getImmutableSchemaClass(outDocument).isVertexType())
-      throw new IllegalArgumentException("source record is not a vertex");
-
-    final ODocument inDocument = inVertex.getRecord();
-    if (inDocument == null)
-      throw new IllegalArgumentException("destination vertex is invalid (rid=" + inVertex.getIdentity() + ")");
-
-    if (!ODocumentInternal.getImmutableSchemaClass(outDocument).isVertexType())
-      throw new IllegalArgumentException("destination record is not a vertex");
-
-    final OrientEdge edge;
-    OIdentifiable to;
-    OIdentifiable from;
-
-    label = OrientBaseGraph.encodeClassName(label);
-    if (label == null && iClassName != null)
-      // RETRO-COMPATIBILITY WITH THE SYNTAX CLASS:<CLASS-NAME>
-      label = OrientBaseGraph.encodeClassName(iClassName);
-
-    if (graph != null && graph.isUseClassForEdgeLabel()) {
-      final OrientEdgeType edgeType = graph.getEdgeType(label);
-      if (edgeType == null)
-        // AUTO CREATE CLASS
-        graph.createEdgeType(label);
-      else
-        // OVERWRITE CLASS NAME BECAUSE ATTRIBUTES ARE CASE SENSITIVE
-        label = edgeType.getName();
-    }
-
-    final String outFieldName = getConnectionFieldName(Direction.OUT, label, settings.isUseVertexFieldsForEdgeLabels());
-    final String inFieldName = getConnectionFieldName(Direction.IN, label, settings.isUseVertexFieldsForEdgeLabels());
-
-    // since the label for the edge can potentially get re-assigned
-    // before being pushed into the OrientEdge, the
-    // null check has to go here.
-    if (label == null)
-      throw ExceptionFactory.edgeLabelCanNotBeNull();
-
-    if (canCreateDynamicEdge(outDocument, inDocument, outFieldName, inFieldName, fields, label)) {
-      // CREATE A LIGHTWEIGHT DYNAMIC EDGE
-      from = rawElement;
-      to = inDocument;
-      if (settings.isKeepInMemoryReferences())
-        edge = new OrientEdge(graph, from.getIdentity(), to.getIdentity(), label);
-      else
-        edge = new OrientEdge(graph, from, to, label);
-    } else {
-      // CREATE THE EDGE DOCUMENT TO STORE FIELDS TOO
-      edge = new OrientEdge(graph, label, fields);
-
-      if (settings.isKeepInMemoryReferences())
-        edge.getRecord().fields(OrientBaseGraph.CONNECTION_OUT, rawElement.getIdentity(), OrientBaseGraph.CONNECTION_IN,
-            inDocument.getIdentity());
-      else
-        edge.getRecord().fields(OrientBaseGraph.CONNECTION_OUT, rawElement, OrientBaseGraph.CONNECTION_IN, inDocument);
-
-      from = edge.getRecord();
-      to = edge.getRecord();
-    }
-
-    if (settings.isKeepInMemoryReferences()) {
-      // USES REFERENCES INSTEAD OF DOCUMENTS
-      from = from.getIdentity();
-      to = to.getIdentity();
-    }
-
-    // OUT-VERTEX ---> IN-VERTEX/EDGE
-    createLink(graph, outDocument, to, outFieldName);
-
-    // IN-VERTEX ---> OUT-VERTEX/EDGE
-    createLink(graph, inDocument, from, inFieldName);
-
-    if (graph != null) {
-      edge.save(iClusterName);
-      inDocument.save();
-      outDocument.save();
-    }
-    return edge;
-
+    // IN MEMORY CHANGES ONLY: USE NOTX CLASS
+    return OrientGraphNoTx.addEdge(null, this, label, inVertex, iClassName, iClusterName, fields);
   }
 
   /**
@@ -1361,7 +1274,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
       iterable.add(toAdd);
   }
 
-  private boolean canCreateDynamicEdge(final ODocument iFromVertex, final ODocument iToVertex, final String iOutFieldName,
+  boolean canCreateDynamicEdge(final ODocument iFromVertex, final ODocument iToVertex, final String iOutFieldName,
       final String iInFieldName, final Object[] fields, final String label) {
 
     checkIfAttached();

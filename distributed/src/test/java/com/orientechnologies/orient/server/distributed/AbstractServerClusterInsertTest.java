@@ -16,6 +16,19 @@
 
 package com.orientechnologies.orient.server.distributed;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
+import org.junit.Assert;
+
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -33,18 +46,6 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import org.junit.Assert;
-
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Insert records concurrently against the cluster
@@ -165,11 +166,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
       Assert.assertEquals(doc.field("updated"), Boolean.TRUE);
     }
 
-<<<<<<< HEAD
-    private void checkIndex(ODatabaseDocumentTx database, final String key, final ORID rid) {
-=======
     protected void checkIndex(ODatabaseDocumentTx database, final String key, final ORID rid) {
->>>>>>> 5db0482... Fixed issue about backup on distributed node github:5758
       final List<OIdentifiable> result = database.command(new OCommandSQL("select from index:Person.name where key = ?"))
           .execute(key);
       Assert.assertNotNull(result);
