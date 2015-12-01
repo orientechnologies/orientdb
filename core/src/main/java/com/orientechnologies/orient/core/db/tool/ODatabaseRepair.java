@@ -51,11 +51,20 @@ public class ODatabaseRepair extends ODatabaseTool {
   }
 
   public void run() {
+    long errors = 0;
+
+    if (removeBrokenLinks)
+      errors += removeBrokenLinks();
+
+    message("\nRepair database complete (" + errors + " errors)");
+  }
+
+  protected long removeBrokenLinks() {
     long fixedLinks = 0l;
     long modifiedDocuments = 0l;
     long errors = 0l;
 
-    message("\n- Fixing dirty links...");
+    message("\n- Removing broken links...");
     for (String clusterName : database.getClusterNames()) {
       for (ORecord rec : database.browseCluster(clusterName)) {
         try {
@@ -107,12 +116,9 @@ public class ODatabaseRepair extends ODatabaseTool {
         }
       }
     }
-    if (verbose)
-      message("\n");
 
-    message("Done! Fixed links: " + fixedLinks + ", modified documents: " + modifiedDocuments);
-
-    message("\nRepair database complete (" + errors + " errors)");
+    message("\n-- Done! Fixed links: " + fixedLinks + ", modified documents: " + modifiedDocuments);
+    return errors;
   }
 
   /**
