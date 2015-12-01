@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.config.OServerNetworkConfiguration;
@@ -68,6 +69,7 @@ public class OServerShutdownMainTest {
     if (prevPassword != null)
       System.setProperty("ORIENTDB_ROOT_PASSWORD", prevPassword);
 
+    Orient.instance().startup();
   }
 
   @Test(enabled = true)
