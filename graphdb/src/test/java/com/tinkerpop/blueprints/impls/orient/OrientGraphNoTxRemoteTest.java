@@ -61,7 +61,7 @@ public class OrientGraphNoTxRemoteTest extends GraphTest {
     oldOrientDBHome = System.getProperty("ORIENTDB_HOME");
     System.setProperty("ORIENTDB_HOME", serverHome);
 
-    server = OServerMain.create();
+    server = new OServer(false);
     server.startup(OrientGraphRemoteTest.class.getResourceAsStream("/embedded-server-config.xml"));
     server.activate();
   }

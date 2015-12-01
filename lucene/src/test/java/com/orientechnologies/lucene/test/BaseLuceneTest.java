@@ -217,7 +217,7 @@ public abstract class BaseLuceneTest {
     public static void main(String[] args) throws Exception {
 
       if (args.length > 0) {
-        OServer server = OServerMain.create();
+        OServer server = new OServer(false);
         server.startup(ClassLoader.getSystemResourceAsStream("orientdb-server-config.xml"));
         server.activate();
 
