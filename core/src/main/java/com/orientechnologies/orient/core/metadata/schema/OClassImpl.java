@@ -2476,7 +2476,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     final Collection<OProperty> baseClassProperties = baseClass.properties();
     for (OProperty property : baseClassProperties) {
       OProperty thisProperty = getProperty(property.getName());
-      if (thisProperty != null && thisProperty.getType().equals(property.getType())) {
+      if (thisProperty != null && !thisProperty.getType().equals(property.getType())) {
         throw new OSchemaException("Cannot add base class '" + baseClass.getName() + "', because of property conflict: '"
             + thisProperty + "' vs '" + property + "'");
       }
