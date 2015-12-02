@@ -97,6 +97,11 @@ public class OUpdateStatementTest {
     checkRightSyntax("update [#9:0, #9:1] set foo = 'bar'");
   }
 
+  public void testDottedTarget() {
+    //issue #5397
+    checkRightSyntax("update $publishedVersionEdge.row set isPublished = false");
+  }
+
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);
     try {
