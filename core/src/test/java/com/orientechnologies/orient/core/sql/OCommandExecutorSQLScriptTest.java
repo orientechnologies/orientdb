@@ -1,17 +1,16 @@
 package com.orientechnologies.orient.core.sql;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-
+import com.orientechnologies.orient.core.command.script.OCommandScript;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.command.script.OCommandScript;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 @Test
 public class OCommandExecutorSQLScriptTest {
@@ -80,12 +79,15 @@ public class OCommandExecutorSQLScriptTest {
     script = new StringBuilder();
     script.append("let $a = select from V limit 2\n");
     script.append("return $a.toJSON()\n");
-    List<String> result = db.command(new OCommandScript("sql", script.toString())).execute();
+    String result = db.command(new OCommandScript("sql", script.toString())).execute();
 
     Assert.assertNotNull(result);
-    for (String d : result) {
-      new ODocument().fromJSON(d);
-    }
+    result = result.trim();
+    Assert.assertTrue(result.startsWith("["));
+    Assert.assertTrue(result.endsWith("]"));
+
+    new ODocument().fromJSON(result.substring(1, result.length()-1));
+
   }
 
   @Test
