@@ -285,6 +285,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
 
                 // END OF SCRIPT
                 breakReturn = true;
+                break;
 
               } else if (lastCommand != null && lastCommand.length() > 0)
                 lastResult = executeCommand(lastCommand, db);
@@ -298,6 +299,9 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
             db.rollback();
           throw ex;
         }
+
+        //COMPLETED
+        break;
 
       } catch (OTransactionException e) {
         // THIS CASE IS ON UPSERT
