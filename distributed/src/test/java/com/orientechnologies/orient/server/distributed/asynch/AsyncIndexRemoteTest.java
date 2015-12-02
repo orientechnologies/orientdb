@@ -10,7 +10,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
-public class AsyncIndexTest extends BareBoneBase2ServerTest {
+public class AsyncIndexRemoteTest extends BareBoneBase3ServerTest {
 
   @Override
   protected String getDatabaseName() {
@@ -18,7 +18,7 @@ public class AsyncIndexTest extends BareBoneBase2ServerTest {
   }
 
   protected void dbClient1() {
-    OrientBaseGraph graph = new OrientGraphNoTx(getLocalURL());
+    OrientBaseGraph graph = new OrientGraphNoTx(getRemoteURL());
     try {
       graph.command(new OCommandSQL("create class SMS")).execute();
       graph.command(new OCommandSQL("create property SMS.type string")).execute();
@@ -52,8 +52,8 @@ public class AsyncIndexTest extends BareBoneBase2ServerTest {
       graph.shutdown();
     }
 
-    // CHECK ON THE OTHER NODE
-    OrientBaseGraph graph2 = new OrientGraphNoTx(getLocalURL2());
+    // CHECK ON THE 2ND NODE
+    OrientBaseGraph graph2 = new OrientGraphNoTx(getRemoteURL2());
     try {
       try {
         graph2
@@ -74,6 +74,30 @@ public class AsyncIndexTest extends BareBoneBase2ServerTest {
     } finally {
       OLogManager.instance().info(this, "Shutting down db2");
       graph2.shutdown();
+    }
+
+    // CHECK ON THE 2ND NODE
+    OrientBaseGraph graph3 = new OrientGraphNoTx(getRemoteURL3());
+    try {
+      try {
+        graph3
+            .command(new OCommandSQL("insert into sms (type, lang, source, content) values ( 'notify', 'en', 1, 'This is a test')"))
+            .execute();
+        Assert.fail("violated unique index was not raised");
+      } catch (ORecordDuplicatedException e) {
+      }
+
+      final Iterable<OrientVertex> result = graph3.command(new OSQLSynchQuery<OrientVertex>("select count(*) from SMS")).execute();
+
+      Assert.assertEquals(1, ((Number) result.iterator().next().getProperty("count")).intValue());
+
+    } catch (Throwable e) {
+      if (exceptionInThread == null) {
+        exceptionInThread = e;
+      }
+    } finally {
+      OLogManager.instance().info(this, "Shutting down db3");
+      graph3.shutdown();
     }
   }
 
