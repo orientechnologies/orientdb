@@ -392,7 +392,7 @@ public class IssueServiceImpl implements IssueService {
   @Override
   public void changeSlaDueTime(Issue issue, OUser actor, Priority priority) {
 
-    if (issue.getClient() != null) {
+    if (issue.getClient() != null && priority != null) {
 
       List<Contract> contracts = organizationRepository.findClientContracts(issue.getRepository().getOrganization().getName(),
           issue.getClient().getClientId());

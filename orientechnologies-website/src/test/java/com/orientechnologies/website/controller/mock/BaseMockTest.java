@@ -39,7 +39,7 @@ public class BaseMockTest {
   @Autowired
   GitHubConfiguration        gitHubConfiguration;
 
-  public static final int    MILLIS = 2000;
+  public static final int    MILLIS = 3000;
   public static boolean      dbInit = false;
 
   public static Organization test;

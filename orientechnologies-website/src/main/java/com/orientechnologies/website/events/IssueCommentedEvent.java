@@ -6,6 +6,8 @@ import com.orientechnologies.website.model.schema.dto.Issue;
 import com.orientechnologies.website.model.schema.dto.OUser;
 import com.orientechnologies.website.repository.CommentRepository;
 import com.orientechnologies.website.repository.IssueRepository;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.mail.SimpleMailMessage;
@@ -38,7 +40,9 @@ public class IssueCommentedEvent extends EventInternal<Comment> {
   @Autowired
   private SpringTemplateEngine templateEngine;
 
-  public static String         EVENT = "issue_commented";
+  protected final Log          logger = LogFactory.getLog(getClass());
+
+  public static String         EVENT  = "issue_commented";
 
   @Override
   public String event() {
@@ -79,12 +83,15 @@ public class IssueCommentedEvent extends EventInternal<Comment> {
           mailMessage.setText(htmlContent);
           sender.send(mailMessage);
         } catch (Exception e) {
-
+          logger.error("Cannot send message: " + mailMessage, e);
         }
       }
     }
-    if (issue.getClient() != null)
+    if (issue.getClient() != null) {
       sendSupportMail(sender, issue, htmlContent, false);
+    }
+    logIssueEvent(issue);
+    postHandle();
   }
 
   private void fillContextVariable(Context context, Issue issue, Comment comment) {

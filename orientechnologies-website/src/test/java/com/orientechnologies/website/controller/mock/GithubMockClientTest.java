@@ -2,6 +2,7 @@ package com.orientechnologies.website.controller.mock;
 
 import com.jayway.restassured.response.Response;
 import com.orientechnologies.website.Application;
+import com.orientechnologies.website.events.EventManager;
 import com.orientechnologies.website.model.schema.dto.Comment;
 import com.orientechnologies.website.model.schema.dto.Issue;
 import com.orientechnologies.website.model.schema.dto.Label;
@@ -13,6 +14,7 @@ import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.IntegrationTest;
 import org.springframework.boot.test.SpringApplicationConfiguration;
 import org.springframework.test.context.ActiveProfiles;
@@ -38,6 +40,10 @@ import static com.jayway.restassured.RestAssured.given;
 @IntegrationTest("server.port:0")
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class GithubMockClientTest extends BaseMockTest {
+
+
+  @Autowired
+  EventManager eventManager;
 
   protected void createLabel(String name, Repository repo) {
     Label label = new Label();
@@ -90,6 +96,9 @@ public class GithubMockClientTest extends BaseMockTest {
 
     // scoped + label + priority + sla
     Assert.assertEquals(events.size(), 4);
+
+
+    Assert.assertEquals(eventManager.firedEvents.get(), 1);
   }
 
   @Test
@@ -156,6 +165,9 @@ public class GithubMockClientTest extends BaseMockTest {
     // comment client
     // sla restarted
     Assert.assertEquals(events.size(), 13);
+
+
+    Assert.assertEquals(eventManager.firedEvents.get(), 6);
   }
 
   @Test
@@ -187,6 +199,8 @@ public class GithubMockClientTest extends BaseMockTest {
     Issue singleIssue = getSigleIssue(memberUser, 1);
 
     Assert.assertNull(singleIssue.getDueTime());
+
+    Assert.assertEquals(eventManager.firedEvents.get(), 7);
   }
 
   @Test
@@ -212,6 +226,9 @@ public class GithubMockClientTest extends BaseMockTest {
 
     Assert.assertEquals(events.size(), 19);
 
+
+    Assert.assertEquals(eventManager.firedEvents.get(), 9);
+
   }
 
   @Test
@@ -222,7 +239,7 @@ public class GithubMockClientTest extends BaseMockTest {
       String content = IOUtils.toString(stream);
       given().body(content).when().post("/api/v1/github/events");
 
-      Thread.sleep(1000);
+      Thread.sleep(MILLIS);
     } catch (IOException e) {
       e.printStackTrace();
     } catch (InterruptedException e) {
@@ -232,6 +249,9 @@ public class GithubMockClientTest extends BaseMockTest {
     Issue issue = getSigleIssue(memberUser, 1);
 
     Assert.assertEquals(issue.getComments().longValue(), 6);
+
+
+    Assert.assertEquals(eventManager.firedEvents.get(), 10);
   }
 
   @Test
@@ -256,5 +276,8 @@ public class GithubMockClientTest extends BaseMockTest {
     List<Map> events = events(memberUser, 1);
 
     Assert.assertEquals(events.size(), 23);
+
+
+    Assert.assertEquals(eventManager.firedEvents.get(), 12);
   }
 }

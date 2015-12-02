@@ -102,6 +102,10 @@ public class ChatDaemon {
 
       break;
     }
+
+    OrientGraph graph = dbFactory.getGraph();
+    graph.shutdown();
+    dbFactory.unsetDb();
   }
 
   private void sendMailAndNotify(OrientGraph graph, final Client client, Map<Date, OUser> activities, Date date1) {
@@ -118,7 +122,7 @@ public class ChatDaemon {
       SimpleMailMessage mailMessage = new SimpleMailMessage();
       String email = user.getWorkingEmail() != null ? user.getWorkingEmail() : user.getEmail();
       mailMessage.setTo(email);
-      mailMessage.setFrom("prjhub@orientechnologies.com");
+      mailMessage.setFrom("PrjHub");
       mailMessage.setSubject("Unread message from room: " + client.getName());
       mailMessage.setText(htmlContent);
       Map<String, Object> params = new HashMap<String, Object>() {

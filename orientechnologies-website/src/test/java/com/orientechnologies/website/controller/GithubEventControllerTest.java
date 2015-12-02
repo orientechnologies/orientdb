@@ -5,6 +5,7 @@ import com.jayway.restassured.response.Response;
 import com.jayway.restassured.specification.RequestSpecification;
 import com.orientechnologies.website.Application;
 import com.orientechnologies.website.OrientDBFactory;
+import com.orientechnologies.website.events.EventManager;
 import com.orientechnologies.website.model.schema.dto.Issue;
 import com.orientechnologies.website.model.schema.dto.OUser;
 import com.orientechnologies.website.model.schema.dto.Organization;
@@ -55,15 +56,15 @@ import static com.jayway.restassured.RestAssured.given;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class GithubEventControllerTest {
 
+  public static final int    MILLIS = 2000;
   public static Organization test;
-  public static boolean      setup = false;
+  public static boolean      setup  = false;
   static {
     test = new Organization();
     test.setName("romeshell");
   }
   @Autowired
   OrganizationRepository     repository;
-
 
   @Autowired
   RepositoryRepository       repoRepository;
@@ -82,6 +83,9 @@ public class GithubEventControllerTest {
   OrientDBFactory            dbFactory;
   @Value("${local.server.port}")
   int                        port;
+
+  @Autowired
+  EventManager               eventManager;
 
   @Before
   public void setUp() {
@@ -138,7 +142,7 @@ public class GithubEventControllerTest {
       String content = IOUtils.toString(stream);
       given().body(content).when().post("/api/v1/github/events");
 
-      Thread.sleep(1000);
+      Thread.sleep(MILLIS);
     } catch (IOException e) {
       e.printStackTrace();
     } catch (InterruptedException e) {
@@ -151,7 +155,9 @@ public class GithubEventControllerTest {
 
     Issue issue = response.getBody().as(Issue.class);
 
-    Assert.assertEquals(issue.getUser().getName(), "maggiolo00");
+    Assert.assertEquals(issue.getAssignee().getName(), "maggiolo00");
+
+    Assert.assertEquals(eventManager.firedEvents.get(), 1);
 
   }
 
@@ -163,7 +169,7 @@ public class GithubEventControllerTest {
       String content = IOUtils.toString(stream);
       given().body(content).when().post("/api/v1/github/events");
 
-      Thread.sleep(1000);
+      Thread.sleep(MILLIS);
     } catch (IOException e) {
       e.printStackTrace();
     } catch (InterruptedException e) {
@@ -176,7 +182,7 @@ public class GithubEventControllerTest {
 
     Issue issue = response.getBody().as(Issue.class);
 
-    Assert.assertNull(issue.getUser());
+    Assert.assertNull(issue.getAssignee());
 
   }
 
@@ -188,7 +194,7 @@ public class GithubEventControllerTest {
       String content = IOUtils.toString(stream);
       given().body(content).when().post("/api/v1/github/events");
 
-      Thread.sleep(1000);
+      Thread.sleep(MILLIS);
     } catch (IOException e) {
       e.printStackTrace();
     } catch (InterruptedException e) {
@@ -212,7 +218,7 @@ public class GithubEventControllerTest {
       String content = IOUtils.toString(stream);
       given().body(content).when().post("/api/v1/github/events");
 
-      Thread.sleep(1000);
+      Thread.sleep(MILLIS);
     } catch (IOException e) {
       e.printStackTrace();
     } catch (InterruptedException e) {
@@ -236,7 +242,7 @@ public class GithubEventControllerTest {
       String content = IOUtils.toString(stream);
       given().body(content).when().post("/api/v1/github/events");
 
-      Thread.sleep(1000);
+      Thread.sleep(MILLIS);
     } catch (IOException e) {
       e.printStackTrace();
     } catch (InterruptedException e) {
@@ -250,17 +256,19 @@ public class GithubEventControllerTest {
     Issue issue = response.getBody().as(Issue.class);
 
     Assert.assertEquals(issue.getState(), "CLOSED");
+
+    Assert.assertEquals(eventManager.firedEvents.get(), 2);
   }
 
   @Test
-  public void test5Reopened() {
+  public void test6Reopened() {
 
     InputStream stream = ClassLoader.getSystemResourceAsStream("reopened.json");
     try {
       String content = IOUtils.toString(stream);
       given().body(content).when().post("/api/v1/github/events");
 
-      Thread.sleep(1000);
+      Thread.sleep(MILLIS);
     } catch (IOException e) {
       e.printStackTrace();
     } catch (InterruptedException e) {
@@ -274,17 +282,19 @@ public class GithubEventControllerTest {
     Issue issue = response.getBody().as(Issue.class);
 
     Assert.assertEquals(issue.getState(), "OPEN");
+
+    Assert.assertEquals(eventManager.firedEvents.get(), 3);
   }
 
   @Test
-  public void test5Comment() {
+  public void test7Comment() {
 
     InputStream stream = ClassLoader.getSystemResourceAsStream("comment.json");
     try {
       String content = IOUtils.toString(stream);
       given().body(content).when().post("/api/v1/github/events");
 
-      Thread.sleep(1000);
+      Thread.sleep(MILLIS);
     } catch (IOException e) {
       e.printStackTrace();
     } catch (InterruptedException e) {
@@ -298,10 +308,12 @@ public class GithubEventControllerTest {
     Issue issue = response.getBody().as(Issue.class);
 
     Assert.assertEquals(issue.getComments().longValue(), 1);
+
+    Assert.assertEquals(eventManager.firedEvents.get(), 4);
   }
 
   @Test
-  public void test6Events() {
+  public void test8Events() {
 
     Response response = header().get("/api/v1/repos/{name}/gnome-shell-extension-aam/issues/1/events", test.getName());
 
@@ -310,6 +322,28 @@ public class GithubEventControllerTest {
     List<Map> events = Arrays.asList(response.getBody().as(Map[].class));
 
     Assert.assertEquals(events.size(), 7);
+  }
+
+  @Test
+  public void test9Opened() {
+    InputStream stream = ClassLoader.getSystemResourceAsStream("opened.json");
+    try {
+      String content = IOUtils.toString(stream);
+      given().body(content).when().post("/api/v1/github/events");
+
+      Thread.sleep(MILLIS);
+    } catch (IOException e) {
+      e.printStackTrace();
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+
+    Response response = header().get("/api/v1/repos/{name}/gnome-shell-extension-aam/issues/2", test.getName());
+
+    Assert.assertEquals(response.statusCode(), 200);
+
+    Assert.assertEquals(eventManager.firedEvents.get(), 5);
+
   }
 
   public static RequestSpecification header() {

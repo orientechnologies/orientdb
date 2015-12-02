@@ -56,6 +56,10 @@ public class IssueEscalateEvent extends EventInternal<Map<String, Object>> {
     mailMessage.setSubject(fillSubjectTags(issue));
     mailMessage.setText(htmlContent);
     sender.send(mailMessage);
+
+
+    logIssueEvent(issue);
+    postHandle();
   }
 
   private void fillContextVariable(Context context, Issue issue, OUser user) {
