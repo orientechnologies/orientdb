@@ -55,7 +55,9 @@ public class IssueAssignedEvent extends EventInternal<IssueEvent> {
       String htmlContent = templateEngine.process("newAssign.html", context);
       SimpleMailMessage mailMessage = new SimpleMailMessage();
       try {
-        mailMessage.setTo(assignee.getEmail());
+
+        String email = assignee.getWorkingEmail() != null ? assignee.getWorkingEmail() : assignee.getEmail();
+        mailMessage.setTo(email);
         mailMessage.setFrom(comment.getActor().getName());
         mailMessage.setSubject(fillSubjectTags(issue));
         mailMessage.setText(htmlContent);
@@ -66,6 +68,8 @@ public class IssueAssignedEvent extends EventInternal<IssueEvent> {
 
     }
 
+    logIssueEvent(issue);
+    postHandle();
   }
 
   private void fillContextVariable(Context context, Issue issue, IssueEvent issueEvent) {

@@ -2,6 +2,7 @@ package com.orientechnologies.website.github;
 
 import com.jcabi.http.Response;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.website.exception.ServiceException;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -194,10 +195,16 @@ public class GRepo extends GEntity {
   }
 
   public GIssue patchIssue(Integer number, String content) throws IOException {
-    String res = header(
-        github.REQUEST.uri().path(getBaseUrl() + "/issues/" + number).back().body().set(content).back().method("PATCH")).fetch()
-        .body();
-    return new GIssue(github, this, res);
+    Response resp = header(
+        github.REQUEST.uri().path(getBaseUrl() + "/issues/" + number).back().body().set(content).back().method("PATCH")).fetch();
+
+    if (resp.status() == 200) {
+      String res = resp.body();
+      return new GIssue(github, this, res);
+    } else {
+      throw ServiceException.create(resp.status()).withMessage("Cannot patch issue number : %d , with payload %s, got: %s ",
+          number, content, resp.body());
+    }
 
   }
 

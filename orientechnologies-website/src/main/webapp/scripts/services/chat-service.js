@@ -1,7 +1,7 @@
 'use strict';
 
 
-angular.module('webappApp').factory("ChatService", function ($rootScope, $location, $timeout, $window, User, Organization) {
+angular.module('webappApp').factory("ChatService", function ($rootScope, $location, $timeout, $window, $q, User, Organization) {
 
 
   var favicon = new Favico({
@@ -18,7 +18,7 @@ angular.module('webappApp').factory("ChatService", function ($rootScope, $locati
         console.log(err);
         return;
       }
-      callback();
+      return callback();
     },
     send: function (msg) {
       this.socket.send(msg);
@@ -91,7 +91,14 @@ angular.module('webappApp').factory("ChatService", function ($rootScope, $locati
     $timeout(function () {
       if (!chatService.connected && chatService.polling) {
         console.log("Reconnecting to chat service! ")
-        charSocketWrapper.init(initializer)
+        var q = charSocketWrapper.init(initializer)
+
+        if (q) {
+          q.then(function () {
+            $rootScope.$broadcast('connection-acquired');
+          });
+        }
+
       }
       poll();
     }, 10000);
@@ -102,9 +109,12 @@ angular.module('webappApp').factory("ChatService", function ($rootScope, $locati
   }
   function initializer() {
 
+    var deferred = $q.defer();
     charSocketWrapper.socket.onopen = function () {
       console.log("Connected to chat service! ")
       chatService.connected = true;
+
+      deferred.resolve();
       User.whoami().then(function (data) {
         chatService.currentUser = data;
         Organization.all("rooms").getList().then(function (data) {
@@ -131,15 +141,23 @@ angular.module('webappApp').factory("ChatService", function ($rootScope, $locati
         $rootScope.$broadcast('msg-received', msg);
       }
     };
-    charSocketWrapper.socket.onclose = function () {
-      console.log("Disconnected from chat service!")
-      chatService.connected = false;
+    charSocketWrapper.socket.onclose = function (status) {
+
+
+      if (status.code === 1000) {
+        console.log("Disconnected from chat service!")
+        chatService.connected = false;
+      } else {
+        chatService.connected = false;
+        console.log("Connection broken from chat service!")
+        $rootScope.$broadcast('connection-lost');
+      }
     };
 
-    //poll();
+    return deferred.promise;
   }
 
-
+  poll();
   return chatService;
 }).run(function (ChatService) {
 

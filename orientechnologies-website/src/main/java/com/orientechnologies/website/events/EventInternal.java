@@ -1,10 +1,14 @@
 package com.orientechnologies.website.events;
 
+import com.orientechnologies.website.OrientDBFactory;
 import com.orientechnologies.website.model.schema.dto.Client;
 import com.orientechnologies.website.model.schema.dto.Issue;
 import com.orientechnologies.website.model.schema.dto.OUser;
 import com.orientechnologies.website.repository.OrganizationRepository;
 import com.orientechnologies.website.services.reactor.ReactorMSG;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
@@ -20,8 +24,12 @@ import java.util.Set;
  */
 public abstract class EventInternal<T> implements Consumer<Event<T>> {
 
+  protected final Log              logger = LogFactory.getLog(getClass());
   @Autowired
   protected OrganizationRepository organizationRepository;
+
+  @Autowired
+  OrientDBFactory                  factory;
 
   public String handleWhat() {
     return ReactorMSG.INTERNAL_EVENT.toString() + "/" + event();
@@ -112,6 +120,17 @@ public abstract class EventInternal<T> implements Consumer<Event<T>> {
     } else {
       return "[PrjHub]";
     }
+  }
+
+  protected void postHandle() {
+    OrientGraph graph = factory.getGraph();
+    graph.shutdown();
+    factory.unsetDb();
+  }
+
+  protected void logIssueEvent(Issue issue) {
+    logger.info("Fired event : " + event() + " for issue :" + issue.getIid());
+
   }
 
   private String titleTag(Issue issue) {

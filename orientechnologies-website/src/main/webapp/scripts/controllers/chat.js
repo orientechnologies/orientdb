@@ -11,19 +11,43 @@ angular.module('webappApp')
   .controller('ChatCtrl', function ($scope, Organization, $routeParams, $route, User, $timeout, BreadCrumb, $location, ChatService, $rootScope, $filter) {
 
     $scope.isNew = false;
+    $scope.connectionLost = false;
     $scope.placeholder = "Click here to type a message(Supports Markdown). Enter to send.";
     $scope.clientId = $routeParams.id;
 
+
     $scope.sending = false;
 
+    $scope.log = null;
     $scope.connected = ChatService.connected;
-
-
 
 
     $scope.closeMe = function () {
       $('#roomsMobile').offcanvas('toggle');
     }
+
+    $rootScope.$on('connection-lost', function () {
+      console.log('connection lost');
+      if (!$scope.log) {
+
+
+        $scope.log = humane.create({baseCls: 'humane-jackedup', timeout: 0, addnCls: 'humane-jackedup-error'})
+        $scope.log.log("Connection lost. Reconnecting now.");
+
+        $scope.$apply(function () {
+          $scope.connectionLost = true;
+        });
+
+      }
+    })
+    $rootScope.$on('connection-acquired', function () {
+      $scope.log.remove()
+      $scope.log = null;
+      $scope.connectionLost = false;
+      var jacked = humane.create({baseCls: 'humane-jackedup', addnCls: 'humane-jackedup-success'})
+      jacked.log("Connection restored");
+      getMessages();
+    })
     $rootScope.$on('msg-received', function (e, msg) {
 
 
@@ -123,6 +147,22 @@ angular.module('webappApp')
       return newMsg;
     }
 
+    function getMessages() {
+      if ($scope.clientId) {
+        Organization.all("clients").one($scope.clientId).all("room").getList().then(function (data) {
+          $scope.messages = aggregateMessage(data.plain().reverse())
+        }).catch(function (e) {
+          if (e.status == 400 && e.data) {
+            $scope.isNew = true;
+          }
+        });
+        Organization.all("clients").one($scope.clientId).all("room").all('actors').getList().then(function (data) {
+          $scope.actors = data.plain();
+        });
+        visit()
+      }
+    }
+
     var replaceMsg = function (msg) {
       $scope.messages.forEach(function (g) {
         g.messages.forEach(function (m) {
@@ -193,22 +233,6 @@ angular.module('webappApp')
         }
       })
 
-
-      function getMessages() {
-        if ($scope.clientId) {
-          Organization.all("clients").one($scope.clientId).all("room").getList().then(function (data) {
-            $scope.messages = aggregateMessage(data.plain().reverse())
-          }).catch(function (e) {
-            if (e.status == 400 && e.data) {
-              $scope.isNew = true;
-            }
-          });
-          Organization.all("clients").one($scope.clientId).all("room").all('actors').getList().then(function (data) {
-            $scope.actors = data.plain();
-          });
-          visit()
-        }
-      }
 
     });
 

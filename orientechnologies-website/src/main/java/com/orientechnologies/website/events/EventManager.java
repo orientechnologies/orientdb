@@ -8,6 +8,7 @@ import reactor.core.Reactor;
 import reactor.event.Event;
 
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Created by Enrico Risa on 30/12/14.
@@ -15,6 +16,7 @@ import java.util.Map;
 @Component
 public class EventManager {
 
+  public AtomicLong firedEvents = new AtomicLong(0);
   @Autowired
   @Lazy
   protected Reactor reactor;
@@ -31,6 +33,7 @@ public class EventManager {
   public void fireEvents() {
     Map<String, Event<?>> eventMap = EventQueue.INSTANCE.get();
     for (String e : eventMap.keySet()) {
+      firedEvents.incrementAndGet();
       reactor.notify(e, eventMap.get(e));
     }
     eventMap.clear();

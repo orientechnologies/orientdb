@@ -12,6 +12,8 @@ angular.module('webappApp')
 
 
     $scope.issue = {}
+
+    $scope.opened = true;
     User.whoami().then(function (data) {
       $scope.member = data;
       $scope.issue.assignee = data;
@@ -32,9 +34,30 @@ angular.module('webappApp')
           return m;
         });
       })
-      Organization.all('issues').customGET("", {q: $scope.query, page: $scope.page}).then(function (data) {
-        $scope.issues = data.content;
-      });
+      //Organization.all('issues').customGET("", {q: $scope.query, page: $scope.page}).then(function (data) {
+      //  $scope.issues = data.content;
+      //});
+
+
+      $scope.$watch('opened', function (data) {
+        if (data != undefined) {
+          var status;
+          if (data) {
+            status = 'open'
+          } else {
+            status = 'closed'
+          }
+        }
+        if (User.isClient(ORGANIZATION)) {
+          $scope.query = 'is:' + status + ' client:\"' + client.name + "\" sort:priority-desc";
+        } else {
+          $scope.query = 'is:' + status;
+        }
+        Organization.all('issues').customGET("", {q: $scope.query, page: $scope.page}).then(function (data) {
+          $scope.issues = data.content;
+        });
+      })
+
 
       Organization.all('announcements').getList().then(function (data) {
         $scope.annauncements = data.plain();

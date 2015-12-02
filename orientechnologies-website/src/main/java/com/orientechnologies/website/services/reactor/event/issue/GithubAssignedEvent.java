@@ -40,7 +40,6 @@ public class GithubAssignedEvent implements GithubIssueEvent {
     OUser sender = findUser(payload, "sender");
     OUser assignee = findUser(payload, "assignee");
     String repoName = repository.field(ORepository.NAME.toString());
-    Integer issueNumber = issue.field(OIssue.NUMBER.toString());
 
     if (issue != null) {
       try {
@@ -48,6 +47,7 @@ public class GithubAssignedEvent implements GithubIssueEvent {
       } catch (InterruptedException e) {
         e.printStackTrace();
       }
+      Integer issueNumber = issue.field(OIssue.NUMBER.toString());
       Issue issueDto = repositoryRepository.findIssueByRepoAndNumber(repoName, issueNumber);
       issueService.assign(issueDto, assignee, sender, true);
     }

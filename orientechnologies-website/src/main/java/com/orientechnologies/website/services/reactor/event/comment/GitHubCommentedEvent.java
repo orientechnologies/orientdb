@@ -57,20 +57,24 @@ public class GitHubCommentedEvent implements GithubCommentEvent {
       }
       Issue issueDto = repositoryRepository.findIssueByRepoAndNumber(repoName, issueNumber);
 
-      Comment comment = commentRepository.findByIssueAndCommentId(issueDto, gComment.getId());
+      if (issueDto != null) {
 
-      if (comment == null) {
-        comment = new Comment();
-        comment.setCommentId(gComment.getId());
-        comment.setBody(gComment.getBody());
-        GUser user = gComment.getUser();
-        comment.setUser(userRepository.findUserOrCreateByLogin(user.getLogin(), user.getId()));
-        comment.setCreatedAt(gComment.getCreatedAt());
-        comment.setUpdatedAt(gComment.getUpdatedAt());
-        comment = commentRepository.save(comment);
-        issueService.commentIssue(issueDto, comment, false);
+        Comment comment = commentRepository.findByIssueAndCommentId(issueDto, gComment.getId());
 
-        eventManager.pushInternalEvent(IssueCommentedEvent.EVENT, comment);
+        if (comment == null) {
+          comment = new Comment();
+          comment.setCommentId(gComment.getId());
+          comment.setBody(gComment.getBody());
+          GUser user = gComment.getUser();
+          comment.setUser(userRepository.findUserOrCreateByLogin(user.getLogin(), user.getId()));
+          comment.setCreatedAt(gComment.getCreatedAt());
+          comment.setUpdatedAt(gComment.getUpdatedAt());
+          comment = commentRepository.save(comment);
+          issueService.commentIssue(issueDto, comment, false);
+          comment.setOwner(issueDto);
+
+          eventManager.pushInternalEvent(IssueCommentedEvent.EVENT, comment);
+        }
       }
     }
   }

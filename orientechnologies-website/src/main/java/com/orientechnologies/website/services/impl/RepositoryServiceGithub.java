@@ -106,7 +106,7 @@ public class RepositoryServiceGithub implements RepositoryService {
         node.put("milestone", patch.getMilestone());
       }
       if (patch.getState() != null) {
-        node.put("state", patch.getState());
+        node.put("state", patch.getState().toUpperCase());
 
         if (fireLogging(user, original)) {
           OUser userByLogin = repositoryService.userRepo.findUserByLogin(patch.getAssignee());

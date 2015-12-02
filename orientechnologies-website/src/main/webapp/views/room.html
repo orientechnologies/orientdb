@@ -1,4 +1,7 @@
-<nav  class="sidebar-right sidebar-rooms">
+<div class="chat-down" ng-show="connectionLost">
+
+</div>
+<nav class="sidebar-right sidebar-rooms">
   <ul class="nav nav-pills nav-stacked">
     <li ng-class="{ 'active' : client.clientId == clientId}" ng-repeat="client in clients | orderBy:'timestamp':true">
       <a href="#/rooms/{{client.clientId}}">
@@ -8,7 +11,7 @@
 </nav>
 
 
-<nav  id="roomsMobile" class="navmenu navmenu-default navmenu-fixed-right offcanvas" role="navigation">
+<nav id="roomsMobile" class="navmenu navmenu-default navmenu-fixed-right offcanvas" role="navigation">
   <ul class="nav navmenu-nav">
     <li ng-class="{ 'active' : client.clientId == clientId}" ng-repeat="client in clients | orderBy:'timestamp':true">
       <a href="#/rooms/{{client.clientId}}" ng-click="closeMe()">
@@ -16,6 +19,10 @@
     </li>
   </ul>
 </nav>
+
+<div class="message-banner" ng-show="alertMessage">
+  {{alertMessage}}
+</div>
 
 
 <div class="container-fluid chat-container">

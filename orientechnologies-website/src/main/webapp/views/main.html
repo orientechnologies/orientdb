@@ -42,7 +42,7 @@
             <div class="list-group">
               <div class="list-group-item" ng-repeat="issue in backlogs">
                 <div class="row">
-                  <div class="col-md-8">
+                  <div class="col-md-12">
                     <h5 class="list-group-item-heading"><a href="#issues/{{issue.iid}}">
                       {{issue.title}} </a>
                     <span class="label"
@@ -54,14 +54,15 @@
                         class="label label-success"
                         ng-if="issue.client">{{issue.client.name}}</span>
                       <span class="label label-warning" ng-show="issue.dueTime"> Due {{ issue.dueTime | fromNow}}</span>
+
+                      <span class="label label-sequence" ng-class="{ 'label-dark' : label.color =='ffffff' }"
+                            ng-repeat="label in issue.labels"
+                            style="background-color: #{{label.color}}">{{label.name}}</span>
                     </p>
 
                   </div>
-                  <div class="col-md-4">
-                 <span class="label" ng-class="{ 'label-dark' : label.color =='ffffff' }"
-                       ng-repeat="label in issue.labels"
-                       style="background-color: #{{label.color}}">{{label.name}}</span>
-                  </div>
+
+
                 </div>
               </div>
             </div>
@@ -79,7 +80,7 @@
             <div class="list-group">
               <div class="list-group-item" ng-repeat="issue in clientIssues">
                 <div class="row">
-                  <div class="col-md-8">
+                  <div class="col-md-12">
                     <h5 class="list-group-item-heading"><a href="#issues/{{issue.iid}}">
                       {{issue.title}} </a>
                     <span class="label"
@@ -92,14 +93,14 @@
                         ng-if="issue.client">{{issue.client.name}}</span>
 
                       <span class="label label-warning" ng-show="issue.dueTime"> Due {{ issue.dueTime | fromNow}}</span>
+
+                      <span class="label label-sequence" ng-class="{ 'label-dark' : label.color =='ffffff' }"
+                            ng-repeat="label in issue.labels"
+                            style="background-color: #{{label.color}}">{{label.name}}</span>
                     </p>
 
                   </div>
-                  <div class="col-md-4">
-                 <span class="label" ng-class="{ 'label-dark' : label.color =='ffffff' }"
-                       ng-repeat="label in issue.labels"
-                       style="background-color: #{{label.color}}">{{label.name}}</span>
-                  </div>
+
                 </div>
               </div>
             </div>
@@ -117,7 +118,7 @@
             <div class="list-group">
               <div class="list-group-item" ng-repeat="issue in inProgress">
                 <div class="row">
-                  <div class="col-md-8">
+                  <div class="col-md-12">
                     <h5 class="list-group-item-heading"><a href="#issues/{{issue.iid}}">
                       {{issue.title}} </a>
                       <span class="label"
@@ -130,13 +131,12 @@
                         ng-if="issue.client">{{issue.client.name}}</span>
 
                       <span class="label label-warning" ng-show="issue.dueTime"> Due {{ issue.dueTime | fromNow}}</span>
+
+                      <span class="label label-sequence" ng-class="{ 'label-dark' : label.color =='ffffff' }"
+                            ng-repeat="label in issue.labels"
+                            style="background-color: #{{label.color}}">{{label.name}}</span>
                     </p>
 
-                  </div>
-                  <div class="col-md-4">
-                 <span class="label" ng-class="{ 'label-dark' : label.color =='ffffff' }"
-                       ng-repeat="label in issue.labels"
-                       style="background-color: #{{label.color}}">{{label.name}}</span>
                   </div>
                 </div>
               </div>
@@ -151,7 +151,7 @@
             <div class="list-group">
               <div class="list-group-item" ng-repeat="issue in zombies">
                 <div class="row">
-                  <div class="col-md-8">
+                  <div class="col-md-12">
                     <h5 class="list-group-item-heading"><a href="#issues/{{issue.iid}}">
                       {{issue.title}} </a>
                       <span class="label"
@@ -164,14 +164,14 @@
                         class="label label-success"
                         ng-if="issue.client">{{issue.client.name}}</span>
                       <span class="label label-warning" ng-show="issue.dueTime"> Due {{ issue.dueTime | fromNow}}</span>
+
+                      <span class="label label-sequence" ng-class="{ 'label-dark' : label.color =='ffffff' }"
+                            ng-repeat="label in issue.labels"
+                            style="background-color: #{{label.color}}">{{label.name}}</span>
                     </p>
 
                   </div>
-                  <div class="col-md-4">
-                 <span class="label" ng-class="{ 'label-dark' : label.color =='ffffff' }"
-                       ng-repeat="label in issue.labels"
-                       style="background-color: #{{label.color}}">{{label.name}}</span>
-                  </div>
+
                 </div>
               </div>
             </div>
@@ -205,9 +205,11 @@
                 <div class="row">
                   <div class="col-md-12" ng-class="{ 'announcement-item-body' : !issue.hide }">
                     <div vue-editor ng-model="ann.body"></div>
-                    <button href="javascript:void(0)" class="btn btn-primary btn-xs" ng-show="!issue.hide" ng-click="issue.hide = true">
+                    <button href="javascript:void(0)" class="btn btn-primary btn-xs" ng-show="!issue.hide"
+                            ng-click="issue.hide = true">
                       <i class="fa fa-plus-square-o"> More</i></button>
-                    <button href="javascript:void(0)" class="btn btn-primary btn-xs" ng-show="issue.hide" ng-click="issue.hide = false">
+                    <button href="javascript:void(0)" class="btn btn-primary btn-xs" ng-show="issue.hide"
+                            ng-click="issue.hide = false">
                       <i class="fa fa-minus-square-o"> Less</i></button>
                   </div>
 
@@ -239,7 +241,7 @@
         <div class="list-group">
           <div class="list-group-item" ng-repeat="issue in myClientIssues">
             <div class="row">
-              <div class="col-md-8">
+              <div class="col-md-12">
                 <h5 class="list-group-item-heading"><a href="#issues/{{issue.iid}}">
                   {{issue.title}} </a>
                     <span class="label"
@@ -252,13 +254,12 @@
                     ng-if="issue.client">{{issue.client.name}}</span>
 
                   <span class="label label-warning" ng-show="issue.dueTime"> Due {{ issue.dueTime | fromNow}}</span>
+
+                  <span class="label label-sequence" ng-class="{ 'label-dark' : label.color =='ffffff' }"
+                        ng-repeat="label in issue.labels"
+                        style="background-color: #{{label.color}}">{{label.name}}</span>
                 </p>
 
-              </div>
-              <div class="col-md-4">
-                 <span class="label" ng-class="{ 'label-dark' : label.color =='ffffff' }"
-                       ng-repeat="label in issue.labels"
-                       style="background-color: #{{label.color}}">{{label.name}}</span>
               </div>
             </div>
           </div>
@@ -266,21 +267,43 @@
       </div>
     </div>
     <div class="col-md-6">
-      <div class="panel panel-default">
+      <div class="panel panel-default my-panel">
         <div class="panel-heading">
           <div class="row">
-            <div class="col-md-9">
+            <div class="col-md-4">
               <h3 class="panel-title">My Issues</h3>
             </div>
-            <div class="col-md-2">
-              <a href="#/issues/new" class="btn btn-sm btn-success">New Issue</a>
+            <div class="col-md-4">
+              <ul class="nav nav-pills">
+                <li role="presentation" ng-class="{ 'active' : opened}"><a href="javascript:void(0)"
+                                                                           ng-click="opened=true">Opened</a>
+                </li>
+                <li role="presentation" ng-class="{ 'active' : !opened}"><a href="javascript:void(0)"
+                                                                            ng-click="opened=false">Closed</a></li>
+              </ul>
+
+
+            </div>
+            <div class="col-md-4">
+              <div class="btn-toolbar">
+                <div class="btn-group">
+                  <a href="#/issues?q={{query}}" class="btn btn-sm btn-primary">View All</a>
+                </div>
+                <div class="btn-group">
+                  <a href="#/issues/new" class="btn btn-sm btn-success ">New Issue</a>
+                </div>
+              </div>
+
             </div>
           </div>
         </div>
         <div class="list-group">
           <div class="list-group-item" ng-repeat="issue in issues">
             <div class="row">
-              <div class="col-md-8">
+              <div class="col-md-1">
+                <i class="fa fa-check-circle-o" ng-class="'issue-' + issue.state.toLowerCase()"></i>
+              </div>
+              <div class="col-md-11">
                 <h5 class="list-group-item-heading"><a href="#issues/{{issue.iid}}">
                   {{issue.title}} </a>
                     <span class="label"
@@ -293,14 +316,14 @@
                     ng-if="issue.client">{{issue.client.name}}</span>
 
                   <span class="label label-warning" ng-show="issue.dueTime"> Due {{ issue.dueTime | fromNow}}</span>
+
+                  <span class="label label-sequence" ng-class="{ 'label-dark' : label.color =='ffffff' }"
+                        ng-repeat="label in issue.labels"
+                        style="background-color: #{{label.color}}">{{label.name}}</span>
                 </p>
 
               </div>
-              <div class="col-md-4">
-                 <span class="label" ng-class="{ 'label-dark' : label.color =='ffffff' }"
-                       ng-repeat="label in issue.labels"
-                       style="background-color: #{{label.color}}">{{label.name}}</span>
-              </div>
+
             </div>
           </div>
         </div>
@@ -318,7 +341,7 @@
         <div class="list-group">
           <div class="list-group-item" ng-repeat="issue in clientIssues">
             <div class="row">
-              <div class="col-md-8">
+              <div class="col-md-12">
                 <h5 class="list-group-item-heading"><a href="#issues/{{issue.iid}}">
                   {{issue.title}} </a>
                     <span class="label"
@@ -331,20 +354,17 @@
                     ng-if="issue.client">{{issue.client.name}}</span>
 
                   <span class="label label-warning" ng-show="issue.dueTime"> Due {{ issue.dueTime | fromNow}}</span>
-                </p>
 
+                  <span class="label label-sequence" ng-class="{ 'label-dark' : label.color =='ffffff' }"
+                        ng-repeat="label in issue.labels"
+                        style="background-color: #{{label.color}}">{{label.name}}</span>
+                </p>
               </div>
-              <div class="col-md-4">
-                 <span class="label" ng-class="{ 'label-dark' : label.color =='ffffff' }"
-                       ng-repeat="label in issue.labels"
-                       style="background-color: #{{label.color}}">{{label.name}}</span>
-              </div>
+
             </div>
           </div>
         </div>
       </div>
     </div>
   </div>
-
-</div>
 </div>

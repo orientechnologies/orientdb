@@ -236,12 +236,32 @@ body {
   padding: 10px;
 }
 
+.panel-heading .nav-pills > li > a {
+  padding: 5px 10px;
+}
+
+.my-panel .panel-title {
+  padding-top: 5px;
+}
+
 .issues-panel .issue-open {
   color: #5cb85c;
 }
 
 .issues-panel .issue-closed {
   color: #d9534f;
+}
+
+.issue-open {
+  color: #5cb85c;
+}
+
+.issue-closed {
+  color: #d9534f;
+}
+
+.label-sequence {
+  margin: 2px;
 }
 
 .issues-panel .list-group-item .issue-info {
@@ -497,4 +517,24 @@ span.label-dark {
 
 .attachment-group-item {
   padding: 5px 10px;
+}
+
+.message-banner {
+  position: fixed;
+  height: 26px;
+  line-height: 18px;
+  background: #dfa941;
+}
+
+
+.chat-down {
+  text-align: center;
+  position: fixed;
+  top: 0;
+  left: 70px;
+  width: 100%;
+  height: 100%;
+  z-index: 3000;
+  background-color: rgba(0, 0, 0, 0.92);
+  opacity: .6;
 }
