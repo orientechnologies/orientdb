@@ -63,12 +63,12 @@ import java.util.zip.GZIPOutputStream;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ODatabaseExport extends ODatabaseImpExpAbstract {
-  public static final int VERSION           = 11;
+  public static final int VERSION = 11;
 
-  protected OJSONWriter   writer;
-  protected long          recordExported;
-  protected int           compressionLevel  = Deflater.BEST_SPEED;
-  protected int           compressionBuffer = 16384;              // 16Kb
+  protected OJSONWriter writer;
+  protected long        recordExported;
+  protected int         compressionLevel  = Deflater.BEST_SPEED;
+  protected int         compressionBuffer = 16384;              // 16Kb
 
   public ODatabaseExport(final ODatabaseDocumentInternal iDatabase, final String iFileName, final OCommandOutputListener iListener)
       throws IOException {
@@ -102,6 +102,11 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
     writer = new OJSONWriter(new OutputStreamWriter(iOutputStream));
     writer.beginObject();
+  }
+
+  @Override
+  public void run() {
+    exportDatabase();
   }
 
   @Override
@@ -214,12 +219,9 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
           if (rec != null) {
             final byte[] buffer = rec.toStream();
 
-            OLogManager
-                .instance()
-                .error(
-                    this,
-                    "\nError on exporting record %s. It seems corrupted; size: %d bytes, raw content (as string):\n==========\n%s\n==========",
-                    t, rec.getIdentity(), buffer.length, new String(buffer));
+            OLogManager.instance().error(this,
+                "\nError on exporting record %s. It seems corrupted; size: %d bytes, raw content (as string):\n==========\n%s\n==========",
+                t, rec.getIdentity(), buffer.length, new String(buffer));
           }
         }
       }
@@ -583,12 +585,9 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
         if (rec != null) {
           final byte[] buffer = rec.toStream();
 
-          OLogManager
-              .instance()
-              .error(
-                  this,
-                  "\nError on exporting record %s. It seems corrupted; size: %d bytes, raw content (as string):\n==========\n%s\n==========",
-                  t, rec.getIdentity(), buffer.length, new String(buffer));
+          OLogManager.instance().error(this,
+              "\nError on exporting record %s. It seems corrupted; size: %d bytes, raw content (as string):\n==========\n%s\n==========",
+              t, rec.getIdentity(), buffer.length, new String(buffer));
         }
       }
 

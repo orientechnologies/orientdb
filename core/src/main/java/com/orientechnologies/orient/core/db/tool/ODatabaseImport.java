@@ -406,6 +406,11 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     return this;
   }
 
+  @Override
+  public void run() {
+    importDatabase();
+  }
+
   public ODatabaseImport importDatabase() {
     try {
       listener.onMessage("\nStarted import of database '" + database.getURL() + "' from " + fileName + "...");
@@ -452,7 +457,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       // in memory database are available after the import.
       // see issue #5245
       database.getMetadata().reload();
-      
+
       database.getStorage().synch();
       database.setStatus(STATUS.OPEN);
 

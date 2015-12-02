@@ -71,6 +71,10 @@ public class OTransactionNoTx extends OTransactionAbstract {
   }
 
   @Override
+  public void restore() {
+  }
+
+  @Override
   public void commit(boolean force) {
   }
 

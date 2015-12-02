@@ -48,6 +48,8 @@ public abstract class OrientConfigurableGraph {
   protected final THREAD_MODE    THREAD_MODE_DEFAULT                              = THREAD_MODE.AUTOSET_IFNULL;
   protected final boolean        AUTO_START_TX_DEFAULT                            = true;
   protected final boolean        REQUIRE_TRANSACTION_DEFAULT                      = false;
+  protected final boolean        STANDARD_TX_REQUIRE_FOR_SQL_OPERATIONS           = true;
+  protected final int            STANDARD_MAX_RETRIES                             = 50;
 
   public enum THREAD_MODE {
     MANUAL, AUTOSET_IFNULL, ALWAYS_AUTOSET
@@ -68,9 +70,11 @@ public abstract class OrientConfigurableGraph {
     private Integer                            edgeContainerTree2EmbeddedThreshold = null;
     private THREAD_MODE                        threadMode                          = null;
     private Boolean                            autoStartTx                         = null;
+    private Boolean                            txRequiredForSQLGraphOperations     = null;
     private Boolean                            requireTransaction                  = null;
     private Boolean                            useLog                              = null;
     private OStorageRemote.CONNECTION_STRATEGY connectionStrategy                  = OStorageRemote.CONNECTION_STRATEGY.STICKY;
+    private Integer                            maxRetries                          = null;
 
     public Settings copy() {
       final Settings copy = new Settings();
@@ -88,8 +92,10 @@ public abstract class OrientConfigurableGraph {
       copy.threadMode = threadMode;
       copy.autoStartTx = autoStartTx;
       copy.requireTransaction = requireTransaction;
+      copy.txRequiredForSQLGraphOperations = txRequiredForSQLGraphOperations;
       copy.useLog = useLog;
       copy.connectionStrategy = connectionStrategy;
+      copy.maxRetries = maxRetries;
       return copy;
     }
 
@@ -141,11 +147,17 @@ public abstract class OrientConfigurableGraph {
       if (settings.requireTransaction != null) {
         requireTransaction = settings.requireTransaction;
       }
+      if (settings.txRequiredForSQLGraphOperations != null) {
+        txRequiredForSQLGraphOperations = settings.txRequiredForSQLGraphOperations;
+      }
       if (settings.useLog != null) {
         useLog = settings.useLog;
       }
       if (settings.connectionStrategy != null) {
         connectionStrategy = settings.connectionStrategy;
+      }
+      if (settings.maxRetries != null) {
+        maxRetries = settings.maxRetries;
       }
     }
 
@@ -271,6 +283,9 @@ public abstract class OrientConfigurableGraph {
       this.autoStartTx = autoStartTx;
     }
 
+    /**
+     * Returns true if it is required that all modification operations are executed inside a transaction.
+     */
     public boolean isRequireTransaction() {
       if (requireTransaction == null) {
         return REQUIRE_TRANSACTION_DEFAULT;
@@ -278,8 +293,34 @@ public abstract class OrientConfigurableGraph {
       return requireTransaction;
     }
 
+    /**
+     * Changes the setting about if all modification operations are executed inside a transaction.
+     */
     public void setRequireTransaction(final boolean requireTransaction) {
       this.requireTransaction = requireTransaction;
+    }
+
+    /**
+     * Changes the setting about usage of transactions on graph modification for SQL commands (create/remove vertex, create/remove
+     * edge).
+     * 
+     * @since v2.2.0
+     */
+    public void setTxRequiredForSQLGraphOperations(final boolean iValue) {
+      this.txRequiredForSQLGraphOperations = iValue;
+    }
+
+    /**
+     * Returns true if usage of transactions is needed on graph modification for SQL commands (create/remove vertex, create/remove
+     * edge).
+     * 
+     * @since v2.2.0
+     */
+    public boolean isTxRequiredForSQLGraphOperations() {
+      if (txRequiredForSQLGraphOperations == null) {
+        return STANDARD_TX_REQUIRE_FOR_SQL_OPERATIONS;
+      }
+      return txRequiredForSQLGraphOperations;
     }
 
     /**
@@ -442,6 +483,23 @@ public abstract class OrientConfigurableGraph {
     public void setThreadMode(final THREAD_MODE iControl) {
       this.threadMode = iControl;
     }
+
+    /**
+     * Returns the maximum number of retry in case of auto managed OConcurrentModificationException (like addEdge).
+     */
+    public int getMaxRetries() {
+      if (maxRetries == null) {
+        return STANDARD_MAX_RETRIES;
+      }
+      return maxRetries;
+    }
+
+    /**
+     * Changes the maximum number of retry in case of auto managed OConcurrentModificationException (like addEdge).
+     */
+    public void setMaxRetries(final int maxRetries) {
+      this.maxRetries = maxRetries;
+    }
   }
 
   protected OrientConfigurableGraph() {
@@ -461,6 +519,27 @@ public abstract class OrientConfigurableGraph {
    */
   public OrientConfigurableGraph setUseLightweightEdges(final boolean useDynamicEdges) {
     settings.setUseLightweightEdges(useDynamicEdges);
+    return this;
+  }
+
+  /**
+   * Returns true if usage of transactions is needed on graph modification for SQL commands (create/remove vertex, create/remove
+   * edge).
+   * 
+   * @since v2.2.0
+   */
+  public boolean isTxRequiredForSQLGraphOperations() {
+    return settings.isTxRequiredForSQLGraphOperations();
+  }
+
+  /**
+   * Changes the setting about usage of transactions on graph modification for SQL commands (create/remove vertex, create/remove
+   * edge).
+   * 
+   * @since v2.2.0
+   */
+  public OrientConfigurableGraph setTxRequiredForSQLGraphOperations(final boolean useTransaction) {
+    settings.setTxRequiredForSQLGraphOperations(useTransaction);
     return this;
   }
 
@@ -698,6 +777,20 @@ public abstract class OrientConfigurableGraph {
   }
 
   /**
+   * Returns the maximum number of retries in case of auto managed OConcurrentModificationException (like addEdge).
+   */
+  public int getMaxRetries() {
+    return this.settings.getMaxRetries();
+  }
+
+  /**
+   * Changes the maximum number of retries in case of auto managed OConcurrentModificationException (like addEdge).
+   */
+  public void setMaxRetries(final int maxRetries) {
+    this.settings.setMaxRetries(maxRetries);
+  }
+
+  /**
    * Builds a OrientGraph instance passing a configuration. Supported configuration settings are:
    * <table>
    * <tr>
@@ -807,5 +900,14 @@ public abstract class OrientConfigurableGraph {
     final Boolean requireTransaction = configuration.getBoolean("blueprints.orientdb.requireTransaction", null);
     if (requireTransaction != null)
       setRequireTransaction(requireTransaction);
+
+    final Boolean txRequiredForSQLGraphOperations = configuration.getBoolean("blueprints.orientdb.txRequiredForSQLGraphOperations",
+        null);
+    if (txRequiredForSQLGraphOperations != null)
+      setTxRequiredForSQLGraphOperations(txRequiredForSQLGraphOperations);
+
+    final Integer maxRetries = configuration.getInt("blueprints.orientdb.maxRetries", 50);
+    if (maxRetries != null)
+      setMaxRetries(maxRetries);
   }
 }

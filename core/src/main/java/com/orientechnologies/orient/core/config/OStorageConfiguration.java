@@ -104,6 +104,7 @@ public class OStorageConfiguration implements OSerializableStream {
   private volatile String                                 recordSerializer;
   private volatile int                                    recordSerializerVersion;
   private volatile boolean                                strictSQL;
+  private volatile boolean                                txRequiredForSQLGraphOperations;
   private volatile Map<String, Object>                    loadProperties;
   private volatile ConcurrentMap<String, IndexEngineData> indexEngines;
   private volatile transient boolean                      validation                    = true;
@@ -146,6 +147,7 @@ public class OStorageConfiguration implements OSerializableStream {
     recordSerializer = null;
     recordSerializerVersion = 0;
     strictSQL = false;
+    txRequiredForSQLGraphOperations = true;
     indexEngines = new ConcurrentHashMap<String, IndexEngineData>();
     validation = OGlobalConfiguration.DB_VALIDATION.getValueAsBoolean();
 
@@ -766,6 +768,10 @@ public class OStorageConfiguration implements OSerializableStream {
     return strictSQL;
   }
 
+  public boolean isTxRequiredForSQLGraphOperations() {
+    return txRequiredForSQLGraphOperations;
+  }
+
   public List<OStorageEntryConfiguration> getProperties() {
     return Collections.unmodifiableList(properties);
   }
@@ -773,7 +779,11 @@ public class OStorageConfiguration implements OSerializableStream {
   public void setProperty(final String iName, final String iValue) {
     if (OStatement.CUSTOM_STRICT_SQL.equalsIgnoreCase(iName))
       // SET STRICT SQL VARIABLE
-      strictSQL = "true".equalsIgnoreCase("" + iValue);
+      strictSQL = "true".equalsIgnoreCase(iValue);
+
+    if ("txRequiredForSQLGraphOperations".equalsIgnoreCase(iName))
+      // SET TX SQL GRAPH OPERATIONS
+      txRequiredForSQLGraphOperations = "true".equalsIgnoreCase(iValue);
 
     for (Iterator<OStorageEntryConfiguration> it = properties.iterator(); it.hasNext();) {
       final OStorageEntryConfiguration e = it.next();

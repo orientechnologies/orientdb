@@ -24,7 +24,12 @@ import org.apache.commons.configuration.Configuration;
 
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Features;
+import com.tinkerpop.blueprints.util.ExceptionFactory;
 
 /**
  * A Blueprints implementation of the graph database OrientDB (http://www.orientechnologies.com)
@@ -32,9 +37,9 @@ import com.tinkerpop.blueprints.Features;
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
 public class OrientGraph extends OrientTransactionalGraph {
-  private boolean          featuresInitialized = false;
+  private boolean featuresInitialized = false;
 
-  protected final Features FEATURES            = new Features();
+  protected final Features FEATURES = new Features();
 
   /**
    * Creates a new Transactional Graph using an existent database instance. User and password are passed in case of re-open.
@@ -153,7 +158,8 @@ public class OrientGraph extends OrientTransactionalGraph {
    * </tr>
    * <tr>
    * <td>blueprints.orientdb.saveOriginalIds</td>
-   * <td>Saves the original element IDs by using the property _id. This could be useful on import of graph to preserve original ids</td>
+   * <td>Saves the original element IDs by using the property _id. This could be useful on import of graph to preserve original ids
+   * </td>
    * <td>false</td>
    * </tr>
    * <tr>
@@ -213,7 +219,8 @@ public class OrientGraph extends OrientTransactionalGraph {
    * @param iDatabase
    *          Underlying database object to attach
    */
-  public OrientGraph(final ODatabaseDocumentTx iDatabase, final String iUser, final String iPassword, final Settings iConfiguration) {
+  public OrientGraph(final ODatabaseDocumentTx iDatabase, final String iUser, final String iPassword,
+      final Settings iConfiguration) {
     super(iDatabase, iUser, iPassword, iConfiguration);
   }
 
@@ -223,7 +230,7 @@ public class OrientGraph extends OrientTransactionalGraph {
    * @return Features object
    */
   public Features getFeatures() {
-		makeActive();
+    makeActive();
 
     if (!featuresInitialized) {
       FEATURES.supportsDuplicateEdges = true;
@@ -267,4 +274,106 @@ public class OrientGraph extends OrientTransactionalGraph {
 
     return FEATURES;
   }
+
+  OrientEdge addEdge(final OrientVertex currentVertex, String label, final OrientVertex inVertex, final String iClassName,
+      final String iClusterName, final Object... fields) {
+    if (currentVertex.checkDeletedInTx())
+      throw new IllegalStateException("The vertex " + currentVertex.getIdentity() + " has been deleted");
+
+    if (inVertex.checkDeletedInTx())
+      throw new IllegalStateException("The vertex " + inVertex.getIdentity() + " has been deleted");
+
+    autoStartTransaction();
+
+    // TEMPORARY STATIC LOCK TO AVOID MT PROBLEMS AGAINST OMVRBTreeRID
+    final ODocument outDocument = currentVertex.getRecord();
+    if (outDocument == null)
+      throw new IllegalArgumentException("source vertex is invalid (rid=" + currentVertex.getIdentity() + ")");
+
+    if (!ODocumentInternal.getImmutableSchemaClass(outDocument).isVertexType())
+      throw new IllegalArgumentException("source record is not a vertex");
+
+    ODocument inDocument = inVertex.getRecord();
+    if (inDocument == null)
+      throw new IllegalArgumentException("destination vertex is invalid (rid=" + inVertex.getIdentity() + ")");
+
+    if (!ODocumentInternal.getImmutableSchemaClass(outDocument).isVertexType())
+      throw new IllegalArgumentException("destination record is not a vertex");
+
+    OIdentifiable to;
+    OIdentifiable from;
+
+    label = OrientBaseGraph.encodeClassName(label);
+    if (label == null && iClassName != null)
+      // RETRO-COMPATIBILITY WITH THE SYNTAX CLASS:<CLASS-NAME>
+      label = OrientBaseGraph.encodeClassName(iClassName);
+
+    if (isUseClassForEdgeLabel()) {
+      final OrientEdgeType edgeType = getEdgeType(label);
+      if (edgeType == null)
+        // AUTO CREATE CLASS
+        createEdgeType(label);
+      else
+        // OVERWRITE CLASS NAME BECAUSE ATTRIBUTES ARE CASE SENSITIVE
+        label = edgeType.getName();
+    }
+
+    final String outFieldName = currentVertex.getConnectionFieldName(Direction.OUT, label,
+        settings.isUseVertexFieldsForEdgeLabels());
+    final String inFieldName = currentVertex.getConnectionFieldName(Direction.IN, label, settings.isUseVertexFieldsForEdgeLabels());
+
+    // since the label for the edge can potentially get re-assigned
+    // before being pushed into the OrientEdge, the
+    // null check has to go here.
+    if (label == null)
+      throw ExceptionFactory.edgeLabelCanNotBeNull();
+
+    OrientEdge edge = null;
+    if (currentVertex.canCreateDynamicEdge(outDocument, inDocument, outFieldName, inFieldName, fields, label)) {
+      // CREATE A LIGHTWEIGHT DYNAMIC EDGE
+      from = currentVertex.rawElement;
+      to = inDocument;
+      if (edge == null) {
+        if (settings.isKeepInMemoryReferences())
+          edge = new OrientEdge(this, from.getIdentity(), to.getIdentity(), label);
+        else
+          edge = new OrientEdge(this, from, to, label);
+      }
+    } else {
+      if (edge == null) {
+        // CREATE THE EDGE DOCUMENT TO STORE FIELDS TOO
+        edge = new OrientEdge(this, label, fields);
+
+        if (settings.isKeepInMemoryReferences())
+          edge.getRecord().fields(OrientBaseGraph.CONNECTION_OUT, currentVertex.rawElement.getIdentity(),
+              OrientBaseGraph.CONNECTION_IN, inDocument.getIdentity());
+        else
+          edge.getRecord().fields(OrientBaseGraph.CONNECTION_OUT, currentVertex.rawElement, OrientBaseGraph.CONNECTION_IN,
+              inDocument);
+      }
+
+      from = edge.getRecord();
+      to = edge.getRecord();
+    }
+
+    if (settings.isKeepInMemoryReferences()) {
+      // USES REFERENCES INSTEAD OF DOCUMENTS
+      from = from.getIdentity();
+      to = to.getIdentity();
+    }
+
+    edge.save(iClusterName);
+
+    // OUT-VERTEX ---> IN-VERTEX/EDGE
+    currentVertex.createLink(this, outDocument, to, outFieldName);
+
+    // IN-VERTEX ---> OUT-VERTEX/EDGE
+    currentVertex.createLink(this, inDocument, from, inFieldName);
+
+    outDocument.save();
+    inDocument.save();
+
+    return edge;
+  }
+
 }

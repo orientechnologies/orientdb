@@ -262,6 +262,9 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     return activeGraph.get();
   }
 
+  abstract OrientEdge addEdge(final OrientVertex currentVertex, String label, final OrientVertex inVertex, final String iClassName,
+      final String iClusterName, final Object... fields);
+
   /**
    * Internal use only.
    */
@@ -1790,6 +1793,10 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     for (OStorageEntryConfiguration c : custom) {
       if (c.name.equals("useLightweightEdges"))
         setUseLightweightEdges(Boolean.parseBoolean(c.value));
+      else if (c.name.equals("txRequiredForSQLGraphOperations")) // Since v2.2.0
+        setTxRequiredForSQLGraphOperations(Boolean.parseBoolean(c.value));
+      else if (c.name.equals("maxRetries")) // Since v2.2.0
+        setMaxRetries(Integer.parseInt(c.value));
       else if (c.name.equals("useClassForEdgeLabel"))
         setUseClassForEdgeLabel(Boolean.parseBoolean(c.value));
       else if (c.name.equals("useClassForVertexLabel"))

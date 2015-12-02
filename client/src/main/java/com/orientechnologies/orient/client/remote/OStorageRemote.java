@@ -1374,6 +1374,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         handleDBFreeze();
       } catch (Exception e) {
         handleException(network, "Error on commit", e);
+        iTx.restore();
 
       } finally {
         OStorageRemoteThreadLocal.INSTANCE.get().commandExecuting = false;
@@ -1612,20 +1613,21 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     // TEMPORARY FIX: DISTRIBUTED MODE DOESN'T SUPPORT TREE BONSAI, KEEP ALWAYS EMBEDDED RIDS
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(Integer.MAX_VALUE);
 
+    final List<ODocument> members;
+    synchronized (clusterConfiguration) {
+      clusterConfiguration.fromStream(obj);
+      clusterConfiguration.toString();
+      members = clusterConfiguration.field("members");
+    }
+
     // UPDATE IT
     synchronized (serverURLs) {
-      clusterConfiguration.fromStream(obj);
 
-      clusterConfiguration.toString();
-
-      final List<ODocument> members = clusterConfiguration.field("members");
       if (members != null) {
         serverURLs.clear();
 
         // ADD CURRENT SERVER AS FIRST
         addHost(iConnectedURL);
-
-        // parseServerURLs();
 
         for (ODocument m : members)
           if (m != null && !serverURLs.contains((String) m.field("name"))) {

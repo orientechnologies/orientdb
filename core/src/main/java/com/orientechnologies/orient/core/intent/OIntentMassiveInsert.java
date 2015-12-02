@@ -35,9 +35,9 @@ public class OIntentMassiveInsert implements OIntent {
   private boolean                                     previousRetainRecords;
   private boolean                                     previousRetainObjects;
   private boolean                                     previousValidation;
+  private boolean                                     previousTxRequiredForSQLGraphOperations;
   private Map<ORecordHook, ORecordHook.HOOK_POSITION> removedHooks;
   private OSecurityUser                               currentUser;
-
   private boolean                                     disableValidation = true;
   private boolean                                     disableSecurity   = true;
   private boolean                                     disableHooks      = true;
@@ -50,6 +50,11 @@ public class OIntentMassiveInsert implements OIntent {
       iDatabase.getDatabaseOwner().setUser(null);
     }
     ODatabaseInternal<?> ownerDb = iDatabase.getDatabaseOwner();
+
+    // DISABLE TX IN GRAPH SQL OPERATIONS
+    previousTxRequiredForSQLGraphOperations = ownerDb.getStorage().getConfiguration().isTxRequiredForSQLGraphOperations();
+    if (previousTxRequiredForSQLGraphOperations)
+      ownerDb.getStorage().getConfiguration().setProperty("txRequiredForSQLGraphOperations", Boolean.FALSE.toString());
 
     if (!enableCache) {
       ownerDb.getLocalCache().setEnable(enableCache);
@@ -90,12 +95,15 @@ public class OIntentMassiveInsert implements OIntent {
   }
 
   public void end(final ODatabaseDocumentInternal iDatabase) {
+    ODatabaseInternal<?> ownerDb = iDatabase.getDatabaseOwner();
+
     if (disableSecurity)
       if (currentUser != null)
         // RE-ENABLE CHECK OF SECURITY
-        iDatabase.getDatabaseOwner().setUser(currentUser);
+        ownerDb.setUser(currentUser);
 
-    ODatabaseInternal<?> ownerDb = iDatabase.getDatabaseOwner();
+    if (previousTxRequiredForSQLGraphOperations)
+      ownerDb.getStorage().getConfiguration().setProperty("txRequiredForSQLGraphOperations", Boolean.TRUE.toString());
 
     if (!enableCache) {
       ownerDb.getLocalCache().setEnable(!enableCache);

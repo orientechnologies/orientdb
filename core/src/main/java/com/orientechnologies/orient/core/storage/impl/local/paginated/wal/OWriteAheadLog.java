@@ -21,10 +21,11 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.orient.core.storage.impl.local.OFullCheckpointRequestListener;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationMetadata;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Set;
+import java.util.Map;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
@@ -49,7 +50,8 @@ public interface OWriteAheadLog {
 
   OLogSequenceNumber logAtomicOperationStartRecord(boolean isRollbackSupported, OOperationUnitId unitId) throws IOException;
 
-  OLogSequenceNumber logAtomicOperationEndRecord(OOperationUnitId operationUnitId, boolean rollback, OLogSequenceNumber startLsn)
+  OLogSequenceNumber logAtomicOperationEndRecord(OOperationUnitId operationUnitId, boolean rollback, OLogSequenceNumber startLsn,
+      Map<String, OAtomicOperationMetadata<?>> atomicOperationMetadata)
       throws IOException;
 
   OLogSequenceNumber log(OWALRecord record) throws IOException;

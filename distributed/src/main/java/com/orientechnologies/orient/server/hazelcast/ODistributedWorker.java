@@ -28,6 +28,7 @@ import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.IMap;
 import com.hazelcast.core.IQueue;
 import com.hazelcast.spi.exception.DistributedObjectDestroyedException;
+import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -257,30 +258,47 @@ public class ODistributedWorker extends Thread {
             "received request: %s", iRequest);
 
       // EXECUTE IT LOCALLY
-      final Serializable responsePayload;
+      Serializable responsePayload;
       OSecurityUser origin = null;
       try {
-        if (task.isRequiredOpenDatabase())
-          initDatabaseInstance();
+        // EXECUTE THE TASK
+        for (int retry = 1;; ++retry) {
+          if (task.isRequiredOpenDatabase())
+            initDatabaseInstance();
 
-        database.activateOnCurrentThread();
+          database.activateOnCurrentThread();
 
-        task.setNodeSource(iRequest.getSenderNodeName());
+          task.setNodeSource(iRequest.getSenderNodeName());
 
-        // keep original user in database, check the username passed in request and set new user in DB, after document saved, reset
-        // to original user
-        if (database != null) {
-          origin = database.getUser();
-          try {
-            if (lastUser == null || !(lastUser.getIdentity()).equals(iRequest.getUserRID()))
-              lastUser = database.getMetadata().getSecurity().getUser(iRequest.getUserRID());
-            database.setUser(lastUser);// set to new user
-          } catch (Throwable ex) {
-            OLogManager.instance().error(this, "failed to convert to OUser " + ex.getMessage());
+          // keep original user in database, check the username passed in request and set new user in DB, after document saved,
+          // reset
+          // to original user
+          if (database != null) {
+            origin = database.getUser();
+            try {
+              if (lastUser == null || !(lastUser.getIdentity()).equals(iRequest.getUserRID()))
+                lastUser = database.getMetadata().getSecurity().getUser(iRequest.getUserRID());
+              database.setUser(lastUser);// set to new user
+            } catch (Throwable ex) {
+              OLogManager.instance().error(this, "Failed on user switching " + ex.getMessage());
+            }
           }
-        }
 
-        responsePayload = manager.executeOnLocalNode(iRequest, database);
+          responsePayload = manager.executeOnLocalNode(iRequest, database);
+
+          if (responsePayload instanceof OModificationOperationProhibitedException) {
+            OLogManager.instance().info(this,
+                "Database is locked on current node (backup is running?) retrying to execute the operation (retry=%d)", retry);
+            // RETRY
+            try {
+              Thread.sleep(1000);
+            } catch (InterruptedException e) {
+            }
+          } else
+            // OPERATION EXECUTED (OK OR ERROR), NO RETRY NEEDED
+            break;
+
+        }
 
       } finally {
         if (database != null) {

@@ -507,6 +507,9 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
 
   @Override
   public void closeStorage(OWriteCache writeCache) throws IOException {
+    if( writeCache == null)
+      return;
+
     cacheLock.acquireWriteLock();
     try {
       final long[] filesToClear = writeCache.close();

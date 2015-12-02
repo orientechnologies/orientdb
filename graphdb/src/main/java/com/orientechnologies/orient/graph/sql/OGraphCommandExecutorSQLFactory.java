@@ -44,7 +44,6 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
   private static final Map<String, Class<? extends OCommandExecutorSQLAbstract>> COMMANDS;
 
   static {
-
     // COMMANDS
     final Map<String, Class<? extends OCommandExecutorSQLAbstract>> commands = new HashMap<String, Class<? extends OCommandExecutorSQLAbstract>>();
 
@@ -180,10 +179,10 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
   }
 
   public static <T> T runInTx(final GraphCallBack<T> callBack) {
-    OModifiableBoolean shutdownFlag = new OModifiableBoolean();
-    ODatabaseDocumentInternal curDb = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final OModifiableBoolean shutdownFlag = new OModifiableBoolean();
+    final ODatabaseDocumentInternal curDb = ODatabaseRecordThreadLocal.INSTANCE.get();
     final boolean txAlreadyBegun = curDb.getTransaction().isActive();
-    OrientGraph graph = OGraphCommandExecutorSQLFactory.getGraph(true, shutdownFlag);
+    final OrientGraph graph = OGraphCommandExecutorSQLFactory.getGraph(true, shutdownFlag);
     try {
       return runInTx(graph, callBack);
     } finally {
@@ -192,6 +191,34 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
 
         if (shutdownFlag.getValue())
           graph.shutdown(false, false);
+      }
+
+      ODatabaseRecordThreadLocal.INSTANCE.set(curDb);
+    }
+  }
+
+  public static <T> T runInConfiguredTxMode(final GraphCallBack<T> callBack) {
+    final OModifiableBoolean shutdownFlag = new OModifiableBoolean();
+    final ODatabaseDocumentInternal curDb = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final boolean txAlreadyBegun = curDb.getTransaction().isActive();
+
+    OrientBaseGraph graph = null;
+    try {
+      if (isTxRequiredForSQLGraphOperations()) {
+        graph = OGraphCommandExecutorSQLFactory.getGraph(true, shutdownFlag);
+        return runInTx((OrientGraph) graph, callBack);
+      } else {
+        graph = OGraphCommandExecutorSQLFactory.getAnyGraph(shutdownFlag);
+        return callBack.call(graph);
+      }
+    } finally {
+      if (graph != null) {
+        if (!txAlreadyBegun) {
+          graph.commit();
+
+          if (shutdownFlag.getValue())
+            graph.shutdown(false, false);
+        }
       }
 
       ODatabaseRecordThreadLocal.INSTANCE.set(curDb);
@@ -227,7 +254,12 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
     }
   }
 
-  protected static boolean canReuseActiveGraph(final ODatabaseDocument iGraphDatabase, final ODatabaseDocument iThreadLocalDatabase) {
+  public static boolean isTxRequiredForSQLGraphOperations() {
+    return ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().isTxRequiredForSQLGraphOperations();
+  }
+
+  protected static boolean canReuseActiveGraph(final ODatabaseDocument iGraphDatabase,
+      final ODatabaseDocument iThreadLocalDatabase) {
     if (iGraphDatabase.getURL().equals(iThreadLocalDatabase.getURL())) {
       final OSecurityUser gdbUser = iGraphDatabase.getUser();
       final OSecurityUser tlUser = iThreadLocalDatabase.getUser();

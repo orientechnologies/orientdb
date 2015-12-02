@@ -19,10 +19,7 @@
  */
 package com.orientechnologies.common.concur;
 
-import com.orientechnologies.common.exception.OErrorCode;
 import com.orientechnologies.orient.core.exception.OCoreException;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.ONestedRollbackException;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 
 /**
  * Abstract base exception to extend for all the exception that report to the user it has been thrown but re-executing it could
@@ -34,11 +31,11 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
 public abstract class ONeedRetryException extends OCoreException {
   private static final long serialVersionUID = 1L;
 
-  public ONeedRetryException(ONeedRetryException exception) {
+  protected ONeedRetryException(ONeedRetryException exception) {
     super(exception);
   }
 
-  public ONeedRetryException(String message) {
+  protected ONeedRetryException(String message) {
     super(message);
   }
 }

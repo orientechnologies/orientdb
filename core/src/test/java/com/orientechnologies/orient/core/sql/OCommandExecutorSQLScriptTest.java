@@ -79,12 +79,15 @@ public class OCommandExecutorSQLScriptTest {
     script = new StringBuilder();
     script.append("let $a = select from V limit 2\n");
     script.append("return $a.toJSON()\n");
-    List<String> result = db.command(new OCommandScript("sql", script.toString())).execute();
+    String result = db.command(new OCommandScript("sql", script.toString())).execute();
 
     Assert.assertNotNull(result);
-    for (String d : result) {
-      new ODocument().fromJSON(d);
-    }
+    result = result.trim();
+    Assert.assertTrue(result.startsWith("["));
+    Assert.assertTrue(result.endsWith("]"));
+
+    new ODocument().fromJSON(result.substring(1, result.length()-1));
+
   }
 
   @Test

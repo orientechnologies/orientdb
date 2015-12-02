@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.config.OServerNetworkConfiguration;
@@ -24,13 +25,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class OServerShutdownMainTest {
 
   private OServer server;
+  private boolean allowJvmShutdownPrev;
+  private String  prevPassword;
+  private String  prevOrientHome;
 
   @BeforeMethod
   public void startupOserver() throws Exception {
-    OLogManager.instance().setConsoleLevel(Level.OFF.getName());
-    System.setProperty("ORIENTDB_ROOT_PASSWORD", "rootPassword");
-    System.setProperty("ORIENTDB_HOME", "./target/testhome");
 
+    OLogManager.instance().setConsoleLevel(Level.OFF.getName());
+    prevPassword = System.setProperty("ORIENTDB_ROOT_PASSWORD", "rootPassword");
+    prevOrientHome = System.setProperty("ORIENTDB_HOME", "./target/testhome");
+
+    allowJvmShutdownPrev = OGlobalConfiguration.ENVIRONMENT_ALLOW_JVM_SHUTDOWN.getValueAsBoolean();
     OGlobalConfiguration.ENVIRONMENT_ALLOW_JVM_SHUTDOWN.setValue(false);
     OServerConfiguration conf = new OServerConfiguration();
     conf.network = new OServerNetworkConfiguration();
@@ -42,7 +48,7 @@ public class OServerShutdownMainTest {
     conf.network.listeners = new ArrayList<OServerNetworkListenerConfiguration>();
     conf.network.listeners.add(new OServerNetworkListenerConfiguration());
 
-    server = OServerMain.create();
+    server = new OServer(false);
     server.startup(conf);
     server.activate();
 
@@ -55,6 +61,15 @@ public class OServerShutdownMainTest {
     if (server.isActive())
       server.shutdown();
 
+    //invariants
+    OGlobalConfiguration.ENVIRONMENT_ALLOW_JVM_SHUTDOWN.setValue(allowJvmShutdownPrev);
+
+    if (prevOrientHome != null)
+      System.setProperty("ORIENTDB_HOME", prevOrientHome);
+    if (prevPassword != null)
+      System.setProperty("ORIENTDB_ROOT_PASSWORD", prevPassword);
+
+    Orient.instance().startup();
   }
 
   @Test(enabled = true)

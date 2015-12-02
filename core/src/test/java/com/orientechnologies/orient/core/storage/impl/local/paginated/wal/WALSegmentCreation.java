@@ -112,7 +112,7 @@ public class WALSegmentCreation {
         writeAheadLog.log(new TestRecordOne(200, operationUnitId));
         writeAheadLog.log(new TestRecordTwo(200));
         writeAheadLog.log(new TestRecordOne(100, operationUnitId));
-        writeAheadLog.logAtomicOperationEndRecord(operationUnitId, false, new OLogSequenceNumber(0, 0));
+        writeAheadLog.logAtomicOperationEndRecord(operationUnitId, false, new OLogSequenceNumber(0, 0), null);
         writeAheadLog.log(new TestRecordTwo(100));
       }
 

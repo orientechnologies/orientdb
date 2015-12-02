@@ -98,9 +98,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    */
   @Override
   public void remove() {
-    checkIfAttached();
-
-    final OrientBaseGraph graph = getGraph();
+    final OrientBaseGraph graph  = checkIfAttached();
     graph.setCurrentGraphInThreadLocal();
     graph.autoStartTransaction();
 
@@ -318,9 +316,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    *          Cluster name or null to use the default "E"
    */
   public void save(final String iClusterName) {
-    checkIfAttached();
-
-    final OrientBaseGraph graph = getGraph();
+    final OrientBaseGraph graph = checkIfAttached();
     graph.setCurrentGraphInThreadLocal();
 
     if (rawElement instanceof ODocument)
