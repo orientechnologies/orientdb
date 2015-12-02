@@ -1,22 +1,27 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
+import static java.util.stream.Collectors.toMap;
 import static org.apache.tinkerpop.gremlin.structure.Transaction.CLOSE_BEHAVIOR.COMMIT;
 import static org.apache.tinkerpop.gremlin.structure.Transaction.CLOSE_BEHAVIOR.ROLLBACK;
+import static org.apache.tinkerpop.gremlin.structure.VertexProperty.Cardinality.single;
+import static org.hamcrest.Matchers.hasEntry;
+import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
-import com.orientechnologies.orient.core.id.ORecordId;
+import java.util.Iterator;
+import java.util.Map;
+
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Property;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.apache.tinkerpop.gremlin.structure.VertexProperty;
 import org.junit.Test;
-
-import java.util.Iterator;
-import java.util.stream.Stream;
 
 public class OrientGraphTest {
 
@@ -180,4 +185,37 @@ public class OrientGraphTest {
             graph.close();
         }
     }
+
+    @Test
+    public void testMetaProperties() throws Exception {
+        try (Graph graph = graphFactory().getTx()) {
+            Vertex v1 = graph.addVertex();
+            VertexProperty<String> prop = v1.property(single, "key", "value", "meta_key", "meta_value", "meta_key_2", "meta_value_2");
+
+            Map<String, String> keysValues = StreamUtils.asStream(prop.properties())
+                    .collect(toMap(p -> p.key(), p -> (String) p.value()));
+            assertThat(keysValues, hasEntry("meta_key", "meta_value"));
+            assertThat(keysValues, hasEntry("meta_key_2", "meta_value_2"));
+
+            Map<String, Property<?>> props = StreamUtils.asStream(prop.properties())
+                    .collect(toMap(p -> p.key(), p -> p));
+
+            props.get("meta_key_2").remove();
+
+            keysValues = StreamUtils.asStream(prop.properties())
+                    .collect(toMap(p -> p.key(), p -> (String) p.value()));
+            assertThat(keysValues, hasEntry("meta_key", "meta_value"));
+            assertThat(keysValues, not(hasEntry("meta_key_2", "meta_value_2")));
+
+            props.get("meta_key").remove();
+
+            keysValues = StreamUtils.asStream(prop.properties())
+                    .collect(toMap(p -> p.key(), p -> (String) p.value()));
+            assertThat(keysValues, not(hasEntry("meta_key", "meta_value")));
+            assertThat(keysValues, not(hasEntry("meta_key_2", "meta_value_2")));
+
+            graph.close();
+        }
+    }
+
 }
