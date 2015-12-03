@@ -276,7 +276,7 @@ ee.controller('ClusterOverviewController', function ($scope, $rootScope) {
         availableMemory += realtime['statistics']['process.runtime.availableMemory'].last;
 
 
-        maxDiskCache +=realtime['statistics']['process.runtime.diskCacheTotal'].last;
+        maxDiskCache += realtime['statistics']['process.runtime.diskCacheTotal'].last;
         totalDiskCache += realtime['statistics']['process.runtime.diskCacheUsed'].last;
 
         // CONNECTIONS
@@ -873,9 +873,9 @@ ee.controller('EventsController', function ($scope, Plugins, $modal, Cluster, Pr
 
   $scope.levels = ['OFFLINE', 'ONLINE'];
 
-  $scope.eventWhen = ['MetricWhen', 'LogWhen'];
+  $scope.eventWhen = [{title: "Metric", name: "MetricWhen"}, {title: "Status", name: 'LogWhen'}];
 
-  $scope.eventWhat = ['MailWhat'];
+  $scope.eventWhat = [{title: "Mail", name: 'MailWhat'}, {title: "Http Request", name: 'HttpWhat'}];
 
   Plugins.one({plugin: 'mail'}).then(function (plugin) {
     $scope.profiles = plugin.profiles;
@@ -901,10 +901,22 @@ ee.controller('EventsController', function ($scope, Plugins, $modal, Cluster, Pr
     $scope.events.splice(idx, 1);
   }
 
+  $scope.changeWhen = function (e) {
+    var name = e.when.name;
+    e.when = {};
+    e.when.name = name;
+  }
+
+  $scope.changeWhat = function (e) {
+    var name = e.what.name;
+    e.what = {};
+    e.what.name = name;
+  }
 
   $scope.configureWhen = function (when) {
 
     var modalScope = $scope.$new(true);
+
 
     modalScope.eventWhen = when;
     modalScope.levels = $scope.levels;
@@ -912,7 +924,6 @@ ee.controller('EventsController', function ($scope, Plugins, $modal, Cluster, Pr
     modalScope.metadata = $scope.metadata;
     modalScope.parameters = $scope.parameters;
     modalScope.alertValues = $scope.alertValues;
-
 
     if (when.name === 'MetricWhen') {
 
@@ -1112,4 +1123,32 @@ ee.controller('TeleporterController', function ($scope, Teleporter, $timeout, No
 
   status();
 
+});
+
+
+ee.controller("HttpWhatController", function ($scope) {
+  $scope.methods = ["GET", "POST"];
+
+
+  $scope.addHeader = function () {
+    if (!$scope.eventWhat.headers) {
+      $scope.eventWhat.headers = []
+    }
+    $scope.eventWhat.headers.push({name: "", value: ""});
+  }
+  $scope.removeHeader = function (h) {
+    var idx = $scope.eventWhat.headers.indexOf(h);
+    $scope.eventWhat.headers.splice(idx, 1);
+  }
+  $scope.checkMethod = function () {
+
+    if ($scope.eventWhat['method'] == 'POST') {
+
+      return false
+    }
+    else {
+      $scope.eventWhat['body'] = undefined;
+      return true
+    }
+  }
 });

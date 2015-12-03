@@ -54,7 +54,8 @@
           <td><input class="form-control" ng-model="e.name"></td>
           <td>
             <div class="col-md-8">
-              <select ng-options="e for e in eventWhen" class="form-control" ng-model="e.when.name"></select>
+              <select ng-options="e.name as e.title for e in eventWhen" ng-change="changeWhen(e)" class="form-control"
+                      ng-model="e.when.name"></select>
             </div>
             <div class="col-md-4">
               <button class="btn  btn-sm" ng-click="configureWhen(e.when)"><i class="fa fa-gear"></i> Configure</button>
@@ -62,7 +63,8 @@
           </td>
           <td>
             <div class="col-md-8">
-              <select ng-options="e for e in eventWhat" class="form-control" ng-model="e.what.name"></select>
+              <select ng-options="e.name as e.title for e in eventWhat" ng-change="changeWhat(e)"  class="form-control"
+                      ng-model="e.what.name"></select>
             </div>
             <div class="col-md-4">
               <button class="btn  btn-sm" ng-click="configureWhat(e.what)"><i class="fa fa-gear"></i> Configure</button>

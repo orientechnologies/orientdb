@@ -179,8 +179,8 @@ ctrl.controller('MultipleServerController', function ($scope, $rootScope, $locat
     if (servers.length == 2) {
       return 'col-md-6';
     }
-    if (servers.length > 2) {
-      return 'col-md-3';
+    if (servers.length >= 3) {
+      return 'col-md-4';
     }
     return 'col-md-12';
   }
