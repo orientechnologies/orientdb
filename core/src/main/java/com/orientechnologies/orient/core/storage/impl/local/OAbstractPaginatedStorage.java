@@ -83,7 +83,6 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.record.impl.ODirtyManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OSimpleKeySerializer;
@@ -102,7 +101,12 @@ import com.orientechnologies.orient.core.storage.cache.OPageDataVerificationErro
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.*;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineCluster;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordOperationMetadata;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationMetadata;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
@@ -745,15 +749,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   /**
-   * This method finds all records which were updated starting from current LSN and write result in provided
+   * This method finds all the records which were updated starting from current LSN and write result in provided
    * output stream. In output stream will be included all records which were updated/deleted/created
    * since passed in LSN till the current moment. Because of limitations of algorithm all data modification operations
    * are prohibited till execution of current method ends.
    *
    * All records are written in output stream by batches.
-   * Size of each batch depends on amount of heap memory available for the process. Bathes may contain duplicated records.
+   * Size of each batch depends on amount of heap memory available for the process. Batches may contain duplicated records.
    *
-   * In the beginning of each batch deleted records are placed, then in random order placed created and updated records.
+   * In batch files, deleted records are placed at the beginning of the file. Created and updated records follow in random order.
    * Created and updated records can be distinguished by record version, created records always have record version set to 1.
    * In output stream any boundaries for batches are absent, batches are separated only logically, each batch starts from deleted
    * records.
