@@ -119,6 +119,7 @@ angular
 
         if (ChatService.connected) {
           ChatService.disconnect();
+          $rootScope.$broadcast("connection-closed");
         }
         if (current.loadedTemplateUrl == 'views/room.html') {
           ChatService.connect();

@@ -26,7 +26,19 @@ angular.module('webappApp')
       $('#roomsMobile').offcanvas('toggle');
     }
 
-    $rootScope.$on('connection-lost', function () {
+    $scope.$on("$routeChangeStart", function () {
+      if ($scope.log) {
+        $scope.log.remove();
+        console.log("removed");
+        $scope.log = null;
+      }
+      $scope.connectionLost = false;
+      console.log("removed");
+    });
+    $scope.$on('connection-closed', function () {
+
+    })
+    $scope.$on('connection-lost', function () {
       console.log('connection lost');
       if (!$scope.log) {
 
@@ -40,7 +52,7 @@ angular.module('webappApp')
 
       }
     })
-    $rootScope.$on('connection-acquired', function () {
+    $scope.$on('connection-acquired', function () {
       $scope.log.remove()
       $scope.log = null;
       $scope.connectionLost = false;
@@ -48,8 +60,7 @@ angular.module('webappApp')
       jacked.log("Connection restored");
       getMessages();
     })
-    $rootScope.$on('msg-received', function (e, msg) {
-
+    $scope.$on('msg-received', function (e, msg) {
 
       if (msg.sender.name != $scope.currentUser.name) {
 

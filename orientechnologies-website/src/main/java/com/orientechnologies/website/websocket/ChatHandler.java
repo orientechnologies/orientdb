@@ -46,9 +46,12 @@ public class ChatHandler extends TextWebSocketHandler {
         sessions.add(session);
       }
     }
+    if ("heartbeat".equals(msg.field("action"))) {
+
+    }
   }
 
-  public void broadcast(Integer roomId, Message message,boolean edited) {
+  public void broadcast(Integer roomId, Message message, boolean edited) {
     ObjectMapper mapper = new ObjectMapper();
     ByteArrayOutputStream stream = new ByteArrayOutputStream();
     message.setEdited(edited);

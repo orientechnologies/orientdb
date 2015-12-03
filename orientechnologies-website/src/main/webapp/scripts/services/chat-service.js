@@ -74,8 +74,8 @@ angular.module('webappApp').factory("ChatService", function ($rootScope, $locati
       this.polling = true;
     },
     disconnect: function () {
-      charSocketWrapper.deinit();
       this.polling = false;
+      charSocketWrapper.deinit();
     },
     getClientName: function (clientId) {
       var name = ''
@@ -92,13 +92,19 @@ angular.module('webappApp').factory("ChatService", function ($rootScope, $locati
       if (!chatService.connected && chatService.polling) {
         console.log("Reconnecting to chat service! ")
         var q = charSocketWrapper.init(initializer)
-
         if (q) {
           q.then(function () {
             $rootScope.$broadcast('connection-acquired');
           });
         }
 
+      } else {
+        if (chatService.polling) {
+          var msg = {"action": "heartbeat"};
+          if (charSocketWrapper.socket) {
+            charSocketWrapper.socket.send(JSON.stringify(msg));
+          }
+        }
       }
       poll();
     }, 10000);
@@ -141,6 +147,10 @@ angular.module('webappApp').factory("ChatService", function ($rootScope, $locati
         $rootScope.$broadcast('msg-received', msg);
       }
     };
+    charSocketWrapper.socket.onclose = function (err) {
+      console.log(err);
+    }
+
     charSocketWrapper.socket.onclose = function (status) {
 
 
