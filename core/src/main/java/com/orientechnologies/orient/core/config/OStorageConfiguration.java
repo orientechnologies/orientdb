@@ -479,6 +479,9 @@ public class OStorageConfiguration implements OSerializableStream {
       }
     }
 
+    // SET FLAGS
+    strictSQL = "true".equalsIgnoreCase("strictSQL");
+    txRequiredForSQLGraphOperations = "true".equalsIgnoreCase("txRequiredForSQLGraphOperations");
   }
 
   public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
