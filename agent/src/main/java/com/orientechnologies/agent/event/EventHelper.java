@@ -27,12 +27,13 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.server.plugin.mail.OMailProfile;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.*;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -156,21 +157,6 @@ public class EventHelper {
     return text;
   }
 
-  public static OMailProfile createOMailProfile(ODocument oUserConfiguration) {
-
-    OMailProfile enterpriseProfile = new OMailProfile();
-
-    enterpriseProfile.put("mail.smtp.user", oUserConfiguration.field("user"));
-    enterpriseProfile.put("mail.smtp.password", oUserConfiguration.field("password"));
-    enterpriseProfile.put("mail.smtp.port", oUserConfiguration.field("port"));
-    enterpriseProfile.put("mail.smtp.auth", oUserConfiguration.field("auth").toString());
-    enterpriseProfile.put("mail.smtp.host", oUserConfiguration.field("host"));
-    enterpriseProfile.put("enabled", oUserConfiguration.field("enabled"));
-    enterpriseProfile.put("mail.smtp.starttls.enable", oUserConfiguration.field("starttlsEnable").toString());
-    enterpriseProfile.put("mail.date.format", oUserConfiguration.field("dateFormat"));
-    return enterpriseProfile;
-  }
-
   public static ODocument findOrCreateMailUserConfiguration(ODatabaseDocumentTx database) {
     String sql = "select from UserConfiguration where user.name = 'admin'";
     OSQLQuery<ORecordSchemaAware> osqlQuery = new OSQLSynchQuery<ORecordSchemaAware>(sql);
@@ -218,105 +204,64 @@ public class EventHelper {
 
     String url = what.field("url");
     String method = what.field("method"); // GET POST
-    String parameters = what.field("body"); // parameters
+    String body = what.field("body"); // parameters
 
-    URL obj = new URL(url);
+    try {
+      HttpURLConnection con = null;
+      URL obj = new URL(url);
+      con = (HttpURLConnection) obj.openConnection();
 
-    // GET
-    if ("GET".equalsIgnoreCase(method)) {
-      try {
+      Collection<Map<String, Object>> headers = what.field("headers");
+      con.setRequestMethod(method);
+      // add request header
+      con.setRequestProperty("User-Agent", USER_AGENT);
 
-        Proxy proxy = null;
-        HttpURLConnection con = null;
-        if (proxy != null)
-          con = (HttpURLConnection) obj.openConnection(proxy);// set proxy
-        else
-          con = (HttpURLConnection) obj.openConnection();
-
-        con.setRequestMethod(method);
-
-        // add request header
-        con.setRequestProperty("User-Agent", USER_AGENT);
-
-        BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
-        String inputLine;
-        StringBuffer response = new StringBuffer();
-
-        while ((inputLine = in.readLine()) != null) {
-          response.append(inputLine);
+      // ADD CUSTOM HEADERS
+      if (headers != null) {
+        for (Map<String, Object> header : headers) {
+          String name = (String) header.get("name");
+          String value = (String) header.get("value");
+          con.setRequestProperty(name, value);
         }
-
-        // print result
-        System.out.println(response.toString());
-        in.close();
-      } catch (Exception e) {
-        e.printStackTrace();
-      } finally {
       }
-    }
-    // POST
-    else {
-      try {
-
-        Proxy proxy = null;
-        HttpURLConnection con = null;
-        if (proxy != null)
-          con = (HttpURLConnection) obj.openConnection(proxy);// set proxy
-        else
-          con = (HttpURLConnection) obj.openConnection();
-
-        con.setRequestMethod(method);
-
-        // add request header
-        con.setRequestProperty("User-Agent", USER_AGENT);
-
-        con.setDoOutput(true);
-        DataOutputStream wr = new DataOutputStream(con.getOutputStream());
-        wr.writeBytes(parameters);
-        wr.flush();
-        wr.close();
-        BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
-        String inputLine;
-        StringBuffer response = new StringBuffer();
-        while ((inputLine = in.readLine()) != null) {
-          response.append(inputLine);
-        }
-
-        // print result
-        // System.out.println(response.toString());
-        in.close();
-      } catch (Exception e) {
-        e.printStackTrace();
-      } finally {
+      if ("GET".equalsIgnoreCase(method)) {
+        doGet(con);
+      } else if ("POST".equalsIgnoreCase(method)) {
+        doPost(body, con);
       }
+    } catch (Exception e) {
+      OLogManager.instance().error(null, "Failed to execute request with config: %s", e, what.toJSON());
     }
+
   }
 
-  public static Proxy retrieveProxy(ODatabaseDocumentTx db) {
-    String sql = "select from  UserConfiguration where user.name = 'admin'";
-    Proxy proxy = null;
-    OSQLSynchQuery<Object> osql = new OSQLSynchQuery<Object>(sql);
-    List<ODocument> userconfiguration = db.query(osql);
-    if (userconfiguration != null) {
-      ODocument userConf = userconfiguration.get(0);
-      ODocument proxyConfiguration = userConf.field("proxyConfiguration");
-      if (proxyConfiguration != null && proxyConfiguration.field("proxyIp") != null
-          && proxyConfiguration.field("proxyPort") != null) {
-
-        String proxyIp = proxyConfiguration.field("proxyIp");
-        String proxyPort = proxyConfiguration.field("proxyPort");
-        if (!proxyIp.isEmpty() && proxyPort != null) {
-          try {
-            proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyIp, new Integer(proxyPort)));
-          } catch (Exception e) {
-            e.printStackTrace();
-            // execute without proxy
-            return null;
-          }
-        }
-      }
-
+  private static void doPost(String parameters, HttpURLConnection con) throws IOException {
+    con.setDoOutput(true);
+    DataOutputStream wr = new DataOutputStream(con.getOutputStream());
+    wr.writeBytes(parameters);
+    wr.flush();
+    wr.close();
+    BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+    String inputLine;
+    StringBuffer response = new StringBuffer();
+    while ((inputLine = in.readLine()) != null) {
+      response.append(inputLine);
     }
-    return proxy;
+
+    OLogManager.instance().info(null, "HTTP result: %s", response.toString());
+    in.close();
+  }
+
+  private static void doGet(HttpURLConnection con) throws IOException {
+    BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+    String inputLine;
+    StringBuffer response = new StringBuffer();
+
+    while ((inputLine = in.readLine()) != null) {
+      response.append(inputLine);
+    }
+
+    OLogManager.instance().debug(null, "HTTP result: %s", response.toString());
+    in.close();
   }
 }
