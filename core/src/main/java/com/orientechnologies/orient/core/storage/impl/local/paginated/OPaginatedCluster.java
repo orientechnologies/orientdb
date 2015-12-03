@@ -64,6 +64,8 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * @since 10/7/13
  */
 public class OPaginatedCluster extends ODurableComponent implements OCluster {
+  private static final boolean addRidMetadata = OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.getValueAsBoolean();
+
   public static final  String DEF_EXTENSION            = ".pcl";
   private static final int    DISK_PAGE_SIZE           = DISK_CACHE_PAGE_SIZE.getValueAsInteger();
   private static final int    LOWEST_FREELIST_BOUNDARY = PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY.getValueAsInteger();
@@ -503,6 +505,9 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   }
 
   private static void addAtomicOperationMetadata(ORID rid, OAtomicOperation atomicOperation) {
+    if (!addRidMetadata)
+      return;
+
     if (atomicOperation == null)
       return;
 
