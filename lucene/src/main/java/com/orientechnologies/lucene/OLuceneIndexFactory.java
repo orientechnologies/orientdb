@@ -20,9 +20,9 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.lucene.builder.ODocBuilder;
 import com.orientechnologies.lucene.builder.OQueryBuilderImpl;
-import com.orientechnologies.lucene.engine.OLuceneStorage;
 import com.orientechnologies.lucene.engine.OLuceneFullTextExpIndexEngine;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngineDelegate;
+import com.orientechnologies.lucene.engine.OLuceneStorage;
 import com.orientechnologies.lucene.index.OLuceneFullTextExpIndex;
 import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
 import com.orientechnologies.lucene.index.OLuceneSpatialIndex;
@@ -45,11 +45,15 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.spatial.shape.OShapeFactory;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleListener {
 
-  public static final String LUCENE_ALGORITHM = "LUCENE";
+  public static final String LUCENE_ALGORITHM    = "LUCENE";
   public static final String LUCENEEXP_ALGORITHM = "LUCENEEXP";
 
   private static final Set<String> TYPES;
@@ -80,7 +84,8 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
 
   public OLuceneIndexFactory(boolean manual) {
     spatialManager = new OLuceneSpatialManager(OShapeFactory.INSTANCE);
-    if (!manual) Orient.instance().addDbLifecycleListener(this);
+    if (!manual)
+      Orient.instance().addDbLifecycleListener(this);
 
     db2luceneindexes = new HashMap<String, OIndexInternal>();
     db2luceneEngine = new HashMap<ODatabaseDocumentInternal, OLuceneStorage>();
@@ -103,8 +108,7 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
 
   @Override
   public OIndexInternal<?> createIndex(String name, ODatabaseDocumentInternal database, String indexType, String algorithm,
-                                       String valueContainerAlgorithm, ODocument metadata, int version)
-      throws OConfigurationException {
+      String valueContainerAlgorithm, ODocument metadata, int version) throws OConfigurationException {
 
     OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
 
@@ -116,7 +120,8 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
           .registerSerializer(OLuceneMockSpatialSerializer.INSTANCE, OType.EMBEDDED);
     }
 
-    if (metadata == null) metadata = new ODocument().field("analyzer", StandardAnalyzer.class.getName());
+    if (metadata == null)
+      metadata = new ODocument().field("analyzer", StandardAnalyzer.class.getName());
 
     if (OClass.INDEX_TYPE.FULLTEXT.toString().equals(indexType)) {
       return new OLuceneFullTextIndex(name, indexType, LUCENE_ALGORITHM, version, storage, valueContainerAlgorithm, metadata);
@@ -125,14 +130,11 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
     } else if (OClass.INDEX_TYPE.FULLTEXTEXP.toString().equals(indexType)) {
 
       OLogManager.instance()
-                 .info(this, "create index - database:: %s , indexName:: %s , algo:: %s , valuecontalgo:: %s", database.getName(),
-                       name, algorithm, valueContainerAlgorithm);
-      if (!db2luceneindexes.containsKey(database.getName())) db2luceneindexes.put(name, new OLuceneFullTextExpIndex(name, indexType,
-                                                                                                                    LUCENEEXP_ALGORITHM,
-                                                                                                                    version,
-                                                                                                                    storage,
-                                                                                                                    valueContainerAlgorithm,
-                                                                                                                    metadata));
+          .info(this, "create index - database:: %s , indexName:: %s , algo:: %s , valuecontalgo:: %s", database.getName(), name,
+              algorithm, valueContainerAlgorithm);
+      if (!db2luceneindexes.containsKey(database.getName()))
+        db2luceneindexes.put(name,
+            new OLuceneFullTextExpIndex(name, indexType, LUCENEEXP_ALGORITHM, version, storage, valueContainerAlgorithm, metadata));
 
       return new OLuceneFullTextExpIndex(name, indexType, LUCENEEXP_ALGORITHM, version, storage, valueContainerAlgorithm, metadata);
 
@@ -142,17 +144,16 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
 
   @Override
   public OIndexEngine createIndexEngine(String algorithm, String name, Boolean durableInNonTxMode, OStorage storage, int version,
-                                        Map<String, String> engineProperties) {
-
+      Map<String, String> engineProperties) {
 
     if (LUCENEEXP_ALGORITHM.equalsIgnoreCase(algorithm)) {
       final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
 
       OLogManager.instance()
-                 .info(this, "CREATE ENGINE database:: %s , name:: %s , algoritmh:: %s", database.getName(), name, algorithm);
+          .info(this, "CREATE ENGINE database:: %s , name:: %s , algoritmh:: %s", database.getName(), name, algorithm);
       if (!db2luceneEngine.containsKey(database)) {
         OLogManager.instance()
-                   .info(this, "REGISTERING name:: %s , algoritmh:: %s , engProps:: %s", name, algorithm, engineProperties);
+            .info(this, "REGISTERING name:: %s , algoritmh:: %s , engProps:: %s", name, algorithm, engineProperties);
 
         db2luceneEngine.put(database, new OLuceneStorage(name, new ODocBuilder(), new OQueryBuilderImpl()));
 
