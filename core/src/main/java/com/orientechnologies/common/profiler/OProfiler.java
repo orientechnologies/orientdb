@@ -33,9 +33,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class OProfiler extends OAbstractProfiler {
 
-  protected final ConcurrentMap<String, Long>                    counters      = new ConcurrentLinkedHashMap.Builder().maximumWeightedCapacity(OGlobalConfiguration.PROFILER_MAXVALUES.getValueAsInteger()).build();
-  private final   ConcurrentLinkedHashMap<String, AtomicInteger> tips          = new ConcurrentLinkedHashMap.Builder().maximumWeightedCapacity(OGlobalConfiguration.PROFILER_MAXVALUES.getValueAsInteger()).build();
-  private final   ConcurrentLinkedHashMap<String, Long>          tipsTimestamp = new ConcurrentLinkedHashMap.Builder().maximumWeightedCapacity(OGlobalConfiguration.PROFILER_MAXVALUES.getValueAsInteger()).build();
+  protected  ConcurrentMap<String, Long>                    counters      = new ConcurrentLinkedHashMap.Builder().maximumWeightedCapacity(OGlobalConfiguration.PROFILER_MAXVALUES.getValueAsInteger()).build();
+  private    ConcurrentLinkedHashMap<String, AtomicInteger> tips          = new ConcurrentLinkedHashMap.Builder().maximumWeightedCapacity(OGlobalConfiguration.PROFILER_MAXVALUES.getValueAsInteger()).build();
+  private    ConcurrentLinkedHashMap<String, Long>          tipsTimestamp = new ConcurrentLinkedHashMap.Builder().maximumWeightedCapacity(OGlobalConfiguration.PROFILER_MAXVALUES.getValueAsInteger()).build();
 
   public OProfiler() {
   }
@@ -66,6 +66,13 @@ public class OProfiler extends OAbstractProfiler {
   }
 
   public boolean startRecording() {
+    counters = new ConcurrentLinkedHashMap.Builder()
+        .maximumWeightedCapacity(OGlobalConfiguration.PROFILER_MAXVALUES.getValueAsInteger()).build();
+    tips = new ConcurrentLinkedHashMap.Builder()
+        .maximumWeightedCapacity(OGlobalConfiguration.PROFILER_MAXVALUES.getValueAsInteger()).build();
+    tipsTimestamp = new ConcurrentLinkedHashMap.Builder()
+        .maximumWeightedCapacity(OGlobalConfiguration.PROFILER_MAXVALUES.getValueAsInteger()).build();
+
     if (super.startRecording()) {
       counters.clear();
       return true;
@@ -78,12 +85,17 @@ public class OProfiler extends OAbstractProfiler {
       counters.clear();
       return true;
     }
+
+    counters.clear();
+    tips.clear();
+    tipsTimestamp.clear();
+
     return false;
   }
 
   @Override
   public void dump(PrintStream out) {
-    if (recordingFrom<0)
+    if (recordingFrom < 0)
       return;
 
     final StringBuilder buffer = new StringBuilder(super.dump());
