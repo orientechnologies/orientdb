@@ -19,7 +19,12 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexEngineException;
+import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.index.OIndexKeyCursor;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.parser.ParseException;
@@ -69,8 +74,7 @@ public class OLuceneFullTextExpIndexEngine implements OLuceneIndexEngine, OOrien
   }
 
   @Override
-  public void initIndex(String indexName, String indexType, OIndexDefinition indexDefinition, boolean isAutomatic,
-      ODocument indexMetadata) {
+  public void initIndex(String indexType, OIndexDefinition indexDefinition, boolean isAutomatic, ODocument indexMetadata) {
     this.indexName = indexName;
     this.indexType = indexType;
     this.indexDefinition = indexDefinition;
@@ -202,7 +206,7 @@ public class OLuceneFullTextExpIndexEngine implements OLuceneIndexEngine, OOrien
 
   @Override
   public void delete() {
-    OLogManager.instance().info(this,"DELETE Called");
+    OLogManager.instance().info(this, "DELETE Called");
     luceneStorage.delete(indexName);
   }
 
@@ -236,7 +240,7 @@ public class OLuceneFullTextExpIndexEngine implements OLuceneIndexEngine, OOrien
   public void close() {
 
     OLogManager.instance().info(this, "CLOSE ::: proxy close");
-//    luceneStorage.close();
+    //    luceneStorage.close();
   }
 
   @Override

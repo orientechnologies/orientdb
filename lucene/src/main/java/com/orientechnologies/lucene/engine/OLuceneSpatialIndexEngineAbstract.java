@@ -29,7 +29,6 @@ import com.orientechnologies.orient.spatial.shape.OShapeBuilder;
 import com.orientechnologies.orient.spatial.strategy.SpatialQueryBuilder;
 import com.spatial4j.core.context.SpatialContext;
 import com.spatial4j.core.shape.Shape;
-import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
@@ -49,9 +48,9 @@ import java.io.IOException;
  */
 public abstract class OLuceneSpatialIndexEngineAbstract extends OLuceneIndexEngineAbstract implements OLuceneSpatialIndexContainer {
 
-  protected final OShapeBuilder     factory;
-  protected SpatialContext          ctx;
-  protected SpatialStrategy         strategy;
+  protected final OShapeBuilder   factory;
+  protected       SpatialContext  ctx;
+  protected       SpatialStrategy strategy;
 
   protected OSpatialStrategyFactory strategyFactory;
   protected SpatialQueryBuilder     queryStrategy;
@@ -65,9 +64,8 @@ public abstract class OLuceneSpatialIndexEngineAbstract extends OLuceneIndexEngi
   }
 
   @Override
-  public void initIndex(String indexName, String indexType, OIndexDefinition indexDefinition, boolean isAutomatic,
-      ODocument metadata) {
-    super.initIndex(indexName, indexType, indexDefinition, isAutomatic, metadata);
+  public void initIndex(String indexType, OIndexDefinition indexDefinition, boolean isAutomatic, ODocument metadata) {
+    super.initIndex(indexType, indexDefinition, isAutomatic, metadata);
 
     strategy = createSpatialStrategy(indexDefinition, metadata);
   }
@@ -76,7 +74,6 @@ public abstract class OLuceneSpatialIndexEngineAbstract extends OLuceneIndexEngi
 
   @Override
   public IndexWriter openIndexWriter(Directory directory) throws IOException {
-    configureAnalyzers(metadata);
     IndexWriterConfig iwc = new IndexWriterConfig(indexAnalyzer());
     iwc.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
     return new IndexWriter(directory, iwc);
@@ -84,7 +81,6 @@ public abstract class OLuceneSpatialIndexEngineAbstract extends OLuceneIndexEngi
 
   @Override
   public IndexWriter createIndexWriter(Directory directory) throws IOException {
-    configureAnalyzers(metadata);
     IndexWriterConfig iwc = new IndexWriterConfig(indexAnalyzer());
     iwc.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
     return new IndexWriter(directory, iwc);
@@ -113,8 +109,8 @@ public abstract class OLuceneSpatialIndexEngineAbstract extends OLuceneIndexEngi
 
     Document doc = new Document();
 
-    doc.add(OLuceneIndexType.createField(RID, oIdentifiable.getIdentity().toString(), Field.Store.YES,
-        Field.Index.NOT_ANALYZED_NO_NORMS));
+    doc.add(OLuceneIndexType
+        .createField(RID, oIdentifiable.getIdentity().toString(), Field.Store.YES, Field.Index.NOT_ANALYZED_NO_NORMS));
     for (IndexableField f : strategy.createIndexableFields(shape)) {
       doc.add(f);
     }
@@ -150,7 +146,8 @@ public abstract class OLuceneSpatialIndexEngineAbstract extends OLuceneIndexEngi
   }
 
   @Override
-  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
+      ValuesTransformer transformer) {
     return null;
   }
 

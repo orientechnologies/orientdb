@@ -46,16 +46,16 @@ import java.io.IOException;
  */
 public class OLuceneIndexEngineDelegate implements OLuceneIndexEngine {
 
-  private final String       name;
-  private final Boolean      durableInNonTxMode;
-  private final OStorage     storage;
-  private final int          version;
-  private OLuceneIndexEngine delegate;
-  private String             indexName;
+//  private final String             name;
+  private final Boolean            durableInNonTxMode;
+  private final OStorage           storage;
+  private final int                version;
+  private       OLuceneIndexEngine delegate;
+  private final       String             indexName;
 
   public OLuceneIndexEngineDelegate(String name, Boolean durableInNonTxMode, OStorage storage, int version) {
 
-    this.name = name;
+    this.indexName = name;
     this.durableInNonTxMode = durableInNonTxMode;
     this.storage = storage;
     this.version = version;
@@ -186,14 +186,11 @@ public class OLuceneIndexEngineDelegate implements OLuceneIndexEngine {
 
   @Override
   public String getName() {
-    return name;
+    return delegate.getName();
   }
 
   @Override
-  public void initIndex(String indexName, String indexType, OIndexDefinition indexDefinition, boolean isAutomatic,
-      ODocument metadata) {
-    this.indexName = indexName;
-
+  public void initIndex(String indexType, OIndexDefinition indexDefinition, boolean isAutomatic, ODocument metadata) {
     if (delegate == null) {
       if (OClass.INDEX_TYPE.SPATIAL.name().equalsIgnoreCase(indexType)) {
         if (indexDefinition.getFields().size() > 1) {
@@ -206,7 +203,7 @@ public class OLuceneIndexEngineDelegate implements OLuceneIndexEngine {
         delegate = new OLuceneFullTextIndexEngine(indexName, new ODocBuilder(), new OQueryBuilderImpl());
       }
 
-      delegate.initIndex(indexName, indexType, indexDefinition, isAutomatic, metadata);
+      delegate.initIndex(indexType, indexDefinition, isAutomatic, metadata);
     }
   }
 

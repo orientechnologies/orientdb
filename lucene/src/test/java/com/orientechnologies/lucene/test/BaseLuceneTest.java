@@ -111,7 +111,7 @@ public abstract class BaseLuceneTest {
       databaseDocumentTx = new ODatabaseDocumentTx(url);
       databaseDocumentTx.create();
     }
-    ODatabaseRecordThreadLocal.INSTANCE.set(databaseDocumentTx);
+    databaseDocumentTx.activateOnCurrentThread();
     //    }
   }
 
