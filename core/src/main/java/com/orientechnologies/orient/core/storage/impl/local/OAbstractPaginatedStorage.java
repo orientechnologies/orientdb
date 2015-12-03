@@ -751,7 +751,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * are prohibited till execution of current method ends.
    *
    * All records are written in output stream by batches.
-   * Size of each batch depends on amount of heap memory available for the process.
+   * Size of each batch depends on amount of heap memory available for the process. Bathes may contain duplicated records.
    *
    * In the beginning of each batch deleted records are placed, then in random order placed created and updated records.
    * Created and updated records can be distinguished by record version, created records always have record version set to 1.
