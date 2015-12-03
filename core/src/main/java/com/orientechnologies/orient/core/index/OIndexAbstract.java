@@ -221,6 +221,15 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
         this.clustersToIndex = new HashSet<String>();
 
       markStorageDirty();
+      // do not remove this, it is needed to remove index garbage if such one exists
+      try {
+        indexEngine.deleteWithoutLoad(name);
+        removeValuesContainer();
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "Error during deletion of index '%s'", name);
+      }
+
+      indexEngine.create(indexDefinition, clusterIndexName, valueSerializer, isAutomatic());
 
       if (rebuild)
         rebuild(progressListener);
