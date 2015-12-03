@@ -1197,14 +1197,19 @@ public class OSchemaShared extends ODocumentWrapperNoClass
       } else {
         // DETERMINE THE BEST NUMBER BASED ON AVAILABLE CORES
         final int cpus = Runtime.getRuntime().availableProcessors();
-        minimumClusters = cpus > 16 ? 16 : cpus;
+        minimumClusters = cpus > 64 ? 64 : cpus;
       }
     }
 
     clusterIds = new int[minimumClusters];
     clusterIds[0] = database.getClusterIdByName(className);
-    if (clusterIds[0] == -1)
-      clusterIds[0] = database.addCluster(className);
+    if (clusterIds[0] == -1) {
+      if (minimumClusters > 1)
+        clusterIds[0] = database.addCluster(className + "_0");
+      else
+        // JUST KEEP THE CLASS NAME
+        clusterIds[0] = database.addCluster(className);
+    }
 
     if (minimumClusters > 1) {
       for (int i = 1; i < minimumClusters; ++i) {
