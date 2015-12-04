@@ -57,7 +57,7 @@ public class OTraverseRecordProcess extends OTraverseAbstractProcess<OIdentifiab
     if (command.getPredicate() != null) {
       final Object conditionResult = command.getPredicate().evaluate(target, null, command.getContext());
       if (conditionResult != Boolean.TRUE)
-        return pop();
+        return drop();
     }
 
     // UPDATE ALL TRAVERSED RECORD TO AVOID RECURSION
