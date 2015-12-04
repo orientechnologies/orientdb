@@ -593,18 +593,6 @@ public class SchemaTest extends DocumentDBBaseTest {
     }
   }
 
-  public void testWrongClassNameWithPercent() {
-    try {
-      database.command(new OCommandSQL("create class Ant%ni")).execute();
-      Assert.fail();
-
-    } catch (Exception e) {
-      if (e instanceof OResponseProcessingException)
-        e = (Exception) e.getCause();
-      Assert.assertTrue(e instanceof OSchemaException);
-    }
-  }
-
   public void testWrongClassNameWithComma() {
     try {
       database.getMetadata().getSchema().createClass("Anta,ni");
