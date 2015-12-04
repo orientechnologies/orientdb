@@ -1204,11 +1204,8 @@ public class OSchemaShared extends ODocumentWrapperNoClass
     clusterIds = new int[minimumClusters];
     clusterIds[0] = database.getClusterIdByName(className);
     if (clusterIds[0] == -1) {
-      if (minimumClusters > 1)
-        clusterIds[0] = database.addCluster(className + "_0");
-      else
-        // JUST KEEP THE CLASS NAME
-        clusterIds[0] = database.addCluster(className);
+      // JUST KEEP THE CLASS NAME. THIS IS FOR LEGACY REASONS
+      clusterIds[0] = database.addCluster(className);
     }
 
     if (minimumClusters > 1) {
