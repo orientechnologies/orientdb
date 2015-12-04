@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.command;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OExecutionThreadLocal;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -36,9 +37,8 @@ import java.util.Map.Entry;
 
 /**
  * Text based Command Request abstract class.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 @SuppressWarnings("serial")
 public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstract implements OCommandRequestText {
@@ -60,6 +60,10 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
   @SuppressWarnings("unchecked")
   public <RET> RET execute(final Object... iArgs) {
     setParameters(iArgs);
+
+    OExecutionThreadLocal.INSTANCE.get().onAsyncReplicationOk = onAsyncReplicationOk;
+    OExecutionThreadLocal.INSTANCE.get().onAsyncReplicationError = onAsyncReplicationError;
+
     return (RET) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().command(this);
   }
 
@@ -182,8 +186,7 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
             parameters.put(p.getKey(), compositeKey);
 
         } else {
-          final Object value = OCompositeKeySerializer.INSTANCE.deserialize(OStringSerializerHelper.getBinaryContent(p.getValue()),
-              0);
+          final Object value = OCompositeKeySerializer.INSTANCE.deserialize(OStringSerializerHelper.getBinaryContent(p.getValue()), 0);
 
           if (p.getKey() instanceof String && Character.isDigit(((String) p.getKey()).charAt(0)))
             parameters.put(Integer.parseInt((String) p.getKey()), value);

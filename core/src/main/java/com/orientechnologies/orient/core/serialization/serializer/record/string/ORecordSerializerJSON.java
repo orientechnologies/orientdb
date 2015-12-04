@@ -19,16 +19,6 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.text.ParseException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.common.util.OCommonConst;
@@ -64,6 +54,16 @@ import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.util.ODateHelper;
+
+import java.io.IOException;
+import java.io.StringWriter;
+import java.text.ParseException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @SuppressWarnings("serial")
 public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
@@ -102,7 +102,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         includeId = true;
         includeClazz = true;
         attribSameRow = true;
-        indentLevel = 1;
+        indentLevel = 0;
         fetchPlan = "";
         keepTypes = true;
         alwaysFetchEmbeddedDocuments = true;
@@ -113,7 +113,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         includeClazz = false;
         attribSameRow = false;
         alwaysFetchEmbeddedDocuments = false;
-        indentLevel = 1;
+        indentLevel = 0;
         keepTypes = false;
 
         if (iFormat != null && !iFormat.isEmpty()) {
@@ -326,6 +326,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
       final FormatSettings settings = new FormatSettings(iFormat);
 
       json.beginObject();
+
       OJSONFetchContext context = new OJSONFetchContext(json, settings);
       context.writeSignature(json, iRecord);
 
@@ -337,18 +338,18 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
         // STRINGABLE
         final ORecordStringable record = (ORecordStringable) iRecord;
-        json.writeAttribute(settings.indentLevel + 1, true, "value", record.value());
+        json.writeAttribute(settings.indentLevel, true, "value", record.value());
 
       } else if (iRecord instanceof ORecordBytes) {
         // BYTES
         final ORecordBytes record = (ORecordBytes) iRecord;
-        json.writeAttribute(settings.indentLevel + 1, true, "value", OBase64Utils.encodeBytes(record.toStream()));
+        json.writeAttribute(settings.indentLevel, true, "value", OBase64Utils.encodeBytes(record.toStream()));
       } else
 
         throw new OSerializationException("Error on marshalling record of type '" + iRecord.getClass()
             + "' to JSON. The record type cannot be exported to JSON");
 
-      json.endObject(0, true);
+      json.endObject(settings.indentLevel, true);
 
       iOutput.append(buffer);
       return iOutput;

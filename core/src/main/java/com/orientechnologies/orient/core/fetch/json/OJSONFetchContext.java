@@ -38,12 +38,11 @@ import java.util.Stack;
 
 /**
  * @author luca.molino
- * 
  */
 public class OJSONFetchContext implements OFetchContext {
 
-  protected final OJSONWriter          jsonWriter;
-  protected final FormatSettings       settings;
+  protected final OJSONWriter    jsonWriter;
+  protected final FormatSettings settings;
   protected final Stack<StringBuilder> typesStack      = new Stack<StringBuilder>();
   protected final Stack<ODocument>     collectionStack = new Stack<ODocument>();
 
@@ -58,10 +57,9 @@ public class OJSONFetchContext implements OFetchContext {
 
   public void onAfterFetch(final ODocument iRootRecord) {
     StringBuilder buffer = typesStack.pop();
-    if (settings.keepTypes && buffer.length() > 0)
+    if (settings.keepTypes && buffer.length()>0)
       try {
-        jsonWriter.writeAttribute(settings.indentLevel > -1 ? settings.indentLevel : 1, true,
-            ORecordSerializerJSON.ATTRIBUTE_FIELD_TYPES, buffer.toString());
+        jsonWriter.writeAttribute(settings.indentLevel>-1 ? settings.indentLevel : 1, true, ORecordSerializerJSON.ATTRIBUTE_FIELD_TYPES, buffer.toString());
       } catch (IOException e) {
         throw new OFetchException("Error writing field types", e);
       }
@@ -74,8 +72,7 @@ public class OJSONFetchContext implements OFetchContext {
   public void onAfterStandardField(Object iFieldValue, String iFieldName, Object iUserObject) {
   }
 
-  public void onBeforeArray(final ODocument iRootRecord, final String iFieldName, final Object iUserObject,
-      final OIdentifiable[] iArray) {
+  public void onBeforeArray(final ODocument iRootRecord, final String iFieldName, final Object iUserObject, final OIdentifiable[] iArray) {
     onBeforeCollection(iRootRecord, iFieldName, iUserObject, null);
   }
 
@@ -83,13 +80,11 @@ public class OJSONFetchContext implements OFetchContext {
     onAfterCollection(iRootRecord, iFieldName, iUserObject);
   }
 
-  public void onBeforeCollection(final ODocument iRootRecord, final String iFieldName, final Object iUserObject,
-      final Iterable<?> iterable) {
+  public void onBeforeCollection(final ODocument iRootRecord, final String iFieldName, final Object iUserObject, final Iterable<?> iterable) {
     try {
       manageTypes(iFieldName, iterable);
-      jsonWriter.beginCollection(settings.indentLevel, true, iFieldName);
+      jsonWriter.beginCollection(++settings.indentLevel, true, iFieldName);
       collectionStack.add(iRootRecord);
-      settings.indentLevel++;
     } catch (IOException e) {
       throw new OFetchException("Error writing collection field " + iFieldName + " of record " + iRootRecord.getIdentity(), e);
     }
@@ -97,8 +92,7 @@ public class OJSONFetchContext implements OFetchContext {
 
   public void onAfterCollection(final ODocument iRootRecord, final String iFieldName, final Object iUserObject) {
     try {
-      settings.indentLevel--;
-      jsonWriter.endCollection(settings.indentLevel, true);
+      jsonWriter.endCollection(settings.indentLevel--, true);
       collectionStack.pop();
     } catch (IOException e) {
       throw new OFetchException("Error writing collection field " + iFieldName + " of record " + iRootRecord.getIdentity(), e);
@@ -106,9 +100,8 @@ public class OJSONFetchContext implements OFetchContext {
   }
 
   public void onBeforeMap(final ODocument iRootRecord, final String iFieldName, final Object iUserObject) {
-    settings.indentLevel++;
     try {
-      jsonWriter.beginObject(settings.indentLevel, true, iFieldName);
+      jsonWriter.beginObject(++settings.indentLevel, true, iFieldName);
       if (!(iUserObject instanceof ODocument)) {
         collectionStack.add(new ODocument()); // <-- sorry for this... fixes #2845 but this mess should be rewritten...
       }
@@ -119,34 +112,30 @@ public class OJSONFetchContext implements OFetchContext {
 
   public void onAfterMap(final ODocument iRootRecord, final String iFieldName, final Object iUserObject) {
     try {
-      jsonWriter.endObject(settings.indentLevel, true);
+      jsonWriter.endObject(--settings.indentLevel, true);
       if (!(iUserObject instanceof ODocument)) {
         collectionStack.pop();
       }
     } catch (IOException e) {
       throw new OFetchException("Error writing map field " + iFieldName + " of record " + iRootRecord.getIdentity(), e);
     }
-    settings.indentLevel--;
   }
 
-  public void onBeforeDocument(final ODocument iRootRecord, final ODocument iDocument, final String iFieldName,
-      final Object iUserObject) {
-    settings.indentLevel++;
+  public void onBeforeDocument(final ODocument iRootRecord, final ODocument iDocument, final String iFieldName, final Object iUserObject) {
     try {
       final String fieldName;
       if (!collectionStack.isEmpty() && collectionStack.peek().equals(iRootRecord))
         fieldName = null;
       else
         fieldName = iFieldName;
-      jsonWriter.beginObject(settings.indentLevel, false, fieldName);
+      jsonWriter.beginObject(++settings.indentLevel, true, fieldName);
       writeSignature(jsonWriter, iDocument);
     } catch (IOException e) {
       throw new OFetchException("Error writing link field " + iFieldName + " of record " + iRootRecord.getIdentity(), e);
     }
   }
 
-  public void onAfterDocument(final ODocument iRootRecord, final ODocument iDocument, final String iFieldName,
-      final Object iUserObject) {
+  public void onAfterDocument(final ODocument iRootRecord, final ODocument iDocument, final String iFieldName, final Object iUserObject) {
     try {
       jsonWriter.endObject(settings.indentLevel--, true);
     } catch (IOException e) {
@@ -184,26 +173,22 @@ public class OJSONFetchContext implements OFetchContext {
     boolean firstAttribute = true;
 
     if (settings.includeType) {
-      json.writeAttribute(firstAttribute ? settings.indentLevel : 1, firstAttribute, ODocumentHelper.ATTRIBUTE_TYPE, ""
-          + (char) ORecordInternal.getRecordType(record));
+      json.writeAttribute(firstAttribute ? settings.indentLevel : 1, firstAttribute, ODocumentHelper.ATTRIBUTE_TYPE, "" + (char) ORecordInternal.getRecordType(record));
       if (settings.attribSameRow)
         firstAttribute = false;
     }
     if (settings.includeId && record.getIdentity() != null && record.getIdentity().isValid()) {
-      json.writeAttribute(!firstAttribute ? settings.indentLevel : 1, firstAttribute, ODocumentHelper.ATTRIBUTE_RID, record
-          .getIdentity().toString());
+      json.writeAttribute(!firstAttribute ? settings.indentLevel : 1, firstAttribute, ODocumentHelper.ATTRIBUTE_RID, record.getIdentity().toString());
       if (settings.attribSameRow)
         firstAttribute = false;
     }
     if (settings.includeVer) {
-      json.writeAttribute(firstAttribute ? settings.indentLevel : 1, firstAttribute, ODocumentHelper.ATTRIBUTE_VERSION, record
-          .getRecordVersion().getCounter());
+      json.writeAttribute(firstAttribute ? settings.indentLevel : 1, firstAttribute, ODocumentHelper.ATTRIBUTE_VERSION, record.getRecordVersion().getCounter());
       if (settings.attribSameRow)
         firstAttribute = false;
     }
     if (settings.includeClazz && record instanceof ODocument && ((ODocument) record).getClassName() != null) {
-      json.writeAttribute(firstAttribute ? settings.indentLevel : 1, firstAttribute, ODocumentHelper.ATTRIBUTE_CLASS,
-          ((ODocument) record).getClassName());
+      json.writeAttribute(firstAttribute ? settings.indentLevel : 1, firstAttribute, ODocumentHelper.ATTRIBUTE_CLASS, ((ODocument) record).getClassName());
       if (settings.attribSameRow)
         firstAttribute = false;
     }
@@ -248,7 +233,7 @@ public class OJSONFetchContext implements OFetchContext {
   }
 
   private void appendType(final StringBuilder iBuffer, final String iFieldName, final char iType) {
-    if (iBuffer.length() > 0)
+    if (iBuffer.length()>0)
       iBuffer.append(',');
     iBuffer.append(iFieldName);
     iBuffer.append('=');

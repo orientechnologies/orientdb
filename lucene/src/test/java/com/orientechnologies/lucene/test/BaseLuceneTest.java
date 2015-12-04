@@ -194,6 +194,7 @@ public abstract class BaseLuceneTest {
     //    if (remote) {
     //      process.destroy();
     //    } else {
+    databaseDocumentTx.activateOnCurrentThread();
     databaseDocumentTx.drop();
     //    }
   }

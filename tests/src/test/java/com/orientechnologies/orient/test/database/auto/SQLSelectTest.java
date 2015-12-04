@@ -708,8 +708,9 @@ public class SQLSelectTest extends AbstractSelectTest {
     int profileClusterId = database.getMetadata().getSchema().getClass("Profile").getDefaultClusterId();
     List<Long> positions = getValidPositions(profileClusterId);
 
-    List<ODocument> result = executeQuery(" select from [" + profileClusterId + ":" + positions.get(0) + ", " + profileClusterId
-        + ":" + positions.get(1) + "]", database);
+    List<ODocument> result = executeQuery(
+        " select from [" + profileClusterId + ":" + positions.get(0) + ", " + profileClusterId + ":" + positions.get(1) + "]",
+        database);
 
     Assert.assertEquals(result.size(), 2);
 
@@ -723,7 +724,8 @@ public class SQLSelectTest extends AbstractSelectTest {
     int profileClusterId = database.getMetadata().getSchema().getClass("Profile").getDefaultClusterId();
     List<Long> postions = getValidPositions(profileClusterId);
 
-    List<ODocument> result = executeQuery("select from Profile where @rid = #" + profileClusterId + ":" + postions.get(0), database);
+    List<ODocument> result = executeQuery("select from Profile where @rid = #" + profileClusterId + ":" + postions.get(0),
+        database);
 
     Assert.assertEquals(result.size(), 1);
 
@@ -1150,8 +1152,9 @@ public class SQLSelectTest extends AbstractSelectTest {
     Assert.assertFalse(result.isEmpty());
     for (ODocument d : result) {
       Assert.assertNotNull(d.field("addresses"));
-      Assert.assertEquals(((ODocument) ((Collection<OIdentifiable>) d.field("addresses")).iterator().next().getRecord())
-          .getSchemaClass().getName(), "Address");
+      Assert.assertEquals(
+          ((ODocument) ((Collection<OIdentifiable>) d.field("addresses")).iterator().next().getRecord()).getSchemaClass().getName(),
+          "Address");
     }
   }
 
@@ -1161,8 +1164,7 @@ public class SQLSelectTest extends AbstractSelectTest {
     List<ODocument> result = executeQuery("select from Account where not ( addresses.@class in [ 'Address' ] )", database);
     Assert.assertFalse(result.isEmpty());
     for (ODocument d : result) {
-      Assert.assertTrue(d.field("addresses") == null
-          || ((Collection<OIdentifiable>) d.field("addresses")).isEmpty()
+      Assert.assertTrue(d.field("addresses") == null || ((Collection<OIdentifiable>) d.field("addresses")).isEmpty()
           || !((ODocument) ((Collection<OIdentifiable>) d.field("addresses")).iterator().next().getRecord()).getSchemaClass()
               .getName().equals("Address"));
     }
@@ -1170,13 +1172,14 @@ public class SQLSelectTest extends AbstractSelectTest {
 
   @Test
   public void testSquareBracketsOnCondition() {
-    List<ODocument> result = executeQuery(
-        "select from Account where addresses[@class='Address'][city.country.name] = 'Washington'", database);
+    List<ODocument> result = executeQuery("select from Account where addresses[@class='Address'][city.country.name] = 'Washington'",
+        database);
     Assert.assertFalse(result.isEmpty());
     for (ODocument d : result) {
       Assert.assertNotNull(d.field("addresses"));
-      Assert.assertEquals(((ODocument) ((Collection<OIdentifiable>) d.field("addresses")).iterator().next().getRecord())
-          .getSchemaClass().getName(), "Address");
+      Assert.assertEquals(
+          ((ODocument) ((Collection<OIdentifiable>) d.field("addresses")).iterator().next().getRecord()).getSchemaClass().getName(),
+          "Address");
     }
   }
 
@@ -1265,15 +1268,15 @@ public class SQLSelectTest extends AbstractSelectTest {
     doc2.field("date", oneYearAgo.getTime());
     doc2.save();
 
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select * from " + facClass.getName()
-        + " where context = 'test' order by date", 1));
+    List<ODocument> result = database
+        .query(new OSQLSynchQuery<ODocument>("select * from " + facClass.getName() + " where context = 'test' order by date", 1));
 
     Calendar smaller = Calendar.getInstance();
     smaller.setTime((Date) result.get(0).field("date", Date.class));
     Assert.assertEquals(smaller.get(Calendar.YEAR), oneYearAgo.get(Calendar.YEAR));
 
-    result = database.query(new OSQLSynchQuery<ODocument>("select * from " + facClass.getName()
-        + " where context = 'test' order by date DESC", 1));
+    result = database.query(
+        new OSQLSynchQuery<ODocument>("select * from " + facClass.getName() + " where context = 'test' order by date DESC", 1));
 
     Calendar bigger = Calendar.getInstance();
     bigger.setTime((Date) result.get(0).field("date", Date.class));
@@ -1382,7 +1385,8 @@ public class SQLSelectTest extends AbstractSelectTest {
     Assert.assertTrue(secondPlaceId.getClusterId() < famousPlaceId.getClusterId());
     Assert.assertTrue(secondPlaceId.getClusterPosition() > famousPlaceId.getClusterPosition());
 
-    List<ODocument> result = executeQuery("select from Place where @rid in [" + secondPlaceId + "," + famousPlaceId + "]", database);
+    List<ODocument> result = executeQuery("select from Place where @rid in [" + secondPlaceId + "," + famousPlaceId + "]",
+        database);
     Assert.assertEquals(2, result.size());
 
     database.getMetadata().getSchema().dropClass("FamousPlace");
@@ -1520,8 +1524,8 @@ public class SQLSelectTest extends AbstractSelectTest {
   public void testSelectFromIndexValues() {
     database.command(new OCommandSQL("create index selectFromIndexValues on Profile (name) notunique")).execute();
 
-    final List<ODocument> classResult = new ArrayList<ODocument>((List<ODocument>) database.query(new OSQLSynchQuery<ODocument>(
-        "select from Profile where ((nick like 'J%') or (nick like 'N%')) and (name is not null)")));
+    final List<ODocument> classResult = new ArrayList<ODocument>((List<ODocument>) database.query(
+        new OSQLSynchQuery<ODocument>("select from Profile where ((nick like 'J%') or (nick like 'N%')) and (name is not null)")));
 
     final List<ODocument> indexValuesResult = database.query(new OSQLSynchQuery<ODocument>(
         "select from indexvalues:selectFromIndexValues where ((nick like 'J%') or (nick like 'N%')) and (name is not null)"));
@@ -1546,8 +1550,8 @@ public class SQLSelectTest extends AbstractSelectTest {
   public void testSelectFromIndexValuesAsc() {
     database.command(new OCommandSQL("create index selectFromIndexValuesAsc on Profile (name) notunique")).execute();
 
-    final List<ODocument> classResult = new ArrayList<ODocument>((List<ODocument>) database.query(new OSQLSynchQuery<ODocument>(
-        "select from Profile where ((nick like 'J%') or (nick like 'N%')) and (name is not null)")));
+    final List<ODocument> classResult = new ArrayList<ODocument>((List<ODocument>) database.query(
+        new OSQLSynchQuery<ODocument>("select from Profile where ((nick like 'J%') or (nick like 'N%')) and (name is not null)")));
 
     final List<ODocument> indexValuesResult = database.query(new OSQLSynchQuery<ODocument>(
         "select from indexvaluesasc:selectFromIndexValuesAsc where ((nick like 'J%') or (nick like 'N%')) and (name is not null)"));
@@ -1572,12 +1576,11 @@ public class SQLSelectTest extends AbstractSelectTest {
   public void testSelectFromIndexValuesDesc() {
     database.command(new OCommandSQL("create index selectFromIndexValuesDesc on Profile (name) notunique")).execute();
 
-    final List<ODocument> classResult = new ArrayList<ODocument>((List<ODocument>) database.query(new OSQLSynchQuery<ODocument>(
-        "select from Profile where ((nick like 'J%') or (nick like 'N%')) and (name is not null)")));
+    final List<ODocument> classResult = new ArrayList<ODocument>((List<ODocument>) database.query(
+        new OSQLSynchQuery<ODocument>("select from Profile where ((nick like 'J%') or (nick like 'N%')) and (name is not null)")));
 
-    final List<ODocument> indexValuesResult = database
-        .query(new OSQLSynchQuery<ODocument>(
-            "select from indexvaluesdesc:selectFromIndexValuesDesc where ((nick like 'J%') or (nick like 'N%')) and (name is not null)"));
+    final List<ODocument> indexValuesResult = database.query(new OSQLSynchQuery<ODocument>(
+        "select from indexvaluesdesc:selectFromIndexValuesDesc where ((nick like 'J%') or (nick like 'N%')) and (name is not null)"));
 
     Assert.assertEquals(indexValuesResult.size(), classResult.size());
 
@@ -1605,13 +1608,48 @@ public class SQLSelectTest extends AbstractSelectTest {
   }
 
   public void testQueryLetExecutedOnce() {
-    final List<OIdentifiable> result = database.query(new OSQLSynchQuery<OIdentifiable>(
-        "select name, $counter as counter from OUser let $counter = eval(\"$counter + 1\")"));
+    final List<OIdentifiable> result = database.query(
+        new OSQLSynchQuery<OIdentifiable>("select name, $counter as counter from OUser let $counter = eval(\"$counter + 1\")"));
 
     Assert.assertFalse(result.isEmpty());
     int i = 1;
     for (OIdentifiable r : result) {
       Assert.assertEquals(((ODocument) r.getRecord()).field("counter"), i++);
+    }
+  }
+
+  @Test
+  public void testMultipleClustersWithPagination() throws Exception {
+    final OClass cls = database.getMetadata().getSchema().createClass("PersonMultipleClusters");
+    cls.addCluster("PersonMultipleClusters_1");
+    cls.addCluster("PersonMultipleClusters_2");
+    cls.addCluster("PersonMultipleClusters_3");
+    cls.addCluster("PersonMultipleClusters_4");
+
+    try {
+      Set<String> names = new HashSet<String>(Arrays.asList(new String[] { "Luca", "Jill", "Sara", "Tania", "Gianluca", "Marco" }));
+      for (String n : names) {
+        new ODocument("PersonMultipleClusters").field("First", n).save();
+      }
+
+      OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select from PersonMultipleClusters where @rid > ? limit 2");
+      List<ODocument> resultset = database.query(query, new ORecordId());
+
+      while (!resultset.isEmpty()) {
+        final ORID last = resultset.get(resultset.size() - 1).getIdentity();
+
+        for (ODocument personDoc : resultset) {
+          Assert.assertTrue(names.contains(personDoc.field("First")));
+          Assert.assertTrue(names.remove(personDoc.field("First")));
+        }
+
+        resultset = database.query(query, last);
+      }
+
+      Assert.assertTrue(names.isEmpty());
+
+    } finally {
+      database.getMetadata().getSchema().dropClass("PersonMultipleClusters");
     }
   }
 

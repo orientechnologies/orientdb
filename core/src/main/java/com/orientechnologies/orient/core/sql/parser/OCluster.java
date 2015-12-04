@@ -2,9 +2,9 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-public
-class OCluster extends SimpleNode {
-  protected String clusterName;
+public class OCluster extends SimpleNode {
+  protected String  clusterName;
+  protected Integer clusterNumber;
 
   public OCluster(int id) {
     super(id);
@@ -14,18 +14,19 @@ class OCluster extends SimpleNode {
     super(p, id);
   }
 
-
   /** Accept the visitor. **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
 
-  @Override public String toString(String prefix) {
+  @Override
+  public String toString(String prefix) {
     return super.toString(prefix);
   }
 
-  @Override public String toString() {
-    return "cluster:"+clusterName;
+  @Override
+  public String toString() {
+    return clusterName != null ? "cluster:" + clusterName : "cluster:" + clusterNumber;
   }
 }
 /* JavaCC - OriginalChecksum=d27abf009fe7db482fbcaac9d52ba192 (do not edit this line) */

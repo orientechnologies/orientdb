@@ -23,6 +23,8 @@ import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.command.OCommandContext.TIMEOUT_STRATEGY;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.replication.OAsyncReplicationError;
+import com.orientechnologies.orient.core.replication.OAsyncReplicationOk;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -32,23 +34,25 @@ import java.util.Set;
 
 /**
  * Text based Command Request abstract class.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 @SuppressWarnings("serial")
 public abstract class OCommandRequestAbstract implements OCommandRequestInternal, ODistributedCommand {
   protected OCommandResultListener resultListener;
   protected OProgressListener      progressListener;
-  protected int                    limit           = -1;
-  protected long                   timeoutMs       = OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsLong();
-  protected TIMEOUT_STRATEGY       timeoutStrategy = TIMEOUT_STRATEGY.EXCEPTION;
-  protected Map<Object, Object>    parameters;
-  protected String                 fetchPlan       = null;
-  protected boolean                useCache        = true;
+  protected int              limit           = -1;
+  protected long             timeoutMs       = OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsLong();
+  protected TIMEOUT_STRATEGY timeoutStrategy = TIMEOUT_STRATEGY.EXCEPTION;
+  protected Map<Object, Object> parameters;
+  protected String  fetchPlan = null;
+  protected boolean useCache  = true;
   protected OCommandContext        context;
+  protected OAsyncReplicationOk    onAsyncReplicationOk;
+  protected OAsyncReplicationError onAsyncReplicationError;
 
-  private final Set<String>        nodesToExclude  = new HashSet<String>();
+
+  private final Set<String> nodesToExclude = new HashSet<String>();
 
   protected OCommandRequestAbstract() {
   }
@@ -66,7 +70,7 @@ public abstract class OCommandRequestAbstract implements OCommandRequestInternal
   }
 
   protected void setParameters(final Object... iArgs) {
-    if (iArgs != null && iArgs.length > 0)
+    if (iArgs != null && iArgs.length>0)
       parameters = convertToParameters(iArgs);
   }
 
@@ -78,7 +82,7 @@ public abstract class OCommandRequestAbstract implements OCommandRequestInternal
       params = (Map<Object, Object>) iArgs[0];
     } else {
       params = new HashMap<Object, Object>(iArgs.length);
-      for (int i = 0; i < iArgs.length; ++i) {
+      for (int i = 0; i<iArgs.length; ++i) {
         Object par = iArgs[i];
 
         if (par instanceof OIdentifiable && ((OIdentifiable) par).getIdentity().isValid())
@@ -89,6 +93,44 @@ public abstract class OCommandRequestAbstract implements OCommandRequestInternal
       }
     }
     return params;
+  }
+
+  /**
+   * Defines a callback to call in case of the asynchronous replication succeed.
+   */
+  @Override
+  public OCommandRequestAbstract onAsyncReplicationOk(final OAsyncReplicationOk iCallback) {
+    onAsyncReplicationOk = iCallback;
+    return this;
+  }
+
+
+  /**
+   * Defines a callback to call in case of error during the asynchronous replication.
+   */
+  @Override
+  public OCommandRequestAbstract onAsyncReplicationError(final OAsyncReplicationError iCallback) {
+    if (iCallback != null) {
+      onAsyncReplicationError = new OAsyncReplicationError() {
+        int retry = 0;
+
+        @Override
+        public ACTION onAsyncReplicationError(Throwable iException, final int iRetry) {
+          switch (iCallback.onAsyncReplicationError(iException, ++retry)) {
+          case RETRY:
+            execute();
+            break;
+
+          case IGNORE:
+
+          }
+
+          return ACTION.IGNORE;
+        }
+      };
+    } else
+      onAsyncReplicationError = null;
+    return this;
   }
 
   public OProgressListener getProgressListener() {
@@ -166,5 +208,14 @@ public abstract class OCommandRequestAbstract implements OCommandRequestInternal
 
   public void removeExcludedNode(String node) {
     nodesToExclude.remove(node);
+  }
+
+
+  public OAsyncReplicationOk getOnAsyncReplicationOk() {
+    return onAsyncReplicationOk;
+  }
+
+  public OAsyncReplicationError getOnAsyncReplicationError() {
+    return onAsyncReplicationError;
   }
 }

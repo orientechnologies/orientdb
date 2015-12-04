@@ -93,6 +93,15 @@ public class OUpdateStatementTest {
     checkRightSyntax("update (select from (traverse References from ( select from Node WHERE Email = 'julia@local'  ) ) WHERE @class = 'Node' and $depth <= 1 and Active = true ) set Points = 0 RETURN BEFORE $current.Points");
   }
 
+  public void testUpdateMultipleRids() {
+    checkRightSyntax("update [#9:0, #9:1] set foo = 'bar'");
+  }
+
+  public void testDottedTarget() {
+    //issue #5397
+    checkRightSyntax("update $publishedVersionEdge.row set isPublished = false");
+  }
+
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);
     try {

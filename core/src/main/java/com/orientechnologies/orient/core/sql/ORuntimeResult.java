@@ -179,7 +179,7 @@ public class ORuntimeResult {
 
   private static boolean entriesPersistent(Collection<OIdentifiable> projectionValue) {
     for (OIdentifiable rec : projectionValue) {
-      if (!rec.getIdentity().isPersistent())
+      if (rec != null && !rec.getIdentity().isPersistent())
         return false;
     }
     return true;

@@ -115,8 +115,8 @@ public class TestSharding extends AbstractServerClusterTest {
 
           totalAmount += amount;
 
-          System.out.println("Create vertex, class: " + vertices[i].getLabel() + ", cluster: " + clId + " -> "
-              + vertices[i].getRecord());
+          System.out
+              .println("Create vertex, class: " + vertices[i].getLabel() + ", cluster: " + clId + " -> " + vertices[i].getRecord());
 
           if (i > 1)
             // CREATE A LIGHT-WEIGHT EDGE
@@ -151,9 +151,9 @@ public class TestSharding extends AbstractServerClusterTest {
         try {
 
           // CREATE A REGULAR EDGE
-          Iterable<OrientEdge> result = graph.command(
-              new OCommandSQL("create edge `Loves-Type` from " + vertices[i].getIdentity() + " to " + fishing.getIdentity()
-                  + " set real = true")).execute();
+          Iterable<OrientEdge> result = graph.command(new OCommandSQL(
+              "create edge `Loves-Type` from " + vertices[i].getIdentity() + " to " + fishing.getIdentity() + " set real = true"))
+              .execute();
 
           Assert.assertTrue(result.iterator().hasNext());
           OrientEdge e = result.iterator().next();
@@ -203,8 +203,8 @@ public class TestSharding extends AbstractServerClusterTest {
             System.out.println("explain " + query + " -> " + explain);
 
             Iterable<OrientVertex> result = g.command(new OCommandSQL(query)).execute();
-            Assert.assertTrue("Error on query against '" + clusterName + "' on server '" + server + "': " + query, result
-                .iterator().hasNext());
+            Assert.assertTrue("Error on query against '" + clusterName + "' on server '" + server + "': " + query,
+                result.iterator().hasNext());
 
             OrientVertex v = result.iterator().next();
 
@@ -231,15 +231,17 @@ public class TestSharding extends AbstractServerClusterTest {
         OrientGraphNoTx g = f.getNoTx();
         try {
           // MISC QUERIES
-          Iterable<OrientVertex> result = g.command(new OCommandSQL("select sum(amount) from ( select from `Client-type` )"))
-              .execute();
+          Iterable<OrientVertex> result = g
+              .command(new OCommandSQL("select sum(amount), set(amount) from ( select from `Client-type` )")).execute();
 
           int count = 0;
           for (OrientVertex v : result) {
-            System.out.println("select sum(amount) from ( select from `Client-Type` ) -> " + v.getRecord());
+            System.out.println("select sum(amount), set(amount) from ( select from `Client-Type` ) -> " + v.getRecord());
 
-            Assert
-                .assertEquals("Returned wrong sum of amount on server " + server, (Long) totalAmount, (Long) v.getProperty("sum"));
+            Assert.assertNotNull("set() function wasn't returned on server " + server, v.getProperty("set"));
+
+            Assert.assertEquals("Returned wrong sum of amount on server " + server, (Long) totalAmount,
+                (Long) v.getProperty("sum"));
 
             count++;
           }
@@ -284,8 +286,8 @@ public class TestSharding extends AbstractServerClusterTest {
         OrientGraphNoTx g = f.getNoTx();
         try {
 
-          Iterable<OrientVertex> result = g.command(
-              new OCommandSQL("select max(amount), avg(amount), sum(amount) from `Client-Type`")).execute();
+          Iterable<OrientVertex> result = g
+              .command(new OCommandSQL("select max(amount), avg(amount), sum(amount) from `Client-Type`")).execute();
 
           int count = 0;
           for (OrientVertex v : result) {
@@ -306,8 +308,8 @@ public class TestSharding extends AbstractServerClusterTest {
         OrientGraphNoTx g = f.getNoTx();
         try {
 
-          Iterable<OrientVertex> result = g.command(
-              new OCommandSQL("select name-property, count(*) from `Client-Type` group by `name-property`")).execute();
+          Iterable<OrientVertex> result = g
+              .command(new OCommandSQL("select name-property, count(*) from `Client-Type` group by `name-property`")).execute();
 
           int count = 0;
           for (OrientVertex v : result) {
@@ -444,8 +446,8 @@ public class TestSharding extends AbstractServerClusterTest {
       OrientGraphNoTx g = f.getNoTx();
       try {
 
-        Iterable<OrientVertex> result = g.command(
-            new OCommandSQL("select * from `Client-Type` where `name-property` = 'shard_" + server + "'")).execute();
+        Iterable<OrientVertex> result = g
+            .command(new OCommandSQL("select * from `Client-Type` where `name-property` = 'shard_" + server + "'")).execute();
 
         int count = 0;
         for (OrientVertex v : result) {
