@@ -56,7 +56,7 @@ public class OSecurityProxy extends OProxedResource<OSecurity> implements OSecur
 
   @Override
   public OIdentifiable denyUser(ODocument iDocument, ORestrictedOperation iOperationType, String iUserName) {
-    return delegate.denyRole(iDocument, iOperationType, iUserName);
+    return delegate.denyUser(iDocument, iOperationType, iUserName);
   }
 
   @Override
