@@ -1,6 +1,7 @@
 package com.orientechnologies.lucene.analyzer;
 
 import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.analysis.en.EnglishAnalyzer;
@@ -47,6 +48,34 @@ public class OluceneAnalyzerFactoryTest {
 
     when(indexDef.getFields()).thenReturn(asList("title", "author", "lyrics", "genre"));
 
+  }
+
+  @Test(enabled = false)
+  public void jsonTest() throws Exception {
+
+    ODocument doc = new ODocument()
+        .fromJSON(
+            "{\n"
+            + "  \"index_analyzer\": \"org.apache.lucene.analysis.en.EnglishAnalyzer\",\n"
+            + "  \"query_analyzer\": \"org.apache.lucene.analysis.standard.StandardAnalyzer\",\n"
+            + "  \"name_index_analyzer\": \"org.apache.lucene.analysis.standard.StandardAnalyzer\",\n"
+            + "  \"name_query_analyzer\": \"org.apache.lucene.analysis.core.KeywordAnalyzer\",\n"
+            + "  \"description_index_analyzer\": {\n"
+            + "    \"class\": \"org.apache.lucene.analysis.standard.StandardAnalyzer\",\n"
+            + "    \"stopwords\": [\n"
+            + "      \"the\",\n"
+            + "      \"is\"\n"
+            + "    ]\n"
+            + "  }\n"
+            + "}","noMap");
+
+    System.out.println(doc.toJSON());
+
+    ODocument description_index_analyzer = doc.field("description_index_analyzer");
+    ODocument index_analyzer = doc.field("index_analyzer");
+
+
+    System.out.println(description_index_analyzer.toJSON());
   }
 
   @Test

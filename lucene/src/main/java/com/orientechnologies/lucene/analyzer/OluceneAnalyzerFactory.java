@@ -58,8 +58,6 @@ public class OluceneAnalyzerFactory {
 
   private Analyzer buildAnalyzer(String analyzerFQN) {
 
-    OLogManager.instance()
-               .debug(this, "looking for analyzer::  " + analyzerFQN);
     try {
 
       final Class classAnalyzer = Class.forName(analyzerFQN);
