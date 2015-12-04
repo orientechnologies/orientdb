@@ -1867,6 +1867,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
       return (RET) iRecord;
     } catch (OOfflineClusterException t) {
       throw t;
+    } catch (ORecordNotFoundException t) {
+      throw t;
     } catch (Throwable t) {
       if (rid.isTemporary())
         throw new ODatabaseException("Error on retrieving record using temporary RecordId: " + rid, t);

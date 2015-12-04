@@ -265,7 +265,10 @@ public abstract class ORecordAbstract implements ORecord {
       getDatabase().reload(this, fetchPlan, ignoreCache, force);
 
       return this;
+
     } catch (OOfflineClusterException e) {
+      throw e;
+    } catch (ORecordNotFoundException e) {
       throw e;
     } catch (Exception e) {
       throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' not found", e);
