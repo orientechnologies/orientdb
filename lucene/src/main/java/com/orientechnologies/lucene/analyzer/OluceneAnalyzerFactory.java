@@ -13,7 +13,7 @@ import java.lang.reflect.Constructor;
 /**
  * Created by frank on 30/10/2015.
  */
-public class OluceneAnalyzerFactory {
+public class OLuceneAnalyzerFactory {
 
   public enum AnalyzerKind {
     INDEX, QUERY;

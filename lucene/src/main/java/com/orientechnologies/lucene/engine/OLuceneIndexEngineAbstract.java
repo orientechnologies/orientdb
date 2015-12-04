@@ -21,7 +21,7 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.lucene.OLuceneIndexType;
-import com.orientechnologies.lucene.analyzer.OluceneAnalyzerFactory;
+import com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory;
 import com.orientechnologies.lucene.query.QueryContext;
 import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.lucene.tx.OLuceneTxChangesMultiRid;
@@ -315,9 +315,9 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     this.automatic = isAutomatic;
     this.metadata = metadata;
 
-    OluceneAnalyzerFactory fc = new OluceneAnalyzerFactory();
-    indexAnalyzer = fc.createAnalyzer(indexDefinition, OluceneAnalyzerFactory.AnalyzerKind.INDEX, metadata);
-    queryAnalyzer = fc.createAnalyzer(indexDefinition, OluceneAnalyzerFactory.AnalyzerKind.QUERY, metadata);
+    OLuceneAnalyzerFactory fc = new OLuceneAnalyzerFactory();
+    indexAnalyzer = fc.createAnalyzer(indexDefinition, OLuceneAnalyzerFactory.AnalyzerKind.INDEX, metadata);
+    queryAnalyzer = fc.createAnalyzer(indexDefinition, OLuceneAnalyzerFactory.AnalyzerKind.QUERY, metadata);
 
     try {
 

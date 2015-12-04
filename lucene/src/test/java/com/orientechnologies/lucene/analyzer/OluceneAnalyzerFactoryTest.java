@@ -1,7 +1,6 @@
 package com.orientechnologies.lucene.analyzer;
 
 import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.analysis.en.EnglishAnalyzer;
@@ -10,8 +9,8 @@ import org.mockito.Mockito;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
-import static com.orientechnologies.lucene.analyzer.OluceneAnalyzerFactory.AnalyzerKind.INDEX;
-import static com.orientechnologies.lucene.analyzer.OluceneAnalyzerFactory.AnalyzerKind.QUERY;
+import static com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory.AnalyzerKind.INDEX;
+import static com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory.AnalyzerKind.QUERY;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
@@ -19,16 +18,16 @@ import static org.mockito.Mockito.when;
 /**
  * Created by frank on 30/10/2015.
  */
-public class OluceneAnalyzerFactoryTest {
+public class OLuceneAnalyzerFactoryTest {
 
-  private OluceneAnalyzerFactory analyzerFactory;
+  private OLuceneAnalyzerFactory analyzerFactory;
   private ODocument              metadata;
   private OIndexDefinition       indexDef;
 
   @BeforeTest
   public void before() {
 
-    analyzerFactory = new OluceneAnalyzerFactory();
+    analyzerFactory = new OLuceneAnalyzerFactory();
 
     //default analyzer is Standard
     //default analyzer for indexing is keyword
