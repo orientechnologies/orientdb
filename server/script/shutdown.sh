@@ -57,7 +57,7 @@ JAVA_OPTS=-Djava.awt.headless=true
 
 if [ "x$wait" = "xyes" ] ; then
   while true ; do
-    ps -ef | grep java | grep $ORIENTDB_HOME/lib/orientdb-server > /dev/null || break
+        ps auxw | grep java | grep $ORIENTDB_HOME/lib/orientdb-server > /dev/null || break
     sleep 1;
   done
 fi
