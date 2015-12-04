@@ -378,8 +378,8 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    */
   @Override
   public void lock(final boolean iExclusive) {
-    ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction()
-        .lockRecord(this, iExclusive ? OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK : OStorage.LOCKING_STRATEGY.SHARED_LOCK);
+    ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction().lockRecord(this,
+        iExclusive ? OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK : OStorage.LOCKING_STRATEGY.SHARED_LOCK);
   }
 
   /**
@@ -558,7 +558,16 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     if (classicDetachMode)
       return graph;
 
-    return OrientBaseGraph.getActiveGraph();
+    final OrientBaseGraph g = OrientBaseGraph.getActiveGraph();
+
+    if (graph != null && (g == null || !g.getRawGraph().getName().equals(graph.getRawGraph().getName()))) {
+      // INVALID GRAPH INSTANCE IN TL, SET CURRENT ONE
+      OrientBaseGraph.clearInitStack();
+      graph.makeActive();
+      return this.graph;
+    }
+
+    return g;
   }
 
   /**
@@ -624,7 +633,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     if (className == null)
       return null;
 
-    OrientBaseGraph graph = getGraph();
+    final OrientBaseGraph graph = getGraph();
     if (graph == null)
       return className;
 
@@ -633,16 +642,15 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     if (!schema.existsClass(className)) {
       // CREATE A NEW CLASS AT THE FLY
       try {
-        graph
-            .executeOutsideTx(new OCallable<OClass, OrientBaseGraph>() {
+        graph.executeOutsideTx(new OCallable<OClass, OrientBaseGraph>() {
 
-              @Override
-              public OClass call(final OrientBaseGraph g) {
-                return schema.createClass(className, schema.getClass(getBaseClassName()));
+          @Override
+          public OClass call(final OrientBaseGraph g) {
+            return schema.createClass(className, schema.getClass(getBaseClassName()));
 
-              }
-            }, "Committing the active transaction to create the new type '", className, "' as subclass of '", getBaseClassName(),
-                "'. The transaction will be reopen right after that. To avoid this behavior create the classes outside the transaction");
+          }
+        }, "Committing the active transaction to create the new type '", className, "' as subclass of '", getBaseClassName(),
+            "'. The transaction will be reopen right after that. To avoid this behavior create the classes outside the transaction");
 
       } catch (OSchemaException e) {
         if (!schema.existsClass(className))

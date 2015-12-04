@@ -14,10 +14,10 @@ import java.util.Set;
 
 public class TestShardingDocsAndEdges extends AbstractServerClusterTest {
 
-  protected final static int    SERVERS        = 2;
-  private static final   String clusterNodeUSA = "user_usa";
-  private static final   String clusterNodeEUR = "user_eur";
-  private static         int    testNumber     = 0;
+  protected final static int  SERVERS        = 2;
+  private static final String clusterNodeUSA = "user_usa";
+  private static final String clusterNodeEUR = "user_eur";
+  private static int          testNumber     = 0;
   private ODatabaseDocumentTx USA;
   private ODatabaseDocumentTx EUR;
 
@@ -100,9 +100,9 @@ public class TestShardingDocsAndEdges extends AbstractServerClusterTest {
     queryResult = execute(EUR, "select from User");
     compare(queryResult, new String[] { "mike", "phoebe" });
 
-        /*
-         verify that 'select from V returns' the same as 'select from User' on both nodes
-         */
+    /*
+     * verify that 'select from V returns' the same as 'select from User' on both nodes
+     */
     // test 12
     queryResult = execute(USA, "select from V");
     compare(queryResult, new String[] { "mike", "phoebe" });
@@ -111,7 +111,7 @@ public class TestShardingDocsAndEdges extends AbstractServerClusterTest {
     compare(queryResult, new String[] { "mike", "phoebe" });
 
     // LINE A
-    execute(USA, "create edge Follows " + "from (select from User where name = 'mike') " + "to (select from User where name = 'phoebe')");
+    execute(USA, "create edge Follows from (select from User where name = 'mike') to (select from User where name = 'phoebe')");
 
     // ...
   }

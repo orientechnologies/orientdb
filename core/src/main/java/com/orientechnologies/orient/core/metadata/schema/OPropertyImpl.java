@@ -19,18 +19,6 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.comparator.OCaseInsentiveComparator;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCollections;
@@ -59,6 +47,9 @@ import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
+import java.text.ParseException;
+import java.util.*;
+
 /**
  * Contains the description of a persistent class property.
  * 
@@ -66,14 +57,14 @@ import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
  * 
  */
 public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty {
-  private final OClassImpl    owner;
+  private final OClassImpl owner;
 
   // private String name;
   // private OType type;
 
-  private OType               linkedType;
-  private OClass              linkedClass;
-  transient private String    linkedClassName;
+  private OType            linkedType;
+  private OClass           linkedClass;
+  transient private String linkedClassName;
 
   private boolean             mandatory;
   private boolean             notNull = false;
@@ -86,7 +77,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   private OCollate            collate = new ODefaultCollate();
   private OGlobalProperty     globalRef;
 
-  private volatile int        hashCode;
+  private volatile int hashCode;
 
   @Deprecated
   OPropertyImpl(final OClassImpl owner, final String name, final OType type) {
@@ -231,8 +222,8 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
           if (definition instanceof OPropertyIndexDefinition) {
             relatedIndexes.add(index);
           } else {
-            throw new IllegalArgumentException("This operation applicable only for property indexes. " + index.getName() + " is "
-                + index.getDefinition());
+            throw new IllegalArgumentException(
+                "This operation applicable only for property indexes. " + index.getName() + " is " + index.getDefinition());
           }
         }
       }
@@ -1039,8 +1030,8 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     regexp = (String) (document.containsField("regexp") ? document.field("regexp") : null);
     linkedClassName = (String) (document.containsField("linkedClass") ? document.field("linkedClass") : null);
     linkedType = document.field("linkedType") != null ? OType.getById(((Integer) document.field("linkedType")).byteValue()) : null;
-    customFields = (Map<String, String>) (document.containsField("customFields") ? document
-        .field("customFields", OType.EMBEDDEDMAP) : null);
+    customFields = (Map<String, String>) (document.containsField("customFields") ? document.field("customFields", OType.EMBEDDEDMAP)
+        : null);
   }
 
   public Collection<OIndex<?>> getAllIndexes() {
@@ -1305,8 +1296,8 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
           final OIndexManager indexManager = database.getMetadata().getIndexManager();
 
           for (OIndex<?> indexToRecreate : indexesToRecreate) {
-            final OIndexInternal.IndexMetadata indexMetadata = indexToRecreate.getInternal().loadMetadata(
-                indexToRecreate.getConfiguration());
+            final OIndexInternal.IndexMetadata indexMetadata = indexToRecreate.getInternal()
+                .loadMetadata(indexToRecreate.getConfiguration());
 
             final ODocument metadata = indexToRecreate.getMetadata();
             final List<String> fields = indexMetadata.getIndexDefinition().getFields();
@@ -1343,7 +1334,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 
   private boolean isDistributedCommand() {
     return getDatabase().getStorage() instanceof OAutoshardedStorage
-        && OScenarioThreadLocal.INSTANCE.get() != OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED;
+        && OScenarioThreadLocal.INSTANCE.getRunMode() != OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED;
   }
 
   @Override

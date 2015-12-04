@@ -39,8 +39,8 @@ public class SimulateOperationsAgainstServer {
   protected final AtomicLong                    totalOperations = new AtomicLong();
   protected int                                 count           = 1000;
   protected int                                 threads         = 20;
-  protected String[]                            urls            = new String[] { "remote:localhost:2424/test",
-      "remote:localhost:2425/test"                             };
+  protected String[]                            urls            = new String[] { "remote:localhost:2424/SimulateOperationsAgainstServer",
+      "remote:localhost:2425/SimulateOperationsAgainstServer"                             };
   protected String                              className       = "Customer";
   protected String                              userName        = "admin";
   protected String                              userPassword    = "admin";

@@ -76,13 +76,16 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
     if (result != null && (result instanceof OrientGraph)) {
       final ODatabaseDocumentTx graphDb = result.getRawGraph();
 
-      if (!graphDb.isClosed()) {
-        ODatabaseRecordThreadLocal.INSTANCE.set(graphDb);
-        if (autoStartTx)
-          ((OrientGraph) result).begin();
+      if (graphDb.getURL().equals(database.getURL())) {
+        // SAME URL, USE IT
+        if (!graphDb.isClosed()) {
+          ODatabaseRecordThreadLocal.INSTANCE.set(graphDb);
+          if (autoStartTx)
+            ((OrientGraph) result).begin();
 
-        shouldBeShutDown.setValue(false);
-        return (OrientGraph) result;
+          shouldBeShutDown.setValue(false);
+          return (OrientGraph) result;
+        }
       }
     }
     // Set it again on ThreadLocal because the getRawGraph() may have set a closed db in the thread-local
@@ -106,10 +109,14 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
     if (result != null && (result instanceof OrientGraphNoTx)) {
       final ODatabaseDocumentTx graphDb = result.getRawGraph();
 
-      if (!graphDb.isClosed()) {
-        ODatabaseRecordThreadLocal.INSTANCE.set(graphDb);
-        shouldBeShutDown.setValue(false);
-        return (OrientGraphNoTx) result;
+      if (graphDb.getURL().equals(database.getURL())) {
+        // SAME URL, USE IT
+
+        if (!graphDb.isClosed()) {
+          ODatabaseRecordThreadLocal.INSTANCE.set(graphDb);
+          shouldBeShutDown.setValue(false);
+          return (OrientGraphNoTx) result;
+        }
       }
     }
 

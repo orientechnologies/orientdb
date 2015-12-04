@@ -108,11 +108,11 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     });
   }
 
-  private final OPartitionedDatabasePool                      pool;
-  protected ODatabaseDocumentTx                               database;
-  private String                                              url;
-  private String                                              username;
-  private String                                              password;
+  private final OPartitionedDatabasePool pool;
+  protected ODatabaseDocumentTx          database;
+  private String                         url;
+  private String                         username;
+  private String                         password;
 
   /**
    * Constructs a new object using an existent database instance.
@@ -565,9 +565,10 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
           if (s.startsWith(CLASS_PREFIX))
             // GET THE CLASS NAME
             className = s.substring(CLASS_PREFIX.length());
-          else if (s.startsWith(CLUSTER_PREFIX))
-            // GET THE CLASS NAME
-            clusterName = s.substring(CLUSTER_PREFIX.length());
+          else
+            if (s.startsWith(CLUSTER_PREFIX))
+              // GET THE CLASS NAME
+              clusterName = s.substring(CLUSTER_PREFIX.length());
           else
             id = s;
         }
@@ -666,9 +667,10 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
           if (s.startsWith(CLASS_PREFIX))
             // GET THE CLASS NAME
             className = s.substring(CLASS_PREFIX.length());
-          else if (s.startsWith(CLUSTER_PREFIX))
-            // GET THE CLASS NAME
-            clusterName = s.substring(CLUSTER_PREFIX.length());
+          else
+            if (s.startsWith(CLUSTER_PREFIX))
+              // GET THE CLASS NAME
+              clusterName = s.substring(CLUSTER_PREFIX.length());
         }
       }
     }
@@ -1522,15 +1524,15 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    *          <ul>
    *          <li>"type" is the index type between the supported types (UNIQUE, NOTUNIQUE, FULLTEXT). The default type is NOT_UNIQUE
    *          <li>"class" is the class to index when it's a custom type derived by Vertex (V) or Edge (E)
-   *          <li>"keytype" to use a key type different by OType.STRING,</li>
-   *          </li>
+   *          <li>"keytype" to use a key type different by OType.STRING,</li></li>
    *          </ul>
    * @param <T>
    *          the element class specification
    */
   @SuppressWarnings({ "rawtypes" })
   @Override
-  public <T extends Element> void createKeyIndex(final String key, final Class<T> elementClass, final Parameter... indexParameters) {
+  public <T extends Element> void createKeyIndex(final String key, final Class<T> elementClass,
+      final Parameter... indexParameters) {
     makeActive();
 
     if (elementClass == null)
@@ -1579,8 +1581,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
         OPropertyIndexDefinition indexDefinition = new OPropertyIndexDefinition(className, key, keyType);
         if (collate != null)
           indexDefinition.setCollate(collate);
-        db.getMetadata().getIndexManager()
-            .createIndex(className + "." + key, indexType, indexDefinition, cls.getPolymorphicClusterIds(), null, metadata);
+        db.getMetadata().getIndexManager().createIndex(className + "." + key, indexType, indexDefinition,
+            cls.getPolymorphicClusterIds(), null, metadata);
         return null;
 
       }
@@ -1728,12 +1730,9 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
           msg.append(s);
 
         // ASSURE PENDING TX IF ANY IS COMMITTED
-        OLogManager
-            .instance()
-            .warn(
-                this,
-                "Requested command '%s' must be executed outside active transaction: the transaction will be committed and reopen right after it. To avoid this behavior execute it outside a transaction",
-                msg.toString());
+        OLogManager.instance().warn(this,
+            "The command '%s' must be executed outside an active transaction: the transaction will be committed and reopen right after it. To avoid this behavior execute it outside a transaction (db=%s)",
+            msg.toString(), getRawGraph().getName());
       }
       raw.commit();
       committed = true;
@@ -1745,7 +1744,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     } finally {
       if (committed)
         // RESTART TRANSACTION
-        ((OrientTransactionalGraph) this).begin();
+        raw.begin();
     }
   }
 
@@ -1882,7 +1881,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     final ODocument metadata = idx.getMetadata();
 
     return (metadata != null && metadata.field(OrientIndex.CONFIG_CLASSNAME) != null)
-    // compatibility with versions earlier 1.6.3
+        // compatibility with versions earlier 1.6.3
         || idx.getConfiguration().field(OrientIndex.CONFIG_CLASSNAME) != null;
   }
 

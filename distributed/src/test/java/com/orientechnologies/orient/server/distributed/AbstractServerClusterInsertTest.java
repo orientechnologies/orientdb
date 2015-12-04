@@ -449,16 +449,6 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
         database = poolFactory.get(getDatabaseURL(server), "admin", "admin").acquire();
         try {
           final int total = (int) database.countClass("Person");
-
-          // if (total != expected) {
-          // // ERROR: DUMP ALL THE RECORDS
-          // result = database.query(new OSQLSynchQuery<OIdentifiable>("select from Person"));
-          // i = 0;
-          // for (ODocument d : result) {
-          // System.out.println((i++) + ": " + d);
-          // }
-          // }
-
           Assert.assertEquals(expected, total);
         } finally {
           database.close();
