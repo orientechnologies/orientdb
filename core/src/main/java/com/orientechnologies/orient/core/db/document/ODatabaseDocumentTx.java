@@ -3009,6 +3009,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
   }
 
   private void installHooks() {
+    hooks.clear();
     registerHook(new OClassTrigger(this), ORecordHook.HOOK_POSITION.FIRST);
     registerHook(new ORestrictedAccessHook(this), ORecordHook.HOOK_POSITION.FIRST);
     registerHook(new OUserTrigger(this), ORecordHook.HOOK_POSITION.EARLY);
