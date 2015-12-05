@@ -19,23 +19,20 @@
  */
 package com.orientechnologies.orient.graph.sql.functions;
 
+import java.util.Iterator;
+import java.util.LinkedList;
+
 import com.orientechnologies.common.collection.OMultiValue;
-import com.orientechnologies.common.types.OModifiableBoolean;
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.graph.sql.OGraphCommandExecutorSQLFactory;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-
-import java.util.Iterator;
-import java.util.LinkedList;
 
 /**
  * Dijkstra's algorithm describes how to find the cheapest path from one node to another node in a directed weighted graph.
@@ -51,47 +48,49 @@ import java.util.LinkedList;
 public class OSQLFunctionDijkstra extends OSQLFunctionPathFinder {
   public static final String NAME = "dijkstra";
 
-  private String             paramWeightFieldName;
+  private String paramWeightFieldName;
 
   public OSQLFunctionDijkstra() {
     super(NAME, 3, 4);
   }
 
-  public LinkedList<OrientVertex> execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult,
-      final Object[] iParams, OCommandContext iContext) {
-    final OModifiableBoolean shutdownFlag = new OModifiableBoolean();
-    ODatabaseDocumentInternal curDb = ODatabaseRecordThreadLocal.INSTANCE.get();
-    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false, shutdownFlag);
-    try {
+  public LinkedList<OrientVertex> execute(final Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult,
+      final Object[] iParams, final OCommandContext iContext) {
 
-      final ORecord record = iCurrentRecord != null ? iCurrentRecord.getRecord() : null;
+    return OGraphCommandExecutorSQLFactory
+        .runWithAnyGraph(new OGraphCommandExecutorSQLFactory.GraphCallBack<LinkedList<OrientVertex>>() {
+          @Override
+          public LinkedList<OrientVertex> call(final OrientBaseGraph graph) {
 
-      Object source = iParams[0];
-      if (OMultiValue.isMultiValue(source)) {
-        if (OMultiValue.getSize(source) > 1)
-          throw new IllegalArgumentException("Only one sourceVertex is allowed");
-        source = OMultiValue.getFirstValue(source);
-      }
-      paramSourceVertex = graph.getVertex(OSQLHelper.getValue(source, record, iContext));
+            final ORecord record = iCurrentRecord != null ? iCurrentRecord.getRecord() : null;
 
-      Object dest = iParams[1];
-      if (OMultiValue.isMultiValue(dest)) {
-        if (OMultiValue.getSize(dest) > 1)
-          throw new IllegalArgumentException("Only one destinationVertex is allowed");
-        dest = OMultiValue.getFirstValue(dest);
-      }
-      paramDestinationVertex = graph.getVertex(OSQLHelper.getValue(dest, record, iContext));
+            Object source = iParams[0];
+            if (OMultiValue.isMultiValue(source)) {
+              if (OMultiValue.getSize(source) > 1)
+                throw new IllegalArgumentException("Only one sourceVertex is allowed");
+              source = OMultiValue.getFirstValue(source);
+            }
+            paramSourceVertex = graph.getVertex(OSQLHelper.getValue(source, record, iContext));
 
-      paramWeightFieldName = OStringSerializerHelper.getStringContent(iParams[2]);
-      if (iParams.length > 3)
-        paramDirection = Direction.valueOf(iParams[3].toString().toUpperCase());
+            Object dest = iParams[1];
+            if (OMultiValue.isMultiValue(dest)) {
+              if (OMultiValue.getSize(dest) > 1)
+                throw new IllegalArgumentException("Only one destinationVertex is allowed");
+              dest = OMultiValue.getFirstValue(dest);
+            }
+            paramDestinationVertex = graph.getVertex(OSQLHelper.getValue(dest, record, iContext));
 
-      return super.execute(iContext);
-    } finally {
-      if (shutdownFlag.getValue())
-        graph.shutdown(false);
-      ODatabaseRecordThreadLocal.INSTANCE.set(curDb);
-    }
+            paramWeightFieldName = OIOUtils.getStringContent(iParams[2]);
+            if (iParams.length > 3)
+              paramDirection = Direction.valueOf(iParams[3].toString().toUpperCase());
+
+            return internalExecute(iContext);
+          }
+        });
+  }
+
+  private LinkedList<OrientVertex> internalExecute(final OCommandContext iContext) {
+    return super.execute(iContext);
   }
 
   public String getSyntax() {

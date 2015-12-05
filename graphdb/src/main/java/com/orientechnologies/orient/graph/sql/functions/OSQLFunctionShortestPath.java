@@ -20,11 +20,8 @@
 package com.orientechnologies.orient.graph.sql.functions;
 
 import com.orientechnologies.common.collection.OMultiValue;
-import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -52,7 +49,7 @@ import java.util.Set;
  * 
  */
 public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
-  public static final String   NAME     = "shortestPath";
+  public static final String NAME = "shortestPath";
 
   protected static final float DISTANCE = 1f;
 
@@ -61,128 +58,124 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
   }
 
   private class OShortestPathContext {
-    OrientVertex             sourceVertex;
-    OrientVertex             destinationVertex;
-    Direction                directionLeft  = Direction.BOTH;
-    Direction                directionRight = Direction.BOTH;
+    OrientVertex sourceVertex;
+    OrientVertex destinationVertex;
+    Direction    directionLeft  = Direction.BOTH;
+    Direction    directionRight = Direction.BOTH;
 
-    String                   edgeType;
-    String[]                 edgeTypeParam;
+    String   edgeType;
+    String[] edgeTypeParam;
 
-    ArrayDeque<OrientVertex> queueLeft      = new ArrayDeque<OrientVertex>();
-    ArrayDeque<OrientVertex> queueRight     = new ArrayDeque<OrientVertex>();
+    ArrayDeque<OrientVertex> queueLeft  = new ArrayDeque<OrientVertex>();
+    ArrayDeque<OrientVertex> queueRight = new ArrayDeque<OrientVertex>();
 
-    final Set<ORID>          leftVisited    = new HashSet<ORID>();
-    final Set<ORID>          rightVisited   = new HashSet<ORID>();
+    final Set<ORID> leftVisited  = new HashSet<ORID>();
+    final Set<ORID> rightVisited = new HashSet<ORID>();
 
-    final Map<ORID, ORID>    previouses     = new HashMap<ORID, ORID>();
-    final Map<ORID, ORID>    nexts          = new HashMap<ORID, ORID>();
+    final Map<ORID, ORID> previouses = new HashMap<ORID, ORID>();
+    final Map<ORID, ORID> nexts      = new HashMap<ORID, ORID>();
 
-    OrientVertex             current;
-    OrientVertex             currentRight;
+    OrientVertex current;
+    OrientVertex currentRight;
   }
 
-  public List<ORID> execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
+  public List<ORID> execute(Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult, final Object[] iParams,
       final OCommandContext iContext) {
-    final OModifiableBoolean shutdownFlag = new OModifiableBoolean();
-    ODatabaseDocumentInternal curDb = ODatabaseRecordThreadLocal.INSTANCE.get();
-    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false, shutdownFlag);
-    try {
-      final ORecord record = iCurrentRecord != null ? iCurrentRecord.getRecord() : null;
 
-      final OShortestPathContext ctx = new OShortestPathContext();
+    return OGraphCommandExecutorSQLFactory.runWithAnyGraph(new OGraphCommandExecutorSQLFactory.GraphCallBack<List<ORID>>() {
+      @Override
+      public List<ORID> call(final OrientBaseGraph graph) {
+        final ORecord record = iCurrentRecord != null ? iCurrentRecord.getRecord() : null;
 
-      Object source = iParams[0];
-      if (OMultiValue.isMultiValue(source)) {
-        if (OMultiValue.getSize(source) > 1)
-          throw new IllegalArgumentException("Only one sourceVertex is allowed");
-        source = OMultiValue.getFirstValue(source);
-      }
-      ctx.sourceVertex = graph.getVertex(OSQLHelper.getValue(source, record, iContext));
+        final OShortestPathContext ctx = new OShortestPathContext();
 
-      Object dest = iParams[1];
-      if (OMultiValue.isMultiValue(dest)) {
-        if (OMultiValue.getSize(dest) > 1)
-          throw new IllegalArgumentException("Only one destinationVertex is allowed");
-        dest = OMultiValue.getFirstValue(dest);
-      }
-      ctx.destinationVertex = graph.getVertex(OSQLHelper.getValue(dest, record, iContext));
+        Object source = iParams[0];
+        if (OMultiValue.isMultiValue(source)) {
+          if (OMultiValue.getSize(source) > 1)
+            throw new IllegalArgumentException("Only one sourceVertex is allowed");
+          source = OMultiValue.getFirstValue(source);
+        }
+        ctx.sourceVertex = graph.getVertex(OSQLHelper.getValue(source, record, iContext));
 
-      if (ctx.sourceVertex.equals(ctx.destinationVertex)) {
-        final List<ORID> result = new ArrayList<ORID>(1);
-        result.add(ctx.destinationVertex.getIdentity());
-        return result;
-      }
+        Object dest = iParams[1];
+        if (OMultiValue.isMultiValue(dest)) {
+          if (OMultiValue.getSize(dest) > 1)
+            throw new IllegalArgumentException("Only one destinationVertex is allowed");
+          dest = OMultiValue.getFirstValue(dest);
+        }
+        ctx.destinationVertex = graph.getVertex(OSQLHelper.getValue(dest, record, iContext));
 
-      if (iParams.length > 2 && iParams[2] != null) {
-        ctx.directionLeft = Direction.valueOf(iParams[2].toString().toUpperCase());
-      }
-      if (ctx.directionLeft == Direction.OUT) {
-        ctx.directionRight = Direction.IN;
-      } else if (ctx.directionLeft == Direction.IN) {
-        ctx.directionRight = Direction.OUT;
-      }
-
-      ctx.edgeType = null;
-      if (iParams.length > 3) {
-        ctx.edgeType = iParams[3] == null ? null : "" + iParams[3];
-      }
-      ctx.edgeTypeParam = new String[] { ctx.edgeType };
-
-      ctx.queueLeft.add(ctx.sourceVertex);
-      ctx.leftVisited.add(ctx.sourceVertex.getIdentity());
-
-      ctx.queueRight.add(ctx.destinationVertex);
-      ctx.rightVisited.add(ctx.destinationVertex.getIdentity());
-
-      while (true) {
-        if (ctx.queueLeft.isEmpty() || ctx.queueRight.isEmpty())
-          break;
-
-        if (Thread.interrupted())
-          throw new OCommandExecutionException("The shortestPath() function has been interrupted");
-
-        if( !OCommandExecutorAbstract.checkInterruption(iContext) )
-          break;
-
-        List<ORID> neighborIdentity;
-
-        if (ctx.queueLeft.size() <= ctx.queueRight.size()) {
-          // START EVALUATING FROM LEFT
-          neighborIdentity = walkLeft(ctx);
-          if (neighborIdentity != null)
-            return neighborIdentity;
-
-          if (ctx.queueLeft.isEmpty())
-            break;
-
-          neighborIdentity = walkRight(ctx);
-          if (neighborIdentity != null)
-            return neighborIdentity;
-
-        } else {
-
-          // START EVALUATING FROM RIGHT
-          neighborIdentity = walkRight(ctx);
-          if (neighborIdentity != null)
-            return neighborIdentity;
-
-          if (ctx.queueRight.isEmpty())
-            break;
-
-          neighborIdentity = walkLeft(ctx);
-          if (neighborIdentity != null)
-            return neighborIdentity;
+        if (ctx.sourceVertex.equals(ctx.destinationVertex)) {
+          final List<ORID> result = new ArrayList<ORID>(1);
+          result.add(ctx.destinationVertex.getIdentity());
+          return result;
         }
 
-      }
-      return new ArrayList<ORID>();
+        if (iParams.length > 2 && iParams[2] != null) {
+          ctx.directionLeft = Direction.valueOf(iParams[2].toString().toUpperCase());
+        }
+        if (ctx.directionLeft == Direction.OUT) {
+          ctx.directionRight = Direction.IN;
+        } else if (ctx.directionLeft == Direction.IN) {
+          ctx.directionRight = Direction.OUT;
+        }
 
-    } finally {
-      if (shutdownFlag.getValue())
-        graph.shutdown(false);
-      ODatabaseRecordThreadLocal.INSTANCE.set(curDb);
-    }
+        ctx.edgeType = null;
+        if (iParams.length > 3) {
+          ctx.edgeType = iParams[3] == null ? null : "" + iParams[3];
+        }
+        ctx.edgeTypeParam = new String[] { ctx.edgeType };
+
+        ctx.queueLeft.add(ctx.sourceVertex);
+        ctx.leftVisited.add(ctx.sourceVertex.getIdentity());
+
+        ctx.queueRight.add(ctx.destinationVertex);
+        ctx.rightVisited.add(ctx.destinationVertex.getIdentity());
+
+        while (true) {
+          if (ctx.queueLeft.isEmpty() || ctx.queueRight.isEmpty())
+            break;
+
+          if (Thread.interrupted())
+            throw new OCommandExecutionException("The shortestPath() function has been interrupted");
+
+          if (!OCommandExecutorAbstract.checkInterruption(iContext))
+            break;
+
+          List<ORID> neighborIdentity;
+
+          if (ctx.queueLeft.size() <= ctx.queueRight.size()) {
+            // START EVALUATING FROM LEFT
+            neighborIdentity = walkLeft(ctx);
+            if (neighborIdentity != null)
+              return neighborIdentity;
+
+            if (ctx.queueLeft.isEmpty())
+              break;
+
+            neighborIdentity = walkRight(ctx);
+            if (neighborIdentity != null)
+              return neighborIdentity;
+
+          } else {
+
+            // START EVALUATING FROM RIGHT
+            neighborIdentity = walkRight(ctx);
+            if (neighborIdentity != null)
+              return neighborIdentity;
+
+            if (ctx.queueRight.isEmpty())
+              break;
+
+            neighborIdentity = walkLeft(ctx);
+            if (neighborIdentity != null)
+              return neighborIdentity;
+          }
+
+        }
+        return new ArrayList<ORID>();
+      }
+    });
   }
 
   public String getSyntax() {

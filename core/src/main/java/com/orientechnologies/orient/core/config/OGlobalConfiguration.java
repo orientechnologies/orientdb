@@ -406,6 +406,15 @@ public enum OGlobalConfiguration {
       "If total number of returned records in a query is major than this threshold a warning is given. Use 0 to disable it",
       Long.class, 10000),
 
+  // GRAPH
+      SQL_GRAPH_CONSISTENCY_MODE("sql.graphConsistencyMode",
+          "Consistency mode for graphs. It can be 'tx' (default), 'notx_sync_repair' and 'notx_async_repair'. "
+              + "'tx' uses transactions to maintain consistency. Instead both 'notx_sync_repair' and 'notx_async_repair' do not use transactions, "
+              + "and the consistency, in case of JVM crash, is guaranteed by a database repair operation that run at startup. "
+              + "With 'notx_sync_repair' the repair is synchronous, so the database comes online after the repair is ended, while "
+              + "with 'notx_async_repair' the repair is a background process",
+          String.class, "tx"),
+
   /**
    * Maximum size of pool of network channels between client and server. A channel is a TCP/IP connection.
    */
