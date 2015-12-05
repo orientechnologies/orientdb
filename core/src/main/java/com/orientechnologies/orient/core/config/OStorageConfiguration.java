@@ -478,10 +478,7 @@ public class OStorageConfiguration implements OSerializableStream {
         indexEngines.put(name.toLowerCase(getLocaleInstance()), indexEngineData);
       }
     }
-
-    // SET FLAGS
-    strictSQL = "true".equalsIgnoreCase("strictSQL");
-    txRequiredForSQLGraphOperations = "true".equalsIgnoreCase("txRequiredForSQLGraphOperations");
+    
   }
 
   public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
