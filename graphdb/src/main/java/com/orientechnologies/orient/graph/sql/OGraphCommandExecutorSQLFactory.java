@@ -40,6 +40,9 @@ import java.util.Set;
  * @author Luca Garulli
  */
 public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFactory {
+  public enum GRAPH_CONSISTENCY_MODE {
+    TX, NOTX_SYNC_REPAIR, NOTX_ASYNC_REPAIR
+  }
 
   private static final Map<String, Class<? extends OCommandExecutorSQLAbstract>> COMMANDS;
 
@@ -197,29 +200,15 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
     }
   }
 
-  public static <T> T runInConfiguredTxMode(final GraphCallBack<T> callBack) {
+  public static <T> T runWithAnyGraph(final GraphCallBack<T> callBack) {
     final OModifiableBoolean shutdownFlag = new OModifiableBoolean();
     final ODatabaseDocumentInternal curDb = ODatabaseRecordThreadLocal.INSTANCE.get();
-    final boolean txAlreadyBegun = curDb.getTransaction().isActive();
-
-    OrientBaseGraph graph = null;
+    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getAnyGraph(shutdownFlag);
     try {
-      if (isTxRequiredForSQLGraphOperations()) {
-        graph = OGraphCommandExecutorSQLFactory.getGraph(true, shutdownFlag);
-        return runInTx((OrientGraph) graph, callBack);
-      } else {
-        graph = OGraphCommandExecutorSQLFactory.getAnyGraph(shutdownFlag);
-        return callBack.call(graph);
-      }
+      return callBack.call(graph);
     } finally {
-      if (graph != null) {
-        if (!txAlreadyBegun) {
-          graph.commit();
-
-          if (shutdownFlag.getValue())
-            graph.shutdown(false, false);
-        }
-      }
+      if (shutdownFlag.getValue())
+        graph.shutdown(false, false);
 
       ODatabaseRecordThreadLocal.INSTANCE.set(curDb);
     }
@@ -254,10 +243,6 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
     }
   }
 
-  public static boolean isTxRequiredForSQLGraphOperations() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().isTxRequiredForSQLGraphOperations();
-  }
-
   protected static boolean canReuseActiveGraph(final ODatabaseDocument iGraphDatabase,
       final ODatabaseDocument iThreadLocalDatabase) {
     if (iGraphDatabase.getURL().equals(iThreadLocalDatabase.getURL())) {
@@ -267,5 +252,45 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
       return gdbUser == null && tlUser == null || (gdbUser != null && tlUser != null && gdbUser.equals(tlUser));
     }
     return false;
+  }
+
+  public static <T> T runInConfiguredTxMode(final GraphCallBack<T> callBack) {
+    final OModifiableBoolean shutdownFlag = new OModifiableBoolean();
+    final ODatabaseDocumentInternal curDb = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final boolean txAlreadyBegun = curDb.getTransaction().isActive();
+
+    OrientBaseGraph graph = null;
+    try {
+      if (isTxRequiredForSQLGraphOperations()) {
+        graph = getGraph(true, shutdownFlag);
+        return runInTx((OrientGraph) graph, callBack);
+      } else {
+        graph = getAnyGraph(shutdownFlag);
+        return callBack.call(graph);
+      }
+    } finally {
+      if (graph != null) {
+        if (!txAlreadyBegun) {
+          graph.commit();
+
+          if (shutdownFlag.getValue())
+            graph.shutdown(false, false);
+        }
+      }
+
+      ODatabaseRecordThreadLocal.INSTANCE.set(curDb);
+    }
+  }
+
+  public static boolean isTxRequiredForSQLGraphOperations() {
+    return ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().isTxRequiredForSQLGraphOperations();
+  }
+
+  public static GRAPH_CONSISTENCY_MODE getConsistencyMode(final OrientBaseGraph graph) {
+    final String consistencyMode = graph.getRawGraph().getStorage().getConfiguration().getProperty("graphConsistencyMode");
+    if (consistencyMode == null)
+      return GRAPH_CONSISTENCY_MODE.TX;
+
+    return GRAPH_CONSISTENCY_MODE.valueOf(consistencyMode);
   }
 }

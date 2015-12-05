@@ -272,7 +272,7 @@ public class OStorageConfiguration implements OSerializableStream {
     if (version > 0)
       indexMgrRecordId = read(values[index++]);
     else
-      // @COMPATIBILTY
+      // @COMPATIBILITY
       indexMgrRecordId = null;
 
     localeLanguage = read(values[index++]);
@@ -280,7 +280,7 @@ public class OStorageConfiguration implements OSerializableStream {
     dateFormat = read(values[index++]);
     dateTimeFormat = read(values[index++]);
 
-    // @COMPATIBILTY 1.2.0
+    // @COMPATIBILITY 1.2.0
     if (version >= 4) {
       timeZone = TimeZone.getTimeZone(read(values[index++]));
       charset = read(values[index++]);
@@ -292,7 +292,7 @@ public class OStorageConfiguration implements OSerializableStream {
     else
       conflictStrategy = conflictStrategyFactory.getDefaultStrategy();
 
-    // @COMPATIBILTY
+    // @COMPATIBILITY
     if (version > 1)
       index = phySegmentFromStream(values, index, fileTemplate);
 
@@ -478,10 +478,6 @@ public class OStorageConfiguration implements OSerializableStream {
         indexEngines.put(name.toLowerCase(getLocaleInstance()), indexEngineData);
       }
     }
-
-    // SET FLAGS
-    strictSQL = "true".equalsIgnoreCase("strictSQL");
-    txRequiredForSQLGraphOperations = "true".equalsIgnoreCase("txRequiredForSQLGraphOperations");
   }
 
   public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {

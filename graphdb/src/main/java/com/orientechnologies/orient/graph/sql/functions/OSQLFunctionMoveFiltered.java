@@ -21,11 +21,8 @@ package com.orientechnologies.orient.graph.sql.functions;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
-import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionFiltered;
@@ -35,9 +32,9 @@ import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 /**
  * @author Luigi Dell'Aquila
  */
-public abstract class OSQLFunctionMoveFiltered extends OSQLFunctionMove implements OSQLFunctionFiltered{
+public abstract class OSQLFunctionMoveFiltered extends OSQLFunctionMove implements OSQLFunctionFiltered {
 
-  protected static int                        supernodeThreshold = 1000; //move to some configuration
+  protected static int supernodeThreshold = 1000; // move to some configuration
 
   public OSQLFunctionMoveFiltered() {
     super(NAME, 1, 2);
@@ -47,36 +44,32 @@ public abstract class OSQLFunctionMoveFiltered extends OSQLFunctionMove implemen
     super(iName, iMin, iMax);
   }
 
+  @Override
+  public Object execute(final Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult,
+      final Object[] iParameters, final Iterable<OIdentifiable> iPossibleResults, final OCommandContext iContext) {
+    return OGraphCommandExecutorSQLFactory.runWithAnyGraph(new OGraphCommandExecutorSQLFactory.GraphCallBack<Object>() {
+      @Override
+      public Object call(final OrientBaseGraph graph) {
+        final String[] labels;
+        if (iParameters != null && iParameters.length > 0 && iParameters[0] != null)
+          labels = OMultiValue.array(iParameters, String.class, new OCallable<Object, Object>() {
 
-  @Override public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iParameters,
-      final Iterable<OIdentifiable> iPossibleResults, OCommandContext iContext) {
-    final OModifiableBoolean shutdownFlag = new OModifiableBoolean();
-    ODatabaseDocumentInternal curDb = ODatabaseRecordThreadLocal.INSTANCE.get();
-    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getAnyGraph(shutdownFlag);
-    try {
-      final String[] labels;
-      if (iParameters != null && iParameters.length > 0 && iParameters[0] != null)
-        labels = OMultiValue.array(iParameters, String.class, new OCallable<Object, Object>() {
+            @Override
+            public Object call(final Object iArgument) {
+              return OIOUtils.getStringContent(iArgument);
+            }
+          });
+        else
+          labels = null;
 
+        return OSQLEngine.foreachRecord(new OCallable<Object, OIdentifiable>() {
           @Override
-          public Object call(final Object iArgument) {
-            return OIOUtils.getStringContent(iArgument);
+          public Object call(final OIdentifiable iArgument) {
+            return move(graph, iArgument, labels, iPossibleResults);
           }
-        });
-      else
-        labels = null;
-
-      return OSQLEngine.foreachRecord(new OCallable<Object, OIdentifiable>() {
-        @Override
-        public Object call(final OIdentifiable iArgument) {
-          return move(graph, iArgument, labels, iPossibleResults);
-        }
-      }, iThis, iContext);
-    } finally {
-      if (shutdownFlag.getValue())
-        graph.shutdown(false);
-      ODatabaseRecordThreadLocal.INSTANCE.set(curDb);
-    }
+        }, iThis, iContext);
+      }
+    });
   }
 
   protected abstract Object move(OrientBaseGraph graph, OIdentifiable iArgument, String[] labels,

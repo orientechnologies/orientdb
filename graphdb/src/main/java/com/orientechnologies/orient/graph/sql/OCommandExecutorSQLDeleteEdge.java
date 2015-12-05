@@ -190,7 +190,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
         return this;
       } finally {
         if (shutdownFlag.getValue())
-          graph.shutdown(false);
+          graph.shutdown(false, false);
         ODatabaseRecordThreadLocal.INSTANCE.set(curDb);
       }
     } finally {
@@ -397,7 +397,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
         g.commit();
 
         if (shutdownFlag.getValue())
-          g.shutdown(false);
+          g.shutdown(false, false);
       }
     }
   }

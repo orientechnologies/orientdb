@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSetAware;
 import com.orientechnologies.orient.core.sql.OCommandParameters;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
@@ -117,9 +116,10 @@ public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware
     if (clazz == null)
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
-    return OGraphCommandExecutorSQLFactory.runInConfiguredTxMode(new OGraphCommandExecutorSQLFactory.GraphCallBack<ODocument>() {
+    // CREATE VERTEX DOES NOT HAVE TO BE IN TX
+    return OGraphCommandExecutorSQLFactory.runWithAnyGraph(new OGraphCommandExecutorSQLFactory.GraphCallBack<Object>() {
       @Override
-      public ODocument call(OrientBaseGraph graph) {
+      public Object call(final OrientBaseGraph graph) {
         final OrientVertex vertex = graph.addTemporaryVertex(clazz.getName());
 
         if (fields != null)
