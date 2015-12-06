@@ -751,13 +751,13 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
     final OrientBaseGraph graph = getGraph();
 
     if (checkDeletedInTx())
-      throw new ORecordNotFoundException("The vertex " + getIdentity() + " has been deleted");
+      graph.throwRecordNotFoundException("The vertex " + getIdentity() + " has been deleted");
 
     final ORID oldIdentity = getIdentity().copy();
 
     final ORecord oldRecord = oldIdentity.getRecord();
     if (oldRecord == null)
-      throw new ORecordNotFoundException("The vertex " + getIdentity() + " has been deleted");
+      graph.throwRecordNotFoundException("The vertex " + getIdentity() + " has been deleted");
 
     if (!graph.getRawGraph().getTransaction().isActive())
       throw new IllegalStateException("Move vertex requires an active transaction to be executed in safe manner");

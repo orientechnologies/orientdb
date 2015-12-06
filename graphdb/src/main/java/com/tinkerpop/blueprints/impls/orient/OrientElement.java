@@ -104,9 +104,13 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     graph.autoStartTransaction();
 
     if (checkDeletedInTx())
-      throw new ORecordNotFoundException("The graph element with id '" + getIdentity() + "' not found");
+      graph.throwRecordNotFoundException("The graph element with id '" + getIdentity() + "' not found");
 
-    getRecord().load();
+    try {
+      getRecord().load();
+    } catch (ORecordNotFoundException e) {
+      graph.throwRecordNotFoundException(e.getMessage());
+    }
     getRecord().delete();
   }
 
@@ -155,7 +159,8 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    */
   public <T extends OrientElement> T setProperties(final Object... fields) {
     if (checkDeletedInTx())
-      throw new ORecordNotFoundException("The graph element " + getIdentity() + " has been deleted");
+      graph.throwRecordNotFoundException("The graph element " + getIdentity() + " has been deleted");
+
     setPropertiesInternal(fields);
     save();
     return (T) this;
@@ -186,7 +191,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
   @Override
   public void setProperty(final String key, final Object value) {
     if (checkDeletedInTx())
-      throw new ORecordNotFoundException("The graph element " + getIdentity() + " has been deleted");
+      graph.throwRecordNotFoundException("The graph element " + getIdentity() + " has been deleted");
 
     validateProperty(this, key, value);
     final OrientBaseGraph graph = getGraph();
@@ -211,7 +216,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    */
   public void setProperty(final String key, final Object value, final OType iType) {
     if (checkDeletedInTx())
-      throw new ORecordNotFoundException("The graph element " + getIdentity() + " has been deleted");
+      graph.throwRecordNotFoundException("The graph element " + getIdentity() + " has been deleted");
 
     validateProperty(this, key, value);
 

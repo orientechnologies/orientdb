@@ -54,6 +54,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OCompositeKey;
@@ -876,7 +877,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * @param iValue
    *          Field value
    * @return Vertex instance if found, otherwise null
-   * @see #getVertices(String,Object)
+   * @see #getVertices(String, Object)
    */
   @Deprecated
   public Vertex getVertexByKey(final String iKey, Object iValue) {
@@ -1777,6 +1778,13 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       }
     }
     return iValue;
+  }
+
+  void throwRecordNotFoundException(final String message) {
+    if (settings.isStandardExceptions())
+      throw new IllegalStateException(message);
+    else
+      throw new ORecordNotFoundException(message);
   }
 
   protected void setCurrentGraphInThreadLocal() {
