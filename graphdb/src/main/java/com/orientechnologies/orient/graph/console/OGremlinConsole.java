@@ -28,7 +28,9 @@ import com.orientechnologies.orient.graph.gremlin.OCommandGremlin;
 import com.orientechnologies.orient.graph.gremlin.OGremlinHelper;
 import com.orientechnologies.orient.graph.migration.OGraphMigration;
 import com.tinkerpop.blueprints.impls.orient.OBonsaiTreeRepair;
+import com.tinkerpop.blueprints.impls.orient.OGraphRepair;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 
 import java.io.IOException;
 import java.util.List;
@@ -73,7 +75,8 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
   }
 
   @ConsoleCommand(splitInWords = false, description = "Execute a GREMLIN script")
-  public void gremlin(@ConsoleParameter(name = "script-text", description = "The script text to execute") final String iScriptText) {
+  public void gremlin(
+      @ConsoleParameter(name = "script-text", description = "The script text to execute") final String iScriptText) {
     checkForDatabase();
 
     if (iScriptText == null || iScriptText.length() == 0)
@@ -131,15 +134,32 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
   public void repairDatabase(@ConsoleParameter(name = "options", description = "Options: -v", optional = true) String iOptions)
       throws IOException {
     checkForDatabase();
-    boolean fix_ridbags = iOptions != null && iOptions.contains("--fix-ridbags");
-    if (!fix_ridbags)
-      super.repairDatabase(iOptions);
-    else {
-      if (!currentDatabase.getURL().startsWith("plocal")) {
-        message("\n fix-ridbags can be run only on plocal connection \n");
-        return;
-      }
 
+    final boolean fix_graph = iOptions == null || iOptions.contains("--fix-graph");
+    if (fix_graph) {
+      // REPAIR GRAPH
+      new OGraphRepair().repair(new OrientGraphNoTx(currentDatabase), this);
+    }
+
+    final boolean fix_links = iOptions == null || iOptions.contains("--fix-links");
+    if (fix_links) {
+      // REPAIR DATABASE AT LOW LEVEL
+      super.repairDatabase(iOptions);
+    }
+
+    if (!currentDatabase.getURL().startsWith("plocal")) {
+      message("\n fix-bonsai can be run only on plocal connection \n");
+      return;
+    }
+
+    final boolean fix_ridbags = iOptions == null || iOptions.contains("--fix-ridbags");
+    if (fix_ridbags) {
+      OBonsaiTreeRepair repairer = new OBonsaiTreeRepair();
+      repairer.repairDatabaseRidbags(currentDatabase, this);
+    }
+
+    final boolean fix_bonsai = iOptions == null || iOptions.contains("--fix-bonsai");
+    if (fix_bonsai) {
       OBonsaiTreeRepair repairer = new OBonsaiTreeRepair();
       repairer.repairDatabaseRidbags(currentDatabase, this);
     }

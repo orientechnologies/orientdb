@@ -216,7 +216,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
 
   /**
    * Sets default serializer. The default serializer is common for all database instances.
-   * 
+   *
    * @param iDefaultSerializer
    *          new default serializer value
    */

@@ -22,6 +22,7 @@ package com.orientechnologies.common.log;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -38,16 +39,16 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class OLogManager {
-  private static final String                 DEFAULT_LOG                  = "com.orientechnologies";
-  private static final String                 ENV_INSTALL_CUSTOM_FORMATTER = "orientdb.installCustomFormatter";
-  private static final OLogManager            instance                     = new OLogManager();
-  private boolean                             debug                        = true;
-  private boolean                             info                         = true;
-  private boolean                             warn                         = true;
-  private boolean                             error                        = true;
-  private Level                               minimumLevel                 = Level.SEVERE;
+  private static final String      DEFAULT_LOG                  = "com.orientechnologies";
+  private static final String      ENV_INSTALL_CUSTOM_FORMATTER = "orientdb.installCustomFormatter";
+  private static final OLogManager instance                     = new OLogManager();
+  private boolean                  debug                        = true;
+  private boolean                  info                         = true;
+  private boolean                  warn                         = true;
+  private boolean                  error                        = true;
+  private Level                    minimumLevel                 = Level.SEVERE;
 
-  private final ConcurrentMap<String, Logger> loggersCache                 = new ConcurrentHashMap<String, Logger>();
+  private final ConcurrentMap<String, Logger> loggersCache = new ConcurrentHashMap<String, Logger>();
 
   protected OLogManager() {
   }
@@ -57,8 +58,8 @@ public class OLogManager {
   }
 
   public static void installCustomFormatter() {
-    final boolean installCustomFormatter = Boolean.parseBoolean(OSystemVariableResolver.resolveSystemVariables("${"
-        + ENV_INSTALL_CUSTOM_FORMATTER + "}", "true"));
+    final boolean installCustomFormatter = Boolean
+        .parseBoolean(OSystemVariableResolver.resolveSystemVariables("${" + ENV_INSTALL_CUSTOM_FORMATTER + "}", "true"));
 
     if (!installCustomFormatter)
       return;
@@ -94,8 +95,8 @@ public class OLogManager {
       final Object... iAdditionalArgs) {
     if (iMessage != null) {
       try {
-        final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE != null ? ODatabaseRecordThreadLocal.INSTANCE
-            .getIfDefined() : null;
+        final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE != null
+            ? ODatabaseRecordThreadLocal.INSTANCE.getIfDefined() : null;
         if (db != null && db.getStorage() != null && db.getStorage() instanceof OAbstractPaginatedStorage) {
           final String dbName = db.getStorage().getName();
           if (dbName != null)
@@ -361,5 +362,14 @@ public class OLogManager {
   public void flush() {
     for (Handler h : Logger.getLogger(Logger.GLOBAL_LOGGER_NAME).getHandlers())
       h.flush();
+  }
+
+  public OCommandOutputListener getCommandOutputListener(final Object iThis, final Level iLevel) {
+    return new OCommandOutputListener() {
+      @Override
+      public void onMessage(String iText) {
+        log(iThis, iLevel, iText, null);
+      }
+    };
   }
 }

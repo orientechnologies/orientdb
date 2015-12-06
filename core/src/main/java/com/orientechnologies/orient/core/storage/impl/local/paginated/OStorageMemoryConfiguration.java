@@ -48,7 +48,7 @@ public class OStorageMemoryConfiguration extends OStorageConfiguration {
     try {
       fromStream(serializedContent);
     } catch (Exception e) {
-      throw new OSerializationException("Cannot load database's configuration. The database seems to be corrupted.", e);
+      throw new OSerializationException("Cannot load database's configuration. The database seems corrupted", e);
     }
     return this;
   }

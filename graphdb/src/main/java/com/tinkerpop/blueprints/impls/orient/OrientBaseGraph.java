@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.traverse.OTraverse;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
@@ -53,6 +54,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageRecoverListener;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.GraphQuery;
@@ -75,13 +77,14 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
 
 /**
  * A Blueprints implementation of the graph database OrientDB (http://www.orientechnologies.com)
  *
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
-public abstract class OrientBaseGraph extends OrientConfigurableGraph implements OrientExtendedGraph {
+public abstract class OrientBaseGraph extends OrientConfigurableGraph implements OrientExtendedGraph, OStorageRecoverListener {
   public static final String                                  CONNECTION_OUT      = "out";
   public static final String                                  CONNECTION_IN       = "in";
   public static final String                                  CLASS_PREFIX        = "class:";
@@ -278,6 +281,29 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     if (ag != null)
       ag.remove();
 
+  }
+
+  @Override
+  public void onStorageRecover() {
+    final String sqlGraphConsistencyMode = OGlobalConfiguration.SQL_GRAPH_CONSISTENCY_MODE.getValueAsString();
+
+    if ("notx_sync_repair".equalsIgnoreCase(sqlGraphConsistencyMode)) {
+      // WAIT FOR REPAIR TO COMPLETE
+
+      new OGraphRepair().repair(this, OLogManager.instance().getCommandOutputListener(this, Level.INFO));
+
+    } else if ("notx_async_repair".equalsIgnoreCase(sqlGraphConsistencyMode)) {
+      // RUNNING REPAIR IN BACKGROUND
+
+      final OrientBaseGraph g = this;
+
+      new Thread(new Runnable() {
+        @Override
+        public void run() {
+          new OGraphRepair().repair(g, OLogManager.instance().getCommandOutputListener(this, Level.INFO));
+        }
+      });
+    }
   }
 
   /**
@@ -1853,17 +1879,21 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
 
     if (pool == null) {
       database = new ODatabaseDocumentTx(url);
+
+      if (database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage)
+        ((OAbstractPaginatedStorage) database.getStorage().getUnderlying()).registerRecoverListener(this);
+
       if (url.startsWith("remote:") || database.exists()) {
         if (database.isClosed())
           database.open(username, password);
-
-        // LOAD THE INDEX CONFIGURATION FROM INTO THE DICTIONARY
-        // final ODocument indexConfiguration =
-        // database.getMetadata().getIndexManager().getConfiguration();
       } else
         database.create();
-    } else
+    } else {
       database = pool.acquire();
+
+      if (database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage)
+        ((OAbstractPaginatedStorage) database.getStorage().getUnderlying()).registerRecoverListener(this);
+    }
 
     makeActive();
     putInInitializationStack();
