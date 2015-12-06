@@ -30,29 +30,30 @@ import com.orientechnologies.orient.core.intent.OIntent;
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
 public abstract class OrientConfigurableGraph {
-  protected Settings             settings                                         = new Settings();
+  protected Settings settings = new Settings();
 
-  protected static final boolean USE_LIGHTWEIGHT_EDGES_DEFAULT                    = false;
-  protected final boolean        USE_CLASS_FOR_EDGE_LABEL_DEFAULT                 = true;
-  protected final boolean        USE_CLASS_FOR_VERTEX_LABEL_DEFAULT               = true;
-  protected final boolean        KEEP_IN_MEMORY_REFERENCES_DEFAULT                = false;
-  protected final boolean        USE_VERTEX_FIELDS_FOR_EDGE_LABELS                = true;
-  protected final boolean        SAVE_ORIGINAL_IDS_DEFAULT                        = false;
-  protected final boolean        STANDARD_ELEMENT_CONSTRAINTS_DEFAULT             = true;
-  protected final boolean        WARN_ON_FORCE_CLOSING_TX_DEFAULT                 = true;
-  protected final boolean        AUTO_SCALE_EDGE_TYPE_DEFAULT                     = false;
-  protected final boolean        USE_LOG_DEFAULT                                  = true;
-  protected final int            EDGE_CONTAINER_EMBEDDED_2_TREE_THRESHOLD_DEFAULT = -1;
-  protected final int            EDGE_CONTAINER_TREE_2_EMBEDDED_THRESHOLD_DEFAULT = -1;
-  protected final THREAD_MODE    THREAD_MODE_DEFAULT                              = THREAD_MODE.AUTOSET_IFNULL;
-  protected final boolean        AUTO_START_TX_DEFAULT                            = true;
-  protected final boolean        REQUIRE_TRANSACTION_DEFAULT                      = false;
+  protected static final boolean     USE_LIGHTWEIGHT_EDGES_DEFAULT                    = false;
+  protected static final boolean     USE_CLASS_FOR_EDGE_LABEL_DEFAULT                 = true;
+  protected static final boolean     USE_CLASS_FOR_VERTEX_LABEL_DEFAULT               = true;
+  protected static final boolean     KEEP_IN_MEMORY_REFERENCES_DEFAULT                = false;
+  protected static final boolean     USE_VERTEX_FIELDS_FOR_EDGE_LABELS                = true;
+  protected static final boolean     SAVE_ORIGINAL_IDS_DEFAULT                        = false;
+  protected static final boolean     STANDARD_ELEMENT_CONSTRAINTS_DEFAULT             = true;
+  protected static final boolean     WARN_ON_FORCE_CLOSING_TX_DEFAULT                 = true;
+  protected static final boolean     AUTO_SCALE_EDGE_TYPE_DEFAULT                     = false;
+  protected static final boolean     USE_LOG_DEFAULT                                  = true;
+  protected static final int         EDGE_CONTAINER_EMBEDDED_2_TREE_THRESHOLD_DEFAULT = -1;
+  protected static final int         EDGE_CONTAINER_TREE_2_EMBEDDED_THRESHOLD_DEFAULT = -1;
+  protected static final THREAD_MODE THREAD_MODE_DEFAULT                              = THREAD_MODE.AUTOSET_IFNULL;
+  protected static final boolean     AUTO_START_TX_DEFAULT                            = true;
+  protected static final boolean     REQUIRE_TRANSACTION_DEFAULT                      = false;
+  protected static final int         STANDARD_MAX_RETRIES                             = 50;
 
   public enum THREAD_MODE {
     MANUAL, AUTOSET_IFNULL, ALWAYS_AUTOSET
   }
 
-  public class Settings {
+  public static class Settings {
 
     private Boolean     useLightweightEdges                 = null;
     private Boolean     useClassForEdgeLabel                = null;
@@ -69,6 +70,7 @@ public abstract class OrientConfigurableGraph {
     private Boolean     autoStartTx                         = null;
     private Boolean     requireTransaction                  = null;
     private Boolean     useLog                              = null;
+    private Integer     maxRetries                          = null;
 
     public Settings copy() {
       final Settings copy = new Settings();
@@ -87,6 +89,7 @@ public abstract class OrientConfigurableGraph {
       copy.autoStartTx = autoStartTx;
       copy.requireTransaction = requireTransaction;
       copy.useLog = useLog;
+      copy.maxRetries = maxRetries;
       return copy;
     }
 
@@ -196,6 +199,23 @@ public abstract class OrientConfigurableGraph {
     public void setUseLog(final boolean useLog) {
       this.useLog = useLog;
 
+    }
+
+    /**
+     * Returns the maximum number of retry in case of auto managed OConcurrentModificationException (like addEdge).
+     */
+    public int getMaxRetries() {
+      if (maxRetries == null) {
+        return STANDARD_MAX_RETRIES;
+      }
+      return maxRetries;
+    }
+
+    /**
+     * Changes the maximum number of retry in case of auto managed OConcurrentModificationException (like addEdge).
+     */
+    public void setMaxRetries(final int maxRetries) {
+      this.maxRetries = maxRetries;
     }
 
     /**
@@ -673,6 +693,20 @@ public abstract class OrientConfigurableGraph {
   public OrientConfigurableGraph setUseLog(final boolean useLog) {
     this.settings.useLog = useLog;
     return this;
+  }
+
+  /**
+   * Returns the maximum number of retries in case of auto managed OConcurrentModificationException (like addEdge).
+   */
+  public int getMaxRetries() {
+    return this.settings.getMaxRetries();
+  }
+
+  /**
+   * Changes the maximum number of retries in case of auto managed OConcurrentModificationException (like addEdge).
+   */
+  public void setMaxRetries(final int maxRetries) {
+    this.settings.setMaxRetries(maxRetries);
   }
 
   /**

@@ -96,8 +96,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    * Removes the Element from the Graph. In case the element is a Vertex, all the incoming and outgoing edges are automatically
    * removed too.
    */
-  @Override
-  public void remove() {
+  void removeRecord() {
     checkIfAttached();
 
     final OrientBaseGraph graph = getGraph();
@@ -105,14 +104,9 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     graph.autoStartTransaction();
 
     if (checkDeletedInTx())
-      throw new IllegalStateException("The elements " + getIdentity() + " has already been deleted");
+      throw new ORecordNotFoundException("The graph element with id '" + getIdentity() + "' not found");
 
-    try {
-      getRecord().load();
-    } catch (ORecordNotFoundException e) {
-      throw new IllegalStateException("The elements " + getIdentity() + " has already been deleted", e);
-    }
-
+    getRecord().load();
     getRecord().delete();
   }
 
@@ -161,7 +155,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    */
   public <T extends OrientElement> T setProperties(final Object... fields) {
     if (checkDeletedInTx())
-      throw new IllegalStateException("The vertex " + getIdentity() + " has been deleted");
+      throw new ORecordNotFoundException("The graph element " + getIdentity() + " has been deleted");
     setPropertiesInternal(fields);
     save();
     return (T) this;
@@ -192,7 +186,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
   @Override
   public void setProperty(final String key, final Object value) {
     if (checkDeletedInTx())
-      throw new IllegalStateException("The vertex " + getIdentity() + " has been deleted");
+      throw new ORecordNotFoundException("The graph element " + getIdentity() + " has been deleted");
 
     validateProperty(this, key, value);
     final OrientBaseGraph graph = getGraph();
@@ -217,7 +211,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    */
   public void setProperty(final String key, final Object value, final OType iType) {
     if (checkDeletedInTx())
-      throw new IllegalStateException("The vertex " + getIdentity() + " has been deleted");
+      throw new ORecordNotFoundException("The graph element " + getIdentity() + " has been deleted");
 
     validateProperty(this, key, value);
 

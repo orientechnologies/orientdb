@@ -257,6 +257,11 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     super.init(configuration);
   }
 
+  abstract OrientEdge addEdge(OrientVertex currentVertex, String label, OrientVertex inVertex, String iClassName,
+      String iClusterName, Object... fields);
+
+  abstract void removeEdge(OrientEdge currentVertex);
+
   public static OrientBaseGraph getActiveGraph() {
     return activeGraph.get();
   }
@@ -687,7 +692,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       inVertex = ((PartitionVertex) inVertex).getBaseVertex();
 
     return ((OrientVertex) outVertex).addEdge(label, (OrientVertex) inVertex, className, clusterName, fields);
-
   }
 
   /**
