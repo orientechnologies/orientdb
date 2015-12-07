@@ -247,7 +247,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
    * (Internal only)
    */
   public static void removeEdges(final ODocument iVertex, final String iFieldName, final OIdentifiable iVertexToRemove,
-      final boolean iAlsoInverse, final boolean useVertexFieldsForEdgeLabels) {
+      final boolean iAlsoInverse, final boolean useVertexFieldsForEdgeLabels, final boolean autoScaleEdgeType) {
     if (iVertex == null)
       return;
 
@@ -266,7 +266,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
       }
 
       if (iAlsoInverse)
-        removeInverseEdge(iVertex, iFieldName, iVertexToRemove, fieldValue, useVertexFieldsForEdgeLabels);
+        removeInverseEdge(iVertex, iFieldName, iVertexToRemove, fieldValue, useVertexFieldsForEdgeLabels, autoScaleEdgeType);
 
       deleteEdgeIfAny((OIdentifiable) fieldValue);
 
@@ -287,7 +287,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
             // FOUND AS VERTEX
             it.remove();
             if (iAlsoInverse)
-              removeInverseEdge(iVertex, iFieldName, iVertexToRemove, curr, useVertexFieldsForEdgeLabels);
+              removeInverseEdge(iVertex, iFieldName, iVertexToRemove, curr, useVertexFieldsForEdgeLabels, autoScaleEdgeType);
             found = true;
             break;
 
@@ -298,7 +298,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
             if (iVertexToRemove.equals(OrientEdge.getConnection(curr, direction.opposite()))) {
               it.remove();
               if (iAlsoInverse)
-                removeInverseEdge(iVertex, iFieldName, iVertexToRemove, curr, useVertexFieldsForEdgeLabels);
+                removeInverseEdge(iVertex, iFieldName, iVertexToRemove, curr, useVertexFieldsForEdgeLabels, autoScaleEdgeType);
               found = true;
               break;
             }
@@ -318,13 +318,13 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
           final OIdentifiable edge = it.next();
 
           if (iAlsoInverse)
-            removeInverseEdge(iVertex, iFieldName, null, edge, useVertexFieldsForEdgeLabels);
+            removeInverseEdge(iVertex, iFieldName, null, edge, useVertexFieldsForEdgeLabels, autoScaleEdgeType);
 
           deleteEdgeIfAny(edge);
         }
       }
 
-      if (bag.isEmpty())
+      if (autoScaleEdgeType && bag.isEmpty())
         // FORCE REMOVAL OF ENTIRE FIELD
         iVertex.removeField(iFieldName);
     } else if (fieldValue instanceof Collection) {
@@ -340,7 +340,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
             // FOUND AS VERTEX
             it.remove();
             if (iAlsoInverse)
-              removeInverseEdge(iVertex, iFieldName, iVertexToRemove, curr, useVertexFieldsForEdgeLabels);
+              removeInverseEdge(iVertex, iFieldName, iVertexToRemove, curr, useVertexFieldsForEdgeLabels, autoScaleEdgeType);
             found = true;
             break;
 
@@ -351,7 +351,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
             if (iVertexToRemove.equals(OrientEdge.getConnection(curr, direction.opposite()))) {
               it.remove();
               if (iAlsoInverse)
-                removeInverseEdge(iVertex, iFieldName, iVertexToRemove, curr, useVertexFieldsForEdgeLabels);
+                removeInverseEdge(iVertex, iFieldName, iVertexToRemove, curr, useVertexFieldsForEdgeLabels, autoScaleEdgeType);
               found = true;
               break;
             }
@@ -369,13 +369,13 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
         // DELETE ALL THE EDGES
         for (final OIdentifiable edge : (Iterable<OIdentifiable>) col) {
           if (iAlsoInverse)
-            removeInverseEdge(iVertex, iFieldName, null, edge, useVertexFieldsForEdgeLabels);
+            removeInverseEdge(iVertex, iFieldName, null, edge, useVertexFieldsForEdgeLabels, autoScaleEdgeType);
 
           deleteEdgeIfAny(edge);
         }
       }
 
-      if (col.isEmpty())
+      if (autoScaleEdgeType && col.isEmpty())
         // FORCE REMOVAL OF ENTIRE FIELD
         iVertex.removeField(iFieldName);
     }
@@ -455,7 +455,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
    * (Internal only)
    */
   private static void removeInverseEdge(final ODocument iVertex, final String iFieldName, final OIdentifiable iVertexToRemove,
-      final Object iFieldValue, final boolean useVertexFieldsForEdgeLabels) {
+      final Object iFieldValue, final boolean useVertexFieldsForEdgeLabels, final boolean autoScaleEdgeType) {
     final ODocument r = ((OIdentifiable) iFieldValue).getRecord();
 
     if (r == null)
@@ -465,7 +465,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
     OImmutableClass immutableClass = ODocumentInternal.getImmutableSchemaClass(r);
     if (immutableClass.isVertexType()) {
       // DIRECT VERTEX
-      removeEdges(r, inverseFieldName, iVertex, false, useVertexFieldsForEdgeLabels);
+      removeEdges(r, inverseFieldName, iVertex, false, useVertexFieldsForEdgeLabels, autoScaleEdgeType);
 
     } else if (immutableClass.isEdgeType()) {
       // EDGE, REMOVE THE EDGE
@@ -476,7 +476,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
         if (iVertexToRemove == null || otherVertex.equals(iVertexToRemove))
           // BIDIRECTIONAL EDGE
           removeEdges((ODocument) otherVertex.getRecord(), inverseFieldName, (OIdentifiable) iFieldValue, false,
-              useVertexFieldsForEdgeLabels);
+              useVertexFieldsForEdgeLabels, autoScaleEdgeType);
 
       } else
         throw new IllegalStateException("Invalid content found in " + iFieldName + " field");
@@ -704,7 +704,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
         // SKIP THIS FIELD
         continue;
 
-      removeEdges(doc, fieldName, null, true, settings.isUseVertexFieldsForEdgeLabels());
+      removeEdges(doc, fieldName, null, true, settings.isUseVertexFieldsForEdgeLabels(), settings.isAutoScaleEdgeType());
     }
 
     super.removeRecord();
