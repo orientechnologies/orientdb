@@ -26,6 +26,11 @@ import java.util.logging.LogRecord;
 
 import static java.util.logging.Level.SEVERE;
 
+/**
+ * Log formatter that uses ANSI code if they are available and enabled.
+ * 
+ * @author Luca Garulli
+ */
 public class OAnsiLogFormatter extends OLogFormatter {
 
   @Override

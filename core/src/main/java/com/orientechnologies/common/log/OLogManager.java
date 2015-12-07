@@ -35,6 +35,11 @@ import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * Centralized Log Manager.
+ * 
+ * @author Luca Garulli
+ */
 public class OLogManager {
   private static final String      DEFAULT_LOG                  = "com.orientechnologies";
   private static final String      ENV_INSTALL_CUSTOM_FORMATTER = "orientdb.installCustomFormatter";

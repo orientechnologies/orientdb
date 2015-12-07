@@ -29,6 +29,12 @@ import java.util.logging.Formatter;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
+/**
+ * Basic Log formatter.
+ *
+ * @author Luca Garulli
+ */
+
 public class OLogFormatter extends Formatter {
 
   protected static final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");
