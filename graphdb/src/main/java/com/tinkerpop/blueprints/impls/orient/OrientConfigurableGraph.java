@@ -33,29 +33,29 @@ import com.orientechnologies.orient.core.intent.OIntent;
 public abstract class OrientConfigurableGraph {
   protected Settings settings = new Settings();
 
-  protected static final boolean USE_LIGHTWEIGHT_EDGES_DEFAULT                    = false;
-  protected final boolean        USE_CLASS_FOR_EDGE_LABEL_DEFAULT                 = true;
-  protected final boolean        USE_CLASS_FOR_VERTEX_LABEL_DEFAULT               = true;
-  protected final boolean        KEEP_IN_MEMORY_REFERENCES_DEFAULT                = false;
-  protected final boolean        USE_VERTEX_FIELDS_FOR_EDGE_LABELS                = true;
-  protected final boolean        SAVE_ORIGINAL_IDS_DEFAULT                        = false;
-  protected final boolean        STANDARD_ELEMENT_CONSTRAINTS_DEFAULT             = true;
-  protected final boolean        WARN_ON_FORCE_CLOSING_TX_DEFAULT                 = true;
-  protected final boolean        AUTO_SCALE_EDGE_TYPE_DEFAULT                     = false;
-  protected final boolean        USE_LOG_DEFAULT                                  = true;
-  protected final int            EDGE_CONTAINER_EMBEDDED_2_TREE_THRESHOLD_DEFAULT = -1;
-  protected final int            EDGE_CONTAINER_TREE_2_EMBEDDED_THRESHOLD_DEFAULT = -1;
-  protected final THREAD_MODE    THREAD_MODE_DEFAULT                              = THREAD_MODE.AUTOSET_IFNULL;
-  protected final boolean        AUTO_START_TX_DEFAULT                            = true;
-  protected final boolean        REQUIRE_TRANSACTION_DEFAULT                      = false;
-  protected final boolean        STANDARD_TX_REQUIRE_FOR_SQL_OPERATIONS           = true;
-  protected final int            STANDARD_MAX_RETRIES                             = 50;
+  protected static final boolean     USE_LIGHTWEIGHT_EDGES_DEFAULT                    = false;
+  protected static final boolean     USE_CLASS_FOR_EDGE_LABEL_DEFAULT                 = true;
+  protected static final boolean     USE_CLASS_FOR_VERTEX_LABEL_DEFAULT               = true;
+  protected static final boolean     KEEP_IN_MEMORY_REFERENCES_DEFAULT                = false;
+  protected static final boolean     USE_VERTEX_FIELDS_FOR_EDGE_LABELS                = true;
+  protected static final boolean     SAVE_ORIGINAL_IDS_DEFAULT                        = false;
+  protected static final boolean     STANDARD_ELEMENT_CONSTRAINTS_DEFAULT             = true;
+  protected static final boolean     WARN_ON_FORCE_CLOSING_TX_DEFAULT                 = true;
+  protected static final boolean     AUTO_SCALE_EDGE_TYPE_DEFAULT                     = false;
+  protected static final boolean     USE_LOG_DEFAULT                                  = true;
+  protected static final int         EDGE_CONTAINER_EMBEDDED_2_TREE_THRESHOLD_DEFAULT = -1;
+  protected static final int         EDGE_CONTAINER_TREE_2_EMBEDDED_THRESHOLD_DEFAULT = -1;
+  protected static final THREAD_MODE THREAD_MODE_DEFAULT                              = THREAD_MODE.AUTOSET_IFNULL;
+  protected static final boolean     AUTO_START_TX_DEFAULT                            = true;
+  protected static final boolean     REQUIRE_TRANSACTION_DEFAULT                      = false;
+  protected static final boolean     STANDARD_TX_REQUIRE_FOR_SQL_OPERATIONS           = true;
+  protected static final int         STANDARD_MAX_RETRIES                             = 50;
 
   public enum THREAD_MODE {
     MANUAL, AUTOSET_IFNULL, ALWAYS_AUTOSET
   }
 
-  public class Settings {
+  public static class Settings {
 
     private Boolean                            useLightweightEdges                 = null;
     private Boolean                            useClassForEdgeLabel                = null;

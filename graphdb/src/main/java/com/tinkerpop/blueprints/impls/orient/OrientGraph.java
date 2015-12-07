@@ -22,9 +22,11 @@ package com.tinkerpop.blueprints.impls.orient;
 
 import org.apache.commons.configuration.Configuration;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.tinkerpop.blueprints.Direction;
@@ -278,10 +280,10 @@ public class OrientGraph extends OrientTransactionalGraph {
   OrientEdge addEdge(final OrientVertex currentVertex, String label, final OrientVertex inVertex, final String iClassName,
       final String iClusterName, final Object... fields) {
     if (currentVertex.checkDeletedInTx())
-      throw new IllegalStateException("The vertex " + currentVertex.getIdentity() + " has been deleted");
+      throw new ORecordNotFoundException("The vertex " + currentVertex.getIdentity() + " has been deleted");
 
     if (inVertex.checkDeletedInTx())
-      throw new IllegalStateException("The vertex " + inVertex.getIdentity() + " has been deleted");
+      throw new ORecordNotFoundException("The vertex " + inVertex.getIdentity() + " has been deleted");
 
     autoStartTransaction();
 
@@ -376,4 +378,56 @@ public class OrientGraph extends OrientTransactionalGraph {
     return edge;
   }
 
+  /**
+   * Removes the Edge from the Graph. Connected vertices aren't removed.
+   */
+  public void removeEdge(final OrientEdge edge) {
+    // OUT VERTEX
+    final OIdentifiable inVertexEdge = edge.vIn != null ? edge.vIn : edge.rawElement;
+
+    final String edgeClassName = OrientBaseGraph.encodeClassName(edge.getLabel());
+
+    final boolean useVertexFieldsForEdgeLabels = settings.isUseVertexFieldsForEdgeLabels();
+
+    final OIdentifiable outVertex = edge.getOutVertex();
+    ODocument outVertexRecord = null;
+    boolean outVertexChanged = false;
+
+    if (outVertex != null) {
+      if (outVertex != null) {
+        outVertexRecord = outVertex.getRecord();
+        final String outFieldName = OrientVertex.getConnectionFieldName(Direction.OUT, edgeClassName, useVertexFieldsForEdgeLabels);
+        outVertexChanged = edge.dropEdgeFromVertex(inVertexEdge, outVertexRecord, outFieldName,
+            outVertexRecord.field(outFieldName));
+      } else
+        OLogManager.instance().debug(this,
+            "Found broken link to outgoing vertex " + outVertex.getIdentity() + " while removing edge " + edge.getId());
+    }
+
+    // IN VERTEX
+    final OIdentifiable outVertexEdge = edge.vOut != null ? edge.vOut : edge.rawElement;
+
+    final OIdentifiable inVertex = edge.getInVertex();
+    ODocument inVertexRecord = null;
+    boolean inVertexChanged = false;
+
+    if (inVertex != null) {
+      inVertexRecord = inVertex.getRecord();
+      if (inVertexRecord != null) {
+        final String inFieldName = OrientVertex.getConnectionFieldName(Direction.IN, edgeClassName, useVertexFieldsForEdgeLabels);
+        inVertexChanged = edge.dropEdgeFromVertex(outVertexEdge, inVertexRecord, inFieldName, inVertexRecord.field(inFieldName));
+      } else
+        OLogManager.instance().debug(this,
+            "Found broken link to incoming vertex " + inVertex.getIdentity() + " while removing edge " + edge.getId());
+    }
+
+    if (outVertexChanged)
+      outVertexRecord.save();
+    if (inVertexChanged)
+      inVertexRecord.save();
+
+    if (edge.rawElement != null)
+      // NON-LIGHTWEIGHT EDGE
+      edge.removeRecord();
+  }
 }

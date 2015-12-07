@@ -19,21 +19,6 @@
  */
 package com.orientechnologies.orient.core.config;
 
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.conflict.ORecordConflictStrategyFactory;
-import com.orientechnologies.orient.core.exception.OSerializationException;
-import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.id.OImmutableRecordId;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.metadata.schema.clusterselection.ORoundRobinClusterSelectionStrategy;
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-import com.orientechnologies.orient.core.serialization.OSerializableStream;
-import com.orientechnologies.orient.core.sql.parser.OStatement;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
-
 import java.io.IOException;
 import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
@@ -48,6 +33,21 @@ import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.conflict.ORecordConflictStrategyFactory;
+import com.orientechnologies.orient.core.exception.OSerializationException;
+import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.id.OImmutableRecordId;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.schema.clusterselection.ORoundRobinClusterSelectionStrategy;
+import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+import com.orientechnologies.orient.core.serialization.OSerializableStream;
+import com.orientechnologies.orient.core.sql.parser.OStatement;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
 /**
  * Versions:
@@ -104,10 +104,10 @@ public class OStorageConfiguration implements OSerializableStream {
   private volatile String                                 recordSerializer;
   private volatile int                                    recordSerializerVersion;
   private volatile boolean                                strictSQL;
-  private volatile boolean                                txRequiredForSQLGraphOperations;
   private volatile Map<String, Object>                    loadProperties;
   private volatile ConcurrentMap<String, IndexEngineData> indexEngines;
   private volatile transient boolean                      validation                    = true;
+  private volatile boolean                                txRequiredForSQLGraphOperations;
 
   public OStorageConfiguration(final OStorage iStorage) {
     storage = iStorage;
@@ -152,6 +152,8 @@ public class OStorageConfiguration implements OSerializableStream {
     validation = OGlobalConfiguration.DB_VALIDATION.getValueAsBoolean();
 
     binaryFormatVersion = CURRENT_BINARY_FORMAT_VERSION;
+
+    txRequiredForSQLGraphOperations = OGlobalConfiguration.SQL_GRAPH_CONSISTENCY_MODE.getValueAsString().equalsIgnoreCase("tx");
   }
 
   public String getConflictStrategy() {
@@ -197,7 +199,7 @@ public class OStorageConfiguration implements OSerializableStream {
     final byte[] record = storage.readRecord(CONFIG_RID, null, false, null).getResult().buffer;
 
     if (record == null)
-      throw new OStorageException("Cannot load database configuration. The database seems to be corrupted");
+      throw new OStorageException("Cannot load database configuration. The database seems corrupted");
 
     fromStream(record);
 
@@ -779,6 +781,10 @@ public class OStorageConfiguration implements OSerializableStream {
     if (OStatement.CUSTOM_STRICT_SQL.equalsIgnoreCase(iName))
       // SET STRICT SQL VARIABLE
       strictSQL = "true".equalsIgnoreCase(iValue);
+
+    if ("txRequiredForSQLGraphOperations".equalsIgnoreCase(iName))
+      // SET TX SQL GRAPH OPERATIONS
+      txRequiredForSQLGraphOperations = "true".equalsIgnoreCase(iValue);
 
     if ("txRequiredForSQLGraphOperations".equalsIgnoreCase(iName))
       // SET TX SQL GRAPH OPERATIONS

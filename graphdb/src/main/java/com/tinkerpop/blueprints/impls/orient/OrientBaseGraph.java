@@ -20,6 +20,21 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+import java.util.logging.Level;
+
+import org.apache.commons.configuration.Configuration;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -29,6 +44,7 @@ import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.traverse.OTraverse;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
@@ -55,6 +71,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageRecoverListener;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.GraphQuery;
@@ -64,26 +81,13 @@ import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
 import com.tinkerpop.blueprints.util.wrappers.partition.PartitionVertex;
-import org.apache.commons.configuration.Configuration;
-
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Deque;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
 
 /**
  * A Blueprints implementation of the graph database OrientDB (http://www.orientechnologies.com)
  *
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
-public abstract class OrientBaseGraph extends OrientConfigurableGraph implements OrientExtendedGraph {
+public abstract class OrientBaseGraph extends OrientConfigurableGraph implements OrientExtendedGraph, OStorageRecoverListener {
   public static final String                                  CONNECTION_OUT      = "out";
   public static final String                                  CONNECTION_IN       = "in";
   public static final String                                  CLASS_PREFIX        = "class:";
@@ -258,12 +262,14 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     super.init(configuration);
   }
 
+  abstract OrientEdge addEdge(OrientVertex currentVertex, String label, OrientVertex inVertex, String iClassName,
+      String iClusterName, Object... fields);
+
+  abstract void removeEdge(OrientEdge currentVertex);
+
   public static OrientBaseGraph getActiveGraph() {
     return activeGraph.get();
   }
-
-  abstract OrientEdge addEdge(final OrientVertex currentVertex, String label, final OrientVertex inVertex, final String iClassName,
-      final String iClusterName, final Object... fields);
 
   /**
    * Internal use only.
@@ -277,6 +283,29 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     if (ag != null)
       ag.remove();
 
+  }
+
+  @Override
+  public void onStorageRecover() {
+    final String sqlGraphConsistencyMode = OGlobalConfiguration.SQL_GRAPH_CONSISTENCY_MODE.getValueAsString();
+
+    if ("notx_sync_repair".equalsIgnoreCase(sqlGraphConsistencyMode)) {
+      // WAIT FOR REPAIR TO COMPLETE
+
+      new OGraphRepair().repair(this, OLogManager.instance().getCommandOutputListener(this, Level.INFO));
+
+    } else if ("notx_async_repair".equalsIgnoreCase(sqlGraphConsistencyMode)) {
+      // RUNNING REPAIR IN BACKGROUND
+
+      final OrientBaseGraph g = this;
+
+      new Thread(new Runnable() {
+        @Override
+        public void run() {
+          new OGraphRepair().repair(g, OLogManager.instance().getCommandOutputListener(this, Level.INFO));
+        }
+      });
+    }
   }
 
   /**
@@ -649,7 +678,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       inVertex = ((PartitionVertex) inVertex).getBaseVertex();
 
     return ((OrientVertex) outVertex).addEdge(label, (OrientVertex) inVertex, className, clusterName, fields);
-
   }
 
   /**
@@ -1819,14 +1847,20 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       final OStorageRemote.CONNECTION_STRATEGY connMode = settings.getConnectionStrategy();
       database.setProperty(OStorageRemote.PARAM_CONNECTION_STRATEGY, connMode);
 
+      if (database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage)
+        ((OAbstractPaginatedStorage) database.getStorage().getUnderlying()).registerRecoverListener(this);
+
       if (url.startsWith("remote:") || database.exists()) {
         if (database.isClosed())
           database.open(username, password);
-
       } else
         database.create();
-    } else
+    } else {
       database = pool.acquire();
+
+      if (database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage)
+        ((OAbstractPaginatedStorage) database.getStorage().getUnderlying()).registerRecoverListener(this);
+    }
 
     makeActive();
     putInInitializationStack();

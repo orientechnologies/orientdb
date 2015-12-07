@@ -15,6 +15,11 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -28,11 +33,6 @@ import com.orientechnologies.orient.core.sql.OCommandExecutorSQLFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
-
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Graph related command operator executor factory. It's auto-discovered.
@@ -243,17 +243,6 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
     }
   }
 
-  protected static boolean canReuseActiveGraph(final ODatabaseDocument iGraphDatabase,
-      final ODatabaseDocument iThreadLocalDatabase) {
-    if (iGraphDatabase.getURL().equals(iThreadLocalDatabase.getURL())) {
-      final OSecurityUser gdbUser = iGraphDatabase.getUser();
-      final OSecurityUser tlUser = iThreadLocalDatabase.getUser();
-
-      return gdbUser == null && tlUser == null || (gdbUser != null && tlUser != null && gdbUser.equals(tlUser));
-    }
-    return false;
-  }
-
   public static <T> T runInConfiguredTxMode(final GraphCallBack<T> callBack) {
     final OModifiableBoolean shutdownFlag = new OModifiableBoolean();
     final ODatabaseDocumentInternal curDb = ODatabaseRecordThreadLocal.INSTANCE.get();
@@ -262,7 +251,7 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
     OrientBaseGraph graph = null;
     try {
       if (isTxRequiredForSQLGraphOperations()) {
-        graph = getGraph(true, shutdownFlag);
+        graph = OGraphCommandExecutorSQLFactory.getGraph(true, shutdownFlag);
         return runInTx((OrientGraph) graph, callBack);
       } else {
         graph = getAnyGraph(shutdownFlag);
@@ -292,5 +281,16 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
       return GRAPH_CONSISTENCY_MODE.TX;
 
     return GRAPH_CONSISTENCY_MODE.valueOf(consistencyMode);
+  }
+
+  protected static boolean canReuseActiveGraph(final ODatabaseDocument iGraphDatabase,
+      final ODatabaseDocument iThreadLocalDatabase) {
+    if (iGraphDatabase.getURL().equals(iThreadLocalDatabase.getURL())) {
+      final OSecurityUser gdbUser = iGraphDatabase.getUser();
+      final OSecurityUser tlUser = iThreadLocalDatabase.getUser();
+
+      return gdbUser == null && tlUser == null || (gdbUser != null && tlUser != null && gdbUser.equals(tlUser));
+    }
+    return false;
   }
 }

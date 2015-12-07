@@ -1,21 +1,5 @@
 package com.orientechnologies.orient.graph.blueprints;
 
-import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
-import com.tinkerpop.blueprints.Direction;
-import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
-import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -32,6 +16,27 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.junit.Assert;
+import org.junit.Test;
+
+import com.orientechnologies.common.collection.OMultiCollectionIterator;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
+import com.tinkerpop.blueprints.Direction;
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
+
 public class BlueprintsConcurrentAddEdgeTestNoTx {
   protected static final int    VERTEXES_COUNT = 1000;
   protected static final int    EDGES_COUNT    = 5 * VERTEXES_COUNT;
@@ -42,12 +47,19 @@ public class BlueprintsConcurrentAddEdgeTestNoTx {
   protected final List<TestVertex>                          vertexes         = new ArrayList<TestVertex>();
   protected final List<TestEdge>                            edges            = new ArrayList<TestEdge>();
 
-  protected AtomicInteger  indexCollisions   = new AtomicInteger();
-  protected AtomicInteger  versionCollisions = new AtomicInteger();
-  protected CountDownLatch latch             = new CountDownLatch(1);
-  protected final Random   random            = new Random();
+  protected AtomicInteger  indexCollisionsCreate   = new AtomicInteger();
+  protected AtomicInteger  versionCollisionsCreate = new AtomicInteger();
+  protected CountDownLatch latchCreate             = new CountDownLatch(1);
+  protected final Random   random                  = new Random();
+
+  protected CountDownLatch latchDelete             = new CountDownLatch(1);
+  protected AtomicInteger  versionCollisionsDelete = new AtomicInteger();
+
+  protected long  beginTime      = 0;
+  private boolean printTempStats = false;
 
   protected OrientBaseGraph getGraph() {
+    OGlobalConfiguration.SQL_GRAPH_CONSISTENCY_MODE.setValue("notx_sync_repair");
     return new OrientGraphNoTx(URL);
   }
 
@@ -60,8 +72,16 @@ public class BlueprintsConcurrentAddEdgeTestNoTx {
     generateEdges();
     initGraph();
 
-    addEdgesConcurrently();
-    assertGraph();
+    System.out.println("Start modifying graph concurrently...");
+    modifyGraphConcurrently();
+    System.out.println("Checking the graph...");
+    assertCreatedGraph();
+
+    System.out.println("Start deleting graph concurrently...");
+    deleteGraphConcurrently();
+    System.out.println("Checking the graph...");
+    assertDeletedGraph();
+    System.out.println("Finished.");
 
     graph = getGraph();
     graph.drop();
@@ -113,26 +133,45 @@ public class BlueprintsConcurrentAddEdgeTestNoTx {
     graph.shutdown();
   }
 
-  private void addEdgesConcurrently() throws Exception {
+  private void modifyGraphConcurrently() throws Exception {
     ExecutorService executorService = Executors.newCachedThreadPool();
 
-    final long beginTime = System.currentTimeMillis();
+    beginTime = System.currentTimeMillis();
 
     List<Future<Void>> futures = new ArrayList<Future<Void>>();
     for (int i = 0; i < THREADS; i++)
       futures.add(executorService.submit(new ConcurrentGraphCreator()));
 
-    latch.countDown();
+    latchCreate.countDown();
 
     for (Future<Void> future : futures)
       future.get();
 
-    System.out.println("Graph was created used threads: " + THREADS + " duplication exceptions: " + indexCollisions.get()
-        + " version exceptions: " + versionCollisions.get() + " vertexes: " + VERTEXES_COUNT + " edges: " + EDGES_COUNT
-        + " time: " + (System.currentTimeMillis() - beginTime));
+    final OrientBaseGraph g = getGraph();
+    printStats(g);
+    g.shutdown();
   }
 
-  private void assertGraph() {
+  private void deleteGraphConcurrently() throws Exception {
+    ExecutorService executorService = Executors.newCachedThreadPool();
+
+    beginTime = System.currentTimeMillis();
+
+    List<Future<Void>> futures = new ArrayList<Future<Void>>();
+    for (int i = 0; i < THREADS; i++)
+      futures.add(executorService.submit(new ConcurrentGraphRemover()));
+
+    latchDelete.countDown();
+
+    for (Future<Void> future : futures)
+      future.get();
+
+    final OrientBaseGraph g = getGraph();
+    printStats(g);
+    g.shutdown();
+  }
+
+  private void assertCreatedGraph() {
     OrientBaseGraph graph = getGraph();
     graph.setUseLightweightEdges(false);
 
@@ -197,6 +236,32 @@ public class BlueprintsConcurrentAddEdgeTestNoTx {
     graph.shutdown();
   }
 
+  private void assertDeletedGraph() {
+    OrientBaseGraph graph = getGraph();
+    graph.setUseLightweightEdges(false);
+
+    Assert.assertEquals(VERTEXES_COUNT, graph.countVertices("TestVertex"));
+    Assert.assertEquals(0, graph.countEdges("TestEdge"));
+
+    for (TestVertex vertex : vertexes) {
+      Iterable<Vertex> vertexes = graph
+          .command(new OSQLSynchQuery<Vertex>("select from TestVertex where uuid = '" + vertex.uuid + "'")).execute();
+
+      Assert.assertTrue(vertexes.iterator().hasNext());
+
+      Vertex gVertex = vertexes.iterator().next();
+
+      OMultiCollectionIterator<Edge> outEdges = (OMultiCollectionIterator<Edge>) gVertex.getEdges(Direction.OUT);
+
+      Assert.assertEquals(outEdges.size(), 0);
+
+      OMultiCollectionIterator<Edge> inEdges = (OMultiCollectionIterator<Edge>) gVertex.getEdges(Direction.IN);
+
+      Assert.assertEquals(inEdges.size(), 0);
+    }
+    graph.shutdown();
+  }
+
   private class TestVertex {
     private String uuid;
 
@@ -235,7 +300,7 @@ public class BlueprintsConcurrentAddEdgeTestNoTx {
     @Override
     public Void call() throws Exception {
       OrientBaseGraph graph = getGraph();
-      latch.await();
+      latchCreate.await();
       final int startIndex = random.nextInt(vertexes.size());
 
       final String startUUID = vertexes.get(startIndex).uuid;
@@ -286,8 +351,6 @@ public class BlueprintsConcurrentAddEdgeTestNoTx {
                   gToVertex = gVertexesIterator.next();
                 }
 
-                Edge gEdge;
-
                 Iterable<Edge> edges = graph
                     .command(new OSQLSynchQuery<Edge>("select from TestEdge where uuid = '" + edge.uuid + "'")).execute();
 
@@ -299,15 +362,24 @@ public class BlueprintsConcurrentAddEdgeTestNoTx {
                 graph.commit();
 
                 success = true;
+
               } catch (OConcurrentModificationException e) {
                 graph.rollback();
 
-                versionCollisions.incrementAndGet();
+                versionCollisionsCreate.incrementAndGet();
+
+                if (printTempStats && versionCollisionsCreate.get() % 1000 == 0)
+                  printStats(graph);
+
                 Thread.yield();
               } catch (ORecordDuplicatedException e) {
                 graph.rollback();
 
-                indexCollisions.incrementAndGet();
+                indexCollisionsCreate.incrementAndGet();
+
+                if (indexCollisionsCreate.get() % 1000 == 0)
+                  printStats(graph);
+
                 Thread.yield();
               }
           }
@@ -329,12 +401,12 @@ public class BlueprintsConcurrentAddEdgeTestNoTx {
               } catch (OConcurrentModificationException e) {
                 graph.rollback();
 
-                versionCollisions.incrementAndGet();
+                versionCollisionsCreate.incrementAndGet();
                 Thread.yield();
               } catch (ORecordDuplicatedException e) {
                 graph.rollback();
 
-                indexCollisions.incrementAndGet();
+                indexCollisionsCreate.incrementAndGet();
                 Thread.yield();
               }
           }
@@ -352,6 +424,46 @@ public class BlueprintsConcurrentAddEdgeTestNoTx {
 
       return null;
 
+    }
+  }
+
+  protected void printStats(OrientBaseGraph g) {
+    System.out.println("Graph " + (getGraph() instanceof OrientGraph ? "TX" : "NOTX") + " stats threads: " + THREADS
+        + " create duplication exceptions: " + indexCollisionsCreate.get() + " create version exceptions: "
+        + versionCollisionsCreate.get() + " delete version exceptions: " + versionCollisionsDelete.get() + " vertexes: "
+        + g.countVertices() + " edges: " + g.countEdges() + " TIME: "
+        + (beginTime > 0 ? System.currentTimeMillis() - beginTime : "?"));
+  }
+
+  private class ConcurrentGraphRemover implements Callable<Void> {
+    @Override
+    public Void call() throws Exception {
+      OrientBaseGraph graph = getGraph();
+      latchDelete.await();
+
+      for (TestEdge edge : edges) {
+        do {
+          try {
+            graph.command(new OCommandSQL("delete edge TestEdge where uuid = '" + edge.uuid + "'")).execute();
+            graph.commit();
+            break;
+
+          } catch (ORecordNotFoundException e) {
+            // OK
+            break;
+          } catch (OConcurrentModificationException e) {
+            graph.rollback();
+
+            versionCollisionsDelete.incrementAndGet();
+
+            if (printTempStats && versionCollisionsDelete.get() % 1000 == 0)
+              printStats(graph);
+
+            Thread.yield();
+          }
+        } while (true);
+      }
+      return null;
     }
   }
 }
