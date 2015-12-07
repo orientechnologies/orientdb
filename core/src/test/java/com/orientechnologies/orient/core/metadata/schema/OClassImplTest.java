@@ -472,6 +472,7 @@ public class OClassImplTest {
     assertNotNull(oSchema.createClass("_OClassImplTesttestClassNameSyntax"));
     assertNotNull(oSchema.createClass("_OClassImplTesttestClassNameSyntax_"));
     assertNotNull(oSchema.createClass("_OClassImplTestte_stClassNameSyntax_"));
+    assertNotNull(oSchema.createClass("_OClassImplTesttestClassNameSyntax_1"));
     assertNotNull(oSchema.createClass("_OClassImplTesttestClassNameSyntax_12"));
     assertNotNull(oSchema.createClass("_OClassImplTesttestCla23ssNameSyntax_12"));
     assertNotNull(oSchema.createClass("$OClassImplTesttestCla23ssNameSyntax_12"));
