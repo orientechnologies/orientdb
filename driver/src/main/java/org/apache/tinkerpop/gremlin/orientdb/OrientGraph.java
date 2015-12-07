@@ -67,15 +67,19 @@ public final class OrientGraph implements Graph {
     public static String CONFIG_CREATE = "orient-create";
     public static String CONFIG_OPEN = "orient-open";
     public static String CONFIG_TRANSACTIONAL = "orient-transactional";
+    public static String CONFIG_POOL_SIZE = "orient-max-poolsize";
 
     protected final ODatabaseDocumentTx database;
     protected final Features features;
     protected final Configuration configuration;
     protected final OPartitionedDatabasePool pool;
 
-    // this is mostly just for the standard tinkerpop test suite
     public static OrientGraph open(final Configuration config) {
-        return new OrientGraphFactory(config).getNoTx();
+        OrientGraphFactory factory = new OrientGraphFactory(config);
+        if (config.containsKey(CONFIG_POOL_SIZE))
+            factory.setupPool(config.getInt(CONFIG_POOL_SIZE));
+
+        return factory.getNoTx();
     }
 
     public OrientGraph(final ODatabaseDocumentTx database, final Configuration configuration) {
