@@ -68,13 +68,14 @@ public class DistributedLifecycleListenerTest extends AbstractServerClusterTest 
 
   @Test
   public void test() throws Exception {
+    this.startupNodesInSequence = true;
     init(SERVERS);
     prepare(false);
     execute();
   }
 
   @Override
-  protected void onServerStarting(ServerRun server) {
+  protected void onServerStarted(ServerRun server) {
     server.getServerInstance().getDistributedManager().registerLifecycleListener(this);
   }
 
