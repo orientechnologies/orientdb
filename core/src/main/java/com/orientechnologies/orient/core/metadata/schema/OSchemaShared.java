@@ -1202,14 +1202,16 @@ public class OSchemaShared extends ODocumentWrapperNoClass
     }
 
     clusterIds = new int[minimumClusters];
+    int firstDynamicCluster = 0;
     clusterIds[0] = database.getClusterIdByName(className);
     if (clusterIds[0] == -1) {
       // JUST KEEP THE CLASS NAME. THIS IS FOR LEGACY REASONS
       clusterIds[0] = database.addCluster(className);
+      firstDynamicCluster = 1;
     }
 
-    if (minimumClusters > 1) {
-      for (int i = 1; i < minimumClusters; ++i) {
+    if (minimumClusters > firstDynamicCluster) {
+      for (int i = firstDynamicCluster; i < minimumClusters; ++i) {
         clusterIds[i] = database.getClusterIdByName(className + "_" + i);
         if (clusterIds[i] == -1)
           clusterIds[i] = database.addCluster(className + "_" + i);
