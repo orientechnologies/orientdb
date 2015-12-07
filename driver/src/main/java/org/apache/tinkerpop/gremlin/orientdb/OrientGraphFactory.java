@@ -15,18 +15,22 @@ public final class OrientGraphFactory {
     protected final String url;
     protected final String user;
     protected final String password;
+    protected Configuration configuration;
     protected volatile OPartitionedDatabasePool pool;
 
     public OrientGraphFactory(String url) {
-        this.url = url;
-        this.user = ADMIN;
-        this.password = ADMIN;
+        this(url, ADMIN, ADMIN);
     }
 
     public OrientGraphFactory(String url, String user, String password) {
         this.url = url;
         this.user = user;
         this.password = password;
+    }
+
+    public OrientGraphFactory(Configuration config) {
+        this(config.getString(OrientGraph.CONFIG_URL, "memory:test-" + Math.random()));
+        this.configuration = config;
     }
 
     /**
@@ -89,15 +93,18 @@ public final class OrientGraphFactory {
     }
 
     protected Configuration getConfiguration(boolean create, boolean open, boolean transactional) {
-        return new BaseConfiguration() {{
-            setProperty(Graph.GRAPH, OrientGraph.class.getName());
-            setProperty(OrientGraph.CONFIG_URL, url);
-            setProperty(OrientGraph.CONFIG_USER, user);
-            setProperty(OrientGraph.CONFIG_PASS, password);
-            setProperty(OrientGraph.CONFIG_CREATE, create);
-            setProperty(OrientGraph.CONFIG_OPEN, open);
-            setProperty(OrientGraph.CONFIG_TRANSACTIONAL, transactional);
-        }};
+        if (configuration != null)
+            return configuration;
+        else
+            return new BaseConfiguration() {{
+                setProperty(Graph.GRAPH, OrientGraph.class.getName());
+                setProperty(OrientGraph.CONFIG_URL, url);
+                setProperty(OrientGraph.CONFIG_USER, user);
+                setProperty(OrientGraph.CONFIG_PASS, password);
+                setProperty(OrientGraph.CONFIG_CREATE, create);
+                setProperty(OrientGraph.CONFIG_OPEN, open);
+                setProperty(OrientGraph.CONFIG_TRANSACTIONAL, transactional);
+            }};
     }
 
     /**

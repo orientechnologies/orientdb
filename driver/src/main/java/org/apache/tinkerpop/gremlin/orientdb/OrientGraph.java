@@ -73,6 +73,11 @@ public final class OrientGraph implements Graph {
     protected final Configuration configuration;
     protected final OPartitionedDatabasePool pool;
 
+    // this is mostly just for the standard tinkerpop test suite
+    public static OrientGraph open(final Configuration config) {
+        return new OrientGraphFactory(config).getNoTx();
+    }
+
     public OrientGraph(final ODatabaseDocumentTx database, final Configuration configuration) {
         this.pool = null;
         this.database = database;
