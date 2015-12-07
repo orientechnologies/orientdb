@@ -840,7 +840,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRid, final String iFetchPlan, boolean iIgnoreCache,
       ORecordCallback<ORawBuffer> iCallback) {
     checkOpeness();
-    return new OStorageOperationResult<ORawBuffer>(readRecord(getClusterById(iRid.clusterId), iRid));
+
+    final OCluster cluster;
+    try {
+      cluster = getClusterById(iRid.clusterId);
+    } catch (IllegalArgumentException e) {
+      throw new ORecordNotFoundException("The record with id '" + iRid + "' was not found", e);
+    }
+
+    return new OStorageOperationResult<ORawBuffer>(readRecord(cluster, iRid));
   }
 
   /**

@@ -5,11 +5,14 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageRecoverEventListener;
 import com.tinkerpop.blueprints.Direction;
 
@@ -179,15 +182,13 @@ public class OGraphRepair {
             // SKIP THIS FIELD
             continue;
 
-          final Object fieldValue = vertex.field(fieldName);
+          final Object fieldValue = vertex.rawField(fieldName);
           if (fieldValue != null) {
             if (fieldValue instanceof OIdentifiable) {
 
-              onScannedLink(stats, (OIdentifiable) fieldValue);
-
-              if ((((OIdentifiable) fieldValue).getIdentity()).getRecord() == null) {
+              if (isEdgeBroken(vertex, fieldName, connection.getKey(), (OIdentifiable) fieldValue, stats,
+                  graph.settings.isUseVertexFieldsForEdgeLabels())) {
                 modifiedVertex = true;
-                onRemovedLink(stats, (OIdentifiable) fieldValue);
                 vertex.field(fieldName, (Object) null);
               }
 
@@ -195,11 +196,11 @@ public class OGraphRepair {
 
               final Collection<?> coll = ((Collection<?>) fieldValue);
               for (Iterator<?> it = coll.iterator(); it.hasNext();) {
-                Object o = it.next();
-                onScannedLink(stats, (OIdentifiable) o);
-                if (o == null || (((OIdentifiable) o).getIdentity()).getRecord() == null) {
+                final Object o = it.next();
+
+                if (isEdgeBroken(vertex, fieldName, connection.getKey(), (OIdentifiable) o, stats,
+                    graph.settings.isUseVertexFieldsForEdgeLabels())) {
                   modifiedVertex = true;
-                  onRemovedLink(stats, (OIdentifiable) o);
                   it.remove();
                 }
               }
@@ -208,11 +209,10 @@ public class OGraphRepair {
 
               final ORidBag ridbag = ((ORidBag) fieldValue);
               for (Iterator<?> it = ridbag.rawIterator(); it.hasNext();) {
-                Object o = it.next();
-                onScannedLink(stats, (OIdentifiable) o);
-                if (o == null || (((OIdentifiable) o).getIdentity()).getRecord() == null) {
+                final Object o = it.next();
+                if (isEdgeBroken(vertex, fieldName, connection.getKey(), (OIdentifiable) o, stats,
+                    graph.settings.isUseVertexFieldsForEdgeLabels())) {
                   modifiedVertex = true;
-                  onRemovedLink(stats, (OIdentifiable) o);
                   it.remove();
                 }
               }
@@ -258,5 +258,76 @@ public class OGraphRepair {
   private void message(final OCommandOutputListener outputListener, final String message) {
     if (outputListener != null)
       outputListener.onMessage(message);
+  }
+
+  private boolean isEdgeBroken(final OIdentifiable vertex, final String fieldName, final Direction direction,
+      final OIdentifiable edgeRID, final ORepairStats stats, final boolean useVertexFieldsForEdgeLabels) {
+    onScannedLink(stats, edgeRID);
+
+    boolean broken = false;
+
+    if (edgeRID == null)
+      // RID NULL
+      broken = true;
+    else {
+      ODocument record = null;
+      try {
+        record = edgeRID.getIdentity().getRecord();
+      } catch (ORecordNotFoundException e) {
+        broken = true;
+      }
+
+      if (record == null)
+        // RECORD DELETED
+        broken = true;
+      else {
+        final OImmutableClass immutableClass = ODocumentInternal.getImmutableSchemaClass(record);
+        if (immutableClass == null || (!immutableClass.isVertexType() && !immutableClass.isEdgeType()))
+          // INVALID RECORD TYPE: NULL OR NOT GRAPH TYPE
+          broken = true;
+        else {
+          if (immutableClass.isVertexType()) {
+            // VERTEX -> LIGHTWEIGHT EDGE
+            final String inverseFieldName = OrientVertex.getInverseConnectionFieldName(fieldName, useVertexFieldsForEdgeLabels);
+
+            // CHECK THE VERTEX IS IN INVERSE EDGE CONTAINS
+            final Object inverseEdgeContainer = record.field(inverseFieldName);
+            if (inverseEdgeContainer == null)
+              // NULL CONTAINER
+              broken = true;
+            else {
+
+              if (inverseEdgeContainer instanceof OIdentifiable) {
+                if (!inverseEdgeContainer.equals(vertex))
+                  // NOT THE SAME
+                  broken = true;
+              } else if (inverseEdgeContainer instanceof Collection<?>) {
+                if (!((Collection) inverseEdgeContainer).contains(vertex))
+                  // NOT IN COLLECTION
+                  broken = true;
+
+              } else if (inverseEdgeContainer instanceof ORidBag) {
+                if (!((ORidBag) inverseEdgeContainer).contains(vertex))
+                  // NOT IN RIDBAG
+                  broken = true;
+              }
+            }
+          } else {
+            // EDGE -> REGULAR EDGE, OK
+            final OIdentifiable backRID = OrientEdge.getConnection(record, direction);
+            if (backRID == null || !backRID.equals(vertex))
+              // BACK RID POINTS TO ANOTHER VERTEX
+              broken = true;
+          }
+        }
+      }
+    }
+
+    if (broken) {
+      onRemovedLink(stats, edgeRID);
+      return true;
+    }
+
+    return false;
   }
 }
