@@ -20,6 +20,12 @@
 
 package com.orientechnologies.common.log;
 
+import com.orientechnologies.common.parser.OSystemVariableResolver;
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+
 import java.util.Locale;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -28,12 +34,6 @@ import java.util.logging.FileHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import com.orientechnologies.common.parser.OSystemVariableResolver;
-import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 public class OLogManager {
   private static final String      DEFAULT_LOG                  = "com.orientechnologies";
@@ -70,12 +70,12 @@ public class OLogManager {
       if (log.getHandlers().length == 0) {
         // SET DEFAULT LOG FORMATTER
         final Handler h = new ConsoleHandler();
-        h.setFormatter(new OLogFormatter());
+        h.setFormatter(new OAnsiLogFormatter());
         log.addHandler(h);
       } else {
         for (Handler h : log.getHandlers()) {
-          if (h instanceof ConsoleHandler && !h.getFormatter().getClass().equals(OLogFormatter.class))
-            h.setFormatter(new OLogFormatter());
+          if (h instanceof ConsoleHandler && !h.getFormatter().getClass().equals(OAnsiLogFormatter.class))
+            h.setFormatter(new OAnsiLogFormatter());
         }
       }
     } catch (Exception e) {
@@ -100,7 +100,7 @@ public class OLogManager {
         if (db != null && db.getStorage() != null && db.getStorage() instanceof OAbstractPaginatedStorage) {
           final String dbName = db.getStorage().getName();
           if (dbName != null)
-            iMessage = "{db=" + dbName + "} " + iMessage;
+            iMessage = "$ANSI{green {db=" + dbName + "}} " + iMessage;
         }
       } catch (Throwable e) {
       }

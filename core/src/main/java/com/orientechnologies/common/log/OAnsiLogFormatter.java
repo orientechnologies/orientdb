@@ -20,64 +20,46 @@
 
 package com.orientechnologies.common.log;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.logging.Formatter;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
-public class OLogFormatter extends Formatter {
+import static java.util.logging.Level.SEVERE;
 
-  protected static final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");
-
-  /**
-   * The end-of-line character for this platform.
-   */
-  protected static final String EOL = System.getProperty("line.separator");
+public class OAnsiLogFormatter extends OLogFormatter {
 
   @Override
-  public String format(final LogRecord record) {
-    if (record.getThrown() == null) {
-      return customFormatMessage(record);
-    }
-
-    // FORMAT THE STACK TRACE
-    final StringBuilder buffer = new StringBuilder(512);
-    buffer.append(record.getMessage());
-
-    final Throwable current = record.getThrown();
-    if (current != null) {
-      buffer.append(EOL);
-
-      StringWriter writer = new StringWriter();
-      PrintWriter printWriter = new PrintWriter(writer);
-
-      current.printStackTrace(printWriter);
-      printWriter.flush();
-
-      buffer.append(writer.getBuffer());
-      printWriter.close();
-    }
-
-    return buffer.toString();
-  }
-
   protected String customFormatMessage(final LogRecord iRecord) {
     final Level level = iRecord.getLevel();
-    final String message = OAnsiCode.format(iRecord.getMessage(), false);
+    final String message = OAnsiCode.format(iRecord.getMessage());
     final Object[] additionalArgs = iRecord.getParameters();
     final String requester = getSourceClassSimpleName(iRecord.getLoggerName());
 
     final StringBuilder buffer = new StringBuilder(512);
     buffer.append(EOL);
+    buffer.append("$ANSI{cyan ");
     synchronized (dateFormat) {
       buffer.append(dateFormat.format(new Date()));
     }
+    buffer.append("}");
+
+    if (OAnsiCode.isSupportsColors()) {
+      if (level == SEVERE)
+        buffer.append("$ANSI{red ");
+      else if (level == Level.WARNING)
+        buffer.append("$ANSI{yellow ");
+      else if (level == Level.INFO)
+        buffer.append("$ANSI{green ");
+      else if (level == Level.CONFIG)
+        buffer.append("$ANSI{green ");
+      else if (level == Level.CONFIG)
+        buffer.append("$ANSI{white ");
+    }
 
     buffer.append(String.format(" %-5.5s ", level.getName()));
+
+    if (OAnsiCode.isSupportsColors())
+      buffer.append("}");
 
     // FORMAT THE MESSAGE
     try {
@@ -95,10 +77,6 @@ public class OLogFormatter extends Formatter {
       buffer.append(']');
     }
 
-    return OAnsiCode.format(buffer.toString(), false);
-  }
-
-  protected String getSourceClassSimpleName(final String iSourceClassName) {
-    return iSourceClassName.substring(iSourceClassName.lastIndexOf(".") + 1);
+    return OAnsiCode.format(buffer.toString());
   }
 }
