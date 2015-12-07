@@ -14,10 +14,10 @@ import java.util.Set;
 
 public class TestShardingDocsAndEdges extends AbstractServerClusterTest {
 
-  protected final static int    SERVERS        = 2;
-  private static final   String clusterNodeUSA = "user_usa";
-  private static final   String clusterNodeEUR = "user_eur";
-  private static         int    testNumber     = 0;
+  protected final static int  SERVERS        = 2;
+  private static final String clusterNodeUSA = "user_usa";
+  private static final String clusterNodeEUR = "user_eur";
+  private static int          testNumber     = 0;
   private ODatabaseDocumentTx USA;
   private ODatabaseDocumentTx EUR;
 
@@ -30,7 +30,7 @@ public class TestShardingDocsAndEdges extends AbstractServerClusterTest {
 
   @Override
   protected String getDatabaseName() {
-    return "sharding2";
+    return "TestShardingDocsAndEdges";
   }
 
   @Override
@@ -44,7 +44,7 @@ public class TestShardingDocsAndEdges extends AbstractServerClusterTest {
     db.command(new OCommandSQL("ALTER DATABASE MINIMUMCLUSTERS 2")).execute();
     db.command(new OCommandSQL("create class User extends V")).execute();
     db.command(new OCommandSQL("create property User.name string")).execute();
-    db.command(new OCommandSQL("alter cluster user_0 name user_usa")).execute();
+    db.command(new OCommandSQL("alter cluster user name user_usa")).execute();
     db.command(new OCommandSQL("alter cluster user_1 name user_eur")).execute();
     db.command(new OCommandSQL("create class Follows extends E")).execute();
   }
@@ -100,9 +100,9 @@ public class TestShardingDocsAndEdges extends AbstractServerClusterTest {
     queryResult = execute(EUR, "select from User");
     compare(queryResult, new String[] { "mike", "phoebe" });
 
-        /*
-         verify that 'select from V returns' the same as 'select from User' on both nodes
-         */
+    /*
+     * verify that 'select from V returns' the same as 'select from User' on both nodes
+     */
     // test 12
     queryResult = execute(USA, "select from V");
     compare(queryResult, new String[] { "mike", "phoebe" });
@@ -111,7 +111,8 @@ public class TestShardingDocsAndEdges extends AbstractServerClusterTest {
     compare(queryResult, new String[] { "mike", "phoebe" });
 
     // LINE A
-    execute(USA, "create edge Follows " + "from (select from User where name = 'mike') " + "to (select from User where name = 'phoebe')");
+    execute(USA,
+        "create edge Follows " + "from (select from User where name = 'mike') " + "to (select from User where name = 'phoebe')");
 
     // ...
   }
@@ -129,7 +130,6 @@ public class TestShardingDocsAndEdges extends AbstractServerClusterTest {
         }
       }
     } finally {
-      db.activateOnCurrentThread();
       db.close();
     }
     return resultSet;
