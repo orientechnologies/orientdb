@@ -99,7 +99,7 @@ public class IssueServiceImpl implements IssueService {
 
       if (issue.getClient() != null) {
         Client client = userService.getClient(comment.getUser(), issue.getRepository().getOrganization().getName());
-        if (client != null && client.getClientId() == issue.getClient().getClientId() && issue.getDueTime() == null
+        if (client != null && client.getClientId().equals(issue.getClient().getClientId()) && issue.getDueTime() == null
             && !issue.isClosed()) {
           OUser actor = securityManager.bot(issue.getRepository().getOrganization().getName());
           if (!isInProgress(issue)) {

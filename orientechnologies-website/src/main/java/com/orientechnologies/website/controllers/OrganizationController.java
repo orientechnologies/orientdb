@@ -121,7 +121,7 @@ public class OrganizationController extends ExceptionController {
 
         Client client = issue.getClient();
         Client currentClient = userService.getClient(user, organization);
-        if (currentClient == null || client == null || client.getClientId() != currentClient.getClientId()) {
+        if (currentClient == null || client == null || !client.getClientId().equals(currentClient.getClientId())) {
           return new ResponseEntity<Issue>(HttpStatus.NOT_FOUND);
         }
       }

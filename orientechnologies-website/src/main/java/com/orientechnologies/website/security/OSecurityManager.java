@@ -55,7 +55,7 @@ public class OSecurityManager {
     Client client = userService.getClient(user, organization);
 
     if (c != null && client != null) {
-      return c.getClientId() == client.getClientId();
+      return c.getClientId().equals(client.getClientId());
     }
     return false;
   }
@@ -65,7 +65,7 @@ public class OSecurityManager {
     Client client = userService.getClient(currentUser(), organization);
 
     if (c != null && client != null) {
-      return c.getClientId() == client.getClientId();
+      return c.getClientId().equals(client.getClientId());
     }
     return false;
   }

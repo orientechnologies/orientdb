@@ -10,15 +10,11 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.stereotype.Component;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring4.SpringTemplateEngine;
 import reactor.event.Event;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by Enrico Risa on 30/12/14.
@@ -62,35 +58,12 @@ public class IssueCommentedEvent extends EventInternal<Comment> {
 
     OUser owner = comment.getUser();
 
-    List<OUser> involvedActors = new ArrayList<OUser>();
-    List<OUser> actorsInIssue = null;
-    if (!Boolean.TRUE.equals(issue.getConfidential())) {
-      actorsInIssue = issueRepository.findToNotifyActors(issue);
-      involvedActors.addAll(actorsInIssue);
-      involvedActors.addAll(issueRepository.findToNotifyActorsWatching(issue));
-    } else {
-      actorsInIssue = issueRepository.findToNotifyPrivateActors(issue);
-      involvedActors.addAll(actorsInIssue);
-    }
-    String[] actors = getActorsEmail(owner, involvedActors, actorsInIssue);
-    if (actors.length > 0) {
-      for (String actor : actors) {
-        SimpleMailMessage mailMessage = new SimpleMailMessage();
-        try {
-          mailMessage.setTo(actor);
-          mailMessage.setFrom(comment.getUser().getName());
-          mailMessage.setSubject(fillSubjectTags(issue));
-          mailMessage.setText(htmlContent);
-          sender.send(mailMessage);
-        } catch (Exception e) {
-          logger.error("Cannot send message: " + mailMessage, e);
-        }
-      }
-    }
+    sendEmail(issue, htmlContent, owner);
+
+
     if (issue.getClient() != null) {
       sendSupportMail(sender, issue, htmlContent, false);
     }
-    logIssueEvent(issue);
     postHandle();
   }
 

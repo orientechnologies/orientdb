@@ -147,12 +147,14 @@ angular.module('webappApp').factory("ChatService", function ($rootScope, $locati
         $rootScope.$broadcast('msg-received', msg);
       }
     };
-    charSocketWrapper.socket.onclose = function (err) {
+    charSocketWrapper.socket.onerror = function (err) {
       console.log(err);
     }
 
     charSocketWrapper.socket.onclose = function (status) {
 
+
+      console.log(status);
 
       if (status.code === 1000) {
         console.log("Disconnected from chat service!")

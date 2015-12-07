@@ -220,7 +220,7 @@ public class UserServiceImpl implements UserService {
 
   private boolean isCurrentClient(OUser current, Issue issue, String organization) {
     Client client1 = getClient(current, organization);
-    return (issue.getClient() != null && client1 != null) ? issue.getClient().getClientId() == client1.getClientId() : false;
+    return (issue.getClient() != null && client1 != null) ? issue.getClient().getClientId().equals(client1.getClientId()) : false;
   }
 
   private boolean isCurrentClient(String organization, String organization1) {
