@@ -438,23 +438,24 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     objectInputStream.close();
 
     if (throwable instanceof OException) {
-      try {
-        final Class<? extends OException> cls = (Class<? extends OException>) throwable.getClass();
-        final Constructor<? extends OException> constructor;
-        constructor = cls.getConstructor(cls);
-        final OException proxyInstance = constructor.newInstance(throwable);
-
-        throw proxyInstance;
-
-      } catch (NoSuchMethodException e) {
-        OLogManager.instance().error(this, "Error during exception deserialization", e);
-      } catch (InvocationTargetException e) {
-        OLogManager.instance().error(this, "Error during exception deserialization", e);
-      } catch (InstantiationException e) {
-        OLogManager.instance().error(this, "Error during exception deserialization", e);
-      } catch (IllegalAccessException e) {
-        OLogManager.instance().error(this, "Error during exception deserialization", e);
-      }
+      throw (OException) throwable;
+      // try {
+      // final Class<? extends OException> cls = (Class<? extends OException>) throwable.getClass();
+      // final Constructor<? extends OException> constructor;
+      // constructor = cls.getConstructor(cls);
+      // final OException proxyInstance = constructor.newInstance(throwable);
+      //
+      // throw proxyInstance;
+      //
+      // } catch (NoSuchMethodException e) {
+      // OLogManager.instance().error(this, "Error during exception deserialization", e);
+      // } catch (InvocationTargetException e) {
+      // OLogManager.instance().error(this, "Error during exception deserialization", e);
+      // } catch (InstantiationException e) {
+      // OLogManager.instance().error(this, "Error during exception deserialization", e);
+      // } catch (IllegalAccessException e) {
+      // OLogManager.instance().error(this, "Error during exception deserialization", e);
+      // }
     }
 
     if (throwable instanceof Throwable) {
