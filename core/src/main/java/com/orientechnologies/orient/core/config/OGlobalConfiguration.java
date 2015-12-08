@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.config;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.util.OApi;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
@@ -69,10 +70,12 @@ public enum OGlobalConfiguration {
           + "but usually it can be safely put to false. It is needed to set to true only after dramatic changes in storage structures.",
       Boolean.class, true),
 
-  DIRECT_MEMORY_TRACK_MODE("memory.directMemory.trackMode", "If 'track mode' is switched on then following steps are performed: "
-      + "1. direct memory JMX bean is registered. 2. You may check amount of allocated direct memory as property of JMX bean. "
-      + "3. If memory leak is detected then JMX event will be fired. "
-      + "This mode provides big overhead and may be used only for testing purpose", Boolean.class, false),
+  DIRECT_MEMORY_TRACK_MODE("memory.directMemory.trackMode",
+      "If 'track mode' is switched on then following steps are performed: "
+          + "1. direct memory JMX bean is registered. 2. You may check amount of allocated direct memory as property of JMX bean. "
+          + "3. If memory leak is detected then JMX event will be fired. "
+          + "This mode provides big overhead and may be used only for testing purpose",
+      Boolean.class, false),
 
   DIRECT_MEMORY_ONLY_ALIGNED_ACCESS("memory.directMemory.onlyAlignedMemoryAccess",
       "Some architectures does not allow unaligned memory access or suffer from speed degradation, on this platforms flag should be set to true",
@@ -82,22 +85,23 @@ public enum OGlobalConfiguration {
       "Minimal amount of time (seconds) since last System.gc() when called after tree optimization", Long.class, 600),
 
   // STORAGE
-  DISK_CACHE_PINNED_PAGES("storage.diskCache.pinnedPages", "Maximum amount of pinned pages which may be contained in cache,"
-      + " if this percent is reached next pages will be left in unpinned state. You can not set value more than 50", Integer.class,
-      20, false),
+      DISK_CACHE_PINNED_PAGES("storage.diskCache.pinnedPages",
+          "Maximum amount of pinned pages which may be contained in cache,"
+              + " if this percent is reached next pages will be left in unpinned state. You can not set value more than 50",
+          Integer.class, 20, false),
 
-  DISK_CACHE_SIZE("storage.diskCache.bufferSize", "Size of disk buffer in megabytes, disk size may be changed at runtime, "
-      + "but if does not enough to contain all pinned pages exception will be thrown.", Integer.class, 4 * 1024,
-      new OConfigurationChangeCallback() {
+  DISK_CACHE_SIZE("storage.diskCache.bufferSize",
+      "Size of disk buffer in megabytes, disk size may be changed at runtime, "
+          + "but if does not enough to contain all pinned pages exception will be thrown.",
+      Integer.class, 4 * 1024, new OConfigurationChangeCallback() {
         @Override
         public void change(Object currentValue, Object newValue) {
           final OEngineLocalPaginated engineLocalPaginated = (OEngineLocalPaginated) Orient.instance()
               .getEngine(OEngineLocalPaginated.NAME);
 
           if (engineLocalPaginated == null) {
-            OLogManager.instance().error(this,
-                "Can not change cache size in runtime because storage engine " + OEngineLocalPaginated.NAME
-                    + " was not registered");
+            OLogManager.instance().error(this, "Can not change cache size in runtime because storage engine "
+                + OEngineLocalPaginated.NAME + " was not registered");
           } else {
             engineLocalPaginated.changeCacheSize(((Integer) (newValue)) * 1024L * 1024L);
           }
@@ -393,10 +397,12 @@ public enum OGlobalConfiguration {
       PROFILER_ENABLED("profiler.enabled", "Enable the recording of statistics and counters", Boolean.class, false,
           new OConfigurationChangeCallback() {
             public void change(final Object iCurrentValue, final Object iNewValue) {
-              if ((Boolean) iNewValue)
-                Orient.instance().getProfiler().startRecording();
-              else
-                Orient.instance().getProfiler().stopRecording();
+              final OProfiler prof = Orient.instance().getProfiler();
+              if (prof != null)
+                if ((Boolean) iNewValue)
+                  prof.startRecording();
+                else
+                  prof.stopRecording();
             }
           }),
 
@@ -629,9 +635,9 @@ public enum OGlobalConfiguration {
   private final Object defValue;
   private final Class<?> type;
   private volatile Object value = null;
-  private final String                       description;
+  private final String description;
   private final OConfigurationChangeCallback changeCallback;
-  private final Boolean                      canChangeAtRuntime;
+  private final Boolean canChangeAtRuntime;
 
   // AT STARTUP AUTO-CONFIG
   static {
