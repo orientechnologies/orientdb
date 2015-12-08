@@ -1,10 +1,5 @@
 package com.orientechnologies.orient.core.record.impl;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNull;
-
 import org.testng.annotations.Test;
 
 import java.util.*;
@@ -17,6 +12,8 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+
+import static org.testng.Assert.*;
 
 /**
  * @author Artem Orobets (enisher-at-gmail.com)
@@ -298,5 +295,25 @@ public class ODocumentTest {
 	      db.drop();
 	    }
   }
+
+
+  @Test
+  public void testMergeNull(){
+    ODocument dest = new ODocument();
+
+    ODocument source = new ODocument();
+    source.field("key","value");
+    source.field("somenull",(Object)null);
+
+    dest.merge(source,true,false);
+
+    assertEquals(dest.field("key"),"value");
+
+    assertTrue(dest.containsField("somenull"));
+
+  }
+
+
+
 
 }
