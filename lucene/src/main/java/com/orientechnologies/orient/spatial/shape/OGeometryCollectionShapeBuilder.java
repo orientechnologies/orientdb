@@ -71,10 +71,8 @@ public class OGeometryCollectionShapeBuilder extends OComplexShapeBuilder<ShapeC
   public void initClazz(ODatabaseDocumentTx db) {
 
     OSchemaProxy schema = db.getMetadata().getSchema();
-    OClass polygon = schema.createClass(getName());
-    polygon.setAbstract(true);
     OClass shape = superClass(db);
-    polygon.addSuperClass(shape);
+    OClass polygon = schema.createAbstractClass(getName(),shape);
     polygon.createProperty("geometries", OType.EMBEDDEDLIST, shape);
   }
 
