@@ -67,7 +67,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
   public static final String CONNECTION_OUT_PREFIX = OrientBaseGraph.CONNECTION_OUT + "_";
   public static final String CONNECTION_IN_PREFIX  = OrientBaseGraph.CONNECTION_IN + "_";
 
-  private static final long  serialVersionUID      = 1L;
+  private static final long serialVersionUID = 1L;
 
   /**
    * (Internal) Called by serialization.
@@ -133,9 +133,8 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
     final OType propType = prop != null && prop.getType() != OType.ANY ? prop.getType() : null;
 
     if (found == null) {
-      if (iGraph.isAutoScaleEdgeType()
-          && (prop == null || propType == OType.LINK || "true".equalsIgnoreCase(prop
-              .getCustom(OrientVertexType.OrientVertexProperty.ORDERED)))) {
+      if (iGraph.isAutoScaleEdgeType() && (prop == null || propType == OType.LINK
+          || "true".equalsIgnoreCase(prop.getCustom(OrientVertexType.OrientVertexProperty.ORDERED)))) {
         // CREATE ONLY ONE LINK
         out = iTo;
         outType = OType.LINK;
@@ -151,13 +150,13 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
         out = bag;
         outType = OType.LINKBAG;
       } else
-        throw new IllegalStateException("Type of field provided in schema '" + prop.getType()
-            + "' cannot be used for link creation.");
+        throw new IllegalStateException(
+            "Type of field provided in schema '" + prop.getType() + "' cannot be used for link creation.");
 
     } else if (found instanceof OIdentifiable) {
       if (prop != null && propType == OType.LINK)
-        throw new IllegalStateException("Type of field provided in schema '" + prop.getType()
-            + "' cannot be used for creation to hold several links.");
+        throw new IllegalStateException(
+            "Type of field provided in schema '" + prop.getType() + "' cannot be used for creation to hold several links.");
 
       if (prop != null && "true".equalsIgnoreCase(prop.getCustom(OrientVertexType.OrientVertexProperty.ORDERED))) {
         final Collection coll = new ORecordLazyList(iFromVertex);
@@ -246,7 +245,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
    * (Internal only)
    */
   public static void removeEdges(final ODocument iVertex, final String iFieldName, final OIdentifiable iVertexToRemove,
-      final boolean iAlsoInverse, final boolean useVertexFieldsForEdgeLabels) {
+      final boolean iAlsoInverse, final boolean useVertexFieldsForEdgeLabels, final boolean autoScaleEdgeType) {
     if (iVertex == null)
       return;
 
@@ -265,7 +264,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
       }
 
       if (iAlsoInverse)
-        removeInverseEdge(iVertex, iFieldName, iVertexToRemove, fieldValue, useVertexFieldsForEdgeLabels);
+        removeInverseEdge(iVertex, iFieldName, iVertexToRemove, fieldValue, useVertexFieldsForEdgeLabels, autoScaleEdgeType);
 
       deleteEdgeIfAny((OIdentifiable) fieldValue);
 
@@ -286,7 +285,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
             // FOUND AS VERTEX
             it.remove();
             if (iAlsoInverse)
-              removeInverseEdge(iVertex, iFieldName, iVertexToRemove, curr, useVertexFieldsForEdgeLabels);
+              removeInverseEdge(iVertex, iFieldName, iVertexToRemove, curr, useVertexFieldsForEdgeLabels, autoScaleEdgeType);
             found = true;
             break;
 
@@ -297,7 +296,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
             if (iVertexToRemove.equals(OrientEdge.getConnection(curr, direction.opposite()))) {
               it.remove();
               if (iAlsoInverse)
-                removeInverseEdge(iVertex, iFieldName, iVertexToRemove, curr, useVertexFieldsForEdgeLabels);
+                removeInverseEdge(iVertex, iFieldName, iVertexToRemove, curr, useVertexFieldsForEdgeLabels, autoScaleEdgeType);
               found = true;
               break;
             }
@@ -305,8 +304,8 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
         }
 
         if (!found)
-          OLogManager.instance()
-              .warn(null, "[OrientVertex.removeEdges] edge %s not found in field %s", iVertexToRemove, iFieldName);
+          OLogManager.instance().warn(null, "[OrientVertex.removeEdges] edge %s not found in field %s", iVertexToRemove,
+              iFieldName);
 
         deleteEdgeIfAny(iVertexToRemove);
 
@@ -317,13 +316,13 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
           final OIdentifiable edge = it.next();
 
           if (iAlsoInverse)
-            removeInverseEdge(iVertex, iFieldName, null, edge, useVertexFieldsForEdgeLabels);
+            removeInverseEdge(iVertex, iFieldName, null, edge, useVertexFieldsForEdgeLabels, autoScaleEdgeType);
 
           deleteEdgeIfAny(edge);
         }
       }
 
-      if (bag.isEmpty())
+      if (autoScaleEdgeType && bag.isEmpty())
         // FORCE REMOVAL OF ENTIRE FIELD
         iVertex.removeField(iFieldName);
     } else if (fieldValue instanceof Collection) {
@@ -339,7 +338,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
             // FOUND AS VERTEX
             it.remove();
             if (iAlsoInverse)
-              removeInverseEdge(iVertex, iFieldName, iVertexToRemove, curr, useVertexFieldsForEdgeLabels);
+              removeInverseEdge(iVertex, iFieldName, iVertexToRemove, curr, useVertexFieldsForEdgeLabels, autoScaleEdgeType);
             found = true;
             break;
 
@@ -350,7 +349,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
             if (iVertexToRemove.equals(OrientEdge.getConnection(curr, direction.opposite()))) {
               it.remove();
               if (iAlsoInverse)
-                removeInverseEdge(iVertex, iFieldName, iVertexToRemove, curr, useVertexFieldsForEdgeLabels);
+                removeInverseEdge(iVertex, iFieldName, iVertexToRemove, curr, useVertexFieldsForEdgeLabels, autoScaleEdgeType);
               found = true;
               break;
             }
@@ -358,8 +357,8 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
         }
 
         if (!found)
-          OLogManager.instance()
-              .warn(null, "[OrientVertex.removeEdges] edge %s not found in field %s", iVertexToRemove, iFieldName);
+          OLogManager.instance().warn(null, "[OrientVertex.removeEdges] edge %s not found in field %s", iVertexToRemove,
+              iFieldName);
 
         deleteEdgeIfAny(iVertexToRemove);
 
@@ -368,13 +367,13 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
         // DELETE ALL THE EDGES
         for (final OIdentifiable edge : (Iterable<OIdentifiable>) col) {
           if (iAlsoInverse)
-            removeInverseEdge(iVertex, iFieldName, null, edge, useVertexFieldsForEdgeLabels);
+            removeInverseEdge(iVertex, iFieldName, null, edge, useVertexFieldsForEdgeLabels, autoScaleEdgeType);
 
           deleteEdgeIfAny(edge);
         }
       }
 
-      if (col.isEmpty())
+      if (autoScaleEdgeType && col.isEmpty())
         // FORCE REMOVAL OF ENTIRE FIELD
         iVertex.removeField(iFieldName);
     }
@@ -454,7 +453,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
    * (Internal only)
    */
   private static void removeInverseEdge(final ODocument iVertex, final String iFieldName, final OIdentifiable iVertexToRemove,
-      final Object iFieldValue, final boolean useVertexFieldsForEdgeLabels) {
+      final Object iFieldValue, final boolean useVertexFieldsForEdgeLabels, final boolean autoScaleEdgeType) {
     final ODocument r = ((OIdentifiable) iFieldValue).getRecord();
 
     if (r == null)
@@ -464,7 +463,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
     OImmutableClass immutableClass = ODocumentInternal.getImmutableSchemaClass(r);
     if (immutableClass.isVertexType()) {
       // DIRECT VERTEX
-      removeEdges(r, inverseFieldName, iVertex, false, useVertexFieldsForEdgeLabels);
+      removeEdges(r, inverseFieldName, iVertex, false, useVertexFieldsForEdgeLabels, autoScaleEdgeType);
 
     } else if (immutableClass.isEdgeType()) {
       // EDGE, REMOVE THE EDGE
@@ -475,7 +474,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
         if (iVertexToRemove == null || otherVertex.equals(iVertexToRemove))
           // BIDIRECTIONAL EDGE
           removeEdges((ODocument) otherVertex.getRecord(), inverseFieldName, (OIdentifiable) iFieldValue, false,
-              useVertexFieldsForEdgeLabels);
+              useVertexFieldsForEdgeLabels, autoScaleEdgeType);
 
       } else
         throw new IllegalStateException("Invalid content found in " + iFieldName + " field");
@@ -486,7 +485,8 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
    * (Internal only)
    */
   protected static OrientEdge getEdge(final OrientBaseGraph graph, final ODocument doc, String fieldName,
-      final OPair<Direction, String> connection, final Object fieldValue, final OIdentifiable iTargetVertex, final String[] iLabels) {
+      final OPair<Direction, String> connection, final Object fieldValue, final OIdentifiable iTargetVertex,
+      final String[] iLabels) {
     final OrientEdge toAdd;
 
     final ODocument fieldRecord = ((OIdentifiable) fieldValue).getRecord();
@@ -688,10 +688,10 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
         // SKIP THIS FIELD
         continue;
 
-      removeEdges(doc, fieldName, null, true, settings.isUseVertexFieldsForEdgeLabels());
+      removeEdges(doc, fieldName, null, true, settings.isUseVertexFieldsForEdgeLabels(), settings.isAutoScaleEdgeType());
     }
 
-    super.remove();
+    super.removeRecord();
   }
 
   /**
@@ -735,13 +735,13 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
     final OrientBaseGraph graph = getGraph();
 
     if (checkDeletedInTx())
-      throw new IllegalStateException("The vertex " + getIdentity() + " has been deleted");
+      graph.throwRecordNotFoundException("The vertex " + getIdentity() + " has been deleted");
 
     final ORID oldIdentity = getIdentity().copy();
 
     final ORecord oldRecord = oldIdentity.getRecord();
     if (oldRecord == null)
-      throw new IllegalStateException("The vertex " + getIdentity() + " has been deleted");
+      graph.throwRecordNotFoundException("The vertex " + getIdentity() + " has been deleted");
 
     if (!graph.getRawGraph().getTransaction().isActive())
       throw new IllegalStateException("Move vertex requires an active transaction to be executed in safe manner");
@@ -884,103 +884,16 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
    */
   public OrientEdge addEdge(String label, final OrientVertex inVertex, final String iClassName, final String iClusterName,
       final Object... fields) {
+
     if (inVertex == null)
       throw new IllegalArgumentException("destination vertex is null");
 
-    if (checkDeletedInTx())
-      throw new IllegalStateException("The vertex " + getIdentity() + " has been deleted");
-
-    if (inVertex.checkDeletedInTx())
-      throw new IllegalStateException("The vertex " + inVertex.getIdentity() + " has been deleted");
-
-    final OrientBaseGraph graph = setCurrentGraphInThreadLocal();
+    final OrientBaseGraph graph = getGraph();
     if (graph != null)
-      graph.autoStartTransaction();
+      return graph.addEdge(this, label, inVertex, iClassName, iClusterName, fields);
 
-    // TEMPORARY STATIC LOCK TO AVOID MT PROBLEMS AGAINST OMVRBTreeRID
-    final ODocument outDocument = getRecord();
-    if (outDocument == null)
-      throw new IllegalArgumentException("source vertex is invalid (rid=" + getIdentity() + ")");
-
-    if (!ODocumentInternal.getImmutableSchemaClass(outDocument).isVertexType())
-      throw new IllegalArgumentException("source record is not a vertex");
-
-    final ODocument inDocument = inVertex.getRecord();
-    if (inDocument == null)
-      throw new IllegalArgumentException("destination vertex is invalid (rid=" + inVertex.getIdentity() + ")");
-
-    if (!ODocumentInternal.getImmutableSchemaClass(outDocument).isVertexType())
-      throw new IllegalArgumentException("destination record is not a vertex");
-
-    final OrientEdge edge;
-    OIdentifiable to;
-    OIdentifiable from;
-
-    label = OrientBaseGraph.encodeClassName(label);
-    if (label == null && iClassName != null)
-      // RETRO-COMPATIBILITY WITH THE SYNTAX CLASS:<CLASS-NAME>
-      label = OrientBaseGraph.encodeClassName(iClassName);
-
-    if (graph != null && graph.isUseClassForEdgeLabel()) {
-      final OrientEdgeType edgeType = graph.getEdgeType(label);
-      if (edgeType == null)
-        // AUTO CREATE CLASS
-        graph.createEdgeType(label);
-      else
-        // OVERWRITE CLASS NAME BECAUSE ATTRIBUTES ARE CASE SENSITIVE
-        label = edgeType.getName();
-    }
-
-    final String outFieldName = getConnectionFieldName(Direction.OUT, label, settings.isUseVertexFieldsForEdgeLabels());
-    final String inFieldName = getConnectionFieldName(Direction.IN, label, settings.isUseVertexFieldsForEdgeLabels());
-
-    // since the label for the edge can potentially get re-assigned
-    // before being pushed into the OrientEdge, the
-    // null check has to go here.
-    if (label == null)
-      throw ExceptionFactory.edgeLabelCanNotBeNull();
-
-    if (canCreateDynamicEdge(outDocument, inDocument, outFieldName, inFieldName, fields, label)) {
-      // CREATE A LIGHTWEIGHT DYNAMIC EDGE
-      from = rawElement;
-      to = inDocument;
-      if (settings.isKeepInMemoryReferences())
-        edge = new OrientEdge(graph, from.getIdentity(), to.getIdentity(), label);
-      else
-        edge = new OrientEdge(graph, from, to, label);
-    } else {
-      // CREATE THE EDGE DOCUMENT TO STORE FIELDS TOO
-      edge = new OrientEdge(graph, label, fields);
-
-      if (settings.isKeepInMemoryReferences())
-        edge.getRecord().fields(OrientBaseGraph.CONNECTION_OUT, rawElement.getIdentity(), OrientBaseGraph.CONNECTION_IN,
-            inDocument.getIdentity());
-      else
-        edge.getRecord().fields(OrientBaseGraph.CONNECTION_OUT, rawElement, OrientBaseGraph.CONNECTION_IN, inDocument);
-
-      from = edge.getRecord();
-      to = edge.getRecord();
-    }
-
-    if (settings.isKeepInMemoryReferences()) {
-      // USES REFERENCES INSTEAD OF DOCUMENTS
-      from = from.getIdentity();
-      to = to.getIdentity();
-    }
-
-    // OUT-VERTEX ---> IN-VERTEX/EDGE
-    createLink(graph, outDocument, to, outFieldName);
-
-    // IN-VERTEX ---> OUT-VERTEX/EDGE
-    createLink(graph, inDocument, from, inFieldName);
-
-    if (graph != null) {
-      edge.save(iClusterName);
-      inDocument.save();
-      outDocument.save();
-    }
-    return edge;
-
+    // IN MEMORY CHANGES ONLY: USE NOTX CLASS
+    return OrientGraphNoTx.addEdge(null, this, label, inVertex, iClassName, iClusterName, fields);
   }
 
   /**
@@ -1273,7 +1186,8 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
   }
 
   protected void addSingleEdge(final ODocument doc, final OMultiCollectionIterator<Edge> iterable, String fieldName,
-      final OPair<Direction, String> connection, final Object fieldValue, final OIdentifiable iTargetVertex, final String[] iLabels) {
+      final OPair<Direction, String> connection, final Object fieldValue, final OIdentifiable iTargetVertex,
+      final String[] iLabels) {
     final OrientBaseGraph graph = getGraph();
     final OrientEdge toAdd = getEdge(graph, doc, fieldName, connection, fieldValue, iTargetVertex, iLabels);
 
@@ -1282,7 +1196,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
       iterable.add(toAdd);
   }
 
-  private boolean canCreateDynamicEdge(final ODocument iFromVertex, final ODocument iToVertex, final String iOutFieldName,
+  boolean canCreateDynamicEdge(final ODocument iFromVertex, final ODocument iToVertex, final String iOutFieldName,
       final String iInFieldName, final Object[] fields, final String label) {
 
     checkIfAttached();
@@ -1291,8 +1205,8 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
     if (!settings.isUseVertexFieldsForEdgeLabels() && label != null)
       return false;
 
-    if (settings.isUseLightweightEdges()
-        && (fields == null || fields.length == 0 || fields[0] == null || (fields[0] instanceof Map && ((Map) fields[0]).isEmpty()))) {
+    if (settings.isUseLightweightEdges() && (fields == null || fields.length == 0 || fields[0] == null
+        || (fields[0] instanceof Map && ((Map) fields[0]).isEmpty()))) {
       Object field = iFromVertex.field(iOutFieldName);
       if (field != null)
         if (field instanceof Collection<?>)

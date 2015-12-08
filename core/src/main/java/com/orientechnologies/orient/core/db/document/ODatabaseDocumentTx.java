@@ -216,7 +216,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
 
   /**
    * Sets default serializer. The default serializer is common for all database instances.
-   * 
+   *
    * @param iDefaultSerializer
    *          new default serializer value
    */
@@ -501,18 +501,45 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
     db.properties.putAll(this.properties);
     db.serializer = this.serializer;
     db.componentsFactory = this.componentsFactory;
-    db.metadata = new OMetadataDefault();
-    db.initialized = true;
-    db.storage = storage;
 
+    db.storage = storage;
     if (storage instanceof OStorageProxy)
       ((OStorageProxy) db.storage).addUser();
 
     db.setStatus(STATUS.OPEN);
     db.activateOnCurrentThread();
+
+    db.sbTreeCollectionManager = new OSBTreeCollectionManagerProxy(this,
+        getStorage().getResource(OSBTreeCollectionManager.class.getSimpleName(), new Callable<OSBTreeCollectionManager>() {
+          @Override
+          public OSBTreeCollectionManager call() throws Exception {
+            Class<? extends OSBTreeCollectionManager> managerClass = getStorage().getCollectionManagerClass();
+
+            if (managerClass == null) {
+              OLogManager.instance().warn(this, "Current implementation of storage does not support sbtree collections");
+              return null;
+            } else {
+              return managerClass.newInstance();
+            }
+          }
+        }));
+
+    db.localCache.startup();
+
+    db.metadata = new OMetadataDefault();
     db.metadata.load();
-    // callOnOpenListeners();
-    // activateOnCurrentThread();
+
+    if (!(db.getStorage() instanceof OStorageProxy))
+      db.installHooks();
+
+    if (OGlobalConfiguration.DB_MAKE_FULL_CHECKPOINT_ON_SCHEMA_CHANGE.getValueAsBoolean())
+      db.metadata.getSchema().setFullCheckpointOnChange(true);
+
+    if (OGlobalConfiguration.DB_MAKE_FULL_CHECKPOINT_ON_INDEX_CHANGE.getValueAsBoolean())
+      db.metadata.getIndexManager().setFullCheckpointOnChange(true);
+
+    db.initialized = true;
+
     return db;
   }
 
@@ -953,7 +980,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
    * {@inheritDoc}
    */
   public <DB extends ODatabase<?>> DB registerHook(final ORecordHook iHookImpl, final ORecordHook.HOOK_POSITION iPosition) {
+    checkOpeness();
     checkIfActive();
+
     final Map<ORecordHook, ORecordHook.HOOK_POSITION> tmp = new LinkedHashMap<ORecordHook, ORecordHook.HOOK_POSITION>(hooks);
     tmp.put(iHookImpl, iPosition);
     hooks.clear();
@@ -1021,13 +1050,13 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
       if (rec == null)
         return ORecordHook.RESULT.RECORD_NOT_CHANGED;
 
-      final OScenarioThreadLocal.RUN_MODE runMode = OScenarioThreadLocal.INSTANCE.get();
+      final OScenarioThreadLocal.RUN_MODE runMode = OScenarioThreadLocal.INSTANCE.getRunMode();
 
       boolean recordChanged = false;
       for (ORecordHook hook : hooks.keySet()) {
         switch (runMode) {
         case DEFAULT: // NON_DISTRIBUTED OR PROXIED DB
-          if (getStorage().isDistributed()
+          if (getStorage().isDistributed() && OScenarioThreadLocal.INSTANCE.isReplicationSyncMode()
               && hook.getDistributedExecutionMode() == ORecordHook.DISTRIBUTED_EXECUTION_MODE.TARGET_NODE)
             // SKIP
             continue;
@@ -1141,7 +1170,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
       status = STATUS.CLOSED;
       return;
     }
-
 
     try {
       commit(true);
@@ -1840,6 +1868,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
 
       return (RET) iRecord;
     } catch (OOfflineClusterException t) {
+      throw t;
+    } catch (ORecordNotFoundException t) {
       throw t;
     } catch (Throwable t) {
       if (rid.isTemporary())
@@ -2981,6 +3011,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
   }
 
   private void installHooks() {
+    hooks.clear();
     registerHook(new OClassTrigger(this), ORecordHook.HOOK_POSITION.FIRST);
     registerHook(new ORestrictedAccessHook(this), ORecordHook.HOOK_POSITION.FIRST);
     registerHook(new OUserTrigger(this), ORecordHook.HOOK_POSITION.EARLY);

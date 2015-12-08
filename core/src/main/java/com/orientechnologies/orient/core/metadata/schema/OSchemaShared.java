@@ -73,28 +73,28 @@ import java.util.concurrent.Callable;
  * 
  */
 @SuppressWarnings("unchecked")
-public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, OCloseable, OOrientStartupListener,
-    OOrientShutdownListener {
-  public static final int                          CURRENT_VERSION_NUMBER  = 4;
-  public static final int                          VERSION_NUMBER_V4       = 4;
+public class OSchemaShared extends ODocumentWrapperNoClass
+    implements OSchema, OCloseable, OOrientStartupListener, OOrientShutdownListener {
+  public static final int   CURRENT_VERSION_NUMBER = 4;
+  public static final int   VERSION_NUMBER_V4      = 4;
   // this is needed for guarantee the compatibility to 2.0-M1 and 2.0-M2 no changed associated with it
-  public static final int                          VERSION_NUMBER_V5       = 5;
-  private static final long                        serialVersionUID        = 1L;
+  public static final int   VERSION_NUMBER_V5      = 5;
+  private static final long serialVersionUID       = 1L;
 
-  private final boolean                            clustersCanNotBeSharedAmongClasses;
+  private final boolean clustersCanNotBeSharedAmongClasses;
 
-  private final OReadersWriterSpinLock             rwSpinLock              = new OReadersWriterSpinLock();
+  private final OReadersWriterSpinLock rwSpinLock = new OReadersWriterSpinLock();
 
-  private final Map<String, OClass>                classes                 = new HashMap<String, OClass>();
-  private final Map<Integer, OClass>               clustersToClasses       = new HashMap<Integer, OClass>();
+  private final Map<String, OClass>  classes           = new HashMap<String, OClass>();
+  private final Map<Integer, OClass> clustersToClasses = new HashMap<Integer, OClass>();
 
-  private final OClusterSelectionFactory           clusterSelectionFactory = new OClusterSelectionFactory();
+  private final OClusterSelectionFactory clusterSelectionFactory = new OClusterSelectionFactory();
 
-  private volatile ThreadLocal<OModifiableInteger> modificationCounter     = new OModificationsCounter();
-  private final List<OGlobalProperty>              properties              = new ArrayList<OGlobalProperty>();
-  private final Map<String, OGlobalProperty>       propertiesByNameType    = new HashMap<String, OGlobalProperty>();
-  private volatile int                             version                 = 0;
-  private volatile boolean                         fullCheckpointOnChange  = false;
+  private volatile ThreadLocal<OModifiableInteger> modificationCounter    = new OModificationsCounter();
+  private final List<OGlobalProperty>              properties             = new ArrayList<OGlobalProperty>();
+  private final Map<String, OGlobalProperty>       propertiesByNameType   = new HashMap<String, OGlobalProperty>();
+  private volatile int                             version                = 0;
+  private volatile boolean                         fullCheckpointOnChange = false;
   private volatile OImmutableSchema                snapshot;
 
   private static final class ClusterIdsAreEmptyException extends Exception {
@@ -132,7 +132,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
     for (int i = 0; i < nameSize; ++i) {
       final char c = iName.charAt(i);
-      if (c == ':' || c == ',' || c == ';' || c == ' ' || c == '%' || c == '@' || c == '=' || c == '.' || c == '#')
+      if (c == ':' || c == ',' || c == ';' || c == ' ' || c == '@' || c == '=' || c == '.' || c == '#')
         // INVALID CHARACTER
         return c;
     }
@@ -404,8 +404,8 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
   public OClass createClass(final String className, int[] clusterIds, OClass... superClasses) {
     final Character wrongCharacter = OSchemaShared.checkClassNameIfValid(className);
     if (wrongCharacter != null)
-      throw new OSchemaException("Invalid class name found. Character '" + wrongCharacter + "' cannot be used in class name '"
-          + className + "'");
+      throw new OSchemaException(
+          "Invalid class name found. Character '" + wrongCharacter + "' cannot be used in class name '" + className + "'");
 
     OClass result;
     int retry = 0;
@@ -442,7 +442,8 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
       final OClass existingCls = clustersToClasses.get(clusterId);
       if (existingCls != null && !cls.equals(existingCls))
-        throw new OSchemaException("Cluster with id " + clusterId + " already belongs to class " + clustersToClasses.get(clusterId));
+        throw new OSchemaException(
+            "Cluster with id " + clusterId + " already belongs to class " + clustersToClasses.get(clusterId));
 
       clustersToClasses.put(clusterId, cls);
     } finally {
@@ -480,7 +481,8 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       final OClass existingCls = clustersToClasses.get(clusterId);
 
       if (existingCls != null && !cls.equals(existingCls))
-        throw new OSchemaException("Cluster with id " + clusterId + " already belongs to class " + clustersToClasses.get(clusterId));
+        throw new OSchemaException(
+            "Cluster with id " + clusterId + " already belongs to class " + clustersToClasses.get(clusterId));
 
     } finally {
       releaseSchemaReadLock();
@@ -690,11 +692,8 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       // READ CURRENT SCHEMA VERSION
       final Integer schemaVersion = (Integer) document.field("schemaVersion");
       if (schemaVersion == null) {
-        OLogManager
-            .instance()
-            .error(
-                this,
-                "Database's schema is empty! Recreating the system classes and allow the opening of the database but double check the integrity of the database");
+        OLogManager.instance().error(this,
+            "Database's schema is empty! Recreating the system classes and allow the opening of the database but double check the integrity of the database");
         return;
       } else if (schemaVersion != CURRENT_VERSION_NUMBER && VERSION_NUMBER_V5 != schemaVersion) {
         // VERSION_NUMBER_V5 is needed for guarantee the compatibility to 2.0-M1 and 2.0-M2 no changed associated with it
@@ -1052,7 +1051,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
   private boolean isDistributedCommand() {
     return getDatabase().getStorage() instanceof OAutoshardedStorage
-        && OScenarioThreadLocal.INSTANCE.get() != OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED;
+        && OScenarioThreadLocal.INSTANCE.getRunMode() != OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED;
   }
 
   private OClass createClassInternal(final String className, final int[] clusterIdsToAdd, final List<OClass> superClasses)
@@ -1163,7 +1162,6 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
       checkEmbedded(getDatabase().getStorage());
 
-
       for (OClass superClass : cls.getSuperClasses()) {
         // REMOVE DEPENDENCY FROM SUPERCLASS
         ((OClassImpl) superClass).removeBaseClassInternal(cls);
@@ -1261,7 +1259,8 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
         continue;
 
       if (clustersToClasses.containsKey(clusterId))
-        throw new OSchemaException("Cluster with id " + clusterId + " already belongs to class " + clustersToClasses.get(clusterId));
+        throw new OSchemaException(
+            "Cluster with id " + clusterId + " already belongs to class " + clustersToClasses.get(clusterId));
     }
   }
 

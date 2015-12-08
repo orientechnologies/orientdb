@@ -452,7 +452,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
   @Override
   public void onCreateClass(final ODatabaseInternal iDatabase, final OClass iClass) {
-    if (OScenarioThreadLocal.INSTANCE.get() == OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED)
+    if (OScenarioThreadLocal.INSTANCE.getRunMode() == OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED)
       return;
 
     // RUN ONLY IN NON-DISTRIBUTED MODE
@@ -1009,8 +1009,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     final File oldDirectory = new File(dbPath);
     if (!oldDirectory.renameTo(backupFullPath)) {
       ODistributedServerLog.error(this, getLocalNodeName(), null, DIRECTION.NONE,
-          "error on moving existent database '%s' located in '%s' to '%s'. Deleting old database...",
-          iDatabaseName, dbPath, backupFullPath);
+          "error on moving existent database '%s' located in '%s' to '%s'. Deleting old database...", iDatabaseName, dbPath,
+          backupFullPath);
 
       // throw new ODistributedException("Error on moving existent database '" + iDatabaseName + "' located in '" + dbPath + "' to
       // '"
@@ -1225,9 +1225,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
             ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "class %s, creation of new cluster '%s' (id=%d)",
                 iClass, newClusterName, iDatabase.getClusterIdByName(newClusterName));
 
-            final OScenarioThreadLocal.RUN_MODE currentDistributedMode = OScenarioThreadLocal.INSTANCE.get();
+            final OScenarioThreadLocal.RUN_MODE currentDistributedMode = OScenarioThreadLocal.INSTANCE.getRunMode();
             if (currentDistributedMode != OScenarioThreadLocal.RUN_MODE.DEFAULT)
-              OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.DEFAULT);
+              OScenarioThreadLocal.INSTANCE.setRunMode(OScenarioThreadLocal.RUN_MODE.DEFAULT);
 
             try {
               iClass.addCluster(newClusterName);
@@ -1242,7 +1242,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
               if (currentDistributedMode != OScenarioThreadLocal.RUN_MODE.DEFAULT)
                 // RESTORE PREVIOUS MODE
-                OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED);
+                OScenarioThreadLocal.INSTANCE.setRunMode(OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED);
             }
 
             ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE,
@@ -1609,9 +1609,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "class '%s', creation of new local cluster '%s' (id=%d)",
             iClass, newClusterName, iDatabase.getClusterIdByName(newClusterName));
 
-        final OScenarioThreadLocal.RUN_MODE currentDistributedMode = OScenarioThreadLocal.INSTANCE.get();
+        final OScenarioThreadLocal.RUN_MODE currentDistributedMode = OScenarioThreadLocal.INSTANCE.getRunMode();
         if (currentDistributedMode != OScenarioThreadLocal.RUN_MODE.DEFAULT)
-          OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.DEFAULT);
+          OScenarioThreadLocal.INSTANCE.setRunMode(OScenarioThreadLocal.RUN_MODE.DEFAULT);
 
         try {
           iClass.addCluster(newClusterName);
@@ -1626,7 +1626,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
           if (currentDistributedMode != OScenarioThreadLocal.RUN_MODE.DEFAULT)
             // RESTORE PREVIOUS MODE
-            OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED);
+            OScenarioThreadLocal.INSTANCE.setRunMode(OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED);
         }
 
         ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE,

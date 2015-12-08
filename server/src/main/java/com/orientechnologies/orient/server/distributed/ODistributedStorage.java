@@ -227,7 +227,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
     servers.add(localNodeName);
 
-    if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.RUNNING_DISTRIBUTED)
+    if (OScenarioThreadLocal.INSTANCE.getRunMode() == RUN_MODE.RUNNING_DISTRIBUTED)
       // ALREADY DISTRIBUTED
       return wrapped.command(iCommand);
 
@@ -252,7 +252,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE executionMode = OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE.LOCAL;
       OCommandDistributedReplicateRequest.DISTRIBUTED_RESULT_MGMT resultMgmt = OCommandDistributedReplicateRequest.DISTRIBUTED_RESULT_MGMT.CHECK_FOR_EQUALS;
 
-      if (OScenarioThreadLocal.INSTANCE.get() != RUN_MODE.RUNNING_DISTRIBUTED) {
+      if (OScenarioThreadLocal.INSTANCE.getRunMode() != RUN_MODE.RUNNING_DISTRIBUTED) {
         if (exec instanceof OCommandDistributedReplicateRequest) {
           executionMode = ((OCommandDistributedReplicateRequest) exec).getDistributedExecutionMode();
           resultMgmt = ((OCommandDistributedReplicateRequest) exec).getDistributedResultManagement();
@@ -261,8 +261,20 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       switch (executionMode) {
       case LOCAL:
-        // CALL IN DEFAULT MODE TO LET OWN COMMAND TO REDISTRIBUTE CHANGES (LIKE INSERT)
-        return wrapped.command(iCommand);
+        // SET REPLICATION-MODE
+        Boolean executionModeSynch = dbCfg.isExecutionModeSynchronous(null);
+        if (executionModeSynch == null)
+          executionModeSynch = Boolean.TRUE;
+
+        if (!executionModeSynch)
+          OScenarioThreadLocal.INSTANCE.setReplicationSyncMode(false);
+        try {
+          // CALL IN DEFAULT MODE TO LET OWN COMMAND TO REDISTRIBUTE CHANGES (LIKE INSERT)
+          return wrapped.command(iCommand);
+        } finally {
+          if (!executionModeSynch)
+            OScenarioThreadLocal.INSTANCE.setReplicationSyncMode(true);
+        }
 
       case REPLICATE:
         // REPLICATE IT, GET ALL THE INVOLVED NODES
@@ -468,7 +480,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       final ORecordVersion iRecordVersion, final byte iRecordType, final int iMode, final ORecordCallback<Long> iCallback) {
     resetLastValidBackup();
 
-    if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.RUNNING_DISTRIBUTED)
+    if (OScenarioThreadLocal.INSTANCE.getRunMode() == RUN_MODE.RUNNING_DISTRIBUTED)
       // ALREADY DISTRIBUTED
       return wrapped.createRecord(iRecordId, iContent, iRecordVersion, iRecordType, iMode, iCallback);
 
@@ -691,7 +703,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       // DELETED
       throw new ORecordNotFoundException("Record " + iRecordId + " was not found");
 
-    if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.RUNNING_DISTRIBUTED)
+    if (OScenarioThreadLocal.INSTANCE.getRunMode() == RUN_MODE.RUNNING_DISTRIBUTED)
       // ALREADY DISTRIBUTED
       return wrapped.updateRecord(iRecordId, updateContent, iContent, iVersion, iRecordType, iMode, iCallback);
 
@@ -784,7 +796,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       final ORecordCallback<Boolean> iCallback) {
     resetLastValidBackup();
 
-    if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.RUNNING_DISTRIBUTED)
+    if (OScenarioThreadLocal.INSTANCE.getRunMode() == RUN_MODE.RUNNING_DISTRIBUTED)
       // ALREADY DISTRIBUTED
       return wrapped.deleteRecord(iRecordId, iVersion, iMode, iCallback);
 
@@ -952,7 +964,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   public void commit(final OTransaction iTx, final Runnable callback) {
     resetLastValidBackup();
 
-    if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.RUNNING_DISTRIBUTED) {
+    if (OScenarioThreadLocal.INSTANCE.getRunMode() == RUN_MODE.RUNNING_DISTRIBUTED) {
       // ALREADY DISTRIBUTED
       wrapped.commit(iTx, callback);
       return;
@@ -1310,7 +1322,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     for (int retry = 0; retry < 10; ++retry) {
       int clId = wrapped.addCluster(iClusterName, false, iParameters);
 
-      if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.DEFAULT) {
+      if (OScenarioThreadLocal.INSTANCE.getRunMode() == RUN_MODE.DEFAULT) {
 
         final StringBuilder cmd = new StringBuilder("create cluster ");
         cmd.append(iClusterName);

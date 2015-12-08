@@ -19,11 +19,8 @@
  */
 package com.orientechnologies.orient.graph.sql.functions;
 
-import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
@@ -50,25 +47,22 @@ public class OSQLFunctionLabel extends OSQLFunctionConfigurableAbstract {
   }
 
   public Object execute(Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult, final Object[] iParameters,
-      OCommandContext iContext) {
-    final OModifiableBoolean shutdownFlag = new OModifiableBoolean();
-    ODatabaseDocumentInternal curDb = ODatabaseRecordThreadLocal.INSTANCE.get();
-    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false, shutdownFlag);
-    try {
-      if (iCurrentResult != null) {
-        return OSQLEngine.foreachRecord(new OCallable<Object, OIdentifiable>() {
-          @Override
-          public Object call(final OIdentifiable iArgument) {
-            return getLabel(graph, iArgument);
-          }
-        }, iCurrentResult, iContext);
-      } else
-        return getLabel(graph, iCurrentRecord);
-    } finally {
-      if (shutdownFlag.getValue())
-        graph.shutdown(false);
-      ODatabaseRecordThreadLocal.INSTANCE.set(curDb);
-    }
+      final OCommandContext iContext) {
+
+    return OGraphCommandExecutorSQLFactory.runWithAnyGraph(new OGraphCommandExecutorSQLFactory.GraphCallBack<Object>() {
+      @Override
+      public Object call(final OrientBaseGraph graph) {
+        if (iCurrentResult != null) {
+          return OSQLEngine.foreachRecord(new OCallable<Object, OIdentifiable>() {
+            @Override
+            public Object call(final OIdentifiable iArgument) {
+              return getLabel(graph, iArgument);
+            }
+          }, iCurrentResult, iContext);
+        } else
+          return getLabel(graph, iCurrentRecord);
+      }
+    });
   }
 
   private Object getLabel(final OrientBaseGraph graph, final OIdentifiable iCurrentRecord) {
@@ -86,8 +80,7 @@ public class OSQLFunctionLabel extends OSQLFunctionConfigurableAbstract {
       return edge.getLabel();
 
     } else
-      throw new OCommandExecutionException("Invalid record: is neither a vertex nor an edge. Found class: "
-          + immutableClass);
+      throw new OCommandExecutionException("Invalid record: is neither a vertex nor an edge. Found class: " + immutableClass);
   }
 
   public String getSyntax() {

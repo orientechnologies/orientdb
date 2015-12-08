@@ -35,8 +35,8 @@ public class OLiveQueryTest {
 
     ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OLiveQueryTest");
     db.activateOnCurrentThread();
-    db.registerHook(new OLiveQueryHook(db));
     db.create();
+    db.registerHook(new OLiveQueryHook(db));
     try {
       db.getMetadata().getSchema().createClass("test");
       db.getMetadata().getSchema().createClass("test2");

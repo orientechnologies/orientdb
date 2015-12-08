@@ -19,9 +19,6 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.io.IOException;
-import java.util.*;
-
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.common.util.OCommonConst;
@@ -65,6 +62,9 @@ import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
+
+import java.io.IOException;
+import java.util.*;
 
 /**
  * Schema Class implementation.
@@ -2503,7 +2503,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
   private boolean isDistributedCommand() {
     return getDatabase().getStorage() instanceof OAutoshardedStorage
-        && OScenarioThreadLocal.INSTANCE.get() != OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED;
+        && OScenarioThreadLocal.INSTANCE.getRunMode() != OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED;
   }
 
 }

@@ -20,22 +20,21 @@
 package com.orientechnologies.orient.graph.sql.functions;
 
 import com.orientechnologies.common.collection.OMultiValue;
-import com.orientechnologies.common.types.OModifiableBoolean;
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionConfigurableAbstract;
 import com.orientechnologies.orient.graph.sql.OGraphCommandExecutorSQLFactory;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.impls.orient.*;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientEdge;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -66,36 +65,34 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
 
   public Object execute(final Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult,
       final Object[] iParameters, final OCommandContext iContext) {
-    final OModifiableBoolean shutdownFlag = new OModifiableBoolean();
-    ODatabaseDocumentInternal curDb = ODatabaseRecordThreadLocal.INSTANCE.get();
-    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false, shutdownFlag);
-    try {
-      final String[] labels;
-      if (iParameters != null && iParameters.length > 0 && iParameters[0] != null)
-        labels = OMultiValue.array(iParameters, String.class, new OCallable<Object, Object>() {
 
+    return OGraphCommandExecutorSQLFactory.runWithAnyGraph(new OGraphCommandExecutorSQLFactory.GraphCallBack<Object>() {
+      @Override
+      public Object call(final OrientBaseGraph graph) {
+        final String[] labels;
+        if (iParameters != null && iParameters.length > 0 && iParameters[0] != null)
+          labels = OMultiValue.array(iParameters, String.class, new OCallable<Object, Object>() {
+
+            @Override
+            public Object call(final Object iArgument) {
+              return OIOUtils.getStringContent(iArgument);
+            }
+          });
+        else
+          labels = null;
+
+        return OSQLEngine.foreachRecord(new OCallable<Object, OIdentifiable>() {
           @Override
-          public Object call(final Object iArgument) {
-            return OStringSerializerHelper.getStringContent(iArgument);
+          public Object call(final OIdentifiable iArgument) {
+            return move(graph, iArgument, labels);
           }
-        });
-      else
-        labels = null;
-
-      return OSQLEngine.foreachRecord(new OCallable<Object, OIdentifiable>() {
-        @Override
-        public Object call(final OIdentifiable iArgument) {
-          return move(graph, iArgument, labels);
-        }
-      }, iThis, iContext);
-    } finally {
-      if (shutdownFlag.getValue())
-        graph.shutdown(false);
-      ODatabaseRecordThreadLocal.INSTANCE.set(curDb);
-    }
+        }, iThis, iContext);
+      }
+    });
   }
 
-  protected Object v2v(final OrientBaseGraph graph, final OIdentifiable iRecord, final Direction iDirection, final String[] iLabels) {
+  protected Object v2v(final OrientBaseGraph graph, final OIdentifiable iRecord, final Direction iDirection,
+      final String[] iLabels) {
     final ODocument rec = iRecord.getRecord();
 
     OImmutableClass immutableClass = ODocumentInternal.getImmutableSchemaClass(rec);
@@ -109,7 +106,8 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
     return null;
   }
 
-  protected Object v2e(final OrientBaseGraph graph, final OIdentifiable iRecord, final Direction iDirection, final String[] iLabels) {
+  protected Object v2e(final OrientBaseGraph graph, final OIdentifiable iRecord, final Direction iDirection,
+      final String[] iLabels) {
     final ODocument rec = iRecord.getRecord();
 
     OImmutableClass immutableClass = ODocumentInternal.getImmutableSchemaClass(rec);
@@ -123,7 +121,8 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
     return null;
   }
 
-  protected Object e2v(final OrientBaseGraph graph, final OIdentifiable iRecord, final Direction iDirection, final String[] iLabels) {
+  protected Object e2v(final OrientBaseGraph graph, final OIdentifiable iRecord, final Direction iDirection,
+      final String[] iLabels) {
     final ODocument rec = iRecord.getRecord();
     OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(rec);
     if (clazz != null && clazz.isEdgeType()) {

@@ -67,8 +67,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class OTransactionOptimistic extends OTransactionRealAbstract {
   private static AtomicInteger txSerial = new AtomicInteger();
 
-  private boolean              usingLog = true;
-  private int                  txStartCounter;
+  private boolean usingLog = true;
+  private int     txStartCounter;
 
   private class CommitIndexesCallback implements Runnable {
     private final Map<String, OIndex<?>> indexes;
@@ -228,11 +228,11 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
     if (txRecord != null) {
       if (iRecord != null && txRecord != iRecord)
-        OLogManager.instance().warn(
-            this,
+        OLogManager.instance().warn(this,
             "Found record in transaction with the same RID %s but different instance. "
                 + "Probably the record has been loaded from another transaction and reused on the current one: reload it "
-                + "from current transaction before to update or delete it", iRecord.getIdentity());
+                + "from current transaction before to update or delete it",
+            iRecord.getIdentity());
       return txRecord;
     }
 
@@ -297,11 +297,11 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
     if (txRecord != null) {
       if (passedRecord != null && txRecord != passedRecord)
-        OLogManager.instance().warn(
-            this,
+        OLogManager.instance().warn(this,
             "Found record in transaction with the same RID %s but different instance. "
                 + "Probably the record has been loaded from another transaction and reused on the current one: reload it "
-                + "from current transaction before to update or delete it", passedRecord.getIdentity());
+                + "from current transaction before to update or delete it",
+            passedRecord.getIdentity());
       return txRecord;
     }
 
@@ -358,8 +358,8 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     if (iRecord == null)
       return null;
-    final byte operation = iForceCreate ? ORecordOperation.CREATED : iRecord.getIdentity().isValid() ? ORecordOperation.UPDATED
-        : ORecordOperation.CREATED;
+    final byte operation = iForceCreate ? ORecordOperation.CREATED
+        : iRecord.getIdentity().isValid() ? ORecordOperation.UPDATED : ORecordOperation.CREATED;
     addRecord(iRecord, operation, iClusterName);
     return iRecord;
   }
@@ -448,12 +448,9 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
             final String clusterName = getDatabase().getClusterNameById(iRecord.getIdentity().getClusterId());
             if (!clusterName.equals(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME)
                 && !clusterName.equals(OMetadataDefault.CLUSTER_INDEX_NAME))
-              OLogManager
-                  .instance()
-                  .warn(
-                      this,
-                      "Found record in transaction with the same RID %s but different instance. Probably the record has been loaded from another transaction and reused on the current one: reload it from current transaction before to update or delete it",
-                      iRecord.getIdentity());
+              OLogManager.instance().warn(this,
+                  "Found record in transaction with the same RID %s but different instance. Probably the record has been loaded from another transaction and reused on the current one: reload it from current transaction before to update or delete it",
+                  iRecord.getIdentity());
 
             txRecord.record = iRecord;
             txRecord.type = iStatus;
@@ -591,7 +588,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     status = TXSTATUS.COMMITTING;
 
     if (!recordEntries.isEmpty() || !indexEntries.isEmpty()) {
-      if (OScenarioThreadLocal.INSTANCE.get() != RUN_MODE.RUNNING_DISTRIBUTED
+      if (OScenarioThreadLocal.INSTANCE.getRunMode() == RUN_MODE.DEFAULT
           && !(database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage))
         database.getStorage().commit(this, null);
       else {

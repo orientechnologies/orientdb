@@ -260,7 +260,7 @@ public class ODistributedWorker extends Thread {
    * Execute the remote call on the local node and send back the result
    */
   protected void onMessage(final ODistributedRequest iRequest) {
-    OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED);
+    OScenarioThreadLocal.INSTANCE.setRunMode(OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED);
 
     try {
       final OAbstractRemoteTask task = iRequest.getTask();
@@ -324,7 +324,7 @@ public class ODistributedWorker extends Thread {
       sendResponseBack(iRequest, task, responsePayload);
 
     } finally {
-      OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.DEFAULT);
+      OScenarioThreadLocal.INSTANCE.setRunMode(OScenarioThreadLocal.RUN_MODE.DEFAULT);
     }
   }
 
