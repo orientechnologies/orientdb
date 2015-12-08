@@ -41,7 +41,7 @@ public class OrientVertexPropertyProperty<U> implements Property<U> {
 
     @Override
     public void remove() {
-        source.getMetadataDocument().removeField(key);
+        source.removeMetadata(key);
     }
 
     @Override
