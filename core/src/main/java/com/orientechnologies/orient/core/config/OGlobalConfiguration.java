@@ -68,6 +68,11 @@ public enum OGlobalConfiguration {
           + "but usually it can be safely put to false. It is needed to set to true only after dramatic changes in storage structures.",
       Boolean.class, true),
 
+  DIRECT_MEMORY_TRACK_MODE("memory.directMemory.trackMode", "If 'track mode' is switched on then following steps are performed: "
+      + "1. direct memory JMX bean is registered. 2. You may check amount of allocated direct memory as property of JMX bean. "
+      + "3. If memory leak is detected then JMX event will be fired. "
+      + "This mode provides big overhead and may be used only for testing purpose", Boolean.class, false),
+
   DIRECT_MEMORY_ONLY_ALIGNED_ACCESS("memory.directMemory.onlyAlignedMemoryAccess",
       "Some architectures does not allow unaligned memory access or suffer from speed degradation, on this platforms flag should be set to true",
       Boolean.class, true),
@@ -349,9 +354,19 @@ public enum OGlobalConfiguration {
   NETWORK_HTTP_JSONP_ENABLED("network.http.jsonp",
       "Enable the usage of JSONP if requested by the client. The parameter name to use is 'callback'", Boolean.class, false, true),
 
-  OAUTH2_SECRETKEY("oauth2.secretkey", "Http OAuth2 secret key", String.class, "utf-8"), NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT(
-      "network.http.sessionExpireTimeout", "Timeout after which an http session is considered tp have expired (seconds)",
-      Integer.class, 300),
+  @Deprecated OAUTH2_SECRETKEY("oauth2.secretkey", "Http OAuth2 secret key", String.class, ""),
+
+  NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT("network.http.sessionExpireTimeout",
+      "Timeout after which an http session is considered tp have expired (seconds)", Integer.class, 300),
+
+  NETWORK_HTTP_USE_TOKEN("network.http.useToken", "Enable Token based sessions for http", Boolean.class, false),
+
+  NETWORK_TOKEN_SECRETKEY("network.token.secretyKey", "Network token sercret key", String.class, ""),
+
+  NETWORK_TOKEN_ENCRIPTION_ALGORITHM("network.token.encriptionAlgorithm", "Network token algorithm", String.class, "HmacSHA256"),
+
+  NETWORK_TOKEN_EXPIRE_TIMEOUT("network.token.expireTimeout",
+      "Timeout after which an binary session is considered tp have expired (minutes)", Integer.class, 60),
 
   // PROFILER
       PROFILER_ENABLED("profiler.enabled", "Enable the recording of statistics and counters", Boolean.class, false,

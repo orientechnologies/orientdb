@@ -43,13 +43,9 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageVariablePars
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODiskWriteAheadLog;
 import com.orientechnologies.orient.core.util.OBackupable;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.List;
-import java.util.Map;
+import java.io.*;
+import java.lang.String;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;

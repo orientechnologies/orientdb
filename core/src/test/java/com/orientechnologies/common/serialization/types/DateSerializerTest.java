@@ -19,11 +19,11 @@ package com.orientechnologies.common.serialization.types;
 import java.util.Calendar;
 import java.util.Date;
 
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointerFactory;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 
 /**
  * @author Ilya Bershadskiy (ibersh20-at-gmail.com)
@@ -76,7 +76,7 @@ public class DateSerializerTest {
     calendar.set(Calendar.SECOND, 0);
     calendar.set(Calendar.MILLISECOND, 0);
 
-    ODirectMemoryPointer pointer = new ODirectMemoryPointer(stream);
+    ODirectMemoryPointer pointer = ODirectMemoryPointerFactory.instance().createPointer(stream);
     try {
       Assert.assertEquals(dateSerializer.deserializeFromDirectMemoryObject(pointer, 0), calendar.getTime());
     } finally {

@@ -2,13 +2,14 @@ package com.orientechnologies.orient.core.index.sbtree.local;
 
 import java.util.Random;
 
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointerFactory;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
 /**
@@ -18,7 +19,8 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
 @Test
 public class SBTreeValuePageTest {
   public void fillPageDataTest() throws Exception {
-    ODirectMemoryPointer pointerOne = new ODirectMemoryPointer(ODurablePage.MAX_PAGE_SIZE_BYTES + ODurablePage.PAGE_PADDING);
+    ODirectMemoryPointer pointerOne = ODirectMemoryPointerFactory.instance()
+        .createPointer(ODurablePage.MAX_PAGE_SIZE_BYTES + ODurablePage.PAGE_PADDING);
     OCachePointer cachePointerOne = new OCachePointer(pointerOne, new OLogSequenceNumber(0, 0), 0, 0);
     cachePointerOne.incrementReferrer();
 
@@ -32,7 +34,7 @@ public class SBTreeValuePageTest {
     int offset = valuePageOne.fillBinaryContent(data, 0);
     Assert.assertEquals(offset, OSBTreeValuePage.MAX_BINARY_VALUE_SIZE);
 
-    ODirectMemoryPointer pointerTwo = new ODirectMemoryPointer(ODurablePage.MAX_PAGE_SIZE_BYTES);
+    ODirectMemoryPointer pointerTwo = ODirectMemoryPointerFactory.instance().createPointer(ODurablePage.MAX_PAGE_SIZE_BYTES);
     OCachePointer cachePointerTwo = new OCachePointer(pointerTwo, new OLogSequenceNumber(0, 0), 0, 0);
     cachePointerTwo.incrementReferrer();
 
@@ -60,7 +62,8 @@ public class SBTreeValuePageTest {
   }
 
   public void testFreeListPointer() throws Exception {
-    ODirectMemoryPointer pointer = new ODirectMemoryPointer(ODurablePage.MAX_PAGE_SIZE_BYTES + ODurablePage.PAGE_PADDING);
+    ODirectMemoryPointer pointer = ODirectMemoryPointerFactory.instance()
+        .createPointer(ODurablePage.MAX_PAGE_SIZE_BYTES + ODurablePage.PAGE_PADDING);
     OCachePointer cachePointer = new OCachePointer(pointer, new OLogSequenceNumber(0, 0), 0, 0);
     cachePointer.incrementReferrer();
 
