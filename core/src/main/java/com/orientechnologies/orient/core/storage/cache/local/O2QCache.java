@@ -310,7 +310,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
       }
 
       newMemoryData = new MemoryData(newMemorySize, memoryData.pinnedPages);
-    } while (memoryDataContainer.compareAndSet(memoryData, newMemoryData));
+    } while (!memoryDataContainer.compareAndSet(memoryData, newMemoryData));
 
     if (newMemorySize < memoryData.maxSize)
       removeColdestPagesIfNeeded();
