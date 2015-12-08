@@ -100,7 +100,7 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
     writeCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000, writeAheadLog,
         100, 1648L * 1024 * 1024, 2 * 1648L * 1024 * 1024, storage, false, 1);
 
-    readCache = new O2QCache(1648L * 1024 * 1024, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, false);
+    readCache = new O2QCache(1648L * 1024 * 1024, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, false, 20);
 
     when(storage.getReadCache()).thenReturn(readCache);
     when(storage.getWriteCache()).thenReturn(writeCache);
@@ -144,7 +144,7 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
         writeAheadLog, 100, 1648L * 1024 * 1024, 1648L * 1024 * 1024 + 400L * 1024 * 1024 * 1024, testStorage, false, 1);
 
     testReadCache = new O2QCache(400L * 1024 * 1024 * 1024, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024,
-        false);
+        false, 20);
 
     OStorageVariableParser variableParser = new OStorageVariableParser(testStorageDir);
     final OAtomicOperationsManager testAtomicOperationsManager = new OAtomicOperationsManager(testStorage);
