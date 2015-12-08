@@ -23,6 +23,7 @@ package com.tinkerpop.blueprints.impls.orient;
 import org.apache.commons.configuration.Configuration;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -277,7 +278,7 @@ public class OrientGraph extends OrientTransactionalGraph {
     return FEATURES;
   }
 
-  OrientEdge addEdge(final OrientVertex currentVertex, String label, final OrientVertex inVertex, final String iClassName,
+  OrientEdge addEdgeInternal(final OrientVertex currentVertex, String label, final OrientVertex inVertex, final String iClassName,
       final String iClusterName, final Object... fields) {
     if (currentVertex.checkDeletedInTx())
       throw new ORecordNotFoundException("The vertex " + currentVertex.getIdentity() + " has been deleted");
@@ -381,7 +382,7 @@ public class OrientGraph extends OrientTransactionalGraph {
   /**
    * Removes the Edge from the Graph. Connected vertices aren't removed.
    */
-  public void removeEdge(final OrientEdge edge) {
+  public void removeEdgeInternal(final OrientEdge edge) {
     // OUT VERTEX
     final OIdentifiable inVertexEdge = edge.vIn != null ? edge.vIn : edge.rawElement;
 
@@ -429,5 +430,19 @@ public class OrientGraph extends OrientTransactionalGraph {
     if (edge.rawElement != null)
       // NON-LIGHTWEIGHT EDGE
       edge.removeRecord();
+  }
+
+  @Override
+  void removeEdgesInternal(OrientVertex vertex, ODocument iVertex, OIdentifiable iVertexToRemove, boolean iAlsoInverse,
+      boolean useVertexFieldsForEdgeLabels, boolean autoScaleEdgeType) {
+
+    for (String fieldName : iVertex.fieldNames()) {
+      final OPair<Direction, String> connection = vertex.getConnection(Direction.BOTH, fieldName);
+      if (connection == null)
+        // SKIP THIS FIELD
+        continue;
+
+      removeEdges(this, iVertex, fieldName, iVertexToRemove, iAlsoInverse, useVertexFieldsForEdgeLabels, autoScaleEdgeType, false);
+    }
   }
 }

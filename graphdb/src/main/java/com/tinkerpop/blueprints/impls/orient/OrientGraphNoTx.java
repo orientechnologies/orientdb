@@ -20,11 +20,10 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
-import org.apache.commons.configuration.Configuration;
-
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -33,6 +32,7 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Features;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
+import org.apache.commons.configuration.Configuration;
 
 /**
  * A Blueprints implementation of the graph database OrientDB (http://www.orientechnologies.com)
@@ -132,12 +132,12 @@ public class OrientGraphNoTx extends OrientBaseGraph {
     FEATURES.supportsThreadIsolatedTransactions = false;
   }
 
-  OrientEdge addEdge(final OrientVertex currentVertex, String label, final OrientVertex inVertex, final String iClassName,
+  OrientEdge addEdgeInternal(final OrientVertex currentVertex, String label, final OrientVertex inVertex, final String iClassName,
       final String iClusterName, final Object... fields) {
-    return OrientGraphNoTx.addEdge(this, currentVertex, label, inVertex, iClassName, iClusterName, fields);
+    return OrientGraphNoTx.addEdgeInternal(this, currentVertex, label, inVertex, iClassName, iClusterName, fields);
   }
 
-  static OrientEdge addEdge(final OrientBaseGraph graph, final OrientVertex currentVertex, String label,
+  static OrientEdge addEdgeInternal(final OrientBaseGraph graph, final OrientVertex currentVertex, String label,
       final OrientVertex inVertex, final String iClassName, final String iClusterName, final Object... fields) {
 
     OrientEdge edge = null;
@@ -288,11 +288,11 @@ public class OrientGraphNoTx extends OrientBaseGraph {
   /**
    * Removes the Edge from the Graph. Connected vertices aren't removed.
    */
-  public void removeEdge(final OrientEdge edge) {
-    removeEdge(this, edge);
+  public void removeEdgeInternal(final OrientEdge edge) {
+    removeEdgeInternal(this, edge);
   }
 
-  public static void removeEdge(final OrientBaseGraph graph, final OrientEdge edge) {
+  public static void removeEdgeInternal(final OrientBaseGraph graph, final OrientEdge edge) {
     ODocument outVertexRecord = null;
     boolean outVertexChanged = false;
     ODocument inVertexRecord = null;
@@ -374,4 +374,46 @@ public class OrientGraphNoTx extends OrientBaseGraph {
       }
     }
   }
+
+  @Override
+  void removeEdgesInternal(final OrientVertex vertex, final ODocument iVertex, final OIdentifiable iVertexToRemove,
+      final boolean iAlsoInverse, final boolean useVertexFieldsForEdgeLabels, final boolean autoScaleEdgeType) {
+
+    Exception lastException = null;
+    boolean forceReload = false;
+
+    final int maxRetries = getMaxRetries();
+    for (int retry = 0; retry < maxRetries; ++retry) {
+      try {
+
+        for (String fieldName : iVertex.fieldNames()) {
+          final OPair<Direction, String> connection = vertex.getConnection(Direction.BOTH, fieldName);
+          if (connection == null)
+            // SKIP THIS FIELD
+            continue;
+
+          removeEdges(this, iVertex, fieldName, iVertexToRemove, iAlsoInverse, useVertexFieldsForEdgeLabels, autoScaleEdgeType,
+              forceReload);
+        }
+
+        // OK
+        return;
+
+      } catch (Exception e) {
+        forceReload = true;
+        lastException = e;
+      }
+    }
+
+    if (lastException instanceof RuntimeException)
+      // CANNOT REVERT CHANGES, RETRY
+      throw (RuntimeException) lastException;
+
+    throw OException
+        .wrapException(
+            new OrientGraphModificationException(
+                "Error on removing edges after vertex (" + iVertex.getIdentity() + ") delete in non tx environment"),
+            lastException);
+  }
+
 }

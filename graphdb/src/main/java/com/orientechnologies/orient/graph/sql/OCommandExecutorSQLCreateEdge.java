@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -27,10 +26,9 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.sql.OCommandExecutorSQLRetryAbstract;
+import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSetAware;
 import com.orientechnologies.orient.core.sql.OCommandParameters;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
@@ -53,7 +51,7 @@ import java.util.Set;
  * 
  * @author Luca Garulli
  */
-public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstract implements OCommandDistributedReplicateRequest {
+public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware implements OCommandDistributedReplicateRequest {
   public static final String  NAME          = "CREATE EDGE";
   private static final String KEYWORD_BATCH = "BATCH";
 
@@ -105,9 +103,6 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstr
 
         } else if (temp.equals(KEYWORD_CONTENT)) {
           parseContent();
-
-        } else if (temp.equals(KEYWORD_RETRY)) {
-          parseRetry();
 
         } else if (temp.equals(KEYWORD_BATCH)) {
           temp = parserNextWord(true);
@@ -183,48 +178,25 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstr
               }
 
             OrientEdge edge = null;
-            for (int r = 0; r < retry; ++r) {
-              try {
-                if (content != null) {
-                  if (fields != null)
-                    // MERGE CONTENT WITH FIELDS
-                    fields.addAll(OPair.convertFromMap(content.toMap()));
-                  else
-                    fields = OPair.convertFromMap(content.toMap());
-                }
 
-                edge = fromVertex.addEdge(null, toVertex, edgeLabel, clusterName, fields);
-
-                if (fields != null && !fields.isEmpty()) {
-                  if (edge.isLightweight())
-                    edge.convertToDocument();
-
-                  OSQLHelper.bindParameters(edge.getRecord(), fields, new OCommandParameters(iArgs), context);
-                }
-
-                edge.save(clusterName);
-
-                // OK
-                break;
-
-              } catch (OConcurrentModificationException e) {
-                if (r + 1 >= retry)
-                  // NO RETRY; PROPAGATE THE EXCEPTION
-                  throw e;
-
-                // RETRY?
-                if (wait > 0)
-                  try {
-                    Thread.sleep(wait);
-                  } catch (InterruptedException e1) {
-                    OLogManager.instance().error(this, "Wait was interrupted.");
-                  }
-
-                // RELOAD LAST VERSION
-                fromVertex.getRecord().reload(null, true);
-                toVertex.getRecord().reload(null, true);
-              }
+            if (content != null) {
+              if (fields != null)
+                // MERGE CONTENT WITH FIELDS
+                fields.addAll(OPair.convertFromMap(content.toMap()));
+              else
+                fields = OPair.convertFromMap(content.toMap());
             }
+
+            edge = fromVertex.addEdge(null, toVertex, edgeLabel, clusterName, fields);
+
+            if (fields != null && !fields.isEmpty()) {
+              if (edge.isLightweight())
+                edge.convertToDocument();
+
+              OSQLHelper.bindParameters(edge.getRecord(), fields, new OCommandParameters(iArgs), context);
+            }
+
+            edge.save(clusterName);
 
             edges.add(edge);
 
