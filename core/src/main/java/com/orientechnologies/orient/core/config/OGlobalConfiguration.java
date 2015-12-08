@@ -24,7 +24,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OApi;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.cache.ORecordCacheWeakRefs;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
@@ -633,7 +632,6 @@ public enum OGlobalConfiguration {
   private final String                       description;
   private final OConfigurationChangeCallback changeCallback;
   private final Boolean                      canChangeAtRuntime;
-  private final boolean                      hidden;
 
   // AT STARTUP AUTO-CONFIG
   static {
@@ -648,7 +646,6 @@ public enum OGlobalConfiguration {
     defValue = iDefValue;
     type = iType;
     canChangeAtRuntime = true;
-    hidden = false;
     changeCallback = iChangeAction;
   }
 
@@ -663,7 +660,6 @@ public enum OGlobalConfiguration {
     defValue = iDefValue;
     type = iType;
     canChangeAtRuntime = iCanChange;
-    hidden = iHidden;
     changeCallback = null;
   }
 
