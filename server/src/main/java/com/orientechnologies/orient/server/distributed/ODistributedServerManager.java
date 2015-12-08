@@ -41,7 +41,7 @@ public interface ODistributedServerManager {
   };
 
   enum DB_STATUS {
-    OFFLINE, SYNCHRONIZING, ONLINE
+    OFFLINE, SYNCHRONIZING, ONLINE, BACKUP
   };
 
   boolean isEnabled();

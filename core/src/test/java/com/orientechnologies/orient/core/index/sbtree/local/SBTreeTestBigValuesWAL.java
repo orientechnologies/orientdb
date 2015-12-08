@@ -138,7 +138,7 @@ public class SBTreeTestBigValuesWAL extends SBTreeTestBigValues {
     actualWriteCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 100000,
         writeAheadLog, 100, 1648L * 1024 * 1024, 400L * 1024 * 1024 * 1024 + 1648L * 1024 * 1024, actualStorage, true, 1);
     actualReadCache = new O2QCache(400L * 1024 * 1024 * 1024, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024,
-        true);
+        true, 20);
 
     when(actualStorage.getStorageTransaction()).thenReturn(null);
     when(actualStorage.getReadCache()).thenReturn(actualReadCache);
@@ -179,7 +179,7 @@ public class SBTreeTestBigValuesWAL extends SBTreeTestBigValues {
     expectedWriteCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000,
         writeAheadLog, 100, 1648L * 1024 * 1024, 1648L * 1024 * 1024 + 400L * 1024 * 1024 * 1024, expectedStorage, true, 1);
     expectedReadCache = new O2QCache(400L * 1024 * 1024 * 1024,
-        OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, false);
+        OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, false, 20);
 
     when(expectedStorage.getStorageTransaction()).thenReturn(null);
     when(expectedStorage.getReadCache()).thenReturn(expectedReadCache);

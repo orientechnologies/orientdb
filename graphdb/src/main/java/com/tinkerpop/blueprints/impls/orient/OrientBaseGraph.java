@@ -20,6 +20,23 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+import java.util.logging.Level;
+
+import org.apache.commons.configuration.Configuration;
+
+import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -28,6 +45,7 @@ import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.traverse.OTraverse;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
@@ -36,6 +54,8 @@ import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OCompositeKey;
@@ -53,6 +73,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageRecoverListener;
+import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.GraphQuery;
@@ -62,26 +84,13 @@ import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
 import com.tinkerpop.blueprints.util.wrappers.partition.PartitionVertex;
-import org.apache.commons.configuration.Configuration;
-
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Deque;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
 
 /**
  * A Blueprints implementation of the graph database OrientDB (http://www.orientechnologies.com)
  *
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
-public abstract class OrientBaseGraph extends OrientConfigurableGraph implements OrientExtendedGraph {
+public abstract class OrientBaseGraph extends OrientConfigurableGraph implements OrientExtendedGraph, OStorageRecoverListener {
   public static final String                                  CONNECTION_OUT      = "out";
   public static final String                                  CONNECTION_IN       = "in";
   public static final String                                  CLASS_PREFIX        = "class:";
@@ -108,11 +117,11 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     });
   }
 
-  private final OPartitionedDatabasePool                      pool;
-  protected ODatabaseDocumentTx                               database;
-  private String                                              url;
-  private String                                              username;
-  private String                                              password;
+  private final OPartitionedDatabasePool pool;
+  protected ODatabaseDocumentTx          database;
+  private String                         url;
+  private String                         username;
+  private String                         password;
 
   /**
    * Constructs a new object using an existent database instance.
@@ -257,6 +266,14 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     super.init(configuration);
   }
 
+  abstract OrientEdge addEdgeInternal(OrientVertex currentVertex, String label, OrientVertex inVertex, String iClassName,
+      String iClusterName, Object... fields);
+
+  abstract void removeEdgesInternal(final OrientVertex vertex, final ODocument iVertex, final OIdentifiable iVertexToRemove,
+      final boolean iAlsoInverse, final boolean useVertexFieldsForEdgeLabels, final boolean autoScaleEdgeType);
+
+  abstract void removeEdgeInternal(OrientEdge currentVertex);
+
   public static OrientBaseGraph getActiveGraph() {
     return activeGraph.get();
   }
@@ -273,6 +290,29 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     if (ag != null)
       ag.remove();
 
+  }
+
+  @Override
+  public void onStorageRecover() {
+    final String sqlGraphConsistencyMode = OGlobalConfiguration.SQL_GRAPH_CONSISTENCY_MODE.getValueAsString();
+
+    if ("notx_sync_repair".equalsIgnoreCase(sqlGraphConsistencyMode)) {
+      // WAIT FOR REPAIR TO COMPLETE
+
+      new OGraphRepair().repair(this, OLogManager.instance().getCommandOutputListener(this, Level.INFO));
+
+    } else if ("notx_async_repair".equalsIgnoreCase(sqlGraphConsistencyMode)) {
+      // RUNNING REPAIR IN BACKGROUND
+
+      final OrientBaseGraph g = this;
+
+      new Thread(new Runnable() {
+        @Override
+        public void run() {
+          new OGraphRepair().repair(g, OLogManager.instance().getCommandOutputListener(this, Level.INFO));
+        }
+      });
+    }
   }
 
   /**
@@ -565,9 +605,10 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
           if (s.startsWith(CLASS_PREFIX))
             // GET THE CLASS NAME
             className = s.substring(CLASS_PREFIX.length());
-          else if (s.startsWith(CLUSTER_PREFIX))
-            // GET THE CLASS NAME
-            clusterName = s.substring(CLUSTER_PREFIX.length());
+          else
+            if (s.startsWith(CLUSTER_PREFIX))
+              // GET THE CLASS NAME
+              clusterName = s.substring(CLUSTER_PREFIX.length());
           else
             id = s;
         }
@@ -666,9 +707,10 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
           if (s.startsWith(CLASS_PREFIX))
             // GET THE CLASS NAME
             className = s.substring(CLASS_PREFIX.length());
-          else if (s.startsWith(CLUSTER_PREFIX))
-            // GET THE CLASS NAME
-            clusterName = s.substring(CLUSTER_PREFIX.length());
+          else
+            if (s.startsWith(CLUSTER_PREFIX))
+              // GET THE CLASS NAME
+              clusterName = s.substring(CLUSTER_PREFIX.length());
         }
       }
     }
@@ -685,7 +727,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       inVertex = ((PartitionVertex) inVertex).getBaseVertex();
 
     return ((OrientVertex) outVertex).addEdge(label, (OrientVertex) inVertex, className, clusterName, fields);
-
   }
 
   /**
@@ -884,7 +925,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * @param iValue
    *          Field value
    * @return Vertex instance if found, otherwise null
-   * @see #getVertices(String,Object)
+   * @see #getVertices(String, Object)
    */
   @Deprecated
   public Vertex getVertexByKey(final String iKey, Object iValue) {
@@ -1522,15 +1563,15 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    *          <ul>
    *          <li>"type" is the index type between the supported types (UNIQUE, NOTUNIQUE, FULLTEXT). The default type is NOT_UNIQUE
    *          <li>"class" is the class to index when it's a custom type derived by Vertex (V) or Edge (E)
-   *          <li>"keytype" to use a key type different by OType.STRING,</li>
-   *          </li>
+   *          <li>"keytype" to use a key type different by OType.STRING,</li></li>
    *          </ul>
    * @param <T>
    *          the element class specification
    */
   @SuppressWarnings({ "rawtypes" })
   @Override
-  public <T extends Element> void createKeyIndex(final String key, final Class<T> elementClass, final Parameter... indexParameters) {
+  public <T extends Element> void createKeyIndex(final String key, final Class<T> elementClass,
+      final Parameter... indexParameters) {
     makeActive();
 
     if (elementClass == null)
@@ -1579,8 +1620,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
         OPropertyIndexDefinition indexDefinition = new OPropertyIndexDefinition(className, key, keyType);
         if (collate != null)
           indexDefinition.setCollate(collate);
-        db.getMetadata().getIndexManager()
-            .createIndex(className + "." + key, indexType, indexDefinition, cls.getPolymorphicClusterIds(), null, metadata);
+        db.getMetadata().getIndexManager().createIndex(className + "." + key, indexType, indexDefinition,
+            cls.getPolymorphicClusterIds(), null, metadata);
         return null;
 
       }
@@ -1728,12 +1769,9 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
           msg.append(s);
 
         // ASSURE PENDING TX IF ANY IS COMMITTED
-        OLogManager
-            .instance()
-            .warn(
-                this,
-                "Requested command '%s' must be executed outside active transaction: the transaction will be committed and reopen right after it. To avoid this behavior execute it outside a transaction",
-                msg.toString());
+        OLogManager.instance().warn(this,
+            "The command '%s' must be executed outside an active transaction: the transaction will be committed and reopen right after it. To avoid this behavior execute it outside a transaction (db=%s)",
+            msg.toString(), getRawGraph().getName());
       }
       raw.commit();
       committed = true;
@@ -1745,7 +1783,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     } finally {
       if (committed)
         // RESTART TRANSACTION
-        ((OrientTransactionalGraph) this).begin();
+        raw.begin();
     }
   }
 
@@ -1788,6 +1826,13 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       }
     }
     return iValue;
+  }
+
+  void throwRecordNotFoundException(final String message) {
+    if (settings.isStandardExceptions())
+      throw new IllegalStateException(message);
+    else
+      throw new ORecordNotFoundException(message);
   }
 
   protected void setCurrentGraphInThreadLocal() {
@@ -1850,17 +1895,21 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
 
     if (pool == null) {
       database = new ODatabaseDocumentTx(url);
+
+      if (database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage)
+        ((OAbstractPaginatedStorage) database.getStorage().getUnderlying()).registerRecoverListener(this);
+
       if (url.startsWith("remote:") || database.exists()) {
         if (database.isClosed())
           database.open(username, password);
-
-        // LOAD THE INDEX CONFIGURATION FROM INTO THE DICTIONARY
-        // final ODocument indexConfiguration =
-        // database.getMetadata().getIndexManager().getConfiguration();
       } else
         database.create();
-    } else
+    } else {
       database = pool.acquire();
+
+      if (database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage)
+        ((OAbstractPaginatedStorage) database.getStorage().getUnderlying()).registerRecoverListener(this);
+    }
 
     makeActive();
     putInInitializationStack();
@@ -1882,7 +1931,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     final ODocument metadata = idx.getMetadata();
 
     return (metadata != null && metadata.field(OrientIndex.CONFIG_CLASSNAME) != null)
-    // compatibility with versions earlier 1.6.3
+        // compatibility with versions earlier 1.6.3
         || idx.getConfiguration().field(OrientIndex.CONFIG_CLASSNAME) != null;
   }
 
@@ -1890,6 +1939,218 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     @Override
     protected Deque<OrientBaseGraph> initialValue() {
       return new LinkedList<OrientBaseGraph>();
+    }
+  }
+
+  /**
+   * (Internal only)
+   */
+  protected static void removeEdges(final OrientBaseGraph graph, final ODocument iVertex, final String iFieldName,
+      final OIdentifiable iVertexToRemove, final boolean iAlsoInverse, final boolean useVertexFieldsForEdgeLabels,
+      final boolean autoScaleEdgeType, final boolean forceReload) {
+    if (iVertex == null)
+      return;
+
+    final Object fieldValue = iVertexToRemove != null ? iVertex.field(iFieldName) : iVertex.removeField(iFieldName);
+    if (fieldValue == null)
+      return;
+
+    if (fieldValue instanceof OIdentifiable) {
+      // SINGLE RECORD
+
+      if (iVertexToRemove != null) {
+        if (!fieldValue.equals(iVertexToRemove))
+          // NOT FOUND
+          return;
+
+        iVertex.removeField(iFieldName);
+
+        deleteEdgeIfAny(iVertexToRemove, forceReload);
+      }
+
+      if (iAlsoInverse)
+        removeInverseEdge(graph, iVertex, iFieldName, iVertexToRemove, (OIdentifiable) fieldValue, useVertexFieldsForEdgeLabels,
+            autoScaleEdgeType, forceReload);
+
+    } else if (fieldValue instanceof ORidBag) {
+      // COLLECTION OF RECORDS: REMOVE THE ENTRY
+      final ORidBag bag = (ORidBag) fieldValue;
+
+      if (iVertexToRemove != null) {
+        // SEARCH SEQUENTIALLY (SLOWER)
+        for (Iterator<OIdentifiable> it = bag.rawIterator(); it.hasNext();) {
+          final ODocument curr = getDocument(it.next(), forceReload);
+
+          if (curr == null)
+            // ALREADY DELETED (BYPASSING GRAPH API?), JUST REMOVE THE REFERENCE FROM BAG
+            it.remove();
+          else if (iVertexToRemove.equals(curr)) {
+            // FOUND AS VERTEX
+            it.remove();
+            if (iAlsoInverse)
+              removeInverseEdge(graph, iVertex, iFieldName, iVertexToRemove, curr, useVertexFieldsForEdgeLabels, autoScaleEdgeType,
+                  forceReload);
+            break;
+
+          } else if (ODocumentInternal.getImmutableSchemaClass(curr).isEdgeType()) {
+            final Direction direction = OrientVertex.getConnectionDirection(iFieldName, useVertexFieldsForEdgeLabels);
+
+            // EDGE, REMOVE THE EDGE
+            if (iVertexToRemove.equals(OrientEdge.getConnection(curr, direction.opposite()))) {
+              it.remove();
+              if (iAlsoInverse)
+                removeInverseEdge(graph, iVertex, iFieldName, iVertexToRemove, curr, useVertexFieldsForEdgeLabels,
+                    autoScaleEdgeType, forceReload);
+              break;
+            }
+          }
+        }
+
+        deleteEdgeIfAny(iVertexToRemove, forceReload);
+
+      } else {
+
+        // DELETE ALL THE EDGES
+        for (Iterator<OIdentifiable> it = bag.rawIterator(); it.hasNext();) {
+          OIdentifiable edge = it.next();
+
+          if (iAlsoInverse)
+            removeInverseEdge(graph, iVertex, iFieldName, null, edge, useVertexFieldsForEdgeLabels, autoScaleEdgeType, forceReload);
+
+          deleteEdgeIfAny(edge, forceReload);
+        }
+      }
+
+      if (autoScaleEdgeType && bag.isEmpty())
+        // FORCE REMOVAL OF ENTIRE FIELD
+        iVertex.removeField(iFieldName);
+
+    } else if (fieldValue instanceof Collection) {
+      final Collection col = (Collection) fieldValue;
+
+      if (iVertexToRemove != null) {
+        // SEARCH SEQUENTIALLY (SLOWER)
+        for (Iterator<OIdentifiable> it = col.iterator(); it.hasNext();) {
+          final ODocument curr = getDocument(it.next(), forceReload);
+
+          if (iVertexToRemove.equals(curr)) {
+            // FOUND AS VERTEX
+            it.remove();
+            if (iAlsoInverse)
+              removeInverseEdge(graph, iVertex, iFieldName, iVertexToRemove, curr, useVertexFieldsForEdgeLabels, autoScaleEdgeType,
+                  forceReload);
+            break;
+
+          } else if (ODocumentInternal.getImmutableSchemaClass(curr).isVertexType()) {
+            final Direction direction = OrientVertex.getConnectionDirection(iFieldName, useVertexFieldsForEdgeLabels);
+
+            // EDGE, REMOVE THE EDGE
+            if (iVertexToRemove.equals(OrientEdge.getConnection(curr, direction.opposite()))) {
+              it.remove();
+              if (iAlsoInverse)
+                removeInverseEdge(graph, iVertex, iFieldName, iVertexToRemove, curr, useVertexFieldsForEdgeLabels,
+                    autoScaleEdgeType, forceReload);
+              break;
+            }
+          }
+        }
+
+        deleteEdgeIfAny(iVertexToRemove, forceReload);
+
+      } else {
+
+        // DELETE ALL THE EDGES
+        for (OIdentifiable edge : (Iterable<OIdentifiable>) col) {
+
+          if (iAlsoInverse)
+            removeInverseEdge(graph, iVertex, iFieldName, null, edge, useVertexFieldsForEdgeLabels, autoScaleEdgeType, forceReload);
+
+          deleteEdgeIfAny(edge, forceReload);
+        }
+      }
+
+      if (autoScaleEdgeType && col.isEmpty())
+        // FORCE REMOVAL OF ENTIRE FIELD
+        iVertex.removeField(iFieldName);
+    }
+  }
+
+  /**
+   * (Internal only)
+   */
+  private static void removeInverseEdge(final OrientBaseGraph graph, final ODocument iVertex, final String iFieldName,
+      final OIdentifiable iVertexToRemove, final OIdentifiable currentRecord, final boolean useVertexFieldsForEdgeLabels,
+      final boolean autoScaleEdgeType, boolean forceReload) {
+
+    final ODocument r = getDocument(currentRecord, forceReload);
+
+    if (r == null)
+      return;
+
+    final String inverseFieldName = OrientVertex.getInverseConnectionFieldName(iFieldName, useVertexFieldsForEdgeLabels);
+    OImmutableClass immutableClass = ODocumentInternal.getImmutableSchemaClass(r);
+    if (immutableClass.isVertexType()) {
+      // DIRECT VERTEX
+      removeEdges(graph, r, inverseFieldName, iVertex, false, useVertexFieldsForEdgeLabels, autoScaleEdgeType, forceReload);
+      r.save();
+
+    } else if (immutableClass.isEdgeType()) {
+      // EDGE, REMOVE THE EDGE
+      final OIdentifiable otherVertex = OrientEdge.getConnection(r,
+          OrientVertex.getConnectionDirection(inverseFieldName, useVertexFieldsForEdgeLabels));
+
+      if (otherVertex != null) {
+        if (iVertexToRemove == null || otherVertex.equals(iVertexToRemove)) {
+
+          final int maxRetries = graph.getMaxRetries();
+          for (int retry = 0; retry < maxRetries; ++retry) {
+            try {
+              final ODocument otherVertexRecord = getDocument(otherVertex, forceReload);
+
+              // BIDIRECTIONAL EDGE
+              removeEdges(graph, otherVertexRecord, inverseFieldName, (OIdentifiable) currentRecord, false,
+                  useVertexFieldsForEdgeLabels, autoScaleEdgeType, forceReload);
+
+              if (otherVertexRecord != null)
+                otherVertexRecord.save();
+
+            } catch (ONeedRetryException e) {
+              // RETRY
+            }
+          }
+        }
+
+      } else
+        throw new IllegalStateException("Invalid content found in " + iFieldName + " field");
+    }
+  }
+
+  private static ODocument getDocument(final OIdentifiable id, final boolean forceReload) {
+    final ODocument doc = id.getRecord();
+
+    if (doc != null && forceReload) {
+      try {
+        doc.reload();
+      } catch (ORecordNotFoundException e) {
+        // IGNORE IT AND RETURN NULL
+      }
+    }
+
+    return doc;
+  }
+
+  /**
+   * (Internal only)
+   */
+  private static void deleteEdgeIfAny(final OIdentifiable iRecord, boolean forceReload) {
+    if (iRecord != null) {
+      final ODocument doc = getDocument(iRecord, forceReload);
+      if (doc != null) {
+        final OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
+        if (clazz != null && clazz.isEdgeType())
+          // DELETE THE EDGE RECORD TOO
+          doc.delete();
+      }
     }
   }
 }

@@ -20,6 +20,7 @@ import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
@@ -49,20 +50,22 @@ import java.util.concurrent.TimeUnit;
  * Insert records concurrently against the cluster
  */
 public abstract class AbstractServerClusterInsertTest extends AbstractDistributedWriteTest {
-  protected static final int delayWriter = 0;
-  protected static final int delayReader = 1000;
-  protected static final int writerCount = 5;
-  protected int              baseCount   = 0;
+  protected static final int delayWriter           = 0;
+  protected static final int delayReader           = 1000;
+  protected static final int writerCount           = 5;
+  protected int              baseCount             = 0;
   protected int              expected;
   protected OIndex<?>        idx;
-  protected int              maxRetries  = 1;
+  protected int              maxRetries            = 1;
+  protected boolean          useTransactions       = false;
+  protected List<ServerRun>  executeTestsOnServers = serverInstance;
 
-  class Writer implements Callable<Void> {
-    private final String databaseUrl;
-    private int          serverId;
-    private int          threadId;
+  protected class BaseWriter implements Callable<Void> {
+    protected final String databaseUrl;
+    protected int          serverId;
+    protected int          threadId;
 
-    public Writer(final int iServerId, final int iThreadId, final String db) {
+    protected BaseWriter(final int iServerId, final int iThreadId, final String db) {
       serverId = iServerId;
       threadId = iThreadId;
       databaseUrl = db;
@@ -81,11 +84,20 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
           int retry = 0;
 
           for (retry = 0; retry < maxRetries; retry++) {
+            if (useTransactions)
+              database.begin();
+
             try {
               final ODocument person = createRecord(database, id);
-              updateRecord(database, id);
-              checkRecord(database, id);
-              checkIndex(database, (String) person.field("name"), person.getIdentity());
+
+              if (!useTransactions) {
+                updateRecord(database, id);
+                checkRecord(database, id);
+                checkIndex(database, (String) person.field("name"), person.getIdentity());
+              }
+
+              if (useTransactions)
+                database.commit();
 
               if ((i + 1) % 100 == 0)
                 System.out.println("\nWriter " + database.getURL() + " managed " + (i + 1) + "/" + count + " records so far");
@@ -130,51 +142,71 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
       return null;
     }
 
-    private ODocument createRecord(ODatabaseDocumentTx database, int i) {
+    protected ODocument createRecord(ODatabaseDocumentTx database, int i) {
       final String uniqueId = serverId + "-" + threadId + "-" + i;
-
-      // System.out.println("Creating person " + uniqueId);
-
       ODocument person = new ODocument("Person").fields("id", UUID.randomUUID().toString(), "name", "Billy" + uniqueId, "surname",
           "Mayes" + uniqueId, "birthday", new Date(), "children", uniqueId);
       database.save(person);
 
-      Assert.assertTrue(person.getIdentity().isPersistent());
+      if (!useTransactions)
+        Assert.assertTrue(person.getIdentity().isPersistent());
 
       return person;
     }
 
-    private void updateRecord(ODatabaseDocumentTx database, int i) {
+    protected void updateRecord(ODatabaseDocumentTx database, int i) {
       ODocument doc = loadRecord(database, i);
       doc.field("updated", true);
       doc.save();
     }
 
-    private void checkRecord(ODatabaseDocumentTx database, int i) {
+    protected void checkRecord(ODatabaseDocumentTx database, int i) {
       ODocument doc = loadRecord(database, i);
       Assert.assertEquals(doc.field("updated"), Boolean.TRUE);
     }
 
-    private void checkIndex(ODatabaseDocumentTx database, final String key, final ORID rid) {
-      final List<OIdentifiable> result = database.command(new OCommandSQL("select from index:Person.name where key = ?")).execute(
-          key);
+    protected void checkIndex(ODatabaseDocumentTx database, final String key, final ORID rid) {
+      final List<OIdentifiable> result = database.command(new OCommandSQL("select from index:Person.name where key = ?"))
+          .execute(key);
       Assert.assertNotNull(result);
       Assert.assertEquals(result.size(), 1);
       Assert.assertNotNull(result.get(0).getRecord());
       Assert.assertEquals(((ODocument) result.get(0)).field("rid"), rid);
     }
 
-    private ODocument loadRecord(ODatabaseDocumentTx database, int i) {
+    protected ODocument loadRecord(ODatabaseDocumentTx database, int i) {
       final String uniqueId = serverId + "-" + threadId + "-" + i;
 
-      List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from Person where name = 'Billy" + uniqueId
-          + "'"));
+      List<ODocument> result = database
+          .query(new OSQLSynchQuery<ODocument>("select from Person where name = 'Billy" + uniqueId + "'"));
       if (result.size() == 0)
         Assert.assertTrue("No record found with name = 'Billy" + uniqueId + "'!", false);
       else if (result.size() > 1)
         Assert.assertTrue(result.size() + " records found with name = 'Billy" + uniqueId + "'!", false);
 
       return result.get(0);
+    }
+
+    protected void updateRecord(ODatabaseDocumentTx database, ODocument doc) {
+      doc.field("updated", true);
+      doc.save();
+    }
+
+    protected void checkRecord(ODatabaseDocumentTx database, ODocument doc) {
+      doc.reload();
+      Assert.assertEquals(doc.field("updated"), Boolean.TRUE);
+    }
+
+    protected void deleteRecord(ODatabaseDocumentTx database, ODocument doc) {
+      doc.delete();
+    }
+
+    protected void checkRecordIsDeleted(ODatabaseDocumentTx database, ODocument doc) {
+      try {
+        doc.reload();
+        Assert.fail("Record found while it should be deleted");
+      } catch (ORecordNotFoundException e) {
+      }
     }
   }
 
@@ -205,6 +237,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
       }
       return null;
     }
+
   }
 
   @Override
@@ -238,12 +271,12 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
     final ExecutorService writerExecutors = Executors.newCachedThreadPool();
     final ExecutorService readerExecutors = Executors.newCachedThreadPool();
 
-    runningWriters = new CountDownLatch(serverInstance.size() * writerCount);
+    runningWriters = new CountDownLatch(executeTestsOnServers.size() * writerCount);
 
     int serverId = 0;
     int threadId = 0;
     List<Callable<Void>> writerWorkers = new ArrayList<Callable<Void>>();
-    for (ServerRun server : serverInstance) {
+    for (ServerRun server : executeTestsOnServers) {
       if (server.isActive()) {
         for (int j = 0; j < writerCount; j++) {
           Callable writer = createWriter(serverId, threadId++, getDatabaseURL(server));
@@ -258,7 +291,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
     List<Future<Void>> futures = writerExecutors.invokeAll(writerWorkers);
 
     List<Callable<Void>> readerWorkers = new ArrayList<Callable<Void>>();
-    for (ServerRun server : serverInstance) {
+    for (ServerRun server : executeTestsOnServers) {
       if (server.isActive()) {
         Callable<Void> reader = createReader(getDatabaseURL(server));
         readerWorkers.add(reader);
@@ -287,7 +320,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
 
     System.out.println("All threads have finished, shutting down server instances");
 
-    for (ServerRun server : serverInstance) {
+    for (ServerRun server : executeTestsOnServers) {
       if (server.isActive()) {
         printStats(getDatabaseURL(server));
       }
@@ -416,16 +449,6 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
         database = poolFactory.get(getDatabaseURL(server), "admin", "admin").acquire();
         try {
           final int total = (int) database.countClass("Person");
-
-          // if (total != expected) {
-          // // ERROR: DUMP ALL THE RECORDS
-          // result = database.query(new OSQLSynchQuery<OIdentifiable>("select from Person"));
-          // i = 0;
-          // for (ODocument d : result) {
-          // System.out.println((i++) + ": " + d);
-          // }
-          // }
-
           Assert.assertEquals(expected, total);
         } finally {
           database.close();
@@ -435,7 +458,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
   }
 
   protected Callable<Void> createWriter(final int serverId, final int threadId, String databaseURL) {
-    return new Writer(serverId, threadId, databaseURL);
+    return new BaseWriter(serverId, threadId, databaseURL);
   }
 
   private void printStats(final String databaseUrl) {

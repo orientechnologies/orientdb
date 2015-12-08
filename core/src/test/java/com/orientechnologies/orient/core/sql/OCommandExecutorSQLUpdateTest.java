@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -195,8 +196,8 @@ public class OCommandExecutorSQLUpdateTest {
 
   // issue #4776
   @Test
-  public void testBooleanListNamedParameter(){
-      ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:testBooleanListNamedParameter");
+  public void testBooleanListNamedParameter() {
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:testBooleanListNamedParameter");
     try {
       ODatabaseRecordThreadLocal.INSTANCE.set(db);
       db.create();
@@ -240,12 +241,11 @@ public class OCommandExecutorSQLUpdateTest {
       assertNotNull(resultBooleanList);
       assertEquals(resultBooleanList.size(), 1);
       assertEquals(resultBooleanList.iterator().next(), true);
-    }finally{
+    } finally {
       db.close();
     }
   }
 
-  
   @Test
   public void testSingleQuoteInNamedParameter() throws Exception {
     final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLUpdateTestSingleQuoteInNamedParameter");
@@ -255,23 +255,23 @@ public class OCommandExecutorSQLUpdateTest {
 
     final ODocument test = new ODocument("test");
     test.field("text", "initial value");
-    
+
     db.save(test);
 
     ODocument queried = (ODocument) db.query(new OSQLSynchQuery<Object>("SELECT FROM test")).get(0);
     assertEquals(queried.field("text"), "initial value");
-    
+
     OCommandSQL command = new OCommandSQL("UPDATE test SET text = :text");
-    Map<String, Object> params = new HashMap<String,Object>();
+    Map<String, Object> params = new HashMap<String, Object>();
     params.put("text", "single \"");
-    
+
     db.command(command).execute(params);
-    queried.reload(); 
+    queried.reload();
     assertEquals(queried.field("text"), "single \"");
-    
+
     db.close();
   }
-  
+
   @Test
   public void testQuotedStringInNamedParameter() throws Exception {
     final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLUpdateTestQuotedStringInNamedParameter");
@@ -281,20 +281,20 @@ public class OCommandExecutorSQLUpdateTest {
 
     final ODocument test = new ODocument("test");
     test.field("text", "initial value");
-    
+
     db.save(test);
 
     ODocument queried = (ODocument) db.query(new OSQLSynchQuery<Object>("SELECT FROM test")).get(0);
     assertEquals(queried.field("text"), "initial value");
-    
+
     OCommandSQL command = new OCommandSQL("UPDATE test SET text = :text");
-    Map<String, Object> params = new HashMap<String,Object>();
+    Map<String, Object> params = new HashMap<String, Object>();
     params.put("text", "quoted \"value\" string");
-    
+
     db.command(command).execute(params);
-    queried.reload(); 
+    queried.reload();
     assertEquals(queried.field("text"), "quoted \"value\" string");
-    
+
     db.close();
   }
 
@@ -314,7 +314,7 @@ public class OCommandExecutorSQLUpdateTest {
     assertEquals(queried.field("text"), "initial value");
 
     OCommandSQL command = new OCommandSQL("UPDATE test SET text = :text");
-    Map<String, Object> params = new HashMap<String,Object>();
+    Map<String, Object> params = new HashMap<String, Object>();
     params.put("text", "quoted 'value' string");
 
     db.command(command).execute(params);
@@ -331,13 +331,35 @@ public class OCommandExecutorSQLUpdateTest {
 
     db.command(new OCommandSQL("CREATE class testquotesinjson")).execute();
     db.command(new OCommandSQL("UPDATE testquotesinjson SET value = {\"f12\":'test\\\\'} UPSERT WHERE key = \"test\"")).execute();
-//    db.command(new OCommandSQL("update V set value.f12 = 'asdf\\\\' WHERE key = \"test\"")).execute();
-
-
+    // db.command(new OCommandSQL("update V set value.f12 = 'asdf\\\\' WHERE key = \"test\"")).execute();
 
     ODocument queried = (ODocument) db.query(new OSQLSynchQuery<Object>("SELECT FROM testquotesinjson")).get(0);
     assertEquals(queried.field("value.f12"), "test\\");
 
+    db.close();
+  }
+
+  @Test
+  public void testDottedTargetInScript() throws Exception {
+    //#issue #5397
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLUpdateTestDottedTargetInScript");
+    db.create();
+
+    db.command(new OCommandSQL("create class A")).execute();
+    db.command(new OCommandSQL("create class B")).execute();
+    db.command(new OCommandSQL("insert into A set name = 'foo'")).execute();
+    db.command(new OCommandSQL("insert into B set name = 'bar', a = (select from A)")).execute();
+
+
+    StringBuilder script = new StringBuilder();
+    script.append("let $a = select from B;\n");
+    script.append("update $a.a set name = 'baz';\n");
+    db.command(new OCommandScript(script.toString())).execute();
+
+    List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from A"));
+    assertNotNull(result);
+    assertEquals(result.size(), 1);
+    assertEquals(result.get(0).field("name"), "baz");
     db.close();
   }
 }

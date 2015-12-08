@@ -32,11 +32,12 @@ import java.util.List;
  * Test class that creates and executes distributed operations against a cluster of servers created in the same JVM.
  */
 public abstract class AbstractServerClusterTest {
-  protected int             delayServerStartup = 0;
-  protected int             delayServerAlign   = 0;
-  protected String          rootDirectory      = "target/servers/";
+  protected int     delayServerStartup     = 0;
+  protected int     delayServerAlign       = 0;
+  protected boolean startupNodesInSequence = true;
+  protected String  rootDirectory          = "target/servers/";
 
-  protected List<ServerRun> serverInstance     = new ArrayList<ServerRun>();
+  protected List<ServerRun> serverInstance = new ArrayList<ServerRun>();
 
   protected AbstractServerClusterTest() {
   }
@@ -93,23 +94,41 @@ public abstract class AbstractServerClusterTest {
 
     try {
 
-      for (ServerRun server : serverInstance) {
-        banner("STARTING SERVER -> " + server.getServerId() + "...");
-        server.startServer(getDistributedServerConfiguration(server));
+      if (startupNodesInSequence) {
+        for (ServerRun server : serverInstance) {
+          banner("STARTING SERVER -> " + server.getServerId() + "...");
+          server.startServer(getDistributedServerConfiguration(server));
 
-        if (delayServerStartup > 0)
-          try {
-            Thread.sleep(delayServerStartup * serverInstance.size());
-          } catch (InterruptedException e) {
-          }
+          if (delayServerStartup > 0)
+            try {
+              Thread.sleep(delayServerStartup * serverInstance.size());
+            } catch (InterruptedException e) {
+            }
 
-        onServerStarted(server);
+          onServerStarted(server);
+        }
+      } else {
+        for (final ServerRun server : serverInstance) {
+          final Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+              banner("STARTING SERVER -> " + server.getServerId() + "...");
+              try {
+                server.startServer(getDistributedServerConfiguration(server));
+              } catch (Exception e) {
+                e.printStackTrace();
+              }
+              onServerStarted(server);
+            }
+          });
+          thread.start();
+        }
       }
 
       if (delayServerAlign > 0)
         try {
-          System.out.println("Server started, waiting for synchronization (" + (delayServerAlign * serverInstance.size() / 1000)
-              + "secs)...");
+          System.out.println(
+              "Server started, waiting for synchronization (" + (delayServerAlign * serverInstance.size() / 1000) + "secs)...");
           Thread.sleep(delayServerAlign * serverInstance.size());
         } catch (InterruptedException e) {
         }
@@ -160,7 +179,7 @@ public abstract class AbstractServerClusterTest {
 
   protected void log(final String iMessage) {
     OLogManager.instance().flush();
-    System.out.println("\n"+iMessage);
+    System.out.println("\n" + iMessage);
     System.out.flush();
   }
 

@@ -125,7 +125,7 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiLocalTest {
         writeAheadLog, 100, 1648L * 1024 * 1024, 1648L * 1024 * 1024 + 400L * 1024 * 1024 * 1024, actualStorage, false, 1);
 
     actualReadCache = new O2QCache(400L * 1024 * 1024 * 1024, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024,
-        false);
+        false, 20);
 
     when(actualStorage.getStorageTransaction()).thenReturn(null);
     when(actualStorage.getAtomicOperationsManager()).thenReturn(actualAtomicOperationsManager);
@@ -165,7 +165,7 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiLocalTest {
     expectedWriteCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000,
         writeAheadLog, 100, 1648L * 1024 * 1024, 1648L * 1024 * 1024 + 400L * 1024 * 1024 * 1024, expectedStorage, false, 2);
     expectedReadCache = new O2QCache(400L * 1024 * 1024 * 1024,
-        OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, false);
+        OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, false, 20);
 
     OStorageVariableParser variableParser = new OStorageVariableParser(expectedStorageDir);
     OAtomicOperationsManager atomicOperationsManager = new OAtomicOperationsManager(null);

@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
-import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
@@ -52,26 +51,27 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * SQL DELETE VERTEX command.
- * 
+ *
  * @author Luca Garulli
  */
-public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest,
-    OCommandResultListener {
-  public static final String  NAME          = "DELETE VERTEX";
-  private static final String KEYWORD_BATCH = "BATCH";
-  private ORecordId           rid;
-  private int                 removed       = 0;
-  private ODatabaseDocument   database;
-  private OCommandRequest     query;
-  private String              returning     = "COUNT";
-  private List<ORecord>       allDeletedRecords;
-  private OrientGraph         graph;
-  private OModifiableBoolean  shutdownFlag  = new OModifiableBoolean();
-  private boolean             txAlreadyBegun;
-  private int                 batch         = 100;
+public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
+    implements OCommandDistributedReplicateRequest, OCommandResultListener {
+  public static final String               NAME          = "DELETE VERTEX";
+  private static final String              KEYWORD_BATCH = "BATCH";
+  private ORecordId                        rid;
+  private int                              removed       = 0;
+  private ODatabaseDocument                database;
+  private OCommandRequest                  query;
+  private String                           returning     = "COUNT";
+  private List<ORecord>                    allDeletedRecords;
+  private AtomicReference<OrientBaseGraph> currentGraph  = new AtomicReference<OrientBaseGraph>();
+  private OModifiableBoolean               shutdownFlag  = new OModifiableBoolean();
+  private boolean                          txAlreadyBegun;
+  private int                              batch         = 100;
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLDeleteVertex parse(final OCommandRequest iRequest) {
@@ -82,7 +82,7 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
     try {
       // System.out.println("NEW PARSER FROM: " + queryText);
       queryText = preParse(queryText, iRequest);
-      // System.out.println("NEW PARSER   TO: " + queryText);
+      // System.out.println("NEW PARSER TO: " + queryText);
       textRequest.setText(queryText);
       database = getDatabase();
 
@@ -183,11 +183,10 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
       allDeletedRecords = new ArrayList<ORecord>();
 
     txAlreadyBegun = getDatabase().getTransaction().isActive();
-    graph = OGraphCommandExecutorSQLFactory.getGraph(true, shutdownFlag);
 
     if (rid != null) {
       // REMOVE PUNCTUAL RID
-      OGraphCommandExecutorSQLFactory.runInTx(graph, new OGraphCommandExecutorSQLFactory.GraphCallBack<Object>() {
+      OGraphCommandExecutorSQLFactory.runInConfiguredTxMode(new OGraphCommandExecutorSQLFactory.GraphCallBack<Object>() {
         @Override
         public Object call(OrientBaseGraph graph) {
           final OrientVertex v = graph.getVertex(rid);
@@ -204,10 +203,11 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
 
     } else if (query != null) {
       // TARGET IS A CLASS + OPTIONAL CONDITION
-      OGraphCommandExecutorSQLFactory.runInTx(graph, new OGraphCommandExecutorSQLFactory.GraphCallBack<OrientGraph>() {
+      OGraphCommandExecutorSQLFactory.runInConfiguredTxMode(new OGraphCommandExecutorSQLFactory.GraphCallBack<OrientGraph>() {
         @Override
-        public OrientGraph call(OrientBaseGraph graph) {
+        public OrientGraph call(final OrientBaseGraph iGraph) {
           // TARGET IS A CLASS + OPTIONAL CONDITION
+          currentGraph.set(iGraph);
           query.setContext(getContext());
           query.execute(iArgs);
           return null;
@@ -233,29 +233,23 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
     if (id.getIdentity().isValid()) {
       final ODocument record = id.getRecord();
 
-      final OrientVertex v = graph.getVertex(record);
-      for (int retry = 0; retry < 20; ++retry) {
-        try {
-          if (v != null) {
-            v.remove();
+      final OrientBaseGraph g = currentGraph.get();
 
-            if (!txAlreadyBegun && batch > 0 && removed % batch == 0) {
-              graph.commit();
-              graph.begin();
-            }
+      final OrientVertex v = g.getVertex(record);
+      if (v != null) {
+        v.remove();
 
-            if (returning.equalsIgnoreCase("BEFORE"))
-              allDeletedRecords.add(record);
-
-            removed++;
+        if (!txAlreadyBegun && batch > 0 && removed % batch == 0) {
+          if (g instanceof OrientGraph) {
+            g.commit();
+            ((OrientGraph) g).begin();
           }
-          // OK
-          break;
-
-        } catch (ONeedRetryException ex) {
-          getDatabase().getLocalCache().invalidate();
-          v.reload();
         }
+
+        if (returning.equalsIgnoreCase("BEFORE"))
+          allDeletedRecords.add(record);
+
+        removed++;
       }
     }
 
@@ -274,12 +268,13 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
 
   @Override
   public void end() {
-    if (graph != null) {
+    final OrientBaseGraph g = currentGraph.get();
+    if (g != null) {
       if (!txAlreadyBegun) {
-        graph.commit();
+        g.commit();
 
         if (shutdownFlag.getValue())
-          graph.shutdown(false);
+          g.shutdown(false);
       }
     }
   }
@@ -327,7 +322,6 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
     return result;
   }
 
-  @Override
   public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
     return query != null && !getDatabase().getTransaction().isActive() ? DISTRIBUTED_EXECUTION_MODE.REPLICATE
         : DISTRIBUTED_EXECUTION_MODE.LOCAL;

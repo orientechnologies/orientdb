@@ -67,40 +67,45 @@ import java.util.TimeZone;
 public class OStorageConfiguration implements OSerializableStream {
   public static final ORecordId CONFIG_RID = new OImmutableRecordId(0, 0);
 
-  public static final String                           DEFAULT_CHARSET               = "UTF-8";
-  private             String                           charset                       = DEFAULT_CHARSET;
-  public static final int                              CURRENT_VERSION               = 14;
-  public static final int                              CURRENT_BINARY_FORMAT_VERSION = 12;
-  private final       List<OStorageEntryConfiguration> properties                    = Collections.synchronizedList(new ArrayList<OStorageEntryConfiguration>());
-  protected final transient OStorage storage;
-  private final   OContextConfiguration configuration = new OContextConfiguration();
-  public volatile int                   version       = -1;
-  public volatile String name;
-  public volatile String schemaRecordId;
-  public volatile String dictionaryRecordId;
-  public volatile String indexMgrRecordId;
-  public volatile String dateFormat     = "yyyy-MM-dd";
-  public volatile String dateTimeFormat = "yyyy-MM-dd HH:mm:ss";
-  public volatile int                          binaryFormatVersion;
-  public volatile OStorageSegmentConfiguration fileTemplate;
-  public volatile  List<OStorageClusterConfiguration> clusters       = Collections.synchronizedList(new ArrayList<OStorageClusterConfiguration>());
-  private volatile String                             localeLanguage = Locale.getDefault().getLanguage();
-  private volatile String                             localeCountry  = Locale.getDefault().getCountry();
-  private volatile TimeZone                           timeZone       = TimeZone.getDefault();
-  private transient volatile Locale               localeInstance;
-  private transient volatile DecimalFormatSymbols unusualSymbols;
-  private volatile           String               clusterSelection;
-  private volatile           String               conflictStrategy;
-  private volatile int minimumClusters = 1;
-  private volatile String  recordSerializer;
-  private volatile int     recordSerializerVersion;
-  private volatile boolean strictSQL;
+  public static final String                         DEFAULT_CHARSET               = "UTF-8";
+  private String                                     charset                       = DEFAULT_CHARSET;
+  public static final int                            CURRENT_VERSION               = 14;
+  public static final int                            CURRENT_BINARY_FORMAT_VERSION = 12;
+  private final List<OStorageEntryConfiguration>     properties                    = Collections
+      .synchronizedList(new ArrayList<OStorageEntryConfiguration>());
+  protected final transient OStorage                 storage;
+  private final OContextConfiguration                configuration                 = new OContextConfiguration();
+  public volatile int                                version                       = -1;
+  public volatile String                             name;
+  public volatile String                             schemaRecordId;
+  public volatile String                             dictionaryRecordId;
+  public volatile String                             indexMgrRecordId;
+  public volatile String                             dateFormat                    = "yyyy-MM-dd";
+  public volatile String                             dateTimeFormat                = "yyyy-MM-dd HH:mm:ss";
+  public volatile int                                binaryFormatVersion;
+  public volatile OStorageSegmentConfiguration       fileTemplate;
+  public volatile List<OStorageClusterConfiguration> clusters                      = Collections
+      .synchronizedList(new ArrayList<OStorageClusterConfiguration>());
+  private volatile String                            localeLanguage                = Locale.getDefault().getLanguage();
+  private volatile String                            localeCountry                 = Locale.getDefault().getCountry();
+  private volatile TimeZone                          timeZone                      = TimeZone.getDefault();
+  private transient volatile Locale                  localeInstance;
+  private transient volatile DecimalFormatSymbols    unusualSymbols;
+  private volatile String                            clusterSelection;
+  private volatile String                            conflictStrategy;
+  private volatile int                               minimumClusters               = 1;
+  private volatile String                            recordSerializer;
+  private volatile int                               recordSerializerVersion;
+  private volatile boolean                           strictSQL;
+  private volatile boolean                           txRequiredForSQLGraphOperations;
 
   public OStorageConfiguration(final OStorage iStorage) {
     storage = iStorage;
     fileTemplate = new OStorageSegmentConfiguration();
 
     binaryFormatVersion = CURRENT_BINARY_FORMAT_VERSION;
+
+    txRequiredForSQLGraphOperations = OGlobalConfiguration.SQL_GRAPH_CONSISTENCY_MODE.getValueAsString().equalsIgnoreCase("tx");
   }
 
   public String getConflictStrategy() {
@@ -127,7 +132,7 @@ public class OStorageConfiguration implements OSerializableStream {
     final byte[] record = storage.readRecord(CONFIG_RID, null, false, null).getResult().buffer;
 
     if (record == null)
-      throw new OStorageException("Cannot load database's configuration. The database seems to be corrupted.");
+      throw new OStorageException("Cannot load database's configuration. The database seems corrupted");
 
     fromStream(record);
     return this;
@@ -135,7 +140,8 @@ public class OStorageConfiguration implements OSerializableStream {
 
   public void update() throws OSerializationException {
     final byte[] record = toStream();
-    storage.updateRecord(CONFIG_RID, true, record, OVersionFactory.instance().createUntrackedVersion(), ORecordBytes.RECORD_TYPE, 0, null);
+    storage.updateRecord(CONFIG_RID, true, record, OVersionFactory.instance().createUntrackedVersion(), ORecordBytes.RECORD_TYPE, 0,
+        null);
   }
 
   public boolean isEmpty() {
@@ -190,7 +196,7 @@ public class OStorageConfiguration implements OSerializableStream {
     if (version > 0)
       indexMgrRecordId = read(values[index++]);
     else
-      // @COMPATIBILTY
+      // @COMPATIBILITY
       indexMgrRecordId = null;
 
     localeLanguage = read(values[index++]);
@@ -198,7 +204,7 @@ public class OStorageConfiguration implements OSerializableStream {
     dateFormat = read(values[index++]);
     dateTimeFormat = read(values[index++]);
 
-    // @COMPATIBILTY 1.2.0
+    // @COMPATIBILITY 1.2.0
     if (version >= 4) {
       timeZone = TimeZone.getTimeZone(read(values[index++]));
       charset = read(values[index++]);
@@ -446,7 +452,8 @@ public class OStorageConfiguration implements OSerializableStream {
   }
 
   public void create() throws IOException {
-    storage.createRecord(CONFIG_RID, new byte[] { 0, 0, 0, 0 }, OVersionFactory.instance().createVersion(), ORecordBytes.RECORD_TYPE, (byte) 0, null);
+    storage.createRecord(CONFIG_RID, new byte[] { 0, 0, 0, 0 }, OVersionFactory.instance().createVersion(),
+        ORecordBytes.RECORD_TYPE, (byte) 0, null);
   }
 
   public void synch() throws IOException {
@@ -556,6 +563,10 @@ public class OStorageConfiguration implements OSerializableStream {
     return strictSQL;
   }
 
+  public boolean isTxRequiredForSQLGraphOperations() {
+    return txRequiredForSQLGraphOperations;
+  }
+
   public List<OStorageEntryConfiguration> getProperties() {
     return Collections.unmodifiableList(properties);
   }
@@ -564,6 +575,10 @@ public class OStorageConfiguration implements OSerializableStream {
     if (OStatement.CUSTOM_STRICT_SQL.equalsIgnoreCase(iName))
       // SET STRICT SQL VARIABLE
       strictSQL = "true".equalsIgnoreCase("" + iValue);
+
+    if ("txRequiredForSQLGraphOperations".equalsIgnoreCase(iName))
+      // SET TX SQL GRAPH OPERATIONS
+      txRequiredForSQLGraphOperations = "true".equalsIgnoreCase(iValue);
 
     for (Iterator<OStorageEntryConfiguration> it = properties.iterator(); it.hasNext();) {
       final OStorageEntryConfiguration e = it.next();

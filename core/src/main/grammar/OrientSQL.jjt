@@ -1010,25 +1010,14 @@ ODeleteEdgeStatement DeleteEdgeWhereStatement():
 }
 
 OUpdateStatement UpdateStatement():
-{ OUpdateOperations lastOperations; }
+{
+    OUpdateOperations lastOperations;
+    ORid lastRid;
+ }
 {
     (
     	<UPDATE>
-    	(
-    	    jjtThis.targetRid = Rid()
-    	    |
-    		jjtThis.targetClass = Identifier()
-    		|
-    		jjtThis.targetCluster = Cluster()
-    		|
-    		jjtThis.targetIndex = IndexIdentifier()
-    		|
-    		(
-    		    <LPAREN>
-    		    jjtThis.targetQuery = QueryStatement()
-    		    <RPAREN>
-    		)
-    	)
+    	jjtThis.target = FromClause()
     	( lastOperations = UpdateOperations() { jjtThis.operations.add(lastOperations); } )+
     	[ <UPSERT> { jjtThis.upsert = true; } ]
     	[

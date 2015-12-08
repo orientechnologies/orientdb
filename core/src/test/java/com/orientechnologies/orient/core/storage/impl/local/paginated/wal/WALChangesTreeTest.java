@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
-import com.orientechnologies.common.serialization.SafeConverterTest;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointerFactory;
 import com.orientechnologies.common.util.MersenneTwisterFast;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -38,7 +38,7 @@ public class WALChangesTreeTest {
 
     tree.add(new byte[] { 10, 20, 30 }, 10);
 
-    ODirectMemoryPointer pointer = new ODirectMemoryPointer(20);
+    ODirectMemoryPointer pointer = ODirectMemoryPointerFactory.instance().createPointer(20);
     tree.applyChanges(pointer);
 
     Assert.assertEquals(pointer.get(10, 3), new byte[] { 10, 20, 30 });
@@ -65,7 +65,7 @@ public class WALChangesTreeTest {
     tree.add(new byte[] { 35, 30 }, 11);
     tree.add(new byte[] { 10, 20 }, 10);
 
-    final ODirectMemoryPointer pointer = new ODirectMemoryPointer(20);
+    final ODirectMemoryPointer pointer = ODirectMemoryPointerFactory.instance().createPointer(20);
     tree.applyChanges(pointer);
 
     Assert.assertEquals(pointer.get(10, 3), new byte[] { 10, 20, 30 });
@@ -94,7 +94,7 @@ public class WALChangesTreeTest {
     tree.add(new byte[] { 33, 34, 35, }, 3);
     tree.add(new byte[] { 22, 23, 24, 25, 26 }, 2);
 
-    ODirectMemoryPointer pointer = new ODirectMemoryPointer(20);
+    ODirectMemoryPointer pointer = ODirectMemoryPointerFactory.instance().createPointer(20);
     tree.applyChanges(pointer);
 
     Assert.assertEquals(pointer.get(1, 6), new byte[] { 11, 22, 23, 24, 25, 26 });
@@ -134,7 +134,7 @@ public class WALChangesTreeTest {
     tree.add(new byte[] { 15 }, 15);
     tree.add(new byte[] { 2 }, 2);
 
-    ODirectMemoryPointer pointer = new ODirectMemoryPointer(20);
+    ODirectMemoryPointer pointer = ODirectMemoryPointerFactory.instance().createPointer(20);
     tree.applyChanges(pointer);
 
     Assert.assertEquals(pointer.get(10, 1), new byte[] { 10 });
@@ -185,7 +185,7 @@ public class WALChangesTreeTest {
     tree.add(new byte[] { 30 }, 30);
     tree.add(new byte[] { 35 }, 35);
 
-    ODirectMemoryPointer pointer = new ODirectMemoryPointer(80);
+    ODirectMemoryPointer pointer = ODirectMemoryPointerFactory.instance().createPointer(80);
     tree.applyChanges(pointer);
 
     Assert.assertEquals(pointer.get(50, 1), new byte[] { 50 });
@@ -279,9 +279,10 @@ public class WALChangesTreeTest {
       tree.add(value, cstart);
     }
 
-    ODirectMemoryPointer pointer = new ODirectMemoryPointer(30);
+    ODirectMemoryPointer pointer = ODirectMemoryPointerFactory.instance().createPointer(30);
     tree.applyChanges(pointer);
     Assert.assertEquals(pointer.get(0, 30), data);
+    pointer.free();
   }
 
 }

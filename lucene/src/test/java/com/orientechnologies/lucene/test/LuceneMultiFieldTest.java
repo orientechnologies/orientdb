@@ -75,6 +75,7 @@ public class LuceneMultiFieldTest extends BaseLuceneTest {
   @Test
   public void testSelectSingleDocumentWithAndOperator() {
 
+    databaseDocumentTx.activateOnCurrentThread();
     List<ODocument> docs = databaseDocumentTx.query(
         new OSQLSynchQuery<ODocument>("select * from Song where [title,author] LUCENE \"(title:mountain AND author:Fabbio)\""));
 
@@ -85,6 +86,7 @@ public class LuceneMultiFieldTest extends BaseLuceneTest {
   @Test
   public void testSelectMultipleDocumentsWithOrOperator() {
 
+    databaseDocumentTx.activateOnCurrentThread();
     List<ODocument> docs = databaseDocumentTx.query(
         new OSQLSynchQuery<ODocument>("select * from Song where [title,author] LUCENE \"(title:mountain OR author:Fabbio)\""));
 
@@ -95,6 +97,7 @@ public class LuceneMultiFieldTest extends BaseLuceneTest {
   @Test
   public void testSelectOnTitleAndAuthorWithMatchOnTitle() {
 
+    databaseDocumentTx.activateOnCurrentThread();
     List<ODocument> docs = databaseDocumentTx
         .query(new OSQLSynchQuery<ODocument>("select * from Song where [title,author] LUCENE \"mountain\""));
 
@@ -105,6 +108,7 @@ public class LuceneMultiFieldTest extends BaseLuceneTest {
   @Test
   public void testSelectOnTitleAndAuthorWithMatchOnAuthor() {
 
+    databaseDocumentTx.activateOnCurrentThread();
     List<ODocument> docs = databaseDocumentTx
         .query(new OSQLSynchQuery<ODocument>("select * from Song where [title,author] LUCENE \"fabbio\""));
 
@@ -118,6 +122,7 @@ public class LuceneMultiFieldTest extends BaseLuceneTest {
         + "create property Item.content string\n"
         + "create index Item.i_lucene on Item(title, summary, content) fulltext engine lucene METADATA {ignoreNullValues:false}\n"
         + "insert into Item set title = 'test', content = 'this is a test'\n";
+    databaseDocumentTx.activateOnCurrentThread();
     databaseDocumentTx.command(new OCommandScript("sql", script)).execute();
 
     List<ODocument> docs;

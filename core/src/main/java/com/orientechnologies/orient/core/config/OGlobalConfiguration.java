@@ -24,6 +24,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OApi;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.storage.cache.local.O2QCache;
@@ -68,6 +69,11 @@ public enum OGlobalConfiguration {
           + "but usually it can be safely put to false. It is needed to set to true only after dramatic changes in storage structures.",
       Boolean.class, true),
 
+  DIRECT_MEMORY_TRACK_MODE("memory.directMemory.trackMode", "If 'track mode' is switched on then following steps are performed: "
+      + "1. direct memory JMX bean is registered. 2. You may check amount of allocated direct memory as property of JMX bean. "
+      + "3. If memory leak is detected then JMX event will be fired. "
+      + "This mode provides big overhead and may be used only for testing purpose", Boolean.class, false),
+
   DIRECT_MEMORY_ONLY_ALIGNED_ACCESS("memory.directMemory.onlyAlignedMemoryAccess",
       "Some architectures does not allow unaligned memory access or suffer from speed degradation, on this platforms flag should be set to true",
       Boolean.class, true),
@@ -76,7 +82,27 @@ public enum OGlobalConfiguration {
       "Minimal amount of time (seconds) since last System.gc() when called after tree optimization", Long.class, 600),
 
   // STORAGE
-      DISK_CACHE_SIZE("storage.diskCache.bufferSize", "Size of disk buffer in megabytes", Integer.class, 4 * 1024),
+  DISK_CACHE_PINNED_PAGES("storage.diskCache.pinnedPages", "Maximum amount of pinned pages which may be contained in cache,"
+      + " if this percent is reached next pages will be left in unpinned state. You can not set value more than 50", Integer.class,
+      20, false),
+
+  DISK_CACHE_SIZE("storage.diskCache.bufferSize", "Size of disk buffer in megabytes, disk size may be changed at runtime, "
+      + "but if does not enough to contain all pinned pages exception will be thrown.", Integer.class, 4 * 1024,
+      new OConfigurationChangeCallback() {
+        @Override
+        public void change(Object currentValue, Object newValue) {
+          final OEngineLocalPaginated engineLocalPaginated = (OEngineLocalPaginated) Orient.instance()
+              .getEngine(OEngineLocalPaginated.NAME);
+
+          if (engineLocalPaginated == null) {
+            OLogManager.instance().error(this,
+                "Can not change cache size in runtime because storage engine " + OEngineLocalPaginated.NAME
+                    + " was not registered");
+          } else {
+            engineLocalPaginated.changeCacheSize(((Integer) (newValue)) * 1024L * 1024L);
+          }
+        }
+      }),
 
   DISK_WRITE_CACHE_PART("storage.diskCache.writeCachePart", "Percent of disk cache which is use as write cache", Integer.class, 15),
 
@@ -349,9 +375,19 @@ public enum OGlobalConfiguration {
   NETWORK_HTTP_JSONP_ENABLED("network.http.jsonp",
       "Enable the usage of JSONP if requested by the client. The parameter name to use is 'callback'", Boolean.class, false, true),
 
-  OAUTH2_SECRETKEY("oauth2.secretkey", "Http OAuth2 secret key", String.class, "utf-8"), NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT(
-      "network.http.sessionExpireTimeout", "Timeout after which an http session is considered tp have expired (seconds)",
-      Integer.class, 300),
+  @Deprecated OAUTH2_SECRETKEY("oauth2.secretkey", "Http OAuth2 secret key", String.class, ""),
+
+  NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT("network.http.sessionExpireTimeout",
+      "Timeout after which an http session is considered tp have expired (seconds)", Integer.class, 300),
+
+  NETWORK_HTTP_USE_TOKEN("network.http.useToken", "Enable Token based sessions for http", Boolean.class, false),
+
+  NETWORK_TOKEN_SECRETKEY("network.token.secretyKey", "Network token sercret key", String.class, ""),
+
+  NETWORK_TOKEN_ENCRIPTION_ALGORITHM("network.token.encriptionAlgorithm", "Network token algorithm", String.class, "HmacSHA256"),
+
+  NETWORK_TOKEN_EXPIRE_TIMEOUT("network.token.expireTimeout",
+      "Timeout after which an binary session is considered tp have expired (minutes)", Integer.class, 60),
 
   // PROFILER
       PROFILER_ENABLED("profiler.enabled", "Enable the recording of statistics and counters", Boolean.class, false,
@@ -405,6 +441,15 @@ public enum OGlobalConfiguration {
   QUERY_LIMIT_THRESHOLD_TIP("query.limitThresholdTip",
       "If total number of returned records in a query is major than this threshold a warning is given. Use 0 to disable it",
       Long.class, 10000),
+
+  // GRAPH
+      SQL_GRAPH_CONSISTENCY_MODE("sql.graphConsistencyMode",
+          "Consistency mode for graphs. It can be 'tx' (default), 'notx_sync_repair' and 'notx_async_repair'. "
+              + "'tx' uses transactions to maintain consistency. Instead both 'notx_sync_repair' and 'notx_async_repair' do not use transactions, "
+              + "and the consistency, in case of JVM crash, is guaranteed by a database repair operation that run at startup. "
+              + "With 'notx_sync_repair' the repair is synchronous, so the database comes online after the repair is ended, while "
+              + "with 'notx_async_repair' the repair is a background process",
+          String.class, "tx"),
 
   /**
    * Maximum size of pool of network channels between client and server. A channel is a TCP/IP connection.
@@ -583,10 +628,10 @@ public enum OGlobalConfiguration {
   private final String key;
   private final Object defValue;
   private final Class<?> type;
-  private Object value = null;
-  private String description;
-  private OConfigurationChangeCallback changeCallback = null;
-  private Boolean canChangeAtRuntime;
+  private volatile Object value = null;
+  private final String                       description;
+  private final OConfigurationChangeCallback changeCallback;
+  private final Boolean                      canChangeAtRuntime;
 
   // AT STARTUP AUTO-CONFIG
   static {
@@ -596,7 +641,11 @@ public enum OGlobalConfiguration {
 
   OGlobalConfiguration(final String iKey, final String iDescription, final Class<?> iType, final Object iDefValue,
       final OConfigurationChangeCallback iChangeAction) {
-    this(iKey, iDescription, iType, iDefValue, true);
+    key = iKey;
+    description = iDescription;
+    defValue = iDefValue;
+    type = iType;
+    canChangeAtRuntime = true;
     changeCallback = iChangeAction;
   }
 
@@ -611,7 +660,7 @@ public enum OGlobalConfiguration {
     defValue = iDefValue;
     type = iType;
     canChangeAtRuntime = iCanChange;
-
+    changeCallback = null;
   }
 
   public static void dumpConfiguration(final PrintStream out) {

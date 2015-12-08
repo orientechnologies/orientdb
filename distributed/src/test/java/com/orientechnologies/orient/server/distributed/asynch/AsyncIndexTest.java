@@ -32,8 +32,8 @@ public class AsyncIndexTest extends BareBoneBase2ServerTest {
       graph.command(new OCommandSQL("insert into sms (type, lang, source, content) values ( 'notify', 'en', 1, 'This is a test')"))
           .execute();
       try {
-        graph.command(
-            new OCommandSQL("insert into sms (type, lang, source, content) values ( 'notify', 'en', 1, 'This is a test')"))
+        graph
+            .command(new OCommandSQL("insert into sms (type, lang, source, content) values ( 'notify', 'en', 1, 'This is a test')"))
             .execute();
         Assert.fail("violated unique index was not raised");
       } catch (ORecordDuplicatedException e) {
@@ -48,8 +48,32 @@ public class AsyncIndexTest extends BareBoneBase2ServerTest {
         exceptionInThread = e;
       }
     } finally {
-      OLogManager.instance().info(this, "Shutting down");
+      OLogManager.instance().info(this, "Shutting down db1");
       graph.shutdown();
+    }
+
+    // CHECK ON THE OTHER NODE
+    OrientBaseGraph graph2 = new OrientGraphNoTx(getLocalURL2());
+    try {
+      try {
+        graph2
+            .command(new OCommandSQL("insert into sms (type, lang, source, content) values ( 'notify', 'en', 1, 'This is a test')"))
+            .execute();
+        Assert.fail("violated unique index was not raised");
+      } catch (ORecordDuplicatedException e) {
+      }
+
+      final Iterable<OrientVertex> result = graph2.command(new OSQLSynchQuery<OrientVertex>("select count(*) from SMS")).execute();
+
+      Assert.assertEquals(1, ((Number) result.iterator().next().getProperty("count")).intValue());
+
+    } catch (Throwable e) {
+      if (exceptionInThread == null) {
+        exceptionInThread = e;
+      }
+    } finally {
+      OLogManager.instance().info(this, "Shutting down db2");
+      graph2.shutdown();
     }
   }
 

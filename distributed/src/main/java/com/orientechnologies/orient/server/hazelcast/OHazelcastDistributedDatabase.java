@@ -114,7 +114,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
     iRequest.setSenderNodeName(getLocalNodeName());
 
-    final int onlineNodes = getOnlineNodes(iRequest, iNodes, databaseName, reqQueues);
+    final int onlineNodes = getAvailableNodes(iRequest, iNodes, databaseName, reqQueues);
 
     final int quorum = calculateQuorum(iRequest, iClusterNames, cfg, onlineNodes, iExecutionMode);
 
@@ -191,16 +191,16 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     }
   }
 
-  protected int getOnlineNodes(final ODistributedRequest iRequest, final Collection<String> iNodes, final String databaseName,
+  protected int getAvailableNodes(final ODistributedRequest iRequest, final Collection<String> iNodes, final String databaseName,
       OPair<String, IQueue>[] reqQueues) {
-    int onlineNodes;
+    int availableNodes;
     if (iRequest.getTask().isRequireNodeOnline()) {
       // CHECK THE ONLINE NODES
-      onlineNodes = 0;
+      availableNodes = 0;
       int i = 0;
       for (String node : iNodes) {
-        if (reqQueues[i].getValue() != null && manager.isNodeOnline(node, databaseName))
-          onlineNodes++;
+        if (reqQueues[i].getValue() != null && manager.isNodeAvailable(node, databaseName))
+          availableNodes++;
         else {
           if (ODistributedServerLog.isDebugEnabled())
             ODistributedServerLog.debug(this, getLocalNodeName(), node, DIRECTION.OUT,
@@ -211,12 +211,12 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       }
     } else {
       // EXPECT ANSWER FROM ALL NODES WITH A QUEUE
-      onlineNodes = 0;
+      availableNodes = 0;
       for (OPair<String, IQueue> q : reqQueues)
         if (q.getValue() != null)
-          onlineNodes++;
+          availableNodes++;
     }
-    return onlineNodes;
+    return availableNodes;
   }
 
   public boolean isRestoringMessages() {
