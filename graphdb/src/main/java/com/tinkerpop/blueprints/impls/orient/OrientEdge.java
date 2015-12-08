@@ -377,10 +377,10 @@ public class OrientEdge extends OrientElement implements Edge {
     }
 
     if (graph != null)
-      graph.removeEdge(this);
+      graph.removeEdgeInternal(this);
     else
       // IN MEMORY CHANGES ONLY: USE NOTX CLASS
-      OrientGraphNoTx.removeEdge(null, this);
+      OrientGraphNoTx.removeEdgeInternal(null, this);
   }
 
   /**

@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
-import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
@@ -237,30 +236,20 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
       final OrientBaseGraph g = currentGraph.get();
 
       final OrientVertex v = g.getVertex(record);
-      for (int retry = 0; retry < 20; ++retry) {
-        try {
-          if (v != null) {
-            v.remove();
+      if (v != null) {
+        v.remove();
 
-            if (!txAlreadyBegun && batch > 0 && removed % batch == 0) {
-              if (g instanceof OrientGraph) {
-                g.commit();
-                ((OrientGraph) g).begin();
-              }
-            }
-
-            if (returning.equalsIgnoreCase("BEFORE"))
-              allDeletedRecords.add(record);
-
-            removed++;
+        if (!txAlreadyBegun && batch > 0 && removed % batch == 0) {
+          if (g instanceof OrientGraph) {
+            g.commit();
+            ((OrientGraph) g).begin();
           }
-          // OK
-          break;
-
-        } catch (ONeedRetryException ex) {
-          getDatabase().getLocalCache().invalidate();
-          v.reload();
         }
+
+        if (returning.equalsIgnoreCase("BEFORE"))
+          allDeletedRecords.add(record);
+
+        removed++;
       }
     }
 

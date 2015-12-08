@@ -2,16 +2,20 @@ package com.orientechnologies.orient.graph.blueprints;
 
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageRecoverEventListener;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.impls.orient.OGraphRepair;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
@@ -36,11 +40,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class BlueprintsConcurrentAddEdgeTestNoTx {
+public class BlueprintsConcurrentGraphChangesTestNoTx {
   protected static final int    VERTEXES_COUNT = 1000;
   protected static final int    EDGES_COUNT    = 5 * VERTEXES_COUNT;
-  protected static final int    THREADS        = 16;
-  protected static final String URL            = "plocal:./target/databases/blueprintsConcurrentAddEdgeTest";
+  protected static final int    THREADS        = 8;
+  protected static final String URL            = "plocal:./target/databases/BlueprintsConcurrentGraphChangesTestNoTx";
 
   protected final ConcurrentSkipListMap<String, TestVertex> vertexesToCreate = new ConcurrentSkipListMap<String, TestVertex>();
   protected final List<TestVertex>                          vertexes         = new ArrayList<TestVertex>();
@@ -51,8 +55,13 @@ public class BlueprintsConcurrentAddEdgeTestNoTx {
   protected CountDownLatch latchCreate             = new CountDownLatch(1);
   protected final Random   random                  = new Random();
 
-  protected CountDownLatch latchDelete             = new CountDownLatch(1);
-  protected AtomicInteger  versionCollisionsDelete = new AtomicInteger();
+  protected CountDownLatch latchEdgeDelete             = new CountDownLatch(1);
+  protected AtomicInteger  versionCollisionsEdgeDelete = new AtomicInteger();
+  protected AtomicInteger  notFoundEdgeDelete          = new AtomicInteger();
+
+  protected CountDownLatch latchVertexDelete             = new CountDownLatch(1);
+  protected AtomicInteger  versionCollisionsVertexDelete = new AtomicInteger();
+  protected AtomicInteger  notFoundVertexDelete          = new AtomicInteger();
 
   protected long  beginTime      = 0;
   private boolean printTempStats = false;
@@ -64,6 +73,13 @@ public class BlueprintsConcurrentAddEdgeTestNoTx {
 
   @Test
   public void testCreateEdge() throws Exception {
+    createGraphAndDeleteEdges();
+    createGraphAndDeleteVertices();
+
+    System.out.println("Finished.");
+  }
+
+  protected void createGraphAndDeleteVertices() throws Exception {
     OrientBaseGraph graph = getGraph();
     graph.drop();
 
@@ -71,16 +87,43 @@ public class BlueprintsConcurrentAddEdgeTestNoTx {
     generateEdges();
     initGraph();
 
-    System.out.println("Start modifying graph concurrently...");
-    modifyGraphConcurrently();
+    System.out.println("Start adding edges concurrently for further delete vertices...");
+    addEdgesConcurrently();
     System.out.println("Checking the graph...");
     assertCreatedGraph();
 
-    System.out.println("Start deleting graph concurrently...");
-    deleteGraphConcurrently();
+    System.out.println("Start removing vertices concurrently...");
+    deleteVerticesConcurrently();
     System.out.println("Checking the graph...");
-    assertDeletedGraph();
-    System.out.println("Finished.");
+    assertVerticesDeletedGraph();
+
+    graph = getGraph();
+    graph.drop();
+  }
+
+  protected void createGraphAndDeleteEdges() throws Exception {
+    OrientBaseGraph graph = getGraph();
+    graph.drop();
+
+    // START ADD AND REMOVE EDGES
+    generateVertexes();
+    generateEdges();
+    initGraph();
+
+    System.out.println("Start adding edges concurrently for further delete edges...");
+    addEdgesConcurrently();
+    System.out.println("Checking the graph...");
+    assertCreatedGraph();
+
+    System.out.println("Start deleting edges concurrently...");
+    deleteEdgesConcurrently();
+    System.out.println("Checking the graph...");
+    assertEdgesDeletedGraph();
+
+    // START TEST REMOVE VERTICES
+    vertexes.clear();
+    vertexesToCreate.clear();
+    edges.clear();
 
     graph = getGraph();
     graph.drop();
@@ -132,7 +175,7 @@ public class BlueprintsConcurrentAddEdgeTestNoTx {
     graph.shutdown();
   }
 
-  private void modifyGraphConcurrently() throws Exception {
+  private void addEdgesConcurrently() throws Exception {
     ExecutorService executorService = Executors.newCachedThreadPool();
 
     beginTime = System.currentTimeMillis();
@@ -151,16 +194,35 @@ public class BlueprintsConcurrentAddEdgeTestNoTx {
     g.shutdown();
   }
 
-  private void deleteGraphConcurrently() throws Exception {
+  private void deleteEdgesConcurrently() throws Exception {
     ExecutorService executorService = Executors.newCachedThreadPool();
 
     beginTime = System.currentTimeMillis();
 
     List<Future<Void>> futures = new ArrayList<Future<Void>>();
     for (int i = 0; i < THREADS; i++)
-      futures.add(executorService.submit(new ConcurrentGraphRemover()));
+      futures.add(executorService.submit(new ConcurrentEdgeRemover()));
 
-    latchDelete.countDown();
+    latchEdgeDelete.countDown();
+
+    for (Future<Void> future : futures)
+      future.get();
+
+    final OrientBaseGraph g = getGraph();
+    printStats(g);
+    g.shutdown();
+  }
+
+  private void deleteVerticesConcurrently() throws Exception {
+    ExecutorService executorService = Executors.newCachedThreadPool();
+
+    beginTime = System.currentTimeMillis();
+
+    List<Future<Void>> futures = new ArrayList<Future<Void>>();
+    for (int i = 0; i < THREADS; i++)
+      futures.add(executorService.submit(new ConcurrentVertexRemover()));
+
+    latchVertexDelete.countDown();
 
     for (Future<Void> future : futures)
       future.get();
@@ -231,11 +293,12 @@ public class BlueprintsConcurrentAddEdgeTestNoTx {
       Assert.assertEquals(vertex.inEdges.size(), counter);
 
     }
+    assertGraphIsConsistent(graph);
 
     graph.shutdown();
   }
 
-  private void assertDeletedGraph() {
+  private void assertEdgesDeletedGraph() {
     OrientBaseGraph graph = getGraph();
     graph.setUseLightweightEdges(false);
 
@@ -258,6 +321,21 @@ public class BlueprintsConcurrentAddEdgeTestNoTx {
 
       Assert.assertEquals(inEdges.size(), 0);
     }
+
+    assertGraphIsConsistent(graph);
+
+    graph.shutdown();
+  }
+
+  private void assertVerticesDeletedGraph() {
+    OrientBaseGraph graph = getGraph();
+    graph.setUseLightweightEdges(false);
+
+    Assert.assertEquals(0, graph.countVertices("TestVertex"));
+    Assert.assertEquals(0, graph.countEdges("TestEdge"));
+
+    assertGraphIsConsistent(graph);
+
     graph.shutdown();
   }
 
@@ -427,20 +505,26 @@ public class BlueprintsConcurrentAddEdgeTestNoTx {
   }
 
   protected void printStats(OrientBaseGraph g) {
-    System.out.println("Graph " + (getGraph() instanceof OrientGraph ? "TX" : "NOTX") + " stats threads: " + THREADS
-        + " create duplication exceptions: " + indexCollisionsCreate.get() + " create version exceptions: "
-        + versionCollisionsCreate.get() + " delete version exceptions: " + versionCollisionsDelete.get() + " vertexes: "
-        + g.countVertices() + " edges: " + g.countEdges() + " TIME: "
-        + (beginTime > 0 ? System.currentTimeMillis() - beginTime : "?"));
+    System.out.println("---------------------------------------------------------------------------------------------------------");
+    System.out.println("Graph " + (getGraph() instanceof OrientGraph ? "TX" : "NOTX") + " stats threads: " + THREADS + " TIME: "
+        + (beginTime > 0 ? System.currentTimeMillis() - beginTime : "?") + " vertexes: " + g.countVertices() + " edges: "
+        + g.countEdges());
+    System.out.println(" create edge -    CME: " + versionCollisionsCreate.get() + " duplication: " + indexCollisionsCreate.get());
+    System.out.println(" delete edge -    CME: " + versionCollisionsEdgeDelete.get() + " not found: " + notFoundEdgeDelete.get());
+    System.out
+        .println(" delete vertex - CME: " + versionCollisionsVertexDelete.get() + " not found: " + notFoundVertexDelete.get());
+    System.out.println("---------------------------------------------------------------------------------------------------------");
   }
 
-  private class ConcurrentGraphRemover implements Callable<Void> {
+  private class ConcurrentEdgeRemover implements Callable<Void> {
     @Override
     public Void call() throws Exception {
       OrientBaseGraph graph = getGraph();
-      latchDelete.await();
+      latchEdgeDelete.await();
 
-      for (TestEdge edge : edges) {
+      while (graph.countEdges() > 0) {
+        final int randomEdge = random.nextInt(edges.size());
+        TestEdge edge = edges.get(randomEdge);
         do {
           try {
             graph.command(new OCommandSQL("delete edge TestEdge where uuid = '" + edge.uuid + "'")).execute();
@@ -449,13 +533,14 @@ public class BlueprintsConcurrentAddEdgeTestNoTx {
 
           } catch (ORecordNotFoundException e) {
             // OK
+            notFoundEdgeDelete.incrementAndGet();
             break;
           } catch (OConcurrentModificationException e) {
             graph.rollback();
 
-            versionCollisionsDelete.incrementAndGet();
+            versionCollisionsEdgeDelete.incrementAndGet();
 
-            if (printTempStats && versionCollisionsDelete.get() % 1000 == 0)
+            if (printTempStats && versionCollisionsEdgeDelete.get() % 1000 == 0)
               printStats(graph);
 
             Thread.yield();
@@ -464,5 +549,72 @@ public class BlueprintsConcurrentAddEdgeTestNoTx {
       }
       return null;
     }
+  }
+
+  private class ConcurrentVertexRemover implements Callable<Void> {
+    @Override
+    public Void call() throws Exception {
+      OrientBaseGraph graph = getGraph();
+      latchVertexDelete.await();
+
+      while (graph.countVertices() > 0) {
+        final int randomVertex = random.nextInt(vertexes.size());
+        TestVertex vertex = vertexes.get(randomVertex);
+
+        do {
+          try {
+            graph.command(new OCommandSQL("delete vertex TestVertex where uuid = '" + vertex.uuid + "'")).execute();
+            graph.commit();
+            break;
+
+          } catch (ORecordNotFoundException e) {
+            // OK
+            notFoundVertexDelete.incrementAndGet();
+            break;
+          } catch (OConcurrentModificationException e) {
+            graph.rollback();
+
+            versionCollisionsVertexDelete.incrementAndGet();
+
+            if (printTempStats && versionCollisionsVertexDelete.get() % 1000 == 0)
+              printStats(graph);
+
+            Thread.yield();
+          }
+        } while (true);
+      }
+      return null;
+    }
+  }
+
+  private void assertGraphIsConsistent(OrientBaseGraph graph) {
+    new OGraphRepair().setEventListener(new OStorageRecoverEventListener() {
+      @Override
+      public void onScannedEdge(ODocument edge) {
+      }
+
+      @Override
+      public void onRemovedEdge(ODocument edge) {
+        Assert.fail("onRemovedEdge " + edge);
+      }
+
+      @Override
+      public void onScannedVertex(ODocument vertex) {
+      }
+
+      @Override
+      public void onScannedLink(OIdentifiable link) {
+      }
+
+      @Override
+      public void onRemovedLink(OIdentifiable link) {
+        Assert.fail("onRemovedLink " + link);
+      }
+
+      @Override
+      public void onRepairedVertex(ODocument vertex) {
+        Assert.fail("onRepairedVertex " + vertex);
+      }
+    }).repair(graph, null);
   }
 }
