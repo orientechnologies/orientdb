@@ -80,7 +80,7 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
     if (result != null && (result instanceof OrientGraph)) {
       final ODatabaseDocumentTx graphDb = result.getRawGraph();
 
-      if (graphDb.getURL().equals(database.getURL())) {
+      if (canReuseActiveGraph(graphDb, database)) {
         // SAME URL, USE IT
         if (!graphDb.isClosed()) {
           ODatabaseRecordThreadLocal.INSTANCE.set(graphDb);
@@ -113,7 +113,7 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
     if (result != null && (result instanceof OrientGraphNoTx)) {
       final ODatabaseDocumentTx graphDb = result.getRawGraph();
 
-      if (graphDb.getURL().equals(database.getURL())) {
+      if (canReuseActiveGraph(graphDb, database)) {
         // SAME URL, USE IT
 
         if (!graphDb.isClosed()) {
