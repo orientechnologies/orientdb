@@ -19,6 +19,13 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
+
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.types.OModifiableBoolean;
@@ -48,16 +55,9 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
-
 /**
  * SQL DELETE VERTEX command.
- * 
+ *
  * @author Luca Garulli
  */
 public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
@@ -71,7 +71,7 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
   private String                           returning     = "COUNT";
   private List<ORecord>                    allDeletedRecords;
   private AtomicReference<OrientBaseGraph> currentGraph  = new AtomicReference<OrientBaseGraph>();
-  private OModifiableBoolean               shutdownFlag = new OModifiableBoolean();
+  private OModifiableBoolean               shutdownFlag  = new OModifiableBoolean();
   private boolean                          txAlreadyBegun;
   private int                              batch         = 100;
 

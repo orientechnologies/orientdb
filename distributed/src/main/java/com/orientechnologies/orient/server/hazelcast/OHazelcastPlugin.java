@@ -40,6 +40,7 @@ import com.orientechnologies.common.console.ODefaultConsoleReader;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
+import com.orientechnologies.common.log.OAnsiCode;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.util.OArrays;
@@ -1360,17 +1361,17 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
       System.out.println();
       System.out.println();
-      System.out.println("+---------------------------------------------------------------+");
-      System.out.println("|         WARNING: FIRST DISTRIBUTED RUN CONFIGURATION          |");
-      System.out.println("+---------------------------------------------------------------+");
-      System.out.println("| This is the first time that the server is running as          |");
-      System.out.println("| distributed. Please type the name you want to assign to the   |");
-      System.out.println("| current server node.                                          |");
-      System.out.println("|                                                               |");
-      System.out.println("| To avoid this message set the environment variable or JVM     |");
-      System.out.println("| setting ORIENTDB_NODE_NAME to the server node name to use.    |");
-      System.out.println("+---------------------------------------------------------------+");
-      System.out.print("\nNode name [BLANK=auto generate it]: ");
+      System.out.println(OAnsiCode.format("$ANSI{yellow +---------------------------------------------------------------+}"));
+      System.out.println(OAnsiCode.format("$ANSI{yellow |         WARNING: FIRST DISTRIBUTED RUN CONFIGURATION          |}"));
+      System.out.println(OAnsiCode.format("$ANSI{yellow +---------------------------------------------------------------+}"));
+      System.out.println(OAnsiCode.format("$ANSI{yellow | This is the first time that the server is running as          |}"));
+      System.out.println(OAnsiCode.format("$ANSI{yellow | distributed. Please type the name you want to assign to the   |}"));
+      System.out.println(OAnsiCode.format("$ANSI{yellow | current server node.                                          |}"));
+      System.out.println(OAnsiCode.format("$ANSI{yellow |                                                               |}"));
+      System.out.println(OAnsiCode.format("$ANSI{yellow | To avoid this message set the environment variable or JVM     |}"));
+      System.out.println(OAnsiCode.format("$ANSI{yellow | setting ORIENTDB_NODE_NAME to the server node name to use.    |}"));
+      System.out.println(OAnsiCode.format("$ANSI{yellow +---------------------------------------------------------------+}"));
+      System.out.print(OAnsiCode.format("\n$ANSI{yellow Node name [BLANK=auto generate it]: }"));
 
       OConsoleReader reader = new ODefaultConsoleReader();
       try {

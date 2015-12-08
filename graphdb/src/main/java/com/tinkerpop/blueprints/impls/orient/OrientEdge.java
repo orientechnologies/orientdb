@@ -20,6 +20,14 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
@@ -30,14 +38,6 @@ import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.Index;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * OrientDB Edge implementation of TinkerPop Blueprints standard. Edges can be classic or lightweight. Lightweight edges have no
@@ -362,7 +362,7 @@ public class OrientEdge extends OrientElement implements Edge {
    */
   @Override
   public void remove() {
-    final OrientBaseGraph graph = checkIfAttached();
+    final OrientBaseGraph graph = getGraph();
     if (!isLightweight())
       checkClass();
 
@@ -376,52 +376,11 @@ public class OrientEdge extends OrientElement implements Edge {
       }
     }
 
-    // OUT VERTEX
-    final OIdentifiable inVertexEdge = vIn != null ? vIn : rawElement;
-
-    final String edgeClassName = OrientBaseGraph.encodeClassName(getLabel());
-
-    final boolean useVertexFieldsForEdgeLabels = settings.isUseVertexFieldsForEdgeLabels();
-
-    final OIdentifiable outVertex = getOutVertex();
-    ODocument outVertexRecord = null;
-    boolean outVertexChanged = false;
-
-    if (outVertex != null) {
-      outVertexRecord = outVertex.getRecord();
-      if (outVertexRecord != null) {
-        final String outFieldName = OrientVertex.getConnectionFieldName(Direction.OUT, edgeClassName, useVertexFieldsForEdgeLabels);
-        outVertexChanged = dropEdgeFromVertex(inVertexEdge, outVertexRecord, outFieldName, outVertexRecord.field(outFieldName));
-      } else
-        OLogManager.instance().debug(this,
-            "Found broken link to outgoing vertex " + outVertex.getIdentity() + " while removing edge " + getId());
-    }
-
-    // IN VERTEX
-    final OIdentifiable outVertexEdge = vOut != null ? vOut : rawElement;
-
-    final OIdentifiable inVertex = getInVertex();
-    ODocument inVertexRecord = null;
-    boolean inVertexChanged = false;
-
-    if (inVertex != null) {
-      inVertexRecord = inVertex.getRecord();
-      if (inVertexRecord != null) {
-        final String inFieldName = OrientVertex.getConnectionFieldName(Direction.IN, edgeClassName, useVertexFieldsForEdgeLabels);
-        inVertexChanged = dropEdgeFromVertex(outVertexEdge, inVertexRecord, inFieldName, inVertexRecord.field(inFieldName));
-      } else
-        OLogManager.instance().debug(this,
-            "Found broken link to incoming vertex " + inVertex.getIdentity() + " while removing edge " + getId());
-    }
-
-    if (outVertexChanged)
-      outVertexRecord.save();
-    if (inVertexChanged)
-      inVertexRecord.save();
-
-    if (rawElement != null)
-      // NON-LIGHTWEIGHT EDGE
-      super.remove();
+    if (graph != null)
+      graph.removeEdge(this);
+    else
+      // IN MEMORY CHANGES ONLY: USE NOTX CLASS
+      OrientGraphNoTx.removeEdge(null, this);
   }
 
   /**

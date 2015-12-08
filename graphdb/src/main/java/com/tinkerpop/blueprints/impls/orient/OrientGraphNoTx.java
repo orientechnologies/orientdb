@@ -24,6 +24,7 @@ import org.apache.commons.configuration.Configuration;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -144,7 +145,10 @@ public class OrientGraphNoTx extends OrientBaseGraph {
     ODocument inDocument = null;
     boolean outDocumentModified = false;
 
-    for (int retry = 0; retry < graph.getMaxRetries(); ++retry) {
+    final Settings settings = graph != null ? graph.settings : new Settings();
+
+    final int maxRetries = graph != null ? graph.getMaxRetries() : 1;
+    for (int retry = 0; retry < maxRetries; ++retry) {
       try {
         // TEMPORARY STATIC LOCK TO AVOID MT PROBLEMS AGAINST OMVRBTreeRID
         if (outDocument == null) {
@@ -184,9 +188,9 @@ public class OrientGraphNoTx extends OrientBaseGraph {
         }
 
         final String outFieldName = currentVertex.getConnectionFieldName(Direction.OUT, label,
-            graph.settings.isUseVertexFieldsForEdgeLabels());
+            settings.isUseVertexFieldsForEdgeLabels());
         final String inFieldName = currentVertex.getConnectionFieldName(Direction.IN, label,
-            graph.settings.isUseVertexFieldsForEdgeLabels());
+            settings.isUseVertexFieldsForEdgeLabels());
 
         // since the label for the edge can potentially get re-assigned
         // before being pushed into the OrientEdge, the
@@ -202,7 +206,7 @@ public class OrientGraphNoTx extends OrientBaseGraph {
           from = currentVertex.rawElement;
           to = inDocument;
           if (edge == null) {
-            if (graph.settings.isKeepInMemoryReferences())
+            if (settings.isKeepInMemoryReferences())
               edge = new OrientEdge(graph, from.getIdentity(), to.getIdentity(), label);
             else
               edge = new OrientEdge(graph, from, to, label);
@@ -215,7 +219,7 @@ public class OrientGraphNoTx extends OrientBaseGraph {
             edge = new OrientEdge(graph, label, fields);
             edgeRecord = edge.getRecord();
 
-            if (graph.settings.isKeepInMemoryReferences())
+            if (settings.isKeepInMemoryReferences())
               edgeRecord.fields(OrientBaseGraph.CONNECTION_OUT, currentVertex.rawElement.getIdentity(),
                   OrientBaseGraph.CONNECTION_IN, inDocument.getIdentity());
             else
@@ -228,7 +232,7 @@ public class OrientGraphNoTx extends OrientBaseGraph {
           to = edgeRecord;
         }
 
-        if (graph.settings.isKeepInMemoryReferences()) {
+        if (settings.isKeepInMemoryReferences()) {
           // USES REFERENCES INSTEAD OF DOCUMENTS
           from = from.getIdentity();
           to = to.getIdentity();
@@ -281,4 +285,93 @@ public class OrientGraphNoTx extends OrientBaseGraph {
     return edge;
   }
 
+  /**
+   * Removes the Edge from the Graph. Connected vertices aren't removed.
+   */
+  public void removeEdge(final OrientEdge edge) {
+    removeEdge(this, edge);
+  }
+
+  public static void removeEdge(final OrientBaseGraph graph, final OrientEdge edge) {
+    ODocument outVertexRecord = null;
+    boolean outVertexChanged = false;
+    ODocument inVertexRecord = null;
+    boolean inVertexChanged = false;
+
+    final Settings settings = graph != null ? graph.settings : new Settings();
+
+    final int maxRetries = graph != null ? graph.getMaxRetries() : 1;
+    for (int retry = 0; retry < maxRetries; ++retry) {
+      try {
+        // OUT VERTEX
+        final OIdentifiable inVertexEdge = edge.vIn != null ? edge.vIn : edge.rawElement;
+
+        final String edgeClassName = OrientBaseGraph.encodeClassName(edge.getLabel());
+
+        final boolean useVertexFieldsForEdgeLabels = settings.isUseVertexFieldsForEdgeLabels();
+
+        final OIdentifiable outVertex = edge.getOutVertex();
+
+        if (outVertex != null) {
+          if (outVertex != null) {
+            outVertexRecord = outVertex.getRecord();
+            final String outFieldName = OrientVertex.getConnectionFieldName(Direction.OUT, edgeClassName,
+                useVertexFieldsForEdgeLabels);
+            outVertexChanged = edge.dropEdgeFromVertex(inVertexEdge, outVertexRecord, outFieldName,
+                outVertexRecord.field(outFieldName));
+          } else
+            OLogManager.instance().debug(graph,
+                "Found broken link to outgoing vertex " + outVertex.getIdentity() + " while removing edge " + edge.getId());
+        }
+
+        // IN VERTEX
+        final OIdentifiable outVertexEdge = edge.vOut != null ? edge.vOut : edge.rawElement;
+
+        final OIdentifiable inVertex = edge.getInVertex();
+
+        inVertexRecord = null;
+        inVertexChanged = false;
+
+        if (inVertex != null) {
+          inVertexRecord = inVertex.getRecord();
+          if (inVertexRecord != null) {
+            final String inFieldName = OrientVertex.getConnectionFieldName(Direction.IN, edgeClassName,
+                useVertexFieldsForEdgeLabels);
+            inVertexChanged = edge.dropEdgeFromVertex(outVertexEdge, inVertexRecord, inFieldName,
+                inVertexRecord.field(inFieldName));
+          } else
+            OLogManager.instance().debug(graph,
+                "Found broken link to incoming vertex " + inVertex.getIdentity() + " while removing edge " + edge.getId());
+        }
+
+        if (outVertexChanged)
+          outVertexRecord.save();
+        if (inVertexChanged)
+          inVertexRecord.save();
+
+        if (edge.rawElement != null)
+          // NON-LIGHTWEIGHT EDGE
+          edge.removeRecord();
+
+        // OK
+        break;
+
+      } catch (ONeedRetryException e) {
+        // RETRY
+        if (outVertexChanged)
+          outVertexRecord.reload();
+        else if (inVertexChanged)
+          inVertexRecord.reload();
+
+      } catch (RuntimeException e) {
+        // REVERT CHANGES. EDGE.REMOVE() TAKES CARE TO UPDATE ALSO BOTH VERTICES IN CASE
+        // TODO
+        throw e;
+      } catch (Throwable e) {
+        // REVERT CHANGES. EDGE.REMOVE() TAKES CARE TO UPDATE ALSO BOTH VERTICES IN CASE
+        // TODO
+        throw OException.wrapException(new OrientGraphModificationException("Error on addEdge in non tx environment"), e);
+      }
+    }
+  }
 }

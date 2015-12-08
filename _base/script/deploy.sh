@@ -12,7 +12,7 @@ echo "Building OrientDB $VER..."
 
 mvn clean install -DskipTests=true -Dmaven.findbugs.enable=false -DlocalDeploy=true
 
-DIR=distribution/target/orientdb-community-$VER-distribution.dir/orientdb-community-$VER/
+DIR=distribution/target/orientdb-community-$VER.dir/orientdb-community-$VER/
 
 echo "Releasing OrientDB $VER to $DIR..."
 

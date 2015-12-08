@@ -15,13 +15,6 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
-import org.junit.Assert;
-
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.instance.GroupProperties;
 import com.orientechnologies.common.log.OLogManager;
@@ -30,6 +23,12 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
+import org.junit.Assert;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Test class that creates and executes distributed operations against a cluster of servers created in the same JVM.
@@ -98,8 +97,9 @@ public abstract class AbstractServerClusterTest {
     try {
 
       if (startupNodesInSequence) {
-        for (ServerRun server : serverInstance) {
+        for (final ServerRun server : serverInstance) {
           banner("STARTING SERVER -> " + server.getServerId() + "...");
+
           server.startServer(getDistributedServerConfiguration(server));
 
           if (delayServerStartup > 0)
@@ -117,6 +117,7 @@ public abstract class AbstractServerClusterTest {
             public void run() {
               banner("STARTING SERVER -> " + server.getServerId() + "...");
               try {
+                onServerStarting(server);
                 server.startServer(getDistributedServerConfiguration(server));
                 onServerStarted(server);
               } catch (Exception e) {
@@ -149,7 +150,11 @@ public abstract class AbstractServerClusterTest {
       } finally {
         onAfterExecution();
       }
-
+    } catch (Exception e) {
+      System.out.println("ERROR: ");
+      e.printStackTrace();
+      OLogManager.instance().flush();
+      throw e;
     } finally {
       banner("Test finished");
 
@@ -168,6 +173,7 @@ public abstract class AbstractServerClusterTest {
       banner("Clean server directories...");
       deleteServers();
     }
+
   }
 
   protected void banner(final String iMessage) {

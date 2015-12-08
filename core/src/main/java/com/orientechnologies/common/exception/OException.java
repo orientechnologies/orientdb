@@ -41,7 +41,7 @@ public abstract class OException extends RuntimeException {
    * Please create "copy constructor" for each exception which has current one as a parent.
    */
   public OException(final OException exception) {
-    super(exception.getMessage(), exception);
+    super(exception.getMessage(), exception.getCause());
   }
 
   /**

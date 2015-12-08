@@ -26,7 +26,6 @@ import com.orientechnologies.common.util.OApi;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.ORecordCacheWeakRefs;
-import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.storage.cache.local.O2QCache;
@@ -42,6 +41,17 @@ import java.util.Map.Entry;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
+
+import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.common.util.OApi;
+import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.cache.ORecordCacheWeakRefs;
+import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
+import com.orientechnologies.orient.core.storage.cache.local.O2QCache;
 
 /**
  * Keeps all configuration settings. At startup assigns the configuration values by reading system properties.
@@ -459,11 +469,17 @@ public enum OGlobalConfiguration {
     }
   }),
 
+  // LOG
+  LOG_SUPPORTS_ANSI("log.console.ansi",
+      "ANSI Console support. 'auto' means automatic check if it is supported, 'true' to force using ANSI, 'false' to avoid using ANSI",
+      String.class, "auto"),
+
   // CACHE
-  CACHE_LOCAL_IMPL("cache.local.impl", "Local Record cache implementation.", String.class, ORecordCacheWeakRefs.class.getName()),
+      CACHE_LOCAL_IMPL("cache.local.impl", "Local Record cache implementation.", String.class,
+          ORecordCacheWeakRefs.class.getName()),
 
   // COMMAND
-  COMMAND_TIMEOUT("command.timeout", "Default timeout for commands (in ms).", Long.class, 0, true),
+          COMMAND_TIMEOUT("command.timeout", "Default timeout for commands (in ms).", Long.class, 0, true),
 
   COMMAND_CACHE_ENABLED("command.cache.enabled", "Enable command cache.", Boolean.class, false),
 
