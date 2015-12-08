@@ -115,14 +115,28 @@ public class OAtomicOperation {
     return null;
   }
 
+  /**
+   * Add metadata with given key inside of atomic operation.
+   * If metadata with the same key insist inside of atomic operation it will be overwritten.
+   *
+   * @param metadata Metadata to add.
+   * @see OAtomicOperationMetadata
+   */
   public void addMetadata(OAtomicOperationMetadata<?> metadata) {
     this.metadata.put(metadata.getKey(), metadata);
   }
 
+  /**
+   * @param key Key of metadata which is looking for.
+   * @return Metadata by associated key or <code>null</code> if such metadata is absent.
+   */
   public OAtomicOperationMetadata<?> getMetadata(String key) {
     return metadata.get(key);
   }
 
+  /**
+   * @return All keys and associated metadata contained inside of atomic operation
+   */
   public Map<String, OAtomicOperationMetadata<?>> getMetadata() {
     return Collections.unmodifiableMap(metadata);
   }

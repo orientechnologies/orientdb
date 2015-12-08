@@ -743,23 +743,18 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
    * output stream will be included all records which were updated/deleted/created since passed in LSN till the current moment.
    * Because of limitations of algorithm all data modification operations are prohibited till execution of current method ends.
    *
-   * All records are written in output stream by batches. Size of each batch depends on amount of heap memory available for the
-   * process. Batches may contain duplicated records.
-   *
-   * In batch files, deleted records are placed at the beginning of the file. Created and updated records follow in random order.
-   * Created and updated records can be distinguished by record version, created records always have record version set to 1. In
-   * output stream any boundaries for batches are absent, batches are separated only logically, each batch starts from deleted
-   * records.
+   * Deleted records are written in output stream first, then created/updated records.
+   * All records are sorted by record id.
    *
    * Each record in output stream is written using following format:
    * <ol>
-   * <li>Size of content (does not include current value) - 4 bytes</li>
    * <li>Record's cluster id - 4 bytes</li>
    * <li>Record's cluster position - 8 bytes</li>
    * <li>Delete flag, 1 if record is deleted - 1 byte</li>
    * <li>Record version , only if record is not deleted - 4 bytes</li>
-   * <li>Record type - only if record is not deleted - 1 byte</li>
-   * <li>Binary presentation of the record, only if record is not deleted - the rest of content</li>
+   * <li>Record type, only if record is not deleted - 1 byte</li>
+   * <li>Length of binary presentation of record, only if record is not deleted - 4 bytes</li>
+   * <li>Binary presentation of the record, only if record is not deleted - length of content is provided in above entity</li>
    * </ol>
    *
    * @see OGlobalConfiguration#STORAGE_TRACK_CHANGED_RECORDS_IN_WAL
@@ -772,6 +767,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
    *         records: write ahead log is absent, record with start LSN was not found in WAL, etc.
    */
   public OLogSequenceNumber recordsChangedAfterLSN(final OLogSequenceNumber lsn, final OutputStream stream) {
+    if (!OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.getValueAsBoolean())
+      throw new IllegalStateException(
+          "Can not find records which were changed starting from provided LSN because tracking of rids of changed records in WAL is switched off, "
+              + "to switch it on please set property " + OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.getValue()
+              + " to the true value, please note that only records"
+              + " which are stored after this property was set will be retrieved");
+
     stateLock.acquireReadLock();
     try {
       if (writeAheadLog == null) {
@@ -780,217 +782,89 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
       // we iterate till the last record is contained in wal at the moment when we call this method
       final OLogSequenceNumber endLsn = writeAheadLog.end();
+
       if (endLsn == null) {
         return null;
       }
 
-      // we track last record processed in batch
-      OLogSequenceNumber lastLsn = null;
+      //container of rids of changed records
+      final SortedSet<ORID> sortedRids = new TreeSet<ORID>();
 
-      long lockId = atomicOperationsManager.freezeAtomicOperations(null, null);
+      final OLogSequenceNumber startLsn = lsn;
+
+      writeAheadLog.preventCutTill(startLsn);
       try {
-        // in wal design we can not read data from active segment, so we iterate only by inactive wal segments.
-        writeAheadLog.newSegment();
+        //start record is absent there is nothing that we can do
+        OWALRecord walRecord = writeAheadLog.read(startLsn);
+        if (walRecord == null) {
+          return null;
+        }
 
-        // we may repeat cycle with lower batch size if we will have OOM issues.
-        int batchSize = Integer.MAX_VALUE;
-        OLogSequenceNumber startLsn = lsn;
+        OLogSequenceNumber currentLsn = startLsn;
 
-        batchCycle: while (lastLsn == null || lastLsn.compareTo(endLsn) < 0) {
-          // on first iteration we retrieve only rids from pages, it is need to send removed records first and then send the rest of
-          // the records
-          // also in such case we minimize risk of OOM
-          //
-          // soft references are used to prevent OOM at all but we still need set of rids to minimize case when we need to reiterate
-          // over
-          // records but with decreased batch size. We refer to such situation as to OOM.
-          final Set<SoftReference<ORID>> rids = new HashSet<SoftReference<ORID>>();
+        //all information about changed records is contained in atomic operation metadata
+        while (currentLsn != null && endLsn.compareTo(currentLsn) <= 0) {
+          walRecord = writeAheadLog.read(currentLsn);
 
-          // if start record is absent there is nothing we can do
-          OWALRecord walRecord = writeAheadLog.read(startLsn);
-
-          if (walRecord == null) {
-            return lastLsn;
-          }
-
-          class RidSoftRef extends SoftReference<ORID> {
-            private final int hash;
-
-            public RidSoftRef(ORID referent, ReferenceQueue<? super ORID> q) {
-              super(referent, q);
-              hash = referent.hashCode();
-            }
-
-            @Override
-            public boolean equals(Object obj) {
-              final ORID rid = get();
-
-              if (rid == null)
-                return super.equals(obj);
-
-              return rid.equals(((SoftReference<ORID>) obj).get());
-            }
-
-            @Override
-            public int hashCode() {
-              return hash;
+          if (walRecord instanceof OAtomicUnitEndRecord) {
+            final OAtomicUnitEndRecord atomicUnitEndRecord = (OAtomicUnitEndRecord) walRecord;
+            if (atomicUnitEndRecord.getAtomicOperationMetadata().containsKey(ORecordOperationMetadata.RID_METADATA_KEY)) {
+              final ORecordOperationMetadata recordOperationMetadata = (ORecordOperationMetadata) atomicUnitEndRecord
+                  .getAtomicOperationMetadata().get(ORecordOperationMetadata.RID_METADATA_KEY);
+              sortedRids.addAll(recordOperationMetadata.getValue());
             }
           }
 
-          // queue is used to detect OOM issues on early stages
-          final ReferenceQueue<ORID> purgedRids = new ReferenceQueue<ORID>();
+          currentLsn = writeAheadLog.next(currentLsn);
+        }
+      } finally {
+        writeAheadLog.preventCutTill(null);
+      }
 
-          OLogSequenceNumber currentLsn = startLsn;
-          OLogSequenceNumber lastProcessedLsn = null;
+      //records may be deleted after we flag them as existing and as result rule of sorting of records
+      // (deleted records go first will be broken), so we prohibit any modifications till we do not complete method execution
+      final long lockId = atomicOperationsManager.freezeAtomicOperations(null, null);
+      try {
+        final DataOutputStream dataOutputStream = new DataOutputStream(stream);
 
-          while (currentLsn != null && currentLsn.compareTo(endLsn) <= 0 && rids.size() < batchSize) {
-            walRecord = writeAheadLog.read(currentLsn);
+        Iterator<ORID> ridIterator = sortedRids.iterator();
+        while (ridIterator.hasNext()) {
+          final ORID rid = ridIterator.next();
+          final OCluster cluster = clusters.get(rid.getClusterId());
 
-            // rids of changed records are contained as cluster metadata in atomic operation end record.
-            if (walRecord instanceof OAtomicUnitEndRecord) {
-              final OAtomicUnitEndRecord atomicUnitEndRecord = (OAtomicUnitEndRecord) walRecord;
-              final Map<String, OAtomicOperationMetadata<?>> atomicOperationMetadata = atomicUnitEndRecord
-                  .getAtomicOperationMetadata();
+          //we do not need to load record only check it's presence
+          if (cluster.getPhysicalPosition(new OPhysicalPosition(rid.getClusterPosition())) == null) {
+            dataOutputStream.writeInt(rid.getClusterId());
+            dataOutputStream.writeLong(rid.getClusterPosition());
+            dataOutputStream.write(1);
 
-              if (atomicOperationMetadata.containsKey(ORecordOperationMetadata.RID_METADATA_KEY)) {
-                final ORecordOperationMetadata recordOperationMetadata = (ORecordOperationMetadata) atomicOperationMetadata
-                    .get(ORecordOperationMetadata.RID_METADATA_KEY);
-
-                for (ORID rid : recordOperationMetadata.getValue()) {
-                  rids.add(new RidSoftRef(rid, purgedRids));
-                }
-              }
-            }
-
-            lastProcessedLsn = currentLsn;
-            currentLsn = writeAheadLog.next(currentLsn);
-
-            if (purgedRids.poll() != null) {
-              OLogManager.instance().warn(this,
-                  "Heap size is not enough to send all records in distributed sync , batch size will be decreased from " + batchSize
-                      + " to " + (batchSize / 2));
-
-              if (batchSize > 1) {
-                batchSize /= 2;
-              }
-
-              System.gc();
-              continue batchCycle;
-            }
+            //delete to avoid duplication
+            ridIterator.remove();
           }
+        }
 
-          // write records into the stream, that is 2 step process:
-          // 1. we write deleted records.
-          // 2. we write created and updated records.
-          // we can not read all records at once and sort because of risk of getting of OOM.
-          Iterator<SoftReference<ORID>> ridIterator = rids.iterator();
-          while (ridIterator.hasNext()) {
-            final SoftReference<ORID> softRid = ridIterator.next();
-            final ORID rid = softRid.get();
+        ridIterator = sortedRids.iterator();
+        while (ridIterator.hasNext()) {
+          final ORID rid = ridIterator.next();
+          final OCluster cluster = clusters.get(rid.getClusterId());
 
-            if (rid == null || purgedRids.poll() != null) {
-              OLogManager.instance().warn(this,
-                  "Heap size is not enough to send all records in distributed sync , batch size will be decreased from " + batchSize
-                      + " to " + (batchSize / 2));
+          dataOutputStream.writeInt(rid.getClusterId());
+          dataOutputStream.writeLong(rid.getClusterPosition());
 
-              if (batchSize > 1) {
-                batchSize /= 2;
-              }
+          final ORawBuffer rawBuffer = cluster.readRecord(rid.getClusterPosition());
+          assert rawBuffer != null;
 
-              System.gc();
-              continue batchCycle;
-            }
-
-            final OCluster cluster = clusters.get(rid.getClusterId());
-            final ORawBuffer rawBuffer = cluster.readRecord(rid.getClusterPosition());
-
-            if (rawBuffer == null) {
-              final int entrySize = OIntegerSerializer.INT_SIZE /* content size */ + OIntegerSerializer.INT_SIZE /* cluster id */
-                  + OLongSerializer.LONG_SIZE /* cluster position */ + OByteSerializer.BYTE_SIZE /* delete flag */;
-
-              int offset = 0;
-              final byte[] data = new byte[entrySize];
-
-              OIntegerSerializer.INSTANCE.serialize(entrySize - OIntegerSerializer.INT_SIZE, data, offset);
-              offset += OIntegerSerializer.INT_SIZE;
-
-              OIntegerSerializer.INSTANCE.serialize(rid.getClusterId(), data, offset);
-              offset += OIntegerSerializer.INT_SIZE;
-
-              OLongSerializer.INSTANCE.serialize(rid.getClusterPosition(), data, offset);
-              offset += OLongSerializer.LONG_SIZE;
-
-              data[offset] = 0;
-
-              stream.write(data);
-
-              ridIterator.remove();
-            }
-          }
-
-          for (SoftReference<ORID> softRid : rids) {
-            final ORID rid = softRid.get();
-
-            if (rid == null || purgedRids.poll() != null) {
-              OLogManager.instance().warn(this,
-                  "Heap size is not enough to send all records in distributed sync , batch size will be decreased from " + batchSize
-                      + " to " + (batchSize / 2));
-
-              if (batchSize > 1) {
-                batchSize /= 2;
-              }
-
-              System.gc();
-              continue batchCycle;
-            }
-
-            final OCluster cluster = clusters.get(rid.getClusterId());
-            final ORawBuffer rawBuffer = cluster.readRecord(rid.getClusterPosition());
-
-            assert rawBuffer != null;
-
-            final int entrySize = OIntegerSerializer.INT_SIZE /* content size */ + OIntegerSerializer.INT_SIZE /* cluster id */
-                + OLongSerializer.LONG_SIZE /* cluster position */ + OByteSerializer.BYTE_SIZE /* delete flag */
-                + OIntegerSerializer.INT_SIZE/* record version */ + OByteSerializer.BYTE_SIZE /* record type */
-                + rawBuffer.buffer.length /* content length */;
-
-            int offset = 0;
-
-            final byte[] data = new byte[entrySize];
-            OIntegerSerializer.INSTANCE.serialize(entrySize - OIntegerSerializer.INT_SIZE, data, offset);
-            offset += OIntegerSerializer.INT_SIZE;
-
-            OIntegerSerializer.INSTANCE.serialize(rid.getClusterId(), data, offset);
-            offset += OIntegerSerializer.INT_SIZE;
-
-            OLongSerializer.INSTANCE.serialize(rid.getClusterPosition(), data, offset);
-            offset += OLongSerializer.LONG_SIZE;
-
-            data[offset] = 1;
-            offset++;
-
-            OIntegerSerializer.INSTANCE.serialize(rawBuffer.version, data, offset);
-            offset += OIntegerSerializer.INT_SIZE;
-
-            data[offset] = rawBuffer.recordType;
-            offset++;
-
-            System.arraycopy(rawBuffer.buffer, 0, data, offset, rawBuffer.buffer.length);
-
-            stream.write(data);
-
-          }
-
-          if (lastProcessedLsn != null) {
-            lastLsn = lastProcessedLsn;
-            startLsn = lastLsn;
-          }
+          dataOutputStream.write(0);
+          dataOutputStream.writeInt(rawBuffer.version);
+          dataOutputStream.write(rawBuffer.recordType);
+          dataOutputStream.writeInt(rawBuffer.buffer.length);
+          dataOutputStream.write(rawBuffer.buffer);
         }
       } finally {
         atomicOperationsManager.releaseAtomicOperations(lockId);
       }
 
-      return lastLsn;
+      return endLsn;
     } catch (IOException e) {
       throw OException.wrapException(new OStorageException("Error of reading of records changed after LSN " + lsn), e);
     } finally {

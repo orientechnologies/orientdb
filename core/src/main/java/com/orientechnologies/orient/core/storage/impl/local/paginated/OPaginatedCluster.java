@@ -73,6 +73,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   private static final int    PAGE_INDEX_OFFSET        = 16;
   private static final int    RECORD_POSITION_MASK     = 0xFFFF;
   private static final int    ONE_KB                   = 1024;
+
   private volatile OCompression                          compression;
   private volatile OEncryption                           encryption;
   private volatile String                                encryptionKey;
