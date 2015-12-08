@@ -19,6 +19,18 @@
 */
 package com.orientechnologies.orient.core.config;
 
+import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.common.util.OApi;
+import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.cache.ORecordCacheWeakRefs;
+import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
+import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
+import com.orientechnologies.orient.core.storage.cache.local.O2QCache;
+
 import java.io.File;
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
@@ -85,7 +97,27 @@ public enum OGlobalConfiguration {
       "Minimal amount of time (in seconds), since the last System.gc(), when called after tree optimization.", Long.class, 600),
 
   // STORAGE
-      DISK_CACHE_SIZE("storage.diskCache.bufferSize", "Size of disk buffer in megabytes.", Integer.class, 4 * 1024),
+  DISK_CACHE_PINNED_PAGES("storage.diskCache.pinnedPages", "Maximum amount of pinned pages which may be contained in cache,"
+      + " if this percent is reached next pages will be left in unpinned state. You can not set value more than 50", Integer.class,
+      20, false),
+
+  DISK_CACHE_SIZE("storage.diskCache.bufferSize", "Size of disk buffer in megabytes, disk size may be changed at runtime, "
+      + "but if does not enough to contain all pinned pages exception will be thrown.", Integer.class, 4 * 1024,
+      new OConfigurationChangeCallback() {
+        @Override
+        public void change(Object currentValue, Object newValue) {
+          final OEngineLocalPaginated engineLocalPaginated = (OEngineLocalPaginated) Orient.instance()
+              .getEngine(OEngineLocalPaginated.NAME);
+
+          if (engineLocalPaginated == null) {
+            OLogManager.instance().error(this,
+                "Can not change cache size in runtime because storage engine " + OEngineLocalPaginated.NAME
+                    + " was not registered");
+          } else {
+            engineLocalPaginated.changeCacheSize(((Integer) (newValue)) * 1024L * 1024L);
+          }
+        }
+      }),
 
   DISK_WRITE_CACHE_PART("storage.diskCache.writeCachePart", "Percentage of disk cache, which is used as write cache", Integer.class,
       15),
@@ -698,11 +730,11 @@ public enum OGlobalConfiguration {
   private final String key;
   private final Object defValue;
   private final Class<?> type;
-  private Object value = null;
-  private String description;
-  private OConfigurationChangeCallback changeCallback = null;
-  private Boolean canChangeAtRuntime;
-  private boolean hidden = false;
+  private volatile Object value = null;
+  private final String                       description;
+  private final OConfigurationChangeCallback changeCallback;
+  private final Boolean                      canChangeAtRuntime;
+  private final boolean                      hidden;
 
   // AT STARTUP AUTO-CONFIG
   static {
@@ -712,7 +744,12 @@ public enum OGlobalConfiguration {
 
   OGlobalConfiguration(final String iKey, final String iDescription, final Class<?> iType, final Object iDefValue,
       final OConfigurationChangeCallback iChangeAction) {
-    this(iKey, iDescription, iType, iDefValue, true);
+    key = iKey;
+    description = iDescription;
+    defValue = iDefValue;
+    type = iType;
+    canChangeAtRuntime = true;
+    hidden = false;
     changeCallback = iChangeAction;
   }
 
@@ -733,6 +770,7 @@ public enum OGlobalConfiguration {
     type = iType;
     canChangeAtRuntime = iCanChange;
     hidden = iHidden;
+    changeCallback = null;
   }
 
   public static void dumpConfiguration(final PrintStream out) {
