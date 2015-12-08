@@ -20,21 +20,7 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Deque;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
-import java.util.logging.Level;
-
-import org.apache.commons.configuration.Configuration;
-
+import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -53,6 +39,7 @@ import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -73,6 +60,7 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageRecoverListener;
+import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.GraphQuery;
@@ -82,6 +70,21 @@ import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
 import com.tinkerpop.blueprints.util.wrappers.partition.PartitionVertex;
+import org.apache.commons.configuration.Configuration;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+import java.util.logging.Level;
 
 /**
  * A Blueprints implementation of the graph database OrientDB (http://www.orientechnologies.com)
@@ -263,10 +266,13 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     super.init(configuration);
   }
 
-  abstract OrientEdge addEdge(OrientVertex currentVertex, String label, OrientVertex inVertex, String iClassName,
+  abstract OrientEdge addEdgeInternal(OrientVertex currentVertex, String label, OrientVertex inVertex, String iClassName,
       String iClusterName, Object... fields);
 
-  abstract void removeEdge(OrientEdge currentVertex);
+  abstract void removeEdgesInternal(final OrientVertex vertex, final ODocument iVertex, final OIdentifiable iVertexToRemove,
+      final boolean iAlsoInverse, final boolean useVertexFieldsForEdgeLabels, final boolean autoScaleEdgeType);
+
+  abstract void removeEdgeInternal(OrientEdge currentVertex);
 
   public static OrientBaseGraph getActiveGraph() {
     return activeGraph.get();
@@ -1897,6 +1903,218 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     @Override
     protected Deque<OrientBaseGraph> initialValue() {
       return new LinkedList<OrientBaseGraph>();
+    }
+  }
+
+  /**
+   * (Internal only)
+   */
+  protected static void removeEdges(final OrientBaseGraph graph, final ODocument iVertex, final String iFieldName,
+      final OIdentifiable iVertexToRemove, final boolean iAlsoInverse, final boolean useVertexFieldsForEdgeLabels,
+      final boolean autoScaleEdgeType, final boolean forceReload) {
+    if (iVertex == null)
+      return;
+
+    final Object fieldValue = iVertexToRemove != null ? iVertex.field(iFieldName) : iVertex.removeField(iFieldName);
+    if (fieldValue == null)
+      return;
+
+    if (fieldValue instanceof OIdentifiable) {
+      // SINGLE RECORD
+
+      if (iVertexToRemove != null) {
+        if (!fieldValue.equals(iVertexToRemove))
+          // NOT FOUND
+          return;
+
+        iVertex.removeField(iFieldName);
+
+        deleteEdgeIfAny(iVertexToRemove, forceReload);
+      }
+
+      if (iAlsoInverse)
+        removeInverseEdge(graph, iVertex, iFieldName, iVertexToRemove, (OIdentifiable) fieldValue, useVertexFieldsForEdgeLabels,
+            autoScaleEdgeType, forceReload);
+
+    } else if (fieldValue instanceof ORidBag) {
+      // COLLECTION OF RECORDS: REMOVE THE ENTRY
+      final ORidBag bag = (ORidBag) fieldValue;
+
+      if (iVertexToRemove != null) {
+        // SEARCH SEQUENTIALLY (SLOWER)
+        for (Iterator<OIdentifiable> it = bag.rawIterator(); it.hasNext();) {
+          final ODocument curr = getDocument(it.next(), forceReload);
+
+          if (curr == null)
+            // ALREADY DELETED (BYPASSING GRAPH API?), JUST REMOVE THE REFERENCE FROM BAG
+            it.remove();
+          else if (iVertexToRemove.equals(curr)) {
+            // FOUND AS VERTEX
+            it.remove();
+            if (iAlsoInverse)
+              removeInverseEdge(graph, iVertex, iFieldName, iVertexToRemove, curr, useVertexFieldsForEdgeLabels, autoScaleEdgeType,
+                  forceReload);
+            break;
+
+          } else if (ODocumentInternal.getImmutableSchemaClass(curr).isEdgeType()) {
+            final Direction direction = OrientVertex.getConnectionDirection(iFieldName, useVertexFieldsForEdgeLabels);
+
+            // EDGE, REMOVE THE EDGE
+            if (iVertexToRemove.equals(OrientEdge.getConnection(curr, direction.opposite()))) {
+              it.remove();
+              if (iAlsoInverse)
+                removeInverseEdge(graph, iVertex, iFieldName, iVertexToRemove, curr, useVertexFieldsForEdgeLabels,
+                    autoScaleEdgeType, forceReload);
+              break;
+            }
+          }
+        }
+
+        deleteEdgeIfAny(iVertexToRemove, forceReload);
+
+      } else {
+
+        // DELETE ALL THE EDGES
+        for (Iterator<OIdentifiable> it = bag.rawIterator(); it.hasNext();) {
+          OIdentifiable edge = it.next();
+
+          if (iAlsoInverse)
+            removeInverseEdge(graph, iVertex, iFieldName, null, edge, useVertexFieldsForEdgeLabels, autoScaleEdgeType, forceReload);
+
+          deleteEdgeIfAny(edge, forceReload);
+        }
+      }
+
+      if (autoScaleEdgeType && bag.isEmpty())
+        // FORCE REMOVAL OF ENTIRE FIELD
+        iVertex.removeField(iFieldName);
+
+    } else if (fieldValue instanceof Collection) {
+      final Collection col = (Collection) fieldValue;
+
+      if (iVertexToRemove != null) {
+        // SEARCH SEQUENTIALLY (SLOWER)
+        for (Iterator<OIdentifiable> it = col.iterator(); it.hasNext();) {
+          final ODocument curr = getDocument(it.next(), forceReload);
+
+          if (iVertexToRemove.equals(curr)) {
+            // FOUND AS VERTEX
+            it.remove();
+            if (iAlsoInverse)
+              removeInverseEdge(graph, iVertex, iFieldName, iVertexToRemove, curr, useVertexFieldsForEdgeLabels, autoScaleEdgeType,
+                  forceReload);
+            break;
+
+          } else if (ODocumentInternal.getImmutableSchemaClass(curr).isVertexType()) {
+            final Direction direction = OrientVertex.getConnectionDirection(iFieldName, useVertexFieldsForEdgeLabels);
+
+            // EDGE, REMOVE THE EDGE
+            if (iVertexToRemove.equals(OrientEdge.getConnection(curr, direction.opposite()))) {
+              it.remove();
+              if (iAlsoInverse)
+                removeInverseEdge(graph, iVertex, iFieldName, iVertexToRemove, curr, useVertexFieldsForEdgeLabels,
+                    autoScaleEdgeType, forceReload);
+              break;
+            }
+          }
+        }
+
+        deleteEdgeIfAny(iVertexToRemove, forceReload);
+
+      } else {
+
+        // DELETE ALL THE EDGES
+        for (OIdentifiable edge : (Iterable<OIdentifiable>) col) {
+
+          if (iAlsoInverse)
+            removeInverseEdge(graph, iVertex, iFieldName, null, edge, useVertexFieldsForEdgeLabels, autoScaleEdgeType, forceReload);
+
+          deleteEdgeIfAny(edge, forceReload);
+        }
+      }
+
+      if (autoScaleEdgeType && col.isEmpty())
+        // FORCE REMOVAL OF ENTIRE FIELD
+        iVertex.removeField(iFieldName);
+    }
+  }
+
+  /**
+   * (Internal only)
+   */
+  private static void removeInverseEdge(final OrientBaseGraph graph, final ODocument iVertex, final String iFieldName,
+      final OIdentifiable iVertexToRemove, final OIdentifiable currentRecord, final boolean useVertexFieldsForEdgeLabels,
+      final boolean autoScaleEdgeType, boolean forceReload) {
+
+    final ODocument r = getDocument(currentRecord, forceReload);
+
+    if (r == null)
+      return;
+
+    final String inverseFieldName = OrientVertex.getInverseConnectionFieldName(iFieldName, useVertexFieldsForEdgeLabels);
+    OImmutableClass immutableClass = ODocumentInternal.getImmutableSchemaClass(r);
+    if (immutableClass.isVertexType()) {
+      // DIRECT VERTEX
+      removeEdges(graph, r, inverseFieldName, iVertex, false, useVertexFieldsForEdgeLabels, autoScaleEdgeType, forceReload);
+      r.save();
+
+    } else if (immutableClass.isEdgeType()) {
+      // EDGE, REMOVE THE EDGE
+      final OIdentifiable otherVertex = OrientEdge.getConnection(r,
+          OrientVertex.getConnectionDirection(inverseFieldName, useVertexFieldsForEdgeLabels));
+
+      if (otherVertex != null) {
+        if (iVertexToRemove == null || otherVertex.equals(iVertexToRemove)) {
+
+          final int maxRetries = graph.getMaxRetries();
+          for (int retry = 0; retry < maxRetries; ++retry) {
+            try {
+              final ODocument otherVertexRecord = getDocument(otherVertex, forceReload);
+
+              // BIDIRECTIONAL EDGE
+              removeEdges(graph, otherVertexRecord, inverseFieldName, (OIdentifiable) currentRecord, false,
+                  useVertexFieldsForEdgeLabels, autoScaleEdgeType, forceReload);
+
+              if (otherVertexRecord != null)
+                otherVertexRecord.save();
+
+            } catch (ONeedRetryException e) {
+              // RETRY
+            }
+          }
+        }
+
+      } else
+        throw new IllegalStateException("Invalid content found in " + iFieldName + " field");
+    }
+  }
+
+  private static ODocument getDocument(final OIdentifiable id, final boolean forceReload) {
+    final ODocument doc = id.getRecord();
+
+    if (doc != null && forceReload) {
+      try {
+        doc.reload();
+      } catch (ORecordNotFoundException e) {
+        // IGNORE IT AND RETURN NULL
+      }
+    }
+
+    return doc;
+  }
+
+  /**
+   * (Internal only)
+   */
+  private static void deleteEdgeIfAny(final OIdentifiable iRecord, boolean forceReload) {
+    if (iRecord != null) {
+      final ODocument doc = getDocument(iRecord, forceReload);
+      if (doc != null) {
+        final OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
+        if (clazz != null && clazz.isEdgeType())
+          // DELETE THE EDGE RECORD TOO
+          doc.delete();
+      }
     }
   }
 }

@@ -19,14 +19,6 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
-
-import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
@@ -54,6 +46,13 @@ import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * SQL DELETE VERTEX command.
@@ -206,6 +205,7 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
     } else if (query != null) {
       // TARGET IS A CLASS + OPTIONAL CONDITION
       OGraphCommandExecutorSQLFactory.runInConfiguredTxMode(new OGraphCommandExecutorSQLFactory.GraphCallBack<OrientGraph>() {
+
         @Override
         public OrientGraph call(final OrientBaseGraph iGraph) {
           // TARGET IS A CLASS + OPTIONAL CONDITION
@@ -214,6 +214,7 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
           query.execute(iArgs);
           return null;
         }
+
       });
 
     } else
@@ -238,34 +239,25 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
       final OrientBaseGraph g = currentGraph.get();
 
       final OrientVertex v = g.getVertex(record);
-      for (int retry = 0; retry < 20; ++retry) {
-        try {
-          if (v != null) {
-            v.remove();
+      if (v != null) {
+        v.remove();
 
-            if (!txAlreadyBegun && batch > 0 && removed % batch == 0) {
-              if (g instanceof OrientGraph) {
-                g.commit();
-                ((OrientGraph) g).begin();
-              }
-            }
-
-            if (returning.equalsIgnoreCase("BEFORE"))
-              allDeletedRecords.add(record);
-
-            removed++;
+        if (!txAlreadyBegun && batch > 0 && removed % batch == 0) {
+          if (g instanceof OrientGraph) {
+            g.commit();
+            ((OrientGraph) g).begin();
           }
-          // OK
-          break;
-
-        } catch (ONeedRetryException ex) {
-          getDatabase().getLocalCache().invalidate();
-          v.reload();
         }
+
+        if (returning.equalsIgnoreCase("BEFORE"))
+          allDeletedRecords.add(record);
+
+        removed++;
       }
     }
 
     return true;
+
   }
 
   @Override
