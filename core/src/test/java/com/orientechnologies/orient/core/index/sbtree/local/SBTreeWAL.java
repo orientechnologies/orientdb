@@ -45,28 +45,28 @@ public class SBTreeWAL extends SBTreeTest {
     OGlobalConfiguration.FILE_LOCK.setValue(false);
   }
 
-  private String                          buildDirectory;
+  private String buildDirectory;
 
-  private String                          actualStorageDir;
-  private String                          expectedStorageDir;
+  private String actualStorageDir;
+  private String expectedStorageDir;
 
-  private ODiskWriteAheadLog              writeAheadLog;
+  private ODiskWriteAheadLog writeAheadLog;
 
-  private OReadCache                      actualReadCache;
-  private OWriteCache                     actualWriteCache;
+  private OReadCache  actualReadCache;
+  private OWriteCache actualWriteCache;
 
-  private OReadCache                      expectedReadCache;
-  private OWriteCache                     expectedWriteCache;
+  private OReadCache  expectedReadCache;
+  private OWriteCache expectedWriteCache;
 
-  private OLocalPaginatedStorage          actualStorage;
+  private OLocalPaginatedStorage actualStorage;
 
   private OSBTree<Integer, OIdentifiable> expectedSBTree;
 
-  private OLocalPaginatedStorage          expectedStorage;
-  private OStorageConfiguration           expectedStorageConfiguration;
-  private OStorageConfiguration           actualStorageConfiguration;
+  private OLocalPaginatedStorage expectedStorage;
+  private OStorageConfiguration  expectedStorageConfiguration;
+  private OStorageConfiguration  actualStorageConfiguration;
 
-  private OAtomicOperationsManager        actualAtomicOperationsManager;
+  private OAtomicOperationsManager actualAtomicOperationsManager;
 
   @BeforeClass
   @Override
@@ -144,7 +144,8 @@ public class SBTreeWAL extends SBTreeTest {
     actualWriteCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000,
         writeAheadLog, 100, 1648L * 1024 * 1024, 2 * 1648L * 1024 * 1024, actualStorage, true, 10);
 
-    actualReadCache = new O2QCache(1648L * 1024 * 1024, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, true);
+    actualReadCache = new O2QCache(1648L * 1024 * 1024, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, true,
+        20);
 
     when(actualStorage.getStorageTransaction()).thenReturn(null);
     when(actualStorage.getReadCache()).thenReturn(actualReadCache);
@@ -182,7 +183,7 @@ public class SBTreeWAL extends SBTreeTest {
     expectedWriteCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000,
         writeAheadLog, 100, 1648L * 1024 * 1024, 400L * 1024 * 1024 * 1024 + 1648L * 1024 * 1024, expectedStorage, true, 20);
     expectedReadCache = new O2QCache(400L * 1024 * 1024 * 1024,
-        OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, false);
+        OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, false, 20);
 
     OAtomicOperationsManager atomicOperationsManager = new OAtomicOperationsManager(expectedStorage);
 

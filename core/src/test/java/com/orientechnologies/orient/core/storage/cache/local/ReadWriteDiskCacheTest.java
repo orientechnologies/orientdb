@@ -132,7 +132,7 @@ public class ReadWriteDiskCacheTest {
         15000 * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING), 15000 * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING) + 4
             * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING), storageLocal, false, 1);
 
-    readBuffer = new O2QCache(4 * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING), 8 + systemOffset, false);
+    readBuffer = new O2QCache(4 * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING), 8 + systemOffset, false, 20);
   }
 
   public void testAddFourItems() throws IOException {
@@ -732,7 +732,7 @@ public class ReadWriteDiskCacheTest {
     writeBuffer = new OWOWCache(false, 8 + systemOffset, 10000, writeAheadLog, 100,
         2 * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING), 2 * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING) + 4
             * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING), storageLocal, false, 10);
-    readBuffer = new O2QCache(4 * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING), 8 + systemOffset, false);
+    readBuffer = new O2QCache(4 * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING), 8 + systemOffset, false, 20);
 
     long fileId = readBuffer.addFile(fileName, writeBuffer);
     OLogSequenceNumber lsnToFlush = null;
