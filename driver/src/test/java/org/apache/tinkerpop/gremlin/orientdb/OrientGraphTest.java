@@ -122,28 +122,28 @@ public class OrientGraphTest {
 
     @Test
     public void testGraph() throws Exception {
-        Graph graph = graphFactory.getNoTx();
+        Graph graph = graphFactory().getNoTx();
         performBasicTests(graph);
         graph.close();
     }
 
     @Test
     public void testPooledGraph() throws Exception {
-        Graph graph = graphFactory.setupPool(5).getNoTx();
+        Graph graph = graphFactory().setupPool(5).getNoTx();
         performBasicTests(graph);
         graph.close();
     }
 
     @Test
     public void testTransactionalGraph() throws Exception {
-        Graph graph = graphFactory.getTx();
+        Graph graph = graphFactory().getTx();
         performBasicTests(graph);
         graph.close();
     }
 
     @Test
     public void testPooledTransactionalGraph() throws Exception {
-        Graph graph = graphFactory.setupPool(5).getTx();
+        Graph graph = graphFactory().setupPool(5).getTx();
         performBasicTests(graph);
         graph.close();
     }
