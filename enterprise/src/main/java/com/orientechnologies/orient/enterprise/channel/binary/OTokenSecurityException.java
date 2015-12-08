@@ -8,7 +8,7 @@ import com.orientechnologies.orient.core.exception.OSecurityException;
 public class OTokenSecurityException extends OSecurityException {
 
 
-  public OTokenSecurityException(OSecurityException exception) {
+  public OTokenSecurityException(OTokenSecurityException exception) {
     super(exception);
   }
 
