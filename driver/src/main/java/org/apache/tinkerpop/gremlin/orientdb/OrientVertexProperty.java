@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import org.apache.tinkerpop.gremlin.structure.Property;
+import org.apache.tinkerpop.gremlin.structure.T;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.VertexProperty;
 
@@ -32,6 +33,9 @@ public class OrientVertexProperty<V> extends OrientProperty<V> implements Vertex
 
     @Override
     public <U> Property<U> property(String key, U value) {
+        if (T.id.equals(key))
+            throw VertexProperty.Exceptions.userSuppliedIdsNotSupported();
+
          ODocument metadata = getMetadataDocument();
 
          metadata.field(key, value);
@@ -40,11 +44,10 @@ public class OrientVertexProperty<V> extends OrientProperty<V> implements Vertex
 
     @Override
     public <U> Iterator<Property<U>> properties(String... propertyKeys) {
-        ODocument metadata = getMetadataDocument();
-        if(metadata == null)
+        if(!hasMetadataDocument())
             return Collections.emptyIterator();
 
-        Map<String, Object> properties = metadata.toMap();
+        Map<String, Object> properties = getMetadataDocument().toMap();
         HashSet<String> keys = new HashSet<>(Arrays.asList(propertyKeys));
 
         Stream<Map.Entry<String, Object>> entries = StreamUtils.asStream(properties.entrySet().iterator());
@@ -57,6 +60,17 @@ public class OrientVertexProperty<V> extends OrientProperty<V> implements Vertex
                 .filter(entry -> !entry.getKey().startsWith("@rid"))
                 .map(entry -> new OrientVertexPropertyProperty<>(entry.getKey(), (U) entry.getValue(), this));
         return propertyStream.iterator();
+    }
+
+    private boolean hasMetadataDocument() {
+        return element.getRawDocument().field(metadataKey()) != null;
+    }
+
+    public void removeMetadata(String key) {
+        ODocument metadata = getMetadataDocument();
+        metadata.removeField(key);
+        if(metadata.fields() == 0)
+            element.getRawDocument().removeField(metadataKey());
     }
 
     ODocument getMetadataDocument() {

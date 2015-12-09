@@ -1,5 +1,21 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Strings.isNullOrEmpty;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+
+import org.apache.tinkerpop.gremlin.structure.Direction;
+import org.apache.tinkerpop.gremlin.structure.Edge;
+import org.apache.tinkerpop.gremlin.structure.Property;
+import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.apache.tinkerpop.gremlin.structure.VertexProperty;
+import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
+import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
+
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
@@ -14,19 +30,6 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-
-import org.apache.commons.lang.NotImplementedException;
-import org.apache.tinkerpop.gremlin.structure.*;
-import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
-import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Strings.isNullOrEmpty;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
 
 public final class OrientVertex extends OrientElement implements Vertex {
     public static final String CONNECTION_OUT_PREFIX = OrientGraphUtils.CONNECTION_OUT + "_";
@@ -111,9 +114,14 @@ public final class OrientVertex extends OrientElement implements Vertex {
 
     @Override
     public <V> VertexProperty<V> property(final String key, final V value, final Object... keyValues) {
-        if(keyValues != null && keyValues.length > 0)
-            throw new NotImplementedException();
-        return this.property(key, value);
+        VertexProperty<V> vertexProperty = this.property(key, value);
+
+        if (ElementHelper.getIdValue(keyValues).isPresent()) 
+            throw VertexProperty.Exceptions.userSuppliedIdsNotSupported();
+
+        ElementHelper.legalPropertyKeyValueArray(keyValues);
+        ElementHelper.attachProperties(vertexProperty, keyValues);
+        return vertexProperty;
     }
 
     @Override
@@ -122,9 +130,7 @@ public final class OrientVertex extends OrientElement implements Vertex {
             final String key,
             final V value,
             final Object... keyValues) {
-        if(keyValues != null && keyValues.length > 0)
-            throw new NotImplementedException();
-        return this.property(key, value);
+        return this.property(key, value, keyValues);
     }
 
     @Override
