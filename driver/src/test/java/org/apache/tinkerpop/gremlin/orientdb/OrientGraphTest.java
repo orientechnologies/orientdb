@@ -122,50 +122,73 @@ public class OrientGraphTest {
 
     @Test
     public void testGraph() throws Exception {
-        try (Graph graph = graphFactory().getTx()) {
+        Graph graph = graphFactory().getNoTx();
+        performBasicTests(graph);
+        graph.close();
+    }
 
-            Vertex vertex = graph.addVertex();
-            assertNotNull(vertex);
-            assertNotNull(vertex.id());
+    @Test
+    public void testPooledGraph() throws Exception {
+        Graph graph = graphFactory().setupPool(5).getNoTx();
+        performBasicTests(graph);
+        graph.close();
+    }
 
-            vertex.property("test", TEST_VALUE);
-            assertEquals(TEST_VALUE, vertex.value("test"));
+    @Test
+    public void testTransactionalGraph() throws Exception {
+        Graph graph = graphFactory().getTx();
+        performBasicTests(graph);
+        graph.close();
+    }
 
-            Property<String> property = vertex.property("test");
-            assertNotNull(property);
-            assertTrue(property.isPresent());
-            assertEquals(TEST_VALUE, property.value());
-            property.remove();
-            assertFalse(property.isPresent());
+    @Test
+    public void testPooledTransactionalGraph() throws Exception {
+        Graph graph = graphFactory().setupPool(5).getTx();
+        performBasicTests(graph);
+        graph.close();
+    }
 
-            // Create test vertices for edge
-            Vertex vertexA = graph.addVertex();
-            Vertex vertexB = graph.addVertex();
-            Edge edge = vertexA.addEdge("EDGE_LABEL", vertexB);
-            assertEquals("EDGE_LABEL", edge.label());
+    protected void performBasicTests(Graph graph) {
+        Vertex vertex = graph.addVertex();
+        assertNotNull(vertex);
+        assertNotNull(vertex.id());
 
-            // Test edge properties
-            assertNotNull(edge.property("test", TEST_VALUE));
-            Property<String> edgeProperty = edge.property("test");
-            assertNotNull(edgeProperty);
-            assertTrue(edgeProperty.isPresent());
-            assertEquals(TEST_VALUE, edgeProperty.value());
-            edgeProperty.remove();
-            assertFalse(edgeProperty.isPresent());
+        vertex.property("test", TEST_VALUE);
+        assertEquals(TEST_VALUE, vertex.value("test"));
 
-            edge.property("test", TEST_VALUE);
-            assertEquals(TEST_VALUE, edge.value("test"));
+        Property<String> property = vertex.property("test");
+        assertNotNull(property);
+        assertTrue(property.isPresent());
+        assertEquals(TEST_VALUE, property.value());
+        property.remove();
+        assertFalse(property.isPresent());
 
-            // Check vertices of edge
-            Vertex out = edge.outVertex();
-            assertNotNull(out);
-            assertEquals(vertexA.id(), out.id());
+        // Create test vertices for edge
+        Vertex vertexA = graph.addVertex();
+        Vertex vertexB = graph.addVertex();
+        Edge edge = vertexA.addEdge("EDGE_LABEL", vertexB);
+        assertEquals("EDGE_LABEL", edge.label());
 
-            Vertex in = edge.inVertex();
-            assertNotNull(in);
-            assertEquals(vertexB.id(), in.id());
-            graph.close();
-        }
+        // Test edge properties
+        assertNotNull(edge.property("test", TEST_VALUE));
+        Property<String> edgeProperty = edge.property("test");
+        assertNotNull(edgeProperty);
+        assertTrue(edgeProperty.isPresent());
+        assertEquals(TEST_VALUE, edgeProperty.value());
+        edgeProperty.remove();
+        assertFalse(edgeProperty.isPresent());
+
+        edge.property("test", TEST_VALUE);
+        assertEquals(TEST_VALUE, edge.value("test"));
+
+        // Check vertices of edge
+        Vertex out = edge.outVertex();
+        assertNotNull(out);
+        assertEquals(vertexA.id(), out.id());
+
+        Vertex in = edge.inVertex();
+        assertNotNull(in);
+        assertEquals(vertexB.id(), in.id());
     }
 
     @Test

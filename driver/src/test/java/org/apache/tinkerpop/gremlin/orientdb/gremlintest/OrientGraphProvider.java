@@ -21,7 +21,6 @@ import org.apache.tinkerpop.gremlin.orientdb.OrientVertex;
 import org.apache.tinkerpop.gremlin.orientdb.OrientVertexProperty;
 import org.apache.tinkerpop.gremlin.structure.Element;
 import org.apache.tinkerpop.gremlin.structure.FeatureSupportTest.GraphFunctionalityTest;
-import org.apache.tinkerpop.gremlin.structure.FeatureSupportTest.VertexFunctionalityTest;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.GraphTest;
 import org.apache.tinkerpop.gremlin.structure.EdgeTest.BasicEdgeTest;
@@ -65,6 +64,11 @@ public class OrientGraphProvider extends AbstractGraphProvider {
         configs.put("name", graphName);
         if(testMethodName .equals("shouldPersistDataOnClose"))
         	configs.put(OrientGraph.CONFIG_URL, "memory:test-" + graphName + "-" + test.getSimpleName() + "-" + testMethodName);
+
+        Random random = new Random();
+        if(random.nextBoolean())
+          configs.put(OrientGraph.CONFIG_POOL_SIZE, random.nextInt(10) + 1);
+
         return configs;
     }
 
