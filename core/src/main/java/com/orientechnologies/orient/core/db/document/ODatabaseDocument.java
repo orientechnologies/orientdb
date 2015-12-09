@@ -274,4 +274,9 @@ public interface ODatabaseDocument extends ODatabase<ORecord>, ODatabaseSchemaAw
    */
   @Deprecated
   <DB extends ODatabaseDocument> DB checkSecurity(String iResourceGeneric, int iOperation, Object... iResourcesSpecific);
+
+  /**
+   * @return <code>true</code> if database is obtained from the pool and <code>false</code> otherwise.
+   */
+  boolean isPooled();
 }
