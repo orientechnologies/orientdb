@@ -297,8 +297,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   public void initIndex(String indexType, OIndexDefinition indexDefinition, boolean isAutomatic, ODocument metadata) {
 
     // FIXME how many timers are around?
-    Orient.instance()
-          .registerListener(this);
+    Orient.instance().registerListener(this);
     commitTask = new TimerTask() {
       @Override
       public void run() {

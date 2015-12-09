@@ -19,4 +19,3 @@
 
 
 com.orientechnologies.lucene.functions.OLuceneFunctionsFactory
-com.orientechnologies.orient.spatial.functions.OSpatialFunctionsFactory
