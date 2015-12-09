@@ -2841,6 +2841,14 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
   }
 
   /**
+   * @return <code>true</code> if database is obtained from the pool and <code>false</code> otherwise.
+   */
+  @Override
+  public boolean isPooled() {
+    return false;
+  }
+
+  /**
    * Use #activateOnCurrentThread instead.
    */
   @Deprecated

@@ -29,10 +29,9 @@ import com.orientechnologies.orient.core.metadata.security.OToken;
 /**
  * Pooled wrapper to the ODatabaseDocumentTx class. Allows to being reused across calls. The close() method does not close the
  * database for real but release it to the owner pool. The database born as opened and will leave open until the pool is closed.
- * 
+ *
  * @author Luca Garulli
  * @see ODatabasePoolBase
- * 
  */
 @SuppressWarnings("unchecked")
 public class ODatabaseDocumentTxPooled extends ODatabaseDocumentTx implements ODatabasePooled {
@@ -68,7 +67,6 @@ public class ODatabaseDocumentTxPooled extends ODatabaseDocumentTx implements OD
         "Database instance was retrieved from a pool. You cannot open the database in this way. Use directly a ODatabaseDocumentTx instance if you want to manually open the connection");
   }
 
-
   @Override
   public ODatabaseDocumentTxPooled open(final OToken iToken) {
     throw new UnsupportedOperationException(
@@ -88,6 +86,14 @@ public class ODatabaseDocumentTxPooled extends ODatabaseDocumentTx implements OD
   @Override
   public boolean isClosed() {
     return ownerPool == null || super.isClosed();
+  }
+
+  /**
+   * @return <code>true</code> if database is obtained from the pool and <code>false</code> otherwise.
+   */
+  @Override
+  public boolean isPooled() {
+    return true;
   }
 
   /**
