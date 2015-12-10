@@ -29,5 +29,12 @@ public class OAtomicUnitEndRecordTest {
     OAtomicUnitEndRecord atomicUnitEndRecordD = new OAtomicUnitEndRecord();
     final int dEndOffset = atomicUnitEndRecordD.fromStream(content, 1);
     Assert.assertEquals(dEndOffset, content.length);
+
+    Assert.assertEquals(atomicUnitEndRecordD.getOperationUnitId(), atomicUnitEndRecord.getOperationUnitId());
+    ORecordOperationMetadata recordOperationMetadataD = (ORecordOperationMetadata) atomicUnitEndRecordD.getAtomicOperationMetadata()
+        .get(ORecordOperationMetadata.RID_METADATA_KEY);
+
+    Assert.assertEquals(recordOperationMetadataD.getValue(), recordOperationMetadata.getValue());
   }
 }
+
