@@ -60,9 +60,7 @@ public interface OWriteCache {
 
   Future store(long fileId, long pageIndex, OCachePointer dataPointer);
 
-  OCachePointer load(long fileId, long pageIndex, boolean addNewPages) throws IOException;
-
-  OCachePointer[] loadPages(long fileId, long pageIndex, int prefetchPages) throws IOException;
+  OCachePointer[] load(long fileId, long startPageIndex, int pageCount, boolean addNewPages) throws IOException;
 
   void flush(long fileId);
 

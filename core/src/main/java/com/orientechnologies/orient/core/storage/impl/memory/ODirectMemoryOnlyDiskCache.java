@@ -163,7 +163,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
-  public OCacheEntry load(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache, final int prefetchPages) {
+  public OCacheEntry load(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache, final int pageCount) {
     int intId = extractFileId(fileId);
 
     final MemoryFile memoryFile = getFile(intId);
@@ -537,12 +537,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
-  public OCachePointer load(long fileId, long pageIndex, boolean addNewPages) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public OCachePointer[] loadPages(long fileId, long pageIndex, int prefetchPages) throws IOException {
+  public OCachePointer[] load(long fileId, long startPageIndex, int pageCount, boolean addNewPages) {
     throw new UnsupportedOperationException();
   }
 

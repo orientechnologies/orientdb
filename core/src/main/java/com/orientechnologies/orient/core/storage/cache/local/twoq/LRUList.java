@@ -18,22 +18,32 @@
  *
  */
 
-package com.orientechnologies.orient.core.storage.cache.local;
+package com.orientechnologies.orient.core.storage.cache.local.twoq;
 
-public interface O2QCacheMXBean {
-  int getA1InSize();
+import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 
-  int getA1OutSize();
+import java.util.Iterator;
 
-  int getAmSize();
+/**
+ * @author Artem Orobets (enisher-at-gmail.com)
+ */
+public interface LRUList extends Iterable<OCacheEntry> {
+  OCacheEntry get(long fileId, long pageIndex);
 
-  double getCacheHits();
+  OCacheEntry remove(long fileId, long pageIndex);
 
-  void clearCacheStatistics();
+  void putToMRU(OCacheEntry cacheEntry);
 
-  long getUsedMemory();
+  void clear();
 
-  long getUsedMemoryInMB();
+  boolean contains(long fileId, long filePosition);
 
-  double getUsedMemoryInGB();
+  int size();
+
+  OCacheEntry removeLRU();
+
+  OCacheEntry getLRU();
+
+  @Override
+  Iterator<OCacheEntry> iterator();
 }

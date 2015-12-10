@@ -70,7 +70,7 @@ public interface OReadCache {
 
   long openFile(String fileName, long fileId, OWriteCache writeCache) throws IOException;
 
-  OCacheEntry load(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache, int prefetchPages) throws IOException;
+  OCacheEntry load(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache, int pageCount) throws IOException;
 
   void pinPage(OCacheEntry cacheEntry) throws IOException;
 

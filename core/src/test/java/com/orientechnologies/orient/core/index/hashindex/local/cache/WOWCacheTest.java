@@ -31,15 +31,15 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WriteA
  */
 @Test
 public class WOWCacheTest {
-  private int                    systemOffset = 2 * (OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE);
-  private int                    pageSize     = systemOffset + 8;
+  private int systemOffset = 2 * (OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE);
+  private int pageSize     = systemOffset + 8;
 
   private OLocalPaginatedStorage storageLocal;
   private String                 fileName;
 
-  private ODiskWriteAheadLog     writeAheadLog;
+  private ODiskWriteAheadLog writeAheadLog;
 
-  private OWriteCache            wowCache;
+  private OWriteCache wowCache;
 
   @BeforeClass
   public void beforeClass() throws IOException {
@@ -111,7 +111,7 @@ public class WOWCacheTest {
 
       pageData[i] = data;
 
-      final OCachePointer cachePointer = wowCache.load(fileId, i, true);
+      final OCachePointer cachePointer = wowCache.load(fileId, i, 1, true)[0];
       cachePointer.acquireExclusiveLock();
       cachePointer.getDataPointer().set(systemOffset + OWOWCache.PAGE_PADDING, data, 0, data.length);
       cachePointer.releaseExclusiveLock();
@@ -123,7 +123,7 @@ public class WOWCacheTest {
     for (int i = 0; i < pageData.length; i++) {
       byte[] dataOne = pageData[i];
 
-      OCachePointer cachePointer = wowCache.load(fileId, i, false);
+      OCachePointer cachePointer = wowCache.load(fileId, i, 1, false)[0];
       byte[] dataTwo = cachePointer.getDataPointer().get(systemOffset + OWOWCache.PAGE_PADDING, 8);
       cachePointer.decrementReferrer();
 
@@ -152,7 +152,7 @@ public class WOWCacheTest {
 
       pageIndexDataMap.put(pageIndex, data);
 
-      final OCachePointer cachePointer = wowCache.load(fileId, pageIndex, true);
+      final OCachePointer cachePointer = wowCache.load(fileId, pageIndex, 1, true)[0];
       cachePointer.acquireExclusiveLock();
       cachePointer.getDataPointer().set(systemOffset + OWOWCache.PAGE_PADDING, data, 0, data.length);
       cachePointer.releaseExclusiveLock();
@@ -165,7 +165,7 @@ public class WOWCacheTest {
       long pageIndex = entry.getKey();
       byte[] dataOne = entry.getValue();
 
-      OCachePointer cachePointer = wowCache.load(fileId, pageIndex, false);
+      OCachePointer cachePointer = wowCache.load(fileId, pageIndex, 1, false)[0];
       byte[] dataTwo = cachePointer.getDataPointer().get(systemOffset + OWOWCache.PAGE_PADDING, 8);
 
       cachePointer.decrementReferrer();
@@ -183,7 +183,7 @@ public class WOWCacheTest {
       random.nextBytes(data);
       pageIndexDataMap.put(pageIndex, data);
 
-      final OCachePointer cachePointer = wowCache.load(fileId, pageIndex, true);
+      final OCachePointer cachePointer = wowCache.load(fileId, pageIndex, 1, true)[0];
 
       cachePointer.acquireExclusiveLock();
       cachePointer.getDataPointer().set(systemOffset + OWOWCache.PAGE_PADDING, data, 0, data.length);
@@ -196,7 +196,7 @@ public class WOWCacheTest {
     for (Map.Entry<Long, byte[]> entry : pageIndexDataMap.entrySet()) {
       long pageIndex = entry.getKey();
       byte[] dataOne = entry.getValue();
-      OCachePointer cachePointer = wowCache.load(fileId, pageIndex, false);
+      OCachePointer cachePointer = wowCache.load(fileId, pageIndex, 1, false)[0];
       byte[] dataTwo = cachePointer.getDataPointer().get(systemOffset + OWOWCache.PAGE_PADDING, 8);
       cachePointer.decrementReferrer();
 
@@ -223,7 +223,7 @@ public class WOWCacheTest {
 
       pageData[i] = data;
 
-      final OCachePointer cachePointer = wowCache.load(fileId, i, true);
+      final OCachePointer cachePointer = wowCache.load(fileId, i, 1, true)[0];
       cachePointer.acquireExclusiveLock();
       cachePointer.getDataPointer().set(systemOffset + OWOWCache.PAGE_PADDING, data, 0, data.length);
       cachePointer.releaseExclusiveLock();
@@ -235,7 +235,7 @@ public class WOWCacheTest {
     for (int i = 0; i < pageData.length; i++) {
       byte[] dataOne = pageData[i];
 
-      OCachePointer cachePointer = wowCache.load(fileId, i, false);
+      OCachePointer cachePointer = wowCache.load(fileId, i, 1, false)[0];
       byte[] dataTwo = cachePointer.getDataPointer().get(systemOffset + OWOWCache.PAGE_PADDING, 8);
       cachePointer.decrementReferrer();
 
@@ -264,8 +264,8 @@ public class WOWCacheTest {
 
     Assert.assertEquals(magicNumber, OWOWCache.MAGIC_NUMBER);
     CRC32 crc32 = new CRC32();
-    crc32.update(content, OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE, content.length - OIntegerSerializer.INT_SIZE
-        - OLongSerializer.LONG_SIZE);
+    crc32.update(content, OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE,
+        content.length - OIntegerSerializer.INT_SIZE - OLongSerializer.LONG_SIZE);
 
     int crc = OIntegerSerializer.INSTANCE.deserializeNative(content, OLongSerializer.LONG_SIZE);
     Assert.assertEquals(crc, (int) crc32.getValue());

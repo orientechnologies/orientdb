@@ -37,13 +37,13 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @since 8/11/14
  */
 public class ONewLockManager<T> {
-  private static final int               CONCURRENCY_LEVEL = closestInteger(Runtime.getRuntime().availableProcessors() * 64);
-  private static final int               MASK              = CONCURRENCY_LEVEL - 1;
+  private static final int CONCURRENCY_LEVEL = closestInteger(Runtime.getRuntime().availableProcessors() * 64);
+  private static final int MASK              = CONCURRENCY_LEVEL - 1;
 
   private final ReadWriteLock[]          locks;
   private final OReadersWriterSpinLock[] spinLocks;
 
-  private final boolean                  useSpinLock;
+  private final boolean useSpinLock;
 
   private static final class SpinLockWrapper implements Lock {
     private final boolean                readLock;
@@ -220,22 +220,32 @@ public class ONewLockManager<T> {
     return lock.tryLock(timeout, TimeUnit.MILLISECONDS);
   }
 
-  public void acquireExclusiveLocksInBatch(final T... value) {
+  public Lock[] acquireExclusiveLocksInBatch(final T... value) {
     if (value == null)
-      return;
+      return new Lock[0];
 
-    for (T val : getOrderedValues(value)) {
-      acquireExclusiveLock(val);
+    final Lock[] locks = new Lock[value.length];
+    final T[] sortedValues = getOrderedValues(value);
+
+    for (int n = 0; n < sortedValues.length; n++) {
+      locks[n] = acquireExclusiveLock(sortedValues[n]);
     }
+
+    return locks;
   }
 
-  public void acquireSharedLocksInBatch(final T... value) {
+  public Lock[] acquireSharedLocksInBatch(final T... value) {
     if (value == null)
-      return;
+      return new Lock[0];
 
-    for (T val : getOrderedValues(value)) {
-      acquireSharedLock(val);
+    final Lock[] locks = new Lock[value.length];
+    final T[] sortedValues = getOrderedValues(value);
+
+    for (int i = 0; i < sortedValues.length; i++) {
+      locks[i] = acquireSharedLock(sortedValues[i]);
     }
+
+    return locks;
   }
 
   public void acquireExclusiveLocksInBatch(Collection<T> values) {

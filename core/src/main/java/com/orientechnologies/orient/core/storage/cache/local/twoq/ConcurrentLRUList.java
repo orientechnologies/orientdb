@@ -18,7 +18,7 @@
  *
  */
 
-package com.orientechnologies.orient.core.storage.cache.local;
+package com.orientechnologies.orient.core.storage.cache.local.twoq;
 
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 
