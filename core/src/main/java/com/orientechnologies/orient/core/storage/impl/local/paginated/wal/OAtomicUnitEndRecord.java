@@ -97,6 +97,7 @@ public class OAtomicUnitEndRecord extends OOperationUnitBodyRecord {
     offset = super.fromStream(content, offset);
 
     rollback = content[offset] > 0;
+    offset++;
 
     final int len = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
     offset += OIntegerSerializer.INT_SIZE;
@@ -110,6 +111,7 @@ public class OAtomicUnitEndRecord extends OOperationUnitBodyRecord {
         final ObjectInputStream objectInputStream = new ObjectInputStream(byteArrayInputStream);
         atomicOperationMetadataMap = (Map<String, OAtomicOperationMetadata<?>>) objectInputStream.readObject();
         objectInputStream.close();
+        offset += len;
       } catch (ClassNotFoundException cnfe) {
         throw new IllegalStateException("Error during atomic operation metadata deserialization", cnfe);
       } catch (IOException ioe) {
