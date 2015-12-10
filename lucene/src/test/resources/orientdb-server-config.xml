@@ -25,7 +25,7 @@
                 <parameter value="true" name="profilerManaged"/>
             </parameters>
         </handler>
-        <!--<handler class="com.orientechnologies.lucene.OLuceneIndexPlugin">-->
+        <!--<handler class="com.orientechnologies.lucene.OLuceneSpatialIndexPlugin">-->
 
         <!--</handler>-->
         <handler class="com.orientechnologies.orient.server.handler.OAutomaticBackup">
