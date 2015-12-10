@@ -19,6 +19,7 @@
 package com.orientechnologies.agent.proxy;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 
@@ -33,13 +34,15 @@ import java.util.concurrent.Callable;
  */
 public class HttpBroadcastCallable implements Callable<HttpProxyResponse> {
 
-  private HttpProxy          proxy;
-  private final OHttpRequest request;
-  private final ODocument    member;
+  private HttpProxy                 proxy;
+  private final OHttpRequest        request;
+  private ODistributedServerManager manager;
+  private final ODocument           member;
 
-  public HttpBroadcastCallable(HttpProxy proxy, OHttpRequest request, ODocument member) {
+  public HttpBroadcastCallable(HttpProxy proxy, OHttpRequest request, ODistributedServerManager manager, ODocument member) {
     this.proxy = proxy;
     this.request = request;
+    this.manager = manager;
     this.member = member;
   }
 
@@ -47,7 +50,7 @@ public class HttpBroadcastCallable implements Callable<HttpProxyResponse> {
   public HttpProxyResponse call() throws Exception {
     final HttpProxyResponse httpProxyResponse = new HttpProxyResponse();
 
-    proxy.fetchFromServer(member, request, bindParameters(request, member), null, new HttpProxyListener() {
+    proxy.fetchFromServer(manager, member, request, bindParameters(request, member), null, new HttpProxyListener() {
       @Override
       public void onProxySuccess(OHttpRequest request, OHttpResponse response, InputStream is) throws IOException {
         httpProxyResponse.setStream(is);

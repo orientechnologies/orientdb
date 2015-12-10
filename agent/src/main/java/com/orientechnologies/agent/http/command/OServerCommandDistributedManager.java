@@ -70,6 +70,10 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
 
       final OHazelcastPlugin manager = (OHazelcastPlugin) server.getDistributedManager();
       ODocument doc = new ODocument().fromJSON(iRequest.content, "noMap");
+
+      Integer version = doc.field("version");
+      version++;
+      doc.field("version", version);
       manager.updateCachedDatabaseConfiguration(id, doc, true, true);
       iResponse.send(OHttpUtils.STATUS_OK_CODE, null, null, OHttpUtils.STATUS_OK_DESCRIPTION, null);
 

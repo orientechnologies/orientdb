@@ -1,6 +1,9 @@
 package com.orientechnologies.agent.proxy;
 
+import com.orientechnologies.agent.OEnterpriseAgent;
+import com.orientechnologies.agent.OL;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
@@ -58,7 +61,7 @@ public class HttpProxy {
     Collection<HttpBroadcastCallable> callables = new ArrayList<HttpBroadcastCallable>();
 
     for (ODocument member : members) {
-      callables.add(new HttpBroadcastCallable(this, request, member));
+      callables.add(new HttpBroadcastCallable(this, request, manager, member));
     }
 
     try {
@@ -115,7 +118,7 @@ public class HttpProxy {
 
         };
       }
-      fetchFromServer(member, request, request.getParameters(), response, listener);
+      fetchFromServer(manager, member, request, request.getParameters(), response, listener);
     } catch (Exception e) {
       response.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, e, null);
     }
@@ -134,10 +137,17 @@ public class HttpProxy {
     return result.fromJSON(res);
   }
 
-  public static void fetchFromServer(ODocument member, OHttpRequest request, Map<String, String> parameters,
-      OHttpResponse response, HttpProxyListener proxyListener) throws Exception {
+  public static void fetchFromServer(ODistributedServerManager manager, ODocument member, OHttpRequest request,
+      Map<String, String> parameters, OHttpResponse response, HttpProxyListener proxyListener) throws Exception {
 
+    Map<String, Object> map = manager.getConfigurationMap();
+
+    String pwd = (String) map.get(OEnterpriseAgent.EE + member.field("name"));
     Collection<Map> listeners = member.field("listeners");
+
+    String decrypt = "root:" + OL.decrypt(pwd);
+
+    String authStringEnc = "Basic " + OBase64Utils.encodeBytes(decrypt.getBytes());
 
     for (Map listener : listeners) {
       String protocol = (String) listener.get("protocol");
@@ -149,8 +159,8 @@ public class HttpProxy {
           url += appendParamenters(parameters);
         }
         final URL remoteUrl = new java.net.URL(url);
-        HttpURLConnection urlConnection = openConnectionForServer(member, request.getHeader("Authorization"), remoteUrl,
-            request.httpMethod, request.content);
+        HttpURLConnection urlConnection = openConnectionForServer(member, authStringEnc, remoteUrl, request.httpMethod,
+            request.content);
 
         try {
           InputStream is = urlConnection.getInputStream();
