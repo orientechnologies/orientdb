@@ -49,13 +49,13 @@ public interface OCommandCache {
   /**
    * Enables cache.
    */
-  OCommandCacheSoftRefs enable();
+  OCommandCache enable();
 
   /**
    * Disables cache. None of query methods will cause effect on cache in disabled state. Only cache info methods available at that
    * state.
    */
-  OCommandCacheSoftRefs disable();
+  OCommandCache disable();
 
   /**
    * Looks up for query result in cache.
@@ -75,7 +75,7 @@ public interface OCommandCache {
   /**
    * Remove all results from the cache.
    */
-  OCommandCacheSoftRefs clear();
+  OCommandCache clear();
 
   /**
    * Total number of stored queries.
@@ -94,5 +94,9 @@ public interface OCommandCache {
 
   int getMaxResultsetSize();
 
-  OCommandCacheSoftRefs.STRATEGY getEvictStrategy();
+  STRATEGY getEvictStrategy();
+
+  public enum STRATEGY {
+    INVALIDATE_ALL, PER_CLUSTER
+  }
 }

@@ -38,7 +38,7 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   @Override
-  public OLogSequenceNumber end() throws IOException {
+  public OLogSequenceNumber end() {
     throw new UnsupportedOperationException("Operation not supported for in memory storage.");
   }
 

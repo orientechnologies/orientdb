@@ -21,7 +21,6 @@ import com.orientechnologies.lucene.functions.OLuceneFunctionsFactory;
 import com.orientechnologies.lucene.operator.OLuceneOperatorFactory;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -31,12 +30,9 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
-import com.orientechnologies.orient.spatial.functions.OSpatialFunctionsFactory;
 import org.apache.lucene.util.Version;
 
 public class OLuceneIndexPlugin extends OServerPluginAbstract implements ODatabaseLifecycleListener {
-
-  private OLuceneSpatialManager spatialManager;
 
   public OLuceneIndexPlugin() {
   }
@@ -58,7 +54,8 @@ public class OLuceneIndexPlugin extends OServerPluginAbstract implements ODataba
     //    registerFunctions();
 
     //    spatialManager = new OLuceneSpatialManager(OShapeFactory.INSTANCE);
-    OLogManager.instance().info(this, "Lucene index plugin installed and active. Lucene version: %s", Version.LATEST);
+    OLogManager.instance()
+               .info(this, "Lucene index plugin installed and active. Lucene version: %s", Version.LATEST);
   }
 
   protected void registerOperators() {
@@ -72,12 +69,10 @@ public class OLuceneIndexPlugin extends OServerPluginAbstract implements ODataba
   protected void registerFunctions() {
 
     for (String s : OLuceneFunctionsFactory.FUNCTIONS.keySet()) {
-      OSQLEngine.getInstance().registerFunction(s, (OSQLFunction) OLuceneFunctionsFactory.FUNCTIONS.get(s));
+      OSQLEngine.getInstance()
+                .registerFunction(s, (OSQLFunction) OLuceneFunctionsFactory.FUNCTIONS.get(s));
     }
 
-    for (String s : OSpatialFunctionsFactory.FUNCTIONS.keySet()) {
-      OSQLEngine.getInstance().registerFunction(s, (OSQLFunction) OSpatialFunctionsFactory.FUNCTIONS.get(s));
-    }
   }
 
   @Override
@@ -97,12 +92,12 @@ public class OLuceneIndexPlugin extends OServerPluginAbstract implements ODataba
 
   @Override
   public void onCreate(ODatabaseInternal iDatabase) {
-    spatialManager.init((ODatabaseDocumentTx) iDatabase);
+
   }
 
   @Override
   public void onOpen(ODatabaseInternal iDatabase) {
-    spatialManager.init((ODatabaseDocumentTx) iDatabase);
+
   }
 
   @Override
@@ -111,10 +106,14 @@ public class OLuceneIndexPlugin extends OServerPluginAbstract implements ODataba
 
   @Override
   public void onDrop(final ODatabaseInternal iDatabase) {
-    OLogManager.instance().info(this, "Dropping Lucene indexes...");
-    for (OIndex idx : iDatabase.getMetadata().getIndexManager().getIndexes()) {
+    OLogManager.instance()
+               .info(this, "Dropping Lucene indexes...");
+    for (OIndex idx : iDatabase.getMetadata()
+                               .getIndexManager()
+                               .getIndexes()) {
       if (idx.getInternal() instanceof OLuceneIndex) {
-        OLogManager.instance().info(this, "- index '%s'", idx.getName());
+        OLogManager.instance()
+                   .info(this, "- index '%s'", idx.getName());
         idx.delete();
       }
     }

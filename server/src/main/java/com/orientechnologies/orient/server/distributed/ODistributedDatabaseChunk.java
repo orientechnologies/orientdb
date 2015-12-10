@@ -19,6 +19,8 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+
 import java.io.Externalizable;
 import java.io.File;
 import java.io.FileInputStream;
@@ -27,20 +29,24 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 public class ODistributedDatabaseChunk implements Externalizable {
-  public long    lastOperationId;
-  public String  filePath;
-  public long    offset;
-  public byte[]  buffer;
-  public boolean last;
+  public long               lastOperationId;
+  public String             filePath;
+  public long               offset;
+  public byte[]             buffer;
+  public OLogSequenceNumber lsn;
+  public boolean            compressed;
+  public boolean            last;
 
   public ODistributedDatabaseChunk() {
   }
 
-  public ODistributedDatabaseChunk(final long iLastOperationId, final File iFile, final long iOffset, final int iMaxSize)
-      throws IOException {
+  public ODistributedDatabaseChunk(final long iLastOperationId, final File iFile, final long iOffset, final int iMaxSize,
+      final OLogSequenceNumber iLSN, final boolean compressed) throws IOException {
     lastOperationId = iLastOperationId;
     filePath = iFile.getAbsolutePath();
     offset = iOffset;
+    lsn = iLSN;
+    this.compressed = compressed;
 
     long fileSize = iFile.length();
 
@@ -104,6 +110,8 @@ public class ODistributedDatabaseChunk implements Externalizable {
     out.writeLong(offset);
     out.writeInt(buffer.length);
     out.write(buffer);
+    lsn.writeExternal(out);
+    out.writeBoolean(compressed);
     out.writeBoolean(last);
   }
 
@@ -115,6 +123,8 @@ public class ODistributedDatabaseChunk implements Externalizable {
     final int size = in.readInt();
     buffer = new byte[size];
     in.readFully(buffer);
+    lsn = new OLogSequenceNumber(in);
+    compressed = in.readBoolean();
     last = in.readBoolean();
   }
 }

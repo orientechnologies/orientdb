@@ -19,14 +19,6 @@
  */
 package com.orientechnologies.orient.core.record;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Set;
-import java.util.WeakHashMap;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -44,6 +36,15 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Set;
+import java.util.WeakHashMap;
 
 @SuppressWarnings({ "unchecked", "serial" })
 public abstract class ORecordAbstract implements ORecord {
@@ -192,6 +193,14 @@ public abstract class ORecordAbstract implements ORecord {
 
   public String toJSON(final String iFormat) {
     return ORecordSerializerJSON.INSTANCE.toString(this, new StringBuilder(1024), iFormat == null ? "" : iFormat).toString();
+  }
+
+  public void toJSON(final String iFormat, final OutputStream stream) throws IOException {
+    stream.write(toJSON(iFormat).toString().getBytes());
+  }
+
+  public void toJSON(final OutputStream stream) throws IOException {
+    stream.write(toJSON().toString().getBytes());
   }
 
   @Override

@@ -21,8 +21,6 @@
 package com.orientechnologies.orient.core.storage.impl.local;
 
 import java.io.*;
-import java.lang.ref.ReferenceQueue;
-import java.lang.ref.SoftReference;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
@@ -45,7 +43,6 @@ import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.OCallable;
@@ -123,7 +120,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginated
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordOperationMetadata;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageTransaction;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationMetadata;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
@@ -274,7 +270,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     for (String indexName : indexNames) {
       final OStorageConfiguration.IndexEngineData engineData = configuration.getIndexEngine(indexName);
       final OIndexEngine engine = OIndexes.createIndexEngine(engineData.getName(), engineData.getAlgorithm(),
-          engineData.getDurableInNonTxMode(), this, engineData.getVersion(), engineData.getEngineProperties());
+          engineData.getIndexType(), engineData.getDurableInNonTxMode(), this, engineData.getVersion(),
+          engineData.getEngineProperties());
 
       try {
         engine.load(engineData.getName(), cf.binarySerializerFactory.getObjectSerializer(engineData.getValueSerializerId()),
@@ -734,6 +731,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     }
   }
 
+  public OLogSequenceNumber getLSN() {
+    if (writeAheadLog == null)
+      return null;
+
+    return writeAheadLog.end();
+  }
+
   public long count(final int[] iClusterIds) {
     return count(iClusterIds, false);
   }
@@ -742,11 +746,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
    * This method finds all the records which were updated starting from current LSN and write result in provided output stream. In
    * output stream will be included all records which were updated/deleted/created since passed in LSN till the current moment.
    * Because of limitations of algorithm all data modification operations are prohibited till execution of current method ends.
+   * <<<<<<< HEAD
    *
-   * Deleted records are written in output stream first, then created/updated records.
-   * All records are sorted by record id.
+   * Deleted records are written in output stream first, then created/updated records. All records are sorted by record id.
    *
-   * Each record in output stream is written using following format:
+   * =======
+   * <p/>
+   * Deleted records are written in output stream first, then created/updated records. All records are sorted by record id.
+   * <p/>
+   * >>>>>>> 3559b9380b42d41cc67e9d6517b7d6d6843e7c2f Each record in output stream is written using following format:
    * <ol>
    * <li>Record's cluster id - 4 bytes</li>
    * <li>Record's cluster position - 8 bytes</li>
@@ -757,14 +765,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
    * <li>Binary presentation of the record, only if record is not deleted - length of content is provided in above entity</li>
    * </ol>
    *
-   * @see OGlobalConfiguration#STORAGE_TRACK_CHANGED_RECORDS_IN_WAL
-   *
    * @param lsn
    *          LSN from which we should find changed records
    * @param stream
    *          Stream which will contain found records
    * @return Last LSN processed during examination of changed records, or <code>null</code> if it was impossible to find changed
    *         records: write ahead log is absent, record with start LSN was not found in WAL, etc.
+   * @see OGlobalConfiguration#STORAGE_TRACK_CHANGED_RECORDS_IN_WAL
    */
   public OLogSequenceNumber recordsChangedAfterLSN(final OLogSequenceNumber lsn, final OutputStream stream) {
     if (!OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.getValueAsBoolean())
@@ -787,14 +794,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         return null;
       }
 
-      //container of rids of changed records
+      // container of rids of changed records
       final SortedSet<ORID> sortedRids = new TreeSet<ORID>();
 
       final OLogSequenceNumber startLsn = lsn;
 
       writeAheadLog.preventCutTill(startLsn);
       try {
-        //start record is absent there is nothing that we can do
+        // start record is absent there is nothing that we can do
         OWALRecord walRecord = writeAheadLog.read(startLsn);
         if (walRecord == null) {
           return null;
@@ -802,7 +809,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
         OLogSequenceNumber currentLsn = startLsn;
 
-        //all information about changed records is contained in atomic operation metadata
+        // all information about changed records is contained in atomic operation metadata
         while (currentLsn != null && endLsn.compareTo(currentLsn) <= 0) {
           walRecord = writeAheadLog.read(currentLsn);
 
@@ -821,7 +828,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         writeAheadLog.preventCutTill(null);
       }
 
-      //records may be deleted after we flag them as existing and as result rule of sorting of records
+      // records may be deleted after we flag them as existing and as result rule of sorting of records
       // (deleted records go first will be broken), so we prohibit any modifications till we do not complete method execution
       final long lockId = atomicOperationsManager.freezeAtomicOperations(null, null);
       try {
@@ -832,13 +839,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           final ORID rid = ridIterator.next();
           final OCluster cluster = clusters.get(rid.getClusterId());
 
-          //we do not need to load record only check it's presence
+          // we do not need to load record only check it's presence
           if (cluster.getPhysicalPosition(new OPhysicalPosition(rid.getClusterPosition())) == null) {
             dataOutputStream.writeInt(rid.getClusterId());
             dataOutputStream.writeLong(rid.getClusterPosition());
             dataOutputStream.write(1);
 
-            //delete to avoid duplication
+            // delete to avoid duplication
             ridIterator.remove();
           }
         }
@@ -1344,7 +1351,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     }
   }
 
-  public int loadExternalIndexEngine(String engineName, String algorithm, OIndexDefinition indexDefinition,
+  public int loadExternalIndexEngine(String engineName, String algorithm, String indexType, OIndexDefinition indexDefinition,
       OBinarySerializer valueSerializer, boolean isAutomatic, Boolean durableInNonTxMode, int version,
       Map<String, String> engineProperties) {
     checkOpeness();
@@ -1373,10 +1380,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       final boolean nullValuesSupport = indexDefinition != null && !indexDefinition.isNullValuesIgnored();
 
       final OStorageConfiguration.IndexEngineData engineData = new OStorageConfiguration.IndexEngineData(originalName, algorithm,
-          durableInNonTxMode, version, valueSerializer.getId(), keySerializer.getId(), isAutomatic, keyTypes, nullValuesSupport,
-          keySize, engineProperties);
+          indexType, durableInNonTxMode, version, valueSerializer.getId(), keySerializer.getId(), isAutomatic, keyTypes,
+          nullValuesSupport, keySize, engineProperties);
 
-      final OIndexEngine engine = OIndexes.createIndexEngine(originalName, algorithm, durableInNonTxMode, this, version,
+      final OIndexEngine engine = OIndexes.createIndexEngine(originalName, algorithm, indexType, durableInNonTxMode, this, version,
           engineProperties);
       engine.load(originalName, valueSerializer, isAutomatic, keySerializer, keyTypes, nullValuesSupport, keySize);
 
@@ -1395,7 +1402,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     }
   }
 
-  public int addIndexEngine(String engineName, String algorithm, OIndexDefinition indexDefinition,
+  public int addIndexEngine(String engineName, String algorithm, String indexType, OIndexDefinition indexDefinition,
       OBinarySerializer valueSerializer, boolean isAutomatic, Boolean durableInNonTxMode, int version,
       Map<String, String> engineProperties) {
     checkOpeness();
@@ -1426,14 +1433,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         serializerId = -1;
 
       final OStorageConfiguration.IndexEngineData engineData = new OStorageConfiguration.IndexEngineData(originalName, algorithm,
-          durableInNonTxMode, version, serializerId, keySerializer.getId(), isAutomatic, keyTypes, nullValuesSupport, keySize,
-          engineProperties);
+          indexType, durableInNonTxMode, version, serializerId, keySerializer.getId(), isAutomatic, keyTypes, nullValuesSupport,
+          keySize, engineProperties);
 
-      final OIndexEngine engine = OIndexes.createIndexEngine(originalName, algorithm, durableInNonTxMode, this, version,
+      final OIndexEngine engine = OIndexes.createIndexEngine(originalName, algorithm, indexType, durableInNonTxMode, this, version,
           engineProperties);
       engine.create(valueSerializer, isAutomatic, keyTypes, nullValuesSupport, keySerializer, keySize);
 
       indexEngineNameMap.put(engineName, engine);
+
       indexEngines.add(engine);
       configuration.addIndexEngine(engineName, engineData);
 
@@ -1491,6 +1499,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
       makeStorageDirty();
       final OIndexEngine engine = indexEngines.get(indexId);
+
       indexEngines.set(indexId, null);
 
       engine.delete();

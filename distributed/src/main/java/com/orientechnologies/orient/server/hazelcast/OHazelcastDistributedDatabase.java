@@ -45,6 +45,8 @@ import com.orientechnologies.orient.server.distributed.task.OSQLCommandTask;
 import com.orientechnologies.orient.server.distributed.task.OTxTask;
 import com.orientechnologies.orient.server.distributed.task.OUpdateRecordTask;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -65,19 +67,21 @@ import java.util.concurrent.locks.Lock;
  */
 public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
-  public static final String                          NODE_QUEUE_PREFIX          = "orientdb.node.";
-  public static final String                          NODE_QUEUE_PENDING_POSTFIX = ".pending";
-  private static final String                         NODE_LOCK_PREFIX           = "orientdb.reqlock.";
+  public static final String                          NODE_QUEUE_PREFIX              = "orientdb.node.";
+  public static final String                          NODE_QUEUE_PENDING_POSTFIX     = ".pending";
+  private static final String                         NODE_LOCK_PREFIX               = "orientdb.reqlock.";
+  private static final String                         DISTRIBUTED_SYNC_JSON_FILENAME = "/distributed-sync.json";
   protected final OHazelcastPlugin                    manager;
   protected final OHazelcastDistributedMessageService msgService;
   protected final String                              databaseName;
   protected final Lock                                requestLock;
-  protected final int                                 numWorkers                 = 8;
-  protected volatile boolean                          restoringMessages          = false;
-  protected AtomicBoolean                             status                     = new AtomicBoolean(false);
-  protected List<ODistributedWorker>                  workers                    = new ArrayList<ODistributedWorker>();
-  protected AtomicLong                                waitForMessageId           = new AtomicLong(-1);
-  protected ConcurrentHashMap<ORID, String>           lockManager                = new ConcurrentHashMap<ORID, String>();
+  protected final int                                 numWorkers                     = 8;
+  protected volatile boolean                          restoringMessages              = false;
+  protected final AtomicBoolean                       status                         = new AtomicBoolean(false);
+  protected final List<ODistributedWorker>            workers                        = new ArrayList<ODistributedWorker>();
+  protected final AtomicLong                          waitForMessageId               = new AtomicLong(-1);
+  protected final ConcurrentHashMap<ORID, String>     lockManager                    = new ConcurrentHashMap<ORID, String>();
+  protected ODistributedSyncConfiguration             syncConfiguration;
 
   public OHazelcastDistributedDatabase(final OHazelcastPlugin manager, final OHazelcastDistributedMessageService msgService,
       final String iDatabaseName) {
@@ -91,8 +95,6 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
     // CREATE 2 QUEUES FOR GENERIC REQUESTS + INSERT ONLY
     msgService.getQueue(OHazelcastDistributedMessageService.getRequestQueueName(getLocalNodeName(), databaseName));
-    msgService.getQueue(OHazelcastDistributedMessageService.getRequestQueueName(getLocalNodeName(),
-        databaseName + OCreateRecordTask.SUFFIX_QUEUE_NAME));
   }
 
   @Override
@@ -282,6 +284,20 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     if (ODistributedServerLog.isDebugEnabled())
       ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
           "Distributed transaction: unlocked record %s in database '%s'", iRecord, databaseName);
+  }
+
+  public ODistributedSyncConfiguration getSyncConfiguration() {
+    if (syncConfiguration == null) {
+      final String path = manager.getServerInstance().getDatabaseDirectory() + databaseName + DISTRIBUTED_SYNC_JSON_FILENAME;
+      final File cfgFile = new File(path);
+      try {
+        syncConfiguration = new ODistributedSyncConfiguration(cfgFile);
+      } catch (IOException e) {
+        throw new ODistributedException("Cannot open database sync configuration file: " + cfgFile);
+      }
+    }
+
+    return syncConfiguration;
   }
 
   @Override
@@ -500,7 +516,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       for (String c : cfg.getClusterNames()) {
         if (c.endsWith(suffix2Search)) {
           // FOUND: ASSIGN TO LOCAL NODE
-          final String currentMaster = cfg.getMasterServer(c);
+          final String currentMaster = cfg.getLeaderServer(c);
 
           if (!getLocalNodeName().equals(currentMaster)) {
             ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE,
@@ -533,8 +549,6 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
               "removing node '%s' in partitions: db=%s %s", iNode, databaseName, foundPartition);
 
           msgService.removeQueue(OHazelcastDistributedMessageService.getRequestQueueName(iNode, databaseName));
-          msgService.removeQueue(
-              OHazelcastDistributedMessageService.getRequestQueueName(iNode, databaseName + OCreateRecordTask.SUFFIX_QUEUE_NAME));
         }
 
         // CHANGED: RE-DEPLOY IT

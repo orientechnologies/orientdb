@@ -99,7 +99,11 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
       // REQUEST CAN'T MODIFY THE RESULT, SO IT'S CACHEABLE
       cmd.setCacheableResult(true);
 
-      response = db.command(cmd).execute(params);
+      if(params==null){
+        response = db.command(cmd).execute();
+      }else {
+        response = db.command(cmd).execute(params);
+      }
 
       fetchPlan = executor.getFetchPlan();
 
