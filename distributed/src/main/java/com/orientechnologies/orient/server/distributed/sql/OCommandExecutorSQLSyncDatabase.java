@@ -19,6 +19,8 @@
  */
 package com.orientechnologies.orient.server.distributed.sql;
 
+import java.util.Map;
+
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -33,10 +35,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedStorage;
-import com.orientechnologies.orient.server.distributed.task.OSyncDatabaseTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
-
-import java.util.Map;
 
 /**
  * SQL SYNC DATABASE command: synchronize database form distributed servers.
@@ -46,11 +45,15 @@ import java.util.Map;
  */
 @SuppressWarnings("unchecked")
 public class OCommandExecutorSQLSyncDatabase extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
-  public static final String     NAME             = "SYNC DATABASE";
-  public static final String     KEYWORD_SYNC     = "SYNC";
-  public static final String     KEYWORD_DATABASE = "DATABASE";
+  public static final String NAME             = "SYNC DATABASE";
+  public static final String KEYWORD_SYNC     = "SYNC";
+  public static final String KEYWORD_DATABASE = "DATABASE";
 
-  private OSyncDatabaseTask.MODE mode             = OSyncDatabaseTask.MODE.FULL_REPLACE;
+  enum MODE {
+    FULL_REPLACE, DELTA
+  };
+
+  private MODE mode = MODE.FULL_REPLACE;
 
   public OCommandExecutorSQLSyncDatabase parse(final OCommandRequest iRequest) {
     init((OCommandRequestText) iRequest);
@@ -68,7 +71,7 @@ public class OCommandExecutorSQLSyncDatabase extends OCommandExecutorSQLAbstract
 
     pos = nextWord(parserText, parserTextUpperCase, pos, word, false);
     if (pos != -1) {
-      mode = OSyncDatabaseTask.MODE.valueOf(word.toString());
+      mode = MODE.valueOf(word.toString());
     }
 
     return this;

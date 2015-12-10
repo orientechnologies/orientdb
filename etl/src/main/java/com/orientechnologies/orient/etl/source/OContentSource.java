@@ -18,14 +18,14 @@
 
 package com.orientechnologies.orient.etl.source;
 
+import java.io.BufferedReader;
+import java.io.Reader;
+import java.io.StringReader;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLProcessor;
-
-import java.io.BufferedReader;
-import java.io.Reader;
-import java.io.StringReader;
 
 /**
  * ETL Source created with a string content.
@@ -39,7 +39,7 @@ public class OContentSource extends OAbstractSource {
     if (value != null) {
       String stringContent;
       if (value instanceof ODocument)
-        stringContent = ((ODocument) value).toJSON(null);
+        stringContent = ((ODocument) value).toJSON((String) null);
       else if (OMultiValue.isMultiValue(value)) {
         stringContent = "[";
         int i = 0;
@@ -49,7 +49,7 @@ public class OContentSource extends OAbstractSource {
               stringContent += ",";
 
             if (o instanceof ODocument)
-              stringContent += ((ODocument) o).toJSON(null);
+              stringContent += ((ODocument) o).toJSON((String) null);
             else
               stringContent += o.toString();
             ++i;

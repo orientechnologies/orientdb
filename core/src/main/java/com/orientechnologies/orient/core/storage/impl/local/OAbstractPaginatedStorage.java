@@ -20,22 +20,6 @@
 
 package com.orientechnologies.orient.core.storage.impl.local;
 
-import java.io.*;
-import java.lang.ref.ReferenceQueue;
-import java.lang.ref.SoftReference;
-import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
-import java.nio.channels.FileChannel;
-import java.nio.charset.Charset;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
-
 import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
@@ -45,7 +29,6 @@ import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.OCallable;
@@ -123,7 +106,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginated
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordOperationMetadata;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageTransaction;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationMetadata;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
@@ -131,6 +113,20 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTxListener;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
+import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.nio.charset.Charset;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 /**
  * @author Andrey Lomakin
@@ -734,6 +730,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     }
   }
 
+  public OLogSequenceNumber getLSN()  {
+    if (writeAheadLog == null)
+      return null;
+
+    return writeAheadLog.end();
+  }
+
   public long count(final int[] iClusterIds) {
     return count(iClusterIds, false);
   }
@@ -743,8 +746,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
    * output stream will be included all records which were updated/deleted/created since passed in LSN till the current moment.
    * Because of limitations of algorithm all data modification operations are prohibited till execution of current method ends.
    *
-   * Deleted records are written in output stream first, then created/updated records.
-   * All records are sorted by record id.
+   * Deleted records are written in output stream first, then created/updated records. All records are sorted by record id.
    *
    * Each record in output stream is written using following format:
    * <ol>
@@ -769,10 +771,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   public OLogSequenceNumber recordsChangedAfterLSN(final OLogSequenceNumber lsn, final OutputStream stream) {
     if (!OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.getValueAsBoolean())
       throw new IllegalStateException(
-          "Can not find records which were changed starting from provided LSN because tracking of rids of changed records in WAL is switched off, "
-              + "to switch it on please set property " + OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.getValue()
-              + " to the true value, please note that only records"
-              + " which are stored after this property was set will be retrieved");
+          "Cannot find records which were changed starting from provided LSN because tracking of rids of changed records in WAL is switched off, "
+              + "to switch it on please set property '" + OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.getValue()
+              + "' to true. Please note that only records which are stored after this property is set will be retrieved");
 
     stateLock.acquireReadLock();
     try {
@@ -787,14 +788,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         return null;
       }
 
-      //container of rids of changed records
+      // container of rids of changed records
       final SortedSet<ORID> sortedRids = new TreeSet<ORID>();
 
       final OLogSequenceNumber startLsn = lsn;
 
       writeAheadLog.preventCutTill(startLsn);
       try {
-        //start record is absent there is nothing that we can do
+        // start record is absent there is nothing that we can do
         OWALRecord walRecord = writeAheadLog.read(startLsn);
         if (walRecord == null) {
           return null;
@@ -802,7 +803,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
         OLogSequenceNumber currentLsn = startLsn;
 
-        //all information about changed records is contained in atomic operation metadata
+        // all information about changed records is contained in atomic operation metadata
         while (currentLsn != null && endLsn.compareTo(currentLsn) <= 0) {
           walRecord = writeAheadLog.read(currentLsn);
 
@@ -821,7 +822,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         writeAheadLog.preventCutTill(null);
       }
 
-      //records may be deleted after we flag them as existing and as result rule of sorting of records
+      // records may be deleted after we flag them as existing and as result rule of sorting of records
       // (deleted records go first will be broken), so we prohibit any modifications till we do not complete method execution
       final long lockId = atomicOperationsManager.freezeAtomicOperations(null, null);
       try {
@@ -832,13 +833,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           final ORID rid = ridIterator.next();
           final OCluster cluster = clusters.get(rid.getClusterId());
 
-          //we do not need to load record only check it's presence
+          // we do not need to load record only check it's presence
           if (cluster.getPhysicalPosition(new OPhysicalPosition(rid.getClusterPosition())) == null) {
             dataOutputStream.writeInt(rid.getClusterId());
             dataOutputStream.writeLong(rid.getClusterPosition());
             dataOutputStream.write(1);
 
-            //delete to avoid duplication
+            // delete to avoid duplication
             ridIterator.remove();
           }
         }

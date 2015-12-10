@@ -20,6 +20,7 @@ import com.hazelcast.instance.GroupProperties;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
@@ -42,6 +43,7 @@ public abstract class AbstractServerClusterTest {
   protected List<ServerRun> serverInstance = new ArrayList<ServerRun>();
 
   protected AbstractServerClusterTest() {
+    OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.setValue(true);
   }
 
   @SuppressWarnings("unchecked")

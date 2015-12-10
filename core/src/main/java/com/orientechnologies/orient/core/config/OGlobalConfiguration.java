@@ -43,17 +43,6 @@ import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 
-import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OProfiler;
-import com.orientechnologies.common.util.OApi;
-import com.orientechnologies.orient.core.OConstants;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.cache.ORecordCacheWeakRefs;
-import com.orientechnologies.orient.core.metadata.OMetadataDefault;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
-import com.orientechnologies.orient.core.storage.cache.local.O2QCache;
-
 /**
  * Keeps all configuration settings. At startup assigns the configuration values by reading system properties.
  *
@@ -97,22 +86,23 @@ public enum OGlobalConfiguration {
       "Minimal amount of time (in seconds), since the last System.gc(), when called after tree optimization.", Long.class, 600),
 
   // STORAGE
-  DISK_CACHE_PINNED_PAGES("storage.diskCache.pinnedPages", "Maximum amount of pinned pages which may be contained in cache,"
-      + " if this percent is reached next pages will be left in unpinned state. You can not set value more than 50", Integer.class,
-      20, false),
+      DISK_CACHE_PINNED_PAGES("storage.diskCache.pinnedPages",
+          "Maximum amount of pinned pages which may be contained in cache,"
+              + " if this percent is reached next pages will be left in unpinned state. You can not set value more than 50",
+          Integer.class, 20, false),
 
-  DISK_CACHE_SIZE("storage.diskCache.bufferSize", "Size of disk buffer in megabytes, disk size may be changed at runtime, "
-      + "but if does not enough to contain all pinned pages exception will be thrown.", Integer.class, 4 * 1024,
-      new OConfigurationChangeCallback() {
+  DISK_CACHE_SIZE("storage.diskCache.bufferSize",
+      "Size of disk buffer in megabytes, disk size may be changed at runtime, "
+          + "but if does not enough to contain all pinned pages exception will be thrown.",
+      Integer.class, 4 * 1024, new OConfigurationChangeCallback() {
         @Override
         public void change(Object currentValue, Object newValue) {
           final OEngineLocalPaginated engineLocalPaginated = (OEngineLocalPaginated) Orient.instance()
               .getEngine(OEngineLocalPaginated.NAME);
 
           if (engineLocalPaginated == null) {
-            OLogManager.instance().error(this,
-                "Can not change cache size in runtime because storage engine " + OEngineLocalPaginated.NAME
-                    + " was not registered");
+            OLogManager.instance().error(this, "Can not change cache size in runtime because storage engine "
+                + OEngineLocalPaginated.NAME + " was not registered");
           } else {
             engineLocalPaginated.changeCacheSize(((Integer) (newValue)) * 1024L * 1024L);
           }
@@ -171,7 +161,7 @@ public enum OGlobalConfiguration {
       "Indicates whether a full checkpoint should be performed, if storage was opened", Boolean.class, true),
 
   STORAGE_TRACK_CHANGED_RECORDS_IN_WAL("storage.trackChangedRecordsInWAL",
-      "If this flag is set metadata " + "which contains rids of changed records is added at the end of each atomic operation",
+      "If this flag is set metadata which contains rids of changed records is added at the end of each atomic operation",
       Boolean.class, false),
 
   USE_WAL("storage.useWAL", "Whether WAL should be used in paginated storage.", Boolean.class, true),
@@ -731,10 +721,10 @@ public enum OGlobalConfiguration {
   private final Object defValue;
   private final Class<?> type;
   private volatile Object value = null;
-  private final String                       description;
+  private final String description;
   private final OConfigurationChangeCallback changeCallback;
-  private final Boolean                      canChangeAtRuntime;
-  private final boolean                      hidden;
+  private final Boolean canChangeAtRuntime;
+  private final boolean hidden;
 
   // AT STARTUP AUTO-CONFIG
   static {

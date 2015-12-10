@@ -44,7 +44,7 @@ public interface OWriteAheadLog {
 
   OLogSequenceNumber begin() throws IOException;
 
-  OLogSequenceNumber end() throws IOException;
+  OLogSequenceNumber end();
 
   void flush();
 

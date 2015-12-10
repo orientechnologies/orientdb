@@ -19,19 +19,6 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Lock;
-
 import com.hazelcast.config.FileSystemXmlConfig;
 import com.hazelcast.config.QueueConfig;
 import com.hazelcast.core.*;
@@ -55,15 +42,18 @@ import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
@@ -73,11 +63,30 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECU
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.sql.OCommandExecutorSQLSyncCluster;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
+import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.OCopyDatabaseChunkTask;
-import com.orientechnologies.orient.server.distributed.task.OCreateRecordTask;
+import com.orientechnologies.orient.server.distributed.task.ODistributedDatabaseDeltaBackupException;
 import com.orientechnologies.orient.server.distributed.task.ORestartNodeTask;
+import com.orientechnologies.orient.server.distributed.task.OSyncDatabaseDeltaTask;
 import com.orientechnologies.orient.server.distributed.task.OSyncDatabaseTask;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
+
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.Serializable;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+import java.util.zip.ZipInputStream;
 
 /**
  * Hazelcast implementation for clustering.
@@ -131,6 +140,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(Integer.MAX_VALUE);
     OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(-1);
+    OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.setValue(true);
 
     super.startup();
 
@@ -918,33 +928,123 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
     final OHazelcastDistributedDatabase distrDatabase = messageService.registerDatabase(databaseName);
 
-    // try {
-    // Thread.sleep(2000 * activeNodes.size());
-    // } catch (InterruptedException e) {
-    // e.printStackTrace();
-    // }
-
     // CREATE THE DISTRIBUTED QUEUE
     String queueName = OHazelcastDistributedMessageService.getRequestQueueName(messageService.manager.getLocalNodeName(),
         databaseName);
     messageService.getQueue(queueName);
 
-    queueName = OHazelcastDistributedMessageService.getRequestQueueName(messageService.manager.getLocalNodeName(),
-        databaseName + OCreateRecordTask.SUFFIX_QUEUE_NAME);
-    messageService.getQueue(queueName);
+    if (distrDatabase.getSyncConfiguration().isEmpty()) {
+      // FIRST TIME, ASK FOR FULL REPLICA
 
+      return requestFullDatabase(databaseName, backupDatabase, distrDatabase);
+
+    } else {
+      try {
+
+        // TRY WITH DELTA
+        return requestDatabaseDelta(distrDatabase, databaseName);
+
+      } catch (ODistributedDatabaseDeltaBackupException e) {
+        // SWITCH TO FULL
+        return requestFullDatabase(databaseName, backupDatabase, distrDatabase);
+      }
+    }
+
+  }
+
+  protected boolean requestFullDatabase(String databaseName, boolean backupDatabase, OHazelcastDistributedDatabase distrDatabase) {
     for (int retry = 0; retry < DEPLOY_DB_MAX_RETRIES; ++retry) {
       // ASK DATABASE TO THE FIRST NODE, THE FIRST ATTEMPT, OTHERWISE ASK TO EVERYONE
-      if (requestDatabase(distrDatabase, backupDatabase, databaseName, retry > 0))
+      if (requestDatabaseFullSync(distrDatabase, backupDatabase, databaseName, retry > 0))
         // DEPLOYED
         return true;
     }
-
     // RETRY COUNTER EXCEED
     return false;
   }
 
-  protected boolean requestDatabase(final OHazelcastDistributedDatabase distrDatabase, final boolean backupDatabase,
+  protected boolean requestDatabaseDelta(final OHazelcastDistributedDatabase distrDatabase, final String databaseName) {
+    final ODistributedConfiguration cfg = getDatabaseConfiguration(databaseName);
+
+    // GET ALL THE OTHER SERVERS
+    final Collection<String> nodes = cfg.getServers(null, getLocalNodeName());
+
+    ODistributedServerLog.warn(this, getLocalNodeName(), nodes.toString(), DIRECTION.OUT,
+        "requesting sync database delta '%s' on local server...", databaseName);
+
+    // CREATE A MAP OF NODE/LSN BY READING LAST LSN SAVED
+    final Map<String, OLogSequenceNumber> selectedNodes = new HashMap<String, OLogSequenceNumber>(nodes.size());
+    for (String node : nodes) {
+      final OLogSequenceNumber lsn = distrDatabase.getSyncConfiguration().getLSN(node);
+      if (lsn != null) {
+        selectedNodes.put(node, lsn);
+      } else
+        ODistributedServerLog.info(this, getLocalNodeName(), node, DIRECTION.OUT,
+            "Last LSN not found for database '%s', skip synchronization of delta", databaseName);
+    }
+
+    for (Map.Entry<String, OLogSequenceNumber> entry : selectedNodes.entrySet()) {
+
+      final OAbstractReplicatedTask deployTask = new OSyncDatabaseDeltaTask(entry.getValue());
+
+      final List<String> targetNodes = new ArrayList<String>(1);
+      targetNodes.add(entry.getKey());
+
+      ODistributedServerLog.info(this, getLocalNodeName(), entry.getKey(), DIRECTION.OUT, "Requesting database delta for '%s'...",
+          databaseName);
+
+      final Map<String, Object> results = (Map<String, Object>) sendRequest(databaseName, null, targetNodes, deployTask,
+          EXECUTION_MODE.RESPONSE);
+
+      ODistributedServerLog.info(this, getLocalNodeName(), entry.getKey(), DIRECTION.IN, "Receiving delta of database '%s'...",
+          databaseName);
+
+      ODistributedServerLog.debug(this, getLocalNodeName(), selectedNodes.toString(), DIRECTION.OUT,
+          "Sync delta database returned: %s", results);
+
+      final String dbPath = serverInstance.getDatabaseDirectory() + databaseName;
+
+      // EXTRACT THE REAL RESULT
+      for (Entry<String, Object> r : results.entrySet()) {
+        final Object value = r.getValue();
+
+        if (value instanceof Boolean)
+          continue;
+        else if (value instanceof ODiscardedResponse) {
+          // RETRY WITH NEXT NODE, IF ANY
+          ODistributedServerLog.warn(this, getLocalNodeName(), selectedNodes.toString(), DIRECTION.OUT,
+              "Requesting sync of delta database '%s' on local server failed, retrying...", databaseName);
+          return false;
+        } else if (value instanceof ODistributedDatabaseDeltaBackupException) {
+          ODistributedServerLog.error(this, getLocalNodeName(), r.getKey(), DIRECTION.IN, "Error on installing database %s in %s",
+              databaseName, dbPath);
+          throw (ODistributedDatabaseDeltaBackupException) value;
+        } else if (value instanceof Throwable) {
+          ODistributedServerLog.error(this, getLocalNodeName(), r.getKey(), DIRECTION.IN, "Error on installing database %s in %s",
+              (Exception) value, databaseName, dbPath);
+        } else if (value instanceof ODistributedDatabaseChunk) {
+
+          final Set<String> toSyncClusters = installDatabaseFromNetwork(dbPath, databaseName, distrDatabase, r.getKey(),
+              (ODistributedDatabaseChunk) value, true);
+
+          // SYNC ALL THE CLUSTERS
+          for (String cl : toSyncClusters) {
+            // FILTER CLUSTER CHECKING IF ANY NODE IS ACTIVE
+            OCommandExecutorSQLSyncCluster.replaceCluster(this, serverInstance, databaseName, cl);
+          }
+
+          ODistributedServerLog.info(this, getLocalNodeName(), entry.getKey(), DIRECTION.IN, "Installed delta of database '%s'...",
+              databaseName);
+
+        } else
+          throw new IllegalArgumentException("Type " + value + " not supported");
+      }
+    }
+
+    return true;
+  }
+
+  protected boolean requestDatabaseFullSync(final OHazelcastDistributedDatabase distrDatabase, final boolean backupDatabase,
       final String databaseName, final boolean iAskToAllNodes) {
     final ODistributedConfiguration cfg = getDatabaseConfiguration(databaseName);
 
@@ -973,8 +1073,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     ODistributedServerLog.warn(this, getLocalNodeName(), selectedNodes.toString(), DIRECTION.OUT,
         "requesting deploy of database '%s' on local server...", databaseName);
 
-    final Map<String, Object> results = (Map<String, Object>) sendRequest(databaseName, null, selectedNodes,
-        new OSyncDatabaseTask(OSyncDatabaseTask.MODE.FULL_REPLACE), EXECUTION_MODE.RESPONSE);
+    // final OAbstractReplicatedTask deployTask = new OSyncDatabaseDeltaTask(lastLSN);
+    final OAbstractReplicatedTask deployTask = new OSyncDatabaseTask();
+
+    final Map<String, Object> results = (Map<String, Object>) sendRequest(databaseName, null, selectedNodes, deployTask,
+        EXECUTION_MODE.RESPONSE);
 
     ODistributedServerLog.debug(this, getLocalNodeName(), selectedNodes.toString(), DIRECTION.OUT, "deploy returned: %s", results);
 
@@ -999,7 +1102,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           backupCurrentDatabase(databaseName);
 
         final Set<String> toSyncClusters = installDatabaseFromNetwork(dbPath, databaseName, distrDatabase, r.getKey(),
-            (ODistributedDatabaseChunk) value);
+            (ODistributedDatabaseChunk) value, false);
 
         // SYNC ALL THE CLUSTERS
         for (String cl : toSyncClusters) {
@@ -1046,9 +1149,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           "error on moving existent database '%s' located in '%s' to '%s'. Deleting old database...", iDatabaseName, dbPath,
           backupFullPath);
 
-      // throw new ODistributedException("Error on moving existent database '" + iDatabaseName + "' located in '" + dbPath + "' to
-      // '"
-      // + backupFullPath + "'. Try to move the database directory manually and retry");
       OFileUtils.deleteRecursively(oldDirectory);
     }
   }
@@ -1057,7 +1157,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
    * Returns the clusters where sync is required.
    */
   protected Set<String> installDatabaseFromNetwork(final String dbPath, final String databaseName,
-      final OHazelcastDistributedDatabase distrDatabase, final String iNode, final ODistributedDatabaseChunk value) {
+      final OHazelcastDistributedDatabase distrDatabase, final String iNode, final ODistributedDatabaseChunk value,
+      final boolean delta) {
     // DISCARD ALL THE MESSAGES BEFORE THE BACKUP
     distrDatabase.setWaitForMessage(value.getLastOperationId());
 
@@ -1084,6 +1185,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     if (completedFile.exists())
       completedFile.delete();
 
+    final AtomicReference<OLogSequenceNumber> lsn = new AtomicReference<OLogSequenceNumber>();
+
     try {
       new Thread(new Runnable() {
         @Override
@@ -1092,7 +1195,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
             Thread.currentThread().setName("OrientDB installDatabase node=" + nodeName + " db=" + databaseName);
             ODistributedDatabaseChunk chunk = value;
 
-            final FileOutputStream fOut = new FileOutputStream(fileName, false);
+            lsn.set(chunk.lsn);
+
+            final OutputStream fOut = new FileOutputStream(fileName, false);
+
             try {
 
               long fileSize = writeDatabaseChunk(1, chunk, fOut);
@@ -1141,9 +1247,19 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       throw OException.wrapException(new ODistributedException("Error on transferring database"), e);
     }
 
-    final ODatabaseDocumentTx db = installDatabaseOnLocalNode(distrDatabase, databaseName, dbPath, iNode, fileName);
+    final ODatabaseDocumentTx db = installDatabaseOnLocalNode(distrDatabase, databaseName, dbPath, iNode, fileName, delta);
+
+    // UPDATE LSN
+    try {
+      distrDatabase.getSyncConfiguration().setLSN(iNode, lsn.get());
+    } catch (IOException e) {
+      ODistributedServerLog.error(this, getLocalNodeName(), null, DIRECTION.NONE,
+          "Error on updating distributed-sync.json file for database '%s'. Next request of delta of changes will contains old records too",
+          e, databaseName);
+    }
 
     if (db != null) {
+      db.activateOnCurrentThread();
       db.close();
       final OStorage stg = Orient.instance().getStorage(databaseName);
       if (stg != null)
@@ -1156,6 +1272,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         final ODistributedConfiguration cfg = getDatabaseConfiguration(db.getName());
 
         distrDatabase.configureDatabase(false, true, new Callable<Void>() {
+
           @Override
           public Void call() throws Exception {
             final boolean distribCfgDirty = installDbClustersForLocalNode(db, cfg);
@@ -1182,13 +1299,16 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     localManagedClusters.removeAll(sourceNodeClusters);
 
     final HashSet<String> toSynchClusters = new HashSet<String>();
-    for (String cl : localManagedClusters) {
+    for (String cl : localManagedClusters)
+
+    {
       // FILTER CLUSTER CHECKING IF ANY NODE IS ACTIVE
       if (!cfg.getServers(cl, localNodeName).isEmpty())
         toSynchClusters.add(cl);
     }
 
     return toSynchClusters;
+
   }
 
   /**
@@ -1439,15 +1559,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
         final boolean hotAlignment = cfg.isHotAlignment();
 
-        // if (!hotAlignment) {
-        // // REMOVE ALL NODES NOT ACTIVE
-        // final Set<String> nodeToRemoveInCfgBecauseNotActive = cfg.getAllConfiguredServers();
-        // nodeToRemoveInCfgBecauseNotActive.remove(getLocalNodeName());
-        // nodeToRemoveInCfgBecauseNotActive.removeAll(getAvailableNodeNames(databaseName));
-        // for (String s : nodeToRemoveInCfgBecauseNotActive)
-        // cfg.removeNodeInServerList(s, true);
-        // }
-
         if (!getConfigurationMap().containsKey(CONFIG_DATABASE_PREFIX + databaseName)) {
           // PUBLISH CFG FIRST TIME
           ODocument cfgDoc = cfg.serialize();
@@ -1495,7 +1606,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     }
   }
 
-  protected long writeDatabaseChunk(final int iChunkId, final ODistributedDatabaseChunk chunk, final FileOutputStream out)
+  protected long writeDatabaseChunk(final int iChunkId, final ODistributedDatabaseChunk chunk, final OutputStream out)
       throws IOException {
 
     ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "- writing chunk #%d offset=%d size=%s", iChunkId,
@@ -1506,7 +1617,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   }
 
   protected ODatabaseDocumentTx installDatabaseOnLocalNode(final OHazelcastDistributedDatabase distrDatabase,
-      final String databaseName, final String dbPath, final String iNode, final String iDatabaseCompressedFile) {
+      final String databaseName, final String dbPath, final String iNode, final String iDatabaseCompressedFile,
+      final boolean delta) {
     ODistributedServerLog.info(this, getLocalNodeName(), iNode, DIRECTION.IN, "installing database '%s' to: %s...", databaseName,
         dbPath);
 
@@ -1538,13 +1650,21 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       };
 
       try {
-        db.restore(in, null, null, this);
+        if (delta) {
+
+          importDelta(db, in);
+
+        } else {
+
+          // IMPORT FULL DATABASE
+          db.restore(in, null, null, this);
+
+        }
       } finally {
         in.close();
       }
-      db.close();
 
-      // Orient.instance().unregisterStorageByName(db.getURL().substring(db.getStorage().getType().length() + 1));
+      db.close();
 
       ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "installed database '%s'", databaseName);
 
@@ -1555,6 +1675,85 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           databaseName);
     }
     return null;
+  }
+
+  /**
+   * Deleted records are written in output stream first, then created/updated records. All records are sorted by record id.
+   *
+   * Each record in output stream is written using following format:
+   * <ol>
+   * <li>Record's cluster id - 4 bytes</li>
+   * <li>Record's cluster position - 8 bytes</li>
+   * <li>Delete flag, 1 if record is deleted - 1 byte</li>
+   * <li>Record version , only if record is not deleted - 4 bytes</li>
+   * <li>Record type, only if record is not deleted - 1 byte</li>
+   * <li>Length of binary presentation of record, only if record is not deleted - 4 bytes</li>
+   * <li>Binary presentation of the record, only if record is not deleted - length of content is provided in above entity</li>
+   * </ol>
+   * 
+   * @param in
+   */
+  private void importDelta(final ODatabaseDocumentTx db, final FileInputStream in) throws IOException {
+    serverInstance.openDatabase(db);
+
+    final ZipInputStream zipInput = new ZipInputStream(in);
+    try {
+
+      final DataInputStream input = new DataInputStream(zipInput);
+      try {
+
+        while (input.available() > 1) {
+          final int clusterId = input.readInt();
+          final long clusterPos = input.readLong();
+          final boolean deleted = input.readBoolean();
+
+          final ORecordId rid = new ORecordId(clusterId, clusterPos);
+
+          if (deleted) {
+            // DELETE
+
+            db.delete(rid);
+
+          } else {
+
+            final int recordVersion = input.readInt();
+            final int recordType = input.readByte();
+            final int recordSize = input.readInt();
+            final byte[] recordContent = new byte[recordSize];
+            input.read(recordContent);
+
+            final ORecord record;
+            if (recordVersion == 1) {
+              // CREATE
+              record = Orient.instance().getRecordFactoryManager().newInstance((byte) recordType);
+
+              ORecordInternal.fill(record, rid, recordVersion, recordContent, true);
+
+            } else {
+
+              // UPDATE
+              record = rid.getRecord();
+              ORecordInternal.fill(record, rid, recordVersion, recordContent, true);
+
+            }
+
+            record.save();
+          }
+        }
+
+      } finally {
+        input.close();
+      }
+
+    } catch (Exception e) {
+      ODistributedServerLog.error(this, getLocalNodeName(), null, DIRECTION.IN,
+          "Error on installing database delta '%s' on local server", e, db.getName());
+      throw OException
+          .wrapException(new ODistributedException("Error on installing database delta '" + db.getName() + "' on local server"), e);
+    } finally {
+      zipInput.close();
+    }
+
   }
 
   @Override
@@ -1629,12 +1828,30 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         cfgClusterNames.add(cl.toLowerCase());
 
       if (cfgClusterNames.contains(newClusterName)) {
+
         // FOUND A CLUSTER PREVIOUSLY ASSIGNED TO THE LOCAL ONE: CHANGE ASSIGNMENT TO LOCAL NODE AGAIN
         ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE,
             "class '%s', change mastership of cluster '%s' (id=%d) to local node '%s'", iClass, newClusterName,
             iDatabase.getClusterIdByName(newClusterName), nodeName);
         cfg.setMasterServer(newClusterName, nodeName);
+
       } else {
+
+        // TRY TO AUTO ASSIGN ANY CLUSTER WHERE THE LEADER IS OFFLINE, AVOIDING TO CREATE A NEW ONE, IF POSSIBLE
+        final Set<String> clustersManagedOnLocalNode = cfg.getClustersOnServer(nodeName);
+        for (String cl : clustersManagedOnLocalNode) {
+          final String leaderNode = cfg.getLeaderServer(cl);
+          if (!isNodeAvailable(leaderNode, iDatabase.getName())) {
+
+            // ASSIGN CLUSTER WHERE LEADER IS OFFLINE
+            ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE,
+                "class '%s', change mastership of cluster '%s' (id=%d) to local node '%s'", iClass, cl,
+                iDatabase.getClusterIdByName(newClusterName), nodeName);
+            cfg.setMasterServer(cl, nodeName);
+
+            return true;
+          }
+        }
 
         // CREATE A NEW CLUSTER WHERE LOCAL NODE IS THE MASTER
         ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "class '%s', creation of new local cluster '%s' (id=%d)",
