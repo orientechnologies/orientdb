@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabaseChunk;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
@@ -44,7 +45,7 @@ import java.io.ObjectOutput;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.zip.ZipOutputStream;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * Ask for synchronization of delta of chanegs on database from a remote node.
@@ -127,8 +128,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
       backupFile.createNewFile();
 
       final FileOutputStream fileOutputStream = new FileOutputStream(backupFile);
-      final ZipOutputStream zipOutputStream = new ZipOutputStream(fileOutputStream);
-      zipOutputStream.setLevel(compressionRate);
+      final GZIPOutputStream gzipOutputStream = new GZIPOutputStream(fileOutputStream);
 
       final File completedFile = new File(backupFile.getAbsolutePath() + ".completed");
       if (completedFile.exists())
@@ -148,7 +148,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
 
           try {
 
-            endLSN.set(((OAbstractPaginatedStorage) storage).recordsChangedAfterLSN(startLSN, zipOutputStream));
+            endLSN.set(((OAbstractPaginatedStorage) storage).recordsChangedAfterLSN(startLSN, gzipOutputStream));
 
             if (endLSN.get() == null)
               // DELTA NOT AVAILABLE, TRY WITH FULL BACKUP
@@ -166,7 +166,12 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
 
           } finally {
             try {
-              zipOutputStream.close();
+              gzipOutputStream.close();
+            } catch (IOException e) {
+            }
+
+            try {
+              fileOutputStream.close();
             } catch (IOException e) {
             }
 
@@ -186,6 +191,18 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
 
       if (exception.get() instanceof ODistributedDatabaseDeltaBackupException)
         throw exception.get();
+
+      // UPDATE LSN VERSUS THE TARGET NODE
+      try {
+        final ODistributedDatabase distrDatabase = iManager.getMessageService().getDatabase(databaseName);
+
+        distrDatabase.getSyncConfiguration().setLSN(getNodeSource(), endLSN.get());
+
+      } catch (IOException e) {
+        ODistributedServerLog.error(this, iManager.getLocalNodeName(), null, DIRECTION.NONE,
+            "Error on updating distributed-sync.json file for database '%s'. Next request of delta of changes will contains old records too",
+            e, databaseName);
+      }
 
       final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(lastOperationId.get(), backupFile, 0, CHUNK_MAX_SIZE,
           endLSN.get(), true);

@@ -86,7 +86,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
-import java.util.zip.ZipInputStream;
+import java.util.zip.GZIPInputStream;
 
 /**
  * Hazelcast implementation for clustering.
@@ -990,8 +990,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       final List<String> targetNodes = new ArrayList<String>(1);
       targetNodes.add(entry.getKey());
 
-      ODistributedServerLog.info(this, getLocalNodeName(), entry.getKey(), DIRECTION.OUT, "Requesting database delta for '%s'...",
-          databaseName);
+      ODistributedServerLog.info(this, getLocalNodeName(), entry.getKey(), DIRECTION.OUT,
+          "Requesting database delta for '%s' LSN=%s...", databaseName, entry.getValue());
 
       final Map<String, Object> results = (Map<String, Object>) sendRequest(databaseName, null, targetNodes, deployTask,
           EXECUTION_MODE.RESPONSE);
@@ -1248,15 +1248,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     }
 
     final ODatabaseDocumentTx db = installDatabaseOnLocalNode(distrDatabase, databaseName, dbPath, iNode, fileName, delta);
-
-    // UPDATE LSN
-    try {
-      distrDatabase.getSyncConfiguration().setLSN(iNode, lsn.get());
-    } catch (IOException e) {
-      ODistributedServerLog.error(this, getLocalNodeName(), null, DIRECTION.NONE,
-          "Error on updating distributed-sync.json file for database '%s'. Next request of delta of changes will contains old records too",
-          e, databaseName);
-    }
 
     if (db != null) {
       db.activateOnCurrentThread();
@@ -1647,6 +1638,23 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
             }
           }
         }
+
+        @Override
+        public int available() throws IOException {
+          while (true) {
+            final int avail = super.available();
+            if (avail > 0)
+              return avail;
+
+            if (fCompleted.exists())
+              return 0;
+
+            try {
+              Thread.sleep(100);
+            } catch (InterruptedException e) {
+            }
+          }
+        }
       };
 
       try {
@@ -1696,64 +1704,85 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   private void importDelta(final ODatabaseDocumentTx db, final FileInputStream in) throws IOException {
     serverInstance.openDatabase(db);
 
-    final ZipInputStream zipInput = new ZipInputStream(in);
-    try {
+    OScenarioThreadLocal.executeAsDistributed(new Callable<Object>() {
+      @Override
+      public Object call() throws Exception {
+        db.activateOnCurrentThread();
 
-      final DataInputStream input = new DataInputStream(zipInput);
-      try {
+        long total = 0;
 
-        while (input.available() > 1) {
-          final int clusterId = input.readInt();
-          final long clusterPos = input.readLong();
-          final boolean deleted = input.readBoolean();
+        final GZIPInputStream gzipInput = new GZIPInputStream(in);
+        try {
 
-          final ORecordId rid = new ORecordId(clusterId, clusterPos);
+          final DataInputStream input = new DataInputStream(gzipInput);
+          try {
 
-          if (deleted) {
-            // DELETE
+            final long records = input.readLong();
 
-            db.delete(rid);
+            for (long i = 0; i < records; ++i) {
+              final int clusterId = input.readInt();
+              final long clusterPos = input.readLong();
+              final boolean deleted = input.readBoolean();
 
-          } else {
+              final ORecordId rid = new ORecordId(clusterId, clusterPos);
 
-            final int recordVersion = input.readInt();
-            final int recordType = input.readByte();
-            final int recordSize = input.readInt();
-            final byte[] recordContent = new byte[recordSize];
-            input.read(recordContent);
+              total++;
 
-            final ORecord record;
-            if (recordVersion == 1) {
-              // CREATE
-              record = Orient.instance().getRecordFactoryManager().newInstance((byte) recordType);
+              if (deleted) {
+                OLogManager.instance().info(this, "DELTA <- deleted " + rid);
 
-              ORecordInternal.fill(record, rid, recordVersion, recordContent, true);
+                // DELETE
+                db.delete(rid);
 
-            } else {
+              } else {
+                final int recordVersion = input.readInt();
+                final int recordType = input.readByte();
+                final int recordSize = input.readInt();
+                final byte[] recordContent = new byte[recordSize];
+                input.read(recordContent);
 
-              // UPDATE
-              record = rid.getRecord();
-              ORecordInternal.fill(record, rid, recordVersion, recordContent, true);
+                OLogManager.instance().info(this,
+                    "DELTA <- other rid=" + rid + " type=" + recordType + " size=" + recordSize + " v=" + recordVersion);
 
+                final ORecord record;
+                if (recordVersion == 1) {
+                  // CREATE
+                  record = Orient.instance().getRecordFactoryManager().newInstance((byte) recordType);
+
+                  ORecordInternal.fill(record, rid, recordVersion, recordContent, true);
+                } else {
+                  // UPDATE
+                  record = rid.getRecord();
+                  ORecordInternal.fill(record, rid, recordVersion, recordContent, true);
+                }
+
+                record.save();
+              }
             }
 
-            record.save();
+            db.getMetadata().reload();
+
+          } finally {
+            input.close();
           }
+
+        } catch (Exception e) {
+          ODistributedServerLog.error(this, getLocalNodeName(), null, DIRECTION.IN,
+              "Error on installing database delta '%s' on local server", e, db.getName());
+          throw OException.wrapException(
+              new ODistributedException("Error on installing database delta '" + db.getName() + "' on local server"), e);
+        } finally {
+          gzipInput.close();
         }
 
-      } finally {
-        input.close();
+        ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.IN,
+            "Installed database delta for '%s', %d total records", db.getName(), total);
+
+        return null;
       }
+    });
 
-    } catch (Exception e) {
-      ODistributedServerLog.error(this, getLocalNodeName(), null, DIRECTION.IN,
-          "Error on installing database delta '%s' on local server", e, db.getName());
-      throw OException
-          .wrapException(new ODistributedException("Error on installing database delta '" + db.getName() + "' on local server"), e);
-    } finally {
-      zipInput.close();
-    }
-
+    db.activateOnCurrentThread();
   }
 
   @Override

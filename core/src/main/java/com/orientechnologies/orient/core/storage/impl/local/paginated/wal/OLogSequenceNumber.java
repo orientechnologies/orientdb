@@ -93,6 +93,6 @@ public class OLogSequenceNumber implements Comparable<OLogSequenceNumber> {
 
   @Override
   public String toString() {
-    return "OLogSequenceNumber{" + "segment=" + segment + ", position=" + position + '}';
+    return "OLogSequenceNumber{segment=" + segment + ", position=" + position + '}';
   }
 }

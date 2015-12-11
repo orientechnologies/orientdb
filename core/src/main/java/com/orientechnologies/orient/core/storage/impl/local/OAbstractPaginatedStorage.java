@@ -20,20 +20,6 @@
 
 package com.orientechnologies.orient.core.storage.impl.local;
 
-import java.io.*;
-import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
-import java.nio.channels.FileChannel;
-import java.nio.charset.Charset;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
-
 import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
@@ -127,6 +113,20 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTxListener;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
+import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.nio.charset.Charset;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 /**
  * @author Andrey Lomakin
@@ -810,7 +810,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         OLogSequenceNumber currentLsn = startLsn;
 
         // all information about changed records is contained in atomic operation metadata
-        while (currentLsn != null && endLsn.compareTo(currentLsn) <= 0) {
+        while (currentLsn != null && endLsn.compareTo(currentLsn) > 0) {
           walRecord = writeAheadLog.read(currentLsn);
 
           if (walRecord instanceof OAtomicUnitEndRecord) {
@@ -833,39 +833,51 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       final long lockId = atomicOperationsManager.freezeAtomicOperations(null, null);
       try {
         final DataOutputStream dataOutputStream = new DataOutputStream(stream);
+        try {
 
-        Iterator<ORID> ridIterator = sortedRids.iterator();
-        while (ridIterator.hasNext()) {
-          final ORID rid = ridIterator.next();
-          final OCluster cluster = clusters.get(rid.getClusterId());
+          dataOutputStream.writeLong(sortedRids.size());
 
-          // we do not need to load record only check it's presence
-          if (cluster.getPhysicalPosition(new OPhysicalPosition(rid.getClusterPosition())) == null) {
+          Iterator<ORID> ridIterator = sortedRids.iterator();
+          while (ridIterator.hasNext()) {
+            final ORID rid = ridIterator.next();
+            final OCluster cluster = clusters.get(rid.getClusterId());
+
+            // we do not need to load record only check it's presence
+            if (cluster.getPhysicalPosition(new OPhysicalPosition(rid.getClusterPosition())) == null) {
+              dataOutputStream.writeInt(rid.getClusterId());
+              dataOutputStream.writeLong(rid.getClusterPosition());
+              dataOutputStream.write(1);
+
+              OLogManager.instance().info(this, "DELTA -> deleted " + rid);
+
+              // delete to avoid duplication
+              ridIterator.remove();
+            }
+          }
+
+          ridIterator = sortedRids.iterator();
+          while (ridIterator.hasNext()) {
+            final ORID rid = ridIterator.next();
+            final OCluster cluster = clusters.get(rid.getClusterId());
+
             dataOutputStream.writeInt(rid.getClusterId());
             dataOutputStream.writeLong(rid.getClusterPosition());
-            dataOutputStream.write(1);
 
-            // delete to avoid duplication
-            ridIterator.remove();
+            final ORawBuffer rawBuffer = cluster.readRecord(rid.getClusterPosition());
+            assert rawBuffer != null;
+
+            dataOutputStream.write(0);
+            dataOutputStream.writeInt(rawBuffer.version);
+            dataOutputStream.write(rawBuffer.recordType);
+            dataOutputStream.writeInt(rawBuffer.buffer.length);
+            dataOutputStream.write(rawBuffer.buffer);
+
+            OLogManager.instance().info(this, "DELTA -> other rid=" + rid + " type=" + rawBuffer.recordType + " size="
+                + rawBuffer.buffer.length + " v=" + rawBuffer.version);
+
           }
-        }
-
-        ridIterator = sortedRids.iterator();
-        while (ridIterator.hasNext()) {
-          final ORID rid = ridIterator.next();
-          final OCluster cluster = clusters.get(rid.getClusterId());
-
-          dataOutputStream.writeInt(rid.getClusterId());
-          dataOutputStream.writeLong(rid.getClusterPosition());
-
-          final ORawBuffer rawBuffer = cluster.readRecord(rid.getClusterPosition());
-          assert rawBuffer != null;
-
-          dataOutputStream.write(0);
-          dataOutputStream.writeInt(rawBuffer.version);
-          dataOutputStream.write(rawBuffer.recordType);
-          dataOutputStream.writeInt(rawBuffer.buffer.length);
-          dataOutputStream.write(rawBuffer.buffer);
+        } finally {
+          dataOutputStream.close();
         }
       } finally {
         atomicOperationsManager.releaseAtomicOperations(lockId);

@@ -36,6 +36,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedResponseManag
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.ODistributedSyncConfiguration;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.OCreateRecordTask;
 import com.orientechnologies.orient.server.distributed.task.ODeleteRecordTask;
@@ -81,7 +82,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
   protected final List<ODistributedWorker>            workers                        = new ArrayList<ODistributedWorker>();
   protected final AtomicLong                          waitForMessageId               = new AtomicLong(-1);
   protected final ConcurrentHashMap<ORID, String>     lockManager                    = new ConcurrentHashMap<ORID, String>();
-  protected ODistributedSyncConfiguration             syncConfiguration;
+  protected ODistributedSyncConfiguration syncConfiguration;
 
   public OHazelcastDistributedDatabase(final OHazelcastPlugin manager, final OHazelcastDistributedMessageService msgService,
       final String iDatabaseName) {

@@ -22,10 +22,10 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.orient.core.serialization.OByteArrayInputStream;
-import com.orientechnologies.orient.core.serialization.OByteArrayOutputStream;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationMetadata;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -46,8 +46,8 @@ public class OAtomicUnitEndRecord extends OOperationUnitBodyRecord {
   public OAtomicUnitEndRecord() {
   }
 
-  OAtomicUnitEndRecord(OOperationUnitId operationUnitId, boolean rollback,
-      Map<String, OAtomicOperationMetadata<?>> atomicOperationMetadataMap) {
+  OAtomicUnitEndRecord(final OOperationUnitId operationUnitId, final boolean rollback,
+      final Map<String, OAtomicOperationMetadata<?>> atomicOperationMetadataMap) throws IOException {
     super(operationUnitId);
 
     this.rollback = rollback;
@@ -56,16 +56,20 @@ public class OAtomicUnitEndRecord extends OOperationUnitBodyRecord {
 
     if (atomicOperationMetadataMap != null && atomicOperationMetadataMap.size() > 0) {
       this.atomicOperationMetadataMap = atomicOperationMetadataMap;
-      OByteArrayOutputStream byteArrayOutputStream = new OByteArrayOutputStream();
+
+      final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
       try {
         ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream);
         objectOutputStream.writeObject(atomicOperationMetadataMap);
         objectOutputStream.close();
+
+        atomicOperationsMetadataBinary = byteArrayOutputStream.toByteArray();
+
       } catch (IOException e) {
         throw new IllegalStateException("Error during metadata serialization", e);
+      } finally {
+        byteArrayOutputStream.close();
       }
-
-      atomicOperationsMetadataBinary = byteArrayOutputStream.toByteArray();
     }
 
   }
@@ -97,6 +101,7 @@ public class OAtomicUnitEndRecord extends OOperationUnitBodyRecord {
     offset = super.fromStream(content, offset);
 
     rollback = content[offset] > 0;
+    offset++;
 
     final int len = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
     offset += OIntegerSerializer.INT_SIZE;
@@ -105,7 +110,7 @@ public class OAtomicUnitEndRecord extends OOperationUnitBodyRecord {
       atomicOperationsMetadataBinary = new byte[len];
       System.arraycopy(content, offset, atomicOperationsMetadataBinary, 0, len);
 
-      final OByteArrayInputStream byteArrayInputStream = new OByteArrayInputStream(atomicOperationsMetadataBinary);
+      final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(atomicOperationsMetadataBinary);
       try {
         final ObjectInputStream objectInputStream = new ObjectInputStream(byteArrayInputStream);
         atomicOperationMetadataMap = (Map<String, OAtomicOperationMetadata<?>>) objectInputStream.readObject();
