@@ -49,6 +49,7 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -657,8 +658,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         final List<String> registeredNodes = getRegisteredNodes();
 
         ODistributedServerLog.error(this, nodeLeftName, null, DIRECTION.NONE,
-            "removed node id=%s name=%s has not being recognized. Remove the node manually (registeredNodes=%s)", member, nodeLeftName,
-            registeredNodes);
+            "removed node id=%s name=%s has not being recognized. Remove the node manually (registeredNodes=%s)", member,
+            nodeLeftName, registeredNodes);
       }
     }
 
@@ -982,7 +983,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       // FORCE FULL DATABASE SYNC
       ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE,
           "No LSN found for delta sync for database %s. Asking for full database sync...", databaseName);
-      throw new ODistributedDatabaseDeltaSyncException();
+      throw new ODistributedDatabaseDeltaSyncException("Requested database delta sync but no LSN was found");
     }
 
     for (Map.Entry<String, OLogSequenceNumber> entry : selectedNodes.entrySet()) {
@@ -1225,17 +1226,22 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
               // CREATE THE .COMPLETED FILE TO SIGNAL EOF
               new File(file.getAbsolutePath() + ".completed").createNewFile();
 
-              // UPDATE LSN VERSUS THE TARGET NODE
-              try {
-                final ODistributedDatabase distrDatabase = getMessageService().getDatabase(databaseName);
+              if (lsn.get() != null) {
+                // UPDATE LSN VERSUS THE TARGET NODE
+                try {
+                  final ODistributedDatabase distrDatabase = getMessageService().getDatabase(databaseName);
 
-                distrDatabase.getSyncConfiguration().setLSN(iNode, lsn.get());
+                  distrDatabase.getSyncConfiguration().setLSN(iNode, lsn.get());
 
-              } catch (IOException e) {
-                ODistributedServerLog.error(this, nodeName, iNode, DIRECTION.IN,
-                    "Error on updating distributed-sync.json file for database '%s'. Next request of delta of changes will contains old records too",
-                    e, databaseName);
-              }
+                } catch (IOException e) {
+                  ODistributedServerLog.error(this, nodeName, iNode, DIRECTION.IN,
+                      "Error on updating distributed-sync.json file for database '%s'. Next request of delta of changes will contains old records too",
+                      e, databaseName);
+                }
+              } else
+                ODistributedServerLog.warn(this, nodeName, iNode, DIRECTION.IN,
+                    "LSN not found in database from network, database delta sync will be not available for database '%s'",
+                    databaseName);
 
               ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "database copied correctly, size=%s",
                   OFileUtils.getSizeAsString(fileSize));
@@ -1714,87 +1720,101 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
    * @param in
    */
   private void importDelta(final ODatabaseDocumentTx db, final FileInputStream in) throws IOException {
-    serverInstance.openDatabase(db);
+    try {
+      serverInstance.openDatabase(db);
 
-    OScenarioThreadLocal.executeAsDistributed(new Callable<Object>() {
-      @Override
-      public Object call() throws Exception {
-        db.activateOnCurrentThread();
+      OScenarioThreadLocal.executeAsDistributed(new Callable<Object>() {
+        @Override
+        public Object call() throws Exception {
+          db.activateOnCurrentThread();
 
-        long total = 0;
+          long total = 0;
 
-        final GZIPInputStream gzipInput = new GZIPInputStream(in);
-        try {
-
-          final DataInputStream input = new DataInputStream(gzipInput);
+          final GZIPInputStream gzipInput = new GZIPInputStream(in);
           try {
 
-            final long records = input.readLong();
+            final DataInputStream input = new DataInputStream(gzipInput);
+            try {
 
-            for (long i = 0; i < records; ++i) {
-              final int clusterId = input.readInt();
-              final long clusterPos = input.readLong();
-              final boolean deleted = input.readBoolean();
+              final long records = input.readLong();
 
-              final ORecordId rid = new ORecordId(clusterId, clusterPos);
+              for (long i = 0; i < records; ++i) {
+                final int clusterId = input.readInt();
+                final long clusterPos = input.readLong();
+                final boolean deleted = input.readBoolean();
 
-              total++;
+                final ORecordId rid = new ORecordId(clusterId, clusterPos);
 
-              if (deleted) {
-                OLogManager.instance().info(this, "DELTA <- deleted " + rid);
+                total++;
 
-                // DELETE
-                db.delete(rid);
+                if (deleted) {
+                  OLogManager.instance().info(this, "DELTA <- deleted " + rid);
 
-              } else {
-                final int recordVersion = input.readInt();
-                final int recordType = input.readByte();
-                final int recordSize = input.readInt();
-                final byte[] recordContent = new byte[recordSize];
-                input.read(recordContent);
+                  // DELETE
+                  db.delete(rid);
 
-                OLogManager.instance().info(this,
-                    "DELTA <- other rid=" + rid + " type=" + recordType + " size=" + recordSize + " v=" + recordVersion);
-
-                final ORecord record;
-                if (recordVersion == 1) {
-                  // CREATE
-                  record = Orient.instance().getRecordFactoryManager().newInstance((byte) recordType);
-
-                  ORecordInternal.fill(record, rid, recordVersion, recordContent, true);
                 } else {
-                  // UPDATE
-                  record = rid.getRecord();
-                  ORecordInternal.fill(record, rid, recordVersion, recordContent, true);
-                }
+                  final int recordVersion = input.readInt();
+                  final int recordType = input.readByte();
+                  final int recordSize = input.readInt();
+                  final byte[] recordContent = new byte[recordSize];
+                  input.read(recordContent);
 
-                record.save();
+                  OLogManager.instance().info(this,
+                      "DELTA <- other rid=" + rid + " type=" + recordType + " size=" + recordSize + " v=" + recordVersion);
+
+                  final int forcedVersion = ORecordVersionHelper.setRollbackMode(recordVersion);
+
+                  final ORecord record;
+                  if (recordVersion == 1) {
+                    // CREATE
+                    record = Orient.instance().getRecordFactoryManager().newInstance((byte) recordType);
+
+                    ORecordInternal.fill(record, rid, forcedVersion, recordContent, true);
+                  } else {
+                    // UPDATE
+                    record = rid.getRecord();
+                    ORecordInternal.fill(record, rid, forcedVersion, recordContent, true);
+                  }
+
+                  record.save();
+                }
               }
+
+              db.getMetadata().reload();
+
+            } finally {
+              input.close();
             }
 
-            db.getMetadata().reload();
-
+          } catch (Exception e) {
+            ODistributedServerLog.error(this, nodeName, null, DIRECTION.IN,
+                "Error on installing database delta '%s' on local server", e, db.getName());
+            throw OException.wrapException(
+                new ODistributedException("Error on installing database delta '" + db.getName() + "' on local server"), e);
           } finally {
-            input.close();
+            gzipInput.close();
           }
 
-        } catch (Exception e) {
-          ODistributedServerLog.error(this, nodeName, null, DIRECTION.IN, "Error on installing database delta '%s' on local server",
-              e, db.getName());
-          throw OException.wrapException(
-              new ODistributedException("Error on installing database delta '" + db.getName() + "' on local server"), e);
-        } finally {
-          gzipInput.close();
+          ODistributedServerLog.info(this, nodeName, null, DIRECTION.IN, "Installed database delta for '%s', %d total records",
+              db.getName(), total);
+
+          return null;
         }
+      });
 
-        ODistributedServerLog.info(this, nodeName, null, DIRECTION.IN, "Installed database delta for '%s', %d total records",
-            db.getName(), total);
+      db.activateOnCurrentThread();
 
-        return null;
-      }
-    });
-
-    db.activateOnCurrentThread();
+    } catch (Exception e) {
+      // FORCE FULL DATABASE SYNC
+      ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE,
+          "Error while applying changes of database delta sync on '%s': forcing full database sync...", e, db.getName());
+      throw OException
+          .wrapException(
+              new ODistributedDatabaseDeltaSyncException(
+                  "Error while applying changes of database delta sync on '" + db.getName() + "': forcing full database sync..."),
+              e);
+    }
   }
 
   @Override

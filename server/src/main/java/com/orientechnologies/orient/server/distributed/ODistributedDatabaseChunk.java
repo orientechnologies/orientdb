@@ -19,14 +19,14 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-
 import java.io.Externalizable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 
 public class ODistributedDatabaseChunk implements Externalizable {
   public long               lastOperationId;
@@ -110,7 +110,9 @@ public class ODistributedDatabaseChunk implements Externalizable {
     out.writeLong(offset);
     out.writeInt(buffer.length);
     out.write(buffer);
-    lsn.writeExternal(out);
+    out.writeBoolean(lsn != null);
+    if (lsn != null)
+      lsn.writeExternal(out);
     out.writeBoolean(compressed);
     out.writeBoolean(last);
   }
@@ -123,7 +125,8 @@ public class ODistributedDatabaseChunk implements Externalizable {
     final int size = in.readInt();
     buffer = new byte[size];
     in.readFully(buffer);
-    lsn = new OLogSequenceNumber(in);
+    final boolean lsnNotNull = in.readBoolean();
+    lsn = lsnNotNull ? new OLogSequenceNumber(in) : null;
     compressed = in.readBoolean();
     last = in.readBoolean();
   }

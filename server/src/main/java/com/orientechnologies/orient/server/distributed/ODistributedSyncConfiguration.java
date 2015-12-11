@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
@@ -52,6 +53,12 @@ public class ODistributedSyncConfiguration {
     final InputStream is = new FileInputStream(file);
     try {
       configuration.fromJSON(is);
+
+    } catch (OSerializationException e) {
+      // CORRUPTED: RECREATE IT
+      file.getParentFile().mkdirs();
+      file.createNewFile();
+
     } finally {
       is.close();
     }

@@ -29,12 +29,16 @@ import com.orientechnologies.orient.server.distributed.ODistributedException;
  * 
  */
 public class ODistributedDatabaseDeltaSyncException extends ODistributedException {
+  public ODistributedDatabaseDeltaSyncException(final ODistributedDatabaseDeltaSyncException exception) {
+    super(exception);
+  }
+
   public ODistributedDatabaseDeltaSyncException(final OLogSequenceNumber requested, final OLogSequenceNumber found) {
     super("Requested database delta sync with LSN=" + requested + " while last available LSN=" + found);
   }
 
-  public ODistributedDatabaseDeltaSyncException() {
-    super("Requested database delta sync but no LSN was found");
+  public ODistributedDatabaseDeltaSyncException(final String iMessage) {
+    super(iMessage);
   }
 
   @Override
