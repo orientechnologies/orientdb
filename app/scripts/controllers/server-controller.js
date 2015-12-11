@@ -45,18 +45,6 @@ ctrl.controller("ServerController", ['$scope', '$routeParams', 'ServerApi', 'Dat
     return 'views/server/' + tab + '.html';
   }
 
-  $scope.killConnection = function (n) {
-    ServerApi.killConnection(n.connectionId, function () {
-      var index = $scope.connections.indexOf(n);
-      $scope.connections.splice(index, 1);
-    });
-  }
-  $scope.interruptConnection = function (n) {
-    ServerApi.interruptConnection(n.connectionId, function () {
-      var index = $scope.connections.indexOf(n);
-      $scope.connections.splice(index, 1);
-    });
-  }
 }]);
 
 
@@ -72,7 +60,7 @@ ctrl.controller("ServerStatusController", ['$scope', '$rootScope', function ($sc
   })
 }]);
 
-ctrl.controller('MultipleServerController', function ($scope, $rootScope, $location, $routeParams, $timeout, Cluster, Profiler, $q) {
+ctrl.controller('MultipleServerController', function ($scope, $rootScope, $location, $routeParams, $timeout, Cluster, Profiler, $q, AgentService) {
 
   $scope.clustered = false;
 
@@ -185,46 +173,53 @@ ctrl.controller('MultipleServerController', function ($scope, $rootScope, $locat
     return 'col-md-12';
   }
   var initMonitoring = function () {
-    Cluster.stats().then(function (data) {
 
-      var keys = Object.keys(data.clusterStats);
+    if (!AgentService.active) {
       $scope.servers = [];
+      $scope.agent = false;
+      $scope.servers.push({status: 'AGENT NOT FOUND'});
+    } else {
+      Cluster.stats().then(function (data) {
 
-
-      for (var i in keys) {
-        var s = data.clusterStats[keys[i]];
-        s.name = keys[i];
-        s.status = "ONLINE"
-        $scope.servers.push(s);
-      }
-      $scope.serverClass = calculateSpan($scope.servers);
-      statsWatching(multiplePoll);
-    }).catch(function (err) {
-
-
-      if (err.status == 400) {
-        Profiler.realtime().then(function (data) {
-          $scope.servers = [];
-          data.status = "ONLINE"
-          data.name = "orientdb";
-          $scope.servers.push(data);
-
-          $scope.serverClass = calculateSpan($scope.servers);
-          statsWatching(singlePoll);
-
-        }).catch(function (err) {
-          if (err.status == 500) {
-            $scope.servers = [];
-            $scope.agent = false;
-            $scope.servers.push({status: 'AGENT NOT FOUND'});
-          }
-        })
-      } else if (err.status = 405) {
+        var keys = Object.keys(data.clusterStats);
         $scope.servers = [];
-        $scope.agent = false;
-        $scope.servers.push({status: 'AGENT NOT FOUND'});
-      }
-    })
+
+
+        for (var i in keys) {
+          var s = data.clusterStats[keys[i]];
+          s.name = keys[i];
+          s.status = "ONLINE"
+          $scope.servers.push(s);
+        }
+        $scope.serverClass = calculateSpan($scope.servers);
+        statsWatching(multiplePoll);
+      }).catch(function (err) {
+
+
+        if (err.status == 400) {
+          Profiler.realtime().then(function (data) {
+            $scope.servers = [];
+            data.status = "ONLINE"
+            data.name = "orientdb";
+            $scope.servers.push(data);
+
+            $scope.serverClass = calculateSpan($scope.servers);
+            statsWatching(singlePoll);
+
+          }).catch(function (err) {
+            if (err.status == 500) {
+              $scope.servers = [];
+              $scope.agent = false;
+              $scope.servers.push({status: 'AGENT NOT FOUND'});
+            }
+          })
+        } else if (err.status = 405) {
+          $scope.servers = [];
+          $scope.agent = false;
+          $scope.servers.push({status: 'AGENT NOT FOUND'});
+        }
+      })
+    }
   }
 
 
@@ -436,20 +431,53 @@ ctrl.controller("ServerDashboardController", ['$scope', '$routeParams', 'Aside',
 
 }]);
 
-ctrl.controller('ServerConnectionController', function ($scope, $filter, ngTableParams, Cluster) {
+ctrl.controller('ServerConnectionController', function ($scope, $filter, ngTableParams, Cluster, AgentService, ServerApi) {
 
 
   $scope.init = false;
 
 
-  $scope.$watch('server', function (server) {
+  if (AgentService.active) {
 
-    Cluster.infoServer(server).then(function (info) {
-      $scope.connections = info.connections;
-    }).catch(function (err) {
-      console.log(err);
+    $scope.killConnection = function (n) {
+      Cluster.killConnection($scope.server, n.connectionId).then(function () {
+        var index = $scope.connections.indexOf(n);
+        $scope.connections.splice(index, 1);
+      });
+    }
+    $scope.interruptConnection = function (n) {
+      Cluster.interruptConnection($scope.server, n.connectionId).then(function () {
+        var index = $scope.connections.indexOf(n);
+        $scope.connections.splice(index, 1);
+      });
+    }
+
+    $scope.$watch('server', function (server) {
+
+      Cluster.infoServer(server).then(function (info) {
+        $scope.connections = info.connections;
+      }).catch(function (err) {
+        console.log(err);
+      })
+    });
+  } else {
+    $scope.killConnection = function (n) {
+      ServerApi.killConnection(n.connectionId, function () {
+        var index = $scope.connections.indexOf(n);
+        $scope.connections.splice(index, 1);
+      });
+    }
+    $scope.interruptConnection = function (n) {
+      ServerApi.interruptConnection(n.connectionId, function () {
+        var index = $scope.connections.indexOf(n);
+        $scope.connections.splice(index, 1);
+      });
+    }
+    ServerApi.getServerInfo(function (data) {
+      $scope.connections = data.connections;
     })
-  });
+  }
+
 
 })
 

@@ -579,7 +579,6 @@ ul.horizontallist, ol.horizontallist {
   /*position: relative;*/
 
   background: 0 0;
-  text-align: left;
   font-size: 12px;
   border-width: 1px 1px 1px 0;
   -webkit-border-image: -webkit-linear-gradient(bottom, #d7dbdb, #fff) 1 100%;

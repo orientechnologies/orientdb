@@ -107,13 +107,13 @@
   </div>
 
   <div id="results-id">
-    <div class="row row-space-2x" ng-if="resultsSet">
+    <div class="row row-space-2x">
 
       <div class="col-md-12">
         <h4 class="text-center">Cached query results</h4>
       </div>
-      <div class="col-md-12">
-        <table st-table="resultsSet" class="table table-hover table-profiles">
+      <div class="col-md-12 table-responsive">
+        <table st-table="displayedResultsSet" st-safe-src="resultsSet" class="table table-hover table-profiles ">
           <thead>
           <tr>
             <th ng-repeat="h in headers">{{h}}</th>
@@ -121,14 +121,14 @@
           </thead>
 
           <tbody>
-          <tr ng-repeat="record  in resultsSet ">
+          <tr ng-repeat="record  in displayedResultsSet">
             <td ng-repeat="h in headers">{{record[h]}}</td>
           </tr>
           </tbody>
           <tfoot>
           <tr>
-            <td colspan="5" class="text-center">
-              <div st-pagination="" st-items-by-page="itemsByPage" st-displayed-pages="7"></div>
+            <td colspan="4" class="text-center">
+              <div st-pagination="" st-items-by-page="10" st-displayed-pages="7"></div>
             </td>
           </tr>
           </tfoot>

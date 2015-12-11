@@ -35,6 +35,7 @@ login.controller("LoginController", ['$scope', '$rootScope', '$routeParams', '$l
     });
   }
   $scope.createNew = function () {
+
     var modalScope = $scope.$new(true);
     modalScope.name = null;
     modalScope.creating = false;

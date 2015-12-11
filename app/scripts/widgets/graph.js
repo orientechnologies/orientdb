@@ -166,13 +166,21 @@ graph.directive('c3chart', function ($http, $compile, $timeout, $rootScope) {
     var lastR = null;
     var lastU = null;
     var lastD = null;
-    if (!scope.server) {
-      return;
-    }
-    element.id = scope.server.name;
 
-    var counter = 0;
-    $timeout(function () {
+
+    scope.$watch("server", function (server) {
+
+      if (server) {
+        startChart();
+      }
+    })
+
+
+    var startChart = function () {
+      var counter = 0;
+      element.id = scope.server.name;
+
+
       scope.chart = c3.generate({
         bindto: "#" + element.id,
         data: {
@@ -283,9 +291,7 @@ graph.directive('c3chart', function ($http, $compile, $timeout, $rootScope) {
           }
         }
       })
-    });
-
-
+    }
   }
   return {
     restrict: 'A',

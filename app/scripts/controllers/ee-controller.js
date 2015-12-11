@@ -1,7 +1,7 @@
 var ee = angular.module('ee.controller', ['ee.services']);
 
 
-ee.controller('GeneralMonitorController', function ($scope, $location, $routeParams, Cluster) {
+ee.controller('GeneralMonitorController', function ($scope, $location, $routeParams, Cluster, AgentService) {
 
 
   $scope.rid = $routeParams.server;
@@ -37,11 +37,13 @@ ee.controller('GeneralMonitorController', function ($scope, $location, $routePar
     }
   }
 
+  if (AgentService.active) {
 
-  Cluster.node().then(function (data) {
-    $scope.servers = data.members;
-    $scope.server = $scope.servers[0];
-  });
+    Cluster.node().then(function (data) {
+      $scope.servers = data.members;
+      $scope.server = $scope.servers[0];
+    });
+  }
 
 
   $scope.editorOptions = {
@@ -151,17 +153,21 @@ ee.controller('GeneralMonitorController', function ($scope, $location, $routePar
 });
 
 
-ee.controller('SinglePollerController', function ($scope, $rootScope, $location, $routeParams, $timeout, Profiler, Cluster) {
+ee.controller('SinglePollerController', function ($scope, $rootScope, $location, $routeParams, $timeout, Profiler, Cluster, AgentService) {
 
 
   $scope.polling = true;
 
   var singlePoll = function () {
 
-    Cluster.stats($scope.server.name).then(function (data) {
-      data.name = $scope.server.name;
-      $rootScope.$broadcast('server:updated', data);
-    });
+    if (AgentService.active) {
+      Cluster.stats($scope.server.name).then(function (data) {
+        data.name = $scope.server.name;
+        $rootScope.$broadcast('server:updated', data);
+      });
+    } else {
+      $scope.polling = false;
+    }
   }
 
 
@@ -353,22 +359,25 @@ ee.controller("ProfilerController", ['$scope', 'Profiler', 'Cluster', 'Spinner',
 
   $scope.strategies = ["INVALIDATE_ALL", "PER_CLUSTER"];
 
+  $scope.itemsByPage = 10;
   Cluster.node().then(function (data) {
     $scope.servers = data.members;
     $scope.server = $scope.servers[0];
 
   });
 
-  $scope.itemsByPage = 4;
-  $scope.profiles = []
 
+  $scope.isLoading = false;
   $scope.refresh = function () {
     Spinner.start();
     var metricName = 'db.' + $scope.db + '.command.';
+    $scope.isLoading = true;
     Profiler.profilerData({server: $scope.server.name, db: $scope.db}).then(function (data) {
       var profiling = $scope.flatten(data.realtime.chronos, metricName);
+
+
       $scope.profiles = profiling;
-      $scope.safeCopy = angular.copy(profiling);
+      $scope.isLoading = false;
       Spinner.stopSpinner();
     }).catch(function (error) {
       if (error.status == 405) {
@@ -376,6 +385,7 @@ ee.controller("ProfilerController", ['$scope', 'Profiler', 'Cluster', 'Spinner',
       } else {
         Notification.push({content: error.data, error: true, autoHide: true});
       }
+      $scope.isLoading = false;
       Spinner.stopSpinner();
     })
   }
@@ -450,7 +460,6 @@ ee.controller("ProfilerController", ['$scope', 'Profiler', 'Cluster', 'Spinner',
       $scope.headers = Database.getPropertyTableFromResults(data.result);
       $scope.resultsSet = data.result;
 
-      $scope.itemsByPage = 10;
       var someElement = angular.element(document.getElementById('results-id'));
       scroller.scrollToElement(someElement, 0, 2000);
     });
@@ -552,7 +561,6 @@ ee.controller("AuditingController", ['$scope', 'Auditing', 'Cluster', 'Spinner',
 
   $scope.filter = function () {
     Spinner.start();
-    console.log($scope.query);
     Auditing.query({db: $scope.db, query: $scope.query}).then(function (data) {
 
       $scope.logs = data.result;
@@ -773,9 +781,8 @@ ee.controller('EEDashboardController', function ($scope, $rootScope) {
     {name: "profiler", title: "Query Profiler", template: 'profiler', icon: 'fa-rocket'},
     {name: "auditing", title: "Auditing", template: 'auditing', icon: 'fa-headphones'},
     {name: "teleporter", title: "Teleporter", template: 'teleporter', icon: 'fa-usb'},
-    {name: "events", title: "Events Management", template: 'events', icon: 'fa-bell'},
-    {name: "configuration", title: "Settings", template: 'config', icon: 'fa-cogs'},
-    {name: "storage", title: "Storages", template: 'storage', icon: 'fa-database'}
+    {name: "events", title: "Events Management", template: 'events', icon: 'fa-bell'}
+
   ]
 })
 
@@ -1109,7 +1116,6 @@ ee.controller('TeleporterController', function ($scope, Teleporter, $timeout, No
     $scope.config.excludes = $scope.excludedClasses.map(function (c) {
       return c.text;
     })
-    //console.log($scope.config)
     Teleporter.launch({config: $scope.config}).then(function (data) {
       $scope.running = true;
       status();
@@ -1193,3 +1199,22 @@ ee.controller("HttpWhatController", function ($scope) {
     }
   }
 });
+
+ee.controller("GlobalConfiController", function ($scope, ServerApi) {
+
+
+  ServerApi.getServerInfo(function (data) {
+    $scope.properties = data.properties;
+    $scope.storages = data.storages;
+
+    $scope.globalProperties = data.globalProperties;
+
+    if ($scope.globalProperties) {
+      $scope.oldGlobal = $scope.globalProperties.filter(function (p) {
+        return p.canChange;
+      })
+    }
+
+  });
+});
+

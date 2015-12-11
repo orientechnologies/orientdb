@@ -153,7 +153,7 @@ ee.factory('Cluster', function ($http, $resource, $q) {
     return deferred.promise;
   }
   /*
-   Returns Database Diistributed Config
+   Returns Database Distributed Config
    */
   resource.database = function (db) {
 
@@ -167,6 +167,36 @@ ee.factory('Cluster', function ($http, $resource, $q) {
     return deferred.promise;
   }
 
+
+  /*
+   Kill Connection n for server
+   */
+
+  resource.killConnection = function (server, n, callback) {
+    var deferred = $q.defer();
+    var url = API + 'node/connection/kill/' + n;
+    if (server && server.name) {
+      url += '?node=' + server.name;
+    }
+    $http.post(url).success(function () {
+      deferred.resolve()
+    });
+    return deferred.promise;
+  }
+  /*
+   Interrupt Connection n for server
+   */
+  resource.interruptConnection = function (server, n, callback) {
+    var deferred = $q.defer();
+    var url = API + 'node/connection/interrupt' + n;
+    if (server && server.name) {
+      url += '?node=' + server.name;
+    }
+    $http.post(url).success(function () {
+      deferred.resolve()
+    });
+    return deferred.promise;
+  }
   resource.saveDBConfig = function (params) {
 
     var deferred = $q.defer();
@@ -551,3 +581,42 @@ ee.factory('Teleporter', function ($http, $q) {
   }
   return teleporter;
 })
+
+ee.factory("AgentService", function (Profiler, $q) {
+  var agent = {
+    active: null
+  }
+  agent.isActive = function () {
+
+    var deferred = $q.defer();
+    if (agent.active == null) {
+      Profiler.metadata().then(function (data) {
+        agent.active = true;
+        deferred.resolve();
+      }).catch(function (err) {
+        agent.active = false;
+        deferred.resolve();
+      })
+    } else {
+      deferred.resolve();
+    }
+    return deferred.promise;
+  }
+  return agent;
+})
+var AgentResolve = {
+  current: function (AgentService, $q) {
+    var deferred = $q.defer();
+
+
+    AgentService.isActive().then(function () {
+      deferred.resolve();
+    })
+    return deferred.promise;
+  },
+  delay: function ($q, $timeout) {
+    var delay = $q.defer();
+    $timeout(delay.resolve, 0);
+    return delay.promise;
+  }
+}

@@ -893,7 +893,7 @@ div.users-ui div.container-fluid, div.role-ui div.container-fluid {
   display: flex;
   margin: 0 auto;
   padding: 0;
-  max-width: 1200px;
+  max-width: 100%;
   list-style: none;
   -ms-box-orient: horizontal;
   -ms-box-pack: center;
@@ -1019,6 +1019,11 @@ div.users-ui div.container-fluid, div.role-ui div.container-fluid {
 .admin-header {
   padding-bottom: 5px;
   margin: 5px 0 5px;
+}
+
+/*END TAB*/
+.admin-title h2 {
+  margin-top: 0px;
 }
 
 .admin-header > h2 {

@@ -2,17 +2,7 @@
   <div class="row row-space-2x">
 
     <div class="col-md-6">
-      <form class="form-search">
-        <div class="input-group">
-          <input type="text" class="input-xxlarge form-control search-query" ng-model="query"
-                 placeholder="Search query">
-                        <span class="input-group-btn">
-                        <button type="submit" class="btn" ng-click="">
-                          <i class="fa fa-search"></i>
-                        </button>
-                            </span>
-        </div>
-      </form>
+
     </div>
     <div class="col-md-6">
       <div class="btn-toolbar pull-right">
@@ -37,8 +27,12 @@
   </div>
   <div class="row row-space-2x">
     <div class="col-md-12">
-      <table st-table="profiles" st-safe-src="safeCopy" class="table table-hover table-profiles">
+      <table st-table="displayedProfiles" st-safe-src="profiles" class="table table-hover table-profiles">
         <thead>
+        <th colspan="10">
+          <input st-search placeholder="Search query" class="input-sm form-control" type="text"/>
+        </th>
+
         <tr>
           <th>Type</th>
           <th>Command</th>
@@ -55,8 +49,8 @@
         <!--<th colspan="5"><input st-search=""  class="form-control" placeholder="global search ..." type="text"/></th>-->
         <!--</tr>-->
         </thead>
-        <tbody>
-        <tr ng-repeat="row in profiles | filter:query">
+        <tbody ng-hide="isLoading">
+        <tr ng-repeat="row in displayedProfiles ">
           <td>{{row.name | ctype}}</td>
           <td>{{row.name | cname}}</td>
           <td>{{row.users}}</td>
@@ -69,6 +63,20 @@
           <td>{{row.lastExecution | formatDate}}</td>
         </tr>
         </tbody>
+        <tbody ng-show="isLoading">
+        <tr>
+          <td colspan="5" class="text-center">
+            <div class="loading-indicator">Loading</div>
+          </td>
+        </tr>
+        </tbody>
+        <tfoot ng-hide="isLoading">
+        <tr>
+          <td colspan="10" class="text-center">
+            <div st-pagination="" st-items-by-page="itemsByPage" st-displayed-pages="7"></div>
+          </td>
+        </tr>
+        </tfoot>
       </table>
     </div>
   </div>

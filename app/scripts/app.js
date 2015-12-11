@@ -143,11 +143,13 @@ App.config(function ($routeProvider, $httpProvider, $translateProvider, $transla
     })
     .when('/dashboard', {
       templateUrl: 'views/server/dashboard.html',
-      controller: 'ServerDashboardController'
+      controller: 'ServerDashboardController',
+      resolve : AgentResolve
     })
     .when('/dashboard/:tab', {
       templateUrl: 'views/server/dashboard.html',
-      controller: 'ServerDashboardController'
+      controller: 'ServerDashboardController',
+      resolve : AgentResolve
     })
     .when('/server', {
       templateUrl: 'views/server/info.html',
