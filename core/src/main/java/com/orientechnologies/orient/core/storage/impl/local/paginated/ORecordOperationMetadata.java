@@ -29,9 +29,6 @@ import java.util.Set;
 /**
  * This class is used inside of {@link OPaginatedCluster} class as container for the records ids which were changed during
  * active atomic operation.
- * <p>
- * Such tracking of record rids is quite slow because of usage of Java serialization so it is not recommended to use it if it is not
- * really needed.
  *
  * @see OGlobalConfiguration#STORAGE_TRACK_CHANGED_RECORDS_IN_WAL
  */

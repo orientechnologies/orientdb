@@ -1,10 +1,11 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations;
 
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitEndRecord;
+
 import java.io.Serializable;
 
 /**
  * Basic interface for any kind of metadata which may be stored as part of atomic operation.
- * Java serialization is used to store atomic operation metadata so it is quite slow operation and should be used with care.
  * <p>
  * All metadata are associated with key, if metadata with the same key is put inside of atomic operation previous instance of metadata
  * will be overwritten.
@@ -16,6 +17,8 @@ import java.io.Serializable;
  * <p>
  * If you wish to read metadata stored inside of atomic operation you may read them from
  * {@link com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitEndRecord#getAtomicOperationMetadata()}
+ * <p>
+ * If you add new metadata implementation, you have to add custom serialization method in {@link OAtomicUnitEndRecord} class.
  *
  * @param <T> Type of atomic operation metadata.
  */
