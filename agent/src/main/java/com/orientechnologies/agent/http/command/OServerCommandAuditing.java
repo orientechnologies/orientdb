@@ -17,87 +17,150 @@
  */
 package com.orientechnologies.agent.http.command;
 
-import com.orientechnologies.agent.DatabaseAuditingResource;
 import com.orientechnologies.agent.OEnterpriseAgent;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.metadata.security.ORule;
-import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
-import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
-public class OServerCommandAuditing extends OServerCommandAuthenticatedDbAbstract {
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+public class OServerCommandAuditing extends OServerCommandDistributedScope {
   private static final String[] NAMES = { "GET|auditing/*", "POST|auditing/*" };
   private OEnterpriseAgent      oEnterpriseAgent;
 
   public OServerCommandAuditing(OEnterpriseAgent oEnterpriseAgent) {
-
+    super("server.profiler");
     this.oEnterpriseAgent = oEnterpriseAgent;
   }
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    final String[] parts = checkSyntax(iRequest.getUrl(), 2, "Syntax error: auditing");
+    final String[] parts = checkSyntax(iRequest.getUrl(), 3, "Syntax error: auditing/<db>/<action>");
 
     iRequest.data.commandInfo = "Auditing information";
 
-    ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
-    OSecurityUser user = db.getUser();
+    String db = parts[1];
+    String action = parts[2];
 
-    if ("GET".equals(iRequest.httpMethod)) {
-      doGet(iRequest, iResponse);
-    } else if ("POST".equals(iRequest.httpMethod)) {
-      doPost(iRequest, iResponse);
+    if (isLocalNode(iRequest)) {
+      if ("GET".equals(iRequest.httpMethod)) {
+        if (action.equalsIgnoreCase("config")) {
+          doGet(iRequest, iResponse, parts[1]);
+        }
+      } else if ("POST".equals(iRequest.httpMethod)) {
+        if (action.equalsIgnoreCase("config")) {
+          doPost(iRequest, iResponse, db);
+        } else if (action.equalsIgnoreCase("query")) {
+          doGetData(iRequest, iResponse, db);
+
+        }
+      }
+    } else {
+      proxyRequest(iRequest, iResponse);
     }
-    // if (user.checkIfAllowed(ORule.ResourceGeneric.valueOf(DatabaseProfilerResource.PROFILER), null, 2) != null) {
-    //
-    // try {
-    //
-    // final String command = parts[1];
-    // final String arg = parts.length > 2 ? parts[2] : null;
-    //
-    // final StringWriter jsonBuffer = new StringWriter();
-    // final OJSONWriter json = new OJSONWriter(jsonBuffer);
-    // json.append(Orient.instance().getProfiler().toJSON("realtime", "db." + db.getName() + ".command"));
-    //
-    // iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, jsonBuffer.toString(), null);
-    //
-    // } catch (Exception e) {
-    // iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, e, null);
-    // }
-    // } else {
-    // iResponse.send(OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
-    // }
     return false;
   }
 
-  private void doPost(OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
+  private void doGetData(OHttpRequest iRequest, OHttpResponse iResponse, String db) throws IOException, InterruptedException {
 
-    ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
-    OSecurityUser user = db.getUser();
+    ODocument params = new ODocument().fromJSON(iRequest.content);
 
-    if (user.checkIfAllowed(ORule.ResourceGeneric.valueOf(DatabaseAuditingResource.AUDITING), null, 2) != null) {
+    iRequest.databaseName = db;
+    ODatabaseDocumentTx databaseDocumentTx = getProfiledDatabaseInstance(iRequest);
 
-      ODocument config = new ODocument().fromJSON(iRequest.content, "noMap");
-      oEnterpriseAgent.auditingListener.changeConfig(db.getName(), config);
-      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, config.toJSON("prettyPrint=true"), null);
-    } else {
-      iResponse.send(OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
+    String clazz = params.field("clazz");
+    Collection<ODocument> documents = new ArrayList<ODocument>();
+    if (databaseDocumentTx.getMetadata().getSchema().existsClass(clazz)) {
+      documents = databaseDocumentTx.command(new OSQLSynchQuery<ODocument>(buildQuery(params))).execute(params.toMap());
     }
+    iResponse.writeResult(documents);
   }
 
-  private void doGet(OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
-    OSecurityUser user = db.getUser();
+  private String buildQuery(ODocument params) {
+    String query = "select user.name as username,* from :clazz :where order by date desc limit :limit";
 
-    if (user.checkIfAllowed(ORule.ResourceGeneric.valueOf(DatabaseAuditingResource.AUDITING), null, 2) != null) {
-      ODocument config = oEnterpriseAgent.auditingListener.getConfig(db.getName());
-      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, config.toJSON("prettyPrint=true"), null);
-    } else {
-      iResponse.send(OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
+    List<String> whereConditions = new ArrayList<String>();
+    String clazz = params.field("clazz");
+    Integer limit = params.field("limit");
+
+    query = query.replace(":clazz", clazz);
+
+    if (isNotNullNotEmpty(params, "operation")) {
+      whereConditions.add("operation = :operation");
     }
+    if (isNotNullNotEmpty(params, "user")) {
+      whereConditions.add("user.name = :user");
+    }
+    if (isNotNullNotEmpty(params, "record")) {
+      whereConditions.add("record = :record");
+    }
+    if (isNotNullNotEmpty(params, "note")) {
+      String note = params.field("note");
+      note = "%" + note + "%";
+      params.field("note", note);
+      whereConditions.add("note LIKE :note");
+    }
+    if (params.containsField("fromDate")) {
+      whereConditions.add("date > :fromDate");
+    }
+    if (params.containsField("toDate")) {
+      whereConditions.add("date < :toDate");
+    }
+    query = query.replace(":where", buildWhere(whereConditions));
+
+    query = query.replace(":limit", "" + limit);
+    return query;
+  }
+
+  private boolean isNotNullNotEmpty(ODocument params, String field) {
+
+    boolean valid = params.field(field) != null;
+    if (valid) {
+      Object val = params.field(field);
+
+      if (val instanceof String) {
+        valid = !((String) val).isEmpty();
+      }
+    }
+    return valid;
+  }
+
+  private String buildWhere(List<String> whereConditions) {
+    String where = "";
+    int i = 0;
+    for (String whereCondition : whereConditions) {
+      if (i != 0) {
+        where += " and ";
+      } else {
+        where += "where ";
+      }
+      where += whereCondition;
+      i++;
+    }
+    return where;
+  }
+
+  private void doPost(OHttpRequest iRequest, OHttpResponse iResponse, String db) throws Exception {
+
+    ODocument config = new ODocument().fromJSON(iRequest.content, "noMap");
+    iRequest.databaseName = db;
+    getProfiledDatabaseInstance(iRequest);
+    oEnterpriseAgent.auditingListener.changeConfig(db, config);
+    iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, config.toJSON("prettyPrint"), null);
+  }
+
+  private void doGet(OHttpRequest iRequest, OHttpResponse iResponse, String db) throws Exception {
+    iRequest.databaseName = db;
+    getProfiledDatabaseInstance(iRequest);
+    ODocument config = oEnterpriseAgent.auditingListener.getConfig(db);
+    iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, config.toJSON("prettyPrint"), null);
+
   }
 
   @Override

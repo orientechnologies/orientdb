@@ -45,15 +45,25 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class OProfilerData {
   private final ConcurrentLinkedHashMap<String, Long>           counters      = new ConcurrentLinkedHashMap.Builder()
-      .maximumWeightedCapacity(OGlobalConfiguration.PROFILER_MAXVALUES.getValueAsInteger()).build();
+                                                                                  .maximumWeightedCapacity(
+                                                                                      OGlobalConfiguration.PROFILER_MAXVALUES
+                                                                                          .getValueAsInteger()).build();
   private final ConcurrentLinkedHashMap<String, OProfilerEntry> chronos       = new ConcurrentLinkedHashMap.Builder()
-      .maximumWeightedCapacity(OGlobalConfiguration.PROFILER_MAXVALUES.getValueAsInteger()).build();
+                                                                                  .maximumWeightedCapacity(
+                                                                                      OGlobalConfiguration.PROFILER_MAXVALUES
+                                                                                          .getValueAsInteger()).build();
   private final ConcurrentLinkedHashMap<String, OProfilerEntry> stats         = new ConcurrentLinkedHashMap.Builder()
-      .maximumWeightedCapacity(OGlobalConfiguration.PROFILER_MAXVALUES.getValueAsInteger()).build();
+                                                                                  .maximumWeightedCapacity(
+                                                                                      OGlobalConfiguration.PROFILER_MAXVALUES
+                                                                                          .getValueAsInteger()).build();
   private final ConcurrentLinkedHashMap<String, AtomicInteger>  tips          = new ConcurrentLinkedHashMap.Builder()
-      .maximumWeightedCapacity(OGlobalConfiguration.PROFILER_MAXVALUES.getValueAsInteger()).build();
+                                                                                  .maximumWeightedCapacity(
+                                                                                      OGlobalConfiguration.PROFILER_MAXVALUES
+                                                                                          .getValueAsInteger()).build();
   private final ConcurrentLinkedHashMap<String, Long>           tipsTimestamp = new ConcurrentLinkedHashMap.Builder()
-      .maximumWeightedCapacity(OGlobalConfiguration.PROFILER_MAXVALUES.getValueAsInteger()).build();
+                                                                                  .maximumWeightedCapacity(
+                                                                                      OGlobalConfiguration.PROFILER_MAXVALUES
+                                                                                          .getValueAsInteger()).build();
   private final Map<String, Object>                             hooks         = new WeakHashMap<String, Object>();
   private long                                                  recordingFrom = 0;
   private long                                                  recordingTo   = Long.MAX_VALUE;
@@ -188,6 +198,7 @@ public class OProfilerData {
         firstItem = false;
       else
         buffer.append(',');
+      buffer.append(String.format(Locale.ENGLISH, "\"%s\":", OIOUtils.encode(k)));
       stats.get(k).toJSON(buffer);
     }
     buffer.append("}");
@@ -276,8 +287,8 @@ public class OProfilerData {
 
     buffer
         .append(String.format(Locale.ENGLISH, "\n%50s +-------------------------------------------------------------------+", ""));
-    buffer.append(
-        String.format(Locale.ENGLISH, "\n%50s | Value                                                             |", "Name"));
+    buffer.append(String.format(Locale.ENGLISH, "\n%50s | Value                                                             |",
+        "Name"));
     buffer
         .append(String.format(Locale.ENGLISH, "\n%50s +-------------------------------------------------------------------+", ""));
 
@@ -318,12 +329,12 @@ public class OProfilerData {
 
       buffer.append("Dumping HOOK VALUES:");
 
-      buffer.append(
-          String.format(Locale.ENGLISH, "\n%50s +-------------------------------------------------------------------+", ""));
-      buffer.append(
-          String.format(Locale.ENGLISH, "\n%50s | Value                                                             |", "Name"));
-      buffer.append(
-          String.format(Locale.ENGLISH, "\n%50s +-------------------------------------------------------------------+", ""));
+      buffer.append(String.format(Locale.ENGLISH, "\n%50s +-------------------------------------------------------------------+",
+          ""));
+      buffer.append(String.format(Locale.ENGLISH, "\n%50s | Value                                                             |",
+          "Name"));
+      buffer.append(String.format(Locale.ENGLISH, "\n%50s +-------------------------------------------------------------------+",
+          ""));
 
       final List<String> names = new ArrayList<String>(hooks.keySet());
       Collections.sort(names);
@@ -449,6 +460,7 @@ public class OProfilerData {
     if (c.last > c.max)
       c.max = c.last;
 
+    c.updateLastExecution();
     return c.last;
   }
 
@@ -459,12 +471,12 @@ public class OProfilerData {
 
     OProfilerEntry c;
 
-    iBuffer
-        .append(String.format(Locale.ENGLISH, "\n%50s +-------------------------------------------------------------------+", ""));
+    iBuffer.append(String
+        .format(Locale.ENGLISH, "\n%50s +-------------------------------------------------------------------+", ""));
     iBuffer.append(String.format(Locale.ENGLISH, "\n%50s | %10s %10s %10s %10s %10s %10s |", "Name", "last", "total", "min", "max",
         "average", "items"));
-    iBuffer
-        .append(String.format(Locale.ENGLISH, "\n%50s +-------------------------------------------------------------------+", ""));
+    iBuffer.append(String
+        .format(Locale.ENGLISH, "\n%50s +-------------------------------------------------------------------+", ""));
 
     final List<String> keys = new ArrayList<String>(iValues.keySet());
     Collections.sort(keys);
@@ -472,11 +484,11 @@ public class OProfilerData {
     for (String k : keys) {
       c = iValues.get(k);
       if (c != null)
-        iBuffer.append(String.format(Locale.ENGLISH, "\n%-50s | %10d %10d %10d %10d %7.2f %10d |", k, c.last, c.total, c.min, c.max,
-            c.average, c.entries));
+        iBuffer.append(String.format(Locale.ENGLISH, "\n%-50s | %10d %10d %10d %10d %7.2f %10d |", k, c.last, c.total, c.min,
+            c.max, c.average, c.entries));
     }
-    iBuffer
-        .append(String.format(Locale.ENGLISH, "\n%50s +-------------------------------------------------------------------+", ""));
+    iBuffer.append(String
+        .format(Locale.ENGLISH, "\n%50s +-------------------------------------------------------------------+", ""));
     return iBuffer.toString();
   }
 

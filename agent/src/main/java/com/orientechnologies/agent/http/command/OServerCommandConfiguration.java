@@ -17,23 +17,20 @@
  */
 package com.orientechnologies.agent.http.command;
 
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.agent.proxy.HttpProxyListener;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
-import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
 
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 
-public class OServerCommandConfiguration extends OServerCommandAuthenticatedServerAbstract {
+public class OServerCommandConfiguration extends OServerCommandDistributedScope {
 
-  private static final String[] NAMES = { "GET|configuration/*", "PUT|configuration/*" };
+  private static final String[] NAMES = { "GET|configuration" };
 
   protected OServerCommandConfiguration(String iRequiredResource) {
     super(iRequiredResource);
@@ -46,49 +43,43 @@ public class OServerCommandConfiguration extends OServerCommandAuthenticatedServ
   @Override
   public boolean execute(OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
 
-    checkSyntax(iRequest.getUrl(), 2, "Syntax error: configuration/");
+    checkSyntax(iRequest.getUrl(), 1, "Syntax error: configuration/");
     if (iRequest.httpMethod.equals("GET")) {
       return doGet(iRequest, iResponse);
     }
-    if (iRequest.httpMethod.equals("PUT")) {
-      return doPut(iRequest, iResponse);
-    }
     return false;
   }
 
-  protected boolean doGet(OHttpRequest iRequest, OHttpResponse iResponse) {
-    String config = OServerConfiguration.DEFAULT_CONFIG_FILE;
-    if (System.getProperty(OServerConfiguration.PROPERTY_CONFIG_FILE) != null)
-      config = System.getProperty(OServerConfiguration.PROPERTY_CONFIG_FILE);
-    FileInputStream input;
-    try {
-      File file2 = new File(config);
-      input = new FileInputStream(file2);
-      iResponse.sendStream(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, "text/xml", input, file2.length());
-    } catch (FileNotFoundException e) {
-      e.printStackTrace();
-    } catch (IOException e) {
+  protected boolean doGet(OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
+
+    if (isLocalNode(iRequest)) {
+      try {
+        String config = OServerConfiguration.DEFAULT_CONFIG_FILE;
+        if (System.getProperty(OServerConfiguration.PROPERTY_CONFIG_FILE) != null)
+          config = System.getProperty(OServerConfiguration.PROPERTY_CONFIG_FILE);
+        FileInputStream input;
+
+        File file2 = new File(config);
+        input = new FileInputStream(file2);
+        iResponse.sendStream(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, "text/xml", input, file2.length());
+      } catch (Exception e) {
+        iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, e, null);
+      }
+    } else {
+      proxyRequest(iRequest, iResponse, new HttpProxyListener() {
+        @Override
+        public void onProxySuccess(OHttpRequest request, OHttpResponse response, InputStream is) throws IOException {
+          response.sendStream(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, "text/xml", is, -1);
+        }
+
+        @Override
+        public void onProxyError(OHttpRequest request, OHttpResponse iResponse, InputStream is, int code, Exception e)
+            throws IOException {
+          iResponse.send(code, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_JSON, e, null);
+        }
+      });
     }
 
-    return false;
-  }
-
-  protected boolean doPut(OHttpRequest iRequest, OHttpResponse iResponse) {
-
-    String config = OServerConfiguration.DEFAULT_CONFIG_FILE;
-    if (System.getProperty(OServerConfiguration.PROPERTY_CONFIG_FILE) != null)
-      config = System.getProperty(OServerConfiguration.PROPERTY_CONFIG_FILE);
-
-    File file = new File(config);
-    BufferedWriter output;
-    try {
-      output = new BufferedWriter(new FileWriter(file));
-      output.write(iRequest.content);
-      output.close();
-      iResponse.writeRecord(new ODocument());
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
     return false;
   }
 

@@ -18,17 +18,9 @@
 package com.orientechnologies.agent;
 
 import com.orientechnologies.agent.hook.OAuditingHook;
-import com.orientechnologies.agent.hook.OAuditingLoggingThread;
-import com.orientechnologies.agent.http.command.OServerCommandAuditing;
-import com.orientechnologies.agent.http.command.OServerCommandConfiguration;
-import com.orientechnologies.agent.http.command.OServerCommandGetDeployDb;
-import com.orientechnologies.agent.http.command.OServerCommandGetDistributed;
-import com.orientechnologies.agent.http.command.OServerCommandGetLog;
-import com.orientechnologies.agent.http.command.OServerCommandGetProfiler;
-import com.orientechnologies.agent.http.command.OServerCommandGetSQLProfiler;
-import com.orientechnologies.agent.http.command.OServerCommandPostBackupDatabase;
+import com.orientechnologies.agent.http.command.*;
+import com.orientechnologies.agent.plugins.OEventPlugin;
 import com.orientechnologies.agent.profiler.OEnterpriseProfiler;
-import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
 import com.orientechnologies.common.profiler.OProfiler;
@@ -47,18 +39,17 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
+import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 
 import java.util.Map;
 
 public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabaseLifecycleListener {
-  public static final String       EE                         = "ee.";
-  private static final String      ORIENDB_ENTERPRISE_VERSION = "2.1"; // CHECK IF THE ORIENTDB COMMUNITY EDITION STARTS WITH THIS
-  public OServer                   server;
-  private String                   license;
-  private String                   version;
-  private boolean                  enabled                    = false;
-  private DatabaseProfilerResource profilerResource;
-  public OAuditingListener         auditingListener;
+  public static final String  EE                         = "ee.";
+  private static final String ORIENDB_ENTERPRISE_VERSION = "2.2"; // CHECK IF THE ORIENTDB COMMUNITY EDITION STARTS WITH THIS
+  public OServer              server;
+  private String              license;
+  private boolean             enabled                    = false;
+  public OAuditingListener    auditingListener;
 
   public OEnterpriseAgent() {
   }
@@ -69,8 +60,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
     for (OServerParameterConfiguration p : iParams) {
       if (p.name.equals("license"))
         license = p.value;
-      if (p.name.equals("version"))
-        version = p.value;
     }
   }
 
@@ -85,7 +74,8 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
       enabled = true;
       installProfiler();
       installCommands();
-      profilerResource = new DatabaseProfilerResource();
+
+      installPlugins();
 
       auditingListener = new OAuditingListener(this);
       Orient.instance().addDbLifecycleListener(auditingListener);
@@ -132,6 +122,16 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
     }
   }
 
+  private void installPlugins() {
+
+    OEventPlugin eventPlugin = new OEventPlugin();
+
+    eventPlugin.config(server, null);
+    eventPlugin.startup();
+    server.getPluginManager().registerPlugin(
+        new OServerPluginInfo(eventPlugin.getName(), null, null, null, eventPlugin, null, 0, null));
+  }
+
   @Override
   public void shutdown() {
     if (enabled) {
@@ -151,16 +151,16 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
    */
   @Override
   public void onOpen(final ODatabaseInternal iDatabase) {
-    if (iDatabase.getProperty(OAuditingLoggingThread.FROM_AUDITING) != null)
-      // DON'T INSTALL HOOK ON THE DB OPEN INSIDE THE AUDITING THREAD
-      return;
-
-    final String dbUrl = OSystemVariableResolver.resolveSystemVariables(iDatabase.getURL());
-
-    // REGISTER AUDITING
-    final ODocument auditingCfg = new ODocument();
-    final OAuditingHook auditing = new OAuditingHook(auditingCfg);
-    iDatabase.registerHook(auditing);
+    // if (iDatabase.getProperty(OAuditingLoggingThread.FROM_AUDITING) != null)
+    // // DON'T INSTALL HOOK ON THE DB OPEN INSIDE THE AUDITING THREAD
+    // return;
+    //
+    // final String dbUrl = OSystemVariableResolver.resolveSystemVariables(iDatabase.getURL());
+    //
+    // // REGISTER AUDITING
+    // final ODocument auditingCfg = new ODocument();
+    // final OAuditingHook auditing = new OAuditingHook(auditingCfg);
+    // iDatabase.registerHook(auditing);
   }
 
   @Override
@@ -173,10 +173,10 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
    */
   @Override
   public void onClose(final ODatabaseInternal iDatabase) {
-    final Map<ORecordHook, ORecordHook.HOOK_POSITION> hooks = iDatabase.getHooks();
-    for (ORecordHook h : hooks.keySet())
-      if (h instanceof OAuditingHook)
-        ((OAuditingHook) h).shutdown(true);
+    // final Map<ORecordHook, ORecordHook.HOOK_POSITION> hooks = iDatabase.getHooks();
+    // for (ORecordHook h : hooks.keySet())
+    // if (h instanceof OAuditingHook)
+    // ((OAuditingHook) h).shutdown(true);
   }
 
   @Override
@@ -197,8 +197,15 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
 
   }
 
+  // TODO SEND CPU METRICS ON configuration request;
   @Override
   public void onLocalNodeConfigurationRequest(ODocument iConfiguration) {
+
+    OProfiler profiler = Orient.instance().getProfiler();
+
+    if (profiler instanceof OEnterpriseProfiler) {
+      iConfiguration.field("cpu", ((OEnterpriseProfiler) profiler).cpuUsage());
+    }
 
   }
 
@@ -208,13 +215,17 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
       throw new OConfigurationException("HTTP listener not found");
 
     listener.registerStatelessCommand(new OServerCommandGetProfiler());
-    listener.registerStatelessCommand(new OServerCommandGetDistributed());
+    listener.registerStatelessCommand(new OServerCommandDistributedManager());
     listener.registerStatelessCommand(new OServerCommandGetLog());
     listener.registerStatelessCommand(new OServerCommandConfiguration());
     listener.registerStatelessCommand(new OServerCommandPostBackupDatabase());
     listener.registerStatelessCommand(new OServerCommandGetDeployDb());
     listener.registerStatelessCommand(new OServerCommandGetSQLProfiler());
+    listener.registerStatelessCommand(new OServerCommandPluginManager());
+    listener.registerStatelessCommand(new OServerCommandGetNode());
+    listener.registerStatelessCommand(new OServerCommandQueryCacheManager());
     listener.registerStatelessCommand(new OServerCommandAuditing(this));
+
   }
 
   private void uninstallCommands() {
@@ -223,7 +234,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
       throw new OConfigurationException("HTTP listener not found");
 
     listener.unregisterStatelessCommand(OServerCommandGetProfiler.class);
-    listener.unregisterStatelessCommand(OServerCommandGetDistributed.class);
+    listener.unregisterStatelessCommand(OServerCommandDistributedManager.class);
     listener.unregisterStatelessCommand(OServerCommandGetLog.class);
     listener.unregisterStatelessCommand(OServerCommandConfiguration.class);
     listener.unregisterStatelessCommand(OServerCommandPostBackupDatabase.class);
@@ -250,26 +261,10 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
 
   private boolean checkLicense() {
 
-    // final int dayLeft = OL.checkDate(license);
-    final int dayLeft = 50;
-
     System.out.printf("\n\n********************************************************************");
     System.out.printf("\n*                 ORIENTDB  -  ENTERPRISE EDITION                  *");
     System.out.printf("\n*                                                                  *");
-    // System.out.printf("\n*            " + OConstants.COPYRIGHT + "           *");
     System.out.printf("\n********************************************************************");
-
-    Orient
-        .instance()
-        .getProfiler()
-        .registerHookValue(Orient.instance().getProfiler().getSystemMetric("config.license"), "Enterprise License",
-            OProfiler.METRIC_TYPE.TEXT, new OProfilerHookValue() {
-
-              @Override
-              public Object getValue() {
-                return license;
-              }
-            });
     Orient
         .instance()
         .getProfiler()
@@ -279,17 +274,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
               @Override
               public Object getValue() {
                 return ORIENDB_ENTERPRISE_VERSION;
-              }
-            });
-    Orient
-        .instance()
-        .getProfiler()
-        .registerHookValue(Orient.instance().getProfiler().getSystemMetric("config.dayLeft"), "Enterprise License Day Left",
-            OProfiler.METRIC_TYPE.TEXT, new OProfilerHookValue() {
-
-              @Override
-              public Object getValue() {
-                return dayLeft;
               }
             });
 

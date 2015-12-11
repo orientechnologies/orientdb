@@ -17,60 +17,53 @@
  */
 package com.orientechnologies.agent.http.command;
 
-import com.orientechnologies.agent.DatabaseProfilerResource;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.metadata.security.ORule;
-import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
-import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
 import java.io.StringWriter;
 
-public class OServerCommandGetSQLProfiler extends OServerCommandAuthenticatedDbAbstract {
-    private static final String[] NAMES = {"GET|sqlProfiler/*"};
+public class OServerCommandGetSQLProfiler extends OServerCommandDistributedScope {
+  private static final String[] NAMES = { "GET|sqlProfiler/*", "POST|sqlProfiler/*" };
 
-    public OServerCommandGetSQLProfiler() {
+  public OServerCommandGetSQLProfiler() {
+    super("server.profiler");
+  }
 
-    }
+  @Override
+  public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
+    final String[] parts = checkSyntax(iRequest.getUrl(), 2, "Syntax error: sqlProfiler/<command>/[<config>]|[<from>]");
 
-    @Override
-    public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-        final String[] parts = checkSyntax(iRequest.getUrl(), 2, "Syntax error: profiler/<command>/[<config>]|[<from>]");
+    iRequest.data.commandInfo = "Profiler information";
 
-        iRequest.data.commandInfo = "Profiler information";
+    try {
 
-        ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
-        OSecurityUser user = db.getUser();
+      if (isLocalNode(iRequest)) {
+        final String db = parts[1];
+        if ("GET".equalsIgnoreCase(iRequest.httpMethod)) {
+          final StringWriter jsonBuffer = new StringWriter();
+          final OJSONWriter json = new OJSONWriter(jsonBuffer);
+          json.append(Orient.instance().getProfiler().toJSON("realtime", "db." + db + ".command"));
 
-        if (user.checkIfAllowed(ORule.ResourceGeneric.valueOf(DatabaseProfilerResource.PROFILER), null, 2) != null) {
-
-
-            try {
-
-                final String command = parts[1];
-                final String arg = parts.length > 2 ? parts[2] : null;
-
-                final StringWriter jsonBuffer = new StringWriter();
-                final OJSONWriter json = new OJSONWriter(jsonBuffer);
-                json.append(Orient.instance().getProfiler().toJSON("realtime", "db." + db.getName() + ".command"));
-
-                iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, jsonBuffer.toString(), null);
-
-            } catch (Exception e) {
-                iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, e, null);
-            }
-        } else {
-            iResponse.send(OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
+          iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, jsonBuffer.toString(), null);
+        } else if ("POST".equalsIgnoreCase(iRequest.httpMethod)) {
+          Orient.instance().getProfiler().resetRealtime("db." + db + ".command");
+          iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, null, null);
         }
-        return false;
-    }
+      } else {
+        proxyRequest(iRequest, iResponse);
+      }
 
-    @Override
-    public String[] getNames() {
-        return NAMES;
+    } catch (Exception e) {
+      iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, e, null);
     }
+    return false;
+  }
+
+  @Override
+  public String[] getNames() {
+    return NAMES;
+  }
 }
