@@ -77,7 +77,7 @@ public class OStorageConfiguration implements OSerializableStream {
   public static final String DEFAULT_DATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
   private String charset;
-  public static final int CURRENT_VERSION               = 16;
+  public static final int CURRENT_VERSION               = 17;
   public static final int CURRENT_BINARY_FORMAT_VERSION = 12;
   private volatile           List<OStorageEntryConfiguration>       properties;
   protected final transient  OStorage                               storage;
@@ -344,10 +344,8 @@ public class OStorageConfiguration implements OSerializableStream {
           status = OStorageClusterConfiguration.STATUS.valueOf(read(values[index++]));
 
         currentCluster = new OStoragePaginatedClusterConfiguration(this, clusterId, clusterName, null, cc, bb, aa,
-                                                                   clusterCompression, clusterEncryption, configuration
-                                                                       .getValueAsString(
-                                                                           OGlobalConfiguration.STORAGE_ENCRYPTION_KEY),
-                                                                   clusterConflictStrategy, status);
+            clusterCompression, clusterEncryption, configuration.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY),
+            clusterConflictStrategy, status);
 
       } else if (clusterType.equals("p"))
         // PHYSICAL CLUSTER
@@ -437,7 +435,12 @@ public class OStorageConfiguration implements OSerializableStream {
       for (int i = 0; i < enginesSize; i++) {
         final String name = read(values[index++]);
         final String algorithm = read(values[index++]);
-        final String indexType = read(values[index++]);
+        final String indexType;
+
+        if (version > 16)
+          indexType = read(values[index++]);
+        else
+          indexType = "";
 
         final byte valueSerializerId = Byte.parseByte(read(values[index++]));
         final byte keySerializerId = Byte.parseByte(read(values[index++]));
@@ -476,9 +479,8 @@ public class OStorageConfiguration implements OSerializableStream {
           }
         }
 
-        final IndexEngineData indexEngineData = new IndexEngineData(name, algorithm, indexType, durableInNonTxMode, version, valueSerializerId,
-                                                                    keySerializerId, isAutomatic, types, nullValuesSupport, keySize,
-                                                                    engineProperties);
+        final IndexEngineData indexEngineData = new IndexEngineData(name, algorithm, indexType, durableInNonTxMode, version,
+            valueSerializerId, keySerializerId, isAutomatic, types, nullValuesSupport, keySize, engineProperties);
 
         indexEngines.put(name.toLowerCase(getLocaleInstance()), indexEngineData);
       }
@@ -588,7 +590,9 @@ public class OStorageConfiguration implements OSerializableStream {
     for (IndexEngineData engineData : indexEngines.values()) {
       write(buffer, engineData.name);
       write(buffer, engineData.algorithm);
-      write(buffer, engineData.indexType);
+
+      if (version > 16)
+        write(buffer, engineData.indexType);
 
       write(buffer, engineData.valueSerializerId);
       write(buffer, engineData.keySerializedId);
@@ -848,20 +852,22 @@ public class OStorageConfiguration implements OSerializableStream {
   }
 
   protected void bindPropertiesToContext(final Map<String, Object> iProperties) {
-    final String compressionMethod = iProperties != null
-        ? (String) iProperties.get(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getKey().toLowerCase()) : null;
+    final String compressionMethod = iProperties != null ?
+        (String) iProperties.get(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getKey().toLowerCase()) :
+        null;
     if (compressionMethod != null)
       // SAVE COMPRESSION METHOD IN CONFIGURATION
       getContextConfiguration().setValue(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD, compressionMethod);
 
-    final String encryptionMethod = iProperties != null
-        ? (String) iProperties.get(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD.getKey().toLowerCase()) : null;
+    final String encryptionMethod = iProperties != null ?
+        (String) iProperties.get(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD.getKey().toLowerCase()) :
+        null;
     if (encryptionMethod != null)
       // SAVE ENCRYPTION METHOD IN CONFIGURATION
       getContextConfiguration().setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD, encryptionMethod);
 
-    final String encryptionKey = iProperties != null
-        ? (String) iProperties.get(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey().toLowerCase()) : null;
+    final String encryptionKey =
+        iProperties != null ? (String) iProperties.get(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey().toLowerCase()) : null;
     if (encryptionKey != null)
       // SAVE ENCRYPTION KEY IN CONFIGURATION
       getContextConfiguration().setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY, encryptionKey);
@@ -891,7 +897,7 @@ public class OStorageConfiguration implements OSerializableStream {
       }
 
       iSegment.infoFiles[i] = new OStorageFileConfiguration(iSegment, fileName, read(values[index++]), read(values[index++]),
-                                                            iSegment.fileIncrementSize);
+          iSegment.fileIncrementSize);
     }
 
     return index;
@@ -949,10 +955,8 @@ public class OStorageConfiguration implements OSerializableStream {
     private final Map<String, String> engineProperties;
 
     public IndexEngineData(final String name, final String algorithm, String indexType, final Boolean durableInNonTxMode,
-                           final int version,
-                           final byte valueSerializerId, final byte keySerializedId, final boolean isAutomatic,
-                           final OType[] keyTypes,
-                           final boolean nullValuesSupport, final int keySize, final Map<String, String> engineProperties) {
+        final int version, final byte valueSerializerId, final byte keySerializedId, final boolean isAutomatic,
+        final OType[] keyTypes, final boolean nullValuesSupport, final int keySize, final Map<String, String> engineProperties) {
       this.name = name;
       this.algorithm = algorithm;
       this.indexType = indexType;

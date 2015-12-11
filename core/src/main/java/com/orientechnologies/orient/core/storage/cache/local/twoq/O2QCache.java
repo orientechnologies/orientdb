@@ -48,6 +48,7 @@ import javax.management.ObjectName;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -143,6 +144,10 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
 
   LRUList getAm() {
     return am;
+  }
+
+  boolean inPinnedPages(long fileId, long pageIndex) {
+    return pinnedPages.containsKey(new PinnedPage(fileId, pageIndex));
   }
 
   LRUList getA1out() {
