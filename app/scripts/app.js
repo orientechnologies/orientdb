@@ -38,7 +38,6 @@ var deps = ['header.controller',
   'pascalprecht.translate',
   'ngTagsInput',
   'frapontillo.bootstrap-switch',
-  'easypiechart',
   'datatables',
   'smart-table'];
 

@@ -1058,6 +1058,7 @@ div.users-ui div.container-fluid, div.role-ui div.container-fluid {
   background: #fff;
   box-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
   margin-bottom: 30px;
+  padding: 15px;
 }
 
 .row span.title {
