@@ -7,8 +7,8 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Callable;
 
-import com.orientechnologies.orient.core.storage.cache.local.ConcurrentLRUList;
-import com.orientechnologies.orient.core.storage.cache.local.LRUList;
+import com.orientechnologies.orient.core.storage.cache.local.twoq.ConcurrentLRUList;
+import com.orientechnologies.orient.core.storage.cache.local.twoq.LRUList;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;

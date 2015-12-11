@@ -2930,7 +2930,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       stream.write(binaryFileId, 0, binaryFileId.length);
 
       for (long pageIndex = 0; pageIndex < filledUpTo; pageIndex++) {
-        final OCacheEntry cacheEntry = readCache.load(fileId, pageIndex, true, writeCache, 0);
+        final OCacheEntry cacheEntry = readCache.load(fileId, pageIndex, true, writeCache, 1);
         cacheEntry.acquireSharedLock();
         try {
           final OLogSequenceNumber pageLsn = ODurablePage
@@ -3105,7 +3105,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
           final long pageIndex = OLongSerializer.INSTANCE.deserializeNative(data, 0);
 
-          OCacheEntry cacheEntry = readCache.load(fileId, pageIndex, true, writeCache, 0);
+          OCacheEntry cacheEntry = readCache.load(fileId, pageIndex, true, writeCache, 1);
 
           if (cacheEntry == null) {
             do {
@@ -4487,7 +4487,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         final long pageIndex = updatePageRecord.getPageIndex();
         fileId = readCache.openFile(fileId, writeCache);
 
-        OCacheEntry cacheEntry = readCache.load(fileId, pageIndex, true, writeCache, 0);
+        OCacheEntry cacheEntry = readCache.load(fileId, pageIndex, true, writeCache, 1);
         if (cacheEntry == null) {
           do {
             if (cacheEntry != null)

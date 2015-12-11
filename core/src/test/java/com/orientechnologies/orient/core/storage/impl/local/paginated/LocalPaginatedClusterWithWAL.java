@@ -6,7 +6,7 @@ import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
-import com.orientechnologies.orient.core.storage.cache.local.O2QCache;
+import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;

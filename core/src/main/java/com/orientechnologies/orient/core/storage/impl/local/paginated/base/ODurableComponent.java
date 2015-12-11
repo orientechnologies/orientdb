@@ -127,15 +127,15 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
 
   protected OCacheEntry loadPage(final OAtomicOperation atomicOperation, final long fileId, final long pageIndex,
       final boolean checkPinnedPages) throws IOException {
-    return loadPage(atomicOperation, fileId, pageIndex, checkPinnedPages, 0);
+    return loadPage(atomicOperation, fileId, pageIndex, checkPinnedPages, 1);
   }
 
   protected OCacheEntry loadPage(OAtomicOperation atomicOperation, long fileId, long pageIndex, boolean checkPinnedPages,
-      final int prefetchPages) throws IOException {
+      final int pageCount) throws IOException {
     if (atomicOperation == null)
-      return readCache.load(fileId, pageIndex, checkPinnedPages, writeCache, prefetchPages);
+      return readCache.load(fileId, pageIndex, checkPinnedPages, writeCache, pageCount);
 
-    return atomicOperation.loadPage(fileId, pageIndex, checkPinnedPages, prefetchPages);
+    return atomicOperation.loadPage(fileId, pageIndex, checkPinnedPages, pageCount);
   }
 
   protected void pinPage(OAtomicOperation atomicOperation, OCacheEntry cacheEntry) throws IOException {

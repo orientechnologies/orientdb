@@ -29,7 +29,7 @@ import com.orientechnologies.orient.core.cache.ORecordCacheWeakRefs;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
-import com.orientechnologies.orient.core.storage.cache.local.O2QCache;
+import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
 
 import java.io.File;
 import java.io.PrintStream;

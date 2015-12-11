@@ -7,7 +7,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
-import com.orientechnologies.orient.core.storage.cache.local.O2QCache;
+import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
@@ -231,7 +231,7 @@ public class ReadWriteCacheConcurrentTest {
     }
 
     private void writeToFile(int fileNumber, long pageIndex) throws IOException {
-      OCacheEntry cacheEntry = readBuffer.load(fileIds.get(fileNumber), pageIndex, false, writeBuffer, 0);
+      OCacheEntry cacheEntry = readBuffer.load(fileIds.get(fileNumber), pageIndex, false, writeBuffer, 1);
       if (cacheEntry == null) {
         do {
           if (cacheEntry != null)
@@ -243,7 +243,7 @@ public class ReadWriteCacheConcurrentTest {
 
       if (cacheEntry.getPageIndex() > pageIndex) {
         readBuffer.release(cacheEntry, writeBuffer);
-        cacheEntry = readBuffer.load(fileIds.get(fileNumber), pageIndex, false, writeBuffer, 0);
+        cacheEntry = readBuffer.load(fileIds.get(fileNumber), pageIndex, false, writeBuffer, 1);
       }
 
       OCachePointer pointer = cacheEntry.getCachePointer();
@@ -301,7 +301,7 @@ public class ReadWriteCacheConcurrentTest {
       long pageIndex = Math.abs(new Random().nextInt() % PAGE_COUNT);
       int fileNumber = new Random().nextInt(FILE_COUNT);
 
-      OCacheEntry cacheEntry = readBuffer.load(fileIds.get(fileNumber), pageIndex, false, writeBuffer, 0);
+      OCacheEntry cacheEntry = readBuffer.load(fileIds.get(fileNumber), pageIndex, false, writeBuffer, 1);
       OCachePointer pointer = cacheEntry.getCachePointer();
 
       byte[] content = pointer.getDataPointer().get(systemOffset + OWOWCache.PAGE_PADDING, 8);

@@ -20,7 +20,6 @@
 
 package com.orientechnologies.orient.core.engine.local;
 
-import java.io.IOException;
 import java.util.Map;
 
 import com.orientechnologies.common.exception.OException;
@@ -29,7 +28,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.engine.OEngineAbstract;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.cache.local.O2QCache;
+import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
 /**

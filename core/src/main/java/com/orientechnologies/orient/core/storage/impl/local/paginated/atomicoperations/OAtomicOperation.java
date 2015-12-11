@@ -74,7 +74,9 @@ public class OAtomicOperation {
     return operationUnitId;
   }
 
-  public OCacheEntry loadPage(long fileId, long pageIndex, boolean checkPinnedPages, final int prefetchPages) throws IOException {
+  public OCacheEntry loadPage(long fileId, long pageIndex, boolean checkPinnedPages, final int pageCount) throws IOException {
+    assert pageCount > 0;
+
     fileId = checkFileIdCompatibilty(fileId, storageId);
 
     if (deletedFiles.contains(fileId))
@@ -108,7 +110,7 @@ public class OAtomicOperation {
           return new OCacheEntry(fileId, pageIndex,
               new OCachePointer((ODirectMemoryPointer) null, new OLogSequenceNumber(-1, -1), fileId, pageIndex), false);
         else
-          return readCache.load(fileId, pageIndex, checkPinnedPages, writeCache, prefetchPages);
+          return readCache.load(fileId, pageIndex, checkPinnedPages, writeCache, pageCount);
       }
     }
 
@@ -382,7 +384,7 @@ public class OAtomicOperation {
         final long pageIndex = filePageChangesEntry.getKey();
         final FilePageChanges filePageChanges = filePageChangesEntry.getValue();
 
-        OCacheEntry cacheEntry = readCache.load(fileId, pageIndex, true, writeCache, 0);
+        OCacheEntry cacheEntry = readCache.load(fileId, pageIndex, true, writeCache, 1);
         if (cacheEntry == null) {
           assert filePageChanges.isNew;
           do {
