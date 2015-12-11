@@ -6,12 +6,13 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 @Test
 public class OAtomicUnitEndRecordTest {
-  public void recordMetadataSerializationTest() {
+  public void recordMetadataSerializationTest() throws IOException {
     ORecordOperationMetadata recordOperationMetadata = new ORecordOperationMetadata();
     recordOperationMetadata.addRid(new ORecordId(10, 42));
     recordOperationMetadata.addRid(new ORecordId(42, 10));

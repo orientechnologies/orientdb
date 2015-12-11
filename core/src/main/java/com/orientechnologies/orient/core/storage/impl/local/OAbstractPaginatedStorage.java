@@ -828,6 +828,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         writeAheadLog.preventCutTill(null);
       }
 
+      OLogManager.instance().debug(this, "Exporting records after LSN=%s. Found %d records", lsn, sortedRids.size());
+
       // records may be deleted after we flag them as existing and as result rule of sorting of records
       // (deleted records go first will be broken), so we prohibit any modifications till we do not complete method execution
       final long lockId = atomicOperationsManager.freezeAtomicOperations(null, null);
@@ -848,7 +850,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
               dataOutputStream.writeLong(rid.getClusterPosition());
               dataOutputStream.write(1);
 
-              OLogManager.instance().info(this, "DELTA -> deleted " + rid);
+              OLogManager.instance().debug(this, "Exporting deleted record %s", rid);
 
               // delete to avoid duplication
               ridIterator.remove();
@@ -872,8 +874,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
             dataOutputStream.writeInt(rawBuffer.buffer.length);
             dataOutputStream.write(rawBuffer.buffer);
 
-            OLogManager.instance().info(this, "DELTA -> other rid=" + rid + " type=" + rawBuffer.recordType + " size="
-                + rawBuffer.buffer.length + " v=" + rawBuffer.version);
+            OLogManager.instance().debug(this, "Exporting modified record rid=%s type=%d size=%d v=%d", rid, rawBuffer.recordType,
+                rawBuffer.buffer.length, rawBuffer.version);
 
           }
         } finally {
