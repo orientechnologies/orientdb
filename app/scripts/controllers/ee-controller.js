@@ -815,7 +815,7 @@ ee.controller("WarningsController", function ($scope, $rootScope) {
 
 });
 
-ee.controller('ClusterDBController', function ($scope, $rootScope) {
+ee.controller('ClusterDBController', function ($scope, $rootScope, $timeout) {
 
 
   $scope.clazz = 'tabs-style-linebox';
@@ -823,7 +823,11 @@ ee.controller('ClusterDBController', function ($scope, $rootScope) {
 
   $scope.databases = null;
   $scope.$on('context:changed', function (evt, context) {
-    $scope.$broadcast('db-chosen', {name: context, servers: $scope.databases[context]});
+
+    $timeout(function () {
+      $scope.$broadcast('db-chosen', {name: context, servers: $scope.databases[context]});
+    }, 500)
+
   })
   $scope.$on('server-list', function (evt, servers) {
     if (!$scope.databases) {
@@ -841,22 +845,56 @@ ee.controller('ClusterDBController', function ($scope, $rootScope) {
 
 })
 
-ee.controller('ClusterSingleDBController', function ($scope, Cluster) {
+ee.controller('ClusterSingleDBController', function ($scope, Cluster, Notification) {
 
+
+  $scope.roles = ["master", "replica"];
   $scope.$on('db-chosen', function (evt, db) {
 
     Cluster.database(db.name).then(function (data) {
       $scope.config = data;
       $scope.name = db.name;
+
+
+      $scope.calculatedRoles = {};
+
+      if ($scope.config.servers) {
+        Object.keys($scope.config.servers).forEach(function (k) {
+          if (k === "*") {
+            $scope.servers.forEach(function (s) {
+              $scope.calculatedRoles[s.name] = $scope.config.servers[k];
+            });
+          } else {
+            $scope.calculatedRoles[k] = $scope.config.servers[k];
+          }
+        })
+      }
     })
 
+
+    $scope.isClusterInNode = function (cluster, node) {
+      var tmp = $scope.config.clusters[cluster];
+      if (!tmp.servers)return false;
+      return tmp.servers.indexOf(node) != -1;
+    }
 
   })
 
   $scope.saveConfig = function () {
 
-    Cluster.saveDBConfig({name: $scope.name, config: $scope.config}).then(function () {
+    Object.keys($scope.calculatedRoles).forEach(function (k) {
+      var r = $scope.calculatedRoles[k];
+      var oldRole = $scope.config.servers[k];
+      if (oldRole) {
+        delete $scope.config.servers[k];
+      }
+      if ($scope.config.servers["*"] != r) {
+        $scope.config.servers[k] = r;
+      }
+    })
 
+    Cluster.saveDBConfig({name: $scope.name, config: $scope.config}).then(function () {
+      Notification.push({content: "Distributed Configuration correctly saved.", autoHide: true});
     })
 
   }
@@ -894,6 +932,9 @@ ee.controller('EventsController', function ($scope, Plugins, $modal, Cluster, Pr
 
 
   $scope.addEvent = function () {
+    if (!$scope.events) {
+      $scope.events = [];
+    }
     $scope.events.push({name: 'New Event', when: {name: $scope.eventWhen[0]}, what: {name: $scope.eventWhat[0]}});
   }
   $scope.dropEvent = function (e) {

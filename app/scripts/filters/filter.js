@@ -138,6 +138,10 @@ filterModule.filter('qtype', function () {
 
 filterModule.filter('toSizeString', function () {
   return function (input, args) {
-    return filesize(input);
+    if (input != null) {
+      return filesize(input);
+    }
+    return input;
+
   }
 })
