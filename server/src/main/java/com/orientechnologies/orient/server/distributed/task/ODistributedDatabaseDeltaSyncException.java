@@ -28,16 +28,20 @@ import com.orientechnologies.orient.server.distributed.ODistributedException;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class ODistributedDatabaseDeltaBackupException extends ODistributedException {
-  public ODistributedDatabaseDeltaBackupException(final OLogSequenceNumber requested, final OLogSequenceNumber found) {
-    super("Requested backup of delta with LSN=" + requested + " while last available LSN=" + found);
+public class ODistributedDatabaseDeltaSyncException extends ODistributedException {
+  public ODistributedDatabaseDeltaSyncException(final OLogSequenceNumber requested, final OLogSequenceNumber found) {
+    super("Requested database delta sync with LSN=" + requested + " while last available LSN=" + found);
+  }
+
+  public ODistributedDatabaseDeltaSyncException() {
+    super("Requested database delta sync but no LSN was found");
   }
 
   @Override
   public boolean equals(Object obj) {
-    if (!(obj instanceof ODistributedDatabaseDeltaBackupException))
+    if (!(obj instanceof ODistributedDatabaseDeltaSyncException))
       return false;
 
-    return getMessage().equals(((ODistributedDatabaseDeltaBackupException) obj).getMessage());
+    return getMessage().equals(((ODistributedDatabaseDeltaSyncException) obj).getMessage());
   }
 }

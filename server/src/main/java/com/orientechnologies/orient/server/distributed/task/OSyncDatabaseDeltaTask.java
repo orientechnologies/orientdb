@@ -30,7 +30,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabaseChunk;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
@@ -115,11 +114,9 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
       // CREATE A BACKUP OF DATABASE
       final File backupFile = new File(Orient.getTempPath() + "/backup_" + getNodeSource() + "_" + database.getName() + ".zip");
 
-      final int compressionRate = OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger();
-
       ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-          "creating delta backup of database '%s' (compressionRate=%d, startLSN=%d) in directory: %s...", databaseName,
-          compressionRate, startLSN, backupFile.getAbsolutePath());
+          "creating delta backup of database '%s' (startLSN=%s) in directory: %s...", databaseName, startLSN,
+          backupFile.getAbsolutePath());
 
       if (backupFile.exists())
         backupFile.delete();
@@ -139,7 +136,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
         throw new UnsupportedOperationException("Storage '" + storage.getName() + "' does not support distributed delta backup");
 
       final AtomicReference<OLogSequenceNumber> endLSN = new AtomicReference<OLogSequenceNumber>();
-      final AtomicReference<ODistributedDatabaseDeltaBackupException> exception = new AtomicReference<ODistributedDatabaseDeltaBackupException>();
+      final AtomicReference<ODistributedDatabaseDeltaSyncException> exception = new AtomicReference<ODistributedDatabaseDeltaSyncException>();
 
       new Thread(new Runnable() {
         @Override
@@ -152,7 +149,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
 
             if (endLSN.get() == null)
               // DELTA NOT AVAILABLE, TRY WITH FULL BACKUP
-              exception.set(new ODistributedDatabaseDeltaBackupException(startLSN, ((OAbstractPaginatedStorage) storage).getLSN()));
+              exception.set(new ODistributedDatabaseDeltaSyncException(startLSN, ((OAbstractPaginatedStorage) storage).getLSN()));
 
             lastOperationId.set(database.getStorage().getLastOperationId());
 
@@ -161,8 +158,8 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
 
           } catch (Exception e) {
             // UNKNOWN ERROR, DELTA NOT AVAILABLE, TRY WITH FULL BACKUP
-            exception.set((ODistributedDatabaseDeltaBackupException) OException.wrapException(
-                new ODistributedDatabaseDeltaBackupException(startLSN, ((OAbstractPaginatedStorage) storage).getLSN()), e));
+            exception.set((ODistributedDatabaseDeltaSyncException) OException.wrapException(
+                new ODistributedDatabaseDeltaSyncException(startLSN, ((OAbstractPaginatedStorage) storage).getLSN()), e));
 
           } finally {
             try {
@@ -189,20 +186,8 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
         Thread.sleep(100);
       }
 
-      if (exception.get() instanceof ODistributedDatabaseDeltaBackupException)
+      if (exception.get() instanceof ODistributedDatabaseDeltaSyncException)
         throw exception.get();
-
-      // UPDATE LSN VERSUS THE TARGET NODE
-      try {
-        final ODistributedDatabase distrDatabase = iManager.getMessageService().getDatabase(databaseName);
-
-        distrDatabase.getSyncConfiguration().setLSN(getNodeSource(), endLSN.get());
-
-      } catch (IOException e) {
-        ODistributedServerLog.error(this, iManager.getLocalNodeName(), null, DIRECTION.NONE,
-            "Error on updating distributed-sync.json file for database '%s'. Next request of delta of changes will contains old records too",
-            e, databaseName);
-      }
 
       final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(lastOperationId.get(), backupFile, 0, CHUNK_MAX_SIZE,
           endLSN.get(), true);
