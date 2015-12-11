@@ -44,11 +44,15 @@ public class OrientJdbcDriver implements java.sql.Driver {
   }
 
   public boolean acceptsURL(String url) throws SQLException {
-
-    return url.startsWith("jdbc:orient:");
+    if (url == null) {
+      return false;
+    }
+    return url.toLowerCase().startsWith("jdbc:orient:");
   }
 
   public Connection connect(String url, Properties info) throws SQLException {
+    if (!acceptsURL(url))
+      return null;
     return new OrientJdbcConnection(url, info);
   }
 
