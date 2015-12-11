@@ -44,7 +44,7 @@ public abstract class OrientElement implements Element {
     public String label() {
         String internalClassName = getRawDocument().getClassName();
         // User labels on edges/vertices are prepended with E_ or V_ . The user should not see that.
-        return internalClassName.length() == 1 ? INTERNAL_CLASSES_TO_TINKERPOP_CLASSES.get(internalClassName) : internalClassName.substring(2);
+        return internalClassName.length() == 1 ? INTERNAL_CLASSES_TO_TINKERPOP_CLASSES.get(internalClassName) : graph.classNameToLabel(internalClassName);
     }
 
     public Graph graph() {

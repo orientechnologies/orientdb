@@ -66,6 +66,7 @@ public final class OrientGraph implements Graph {
     public static String CONFIG_OPEN = "orient-open";
     public static String CONFIG_TRANSACTIONAL = "orient-transactional";
     public static String CONFIG_POOL_SIZE = "orient-max-poolsize";
+    public static String CONFIG_LABEL_AS_CLASSNAME = "orient-label-as-classname";
 
     protected final ODatabaseDocumentTx database;
     protected final Features features;
@@ -127,9 +128,7 @@ public final class OrientGraph implements Graph {
         if (ElementHelper.getIdValue(keyValues).isPresent()) throw Vertex.Exceptions.userSuppliedIdsNotSupported();
 
         String label = ElementHelper.getLabelValue(keyValues).orElse(OImmutableClass.VERTEX_CLASS_NAME);
-        String className = label.equals(OImmutableClass.VERTEX_CLASS_NAME) ?
-            OImmutableClass.VERTEX_CLASS_NAME :
-            OImmutableClass.VERTEX_CLASS_NAME + "_" + label;
+        String className = labelToClassName(label, OImmutableClass.VERTEX_CLASS_NAME);
         OrientVertex vertex = new OrientVertex(this, className);
         vertex.property(keyValues);
 
@@ -165,6 +164,26 @@ public final class OrientGraph implements Graph {
             r -> new OrientVertex(this, getRawDocument(r)),
             vertexIds);
     }
+
+    /**
+     * Convert a label to orientdb class name
+     */
+    public String labelToClassName(String label, String prefix) {
+    	if (configuration.getBoolean(CONFIG_LABEL_AS_CLASSNAME, false)) {
+        	return label;
+    	}
+		return label.equals(prefix) ? prefix : prefix + "_" + label;
+    }
+    
+    /**
+     * Convert a orientdb class name to label
+     */
+    public String classNameToLabel(String className) {
+    	if (configuration.getBoolean(CONFIG_LABEL_AS_CLASSNAME, false)) {
+        	return className;
+    	}
+    	return className.substring(2);
+    }    
 
     protected Object convertValue(final OIndex<?> idx, Object iValue) {
         if (iValue != null) {
@@ -209,6 +228,10 @@ public final class OrientGraph implements Graph {
     private OIndexManager getIndexManager() {
         return database.getMetadata().getIndexManager();
     }
+    
+    private OSchema getSchema() {
+    	return database.getMetadata().getSchema();
+    }
 
 
     public Set<String> getIndexedKeys(String className) {
@@ -241,11 +264,21 @@ public final class OrientGraph implements Graph {
     }
 
     public Set<String> getVertexIndexedKeys(final String label) {
-        return getIndexedKeys(OImmutableClass.VERTEX_CLASS_NAME + "_" + label);
+        String className = labelToClassName(label, OImmutableClass.VERTEX_CLASS_NAME);
+    	OClass cls = getSchema().getClass(className);
+    	if (cls != null && cls.isSubClassOf(OImmutableClass.VERTEX_CLASS_NAME)) {
+    		return getIndexedKeys(className);
+    	}
+		return new HashSet<String>();
     }
 
     public Set<String> getEdgeIndexedKeys(final String label) {
-        return getIndexedKeys(OImmutableClass.EDGE_CLASS_NAME + "_" + label);
+        String className = labelToClassName(label, OImmutableClass.EDGE_CLASS_NAME);
+    	OClass cls = getSchema().getClass(className);
+    	if (cls != null && cls.isSubClassOf(OImmutableClass.EDGE_CLASS_NAME)) {
+    		return getIndexedKeys(className);
+    	}
+    	return new HashSet<String>();
     }
 
     @Override
@@ -438,7 +471,8 @@ public final class OrientGraph implements Graph {
     public void createClass(final String className, final OClass superClass) {
         makeActive();
         OSchemaProxy schema = database.getMetadata().getSchema();
-        if (schema.getClass(className) == null) {
+        OClass cls = schema.getClass(className);
+        if (cls == null) {
             try
             {
               schema.createClass(className, superClass);
@@ -448,6 +482,11 @@ public final class OrientGraph implements Graph {
               throw new IllegalArgumentException(e);
             }
             OLogManager.instance().info(this, "created class '" + className + "' as subclass of '" + superClass + "'");
+        }
+        else {
+        	if (!cls.isSubClassOf(superClass)) {
+                throw new IllegalArgumentException("unable to create class '" + className + "' as subclass of '" + superClass + "'. different super class.");        		
+        	}
         }
     }
 
@@ -500,14 +539,14 @@ public final class OrientGraph implements Graph {
 
 
     public <E extends Element> void createVertexIndex(final String key, final String label, final Configuration configuration) {
-        String className = OrientVertexType.CLASS_NAME + "_" + label;
+        String className = labelToClassName(label, OrientVertexType.CLASS_NAME);
         createVertexClass(className);
         createIndex(key, className, configuration);
     }
 
 
     public <E extends Element> void createEdgeIndex(final String key, final String label, final Configuration configuration) {
-        String className = OrientEdgeType.CLASS_NAME + "_" + label;
+        String className = labelToClassName(label, OrientEdgeType.CLASS_NAME);
         createEdgeClass(className);
         createIndex(key, className, configuration);
     }

@@ -17,6 +17,7 @@ public final class OrientGraphFactory {
     protected final String password;
     protected Configuration configuration;
     protected volatile OPartitionedDatabasePool pool;
+    protected boolean labelAsClassName;
 
     public OrientGraphFactory(String url) {
         this(url, ADMIN, ADMIN);
@@ -26,6 +27,7 @@ public final class OrientGraphFactory {
         this.url = url;
         this.user = user;
         this.password = password;
+        this.labelAsClassName = false;
     }
 
     public OrientGraphFactory(Configuration config) {
@@ -104,6 +106,7 @@ public final class OrientGraphFactory {
                 setProperty(OrientGraph.CONFIG_CREATE, create);
                 setProperty(OrientGraph.CONFIG_OPEN, open);
                 setProperty(OrientGraph.CONFIG_TRANSACTIONAL, transactional);
+                setProperty(OrientGraph.CONFIG_LABEL_AS_CLASSNAME, labelAsClassName);
             }};
     }
 
@@ -119,6 +122,16 @@ public final class OrientGraphFactory {
         } else if (open) db.open(user, password);
 
         return db;
+    }
+
+    /**
+     * Enable or disable the prefixing of class names with V_<label> for vertices or E_<label> for edges.
+     * 
+     * @param is	if true classname equals label, if false classname is prefixed with V_ or E_ (default)
+     */
+    public OrientGraphFactory setLabelAsClassName(boolean is) {
+        this.labelAsClassName = is;
+        return this;
     }
 
     /**

@@ -183,8 +183,7 @@ public final class OrientVertex extends OrientElement implements Vertex {
             throw new IllegalStateException("label cannot be null");
 
         // CREATE THE EDGE DOCUMENT TO STORE FIELDS TOO
-        String className = label.equals(OImmutableClass.EDGE_CLASS_NAME) ?
-            OImmutableClass.EDGE_CLASS_NAME : OImmutableClass.EDGE_CLASS_NAME + "_" + label;
+        String className = graph.labelToClassName(label, OImmutableClass.EDGE_CLASS_NAME);
         edge = new OrientEdge(graph, className, outDocument, inDocument, label);
         edge.property(keyValues);
 

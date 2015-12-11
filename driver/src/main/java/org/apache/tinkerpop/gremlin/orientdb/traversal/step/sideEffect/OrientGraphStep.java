@@ -118,7 +118,7 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E> imple
             String key = indexedKeyAndValue.get().getValue0();
             Object value = indexedKeyAndValue.get().getValue1();
 
-            String className = OImmutableClass.VERTEX_CLASS_NAME + '_' + elementLabel.get();
+            String className = graph.labelToClassName(elementLabel.get(), OImmutableClass.VERTEX_CLASS_NAME);
             Set<OIndex<?>> classIndexes = indexManager.getClassIndexes(className);
             Iterator<OIndex<?>> keyIndexes = classIndexes.stream().filter(idx -> idx.getDefinition().getFields().contains(key)).iterator();
 
