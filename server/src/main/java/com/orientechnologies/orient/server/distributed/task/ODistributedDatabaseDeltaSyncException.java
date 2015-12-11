@@ -33,8 +33,8 @@ public class ODistributedDatabaseDeltaSyncException extends ODistributedExceptio
     super(exception);
   }
 
-  public ODistributedDatabaseDeltaSyncException(final OLogSequenceNumber requested, final OLogSequenceNumber found) {
-    super("Requested database delta sync with LSN=" + requested + " while last available LSN=" + found);
+  public ODistributedDatabaseDeltaSyncException(final OLogSequenceNumber requested) {
+    super("Requested database delta sync with LSN=" + requested + " but not found in database");
   }
 
   public ODistributedDatabaseDeltaSyncException(final String iMessage) {

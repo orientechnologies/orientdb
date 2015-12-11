@@ -640,7 +640,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
         if (n.startsWith(CONFIG_DBSTATUS_PREFIX))
           if (n.substring(CONFIG_DBSTATUS_PREFIX.length()).equals(nodeLeftName)) {
-            ODistributedServerLog.debug(this, nodeLeftName, null, DIRECTION.NONE,
+            ODistributedServerLog.debug(this, nodeName, null, DIRECTION.NONE,
                 "removing dbstatus for the node %s that just left: %s", nodeLeftName, n);
             it.remove();
           }
@@ -657,7 +657,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       if (nodeLeftName.startsWith("ext:")) {
         final List<String> registeredNodes = getRegisteredNodes();
 
-        ODistributedServerLog.error(this, nodeLeftName, null, DIRECTION.NONE,
+        ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE,
             "removed node id=%s name=%s has not being recognized. Remove the node manually (registeredNodes=%s)", member,
             nodeLeftName, registeredNodes);
       }
@@ -680,39 +680,39 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     if (key.startsWith(CONFIG_NODE_PREFIX)) {
       if (!iEvent.getMember().equals(hazelcastInstance.getCluster().getLocalMember())) {
         final ODocument cfg = (ODocument) iEvent.getValue();
-        final String nodejoinedName = (String) cfg.field("name");
+        final String joinedNodeName = (String) cfg.field("name");
 
-        if (this.nodeName.equals(nodejoinedName)) {
-          ODistributedServerLog.error(this, nodejoinedName, getNodeName(iEvent.getMember()), DIRECTION.IN,
-              "Found a new node with the same name as current: '" + nodejoinedName
+        if (this.nodeName.equals(joinedNodeName)) {
+          ODistributedServerLog.error(this, joinedNodeName, getNodeName(iEvent.getMember()), DIRECTION.IN,
+              "Found a new node with the same name as current: '" + joinedNodeName
                   + "'. The node has been excluded. Change the name in its config/orientdb-dserver-config.xml file");
 
-          throw new ODistributedException("Found a new node with the same name as current: '" + nodejoinedName
+          throw new ODistributedException("Found a new node with the same name as current: '" + joinedNodeName
               + "'. The node has been excluded. Change the name in its config/orientdb-dserver-config.xml file");
         }
 
         // NOTIFY NODE IS GOING TO BE ADDED. EVERYBODY IS OK?
         for (ODistributedLifecycleListener l : listeners) {
-          if (!l.onNodeJoining(nodejoinedName)) {
+          if (!l.onNodeJoining(joinedNodeName)) {
             // DENY JOIN
-            ODistributedServerLog.info(this, nodejoinedName, getNodeName(iEvent.getMember()), DIRECTION.IN,
+            ODistributedServerLog.info(this, nodeName, getNodeName(iEvent.getMember()), DIRECTION.IN,
                 "denied node to join the cluster id=%s name=%s", iEvent.getMember(), getNodeName(iEvent.getMember()));
             return;
           }
         }
 
-        activeNodes.put(nodejoinedName, (Member) iEvent.getMember());
+        activeNodes.put(joinedNodeName, (Member) iEvent.getMember());
 
-        ODistributedServerLog.info(this, nodejoinedName, getNodeName(iEvent.getMember()), DIRECTION.IN,
+        ODistributedServerLog.info(this, nodeName, getNodeName(iEvent.getMember()), DIRECTION.IN,
             "added node configuration id=%s name=%s, now %d nodes are configured", iEvent.getMember(),
             getNodeName(iEvent.getMember()), activeNodes.size());
 
         installNewDatabases(false);
-      }
 
-      // NOTIFY NODE WAS ADDED SUCCESSFULLY
-      for (ODistributedLifecycleListener l : listeners)
-        l.onNodeJoined(nodeName);
+        // NOTIFY NODE WAS ADDED SUCCESSFULLY
+        for (ODistributedLifecycleListener l : listeners)
+          l.onNodeJoined(joinedNodeName);
+      }
 
     } else if (key.startsWith(CONFIG_DATABASE_PREFIX)) {
       // SYNCHRONIZE ADDING OF CLUSTERS TO AVOID DEADLOCKS
@@ -1019,12 +1019,12 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
               "Requesting sync of delta database '%s' on local server failed, retrying...", databaseName);
           return false;
         } else if (value instanceof ODistributedDatabaseDeltaSyncException) {
-          ODistributedServerLog.error(this, nodeName, r.getKey(), DIRECTION.IN, "Error on installing database %s in %s",
-              databaseName, dbPath);
+          ODistributedServerLog.error(this, nodeName, r.getKey(), DIRECTION.IN,
+              "Error on installing database delta %s, requesting full database sync...", databaseName, dbPath);
           throw (ODistributedDatabaseDeltaSyncException) value;
         } else if (value instanceof Throwable) {
-          ODistributedServerLog.error(this, nodeName, r.getKey(), DIRECTION.IN, "Error on installing database %s in %s",
-              (Exception) value, databaseName, dbPath);
+          ODistributedServerLog.error(this, nodeName, r.getKey(), DIRECTION.IN, "Error on installing database delta %s in %s (%s)",
+              (Exception) value, databaseName, dbPath, value);
         } else if (value instanceof ODistributedDatabaseChunk) {
 
           final Set<String> toSyncClusters = installDatabaseFromNetwork(dbPath, databaseName, distrDatabase, r.getKey(),

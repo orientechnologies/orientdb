@@ -149,7 +149,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
 
             if (endLSN.get() == null)
               // DELTA NOT AVAILABLE, TRY WITH FULL BACKUP
-              exception.set(new ODistributedDatabaseDeltaSyncException(startLSN, ((OAbstractPaginatedStorage) storage).getLSN()));
+              exception.set(new ODistributedDatabaseDeltaSyncException(startLSN));
 
             lastOperationId.set(database.getStorage().getLastOperationId());
 
@@ -158,8 +158,8 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
 
           } catch (Exception e) {
             // UNKNOWN ERROR, DELTA NOT AVAILABLE, TRY WITH FULL BACKUP
-            exception.set((ODistributedDatabaseDeltaSyncException) OException.wrapException(
-                new ODistributedDatabaseDeltaSyncException(startLSN, ((OAbstractPaginatedStorage) storage).getLSN()), e));
+            exception.set((ODistributedDatabaseDeltaSyncException) OException
+                .wrapException(new ODistributedDatabaseDeltaSyncException(startLSN), e));
 
           } finally {
             try {
