@@ -764,24 +764,26 @@ public class OEnterpriseProfiler extends OAbstractProfiler {
 
             ODistributedServerManager distributedManager = server.getDistributedManager();
 
-            String localNodeName = distributedManager.getLocalNodeName();
-            if (distributedManager != null && distributedManager.isEnabled()) {
-              Map<String, Object> configurationMap = distributedManager.getConfigurationMap();
+            if (distributedManager != null) {
+              String localNodeName = distributedManager.getLocalNodeName();
+              if (distributedManager != null && distributedManager.isEnabled()) {
+                Map<String, Object> configurationMap = distributedManager.getConfigurationMap();
 
-              ODocument doc = (ODocument) configurationMap.get("clusterStats");
+                ODocument doc = (ODocument) configurationMap.get("clusterStats");
 
-              if (doc == null) {
-                doc = new ODocument();
-                doc.setTrackingChanges(false);
+                if (doc == null) {
+                  doc = new ODocument();
+                  doc.setTrackingChanges(false);
+                }
+                try {
+                  ODocument entries = new ODocument().fromJSON(toJSON("realtime", null));
+                  doc.field(localNodeName, entries.toMap());
+                  configurationMap.put("clusterStats", doc);
+                } catch (Exception e) {
+                  OLogManager.instance().debug(this, "Cannot publish realtime stats for node %s", e, localNodeName);
+                }
+
               }
-              try {
-                ODocument entries = new ODocument().fromJSON(toJSON("realtime", null));
-                doc.field(localNodeName, entries.toMap());
-                configurationMap.put("clusterStats", doc);
-              } catch (Exception e) {
-                OLogManager.instance().debug(this, "Cannot publish realtime stats for node %s", e, localNodeName);
-              }
-
             }
           }
         }

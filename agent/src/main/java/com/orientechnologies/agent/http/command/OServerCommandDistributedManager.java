@@ -17,20 +17,21 @@
  */
 package com.orientechnologies.agent.http.command;
 
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedMessageService;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
+import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class OServerCommandDistributedManager extends OServerCommandDistributedScope {
 
@@ -86,49 +87,93 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
     final String command = parts[1];
     final String id = parts.length > 2 ? parts[2] : null;
 
-    if (manager != null) {
-      final ODocument doc;
+    final ODocument doc;
 
-      if (command.equalsIgnoreCase("node")) {
+    if (command.equalsIgnoreCase("node")) {
 
+      if (manager != null) {
         doc = manager.getClusterConfiguration();
         enhanceStats(doc, (ODocument) manager.getConfigurationMap().get("clusterStats"));
+      } else {
+        doc = new ODocument();
 
-      } else if (command.equalsIgnoreCase("queue")) {
+        final ODocument member = new ODocument();
 
-        final ODistributedMessageService messageService = manager.getMessageService();
-        if (id == null) {
-          // RETURN QUEUE NAMES
-          final List<String> queues = messageService.getManagedQueueNames();
-          doc = new ODocument();
-          doc.field("queues", queues);
-        } else {
-          doc = messageService.getQueueStats(id);
+        member.field("name", "orientdb");
+        member.field("status", "ONLINE");
+
+        List<Map<String, Object>> listeners = new ArrayList<Map<String, Object>>();
+
+        member.field("listeners", listeners, OType.EMBEDDEDLIST);
+
+        String realtime = Orient.instance().getProfiler().toJSON("realtime", "system.config.");
+        ODocument cfg = new ODocument().fromJSON(realtime);
+
+        Map<String, Object> eval = (Map) cfg.eval("realtime.hookValues");
+
+        ODocument configuration = new ODocument();
+        member.field("configuration", configuration);
+        for (String key : eval.keySet()) {
+          if (key.startsWith("system.config.")) {
+            configuration.field(key.replace("system.config.", "").replace(".", "_"), eval.get(key));
+          }
         }
+        for (OServerNetworkListener listener : server.getNetworkListeners()) {
+          final Map<String, Object> listenerCfg = new HashMap<String, Object>();
+          listeners.add(listenerCfg);
 
-      } else if (command.equalsIgnoreCase("database")) {
+          listenerCfg.put("protocol", listener.getProtocolType().getSimpleName());
+          listenerCfg.put("listen", listener.getListeningAddress(true));
+        }
+        member.field("databases", server.getAvailableStorageNames().keySet());
+        doc.field("members", new ArrayList<ODocument>() {
+          {
+            add(member);
+          }
+        });
+      }
 
-        ODistributedConfiguration cfg = manager.getDatabaseConfiguration(id);
-        doc = cfg.serialize();
+    } else if (command.equalsIgnoreCase("queue")) {
 
-      } else if (command.equalsIgnoreCase("stats")) {
+      final ODistributedMessageService messageService = manager.getMessageService();
+      if (id == null) {
+        // RETURN QUEUE NAMES
+        final List<String> queues = messageService.getManagedQueueNames();
+        doc = new ODocument();
+        doc.field("queues", queues);
+      } else {
+        doc = messageService.getQueueStats(id);
+      }
 
-        if (id != null) {
+    } else if (command.equalsIgnoreCase("database")) {
 
+      ODistributedConfiguration cfg = manager.getDatabaseConfiguration(id);
+      doc = cfg.serialize();
+
+    } else if (command.equalsIgnoreCase("stats")) {
+
+      if (id != null) {
+
+        if (manager != null) {
           ODocument clusterStats = (ODocument) manager.getConfigurationMap().get("clusterStats");
           doc = new ODocument().fromMap(clusterStats.<Map<String, Object>> field(id));
         } else {
+          doc = new ODocument().fromJSON(Orient.instance().getProfiler().toJSON("realtime", null));
+        }
+      } else {
+        if (manager != null) {
           doc = manager.getClusterConfiguration();
           doc.field("clusterStats", manager.getConfigurationMap().get("clusterStats"));
+        } else {
+          throw new OConfigurationException("Seems that the server is not running in distributed mode");
         }
 
-      } else
-        throw new IllegalArgumentException("Command '" + command + "' not supported");
+      }
 
-      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, doc.toJSON(""), null);
     } else {
-      throw new OConfigurationException("Seems that the server is not running in distributed mode");
+      throw new IllegalArgumentException("Command '" + command + "' not supported");
     }
+    iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, doc.toJSON(""), null);
   }
 
   private void enhanceStats(ODocument doc, ODocument clusterStats) {

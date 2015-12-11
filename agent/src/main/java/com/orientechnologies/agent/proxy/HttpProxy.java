@@ -2,6 +2,7 @@ package com.orientechnologies.agent.proxy;
 
 import com.orientechnologies.agent.OEnterpriseAgent;
 import com.orientechnologies.agent.OL;
+import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
@@ -105,8 +106,13 @@ public class HttpProxy {
           @Override
           public void onProxySuccess(OHttpRequest request, OHttpResponse response, InputStream is) throws IOException {
 
-            ODocument fromJSON = toDoc(is);
-            response.writeRecord(fromJSON, null, "");
+            try {
+              ODocument fromJSON = toDoc(is);
+              response.writeRecord(fromJSON, null, "");
+            } catch (OSerializationException e) {
+              response.send(OHttpUtils.STATUS_OK_NOCONTENT_CODE, OHttpUtils.STATUS_OK_NOCONTENT_DESCRIPTION,
+                  OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
+            }
           }
 
           @Override

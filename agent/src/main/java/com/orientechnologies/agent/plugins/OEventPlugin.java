@@ -150,31 +150,34 @@ public class OEventPlugin extends OServerPluginAbstract implements OServerPlugin
 
       }
     });
-    distributedManager.registerLifecycleListener(new ODistributedLifecycleListener() {
-      @Override
-      public boolean onNodeJoining(String iNode) {
+    if (distributedManager != null) {
+      distributedManager.registerLifecycleListener(new ODistributedLifecycleListener() {
+        @Override
+        public boolean onNodeJoining(String iNode) {
 
-        return false;
-      }
+          return false;
+        }
 
-      @Override
-      public void onNodeJoined(String iNode) {
-        if (isLeader(distributedManager))
-          eventController.broadcast(OEvent.EVENT_TYPE.LOG_WHEN, new ODocument().field("server", iNode).field("message", "ONLINE"));
-      }
+        @Override
+        public void onNodeJoined(String iNode) {
+          if (isLeader(distributedManager))
+            eventController
+                .broadcast(OEvent.EVENT_TYPE.LOG_WHEN, new ODocument().field("server", iNode).field("message", "ONLINE"));
+        }
 
-      @Override
-      public void onNodeLeft(String iNode) {
-        if (isLeader(distributedManager))
-          eventController.broadcast(OEvent.EVENT_TYPE.LOG_WHEN, new ODocument().field("server", iNode).field("message", "OFFLINE"));
-      }
+        @Override
+        public void onNodeLeft(String iNode) {
+          if (isLeader(distributedManager))
+            eventController.broadcast(OEvent.EVENT_TYPE.LOG_WHEN, new ODocument().field("server", iNode)
+                .field("message", "OFFLINE"));
+        }
 
-      @Override
-      public void onDatabaseChangeStatus(String iNode, String iDatabaseName, ODistributedServerManager.DB_STATUS iNewStatus) {
+        @Override
+        public void onDatabaseChangeStatus(String iNode, String iDatabaseName, ODistributedServerManager.DB_STATUS iNewStatus) {
 
-      }
-    });
-
+        }
+      });
+    }
   }
 
   @Override
