@@ -2,9 +2,10 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.directmemory.ODirectMemoryPointerFactory;
-import com.orientechnologies.common.util.MersenneTwisterFast;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
+import java.util.Random;
 
 @Test
 public class WALChangesTreeTest {
@@ -206,7 +207,7 @@ public class WALChangesTreeTest {
     final long ts = System.currentTimeMillis();
     System.out.println("TestInsertRandom seed : " + ts);
 
-    final MersenneTwisterFast rnd = new MersenneTwisterFast(ts);
+    final Random rnd = new Random(ts);
     for (int i = 0; i < 100; i++) {
       final int start = rnd.nextInt(data.length) - 3;
       final int length = rnd.nextInt(3) + 4;
@@ -259,7 +260,7 @@ public class WALChangesTreeTest {
     final long ts = System.currentTimeMillis();
     System.out.println("TestInsertRandomDM seed : " + ts);
 
-    final MersenneTwisterFast rnd = new MersenneTwisterFast(ts);
+    final Random rnd = new Random(ts);
     for (int i = 0; i < 100; i++) {
       final int start = rnd.nextInt(data.length) - 3;
       final int length = rnd.nextInt(3) + 4;

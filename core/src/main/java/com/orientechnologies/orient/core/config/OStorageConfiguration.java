@@ -590,9 +590,7 @@ public class OStorageConfiguration implements OSerializableStream {
     for (IndexEngineData engineData : indexEngines.values()) {
       write(buffer, engineData.name);
       write(buffer, engineData.algorithm);
-
-      if (version > 16)
-        write(buffer, engineData.indexType);
+      write(buffer, engineData.indexType == null ? "" : engineData.indexType);
 
       write(buffer, engineData.valueSerializerId);
       write(buffer, engineData.keySerializedId);

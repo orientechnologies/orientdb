@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.core.index.hashindex.local;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.common.util.MersenneTwisterFast;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
@@ -15,6 +14,7 @@ import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.Random;
 import java.util.Set;
 
 /**
@@ -86,7 +86,7 @@ public class OLocalHashTableTest {
 
   public void testKeyPutRandomUniform() throws IOException {
     final Set<Integer> keys = new HashSet<Integer>();
-    final MersenneTwisterFast random = new MersenneTwisterFast();
+    final Random random = new Random();
 
     while (keys.size() < KEYS_COUNT) {
       int key = random.nextInt();
@@ -102,7 +102,7 @@ public class OLocalHashTableTest {
 
   public void testKeyPutRandomGaussian() throws IOException {
     Set<Integer> keys = new HashSet<Integer>();
-    MersenneTwisterFast random = new MersenneTwisterFast();
+    Random random = new Random();
     keys.clear();
 
     while (keys.size() < KEYS_COUNT) {
@@ -121,7 +121,7 @@ public class OLocalHashTableTest {
     final Set<Integer> keys = new HashSet<Integer>();
     long ms = System.currentTimeMillis();
     System.out.println("testKeyDeleteRandomUniform : " + ms);
-    final MersenneTwisterFast random = new MersenneTwisterFast(ms);
+    final Random random = new Random(ms);
 
     while (keys.size() < KEYS_COUNT) {
       int key = random.nextInt();
@@ -148,7 +148,7 @@ public class OLocalHashTableTest {
   public void testKeyDeleteRandomGaussian() throws IOException {
     HashSet<Integer> keys = new HashSet<Integer>();
 
-    MersenneTwisterFast random = new MersenneTwisterFast();
+    Random random = new Random();
     while (keys.size() < KEYS_COUNT) {
       int key = (int) (random.nextGaussian() * Integer.MAX_VALUE / 2 + Integer.MAX_VALUE);
 
