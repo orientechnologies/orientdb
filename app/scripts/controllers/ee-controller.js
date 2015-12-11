@@ -187,22 +187,31 @@ ee.controller('SinglePollerController', function ($scope, $rootScope, $location,
 })
 
 
-ee.controller('ClusterController', function ($scope, Cluster, Notification, $rootScope, $timeout) {
+ee.controller('ClusterController', function ($scope, Cluster, Notification, $rootScope, $timeout, AgentService) {
 
 
+  $scope.links = {
+    ee: "http://www.orientdb.com/orientdb-enterprise"
+  }
   $scope.polling = true;
+  $scope.agentActive = AgentService.active;
   var clusterPolling = function () {
-    Cluster.stats().then(function (data) {
 
-      $scope.servers = data.members;
+    if (AgentService.active) {
+      Cluster.stats().then(function (data) {
+
+        $scope.servers = data.members;
 
 
-      $scope.clusterStats = data.clusterStats;
-      $rootScope.$broadcast("server-list", $scope.servers);
+        $scope.clusterStats = data.clusterStats;
+        $rootScope.$broadcast("server-list", $scope.servers);
 
-    }).catch(function (error) {
-      Notification.push({content: error.data, error: true, autoHide: true});
-    })
+      }).catch(function (error) {
+        Notification.push({content: error.data, error: true, autoHide: true});
+      })
+    } else {
+      $scope.polling = false;
+    }
   }
   var statsWatching = function (polling) {
     $timeout(function () {
@@ -354,17 +363,24 @@ ee.controller('ClusterOverviewController', function ($scope, $rootScope) {
 });
 
 
-ee.controller("ProfilerController", ['$scope', 'Profiler', 'Cluster', 'Spinner', 'Notification', 'CommandCache', 'Database', 'scroller', function ($scope, Profiler, Cluster, Spinner, Notification, CommandCache, Database, scroller) {
+ee.controller("ProfilerController", ['$scope', 'Profiler', 'Cluster', 'Spinner', 'Notification', 'CommandCache', 'Database', 'scroller', 'AgentService', function ($scope, Profiler, Cluster, Spinner, Notification, CommandCache, Database, scroller, AgentService) {
 
 
   $scope.strategies = ["INVALIDATE_ALL", "PER_CLUSTER"];
 
-  $scope.itemsByPage = 10;
-  Cluster.node().then(function (data) {
-    $scope.servers = data.members;
-    $scope.server = $scope.servers[0];
 
-  });
+  $scope.links = {
+    ee: "http://www.orientdb.com/orientdb-enterprise"
+  }
+  $scope.agentActive = AgentService.active;
+  $scope.itemsByPage = 10;
+  if (AgentService.active) {
+    Cluster.node().then(function (data) {
+      $scope.servers = data.members;
+      $scope.server = $scope.servers[0];
+
+    });
+  }
 
 
   $scope.isLoading = false;
@@ -484,8 +500,15 @@ ee.controller("ProfilerController", ['$scope', 'Profiler', 'Cluster', 'Spinner',
 }]);
 
 
-ee.controller("AuditingController", ['$scope', 'Auditing', 'Cluster', 'Spinner', 'Notification', '$modal', 'ngTableParams', function ($scope, Auditing, Cluster, Spinner, Notification, $modal, ngTableParams) {
+ee.controller("AuditingController", ['$scope', 'Auditing', 'Cluster', 'Spinner', 'Notification', '$modal', 'ngTableParams','AgentService', function ($scope, Auditing, Cluster, Spinner, Notification, $modal, ngTableParams,AgentService) {
 
+
+
+
+  $scope.links = {
+    ee: "http://www.orientdb.com/orientdb-enterprise"
+  }
+  $scope.agentActive = AgentService.active;
 
   $scope.active = 'log';
 
@@ -494,16 +517,18 @@ ee.controller("AuditingController", ['$scope', 'Auditing', 'Cluster', 'Spinner',
     limit: 100
   }
 
-  Cluster.node().then(function (data) {
-    $scope.servers = data.members;
-    $scope.server = $scope.servers[0];
+  if (AgentService.active) {
+    Cluster.node().then(function (data) {
+      $scope.servers = data.members;
+      $scope.server = $scope.servers[0];
 
-    if ($scope.server.databases.length > 0) {
-      $scope.db = $scope.server.databases[0];
+      if ($scope.server.databases.length > 0) {
+        $scope.db = $scope.server.databases[0];
 
-    }
-  });
+      }
+    });
 
+  }
   $scope.itemsByPage = 10;
 
   $scope.template = 'views/server/stats/auditing/log.html';
@@ -907,10 +932,15 @@ ee.controller('ClusterSingleDBController', function ($scope, Cluster, Notificati
   }
 })
 
-ee.controller('EventsController', function ($scope, Plugins, $modal, Cluster, Profiler, Notification) {
+ee.controller('EventsController', function ($scope, Plugins, $modal, Cluster, Profiler, Notification, AgentService) {
 
   var PNAME = "ee-events";
 
+
+  $scope.links = {
+    ee: "http://www.orientdb.com/orientdb-enterprise"
+  }
+  $scope.agentActive = AgentService.active;
 
   $scope.alertValues = [">=", "<="];
 
@@ -922,21 +952,23 @@ ee.controller('EventsController', function ($scope, Plugins, $modal, Cluster, Pr
 
   $scope.eventWhat = [{title: "Mail", name: 'MailWhat'}, {title: "Http Request", name: 'HttpWhat'}];
 
-  Plugins.one({plugin: 'mail'}).then(function (plugin) {
-    $scope.profiles = plugin.profiles;
-  });
 
-  Profiler.metadata().then(function (data) {
-    $scope.metadata = data.metadata;
-  });
-  Cluster.node().then(function (data) {
-    $scope.servers = data.members;
-    Plugins.one({plugin: PNAME}).then(function (plugin) {
-      $scope.config = plugin;
-      $scope.events = plugin.events;
+  if (AgentService.active) {
+    Plugins.one({plugin: 'mail'}).then(function (plugin) {
+      $scope.profiles = plugin.profiles;
     });
-  });
 
+    Profiler.metadata().then(function (data) {
+      $scope.metadata = data.metadata;
+    });
+    Cluster.node().then(function (data) {
+      $scope.servers = data.members;
+      Plugins.one({plugin: PNAME}).then(function (plugin) {
+        $scope.config = plugin;
+        $scope.events = plugin.events;
+      });
+    });
+  }
 
   $scope.addEvent = function () {
     if (!$scope.events) {
@@ -1061,8 +1093,13 @@ ee.controller('MetricsController', function ($scope, Cluster) {
   })
 });
 
-ee.controller('TeleporterController', function ($scope, Teleporter, $timeout, Notification) {
+ee.controller('TeleporterController', function ($scope, Teleporter, $timeout, Notification,AgentService) {
 
+
+  $scope.links = {
+    ee: "http://www.orientdb.com/orientdb-enterprise"
+  }
+  $scope.agentActive = AgentService.active;
 
   $scope.editorOptions = {
     lineWrapping: true,

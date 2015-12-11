@@ -67,6 +67,14 @@ ctrl.controller('MultipleServerController', function ($scope, $rootScope, $locat
   $scope.polling = true;
   $scope.agent = true;
 
+
+
+  $scope.links = {
+    ee: "http://www.orientdb.com/orientdb-enterprise"
+  }
+  $scope.agentActive = AgentService.active;
+
+
   var singlePoll = function () {
     Profiler.realtime().then(function (data) {
 
@@ -240,12 +248,14 @@ ctrl.controller('SingleChartServerController', function ($scope, $rootScope, $lo
 
 
 })
-ctrl.controller('SingleServerController', function ($scope, $rootScope, $location, $routeParams, $timeout, Profiler, $q) {
+ctrl.controller('SingleServerController', function ($scope, $rootScope, $location, $routeParams, $timeout, Profiler, $q,AgentService) {
 
 
   $scope.links = {
     ee: "http://www.orientdb.com/orientdb-enterprise"
   }
+
+  $scope.agentActive = AgentService.active;
   $scope.polling = true;
   $scope.operations = 0;
 

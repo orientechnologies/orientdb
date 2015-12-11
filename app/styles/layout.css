@@ -1053,12 +1053,17 @@ div.users-ui div.container-fluid, div.role-ui div.container-fluid {
   padding: 20px;
 }
 
+
 .card {
   position: relative;
   background: #fff;
   box-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
   margin-bottom: 30px;
   padding: 15px;
+}
+
+.card-function {
+  padding: 0px;
 }
 
 .row span.title {

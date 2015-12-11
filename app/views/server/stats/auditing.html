@@ -1,7 +1,12 @@
 <div class="row" ng-controller="AuditingController">
 
 
-  <div class="col-md-12">
+  <div ng-show="!agentActive">
+    <div class="col-md-12 studio-well-tips">
+      <h4 ng-bind-html=" 'agent.notFound' | translate:links "></h4>
+    </div>
+  </div>
+  <div class="col-md-12" ng-show="agentActive">
     <div class="row row-space">
       <div class="col-md-12">
         <form class="form-inline studio-well">
@@ -20,7 +25,7 @@
     </div>
   </div>
 
-  <div class="col-md-12">
+  <div class="col-md-12" ng-show="agentActive">
     <div class="row row-space">
       <div class="col-md-12">
         <tabset>

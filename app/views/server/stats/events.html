@@ -1,7 +1,13 @@
 <div class="" ng-controller="EventsController">
 
 
-  <div class="row row-space-2x">
+
+  <div ng-show="!agentActive">
+    <div class="col-md-12 studio-well-tips">
+      <h4 ng-bind-html=" 'agent.notFound' | translate:links "></h4>
+    </div>
+  </div>
+  <div class="row row-space-2x" ng-show="agentActive">
 
     <div class="col-md-6">
       <form class="form-search">
@@ -38,7 +44,7 @@
     </div>
   </div>
 
-  <div class="row row-space-2x">
+  <div class="row row-space-2x" ng-show="agentActive">
     <div class="col-md-12">
       <table st-table="events" st-safe-src="safeCopy" class="table table-hover ">
         <thead>

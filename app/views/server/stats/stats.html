@@ -1,5 +1,11 @@
 <div ng-controller="MultipleServerController">
-  <div class="row">
+
+  <div ng-show="!agentActive">
+    <div class="col-md-12 studio-well-tips">
+      <h4 ng-bind-html=" 'agent.notFound' | translate:links "></h4>
+    </div>
+  </div>
+  <div class="row" ng-show="agentActive">
     <div class="{{serverClass}}" ng-repeat="server in servers" ng-controller="SingleServerController">
       <div class="panel panel-default">
         <div class="panel-heading">
@@ -79,7 +85,7 @@
       </div>
     </div>
   </div>
-  <div class="row">
+  <div class="row" ng-show="agentActive">
     <div class="{{serverClass}}" ng-repeat="server in servers" ng-controller="SingleChartServerController">
       <div class="panel panel-default">
         <div class="panel-heading">
