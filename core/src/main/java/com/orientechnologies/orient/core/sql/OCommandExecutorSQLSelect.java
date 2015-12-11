@@ -1653,7 +1653,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     final long to = range[1] != null && range[1].getClusterId() == clusterId ? range[1].getClusterPosition() : -1;
 
     try {
-      ((OLocalPaginatedStorage) localDatabase.getStorage()).scanCluster(iClusterName, isBrowsingAscendingOrder(), from, to,
+      ((OLocalPaginatedStorage) localDatabase.getStorage().getUnderlying()).scanCluster(iClusterName, isBrowsingAscendingOrder(), from, to,
           new OCallable<Boolean, ORecord>() {
             @Override
             public Boolean call(final ORecord iRecord) {
