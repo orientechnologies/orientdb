@@ -23,7 +23,6 @@ package com.tinkerpop.blueprints.impls.orient;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import org.apache.commons.configuration.Configuration;
 
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -395,14 +394,12 @@ public class OrientGraph extends OrientTransactionalGraph {
     boolean outVertexChanged = false;
 
     if (outVertex != null) {
-      if (outVertex != null) {
-        outVertexRecord = outVertex.getRecord();
+      outVertexRecord = outVertex.getRecord();
+      if (outVertexRecord != null) {
         final String outFieldName = OrientVertex.getConnectionFieldName(Direction.OUT, edgeClassName, useVertexFieldsForEdgeLabels);
         outVertexChanged = edge.dropEdgeFromVertex(inVertexEdge, outVertexRecord, outFieldName,
             outVertexRecord.field(outFieldName));
-      } else
-        OLogManager.instance().debug(this,
-            "Found broken link to outgoing vertex " + outVertex.getIdentity() + " while removing edge " + edge.getId());
+      }
     }
 
     // IN VERTEX
@@ -417,9 +414,7 @@ public class OrientGraph extends OrientTransactionalGraph {
       if (inVertexRecord != null) {
         final String inFieldName = OrientVertex.getConnectionFieldName(Direction.IN, edgeClassName, useVertexFieldsForEdgeLabels);
         inVertexChanged = edge.dropEdgeFromVertex(outVertexEdge, inVertexRecord, inFieldName, inVertexRecord.field(inFieldName));
-      } else
-        OLogManager.instance().debug(this,
-            "Found broken link to incoming vertex " + inVertex.getIdentity() + " while removing edge " + edge.getId());
+      }
     }
 
     if (outVertexChanged)
