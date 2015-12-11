@@ -1,10 +1,6 @@
 package com.orientechnologies.orient.core.index.hashindex.local;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.*;
 
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.testng.Assert;
@@ -14,7 +10,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.common.util.MersenneTwisterFast;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
@@ -74,7 +69,7 @@ public class LocalHashTableIterationTest {
   public void testNextHaveRightOrder() throws Exception {
     SortedSet<Integer> keys = new TreeSet<Integer>();
     keys.clear();
-    final MersenneTwisterFast random = new MersenneTwisterFast();
+    final Random random = new Random();
 
     while (keys.size() < KEYS_COUNT) {
       int key = random.nextInt();
@@ -104,7 +99,7 @@ public class LocalHashTableIterationTest {
     List<Integer> keys = new ArrayList<Integer>();
     keys.clear();
 
-    final MersenneTwisterFast random = new MersenneTwisterFast();
+    final Random random = new Random();
     while (keys.size() < KEYS_COUNT) {
       int key = random.nextInt();
 
@@ -138,7 +133,7 @@ public class LocalHashTableIterationTest {
   public void testNextHaveRightOrderUsingNextMethod() throws Exception {
     List<Integer> keys = new ArrayList<Integer>();
     keys.clear();
-    MersenneTwisterFast random = new MersenneTwisterFast();
+    Random random = new Random();
 
     while (keys.size() < KEYS_COUNT) {
       int key = random.nextInt();

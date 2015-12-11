@@ -100,10 +100,7 @@ public enum OGlobalConfiguration {
           final OEngineLocalPaginated engineLocalPaginated = (OEngineLocalPaginated) Orient.instance()
               .getEngine(OEngineLocalPaginated.NAME);
 
-          if (engineLocalPaginated == null) {
-            OLogManager.instance().error(this, "Can not change cache size in runtime because storage engine "
-                + OEngineLocalPaginated.NAME + " was not registered");
-          } else {
+          if (engineLocalPaginated != null) {
             engineLocalPaginated.changeCacheSize(((Integer) (newValue)) * 1024L * 1024L);
           }
         }

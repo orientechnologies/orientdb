@@ -1,13 +1,6 @@
 package com.orientechnologies.orient.core.index.sbtree.local;
 
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.NavigableSet;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.testng.Assert;
@@ -17,7 +10,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.common.util.MersenneTwisterFast;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
@@ -30,10 +22,10 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OL
  */
 @Test
 public class SBTreeTest {
-  private static final int                  KEYS_COUNT = 500000;
+  private static final int KEYS_COUNT = 500000;
   protected OSBTree<Integer, OIdentifiable> sbTree;
-  private ODatabaseDocumentTx               databaseDocumentTx;
-  private String                            buildDirectory;
+  private   ODatabaseDocumentTx             databaseDocumentTx;
+  private   String                          buildDirectory;
 
   @BeforeClass
   public void beforeClass() {
@@ -95,7 +87,7 @@ public class SBTreeTest {
 
   public void testKeyPutRandomUniform() throws Exception {
     final NavigableSet<Integer> keys = new TreeSet<Integer>();
-    final MersenneTwisterFast random = new MersenneTwisterFast();
+    final Random random = new Random();
 
     while (keys.size() < KEYS_COUNT) {
       int key = random.nextInt(Integer.MAX_VALUE);
@@ -126,7 +118,7 @@ public class SBTreeTest {
 
     System.out.println("testKeyPutRandomGaussian seed : " + seed);
 
-    MersenneTwisterFast random = new MersenneTwisterFast(seed);
+    Random random = new Random(seed);
 
     while (keys.size() < KEYS_COUNT) {
       int key = (int) (random.nextGaussian() * Integer.MAX_VALUE / 2 + Integer.MAX_VALUE);
@@ -193,7 +185,7 @@ public class SBTreeTest {
     long seed = System.currentTimeMillis();
 
     System.out.println("testKeyDeleteRandomGaussian seed : " + seed);
-    MersenneTwisterFast random = new MersenneTwisterFast(seed);
+    Random random = new Random(seed);
 
     while (keys.size() < KEYS_COUNT) {
       int key = (int) (random.nextGaussian() * Integer.MAX_VALUE / 2 + Integer.MAX_VALUE);
@@ -301,7 +293,7 @@ public class SBTreeTest {
 
   public void testIterateEntriesMajor() {
     NavigableMap<Integer, ORID> keyValues = new TreeMap<Integer, ORID>();
-    MersenneTwisterFast random = new MersenneTwisterFast();
+    Random random = new Random();
 
     while (keyValues.size() < KEYS_COUNT) {
       int key = random.nextInt(Integer.MAX_VALUE);
@@ -322,7 +314,7 @@ public class SBTreeTest {
 
   public void testIterateEntriesMinor() {
     NavigableMap<Integer, ORID> keyValues = new TreeMap<Integer, ORID>();
-    MersenneTwisterFast random = new MersenneTwisterFast();
+    Random random = new Random();
 
     while (keyValues.size() < KEYS_COUNT) {
       int key = random.nextInt(Integer.MAX_VALUE);
@@ -343,7 +335,7 @@ public class SBTreeTest {
 
   public void testIterateEntriesBetween() {
     NavigableMap<Integer, ORID> keyValues = new TreeMap<Integer, ORID>();
-    MersenneTwisterFast random = new MersenneTwisterFast();
+    Random random = new Random();
 
     while (keyValues.size() < KEYS_COUNT) {
       int key = random.nextInt(Integer.MAX_VALUE);
@@ -575,7 +567,7 @@ public class SBTreeTest {
     }
   }
 
-  private void assertIterateMajorEntries(NavigableMap<Integer, ORID> keyValues, MersenneTwisterFast random, boolean keyInclusive,
+  private void assertIterateMajorEntries(NavigableMap<Integer, ORID> keyValues, Random random, boolean keyInclusive,
       boolean ascSortOrder) {
     for (int i = 0; i < 100; i++) {
       int upperBorder = keyValues.lastKey() + 5000;
@@ -614,7 +606,7 @@ public class SBTreeTest {
     }
   }
 
-  private void assertIterateMinorEntries(NavigableMap<Integer, ORID> keyValues, MersenneTwisterFast random, boolean keyInclusive,
+  private void assertIterateMinorEntries(NavigableMap<Integer, ORID> keyValues, Random random, boolean keyInclusive,
       boolean ascSortOrder) {
     for (int i = 0; i < 100; i++) {
       int upperBorder = keyValues.lastKey() + 5000;
@@ -653,8 +645,8 @@ public class SBTreeTest {
     }
   }
 
-  private void assertIterateBetweenEntries(NavigableMap<Integer, ORID> keyValues, MersenneTwisterFast random,
-      boolean fromInclusive, boolean toInclusive, boolean ascSortOrder) {
+  private void assertIterateBetweenEntries(NavigableMap<Integer, ORID> keyValues, Random random, boolean fromInclusive,
+      boolean toInclusive, boolean ascSortOrder) {
     long totalTime = 0;
     long totalIterations = 0;
 
@@ -689,8 +681,8 @@ public class SBTreeTest {
       if (fromKey > toKey)
         toKey = fromKey;
 
-      OSBTree.OSBTreeCursor<Integer, OIdentifiable> cursor = sbTree.iterateEntriesBetween(fromKey, fromInclusive, toKey,
-          toInclusive, ascSortOrder);
+      OSBTree.OSBTreeCursor<Integer, OIdentifiable> cursor = sbTree
+          .iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascSortOrder);
 
       Iterator<Map.Entry<Integer, ORID>> iterator;
       if (ascSortOrder)

@@ -24,7 +24,6 @@ import org.testng.annotations.Test;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.common.util.MersenneTwisterFast;
 import com.orientechnologies.orient.core.compression.impl.ONothingCompression;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -159,7 +158,7 @@ public class LocalPaginatedClusterTest {
 
   public void testAddOneBigRecord() throws IOException {
     byte[] bigRecord = new byte[2 * 65536 + 100];
-    MersenneTwisterFast mersenneTwisterFast = new MersenneTwisterFast();
+    Random mersenneTwisterFast = new Random();
     mersenneTwisterFast.nextBytes(bigRecord);
 
     int recordVersion = 0;
@@ -182,7 +181,7 @@ public class LocalPaginatedClusterTest {
 
     long seed = 1426587095601L;
     System.currentTimeMillis();
-    MersenneTwisterFast mersenneTwisterFast = new MersenneTwisterFast(seed);
+    Random mersenneTwisterFast = new Random(seed);
     System.out.println("testAddManySmallRecords seed : " + seed);
 
     Map<Long, byte[]> positionRecordMap = new HashMap<Long, byte[]>();
@@ -215,7 +214,7 @@ public class LocalPaginatedClusterTest {
     final int records = 5000;
 
     long seed = System.currentTimeMillis();
-    MersenneTwisterFast mersenneTwisterFast = new MersenneTwisterFast(seed);
+    Random mersenneTwisterFast = new Random(seed);
 
     System.out.println("testAddManyBigRecords seed : " + seed);
 
@@ -248,7 +247,7 @@ public class LocalPaginatedClusterTest {
   public void testAddManyRecords() throws IOException {
     final int records = 10000;
     long seed = System.currentTimeMillis();
-    MersenneTwisterFast mersenneTwisterFast = new MersenneTwisterFast(seed);
+    Random mersenneTwisterFast = new Random(seed);
 
     System.out.println("testAddManyRecords seed : " + seed);
 
@@ -281,7 +280,7 @@ public class LocalPaginatedClusterTest {
   public void testRemoveHalfSmallRecords() throws IOException {
     final int records = 10000;
     long seed = System.currentTimeMillis();
-    MersenneTwisterFast mersenneTwisterFast = new MersenneTwisterFast(seed);
+    Random mersenneTwisterFast = new Random(seed);
 
     System.out.println("testRemoveHalfSmallRecords seed : " + seed);
 
@@ -337,7 +336,7 @@ public class LocalPaginatedClusterTest {
   public void testHideHalfSmallRecords() throws IOException {
     final int records = 10000;
     long seed = System.currentTimeMillis();
-    MersenneTwisterFast mersenneTwisterFast = new MersenneTwisterFast(seed);
+    Random mersenneTwisterFast = new Random(seed);
 
     System.out.println("testHideHalfSmallRecords seed : " + seed);
 
@@ -393,7 +392,7 @@ public class LocalPaginatedClusterTest {
   public void testRemoveHalfBigRecords() throws IOException {
     final int records = 5000;
     long seed = System.currentTimeMillis();
-    MersenneTwisterFast mersenneTwisterFast = new MersenneTwisterFast(seed);
+    Random mersenneTwisterFast = new Random(seed);
 
     System.out.println("testRemoveHalfBigRecords seed : " + seed);
 
@@ -450,7 +449,7 @@ public class LocalPaginatedClusterTest {
   public void testHideHalfBigRecords() throws IOException {
     final int records = 5000;
     long seed = System.currentTimeMillis();
-    MersenneTwisterFast mersenneTwisterFast = new MersenneTwisterFast(seed);
+    Random mersenneTwisterFast = new Random(seed);
 
     System.out.println("testHideHalfBigRecords seed : " + seed);
 
@@ -508,7 +507,7 @@ public class LocalPaginatedClusterTest {
   public void testRemoveHalfRecords() throws IOException {
     final int records = 10000;
     long seed = System.currentTimeMillis();
-    MersenneTwisterFast mersenneTwisterFast = new MersenneTwisterFast(seed);
+    Random mersenneTwisterFast = new Random(seed);
 
     System.out.println("testRemoveHalfRecords seed : " + seed);
 
@@ -565,7 +564,7 @@ public class LocalPaginatedClusterTest {
   public void testHideHalfRecords() throws IOException {
     final int records = 10000;
     long seed = System.currentTimeMillis();
-    MersenneTwisterFast mersenneTwisterFast = new MersenneTwisterFast(seed);
+    Random mersenneTwisterFast = new Random(seed);
 
     System.out.println("testHideHalfRecords seed : " + seed);
 
@@ -622,7 +621,7 @@ public class LocalPaginatedClusterTest {
   public void testRemoveHalfRecordsAndAddAnotherHalfAgain() throws IOException {
     final int records = 10000;
     long seed = System.currentTimeMillis();
-    MersenneTwisterFast mersenneTwisterFast = new MersenneTwisterFast(seed);
+    Random mersenneTwisterFast = new Random(seed);
 
     System.out.println("testRemoveHalfRecordsAndAddAnotherHalfAgain seed : " + seed);
 
@@ -678,7 +677,7 @@ public class LocalPaginatedClusterTest {
   public void testHideHalfRecordsAndAddAnotherHalfAgain() throws IOException {
     final int records = 10000;
     long seed = System.currentTimeMillis();
-    MersenneTwisterFast mersenneTwisterFast = new MersenneTwisterFast(seed);
+    Random mersenneTwisterFast = new Random(seed);
 
     System.out.println("testHideHalfRecordsAndAddAnotherHalfAgain seed : " + seed);
 
@@ -800,7 +799,7 @@ public class LocalPaginatedClusterTest {
 
   public void testUpdateOneBigRecord() throws IOException {
     byte[] bigRecord = new byte[2 * 65536 + 100];
-    MersenneTwisterFast mersenneTwisterFast = new MersenneTwisterFast();
+    Random mersenneTwisterFast = new Random();
     mersenneTwisterFast.nextBytes(bigRecord);
 
     int recordVersion = 0;
@@ -828,7 +827,7 @@ public class LocalPaginatedClusterTest {
     final int records = 10000;
 
     long seed = System.currentTimeMillis();
-    MersenneTwisterFast mersenneTwisterFast = new MersenneTwisterFast(seed);
+    Random mersenneTwisterFast = new Random(seed);
     System.out.println("testUpdateManySmallRecords seed : " + seed);
 
     Map<Long, byte[]> positionRecordMap = new HashMap<Long, byte[]>();
@@ -885,7 +884,7 @@ public class LocalPaginatedClusterTest {
     final int records = 5000;
 
     long seed = System.currentTimeMillis();
-    MersenneTwisterFast mersenneTwisterFast = new MersenneTwisterFast(seed);
+    Random mersenneTwisterFast = new Random(seed);
     System.out.println("testUpdateManyBigRecords seed : " + seed);
 
     Map<Long, byte[]> positionRecordMap = new HashMap<Long, byte[]>();
@@ -941,7 +940,7 @@ public class LocalPaginatedClusterTest {
     final int records = 10000;
 
     long seed = System.currentTimeMillis();
-    MersenneTwisterFast mersenneTwisterFast = new MersenneTwisterFast(seed);
+    Random mersenneTwisterFast = new Random(seed);
     System.out.println("testUpdateManyRecords seed : " + seed);
 
     Map<Long, byte[]> positionRecordMap = new HashMap<Long, byte[]>();
@@ -997,7 +996,7 @@ public class LocalPaginatedClusterTest {
     final int records = 10000;
 
     long seed = System.currentTimeMillis();
-    MersenneTwisterFast mersenneTwisterFast = new MersenneTwisterFast(seed);
+    Random mersenneTwisterFast = new Random(seed);
     System.out.println("testForwardIteration seed : " + seed);
 
     NavigableMap<Long, byte[]> positionRecordMap = new TreeMap<Long, byte[]>();
@@ -1051,7 +1050,7 @@ public class LocalPaginatedClusterTest {
     final int records = 10000;
 
     long seed = System.currentTimeMillis();
-    MersenneTwisterFast mersenneTwisterFast = new MersenneTwisterFast(1381162033616L);
+    Random mersenneTwisterFast = new Random(seed);
     System.out.println("testBackwardIteration seed : " + seed);
 
     NavigableMap<Long, byte[]> positionRecordMap = new TreeMap<Long, byte[]>();
@@ -1108,7 +1107,7 @@ public class LocalPaginatedClusterTest {
     final int records = 10000;
 
     long seed = System.currentTimeMillis();
-    MersenneTwisterFast mersenneTwisterFast = new MersenneTwisterFast(seed);
+    Random mersenneTwisterFast = new Random(seed);
     System.out.println("testGetPhysicalPosition seed : " + seed);
 
     Set<OPhysicalPosition> positions = new HashSet<OPhysicalPosition>();

@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.directmemory.ODirectMemoryPointerFactory;
-import com.orientechnologies.common.util.MersenneTwisterFast;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
@@ -13,12 +12,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Andrey Lomakin
@@ -586,7 +580,7 @@ public class ClusterPageTest {
   }
 
   private void addBigRecordDeleteAndAddSmallRecords(long seed, OClusterPage localPage) throws IOException {
-    final MersenneTwisterFast mersenneTwisterFast = new MersenneTwisterFast(seed);
+    final Random mersenneTwisterFast = new Random(seed);
 
     int recordVersion = 0;
     recordVersion++;
@@ -662,7 +656,7 @@ public class ClusterPageTest {
   }
 
   private void findFirstRecord(long seed, OClusterPage localPage) throws IOException {
-    final MersenneTwisterFast mersenneTwister = new MersenneTwisterFast(seed);
+    final Random mersenneTwister = new Random(seed);
     Set<Integer> positions = new HashSet<Integer>();
 
     int lastPosition;
@@ -746,7 +740,7 @@ public class ClusterPageTest {
   }
 
   private void findLastRecord(long seed, OClusterPage localPage) throws IOException {
-    final MersenneTwisterFast mersenneTwister = new MersenneTwisterFast(seed);
+    final Random mersenneTwister = new Random(seed);
     Set<Integer> positions = new HashSet<Integer>();
 
     int lastPosition;
