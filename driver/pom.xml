@@ -239,6 +239,20 @@
             </build>
         </profile>
         <profile>
+            <id>skip-formatter</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.marvinformatics.formatter</groupId>
+                        <artifactId>formatter-maven-plugin</artifactId>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
             <id>release</id>
             <build>
                 <plugins>
