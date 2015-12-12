@@ -17,10 +17,10 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.stream.Stream;
 
-
 public abstract class OrientElement implements Element {
 
     private static final Map<String, String> INTERNAL_CLASSES_TO_TINKERPOP_CLASSES;
+
     static {
         INTERNAL_CLASSES_TO_TINKERPOP_CLASSES = new HashMap<>();
         INTERNAL_CLASSES_TO_TINKERPOP_CLASSES.put(OImmutableClass.VERTEX_CLASS_NAME, Vertex.DEFAULT_LABEL);
@@ -56,11 +56,11 @@ public abstract class OrientElement implements Element {
     }
 
     private <V> Property<V> property(final String key, final V value, boolean saveDocument) {
-        if(key == null)
+        if (key == null)
             throw Property.Exceptions.propertyKeyCanNotBeNull();
-        if(value == null)
+        if (value == null)
             throw Property.Exceptions.propertyValueCanNotBeNull();
-        if(Graph.Hidden.isHidden(key))
+        if (Graph.Hidden.isHidden(key))
             throw Property.Exceptions.propertyKeyCanNotBeAHiddenKey(key);
 
         ODocument doc = getRawDocument();
@@ -104,7 +104,7 @@ public abstract class OrientElement implements Element {
     }
 
     public void save() {
-        ((ODocument)rawElement).save();
+        ((ODocument) rawElement).save();
     }
 
     public ODocument getRawDocument() {
@@ -130,6 +130,5 @@ public abstract class OrientElement implements Element {
     public final boolean equals(final Object object) {
         return ElementHelper.areEqual(this, object);
     }
-
 
 }

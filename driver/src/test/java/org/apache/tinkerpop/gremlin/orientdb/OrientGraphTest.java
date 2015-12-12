@@ -26,7 +26,7 @@ import org.junit.Test;
 public class OrientGraphTest {
 
     protected OrientGraphFactory graphFactory() {
-        return new OrientGraphFactory("memory:tinkerpop-" +  Math.random());
+        return new OrientGraphFactory("memory:tinkerpop-" + Math.random());
     }
 
     public static final String TEST_VALUE = "SomeValue";
