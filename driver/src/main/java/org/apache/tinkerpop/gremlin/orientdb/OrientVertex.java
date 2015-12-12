@@ -378,17 +378,6 @@ public final class OrientVertex extends OrientElement implements Vertex {
 
                     if (iFieldName.equals(CONNECTION_OUT_PREFIX + clsName))
                         return new OPair<Direction, String>(Direction.OUT, clsName);
-
-                    // GO DOWN THROUGH THE INHERITANCE TREE
-                    OrientEdgeType type = graph.getEdgeType(clsName);
-                    if (type != null) {
-                        for (OClass subType : type.getAllSubclasses()) {
-                            clsName = subType.getName();
-
-                            if (iFieldName.equals(CONNECTION_OUT_PREFIX + clsName))
-                                return new OPair<Direction, String>(Direction.OUT, clsName);
-                        }
-                    }
                 }
             }
         }
@@ -404,17 +393,6 @@ public final class OrientVertex extends OrientElement implements Vertex {
 
                     if (iFieldName.equals(CONNECTION_IN_PREFIX + clsName))
                         return new OPair<Direction, String>(Direction.IN, clsName);
-
-                    // GO DOWN THROUGH THE INHERITANCE TREE
-                    OrientEdgeType type = graph.getEdgeType(clsName);
-                    if (type != null) {
-                        for (OClass subType : type.getAllSubclasses()) {
-                            clsName = subType.getName();
-
-                            if (iFieldName.equals(CONNECTION_IN_PREFIX + clsName))
-                                return new OPair<Direction, String>(Direction.IN, clsName);
-                        }
-                    }
                 }
             }
         }
@@ -438,7 +416,7 @@ public final class OrientVertex extends OrientElement implements Vertex {
             if (iFieldName.length() > CONNECTION_IN_PREFIX.length())
                 return iFieldName.substring(CONNECTION_IN_PREFIX.length());
         }
-        return OrientEdgeType.CLASS_NAME;
+        return OImmutableClass.EDGE_CLASS_NAME;
     }
 
     protected void addSingleEdge(final ODocument doc, final OMultiCollectionIterator<Edge> iterable, String fieldName,
