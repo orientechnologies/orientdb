@@ -449,26 +449,11 @@ public final class OrientGraph implements Graph {
         return database;
     }
 
-    /**
-     * Returns the persistent class for type iTypeName as OrientEdgeType instance.
-     *
-     * @param iTypeName Edge class name
-     */
-    public final OrientEdgeType getEdgeType(final String iTypeName) {
-        makeActive();
-        final OClass cls = getRawDatabase().getMetadata().getSchema().getClass(iTypeName);
-        if (cls == null)
-            return null;
-
-        OrientEdgeType.checkType(cls);
-        return new OrientEdgeType(this, cls);
-    }
-
     protected <E> String getClassName(final Class<T> elementClass) {
         if (elementClass.isAssignableFrom(Vertex.class))
-            return OrientVertexType.CLASS_NAME;
+            return OImmutableClass.VERTEX_CLASS_NAME;
         else if (elementClass.isAssignableFrom(Edge.class))
-            return OrientEdgeType.CLASS_NAME;
+            return OImmutableClass.EDGE_CLASS_NAME;
         throw new IllegalArgumentException("Class '" + elementClass + "' is neither a Vertex, nor an Edge");
     }
 
@@ -492,13 +477,13 @@ public final class OrientGraph implements Graph {
     }
 
     public <E extends Element> void createVertexIndex(final String key, final String label, final Configuration configuration) {
-        String className = OrientVertexType.CLASS_NAME + "_" + label;
+        String className = OImmutableClass.VERTEX_CLASS_NAME + "_" + label;
         createVertexClass(className);
         createIndex(key, className, configuration);
     }
 
     public <E extends Element> void createEdgeIndex(final String key, final String label, final Configuration configuration) {
-        String className = OrientEdgeType.CLASS_NAME + "_" + label;
+        String className = OImmutableClass.EDGE_CLASS_NAME + "_" + label;
         createEdgeClass(className);
         createIndex(key, className, configuration);
     }
