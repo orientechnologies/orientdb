@@ -9,7 +9,6 @@ import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 
-
 public final class OrientGraphFactory {
     public static String ADMIN = "admin";
     protected final String url;
@@ -88,7 +87,7 @@ public final class OrientGraphFactory {
         if (txActive) {
             // REOPEN IT AGAIN
             db.begin();
-//            db.getTransaction().setUsingLog(settings.isUseLog());
+            //            db.getTransaction().setUsingLog(settings.isUseLog());
         }
     }
 
@@ -96,15 +95,17 @@ public final class OrientGraphFactory {
         if (configuration != null)
             return configuration;
         else
-            return new BaseConfiguration() {{
-                setProperty(Graph.GRAPH, OrientGraph.class.getName());
-                setProperty(OrientGraph.CONFIG_URL, url);
-                setProperty(OrientGraph.CONFIG_USER, user);
-                setProperty(OrientGraph.CONFIG_PASS, password);
-                setProperty(OrientGraph.CONFIG_CREATE, create);
-                setProperty(OrientGraph.CONFIG_OPEN, open);
-                setProperty(OrientGraph.CONFIG_TRANSACTIONAL, transactional);
-            }};
+            return new BaseConfiguration() {
+                {
+                    setProperty(Graph.GRAPH, OrientGraph.class.getName());
+                    setProperty(OrientGraph.CONFIG_URL, url);
+                    setProperty(OrientGraph.CONFIG_USER, user);
+                    setProperty(OrientGraph.CONFIG_PASS, password);
+                    setProperty(OrientGraph.CONFIG_CREATE, create);
+                    setProperty(OrientGraph.CONFIG_OPEN, open);
+                    setProperty(OrientGraph.CONFIG_TRANSACTIONAL, transactional);
+                }
+            };
     }
 
     /**
@@ -114,7 +115,8 @@ public final class OrientGraphFactory {
     protected ODatabaseDocumentTx getDatabase(boolean create, boolean open) {
         final ODatabaseDocumentTx db = new ODatabaseFactory().createDatabase("graph", url);
         if (!db.getURL().startsWith("remote:") && !db.exists()) {
-            if (create) db.create();
+            if (create)
+                db.create();
             else if (open) throw new ODatabaseException("Database '" + url + "' not found");
         } else if (open) db.open(user, password);
 

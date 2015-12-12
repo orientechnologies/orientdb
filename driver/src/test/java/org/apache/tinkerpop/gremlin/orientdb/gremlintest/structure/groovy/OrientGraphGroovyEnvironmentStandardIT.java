@@ -34,7 +34,7 @@ import org.junit.runner.RunWith;
 @RunWith(GroovyEnvironmentSuite.class)
 @GraphProviderClass(provider = OrientGraphProvider.class, graph = OrientGraph.class)
 public class OrientGraphGroovyEnvironmentStandardIT {
-	static {
-		SugarLoader.load();
-	}
+    static {
+        SugarLoader.load();
+    }
 }

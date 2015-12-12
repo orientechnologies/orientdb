@@ -39,13 +39,14 @@ public class OrientGraphProvider extends AbstractGraphProvider {
     }
 
     private static final Map<Class<?>, List<String>> IGNORED_TESTS;
+
     static {
         IGNORED_TESTS = new HashMap<>();
         IGNORED_TESTS.put(GraphTest.class, asList(
-              "shouldNotMixTypesForGettingSpecificEdgesWithStringFirst",
-              "shouldNotMixTypesForGettingSpecificEdgesWithEdgeFirst",
-              "shouldNotMixTypesForGettingSpecificVerticesWithStringFirst",
-              "shouldNotMixTypesForGettingSpecificVerticesWithVertexFirst"));
+                "shouldNotMixTypesForGettingSpecificEdgesWithStringFirst",
+                "shouldNotMixTypesForGettingSpecificEdgesWithEdgeFirst",
+                "shouldNotMixTypesForGettingSpecificVerticesWithStringFirst",
+                "shouldNotMixTypesForGettingSpecificVerticesWithVertexFirst"));
 
         //OrientDB can not modify schema when the transaction is on, which break the tests
         IGNORED_TESTS.put(GraphFunctionalityTest.class, asList("shouldSupportTransactionsIfAGraphConstructsATx"));
@@ -56,18 +57,18 @@ public class OrientGraphProvider extends AbstractGraphProvider {
 
     @Override
     public Map<String, Object> getBaseConfiguration(String graphName, Class<?> test, String testMethodName, LoadGraphWith.GraphData loadGraphWith) {
-        if(IGNORED_TESTS.containsKey(test) && IGNORED_TESTS.get(test).contains(testMethodName))
-          throw new AssumptionViolatedException("We allow mixed ids");
+        if (IGNORED_TESTS.containsKey(test) && IGNORED_TESTS.get(test).contains(testMethodName))
+            throw new AssumptionViolatedException("We allow mixed ids");
 
         HashMap<String, Object> configs = new HashMap<String, Object>();
         configs.put(Graph.GRAPH, OrientGraph.class.getName());
         configs.put("name", graphName);
-        if(testMethodName .equals("shouldPersistDataOnClose"))
-        	configs.put(OrientGraph.CONFIG_URL, "memory:test-" + graphName + "-" + test.getSimpleName() + "-" + testMethodName);
+        if (testMethodName.equals("shouldPersistDataOnClose"))
+            configs.put(OrientGraph.CONFIG_URL, "memory:test-" + graphName + "-" + test.getSimpleName() + "-" + testMethodName);
 
         Random random = new Random();
-        if(random.nextBoolean())
-          configs.put(OrientGraph.CONFIG_POOL_SIZE, random.nextInt(10) + 1);
+        if (random.nextBoolean())
+            configs.put(OrientGraph.CONFIG_POOL_SIZE, random.nextInt(10) + 1);
 
         return configs;
     }

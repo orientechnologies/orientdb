@@ -20,7 +20,7 @@ import java.util.*;
 public class OrientGraphIndexTest {
 
     public static final String URL = "memory:" + OrientGraphIndexTest.class.getSimpleName();
-//    public static final String URL = "remote:localhost/test";
+    //    public static final String URL = "remote:localhost/test";
 
     private OrientGraph newGraph() {
         return new OrientGraphFactory(URL + UUID.randomUUID(), "root", "root").getNoTx();
@@ -78,49 +78,49 @@ public class OrientGraphIndexTest {
     }
 
     // Indexed edge properties is not yet handled / implemented.
-//    @Test
-//    public void uniqueIndexOnEdges() {
-//
-//        String vertexLabel = "SomeVertexLabel";
-//        String edgeLabel1 = "SomeEdgeLabel1";
-//        String edgeLabel2 = "SomeEdgeLabel2";
-//        String indexedKey = "indexedKey";
-//        String value = "value1";
-//
-//        OrientGraph graph = newGraph();
-//
-//        Configuration config = new BaseConfiguration();
-//        config.setProperty("type", "UNIQUE");
-//        config.setProperty("keytype", OType.STRING);
-//        graph.createEdgeIndex(indexedKey, edgeLabel1, config);
-//
-//        Assert.assertEquals(graph.getIndexedKeys(Edge.class, edgeLabel1), new HashSet<String>(Collections.singletonList(indexedKey)));
-//        Assert.assertEquals(graph.getIndexedKeys(Edge.class, edgeLabel2), new HashSet<String>(Collections.emptyList()));
-//        Assert.assertEquals(graph.getIndexedKeys(Vertex.class, vertexLabel), new HashSet<String>(Collections.emptyList()));
-//
-//        Vertex v1 = graph.addVertex(T.label, vertexLabel);
-//        Vertex v2 = graph.addVertex(T.label, vertexLabel);
-//        Edge e1 = v1.addEdge(edgeLabel1, v2, indexedKey, value);
-//        Edge e2 = v1.addEdge(edgeLabel2, v2, indexedKey, value);
-//
-//        // Verify that the traversal hits the index via println debugging.
-//        // Should print "index will be queried..." then "not indexed"
-//        Set<Edge> result1 = graph.traversal().E().has(T.label, P.eq(edgeLabel1)).toSet();
-//        Assert.assertTrue(result1.size() == 1);
-//        Set<Edge> result2 = graph.traversal().E().has(T.label, P.eq(edgeLabel2)).toSet();
-//        Assert.assertTrue(result2.size() == 1);
-//
-//        // no duplicates allowed for edge with label1
-//        try {
-//            v2.addEdge(edgeLabel1, v1, indexedKey, value);
-//            Assert.fail("must throw duplicate key here!");
-//        } catch (ORecordDuplicatedException e) {
-//            // ok
-//        }
-//
-//        // allow duplicate for vertex with label2
-//        v2.addEdge(edgeLabel2, v1, indexedKey, value);
-//    }
+    //    @Test
+    //    public void uniqueIndexOnEdges() {
+    //
+    //        String vertexLabel = "SomeVertexLabel";
+    //        String edgeLabel1 = "SomeEdgeLabel1";
+    //        String edgeLabel2 = "SomeEdgeLabel2";
+    //        String indexedKey = "indexedKey";
+    //        String value = "value1";
+    //
+    //        OrientGraph graph = newGraph();
+    //
+    //        Configuration config = new BaseConfiguration();
+    //        config.setProperty("type", "UNIQUE");
+    //        config.setProperty("keytype", OType.STRING);
+    //        graph.createEdgeIndex(indexedKey, edgeLabel1, config);
+    //
+    //        Assert.assertEquals(graph.getIndexedKeys(Edge.class, edgeLabel1), new HashSet<String>(Collections.singletonList(indexedKey)));
+    //        Assert.assertEquals(graph.getIndexedKeys(Edge.class, edgeLabel2), new HashSet<String>(Collections.emptyList()));
+    //        Assert.assertEquals(graph.getIndexedKeys(Vertex.class, vertexLabel), new HashSet<String>(Collections.emptyList()));
+    //
+    //        Vertex v1 = graph.addVertex(T.label, vertexLabel);
+    //        Vertex v2 = graph.addVertex(T.label, vertexLabel);
+    //        Edge e1 = v1.addEdge(edgeLabel1, v2, indexedKey, value);
+    //        Edge e2 = v1.addEdge(edgeLabel2, v2, indexedKey, value);
+    //
+    //        // Verify that the traversal hits the index via println debugging.
+    //        // Should print "index will be queried..." then "not indexed"
+    //        Set<Edge> result1 = graph.traversal().E().has(T.label, P.eq(edgeLabel1)).toSet();
+    //        Assert.assertTrue(result1.size() == 1);
+    //        Set<Edge> result2 = graph.traversal().E().has(T.label, P.eq(edgeLabel2)).toSet();
+    //        Assert.assertTrue(result2.size() == 1);
+    //
+    //        // no duplicates allowed for edge with label1
+    //        try {
+    //            v2.addEdge(edgeLabel1, v1, indexedKey, value);
+    //            Assert.fail("must throw duplicate key here!");
+    //        } catch (ORecordDuplicatedException e) {
+    //            // ok
+    //        }
+    //
+    //        // allow duplicate for vertex with label2
+    //        v2.addEdge(edgeLabel2, v1, indexedKey, value);
+    //    }
 
     //TODO: fix
     @Test
@@ -139,9 +139,9 @@ public class OrientGraphIndexTest {
 
         graph.addVertex(T.label, label, key, value);
         // TODO: test with a "has" traversal, if/when that supports a case insensitive match predicate
-//        OrientIndexQuery indexRef = new OrientIndexQuery(true, Optional.of(label), key, value.toUpperCase());
-//        Iterator<OrientVertex> result = graph.getIndexedVertices(indexRef).iterator();
-//        Assert.assertEquals(result.hasNext(), true);
+        //        OrientIndexQuery indexRef = new OrientIndexQuery(true, Optional.of(label), key, value.toUpperCase());
+        //        Iterator<OrientVertex> result = graph.getIndexedVertices(indexRef).iterator();
+        //        Assert.assertEquals(result.hasNext(), true);
     }
 
     private void createVertexIndexLabel1(OrientGraph graph) {

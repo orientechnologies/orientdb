@@ -13,7 +13,8 @@ public class ODBFeatures {
         static final OrientFeatures INSTANCE_NOTX = new OrientFeatures(false);
         static final OrientFeatures INSTANCE_TX = new OrientFeatures(true);
 
-      private OrientGraphFeatures graphFeatures;
+        private OrientGraphFeatures graphFeatures;
+
         private OrientFeatures(boolean transactionalGraph) {
             this.graphFeatures = new OrientGraphFeatures(transactionalGraph);
         }
@@ -41,7 +42,6 @@ public class ODBFeatures {
 
     public static abstract class OrientElementFeatures implements Features.ElementFeatures {
 
-
         @Override
         public boolean supportsAnyIds() {
             return false;
@@ -54,22 +54,22 @@ public class ODBFeatures {
 
         @Override
         public boolean supportsNumericIds() {
-          return false;
+            return false;
         }
 
         @Override
         public boolean supportsStringIds() {
-          return false;
+            return false;
         }
 
         @Override
         public boolean supportsUserSuppliedIds() {
-          return false;
+            return false;
         }
 
         @Override
         public boolean supportsUuidIds() {
-          return false;
+            return false;
         }
 
         @Override
@@ -109,7 +109,8 @@ public class ODBFeatures {
 
     public static class OrientGraphFeatures implements Features.GraphFeatures {
 
-      protected final boolean transactionalGraph;
+        protected final boolean transactionalGraph;
+
         private OrientGraphFeatures(boolean transactionalGraph) {
             this.transactionalGraph = transactionalGraph;
         }
@@ -238,37 +239,37 @@ public class ODBFeatures {
 
     public static class OrientVertexPropertyFeatures implements Features.VertexPropertyFeatures {
 
-      static final OrientVertexPropertyFeatures INSTANCE = new OrientVertexPropertyFeatures();
+        static final OrientVertexPropertyFeatures INSTANCE = new OrientVertexPropertyFeatures();
 
-      @Override
-      public boolean supportsAnyIds() {
-          return false;
-      }
+        @Override
+        public boolean supportsAnyIds() {
+            return false;
+        }
 
-      @Override
-      public boolean supportsCustomIds() {
-          return false;
-      }
+        @Override
+        public boolean supportsCustomIds() {
+            return false;
+        }
 
-      @Override
-      public boolean supportsNumericIds() {
-           return false;
-      }
+        @Override
+        public boolean supportsNumericIds() {
+            return false;
+        }
 
-      @Override
-      public boolean supportsUserSuppliedIds() {
-           return false;
-      }
+        @Override
+        public boolean supportsUserSuppliedIds() {
+            return false;
+        }
 
-      @Override
-      public boolean supportsUuidIds() {
-           return false;
-      }
+        @Override
+        public boolean supportsUuidIds() {
+            return false;
+        }
 
-      @Override
-      public boolean willAllowId(Object id) {
-          return false;
-      }
+        @Override
+        public boolean willAllowId(Object id) {
+            return false;
+        }
 
     }
 
