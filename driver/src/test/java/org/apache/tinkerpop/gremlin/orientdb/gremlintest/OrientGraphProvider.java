@@ -39,35 +39,38 @@ public class OrientGraphProvider extends AbstractGraphProvider {
     }
 
     private static final Map<Class<?>, List<String>> IGNORED_TESTS;
+
     static {
         IGNORED_TESTS = new HashMap<>();
         IGNORED_TESTS.put(GraphTest.class, asList(
-              "shouldNotMixTypesForGettingSpecificEdgesWithStringFirst",
-              "shouldNotMixTypesForGettingSpecificEdgesWithEdgeFirst",
-              "shouldNotMixTypesForGettingSpecificVerticesWithStringFirst",
-              "shouldNotMixTypesForGettingSpecificVerticesWithVertexFirst"));
+                "shouldNotMixTypesForGettingSpecificEdgesWithStringFirst",
+                "shouldNotMixTypesForGettingSpecificEdgesWithEdgeFirst",
+                "shouldNotMixTypesForGettingSpecificVerticesWithStringFirst",
+                "shouldNotMixTypesForGettingSpecificVerticesWithVertexFirst"));
 
-        //OrientDB can not modify schema when the transaction is on, which break the tests
+        // OrientDB can not modify schema when the transaction is on, which
+        // break the tests
         IGNORED_TESTS.put(GraphFunctionalityTest.class, asList("shouldSupportTransactionsIfAGraphConstructsATx"));
 
-        //this test falls into an infinite loop, it tries to remove all edges, but for each edge it removes 2 more are added
+        // this test falls into an infinite loop, it tries to remove all edges,
+        // but for each edge it removes 2 more are added
         IGNORED_TESTS.put(BasicEdgeTest.class, asList("shouldNotHaveAConcurrentModificationExceptionWhenIteratingAndRemovingAddingEdges"));
     }
 
     @Override
     public Map<String, Object> getBaseConfiguration(String graphName, Class<?> test, String testMethodName, LoadGraphWith.GraphData loadGraphWith) {
-        if(IGNORED_TESTS.containsKey(test) && IGNORED_TESTS.get(test).contains(testMethodName))
-          throw new AssumptionViolatedException("We allow mixed ids");
+        if (IGNORED_TESTS.containsKey(test) && IGNORED_TESTS.get(test).contains(testMethodName))
+            throw new AssumptionViolatedException("We allow mixed ids");
 
         HashMap<String, Object> configs = new HashMap<String, Object>();
         configs.put(Graph.GRAPH, OrientGraph.class.getName());
         configs.put("name", graphName);
-        if(testMethodName .equals("shouldPersistDataOnClose"))
-        	configs.put(OrientGraph.CONFIG_URL, "memory:test-" + graphName + "-" + test.getSimpleName() + "-" + testMethodName);
+        if (testMethodName.equals("shouldPersistDataOnClose"))
+            configs.put(OrientGraph.CONFIG_URL, "memory:test-" + graphName + "-" + test.getSimpleName() + "-" + testMethodName);
 
         Random random = new Random();
-        if(random.nextBoolean())
-          configs.put(OrientGraph.CONFIG_POOL_SIZE, random.nextInt(10) + 1);
+        if (random.nextBoolean())
+            configs.put(OrientGraph.CONFIG_POOL_SIZE, random.nextInt(10) + 1);
 
         return configs;
     }
@@ -93,7 +96,7 @@ public class OrientGraphProvider extends AbstractGraphProvider {
     @Override
     public Graph openTestGraph(Configuration config) {
         if (config.getString("name").equals("readGraph"))
-            //FIXME eventually ne need to get ride of this 
+            // FIXME eventually ne need to get ride of this
             assumeFalse("there is some technical limitation on orientDB that makes tests enter in an infinite loop when reading and writing to orientDB", true);
 
         return super.openTestGraph(config);

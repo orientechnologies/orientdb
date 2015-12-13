@@ -30,7 +30,7 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManagerProxy;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 
-public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E> implements HasContainerHolder {
+public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E>implements HasContainerHolder {
 
     private final List<HasContainer> hasContainers = new ArrayList<>();
 
@@ -57,7 +57,7 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E> imple
                 Stream<OrientVertex> indexedVertices = graph.getIndexedVertices(indexQuery.index, indexQuery.value);
                 return indexedVertices
                         .filter(vertex -> HasContainer.testAll(vertex, this.hasContainers))
-                        .collect(Collectors.<Vertex>toList())
+                        .collect(Collectors.<Vertex> toList())
                         .iterator();
             } else {
                 OLogManager.instance().warn(this, "scanning through all vertices without using an index for Traversal " + getTraversal());
@@ -66,7 +66,7 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E> imple
         }
     }
 
-    //TODO: indexed edges
+    // TODO: indexed edges
     private Iterator<? extends Edge> edges() {
         final OrientGraph graph = getGraph();
         if (this.ids != null && this.ids.length > 0) {
@@ -77,19 +77,20 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E> imple
     }
 
     private boolean isLabelKey(String key) {
-       try {
-           return T.fromString(key) == T.label;
-       } catch (IllegalArgumentException e) {
-           return false;
-       }
+        try {
+            return T.fromString(key) == T.label;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
     }
 
-    // if one of the HasContainers is a label matching predicate, then return that label
+    // if one of the HasContainers is a label matching predicate, then return
+    // that label
     private Optional<String> findElementLabelInHasContainers() {
         return this.hasContainers.stream()
-            .filter(hasContainer -> isLabelKey(hasContainer.getKey()))
-            .findFirst()
-            .map(hasContainer -> hasContainer.getValue().toString());
+                .filter(hasContainer -> isLabelKey(hasContainer.getKey()))
+                .findFirst()
+                .map(hasContainer -> hasContainer.getValue().toString());
     }
 
     private OrientGraph getGraph() {
@@ -103,16 +104,13 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E> imple
         final OIndexManagerProxy indexManager = graph.database().getMetadata().getIndexManager();
 
         // find indexed keys only for the element subclass (if present)
-        final Set<String> indexedKeys = elementLabel.isPresent() ?
-            graph.getIndexedKeys(this.returnClass, elementLabel.get()) :
-            graph.getIndexedKeys(this.returnClass);
+        final Set<String> indexedKeys = elementLabel.isPresent() ? graph.getIndexedKeys(this.returnClass, elementLabel.get()) : graph.getIndexedKeys(this.returnClass);
 
-        Optional<Pair<String, Object>> indexedKeyAndValue =
-            this.hasContainers.stream()
-            .filter(c -> indexedKeys.contains(c.getKey()) && c.getPredicate().getBiPredicate() == Compare.eq)
-            .findAny()
-            .map(c -> Optional.of(new Pair<>(c.getKey(), c.getValue())))
-            .orElseGet(Optional::empty);
+        Optional<Pair<String, Object>> indexedKeyAndValue = this.hasContainers.stream()
+                .filter(c -> indexedKeys.contains(c.getKey()) && c.getPredicate().getBiPredicate() == Compare.eq)
+                .findAny()
+                .map(c -> Optional.of(new Pair<>(c.getKey(), c.getValue())))
+                .orElseGet(Optional::empty);
 
         if (elementLabel.isPresent() && indexedKeyAndValue.isPresent()) {
             String key = indexedKeyAndValue.get().getValue0();
@@ -123,10 +121,11 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E> imple
             Iterator<OIndex<?>> keyIndexes = classIndexes.stream().filter(idx -> idx.getDefinition().getFields().contains(key)).iterator();
 
             if (keyIndexes.hasNext()) {
-                // TODO: implement algorithm to select best index if there are multiple
+                // TODO: implement algorithm to select best index if there are
+                // multiple
                 return Optional.of(new OrientIndexQuery(keyIndexes.next(), Optional.of(value)));
             } else {
-              OLogManager.instance().warn(this, "no index found for class=[" + className + "] and key=[" + key + "]");
+                OLogManager.instance().warn(this, "no index found for class=[" + className + "] and key=[" + key + "]");
             }
         }
 
@@ -138,9 +137,8 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E> imple
         if (this.hasContainers.isEmpty())
             return super.toString();
         else
-            return 0 == this.ids.length ?
-                StringFactory.stepString(this, this.returnClass.getSimpleName().toLowerCase(), this.hasContainers) :
-                StringFactory.stepString(this, this.returnClass.getSimpleName().toLowerCase(), Arrays.toString(this.ids), this.hasContainers);
+            return 0 == this.ids.length ? StringFactory.stepString(this, this.returnClass.getSimpleName().toLowerCase(), this.hasContainers)
+                    : StringFactory.stepString(this, this.returnClass.getSimpleName().toLowerCase(), Arrays.toString(this.ids), this.hasContainers);
     }
 
     private <E extends Element> Iterator<E> iteratorList(final Iterator<E> iterator) {

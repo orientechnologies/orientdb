@@ -4,7 +4,8 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 
 public class OrientEdgeType extends OrientElementType {
-    // Keeping the name in Immutable class because i cannot do the other way around
+    // Keeping the name in Immutable class because i cannot do the other way
+    // around
     public static final String CLASS_NAME = OImmutableClass.EDGE_CLASS_NAME;
 
     public OrientEdgeType(final OrientGraph graph, final OClass delegate) {

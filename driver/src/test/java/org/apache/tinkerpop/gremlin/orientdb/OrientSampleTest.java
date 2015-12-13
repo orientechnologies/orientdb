@@ -11,8 +11,8 @@ public class OrientSampleTest {
     @Test
     public void labelTest() {
         String graphUri = "memory:test";
-//        String graphUri = "plocal:target/graph" + Math.random();
-//        String graphUri = "remote:localhost/test";
+        // String graphUri = "plocal:target/graph" + Math.random();
+        // String graphUri = "remote:localhost/test";
         OrientGraph graph = new OrientGraphFactory(graphUri, "root", "root").getNoTx();
 
         OrientVertex v1 = (OrientVertex) graph.addVertex();
@@ -23,10 +23,10 @@ public class OrientSampleTest {
         while (vertices.hasNext())
             System.out.println(vertices.next());
 
-//        OClass clazz = v1.getRawDocument().getSchemaClass();
-//        Collection<OClass> subclasses = clazz.getSubclasses();
-//        System.out.println("Subclasses of vertex: " + subclasses.size());
-//        subclasses.forEach(c -> System.out.println(c));
+        // OClass clazz = v1.getRawDocument().getSchemaClass();
+        // Collection<OClass> subclasses = clazz.getSubclasses();
+        // System.out.println("Subclasses of vertex: " + subclasses.size());
+        // subclasses.forEach(c -> System.out.println(c));
     }
 
 }

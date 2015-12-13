@@ -9,7 +9,6 @@ import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 
-
 public final class OrientGraphFactory {
     public static String ADMIN = "admin";
     protected final String url;
@@ -36,15 +35,17 @@ public final class OrientGraphFactory {
     }
 
     /**
-     * Gets transactional graph with the database from pool if pool is configured. Otherwise creates a graph with new db instance. The
-     * Graph instance inherits the factory's configuration.
+     * Gets transactional graph with the database from pool if pool is
+     * configured. Otherwise creates a graph with new db instance. The Graph
+     * instance inherits the factory's configuration.
      *
      * @param create
-     *          if true automatically creates database if database with given URL does not exist
+     *            if true automatically creates database if database with given
+     *            URL does not exist
      * @param open
-     *          if true automatically opens the database
+     *            if true automatically opens the database
      */
-    //TODO: allow to open with these properties
+    // TODO: allow to open with these properties
     public OrientGraph getNoTx(boolean create, boolean open) {
         return getGraph(create, open, false);
     }
@@ -90,7 +91,7 @@ public final class OrientGraphFactory {
         if (txActive) {
             // REOPEN IT AGAIN
             db.begin();
-//            db.getTransaction().setUsingLog(settings.isUseLog());
+            // db.getTransaction().setUsingLog(settings.isUseLog());
         }
     }
 
@@ -98,26 +99,32 @@ public final class OrientGraphFactory {
         if (configuration != null)
             return configuration;
         else
-            return new BaseConfiguration() {{
-                setProperty(Graph.GRAPH, OrientGraph.class.getName());
-                setProperty(OrientGraph.CONFIG_URL, url);
-                setProperty(OrientGraph.CONFIG_USER, user);
-                setProperty(OrientGraph.CONFIG_PASS, password);
-                setProperty(OrientGraph.CONFIG_CREATE, create);
-                setProperty(OrientGraph.CONFIG_OPEN, open);
-                setProperty(OrientGraph.CONFIG_TRANSACTIONAL, transactional);
-                setProperty(OrientGraph.CONFIG_LABEL_AS_CLASSNAME, labelAsClassName);
-            }};
+            return new BaseConfiguration() {
+                {
+                    setProperty(Graph.GRAPH, OrientGraph.class.getName());
+                    setProperty(OrientGraph.CONFIG_URL, url);
+                    setProperty(OrientGraph.CONFIG_USER, user);
+                    setProperty(OrientGraph.CONFIG_PASS, password);
+                    setProperty(OrientGraph.CONFIG_CREATE, create);
+                    setProperty(OrientGraph.CONFIG_OPEN, open);
+                    setProperty(OrientGraph.CONFIG_TRANSACTIONAL, transactional);
+                    setProperty(OrientGraph.CONFIG_LABEL_AS_CLASSNAME, labelAsClassName);
+                }
+            };
     }
 
     /**
-     * @param create if true automatically creates database if database with given URL does not exist
-     * @param open   if true automatically opens the database
+     * @param create
+     *            if true automatically creates database if database with given
+     *            URL does not exist
+     * @param open
+     *            if true automatically opens the database
      */
     protected ODatabaseDocumentTx getDatabase(boolean create, boolean open) {
         final ODatabaseDocumentTx db = new ODatabaseFactory().createDatabase("graph", url);
         if (!db.getURL().startsWith("remote:") && !db.exists()) {
-            if (create) db.create();
+            if (create)
+                db.create();
             else if (open) throw new ODatabaseException("Database '" + url + "' not found");
         } else if (open) db.open(user, password);
 
@@ -125,9 +132,12 @@ public final class OrientGraphFactory {
     }
 
     /**
-     * Enable or disable the prefixing of class names with V_<label> for vertices or E_<label> for edges.
+     * Enable or disable the prefixing of class names with V_<label> for
+     * vertices or E_<label> for edges.
      * 
-     * @param is	if true classname equals label, if false classname is prefixed with V_ or E_ (default)
+     * @param is
+     *            if true classname equals label, if false classname is prefixed
+     *            with V_ or E_ (default)
      */
     public OrientGraphFactory setLabelAsClassName(boolean is) {
         this.labelAsClassName = is;
@@ -135,7 +145,8 @@ public final class OrientGraphFactory {
     }
 
     /**
-     * Setting up the factory to use database pool instead of creation a new instance of database connection each time.
+     * Setting up the factory to use database pool instead of creation a new
+     * instance of database connection each time.
      */
     public OrientGraphFactory setupPool(final int max) {
         pool = new OPartitionedDatabasePool(url, user, password, max).setAutoCreate(true);
