@@ -1759,7 +1759,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     final Throwable firstCause = OException.getFirstCause(exception);
 
     // CHECK IF THE EXCEPTION SHOULD BE JUST PROPAGATED
-    if (!(firstCause instanceof IOException)) {
+    if (!(firstCause instanceof IOException) && !(firstCause instanceof IllegalMonitorStateException)) {
       if (exception instanceof OException)
         // NOT AN IO CAUSE, JUST PROPAGATE IT
         throw (OException) exception;

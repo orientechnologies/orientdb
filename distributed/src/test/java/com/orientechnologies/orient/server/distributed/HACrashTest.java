@@ -35,7 +35,7 @@ public class HACrashTest extends AbstractServerClusterTxTest {
   @Test
   public void test() throws Exception {
     startupNodesInSequence = true;
-    count = 300;
+    count = 500;
     maxRetries = 10;
     init(SERVERS);
     prepare(false);
@@ -69,13 +69,13 @@ public class HACrashTest extends AbstractServerClusterTxTest {
                 e.printStackTrace();
               }
             }
-          }, 10000);
+          }, 20000);
 
           banner("SIMULATE FAILURE ON SERVER " + (SERVERS - 1));
           serverInstance.get(SERVERS - 1).crashServer();
           lastServerOn = false;
         }
-      }, 2000);
+      }, 5000);
     }
   }
 
