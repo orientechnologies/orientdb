@@ -69,13 +69,13 @@ public class HACrashTest extends AbstractServerClusterTxTest {
                 e.printStackTrace();
               }
             }
-          }, 20000);
+          }, 10000);
 
           banner("SIMULATE FAILURE ON SERVER " + (SERVERS - 1));
           serverInstance.get(SERVERS - 1).crashServer();
           lastServerOn = false;
         }
-      }, 5000);
+      }, 3000);
     }
   }
 
