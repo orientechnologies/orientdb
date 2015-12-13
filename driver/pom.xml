@@ -170,6 +170,37 @@
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>2.6</version>
             </plugin>
+            <plugin>
+                <groupId>com.marvinformatics.formatter</groupId>
+                <artifactId>formatter-maven-plugin</artifactId>
+                <version>1.6.0.RC4</version>
+                <configuration>
+                    <sourceDirectory>${project.basedir}</sourceDirectory>
+                    <excludes>
+                        <exclude>**/src/test/resources/**</exclude>
+                        <exclude>**/target/**</exclude>
+                    </excludes>
+                    <lineEnding>LF</lineEnding>
+                    <configFile>${project.basedir}/src/config/eclipse/formatter/java.xml</configFile>
+                    <configJsFile>${project.basedir}/src/config/eclipse/formatter/javascript.xml</configJsFile>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>format</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>format</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.codehaus.plexus</groupId>
+                        <artifactId>plexus-utils</artifactId>
+                        <version>3.0.22</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
         </plugins>
         <pluginManagement>
             <plugins>
@@ -187,6 +218,40 @@
     </build>
 
     <profiles>
+        <profile>
+            <id>travis</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.marvinformatics.formatter</groupId>
+                        <artifactId>formatter-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>validate</id>
+                                <phase>initialize</phase>
+                                <goals>
+                                    <goal>validate</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>skip-formatter</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.marvinformatics.formatter</groupId>
+                        <artifactId>formatter-maven-plugin</artifactId>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
         <profile>
             <id>release</id>
             <build>

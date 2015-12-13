@@ -18,8 +18,7 @@ public class OrientGraphUtils {
         try {
             return URLEncoder.encode(iClassName, "UTF-8");
         } catch (UnsupportedEncodingException e) {
-            // OLogManager.instance().error(null, "Error on encoding class name
-            // using encoding '%s'", e, "UTF-8");
+            //            OLogManager.instance().error(null, "Error on encoding class name using encoding '%s'", e, "UTF-8");
             return iClassName;
         }
     }
@@ -34,20 +33,18 @@ public class OrientGraphUtils {
         try {
             return URLDecoder.decode(iClassName, "UTF-8");
         } catch (UnsupportedEncodingException e) {
-            // OLogManager.instance().error(null, "Error on decoding class name
-            // using encoding '%s'", e, "UTF-8");
+            //            OLogManager.instance().error(null, "Error on decoding class name using encoding '%s'", e, "UTF-8");
             return iClassName;
         }
     }
 
-    // public static void getEdgeClassNames(final OrientGraph graph, final
-    // String... iLabels) {
-    // for (int i = 0; i < iLabels.length; ++i) {
-    // final OrientEdgeType edgeType = graph.getEdgeType(iLabels[i]);
-    // if (edgeType != null)
-    // // OVERWRITE CLASS NAME BECAUSE ATTRIBUTES ARE CASE SENSITIVE
-    // iLabels[i] = edgeType.getName();
-    // }
-    // }
+    //    public static void getEdgeClassNames(final OrientGraph graph, final String... iLabels) {
+    //        for (int i = 0; i < iLabels.length; ++i) {
+    //            final OrientEdgeType edgeType = graph.getEdgeType(iLabels[i]);
+    //            if (edgeType != null)
+    //                // OVERWRITE CLASS NAME BECAUSE ATTRIBUTES ARE CASE SENSITIVE
+    //                iLabels[i] = edgeType.getName();
+    //        }
+    //    }
 
 }

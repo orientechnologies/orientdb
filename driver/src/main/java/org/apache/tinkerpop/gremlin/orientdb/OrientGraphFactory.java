@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.db.ODatabaseFactory;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
@@ -83,10 +84,10 @@ public final class OrientGraphFactory {
             db.commit();
 
         OSchema schema = db.getMetadata().getSchema();
-        if (!schema.existsClass(OrientVertexType.CLASS_NAME))
-            schema.createClass(OrientVertexType.CLASS_NAME).setOverSize(2);
-        if (!schema.existsClass(OrientEdgeType.CLASS_NAME))
-            schema.createClass(OrientEdgeType.CLASS_NAME);
+        if (!schema.existsClass(OImmutableClass.VERTEX_CLASS_NAME))
+            schema.createClass(OImmutableClass.VERTEX_CLASS_NAME).setOverSize(2);
+        if (!schema.existsClass(OImmutableClass.EDGE_CLASS_NAME))
+            schema.createClass(OImmutableClass.EDGE_CLASS_NAME);
 
         if (txActive) {
             // REOPEN IT AGAIN

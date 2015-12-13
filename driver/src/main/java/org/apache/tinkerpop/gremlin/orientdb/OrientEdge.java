@@ -141,10 +141,10 @@ public class OrientEdge extends OrientElement implements Edge {
         if (doc == null)
             return null;
 
-        // if (settings != null && settings.isKeepInMemoryReferences())
+        //        if (settings != null && settings.isKeepInMemoryReferences())
         // AVOID LAZY RESOLVING+SETTING OF RECORD
-        // return doc.rawField(OrientGraphUtils.CONNECTION_IN);
-        // else
+        //            return doc.rawField(OrientGraphUtils.CONNECTION_IN);
+        //        else
         return doc.field(OrientGraphUtils.CONNECTION_IN);
     }
 

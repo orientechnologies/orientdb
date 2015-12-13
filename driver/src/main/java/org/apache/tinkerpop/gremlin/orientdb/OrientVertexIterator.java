@@ -51,10 +51,10 @@ public class OrientVertexIterator extends OLazyWrapperIterator<Vertex> {
         } else if (immutableClass.isEdgeType()) {
             // EDGE
             // if (vertex.settings.isUseVertexFieldsForEdgeLabels() ||
-            // OrientEdge.isLabeled(OrientEdge.getRecordLabel(value), iLabels))
+            //            if (vertex.settings.isUseVertexFieldsForEdgeLabels() || OrientEdge.isLabeled(OrientEdge.getRecordLabel(value), iLabels))
             v = new OrientVertex(vertex.getGraph(), OrientEdge.getConnection(value, connection.getKey().opposite()));
-            // else
-            // v = null;
+            //            else
+            //                v = null;
         } else
             throw new IllegalStateException("Invalid content found between connections:" + value);
 
@@ -77,11 +77,10 @@ public class OrientVertexIterator extends OLazyWrapperIterator<Vertex> {
             v = value;
         } else if (immutableClass.isEdgeType()) {
             // EDGE
-            // if (vertex.settings.isUseVertexFieldsForEdgeLabels() ||
-            // OrientEdge.isLabeled(OrientEdge.getRecordLabel(value), iLabels))
+            //            if (vertex.settings.isUseVertexFieldsForEdgeLabels() || OrientEdge.isLabeled(OrientEdge.getRecordLabel(value), iLabels))
             v = OrientEdge.getConnection(value, connection.getKey().opposite());
-            // else
-            // v = null;
+            //            else
+            //                v = null;
         } else
             throw new IllegalStateException("Invalid content found between connections:" + value);
 
