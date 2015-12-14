@@ -44,6 +44,7 @@ import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceInformation;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
+import com.orientechnologies.orient.core.storage.impl.local.OStoragePerformanceStatistic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
@@ -1231,14 +1232,23 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     final long firstPageEndPosition = firstPageStartPosition + pageSize;
 
     if (fileClassic.getFileSize() >= firstPageEndPosition) {
-      if (pageCount == 1) {
-        final byte[] content = new byte[pageSize + 2 * PAGE_PADDING];
-        fileClassic.read(firstPageStartPosition, content, pageSize, PAGE_PADDING);
+      final OStoragePerformanceStatistic storagePerformanceStatistic = OStoragePerformanceStatistic.getStatisticInstance();
+      if (storagePerformanceStatistic != null) {
+        storagePerformanceStatistic.startPageReadFromFileTimer();
+      }
+      int pagesRead = 0;
 
-        final ODirectMemoryPointer pointer = ODirectMemoryPointerFactory.instance().createPointer(content);
-        final OCachePointer dataPointer = new OCachePointer(pointer, lastLsn, fileId, startPageIndex);
-        return new OCachePointer[] { dataPointer };
-      } else {
+      try {
+        if (pageCount == 1) {
+          final byte[] content = new byte[pageSize + 2 * PAGE_PADDING];
+          fileClassic.read(firstPageStartPosition, content, pageSize, PAGE_PADDING);
+
+          final ODirectMemoryPointer pointer = ODirectMemoryPointerFactory.instance().createPointer(content);
+          final OCachePointer dataPointer = new OCachePointer(pointer, lastLsn, fileId, startPageIndex);
+          pagesRead = 1;
+          return new OCachePointer[] { dataPointer };
+        }
+
         final long maxPageCount = (fileClassic.getFileSize() - firstPageStartPosition) / pageSize;
         final int realPageCount = Math.min((int) maxPageCount, pageCount);
 
@@ -1254,7 +1264,12 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
           dataPointers[n] = new OCachePointer(pointer, lastLsn, fileId, startPageIndex + n);
         }
 
+        pagesRead = dataPointers.length;
         return dataPointers;
+      } finally {
+        if (storagePerformanceStatistic != null) {
+          storagePerformanceStatistic.stopPageReadFromFileTimer(pagesRead);
+        }
       }
     } else if (addNewPages) {
       final int space = (int) (firstPageEndPosition - fileClassic.getFileSize());

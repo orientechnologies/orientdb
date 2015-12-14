@@ -1232,6 +1232,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * @see #completeGatheringPerformanceStatisticForCurrentThread()
    */
   public void startGatheringPerformanceStatisticForCurrentThread() {
+    OStoragePerformanceStatistic
+        .initThreadLocalInstance(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024 * 1024);
   }
 
   /**
@@ -1241,7 +1243,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * @return Performance statistic gathered after call of {@link #startGatheringPerformanceStatisticForCurrentThread()}
    */
   public OStoragePerformanceStatistic completeGatheringPerformanceStatisticForCurrentThread() {
-    return new OStoragePerformanceStatistic();
+    return OStoragePerformanceStatistic.clearThreadLocalInstance();
   }
 
   @Override
