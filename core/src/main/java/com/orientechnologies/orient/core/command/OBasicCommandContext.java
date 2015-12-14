@@ -113,8 +113,8 @@ public class OBasicCommandContext implements OCommandContext {
     } else {
       if (variables != null && variables.containsKey(firstPart))
         result = variables.get(firstPart);
-      else if (child != null)
-        result = child.getVariable(firstPart);
+      else if (parent != null)
+        result = parent.getVariable(firstPart);
     }
 
     if (pos > -1)
