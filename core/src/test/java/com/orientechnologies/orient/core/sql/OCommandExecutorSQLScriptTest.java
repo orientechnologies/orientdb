@@ -9,6 +9,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -86,7 +87,7 @@ public class OCommandExecutorSQLScriptTest {
     Assert.assertTrue(result.startsWith("["));
     Assert.assertTrue(result.endsWith("]"));
 
-    new ODocument().fromJSON(result.substring(1, result.length()-1));
+    new ODocument().fromJSON(result.substring(1, result.length() - 1));
 
   }
 
@@ -166,7 +167,6 @@ public class OCommandExecutorSQLScriptTest {
     Assert.assertEquals(qResult, "OK");
   }
 
-
   @Test
   public void testIf2() throws Exception {
     StringBuilder script = new StringBuilder();
@@ -230,7 +230,7 @@ public class OCommandExecutorSQLScriptTest {
     Object qResult = db.command(new OCommandScript("sql", script.toString())).execute();
 
     Assert.assertNotNull(qResult);
-    Assert.assertEquals(((List)qResult).size(), 3);
+    Assert.assertEquals(((List) qResult).size(), 3);
   }
 
   @Test
@@ -247,5 +247,20 @@ public class OCommandExecutorSQLScriptTest {
 
     Assert.assertNotNull(qResult);
     Assert.assertEquals(qResult, "OK");
+  }
+
+  @Test
+  public void testScriptSubContext() throws Exception {
+    StringBuilder script = new StringBuilder();
+
+    script.append("let $a = select from foo limit 1\n");
+    script.append("select from (traverse doesnotexist from $a)\n");
+    Iterable qResult = db.command(new OCommandScript("sql", script.toString())).execute();
+
+    Assert.assertNotNull(qResult);
+    Iterator iterator = qResult.iterator();
+    Assert.assertTrue(iterator.hasNext());
+    iterator.next();
+    Assert.assertFalse(iterator.hasNext());
   }
 }
