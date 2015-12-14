@@ -84,7 +84,7 @@ public class OObjectEntityEnhancer {
           + " cannot be serialized because is not part of registered entities. To fix this error register this class");
     }
     final Class<T> c;
-    boolean isInnerClass = iClass.getEnclosingClass() != null;
+    boolean isInnerClass = OObjectEntitySerializer.getEnclosingClass(iClass) != null;
     if (Proxy.class.isAssignableFrom(iClass)) {
       c = iClass;
     } else {
@@ -256,7 +256,7 @@ public class OObjectEntityEnhancer {
   protected <T> T createInstanceNoParameters(Class<T> iProxiedClass, Class<?> iOriginalClass) throws SecurityException,
       NoSuchMethodException, IllegalArgumentException, InstantiationException, IllegalAccessException, InvocationTargetException {
     T instanceToReturn = null;
-    final Class<?> enclosingClass = iOriginalClass.getEnclosingClass();
+    final Class<?> enclosingClass = OObjectEntitySerializer.getEnclosingClass(iOriginalClass);
 
     if (enclosingClass != null && !Modifier.isStatic(iOriginalClass.getModifiers())) {
       Object instanceOfEnclosingClass = createInstanceNoParameters(enclosingClass, enclosingClass);
