@@ -18,6 +18,7 @@ package com.orientechnologies.orient.object.enhancement;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.reflection.OReflectionHelper;
+import com.orientechnologies.common.reflection.OReflectionUtils;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.annotation.OAccess;
 import com.orientechnologies.orient.core.annotation.OAfterDeserialization;
@@ -89,6 +90,8 @@ import java.util.concurrent.Callable;
  */
 public class OObjectEntitySerializer {
 
+  public static final String SIMPLE_NAME = OObjectEntitySerializedSchema.class.getSimpleName();
+
   public static class OObjectEntitySerializedSchema {
     public final Set<Class<?>>                           classes             = new HashSet<Class<?>>();
     public final HashMap<Class<?>, List<String>>         allFields           = new HashMap<Class<?>, List<String>>();
@@ -108,7 +111,7 @@ public class OObjectEntitySerializer {
       return null;
 
     OStorage storage = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage();
-    OObjectEntitySerializedSchema serializedShchema = storage.getResource(OObjectEntitySerializedSchema.class.getSimpleName(),
+    OObjectEntitySerializedSchema serializedShchema = storage.getResource(SIMPLE_NAME,
         new Callable<OObjectEntitySerializedSchema>() {
           @Override
           public OObjectEntitySerializedSchema call() throws Exception {
@@ -1075,7 +1078,7 @@ public class OObjectEntitySerializer {
   }
 
   public static Field getField(String fieldName, Class<?> iClass) {
-    for (Field f : iClass.getDeclaredFields()) {
+    for (Field f : OReflectionUtils.getDeclaredFields(iClass)) {
       if (f.getName().equals(fieldName))
         return f;
     }
@@ -1224,7 +1227,7 @@ public class OObjectEntitySerializer {
     Class<?> currentClass = pojoClass;
 
     while (!currentClass.equals(Object.class) && serializedSchema.classes.contains(pojoClass)) {
-      for (Field p : currentClass.getDeclaredFields()) {
+      for (Field p : OReflectionUtils.getDeclaredFields(currentClass)) {
         if (Modifier.isStatic(p.getModifiers()) || Modifier.isNative(p.getModifiers()) || Modifier.isTransient(p.getModifiers())
             || p.getType().isAnonymousClass())
           continue;
