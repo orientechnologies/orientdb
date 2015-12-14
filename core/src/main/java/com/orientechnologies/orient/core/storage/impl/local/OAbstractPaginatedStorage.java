@@ -1225,6 +1225,25 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
+  /**
+   * Starts to gather information about storage performance for current thread.
+   * Details which performance characteristics are gathered can be found at {@link OStoragePerformanceStatistic}.
+   *
+   * @see #completeGatheringPerformanceStatisticForCurrentThread()
+   */
+  public void startGatheringPerformanceStatisticForCurrentThread() {
+  }
+
+  /**
+   * Completes gathering performance characteristics for current thread initiated by call of
+   * {@link #startGatheringPerformanceStatisticForCurrentThread()}
+   *
+   * @return Performance statistic gathered after call of {@link #startGatheringPerformanceStatisticForCurrentThread()}
+   */
+  public OStoragePerformanceStatistic completeGatheringPerformanceStatisticForCurrentThread() {
+    return new OStoragePerformanceStatistic();
+  }
+
   @Override
   public <V> V callInLock(Callable<V> iCallable, boolean iExclusiveLock) {
     stateLock.acquireReadLock();
