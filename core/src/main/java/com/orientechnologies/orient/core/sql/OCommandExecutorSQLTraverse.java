@@ -131,7 +131,7 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
       else
         traverse.limit(limit);
 
-      traverse.getContext().setChild(iRequest.getContext());
+      traverse.getContext().setParent(iRequest.getContext());
     } finally {
       textRequest.setText(originalQuery);
     }
