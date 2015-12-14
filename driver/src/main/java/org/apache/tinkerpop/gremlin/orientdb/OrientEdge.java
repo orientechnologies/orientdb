@@ -19,12 +19,12 @@ import java.util.Iterator;
 import java.util.List;
 
 public class OrientEdge extends OrientElement implements Edge {
-	
-	private static final List<String> INTERNAL_FIELDS = Arrays.asList("@rid", "@class", "in", "out");
-	
-    protected OIdentifiable   vOut;
-    protected OIdentifiable   vIn;
-    protected String          label;
+
+    private static final List<String> INTERNAL_FIELDS = Arrays.asList("@rid", "@class", "in", "out");
+
+    protected OIdentifiable vOut;
+    protected OIdentifiable vIn;
+    protected String label;
 
     public OrientEdge(OrientGraph graph, OIdentifiable rawElement, final OIdentifiable out, final OIdentifiable in, final String iLabel) {
         super(graph, rawElement);
@@ -38,16 +38,15 @@ public class OrientEdge extends OrientElement implements Edge {
     }
 
     public OrientEdge(OrientGraph graph, final OIdentifiable out, final OIdentifiable in, final String iLabel) {
-      this(graph, (OIdentifiable) null, out, in, iLabel);
+        this(graph, (OIdentifiable) null, out, in, iLabel);
     }
 
     public OrientEdge(OrientGraph graph, ODocument rawDocument, String label) {
         this(graph, rawDocument, rawDocument.field("out", OIdentifiable.class), rawDocument.field("in", OIdentifiable.class), label);
     }
 
-    public OrientEdge(OrientGraph graph, ODocument rawDocument)
-    {
-      this(graph, rawDocument, rawDocument.getClassName());
+    public OrientEdge(OrientGraph graph, ODocument rawDocument) {
+        this(graph, rawDocument, rawDocument.getClassName());
     }
 
     public static OIdentifiable getConnection(final ODocument iEdgeRecord, final Direction iDirection) {
@@ -61,24 +60,20 @@ public class OrientEdge extends OrientElement implements Edge {
 
     @Override
     public Iterator<Vertex> vertices(Direction direction) {
-      switch (direction)
-      {
-      case OUT:
-        return graph.vertices(vOut.getIdentity());
-      case IN:
-        return graph.vertices(vIn.getIdentity());
-      case BOTH:
-      default:
-        return graph.vertices(vOut.getIdentity(), vIn.getIdentity());
-      }
+        switch (direction) {
+        case OUT:
+            return graph.vertices(vOut.getIdentity());
+        case IN:
+            return graph.vertices(vIn.getIdentity());
+        case BOTH:
+        default:
+            return graph.vertices(vOut.getIdentity(), vIn.getIdentity());
+        }
     }
 
     public <V> Iterator<Property<V>> properties(final String... propertyKeys) {
         Iterator<? extends Property<V>> properties = super.properties(propertyKeys);
-        return StreamUtils.asStream(properties).filter(p ->
-        	!INTERNAL_FIELDS.contains(p.key()) ).map(p ->
-            (Property<V>) p
-        ).iterator();
+        return StreamUtils.asStream(properties).filter(p -> !INTERNAL_FIELDS.contains(p.key())).map(p -> (Property<V>) p).iterator();
     }
 
     public OrientVertex getVertex(final Direction direction) {
@@ -102,18 +97,17 @@ public class OrientEdge extends OrientElement implements Edge {
     }
 
     @SuppressWarnings("unchecked")
-    private void removeLink( Direction direction) {
+    private void removeLink(Direction direction) {
         final String fieldName = OrientVertex.getConnectionFieldName(direction, this.label());
         ODocument doc = this.getVertex(direction).getRawDocument();
         Object found = doc.field(fieldName);
-        if(found instanceof ORidBag) {
-            ORidBag bag = (ORidBag)found;
+        if (found instanceof ORidBag) {
+            ORidBag bag = (ORidBag) found;
             bag.remove(this.getRawElement());
-            if(bag.size() == 0)  doc.removeField(fieldName);
-        }
-        else if (found instanceof Collection<?>) {
+            if (bag.size() == 0) doc.removeField(fieldName);
+        } else if (found instanceof Collection<?>) {
             ((Collection<Object>) found).remove(this.getRawElement());
-            if(((Collection<Object>) found).size() == 0) doc.removeField(fieldName);
+            if (((Collection<Object>) found).size() == 0) doc.removeField(fieldName);
         } else
             throw new IllegalStateException("Relationship content is invalid on field " + fieldName + ". Found: " + found);
         doc.save();
@@ -128,11 +122,11 @@ public class OrientEdge extends OrientElement implements Edge {
         if (doc == null)
             return null;
 
-//        if (settings != null && settings.isKeepInMemoryReferences())
-            // AVOID LAZY RESOLVING+SETTING OF RECORD
-//            return doc.rawField(OrientGraphUtils.CONNECTION_OUT);
-//        else
-            return doc.field(OrientGraphUtils.CONNECTION_OUT);
+        // if (settings != null && settings.isKeepInMemoryReferences())
+        // AVOID LAZY RESOLVING+SETTING OF RECORD
+        // return doc.rawField(OrientGraphUtils.CONNECTION_OUT);
+        // else
+        return doc.field(OrientGraphUtils.CONNECTION_OUT);
     }
 
     /**
@@ -147,11 +141,11 @@ public class OrientEdge extends OrientElement implements Edge {
         if (doc == null)
             return null;
 
-//        if (settings != null && settings.isKeepInMemoryReferences())
-            // AVOID LAZY RESOLVING+SETTING OF RECORD
-//            return doc.rawField(OrientGraphUtils.CONNECTION_IN);
-//        else
-            return doc.field(OrientGraphUtils.CONNECTION_IN);
+        //        if (settings != null && settings.isKeepInMemoryReferences())
+        // AVOID LAZY RESOLVING+SETTING OF RECORD
+        //            return doc.rawField(OrientGraphUtils.CONNECTION_IN);
+        //        else
+        return doc.field(OrientGraphUtils.CONNECTION_IN);
     }
 
     @Override

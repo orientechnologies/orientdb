@@ -27,7 +27,7 @@ import org.junit.Test;
 public class OrientGraphTest {
 
     protected OrientGraphFactory graphFactory() {
-        return new OrientGraphFactory("memory:tinkerpop-" +  Math.random());
+        return new OrientGraphFactory("memory:tinkerpop-" + Math.random());
     }
 
     public static final String TEST_VALUE = "SomeValue";
@@ -153,7 +153,7 @@ public class OrientGraphTest {
     public void testUnprefixedLabelGraph() throws Exception {
         Graph graph = graphFactory().setLabelAsClassName(true).getNoTx();
         assertEquals(true, graph.configuration().getBoolean(OrientGraph.CONFIG_LABEL_AS_CLASSNAME));
-        
+
         performBasicTests(graph);
 
         Vertex vertex = graph.addVertex("VERTEX_LABEL");
@@ -165,7 +165,7 @@ public class OrientGraphTest {
         } catch (IllegalArgumentException e) {
             // ok
         }
-        
+
         graph.close();
     }
 

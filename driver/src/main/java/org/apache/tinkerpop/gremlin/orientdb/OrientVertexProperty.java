@@ -16,7 +16,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-public class OrientVertexProperty<V> extends OrientProperty<V> implements VertexProperty<V> {
+public class OrientVertexProperty<V> extends OrientProperty<V>implements VertexProperty<V> {
 
     public OrientVertexProperty(Property<V> property, OrientVertex vertex) {
         super(property.key(), property.value(), vertex);
@@ -36,15 +36,15 @@ public class OrientVertexProperty<V> extends OrientProperty<V> implements Vertex
         if (T.id.equals(key))
             throw VertexProperty.Exceptions.userSuppliedIdsNotSupported();
 
-         ODocument metadata = getMetadataDocument();
+        ODocument metadata = getMetadataDocument();
 
-         metadata.field(key, value);
-         return new OrientVertexPropertyProperty<>(key, value, this);
-     }
+        metadata.field(key, value);
+        return new OrientVertexPropertyProperty<>(key, value, this);
+    }
 
     @Override
     public <U> Iterator<Property<U>> properties(String... propertyKeys) {
-        if(!hasMetadataDocument())
+        if (!hasMetadataDocument())
             return Collections.emptyIterator();
 
         Map<String, Object> properties = getMetadataDocument().toMap();
@@ -69,13 +69,13 @@ public class OrientVertexProperty<V> extends OrientProperty<V> implements Vertex
     public void removeMetadata(String key) {
         ODocument metadata = getMetadataDocument();
         metadata.removeField(key);
-        if(metadata.fields() == 0)
+        if (metadata.fields() == 0)
             element.getRawDocument().removeField(metadataKey());
     }
 
     ODocument getMetadataDocument() {
         ODocument metadata = element.getRawDocument().field(metadataKey());
-        if(metadata == null) {
+        if (metadata == null) {
             metadata = new ODocument();
             ODocument vertexDocument = element.getRawDocument();
             vertexDocument.field(metadataKey(), metadata, OType.EMBEDDED);

@@ -15,12 +15,12 @@ import java.util.Collection;
 import java.util.Iterator;
 
 public class OrientVertexIterator extends OLazyWrapperIterator<Vertex> {
-    private final OrientVertex             vertex;
-    private final String[]                 iLabels;
+    private final OrientVertex vertex;
+    private final String[] iLabels;
     private final OPair<Direction, String> connection;
 
     public OrientVertexIterator(final OrientVertex orientVertex, final Object iMultiValue, final Iterator<?> iterator,
-                                final OPair<Direction, String> connection, final String[] iLabels, final int iSize) {
+            final OPair<Direction, String> connection, final String[] iLabels, final int iSize) {
         super(iterator, iSize, iMultiValue);
         this.vertex = orientVertex;
         this.connection = connection;
@@ -50,10 +50,11 @@ public class OrientVertexIterator extends OLazyWrapperIterator<Vertex> {
             v = new OrientVertex(vertex.getGraph(), value);
         } else if (immutableClass.isEdgeType()) {
             // EDGE
-//            if (vertex.settings.isUseVertexFieldsForEdgeLabels() || OrientEdge.isLabeled(OrientEdge.getRecordLabel(value), iLabels))
-                v = new OrientVertex(vertex.getGraph(), OrientEdge.getConnection(value, connection.getKey().opposite()));
-//            else
-//                v = null;
+            // if (vertex.settings.isUseVertexFieldsForEdgeLabels() ||
+            //            if (vertex.settings.isUseVertexFieldsForEdgeLabels() || OrientEdge.isLabeled(OrientEdge.getRecordLabel(value), iLabels))
+            v = new OrientVertex(vertex.getGraph(), OrientEdge.getConnection(value, connection.getKey().opposite()));
+            //            else
+            //                v = null;
         } else
             throw new IllegalStateException("Invalid content found between connections:" + value);
 
@@ -76,10 +77,10 @@ public class OrientVertexIterator extends OLazyWrapperIterator<Vertex> {
             v = value;
         } else if (immutableClass.isEdgeType()) {
             // EDGE
-//            if (vertex.settings.isUseVertexFieldsForEdgeLabels() || OrientEdge.isLabeled(OrientEdge.getRecordLabel(value), iLabels))
-                v = OrientEdge.getConnection(value, connection.getKey().opposite());
-//            else
-//                v = null;
+            //            if (vertex.settings.isUseVertexFieldsForEdgeLabels() || OrientEdge.isLabeled(OrientEdge.getRecordLabel(value), iLabels))
+            v = OrientEdge.getConnection(value, connection.getKey().opposite());
+            //            else
+            //                v = null;
         } else
             throw new IllegalStateException("Invalid content found between connections:" + value);
 

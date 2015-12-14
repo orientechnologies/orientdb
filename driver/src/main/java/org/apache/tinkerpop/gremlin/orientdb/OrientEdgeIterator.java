@@ -20,8 +20,8 @@ public class OrientEdgeIterator extends OLazyWrapperIterator<OrientEdge> {
     private final String[] labels;
 
     public OrientEdgeIterator(final OrientVertex iSourceVertex, final OrientVertex iTargetVertex,
-                              final Object iMultiValue, final Iterator<?> iterator,
-                              final OPair<Direction, String> connection, final String[] iLabels, final int iSize) {
+            final Object iMultiValue, final Iterator<?> iterator,
+            final OPair<Direction, String> connection, final String[] iLabels, final int iSize) {
         super(iterator, iSize, iMultiValue);
         this.sourceVertex = iSourceVertex;
         this.targetVertex = iTargetVertex;
@@ -52,9 +52,9 @@ public class OrientEdgeIterator extends OLazyWrapperIterator<OrientEdge> {
         if (!(record instanceof ODocument)) {
             // SKIP IT
             OLogManager.instance().warn(this,
-                "Found a record (%s) that is not an edge. Source vertex : %s, Target vertex : %s, Database : %s .", rec,
-                sourceVertex != null ? sourceVertex.id() : null, targetVertex != null ? targetVertex.id() : null,
-                record.getDatabase().getURL());
+                    "Found a record (%s) that is not an edge. Source vertex : %s, Target vertex : %s, Database : %s .", rec,
+                    sourceVertex != null ? sourceVertex.id() : null, targetVertex != null ? targetVertex.id() : null,
+                    record.getDatabase().getURL());
             return null;
         }
 
@@ -80,13 +80,13 @@ public class OrientEdgeIterator extends OLazyWrapperIterator<OrientEdge> {
 
         final OrientEdge edge;
         if (immutableSchema.isVertexType()) {
-//          DIRECT VERTEX, CREATE DUMMY EDGE
+            // DIRECT VERTEX, CREATE DUMMY EDGE
             if (connection.getKey() == Direction.OUT)
                 edge = new OrientEdge(this.sourceVertex.getGraph(), (OIdentifiable) this.sourceVertex.id(), rec.getIdentity(),
-                    connection.getValue());
+                        connection.getValue());
             else
                 edge = new OrientEdge(this.sourceVertex.getGraph(), rec.getIdentity(), (OIdentifiable) this.sourceVertex.id(),
-                    connection.getValue());
+                        connection.getValue());
         } else if (immutableSchema.isEdgeType()) {
             edge = new OrientEdge(this.sourceVertex.getGraph(), value, connection.getValue());
         } else
@@ -96,17 +96,20 @@ public class OrientEdgeIterator extends OLazyWrapperIterator<OrientEdge> {
     }
 
     public boolean filter(final OrientEdge edge) {
-//        return targetVertex == null || targetVertex.equals(edge.getVertex(connection.getKey().opposite()));
-//        throw new NotImplementedException();
-        //TODO simplify
+        // return targetVertex == null ||
+        // targetVertex.equals(edge.getVertex(connection.getKey().opposite()));
+        // throw new NotImplementedException();
+        // TODO simplify
         if (targetVertex != null && !targetVertex.equals(edge.getVertex(connection.getKey().opposite())))
             return false;
         else
             return true;
-//        if (targetVertex != null && !targetVertex.equals(iObject.getVertex(connection.getKey().opposite())))
-//            return false;
-//
-//        return this.sourceVertex.settings.isUseVertexFieldsForEdgeLabels() || iObject.isLabeled(labels);
+        // if (targetVertex != null &&
+        // !targetVertex.equals(iObject.getVertex(connection.getKey().opposite())))
+        // return false;
+        //
+        // return this.sourceVertex.settings.isUseVertexFieldsForEdgeLabels() ||
+        // iObject.isLabeled(labels);
     }
 
     @Override
