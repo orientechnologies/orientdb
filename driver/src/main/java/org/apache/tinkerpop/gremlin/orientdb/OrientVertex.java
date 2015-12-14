@@ -51,6 +51,7 @@ public final class OrientVertex extends OrientElement implements Vertex {
 
     public Iterator<Vertex> vertices(final Direction direction, final String... labels) {
         //        OrientGraphUtils.getEdgeClassNames(getGraph(), labels);
+        // labels = (String[])
         //        labels = (String[]) Stream.of(labels).map(OrientGraphUtils::encodeClassName).toArray();
 
         final ODocument doc = getRawDocument();
@@ -180,7 +181,7 @@ public final class OrientVertex extends OrientElement implements Vertex {
             throw new IllegalStateException("label cannot be null");
 
         // CREATE THE EDGE DOCUMENT TO STORE FIELDS TOO
-        String className = label.equals(OImmutableClass.EDGE_CLASS_NAME) ? OImmutableClass.EDGE_CLASS_NAME : OImmutableClass.EDGE_CLASS_NAME + "_" + label;
+        String className = graph.labelToClassName(label, OImmutableClass.EDGE_CLASS_NAME);
         edge = new OrientEdge(graph, className, outDocument, inDocument, label);
         edge.property(keyValues);
 
@@ -356,9 +357,12 @@ public final class OrientVertex extends OrientElement implements Vertex {
     /**
      * Determines if a field is a connections or not.
      *
-     * @param iDirection  Direction to check
-     * @param iFieldName  Field name
-     * @param iClassNames Optional array of class names
+     * @param iDirection
+     *            Direction to check
+     * @param iFieldName
+     *            Field name
+     * @param iClassNames
+     *            Optional array of class names
      * @return The found direction if any
      */
     protected OPair<Direction, String> getConnection(final Direction iDirection, final String iFieldName, String... iClassNames) {
@@ -404,8 +408,10 @@ public final class OrientVertex extends OrientElement implements Vertex {
     /**
      * Used to extract the class name from the vertex's field.
      *
-     * @param iDirection Direction of connection
-     * @param iFieldName Full field name
+     * @param iDirection
+     *            Direction of connection
+     * @param iFieldName
+     *            Full field name
      * @return Class of the connection if any
      */
     public String getConnectionClass(final Direction iDirection, final String iFieldName) {

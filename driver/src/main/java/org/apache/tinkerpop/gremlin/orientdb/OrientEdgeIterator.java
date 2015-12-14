@@ -80,7 +80,7 @@ public class OrientEdgeIterator extends OLazyWrapperIterator<OrientEdge> {
 
         final OrientEdge edge;
         if (immutableSchema.isVertexType()) {
-            //          DIRECT VERTEX, CREATE DUMMY EDGE
+            // DIRECT VERTEX, CREATE DUMMY EDGE
             if (connection.getKey() == Direction.OUT)
                 edge = new OrientEdge(this.sourceVertex.getGraph(), (OIdentifiable) this.sourceVertex.id(), rec.getIdentity(),
                         connection.getValue());
@@ -96,17 +96,20 @@ public class OrientEdgeIterator extends OLazyWrapperIterator<OrientEdge> {
     }
 
     public boolean filter(final OrientEdge edge) {
-        //        return targetVertex == null || targetVertex.equals(edge.getVertex(connection.getKey().opposite()));
-        //        throw new NotImplementedException();
-        //TODO simplify
+        // return targetVertex == null ||
+        // targetVertex.equals(edge.getVertex(connection.getKey().opposite()));
+        // throw new NotImplementedException();
+        // TODO simplify
         if (targetVertex != null && !targetVertex.equals(edge.getVertex(connection.getKey().opposite())))
             return false;
         else
             return true;
-        //        if (targetVertex != null && !targetVertex.equals(iObject.getVertex(connection.getKey().opposite())))
-        //            return false;
+        // if (targetVertex != null &&
+        // !targetVertex.equals(iObject.getVertex(connection.getKey().opposite())))
+        // return false;
         //
-        //        return this.sourceVertex.settings.isUseVertexFieldsForEdgeLabels() || iObject.isLabeled(labels);
+        // return this.sourceVertex.settings.isUseVertexFieldsForEdgeLabels() ||
+        // iObject.isLabeled(labels);
     }
 
     @Override

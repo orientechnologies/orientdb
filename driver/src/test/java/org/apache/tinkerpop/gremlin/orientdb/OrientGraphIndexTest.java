@@ -65,7 +65,8 @@ public class OrientGraphIndexTest {
         Vertex v1 = graph.addVertex(T.label, label1, key, value);
         Vertex v2 = graph.addVertex(T.label, label2, key, value);
 
-        // looking deep into the internals here - I can't find a nicer way to auto verify that an index is actually used
+        // looking deep into the internals here - I can't find a nicer way to
+        // auto verify that an index is actually used
         GraphTraversal<Vertex, Vertex> traversal = graph.traversal().V().has(T.label, P.eq(label1)).has(key, P.eq(value));
         OrientGraphStepStrategy.instance().apply(traversal.asAdmin());
 

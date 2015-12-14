@@ -48,10 +48,12 @@ public class OrientGraphProvider extends AbstractGraphProvider {
                 "shouldNotMixTypesForGettingSpecificVerticesWithStringFirst",
                 "shouldNotMixTypesForGettingSpecificVerticesWithVertexFirst"));
 
-        //OrientDB can not modify schema when the transaction is on, which break the tests
+        // OrientDB can not modify schema when the transaction is on, which
+        // break the tests
         IGNORED_TESTS.put(GraphFunctionalityTest.class, asList("shouldSupportTransactionsIfAGraphConstructsATx"));
 
-        //this test falls into an infinite loop, it tries to remove all edges, but for each edge it removes 2 more are added
+        // this test falls into an infinite loop, it tries to remove all edges,
+        // but for each edge it removes 2 more are added
         IGNORED_TESTS.put(BasicEdgeTest.class, asList("shouldNotHaveAConcurrentModificationExceptionWhenIteratingAndRemovingAddingEdges"));
     }
 
@@ -94,7 +96,7 @@ public class OrientGraphProvider extends AbstractGraphProvider {
     @Override
     public Graph openTestGraph(Configuration config) {
         if (config.getString("name").equals("readGraph"))
-            //FIXME eventually ne need to get ride of this 
+            // FIXME eventually ne need to get ride of this
             assumeFalse("there is some technical limitation on orientDB that makes tests enter in an infinite loop when reading and writing to orientDB", true);
 
         return super.openTestGraph(config);

@@ -21,6 +21,7 @@ import org.apache.tinkerpop.gremlin.structure.Property;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.VertexProperty;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class OrientGraphTest {
@@ -145,6 +146,26 @@ public class OrientGraphTest {
     public void testPooledTransactionalGraph() throws Exception {
         Graph graph = graphFactory().setupPool(5).getTx();
         performBasicTests(graph);
+        graph.close();
+    }
+
+    @Test
+    public void testUnprefixedLabelGraph() throws Exception {
+        Graph graph = graphFactory().setLabelAsClassName(true).getNoTx();
+        assertEquals(true, graph.configuration().getBoolean(OrientGraph.CONFIG_LABEL_AS_CLASSNAME));
+
+        performBasicTests(graph);
+
+        Vertex vertex = graph.addVertex("VERTEX_LABEL");
+        assertEquals("VERTEX_LABEL", vertex.label());
+
+        try {
+            graph.addVertex("EDGE_LABEL");
+            Assert.fail("must throw unable to create different super class");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().startsWith("unable to create class 'EDGE_LABEL' as subclass of 'V'"));
+        }
+
         graph.close();
     }
 

@@ -66,7 +66,7 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E>implem
         }
     }
 
-    //TODO: indexed edges
+    // TODO: indexed edges
     private Iterator<? extends Edge> edges() {
         final OrientGraph graph = getGraph();
         if (this.ids != null && this.ids.length > 0) {
@@ -84,7 +84,8 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E>implem
         }
     }
 
-    // if one of the HasContainers is a label matching predicate, then return that label
+    // if one of the HasContainers is a label matching predicate, then return
+    // that label
     private Optional<String> findElementLabelInHasContainers() {
         return this.hasContainers.stream()
                 .filter(hasContainer -> isLabelKey(hasContainer.getKey()))
@@ -115,12 +116,13 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E>implem
             String key = indexedKeyAndValue.get().getValue0();
             Object value = indexedKeyAndValue.get().getValue1();
 
-            String className = OImmutableClass.VERTEX_CLASS_NAME + '_' + elementLabel.get();
+            String className = graph.labelToClassName(elementLabel.get(), OImmutableClass.VERTEX_CLASS_NAME);
             Set<OIndex<?>> classIndexes = indexManager.getClassIndexes(className);
             Iterator<OIndex<?>> keyIndexes = classIndexes.stream().filter(idx -> idx.getDefinition().getFields().contains(key)).iterator();
 
             if (keyIndexes.hasNext()) {
-                // TODO: implement algorithm to select best index if there are multiple
+                // TODO: implement algorithm to select best index if there are
+                // multiple
                 return Optional.of(new OrientIndexQuery(keyIndexes.next(), Optional.of(value)));
             } else {
                 OLogManager.instance().warn(this, "no index found for class=[" + className + "] and key=[" + key + "]");

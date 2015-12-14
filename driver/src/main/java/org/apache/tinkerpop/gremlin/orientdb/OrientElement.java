@@ -43,8 +43,9 @@ public abstract class OrientElement implements Element {
 
     public String label() {
         String internalClassName = getRawDocument().getClassName();
-        // User labels on edges/vertices are prepended with E_ or V_ . The user should not see that.
-        return internalClassName.length() == 1 ? INTERNAL_CLASSES_TO_TINKERPOP_CLASSES.get(internalClassName) : internalClassName.substring(2);
+        // User labels on edges/vertices are prepended with E_ or V_ . The user
+        // should not see that.
+        return internalClassName.length() == 1 ? INTERNAL_CLASSES_TO_TINKERPOP_CLASSES.get(internalClassName) : graph.classNameToLabel(internalClassName);
     }
 
     public Graph graph() {
@@ -52,7 +53,7 @@ public abstract class OrientElement implements Element {
     }
 
     public <V> Property<V> property(final String key, final V value) {
-        return property(key, value, true); //save after setting
+        return property(key, value, true); // save after setting
     }
 
     private <V> Property<V> property(final String key, final V value, boolean saveDocument) {
@@ -66,8 +67,10 @@ public abstract class OrientElement implements Element {
         ODocument doc = getRawDocument();
         doc.field(key, value);
 
-        // when setting multiple properties at once, it makes sense to only save them in the end
-        // for performance reasons and so that the schema checker only kicks in at the end
+        // when setting multiple properties at once, it makes sense to only save
+        // them in the end
+        // for performance reasons and so that the schema checker only kicks in
+        // at the end
         if (saveDocument) doc.save();
         return new OrientProperty<>(key, value, this);
     }
@@ -77,7 +80,8 @@ public abstract class OrientElement implements Element {
         if (ElementHelper.getIdValue(keyValues).isPresent()) throw Vertex.Exceptions.userSuppliedIdsNotSupported();
 
         // copied from ElementHelper.attachProperties
-        // can't use ElementHelper here because we only want to save the document at the very end
+        // can't use ElementHelper here because we only want to save the
+        // document at the very end
         for (int i = 0; i < keyValues.length; i = i + 2) {
             if (!keyValues[i].equals(T.id) && !keyValues[i].equals(T.label))
                 property((String) keyValues[i], keyValues[i + 1], false);
