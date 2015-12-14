@@ -59,6 +59,14 @@ public final class OrientGraph implements Graph {
                         .addStrategies(OrientGraphStepStrategy.instance()));
     }
 
+    private static final Map<String, String> INTERNAL_CLASSES_TO_TINKERPOP_CLASSES;
+
+    static {
+        INTERNAL_CLASSES_TO_TINKERPOP_CLASSES = new HashMap<>();
+        INTERNAL_CLASSES_TO_TINKERPOP_CLASSES.put(OImmutableClass.VERTEX_CLASS_NAME, Vertex.DEFAULT_LABEL);
+        INTERNAL_CLASSES_TO_TINKERPOP_CLASSES.put(OImmutableClass.EDGE_CLASS_NAME, Edge.DEFAULT_LABEL);
+    }
+
     public static String CONFIG_URL = "orient-url";
     public static String CONFIG_USER = "orient-user";
     public static String CONFIG_PASS = "orient-pass";
@@ -179,6 +187,9 @@ public final class OrientGraph implements Graph {
      * Convert a orientdb class name to label
      */
     public String classNameToLabel(String className) {
+        if (INTERNAL_CLASSES_TO_TINKERPOP_CLASSES.containsKey(className)) {
+            return INTERNAL_CLASSES_TO_TINKERPOP_CLASSES.get(className);
+        }
         if (configuration.getBoolean(CONFIG_LABEL_AS_CLASSNAME, false)) {
             return className;
         }
