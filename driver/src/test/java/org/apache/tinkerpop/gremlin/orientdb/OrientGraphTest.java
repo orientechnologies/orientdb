@@ -163,7 +163,7 @@ public class OrientGraphTest {
             graph.addVertex("EDGE_LABEL");
             Assert.fail("must throw unable to create different super class");
         } catch (IllegalArgumentException e) {
-            // ok
+            assertTrue(e.getMessage().startsWith("unable to create class 'EDGE_LABEL' as subclass of 'V'"));
         }
 
         graph.close();
