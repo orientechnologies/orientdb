@@ -198,8 +198,8 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
     // REMOVE ALL THE ENTRIES AND INVALIDATE THE DOCUMENTS TO AVOID TO BE RE-USED DIRTY AT USER-LEVEL. IN THIS WAY RE-LOADING MUST
     // EXECUTED
-    for (ORecordOperation v : recordEntries.values())
-      v.getRecord().unload();
+//    for (ORecordOperation v : recordEntries.values())
+//      v.getRecord().unload();
 
     for (ORecordOperation v : allEntries.values())
       v.getRecord().unload();
@@ -399,7 +399,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
   @Override
   public String toString() {
-    return "OTransactionOptimistic [id=" + id + ", status=" + status + ", recEntries=" + recordEntries.size() + ", idxEntries="
+    return "OTransactionOptimistic [id=" + id + ", status=" + status + ", recEntries=" + allEntries.size() + ", idxEntries="
         + indexEntries.size() + ']';
   }
 
@@ -486,7 +486,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
           if (!(rid.isTemporary() && iStatus != ORecordOperation.CREATED)) {
             // NEW ENTRY: JUST REGISTER IT
             txEntry = new ORecordOperation(iRecord, iStatus);
-            recordEntries.put(rid, txEntry);
+            allEntries.put(rid, txEntry);
           }
         } else {
           // UPDATE PREVIOUS STATUS
@@ -515,7 +515,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
           case ORecordOperation.CREATED:
             switch (iStatus) {
             case ORecordOperation.DELETED:
-              recordEntries.remove(rid);
+              allEntries.remove(rid);
               // txEntry.type = ORecordOperation.DELETED;
               break;
             }
@@ -579,7 +579,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
     status = TXSTATUS.COMMITTING;
 
-    if (!recordEntries.isEmpty() || !indexEntries.isEmpty()) {
+    if (!allEntries.isEmpty() || !indexEntries.isEmpty()) {
       if (OScenarioThreadLocal.INSTANCE.get() != RUN_MODE.RUNNING_DISTRIBUTED
           && !(database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage))
         database.getStorage().commit(this, null);

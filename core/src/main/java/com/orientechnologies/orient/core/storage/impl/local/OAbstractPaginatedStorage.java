@@ -1285,7 +1285,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     checkOpeness();
     checkLowDiskSpaceAndFullCheckpointRequests();
 
-    final ODatabaseDocumentInternal databaseRecord = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocumentInternal databaseRecord = (ODatabaseDocumentInternal) clientTx.getDatabase();
     ((OMetadataInternal) databaseRecord.getMetadata()).makeThreadLocalSchemaSnapshot();
 
     stateLock.acquireReadLock();
@@ -1304,10 +1304,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
           final List<ORecordOperation> tmpEntries = new ArrayList<ORecordOperation>();
 
-          for (ORecordOperation txEntry : clientTx.getCurrentRecordEntries())
+          for (ORecordOperation txEntry : clientTx.getAllRecordEntries())
             tmpEntries.add(txEntry);
-
-          clientTx.clearRecordEntries();
 
           for (ORecordOperation txEntry : tmpEntries) {
             if (txEntry.type == ORecordOperation.CREATED || txEntry.type == ORecordOperation.UPDATED) {
