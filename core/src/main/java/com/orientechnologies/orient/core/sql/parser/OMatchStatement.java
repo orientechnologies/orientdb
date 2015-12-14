@@ -230,7 +230,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   @Override
   public Object execute(Map<Object, Object> iArgs) {
     this.context.setInputParameters(iArgs);
-    return execute(this.request, this.context);
+    return execute(this.request, this.context, this.progressListener);
   }
 
   /**
@@ -241,7 +241,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
    * @param context
    * @return
    */
-  public Object execute(OSQLAsynchQuery<ODocument> request, OCommandContext context) {
+  public Object execute(OSQLAsynchQuery<ODocument> request, OCommandContext context, OProgressListener progressListener) {
     Map<Object, Object> iArgs = context.getInputParameters();
     try {
 

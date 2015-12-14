@@ -2,9 +2,11 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-import com.orientechnologies.orient.core.command.OCommandRequest;
-import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
+import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 
 import java.util.Map;
 
@@ -40,8 +42,8 @@ public class OStatement extends SimpleNode {
     return builder.toString();
   }
 
-  public OCommandExecutorSQLAbstract buildExecutor(final OCommandRequest iRequest) {
-    return null; // TODO make it abstract
+  public Object execute(OSQLAsynchQuery<ODocument> request, OCommandContext context, OProgressListener progressListener) {
+    throw new UnsupportedOperationException("Unsupported command: " + getClass().getSimpleName());
   }
 }
 /* JavaCC - OriginalChecksum=589c4dcc8287f430e46d8eb12b0412c5 (do not edit this line) */
