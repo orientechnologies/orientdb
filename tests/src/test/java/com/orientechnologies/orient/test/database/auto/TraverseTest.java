@@ -36,7 +36,7 @@ import java.util.Map;
 @Test
 @SuppressWarnings("unused")
 public class TraverseTest extends DocumentDBBaseTest {
-  private int totalElements = 0;
+  private int       totalElements = 0;
   private ODocument tomCruise;
   private ODocument megRyan;
   private ODocument nicoleKidman;
@@ -258,9 +258,8 @@ public class TraverseTest extends DocumentDBBaseTest {
   public void traverseAndFilterByAttributeThatContainsDotInValue() {
     // issue #4952
     List<ODocument> result1 = database.command(
-        new OSQLSynchQuery<ODocument>(
-            "select from ( traverse out_married, in[attributeWithDotValue = 'a.b']  from " + tomCruise.getIdentity() + ")"))
-        .execute();
+        new OSQLSynchQuery<ODocument>("select from ( traverse out_married, in[attributeWithDotValue = 'a.b']  from "
+            + tomCruise.getIdentity() + ")")).execute();
     Assert.assertTrue(result1.size() > 0);
     boolean found = false;
     for (ODocument doc : result1) {
@@ -280,9 +279,8 @@ public class TraverseTest extends DocumentDBBaseTest {
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("param1", "a.b");
     List<ODocument> result1 = database.command(
-        new OSQLSynchQuery<ODocument>(
-            "select from (traverse out_married, in[attributeWithDotValue = :param1]  from " + tomCruise.getIdentity() + ")"))
-        .execute(params);
+        new OSQLSynchQuery<ODocument>("select from (traverse out_married, in[attributeWithDotValue = :param1]  from "
+            + tomCruise.getIdentity() + ")")).execute(params);
     Assert.assertTrue(result1.size() > 0);
     boolean found = false;
     for (ODocument doc : result1) {
@@ -294,6 +292,20 @@ public class TraverseTest extends DocumentDBBaseTest {
     }
     Assert.assertTrue(found);
 
+  }
+
+  @Test
+  public void traverseAndCheckDepthInSelect() {
+    List<ODocument> result1 = database.command(
+        new OSQLSynchQuery<ODocument>("select *, $depth as d from ( traverse out_married  from " + tomCruise.getIdentity()
+            + " while $depth < 2)")).execute();
+    Assert.assertEquals(result1.size(), 2);
+    boolean found = false;
+    Integer i = 0;
+    for (ODocument doc : result1) {
+      Integer depth = doc.field("d");
+      Assert.assertEquals(depth, i++);
+    }
   }
 
 }
