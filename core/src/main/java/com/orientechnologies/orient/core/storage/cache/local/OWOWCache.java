@@ -44,11 +44,12 @@ import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceInformation;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
-import com.orientechnologies.orient.core.storage.impl.local.OStoragePerformanceStatistic;
+import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.statistic.OStoragePerformanceStatistic;
 
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.InstanceNotFoundException;
@@ -131,6 +132,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   private final int                  writeCacheMaxSize;
   private final int                  cacheMaxSize;
 
+  private final OStoragePerformanceStatistic storagePerformanceStatistic;
+
   private int fileCounter = 1;
 
   private PageKey lastPageKey      = new PageKey(0, -1);
@@ -174,6 +177,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       this.storageLocal = storageLocal;
 
       this.storagePath = storageLocal.getVariableParser().resolveVariables(storageLocal.getStoragePath());
+      this.storagePerformanceStatistic = storageLocal.getStoragePerformanceStatistic();
 
       final OBinarySerializerFactory binarySerializerFactory = storageLocal.getComponentsFactory().binarySerializerFactory;
       this.stringSerializer = binarySerializerFactory.getObjectSerializer(OType.STRING);
@@ -1232,10 +1236,13 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     final long firstPageEndPosition = firstPageStartPosition + pageSize;
 
     if (fileClassic.getFileSize() >= firstPageEndPosition) {
-      final OStoragePerformanceStatistic storagePerformanceStatistic = OStoragePerformanceStatistic.getStatisticInstance();
-      if (storagePerformanceStatistic != null) {
-        storagePerformanceStatistic.startPageReadFromFileTimer();
+      final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = OSessionStoragePerformanceStatistic
+          .getStatisticInstance();
+      if (sessionStoragePerformanceStatistic != null) {
+        sessionStoragePerformanceStatistic.startPageReadFromFileTimer();
       }
+      storagePerformanceStatistic.startPageReadFromFileTimer();
+
       int pagesRead = 0;
 
       try {
@@ -1267,9 +1274,11 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         pagesRead = dataPointers.length;
         return dataPointers;
       } finally {
-        if (storagePerformanceStatistic != null) {
-          storagePerformanceStatistic.stopPageReadFromFileTimer(pagesRead);
+        if (sessionStoragePerformanceStatistic != null) {
+          sessionStoragePerformanceStatistic.stopPageReadFromFileTimer(pagesRead);
         }
+
+        storagePerformanceStatistic.stopPageReadFromFileTimer(pagesRead);
       }
     } else if (addNewPages) {
       final int space = (int) (firstPageEndPosition - fileClassic.getFileSize());
@@ -1288,29 +1297,36 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   }
 
   private void flushPage(final int fileId, final long pageIndex, final ODirectMemoryPointer dataPointer) throws IOException {
-    if (writeAheadLog != null) {
-      final OLogSequenceNumber lsn = ODurablePage.getLogSequenceNumberFromPage(dataPointer);
-      final OLogSequenceNumber flushedLSN = writeAheadLog.getFlushedLsn();
-      if (flushedLSN == null || flushedLSN.compareTo(lsn) < 0)
-        writeAheadLog.flush();
+    storagePerformanceStatistic.startPageWriteToFileTimer();
+    try {
+      if (writeAheadLog != null) {
+        final OLogSequenceNumber lsn = ODurablePage.getLogSequenceNumberFromPage(dataPointer);
+        final OLogSequenceNumber flushedLSN = writeAheadLog.getFlushedLsn();
+
+        if (flushedLSN == null || flushedLSN.compareTo(lsn) < 0)
+          writeAheadLog.flush();
+      }
+
+      final byte[] content = dataPointer.get(PAGE_PADDING, pageSize);
+      OLongSerializer.INSTANCE.serializeNative(MAGIC_NUMBER, content, 0);
+
+      final int crc32 = calculatePageCrc(content);
+      OIntegerSerializer.INSTANCE.serializeNative(crc32, content, OLongSerializer.LONG_SIZE);
+
+      final OFileClassic fileClassic = files.get(fileId);
+
+      final long spaceDiff = fileClassic.write(pageIndex * pageSize, content);
+
+      assert spaceDiff >= 0;
+
+      addAllocatedSpace(-spaceDiff);
+
+      if (syncOnPageFlush)
+        fileClassic.synch();
+
+    } finally {
+      storagePerformanceStatistic.stopPageWriteToFileTimer();
     }
-
-    final byte[] content = dataPointer.get(PAGE_PADDING, pageSize);
-    OLongSerializer.INSTANCE.serializeNative(MAGIC_NUMBER, content, 0);
-
-    final int crc32 = calculatePageCrc(content);
-    OIntegerSerializer.INSTANCE.serializeNative(crc32, content, OLongSerializer.LONG_SIZE);
-
-    final OFileClassic fileClassic = files.get(fileId);
-
-    final long spaceDiff = fileClassic.write(pageIndex * pageSize, content);
-
-    assert spaceDiff >= 0;
-
-    addAllocatedSpace(-spaceDiff);
-
-    if (syncOnPageFlush)
-      fileClassic.synch();
   }
 
   private static final class NameFileIdEntry {

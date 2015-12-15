@@ -26,16 +26,20 @@ import com.orientechnologies.orient.etl.OETLProcessor;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
+import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.INFO;
+
 public class OVertexTransformer extends OAbstractTransformer {
-  private String  vertexClass;
+  private String vertexClass;
   private boolean skipDuplicates = false;
 
   @Override
   public ODocument getConfiguration() {
     return new ODocument().fromJSON("{parameters:[" + getCommonConfigurationParameters() + ","
-        + "{class:{optional:true,description:'Vertex class name to assign. Default is " + OrientVertexType.CLASS_NAME + "'}}"
-        + ",skipDuplicates:{optional:true,description:'Vertices with duplicate keys are skipped', default:false}" + "]"
-        + ",input:['OrientVertex','ODocument'],output:'OrientVertex'}");
+                                    + "{class:{optional:true,description:'Vertex class name to assign. Default is "
+                                    + OrientVertexType.CLASS_NAME + "'}}"
+                                    + ",skipDuplicates:{optional:true,description:'Vertices with duplicate keys are skipped', default:false}"
+                                    + "]"
+                                    + ",input:['OrientVertex','ODocument'],output:'OrientVertex'}");
   }
 
   @Override
@@ -45,6 +49,7 @@ public class OVertexTransformer extends OAbstractTransformer {
       vertexClass = (String) resolve(iConfiguration.field("class"));
     if (iConfiguration.containsField("skipDuplicates"))
       skipDuplicates = (Boolean) resolve(iConfiguration.field("skipDuplicates"));
+
   }
 
   @Override
@@ -62,8 +67,10 @@ public class OVertexTransformer extends OAbstractTransformer {
     }
 
     final OrientVertex v = pipeline.getGraphDatabase().getVertex(input);
-    if (v == null)
+
+    if (v == null) {
       return null;
+    }
 
     if (vertexClass != null && !vertexClass.equals(v.getRecord().getClassName()))
       try {

@@ -17,12 +17,11 @@ package com.orientechnologies.orient.test.database.speed;
 
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OStoragePerformanceStatistic;
+import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
@@ -72,17 +71,14 @@ public class LocalCreateBinaryDocumentSpeedTest extends OrientMonoThreadTest {
   @Test(enabled = false)
   public void cycle() {
     final OStorage storage = database.getStorage();
-    ((OAbstractPaginatedStorage) storage).startGatheringPerformanceStatisticForCurrentThread();
+    ((OAbstractPaginatedStorage) storage).getStoragePerformanceStatistic().startMeasurement();
     record = new ORecordBytes(database, payload);
     record.save();
 
     if (data.getCyclesDone() == data.getCycles() - 1)
       database.commit();
 
-    final OStoragePerformanceStatistic performanceStatistic = ((OAbstractPaginatedStorage) storage)
-        .completeGatheringPerformanceStatisticForCurrentThread();
-
-    System.out.println(performanceStatistic.toDocument().toJSON(""));
+    ((OAbstractPaginatedStorage) storage).getStoragePerformanceStatistic().stopMeasurement();
   }
 
   @Override

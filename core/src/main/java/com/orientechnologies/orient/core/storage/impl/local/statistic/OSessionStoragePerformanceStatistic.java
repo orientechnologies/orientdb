@@ -17,10 +17,11 @@
  *  * For more information: http://www.orientechnologies.com
  *
  */
-package com.orientechnologies.orient.core.storage.impl.local;
+package com.orientechnologies.orient.core.storage.impl.local.statistic;
 
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -31,11 +32,11 @@ import java.util.Deque;
  *
  * @author Andrey Lomakin
  */
-public class OStoragePerformanceStatistic {
+public class OSessionStoragePerformanceStatistic {
   /**
    * Amount of bytes in megabyte
    */
-  private static final long MEGABYTE = 1024 * 1024;
+  private static final int MEGABYTE = 1024 * 1024;
 
   /**
    * Amount of nanoseconds in second
@@ -48,7 +49,7 @@ public class OStoragePerformanceStatistic {
    * @see OAbstractPaginatedStorage#startGatheringPerformanceStatisticForCurrentThread()
    * @see OAbstractPaginatedStorage#completeGatheringPerformanceStatisticForCurrentThread()
    */
-  private static final ThreadLocal<OStoragePerformanceStatistic> THREAD_LOCAL = new ThreadLocal<OStoragePerformanceStatistic>();
+  private static final ThreadLocal<OSessionStoragePerformanceStatistic> THREAD_LOCAL = new ThreadLocal<OSessionStoragePerformanceStatistic>();
 
   /**
    * Initiates new session for gathering performance statistic for storage.
@@ -57,7 +58,7 @@ public class OStoragePerformanceStatistic {
    * @param pageSize Size of page for storage is used for calculation of metrics which are measured in megabytes.
    */
   public static void initThreadLocalInstance(final int pageSize) {
-    THREAD_LOCAL.set(new OStoragePerformanceStatistic(pageSize));
+    THREAD_LOCAL.set(new OSessionStoragePerformanceStatistic(pageSize));
   }
 
   /**
@@ -65,8 +66,8 @@ public class OStoragePerformanceStatistic {
    *
    * @return Performance statistic for current session.
    */
-  public static OStoragePerformanceStatistic clearThreadLocalInstance() {
-    final OStoragePerformanceStatistic result = THREAD_LOCAL.get();
+  public static OSessionStoragePerformanceStatistic clearThreadLocalInstance() {
+    final OSessionStoragePerformanceStatistic result = THREAD_LOCAL.get();
     THREAD_LOCAL.remove();
     return result;
   }
@@ -75,7 +76,7 @@ public class OStoragePerformanceStatistic {
    * @return instance of container for gathering of storage performance statistic if session of gathering performance is initiated by
    * call if {@link #initThreadLocalInstance(int)} or <code>null</code> otherwise.
    */
-  public static OStoragePerformanceStatistic getStatisticInstance() {
+  public static OSessionStoragePerformanceStatistic getStatisticInstance() {
     return THREAD_LOCAL.get();
   }
 
@@ -144,7 +145,7 @@ public class OStoragePerformanceStatistic {
    *
    * @param pageSize Page size in cache.
    */
-  public OStoragePerformanceStatistic(int pageSize) {
+  public OSessionStoragePerformanceStatistic(int pageSize) {
     this.pageSize = pageSize;
   }
 
@@ -325,7 +326,7 @@ public class OStoragePerformanceStatistic {
   /**
    * Starts timer which counts how much time was spent on write of page to disk cache.
    */
-  public void startPageWriteFromCacheTimer() {
+  public void startPageWriteToCacheTimer() {
     timeStamps.push(System.nanoTime());
   }
 

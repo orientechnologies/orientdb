@@ -36,8 +36,9 @@ import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
-import com.orientechnologies.orient.core.storage.impl.local.OStoragePerformanceStatistic;
+import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.statistic.OStoragePerformanceStatistic;
 
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.InstanceNotFoundException;
@@ -49,7 +50,6 @@ import javax.management.ObjectName;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -100,9 +100,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
   private final ONewLockManager<PageKey>               pageLockManager = new ONewLockManager<PageKey>();
   private final ConcurrentMap<PinnedPage, OCacheEntry> pinnedPages     = new ConcurrentHashMap<PinnedPage, OCacheEntry>();
 
-  private final AtomicBoolean       coldPagesRemovalInProgress = new AtomicBoolean();
-  private final ODistributedCounter cacheHitCounter            = new ODistributedCounter();
-  private final ODistributedCounter cacheQueriesCounter        = new ODistributedCounter();
+  private final AtomicBoolean coldPagesRemovalInProgress = new AtomicBoolean();
 
   private final       AtomicBoolean mbeanIsRegistered = new AtomicBoolean();
   public static final String        MBEAN_NAME        = "com.orientechnologies.orient.core.storage.cache.local:type=O2QCacheMXBean";
@@ -336,18 +334,22 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
 
   @Override
   public OCacheEntry load(long fileId, final long pageIndex, final boolean checkPinnedPages, OWriteCache writeCache,
-      final int pageCount) throws IOException {
-    final OStoragePerformanceStatistic storagePerformanceStatistic = OStoragePerformanceStatistic.getStatisticInstance();
+      final int pageCount, OStoragePerformanceStatistic storagePerformanceStatistic) throws IOException {
 
-    if (storagePerformanceStatistic != null) {
-      storagePerformanceStatistic.startPageReadFromCacheTimer();
+    final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = OSessionStoragePerformanceStatistic
+        .getStatisticInstance();
+
+    if (sessionStoragePerformanceStatistic != null) {
+      sessionStoragePerformanceStatistic.startPageReadFromCacheTimer();
     }
+
+    storagePerformanceStatistic.startPageReadFromCacheTimer();
 
     try {
       fileId = OAbstractWriteCache.checkFileIdCompatibility(writeCache.getId(), fileId);
 
       final UpdateCacheResult cacheResult = doLoad(fileId, pageIndex, checkPinnedPages, false, writeCache, pageCount,
-          storagePerformanceStatistic);
+          sessionStoragePerformanceStatistic, storagePerformanceStatistic);
       if (cacheResult == null)
         return null;
 
@@ -357,21 +359,23 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
       } catch (RuntimeException e) {
         assert !cacheResult.cacheEntry.isDirty();
 
-        release(cacheResult.cacheEntry, writeCache);
+        release(cacheResult.cacheEntry, writeCache, storagePerformanceStatistic);
         throw e;
       }
 
       return cacheResult.cacheEntry;
     } finally {
-      if (storagePerformanceStatistic != null) {
-        storagePerformanceStatistic.stopPageReadFromCacheTimer();
+      if (sessionStoragePerformanceStatistic != null) {
+        sessionStoragePerformanceStatistic.stopPageReadFromCacheTimer();
       }
+
+      storagePerformanceStatistic.stopPageReadFromCacheTimer();
     }
   }
 
   private UpdateCacheResult doLoad(long fileId, long pageIndex, boolean checkPinnedPages, boolean addNewPages,
-      OWriteCache writeCache, final int pageCount, final OStoragePerformanceStatistic storagePerformanceStatistic)
-      throws IOException {
+      OWriteCache writeCache, final int pageCount, final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic,
+      final OStoragePerformanceStatistic storagePerformanceStatistic) throws IOException {
 
     if (pageCount < 1)
       throw new IllegalArgumentException(
@@ -383,11 +387,10 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
     Lock fileLock;
     Lock[] pageLocks;
 
-    cacheQueriesCounter.increment();
-
-    if (storagePerformanceStatistic != null) {
-      storagePerformanceStatistic.incrementPageAccessOnCacheLevel();
+    if (sessionStoragePerformanceStatistic != null) {
+      sessionStoragePerformanceStatistic.incrementPageAccessOnCacheLevel();
     }
+    storagePerformanceStatistic.incrementPageAccessOnCacheLevel();
 
     cacheLock.acquireReadLock();
     try {
@@ -406,17 +409,17 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
 
           if (cacheEntry == null) {
             UpdateCacheResult cacheResult = updateCache(fileId, pageIndex, addNewPages, writeCache, pageCount,
-                storagePerformanceStatistic);
+                sessionStoragePerformanceStatistic, storagePerformanceStatistic);
             if (cacheResult == null)
               return null;
 
             cacheEntry = cacheResult.cacheEntry;
             removeColdPages = cacheResult.removeColdPages;
           } else {
-            cacheHitCounter.increment();
-            if (storagePerformanceStatistic != null) {
-              storagePerformanceStatistic.incrementCacheHit();
+            if (sessionStoragePerformanceStatistic != null) {
+              sessionStoragePerformanceStatistic.incrementCacheHit();
             }
+            storagePerformanceStatistic.incrementCacheHit();
           }
 
           cacheEntry.incrementUsages();
@@ -436,11 +439,16 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
   }
 
   @Override
-  public OCacheEntry allocateNewPage(long fileId, OWriteCache writeCache) throws IOException {
-    final OStoragePerformanceStatistic storagePerformanceStatistic = OStoragePerformanceStatistic.getStatisticInstance();
-    if (storagePerformanceStatistic != null) {
-      storagePerformanceStatistic.startPageReadFromCacheTimer();
+  public OCacheEntry allocateNewPage(long fileId, OWriteCache writeCache, OStoragePerformanceStatistic storagePerformanceStatistic)
+      throws IOException {
+    final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = OSessionStoragePerformanceStatistic
+        .getStatisticInstance();
+
+    if (sessionStoragePerformanceStatistic != null) {
+      sessionStoragePerformanceStatistic.startPageReadFromCacheTimer();
     }
+
+    storagePerformanceStatistic.startPageReadFromCacheTimer();
 
     try {
       fileId = OAbstractWriteCache.checkFileIdCompatibility(writeCache.getId(), fileId);
@@ -454,7 +462,8 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
         try {
           final long filledUpTo = writeCache.getFilledUpTo(fileId);
           assert filledUpTo >= 0;
-          cacheResult = doLoad(fileId, filledUpTo, false, true, writeCache, 1, storagePerformanceStatistic);
+          cacheResult = doLoad(fileId, filledUpTo, false, true, writeCache, 1, sessionStoragePerformanceStatistic,
+              storagePerformanceStatistic);
         } finally {
           fileLockManager.releaseLock(fileLock);
         }
@@ -470,20 +479,22 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
       } catch (RuntimeException e) {
         assert !cacheResult.cacheEntry.isDirty();
 
-        release(cacheResult.cacheEntry, writeCache);
+        release(cacheResult.cacheEntry, writeCache, storagePerformanceStatistic);
         throw e;
       }
 
       return cacheResult.cacheEntry;
     } finally {
-      if (storagePerformanceStatistic != null) {
-        storagePerformanceStatistic.startPageReadFromCacheTimer();
+      if (sessionStoragePerformanceStatistic != null) {
+        sessionStoragePerformanceStatistic.stopPageReadFromCacheTimer();
       }
+
+      storagePerformanceStatistic.stopPageReadFromCacheTimer();
     }
   }
 
   @Override
-  public void release(OCacheEntry cacheEntry, OWriteCache writeCache) {
+  public void release(OCacheEntry cacheEntry, OWriteCache writeCache, OStoragePerformanceStatistic storagePerformanceStatistic) {
     Future<?> flushFuture = null;
 
     Lock fileLock;
@@ -499,17 +510,22 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
           assert cacheEntry.getUsagesCount() >= 0;
 
           if (cacheEntry.getUsagesCount() == 0 && cacheEntry.isDirty()) {
-            final OStoragePerformanceStatistic storagePerformanceStatistic = OStoragePerformanceStatistic.getStatisticInstance();
+            final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = OSessionStoragePerformanceStatistic
+                .getStatisticInstance();
 
-            if (storagePerformanceStatistic != null) {
-              storagePerformanceStatistic.startPageWriteFromCacheTimer();
+            if (sessionStoragePerformanceStatistic != null) {
+              sessionStoragePerformanceStatistic.startPageWriteToCacheTimer();
             }
+
+            storagePerformanceStatistic.startPageWriteToCacheTimer();
             try {
               flushFuture = writeCache.store(cacheEntry.getFileId(), cacheEntry.getPageIndex(), cacheEntry.getCachePointer());
             } finally {
-              if (storagePerformanceStatistic != null) {
-                storagePerformanceStatistic.stopPageWriteToCacheTimer();
+              if (sessionStoragePerformanceStatistic != null) {
+                sessionStoragePerformanceStatistic.stopPageWriteToCacheTimer();
               }
+
+              storagePerformanceStatistic.stopPageWriteToCacheTimer();
             }
 
             cacheEntry.clearDirty();
@@ -733,17 +749,6 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
     return am.size();
   }
 
-  @Override
-  public double getCacheHits() {
-    return (cacheHitCounter.get() * 100.0) / cacheQueriesCounter.get();
-  }
-
-  @Override
-  public void clearCacheStatistics() {
-    cacheHitCounter.clear();
-    cacheQueriesCounter.clear();
-  }
-
   private OCacheEntry get(long fileId, long pageIndex, boolean useOutQueue) {
     OCacheEntry cacheEntry = am.get(fileId, pageIndex);
 
@@ -871,17 +876,18 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
   }
 
   private UpdateCacheResult updateCache(final long fileId, final long pageIndex, final boolean addNewPages, OWriteCache writeCache,
-      final int pageCount, final OStoragePerformanceStatistic storagePerformanceStatistic) throws IOException {
+      final int pageCount, final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic,
+      final OStoragePerformanceStatistic storagePerformanceStatistic) throws IOException {
 
     assert pageCount > 0;
 
     OCacheEntry cacheEntry = am.get(fileId, pageIndex);
 
     if (cacheEntry != null) {
-      cacheHitCounter.increment();
-      if (storagePerformanceStatistic != null) {
-        storagePerformanceStatistic.incrementCacheHit();
+      if (sessionStoragePerformanceStatistic != null) {
+        sessionStoragePerformanceStatistic.incrementCacheHit();
       }
+      storagePerformanceStatistic.incrementCacheHit();
 
       return new UpdateCacheResult(entryIsInAmQueue(fileId, pageIndex, cacheEntry), cacheEntry);
     }
@@ -900,10 +906,10 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
 
       if (cacheEntry != null) {
         removeColdPages = entryIsInA1InQueue(fileId, pageIndex);
-        cacheHitCounter.increment();
-        if (storagePerformanceStatistic != null) {
-          storagePerformanceStatistic.incrementCacheHit();
+        if (sessionStoragePerformanceStatistic != null) {
+          sessionStoragePerformanceStatistic.incrementCacheHit();
         }
+        storagePerformanceStatistic.incrementCacheHit();
       } else {
         dataPointers = writeCache.load(fileId, pageIndex, pageCount, addNewPages);
 
