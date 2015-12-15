@@ -451,9 +451,6 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       }
 
       try {
-        if (iRecord.getIdentity().isTemporary())
-          temp2persistent.put(iRecord.getIdentity().copy(), iRecord);
-
         final ORecordId rid = (ORecordId) iRecord.getIdentity();
 
         if (!rid.isValid()) {
@@ -486,7 +483,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
           if (!(rid.isTemporary() && iStatus != ORecordOperation.CREATED)) {
             // NEW ENTRY: JUST REGISTER IT
             txEntry = new ORecordOperation(iRecord, iStatus);
-            allEntries.put(rid, txEntry);
+            allEntries.put(rid.copy(), txEntry);
           }
         } else {
           // UPDATE PREVIOUS STATUS
