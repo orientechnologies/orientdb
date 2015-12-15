@@ -19,6 +19,17 @@
  */
 package com.orientechnologies.orient.enterprise.channel.binary;
 
+import com.orientechnologies.common.concur.OTimeoutException;
+import com.orientechnologies.common.concur.lock.OLockException;
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.io.OIOException;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
+import com.orientechnologies.orient.enterprise.channel.OSocketFactory;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
@@ -34,17 +45,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
-
-import com.orientechnologies.common.concur.OTimeoutException;
-import com.orientechnologies.common.concur.lock.OLockException;
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.util.OPair;
-import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
-import com.orientechnologies.orient.enterprise.channel.OSocketFactory;
 
 public class OChannelBinaryAsynchClient extends OChannelBinary {
   protected final int                          socketTimeout;                                               // IN MS
@@ -134,7 +134,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
 
     } catch (Exception e) {
       // UNABLE TO REPRODUCE THE SAME SERVER-SIZE EXCEPTION: THROW A STORAGE EXCEPTION
-      rootException = new OStorageException(iMessage, iPrevious);
+      rootException = new OIOException(iMessage, iPrevious);
     }
 
     if (c != null)

@@ -196,6 +196,13 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   }
 
   @Override
+  public Throwable convertException(final Throwable original) {
+    if (original instanceof HazelcastException || original instanceof HazelcastInstanceNotActiveException)
+      return new IOException("Hazelcast wrapped exception: " + original.getMessage(), original.getCause());
+    return original;
+  }
+
+  @Override
   public long getDistributedTime(final long iTime) {
     return iTime - timeOffset;
   }
