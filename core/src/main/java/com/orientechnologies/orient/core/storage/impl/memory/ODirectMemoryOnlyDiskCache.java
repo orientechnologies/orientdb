@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.storage.impl.local.statistic.OStoragePerformanceStatistic;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -163,7 +164,8 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
-  public OCacheEntry load(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache, final int pageCount) {
+  public OCacheEntry load(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache, final int pageCount,
+      OStoragePerformanceStatistic storagePerformanceStatistic) {
     int intId = extractFileId(fileId);
 
     final MemoryFile memoryFile = getFile(intId);
@@ -183,7 +185,8 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
-  public OCacheEntry allocateNewPage(long fileId, OWriteCache writeCache) {
+  public OCacheEntry allocateNewPage(long fileId, OWriteCache writeCache,
+      OStoragePerformanceStatistic storagePerformanceStatistic) {
     int intId = extractFileId(fileId);
 
     final MemoryFile memoryFile = getFile(intId);
@@ -206,7 +209,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
-  public void release(OCacheEntry cacheEntry, OWriteCache writeCache) {
+  public void release(OCacheEntry cacheEntry, OWriteCache writeCache, OStoragePerformanceStatistic storagePerformanceStatistic) {
     synchronized (cacheEntry) {
       cacheEntry.decrementUsages();
     }

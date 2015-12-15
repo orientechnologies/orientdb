@@ -9,6 +9,7 @@ import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.orientechnologies.orient.core.storage.impl.local.statistic.OStoragePerformanceStatistic;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -292,6 +293,9 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiLocalTest {
   }
 
   private void restoreDataFromWAL() throws IOException {
+    OStoragePerformanceStatistic storagePerformanceStatistic = new OStoragePerformanceStatistic(
+        OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, "test");
+
     ODiskWriteAheadLog log = new ODiskWriteAheadLog(4, -1, 10 * 1024L * OWALPage.PAGE_SIZE, null, actualStorage);
     OLogSequenceNumber lsn = log.begin();
 
@@ -320,10 +324,11 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiLocalTest {
           if (!expectedWriteCache.isOpen(fileId))
             expectedReadCache.openFile(fileId, expectedWriteCache);
 
-          OCacheEntry cacheEntry = expectedReadCache.load(fileId, pageIndex, true, expectedWriteCache, 0);
+          OCacheEntry cacheEntry = expectedReadCache
+              .load(fileId, pageIndex, true, expectedWriteCache, 0, storagePerformanceStatistic);
           if (cacheEntry == null) {
             do {
-              cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache);
+              cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache, storagePerformanceStatistic);
             } while (cacheEntry.getPageIndex() != pageIndex);
           }
           cacheEntry.acquireExclusiveLock();
@@ -335,7 +340,7 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiLocalTest {
             cacheEntry.markDirty();
           } finally {
             cacheEntry.releaseExclusiveLock();
-            expectedReadCache.release(cacheEntry, expectedWriteCache);
+            expectedReadCache.release(cacheEntry, expectedWriteCache, storagePerformanceStatistic);
           }
         }
         atomicUnit.clear();

@@ -37,6 +37,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ONonTxOperationPerformedWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.statistic.OStoragePerformanceStatistic;
 
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.InstanceNotFoundException;
@@ -98,8 +99,9 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     });
   }
 
-  private final OAbstractPaginatedStorage storage;
-  private final OWriteAheadLog            writeAheadLog;
+  private final OAbstractPaginatedStorage    storage;
+  private final OStoragePerformanceStatistic storagePerformanceStatistic;
+  private final OWriteAheadLog               writeAheadLog;
   private final OLockManager<String> lockManager = new OLockManager<String>(true, -1);
   private final OReadCache  readCache;
   private final OWriteCache writeCache;
@@ -111,6 +113,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     this.writeAheadLog = storage.getWALInstance();
     this.readCache = storage.getReadCache();
     this.writeCache = storage.getWriteCache();
+    this.storagePerformanceStatistic = storage.getStoragePerformanceStatistic();
   }
 
   public OAtomicOperation startAtomicOperation(ODurableComponent durableComponent) throws IOException {
@@ -159,7 +162,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     final OOperationUnitId unitId = OOperationUnitId.generateId();
     final OLogSequenceNumber lsn = writeAheadLog.logAtomicOperationStartRecord(true, unitId);
 
-    operation = new OAtomicOperation(lsn, unitId, readCache, writeCache, storage.getId());
+    operation = new OAtomicOperation(lsn, unitId, readCache, writeCache, storagePerformanceStatistic, storage.getId());
     currentOperation.set(operation);
 
     if (trackAtomicOperations) {

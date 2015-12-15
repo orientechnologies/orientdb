@@ -421,13 +421,13 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
           if (!testWriteCache.isOpen(fileId))
             testReadCache.openFile(fileId, testWriteCache);
 
-          OCacheEntry cacheEntry = testReadCache.load(fileId, pageIndex, true, testWriteCache, 0);
+          OCacheEntry cacheEntry = testReadCache.load(fileId, pageIndex, true, testWriteCache, 0, storagePerformanceStatistic);
           if (cacheEntry == null) {
             do {
               if (cacheEntry != null)
-                readCache.release(cacheEntry, testWriteCache);
+                readCache.release(cacheEntry, testWriteCache, storagePerformanceStatistic);
 
-              cacheEntry = testReadCache.allocateNewPage(fileId, testWriteCache);
+              cacheEntry = testReadCache.allocateNewPage(fileId, testWriteCache, storagePerformanceStatistic);
             } while (cacheEntry.getPageIndex() != pageIndex);
           }
           cacheEntry.acquireExclusiveLock();
@@ -439,7 +439,7 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
             cacheEntry.markDirty();
           } finally {
             cacheEntry.releaseExclusiveLock();
-            testReadCache.release(cacheEntry, testWriteCache);
+            testReadCache.release(cacheEntry, testWriteCache, storagePerformanceStatistic);
           }
         }
         atomicUnit.clear();

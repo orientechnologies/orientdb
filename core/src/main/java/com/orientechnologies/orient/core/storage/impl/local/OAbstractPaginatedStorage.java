@@ -109,6 +109,8 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageTr
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
+import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
+import com.orientechnologies.orient.core.storage.impl.local.statistic.OStoragePerformanceStatistic;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTxListener;
@@ -163,7 +165,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   private volatile int defaultClusterId = -1;
   private volatile OAtomicOperationsManager atomicOperationsManager;
-  private volatile boolean                  wereDataRecoverAfterOpen                   = false;
   private volatile boolean                  wereNonTxOperationsPerformedInPreviousOpen = false;
   private          boolean                  makeFullCheckPointAfterClusterCreate       = OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CLUSTER_CREATE
       .getValueAsBoolean();
@@ -176,6 +177,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private Map<String, OIndexEngine> indexEngineNameMap        = new HashMap<String, OIndexEngine>();
   private List<OIndexEngine>        indexEngines              = new ArrayList<OIndexEngine>();
   private boolean                   wereDataRestoredAfterOpen = false;
+
+  private volatile OStoragePerformanceStatistic storagePerformanceStatistic;
 
   public OAbstractPaginatedStorage(String name, String filePath, String mode, int id) {
     super(name, filePath, mode, OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.getValueAsInteger());
@@ -218,6 +221,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       preOpenSteps();
 
+      storagePerformanceStatistic = new OStoragePerformanceStatistic(
+          OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, name);
+
       initWalAndDiskCache();
 
       atomicOperationsManager = new OAtomicOperationsManager(this);
@@ -236,6 +242,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         makeFullCheckpoint();
 
       writeCache.startFuzzyCheckpoints();
+
+      try {
+        storagePerformanceStatistic.registerMBean();
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "Error during of registering of MBean for storage performance statistic", e);
+      }
 
       status = STATUS.OPEN;
     } catch (Exception e) {
@@ -380,6 +392,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             .setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY, OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getValue());
 
       componentsFactory = new OCurrentStorageComponentsFactory(configuration);
+
+      storagePerformanceStatistic = new OStoragePerformanceStatistic(
+          OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, name);
+
       initWalAndDiskCache();
 
       atomicOperationsManager = new OAtomicOperationsManager(this);
@@ -755,16 +771,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   /**
    * This method finds all the records which were updated starting from current LSN and write result in provided output stream. In
    * output stream will be included all records which were updated/deleted/created since passed in LSN till the current moment.
-   * Because of limitations of algorithm all data modification operations are prohibited till execution of current method ends.
-   * <<<<<<< HEAD
    * <p>
    * Deleted records are written in output stream first, then created/updated records. All records are sorted by record id.
    * <p>
-   * =======
-   * <p>
-   * Deleted records are written in output stream first, then created/updated records. All records are sorted by record id.
-   * <p>
-   * >>>>>>> 3559b9380b42d41cc67e9d6517b7d6d6843e7c2f Each record in output stream is written using following format:
    * <ol>
    * <li>Record's cluster id - 4 bytes</li>
    * <li>Record's cluster position - 8 bytes</li>
@@ -1137,6 +1146,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return atomicOperationsManager;
   }
 
+  /**
+   * @return Instance of tool which is used to gather statistic about storage performance.
+   */
+  public OStoragePerformanceStatistic getStoragePerformanceStatistic() {
+    return storagePerformanceStatistic;
+  }
+
   public OWriteAheadLog getWALInstance() {
     return writeAheadLog;
   }
@@ -1227,13 +1243,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   /**
    * Starts to gather information about storage performance for current thread.
-   * Details which performance characteristics are gathered can be found at {@link OStoragePerformanceStatistic}.
+   * Details which performance characteristics are gathered can be found at {@link OSessionStoragePerformanceStatistic}.
    *
    * @see #completeGatheringPerformanceStatisticForCurrentThread()
    */
   public void startGatheringPerformanceStatisticForCurrentThread() {
-    OStoragePerformanceStatistic
-        .initThreadLocalInstance(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024 * 1024);
+    OSessionStoragePerformanceStatistic
+        .initThreadLocalInstance(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024);
   }
 
   /**
@@ -1242,8 +1258,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    *
    * @return Performance statistic gathered after call of {@link #startGatheringPerformanceStatisticForCurrentThread()}
    */
-  public OStoragePerformanceStatistic completeGatheringPerformanceStatisticForCurrentThread() {
-    return OStoragePerformanceStatistic.clearThreadLocalInstance();
+  public OSessionStoragePerformanceStatistic completeGatheringPerformanceStatisticForCurrentThread() {
+    return OSessionStoragePerformanceStatistic.clearThreadLocalInstance();
   }
 
   @Override
@@ -2962,7 +2978,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stream.write(binaryFileId, 0, binaryFileId.length);
 
       for (long pageIndex = 0; pageIndex < filledUpTo; pageIndex++) {
-        final OCacheEntry cacheEntry = readCache.load(fileId, pageIndex, true, writeCache, 1);
+        final OCacheEntry cacheEntry = readCache.load(fileId, pageIndex, true, writeCache, 1, storagePerformanceStatistic);
         cacheEntry.acquireSharedLock();
         try {
           final OLogSequenceNumber pageLsn = ODurablePage
@@ -2982,7 +2998,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           }
         } finally {
           cacheEntry.releaseSharedLock();
-          readCache.release(cacheEntry, writeCache);
+          readCache.release(cacheEntry, writeCache, storagePerformanceStatistic);
         }
       }
 
@@ -3139,14 +3155,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
           final long pageIndex = OLongSerializer.INSTANCE.deserializeNative(data, 0);
 
-          OCacheEntry cacheEntry = readCache.load(fileId, pageIndex, true, writeCache, 1);
+          OCacheEntry cacheEntry = readCache.load(fileId, pageIndex, true, writeCache, 1, storagePerformanceStatistic);
 
           if (cacheEntry == null) {
             do {
               if (cacheEntry != null)
-                readCache.release(cacheEntry, writeCache);
+                readCache.release(cacheEntry, writeCache, storagePerformanceStatistic);
 
-              cacheEntry = readCache.allocateNewPage(fileId, writeCache);
+              cacheEntry = readCache.allocateNewPage(fileId, writeCache, storagePerformanceStatistic);
             } while (cacheEntry.getPageIndex() != pageIndex);
           }
 
@@ -3174,7 +3190,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             }
           } finally {
             cacheEntry.releaseExclusiveLock();
-            readCache.release(cacheEntry, writeCache);
+            readCache.release(cacheEntry, writeCache, storagePerformanceStatistic);
           }
         }
       }
@@ -3919,6 +3935,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       preCloseSteps();
 
+      try {
+        storagePerformanceStatistic.unregisterMBean();
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "Error during of unregister of MBean for storage performance statistic", e);
+      }
+
       sbTreeCollectionManager.close();
 
       closeClusters(onDelete);
@@ -4521,13 +4543,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         final long pageIndex = updatePageRecord.getPageIndex();
         fileId = readCache.openFile(fileId, writeCache);
 
-        OCacheEntry cacheEntry = readCache.load(fileId, pageIndex, true, writeCache, 1);
+        OCacheEntry cacheEntry = readCache.load(fileId, pageIndex, true, writeCache, 1, storagePerformanceStatistic);
         if (cacheEntry == null) {
           do {
             if (cacheEntry != null)
-              readCache.release(cacheEntry, writeCache);
+              readCache.release(cacheEntry, writeCache, storagePerformanceStatistic);
 
-            cacheEntry = readCache.allocateNewPage(fileId, writeCache);
+            cacheEntry = readCache.allocateNewPage(fileId, writeCache, storagePerformanceStatistic);
           } while (cacheEntry.getPageIndex() != pageIndex);
         }
 
@@ -4539,7 +4561,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           durablePage.setLsn(updatePageRecord.getLsn());
         } finally {
           cachePointer.releaseExclusiveLock();
-          readCache.release(cacheEntry, writeCache);
+          readCache.release(cacheEntry, writeCache, storagePerformanceStatistic);
         }
 
         atLeastOnePageUpdate.setValue(true);

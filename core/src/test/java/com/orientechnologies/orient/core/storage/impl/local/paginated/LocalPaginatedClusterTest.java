@@ -15,6 +15,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
 
+import com.orientechnologies.orient.core.storage.impl.local.statistic.OStoragePerformanceStatistic;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -47,16 +48,18 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
  */
 @Test
 public class LocalPaginatedClusterTest {
-  private static final int RECORD_SYSTEM_INFORMATION = 2 * OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE
-      + OLongSerializer.LONG_SIZE;
-  public OPaginatedCluster paginatedCluster;
-  protected String         buildDirectory;
+  private static final int RECORD_SYSTEM_INFORMATION =
+      2 * OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE;
+  public    OPaginatedCluster paginatedCluster;
+  protected String            buildDirectory;
 
   protected O2QCache    readCache;
   protected OWriteCache writeCache;
+  protected OStoragePerformanceStatistic storagePerformanceStatistic = new OStoragePerformanceStatistic(
+      OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, "test");
 
   protected OAtomicOperationsManager atomicOperationsManager;
-  private OContextConfiguration      contextConfiguration = new OContextConfiguration();
+  private OContextConfiguration contextConfiguration = new OContextConfiguration();
 
   @BeforeClass
   public void beforeClass() throws IOException {
@@ -1171,22 +1174,22 @@ public class LocalPaginatedClusterTest {
 
     OPhysicalPosition physicalPosition = paginatedCluster.createRecord(record, 0, (byte) 1);
 
-    OCacheEntry cacheEntry = readCache.load(1, 1, false, writeCache, 0);
+    OCacheEntry cacheEntry = readCache.load(1, 1, false, writeCache, 0, storagePerformanceStatistic);
     OClusterPage page = new OClusterPage(cacheEntry, false, null);
     int recordIndex = (int) (physicalPosition.clusterPosition & 0xFFFF);
 
     Assert.assertEquals(page.getRecordSize(recordIndex), ((int) (record.length * 1.5)) + RECORD_SYSTEM_INFORMATION);
-    readCache.release(cacheEntry, writeCache);
+    readCache.release(cacheEntry, writeCache, storagePerformanceStatistic);
 
     paginatedCluster.set(OCluster.ATTRIBUTES.RECORD_GROW_FACTOR, 2);
     physicalPosition = paginatedCluster.createRecord(record, 0, (byte) 1);
 
     recordIndex = (int) (physicalPosition.clusterPosition & 0xFFFF);
-    cacheEntry = readCache.load(1, 1, false, writeCache, 0);
+    cacheEntry = readCache.load(1, 1, false, writeCache, 0, storagePerformanceStatistic);
     page = new OClusterPage(cacheEntry, false, null);
 
     Assert.assertEquals(page.getRecordSize(recordIndex), record.length * 2 + RECORD_SYSTEM_INFORMATION);
-    readCache.release(cacheEntry, writeCache);
+    readCache.release(cacheEntry, writeCache, storagePerformanceStatistic);
   }
 
   @Test(enabled = false)
@@ -1207,19 +1210,19 @@ public class LocalPaginatedClusterTest {
 
     paginatedCluster.updateRecord(physicalPosition.clusterPosition, record, version, (byte) 1);
 
-    OCacheEntry cacheEntry = readCache.load(1, 1, false, writeCache, 0);
+    OCacheEntry cacheEntry = readCache.load(1, 1, false, writeCache, 0, storagePerformanceStatistic);
     int recordIndex = (int) (physicalPosition.clusterPosition & 0xFFFF);
     OClusterPage page = new OClusterPage(cacheEntry, false, null);
 
     Assert.assertEquals(page.getRecordSize(recordIndex), record.length + RECORD_SYSTEM_INFORMATION);
-    readCache.release(cacheEntry, writeCache);
+    readCache.release(cacheEntry, writeCache, storagePerformanceStatistic);
 
     record = new byte[200];
     random.nextBytes(record);
 
     paginatedCluster.updateRecord(physicalPosition.clusterPosition, record, version, (byte) 1);
 
-    cacheEntry = readCache.load(1, 1, false, writeCache, 0);
+    cacheEntry = readCache.load(1, 1, false, writeCache, 0, storagePerformanceStatistic);
     page = new OClusterPage(cacheEntry, false, null);
 
     int fullContentSize = 500 + OIntegerSerializer.INT_SIZE + OByteSerializer.BYTE_SIZE; // type + real size
@@ -1229,6 +1232,6 @@ public class LocalPaginatedClusterTest {
 
     Assert.assertEquals(page.getRecordSize(recordIndex + 1),
         fullContentSize + (OByteSerializer.BYTE_SIZE + OLongSerializer.LONG_SIZE));
-    readCache.release(cacheEntry, writeCache);
+    readCache.release(cacheEntry, writeCache, storagePerformanceStatistic);
   }
 }

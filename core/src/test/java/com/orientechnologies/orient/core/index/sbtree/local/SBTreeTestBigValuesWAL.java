@@ -9,6 +9,7 @@ import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.orientechnologies.orient.core.storage.impl.local.statistic.OStoragePerformanceStatistic;
 import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -56,20 +57,20 @@ public class SBTreeTestBigValuesWAL extends SBTreeTestBigValues {
     OGlobalConfiguration.FILE_LOCK.setValue(false);
   }
 
-  private String                   buildDirectory;
+  private String buildDirectory;
 
-  private String                   actualStorageDir;
-  private String                   expectedStorageDir;
+  private String actualStorageDir;
+  private String expectedStorageDir;
 
-  private ODiskWriteAheadLog       writeAheadLog;
+  private ODiskWriteAheadLog writeAheadLog;
 
-  private OReadCache               actualReadCache;
-  private OWriteCache              actualWriteCache;
+  private OReadCache  actualReadCache;
+  private OWriteCache actualWriteCache;
 
-  private OReadCache               expectedReadCache;
-  private OWriteCache              expectedWriteCache;
+  private OReadCache  expectedReadCache;
+  private OWriteCache expectedWriteCache;
 
-  private OLocalPaginatedStorage   actualStorage;
+  private OLocalPaginatedStorage actualStorage;
 
   private OSBTree<Integer, byte[]> expectedSBTree;
   private OLocalPaginatedStorage   expectedStorage;
@@ -362,6 +363,9 @@ public class SBTreeTestBigValuesWAL extends SBTreeTestBigValues {
   }
 
   private void restoreDataFromWAL() throws IOException {
+    OStoragePerformanceStatistic storagePerformanceStatistic = new OStoragePerformanceStatistic(
+        OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, "test");
+
     ODiskWriteAheadLog log = new ODiskWriteAheadLog(4, -1, 10 * 1024L * OWALPage.PAGE_SIZE, null, actualStorage);
     OLogSequenceNumber lsn = log.begin();
 
@@ -391,13 +395,14 @@ public class SBTreeTestBigValuesWAL extends SBTreeTestBigValues {
           if (!expectedWriteCache.isOpen(fileId))
             expectedReadCache.openFile(fileId, expectedWriteCache);
 
-          OCacheEntry cacheEntry = expectedReadCache.load(fileId, pageIndex, true, expectedWriteCache, 0);
+          OCacheEntry cacheEntry = expectedReadCache
+              .load(fileId, pageIndex, true, expectedWriteCache, 0, storagePerformanceStatistic);
           if (cacheEntry == null) {
             do {
               if (cacheEntry != null)
-                expectedReadCache.release(cacheEntry, expectedWriteCache);
+                expectedReadCache.release(cacheEntry, expectedWriteCache, storagePerformanceStatistic);
 
-              cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache);
+              cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache, storagePerformanceStatistic);
             } while (cacheEntry.getPageIndex() != pageIndex);
           }
           cacheEntry.acquireExclusiveLock();
@@ -409,7 +414,7 @@ public class SBTreeTestBigValuesWAL extends SBTreeTestBigValues {
             cacheEntry.markDirty();
           } finally {
             cacheEntry.releaseExclusiveLock();
-            expectedReadCache.release(cacheEntry, expectedWriteCache);
+            expectedReadCache.release(cacheEntry, expectedWriteCache, storagePerformanceStatistic);
           }
         }
         atomicUnit.clear();
