@@ -157,6 +157,13 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       OChannelBinaryAsynchClient network=null;
       try {
         network = getAvailableNetwork(getNextAvailableServerURL(false));
+
+        if (tokens.get(network.getServerURL()) == null && getSessionId() > 0) {
+          // TODO: Remove this workaround in favor of a proper per server authentication.
+          setSessionId(network.getServerURL(), -1, null);
+          openRemoteDatabase(network);
+        }
+
         return operation.execute(network);
       } catch (OModificationOperationProhibitedException mope) {
         handleDBFreeze();
@@ -1865,58 +1872,67 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return openRemoteDatabase(currentURL);
   }
 
+  protected void openRemoteDatabase(OChannelBinaryAsynchClient network) throws IOException {
+    stateLock.acquireWriteLock();
+    try {
+
+      try {
+        network.writeByte(OChannelBinaryProtocol.REQUEST_DB_OPEN);
+        network.writeInt(getSessionId());
+
+        // @SINCE 1.0rc8
+        sendClientInfo(network);
+
+        network.writeString(name);
+        network.writeString(connectionUserName);
+        network.writeString(connectionUserPassword);
+
+      } finally {
+        endRequest(network);
+      }
+
+      final int sessionId;
+
+      try {
+        network.beginResponse(getSessionId(), false);
+        sessionId = network.readInt();
+        byte[] token = network.readBytes();
+        if (token.length == 0) {
+          token = null;
+        } else {
+          network.getServiceThread().setTokenBased(true);
+        }
+        setSessionId(network.getServerURL(), sessionId, token);
+
+        OLogManager.instance().debug(this, "Client connected to %s with session id=%d", network.getServerURL(), sessionId);
+
+        readDatabaseInformation(network);
+
+        // READ CLUSTER CONFIGURATION
+        updateClusterConfiguration(network.getServerURL(), network.readBytes());
+
+        // read OrientDB release info
+        if (network.getSrvProtocolVersion() >= 14)
+          network.readString();
+
+        status = STATUS.OPEN;
+
+      } finally {
+        endResponse(network);
+      }
+    }finally {
+      stateLock.releaseWriteLock();
+    }
+  }
+
   protected String openRemoteDatabase(String currentURL) {
     do {
       do {
         OChannelBinaryAsynchClient network = null;
         try {
           network = getAvailableNetwork(currentURL);
-          try {
-            network.writeByte(OChannelBinaryProtocol.REQUEST_DB_OPEN);
-            network.writeInt(getSessionId());
-
-            // @SINCE 1.0rc8
-            sendClientInfo(network);
-
-            network.writeString(name);
-            network.writeString(connectionUserName);
-            network.writeString(connectionUserPassword);
-
-          } finally {
-            endRequest(network);
-          }
-
-          final int sessionId;
-
-          try {
-            network.beginResponse(getSessionId(), false);
-            sessionId = network.readInt();
-            byte[] token = network.readBytes();
-            if (token.length == 0) {
-              token = null;
-            } else {
-              network.getServiceThread().setTokenBased(true);
-            }
-            setSessionId(currentURL, sessionId, token);
-
-            OLogManager.instance().debug(this, "Client connected to %s with session id=%d", currentURL, sessionId);
-
-            readDatabaseInformation(network);
-
-            // READ CLUSTER CONFIGURATION
-            updateClusterConfiguration(currentURL, network.readBytes());
-
-            // read OrientDB release info
-            if (network.getSrvProtocolVersion() >= 14)
-              network.readString();
-
-            status = STATUS.OPEN;
-
-            return currentURL;
-
-          } finally {
-            endResponse(network);
-          }
+          openRemoteDatabase(network);
+          return currentURL;
         } catch (OIOException e) {
           if (network != null) {
             // REMOVE THE NETWORK CONNECTION IF ANY
@@ -2188,12 +2204,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         OLogManager.instance().debug(this, "Error during acquiring of connection to URL " + lastURL, e);
         network = null;
         cause = e;
-      }
-
-      if (tokens.get(lastURL) == null && getSessionId() > 0) {
-        // TODO: Remove this workaround in favor of a proper per server authentication.
-        setSessionId(lastURL, -1, null);
-        throw new OTokenException("Missing token, reconnect is required");
       }
 
       if (network == null) {
