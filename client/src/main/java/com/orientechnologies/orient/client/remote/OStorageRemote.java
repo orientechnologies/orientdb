@@ -1709,7 +1709,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     final boolean tokenException = firstCause instanceof OTokenException;
 
     // CHECK IF THE EXCEPTION SHOULD BE JUST PROPAGATED
-    if (!(firstCause instanceof IOException) && !(firstCause instanceof OIOException)) {
+    if (!(firstCause instanceof IOException) && !(firstCause instanceof OIOException)
+        && !(firstCause instanceof IllegalMonitorStateException)) {
       if (exception instanceof OException)
         // NOT AN IO CAUSE, JUST PROPAGATE IT
         throw (OException) exception;
@@ -2433,7 +2434,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       }
     }
 
-    defaultClusterId = clusterMap.get(CLUSTER_DEFAULT_NAME).getId();
+    final OCluster defaultCluster = clusterMap.get(CLUSTER_DEFAULT_NAME);
+    if (defaultCluster != null)
+      defaultClusterId = clusterMap.get(CLUSTER_DEFAULT_NAME).getId();
   }
 
   private boolean deleteRecord(final ORecordId iRid, final int iVersion, int iMode, final ORecordCallback<Boolean> iCallback,
