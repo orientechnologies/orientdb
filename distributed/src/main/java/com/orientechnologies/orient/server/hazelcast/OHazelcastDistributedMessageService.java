@@ -19,15 +19,6 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TimerTask;
-import java.util.concurrent.ConcurrentHashMap;
-
 import com.hazelcast.collection.impl.queue.QueueService;
 import com.hazelcast.config.QueueConfig;
 import com.hazelcast.core.DistributedObject;
@@ -46,6 +37,15 @@ import com.orientechnologies.orient.server.distributed.ODistributedResponseManag
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Hazelcast implementation of distributed peer. There is one instance per database. Each node creates own instance to talk with
@@ -87,7 +87,7 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
           "listening for incoming responses on queue: %s", queueName);
 
     // TODO: CHECK IF SET TO TRUE (UNQUEUE MSG) WHEN HOT-ALIGNMENT = TRUE
-    checkForPendingMessages(nodeResponseQueue, queueName, false);
+    checkForPendingMessages(nodeResponseQueue, queueName);
 
     // CREATE TASK THAT CHECK ASYNCHRONOUS MESSAGE RECEIVED
     asynchMessageManager = new TimerTask() {
@@ -393,23 +393,15 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
     }
   }
 
-  protected boolean checkForPendingMessages(final IQueue iQueue, final String iQueueName, final boolean iUnqueuePendingMessages) {
+  protected void checkForPendingMessages(final IQueue iQueue, final String iQueueName) {
     final int queueSize = iQueue.size();
     if (queueSize > 0) {
-      if (!iUnqueuePendingMessages) {
-        ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
-            "found %d messages in queue %s, clearing them...", queueSize, iQueueName);
-        iQueue.clear();
-      } else {
-        ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
-            "found %d messages in queue %s, aligning the database...", queueSize, iQueueName);
-        return true;
-      }
+      ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
+          "found %d messages in queue %s, clearing them...", queueSize, iQueueName);
+      iQueue.clear();
     } else
       ODistributedServerLog.info(this, manager.getLocalNodeName(), null, DIRECTION.NONE, "found no previous messages in queue %s",
           iQueueName);
-
-    return false;
   }
 
   /**

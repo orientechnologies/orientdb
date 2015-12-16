@@ -223,6 +223,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   public Throwable convertException(final Throwable original) {
     if (original instanceof HazelcastException || original instanceof HazelcastInstanceNotActiveException)
       return new IOException("Hazelcast wrapped exception: " + original.getMessage(), original.getCause());
+
+    if (original instanceof IllegalMonitorStateException)
+      // THIS IS RAISED WHEN INTERNAL LOCKING IS BROKEN BECAUSE HARD SHUTDOWN
+      return new IOException("Illegal monitor state: " + original.getMessage(), original.getCause());
+
     return original;
   }
 
@@ -442,7 +447,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         throw new ODistributedException("Cannot create a new database with the same name of one available distributed");
 
       final OHazelcastDistributedDatabase distribDatabase = messageService.registerDatabase(iDatabase.getName());
-      distribDatabase.configureDatabase(false, false, null).setOnline();
+      distribDatabase.configureDatabase(null).setOnline();
       onOpen(iDatabase);
 
     } finally {
@@ -1289,7 +1294,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         // GET LAST VERSION IN LOCK
         final ODistributedConfiguration cfg = getDatabaseConfiguration(db.getName());
 
-        distrDatabase.configureDatabase(false, true, new Callable<Void>() {
+        distrDatabase.configureDatabase(new Callable<Void>() {
 
           @Override
           public Void call() throws Exception {
@@ -1574,8 +1579,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
         ODistributedConfiguration cfg = getDatabaseConfiguration(databaseName);
 
-        final boolean hotAlignment = cfg.isHotAlignment();
-
         if (!getConfigurationMap().containsKey(CONFIG_DATABASE_PREFIX + databaseName)) {
           // PUBLISH CFG FIRST TIME
           ODocument cfgDoc = cfg.serialize();
@@ -1583,8 +1586,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           getConfigurationMap().put(CONFIG_DATABASE_PREFIX + databaseName, cfgDoc);
         }
 
-        final OHazelcastDistributedDatabase db = messageService.registerDatabase(databaseName).configureDatabase(hotAlignment,
-            hotAlignment, null);
+        final OHazelcastDistributedDatabase db = messageService.registerDatabase(databaseName).configureDatabase(null);
 
         final ODatabaseDocumentTx database = (ODatabaseDocumentTx) serverInstance.openDatabase(databaseName, "internal", "internal",
             null, true);

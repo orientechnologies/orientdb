@@ -82,7 +82,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
   protected final List<ODistributedWorker>            workers                        = new ArrayList<ODistributedWorker>();
   protected final AtomicLong                          waitForMessageId               = new AtomicLong(-1);
   protected final ConcurrentHashMap<ORID, String>     lockManager                    = new ConcurrentHashMap<ORID, String>();
-  protected ODistributedSyncConfiguration syncConfiguration;
+  protected ODistributedSyncConfiguration             syncConfiguration;
 
   public OHazelcastDistributedDatabase(final OHazelcastPlugin manager, final OHazelcastDistributedMessageService msgService,
       final String iDatabaseName) {
@@ -228,14 +228,12 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     return restoringMessages;
   }
 
-  public OHazelcastDistributedDatabase configureDatabase(final boolean iRestoreMessages, final boolean iUnqueuePendingMessages,
-      Callable<Void> iCallback) {
+  public OHazelcastDistributedDatabase configureDatabase(final Callable<Void> iCallback) {
     // CREATE A QUEUE PER DATABASE REQUESTS
     final String queueName = OHazelcastDistributedMessageService.getRequestQueueName(getLocalNodeName(), databaseName);
     final IQueue requestQueue = msgService.getQueue(queueName);
 
-    final ODistributedWorker listenerThread = unqueuePendingMessages(iRestoreMessages, iUnqueuePendingMessages, queueName,
-        requestQueue);
+    final ODistributedWorker listenerThread = unqueuePendingMessages(queueName, requestQueue);
 
     workers.add(listenerThread);
 
@@ -332,16 +330,12 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       workers.get(i).shutdown();
   }
 
-  protected ODistributedWorker unqueuePendingMessages(boolean iRestoreMessages, boolean iUnqueuePendingMessages, String queueName,
-      IQueue requestQueue) {
+  protected ODistributedWorker unqueuePendingMessages(String queueName, IQueue requestQueue) {
     if (ODistributedServerLog.isDebugEnabled())
       ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE, "listening for incoming requests on queue: %s",
           queueName);
 
-    // UNDO PREVIOUS MESSAGE IF ANY
-    restoreMessagesBeforeFailure(iRestoreMessages);
-
-    restoringMessages = msgService.checkForPendingMessages(requestQueue, queueName, iUnqueuePendingMessages);
+    msgService.checkForPendingMessages(requestQueue, queueName);
 
     final ODistributedWorker listenerThread = new ODistributedWorker(this, requestQueue, databaseName, 0, restoringMessages);
     listenerThread.initDatabaseInstance();
@@ -471,11 +465,6 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
   protected String getLocalNodeName() {
     return manager.getLocalNodeName();
-  }
-
-  protected void restoreMessagesBeforeFailure(final boolean iRestoreMessages) {
-    for (int i = 0; i < workers.size(); ++i)
-      workers.get(i).restoreMessagesBeforeFailure(iRestoreMessages);
   }
 
   /**

@@ -19,13 +19,7 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
-import java.io.Serializable;
-import java.util.Queue;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.TimeUnit;
-
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
-import com.hazelcast.core.IMap;
 import com.hazelcast.core.IQueue;
 import com.hazelcast.spi.exception.DistributedObjectDestroyedException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
@@ -50,6 +44,11 @@ import com.orientechnologies.orient.server.distributed.task.OResurrectRecordTask
 import com.orientechnologies.orient.server.distributed.task.OSQLCommandTask;
 import com.orientechnologies.orient.server.distributed.task.OTxTask;
 import com.orientechnologies.orient.server.distributed.task.OUpdateRecordTask;
+
+import java.io.Serializable;
+import java.util.Queue;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Hazelcast implementation of distributed peer. There is one instance per database. Each node creates own instance to talk with
@@ -329,35 +328,6 @@ public class ODistributedWorker extends Thread {
 
   protected String getLocalNodeName() {
     return manager.getLocalNodeName();
-  }
-
-  protected IMap<String, Object> restoreMessagesBeforeFailure(final boolean iRestoreMessages) {
-    final IMap<String, Object> lastPendingRequestMap = manager.getHazelcastInstance().getMap(getPendingRequestMapName());
-    if (iRestoreMessages) {
-      // RESTORE LAST UNDO MESSAGE
-      final ODistributedRequest lastPendingRequest = (ODistributedRequest) lastPendingRequestMap.remove(databaseName);
-      if (lastPendingRequest != null) {
-        // RESTORE LAST REQUEST
-        ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE,
-            "restore last replication message before the crash for database '%s': %s...", databaseName, lastPendingRequest);
-
-        try {
-          initDatabaseInstance();
-
-          final boolean executeLastPendingRequest = checkIfOperationHasBeenExecuted(lastPendingRequest,
-              lastPendingRequest.getTask());
-
-          if (executeLastPendingRequest)
-            onMessage(lastPendingRequest);
-
-        } catch (Throwable t) {
-          ODistributedServerLog.error(this, getLocalNodeName(), null, DIRECTION.NONE,
-              "error on executing restored message for database %s", t, databaseName);
-        }
-      }
-    }
-
-    return lastPendingRequestMap;
   }
 
   /**
