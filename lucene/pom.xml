@@ -34,7 +34,7 @@
     <properties>
         <surefire.version>2.18.1</surefire.version>
         <orientdb.version>${project.version}</orientdb.version>
-        <lucene.version>5.3.1</lucene.version>
+        <lucene.version>5.4.0</lucene.version>
         <geotools.version>13.2</geotools.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
