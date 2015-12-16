@@ -3,7 +3,7 @@ language: java
 cache:
   directories:
   - $HOME/.m2
-install: mvn clean install -DskipTests -Dmaven.test.failure.ignore=true
+install: mvn clean install -Dmaven.test.failure.ignore=true
 branches:
   only:
   - develop
