@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OStoragePerformanceStatistic;
 
 import java.io.IOException;
@@ -165,19 +166,34 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
 
   @Override
   public OCacheEntry load(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache, final int pageCount,
-      OStoragePerformanceStatistic storagePerformanceStatistic) {
-    int intId = extractFileId(fileId);
+                          OStoragePerformanceStatistic storagePerformanceStatistic) {
+    final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic =
+        OSessionStoragePerformanceStatistic.getStatisticInstance();
 
-    final MemoryFile memoryFile = getFile(intId);
-    final OCacheEntry cacheEntry = memoryFile.loadPage(pageIndex);
-    if (cacheEntry == null)
-      return null;
-
-    synchronized (cacheEntry) {
-      cacheEntry.incrementUsages();
+    if (sessionStoragePerformanceStatistic != null) {
+      sessionStoragePerformanceStatistic.startPageReadFromCacheTimer();
     }
+    storagePerformanceStatistic.startPageReadFromCacheTimer();
 
-    return cacheEntry;
+    try {
+      int intId = extractFileId(fileId);
+
+      final MemoryFile memoryFile = getFile(intId);
+      final OCacheEntry cacheEntry = memoryFile.loadPage(pageIndex);
+      if (cacheEntry == null)
+        return null;
+
+      synchronized (cacheEntry) {
+        cacheEntry.incrementUsages();
+      }
+
+      return cacheEntry;
+    } finally {
+      storagePerformanceStatistic.stopPageReadFromCacheTimer();
+      if (sessionStoragePerformanceStatistic != null) {
+        sessionStoragePerformanceStatistic.stopPageReadFromCacheTimer();
+      }
+    }
   }
 
   @Override
@@ -186,17 +202,32 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
 
   @Override
   public OCacheEntry allocateNewPage(long fileId, OWriteCache writeCache,
-      OStoragePerformanceStatistic storagePerformanceStatistic) {
-    int intId = extractFileId(fileId);
+                                     OStoragePerformanceStatistic storagePerformanceStatistic) {
+    final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic =
+        OSessionStoragePerformanceStatistic.getStatisticInstance();
 
-    final MemoryFile memoryFile = getFile(intId);
-    final OCacheEntry cacheEntry = memoryFile.addNewPage();
-
-    synchronized (cacheEntry) {
-      cacheEntry.incrementUsages();
+    if (sessionStoragePerformanceStatistic != null) {
+      sessionStoragePerformanceStatistic.startPageReadFromCacheTimer();
     }
+    storagePerformanceStatistic.startPageReadFromCacheTimer();
 
-    return cacheEntry;
+    try {
+      int intId = extractFileId(fileId);
+
+      final MemoryFile memoryFile = getFile(intId);
+      final OCacheEntry cacheEntry = memoryFile.addNewPage();
+
+      synchronized (cacheEntry) {
+        cacheEntry.incrementUsages();
+      }
+
+      return cacheEntry;
+    } finally {
+      storagePerformanceStatistic.stopPageReadFromCacheTimer();
+      if (sessionStoragePerformanceStatistic != null) {
+        sessionStoragePerformanceStatistic.stopPageReadFromCacheTimer();
+      }
+    }
   }
 
   private MemoryFile getFile(int fileId) {

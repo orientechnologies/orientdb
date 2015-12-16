@@ -3,6 +3,8 @@ package com.orientechnologies.orient.core.storage.impl.local.statistic;
 import com.orientechnologies.common.concur.lock.ODistributedCounter;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.exception.OReadCacheException;
+import com.orientechnologies.orient.core.storage.OIdentifiableStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 import javax.management.*;
 import java.lang.management.ManagementFactory;
@@ -10,6 +12,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -24,12 +27,12 @@ public class OStoragePerformanceStatistic implements OStoragePerformanceStatisti
   /**
    * Timer which is used to update exposed statistic values (so called snapshots).
    */
-  private final Timer updateTimer;
+  private final ScheduledExecutorService updateTimer;
 
   /**
    * Task which is used to update exposed statistic values (aka snapshots).
    */
-  private volatile TimerTask updateTask;
+  private volatile ScheduledFuture<?> updateTask;
 
   /**
    * Amount of bytes in megabyte.
@@ -60,7 +63,7 @@ public class OStoragePerformanceStatistic implements OStoragePerformanceStatisti
   /**
    * Flag which indicates whether measurement of storage performance statistic is enabled.
    */
-  private volatile boolean measurementIsEnabled = false;
+  private volatile boolean measurementEnabled = false;
 
   /**
    * Amount of times when cache was accessed during the measurement session.
@@ -198,17 +201,42 @@ public class OStoragePerformanceStatistic implements OStoragePerformanceStatisti
   private final AtomicBoolean mbeanIsRegistered = new AtomicBoolean();
 
   /**
+   * Object which is used to get current PC nano time.
+   */
+  private final NanoTimer nanoTimer;
+
+  /**
    * Creates object and initiates it with value of size of page in cache and set name of MBean exposed to JVM.
    *
    * @param pageSize    Page size in cache.
    * @param storageName Name of storage performance statistic of which is gathered.
+   * @param storageId   Id of storage {@link OIdentifiableStorage#getId()}
    */
-  public OStoragePerformanceStatistic(int pageSize, String storageName) {
+  public OStoragePerformanceStatistic(int pageSize, String storageName, long storageId) {
+    this(pageSize, storageName, storageId, new NanoTimer() {
+      @Override
+      public long getNano() {
+        return System.nanoTime();
+      }
+    });
+  }
+
+  /**
+   * Creates object and initiates it with value of size of page in cache and set name of MBean exposed to JVM.
+   *
+   * @param pageSize    Page size in cache.
+   * @param storageName Name of storage performance statistic of which is gathered.
+   * @param storageId   Id of storage {@link OIdentifiableStorage#getId()}
+   * @param nanoTimer   Object which is used to get current PC nano time.
+   */
+  public OStoragePerformanceStatistic(int pageSize, String storageName, long storageId, NanoTimer nanoTimer) {
     this.pageSize = pageSize;
 
-    updateTimer = new Timer("Updater for storage performance statistic of " + storageName, true);
+    updateTimer = Executors.newSingleThreadScheduledExecutor(new SnapshotTaskFactory(storageName));
     mbeanName = "com.orientechnologies.orient.core.storage.impl.local.statistic:type=OStoragePerformanceStatisticMXBean,name="
-        + storageName;
+        + storageName + ",id=" + storageId;
+
+    this.nanoTimer = nanoTimer;
   }
 
   /**
@@ -216,7 +244,7 @@ public class OStoragePerformanceStatistic implements OStoragePerformanceStatisti
    */
   @Override
   public void startMeasurement() {
-    measurementIsEnabled = true;
+    measurementEnabled = true;
 
     cacheAccessCount.clear();
     cacheHit.clear();
@@ -231,25 +259,7 @@ public class OStoragePerformanceStatistic implements OStoragePerformanceStatisti
     commitCount.clear();
     commitTime.clear();
 
-    updateTask = new TimerTask() {
-      @Override
-      public void run() {
-        cacheAccessCountSnapshot = cacheAccessCount.get();
-        cacheHitSnapshot = cacheHit.get();
-        pageReadFromFileTimeSnapshot = pageReadFromFileTime.get();
-        pageReadFromFileCountSnapshot = pageReadFromFileCount.get();
-        pageReadFromCacheTimeSnapshot = pageReadFromCacheTime.get();
-        pageReadFromCacheCountSnapshot = pageReadFromCacheCount.get();
-        pageWriteToCacheTimeSnapshot = pageWriteToCacheTime.get();
-        pageWriteToCacheCountSnapshot = pageWriteToCacheCount.get();
-        pageWriteToFileTimeSnapshot = pageWriteToFileTime.get();
-        pageWriteToFileCountSnapshot = pageWriteToFileCount.get();
-        commitCountSnapshot = commitCount.get();
-        commitTimeSnapshot = commitTime.get();
-      }
-    };
-
-    updateTimer.schedule(updateTask, MILLISECONDS_IN_SECOND, MILLISECONDS_IN_SECOND);
+    updateTask = updateTimer.scheduleWithFixedDelay(new SnapshotTask(), 1, 1, TimeUnit.SECONDS);
   }
 
   /**
@@ -257,13 +267,21 @@ public class OStoragePerformanceStatistic implements OStoragePerformanceStatisti
    */
   @Override
   public void stopMeasurement() {
-    final TimerTask ct = updateTask;
+    final ScheduledFuture<?> ct = updateTask;
     if (ct != null) {
-      ct.cancel();
+      ct.cancel(false);
     }
 
-    measurementIsEnabled = false;
+    measurementEnabled = false;
     updateTask = null;
+  }
+
+  /**
+   * @return <code>true</code> if statistic is measured inside of storage.
+   */
+  @Override
+  public boolean isMeasurementEnabled() {
+    return measurementEnabled;
   }
 
   /**
@@ -318,7 +336,11 @@ public class OStoragePerformanceStatistic implements OStoragePerformanceStatisti
    */
   @Override
   public long getReadSpeedFromCacheInMB() {
-    return (getReadSpeedFromCacheInPages() * pageSize) / MEGABYTE;
+    final long pagesSpeed = getReadSpeedFromCacheInPages();
+    if (pagesSpeed < 0)
+      return -1;
+
+    return (pagesSpeed * pageSize) / MEGABYTE;
   }
 
   /**
@@ -353,7 +375,11 @@ public class OStoragePerformanceStatistic implements OStoragePerformanceStatisti
    */
   @Override
   public long getReadSpeedFromFileInMB() {
-    return (getReadSpeedFromFileInPages() * pageSize) / MEGABYTE;
+    final long pageSpeed = getReadSpeedFromFileInPages();
+    if (pageSpeed < 0)
+      return -1;
+
+    return (pageSpeed * pageSize) / MEGABYTE;
   }
 
   /**
@@ -368,7 +394,7 @@ public class OStoragePerformanceStatistic implements OStoragePerformanceStatisti
    * @return Amount of pages are read from file.
    */
   @Override
-  public long getAmountOfPagesReadFromFileSystem() {
+  public long getAmountOfPagesReadFromFile() {
     return pageReadFromFileCountSnapshot;
   }
 
@@ -391,7 +417,11 @@ public class OStoragePerformanceStatistic implements OStoragePerformanceStatisti
    */
   @Override
   public long getWriteSpeedInCacheInMB() {
-    return (getWriteSpeedInCacheInPages() * pageSize) / MEGABYTE;
+    final long pageSpeed = getWriteSpeedInCacheInPages();
+    if (pageSpeed < 0)
+      return -1;
+
+    return (pageSpeed * pageSize) / MEGABYTE;
   }
 
   /**
@@ -413,7 +443,11 @@ public class OStoragePerformanceStatistic implements OStoragePerformanceStatisti
    */
   @Override
   public long getWriteSpeedInFileInMB() {
-    return (getWriteSpeedInFileInPages() * pageSize) / MEGABYTE;
+    final long pageSpeed = getWriteSpeedInFileInPages();
+    if (pageSpeed < 0)
+      return -1;
+
+    return (pageSpeed * pageSize) / MEGABYTE;
   }
 
   /**
@@ -422,6 +456,14 @@ public class OStoragePerformanceStatistic implements OStoragePerformanceStatisti
   @Override
   public long getAmountOfPagesWrittenToCache() {
     return pageWriteToCacheCountSnapshot;
+  }
+
+  /**
+   * @return Amount of pages written to file.
+   */
+  @Override
+  public long getAmountOfPagesWrittenToFile() {
+    return pageWriteToFileCountSnapshot;
   }
 
   /**
@@ -462,9 +504,9 @@ public class OStoragePerformanceStatistic implements OStoragePerformanceStatisti
    * That is utility method which is used by all startXXXTimer methods.
    */
   private void pushTimeStamp() {
-    if (measurementIsEnabled) {
+    if (measurementEnabled) {
       final Deque<Long> stamps = tlTimeStumps.get();
-      stamps.push(System.nanoTime());
+      stamps.push(nanoTimer.getNano());
     }
   }
 
@@ -476,7 +518,7 @@ public class OStoragePerformanceStatistic implements OStoragePerformanceStatisti
   public void stopPageReadFromFileTimer(int readPages) {
     final Deque<Long> stamps = tlTimeStumps.get();
     if (stamps.size() > 0) {
-      final long endTs = System.nanoTime();
+      final long endTs = nanoTimer.getNano();
 
       pageReadFromFileTime.add(endTs - stamps.pop());
       pageReadFromFileCount.add(readPages);
@@ -496,7 +538,7 @@ public class OStoragePerformanceStatistic implements OStoragePerformanceStatisti
   public void stopPageReadFromCacheTimer() {
     final Deque<Long> stamps = tlTimeStumps.get();
     if (stamps.size() > 0) {
-      final long endTs = System.nanoTime();
+      final long endTs = nanoTimer.getNano();
 
       pageReadFromCacheTime.add(endTs - stamps.pop());
       pageReadFromCacheCount.increment();
@@ -516,7 +558,7 @@ public class OStoragePerformanceStatistic implements OStoragePerformanceStatisti
   public void stopPageWriteToCacheTimer() {
     final Deque<Long> stamps = tlTimeStumps.get();
     if (stamps.size() > 0) {
-      final long endTs = System.nanoTime();
+      final long endTs = nanoTimer.getNano();
 
       pageWriteToCacheTime.add(endTs - stamps.pop());
       pageWriteToCacheCount.increment();
@@ -536,7 +578,7 @@ public class OStoragePerformanceStatistic implements OStoragePerformanceStatisti
   public void stopPageWriteToFileTimer() {
     final Deque<Long> stamps = tlTimeStumps.get();
     if (stamps.size() > 0) {
-      final long endTs = System.nanoTime();
+      final long endTs = nanoTimer.getNano();
 
       pageWriteToFileTime.add(endTs - stamps.pop());
       pageWriteToFileCount.increment();
@@ -547,7 +589,7 @@ public class OStoragePerformanceStatistic implements OStoragePerformanceStatisti
    * Increments counter of page accesses from cache.
    */
   public void incrementPageAccessOnCacheLevel() {
-    if (measurementIsEnabled) {
+    if (measurementEnabled) {
       cacheAccessCount.increment();
     }
   }
@@ -556,7 +598,7 @@ public class OStoragePerformanceStatistic implements OStoragePerformanceStatisti
    * Increments counter of cache hits
    */
   public void incrementCacheHit() {
-    if (measurementIsEnabled) {
+    if (measurementEnabled) {
       cacheHit.increment();
     }
   }
@@ -574,10 +616,67 @@ public class OStoragePerformanceStatistic implements OStoragePerformanceStatisti
   public void stopCommitTimer() {
     final Deque<Long> stamps = tlTimeStumps.get();
     if (stamps.size() > 0) {
-      final long endTs = System.nanoTime();
+      final long endTs = nanoTimer.getNano();
 
       commitTime.add(endTs - stamps.pop());
       commitCount.increment();
     }
   }
+
+  /**
+   * Interface which is used by this tool to get current PC nano time.
+   * Implementation which calls <code>System.nanoTime()</code> is used by default.
+   */
+  public interface NanoTimer {
+    /**
+     * @return Current PC nano time.
+     */
+    long getNano();
+  }
+
+  /**
+   * Task to move gathered values about performance statistic at the end of measurement session to snapshot holders.
+   */
+  private final class SnapshotTask implements Runnable {
+
+    /**
+     * Moves counters values to snapshot values.
+     */
+    @Override
+    public void run() {
+      cacheAccessCountSnapshot = cacheAccessCount.get();
+      cacheHitSnapshot = cacheHit.get();
+      pageReadFromFileTimeSnapshot = pageReadFromFileTime.get();
+      pageReadFromFileCountSnapshot = pageReadFromFileCount.get();
+      pageReadFromCacheTimeSnapshot = pageReadFromCacheTime.get();
+      pageReadFromCacheCountSnapshot = pageReadFromCacheCount.get();
+      pageWriteToCacheTimeSnapshot = pageWriteToCacheTime.get();
+      pageWriteToCacheCountSnapshot = pageWriteToCacheCount.get();
+      pageWriteToFileTimeSnapshot = pageWriteToFileTime.get();
+      pageWriteToFileCountSnapshot = pageWriteToFileCount.get();
+      commitCountSnapshot = commitCount.get();
+      commitTimeSnapshot = commitTime.get();
+    }
+  }
+
+  /**
+   * Thread factory for {@link SnapshotTask}
+   */
+  private final static class SnapshotTaskFactory implements ThreadFactory {
+    private final String storageName;
+
+    public SnapshotTaskFactory(String storageName) {
+      this.storageName = storageName;
+    }
+
+    @Override
+    public Thread newThread(Runnable r) {
+      final Thread thread = new Thread(OAbstractPaginatedStorage.storageThreadGroup, r);
+      thread.setName("Updater for storage performance statistic of " + storageName);
+      thread.setDaemon(true);
+
+      return thread;
+    }
+  }
+
 }

@@ -233,7 +233,7 @@ public class ReadWriteCacheConcurrentTest {
 
     private void writeToFile(int fileNumber, long pageIndex) throws IOException {
       OStoragePerformanceStatistic storagePerformanceStatistic = new OStoragePerformanceStatistic(
-          OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, "test");
+          OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, "test", 1);
 
       OCacheEntry cacheEntry = readBuffer
           .load(fileIds.get(fileNumber), pageIndex, false, writeBuffer, 1, storagePerformanceStatistic);
@@ -304,7 +304,7 @@ public class ReadWriteCacheConcurrentTest {
     @Override
     public Void call() throws Exception {
       OStoragePerformanceStatistic storagePerformanceStatistic = new OStoragePerformanceStatistic(
-          OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, "test");
+          OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, "test", 1);
 
       long pageIndex = Math.abs(new Random().nextInt() % PAGE_COUNT);
       int fileNumber = new Random().nextInt(FILE_COUNT);

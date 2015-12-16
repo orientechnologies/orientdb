@@ -50,7 +50,7 @@ public class ReadWriteDiskCacheTest {
   private byte                   seed;
   private ODiskWriteAheadLog     writeAheadLog;
 
-  private OStoragePerformanceStatistic storagePerformanceStatistic = new OStoragePerformanceStatistic(PAGE_SIZE, "test");
+  private OStoragePerformanceStatistic storagePerformanceStatistic = new OStoragePerformanceStatistic(PAGE_SIZE, "test", 1);
 
   @BeforeClass
   public void beforeClass() throws IOException {

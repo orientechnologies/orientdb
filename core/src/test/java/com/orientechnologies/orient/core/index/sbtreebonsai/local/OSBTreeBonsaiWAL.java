@@ -294,7 +294,7 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiLocalTest {
 
   private void restoreDataFromWAL() throws IOException {
     OStoragePerformanceStatistic storagePerformanceStatistic = new OStoragePerformanceStatistic(
-        OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, "test");
+        OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, "test", 1);
 
     ODiskWriteAheadLog log = new ODiskWriteAheadLog(4, -1, 10 * 1024L * OWALPage.PAGE_SIZE, null, actualStorage);
     OLogSequenceNumber lsn = log.begin();

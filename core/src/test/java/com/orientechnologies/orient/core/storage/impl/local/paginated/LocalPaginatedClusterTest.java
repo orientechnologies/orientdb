@@ -56,7 +56,7 @@ public class LocalPaginatedClusterTest {
   protected O2QCache    readCache;
   protected OWriteCache writeCache;
   protected OStoragePerformanceStatistic storagePerformanceStatistic = new OStoragePerformanceStatistic(
-      OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, "test");
+      OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, "test", 1);
 
   protected OAtomicOperationsManager atomicOperationsManager;
   private OContextConfiguration contextConfiguration = new OContextConfiguration();
