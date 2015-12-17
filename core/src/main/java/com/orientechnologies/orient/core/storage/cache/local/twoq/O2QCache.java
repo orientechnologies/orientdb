@@ -20,7 +20,6 @@
 
 package com.orientechnologies.orient.core.storage.cache.local.twoq;
 
-import com.orientechnologies.common.concur.lock.ODistributedCounter;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.ONewLockManager;
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
@@ -514,7 +513,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
                 .getStatisticInstance();
 
             if (sessionStoragePerformanceStatistic != null) {
-              sessionStoragePerformanceStatistic.startPageWriteToCacheTimer();
+              sessionStoragePerformanceStatistic.startPageWriteInCacheTimer();
             }
 
             storagePerformanceStatistic.startPageWriteToCacheTimer();
@@ -522,7 +521,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
               flushFuture = writeCache.store(cacheEntry.getFileId(), cacheEntry.getPageIndex(), cacheEntry.getCachePointer());
             } finally {
               if (sessionStoragePerformanceStatistic != null) {
-                sessionStoragePerformanceStatistic.stopPageWriteToCacheTimer();
+                sessionStoragePerformanceStatistic.stopPageWriteInCacheTimer();
               }
 
               storagePerformanceStatistic.stopPageWriteToCacheTimer();

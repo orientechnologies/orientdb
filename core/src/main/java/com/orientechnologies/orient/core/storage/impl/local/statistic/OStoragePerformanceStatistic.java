@@ -40,11 +40,6 @@ public class OStoragePerformanceStatistic implements OStoragePerformanceStatisti
   private static final int MEGABYTE = 1024 * 1024;
 
   /**
-   * Amount of milliseconds in one second.
-   */
-  private static final int MILLISECONDS_IN_SECOND = 1000;
-
-  /**
    * Amount of nanoseconds in second.
    */
   private static final int NANOS_IN_SECOND = 1000000000;

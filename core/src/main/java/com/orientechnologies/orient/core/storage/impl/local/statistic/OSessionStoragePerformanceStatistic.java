@@ -141,12 +141,34 @@ public class OSessionStoragePerformanceStatistic {
   private final int pageSize;
 
   /**
+   * Object which is used to get current PC nano time.
+   */
+  private final NanoTimer nanoTimer;
+
+  /**
    * Creates object and initiates it with value of size of page in cache.
    *
    * @param pageSize Page size in cache.
    */
   public OSessionStoragePerformanceStatistic(int pageSize) {
+    this(pageSize, new NanoTimer() {
+      @Override
+      public long getNano() {
+        return System.nanoTime();
+      }
+    });
+  }
+
+  /**
+   * Creates object and initiates it with page size for storage and time service is needed
+   * to get current value of PC nano time.
+   *
+   * @param pageSize  Size of page in storage
+   * @param nanoTimer Service to get current value of PC nano time.
+   */
+  public OSessionStoragePerformanceStatistic(int pageSize, NanoTimer nanoTimer) {
     this.pageSize = pageSize;
+    this.nanoTimer = nanoTimer;
   }
 
   /**
@@ -154,7 +176,11 @@ public class OSessionStoragePerformanceStatistic {
    * or value which is less than 0, which means that value can not be calculated.
    */
   public long getReadSpeedFromCacheInMB() {
-    return (getReadSpeedFromCacheInPages() * pageSize) / MEGABYTE;
+    final long pageSpeed = getReadSpeedFromCacheInPages();
+    if (pageSpeed < 0)
+      return -1;
+
+    return (pageSpeed * pageSize) / MEGABYTE;
   }
 
   /**
@@ -184,7 +210,11 @@ public class OSessionStoragePerformanceStatistic {
    * or value which is less than 0, which means that value can not be calculated.
    */
   public long getReadSpeedFromFileInMB() {
-    return (getReadSpeedFromFileInPages() * pageSize) / MEGABYTE;
+    final long pageSpeed = getReadSpeedFromFileInPages();
+    if (pageSpeed < 0)
+      return -1;
+
+    return (pageSpeed * pageSize) / MEGABYTE;
   }
 
   /**
@@ -197,7 +227,7 @@ public class OSessionStoragePerformanceStatistic {
   /**
    * @return Amount of pages are read from file.
    */
-  public long getAmountOfPagesReadFromFileSystem() {
+  public long getAmountOfPagesReadFromFile() {
     return pageReadFromFileCount;
   }
 
@@ -217,13 +247,17 @@ public class OSessionStoragePerformanceStatistic {
    * or value which is less than 0, which means that value can not be calculated.
    */
   public long getWriteSpeedInCacheInMB() {
-    return (getWriteSpeedInCacheInPages() * pageSize) / MEGABYTE;
+    final long pageSpeed = getWriteSpeedInCacheInPages();
+    if (pageSpeed < 0)
+      return -1;
+
+    return (pageSpeed * pageSize) / MEGABYTE;
   }
 
   /**
    * @return Amount of pages written to cache.
    */
-  public long getAmountOfPagesWrittenToCache() {
+  public long getAmountOfPagesWrittenInCache() {
     return pageWriteToCacheCount;
   }
 
@@ -262,13 +296,13 @@ public class OSessionStoragePerformanceStatistic {
     document.field("readSpeedFromCacheInMB", getReadSpeedFromCacheInMB(), OType.LONG);
     document.field("readSpeedFromCacheInPages", getReadSpeedFromCacheInPages(), OType.LONG);
     document.field("readSpeedFromFileInPages", getReadSpeedFromFileInPages(), OType.LONG);
-    document.field("readSpeedFromFileInMegabytes", getReadSpeedFromFileInMB(), OType.LONG);
+    document.field("readSpeedFromFileInMB", getReadSpeedFromFileInMB(), OType.LONG);
     document.field("amountOfPagesReadFromCache", getAmountOfPagesReadFromCache(), OType.LONG);
     document.field("writeSpeedInCacheInPages", getWriteSpeedInCacheInPages(), OType.LONG);
     document.field("writeSpeedInCacheInMB", getWriteSpeedInCacheInMB(), OType.LONG);
-    document.field("amountOfPagesWrittenToCache", getAmountOfPagesWrittenToCache(), OType.LONG);
+    document.field("amountOfPagesWrittenInCache", getAmountOfPagesWrittenInCache(), OType.LONG);
     document.field("commitTimeAvg", getCommitTimeAvg(), OType.LONG);
-    document.field("amountOfPagesReadFromFileSystem", getAmountOfPagesReadFromFileSystem(), OType.LONG);
+    document.field("amountOfPagesReadFromFile", getAmountOfPagesReadFromFile(), OType.LONG);
     document.field("cacheHits", getCacheHits(), OType.INTEGER);
 
     return document;
@@ -292,7 +326,7 @@ public class OSessionStoragePerformanceStatistic {
    * Starts timer which counts how much time was spent on read of page from file system.
    */
   public void startPageReadFromFileTimer() {
-    timeStamps.push(System.nanoTime());
+    timeStamps.push(nanoTimer.getNano());
   }
 
   /**
@@ -301,7 +335,7 @@ public class OSessionStoragePerformanceStatistic {
    * @param readPages Amount of pages which were read by single call to file system.
    */
   public void stopPageReadFromFileTimer(int readPages) {
-    final long entTs = System.nanoTime();
+    final long entTs = nanoTimer.getNano();
 
     pageReadFromFileTime += (entTs - timeStamps.pop());
     pageReadFromFileCount += readPages;
@@ -311,14 +345,14 @@ public class OSessionStoragePerformanceStatistic {
    * Starts timer which counts how much time was spent on read of page from disk cache.
    */
   public void startPageReadFromCacheTimer() {
-    timeStamps.push(System.nanoTime());
+    timeStamps.push(nanoTimer.getNano());
   }
 
   /**
    * Stops and records results of timer which counts how much time was spent on read of page from disk cache.
    */
   public void stopPageReadFromCacheTimer() {
-    final long entTs = System.nanoTime();
+    final long entTs = nanoTimer.getNano();
     pageReadFromCacheTime += (entTs - timeStamps.pop());
     pageReadFromCacheCount++;
   }
@@ -326,15 +360,15 @@ public class OSessionStoragePerformanceStatistic {
   /**
    * Starts timer which counts how much time was spent on write of page to disk cache.
    */
-  public void startPageWriteToCacheTimer() {
-    timeStamps.push(System.nanoTime());
+  public void startPageWriteInCacheTimer() {
+    timeStamps.push(nanoTimer.getNano());
   }
 
   /**
    * Stops and records results of timer which counts how much time was spent to write page to disk cache.
    */
-  public void stopPageWriteToCacheTimer() {
-    final long entTs = System.nanoTime();
+  public void stopPageWriteInCacheTimer() {
+    final long entTs = nanoTimer.getNano();
 
     pageWriteToCacheTime += (entTs - timeStamps.pop());
     pageWriteToCacheCount++;
@@ -344,17 +378,28 @@ public class OSessionStoragePerformanceStatistic {
    * Starts timer which counts how much time was spent on atomic operation commit.
    */
   public void startCommitTimer() {
-    timeStamps.push(System.nanoTime());
+    timeStamps.push(nanoTimer.getNano());
   }
 
   /**
    * Stops and records results of timer which counts how much time was spent on atomic operation commit.
    */
   public void stopCommitTimer() {
-    final long entTs = System.nanoTime();
+    final long entTs = nanoTimer.getNano();
 
     commitTime += (entTs - timeStamps.pop());
     commitCount++;
+  }
+
+  /**
+   * Interface which is used by this tool to get current PC nano time.
+   * Implementation which calls <code>System.nanoTime()</code> is used by default.
+   */
+  public interface NanoTimer {
+    /**
+     * @return Current PC nano time.
+     */
+    long getNano();
   }
 
 }
