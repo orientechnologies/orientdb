@@ -1,24 +1,32 @@
-<div ng-controller="DatabasesController">
-  <div class="col-md-4">
-    <table class="table table-striped table-bordered table-hover table-condensed">
-      <thead>
-      <tr>
-        <th>Database</th>
-        <th>Backup</th>
-      </tr>
-      </thead>
-      <tbody>
-      <tr ng-repeat="db in databases"
-          ng-class="{  success : db == dbselected }">
-        <td><a href="javascript:void(0)" ng-click="selectDb(db);">{{ db }}</a></td>
-        <td>
-          <i class="fa fa-cloud-download pointer" ng-click="downloadDb(db)" title="backup"></i>
-        </td>
-      </tr>
-      </tbody>
-    </table>
+<div class="col-md-12" ng-controller="DatabasesController">
+
+  <div ng-show="!agentActive">
+    <div class="col-md-12 studio-well-tips">
+      <h4 ng-bind-html=" 'agent.notFound' | translate:links "></h4>
+    </div>
   </div>
-  <div class="col-md-8">
-    <div metricchart="configDb" chartheight="400"></div>
+  <div ng-show="agentActive">
+    <div class="col-md-4">
+      <table class="table table-striped table-bordered table-hover table-condensed">
+        <thead>
+        <tr>
+          <th>Database</th>
+          <th>Backup</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr ng-repeat="db in databases"
+            ng-class="{  success : db == dbselected }">
+          <td><a href="javascript:void(0)" ng-click="selectDb(db);">{{ db }}</a></td>
+          <td>
+            <i class="fa fa-cloud-download pointer" ng-click="downloadDb(db)" title="backup"></i>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="col-md-8">
+      <div metricchart="configDb" chartheight="400"></div>
+    </div>
   </div>
 </div>

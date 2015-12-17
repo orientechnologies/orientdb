@@ -1,5 +1,11 @@
 <div class="col-md-12" ng-controller="LogsController">
-  <div class="row">
+
+  <div ng-show="!agentActive">
+    <div class="col-md-12 studio-well-tips">
+      <h4 ng-bind-html=" 'agent.notFound' | translate:links "></h4>
+    </div>
+  </div>
+  <div ng-show="agentActive" class="row">
     <div class="col-md-12">
       <form class="form-inline studio-well">
 
@@ -81,7 +87,7 @@
       </form>
     </div>
   </div>
-  <div class="row row-space-2x">
+  <div ng-show="agentActive" class="row row-space-2x">
     <div class="col-md-12">
 
       <table class="table table-striped table-bordered table-hover table-condensed table-width align-left">

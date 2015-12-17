@@ -1,37 +1,47 @@
 <div ng-controller="PluginsController">
-  <div class="row row-space studio-well">
-    <div class="col-md-6">
-      <form class="form-horizontal ">
-        <div class="form-group">
-          <label class="col-md-2 control-label">Server </label>
 
-          <div class="col-md-4">
-            <select id="serverOnline" ng-model="server" class="form-control "
-                    ng-options="s.name for s in servers"
-                    data-placeholder="Pick a Server"></select>
-          </div>
-        </div>
-      </form>
-    </div>
-    <div class="col-md-6">
-      <div class="pull-right">
-        <button class="btn btn-sm btn-primary" ng-click="saveConfiguration()"><i
-          class="fa fa-save"></i> Apply plugin config
-        </button>
-        <button class="btn btn-sm btn-warning" ng-click="applyAll()"><i
-          class="fa fa-sitemap"></i> Apply plugin configuration in all Servers
-        </button>
+  <div class="col-md-12" ng-show="!agentActive">
+    <div class="row">
+      <div class="col-md-12 studio-well-tips">
+        <h4 ng-bind-html=" 'agent.notFound' | translate:links "></h4>
       </div>
     </div>
   </div>
-  <div class="row row-space">
+  <div ng-show="agentActive">
+    <div class="row row-space studio-well">
+      <div class="col-md-6">
+        <form class="form-horizontal ">
+          <div class="form-group">
+            <label class="col-md-2 control-label">Server </label>
 
+            <div class="col-md-4">
+              <select id="serverOnline" ng-model="server" class="form-control "
+                      ng-options="s.name for s in servers"
+                      data-placeholder="Pick a Server"></select>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="col-md-6">
+        <div class="pull-right">
+          <button class="btn btn-sm btn-primary" ng-click="saveConfiguration()"><i
+            class="fa fa-save"></i> Apply plugin config
+          </button>
+          <button class="btn btn-sm btn-warning" ng-click="applyAll()"><i
+            class="fa fa-sitemap"></i> Apply plugin configuration in all Servers
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="row row-space">
+
+    </div>
+
+    <div class="row row-space">
+      <tabset clazz="clazz">
+        <tab ng-repeat="plugin in plugins" context="plugin" title="{{plugin.name}}"
+             template-url=" {{pluginTemplate(plugin)}}"></tab>
+      </tabset>
+    </div>
   </div>
-
-  <div class="row row-space">
-    <tabset clazz="clazz">
-      <tab ng-repeat="plugin in plugins"  context="plugin"  title="{{plugin.name}}" template-url=" {{pluginTemplate(plugin)}}"></tab>
-    </tabset>
-  </div>
-
 </div>

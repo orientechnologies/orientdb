@@ -9,6 +9,13 @@ ee.controller('GeneralMonitorController', function ($scope, $location, $routePar
 
   $scope.tab = $routeParams.db;
 
+
+
+  $scope.links = {
+    ee: "http://www.orientdb.com/orientdb-enterprise"
+  }
+  $scope.agentActive = AgentService.active;
+
   $scope.profilerOff = {content: "The Profiler for this server is Off. Just click the switch button above."}
   $scope.error = false;
   $scope.currentTab = 'overview';
@@ -157,6 +164,12 @@ ee.controller('SinglePollerController', function ($scope, $rootScope, $location,
 
 
   $scope.polling = true;
+
+
+  $scope.links = {
+    ee: "http://www.orientdb.com/orientdb-enterprise"
+  }
+  $scope.agentActive = AgentService.active;
 
   var singlePoll = function () {
 
@@ -500,9 +513,7 @@ ee.controller("ProfilerController", ['$scope', 'Profiler', 'Cluster', 'Spinner',
 }]);
 
 
-ee.controller("AuditingController", ['$scope', 'Auditing', 'Cluster', 'Spinner', 'Notification', '$modal', 'ngTableParams','AgentService', function ($scope, Auditing, Cluster, Spinner, Notification, $modal, ngTableParams,AgentService) {
-
-
+ee.controller("AuditingController", ['$scope', 'Auditing', 'Cluster', 'Spinner', 'Notification', '$modal', 'ngTableParams', 'AgentService', function ($scope, Auditing, Cluster, Spinner, Notification, $modal, ngTableParams, AgentService) {
 
 
   $scope.links = {
@@ -648,8 +659,16 @@ ee.controller("AuditingController", ['$scope', 'Auditing', 'Cluster', 'Spinner',
 }]);
 
 
-ee.controller('PluginsController', function ($scope, Plugins, Cluster, Notification) {
+ee.controller('PluginsController', function ($scope, Plugins, Cluster, Notification,AgentService) {
 
+
+
+
+  $scope.links = {
+    ee: "http://www.orientdb.com/orientdb-enterprise"
+  }
+
+  $scope.agentActive = AgentService.active;
   $scope.editorOptions = {
     lineWrapping: true,
     lineNumbers: true,
@@ -812,8 +831,10 @@ ee.controller('EEDashboardController', function ($scope, $rootScope) {
 })
 
 
-ee.controller('DatabasesController', function ($scope, $rootScope) {
+ee.controller('DatabasesController', function ($scope, $rootScope, AgentService) {
 
+
+  $scope.agentActive = AgentService.active;
 
   $scope.$watch("server", function (server) {
 
@@ -828,9 +849,10 @@ ee.controller('DatabasesController', function ($scope, $rootScope) {
 
 })
 
-ee.controller("WarningsController", function ($scope, $rootScope) {
+ee.controller("WarningsController", function ($scope, $rootScope, AgentService) {
 
 
+  $scope.agentActive = AgentService.active;
   $rootScope.$on('server:updated', function (evt, data) {
 
 
@@ -1051,10 +1073,11 @@ ee.controller('EventsController', function ($scope, Plugins, $modal, Cluster, Pr
   }
 });
 
-ee.controller('MetricsController', function ($scope, Cluster) {
+ee.controller('MetricsController', function ($scope, Cluster, AgentService) {
 
   $scope.clazz = 'tabs-style-linebox';
 
+  $scope.agentActive = AgentService.active;
 
   $scope.$watch('server', function (server) {
 
@@ -1093,7 +1116,7 @@ ee.controller('MetricsController', function ($scope, Cluster) {
   })
 });
 
-ee.controller('TeleporterController', function ($scope, Teleporter, $timeout, Notification,AgentService) {
+ee.controller('TeleporterController', function ($scope, Teleporter, $timeout, Notification, AgentService) {
 
 
   $scope.links = {

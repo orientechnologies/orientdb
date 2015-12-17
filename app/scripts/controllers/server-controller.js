@@ -68,7 +68,6 @@ ctrl.controller('MultipleServerController', function ($scope, $rootScope, $locat
   $scope.agent = true;
 
 
-
   $scope.links = {
     ee: "http://www.orientdb.com/orientdb-enterprise"
   }
@@ -248,7 +247,7 @@ ctrl.controller('SingleChartServerController', function ($scope, $rootScope, $lo
 
 
 })
-ctrl.controller('SingleServerController', function ($scope, $rootScope, $location, $routeParams, $timeout, Profiler, $q,AgentService) {
+ctrl.controller('SingleServerController', function ($scope, $rootScope, $location, $routeParams, $timeout, Profiler, $q, AgentService) {
 
 
   $scope.links = {
@@ -425,18 +424,52 @@ ctrl.controller("ServerDashboardController", ['$scope', '$routeParams', 'Aside',
       $scope.dirtyProperties.push(prop);
     }
   }
+
+  $scope.getType = function (val) {
+
+
+    var type = typeof val;
+
+    var formType = "text";
+    switch (type) {
+      case "boolean":
+        formType = "checkbox";
+        break;
+      case "number":
+        formType = "number";
+        break;
+      default :
+
+
+    }
+
+    return formType;
+  }
+
+  $scope.isNumber = function (val) {
+
+  }
+  $scope.isBoolean = function (val) {
+    return (typeof val === "boolean");
+  }
+  $scope.isText = function (val) {
+
+  }
   $scope.saveGlobalProperties = function () {
 
     var promises = []
-    $scope.dirtyProperties.forEach(function (p) {
-      promises.push(ServerApi.changeConfiguration(p.key, p.value));
-    })
+    if ($scope.dirtyProperties.length > 0) {
+      $scope.dirtyProperties.forEach(function (p) {
+        promises.push(ServerApi.changeConfiguration(p.key, p.value));
+      })
 
-    $q.all(promises).then(function (data) {
-      Notification.push({content: data, autoHide: true});
-    }).catch(function (data) {
-      Notification.push({content: data, error: true, autoHide: true});
-    })
+      $q.all(promises).then(function (data) {
+        $scope.dirtyProperties = [];
+        Notification.push({content: data, autoHide: true});
+      }).catch(function (data) {
+        Notification.push({content: data, error: true, autoHide: true});
+      })
+    }
   }
 
 }]);
@@ -492,7 +525,7 @@ ctrl.controller('ServerConnectionController', function ($scope, $filter, ngTable
 })
 
 
-ctrl.controller("LogsController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Spinner', 'Cluster', function ($scope, $http, $location, $routeParams, CommandLogApi, Spinner, Cluster) {
+ctrl.controller("LogsController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Spinner', 'Cluster', 'AgentService', function ($scope, $http, $location, $routeParams, CommandLogApi, Spinner, Cluster, AgentService) {
   $scope.countPage = 1000;
   $scope.countPageOptions = [100, 500, 1000];
 //  LOG_LEVEL.ERROR.ordinal() 4
@@ -500,6 +533,11 @@ ctrl.controller("LogsController", ['$scope', '$http', '$location', '$routeParams
 //	LOG_LEVEL.DEBUG.ordinal() 0
 //	LOG_LEVEL.INFO.ordinal() 1
 //	LOG_LEVEL.WARN.ordinal() 3
+  $scope.links = {
+    ee: "http://www.orientdb.com/orientdb-enterprise"
+  }
+
+  $scope.agentActive = AgentService.active;
   $scope.types = ['CONFIG', 'DEBUG', 'ERROR', 'INFO', 'WARNI'];
   $scope.files = ['ALL_FILES', 'LAST'];
   $scope.selectedType = undefined;
