@@ -101,7 +101,7 @@ public class OProfilerStub extends OAbstractProfiler {
     final StringBuilder buffer = new StringBuilder(super.dump());
 
     if (tips.size() == 0)
-      return "";
+      return buffer.toString();
 
     buffer.append("TIPS:");
 
