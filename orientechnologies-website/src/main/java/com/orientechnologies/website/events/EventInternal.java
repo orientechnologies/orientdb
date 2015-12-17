@@ -172,7 +172,7 @@ public abstract class EventInternal<T> implements Consumer<Event<T>> {
           mailMessage.setText(htmlContent);
           sender.send(mailMessage);
         } catch (Exception e) {
-
+          logger.error(this, e);
         }
       }
     }

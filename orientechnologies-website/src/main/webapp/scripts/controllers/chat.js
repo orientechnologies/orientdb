@@ -29,11 +29,10 @@ angular.module('webappApp')
     $scope.$on("$routeChangeStart", function () {
       if ($scope.log) {
         $scope.log.remove();
-        console.log("removed");
+
         $scope.log = null;
       }
       $scope.connectionLost = false;
-      console.log("removed");
     });
     $scope.$on('connection-closed', function () {
 
@@ -53,12 +52,14 @@ angular.module('webappApp')
       }
     })
     $scope.$on('connection-acquired', function () {
-      $scope.log.remove()
-      $scope.log = null;
-      $scope.connectionLost = false;
-      var jacked = humane.create({baseCls: 'humane-jackedup', addnCls: 'humane-jackedup-success'})
-      jacked.log("Connection restored");
-      getMessages();
+      if ($scope.log) {
+        $scope.log.remove()
+        $scope.log = null;
+        $scope.connectionLost = false;
+        var jacked = humane.create({baseCls: 'humane-jackedup', addnCls: 'humane-jackedup-success'})
+        jacked.log("Connection restored");
+        getMessages();
+      }
     })
     $scope.$on('msg-received', function (e, msg) {
 

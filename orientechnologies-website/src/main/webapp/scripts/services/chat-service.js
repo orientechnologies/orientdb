@@ -154,15 +154,16 @@ angular.module('webappApp').factory("ChatService", function ($rootScope, $locati
     charSocketWrapper.socket.onclose = function (status) {
 
 
-      console.log(status);
-
-      if (status.code === 1000) {
-        console.log("Disconnected from chat service!")
-        chatService.connected = false;
-      } else {
-        chatService.connected = false;
-        console.log("Connection broken from chat service!")
-        $rootScope.$broadcast('connection-lost');
+      if (status instanceof  CloseEvent) {
+        
+        if (status.code === 1000) {
+          console.log("Disconnected from chat service!")
+          chatService.connected = false;
+        } else {
+          chatService.connected = false;
+          console.log("Connection broken from chat service!")
+          $rootScope.$broadcast('connection-lost');
+        }
       }
     };
 
