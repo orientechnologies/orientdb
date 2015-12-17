@@ -180,7 +180,10 @@ public class OSQLTarget extends OBaseParser {
           .getExecutor(subCommand);
       executor.setProgressListener(subCommand.getProgressListener());
       executor.parse(subCommand);
-      context.setChild(executor.getContext());
+      OCommandContext childContext = executor.getContext();
+      if(childContext!=null) {
+        childContext.setParent(context);
+      }
 
       if (!(executor instanceof Iterable<?>))
         throw new OCommandSQLParsingException("Sub-query cannot be iterated because doesn't implement the Iterable interface: "

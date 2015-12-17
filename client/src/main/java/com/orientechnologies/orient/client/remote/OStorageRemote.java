@@ -1671,7 +1671,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     synchronized (serverURLs) {
 
       if (members != null) {
-        serverURLs.clear();
+        // serverURLs.clear();
 
         // ADD CURRENT SERVER AS FIRST
         addHost(iConnectedURL);
@@ -1754,12 +1754,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
    * @param exception
    *          cause of the error
    */
-  protected void handleException(final OChannelBinaryAsynchClient iNetwork, final String message, Exception exception) {
+  protected void handleException(final OChannelBinaryAsynchClient iNetwork, final String message, final Exception exception) {
 
     final Throwable firstCause = OException.getFirstCause(exception);
 
     // CHECK IF THE EXCEPTION SHOULD BE JUST PROPAGATED
-    if (!(firstCause instanceof IOException)) {
+    if (!(firstCause instanceof IOException) && !(firstCause instanceof OIOException)) {
       if (exception instanceof OException)
         // NOT AN IO CAUSE, JUST PROPAGATE IT
         throw (OException) exception;
@@ -2059,8 +2059,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       host = host.substring(0, host.indexOf("/"));
 
     synchronized (serverURLs) {
-      if (!serverURLs.contains(host))
+      if (!serverURLs.contains(host)) {
         serverURLs.add(host);
+        OLogManager.instance().debug(this, "Registered the new available server '%s'", host);
+      }
     }
 
     return host;

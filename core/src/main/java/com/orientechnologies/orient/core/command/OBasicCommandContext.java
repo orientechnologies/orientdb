@@ -113,14 +113,28 @@ public class OBasicCommandContext implements OCommandContext {
     } else {
       if (variables != null && variables.containsKey(firstPart))
         result = variables.get(firstPart);
-      else if (child != null)
-        result = child.getVariable(firstPart);
+      else {
+        if (child != null)
+          result = child.getVariable(firstPart);
+        else
+          result = getVariableFromParentHierarchy(firstPart);
+      }
     }
 
     if (pos > -1)
       result = ODocumentHelper.getFieldValue(result, lastPart, this);
 
     return result != null ? result : iDefault;
+  }
+
+  protected Object getVariableFromParentHierarchy(String varName) {
+    if (this.variables != null && variables.containsKey(varName)) {
+      return variables.get(varName);
+    }
+    if (parent!=null && parent instanceof OBasicCommandContext) {
+      return ((OBasicCommandContext) parent).getVariableFromParentHierarchy(varName);
+    }
+    return null;
   }
 
   public OCommandContext setVariable(String iName, final Object iValue) {

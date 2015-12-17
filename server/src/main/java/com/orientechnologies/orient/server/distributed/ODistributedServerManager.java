@@ -115,4 +115,6 @@ public interface ODistributedServerManager {
       OAbstractRemoteTask iTask, EXECUTION_MODE iExecutionMode);
 
   ODocument getStats();
+
+  Throwable convertException(Throwable original);
 }

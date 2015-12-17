@@ -110,8 +110,7 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
       }
 
       log(OETLProcessor.LOG_LEVELS.INFO, "column types: %s", columnTypes);
-      String[] header = columnTypes.keySet().toArray(new String[] {});
-      csvFormat = csvFormat.withHeader(header);
+      csvFormat = csvFormat.withHeader(columnNames.toArray(new String[] {}));
 
     }
     if (iConfiguration.containsField("skipFrom")) {
