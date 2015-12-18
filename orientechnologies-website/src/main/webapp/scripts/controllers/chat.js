@@ -10,6 +10,8 @@
 angular.module('webappApp')
   .controller('ChatCtrl', function ($scope, Organization, $routeParams, $route, User, $timeout, BreadCrumb, $location, ChatService, $rootScope, $filter) {
 
+
+    $scope.changingRoute = false;
     $scope.isNew = false;
     $scope.connectionLost = false;
     $scope.placeholder = "Click here to type a message(Supports Markdown). Enter to send.";
@@ -27,6 +29,7 @@ angular.module('webappApp')
     }
 
     $scope.$on("$routeChangeStart", function () {
+      $scope.changingRoute = true;
       if ($scope.log) {
         $scope.log.remove();
 
@@ -39,6 +42,8 @@ angular.module('webappApp')
     })
     $scope.$on('connection-lost', function () {
       console.log('connection lost');
+
+
       if (!$scope.log) {
 
 
@@ -51,6 +56,7 @@ angular.module('webappApp')
 
       }
     })
+
     $scope.$on('connection-acquired', function () {
       if ($scope.log) {
         $scope.log.remove()
