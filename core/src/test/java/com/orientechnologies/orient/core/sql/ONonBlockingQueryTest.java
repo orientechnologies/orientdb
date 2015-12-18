@@ -25,6 +25,10 @@ public class ONonBlockingQueryTest {
     @Override public void end() {
       finished = true;
     }
+
+    @Override public Object getResult() {
+      return null;
+    }
   }
 
   @Test
