@@ -97,9 +97,9 @@ public class OCommandExecutorSQLScriptTest {
 
     script.append("let $a = select 1 as one\n");
     script.append("if($a[0].one = 1){\n");
-    script.append(" return OK\n");
+    script.append(" return 'OK'\n");
     script.append("}\n");
-    script.append("return FAIL\n");
+    script.append("return 'FAIL'\n");
     Object qResult = db.command(new OCommandScript("sql", script.toString())).execute();
 
     Assert.assertNotNull(qResult);
@@ -113,9 +113,9 @@ public class OCommandExecutorSQLScriptTest {
 
     script.append("let $a = select 1 as one\n");
     script.append("if    ($a[0].one = 1)   { \n");
-    script.append(" return OK\n");
+    script.append(" return 'OK'\n");
     script.append("     }      \n");
-    script.append("return FAIL\n");
+    script.append("return 'FAIL'\n");
     Object qResult = db.command(new OCommandScript("sql", script.toString())).execute();
 
     Assert.assertNotNull(qResult);
@@ -129,11 +129,11 @@ public class OCommandExecutorSQLScriptTest {
     script.append("let $a = select 1 as one\n");
     script.append("if($a[0].one = 1){\n");
     script.append("    if($a[0].one = 'zz'){\n");
-    script.append("      return FAIL\n");
+    script.append("      return 'FAIL'\n");
     script.append("    }\n");
-    script.append("  return OK\n");
+    script.append("  return 'OK'\n");
     script.append("}\n");
-    script.append("return FAIL\n");
+    script.append("return 'FAIL'\n");
     Object qResult = db.command(new OCommandScript("sql", script.toString())).execute();
 
     Assert.assertNotNull(qResult);
@@ -147,11 +147,11 @@ public class OCommandExecutorSQLScriptTest {
     script.append("let $a = select 1 as one\n");
     script.append("if($a[0].one = 'zz'){\n");
     script.append("    if($a[0].one = 1){\n");
-    script.append("      return FAIL\n");
+    script.append("      return 'FAIL'\n");
     script.append("    }\n");
-    script.append("  return FAIL\n");
+    script.append("  return 'FAIL'\n");
     script.append("}\n");
-    script.append("return OK\n");
+    script.append("return 'OK'\n");
     Object qResult = db.command(new OCommandScript("sql", script.toString())).execute();
 
     Assert.assertNotNull(qResult);
@@ -166,7 +166,7 @@ public class OCommandExecutorSQLScriptTest {
     script.append("if($a is not null and $a.size() = 3){\n");
     script.append("  return $a\n");
     script.append("}\n");
-    script.append("return FAIL\n");
+    script.append("return 'FAIL'\n");
     Object qResult = db.command(new OCommandScript("sql", script.toString())).execute();
 
     Assert.assertNotNull(qResult);
@@ -182,7 +182,7 @@ public class OCommandExecutorSQLScriptTest {
     script.append("  let $b = select 'OK' as ok\n");
     script.append("  return $b[0].ok\n");
     script.append("}\n");
-    script.append("return FAIL\n");
+    script.append("return 'FAIL'\n");
     Object qResult = db.command(new OCommandScript("sql", script.toString())).execute();
 
     Assert.assertNotNull(qResult);

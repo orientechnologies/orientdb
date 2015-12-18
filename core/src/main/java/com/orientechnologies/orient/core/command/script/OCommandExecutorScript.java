@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.command.script;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.concur.resource.OPartitionedObjectPool;
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -469,7 +470,8 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
       }
       lastResult = result;
     } else
-      lastResult = variable;
+      lastResult = new OSQLPredicate(variable).evaluate(context);
+
 
     // END OF THE SCRIPT
     return lastResult;
