@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.core.storage.impl.local.statistic;
 
-import com.orientechnologies.common.concur.lock.ODistributedCounter;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.exception.OReadCacheException;
 import com.orientechnologies.orient.core.storage.OIdentifiableStorage;
@@ -10,18 +9,21 @@ import javax.management.*;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Tool which allows to gather statistic about storage performance and expose it as MBean to the users.
+ * Tool which allows to gather statistic about storage performance and exposes it as MBean to the users.
  * <p>
  * All statistic is started to be gathered in runtime when method {@link #startMeasurement()} is called and is stopped to be gathered
  * once {@link #stopMeasurement()} will be called. This method may be called from Java or from JMX client.
  * <p>
- * Statistic is gathered in runtime but it's values are updated once per second and exposed using getXXX methods.
+ * Statistic is gathered in runtime but it's values are exposed to the user once in specified time interval (this interval is called
+ * measurement session) (1 second by default) and are available using getXXX methods. Exposed values are called
+ * snapshots. All data are gathered during the session,
+ * then latest values are taken as snapshots and after that runtime values are cleared (but snapshots are kept) and measurement
+ * of storage performance is started again.
  */
 public class OStoragePerformanceStatistic implements OStoragePerformanceStatisticMXBean {
   /**
@@ -33,6 +35,11 @@ public class OStoragePerformanceStatistic implements OStoragePerformanceStatisti
    * Task which is used to update exposed statistic values (aka snapshots).
    */
   private volatile ScheduledFuture<?> updateTask;
+
+  /**
+   * Interval of time for single session of storage performance measurement in nano seconds (1s by default).
+   */
+  private final long snapshotInterval;
 
   /**
    * Amount of bytes in megabyte.
@@ -56,129 +63,45 @@ public class OStoragePerformanceStatistic implements OStoragePerformanceStatisti
   };
 
   /**
-   * Flag which indicates whether measurement of storage performance statistic is enabled.
+   * Container for all performance counters are used during measurement of storage performance.
    */
-  private volatile boolean measurementEnabled = false;
+  private final AtomicReference<PerformanceCounters> performanceCounters = new AtomicReference<PerformanceCounters>();
 
   /**
-   * Amount of times when cache was accessed during the measurement session.
+   * Snapshot of amount of cache hits calculated from  {@link PerformanceCounters#cacheHits}
+   * value at the end of measurement session.
    */
-  private final ODistributedCounter cacheAccessCount = new ODistributedCounter();
+  private volatile int cacheHitsSnapshot = -1;
 
   /**
-   * Snapshot of {@link #cacheAccessCount} value at the end of measurement session.
+   * Snapshot of read speed of pages per second from file system calculated from
+   * {@link PerformanceCounters#readSpeedFromFile} value at the end of measurement session.
    */
-  private volatile long cacheAccessCountSnapshot = 0;
+  private volatile long readSpeedFromFileSnapshot = -1;
 
   /**
-   * Amount of "cache hit" times during the measurement session.
+   * Snapshot of read speed of pages per second from disk cache calculated from
+   * {@link PerformanceCounters#readSpeedFromCache} value at the end of measurement session.
    */
-  private final ODistributedCounter cacheHit = new ODistributedCounter();
+  private volatile long readSpeedFromCacheSnapshot = -1;
 
   /**
-   * Snapshot of {@link #cacheHit} value at the end of measurement session.
+   * Snapshot of write speed of pages in disk cache calculated from
+   * {@link PerformanceCounters#writeSpeedInCache} value at the end of measurement session.
    */
-  private volatile long cacheHitSnapshot = 0;
+  private volatile long writeSpeedInCacheSnapshot = -1;
 
   /**
-   * Summary time which was spent on access of pages from file system during the measurement session.
+   * Snapshot of write speed of pages in file calculated from
+   * {@link PerformanceCounters#writeSpeedInFile} value at the end of measurement session.
    */
-  private final ODistributedCounter pageReadFromFileTime = new ODistributedCounter();
+  private volatile long writeSpeedInFileSnapshot = -1;
 
   /**
-   * Snapshot of {@link #pageReadFromFileTime} value at the end of measurement session.
+   * Snapshot of average time of atomic operation commit calculated from
+   * {@link PerformanceCounters#commitTimeAvg} value at the end of measurement session.
    */
-  private volatile long pageReadFromFileTimeSnapshot = 0;
-
-  /**
-   * Amount of pages in total which were accessed from file system during the measurement session.
-   */
-  private final ODistributedCounter pageReadFromFileCount = new ODistributedCounter();
-
-  /**
-   * Snapshot of {@link #pageReadFromFileCount} value at the end of measurement session.
-   */
-  private volatile long pageReadFromFileCountSnapshot = 0;
-
-  /**
-   * Summary time which was spent on access of pages from disk cache during the measurement session.
-   */
-  private final ODistributedCounter pageReadFromCacheTime = new ODistributedCounter();
-
-  /**
-   * Snapshot of {@link #pageReadFromCacheTime} value at the end of measurement session.
-   */
-  private volatile long pageReadFromCacheTimeSnapshot = 0;
-
-  /**
-   * Amount of pages in total which were accessed from disk cache during the measurement session.
-   */
-  private final ODistributedCounter pageReadFromCacheCount = new ODistributedCounter();
-
-  /**
-   * Snapshot of {@link #pageReadFromCacheCount} value at the end of measurement session.
-   */
-  private volatile long pageReadFromCacheCountSnapshot = 0;
-
-  /**
-   * Summary time which was spent to write pages to disk cache during the measurement session.
-   */
-  private final ODistributedCounter pageWriteToCacheTime = new ODistributedCounter();
-
-  /**
-   * Snapshot of {@link #pageWriteToCacheTime} value at the end of measurement session.
-   */
-  private volatile long pageWriteToCacheTimeSnapshot = 0;
-
-  /**
-   * Amount of pages in total which were written to disk cache during the measurement session.
-   */
-  private final ODistributedCounter pageWriteToCacheCount = new ODistributedCounter();
-
-  /**
-   * Snapshot of {@link #pageWriteToCacheCount} value at the end of measurement session.
-   */
-  private volatile long pageWriteToCacheCountSnapshot = 0;
-
-  /**
-   * Summary time which was spent to write pages to file system during the measurement session.
-   */
-  private final ODistributedCounter pageWriteToFileTime = new ODistributedCounter();
-
-  /**
-   * Snapshot of {@link #pageWriteToFileTime} value at the end of measurement session.
-   */
-  private volatile long pageWriteToFileTimeSnapshot = 0;
-
-  /**
-   * Amount of pages in total which were written to file system during the measurement session.
-   */
-  private final ODistributedCounter pageWriteToFileCount = new ODistributedCounter();
-
-  /**
-   * Snapshot of {@link #pageWriteToFileCount} value at the end of measurement session.
-   */
-  private volatile long pageWriteToFileCountSnapshot = 0;
-
-  /**
-   * Amount of times when atomic operation commit was performed during the measurement session.
-   */
-  private final ODistributedCounter commitCount = new ODistributedCounter();
-
-  /**
-   * Snapshot of {@link #commitCount} value at the end of measurement session.
-   */
-  private volatile long commitCountSnapshot = 0;
-
-  /**
-   * Summary time which was spent on atomic operation commits during the measurement session.
-   */
-  private final ODistributedCounter commitTime = new ODistributedCounter();
-
-  /**
-   * Snapshot of {@link #commitTime} value at the end of measurement session.
-   */
-  private volatile long commitTimeSnapshot = 0;
+  private volatile long commitTimeAvgSnapshot = -1;
 
   /**
    * Page size in cache.
@@ -213,25 +136,30 @@ public class OStoragePerformanceStatistic implements OStoragePerformanceStatisti
       public long getNano() {
         return System.nanoTime();
       }
-    });
+    }, NANOS_IN_SECOND);
   }
 
   /**
    * Creates object and initiates it with value of size of page in cache and set name of MBean exposed to JVM.
    *
-   * @param pageSize    Page size in cache.
-   * @param storageName Name of storage performance statistic of which is gathered.
-   * @param storageId   Id of storage {@link OIdentifiableStorage#getId()}
-   * @param nanoTimer   Object which is used to get current PC nano time.
+   * @param pageSize         Page size in cache.
+   * @param storageName      Name of storage performance statistic of which is gathered.
+   * @param storageId        Id of storage {@link OIdentifiableStorage#getId()}
+   * @param nanoTimer        Object which is used to get current PC nano time.
+   * @param snapshotInterval How much session management lasts.
    */
-  public OStoragePerformanceStatistic(int pageSize, String storageName, long storageId, NanoTimer nanoTimer) {
+  public OStoragePerformanceStatistic(int pageSize, String storageName, long storageId, NanoTimer nanoTimer,
+      long snapshotInterval) {
     this.pageSize = pageSize;
 
     updateTimer = Executors.newSingleThreadScheduledExecutor(new SnapshotTaskFactory(storageName));
-    mbeanName = "com.orientechnologies.orient.core.storage.impl.local.statistic:type=OStoragePerformanceStatisticMXBean,name="
-        + storageName + ",id=" + storageId;
+
+    mbeanName =
+        "com.orientechnologies.orient.core.storage.impl.local.statistic:type=OStoragePerformanceStatisticMXBean,name=" + storageName
+            + ",id=" + storageId;
 
     this.nanoTimer = nanoTimer;
+    this.snapshotInterval = snapshotInterval;
   }
 
   /**
@@ -239,22 +167,9 @@ public class OStoragePerformanceStatistic implements OStoragePerformanceStatisti
    */
   @Override
   public void startMeasurement() {
-    measurementEnabled = true;
+    performanceCounters.set(new PerformanceCounters());
 
-    cacheAccessCount.clear();
-    cacheHit.clear();
-    pageReadFromFileTime.clear();
-    pageReadFromFileCount.clear();
-    pageReadFromCacheTime.clear();
-    pageReadFromCacheCount.clear();
-    pageWriteToCacheTime.clear();
-    pageWriteToCacheCount.clear();
-    pageWriteToFileTime.clear();
-    pageWriteToFileCount.clear();
-    commitCount.clear();
-    commitTime.clear();
-
-    updateTask = updateTimer.scheduleWithFixedDelay(new SnapshotTask(), 1, 1, TimeUnit.SECONDS);
+    updateTask = updateTimer.scheduleWithFixedDelay(new SnapshotTask(), snapshotInterval, snapshotInterval, TimeUnit.NANOSECONDS);
   }
 
   /**
@@ -267,7 +182,7 @@ public class OStoragePerformanceStatistic implements OStoragePerformanceStatisti
       ct.cancel(false);
     }
 
-    measurementEnabled = false;
+    performanceCounters.set(null);
     updateTask = null;
   }
 
@@ -276,7 +191,7 @@ public class OStoragePerformanceStatistic implements OStoragePerformanceStatisti
    */
   @Override
   public boolean isMeasurementEnabled() {
-    return measurementEnabled;
+    return performanceCounters.get() != null;
   }
 
   /**
@@ -344,11 +259,7 @@ public class OStoragePerformanceStatistic implements OStoragePerformanceStatisti
    */
   @Override
   public long getReadSpeedFromCacheInPages() {
-    final long time = pageReadFromCacheTimeSnapshot;
-    if (time == 0)
-      return -1;
-
-    return (pageReadFromCacheCountSnapshot * NANOS_IN_SECOND) / time;
+    return readSpeedFromCacheSnapshot;
   }
 
   /**
@@ -357,11 +268,7 @@ public class OStoragePerformanceStatistic implements OStoragePerformanceStatisti
    */
   @Override
   public long getReadSpeedFromFileInPages() {
-    final long time = pageReadFromFileTimeSnapshot;
-    if (time == 0)
-      return -1;
-
-    return (pageReadFromFileCountSnapshot * NANOS_IN_SECOND) / time;
+    return readSpeedFromFileSnapshot;
   }
 
   /**
@@ -378,32 +285,12 @@ public class OStoragePerformanceStatistic implements OStoragePerformanceStatisti
   }
 
   /**
-   * @return Amount of pages read from cache in total.
-   */
-  @Override
-  public long getAmountOfPagesReadFromCache() {
-    return pageReadFromCacheCountSnapshot;
-  }
-
-  /**
-   * @return Amount of pages are read from file.
-   */
-  @Override
-  public long getAmountOfPagesReadFromFile() {
-    return pageReadFromFileCountSnapshot;
-  }
-
-  /**
    * @return Write speed of data in pages per second on cache level
    * or value which is less than 0, which means that value can not be calculated.
    */
   @Override
   public long getWriteSpeedInCacheInPages() {
-    final long time = pageWriteToCacheTimeSnapshot;
-    if (time == 0)
-      return -1;
-
-    return (pageWriteToCacheCountSnapshot * NANOS_IN_SECOND) / time;
+    return writeSpeedInCacheSnapshot;
   }
 
   /**
@@ -425,11 +312,7 @@ public class OStoragePerformanceStatistic implements OStoragePerformanceStatisti
    */
   @Override
   public long getWriteSpeedInFileInPages() {
-    final long time = pageWriteToFileTimeSnapshot;
-    if (time == 0)
-      return -1;
-
-    return (pageWriteToFileCountSnapshot * NANOS_IN_SECOND) / time;
+    return writeSpeedInFileSnapshot;
   }
 
   /**
@@ -446,32 +329,12 @@ public class OStoragePerformanceStatistic implements OStoragePerformanceStatisti
   }
 
   /**
-   * @return Amount of pages written to cache.
-   */
-  @Override
-  public long getAmountOfPagesWrittenToCache() {
-    return pageWriteToCacheCountSnapshot;
-  }
-
-  /**
-   * @return Amount of pages written to file.
-   */
-  @Override
-  public long getAmountOfPagesWrittenToFile() {
-    return pageWriteToFileCountSnapshot;
-  }
-
-  /**
    * @return Average time of commit of atomic operation in nanoseconds
    * or value which is less than 0, which means that value can not be calculated.
    */
   @Override
   public long getCommitTimeAvg() {
-    final long count = commitCountSnapshot;
-    if (count == 0)
-      return -1;
-
-    return commitTimeSnapshot / count;
+    return commitTimeAvgSnapshot;
   }
 
   /**
@@ -480,11 +343,7 @@ public class OStoragePerformanceStatistic implements OStoragePerformanceStatisti
    */
   @Override
   public int getCacheHits() {
-    final long count = cacheAccessCountSnapshot;
-    if (count == 0)
-      return -1;
-
-    return (int) ((cacheHitSnapshot * 100) / count);
+    return cacheHitsSnapshot;
   }
 
   /**
@@ -495,11 +354,13 @@ public class OStoragePerformanceStatistic implements OStoragePerformanceStatisti
   }
 
   /**
-   * Put current value of nano time into thread local stack of timestamps {@link #tlTimeStumps}.
+   * Push current value of nano time into thread local stack of timestamps {@link #tlTimeStumps}.
    * That is utility method which is used by all startXXXTimer methods.
    */
   private void pushTimeStamp() {
-    if (measurementEnabled) {
+    //we push timestamps only if measurement is started, which is indicated by presence
+    //of performance counters
+    if (performanceCounters.get() != null) {
       final Deque<Long> stamps = tlTimeStumps.get();
       stamps.push(nanoTimer.getNano());
     }
@@ -514,10 +375,26 @@ public class OStoragePerformanceStatistic implements OStoragePerformanceStatisti
     final Deque<Long> stamps = tlTimeStumps.get();
     if (stamps.size() > 0) {
       final long endTs = nanoTimer.getNano();
+      final long timeDiff = endTs - stamps.pop();
 
-      pageReadFromFileTime.add(endTs - stamps.pop());
-      pageReadFromFileCount.add(readPages);
+      final PerformanceCounters pf = performanceCounters.get();
+      //we do not do null check at the beginning to do not allow to have dangling time stamps
+      //in thread local stack
+      if (pf != null) {
+        final AtomicReference<OTimeCounter> readSpeedFromFile = pf.readSpeedFromFile;
+
+        OTimeCounter oldReadSpeedFromFile = readSpeedFromFile.get();
+        OTimeCounter newReadSpeedFromFile = new OTimeCounter(oldReadSpeedFromFile.getTime() + timeDiff,
+            oldReadSpeedFromFile.getCounter() + readPages);
+
+        while (!readSpeedFromFile.compareAndSet(oldReadSpeedFromFile, newReadSpeedFromFile)) {
+          oldReadSpeedFromFile = readSpeedFromFile.get();
+          newReadSpeedFromFile = new OTimeCounter(oldReadSpeedFromFile.getTime() + timeDiff,
+              oldReadSpeedFromFile.getCounter() + readPages);
+        }
+      }
     }
+
   }
 
   /**
@@ -534,9 +411,23 @@ public class OStoragePerformanceStatistic implements OStoragePerformanceStatisti
     final Deque<Long> stamps = tlTimeStumps.get();
     if (stamps.size() > 0) {
       final long endTs = nanoTimer.getNano();
+      final long timeDiff = endTs - stamps.pop();
 
-      pageReadFromCacheTime.add(endTs - stamps.pop());
-      pageReadFromCacheCount.increment();
+      final PerformanceCounters pf = performanceCounters.get();
+      //we do not make null check at the begging because we do not want to have
+      //dangling time stamps at the thread local stack
+      if (pf != null) {
+        final AtomicReference<OTimeCounter> readSpeedFromCache = pf.readSpeedFromCache;
+        OTimeCounter oldReadSpeedFromCache = readSpeedFromCache.get();
+        OTimeCounter newReadSpeedFromCache = new OTimeCounter(oldReadSpeedFromCache.getTime() + timeDiff,
+            oldReadSpeedFromCache.getCounter() + 1);
+
+        while (!readSpeedFromCache.compareAndSet(oldReadSpeedFromCache, newReadSpeedFromCache)) {
+          oldReadSpeedFromCache = readSpeedFromCache.get();
+          newReadSpeedFromCache = new OTimeCounter(oldReadSpeedFromCache.getTime() + timeDiff,
+              oldReadSpeedFromCache.getCounter() + 1);
+        }
+      }
     }
   }
 
@@ -554,9 +445,21 @@ public class OStoragePerformanceStatistic implements OStoragePerformanceStatisti
     final Deque<Long> stamps = tlTimeStumps.get();
     if (stamps.size() > 0) {
       final long endTs = nanoTimer.getNano();
+      final long timeDiff = endTs - stamps.pop();
 
-      pageWriteToCacheTime.add(endTs - stamps.pop());
-      pageWriteToCacheCount.increment();
+      final PerformanceCounters pf = performanceCounters.get();
+      //we do not make null check at the begging because we do not want to have
+      //dangling time stamps at the thread local stack
+      if (pf != null) {
+        final AtomicReference<OTimeCounter> writeSpeedInCache = pf.writeSpeedInCache;
+        OTimeCounter oldWriteSpeedInCache = writeSpeedInCache.get();
+        OTimeCounter newWriteSpeedInCache = new OTimeCounter(oldWriteSpeedInCache.getTime() + timeDiff,
+            oldWriteSpeedInCache.getCounter() + 1);
+        while (writeSpeedInCache.compareAndSet(oldWriteSpeedInCache, newWriteSpeedInCache)) {
+          oldWriteSpeedInCache = writeSpeedInCache.get();
+          newWriteSpeedInCache = new OTimeCounter(oldWriteSpeedInCache.getTime() + timeDiff, oldWriteSpeedInCache.getCounter() + 1);
+        }
+      }
     }
   }
 
@@ -574,27 +477,41 @@ public class OStoragePerformanceStatistic implements OStoragePerformanceStatisti
     final Deque<Long> stamps = tlTimeStumps.get();
     if (stamps.size() > 0) {
       final long endTs = nanoTimer.getNano();
+      final long timeDiff = endTs - stamps.pop();
 
-      pageWriteToFileTime.add(endTs - stamps.pop());
-      pageWriteToFileCount.increment();
+      final PerformanceCounters pf = performanceCounters.get();
+      //we do not make null check at the begging because we do not want to have
+      //dangling time stamps at the thread local stack
+      if (pf != null) {
+        final AtomicReference<OTimeCounter> writeSpeedInFile = pf.writeSpeedInFile;
+        OTimeCounter oldWriteSpeedInFile = writeSpeedInFile.get();
+        OTimeCounter newWriteSpeedInFile = new OTimeCounter(oldWriteSpeedInFile.getTime() + timeDiff,
+            oldWriteSpeedInFile.getCounter() + 1);
+        while (!writeSpeedInFile.compareAndSet(oldWriteSpeedInFile, newWriteSpeedInFile)) {
+          oldWriteSpeedInFile = writeSpeedInFile.get();
+          newWriteSpeedInFile = new OTimeCounter(oldWriteSpeedInFile.getTime() + timeDiff, oldWriteSpeedInFile.getCounter() + 1);
+        }
+      }
     }
   }
 
   /**
    * Increments counter of page accesses from cache.
+   *
+   * @param cacheHit Indicates that accessed page was found in cache.
    */
-  public void incrementPageAccessOnCacheLevel() {
-    if (measurementEnabled) {
-      cacheAccessCount.increment();
-    }
-  }
+  public void incrementPageAccessOnCacheLevel(boolean cacheHit) {
+    final PerformanceCounters pf = performanceCounters.get();
+    if (pf != null) {
+      final AtomicReference<OTimeCounter> cacheHits = pf.cacheHits;
 
-  /**
-   * Increments counter of cache hits
-   */
-  public void incrementCacheHit() {
-    if (measurementEnabled) {
-      cacheHit.increment();
+      OTimeCounter oldCacheHits = cacheHits.get();
+      OTimeCounter newCacheHits = new OTimeCounter(oldCacheHits.getTime() + (cacheHit ? 1 : 0), oldCacheHits.getCounter() + 1);
+
+      while (!cacheHits.compareAndSet(oldCacheHits, newCacheHits)) {
+        oldCacheHits = cacheHits.get();
+        newCacheHits = new OTimeCounter(oldCacheHits.getTime() + (cacheHit ? 1 : 0), oldCacheHits.getCounter() + 1);
+      }
     }
   }
 
@@ -612,9 +529,20 @@ public class OStoragePerformanceStatistic implements OStoragePerformanceStatisti
     final Deque<Long> stamps = tlTimeStumps.get();
     if (stamps.size() > 0) {
       final long endTs = nanoTimer.getNano();
+      final long timeDiff = endTs - stamps.pop();
 
-      commitTime.add(endTs - stamps.pop());
-      commitCount.increment();
+      final PerformanceCounters pf = performanceCounters.get();
+      //we do not make null check at the begging because we do not want to have
+      //dangling time stamps at the thread local stack
+      if (pf != null) {
+        final AtomicReference<OTimeCounter> commitTimeAvg = pf.commitTimeAvg;
+        OTimeCounter oldCommitTimeAvg = commitTimeAvg.get();
+        OTimeCounter newCommitTimeAvg = new OTimeCounter(oldCommitTimeAvg.getTime() + timeDiff, oldCommitTimeAvg.getCounter() + 1);
+        while (!commitTimeAvg.compareAndSet(oldCommitTimeAvg, newCommitTimeAvg)) {
+          oldCommitTimeAvg = commitTimeAvg.get();
+          newCommitTimeAvg = new OTimeCounter(oldCommitTimeAvg.getTime() + timeDiff, oldCommitTimeAvg.getCounter() + 1);
+        }
+      }
     }
   }
 
@@ -639,18 +567,31 @@ public class OStoragePerformanceStatistic implements OStoragePerformanceStatisti
      */
     @Override
     public void run() {
-      cacheAccessCountSnapshot = cacheAccessCount.get();
-      cacheHitSnapshot = cacheHit.get();
-      pageReadFromFileTimeSnapshot = pageReadFromFileTime.get();
-      pageReadFromFileCountSnapshot = pageReadFromFileCount.get();
-      pageReadFromCacheTimeSnapshot = pageReadFromCacheTime.get();
-      pageReadFromCacheCountSnapshot = pageReadFromCacheCount.get();
-      pageWriteToCacheTimeSnapshot = pageWriteToCacheTime.get();
-      pageWriteToCacheCountSnapshot = pageWriteToCacheCount.get();
-      pageWriteToFileTimeSnapshot = pageWriteToFileTime.get();
-      pageWriteToFileCountSnapshot = pageWriteToFileCount.get();
-      commitCountSnapshot = commitCount.get();
-      commitTimeSnapshot = commitTime.get();
+      final PerformanceCounters pf = performanceCounters.get();
+      //we make snapshots only if performance measurement is enabled, so counters holder is not null
+      if (pf != null) {
+        //clear counters, CAS may be unsuccessful if we stopped measurement of
+        //storage performance in this case counters holder will be set to null
+        //or in case if we start new measurement session (holder instance will be changed in such case)
+        //and we do not need to clear it yet.
+        performanceCounters.compareAndSet(pf, new PerformanceCounters());
+
+        final OTimeCounter cacheHits = pf.cacheHits.get();
+
+        //unusual case where cache hits is time and total access count is counter.
+        if (cacheHits.getCounter() == 0)
+          cacheHitsSnapshot = -1;
+        else
+          cacheHitsSnapshot = (int) ((cacheHits.getTime() * 100) / cacheHits.getCounter());
+
+        //calculate speeds per second
+        readSpeedFromFileSnapshot = pf.readSpeedFromFile.get().calculateSpeedPerTimeInter(NANOS_IN_SECOND);
+        readSpeedFromCacheSnapshot = pf.readSpeedFromCache.get().calculateSpeedPerTimeInter(NANOS_IN_SECOND);
+        writeSpeedInCacheSnapshot = pf.writeSpeedInCache.get().calculateSpeedPerTimeInter(NANOS_IN_SECOND);
+        writeSpeedInFileSnapshot = pf.writeSpeedInFile.get().calculateSpeedPerTimeInter(NANOS_IN_SECOND);
+
+        commitTimeAvgSnapshot = pf.commitTimeAvg.get().calculateAvgTime();
+      }
     }
   }
 
@@ -672,6 +613,52 @@ public class OStoragePerformanceStatistic implements OStoragePerformanceStatisti
 
       return thread;
     }
+  }
+
+  /**
+   * Holder for performance counters of storage statistic, is used to:
+   * <p>
+   * <ol>
+   * <li>Indicate whether measurement of storage performance is switched on/off</li>
+   * <li>Speed up cleaning of performance counters at the end of measurement session</li>
+   * </ol>
+   */
+  private static final class PerformanceCounters {
+    /**
+     * Amount of times when cache was accessed during the measurement session and
+     * amount of "cache hit" times during the measurement session.
+     */
+    private final AtomicReference<OTimeCounter> cacheHits = new AtomicReference<OTimeCounter>(new OTimeCounter(0, 0));
+
+    /**
+     * Summary time which was spent on access of pages from file system during the measurement session and
+     * Amount of pages in total which were accessed from file system during the measurement session.
+     */
+    private final AtomicReference<OTimeCounter> readSpeedFromFile = new AtomicReference<OTimeCounter>(new OTimeCounter(0, 0));
+
+    /**
+     * Summary time which was spent on access of pages from disk cache during the measurement session
+     * and amount of pages in total which were accessed from disk cache during the measurement session.
+     */
+    private final AtomicReference<OTimeCounter> readSpeedFromCache = new AtomicReference<OTimeCounter>(new OTimeCounter(0, 0));
+
+    /**
+     * Summary time which was spent to write pages to disk cache during the measurement session
+     * and amount of pages in total which were written to disk cache during the measurement session.
+     */
+    private final AtomicReference<OTimeCounter> writeSpeedInCache = new AtomicReference<OTimeCounter>(new OTimeCounter(0, 0));
+
+    /**
+     * Summary time which was spent to write pages to file system during the measurement session
+     * and amount of pages in total which were written to file system during the measurement session.
+     */
+    private final AtomicReference<OTimeCounter> writeSpeedInFile = new AtomicReference<OTimeCounter>(new OTimeCounter(0, 0));
+
+    /**
+     * Amount of times when atomic operation commit was performed during the measurement session
+     * and summary time which was spent on atomic operation commits during the measurement session.
+     */
+    private final AtomicReference<OTimeCounter> commitTimeAvg = new AtomicReference<OTimeCounter>(new OTimeCounter(0, 0));
   }
 
 }

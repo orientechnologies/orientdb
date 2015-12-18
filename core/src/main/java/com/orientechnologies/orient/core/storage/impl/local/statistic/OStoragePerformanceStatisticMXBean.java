@@ -45,16 +45,6 @@ public interface OStoragePerformanceStatisticMXBean {
   long getReadSpeedFromFileInMB();
 
   /**
-   * @return Amount of pages read from cache in total.
-   */
-  long getAmountOfPagesReadFromCache();
-
-  /**
-   * @return Amount of pages are read from file.
-   */
-  long getAmountOfPagesReadFromFile();
-
-  /**
    * @return Write speed of data in pages per second on cache level
    * or value which is less than 0, which means that value can not be calculated.
    */
@@ -77,16 +67,6 @@ public interface OStoragePerformanceStatisticMXBean {
    * or value which is less than 0, which means that value can not be calculated.
    */
   long getWriteSpeedInFileInMB();
-
-  /**
-   * @return Amount of pages written to cache.
-   */
-  long getAmountOfPagesWrittenToCache();
-
-  /**
-   * @return Amount of pages written to file.
-   */
-  long getAmountOfPagesWrittenToFile();
 
   /**
    * @return Average time of commit of atomic operation in nanoseconds
