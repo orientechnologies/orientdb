@@ -251,6 +251,7 @@ public class OSQLNonBlockingQuery<T extends Object> extends OSQLQuery<T> impleme
         @Override
         public void run() {
           final ODatabaseDocumentTx db = ((ODatabaseDocumentTx) database).copy();
+          db.activateOnCurrentThread();
           try {
             OSQLNonBlockingQuery.super.execute(iArgs);
           } catch(RuntimeException e){
