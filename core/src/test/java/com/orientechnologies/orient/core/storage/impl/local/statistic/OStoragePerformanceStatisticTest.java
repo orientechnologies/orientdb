@@ -55,7 +55,7 @@ public class OStoragePerformanceStatisticTest {
     long msStart = System.currentTimeMillis();
     long counter = 0;
 
-    while (notZeroSpeedCount < 100000) {
+    while (notZeroSpeedCount < 1000) {
       if (counter % 1000 == 0 && System.currentTimeMillis() - msStart > 10000)
         break;
 
@@ -105,184 +105,312 @@ public class OStoragePerformanceStatisticTest {
     executor.shutdown();
   }
 
-  //  public void testReadSpeedFromCacheMBean() throws Exception {
-  //    final OStoragePerformanceStatistic storagePerformanceStatistic = new OStoragePerformanceStatistic(1024, "test", 1,
-  //        new OStoragePerformanceStatistic.NanoTimer() {
-  //          private long counter = 0;
-  //
-  //          @Override
-  //          public long getNano() {
-  //            return counter += 100;
-  //          }
-  //        });
-  //
-  //    storagePerformanceStatistic.registerMBean();
-  //
-  //    final MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
-  //    final ObjectName objectName = new ObjectName("com.orientechnologies.orient.core.storage.impl.local." +
-  //        "statistic:type=OStoragePerformanceStatisticMXBean,name=test,id=1");
-  //
-  //    Assert.assertTrue(mbs.isRegistered(objectName));
-  //
-  //    storagePerformanceStatistic.registerMBean();
-  //
-  //    final OStoragePerformanceStatisticMXBean mxBean =
-  //        MBeanServerInvocationHandler.newProxyInstance(mbs, objectName, OStoragePerformanceStatisticMXBean.class, false);
-  //
-  //    Assert.assertFalse(mxBean.isMeasurementEnabled());
-  //    Assert.assertEquals(mxBean.getReadSpeedFromCacheInPages(), -1);
-  //    Assert.assertEquals(mxBean.getReadSpeedFromCacheInMB(), -1);
-  //    Assert.assertEquals(mxBean.getAmountOfPagesReadFromCache(), 0);
-  //
-  //    mxBean.startMeasurement();
-  //
-  //    storagePerformanceStatistic.startCommitTimer();
-  //    for (int i = 0; i < 100; i++) {
-  //      storagePerformanceStatistic.startPageReadFromCacheTimer();
-  //      storagePerformanceStatistic.stopPageReadFromCacheTimer();
-  //    }
-  //    storagePerformanceStatistic.stopCommitTimer();
-  //
-  //
-  //    Thread.sleep(2000);
-  //    Assert.assertEquals(mxBean.getReadSpeedFromCacheInPages(), 10000000);
-  //    Assert.assertEquals(mxBean.getReadSpeedFromCacheInMB(), 10000000 / 1024);
-  //    Assert.assertEquals(mxBean.getAmountOfPagesReadFromCache(), 100);
-  //
-  //    mxBean.stopMeasurement();
-  //
-  //    for (int i = 0; i < 100; i++) {
-  //      storagePerformanceStatistic.startPageReadFromCacheTimer();
-  //      storagePerformanceStatistic.stopPageReadFromCacheTimer();
-  //    }
-  //
-  //
-  //    Thread.sleep(2000);
-  //
-  //    Assert.assertEquals(mxBean.getReadSpeedFromCacheInPages(), 10000000);
-  //    Assert.assertEquals(mxBean.getReadSpeedFromCacheInMB(), 10000000 / 1024);
-  //    Assert.assertEquals(mxBean.getAmountOfPagesReadFromCache(), 100);
-  //    Assert.assertFalse(mxBean.isMeasurementEnabled());
-  //
-  //    storagePerformanceStatistic.unregisterMBean();
-  //    Assert.assertFalse(mbs.isRegistered(objectName));
-  //
-  //    storagePerformanceStatistic.unregisterMBean();
-  //  }
-  //
-  //
-  //  public void testReadSpeedFromFile() throws Exception {
-  //    final OStoragePerformanceStatistic storagePerformanceStatistic = new OStoragePerformanceStatistic(1024, "test", 1,
-  //        new OStoragePerformanceStatistic.NanoTimer() {
-  //          private long counter = 0;
-  //
-  //          @Override
-  //          public long getNano() {
-  //            return counter += 100;
-  //          }
-  //        });
-  //
-  //    Assert.assertFalse(storagePerformanceStatistic.isMeasurementEnabled());
-  //    Assert.assertEquals(storagePerformanceStatistic.getReadSpeedFromFileInPages(), -1);
-  //    Assert.assertEquals(storagePerformanceStatistic.getReadSpeedFromFileInMB(), -1);
-  //    Assert.assertEquals(storagePerformanceStatistic.getAmountOfPagesReadFromFile(), 0);
-  //
-  //    storagePerformanceStatistic.startMeasurement();
-  //
-  //    storagePerformanceStatistic.startCommitTimer();
-  //    for (int i = 0; i < 100; i++) {
-  //      storagePerformanceStatistic.startPageReadFromFileTimer();
-  //      storagePerformanceStatistic.stopPageReadFromFileTimer(10);
-  //    }
-  //    storagePerformanceStatistic.stopCommitTimer();
-  //
-  //
-  //    Thread.sleep(2000);
-  //    Assert.assertEquals(storagePerformanceStatistic.getReadSpeedFromFileInPages(), 100000000);
-  //    Assert.assertEquals(storagePerformanceStatistic.getReadSpeedFromFileInMB(), 100000000 / 1024);
-  //    Assert.assertEquals(storagePerformanceStatistic.getAmountOfPagesReadFromFile(), 1000);
-  //
-  //    storagePerformanceStatistic.stopMeasurement();
-  //
-  //    for (int i = 0; i < 100; i++) {
-  //      storagePerformanceStatistic.startPageReadFromFileTimer();
-  //      storagePerformanceStatistic.stopPageReadFromFileTimer(10);
-  //    }
-  //
-  //    Thread.sleep(2000);
-  //
-  //    Assert.assertEquals(storagePerformanceStatistic.getReadSpeedFromFileInPages(), 100000000);
-  //    Assert.assertEquals(storagePerformanceStatistic.getReadSpeedFromFileInMB(), 100000000 / 1024);
-  //    Assert.assertEquals(storagePerformanceStatistic.getAmountOfPagesReadFromFile(), 1000);
-  //    Assert.assertFalse(storagePerformanceStatistic.isMeasurementEnabled());
-  //
-  //  }
-  //
-  //  public void testReadSpeedFromFileMBean() throws Exception {
-  //    final OStoragePerformanceStatistic storagePerformanceStatistic = new OStoragePerformanceStatistic(1024, "test", 1,
-  //        new OStoragePerformanceStatistic.NanoTimer() {
-  //          private long counter = 0;
-  //
-  //          @Override
-  //          public long getNano() {
-  //            return counter += 100;
-  //          }
-  //        });
-  //
-  //    storagePerformanceStatistic.registerMBean();
-  //
-  //    final MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
-  //    final ObjectName objectName = new ObjectName("com.orientechnologies.orient.core.storage.impl.local." +
-  //        "statistic:type=OStoragePerformanceStatisticMXBean,name=test,id=1");
-  //
-  //    Assert.assertTrue(mbs.isRegistered(objectName));
-  //
-  //    storagePerformanceStatistic.registerMBean();
-  //
-  //    final OStoragePerformanceStatisticMXBean mxBean =
-  //        MBeanServerInvocationHandler.newProxyInstance(mbs, objectName, OStoragePerformanceStatisticMXBean.class, false);
-  //
-  //
-  //    Assert.assertFalse(mxBean.isMeasurementEnabled());
-  //    Assert.assertEquals(mxBean.getReadSpeedFromFileInPages(), -1);
-  //    Assert.assertEquals(mxBean.getReadSpeedFromFileInMB(), -1);
-  //    Assert.assertEquals(mxBean.getAmountOfPagesReadFromFile(), 0);
-  //
-  //    mxBean.startMeasurement();
-  //
-  //    storagePerformanceStatistic.startCommitTimer();
-  //    for (int i = 0; i < 100; i++) {
-  //      storagePerformanceStatistic.startPageReadFromFileTimer();
-  //      storagePerformanceStatistic.stopPageReadFromFileTimer(10);
-  //    }
-  //    storagePerformanceStatistic.stopCommitTimer();
-  //
-  //
-  //    Thread.sleep(2000);
-  //    Assert.assertEquals(mxBean.getReadSpeedFromFileInPages(), 100000000);
-  //    Assert.assertEquals(mxBean.getReadSpeedFromFileInMB(), 100000000 / 1024);
-  //    Assert.assertEquals(mxBean.getAmountOfPagesReadFromFile(), 1000);
-  //
-  //    mxBean.stopMeasurement();
-  //
-  //    for (int i = 0; i < 100; i++) {
-  //      storagePerformanceStatistic.startPageReadFromFileTimer();
-  //      storagePerformanceStatistic.stopPageReadFromFileTimer(10);
-  //    }
-  //
-  //    Thread.sleep(2000);
-  //
-  //    Assert.assertEquals(mxBean.getReadSpeedFromFileInPages(), 100000000);
-  //    Assert.assertEquals(mxBean.getReadSpeedFromFileInMB(), 100000000 / 1024);
-  //    Assert.assertEquals(mxBean.getAmountOfPagesReadFromFile(), 1000);
-  //    Assert.assertFalse(mxBean.isMeasurementEnabled());
-  //
-  //    storagePerformanceStatistic.unregisterMBean();
-  //    Assert.assertFalse(mbs.isRegistered(objectName));
-  //
-  //    storagePerformanceStatistic.unregisterMBean();
-  //  }
-  //
+  public void testReadSpeedFromCacheMBean() throws Exception {
+    final AtomicLong nanoIncrement = new AtomicLong();
+    nanoIncrement.set(100);
+
+    final OStoragePerformanceStatistic storagePerformanceStatistic = new OStoragePerformanceStatistic(1024, "test", 1,
+        new OStoragePerformanceStatistic.NanoTimer() {
+          private long counter = 0;
+
+          @Override
+          public long getNano() {
+            return counter += nanoIncrement.get();
+          }
+        }, 100000); // take measurements during 100 ms
+
+    storagePerformanceStatistic.registerMBean();
+
+    final MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+    final ObjectName objectName = new ObjectName("com.orientechnologies.orient.core.storage.impl.local."
+        + "statistic:type=OStoragePerformanceStatisticMXBean,name=test,id=1");
+
+    Assert.assertTrue(mbs.isRegistered(objectName));
+
+    storagePerformanceStatistic.registerMBean();
+
+    final OStoragePerformanceStatisticMXBean mxBean = MBeanServerInvocationHandler
+        .newProxyInstance(mbs, objectName, OStoragePerformanceStatisticMXBean.class, false);
+
+    Assert.assertFalse(mxBean.isMeasurementEnabled());
+    Assert.assertEquals(mxBean.getReadSpeedFromCacheInPages(), -1);
+    Assert.assertEquals(mxBean.getReadSpeedFromCacheInMB(), -1);
+
+    mxBean.startMeasurement();
+
+    final AtomicBoolean stop = new AtomicBoolean();
+    final ExecutorService executor = Executors.newSingleThreadExecutor();
+
+    final Future<Void> future = executor.submit(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        while (!stop.get()) {
+          storagePerformanceStatistic.startCommitTimer();
+          storagePerformanceStatistic.startPageReadFromCacheTimer();
+          storagePerformanceStatistic.stopPageReadFromCacheTimer();
+          storagePerformanceStatistic.stopCommitTimer();
+        }
+        return null;
+      }
+    });
+
+    long notZeroSpeedCount = 0;
+    long msStart = System.currentTimeMillis();
+    long counter = 0;
+
+    while (notZeroSpeedCount < 1000) {
+      if (counter % 1000 == 0 && System.currentTimeMillis() - msStart > 10000)
+        break;
+
+      final long pagesSpeed = mxBean.getReadSpeedFromCacheInPages();
+      final long mbSpeed = mxBean.getReadSpeedFromCacheInMB();
+
+      //background thread did not run.
+      if (pagesSpeed == -1) {
+        Thread.yield();
+      } else {
+        notZeroSpeedCount++;
+        Assert.assertEquals(pagesSpeed, 10000000);
+        Assert.assertEquals(mbSpeed, 10000000 / 1024);
+      }
+      Thread.yield();
+
+      counter++;
+    }
+
+    Assert.assertTrue(notZeroSpeedCount > 0);
+    System.out.println("testReadSpeedFromCacheMBean : not zero speed count " + notZeroSpeedCount);
+
+    mxBean.stopMeasurement();
+
+    if (mxBean.getReadSpeedFromCacheInPages() > 0) {
+      System.out.println("testReadSpeedFromCacheMBean : check that values were not changed after stop measurement");
+      nanoIncrement.set(10);
+      Thread.sleep(200);
+
+      Assert.assertEquals(mxBean.getReadSpeedFromCacheInPages(), 10000000);
+      Assert.assertEquals(mxBean.getReadSpeedFromCacheInMB(), 10000000 / 1024);
+      Assert.assertFalse(mxBean.isMeasurementEnabled());
+    }
+
+    stop.set(true);
+
+    future.get();
+
+    mxBean.startMeasurement();
+
+    Thread.sleep(200);
+
+    Assert.assertTrue(mxBean.isMeasurementEnabled());
+    Assert.assertEquals(mxBean.getReadSpeedFromCacheInPages(), -1);
+    Assert.assertEquals(mxBean.getReadSpeedFromCacheInMB(), -1);
+
+    executor.shutdown();
+
+    storagePerformanceStatistic.unregisterMBean();
+    Assert.assertFalse(mbs.isRegistered(objectName));
+
+    storagePerformanceStatistic.unregisterMBean();
+  }
+
+  public void testReadSpeedFromFile() throws Exception {
+    final AtomicLong nanoIncrement = new AtomicLong();
+    nanoIncrement.set(100);
+
+    final OStoragePerformanceStatistic storagePerformanceStatistic = new OStoragePerformanceStatistic(1024, "test", 1,
+        new OStoragePerformanceStatistic.NanoTimer() {
+          private long counter = 0;
+
+          @Override
+          public long getNano() {
+            return counter += nanoIncrement.get();
+          }
+        }, 100000); // take measurements during 100 ms
+
+    Assert.assertFalse(storagePerformanceStatistic.isMeasurementEnabled());
+    Assert.assertEquals(storagePerformanceStatistic.getReadSpeedFromFileInPages(), -1);
+    Assert.assertEquals(storagePerformanceStatistic.getReadSpeedFromFileInMB(), -1);
+
+    storagePerformanceStatistic.startMeasurement();
+
+    final AtomicBoolean stop = new AtomicBoolean();
+    final ExecutorService executor = Executors.newSingleThreadExecutor();
+
+    final Future<Void> future = executor.submit(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        while (!stop.get()) {
+          storagePerformanceStatistic.startCommitTimer();
+          storagePerformanceStatistic.startPageReadFromFileTimer();
+          storagePerformanceStatistic.stopPageReadFromFileTimer(10);
+          storagePerformanceStatistic.stopCommitTimer();
+        }
+
+        return null;
+      }
+    });
+
+    long notZeroSpeedCount = 0;
+    long msStart = System.currentTimeMillis();
+    long counter = 0;
+
+    while (notZeroSpeedCount < 1000) {
+      if (counter % 1000 == 0 && System.currentTimeMillis() - msStart > 10000)
+        break;
+
+      final long pagesSpeed = storagePerformanceStatistic.getReadSpeedFromFileInPages();
+      final long mbSpeed = storagePerformanceStatistic.getReadSpeedFromFileInMB();
+
+      //background thread did not run.
+      if (pagesSpeed == -1) {
+        Thread.yield();
+      } else {
+        notZeroSpeedCount++;
+        Assert.assertEquals(pagesSpeed, 100000000);
+        Assert.assertEquals(mbSpeed, 100000000 / 1024);
+      }
+      Thread.yield();
+
+      counter++;
+    }
+
+    Assert.assertTrue(notZeroSpeedCount > 0);
+    System.out.println("testReadSpeedFromFile : not zero speed count " + notZeroSpeedCount);
+
+    storagePerformanceStatistic.stopMeasurement();
+
+    if (storagePerformanceStatistic.getReadSpeedFromFileInPages() > 0) {
+      System.out.println("testReadSpeedFromFile : check that values were not changed after stop measurement");
+      nanoIncrement.set(10);
+      Thread.sleep(200);
+
+      Assert.assertEquals(storagePerformanceStatistic.getReadSpeedFromFileInPages(), 100000000);
+      Assert.assertEquals(storagePerformanceStatistic.getReadSpeedFromFileInMB(), 100000000 / 1024);
+    }
+
+    stop.set(true);
+
+    future.get();
+
+    storagePerformanceStatistic.startMeasurement();
+
+    Thread.sleep(200);
+
+    Assert.assertTrue(storagePerformanceStatistic.isMeasurementEnabled());
+    Assert.assertEquals(storagePerformanceStatistic.getReadSpeedFromFileInPages(), -1);
+    Assert.assertEquals(storagePerformanceStatistic.getReadSpeedFromFileInMB(), -1);
+
+    executor.shutdown();
+  }
+
+  public void testReadSpeedFromFileMBean() throws Exception {
+    final AtomicLong nanoIncrement = new AtomicLong();
+    nanoIncrement.set(100);
+
+    final OStoragePerformanceStatistic storagePerformanceStatistic = new OStoragePerformanceStatistic(1024, "test", 1,
+        new OStoragePerformanceStatistic.NanoTimer() {
+          private long counter = 0;
+
+          @Override
+          public long getNano() {
+            return counter += nanoIncrement.get();
+          }
+        }, 100000); // take measurements during 100 ms
+
+    storagePerformanceStatistic.registerMBean();
+
+    final MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+    final ObjectName objectName = new ObjectName("com.orientechnologies.orient.core.storage.impl.local."
+        + "statistic:type=OStoragePerformanceStatisticMXBean,name=test,id=1");
+
+    Assert.assertTrue(mbs.isRegistered(objectName));
+
+    storagePerformanceStatistic.registerMBean();
+
+    final OStoragePerformanceStatisticMXBean mxBean = MBeanServerInvocationHandler
+        .newProxyInstance(mbs, objectName, OStoragePerformanceStatisticMXBean.class, false);
+
+    Assert.assertFalse(mxBean.isMeasurementEnabled());
+    Assert.assertEquals(mxBean.getReadSpeedFromFileInPages(), -1);
+    Assert.assertEquals(mxBean.getReadSpeedFromFileInMB(), -1);
+
+    mxBean.startMeasurement();
+
+    final AtomicBoolean stop = new AtomicBoolean();
+    final ExecutorService executor = Executors.newSingleThreadExecutor();
+
+    final Future<Void> future = executor.submit(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        while (!stop.get()) {
+          storagePerformanceStatistic.startCommitTimer();
+          storagePerformanceStatistic.startPageReadFromFileTimer();
+          storagePerformanceStatistic.stopPageReadFromFileTimer(10);
+          storagePerformanceStatistic.stopCommitTimer();
+        }
+
+        return null;
+      }
+    });
+
+    long notZeroSpeedCount = 0;
+    long msStart = System.currentTimeMillis();
+    long counter = 0;
+
+    while (notZeroSpeedCount < 1000) {
+      if (counter % 1000 == 0 && System.currentTimeMillis() - msStart > 10000)
+        break;
+
+      final long pagesSpeed = mxBean.getReadSpeedFromFileInPages();
+      final long mbSpeed = mxBean.getReadSpeedFromFileInMB();
+
+      //background thread did not run.
+      if (pagesSpeed == -1) {
+        Thread.yield();
+      } else {
+        notZeroSpeedCount++;
+        Assert.assertEquals(pagesSpeed, 100000000);
+        Assert.assertEquals(mbSpeed, 100000000 / 1024);
+      }
+      Thread.yield();
+
+      counter++;
+    }
+
+    Assert.assertTrue(notZeroSpeedCount > 0);
+    System.out.println("testReadSpeedFromFileMBean : not zero speed count " + notZeroSpeedCount);
+
+    mxBean.stopMeasurement();
+
+    if (mxBean.getReadSpeedFromFileInPages() > 0) {
+      System.out.println("testReadSpeedFromFileMBean : check that values were not changed after stop measurement");
+      nanoIncrement.set(10);
+      Thread.sleep(200);
+
+      Assert.assertEquals(mxBean.getReadSpeedFromFileInPages(), 100000000);
+      Assert.assertEquals(mxBean.getReadSpeedFromFileInMB(), 100000000 / 1024);
+    }
+
+    stop.set(true);
+
+    future.get();
+
+    mxBean.startMeasurement();
+
+    Thread.sleep(200);
+
+    Assert.assertTrue(mxBean.isMeasurementEnabled());
+    Assert.assertEquals(mxBean.getReadSpeedFromFileInPages(), -1);
+    Assert.assertEquals(mxBean.getReadSpeedFromFileInMB(), -1);
+
+    executor.shutdown();
+
+    storagePerformanceStatistic.unregisterMBean();
+    Assert.assertFalse(mbs.isRegistered(objectName));
+
+    storagePerformanceStatistic.unregisterMBean();
+  }
+
   //
   //  public void testWriteSpeedToCache() throws Exception {
   //    final OStoragePerformanceStatistic storagePerformanceStatistic = new OStoragePerformanceStatistic(1024, "test", 1,
