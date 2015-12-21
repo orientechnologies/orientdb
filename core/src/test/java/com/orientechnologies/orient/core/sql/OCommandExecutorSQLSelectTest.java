@@ -492,6 +492,15 @@ public class OCommandExecutorSQLSelectTest {
   }
 
   @Test
+  public void testLimitWithNamedParam2() {
+    //issue #5493
+    Map<String, Object> params = new HashMap<String, Object>();
+    params.put("limit", 2);
+    List<ODocument> qResult = db.command(new OCommandSQL("select from foo limit :limit")).execute(params);
+    assertEquals(qResult.size(), 2);
+  }
+
+  @Test
   public void testParamsInLetSubquery() {
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("name", "foo");
