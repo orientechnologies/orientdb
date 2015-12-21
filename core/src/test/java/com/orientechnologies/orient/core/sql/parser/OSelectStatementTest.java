@@ -620,6 +620,12 @@ public class OSelectStatementTest {
     checkRightSyntax("select from cluster:12");
   }
 
+  @Test
+  public void testNamedParamsReservedWords() {
+    checkRightSyntax("select from foo skip :skip limit :limit");
+  }
+
+
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);
     try {

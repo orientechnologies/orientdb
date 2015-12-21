@@ -327,9 +327,11 @@ public interface OrientSqlConstants {
   /** RegularExpression Id. */
   int METADATA_IDENTIFIER = 166;
   /** RegularExpression Id. */
-  int LETTER = 167;
+  int NAMED_PARAMETER = 167;
   /** RegularExpression Id. */
-  int PART_LETTER = 168;
+  int LETTER = 168;
+  /** RegularExpression Id. */
+  int PART_LETTER = 169;
 
   /** Lexical state. */
   int DEFAULT = 0;
@@ -507,6 +509,7 @@ public interface OrientSqlConstants {
     "<CLUSTER_IDENTIFIER>",
     "<CLUSTER_NUMBER_IDENTIFIER>",
     "<METADATA_IDENTIFIER>",
+    "<NAMED_PARAMETER>",
     "<LETTER>",
     "<PART_LETTER>",
     "\"#\"",
