@@ -158,7 +158,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       try {
         network = getAvailableNetwork(getNextAvailableServerURL(false));
 
-        if (tokens.get(network.getServerURL()) == null && getSessionId() > 0) {
+        //In case i do not have a token or i'm switching between server i've to execute a open operation.
+        if (!network.getServerURL().equals(getServerURL()) || tokens.get(network.getServerURL()) == null && getSessionId() > 0) {
           // TODO: Remove this workaround in favor of a proper per server authentication.
           setSessionId(network.getServerURL(), -1, null);
           openRemoteDatabase(network);
@@ -173,25 +174,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     } while (true);
 
   }
-
-
-  public <T> T beginOperation(final byte command, final OStorageRemoteOperation<T> operationExecutor, final String errorMessage) {
-
-    return networkOperation(new OStorageRemoteOperation<T>() {
-      @Override
-      public T execute(OChannelBinaryAsynchClient network) throws IOException {
-        network.writeByte(command);
-        network.writeInt(OStorageRemote.this.getSessionId());
-        byte[] token = tokens.get(network.getServerURL());
-        if (token != null) {
-          network.writeBytes(token);
-        }
-        return operationExecutor.execute(network);
-      }
-    }, errorMessage);
-
-  }
-
 
   @Override
   public boolean isAssigningClusterIds() {
