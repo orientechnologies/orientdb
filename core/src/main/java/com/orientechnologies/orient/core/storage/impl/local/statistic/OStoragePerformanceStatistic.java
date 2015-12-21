@@ -455,7 +455,7 @@ public class OStoragePerformanceStatistic implements OStoragePerformanceStatisti
         OTimeCounter oldWriteSpeedInCache = writeSpeedInCache.get();
         OTimeCounter newWriteSpeedInCache = new OTimeCounter(oldWriteSpeedInCache.getTime() + timeDiff,
             oldWriteSpeedInCache.getCounter() + 1);
-        while (writeSpeedInCache.compareAndSet(oldWriteSpeedInCache, newWriteSpeedInCache)) {
+        while (!writeSpeedInCache.compareAndSet(oldWriteSpeedInCache, newWriteSpeedInCache)) {
           oldWriteSpeedInCache = writeSpeedInCache.get();
           newWriteSpeedInCache = new OTimeCounter(oldWriteSpeedInCache.getTime() + timeDiff, oldWriteSpeedInCache.getCounter() + 1);
         }
