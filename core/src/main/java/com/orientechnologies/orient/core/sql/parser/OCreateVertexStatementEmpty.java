@@ -18,4 +18,4 @@ class OCreateVertexStatementEmpty extends OCreateVertexStatement {
     return visitor.visit(this, data);
   }
 }
-/* JavaCC - OriginalChecksum=016e2.1.9-SNAPSHOTdd8fae2a4e129ad660c5c23 (do not edit this line) */
+/* JavaCC - OriginalChecksum=016e27188dd8fae2a4e129ad660c5c23 (do not edit this line) */
