@@ -6,8 +6,10 @@ import org.apache.http.util.EntityUtils;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.Iterator;
 import java.util.List;
 
@@ -71,22 +73,31 @@ public class HttpBatchTest extends BaseHttpDatabaseTest {
         + "\"type\": \"script\",\n"
         + "\"language\": \"SQL\","
         + "\"script\": \"let $a = select from User limit 2 \\n"
-        + "let $b = select sum(foo) from (select from User where name = foo) \\n"
+        + "let $b = select sum(foo) from (select from User where name = 'adsfafoo') \\n"
         + "return [$a, $b]\""
         + "}]\n"
         + "}";
-    System.out.println(json);
     HttpResponse response = post("batch/" + getDatabaseName() ).payload(
             json,
         CONTENT.TEXT).getResponse();
 
     Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
     InputStream stream = response.getEntity().getContent();
+    String string = "";
+    BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
+    String line = reader.readLine();
+    while(line!=null){
+      string+=line;
+      line = reader.readLine();
+    }
+    System.out.println(string);
     ODocument doc = new ODocument();
-    doc.fromJSON(stream);
-    stream.close();
-    Iterable iterable = doc.field("result");
+    doc.fromJSON(string);
 
+    stream.close();
+    Iterable iterable = (Iterable)doc.eval("result.value");
+
+    System.out.println(iterable);
     Iterator iterator = iterable.iterator();
     Assert.assertTrue(iterator.hasNext());
     iterator.next();
