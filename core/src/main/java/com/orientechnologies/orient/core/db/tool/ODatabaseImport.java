@@ -919,7 +919,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       // REBUILD ALL THE INHERITANCE
       for (Map.Entry<OClass, List<String>> entry : superClasses.entrySet())
         for (String s : entry.getValue()) {
-          entry.getKey().addSuperClass(database.getMetadata().getSchema().getClass(s));
+          OClass superClass = database.getMetadata().getSchema().getClass(s);;
+          if(!entry.getKey().getSuperClasses().contains(superClass))
+            entry.getKey().addSuperClass(superClass);
         }
 
       // SET ALL THE LINKED CLASSES

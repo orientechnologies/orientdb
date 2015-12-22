@@ -58,5 +58,24 @@ public class AlterSuperclassTest {
     classChild2.setSuperClasses(Arrays.asList(classChild));
   }
 
+  @Test(expectedExceptions = OSchemaException.class)
+  public void testHasAlreadySuperclass() {
+    OSchema schema = db.getMetadata().getSchema();
+    OClass classA = schema.createClass("ParentClass");
+    OClass classChild = schema.createClass("ChildClass1", classA);
+    assertEquals(classChild.getSuperClasses(), Arrays.asList(classA));
+    classChild.addSuperClass(classA);
+  }
+
+  @Test(expectedExceptions = OSchemaException.class)
+  public void testSetDuplicateSuperclasses() {
+    OSchema schema = db.getMetadata().getSchema();
+    OClass classA = schema.createClass("ParentClass");
+    OClass classChild = schema.createClass("ChildClass1", classA);
+    assertEquals(classChild.getSuperClasses(), Arrays.asList(classA));
+    classChild.setSuperClasses(Arrays.asList(classA,classA));
+  }
+
+
 
 }
