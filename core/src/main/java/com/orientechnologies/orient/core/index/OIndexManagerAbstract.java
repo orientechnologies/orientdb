@@ -132,9 +132,6 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
               reload(null, true);
             }
 
-          document.save();
-          getDatabase().getStorage().synch();
-
           return null;
 
         } finally {
