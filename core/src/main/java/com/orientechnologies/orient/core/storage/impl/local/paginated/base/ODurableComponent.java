@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
+import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OStoragePerformanceStatistic;
 
 import java.io.IOException;
@@ -135,10 +136,23 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
 
   protected OCacheEntry loadPage(OAtomicOperation atomicOperation, long fileId, long pageIndex, boolean checkPinnedPages,
       final int pageCount) throws IOException {
-    if (atomicOperation == null)
-      return readCache.load(fileId, pageIndex, checkPinnedPages, writeCache, pageCount, storagePerformanceStatistic);
+    final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = OSessionStoragePerformanceStatistic
+        .getStatisticInstance();
+    if (sessionStoragePerformanceStatistic != null) {
+      sessionStoragePerformanceStatistic.setCurrentComponent(getFullName());
+    }
 
-    return atomicOperation.loadPage(fileId, pageIndex, checkPinnedPages, pageCount);
+    try {
+      if (atomicOperation == null)
+        return readCache.load(fileId, pageIndex, checkPinnedPages, writeCache, pageCount, storagePerformanceStatistic);
+
+      return atomicOperation.loadPage(fileId, pageIndex, checkPinnedPages, pageCount);
+    } finally {
+      if (sessionStoragePerformanceStatistic != null) {
+        sessionStoragePerformanceStatistic.clearCurrentComponent();
+      }
+    }
+
   }
 
   protected void pinPage(OAtomicOperation atomicOperation, OCacheEntry cacheEntry) throws IOException {
@@ -149,17 +163,41 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
   }
 
   protected OCacheEntry addPage(OAtomicOperation atomicOperation, long fileId) throws IOException {
-    if (atomicOperation == null)
-      return readCache.allocateNewPage(fileId, writeCache, storagePerformanceStatistic);
+    final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = OSessionStoragePerformanceStatistic
+        .getStatisticInstance();
+    if (sessionStoragePerformanceStatistic != null) {
+      sessionStoragePerformanceStatistic.setCurrentComponent(getFullName());
+    }
 
-    return atomicOperation.addPage(fileId);
+    try {
+      if (atomicOperation == null)
+        return readCache.allocateNewPage(fileId, writeCache, storagePerformanceStatistic);
+
+      return atomicOperation.addPage(fileId);
+    } finally {
+      if (sessionStoragePerformanceStatistic != null) {
+        sessionStoragePerformanceStatistic.clearCurrentComponent();
+      }
+    }
   }
 
   protected void releasePage(OAtomicOperation atomicOperation, OCacheEntry cacheEntry) {
-    if (atomicOperation == null)
-      readCache.release(cacheEntry, writeCache, storagePerformanceStatistic);
-    else
-      atomicOperation.releasePage(cacheEntry);
+    final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = OSessionStoragePerformanceStatistic
+        .getStatisticInstance();
+    if (sessionStoragePerformanceStatistic != null) {
+      sessionStoragePerformanceStatistic.setCurrentComponent(getFullName());
+    }
+
+    try {
+      if (atomicOperation == null)
+        readCache.release(cacheEntry, writeCache, storagePerformanceStatistic);
+      else
+        atomicOperation.releasePage(cacheEntry);
+    } finally {
+      if (sessionStoragePerformanceStatistic != null) {
+        sessionStoragePerformanceStatistic.clearCurrentComponent();
+      }
+    }
   }
 
   protected long addFile(OAtomicOperation atomicOperation, String fileName) throws IOException {

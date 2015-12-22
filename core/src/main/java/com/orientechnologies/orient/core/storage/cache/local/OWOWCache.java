@@ -30,6 +30,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
@@ -598,7 +599,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     }
   }
 
-  public OCachePointer[] load(long fileId, long startPageIndex, int pageCount, boolean addNewPages) throws IOException {
+  public OCachePointer[] load(long fileId, long startPageIndex, int pageCount, boolean addNewPages, OModifiableBoolean cacheHit)
+      throws IOException {
     final int intId = extractFileId(fileId);
     if (pageCount < 1)
       throw new IllegalArgumentException("Amount of pages to load should be not less than 1 but provided value is " + pageCount);
@@ -615,7 +617,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         PageGroup pageGroup = writeCachePages.get(pageKeys[0]);
 
         if (pageGroup == null) {
-          final OCachePointer pagePointers[] = cacheFileContent(fileId, intId, startPageIndex, pageCount, addNewPages);
+          final OCachePointer pagePointers[] = cacheFileContent(fileId, intId, startPageIndex, pageCount, addNewPages, cacheHit);
 
           if (pagePointers.length == 0)
             return pagePointers;
@@ -639,6 +641,9 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
         final OCachePointer pagePointer = pageGroup.page;
         pagePointer.incrementReadersReferrer();
+
+        cacheHit.setValue(true);
+
         return new OCachePointer[] { pagePointer };
       } finally {
         for (Lock lock : pageLocks) {
@@ -1219,7 +1224,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   }
 
   private OCachePointer[] cacheFileContent(final long fileId, final int intId, final long startPageIndex, final int pageCount,
-      final boolean addNewPages) throws IOException {
+      final boolean addNewPages, OModifiableBoolean cacheHit) throws IOException {
 
     final OFileClassic fileClassic = files.get(intId);
 
@@ -1291,6 +1296,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       final byte[] content = new byte[pageSize + 2 * PAGE_PADDING];
       final ODirectMemoryPointer pointer = ODirectMemoryPointerFactory.instance().createPointer(content);
       OCachePointer dataPointer = new OCachePointer(pointer, lastLsn, fileId, startPageIndex);
+      cacheHit.setValue(true);
       return new OCachePointer[] { dataPointer };
     } else
       return new OCachePointer[0];

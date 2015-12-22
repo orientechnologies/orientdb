@@ -71,14 +71,16 @@ public class LocalCreateBinaryDocumentSpeedTest extends OrientMonoThreadTest {
   @Test(enabled = false)
   public void cycle() {
     final OStorage storage = database.getStorage();
-    ((OAbstractPaginatedStorage) storage).getStoragePerformanceStatistic().startMeasurement();
+    ((OAbstractPaginatedStorage) storage).startGatheringPerformanceStatisticForCurrentThread();
     record = new ORecordBytes(database, payload);
     record.save();
 
     if (data.getCyclesDone() == data.getCycles() - 1)
       database.commit();
 
-    ((OAbstractPaginatedStorage) storage).getStoragePerformanceStatistic().stopMeasurement();
+    OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = ((OAbstractPaginatedStorage) storage)
+        .completeGatheringPerformanceStatisticForCurrentThread();
+    System.out.println(sessionStoragePerformanceStatistic.toDocument().toJSON(""));
   }
 
   @Override

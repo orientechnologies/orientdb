@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.zip.CRC32;
 
+import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
@@ -111,7 +112,7 @@ public class WOWCacheTest {
 
       pageData[i] = data;
 
-      final OCachePointer cachePointer = wowCache.load(fileId, i, 1, true)[0];
+      final OCachePointer cachePointer = wowCache.load(fileId, i, 1, true, new OModifiableBoolean())[0];
       cachePointer.acquireExclusiveLock();
       cachePointer.getDataPointer().set(systemOffset + OWOWCache.PAGE_PADDING, data, 0, data.length);
       cachePointer.releaseExclusiveLock();
@@ -123,7 +124,7 @@ public class WOWCacheTest {
     for (int i = 0; i < pageData.length; i++) {
       byte[] dataOne = pageData[i];
 
-      OCachePointer cachePointer = wowCache.load(fileId, i, 1, false)[0];
+      OCachePointer cachePointer = wowCache.load(fileId, i, 1, false, new OModifiableBoolean())[0];
       byte[] dataTwo = cachePointer.getDataPointer().get(systemOffset + OWOWCache.PAGE_PADDING, 8);
       cachePointer.decrementReferrer();
 
@@ -152,7 +153,7 @@ public class WOWCacheTest {
 
       pageIndexDataMap.put(pageIndex, data);
 
-      final OCachePointer cachePointer = wowCache.load(fileId, pageIndex, 1, true)[0];
+      final OCachePointer cachePointer = wowCache.load(fileId, pageIndex, 1, true, new OModifiableBoolean())[0];
       cachePointer.acquireExclusiveLock();
       cachePointer.getDataPointer().set(systemOffset + OWOWCache.PAGE_PADDING, data, 0, data.length);
       cachePointer.releaseExclusiveLock();
@@ -165,7 +166,7 @@ public class WOWCacheTest {
       long pageIndex = entry.getKey();
       byte[] dataOne = entry.getValue();
 
-      OCachePointer cachePointer = wowCache.load(fileId, pageIndex, 1, false)[0];
+      OCachePointer cachePointer = wowCache.load(fileId, pageIndex, 1, false, new OModifiableBoolean())[0];
       byte[] dataTwo = cachePointer.getDataPointer().get(systemOffset + OWOWCache.PAGE_PADDING, 8);
 
       cachePointer.decrementReferrer();
@@ -183,7 +184,7 @@ public class WOWCacheTest {
       random.nextBytes(data);
       pageIndexDataMap.put(pageIndex, data);
 
-      final OCachePointer cachePointer = wowCache.load(fileId, pageIndex, 1, true)[0];
+      final OCachePointer cachePointer = wowCache.load(fileId, pageIndex, 1, true, new OModifiableBoolean())[0];
 
       cachePointer.acquireExclusiveLock();
       cachePointer.getDataPointer().set(systemOffset + OWOWCache.PAGE_PADDING, data, 0, data.length);
@@ -196,7 +197,7 @@ public class WOWCacheTest {
     for (Map.Entry<Long, byte[]> entry : pageIndexDataMap.entrySet()) {
       long pageIndex = entry.getKey();
       byte[] dataOne = entry.getValue();
-      OCachePointer cachePointer = wowCache.load(fileId, pageIndex, 1, false)[0];
+      OCachePointer cachePointer = wowCache.load(fileId, pageIndex, 1, false, new OModifiableBoolean())[0];
       byte[] dataTwo = cachePointer.getDataPointer().get(systemOffset + OWOWCache.PAGE_PADDING, 8);
       cachePointer.decrementReferrer();
 
@@ -223,7 +224,7 @@ public class WOWCacheTest {
 
       pageData[i] = data;
 
-      final OCachePointer cachePointer = wowCache.load(fileId, i, 1, true)[0];
+      final OCachePointer cachePointer = wowCache.load(fileId, i, 1, true, new OModifiableBoolean())[0];
       cachePointer.acquireExclusiveLock();
       cachePointer.getDataPointer().set(systemOffset + OWOWCache.PAGE_PADDING, data, 0, data.length);
       cachePointer.releaseExclusiveLock();
@@ -235,7 +236,7 @@ public class WOWCacheTest {
     for (int i = 0; i < pageData.length; i++) {
       byte[] dataOne = pageData[i];
 
-      OCachePointer cachePointer = wowCache.load(fileId, i, 1, false)[0];
+      OCachePointer cachePointer = wowCache.load(fileId, i, 1, false, new OModifiableBoolean())[0];
       byte[] dataTwo = cachePointer.getDataPointer().get(systemOffset + OWOWCache.PAGE_PADDING, 8);
       cachePointer.decrementReferrer();
 

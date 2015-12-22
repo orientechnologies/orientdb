@@ -354,6 +354,7 @@ public class OAtomicOperation {
         .getStatisticInstance();
     if (sessionStoragePerformanceStatistic != null) {
       sessionStoragePerformanceStatistic.startCommitTimer();
+      sessionStoragePerformanceStatistic.setCurrentComponent("atomic operation");
     }
     storagePerformanceStatistic.startCommitTimer();
 
@@ -427,6 +428,7 @@ public class OAtomicOperation {
     } finally {
       if (sessionStoragePerformanceStatistic != null) {
         sessionStoragePerformanceStatistic.stopCommitTimer();
+        sessionStoragePerformanceStatistic.clearCurrentComponent();
       }
 
       storagePerformanceStatistic.stopCommitTimer();
