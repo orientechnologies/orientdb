@@ -163,6 +163,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           // TODO: Remove this workaround in favor of a proper per server authentication.
           setSessionId(network.getServerURL(), -1, null);
           openRemoteDatabase(network);
+          if (!network.tryLock())
+            continue;
         }
 
         return operation.execute(network);
