@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.BufferedReader;
@@ -20,6 +21,12 @@ import java.util.List;
  */
 @Test
 public class HttpBatchTest extends BaseHttpDatabaseTest {
+
+  @BeforeMethod
+  public void beforeMethod(){
+    getServer().getPlugin("script-interpreter").startup();
+  }
+
   public void batchUpdate() throws IOException {
     Assert.assertEquals(post("command/" + getDatabaseName() + "/sql/").payload("create class User", CONTENT.TEXT).getResponse()
         .getStatusLine().getStatusCode(), 200);

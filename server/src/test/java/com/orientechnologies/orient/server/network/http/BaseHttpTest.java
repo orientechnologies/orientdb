@@ -209,4 +209,8 @@ public abstract class BaseHttpTest {
     this.realm = realm;
     return this;
   }
+
+  public static OServer getServer() {
+    return server;
+  }
 }
