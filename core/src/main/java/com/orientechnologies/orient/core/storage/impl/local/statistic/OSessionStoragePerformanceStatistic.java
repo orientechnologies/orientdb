@@ -42,7 +42,7 @@ import java.util.Map;
  * There are 2 kind of methods , one kind do not accept any parameter, they return performance data on system level
  * and, other kind accept component name, they return performance data gathered on separate component or on system level if null is
  * passed as method name. If data from component with passed in name is absent then -1 is returned.
- *
+ * <p>
  * At the moment all performance data are shared between durable components and whole system with exception of {@link #getCommitTimeAvg()}.
  *
  * @author Andrey Lomakin
@@ -98,7 +98,9 @@ public class OSessionStoragePerformanceStatistic {
   /**
    * Stack of time stamps which is used to init clock in startTimerXXX methods.
    */
-  private Deque<Long> timeStamps = new ArrayDeque<Long>();
+  private final Deque<Long> timeStamps = new ArrayDeque<Long>();
+
+  private Deque<String> componentsStack = new ArrayDeque<String>();
 
   /**
    * Container for performance counters of system performance as whole.
@@ -134,12 +136,6 @@ public class OSessionStoragePerformanceStatistic {
   private Map<String, PerformanceCountersHolder> countersByComponent = new HashMap<String, PerformanceCountersHolder>();
 
   /**
-   * Name of component which is making a call to the disk cache.
-   * This parameter is set inside of {@link com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent}
-   */
-  private String currentComponent;
-
-  /**
    * Creates object and initiates it with value of size of page in cache.
    *
    * @param pageSize Page size in cache.
@@ -165,22 +161,24 @@ public class OSessionStoragePerformanceStatistic {
     this.nanoTimer = nanoTimer;
   }
 
-  /**
-   * Set name of component which is making a call to disk cache.
-   * This method is used in {@link com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent}
-   *
-   * @param componentName Component name
-   */
-  public void setCurrentComponent(String componentName) {
-    this.currentComponent = componentName;
+  public void startComponentOperation(String componentName) {
+    componentsStack.push(componentName);
   }
 
-  /**
-   * Reset name of component after it made call to disk cache.
-   * This method is used inside {@link com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent}
-   */
-  public void clearCurrentComponent() {
-    this.currentComponent = null;
+  public void completeComponentOperation() {
+    performanceCountersHolder.operationsCount++;
+
+    final String currentComponent = componentsStack.peek();
+
+    PerformanceCountersHolder cHolder = countersByComponent.get(currentComponent);
+    if (cHolder == null) {
+      cHolder = new PerformanceCountersHolder();
+      countersByComponent.put(currentComponent, cHolder);
+    }
+
+    performanceCountersHolder.operationsCount++;
+
+    componentsStack.pop();
   }
 
   /**
@@ -471,7 +469,7 @@ public class OSessionStoragePerformanceStatistic {
   /**
    * Converts properties of given class into values of fields of returned document.
    * Names of fields equal to names of properties.
-   *
+   * <p>
    * All data related to separate components are stored in field <code>dataByComponent</code> map which has type
    * {@link OType#EMBEDDEDMAP} where key of map entry is name of component, and value is document which contains the same fields
    * as high level document but with values for single component not whole system.
@@ -496,7 +494,7 @@ public class OSessionStoragePerformanceStatistic {
 
   /**
    * Increments counter of page accesses from cache.
-   *
+   * <p>
    * If you wish to gather statistic for current durable component please call {@link #setCurrentComponent(String)}
    * method before the call and {@link #clearCurrentComponent()} after the call.
    */
@@ -505,29 +503,17 @@ public class OSessionStoragePerformanceStatistic {
     if (cacheHit)
       performanceCountersHolder.cacheHit++;
 
-    if (currentComponent != null) {
-      final PerformanceCountersHolder cHolder = getCountersHolderForComponent();
+    for (String componentName : componentsStack) {
+      PerformanceCountersHolder cHolder = countersByComponent.get(componentName);
+      if (cHolder == null) {
+        cHolder = new PerformanceCountersHolder();
+        countersByComponent.put(componentName, cHolder);
+      }
+
       cHolder.cacheAccessCount++;
       if (cacheHit)
         cHolder.cacheHit++;
     }
-  }
-
-  /**
-   * @return Container for performance counters for component name of which is set in {@link #currentComponent} field.
-   * @throws NullPointerException if field {@link #currentComponent} value is set to null.
-   */
-  private PerformanceCountersHolder getCountersHolderForComponent() {
-    if (currentComponent == null)
-      throw new NullPointerException();
-
-    PerformanceCountersHolder cHolder = countersByComponent.get(currentComponent);
-
-    if (cHolder == null) {
-      cHolder = new PerformanceCountersHolder();
-      countersByComponent.put(currentComponent, cHolder);
-    }
-    return cHolder;
   }
 
   /**
@@ -539,7 +525,7 @@ public class OSessionStoragePerformanceStatistic {
 
   /**
    * Stops and records results of timer which counts how much time was spent on read of page from file system.
-   *
+   * <p>
    * If you wish to gather statistic for current durable component please call {@link #setCurrentComponent(String)}
    * method before the call and {@link #clearCurrentComponent()} after the call.
    *
@@ -552,11 +538,16 @@ public class OSessionStoragePerformanceStatistic {
     performanceCountersHolder.pageReadFromFileTime += timeDiff;
     performanceCountersHolder.pageReadFromFileCount += readPages;
 
-    if (currentComponent != null) {
-      final PerformanceCountersHolder cHolder = getCountersHolderForComponent();
+    for (String componentName : componentsStack) {
+      PerformanceCountersHolder cHolder = countersByComponent.get(componentName);
+      if (cHolder == null) {
+        cHolder = new PerformanceCountersHolder();
+        countersByComponent.put(componentName, cHolder);
+      }
       cHolder.pageReadFromFileTime += timeDiff;
-      cHolder.pageReadFromFileCount += readPages;
+      cHolder.pageReadFromCacheCount += readPages;
     }
+
   }
 
   /**
@@ -568,10 +559,9 @@ public class OSessionStoragePerformanceStatistic {
 
   /**
    * Stops and records results of timer which counts how much time was spent on read of page from disk cache.
-   *
+   * <p>
    * If you wish to gather statistic for current durable component please call {@link #setCurrentComponent(String)}
    * method before the call and {@link #clearCurrentComponent()} after the call.
-   *
    */
   public void stopPageReadFromCacheTimer() {
     final long entTs = nanoTimer.getNano();
@@ -580,8 +570,13 @@ public class OSessionStoragePerformanceStatistic {
     performanceCountersHolder.pageReadFromCacheTime += timeDiff;
     performanceCountersHolder.pageReadFromCacheCount++;
 
-    if (currentComponent != null) {
-      final PerformanceCountersHolder cHolder = getCountersHolderForComponent();
+    for (String componentName : componentsStack) {
+      PerformanceCountersHolder cHolder = countersByComponent.get(componentName);
+      if (cHolder == null) {
+        cHolder = new PerformanceCountersHolder();
+        countersByComponent.put(componentName, cHolder);
+      }
+
       cHolder.pageReadFromCacheTime += timeDiff;
       cHolder.pageReadFromCacheCount++;
     }
@@ -596,7 +591,7 @@ public class OSessionStoragePerformanceStatistic {
 
   /**
    * Stops and records results of timer which counts how much time was spent to write page to disk cache.
-   *
+   * <p>
    * If you wish to gather statistic for current durable component please call {@link #setCurrentComponent(String)}
    * method before the call and {@link #clearCurrentComponent()} after the call.
    */
@@ -607,8 +602,13 @@ public class OSessionStoragePerformanceStatistic {
     performanceCountersHolder.pageWriteToCacheTime += timeDiff;
     performanceCountersHolder.pageWriteToCacheCount++;
 
-    if (currentComponent != null) {
-      final PerformanceCountersHolder cHolder = getCountersHolderForComponent();
+    for (String componentName : componentsStack) {
+      PerformanceCountersHolder cHolder = countersByComponent.get(componentName);
+      if (cHolder == null) {
+        cHolder = new PerformanceCountersHolder();
+        countersByComponent.put(componentName, cHolder);
+      }
+
       cHolder.pageWriteToCacheTime += timeDiff;
       cHolder.pageWriteToCacheCount++;
     }
@@ -647,6 +647,8 @@ public class OSessionStoragePerformanceStatistic {
    * Container for all performance counters which are shared between durable components and whole system.
    */
   private final class PerformanceCountersHolder {
+    private long operationsCount = 0;
+
     /**
      * Amount of times when cache was accessed during the session.
      */
@@ -786,6 +788,13 @@ public class OSessionStoragePerformanceStatistic {
         return -1;
 
       return (int) ((cacheHit * 100) / cacheAccessCount);
+    }
+
+    public long getPagesPerOperation() {
+      if (operationsCount == 0)
+        return -1;
+
+      return cacheAccessCount / operationsCount;
     }
 
     /**
