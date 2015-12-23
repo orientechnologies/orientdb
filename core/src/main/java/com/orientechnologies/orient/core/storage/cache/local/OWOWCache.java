@@ -1183,12 +1183,12 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     nameIdMapHolder.seek(nameIdMapHolder.length());
 
     final int nameSize = stringSerializer.getObjectSize(nameFileIdEntry.name);
-    byte[] serializedName = new byte[nameSize];
-    stringSerializer.serialize(nameFileIdEntry.name, serializedName, 0);
+    byte[] serializedRecord = new byte[OIntegerSerializer.INT_SIZE + nameSize + OLongSerializer.LONG_SIZE];
+    OIntegerSerializer.INSTANCE.serializeLiteral(nameSize,serializedRecord,0);
+    stringSerializer.serialize(nameFileIdEntry.name, serializedRecord, OIntegerSerializer.INT_SIZE);
+    OLongSerializer.INSTANCE.serializeLiteral(nameFileIdEntry.fileId,serializedRecord,OIntegerSerializer.INT_SIZE + nameSize);
 
-    nameIdMapHolder.writeInt(nameSize);
-    nameIdMapHolder.write(serializedName);
-    nameIdMapHolder.writeLong(nameFileIdEntry.fileId);
+    nameIdMapHolder.write(serializedRecord);
 
     if (sync)
       nameIdMapHolder.getFD().sync();

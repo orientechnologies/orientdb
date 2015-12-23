@@ -1341,9 +1341,12 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     OLongSerializer.INSTANCE.serializeLiteral(masterRecord.getPosition(), serializedLSN, OLongSerializer.LONG_SIZE);
     crc32.update(serializedLSN);
 
-    masterRecordLSNHolder.writeInt((int) crc32.getValue());
-    masterRecordLSNHolder.writeLong(masterRecord.getSegment());
-    masterRecordLSNHolder.writeLong(masterRecord.getPosition());
+    byte [] record = new byte[OIntegerSerializer.INT_SIZE + 2 * OLongSerializer.LONG_SIZE];
+
+    OIntegerSerializer.INSTANCE.serializeLiteral((int)crc32.getValue(),record,0);
+    OLongSerializer.INSTANCE.serializeLiteral(masterRecord.getSegment(),record,OIntegerSerializer.INT_SIZE);
+    OLongSerializer.INSTANCE.serializeLiteral(masterRecord.getPosition(),record,OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE);
+    masterRecordLSNHolder.write(record);
   }
 
   private String getSegmentName(long order) {
