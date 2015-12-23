@@ -231,7 +231,8 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
                 + (socket != null ? socket.getRemoteSocketAddress() : "") + " for the request " + iRequesterId);
           }
 
-          if (unreadResponse > maxUnreadResponses) {
+          //IN CASE OF TOO MUCH TIME FOR READ A MESSAGE, ASYNC THREAD SHOULD NOT BE INCLUDE IN THIS CHECK
+          if (unreadResponse > maxUnreadResponses && iRequesterId != Integer.MIN_VALUE) {
             if (debug)
               OLogManager.instance().info(this, "Unread responses %d > %d, consider the buffer as dirty: clean it", unreadResponse,
                   maxUnreadResponses);
@@ -249,16 +250,15 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
 
           final long start = System.currentTimeMillis();
 
-          // WAIT 1 SECOND AND RETRY
-          readCondition.await(1, TimeUnit.SECONDS);
-          final long now = System.currentTimeMillis();
+          // WAIT MAX 30 SECOND AND RETRY, THIS IS UNBLOCKED BY ANOTHER THREAD IN CASE THE RESPONSE FOR THIS IS ARRIVED
+          readCondition.await(30, TimeUnit.SECONDS);
 
-          if (debug)
-            OLogManager.instance().debug(this, "Waked up: slept %dms, checking again from %s for session %d", (now - start),
-                socket.getLocalAddress(), iRequesterId);
+          if (debug) {
+            final long now = System.currentTimeMillis();
+            OLogManager.instance().debug(this, "Waked up: slept %dms, checking again from %s for session %d", (now - start), socket.getLocalAddress(), iRequesterId);
+          }
 
-          if (now - start >= 1000)
-            unreadResponse++;
+          unreadResponse++;
 
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
