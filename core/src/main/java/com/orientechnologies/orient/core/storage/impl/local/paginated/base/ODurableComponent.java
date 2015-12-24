@@ -136,23 +136,10 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
 
   protected OCacheEntry loadPage(OAtomicOperation atomicOperation, long fileId, long pageIndex, boolean checkPinnedPages,
       final int pageCount) throws IOException {
-    final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = OSessionStoragePerformanceStatistic
-        .getStatisticInstance();
-    if (sessionStoragePerformanceStatistic != null) {
-      sessionStoragePerformanceStatistic.setCurrentComponent(getFullName());
-    }
+    if (atomicOperation == null)
+      return readCache.load(fileId, pageIndex, checkPinnedPages, writeCache, pageCount, storagePerformanceStatistic);
 
-    try {
-      if (atomicOperation == null)
-        return readCache.load(fileId, pageIndex, checkPinnedPages, writeCache, pageCount, storagePerformanceStatistic);
-
-      return atomicOperation.loadPage(fileId, pageIndex, checkPinnedPages, pageCount);
-    } finally {
-      if (sessionStoragePerformanceStatistic != null) {
-        sessionStoragePerformanceStatistic.clearCurrentComponent();
-      }
-    }
-
+    return atomicOperation.loadPage(fileId, pageIndex, checkPinnedPages, pageCount);
   }
 
   protected void pinPage(OAtomicOperation atomicOperation, OCacheEntry cacheEntry) throws IOException {
@@ -163,41 +150,17 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
   }
 
   protected OCacheEntry addPage(OAtomicOperation atomicOperation, long fileId) throws IOException {
-    final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = OSessionStoragePerformanceStatistic
-        .getStatisticInstance();
-    if (sessionStoragePerformanceStatistic != null) {
-      sessionStoragePerformanceStatistic.setCurrentComponent(getFullName());
-    }
+    if (atomicOperation == null)
+      return readCache.allocateNewPage(fileId, writeCache, storagePerformanceStatistic);
 
-    try {
-      if (atomicOperation == null)
-        return readCache.allocateNewPage(fileId, writeCache, storagePerformanceStatistic);
-
-      return atomicOperation.addPage(fileId);
-    } finally {
-      if (sessionStoragePerformanceStatistic != null) {
-        sessionStoragePerformanceStatistic.clearCurrentComponent();
-      }
-    }
+    return atomicOperation.addPage(fileId);
   }
 
   protected void releasePage(OAtomicOperation atomicOperation, OCacheEntry cacheEntry) {
-    final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = OSessionStoragePerformanceStatistic
-        .getStatisticInstance();
-    if (sessionStoragePerformanceStatistic != null) {
-      sessionStoragePerformanceStatistic.setCurrentComponent(getFullName());
-    }
-
-    try {
-      if (atomicOperation == null)
-        readCache.release(cacheEntry, writeCache, storagePerformanceStatistic);
-      else
-        atomicOperation.releasePage(cacheEntry);
-    } finally {
-      if (sessionStoragePerformanceStatistic != null) {
-        sessionStoragePerformanceStatistic.clearCurrentComponent();
-      }
-    }
+    if (atomicOperation == null)
+      readCache.release(cacheEntry, writeCache, storagePerformanceStatistic);
+    else
+      atomicOperation.releasePage(cacheEntry);
   }
 
   protected long addFile(OAtomicOperation atomicOperation, String fileName) throws IOException {
@@ -248,4 +211,21 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     else
       atomicOperation.truncateFile(filedId);
   }
+
+  protected void startOperation() {
+    OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = OSessionStoragePerformanceStatistic
+        .getStatisticInstance();
+    if (sessionStoragePerformanceStatistic != null) {
+      sessionStoragePerformanceStatistic.startComponentOperation(getFullName());
+    }
+  }
+
+  protected void completeOperation() {
+    OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = OSessionStoragePerformanceStatistic
+        .getStatisticInstance();
+    if (sessionStoragePerformanceStatistic != null) {
+      sessionStoragePerformanceStatistic.completeComponentOperation();
+    }
+  }
+
 }

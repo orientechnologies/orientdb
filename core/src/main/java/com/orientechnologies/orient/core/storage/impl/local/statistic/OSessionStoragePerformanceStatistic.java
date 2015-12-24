@@ -162,6 +162,11 @@ public class OSessionStoragePerformanceStatistic {
   }
 
   public void startComponentOperation(String componentName) {
+    final String currentComponent = componentsStack.peek();
+
+    if (currentComponent.equals(componentName))
+      return;
+
     componentsStack.push(componentName);
   }
 
