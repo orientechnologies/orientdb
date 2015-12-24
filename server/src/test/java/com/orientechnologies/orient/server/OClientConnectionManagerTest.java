@@ -41,12 +41,12 @@ public class OClientConnectionManagerTest {
   @Test
   public void testTokenConnectDisconnect() throws IOException {
     byte[] atoken = new byte[] {};
-    Mockito.when(protocol.getTokenBytes()).thenReturn(atoken);
     OClientConnectionManager manager = new OClientConnectionManager();
     OClientConnection ret = manager.connect(protocol);
     manager.connect(protocol, ret, atoken, token);
     assertNotNull(ret);
-    OClientSessions sess = manager.getSession(protocol);
+    ret.tokenBytes = atoken;
+    OClientSessions sess = manager.getSession(ret);
     assertNotNull(sess);
     assertEquals(sess.getConnections().size(), 1);
     OClientConnection ret1 = manager.getConnection(ret.id, protocol);

@@ -289,8 +289,7 @@ public class OClientConnectionManager {
 
   private void removeConnectFromSession(OClientConnection connection) {
     if (connection.getProtocol() instanceof OBinaryNetworkProtocolAbstract) {
-      OBinaryNetworkProtocolAbstract proto = (OBinaryNetworkProtocolAbstract) connection.getProtocol();
-      byte[] tokenBytes = proto.getTokenBytes();
+      byte[] tokenBytes = connection.getTokenBytes();
       OHashToken hashToken = new OHashToken(tokenBytes);
       synchronized (sessions) {
         OClientSessions sess = sessions.get(hashToken);
@@ -461,8 +460,8 @@ public class OClientConnectionManager {
     }
   }
 
-  public OClientSessions getSession(ONetworkProtocolBinary iNetworkProtocolBinary) {
-    OHashToken key = new OHashToken(iNetworkProtocolBinary.getTokenBytes());
+  public OClientSessions getSession(OClientConnection connection) {
+    OHashToken key = new OHashToken(connection.getTokenBytes());
     synchronized (sessions) {
       return sessions.get(key);
     }

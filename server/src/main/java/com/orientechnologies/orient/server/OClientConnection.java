@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.server;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
@@ -40,6 +41,9 @@ public class OClientConnection {
   private Lock                             lock = new ReentrantLock();
 
   public ONetworkProtocolData              data = new ONetworkProtocolData();
+  public Boolean                           tokenBased;
+  public byte []                           tokenBytes;
+  public OToken                            token;
 
   public OClientConnection(final int id, final ONetworkProtocol protocol) throws IOException {
     this.id = id;
@@ -118,5 +122,9 @@ public class OClientConnection {
 
   public ONetworkProtocol getProtocol() {
     return protocol;
+  }
+
+  public byte[] getTokenBytes() {
+    return tokenBytes;
   }
 }
