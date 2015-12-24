@@ -19,7 +19,7 @@ public interface OWALChanges {
 
   void add(byte[] value, int start);
 
-  OWALChangesTree.PointerWrapper wrap(final ODirectMemoryPointer pointer);
+  PointerWrapper wrap(final ODirectMemoryPointer pointer);
 
   void applyChanges(ODirectMemoryPointer pointer);
 
