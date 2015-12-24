@@ -1126,8 +1126,8 @@ public class ClusterPageTest {
     try {
       OClusterPage restoredPage = new OClusterPage(cacheEntry, false, null);
 
-      OWALChanges changesTree = localPage.getChangesTree();
-      restoredPage.restoreChanges(changesTree);
+      OWALChanges changes = localPage.getChanges();
+      restoredPage.restoreChanges(changes);
 
       Assert.assertEquals(restoredPagePointer.get(SYSTEM_OFFSET, OClusterPage.PAGE_SIZE - SYSTEM_OFFSET),
           pagePointer.get(SYSTEM_OFFSET, OClusterPage.PAGE_SIZE - SYSTEM_OFFSET));

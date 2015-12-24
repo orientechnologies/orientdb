@@ -72,8 +72,8 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
 
   @SuppressFBWarnings("EI_EXPOSE_REP2")
   public OSBTreeBucket(OCacheEntry cacheEntry, boolean isLeaf, OBinarySerializer<K> keySerializer, OType[] keyTypes,
-      OBinarySerializer<V> valueSerializer, OWALChanges changesTree) throws IOException {
-    super(cacheEntry, changesTree);
+      OBinarySerializer<V> valueSerializer, OWALChanges changes) throws IOException {
+    super(cacheEntry, changes);
 
     this.isLeaf = isLeaf;
     this.keySerializer = keySerializer;
@@ -96,8 +96,8 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
 
   @SuppressFBWarnings("EI_EXPOSE_REP2")
   public OSBTreeBucket(OCacheEntry cacheEntry, OBinarySerializer<K> keySerializer, OType[] keyTypes,
-      OBinarySerializer<V> valueSerializer, OWALChanges changesTree) {
-    super(cacheEntry, changesTree);
+      OBinarySerializer<V> valueSerializer, OWALChanges changes) {
+    super(cacheEntry, changes);
     this.keyTypes = keyTypes;
 
     this.isLeaf = getByteValue(IS_LEAF_OFFSET) > 0;

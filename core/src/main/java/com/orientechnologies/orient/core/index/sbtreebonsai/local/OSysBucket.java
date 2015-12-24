@@ -53,8 +53,8 @@ public class OSysBucket extends OBonsaiBucketAbstract {
    */
   private static final byte SYS_MAGIC               = (byte) 41;
 
-  public OSysBucket(OCacheEntry cacheEntry, OWALChanges changesTree) {
-    super(cacheEntry, changesTree);
+  public OSysBucket(OCacheEntry cacheEntry, OWALChanges changes) {
+    super(cacheEntry, changes);
   }
 
   public void init() throws IOException {

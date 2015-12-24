@@ -193,7 +193,7 @@ public class OAtomicOperation {
       readCache.release(cacheEntry, writeCache, storagePerformanceStatistic);
   }
 
-  public OWALChanges getChangesTree(long fileId, long pageIndex) {
+  public OWALChanges getChanges(long fileId, long pageIndex) {
     fileId = checkFileIdCompatibilty(fileId, storageId);
 
     if (deletedFiles.contains(fileId))
@@ -205,7 +205,7 @@ public class OAtomicOperation {
     final FilePageChanges pageChangesContainer = changesContainer.pageChangesMap.get(pageIndex);
     assert pageChangesContainer != null;
 
-    return pageChangesContainer.changesTree;
+    return pageChangesContainer.changes;
   }
 
   public long filledUpTo(long fileId) throws IOException {
@@ -377,7 +377,7 @@ public class OAtomicOperation {
           final FilePageChanges filePageChanges = filePageChangesEntry.getValue();
 
           filePageChanges.lsn = writeAheadLog
-              .log(new OUpdatePageRecord(pageIndex, fileId, operationUnitId, filePageChanges.changesTree));
+              .log(new OUpdatePageRecord(pageIndex, fileId, operationUnitId, filePageChanges.changes));
         }
       }
 
@@ -412,7 +412,7 @@ public class OAtomicOperation {
           cacheEntry.acquireExclusiveLock();
           try {
             ODurablePage durablePage = new ODurablePage(cacheEntry, null);
-            durablePage.restoreChanges(filePageChanges.changesTree);
+            durablePage.restoreChanges(filePageChanges.changes);
 
             durablePage.setLsn(filePageChanges.lsn);
 
@@ -498,10 +498,10 @@ public class OAtomicOperation {
   }
 
   private static class FilePageChanges {
-    private OWALChangesTree    changesTree = new OWALChangesTree();
-    private OLogSequenceNumber lsn         = null;
-    private boolean            isNew       = false;
-    private boolean            pinPage     = false;
+    private OWALChanges        changes = new OWALChangesTree();
+    private OLogSequenceNumber lsn     = null;
+    private boolean            isNew   = false;
+    private boolean            pinPage = false;
   }
 
   private int storageId(long fileId) {

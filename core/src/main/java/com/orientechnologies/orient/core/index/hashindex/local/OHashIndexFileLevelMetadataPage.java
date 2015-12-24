@@ -41,8 +41,8 @@ public class OHashIndexFileLevelMetadataPage extends ODurablePage {
 
   private final static int ITEM_SIZE                  = OByteSerializer.BYTE_SIZE + 3 * OLongSerializer.LONG_SIZE;
 
-  public OHashIndexFileLevelMetadataPage(OCacheEntry cacheEntry, OWALChanges changesTree, boolean isNewPage) throws IOException {
-    super(cacheEntry, changesTree);
+  public OHashIndexFileLevelMetadataPage(OCacheEntry cacheEntry, OWALChanges changes, boolean isNewPage) throws IOException {
+    super(cacheEntry, changes);
 
     if (isNewPage) {
       for (int i = 0; i < OLocalHashTable.HASH_CODE_SIZE; i++)

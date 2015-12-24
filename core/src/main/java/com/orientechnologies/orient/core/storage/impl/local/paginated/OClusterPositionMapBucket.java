@@ -46,8 +46,8 @@ public class OClusterPositionMapBucket extends ODurablePage {
 
   public static final int   MAX_ENTRIES      = (MAX_PAGE_SIZE_BYTES - POSITIONS_OFFSET) / ENTRY_SIZE;
 
-  public OClusterPositionMapBucket(OCacheEntry cacheEntry, OWALChanges changesTree) {
-    super(cacheEntry, changesTree);
+  public OClusterPositionMapBucket(OCacheEntry cacheEntry, OWALChanges changes) {
+    super(cacheEntry, changes);
   }
 
   public int add(long pageIndex, int recordPosition) throws IOException {

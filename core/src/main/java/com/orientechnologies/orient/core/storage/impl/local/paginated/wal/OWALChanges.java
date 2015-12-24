@@ -17,11 +17,24 @@ public interface OWALChanges {
 
   long getLongValue(ODirectMemoryPointer pointer, int offset);
 
-  void add(byte[] value, int start);
+  void setLongValue(ODirectMemoryPointer pointer, int offset, long value);
+
+  void setIntValue(ODirectMemoryPointer pointer, int offset, int value);
+
+  void setByteValue(ODirectMemoryPointer pointer, int offset, byte value);
+
+  void setBinaryValue(ODirectMemoryPointer pointer, int offset, byte[] value);
+
+  void moveData(ODirectMemoryPointer pointer, int from, int to, int  len);
 
   PointerWrapper wrap(final ODirectMemoryPointer pointer);
 
   void applyChanges(ODirectMemoryPointer pointer);
 
+  int serializedSize();
+
+  int toStream(int offset, byte[] stream);
+
+  int fromStream(int offset, byte[] stream);
 
 }

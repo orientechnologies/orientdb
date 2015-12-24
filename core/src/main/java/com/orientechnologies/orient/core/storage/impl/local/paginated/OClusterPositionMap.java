@@ -205,7 +205,7 @@ public class OClusterPositionMap extends ODurableComponent {
         cacheEntry.acquireExclusiveLock();
         try {
 
-          OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry, getChangesTree(atomicOperation, cacheEntry));
+          OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry, getChanges(atomicOperation, cacheEntry));
           if (bucket.isFull()) {
             cacheEntry.releaseExclusiveLock();
             releasePage(atomicOperation, cacheEntry);
@@ -213,7 +213,7 @@ public class OClusterPositionMap extends ODurableComponent {
             cacheEntry = addPage(atomicOperation, fileId);
 
             cacheEntry.acquireExclusiveLock();
-            bucket = new OClusterPositionMapBucket(cacheEntry, getChangesTree(atomicOperation, cacheEntry));
+            bucket = new OClusterPositionMapBucket(cacheEntry, getChanges(atomicOperation, cacheEntry));
           }
 
           final long index = bucket.add(pageIndex, recordPosition);
@@ -256,7 +256,7 @@ public class OClusterPositionMap extends ODurableComponent {
         cacheEntry.acquireExclusiveLock();
         try {
           final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry,
-              getChangesTree(atomicOperation, cacheEntry));
+              getChanges(atomicOperation, cacheEntry));
           bucket.set(index, entry);
         } finally {
           cacheEntry.releaseExclusiveLock();
@@ -298,7 +298,7 @@ public class OClusterPositionMap extends ODurableComponent {
           final OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false, pageCount);
           try {
             final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry,
-                getChangesTree(atomicOperation, cacheEntry));
+                getChanges(atomicOperation, cacheEntry));
             return bucket.get(index);
           } finally {
             releasePage(atomicOperation, cacheEntry);
@@ -328,7 +328,7 @@ public class OClusterPositionMap extends ODurableComponent {
         cacheEntry.acquireExclusiveLock();
         try {
           final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry,
-              getChangesTree(atomicOperation, cacheEntry));
+              getChanges(atomicOperation, cacheEntry));
 
           OClusterPositionMapBucket.PositionEntry positionEntry = bucket.remove(index);
           if (positionEntry == null) {
@@ -401,7 +401,7 @@ public class OClusterPositionMap extends ODurableComponent {
           do {
             OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false, 1);
             OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry,
-                getChangesTree(atomicOperation, cacheEntry));
+                getChanges(atomicOperation, cacheEntry));
             int resultSize = bucket.getSize() - index;
 
             if (resultSize <= 0) {
@@ -498,7 +498,7 @@ public class OClusterPositionMap extends ODurableComponent {
           do {
             OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false, 1);
             OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry,
-                getChangesTree(atomicOperation, cacheEntry));
+                getChanges(atomicOperation, cacheEntry));
             if (index == Integer.MIN_VALUE)
               index = bucket.getSize() - 1;
 
@@ -554,7 +554,7 @@ public class OClusterPositionMap extends ODurableComponent {
             OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false, 1);
             try {
               OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry,
-                  getChangesTree(atomicOperation, cacheEntry));
+                  getChanges(atomicOperation, cacheEntry));
               int bucketSize = bucket.getSize();
 
               for (int index = 0; index < bucketSize; index++) {
@@ -592,7 +592,7 @@ public class OClusterPositionMap extends ODurableComponent {
             OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false, 1);
             try {
               OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry,
-                  getChangesTree(atomicOperation, cacheEntry));
+                  getChanges(atomicOperation, cacheEntry));
               final int bucketSize = bucket.getSize();
 
               for (int index = bucketSize - 1; index >= 0; index--) {
