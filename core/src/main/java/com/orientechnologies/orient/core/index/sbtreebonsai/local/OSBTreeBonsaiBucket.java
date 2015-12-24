@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.exception.OSBTreeBonsaiLocalException;
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTree;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTreeException;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
 
 /**
@@ -139,7 +140,7 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
   }
 
   public OSBTreeBonsaiBucket(OCacheEntry cacheEntry, int pageOffset, boolean isLeaf, OBinarySerializer<K> keySerializer,
-      OBinarySerializer<V> valueSerializer, OWALChangesTree changesTree, OSBTreeBonsaiLocal<K, V> tree) throws IOException {
+      OBinarySerializer<V> valueSerializer, OWALChanges changesTree, OSBTreeBonsaiLocal<K, V> tree) throws IOException {
     super(cacheEntry, changesTree);
 
     this.offset = pageOffset;
@@ -162,7 +163,7 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
   }
 
   public OSBTreeBonsaiBucket(OCacheEntry cacheEntry, int pageOffset, OBinarySerializer<K> keySerializer,
-      OBinarySerializer<V> valueSerializer, OWALChangesTree changesTree, OSBTreeBonsaiLocal<K, V> tree) {
+      OBinarySerializer<V> valueSerializer, OWALChanges changesTree, OSBTreeBonsaiLocal<K, V> tree) {
     super(cacheEntry, changesTree);
 
     this.offset = pageOffset;

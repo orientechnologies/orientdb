@@ -30,6 +30,7 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 
@@ -60,7 +61,7 @@ public class OClusterPage extends ODurablePage {
 
   public static final int MAX_RECORD_SIZE = MAX_ENTRY_SIZE - 3 * OIntegerSerializer.INT_SIZE;
 
-  public OClusterPage(OCacheEntry cacheEntry, boolean newPage, OWALChangesTree changesTree) throws IOException {
+  public OClusterPage(OCacheEntry cacheEntry, boolean newPage, OWALChanges changesTree) throws IOException {
     super(cacheEntry, changesTree);
 
     if (newPage) {

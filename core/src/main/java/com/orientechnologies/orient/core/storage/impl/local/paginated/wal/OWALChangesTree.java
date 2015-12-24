@@ -9,7 +9,7 @@ import com.orientechnologies.common.types.OModifiableInteger;
 
 import java.util.*;
 
-public class OWALChangesTree {
+public class OWALChangesTree implements OWALChanges {
   private static final boolean BLACK          = false;
   private static final boolean RED            = true;
 

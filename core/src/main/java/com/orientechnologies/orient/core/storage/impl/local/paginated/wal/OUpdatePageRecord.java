@@ -36,7 +36,7 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
     this.changesTree = changesTree;
   }
 
-  public OWALChangesTree getChanges() {
+  public OWALChanges getChanges() {
     return changesTree;
   }
 
