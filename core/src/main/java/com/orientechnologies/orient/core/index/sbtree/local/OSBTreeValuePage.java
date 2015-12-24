@@ -26,6 +26,7 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
 
 /**
@@ -54,7 +55,7 @@ public class OSBTreeValuePage extends ODurablePage {
 
   public static final int  MAX_BINARY_VALUE_SIZE      = MAX_PAGE_SIZE_BYTES - BINARY_CONTENT_OFFSET;
 
-  public OSBTreeValuePage(OCacheEntry cacheEntry, OWALChangesTree changesTree, boolean isNew) throws IOException {
+  public OSBTreeValuePage(OCacheEntry cacheEntry, OWALChanges changesTree, boolean isNew) throws IOException {
     super(cacheEntry, changesTree);
 
     if (isNew) {

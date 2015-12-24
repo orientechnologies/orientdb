@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
 
 import java.io.IOException;
@@ -69,12 +70,12 @@ public class ODurablePage {
 
   protected static final int         NEXT_FREE_POSITION  = WAL_POSITION_OFFSET + OLongSerializer.LONG_SIZE;
 
-  protected OWALChangesTree          changesTree;
+  protected OWALChanges              changesTree;
 
   private final OCacheEntry          cacheEntry;
   private final ODirectMemoryPointer pagePointer;
 
-  public ODurablePage(OCacheEntry cacheEntry, OWALChangesTree changesTree) {
+  public ODurablePage(OCacheEntry cacheEntry, OWALChanges changesTree) {
     assert cacheEntry != null || changesTree != null;
 
     this.cacheEntry = cacheEntry;
@@ -216,11 +217,11 @@ public class ODurablePage {
     cacheEntry.markDirty();
   }
 
-  public OWALChangesTree getChangesTree() {
+  public OWALChanges getChangesTree() {
     return changesTree;
   }
 
-  public void restoreChanges(OWALChangesTree changesTree) {
+  public void restoreChanges(OWALChanges changesTree) {
     changesTree.applyChanges(cacheEntry.getCachePointer().getDataPointer());
     cacheEntry.markDirty();
   }

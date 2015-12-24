@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import org.testng.Assert;
@@ -1125,7 +1126,7 @@ public class ClusterPageTest {
     try {
       OClusterPage restoredPage = new OClusterPage(cacheEntry, false, null);
 
-      OWALChangesTree changesTree = localPage.getChangesTree();
+      OWALChanges changesTree = localPage.getChangesTree();
       restoredPage.restoreChanges(changesTree);
 
       Assert.assertEquals(restoredPagePointer.get(SYSTEM_OFFSET, OClusterPage.PAGE_SIZE - SYSTEM_OFFSET),

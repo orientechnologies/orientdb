@@ -25,6 +25,7 @@ import java.io.IOException;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
 
 /**
@@ -39,7 +40,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALCh
  * @author Artem Orobets (enisher-at-gmail.com)
  */
 public class OBonsaiBucketAbstract extends ODurablePage {
-  public OBonsaiBucketAbstract(OCacheEntry cacheEntry, OWALChangesTree changesTree) {
+  public OBonsaiBucketAbstract(OCacheEntry cacheEntry, OWALChanges changesTree) {
     super(cacheEntry, changesTree);
   }
 
