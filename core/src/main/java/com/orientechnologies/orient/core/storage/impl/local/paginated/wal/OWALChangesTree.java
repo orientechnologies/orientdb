@@ -299,7 +299,7 @@ public class OWALChangesTree implements OWALChanges {
   }
 
   public PointerWrapper wrap(final ODirectMemoryPointer pointer) {
-    return new PointerWrapper(pointer);
+    return new PointerWrapper(this, pointer);
   }
 
   public int getSerializedSize() {
@@ -760,36 +760,4 @@ public class OWALChangesTree implements OWALChanges {
     }
   }
 
-  public final class PointerWrapper {
-    private final ODirectMemoryPointer pointer;
-
-    private PointerWrapper(ODirectMemoryPointer pointer) {
-      this.pointer = pointer;
-    }
-
-    public byte getByte(long offset) {
-      return OWALChangesTree.this.getByteValue(pointer, (int) offset);
-    }
-
-    public short getShort(long offset) {
-      return OWALChangesTree.this.getShortValue(pointer, (int) offset);
-    }
-
-    public int getInt(long offset) {
-      return OWALChangesTree.this.getIntValue(pointer, (int) offset);
-    }
-
-    public long getLong(long offset) {
-      return OWALChangesTree.this.getLongValue(pointer, (int) offset);
-    }
-
-    public byte[] get(long offset, int len) {
-      return OWALChangesTree.this.getBinaryValue(pointer, (int) offset, len);
-    }
-
-    public char getChar(long offset) {
-      return (char) OWALChangesTree.this.getShortValue(pointer, (int) offset);
-    }
-
-  }
 }
