@@ -193,7 +193,7 @@ public class OAtomicOperation {
       readCache.release(cacheEntry, writeCache, storagePerformanceStatistic);
   }
 
-  public OWALChangesTree getChangesTree(long fileId, long pageIndex) {
+  public OWALChanges getChangesTree(long fileId, long pageIndex) {
     fileId = checkFileIdCompatibilty(fileId, storageId);
 
     if (deletedFiles.contains(fileId))
