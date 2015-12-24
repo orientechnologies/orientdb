@@ -34,8 +34,8 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALCh
 public class ONullBucket<V> extends ODurablePage {
   private final OBinarySerializer<V> valueSerializer;
 
-  public ONullBucket(OCacheEntry cacheEntry, OWALChanges changesTree, OBinarySerializer<V> valueSerializer, boolean isNew) {
-    super(cacheEntry, changesTree);
+  public ONullBucket(OCacheEntry cacheEntry, OWALChanges changes, OBinarySerializer<V> valueSerializer, boolean isNew) {
+    super(cacheEntry, changes);
     this.valueSerializer = valueSerializer;
 
     if (isNew)

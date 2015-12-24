@@ -40,8 +40,8 @@ public class ODirectoryPage extends ODurablePage {
 
   private final OCacheEntry entry;
 
-  public ODirectoryPage(OCacheEntry cacheEntry, OWALChanges changesTree, OCacheEntry entry) {
-    super(cacheEntry, changesTree);
+  public ODirectoryPage(OCacheEntry cacheEntry, OWALChanges changes, OCacheEntry entry) {
+    super(cacheEntry, changes);
     this.entry = entry;
   }
 

@@ -119,6 +119,36 @@ public class OWALChangesTree implements OWALChanges {
     return OLongSerializer.INSTANCE.deserializeNative(value, 0);
   }
 
+  @Override
+  public void setIntValue(ODirectMemoryPointer pointer, int offset, int value) {
+    byte[] svalue = new byte[OIntegerSerializer.INT_SIZE];
+    OIntegerSerializer.INSTANCE.serializeNative(value, svalue, 0);
+    add(svalue, offset);
+  }
+
+  @Override
+  public void setLongValue(ODirectMemoryPointer pointer, int offset, long value) {
+    byte[] svalue = new byte[OLongSerializer.LONG_SIZE];
+    OLongSerializer.INSTANCE.serializeNative(value, svalue, 0);
+    add(svalue, offset);
+  }
+
+  @Override
+  public void moveData(ODirectMemoryPointer pointer, int from, int to, int len) {
+    byte[] content = getBinaryValue(pointer, from, len);
+    add(content, to);
+  }
+
+  @Override
+  public void setBinaryValue(ODirectMemoryPointer pointer, int offset, byte[] value) {
+    add(value, offset);
+  }
+
+  @Override
+  public void setByteValue(ODirectMemoryPointer pointer, int offset, byte value) {
+    add(new byte[] { value }, offset);
+  }
+
   public void add(byte[] value, int start) {
     version++;
 

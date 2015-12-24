@@ -59,8 +59,8 @@ public class OHashIndexBucket<K, V> extends ODurablePage implements Iterable<OHa
 
   @SuppressFBWarnings("EI_EXPOSE_REP2")
   public OHashIndexBucket(int depth, OCacheEntry cacheEntry, OBinarySerializer<K> keySerializer,
-      OBinarySerializer<V> valueSerializer, OType[] keyTypes, OWALChanges changesTree) throws IOException {
-    super(cacheEntry, changesTree);
+      OBinarySerializer<V> valueSerializer, OType[] keyTypes, OWALChanges changes) throws IOException {
+    super(cacheEntry, changes);
 
     this.keySerializer = keySerializer;
     this.valueSerializer = valueSerializer;
@@ -71,8 +71,8 @@ public class OHashIndexBucket<K, V> extends ODurablePage implements Iterable<OHa
 
   @SuppressFBWarnings("EI_EXPOSE_REP2")
   public OHashIndexBucket(OCacheEntry cacheEntry, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer,
-      OType[] keyTypes, OWALChanges changesTree) {
-    super(cacheEntry, changesTree);
+      OType[] keyTypes, OWALChanges changes) {
+    super(cacheEntry, changes);
 
     this.keySerializer = keySerializer;
     this.valueSerializer = valueSerializer;

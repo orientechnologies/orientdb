@@ -60,8 +60,8 @@ public class OClusterPage extends ODurablePage {
 
   public static final int MAX_RECORD_SIZE = MAX_ENTRY_SIZE - 3 * OIntegerSerializer.INT_SIZE;
 
-  public OClusterPage(OCacheEntry cacheEntry, boolean newPage, OWALChanges changesTree) throws IOException {
-    super(cacheEntry, changesTree);
+  public OClusterPage(OCacheEntry cacheEntry, boolean newPage, OWALChanges changes) throws IOException {
+    super(cacheEntry, changes);
 
     if (newPage) {
       setLongValue(NEXT_PAGE_OFFSET, -1);

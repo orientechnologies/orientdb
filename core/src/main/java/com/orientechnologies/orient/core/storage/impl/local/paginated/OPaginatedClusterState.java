@@ -36,8 +36,8 @@ public class OPaginatedClusterState extends ODurablePage {
   private static final int SIZE_OFFSET         = RECORDS_SIZE_OFFSET + OLongSerializer.LONG_SIZE;
   private static final int FREE_LIST_OFFSET    = SIZE_OFFSET + OLongSerializer.LONG_SIZE;
 
-  public OPaginatedClusterState(OCacheEntry cacheEntry, OWALChanges changesTree) {
-    super(cacheEntry, changesTree);
+  public OPaginatedClusterState(OCacheEntry cacheEntry, OWALChanges changes) {
+    super(cacheEntry, changes);
   }
 
   public void setSize(long size) throws IOException {

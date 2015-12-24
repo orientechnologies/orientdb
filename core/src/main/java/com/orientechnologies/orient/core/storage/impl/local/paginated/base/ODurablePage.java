@@ -69,13 +69,13 @@ public class ODurablePage {
 
   protected static final int         NEXT_FREE_POSITION  = WAL_POSITION_OFFSET + OLongSerializer.LONG_SIZE;
 
-  protected OWALChanges              changesTree;
+  protected OWALChanges changes;
 
   private final OCacheEntry          cacheEntry;
   private final ODirectMemoryPointer pagePointer;
 
-  public ODurablePage(OCacheEntry cacheEntry, OWALChanges changesTree) {
-    assert cacheEntry != null || changesTree != null;
+  public ODurablePage(OCacheEntry cacheEntry, OWALChanges changes) {
+    assert cacheEntry != null || changes != null;
 
     this.cacheEntry = cacheEntry;
 
@@ -85,7 +85,7 @@ public class ODurablePage {
     } else
       this.pagePointer = null;
 
-    this.changesTree = changesTree;
+    this.changes = changes;
   }
 
   public static OLogSequenceNumber getLogSequenceNumberFromPage(ODirectMemoryPointer dataPointer) {
@@ -107,53 +107,50 @@ public class ODurablePage {
   }
 
   protected int getIntValue(int pageOffset) {
-    if (changesTree == null)
+    if (changes == null)
       return OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(pagePointer, pageOffset + PAGE_PADDING);
 
-    return OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(changesTree.wrap(pagePointer), pageOffset + PAGE_PADDING);
+    return OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(changes.wrap(pagePointer), pageOffset + PAGE_PADDING);
   }
 
   protected long getLongValue(int pageOffset) {
-    if (changesTree == null)
+    if (changes == null)
       return OLongSerializer.INSTANCE.deserializeFromDirectMemory(pagePointer, pageOffset + PAGE_PADDING);
 
-    return OLongSerializer.INSTANCE.deserializeFromDirectMemory(changesTree.wrap(pagePointer), pageOffset + PAGE_PADDING);
+    return OLongSerializer.INSTANCE.deserializeFromDirectMemory(changes.wrap(pagePointer), pageOffset + PAGE_PADDING);
   }
 
   protected byte[] getBinaryValue(int pageOffset, int valLen) {
-    if (changesTree == null)
+    if (changes == null)
       return pagePointer.get(pageOffset + PAGE_PADDING, valLen);
 
-    return changesTree.getBinaryValue(pagePointer, pageOffset + PAGE_PADDING, valLen);
+    return changes.getBinaryValue(pagePointer, pageOffset + PAGE_PADDING, valLen);
   }
 
   protected int getObjectSizeInDirectMemory(OBinarySerializer binarySerializer, long offset) {
-    if (changesTree == null)
+    if (changes == null)
       return binarySerializer.getObjectSizeInDirectMemory(pagePointer, offset + PAGE_PADDING);
 
-    return binarySerializer.getObjectSizeInDirectMemory(changesTree.wrap(pagePointer), offset + PAGE_PADDING);
+    return binarySerializer.getObjectSizeInDirectMemory(changes.wrap(pagePointer), offset + PAGE_PADDING);
   }
 
   protected <T> T deserializeFromDirectMemory(OBinarySerializer<T> binarySerializer, long offset) {
-    if (changesTree == null)
+    if (changes == null)
       return binarySerializer.deserializeFromDirectMemoryObject(pagePointer, offset + PAGE_PADDING);
 
-    return binarySerializer.deserializeFromDirectMemoryObject(changesTree.wrap(pagePointer), offset + PAGE_PADDING);
+    return binarySerializer.deserializeFromDirectMemoryObject(changes.wrap(pagePointer), offset + PAGE_PADDING);
   }
 
   protected byte getByteValue(int pageOffset) {
-    if (changesTree == null)
+    if (changes == null)
       return pagePointer.getByte(pageOffset + PAGE_PADDING);
 
-    return changesTree.getByteValue(pagePointer, pageOffset + PAGE_PADDING);
+    return changes.getByteValue(pagePointer, pageOffset + PAGE_PADDING);
   }
 
   protected int setIntValue(int pageOffset, int value) throws IOException {
-    if (changesTree != null) {
-      byte[] svalue = new byte[OIntegerSerializer.INT_SIZE];
-      OIntegerSerializer.INSTANCE.serializeNative(value, svalue, 0);
-
-      changesTree.add(svalue, pageOffset + PAGE_PADDING);
+    if (changes != null) {
+      changes.setIntValue(pagePointer,pageOffset + PAGE_PADDING,value);
     } else
       OIntegerSerializer.INSTANCE.serializeInDirectMemory(value, pagePointer, pageOffset + PAGE_PADDING);
 
@@ -164,8 +161,8 @@ public class ODurablePage {
   }
 
   protected int setByteValue(int pageOffset, byte value) {
-    if (changesTree != null) {
-      changesTree.add(new byte[] { value }, pageOffset + PAGE_PADDING);
+    if (changes != null) {
+      changes.setByteValue(pagePointer, pageOffset + PAGE_PADDING,value);
     } else
       pagePointer.setByte(pageOffset + PAGE_PADDING, value);
 
@@ -175,11 +172,8 @@ public class ODurablePage {
   }
 
   protected int setLongValue(int pageOffset, long value) throws IOException {
-    if (changesTree != null) {
-      byte[] svalue = new byte[OLongSerializer.LONG_SIZE];
-      OLongSerializer.INSTANCE.serializeNative(value, svalue, 0);
-
-      changesTree.add(svalue, pageOffset + PAGE_PADDING);
+    if (changes != null) {
+      changes.setLongValue(pagePointer, pageOffset + PAGE_PADDING, value);
     } else
       OLongSerializer.INSTANCE.serializeInDirectMemory(value, pagePointer, pageOffset + PAGE_PADDING);
 
@@ -192,8 +186,8 @@ public class ODurablePage {
     if (value.length == 0)
       return 0;
 
-    if (changesTree != null) {
-      changesTree.add(value, pageOffset + PAGE_PADDING);
+    if (changes != null) {
+      changes.setBinaryValue(pagePointer, pageOffset + PAGE_PADDING, value);
     } else
       pagePointer.set(pageOffset + PAGE_PADDING, value, 0, value.length);
 
@@ -206,22 +200,20 @@ public class ODurablePage {
     if (len == 0)
       return;
 
-    if (changesTree != null) {
-      byte[] content = changesTree.getBinaryValue(pagePointer, from + PAGE_PADDING, len);
-
-      changesTree.add(content, to + PAGE_PADDING);
+    if (changes != null) {
+      changes.moveData(pagePointer, from + PAGE_PADDING, to + PAGE_PADDING, len);
     } else
       pagePointer.moveData(from + PAGE_PADDING, pagePointer, to + PAGE_PADDING, len);
 
     cacheEntry.markDirty();
   }
 
-  public OWALChanges getChangesTree() {
-    return changesTree;
+  public OWALChanges getChanges() {
+    return changes;
   }
 
-  public void restoreChanges(OWALChanges changesTree) {
-    changesTree.applyChanges(cacheEntry.getCachePointer().getDataPointer());
+  public void restoreChanges(OWALChanges changes) {
+    changes.applyChanges(cacheEntry.getCachePointer().getDataPointer());
     cacheEntry.markDirty();
   }
 

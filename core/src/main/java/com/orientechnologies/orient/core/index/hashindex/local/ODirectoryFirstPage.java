@@ -40,8 +40,8 @@ public class ODirectoryFirstPage extends ODirectoryPage {
   public static final int  NODES_PER_PAGE   = (OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024 - ITEMS_OFFSET)
                                                 / OHashTableDirectory.BINARY_LEVEL_SIZE;
 
-  public ODirectoryFirstPage(OCacheEntry cacheEntry, OWALChanges changesTree, OCacheEntry entry) {
-    super(cacheEntry, changesTree, entry);
+  public ODirectoryFirstPage(OCacheEntry cacheEntry, OWALChanges changes, OCacheEntry entry) {
+    super(cacheEntry, changes, entry);
   }
 
   public void setTreeSize(int treeSize) throws IOException {

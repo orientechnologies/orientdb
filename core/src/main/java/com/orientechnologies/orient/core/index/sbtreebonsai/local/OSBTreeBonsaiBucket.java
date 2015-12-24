@@ -137,8 +137,8 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
   }
 
   public OSBTreeBonsaiBucket(OCacheEntry cacheEntry, int pageOffset, boolean isLeaf, OBinarySerializer<K> keySerializer,
-      OBinarySerializer<V> valueSerializer, OWALChanges changesTree, OSBTreeBonsaiLocal<K, V> tree) throws IOException {
-    super(cacheEntry, changesTree);
+      OBinarySerializer<V> valueSerializer, OWALChanges changes, OSBTreeBonsaiLocal<K, V> tree) throws IOException {
+    super(cacheEntry, changes);
 
     this.offset = pageOffset;
     this.isLeaf = isLeaf;
@@ -160,8 +160,8 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
   }
 
   public OSBTreeBonsaiBucket(OCacheEntry cacheEntry, int pageOffset, OBinarySerializer<K> keySerializer,
-      OBinarySerializer<V> valueSerializer, OWALChanges changesTree, OSBTreeBonsaiLocal<K, V> tree) {
-    super(cacheEntry, changesTree);
+      OBinarySerializer<V> valueSerializer, OWALChanges changes, OSBTreeBonsaiLocal<K, V> tree) {
+    super(cacheEntry, changes);
 
     this.offset = pageOffset;
     this.isLeaf = getByteValue(offset + IS_LEAF_OFFSET) > 0;

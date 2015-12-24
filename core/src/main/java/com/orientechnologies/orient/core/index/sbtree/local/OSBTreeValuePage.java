@@ -54,8 +54,8 @@ public class OSBTreeValuePage extends ODurablePage {
 
   public static final int  MAX_BINARY_VALUE_SIZE      = MAX_PAGE_SIZE_BYTES - BINARY_CONTENT_OFFSET;
 
-  public OSBTreeValuePage(OCacheEntry cacheEntry, OWALChanges changesTree, boolean isNew) throws IOException {
-    super(cacheEntry, changesTree);
+  public OSBTreeValuePage(OCacheEntry cacheEntry, OWALChanges changes, boolean isNew) throws IOException {
+    super(cacheEntry, changes);
 
     if (isNew) {
       setNextFreeListPage(-1);
