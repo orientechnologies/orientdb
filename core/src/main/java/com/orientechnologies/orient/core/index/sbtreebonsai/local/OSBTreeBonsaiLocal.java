@@ -213,66 +213,71 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
   @Override
   public boolean put(K key, V value) {
-    final OAtomicOperation atomicOperation;
+    startOperation();
     try {
-      atomicOperation = startAtomicOperation();
-    } catch (IOException e) {
-      throw OException.wrapException(new OSBTreeBonsaiLocalException("Error during sbtree entrie put", this), e);
-    }
-
-    final Lock lock = fileLockManager.acquireExclusiveLock(fileId);
-    try {
-      BucketSearchResult bucketSearchResult = findBucket(key, atomicOperation);
-      OBonsaiBucketPointer bucketPointer = bucketSearchResult.getLastPathItem();
-
-      OCacheEntry keyBucketCacheEntry = loadPage(atomicOperation, fileId, bucketPointer.getPageIndex(), false);
-      keyBucketCacheEntry.acquireExclusiveLock();
-      OSBTreeBonsaiBucket<K, V> keyBucket = new OSBTreeBonsaiBucket<K, V>(keyBucketCacheEntry, bucketPointer.getPageOffset(),
-          keySerializer, valueSerializer, getChangesTree(atomicOperation, keyBucketCacheEntry), this);
-
-      final boolean itemFound = bucketSearchResult.itemIndex >= 0;
-      boolean result = true;
-      if (itemFound) {
-        final int updateResult = keyBucket.updateValue(bucketSearchResult.itemIndex, value);
-        assert updateResult == 0 || updateResult == 1;
-
-        result = updateResult != 0;
-      } else {
-        int insertionIndex = -bucketSearchResult.itemIndex - 1;
-
-        while (!keyBucket.addEntry(insertionIndex,
-            new OSBTreeBonsaiBucket.SBTreeEntry<K, V>(OBonsaiBucketPointer.NULL, OBonsaiBucketPointer.NULL, key, value), true)) {
-          keyBucketCacheEntry.releaseExclusiveLock();
-          releasePage(atomicOperation, keyBucketCacheEntry);
-
-          bucketSearchResult = splitBucket(bucketSearchResult.path, insertionIndex, key, atomicOperation);
-          bucketPointer = bucketSearchResult.getLastPathItem();
-
-          insertionIndex = bucketSearchResult.itemIndex;
-
-          keyBucketCacheEntry = loadPage(atomicOperation, fileId, bucketSearchResult.getLastPathItem().getPageIndex(), false);
-          keyBucketCacheEntry.acquireExclusiveLock();
-
-          keyBucket = new OSBTreeBonsaiBucket<K, V>(keyBucketCacheEntry, bucketPointer.getPageOffset(), keySerializer,
-              valueSerializer, getChangesTree(atomicOperation, keyBucketCacheEntry), this);
-        }
+      final OAtomicOperation atomicOperation;
+      try {
+        atomicOperation = startAtomicOperation();
+      } catch (IOException e) {
+        throw OException.wrapException(new OSBTreeBonsaiLocalException("Error during sbtree entrie put", this), e);
       }
 
-      keyBucketCacheEntry.releaseExclusiveLock();
-      releasePage(atomicOperation, keyBucketCacheEntry);
+      final Lock lock = fileLockManager.acquireExclusiveLock(fileId);
+      try {
+        BucketSearchResult bucketSearchResult = findBucket(key, atomicOperation);
+        OBonsaiBucketPointer bucketPointer = bucketSearchResult.getLastPathItem();
 
-      if (!itemFound)
-        setSize(size() + 1, atomicOperation);
+        OCacheEntry keyBucketCacheEntry = loadPage(atomicOperation, fileId, bucketPointer.getPageIndex(), false);
+        keyBucketCacheEntry.acquireExclusiveLock();
+        OSBTreeBonsaiBucket<K, V> keyBucket = new OSBTreeBonsaiBucket<K, V>(keyBucketCacheEntry, bucketPointer.getPageOffset(),
+            keySerializer, valueSerializer, getChangesTree(atomicOperation, keyBucketCacheEntry), this);
 
-      endAtomicOperation(false, null);
-      return result;
-    } catch (IOException e) {
-      rollback(e);
-      throw OException
-          .wrapException(new OSBTreeBonsaiLocalException("Error during index update with key " + key + " and value " + value, this),
-              e);
+        final boolean itemFound = bucketSearchResult.itemIndex >= 0;
+        boolean result = true;
+        if (itemFound) {
+          final int updateResult = keyBucket.updateValue(bucketSearchResult.itemIndex, value);
+          assert updateResult == 0 || updateResult == 1;
+
+          result = updateResult != 0;
+        } else {
+          int insertionIndex = -bucketSearchResult.itemIndex - 1;
+
+          while (!keyBucket.addEntry(insertionIndex,
+              new OSBTreeBonsaiBucket.SBTreeEntry<K, V>(OBonsaiBucketPointer.NULL, OBonsaiBucketPointer.NULL, key, value), true)) {
+            keyBucketCacheEntry.releaseExclusiveLock();
+            releasePage(atomicOperation, keyBucketCacheEntry);
+
+            bucketSearchResult = splitBucket(bucketSearchResult.path, insertionIndex, key, atomicOperation);
+            bucketPointer = bucketSearchResult.getLastPathItem();
+
+            insertionIndex = bucketSearchResult.itemIndex;
+
+            keyBucketCacheEntry = loadPage(atomicOperation, fileId, bucketSearchResult.getLastPathItem().getPageIndex(), false);
+            keyBucketCacheEntry.acquireExclusiveLock();
+
+            keyBucket = new OSBTreeBonsaiBucket<K, V>(keyBucketCacheEntry, bucketPointer.getPageOffset(), keySerializer,
+                valueSerializer, getChangesTree(atomicOperation, keyBucketCacheEntry), this);
+          }
+        }
+
+        keyBucketCacheEntry.releaseExclusiveLock();
+        releasePage(atomicOperation, keyBucketCacheEntry);
+
+        if (!itemFound)
+          setSize(size() + 1, atomicOperation);
+
+        endAtomicOperation(false, null);
+        return result;
+      } catch (IOException e) {
+        rollback(e);
+        throw OException.wrapException(
+            new OSBTreeBonsaiLocalException("Error during index update with key " + key + " and value " + value, this), e);
+      } finally {
+        lock.unlock();
+      }
+
     } finally {
-      lock.unlock();
+      completeOperation();
     }
   }
 
@@ -285,13 +290,18 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
   }
 
   public void close(boolean flush) {
-    Lock lock = fileLockManager.acquireExclusiveLock(fileId);
+    startOperation();
     try {
-      readCache.closeFile(fileId, flush, writeCache);
-    } catch (IOException e) {
-      throw OException.wrapException(new OSBTreeBonsaiLocalException("Error during close of index " + getName(), this), e);
+      Lock lock = fileLockManager.acquireExclusiveLock(fileId);
+      try {
+        readCache.closeFile(fileId, flush, writeCache);
+      } catch (IOException e) {
+        throw OException.wrapException(new OSBTreeBonsaiLocalException("Error during close of index " + getName(), this), e);
+      } finally {
+        lock.unlock();
+      }
     } finally {
-      lock.unlock();
+      completeOperation();
     }
   }
 
@@ -304,49 +314,54 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
    */
   @Override
   public void clear() {
-    final OAtomicOperation atomicOperation;
+    startOperation();
     try {
-      atomicOperation = startAtomicOperation();
-    } catch (IOException e) {
-      throw OException.wrapException(new OSBTreeBonsaiLocalException("Error during sbtree entrie clear", this), e);
-    }
-
-    final Lock lock = fileLockManager.acquireExclusiveLock(fileId);
-    try {
-      final Queue<OBonsaiBucketPointer> subTreesToDelete = new LinkedList<OBonsaiBucketPointer>();
-
-      OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, rootBucketPointer.getPageIndex(), false);
-      cacheEntry.acquireExclusiveLock();
+      final OAtomicOperation atomicOperation;
       try {
-        OSBTreeBonsaiBucket<K, V> rootBucket = new OSBTreeBonsaiBucket<K, V>(cacheEntry, rootBucketPointer.getPageOffset(),
-            keySerializer, valueSerializer, getChangesTree(atomicOperation, cacheEntry), this);
-
-        addChildrenToQueue(subTreesToDelete, rootBucket);
-
-        rootBucket.shrink(0);
-        rootBucket = new OSBTreeBonsaiBucket<K, V>(cacheEntry, rootBucketPointer.getPageOffset(), true, keySerializer,
-            valueSerializer, getChangesTree(atomicOperation, cacheEntry), this);
-
-        rootBucket.setTreeSize(0);
-      } finally {
-        cacheEntry.releaseExclusiveLock();
-        releasePage(atomicOperation, cacheEntry);
+        atomicOperation = startAtomicOperation();
+      } catch (IOException e) {
+        throw OException.wrapException(new OSBTreeBonsaiLocalException("Error during sbtree entrie clear", this), e);
       }
 
-      recycleSubTrees(subTreesToDelete, atomicOperation);
+      final Lock lock = fileLockManager.acquireExclusiveLock(fileId);
+      try {
+        final Queue<OBonsaiBucketPointer> subTreesToDelete = new LinkedList<OBonsaiBucketPointer>();
 
-      endAtomicOperation(false, null);
-    } catch (IOException e) {
-      rollback(e);
+        OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, rootBucketPointer.getPageIndex(), false);
+        cacheEntry.acquireExclusiveLock();
+        try {
+          OSBTreeBonsaiBucket<K, V> rootBucket = new OSBTreeBonsaiBucket<K, V>(cacheEntry, rootBucketPointer.getPageOffset(),
+              keySerializer, valueSerializer, getChangesTree(atomicOperation, cacheEntry), this);
 
-      throw OException
-          .wrapException(new OSBTreeBonsaiLocalException("Error during clear of sbtree with name " + getName(), this), e);
-    } catch (RuntimeException e) {
-      rollback(e);
+          addChildrenToQueue(subTreesToDelete, rootBucket);
 
-      throw e;
+          rootBucket.shrink(0);
+          rootBucket = new OSBTreeBonsaiBucket<K, V>(cacheEntry, rootBucketPointer.getPageOffset(), true, keySerializer,
+              valueSerializer, getChangesTree(atomicOperation, cacheEntry), this);
+
+          rootBucket.setTreeSize(0);
+        } finally {
+          cacheEntry.releaseExclusiveLock();
+          releasePage(atomicOperation, cacheEntry);
+        }
+
+        recycleSubTrees(subTreesToDelete, atomicOperation);
+
+        endAtomicOperation(false, null);
+      } catch (IOException e) {
+        rollback(e);
+
+        throw OException
+            .wrapException(new OSBTreeBonsaiLocalException("Error during clear of sbtree with name " + getName(), this), e);
+      } catch (RuntimeException e) {
+        rollback(e);
+
+        throw e;
+      } finally {
+        lock.unlock();
+      }
     } finally {
-      lock.unlock();
+      completeOperation();
     }
   }
 
@@ -424,58 +439,69 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
    */
   @Override
   public void delete() {
-    final OAtomicOperation atomicOperation;
+    startOperation();
     try {
-      atomicOperation = startAtomicOperation();
-    } catch (IOException e) {
-      throw OException.wrapException(new OSBTreeBonsaiLocalException("Error during sbtree deletion", this), e);
-    }
+      final OAtomicOperation atomicOperation;
+      try {
+        atomicOperation = startAtomicOperation();
+      } catch (IOException e) {
+        throw OException.wrapException(new OSBTreeBonsaiLocalException("Error during sbtree deletion", this), e);
+      }
 
-    final Lock lock = fileLockManager.acquireExclusiveLock(fileId);
-    try {
-      final Queue<OBonsaiBucketPointer> subTreesToDelete = new LinkedList<OBonsaiBucketPointer>();
-      subTreesToDelete.add(rootBucketPointer);
-      recycleSubTrees(subTreesToDelete, atomicOperation);
+      final Lock lock = fileLockManager.acquireExclusiveLock(fileId);
+      try {
+        final Queue<OBonsaiBucketPointer> subTreesToDelete = new LinkedList<OBonsaiBucketPointer>();
+        subTreesToDelete.add(rootBucketPointer);
+        recycleSubTrees(subTreesToDelete, atomicOperation);
 
-      endAtomicOperation(false, null);
-    } catch (Exception e) {
-      rollback(e);
+        endAtomicOperation(false, null);
+      } catch (Exception e) {
+        rollback(e);
 
-      throw OException
-          .wrapException(new OSBTreeBonsaiLocalException("Error during delete of sbtree with name " + getName(), this), e);
+        throw OException
+            .wrapException(new OSBTreeBonsaiLocalException("Error during delete of sbtree with name " + getName(), this), e);
+      } finally {
+        lock.unlock();
+      }
     } finally {
-      lock.unlock();
+      completeOperation();
     }
   }
 
   public void load(OBonsaiBucketPointer rootBucketPointer) {
-    Lock lock = fileLockManager.acquireExclusiveLock(fileId);
+    startOperation();
     try {
-      this.rootBucketPointer = rootBucketPointer;
-
-      final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
-
-      this.fileId = openFile(atomicOperation, getFullName());
-
-      OCacheEntry rootCacheEntry = loadPage(atomicOperation, this.fileId, this.rootBucketPointer.getPageIndex(), false);
-
-      rootCacheEntry.acquireSharedLock();
+      Lock lock = fileLockManager.acquireExclusiveLock(fileId);
       try {
-        OSBTreeBonsaiBucket<K, V> rootBucket = new OSBTreeBonsaiBucket<K, V>(rootCacheEntry, this.rootBucketPointer.getPageOffset(),
-            keySerializer, valueSerializer, getChangesTree(atomicOperation, rootCacheEntry), this);
-        keySerializer = (OBinarySerializer<K>) storage.getComponentsFactory().binarySerializerFactory
-            .getObjectSerializer(rootBucket.getKeySerializerId());
-        valueSerializer = (OBinarySerializer<V>) storage.getComponentsFactory().binarySerializerFactory
-            .getObjectSerializer(rootBucket.getValueSerializerId());
-      } finally {
-        rootCacheEntry.releaseSharedLock();
-        releasePage(atomicOperation, rootCacheEntry);
-      }
+        this.rootBucketPointer = rootBucketPointer;
 
-    } catch (IOException e) {
-      throw OException.wrapException(new OSBTreeBonsaiLocalException("Exception during loading of sbtree " + fileId, this), e);
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
+
+        this.fileId = openFile(atomicOperation, getFullName());
+
+        OCacheEntry rootCacheEntry = loadPage(atomicOperation, this.fileId, this.rootBucketPointer.getPageIndex(), false);
+
+        rootCacheEntry.acquireSharedLock();
+        try {
+          OSBTreeBonsaiBucket<K, V> rootBucket = new OSBTreeBonsaiBucket<K, V>(rootCacheEntry,
+              this.rootBucketPointer.getPageOffset(), keySerializer, valueSerializer,
+              getChangesTree(atomicOperation, rootCacheEntry), this);
+          keySerializer = (OBinarySerializer<K>) storage.getComponentsFactory().binarySerializerFactory
+              .getObjectSerializer(rootBucket.getKeySerializerId());
+          valueSerializer = (OBinarySerializer<V>) storage.getComponentsFactory().binarySerializerFactory
+              .getObjectSerializer(rootBucket.getValueSerializerId());
+        } finally {
+          rootCacheEntry.releaseSharedLock();
+          releasePage(atomicOperation, rootCacheEntry);
+        }
+
+      } catch (IOException e) {
+        throw OException.wrapException(new OSBTreeBonsaiLocalException("Exception during loading of sbtree " + fileId, this), e);
+      } finally {
+        lock.unlock();
+      }
     } finally {
-      lock.unlock();
+      completeOperation();
     }
   }
 
@@ -495,170 +521,195 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
   @Override
   public long size() {
-    atomicOperationsManager.acquireReadLock(this);
+    startOperation();
     try {
-      final Lock lock = fileLockManager.acquireSharedLock(fileId);
+      atomicOperationsManager.acquireReadLock(this);
       try {
-        OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
-        OCacheEntry rootCacheEntry = loadPage(atomicOperation, fileId, rootBucketPointer.getPageIndex(), false);
-
+        final Lock lock = fileLockManager.acquireSharedLock(fileId);
         try {
-          OSBTreeBonsaiBucket rootBucket = new OSBTreeBonsaiBucket<K, V>(rootCacheEntry, rootBucketPointer.getPageOffset(),
-              keySerializer, valueSerializer, getChangesTree(atomicOperation, rootCacheEntry), this);
-          return rootBucket.getTreeSize();
+          OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
+          OCacheEntry rootCacheEntry = loadPage(atomicOperation, fileId, rootBucketPointer.getPageIndex(), false);
+
+          try {
+            OSBTreeBonsaiBucket rootBucket = new OSBTreeBonsaiBucket<K, V>(rootCacheEntry, rootBucketPointer.getPageOffset(),
+                keySerializer, valueSerializer, getChangesTree(atomicOperation, rootCacheEntry), this);
+            return rootBucket.getTreeSize();
+          } finally {
+            releasePage(atomicOperation, rootCacheEntry);
+          }
         } finally {
-          releasePage(atomicOperation, rootCacheEntry);
+          lock.unlock();
         }
+      } catch (IOException e) {
+        throw OException
+            .wrapException(new OSBTreeBonsaiLocalException("Error during retrieving of size of index " + getName(), this), e);
       } finally {
-        lock.unlock();
+        atomicOperationsManager.releaseReadLock(this);
       }
-    } catch (IOException e) {
-      throw OException
-          .wrapException(new OSBTreeBonsaiLocalException("Error during retrieving of size of index " + getName(), this), e);
     } finally {
-      atomicOperationsManager.releaseReadLock(this);
+      completeOperation();
     }
   }
 
   @Override
   public V remove(K key) {
-    final OAtomicOperation atomicOperation;
+    startOperation();
     try {
-      atomicOperation = startAtomicOperation();
-    } catch (IOException e) {
-      throw OException.wrapException(new OSBTreeBonsaiLocalException("Error during sbtree entrie removal", this), e);
-    }
-
-    Lock lock = fileLockManager.acquireExclusiveLock(fileId);
-    try {
-      BucketSearchResult bucketSearchResult = findBucket(key, atomicOperation);
-      if (bucketSearchResult.itemIndex < 0) {
-        endAtomicOperation(false, null);
-        return null;
-      }
-
-      OBonsaiBucketPointer bucketPointer = bucketSearchResult.getLastPathItem();
-
-      OCacheEntry keyBucketCacheEntry = loadPage(atomicOperation, fileId, bucketPointer.getPageIndex(), false);
-      final V removed;
-
-      keyBucketCacheEntry.acquireExclusiveLock();
+      final OAtomicOperation atomicOperation;
       try {
-        OSBTreeBonsaiBucket<K, V> keyBucket = new OSBTreeBonsaiBucket<K, V>(keyBucketCacheEntry, bucketPointer.getPageOffset(),
-            keySerializer, valueSerializer, getChangesTree(atomicOperation, keyBucketCacheEntry), this);
-
-        removed = keyBucket.getEntry(bucketSearchResult.itemIndex).value;
-
-        keyBucket.remove(bucketSearchResult.itemIndex);
-      } finally {
-        keyBucketCacheEntry.releaseExclusiveLock();
-        releasePage(atomicOperation, keyBucketCacheEntry);
+        atomicOperation = startAtomicOperation();
+      } catch (IOException e) {
+        throw OException.wrapException(new OSBTreeBonsaiLocalException("Error during sbtree entrie removal", this), e);
       }
-      setSize(size() - 1, atomicOperation);
 
-      endAtomicOperation(false, null);
-      return removed;
-    } catch (IOException e) {
-      rollback(e);
+      Lock lock = fileLockManager.acquireExclusiveLock(fileId);
+      try {
+        BucketSearchResult bucketSearchResult = findBucket(key, atomicOperation);
+        if (bucketSearchResult.itemIndex < 0) {
+          endAtomicOperation(false, null);
+          return null;
+        }
 
-      throw OException
-          .wrapException(new OSBTreeBonsaiLocalException("Error during removing key " + key + " from sbtree " + getName(), this),
-              e);
-    } catch (RuntimeException e) {
-      rollback(e);
+        OBonsaiBucketPointer bucketPointer = bucketSearchResult.getLastPathItem();
 
-      throw e;
+        OCacheEntry keyBucketCacheEntry = loadPage(atomicOperation, fileId, bucketPointer.getPageIndex(), false);
+        final V removed;
+
+        keyBucketCacheEntry.acquireExclusiveLock();
+        try {
+          OSBTreeBonsaiBucket<K, V> keyBucket = new OSBTreeBonsaiBucket<K, V>(keyBucketCacheEntry, bucketPointer.getPageOffset(),
+              keySerializer, valueSerializer, getChangesTree(atomicOperation, keyBucketCacheEntry), this);
+
+          removed = keyBucket.getEntry(bucketSearchResult.itemIndex).value;
+
+          keyBucket.remove(bucketSearchResult.itemIndex);
+        } finally {
+          keyBucketCacheEntry.releaseExclusiveLock();
+          releasePage(atomicOperation, keyBucketCacheEntry);
+        }
+        setSize(size() - 1, atomicOperation);
+
+        endAtomicOperation(false, null);
+        return removed;
+      } catch (IOException e) {
+        rollback(e);
+
+        throw OException
+            .wrapException(new OSBTreeBonsaiLocalException("Error during removing key " + key + " from sbtree " + getName(), this),
+                e);
+      } catch (RuntimeException e) {
+        rollback(e);
+
+        throw e;
+      } finally {
+        lock.unlock();
+      }
     } finally {
-      lock.unlock();
+      completeOperation();
     }
   }
 
   @Override
   public Collection<V> getValuesMinor(K key, boolean inclusive, final int maxValuesToFetch) {
-    final List<V> result = new ArrayList<V>();
+    startOperation();
+    try {
+      final List<V> result = new ArrayList<V>();
 
-    loadEntriesMinor(key, inclusive, new RangeResultListener<K, V>() {
-      @Override
-      public boolean addResult(Map.Entry<K, V> entry) {
-        result.add(entry.getValue());
-        if (maxValuesToFetch > -1 && result.size() >= maxValuesToFetch)
-          return false;
+      loadEntriesMinor(key, inclusive, new RangeResultListener<K, V>() {
+        @Override
+        public boolean addResult(Map.Entry<K, V> entry) {
+          result.add(entry.getValue());
+          if (maxValuesToFetch > -1 && result.size() >= maxValuesToFetch)
+            return false;
 
-        return true;
-      }
-    });
+          return true;
+        }
+      });
 
-    return result;
+      return result;
+    } finally {
+      completeOperation();
+    }
   }
 
   @Override
   public void loadEntriesMinor(K key, boolean inclusive, RangeResultListener<K, V> listener) {
-    atomicOperationsManager.acquireReadLock(this);
+    startOperation();
     try {
-      final Lock lock = fileLockManager.acquireSharedLock(fileId);
+      atomicOperationsManager.acquireReadLock(this);
       try {
-        OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
+        final Lock lock = fileLockManager.acquireSharedLock(fileId);
+        try {
+          OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
-        BucketSearchResult bucketSearchResult = findBucket(key, atomicOperation);
+          BucketSearchResult bucketSearchResult = findBucket(key, atomicOperation);
 
-        OBonsaiBucketPointer bucketPointer = bucketSearchResult.getLastPathItem();
-        int index;
-        if (bucketSearchResult.itemIndex >= 0) {
-          index = inclusive ? bucketSearchResult.itemIndex : bucketSearchResult.itemIndex - 1;
-        } else {
-          index = -bucketSearchResult.itemIndex - 2;
-        }
-
-        boolean firstBucket = true;
-        do {
-          OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, bucketPointer.getPageIndex(), false);
-          try {
-            OSBTreeBonsaiBucket<K, V> bucket = new OSBTreeBonsaiBucket<K, V>(cacheEntry, bucketPointer.getPageOffset(),
-                keySerializer, valueSerializer, getChangesTree(atomicOperation, cacheEntry), this);
-            if (!firstBucket)
-              index = bucket.size() - 1;
-
-            for (int i = index; i >= 0; i--) {
-              if (!listener.addResult(bucket.getEntry(i)))
-                return;
-            }
-
-            bucketPointer = bucket.getLeftSibling();
-
-            firstBucket = false;
-
-          } finally {
-            releasePage(atomicOperation, cacheEntry);
+          OBonsaiBucketPointer bucketPointer = bucketSearchResult.getLastPathItem();
+          int index;
+          if (bucketSearchResult.itemIndex >= 0) {
+            index = inclusive ? bucketSearchResult.itemIndex : bucketSearchResult.itemIndex - 1;
+          } else {
+            index = -bucketSearchResult.itemIndex - 2;
           }
-        } while (bucketPointer.getPageIndex() >= 0);
+
+          boolean firstBucket = true;
+          do {
+            OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, bucketPointer.getPageIndex(), false);
+            try {
+              OSBTreeBonsaiBucket<K, V> bucket = new OSBTreeBonsaiBucket<K, V>(cacheEntry, bucketPointer.getPageOffset(),
+                  keySerializer, valueSerializer, getChangesTree(atomicOperation, cacheEntry), this);
+              if (!firstBucket)
+                index = bucket.size() - 1;
+
+              for (int i = index; i >= 0; i--) {
+                if (!listener.addResult(bucket.getEntry(i)))
+                  return;
+              }
+
+              bucketPointer = bucket.getLeftSibling();
+
+              firstBucket = false;
+
+            } finally {
+              releasePage(atomicOperation, cacheEntry);
+            }
+          } while (bucketPointer.getPageIndex() >= 0);
+        } finally {
+          lock.unlock();
+        }
+      } catch (IOException ioe) {
+        throw OException.wrapException(
+            new OSBTreeBonsaiLocalException("Error during fetch of minor values for key " + key + " in sbtree " + getName(), this),
+            ioe);
       } finally {
-        lock.unlock();
+        atomicOperationsManager.releaseReadLock(this);
       }
-    } catch (IOException ioe) {
-      throw OException.wrapException(
-          new OSBTreeBonsaiLocalException("Error during fetch of minor values for key " + key + " in sbtree " + getName(), this),
-          ioe);
     } finally {
-      atomicOperationsManager.releaseReadLock(this);
+      completeOperation();
     }
   }
 
   @Override
   public Collection<V> getValuesMajor(K key, boolean inclusive, final int maxValuesToFetch) {
-    final List<V> result = new ArrayList<V>();
+    startOperation();
+    try {
+      final List<V> result = new ArrayList<V>();
 
-    loadEntriesMajor(key, inclusive, true, new RangeResultListener<K, V>() {
-      @Override
-      public boolean addResult(Map.Entry<K, V> entry) {
-        result.add(entry.getValue());
-        if (maxValuesToFetch > -1 && result.size() >= maxValuesToFetch)
-          return false;
+      loadEntriesMajor(key, inclusive, true, new RangeResultListener<K, V>() {
+        @Override
+        public boolean addResult(Map.Entry<K, V> entry) {
+          result.add(entry.getValue());
+          if (maxValuesToFetch > -1 && result.size() >= maxValuesToFetch)
+            return false;
 
-        return true;
-      }
-    });
+          return true;
+        }
+      });
 
-    return result;
+      return result;
+    } finally {
+      completeOperation();
+    }
   }
 
   /**
@@ -671,312 +722,344 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
    */
   @Override
   public void loadEntriesMajor(K key, boolean inclusive, boolean ascSortOrder, RangeResultListener<K, V> listener) {
-    if (!ascSortOrder)
-      throw new IllegalStateException("Descending sort order is not supported.");
-
-    atomicOperationsManager.acquireReadLock(this);
+    startOperation();
     try {
-      final Lock lock = fileLockManager.acquireSharedLock(fileId);
+      if (!ascSortOrder)
+        throw new IllegalStateException("Descending sort order is not supported.");
+
+      atomicOperationsManager.acquireReadLock(this);
       try {
-        OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
+        final Lock lock = fileLockManager.acquireSharedLock(fileId);
+        try {
+          OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
-        BucketSearchResult bucketSearchResult = findBucket(key, atomicOperation);
-        OBonsaiBucketPointer bucketPointer = bucketSearchResult.getLastPathItem();
+          BucketSearchResult bucketSearchResult = findBucket(key, atomicOperation);
+          OBonsaiBucketPointer bucketPointer = bucketSearchResult.getLastPathItem();
 
-        int index;
-        if (bucketSearchResult.itemIndex >= 0) {
-          index = inclusive ? bucketSearchResult.itemIndex : bucketSearchResult.itemIndex + 1;
-        } else {
-          index = -bucketSearchResult.itemIndex - 1;
-        }
-
-        do {
-          final OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, bucketPointer.getPageIndex(), false);
-          try {
-            OSBTreeBonsaiBucket<K, V> bucket = new OSBTreeBonsaiBucket<K, V>(cacheEntry, bucketPointer.getPageOffset(),
-                keySerializer, valueSerializer, getChangesTree(atomicOperation, cacheEntry), this);
-            int bucketSize = bucket.size();
-            for (int i = index; i < bucketSize; i++) {
-              if (!listener.addResult(bucket.getEntry(i)))
-                return;
-            }
-
-            bucketPointer = bucket.getRightSibling();
-            index = 0;
-          } finally {
-            releasePage(atomicOperation, cacheEntry);
+          int index;
+          if (bucketSearchResult.itemIndex >= 0) {
+            index = inclusive ? bucketSearchResult.itemIndex : bucketSearchResult.itemIndex + 1;
+          } else {
+            index = -bucketSearchResult.itemIndex - 1;
           }
 
-        } while (bucketPointer.getPageIndex() >= 0);
+          do {
+            final OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, bucketPointer.getPageIndex(), false);
+            try {
+              OSBTreeBonsaiBucket<K, V> bucket = new OSBTreeBonsaiBucket<K, V>(cacheEntry, bucketPointer.getPageOffset(),
+                  keySerializer, valueSerializer, getChangesTree(atomicOperation, cacheEntry), this);
+              int bucketSize = bucket.size();
+              for (int i = index; i < bucketSize; i++) {
+                if (!listener.addResult(bucket.getEntry(i)))
+                  return;
+              }
+
+              bucketPointer = bucket.getRightSibling();
+              index = 0;
+            } finally {
+              releasePage(atomicOperation, cacheEntry);
+            }
+
+          } while (bucketPointer.getPageIndex() >= 0);
+        } finally {
+          lock.unlock();
+        }
+      } catch (IOException ioe) {
+        throw OException.wrapException(
+            new OSBTreeBonsaiLocalException("Error during fetch of major values for key " + key + " in sbtree " + getName(), this),
+            ioe);
       } finally {
-        lock.unlock();
+        atomicOperationsManager.releaseReadLock(this);
       }
-    } catch (IOException ioe) {
-      throw OException.wrapException(
-          new OSBTreeBonsaiLocalException("Error during fetch of major values for key " + key + " in sbtree " + getName(), this),
-          ioe);
     } finally {
-      atomicOperationsManager.releaseReadLock(this);
+      completeOperation();
     }
   }
 
   @Override
   public Collection<V> getValuesBetween(K keyFrom, boolean fromInclusive, K keyTo, boolean toInclusive,
       final int maxValuesToFetch) {
-    final List<V> result = new ArrayList<V>();
-    loadEntriesBetween(keyFrom, fromInclusive, keyTo, toInclusive, new RangeResultListener<K, V>() {
-      @Override
-      public boolean addResult(Map.Entry<K, V> entry) {
-        result.add(entry.getValue());
-        if (maxValuesToFetch > 0 && result.size() >= maxValuesToFetch)
-          return false;
+    startOperation();
+    try {
+      final List<V> result = new ArrayList<V>();
+      loadEntriesBetween(keyFrom, fromInclusive, keyTo, toInclusive, new RangeResultListener<K, V>() {
+        @Override
+        public boolean addResult(Map.Entry<K, V> entry) {
+          result.add(entry.getValue());
+          if (maxValuesToFetch > 0 && result.size() >= maxValuesToFetch)
+            return false;
 
-        return true;
-      }
-    });
+          return true;
+        }
+      });
 
-    return result;
+      return result;
+    } finally {
+      completeOperation();
+    }
   }
 
   @Override
   public K firstKey() {
-    atomicOperationsManager.acquireReadLock(this);
+    startOperation();
     try {
-      final Lock lock = fileLockManager.acquireSharedLock(fileId);
+      atomicOperationsManager.acquireReadLock(this);
       try {
-        LinkedList<PagePathItemUnit> path = new LinkedList<PagePathItemUnit>();
-
-        OBonsaiBucketPointer bucketPointer = rootBucketPointer;
-
-        OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
-
-        OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, rootBucketPointer.getPageIndex(), false);
-        int itemIndex = 0;
-
-        OSBTreeBonsaiBucket<K, V> bucket = new OSBTreeBonsaiBucket<K, V>(cacheEntry, bucketPointer.getPageOffset(), keySerializer,
-            valueSerializer, getChangesTree(atomicOperation, cacheEntry), this);
+        final Lock lock = fileLockManager.acquireSharedLock(fileId);
         try {
-          while (true) {
-            if (bucket.isLeaf()) {
-              if (bucket.isEmpty()) {
-                if (path.isEmpty()) {
-                  return null;
-                } else {
-                  PagePathItemUnit pagePathItemUnit = path.removeLast();
+          LinkedList<PagePathItemUnit> path = new LinkedList<PagePathItemUnit>();
 
-                  bucketPointer = pagePathItemUnit.bucketPointer;
-                  itemIndex = pagePathItemUnit.itemIndex + 1;
+          OBonsaiBucketPointer bucketPointer = rootBucketPointer;
+
+          OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
+
+          OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, rootBucketPointer.getPageIndex(), false);
+          int itemIndex = 0;
+
+          OSBTreeBonsaiBucket<K, V> bucket = new OSBTreeBonsaiBucket<K, V>(cacheEntry, bucketPointer.getPageOffset(), keySerializer,
+              valueSerializer, getChangesTree(atomicOperation, cacheEntry), this);
+          try {
+            while (true) {
+              if (bucket.isLeaf()) {
+                if (bucket.isEmpty()) {
+                  if (path.isEmpty()) {
+                    return null;
+                  } else {
+                    PagePathItemUnit pagePathItemUnit = path.removeLast();
+
+                    bucketPointer = pagePathItemUnit.bucketPointer;
+                    itemIndex = pagePathItemUnit.itemIndex + 1;
+                  }
+                } else {
+                  return bucket.getKey(0);
                 }
               } else {
-                return bucket.getKey(0);
-              }
-            } else {
-              if (bucket.isEmpty() || itemIndex > bucket.size()) {
-                if (path.isEmpty()) {
-                  return null;
+                if (bucket.isEmpty() || itemIndex > bucket.size()) {
+                  if (path.isEmpty()) {
+                    return null;
+                  } else {
+                    PagePathItemUnit pagePathItemUnit = path.removeLast();
+
+                    bucketPointer = pagePathItemUnit.bucketPointer;
+                    itemIndex = pagePathItemUnit.itemIndex + 1;
+                  }
                 } else {
-                  PagePathItemUnit pagePathItemUnit = path.removeLast();
+                  path.add(new PagePathItemUnit(bucketPointer, itemIndex));
 
-                  bucketPointer = pagePathItemUnit.bucketPointer;
-                  itemIndex = pagePathItemUnit.itemIndex + 1;
+                  if (itemIndex < bucket.size()) {
+                    OSBTreeBonsaiBucket.SBTreeEntry<K, V> entry = bucket.getEntry(itemIndex);
+                    bucketPointer = entry.leftChild;
+                  } else {
+                    OSBTreeBonsaiBucket.SBTreeEntry<K, V> entry = bucket.getEntry(itemIndex - 1);
+                    bucketPointer = entry.rightChild;
+                  }
+
+                  itemIndex = 0;
                 }
-              } else {
-                path.add(new PagePathItemUnit(bucketPointer, itemIndex));
-
-                if (itemIndex < bucket.size()) {
-                  OSBTreeBonsaiBucket.SBTreeEntry<K, V> entry = bucket.getEntry(itemIndex);
-                  bucketPointer = entry.leftChild;
-                } else {
-                  OSBTreeBonsaiBucket.SBTreeEntry<K, V> entry = bucket.getEntry(itemIndex - 1);
-                  bucketPointer = entry.rightChild;
-                }
-
-                itemIndex = 0;
               }
+
+              releasePage(atomicOperation, cacheEntry);
+              cacheEntry = loadPage(atomicOperation, fileId, bucketPointer.getPageIndex(), false);
+
+              bucket = new OSBTreeBonsaiBucket<K, V>(cacheEntry, bucketPointer.getPageOffset(), keySerializer, valueSerializer,
+                  getChangesTree(atomicOperation, cacheEntry), this);
             }
-
+          } finally {
             releasePage(atomicOperation, cacheEntry);
-            cacheEntry = loadPage(atomicOperation, fileId, bucketPointer.getPageIndex(), false);
-
-            bucket = new OSBTreeBonsaiBucket<K, V>(cacheEntry, bucketPointer.getPageOffset(), keySerializer, valueSerializer,
-                getChangesTree(atomicOperation, cacheEntry), this);
           }
         } finally {
-          releasePage(atomicOperation, cacheEntry);
+          lock.unlock();
         }
+      } catch (IOException e) {
+        throw OException
+            .wrapException(new OSBTreeBonsaiLocalException("Error during finding first key in sbtree [" + getName() + "]", this),
+                e);
       } finally {
-        lock.unlock();
+        atomicOperationsManager.releaseReadLock(this);
       }
-    } catch (IOException e) {
-      throw OException
-          .wrapException(new OSBTreeBonsaiLocalException("Error during finding first key in sbtree [" + getName() + "]", this), e);
     } finally {
-      atomicOperationsManager.releaseReadLock(this);
+      completeOperation();
     }
   }
 
   @Override
   public K lastKey() {
-    atomicOperationsManager.acquireReadLock(this);
+    startOperation();
     try {
-      final Lock lock = fileLockManager.acquireSharedLock(fileId);
+      atomicOperationsManager.acquireReadLock(this);
       try {
-        LinkedList<PagePathItemUnit> path = new LinkedList<PagePathItemUnit>();
-
-        OBonsaiBucketPointer bucketPointer = rootBucketPointer;
-
-        OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
-        OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, bucketPointer.getPageIndex(), false);
-        OSBTreeBonsaiBucket<K, V> bucket = new OSBTreeBonsaiBucket<K, V>(cacheEntry, bucketPointer.getPageOffset(), keySerializer,
-            valueSerializer, getChangesTree(atomicOperation, cacheEntry), this);
-
-        int itemIndex = bucket.size() - 1;
+        final Lock lock = fileLockManager.acquireSharedLock(fileId);
         try {
-          while (true) {
-            if (bucket.isLeaf()) {
-              if (bucket.isEmpty()) {
-                if (path.isEmpty()) {
-                  return null;
-                } else {
-                  PagePathItemUnit pagePathItemUnit = path.removeLast();
+          LinkedList<PagePathItemUnit> path = new LinkedList<PagePathItemUnit>();
 
-                  bucketPointer = pagePathItemUnit.bucketPointer;
-                  itemIndex = pagePathItemUnit.itemIndex - 1;
+          OBonsaiBucketPointer bucketPointer = rootBucketPointer;
+
+          OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
+          OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, bucketPointer.getPageIndex(), false);
+          OSBTreeBonsaiBucket<K, V> bucket = new OSBTreeBonsaiBucket<K, V>(cacheEntry, bucketPointer.getPageOffset(), keySerializer,
+              valueSerializer, getChangesTree(atomicOperation, cacheEntry), this);
+
+          int itemIndex = bucket.size() - 1;
+          try {
+            while (true) {
+              if (bucket.isLeaf()) {
+                if (bucket.isEmpty()) {
+                  if (path.isEmpty()) {
+                    return null;
+                  } else {
+                    PagePathItemUnit pagePathItemUnit = path.removeLast();
+
+                    bucketPointer = pagePathItemUnit.bucketPointer;
+                    itemIndex = pagePathItemUnit.itemIndex - 1;
+                  }
+                } else {
+                  return bucket.getKey(bucket.size() - 1);
                 }
               } else {
-                return bucket.getKey(bucket.size() - 1);
-              }
-            } else {
-              if (itemIndex < -1) {
-                if (!path.isEmpty()) {
-                  PagePathItemUnit pagePathItemUnit = path.removeLast();
+                if (itemIndex < -1) {
+                  if (!path.isEmpty()) {
+                    PagePathItemUnit pagePathItemUnit = path.removeLast();
 
-                  bucketPointer = pagePathItemUnit.bucketPointer;
-                  itemIndex = pagePathItemUnit.itemIndex - 1;
-                } else
-                  return null;
-              } else {
-                path.add(new PagePathItemUnit(bucketPointer, itemIndex));
-
-                if (itemIndex > -1) {
-                  OSBTreeBonsaiBucket.SBTreeEntry<K, V> entry = bucket.getEntry(itemIndex);
-                  bucketPointer = entry.rightChild;
+                    bucketPointer = pagePathItemUnit.bucketPointer;
+                    itemIndex = pagePathItemUnit.itemIndex - 1;
+                  } else
+                    return null;
                 } else {
-                  OSBTreeBonsaiBucket.SBTreeEntry<K, V> entry = bucket.getEntry(0);
-                  bucketPointer = entry.leftChild;
-                }
+                  path.add(new PagePathItemUnit(bucketPointer, itemIndex));
 
-                itemIndex = OSBTreeBonsaiBucket.MAX_BUCKET_SIZE_BYTES + 1;
+                  if (itemIndex > -1) {
+                    OSBTreeBonsaiBucket.SBTreeEntry<K, V> entry = bucket.getEntry(itemIndex);
+                    bucketPointer = entry.rightChild;
+                  } else {
+                    OSBTreeBonsaiBucket.SBTreeEntry<K, V> entry = bucket.getEntry(0);
+                    bucketPointer = entry.leftChild;
+                  }
+
+                  itemIndex = OSBTreeBonsaiBucket.MAX_BUCKET_SIZE_BYTES + 1;
+                }
               }
+
+              releasePage(atomicOperation, cacheEntry);
+              cacheEntry = loadPage(atomicOperation, fileId, bucketPointer.getPageIndex(), false);
+
+              bucket = new OSBTreeBonsaiBucket<K, V>(cacheEntry, bucketPointer.getPageOffset(), keySerializer, valueSerializer,
+                  getChangesTree(atomicOperation, cacheEntry), this);
+              if (itemIndex == OSBTreeBonsaiBucket.MAX_BUCKET_SIZE_BYTES + 1)
+                itemIndex = bucket.size() - 1;
             }
-
+          } finally {
             releasePage(atomicOperation, cacheEntry);
-            cacheEntry = loadPage(atomicOperation, fileId, bucketPointer.getPageIndex(), false);
-
-            bucket = new OSBTreeBonsaiBucket<K, V>(cacheEntry, bucketPointer.getPageOffset(), keySerializer, valueSerializer,
-                getChangesTree(atomicOperation, cacheEntry), this);
-            if (itemIndex == OSBTreeBonsaiBucket.MAX_BUCKET_SIZE_BYTES + 1)
-              itemIndex = bucket.size() - 1;
           }
         } finally {
-          releasePage(atomicOperation, cacheEntry);
+          lock.unlock();
         }
+      } catch (IOException e) {
+        throw OException
+            .wrapException(new OSBTreeBonsaiLocalException("Error during finding first key in sbtree [" + getName() + "]", this),
+                e);
       } finally {
-        lock.unlock();
+        atomicOperationsManager.releaseReadLock(this);
       }
-    } catch (IOException e) {
-      throw OException
-          .wrapException(new OSBTreeBonsaiLocalException("Error during finding first key in sbtree [" + getName() + "]", this), e);
     } finally {
-      atomicOperationsManager.releaseReadLock(this);
+      completeOperation();
     }
   }
 
   @Override
   public void loadEntriesBetween(K keyFrom, boolean fromInclusive, K keyTo, boolean toInclusive,
       RangeResultListener<K, V> listener) {
-    atomicOperationsManager.acquireReadLock(this);
+    startOperation();
     try {
-      final Lock lock = fileLockManager.acquireSharedLock(fileId);
+      atomicOperationsManager.acquireReadLock(this);
       try {
-        OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
-        BucketSearchResult bucketSearchResultFrom = findBucket(keyFrom, atomicOperation);
+        final Lock lock = fileLockManager.acquireSharedLock(fileId);
+        try {
+          OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
+          BucketSearchResult bucketSearchResultFrom = findBucket(keyFrom, atomicOperation);
 
-        OBonsaiBucketPointer bucketPointerFrom = bucketSearchResultFrom.getLastPathItem();
+          OBonsaiBucketPointer bucketPointerFrom = bucketSearchResultFrom.getLastPathItem();
 
-        int indexFrom;
-        if (bucketSearchResultFrom.itemIndex >= 0) {
-          indexFrom = fromInclusive ? bucketSearchResultFrom.itemIndex : bucketSearchResultFrom.itemIndex + 1;
-        } else {
-          indexFrom = -bucketSearchResultFrom.itemIndex - 1;
-        }
-
-        BucketSearchResult bucketSearchResultTo = findBucket(keyTo, atomicOperation);
-        OBonsaiBucketPointer bucketPointerTo = bucketSearchResultTo.getLastPathItem();
-
-        int indexTo;
-        if (bucketSearchResultTo.itemIndex >= 0) {
-          indexTo = toInclusive ? bucketSearchResultTo.itemIndex : bucketSearchResultTo.itemIndex - 1;
-        } else {
-          indexTo = -bucketSearchResultTo.itemIndex - 2;
-        }
-
-        int startIndex = indexFrom;
-        int endIndex;
-        OBonsaiBucketPointer bucketPointer = bucketPointerFrom;
-
-        resultsLoop:
-        while (true) {
-
-          final OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, bucketPointer.getPageIndex(), false);
-          try {
-            OSBTreeBonsaiBucket<K, V> bucket = new OSBTreeBonsaiBucket<K, V>(cacheEntry, bucketPointer.getPageOffset(),
-                keySerializer, valueSerializer, getChangesTree(atomicOperation, cacheEntry), this);
-            if (!bucketPointer.equals(bucketPointerTo))
-              endIndex = bucket.size() - 1;
-            else
-              endIndex = indexTo;
-
-            for (int i = startIndex; i <= endIndex; i++) {
-              if (!listener.addResult(bucket.getEntry(i)))
-                break resultsLoop;
-            }
-
-            if (bucketPointer.equals(bucketPointerTo))
-              break;
-
-            bucketPointer = bucket.getRightSibling();
-            if (bucketPointer.getPageIndex() < 0)
-              break;
-
-          } finally {
-            releasePage(atomicOperation, cacheEntry);
+          int indexFrom;
+          if (bucketSearchResultFrom.itemIndex >= 0) {
+            indexFrom = fromInclusive ? bucketSearchResultFrom.itemIndex : bucketSearchResultFrom.itemIndex + 1;
+          } else {
+            indexFrom = -bucketSearchResultFrom.itemIndex - 1;
           }
 
-          startIndex = 0;
+          BucketSearchResult bucketSearchResultTo = findBucket(keyTo, atomicOperation);
+          OBonsaiBucketPointer bucketPointerTo = bucketSearchResultTo.getLastPathItem();
+
+          int indexTo;
+          if (bucketSearchResultTo.itemIndex >= 0) {
+            indexTo = toInclusive ? bucketSearchResultTo.itemIndex : bucketSearchResultTo.itemIndex - 1;
+          } else {
+            indexTo = -bucketSearchResultTo.itemIndex - 2;
+          }
+
+          int startIndex = indexFrom;
+          int endIndex;
+          OBonsaiBucketPointer bucketPointer = bucketPointerFrom;
+
+          resultsLoop:
+          while (true) {
+
+            final OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, bucketPointer.getPageIndex(), false);
+            try {
+              OSBTreeBonsaiBucket<K, V> bucket = new OSBTreeBonsaiBucket<K, V>(cacheEntry, bucketPointer.getPageOffset(),
+                  keySerializer, valueSerializer, getChangesTree(atomicOperation, cacheEntry), this);
+              if (!bucketPointer.equals(bucketPointerTo))
+                endIndex = bucket.size() - 1;
+              else
+                endIndex = indexTo;
+
+              for (int i = startIndex; i <= endIndex; i++) {
+                if (!listener.addResult(bucket.getEntry(i)))
+                  break resultsLoop;
+              }
+
+              if (bucketPointer.equals(bucketPointerTo))
+                break;
+
+              bucketPointer = bucket.getRightSibling();
+              if (bucketPointer.getPageIndex() < 0)
+                break;
+
+            } finally {
+              releasePage(atomicOperation, cacheEntry);
+            }
+
+            startIndex = 0;
+          }
+        } finally {
+          lock.unlock();
         }
+      } catch (IOException ioe) {
+        throw OException.wrapException(new OSBTreeBonsaiLocalException(
+            "Error during fetch of values between key " + keyFrom + " and key " + keyTo + " in sbtree " + getName(), this), ioe);
       } finally {
-        lock.unlock();
+        atomicOperationsManager.releaseReadLock(this);
       }
-    } catch (IOException ioe) {
-      throw OException.wrapException(new OSBTreeBonsaiLocalException(
-          "Error during fetch of values between key " + keyFrom + " and key " + keyTo + " in sbtree " + getName(), this), ioe);
     } finally {
-      atomicOperationsManager.releaseReadLock(this);
+      completeOperation();
     }
   }
 
   public void flush() {
-    atomicOperationsManager.acquireReadLock(this);
+    startOperation();
     try {
-      final Lock lock = fileLockManager.acquireSharedLock(fileId);
+      atomicOperationsManager.acquireReadLock(this);
       try {
-        writeCache.flush();
+        final Lock lock = fileLockManager.acquireSharedLock(fileId);
+        try {
+          writeCache.flush();
+        } finally {
+          lock.unlock();
+        }
       } finally {
-        lock.unlock();
+        atomicOperationsManager.releaseReadLock(this);
       }
     } finally {
-      atomicOperationsManager.releaseReadLock(this);
+      completeOperation();
     }
   }
 
@@ -1293,30 +1376,35 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
   @Override
   public int getRealBagSize(Map<K, OSBTreeRidBag.Change> changes) {
-    final Map<K, OSBTreeRidBag.Change> notAppliedChanges = new HashMap<K, OSBTreeRidBag.Change>(changes);
-    final OModifiableInteger size = new OModifiableInteger(0);
-    loadEntriesMajor(firstKey(), true, true, new RangeResultListener<K, V>() {
-      @Override
-      public boolean addResult(Map.Entry<K, V> entry) {
-        final OSBTreeRidBag.Change change = notAppliedChanges.remove(entry.getKey());
-        final int result;
+    startOperation();
+    try {
+      final Map<K, OSBTreeRidBag.Change> notAppliedChanges = new HashMap<K, OSBTreeRidBag.Change>(changes);
+      final OModifiableInteger size = new OModifiableInteger(0);
+      loadEntriesMajor(firstKey(), true, true, new RangeResultListener<K, V>() {
+        @Override
+        public boolean addResult(Map.Entry<K, V> entry) {
+          final OSBTreeRidBag.Change change = notAppliedChanges.remove(entry.getKey());
+          final int result;
 
-        final Integer treeValue = (Integer) entry.getValue();
-        if (change == null)
-          result = treeValue;
-        else
-          result = change.applyTo(treeValue);
+          final Integer treeValue = (Integer) entry.getValue();
+          if (change == null)
+            result = treeValue;
+          else
+            result = change.applyTo(treeValue);
 
-        size.increment(result);
-        return true;
+          size.increment(result);
+          return true;
+        }
+      });
+
+      for (OSBTreeRidBag.Change change : notAppliedChanges.values()) {
+        size.increment(change.applyTo(0));
       }
-    });
 
-    for (OSBTreeRidBag.Change change : notAppliedChanges.values()) {
-      size.increment(change.applyTo(0));
+      return size.intValue();
+    } finally {
+      completeOperation();
     }
-
-    return size.intValue();
   }
 
   @Override
