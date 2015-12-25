@@ -88,7 +88,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     try {
       final OAtomicOperation atomicOperation;
       try {
-        atomicOperation = startAtomicOperation();
+        atomicOperation = startAtomicOperation(false);
       } catch (IOException e) {
         throw OException.wrapException(new OSBTreeBonsaiLocalException("Error during sbtree creation", this), e);
       }
@@ -217,7 +217,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     try {
       final OAtomicOperation atomicOperation;
       try {
-        atomicOperation = startAtomicOperation();
+        atomicOperation = startAtomicOperation(true);
       } catch (IOException e) {
         throw OException.wrapException(new OSBTreeBonsaiLocalException("Error during sbtree entrie put", this), e);
       }
@@ -318,7 +318,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     try {
       final OAtomicOperation atomicOperation;
       try {
-        atomicOperation = startAtomicOperation();
+        atomicOperation = startAtomicOperation(true);
       } catch (IOException e) {
         throw OException.wrapException(new OSBTreeBonsaiLocalException("Error during sbtree entrie clear", this), e);
       }
@@ -443,7 +443,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     try {
       final OAtomicOperation atomicOperation;
       try {
-        atomicOperation = startAtomicOperation();
+        atomicOperation = startAtomicOperation(false);
       } catch (IOException e) {
         throw OException.wrapException(new OSBTreeBonsaiLocalException("Error during sbtree deletion", this), e);
       }
@@ -557,7 +557,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     try {
       final OAtomicOperation atomicOperation;
       try {
-        atomicOperation = startAtomicOperation();
+        atomicOperation = startAtomicOperation(true);
       } catch (IOException e) {
         throw OException.wrapException(new OSBTreeBonsaiLocalException("Error during sbtree entrie removal", this), e);
       }

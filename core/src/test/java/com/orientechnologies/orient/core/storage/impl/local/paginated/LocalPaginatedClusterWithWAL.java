@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ONonTx
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.statistic.OStoragePerformanceStatistic;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -49,12 +50,13 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
   {
     OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(1000000000);
   }
-  private ODiskWriteAheadLog     writeAheadLog;
 
-  private OPaginatedCluster      testCluster;
+  private ODiskWriteAheadLog writeAheadLog;
 
-  private OReadCache             testReadCache;
-  private OWriteCache            testWriteCache;
+  private OPaginatedCluster testCluster;
+
+  private OReadCache  testReadCache;
+  private OWriteCache testWriteCache;
 
   private OLocalPaginatedStorage testStorage;
 
@@ -86,6 +88,7 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
     when(storage.getName()).thenReturn("localPaginatedClusterWithWALTestOne");
     when(storage.getComponentsFactory()).thenReturn(new OCurrentStorageComponentsFactory(storageConfiguration));
     when(storage.getVariableParser()).thenReturn(new OStorageVariableParser(storageDir));
+    when(storage.getStoragePerformanceStatistic()).thenReturn(new OStoragePerformanceStatistic(1024, "test", 1));
 
     File buildDir = new File(buildDirectory);
     if (!buildDir.exists())
@@ -128,6 +131,7 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
     testStorageDir = buildDirectory + "/localPaginatedClusterWithWALTestTwo";
     when(testStorage.getStoragePath()).thenReturn(testStorageDir);
     when(testStorage.getComponentsFactory()).thenReturn(new OCurrentStorageComponentsFactory(storageConfiguration));
+    when(testStorage.getStoragePerformanceStatistic()).thenReturn(new OStoragePerformanceStatistic(1024, "test", 1));
 
     when(testStorage.getName()).thenReturn("localPaginatedClusterWithWALTestTwo");
     when(testStorage.getVariableParser()).thenReturn(new OStorageVariableParser(testStorageDir));

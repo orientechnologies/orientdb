@@ -210,15 +210,6 @@ public class OSchemaProxyObject implements OSchema {
     return underlying.getClusterSelectionFactory();
   }
 
-  @Override
-  public boolean isFullCheckpointOnChange() {
-    return underlying.isFullCheckpointOnChange();
-  }
-
-  @Override
-  public void setFullCheckpointOnChange(boolean fullCheckpointOnChange) {
-    underlying.setFullCheckpointOnChange(fullCheckpointOnChange);
-  }
 
   /**
    * Scans all classes accessible from the context class loader which belong to the given package and subpackages.

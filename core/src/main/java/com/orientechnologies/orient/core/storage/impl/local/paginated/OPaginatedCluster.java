@@ -177,7 +177,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   public void create(final int startSize) throws IOException {
     startOperation();
     try {
-      final OAtomicOperation atomicOperation = startAtomicOperation();
+      final OAtomicOperation atomicOperation = startAtomicOperation(false);
       acquireExclusiveLock();
       try {
         fileId = addFile(atomicOperation, getFullName());
@@ -282,7 +282,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   public void delete() throws IOException {
     startOperation();
     try {
-      final OAtomicOperation atomicOperation = startAtomicOperation();
+      final OAtomicOperation atomicOperation = startAtomicOperation(false);
       acquireExclusiveLock();
       try {
         deleteFile(atomicOperation, fileId);
@@ -419,7 +419,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       content = compression.compress(content);
       content = encryption.encrypt(content);
 
-      OAtomicOperation atomicOperation = startAtomicOperation();
+      OAtomicOperation atomicOperation = startAtomicOperation(true);
       acquireExclusiveLock();
       try {
         int entryContentLength = getEntryContentLength(content.length);
@@ -692,7 +692,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   public boolean deleteRecord(long clusterPosition) throws IOException {
     startOperation();
     try {
-      OAtomicOperation atomicOperation = startAtomicOperation();
+      OAtomicOperation atomicOperation = startAtomicOperation(true);
       acquireExclusiveLock();
       try {
 
@@ -781,7 +781,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   public boolean hideRecord(long position) throws IOException {
     startOperation();
     try {
-      OAtomicOperation atomicOperation = startAtomicOperation();
+      OAtomicOperation atomicOperation = startAtomicOperation(true);
       acquireExclusiveLock();
       try {
         OClusterPositionMapBucket.PositionEntry positionEntry = clusterPositionMap.get(position, 1);
@@ -824,7 +824,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       content = compression.compress(content);
       content = encryption.encrypt(content);
 
-      OAtomicOperation atomicOperation = startAtomicOperation();
+      OAtomicOperation atomicOperation = startAtomicOperation(true);
 
       acquireExclusiveLock();
       try {
@@ -1061,7 +1061,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     try {
       storageLocal.checkForClusterPermissions(getName());
 
-      OAtomicOperation atomicOperation = startAtomicOperation();
+      OAtomicOperation atomicOperation = startAtomicOperation(true);
 
       acquireExclusiveLock();
       try {
@@ -1467,8 +1467,8 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   }
 
   @Override
-  protected OAtomicOperation startAtomicOperation() throws IOException {
-    return atomicOperationsManager.startAtomicOperation(this);
+  protected OAtomicOperation startAtomicOperation(boolean trackNonTxOperations) throws IOException {
+    return atomicOperationsManager.startAtomicOperation(this, trackNonTxOperations);
   }
 
   private void updateClusterState(long sizeDiff, long recordsSizeDiff, OAtomicOperation atomicOperation) throws IOException {

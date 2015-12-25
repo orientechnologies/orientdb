@@ -58,7 +58,7 @@ public class OHashTableDirectory extends ODurableComponent {
   public void create() throws IOException {
     startOperation();
     try {
-      OAtomicOperation atomicOperation = startAtomicOperation();
+      OAtomicOperation atomicOperation = startAtomicOperation(false);
       acquireExclusiveLock();
       try {
 
@@ -80,7 +80,7 @@ public class OHashTableDirectory extends ODurableComponent {
   }
 
   private void init() throws IOException {
-    OAtomicOperation atomicOperation = startAtomicOperation();
+    OAtomicOperation atomicOperation = startAtomicOperation(false);
     try {
       OCacheEntry firstEntry = loadPage(atomicOperation, fileId, firstEntryIndex, true);
 
@@ -156,7 +156,7 @@ public class OHashTableDirectory extends ODurableComponent {
   public void delete() throws IOException {
     startOperation();
     try {
-      final OAtomicOperation atomicOperation = startAtomicOperation();
+      final OAtomicOperation atomicOperation = startAtomicOperation(false);
       acquireExclusiveLock();
       try {
         deleteFile(atomicOperation, fileId);
@@ -178,7 +178,7 @@ public class OHashTableDirectory extends ODurableComponent {
   public void deleteWithoutOpen() throws IOException {
     startOperation();
     try {
-      final OAtomicOperation atomicOperation = startAtomicOperation();
+      final OAtomicOperation atomicOperation = startAtomicOperation(false);
       acquireExclusiveLock();
       try {
         if (isFileExists(atomicOperation, getFullName())) {
@@ -206,7 +206,7 @@ public class OHashTableDirectory extends ODurableComponent {
     try {
       int nodeIndex;
 
-      OAtomicOperation atomicOperation = startAtomicOperation();
+      OAtomicOperation atomicOperation = startAtomicOperation(true);
       acquireExclusiveLock();
       try {
         OCacheEntry firstEntry = loadPage(atomicOperation, fileId, firstEntryIndex, true);
@@ -295,7 +295,7 @@ public class OHashTableDirectory extends ODurableComponent {
   public void deleteNode(int nodeIndex) throws IOException {
     startOperation();
     try {
-      final OAtomicOperation atomicOperation = startAtomicOperation();
+      final OAtomicOperation atomicOperation = startAtomicOperation(true);
       acquireExclusiveLock();
       try {
         OCacheEntry firstEntry = loadPage(atomicOperation, fileId, firstEntryIndex, true);
@@ -372,7 +372,7 @@ public class OHashTableDirectory extends ODurableComponent {
   public void setMaxLeftChildDepth(int nodeIndex, byte maxLeftChildDepth) throws IOException {
     startOperation();
     try {
-      OAtomicOperation atomicOperation = startAtomicOperation();
+      OAtomicOperation atomicOperation = startAtomicOperation(true);
       acquireExclusiveLock();
       try {
 
@@ -426,7 +426,7 @@ public class OHashTableDirectory extends ODurableComponent {
   public void setMaxRightChildDepth(int nodeIndex, byte maxRightChildDepth) throws IOException {
     startOperation();
     try {
-      OAtomicOperation atomicOperation = startAtomicOperation();
+      OAtomicOperation atomicOperation = startAtomicOperation(true);
       acquireExclusiveLock();
       try {
 
@@ -480,7 +480,7 @@ public class OHashTableDirectory extends ODurableComponent {
   public void setNodeLocalDepth(int nodeIndex, byte localNodeDepth) throws IOException {
     startOperation();
     try {
-      OAtomicOperation atomicOperation = startAtomicOperation();
+      OAtomicOperation atomicOperation = startAtomicOperation(true);
       acquireExclusiveLock();
       try {
         final ODirectoryPage page = loadPage(nodeIndex, true, atomicOperation);
@@ -539,7 +539,7 @@ public class OHashTableDirectory extends ODurableComponent {
   public void setNode(int nodeIndex, long[] node) throws IOException {
     startOperation();
     try {
-      OAtomicOperation atomicOperation = startAtomicOperation();
+      OAtomicOperation atomicOperation = startAtomicOperation(true);
       acquireExclusiveLock();
       try {
 
@@ -595,7 +595,7 @@ public class OHashTableDirectory extends ODurableComponent {
   public void setNodePointer(int nodeIndex, int index, long pointer) throws IOException {
     startOperation();
     try {
-      OAtomicOperation atomicOperation = startAtomicOperation();
+      OAtomicOperation atomicOperation = startAtomicOperation(true);
       acquireExclusiveLock();
       try {
         final ODirectoryPage page = loadPage(nodeIndex, true, atomicOperation);
@@ -623,7 +623,7 @@ public class OHashTableDirectory extends ODurableComponent {
   public void clear() throws IOException {
     startOperation();
     try {
-      OAtomicOperation atomicOperation = startAtomicOperation();
+      OAtomicOperation atomicOperation = startAtomicOperation(true);
       acquireExclusiveLock();
       try {
         truncateFile(atomicOperation, fileId);
@@ -701,7 +701,7 @@ public class OHashTableDirectory extends ODurableComponent {
   }
 
   @Override
-  protected OAtomicOperation startAtomicOperation() throws IOException {
-    return atomicOperationsManager.startAtomicOperation(this);
+  protected OAtomicOperation startAtomicOperation(boolean trackNonTxOperations) throws IOException {
+    return atomicOperationsManager.startAtomicOperation(this, trackNonTxOperations);
   }
 }

@@ -63,7 +63,7 @@ public class OClusterPositionMap extends ODurableComponent {
   public void create() throws IOException {
     startOperation();
     try {
-      final OAtomicOperation atomicOperation = startAtomicOperation();
+      final OAtomicOperation atomicOperation = startAtomicOperation(false);
 
       acquireExclusiveLock();
       try {
@@ -120,7 +120,7 @@ public class OClusterPositionMap extends ODurableComponent {
   public void truncate() throws IOException {
     startOperation();
     try {
-      final OAtomicOperation atomicOperation = startAtomicOperation();
+      final OAtomicOperation atomicOperation = startAtomicOperation(true);
       acquireExclusiveLock();
       try {
         truncateFile(atomicOperation, fileId);
@@ -143,7 +143,7 @@ public class OClusterPositionMap extends ODurableComponent {
   public void delete() throws IOException {
     startOperation();
     try {
-      final OAtomicOperation atomicOperation = startAtomicOperation();
+      final OAtomicOperation atomicOperation = startAtomicOperation(false);
 
       acquireExclusiveLock();
       try {
@@ -167,7 +167,7 @@ public class OClusterPositionMap extends ODurableComponent {
   public void rename(String newName) throws IOException {
     startOperation();
     try {
-      startAtomicOperation();
+      startAtomicOperation(true);
       acquireExclusiveLock();
       try {
         writeCache.renameFile(fileId, getFullName(), newName + getExtension());
@@ -191,7 +191,7 @@ public class OClusterPositionMap extends ODurableComponent {
   public long add(long pageIndex, int recordPosition) throws IOException {
     startOperation();
     try {
-      OAtomicOperation atomicOperation = startAtomicOperation();
+      OAtomicOperation atomicOperation = startAtomicOperation(true);
 
       acquireExclusiveLock();
       try {
@@ -241,7 +241,7 @@ public class OClusterPositionMap extends ODurableComponent {
   public void update(long clusterPosition, OClusterPositionMapBucket.PositionEntry entry) throws IOException {
     startOperation();
     try {
-      OAtomicOperation atomicOperation = startAtomicOperation();
+      OAtomicOperation atomicOperation = startAtomicOperation(true);
 
       acquireExclusiveLock();
       try {
@@ -317,7 +317,7 @@ public class OClusterPositionMap extends ODurableComponent {
   public OClusterPositionMapBucket.PositionEntry remove(final long clusterPosition) throws IOException {
     startOperation();
     try {
-      OAtomicOperation atomicOperation = startAtomicOperation();
+      OAtomicOperation atomicOperation = startAtomicOperation(true);
 
       acquireExclusiveLock();
       try {
@@ -617,7 +617,7 @@ public class OClusterPositionMap extends ODurableComponent {
   }
 
   @Override
-  protected OAtomicOperation startAtomicOperation() throws IOException {
-    return atomicOperationsManager.startAtomicOperation(this);
+  protected OAtomicOperation startAtomicOperation(boolean trackNonTxOperations) throws IOException {
+    return atomicOperationsManager.startAtomicOperation(this, trackNonTxOperations);
   }
 }

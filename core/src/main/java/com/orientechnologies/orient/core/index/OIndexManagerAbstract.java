@@ -67,19 +67,10 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 
   protected ReadWriteLock                                     lock                   = new ReentrantReadWriteLock();
 
-  private volatile boolean                                    fullCheckpointOnChange = false;
-
   public OIndexManagerAbstract(final ODatabaseDocument iDatabase) {
     super(new ODocument().setTrackingChanges(false));
   }
 
-  public boolean isFullCheckpointOnChange() {
-    return fullCheckpointOnChange;
-  }
-
-  public void setFullCheckpointOnChange(boolean fullCheckpointOnChange) {
-    this.fullCheckpointOnChange = fullCheckpointOnChange;
-  }
 
   @Override
   public OIndexManagerAbstract load() {
@@ -124,8 +115,6 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 
               toStream();
               document.save();
-
-              getDatabase().getStorage().synch();
               break;
 
             } catch (OConcurrentModificationException e) {

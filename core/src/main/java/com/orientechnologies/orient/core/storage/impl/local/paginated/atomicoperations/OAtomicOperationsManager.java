@@ -116,14 +116,15 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     this.storagePerformanceStatistic = storage.getStoragePerformanceStatistic();
   }
 
-  public OAtomicOperation startAtomicOperation(ODurableComponent durableComponent) throws IOException {
+  public OAtomicOperation startAtomicOperation(ODurableComponent durableComponent, boolean trackNonTxOperations)
+      throws IOException {
     if (durableComponent != null)
-      return startAtomicOperation(durableComponent.getFullName());
+      return startAtomicOperation(durableComponent.getFullName(), trackNonTxOperations);
 
-    return startAtomicOperation((String) null);
+    return startAtomicOperation((String) null, trackNonTxOperations);
   }
 
-  public OAtomicOperation startAtomicOperation(String fullName) throws IOException {
+  public OAtomicOperation startAtomicOperation(String fullName, boolean trackNonTxOperations) throws IOException {
     if (writeAheadLog == null)
       return null;
 
@@ -170,7 +171,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       activeAtomicOperations.put(unitId, new OPair<String, StackTraceElement[]>(thread.getName(), thread.getStackTrace()));
     }
 
-    if (storage.getStorageTransaction() == null)
+    if (trackNonTxOperations && storage.getStorageTransaction() == null)
       writeAheadLog.log(new ONonTxOperationPerformedWALRecord());
 
     if (fullName != null)

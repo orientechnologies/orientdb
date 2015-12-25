@@ -133,7 +133,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
     try {
       final OAtomicOperation atomicOperation;
       try {
-        atomicOperation = startAtomicOperation();
+        atomicOperation = startAtomicOperation(false);
       } catch (IOException e) {
         throw OException.wrapException(new OIndexException("Error during hash table creation"), e);
       }
@@ -199,8 +199,8 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
   }
 
   @Override
-  protected OAtomicOperation startAtomicOperation() throws IOException {
-    return atomicOperationsManager.startAtomicOperation(this);
+  protected OAtomicOperation startAtomicOperation(boolean trackNonTxOperations) throws IOException {
+    return atomicOperationsManager.startAtomicOperation(this, trackNonTxOperations);
   }
 
   @Override
@@ -219,7 +219,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
     try {
       final OAtomicOperation atomicOperation;
       try {
-        atomicOperation = startAtomicOperation();
+        atomicOperation = startAtomicOperation(true);
       } catch (IOException e) {
         throw OException.wrapException(new OIndexException("Error during hash set serializer for index keys"), e);
       }
@@ -279,7 +279,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
     try {
       final OAtomicOperation atomicOperation;
       try {
-        atomicOperation = startAtomicOperation();
+        atomicOperation = startAtomicOperation(true);
       } catch (IOException e) {
         throw OException.wrapException(new OIndexException("Error during hash table set serializer for index values"), e);
       }
@@ -388,7 +388,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
     try {
       final OAtomicOperation atomicOperation;
       try {
-        atomicOperation = startAtomicOperation();
+        atomicOperation = startAtomicOperation(true);
       } catch (IOException e) {
         throw OException.wrapException(new OIndexException("Error during hash table entry put"), e);
       }
@@ -422,7 +422,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
     try {
       final OAtomicOperation atomicOperation;
       try {
-        atomicOperation = startAtomicOperation();
+        atomicOperation = startAtomicOperation(true);
       } catch (IOException e) {
         throw OException.wrapException(new OIndexException("Error during hash table entry deletion"), e);
       }
@@ -542,7 +542,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
     try {
       final OAtomicOperation atomicOperation;
       try {
-        atomicOperation = startAtomicOperation();
+        atomicOperation = startAtomicOperation(true);
       } catch (IOException e) {
         throw OException.wrapException(new OIndexException("Error during hash table clear"), e);
       }
@@ -702,7 +702,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
     try {
       final OAtomicOperation atomicOperation;
       try {
-        atomicOperation = startAtomicOperation();
+        atomicOperation = startAtomicOperation(false);
       } catch (IOException e) {
         throw OException.wrapException(new OLocalHashTableException("Error during hash table deletion", this), e);
       }
@@ -1316,7 +1316,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
     try {
       final OAtomicOperation atomicOperation;
       try {
-        atomicOperation = startAtomicOperation();
+        atomicOperation = startAtomicOperation(false);
       } catch (IOException e) {
         throw OException.wrapException(new OLocalHashTableException("Error during hash table deletion", this), e);
       }

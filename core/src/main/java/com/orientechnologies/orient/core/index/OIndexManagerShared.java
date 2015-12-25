@@ -188,9 +188,6 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
       releaseExclusiveLock();
     }
 
-    if (OGlobalConfiguration.INDEX_FLUSH_AFTER_CREATE.getValueAsBoolean())
-      storage.synch();
-
     return preProcessBeforeReturn(index);
   }
 
@@ -238,10 +235,6 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
     } finally {
       releaseExclusiveLock();
     }
-
-    final OStorage storage = getDatabase().getStorage();
-    if (OGlobalConfiguration.INDEX_FLUSH_AFTER_CREATE.getValueAsBoolean())
-      storage.synch();
 
     return this;
   }
@@ -499,10 +492,6 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
       }
 
       save();
-
-      final OStorage storage = newDb.getStorage();
-      if (OGlobalConfiguration.INDEX_FLUSH_AFTER_CREATE.getValueAsBoolean())
-        storage.synch();
 
       rebuildCompleted = true;
 

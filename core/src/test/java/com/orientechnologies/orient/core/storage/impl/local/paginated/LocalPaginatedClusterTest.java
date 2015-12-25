@@ -80,6 +80,7 @@ public class LocalPaginatedClusterTest {
     when(storageConfiguration.getDirectory()).thenReturn(buildDirectory);
     when(storageConfiguration.getContextConfiguration()).thenReturn(contextConfiguration);
     when(storage.getStoragePath()).thenReturn(buildDirectory);
+    when(storage.getStoragePerformanceStatistic()).thenReturn(new OStoragePerformanceStatistic(1024, "test", 1));
 
     OStorageVariableParser variableParser = new OStorageVariableParser(buildDirectory);
     when(storage.getVariableParser()).thenReturn(variableParser);

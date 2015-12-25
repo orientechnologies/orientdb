@@ -48,7 +48,7 @@ import java.io.IOException;
  * <p>
  * To support of "atomic operation" concept following should be done:
  * <ol>
- * <li>Call {@link #startAtomicOperation()} method.</li>
+ * <li>Call {@link #startAtomicOperation(boolean)} method.</li>
  * <li>Call {@link #endAtomicOperation(boolean, Exception)} method when atomic operation completes, passed in parameter should be
  * <code>false</code> if atomic operation completes with success and <code>true</code> if there were some exceptions and it is
  * needed to rollback given operation.</li>
@@ -111,8 +111,8 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     atomicOperationsManager.endAtomicOperation(rollback, e);
   }
 
-  protected OAtomicOperation startAtomicOperation() throws IOException {
-    return atomicOperationsManager.startAtomicOperation(this);
+  protected OAtomicOperation startAtomicOperation(boolean trackNonTxOperations) throws IOException {
+    return atomicOperationsManager.startAtomicOperation(this, trackNonTxOperations);
   }
 
   protected OWALChangesTree getChangesTree(OAtomicOperation atomicOperation, OCacheEntry entry) {

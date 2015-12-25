@@ -115,7 +115,7 @@ public class OSBTree<K, V> extends ODurableComponent {
     try {
       final OAtomicOperation atomicOperation;
       try {
-        atomicOperation = startAtomicOperation();
+        atomicOperation = startAtomicOperation(false);
       } catch (IOException e) {
         throw OException.wrapException(new OSBTreeException("Error during sbtree creation", this), e);
       }
@@ -238,7 +238,7 @@ public class OSBTree<K, V> extends ODurableComponent {
     try {
       final OAtomicOperation atomicOperation;
       try {
-        atomicOperation = startAtomicOperation();
+        atomicOperation = startAtomicOperation(true);
       } catch (IOException e) {
         throw OException.wrapException(new OSBTreeException("Error during sbtree entrie put", this), e);
       }
@@ -404,7 +404,7 @@ public class OSBTree<K, V> extends ODurableComponent {
     try {
       final OAtomicOperation atomicOperation;
       try {
-        atomicOperation = startAtomicOperation();
+        atomicOperation = startAtomicOperation(true);
       } catch (IOException e) {
         throw OException.wrapException(new OSBTreeException("Error during sbtree clear", this), e);
       }
@@ -454,7 +454,7 @@ public class OSBTree<K, V> extends ODurableComponent {
     try {
       final OAtomicOperation atomicOperation;
       try {
-        atomicOperation = startAtomicOperation();
+        atomicOperation = startAtomicOperation(false);
       } catch (IOException e) {
         throw OException.wrapException(new OSBTreeException("Error during sbtree deletion", this), e);
       }
@@ -486,7 +486,7 @@ public class OSBTree<K, V> extends ODurableComponent {
     try {
       final OAtomicOperation atomicOperation;
       try {
-        atomicOperation = startAtomicOperation();
+        atomicOperation = startAtomicOperation(false);
       } catch (IOException e) {
         throw OException.wrapException(new OSBTreeException("Error during sbtree deletion", this), e);
       }
@@ -585,7 +585,7 @@ public class OSBTree<K, V> extends ODurableComponent {
     try {
       final OAtomicOperation atomicOperation;
       try {
-        atomicOperation = startAtomicOperation();
+        atomicOperation = startAtomicOperation(true);
       } catch (IOException e) {
         throw OException.wrapException(new OSBTreeException("Error during sbtree entrie remove", this), e);
       }
@@ -873,8 +873,8 @@ public class OSBTree<K, V> extends ODurableComponent {
   }
 
   @Override
-  protected OAtomicOperation startAtomicOperation() throws IOException {
-    return atomicOperationsManager.startAtomicOperation(this);
+  protected OAtomicOperation startAtomicOperation(boolean trackNonTxOperations) throws IOException {
+    return atomicOperationsManager.startAtomicOperation(this, trackNonTxOperations);
   }
 
   private void checkNullSupport(K key) {
