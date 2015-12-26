@@ -434,6 +434,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
           cls = (OClassImpl) ((OClassAbstractDelegate) superClass).delegate;
         else
           cls = (OClassImpl) superClass;
+        if(newSuperClasses.contains(cls)){
+          throw new OSchemaException("Duplicate superclass:'" + cls.getName() + "'");
+        }
         newSuperClasses.add(cls);
       }
       checkParametersConflict(newSuperClasses);
@@ -500,7 +503,10 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
         if (user != null)
           user.allow(ORule.ResourceGeneric.CLASS, cls.getName(), ORole.PERMISSION_UPDATE);
 
-        cls.checkParametersConflict(this);
+        if (superClasses.contains(superClass)) {
+          throw new OSchemaException(" Class:'" + this.getName() + "' has already class:'" + superClass.getName() + "' as superclass ");
+        }
+
         cls.addBaseClass(this);
         superClasses.add(cls);
       }
@@ -2476,7 +2482,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     final Collection<OProperty> baseClassProperties = baseClass.properties();
     for (OProperty property : baseClassProperties) {
       OProperty thisProperty = getProperty(property.getName());
-      if (thisProperty != null && thisProperty.getType().equals(property.getType())) {
+      if (thisProperty != null && !thisProperty.getType().equals(property.getType())) {
         throw new OSchemaException("Cannot add base class '" + baseClass.getName() + "', because of property conflict: '"
             + thisProperty + "' vs '" + property + "'");
       }

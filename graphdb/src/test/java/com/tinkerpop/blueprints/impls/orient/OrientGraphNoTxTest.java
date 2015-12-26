@@ -98,6 +98,7 @@ public class OrientGraphNoTxTest extends GraphTest {
 
     graph = new OrientGraphNoTx(url);
     graph.setWarnOnForceClosingTx(false);
+    graph.setStandardExceptions(true);
 
     currentGraphs.put(url, graph);
 

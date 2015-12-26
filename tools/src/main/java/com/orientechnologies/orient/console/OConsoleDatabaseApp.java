@@ -43,16 +43,15 @@ import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExportException;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImportException;
+import com.orientechnologies.orient.core.db.tool.ODatabaseRepair;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -1834,73 +1833,12 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     boolean verbose = iOptions != null && iOptions.contains("-v");
 
-    long fixedLinks = 0l;
-    long modifiedDocuments = 0l;
-    long errors = 0l;
-
-    try {
-
-      message("\n- Fixing dirty links...");
-      for (String clusterName : currentDatabase.getClusterNames()) {
-        for (ORecord rec : currentDatabase.browseCluster(clusterName)) {
-          try {
-            if (rec instanceof ODocument) {
-              boolean changed = false;
-
-              final ODocument doc = (ODocument) rec;
-              for (String fieldName : doc.fieldNames()) {
-                final Object fieldValue = doc.rawField(fieldName);
-
-                if (fieldValue instanceof OIdentifiable) {
-                  if (fixLink(fieldValue)) {
-                    doc.field(fieldName, (OIdentifiable) null);
-                    fixedLinks++;
-                    changed = true;
-                    if (verbose)
-                      message("\n--- reset link " + ((OIdentifiable) fieldValue).getIdentity() + " in field '" + fieldName
-                          + "' (rid=" + doc.getIdentity() + ")");
-                  }
-                } else if (fieldValue instanceof Iterable<?>) {
-                  if (fieldValue instanceof ORecordLazyMultiValue)
-                    ((ORecordLazyMultiValue) fieldValue).setAutoConvertToRecord(false);
-
-                  final Iterator<Object> it = ((Iterable) fieldValue).iterator();
-                  for (int i = 0; it.hasNext(); ++i) {
-                    final Object v = it.next();
-                    if (fixLink(v)) {
-                      it.remove();
-                      fixedLinks++;
-                      changed = true;
-                      if (verbose)
-                        message("\n--- reset link " + ((OIdentifiable) v).getIdentity() + " as item " + i
-                            + " in collection of field '" + fieldName + "' (rid=" + doc.getIdentity() + ")");
-                    }
-                  }
-                }
-              }
-
-              if (changed) {
-                modifiedDocuments++;
-                doc.save();
-
-                if (verbose)
-                  message("\n-- updated document " + doc.getIdentity());
-              }
-            }
-          } catch (Exception e) {
-            errors++;
-          }
-        }
+    new ODatabaseRepair().setDatabase(currentDatabase).setOutputListener(new OCommandOutputListener() {
+      @Override
+      public void onMessage(String iText) {
+        message(iText);
       }
-      if (verbose)
-        message("\n");
-
-      message("Done! Fixed links: " + fixedLinks + ", modified documents: " + modifiedDocuments);
-
-      message("\nRepair database complete (" + errors + " errors)");
-    } catch (Exception e) {
-      printError(e);
-    }
+    }).setVerbose(verbose).run();
   }
 
   @ConsoleCommand(description = "Compare two databases")
@@ -2436,28 +2374,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     currentRecord = null;
     currentResult = null;
     commandBuffer.setLength(0);
-  }
-
-  /**
-   * Checks if the link must be fixed.
-   * 
-   * @param fieldValue
-   *          Field containing the OIdentifiable (RID or Record)
-   * @return true to fix it, otherwise false
-   */
-  protected boolean fixLink(final Object fieldValue) {
-    if (fieldValue instanceof OIdentifiable) {
-      final ORID id = ((OIdentifiable) fieldValue).getIdentity();
-
-      if (id.isValid())
-        if (id.isPersistent()) {
-          final ORecord connected = ((OIdentifiable) fieldValue).getRecord();
-          if (connected == null)
-            return true;
-        } else
-          return true;
-    }
-    return false;
   }
 
   protected void dumpDistributedConfiguration(final boolean iForce) {

@@ -11,6 +11,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -154,6 +155,6 @@ public class OrientGraphSpecificTestSuite extends TestSuite {
     assertNotNull(d);
     assertTrue(d.containsKey("telefax"));
     graph.shutdown();
-    //graphTest.dropGraph(((OrientGraphTest) graphTest).getWorkingDirectory() + "/complex-map");
+    graphTest.dropGraph(((OrientGraphTest) graphTest).getWorkingDirectory() + File.separator + "complex-map");
   }
 }

@@ -121,4 +121,9 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
   protected OWriteAheadLog createWalFromIBUFiles(File directory) throws IOException {
     return null;
   }
+
+  @Override
+  public void shutdown() {
+    delete();
+  }
 }

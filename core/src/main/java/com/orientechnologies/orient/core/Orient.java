@@ -256,7 +256,6 @@ public class Orient extends OListenerManger<OOrientListener> {
           OLogManager.instance().error(this, "Error on startup", e);
         }
 
-      ODirectMemoryPointerFactory.instance().onShutdown();
     } finally {
       engineLock.writeLock().unlock();
     }
@@ -280,7 +279,7 @@ public class Orient extends OListenerManger<OOrientListener> {
 
       OLogManager.instance().debug(this, "Orient Engine is shutting down...");
 
-      closeAllStorages();
+      shutdownAllStorages();
 
       // SHUTDOWN ENGINES
       for (OEngine engine : engines.values())
@@ -333,6 +332,8 @@ public class Orient extends OListenerManger<OOrientListener> {
 
       System.gc();
 
+      ODirectMemoryPointerFactory.instance().onShutdown();
+
       OLogManager.instance().info(this, "OrientDB Engine shutdown complete");
       OLogManager.instance().flush();
     } finally {
@@ -383,6 +384,25 @@ public class Orient extends OListenerManger<OOrientListener> {
           stg.close(true, false);
         } catch (Throwable e) {
           OLogManager.instance().warn(this, "-- error on closing storage", e);
+        }
+      }
+      storages.clear();
+    } finally {
+      engineLock.writeLock().unlock();
+    }
+  }
+
+  private void shutdownAllStorages() {
+    engineLock.writeLock().lock();
+    try {
+      // CLOSE ALL THE STORAGES
+      final List<OStorage> storagesCopy = new ArrayList<OStorage>(storages.values());
+      for (OStorage stg : storagesCopy) {
+        try {
+          OLogManager.instance().info(this, "- shutdown storage: " + stg.getName() + "...");
+          stg.shutdown();
+        } catch (Throwable e) {
+          OLogManager.instance().warn(this, "-- error on shutdown storage", e);
         }
       }
       storages.clear();

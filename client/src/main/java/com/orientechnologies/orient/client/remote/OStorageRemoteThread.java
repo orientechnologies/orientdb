@@ -727,6 +727,11 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   @Override
+  public void shutdown() {
+    close(true, false);
+  }
+
+  @Override
   public boolean equals(final Object iOther) {
     if (iOther instanceof OStorageRemoteThread)
       return iOther == this;

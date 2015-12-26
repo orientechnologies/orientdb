@@ -8,7 +8,6 @@ import com.tinkerpop.blueprints.util.io.graphml.GraphMLReaderTestSuite;
 import com.tinkerpop.blueprints.util.io.graphson.GraphSONReaderTestSuite;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -151,6 +150,7 @@ public abstract class OrientGraphTest extends GraphTest {
 
     graph = new OrientGraph(url);
     graph.setWarnOnForceClosingTx(false);
+    graph.setStandardExceptions(true);
 
     currentGraphs.put(url, graph);
 

@@ -63,7 +63,7 @@ public abstract class BaseHttpTest {
 
   protected void startServer() throws Exception {
     if (server == null) {
-      server = OServerMain.create();
+      server = new OServer(false);
       server.startup(getClass().getResourceAsStream(getServerCfg()));
       server.activate();
     }
@@ -208,5 +208,9 @@ public abstract class BaseHttpTest {
   protected BaseHttpTest setRealm(String realm) {
     this.realm = realm;
     return this;
+  }
+
+  public static OServer getServer() {
+    return server;
   }
 }

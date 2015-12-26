@@ -28,13 +28,15 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
+import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
+import com.orientechnologies.orient.core.storage.impl.local.statistic.OStoragePerformanceStatistic;
 
 import java.io.IOException;
 
 /**
  * Base class for all durable data structures, that is data structures state of which can be consistently restored after system
  * crash but results of last operations in small interval before crash may be lost.
- * 
+ * <p>
  * This class contains methods which are used to support such concepts as:
  * <ol>
  * <li>"atomic operation" - set of operations which should be either applied together or not. It includes not only changes on
@@ -42,17 +44,16 @@ import java.io.IOException;
  * operation.</li>
  * <li>write ahead log - log of all changes which were done with page content after loading it from cache.</li>
  * </ol>
- * 
- * 
+ * <p>
+ * <p>
  * To support of "atomic operation" concept following should be done:
  * <ol>
- * <li>Call {@link #startAtomicOperation()} method.</li>
+ * <li>Call {@link #startAtomicOperation(boolean)} method.</li>
  * <li>Call {@link #endAtomicOperation(boolean, Exception)} method when atomic operation completes, passed in parameter should be
  * <code>false</code> if atomic operation completes with success and <code>true</code> if there were some exceptions and it is
  * needed to rollback given operation.</li>
  * </ol>
- * 
- * 
+ *
  * @author Andrey Lomakin
  * @since 8/27/13
  */
@@ -62,10 +63,12 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
   protected final OReadCache                readCache;
   protected final OWriteCache               writeCache;
 
-  private volatile String                   name;
-  private volatile String                   fullName;
+  private volatile String name;
+  private volatile String fullName;
 
-  protected final String                    extension;
+  protected final String extension;
+
+  private final OStoragePerformanceStatistic storagePerformanceStatistic;
 
   public ODurableComponent(OAbstractPaginatedStorage storage, String name, String extension) {
     super(true);
@@ -78,6 +81,7 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     this.atomicOperationsManager = storage.getAtomicOperationsManager();
     this.readCache = storage.getReadCache();
     this.writeCache = storage.getWriteCache();
+    this.storagePerformanceStatistic = storage.getStoragePerformanceStatistic();
 
   }
 
@@ -107,8 +111,8 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     atomicOperationsManager.endAtomicOperation(rollback, e);
   }
 
-  protected OAtomicOperation startAtomicOperation() throws IOException {
-    return atomicOperationsManager.startAtomicOperation(this);
+  protected OAtomicOperation startAtomicOperation(boolean trackNonTxOperations) throws IOException {
+    return atomicOperationsManager.startAtomicOperation(this, trackNonTxOperations);
   }
 
   protected OWALChangesTree getChangesTree(OAtomicOperation atomicOperation, OCacheEntry entry) {
@@ -127,15 +131,15 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
 
   protected OCacheEntry loadPage(final OAtomicOperation atomicOperation, final long fileId, final long pageIndex,
       final boolean checkPinnedPages) throws IOException {
-    return loadPage(atomicOperation, fileId, pageIndex, checkPinnedPages, 0);
+    return loadPage(atomicOperation, fileId, pageIndex, checkPinnedPages, 1);
   }
 
   protected OCacheEntry loadPage(OAtomicOperation atomicOperation, long fileId, long pageIndex, boolean checkPinnedPages,
-      final int prefetchPages) throws IOException {
+      final int pageCount) throws IOException {
     if (atomicOperation == null)
-      return readCache.load(fileId, pageIndex, checkPinnedPages, writeCache, prefetchPages);
+      return readCache.load(fileId, pageIndex, checkPinnedPages, writeCache, pageCount, storagePerformanceStatistic);
 
-    return atomicOperation.loadPage(fileId, pageIndex, checkPinnedPages, prefetchPages);
+    return atomicOperation.loadPage(fileId, pageIndex, checkPinnedPages, pageCount);
   }
 
   protected void pinPage(OAtomicOperation atomicOperation, OCacheEntry cacheEntry) throws IOException {
@@ -147,14 +151,14 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
 
   protected OCacheEntry addPage(OAtomicOperation atomicOperation, long fileId) throws IOException {
     if (atomicOperation == null)
-      return readCache.allocateNewPage(fileId, writeCache);
+      return readCache.allocateNewPage(fileId, writeCache, storagePerformanceStatistic);
 
     return atomicOperation.addPage(fileId);
   }
 
   protected void releasePage(OAtomicOperation atomicOperation, OCacheEntry cacheEntry) {
     if (atomicOperation == null)
-      readCache.release(cacheEntry, writeCache);
+      readCache.release(cacheEntry, writeCache, storagePerformanceStatistic);
     else
       atomicOperation.releasePage(cacheEntry);
   }
@@ -201,17 +205,27 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     return atomicOperation.isFileExists(fileId);
   }
 
-  protected String fileNameById(OAtomicOperation atomicOperation, long fileId) {
-    if (atomicOperation == null)
-      return writeCache.fileNameById(fileId);
-
-    return atomicOperation.fileNameById(fileId);
-  }
-
   protected void truncateFile(OAtomicOperation atomicOperation, long filedId) throws IOException {
     if (atomicOperation == null)
       readCache.truncateFile(filedId, writeCache);
     else
       atomicOperation.truncateFile(filedId);
   }
+
+  protected void startOperation() {
+    OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = OSessionStoragePerformanceStatistic
+        .getStatisticInstance();
+    if (sessionStoragePerformanceStatistic != null) {
+      sessionStoragePerformanceStatistic.startComponentOperation(getFullName());
+    }
+  }
+
+  protected void completeOperation() {
+    OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = OSessionStoragePerformanceStatistic
+        .getStatisticInstance();
+    if (sessionStoragePerformanceStatistic != null) {
+      sessionStoragePerformanceStatistic.completeComponentOperation();
+    }
+  }
+
 }

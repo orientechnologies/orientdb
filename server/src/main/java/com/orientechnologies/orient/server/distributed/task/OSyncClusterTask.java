@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPositionMap;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabaseChunk;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
@@ -169,7 +170,8 @@ public class OSyncClusterTask extends OAbstractReplicatedTask {
                 "sending the compressed cluster '%s.%s' over the NETWORK to node '%s', size=%s...", databaseName, clusterName,
                 getNodeSource(), OFileUtils.getSizeAsString(fileSize));
 
-            final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(0, backupFile, 0, CHUNK_MAX_SIZE);
+            final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(0, backupFile, 0, CHUNK_MAX_SIZE,
+                new OLogSequenceNumber(-1, -1), false);
 
             ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
                 "- transferring chunk #%d offset=%d size=%s...", 1, 0, OFileUtils.getSizeAsNumber(chunk.buffer.length));

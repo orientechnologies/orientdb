@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineCl
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
@@ -194,6 +195,14 @@ public abstract class ORecordAbstract implements ORecord {
     return ORecordSerializerJSON.INSTANCE.toString(this, new StringBuilder(1024), iFormat == null ? "" : iFormat).toString();
   }
 
+  public void toJSON(final String iFormat, final OutputStream stream) throws IOException {
+    stream.write(toJSON(iFormat).toString().getBytes());
+  }
+
+  public void toJSON(final OutputStream stream) throws IOException {
+    stream.write(toJSON().toString().getBytes());
+  }
+
   @Override
   public String toString() {
     return (_recordId.isValid() ? _recordId : "") + (_source != null ? Arrays.toString(_source) : "[]") + " v" + _recordVersion;
@@ -261,9 +270,10 @@ public abstract class ORecordAbstract implements ORecord {
       getDatabase().reload(this, fetchPlan, ignoreCache, force);
 
       return this;
+
     } catch (OOfflineClusterException e) {
       throw e;
-    } catch (OException e) {
+    } catch (ORecordNotFoundException e) {
       throw e;
     } catch (Exception e) {
       throw OException.wrapException(new ORecordNotFoundException("The record with id '" + getIdentity() + "' not found"), e);

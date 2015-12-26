@@ -626,6 +626,13 @@ public class OSelectStatementTest {
   }
 
 
+  @Test
+  public void testReservedWordsAsNamedParams() {
+    //issue #5493
+    checkRightSyntax("select from V limit :limit");
+  }
+
+
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);
     try {

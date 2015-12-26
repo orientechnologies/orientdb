@@ -102,20 +102,20 @@ public class OSecurityShared implements OSecurity, OCloseable {
 
   @Override
   public OIdentifiable allowRole(final ODocument iDocument, final ORestrictedOperation iOperation, final String iRoleName) {
-    final ORole role = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSecurity().getRole(iRoleName);
+    final ORID role = getRoleRID(iRoleName);
     if (role == null)
       throw new IllegalArgumentException("Role '" + iRoleName + "' not found");
 
-    return allowIdentity(iDocument, iOperation.getFieldName(), role.getDocument().getIdentity());
+    return allowIdentity(iDocument, iOperation.getFieldName(), role);
   }
 
   @Override
   public OIdentifiable allowUser(final ODocument iDocument, final ORestrictedOperation iOperation, final String iUserName) {
-    final OUser user = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSecurity().getUser(iUserName);
+    final ORID user = getUserRID(iUserName);
     if (user == null)
       throw new IllegalArgumentException("User '" + iUserName + "' not found");
 
-    return allowIdentity(iDocument, iOperation.getFieldName(), user.getDocument().getIdentity());
+    return allowIdentity(iDocument, iOperation.getFieldName(), user);
   }
 
   @Override
@@ -311,8 +311,8 @@ public class OSecurityShared implements OSecurity, OCloseable {
   }
 
   public boolean dropUser(final String iUserName) {
-    final Number removed = getDatabase().<OCommandRequest> command(new OCommandSQL("delete from OUser where name = ?")).execute(
-        iUserName);
+    final Number removed = getDatabase().<OCommandRequest> command(new OCommandSQL("delete from OUser where name = ?"))
+        .execute(iUserName);
 
     return removed != null && removed.intValue() > 0;
   }
@@ -329,8 +329,8 @@ public class OSecurityShared implements OSecurity, OCloseable {
     if (iRoleName == null)
       return null;
 
-    final List<ODocument> result = getDatabase().<OCommandRequest> command(
-        new OSQLSynchQuery<ODocument>("select from ORole where name = ? limit 1")).execute(iRoleName);
+    final List<ODocument> result = getDatabase()
+        .<OCommandRequest> command(new OSQLSynchQuery<ODocument>("select from ORole where name = ? limit 1")).execute(iRoleName);
 
     if (result != null && !result.isEmpty())
       return new ORole(result.get(0));
@@ -342,8 +342,9 @@ public class OSecurityShared implements OSecurity, OCloseable {
     if (iRoleName == null)
       return null;
 
-    final List<ODocument> result = getDatabase().<OCommandRequest> command(
-        new OSQLSynchQuery<ODocument>("select rid from index:ORole.name where key = ? limit 1")).execute(iRoleName);
+    final List<ODocument> result = getDatabase()
+        .<OCommandRequest> command(new OSQLSynchQuery<ODocument>("select rid from index:ORole.name where key = ? limit 1"))
+        .execute(iRoleName);
 
     if (result != null && !result.isEmpty())
       return result.get(0).rawField("rid");
@@ -361,8 +362,8 @@ public class OSecurityShared implements OSecurity, OCloseable {
   }
 
   public boolean dropRole(final String iRoleName) {
-    final Number removed = getDatabase().<OCommandRequest> command(
-        new OCommandSQL("delete from ORole where name = '" + iRoleName + "'")).execute();
+    final Number removed = getDatabase()
+        .<OCommandRequest> command(new OCommandSQL("delete from ORole where name = '" + iRoleName + "'")).execute();
 
     return removed != null && removed.intValue() > 0;
   }
@@ -400,8 +401,8 @@ public class OSecurityShared implements OSecurity, OCloseable {
 
     final ORole writerRole = createRole("writer", ORole.ALLOW_MODES.DENY_ALL_BUT);
     writerRole.addRule(ORule.ResourceGeneric.DATABASE, null, ORole.PERMISSION_READ);
-    writerRole.addRule(ORule.ResourceGeneric.SCHEMA, null, ORole.PERMISSION_READ + ORole.PERMISSION_CREATE
-        + ORole.PERMISSION_UPDATE);
+    writerRole.addRule(ORule.ResourceGeneric.SCHEMA, null,
+        ORole.PERMISSION_READ + ORole.PERMISSION_CREATE + ORole.PERMISSION_UPDATE);
     writerRole.addRule(ORule.ResourceGeneric.CLUSTER, OMetadataDefault.CLUSTER_INTERNAL_NAME, ORole.PERMISSION_READ);
     readerRole.addRule(ORule.ResourceGeneric.CLUSTER, "orole", ORole.PERMISSION_NONE);
     readerRole.addRule(ORule.ResourceGeneric.CLUSTER, "ouser", ORole.PERMISSION_NONE);
@@ -598,8 +599,9 @@ public class OSecurityShared implements OSecurity, OCloseable {
   }
 
   public ORID getUserRID(final String iUserName) {
-    List<ODocument> result = getDatabase().<OCommandRequest> command(
-        new OSQLSynchQuery<ODocument>("select rid from index:OUser.name where key = ? limit 1")).execute(iUserName);
+    List<ODocument> result = getDatabase()
+        .<OCommandRequest> command(new OSQLSynchQuery<ODocument>("select rid from index:OUser.name where key = ? limit 1"))
+        .execute(iUserName);
 
     if (result != null && !result.isEmpty())
       return result.get(0).rawField("rid");

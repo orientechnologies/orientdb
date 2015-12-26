@@ -105,7 +105,7 @@ public class GraphTransactionConsistency {
 
               for (int e = 0; e < EDGENUM; ++e) {
                 final OrientVertex v2 = graph.addVertex(null, "v", i, "e", e, "type", "Connected", "lastUpdate", new Date());
-                v1.addEdge(null, v2);
+                v1.addEdge("E", v2);
               }
 
               if (i % TXBATCH == 0) {

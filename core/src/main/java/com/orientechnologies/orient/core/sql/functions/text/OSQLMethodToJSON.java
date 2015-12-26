@@ -23,8 +23,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.method.misc.OAbstractSQLMethod;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -66,14 +64,14 @@ public class OSQLMethodToJSON extends OAbstractSQLMethod {
 
     } else if (OMultiValue.isMultiValue(iThis)) {
 
-      final List<String> result = new ArrayList<String>();
+      StringBuilder builder = new StringBuilder();
+      builder.append("[");
       for (Object o : OMultiValue.getMultiValueIterable(iThis, false)) {
-        if (o != null && o instanceof OIdentifiable) {
-          final ORecord record = ((OIdentifiable) o).getRecord();
-          result.add(iParams.length == 1 ? record.toJSON(format) : record.toJSON());
-        }
+        builder.append(execute(o, iCurrentRecord, iContext, ioResult, iParams));
       }
-      return result;
+
+      builder.append("]");
+      return builder.toString();
     }
     return null;
   }

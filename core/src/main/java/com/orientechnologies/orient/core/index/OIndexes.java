@@ -23,45 +23,49 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 import static com.orientechnologies.common.util.OClassLoaderHelper.lookupProviderWithOrientClassLoader;
 
 /**
  * Utility class to create indexes. New OIndexFactory can be registered
- * 
+ * <p/>
  * <p>
  * In order to be detected, factories must implement the {@link OIndexFactory} interface.
  * </p>
- * 
+ * <p/>
  * <p>
  * In addition to implementing this interface datasouces should have a services file:<br>
  * <code>META-INF/services/com.orientechnologies.orient.core.index.OIndexFactory</code>
  * </p>
- * 
+ * <p/>
  * <p>
  * The file should contain a single line which gives the full name of the implementing class.
  * </p>
- * 
+ * <p/>
  * <p>
  * Example:<br>
  * <code>org.mycompany.index.MyIndexFactory</code>
  * </p>
- * 
+ *
  * @author Johann Sorel (Geomatys)
  */
 public final class OIndexes {
 
-  private static Set<OIndexFactory>       FACTORIES         = null;
+  private static       Set<OIndexFactory> FACTORIES         = null;
   private static final Set<OIndexFactory> DYNAMIC_FACTORIES = Collections.synchronizedSet(new HashSet<OIndexFactory>());
-  private static ClassLoader              orientClassLoader = OIndexes.class.getClassLoader();
+  private static       ClassLoader        orientClassLoader = OIndexes.class.getClassLoader();
 
   private OIndexes() {
   }
 
   /**
    * Cache a set of all factories. we do not use the service loader directly since it is not concurrent.
-   * 
+   *
    * @return Set<OIndexFactory>
    */
   private static synchronized Set<OIndexFactory> getFactories() {
@@ -88,7 +92,7 @@ public final class OIndexes {
 
   /**
    * Iterates on all factories and append all index types.
-   * 
+   *
    * @return Set of all index types.
    */
   public static Set<String> getIndexTypes() {
@@ -131,63 +135,45 @@ public final class OIndexes {
   }
 
   /**
-   * 
-   * 
-   * 
    * @param database
    * @param name
-   * @param indexType
-   *          index type
+   * @param indexType               index type
    * @param algorithm
    * @param valueContainerAlgorithm
    * @return OIndexInternal
-   * @throws OConfigurationException
-   *           if index creation failed
-   * @throws OIndexException
-   *           if index type does not exist
+   * @throws OConfigurationException if index creation failed
+   * @throws OIndexException         if index type does not exist
    */
   public static OIndexInternal<?> createIndex(ODatabaseDocumentInternal database, String name, String indexType, String algorithm,
       String valueContainerAlgorithm, ODocument metadata, int version) throws OConfigurationException, OIndexException {
-    if (indexType.equalsIgnoreCase(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name())
-        || indexType.equalsIgnoreCase(OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.name())
-        || indexType.equalsIgnoreCase(OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.name()))
+    if (indexType.equalsIgnoreCase(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name()) || indexType
+        .equalsIgnoreCase(OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.name()) || indexType
+        .equalsIgnoreCase(OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.name()))
       algorithm = OHashIndexFactory.HASH_INDEX_ALGORITHM;
 
-    findFactoryByAlgorithm(algorithm);
+    return findFactoryByAlgorithmAndType(algorithm, indexType)
+        .createIndex(name, database, indexType, algorithm, valueContainerAlgorithm, metadata, version);
 
-    Iterator<OIndexFactory> ite;
-    ite = getAllFactories();
-    while (ite.hasNext()) {
-      final OIndexFactory factory = ite.next();
-      if (factory.getTypes().contains(indexType) && factory.getAlgorithms().contains(algorithm)) {
-        return factory.createIndex(name, database, indexType, algorithm, valueContainerAlgorithm, metadata, version);
+  }
+
+  public static OIndexFactory findFactoryByAlgorithmAndType(String algorithm, String indexType) {
+
+    for (OIndexFactory factory : getFactories()) {
+      if (indexType == null || indexType.isEmpty() || (factory.getTypes().contains(indexType)) && factory.getAlgorithms()
+          .contains(algorithm)) {
+        return factory;
       }
     }
-
-    throw new OIndexException("Index type: " + indexType + " is not supported. Types are " + OCollections.toString(getIndexTypes()));
+    throw new OIndexException(
+        "Index type: " + indexType + " is not supported. Types are " + OCollections.toString(getIndexTypes()));
   }
 
-  private static OIndexFactory findFactoryByAlgorithm(String algorithm) {
-    Iterator<OIndexFactory> ite = getAllFactories();
+  public static OIndexEngine createIndexEngine(String name, String algorithm, String type, Boolean durableInNonTxMode,
+      OStorage storage, int version, Map<String, String> indexProperties) {
 
-    while (ite.hasNext()) {
-      final OIndexFactory factory = ite.next();
-      if (factory.getAlgorithms().contains(algorithm))
-        return factory;
+    final OIndexFactory factory = findFactoryByAlgorithmAndType(algorithm, type);
 
-    }
-
-    throw new OIndexException("Engine type: '" + algorithm + "' is not supported. Types are "
-        + OCollections.toString(getIndexEngines()) + ". Please check the engine name or verify that the engine '" + algorithm
-        + "' is installed correctly");
-  }
-
-  public static OIndexEngine createIndexEngine(String name, String algorithm, Boolean durableInNonTxMode, OStorage storage,
-      int version, Map<String, String> indexProperties) {
-
-    final OIndexFactory factory = findFactoryByAlgorithm(algorithm);
-
-    return factory.createIndexEngine(algorithm,name, durableInNonTxMode, storage, version, indexProperties);
+    return factory.createIndexEngine(algorithm, name, durableInNonTxMode, storage, version, indexProperties);
   }
 
   public static String chooseDefaultIndexAlgorithm(String type) {
@@ -196,9 +182,9 @@ public final class OIndexes {
     if (OClass.INDEX_TYPE.DICTIONARY.name().equals(type) || OClass.INDEX_TYPE.FULLTEXT.name().equals(type)
         || OClass.INDEX_TYPE.NOTUNIQUE.name().equals(type) || OClass.INDEX_TYPE.UNIQUE.name().equals(type)) {
       algorithm = ODefaultIndexFactory.SBTREE_ALGORITHM;
-    } else if (OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.name().equals(type)
-        || OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.name().equals(type) || OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.name().equals(type)
-        || OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name().equals(type)) {
+    } else if (OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.name().equals(type) || OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.name()
+        .equals(type) || OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.name().equals(type) || OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name()
+        .equals(type)) {
       algorithm = OHashIndexFactory.HASH_INDEX_ALGORITHM;
     }
     return algorithm;
@@ -218,7 +204,7 @@ public final class OIndexes {
 
   /**
    * Register at runtime custom factories
-   * 
+   *
    * @param factory
    */
   public static void registerFactory(OIndexFactory factory) {
@@ -228,7 +214,7 @@ public final class OIndexes {
 
   /**
    * Unregister custom factories
-   * 
+   *
    * @param factory
    */
   public static void unregisterFactory(OIndexFactory factory) {

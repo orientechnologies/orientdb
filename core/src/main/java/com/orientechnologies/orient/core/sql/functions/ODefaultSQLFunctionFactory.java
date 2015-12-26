@@ -19,6 +19,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.functions.coll.*;
 import com.orientechnologies.orient.core.sql.functions.geo.OSQLFunctionDistance;
+import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionAbsoluteValue;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionAverage;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionDecimal;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionEval;
@@ -95,6 +96,7 @@ public final class ODefaultSQLFunctionFactory implements OSQLFunctionFactory {
     register(OSQLFunctionConcat.NAME, OSQLFunctionConcat.class);
     register(OSQLFunctionDecimal.NAME, OSQLFunctionDecimal.class);
     register(OSQLFunctionSequence.NAME, new OSQLFunctionSequence());
+    register(OSQLFunctionAbsoluteValue.NAME, OSQLFunctionAbsoluteValue.class);
   }
 
   public static void register(final String iName, final Object iImplementation) {

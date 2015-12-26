@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.graph;
 
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -23,7 +24,7 @@ public class TestFailOperationOnRemovedElement {
     grap.drop();
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test(expected = ORecordNotFoundException.class)
   public void testAddEdgeOnRemovedVertexSameTransaction() {
     Vertex v = grap.addVertex(null);
     Vertex v1 = grap.addVertex(null);
@@ -32,7 +33,7 @@ public class TestFailOperationOnRemovedElement {
     v.addEdge("test", v1);
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test(expected = ORecordNotFoundException.class)
   public void testAddEdgeOnRemovedVertex() {
     Vertex v = grap.addVertex(null);
     Vertex v1 = grap.addVertex(null);
@@ -42,7 +43,7 @@ public class TestFailOperationOnRemovedElement {
     v.addEdge("test", v1);
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test(expected = ORecordNotFoundException.class)
   public void testAddEdgeToRemovedVertex() {
     Vertex v = grap.addVertex(null);
     Vertex v1 = grap.addVertex(null);
@@ -52,7 +53,7 @@ public class TestFailOperationOnRemovedElement {
     v.addEdge("test", v1);
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test(expected = ORecordNotFoundException.class)
   public void testSetPropertyOnRemovedVertex() {
     Vertex v = grap.addVertex(null);
     grap.commit();
@@ -61,7 +62,7 @@ public class TestFailOperationOnRemovedElement {
     v.setProperty("test", "aaaa");
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test(expected = ORecordNotFoundException.class)
   public void testSetPropertyTypeOnRemovedVertex() {
     OrientVertex v = grap.addVertex(null);
     grap.commit();
@@ -70,7 +71,7 @@ public class TestFailOperationOnRemovedElement {
     v.setProperty("test", "aaaa", OType.STRING);
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test(expected = ORecordNotFoundException.class)
   public void testSetPropertiesOnRemovedVertex() {
     OrientVertex v = grap.addVertex(null);
     grap.commit();
@@ -79,7 +80,7 @@ public class TestFailOperationOnRemovedElement {
     v.setProperties("test", "aaaa");
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test(expected = ORecordNotFoundException.class)
   public void testDoubleRemoveVertex() {
     OrientVertex v = grap.addVertex(null);
     grap.commit();
@@ -88,7 +89,7 @@ public class TestFailOperationOnRemovedElement {
     v.remove();
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test(expected = ORecordNotFoundException.class)
   public void testMoveToOfRemovedVertex() {
     OrientVertex v = grap.addVertex(null);
     grap.commit();
@@ -97,7 +98,7 @@ public class TestFailOperationOnRemovedElement {
     v.moveTo("test", "test");
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test(expected = ORecordNotFoundException.class)
   public void testSetPropertiesRemovedEdge() {
     OrientVertex v = grap.addVertex(null);
     OrientVertex v1 = grap.addVertex(null);
@@ -108,7 +109,7 @@ public class TestFailOperationOnRemovedElement {
     e.setProperties("test", "test");
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test(expected = ORecordNotFoundException.class)
   public void testSetPropertyRemovedEdge() {
     OrientVertex v = grap.addVertex(null);
     OrientVertex v1 = grap.addVertex(null);
@@ -119,7 +120,7 @@ public class TestFailOperationOnRemovedElement {
     e.setProperties("test", "test");
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test(expected = ORecordNotFoundException.class)
   public void testDoubleRemovedEdge() {
     OrientVertex v = grap.addVertex(null);
     OrientVertex v1 = grap.addVertex(null);
@@ -130,7 +131,7 @@ public class TestFailOperationOnRemovedElement {
     e.remove();
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test(expected = ORecordNotFoundException.class)
   public void testPropertyTypeRemovedEdge() {
     OrientVertex v = grap.addVertex(null);
     OrientVertex v1 = grap.addVertex(null);

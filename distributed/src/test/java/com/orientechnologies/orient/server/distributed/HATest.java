@@ -39,7 +39,7 @@ public class HATest extends AbstractServerClusterTxTest {
 
     banner("RESTARTING TESTS WITH SERVER " + (SERVERS - 1) + " DOWN...");
 
-    // count = 1000;
+    count = 200;
 
     executeMultipleTest();
 
@@ -49,8 +49,6 @@ public class HATest extends AbstractServerClusterTxTest {
     Thread.sleep(1000);
 
     banner("RESTARTING TESTS WITH SERVER " + (SERVERS - 1) + " UP...");
-
-    // count = 1000;
 
     executeMultipleTest();
   }

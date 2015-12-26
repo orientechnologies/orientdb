@@ -41,7 +41,7 @@ public interface ODistributedServerManager {
   };
 
   enum DB_STATUS {
-    OFFLINE, SYNCHRONIZING, ONLINE
+    OFFLINE, SYNCHRONIZING, ONLINE, BACKUP
   };
 
   boolean isEnabled();
@@ -115,4 +115,6 @@ public interface ODistributedServerManager {
       OAbstractRemoteTask iTask, EXECUTION_MODE iExecutionMode);
 
   ODocument getStats();
+
+  Throwable convertException(Throwable original);
 }

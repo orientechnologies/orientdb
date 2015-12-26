@@ -222,6 +222,14 @@ TOKEN:
     |
 	< EXCEPTION: ( "e" | "E" ) ( "x" | "X" ) ( "c" | "C" ) ( "e" | "E" ) ( "p" | "P" ) ( "t" | "T" ) ( "i" | "I" ) ( "o" | "O" ) ( "n" | "N" ) >
 	|
+	< PROFILE: ( "p" | "P" ) ( "r" | "R" ) ( "o" | "O" ) ( "f" | "F" ) ( "i" | "I" ) ( "l" | "L" ) ( "e" | "E" ) >
+	|
+	< STORAGE: ( "s" | "S" ) ( "t" | "T" ) ( "o" | "O" ) ( "r" | "R" ) ( "a" | "A" ) ( "g" | "G" ) ( "e" | "E" ) >
+	|
+	< ON: ( "o" | "O" ) ( "n" | "N" ) >
+	|
+	< OFF: ( "o" | "O" ) ( "f" | "F" ) ( "f" | "F" ) >
+	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
 	< RECORD_ATTRIBUTE: <RID_ATTR> | <CLASS_ATTR> | <VERSION_ATTR> | <SIZE_ATTR> | <TYPE_ATTR> | <RAW_ATTR> | <RID_ID_ATTR> | <RID_POS_ATTR> | <FIELDS_ATTR> >
@@ -524,6 +532,14 @@ OIdentifier Identifier():
     |
     token = <EXCEPTION>
     |
+    token = <PROFILE>
+    |
+    token = <STORAGE>
+    |
+    token = <ON>
+    |
+    token = <OFF>
+    |
     quotedToken = <QUOTED_IDENTIFIER>
     /*
     (
@@ -778,6 +794,8 @@ OStatement Statement():
 		result = UpdateStatement()
 		|
 		result = MatchStatement()
+		|
+		result = ProfileStorageStatement()
 
 	) [ <SEMICOLON> ]
 	{
@@ -1215,26 +1233,13 @@ ODeleteEdgeStatement DeleteEdgeWhereStatement():
 }
 
 OUpdateEdgeStatement UpdateEdgeStatement():
-{ OUpdateOperations lastOperations; }
+{ OUpdateOperations lastOperations;
+ ORid lastRid;}
 {
   (
 	<UPDATE>
 	<EDGE>
-	(
-		jjtThis.targetRid = Rid()
-		|
-		jjtThis.targetClass = Identifier()
-		|
-		jjtThis.targetCluster = Cluster()
-		|
-		jjtThis.targetIndex = IndexIdentifier()
-		|
-		(
-			<LPAREN>
-			jjtThis.targetQuery = QueryStatement()
-			<RPAREN>
-		)
-	)
+	jjtThis.target = FromClause()
 	( lastOperations = UpdateOperations() { jjtThis.operations.add(lastOperations); } )+
 	[ <UPSERT> { jjtThis.upsert = true; } ]
 	[
@@ -1253,25 +1258,12 @@ OUpdateEdgeStatement UpdateEdgeStatement():
 }
 
 OUpdateStatement UpdateStatement():
-{ OUpdateOperations lastOperations; }
+{ OUpdateOperations lastOperations;
+ ORid lastRid;}
 {
     (
     	<UPDATE>
-    	(
-    	    jjtThis.targetRid = Rid()
-    	    |
-    		jjtThis.targetClass = Identifier()
-    		|
-    		jjtThis.targetCluster = Cluster()
-    		|
-    		jjtThis.targetIndex = IndexIdentifier()
-    		|
-    		(
-    		    <LPAREN>
-    		    jjtThis.targetQuery = QueryStatement()
-    		    <RPAREN>
-    		)
-    	)
+    	jjtThis.target = FromClause()
     	( lastOperations = UpdateOperations() { jjtThis.operations.add(lastOperations); } )+
     	[ <UPSERT> { jjtThis.upsert = true; } ]
     	[
@@ -1685,10 +1677,20 @@ OPositionalParameter PositionalParameter():
 }
 
 ONamedParameter NamedParameter():
-{}
+{
+OIdentifier identifierParam;
+Token token;
+}
 {
     (
-	    <COLON> jjtThis.paramName = Identifier()
+	    <COLON>
+	    (
+	    	identifierParam = Identifier() { jjtThis.paramName = identifierParam.toString(); }
+	    	|
+	    	token = <SKIP2> {jjtThis.paramName = token.image;}
+	    	|
+            token = <LIMIT> {jjtThis.paramName = token.image;}
+	    )
 	)
 	{
 	 jjtThis.paramNumber = inputParamCount;
@@ -3400,4 +3402,16 @@ OMatchPathItem BothPathItemOpt():
      jjtThis.method.params.add(exp);
      return jjtThis;
     }
+}
+
+OProfileStorageStatement ProfileStorageStatement():
+{}
+{
+	<PROFILE> <STORAGE>
+	(
+		<ON> {jjtThis.on = true;}
+		|
+		<OFF> {jjtThis.on = false;}
+	)
+	{return jjtThis;}
 }

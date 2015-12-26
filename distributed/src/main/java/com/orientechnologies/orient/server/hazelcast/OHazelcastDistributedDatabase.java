@@ -36,6 +36,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedResponseManag
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.ODistributedSyncConfiguration;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.OCreateRecordTask;
 import com.orientechnologies.orient.server.distributed.task.ODeleteRecordTask;
@@ -45,6 +46,8 @@ import com.orientechnologies.orient.server.distributed.task.OSQLCommandTask;
 import com.orientechnologies.orient.server.distributed.task.OTxTask;
 import com.orientechnologies.orient.server.distributed.task.OUpdateRecordTask;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -65,19 +68,21 @@ import java.util.concurrent.locks.Lock;
  */
 public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
-  public static final String                          NODE_QUEUE_PREFIX          = "orientdb.node.";
-  public static final String                          NODE_QUEUE_PENDING_POSTFIX = ".pending";
-  private static final String                         NODE_LOCK_PREFIX           = "orientdb.reqlock.";
+  public static final String                          NODE_QUEUE_PREFIX              = "orientdb.node.";
+  public static final String                          NODE_QUEUE_PENDING_POSTFIX     = ".pending";
+  private static final String                         NODE_LOCK_PREFIX               = "orientdb.reqlock.";
+  private static final String                         DISTRIBUTED_SYNC_JSON_FILENAME = "/distributed-sync.json";
   protected final OHazelcastPlugin                    manager;
   protected final OHazelcastDistributedMessageService msgService;
   protected final String                              databaseName;
   protected final Lock                                requestLock;
-  protected final int                                 numWorkers                 = 8;
-  protected volatile boolean                          restoringMessages          = false;
-  protected AtomicBoolean                             status                     = new AtomicBoolean(false);
-  protected List<ODistributedWorker>                  workers                    = new ArrayList<ODistributedWorker>();
-  protected AtomicLong                                waitForMessageId           = new AtomicLong(-1);
-  protected ConcurrentHashMap<ORID, String>           lockManager                = new ConcurrentHashMap<ORID, String>();
+  protected final int                                 numWorkers                     = 8;
+  protected volatile boolean                          restoringMessages              = false;
+  protected final AtomicBoolean                       status                         = new AtomicBoolean(false);
+  protected final List<ODistributedWorker>            workers                        = new ArrayList<ODistributedWorker>();
+  protected final AtomicLong                          waitForMessageId               = new AtomicLong(-1);
+  protected final ConcurrentHashMap<ORID, String>     lockManager                    = new ConcurrentHashMap<ORID, String>();
+  protected ODistributedSyncConfiguration             syncConfiguration;
 
   public OHazelcastDistributedDatabase(final OHazelcastPlugin manager, final OHazelcastDistributedMessageService msgService,
       final String iDatabaseName) {
@@ -91,8 +96,6 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
     // CREATE 2 QUEUES FOR GENERIC REQUESTS + INSERT ONLY
     msgService.getQueue(OHazelcastDistributedMessageService.getRequestQueueName(getLocalNodeName(), databaseName));
-    msgService.getQueue(OHazelcastDistributedMessageService.getRequestQueueName(getLocalNodeName(),
-        databaseName + OCreateRecordTask.SUFFIX_QUEUE_NAME));
   }
 
   @Override
@@ -115,7 +118,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
     iRequest.setSenderNodeName(getLocalNodeName());
 
-    final int onlineNodes = getOnlineNodes(iRequest, iNodes, databaseName, reqQueues);
+    final int onlineNodes = getAvailableNodes(iRequest, iNodes, databaseName, reqQueues);
 
     final int quorum = calculateQuorum(iRequest, iClusterNames, cfg, onlineNodes, iExecutionMode);
 
@@ -193,16 +196,16 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     }
   }
 
-  protected int getOnlineNodes(final ODistributedRequest iRequest, final Collection<String> iNodes, final String databaseName,
+  protected int getAvailableNodes(final ODistributedRequest iRequest, final Collection<String> iNodes, final String databaseName,
       OPair<String, IQueue>[] reqQueues) {
-    int onlineNodes;
+    int availableNodes;
     if (iRequest.getTask().isRequireNodeOnline()) {
       // CHECK THE ONLINE NODES
-      onlineNodes = 0;
+      availableNodes = 0;
       int i = 0;
       for (String node : iNodes) {
-        if (reqQueues[i].getValue() != null && manager.isNodeOnline(node, databaseName))
-          onlineNodes++;
+        if (reqQueues[i].getValue() != null && manager.isNodeAvailable(node, databaseName))
+          availableNodes++;
         else {
           if (ODistributedServerLog.isDebugEnabled())
             ODistributedServerLog.debug(this, getLocalNodeName(), node, DIRECTION.OUT,
@@ -213,26 +216,24 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       }
     } else {
       // EXPECT ANSWER FROM ALL NODES WITH A QUEUE
-      onlineNodes = 0;
+      availableNodes = 0;
       for (OPair<String, IQueue> q : reqQueues)
         if (q.getValue() != null)
-          onlineNodes++;
+          availableNodes++;
     }
-    return onlineNodes;
+    return availableNodes;
   }
 
   public boolean isRestoringMessages() {
     return restoringMessages;
   }
 
-  public OHazelcastDistributedDatabase configureDatabase(final boolean iRestoreMessages, final boolean iUnqueuePendingMessages,
-      Callable<Void> iCallback) {
+  public OHazelcastDistributedDatabase configureDatabase(final Callable<Void> iCallback) {
     // CREATE A QUEUE PER DATABASE REQUESTS
     final String queueName = OHazelcastDistributedMessageService.getRequestQueueName(getLocalNodeName(), databaseName);
     final IQueue requestQueue = msgService.getQueue(queueName);
 
-    final ODistributedWorker listenerThread = unqueuePendingMessages(iRestoreMessages, iUnqueuePendingMessages, queueName,
-        requestQueue);
+    final ODistributedWorker listenerThread = unqueuePendingMessages(queueName, requestQueue);
 
     workers.add(listenerThread);
 
@@ -284,6 +285,20 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
           "Distributed transaction: unlocked record %s in database '%s'", iRecord, databaseName);
   }
 
+  public ODistributedSyncConfiguration getSyncConfiguration() {
+    if (syncConfiguration == null) {
+      final String path = manager.getServerInstance().getDatabaseDirectory() + databaseName + DISTRIBUTED_SYNC_JSON_FILENAME;
+      final File cfgFile = new File(path);
+      try {
+        syncConfiguration = new ODistributedSyncConfiguration(cfgFile);
+      } catch (IOException e) {
+        throw new ODistributedException("Cannot open database sync configuration file: " + cfgFile);
+      }
+    }
+
+    return syncConfiguration;
+  }
+
   @Override
   public void unlockRecords(final String iNodeName) {
     int unlocked = 0;
@@ -315,16 +330,12 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       workers.get(i).shutdown();
   }
 
-  protected ODistributedWorker unqueuePendingMessages(boolean iRestoreMessages, boolean iUnqueuePendingMessages, String queueName,
-      IQueue requestQueue) {
+  protected ODistributedWorker unqueuePendingMessages(String queueName, IQueue requestQueue) {
     if (ODistributedServerLog.isDebugEnabled())
       ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE, "listening for incoming requests on queue: %s",
           queueName);
 
-    // UNDO PREVIOUS MESSAGE IF ANY
-    restoreMessagesBeforeFailure(iRestoreMessages);
-
-    restoringMessages = msgService.checkForPendingMessages(requestQueue, queueName, iUnqueuePendingMessages);
+    msgService.checkForPendingMessages(requestQueue, queueName);
 
     final ODistributedWorker listenerThread = new ODistributedWorker(this, requestQueue, databaseName, 0, restoringMessages);
     listenerThread.initDatabaseInstance();
@@ -456,11 +467,6 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     return manager.getLocalNodeName();
   }
 
-  protected void restoreMessagesBeforeFailure(final boolean iRestoreMessages) {
-    for (int i = 0; i < workers.size(); ++i)
-      workers.get(i).restoreMessagesBeforeFailure(iRestoreMessages);
-  }
-
   /**
    * Checks if last pending operation must be re-executed or not. In some circustamces the exception
    * OHotAlignmentNotPossibleExeption is raised because it's not possible to recover the database state.
@@ -500,7 +506,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       for (String c : cfg.getClusterNames()) {
         if (c.endsWith(suffix2Search)) {
           // FOUND: ASSIGN TO LOCAL NODE
-          final String currentMaster = cfg.getMasterServer(c);
+          final String currentMaster = cfg.getLeaderServer(c);
 
           if (!getLocalNodeName().equals(currentMaster)) {
             ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE,
@@ -533,8 +539,6 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
               "removing node '%s' in partitions: db=%s %s", iNode, databaseName, foundPartition);
 
           msgService.removeQueue(OHazelcastDistributedMessageService.getRequestQueueName(iNode, databaseName));
-          msgService.removeQueue(
-              OHazelcastDistributedMessageService.getRequestQueueName(iNode, databaseName + OCreateRecordTask.SUFFIX_QUEUE_NAME));
         }
 
         // CHANGED: RE-DEPLOY IT

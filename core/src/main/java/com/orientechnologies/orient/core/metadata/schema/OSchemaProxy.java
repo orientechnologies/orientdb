@@ -231,15 +231,6 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared>implements OSche
     return delegate.createGlobalProperty(name, type, id);
   }
 
-  @Override
-  public boolean isFullCheckpointOnChange() {
-    return delegate.isFullCheckpointOnChange();
-  }
-
-  @Override
-  public void setFullCheckpointOnChange(boolean fullCheckpointOnChange) {
-    delegate.setFullCheckpointOnChange(fullCheckpointOnChange);
-  }
 
   @Override
   public OClusterSelectionFactory getClusterSelectionFactory() {

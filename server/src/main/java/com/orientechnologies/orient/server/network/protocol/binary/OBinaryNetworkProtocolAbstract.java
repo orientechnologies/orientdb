@@ -327,11 +327,16 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
 
       iDatabase.delete(rid, version);
       return 1;
+    } catch (ORecordNotFoundException e) {
+      // MAINTAIN COHERENT THE BEHAVIOR FOR ALL THE STORAGE TYPES
+      if (e.getCause() instanceof OOfflineClusterException)
+        throw (OOfflineClusterException) e.getCause();
     } catch (OOfflineClusterException e) {
       throw e;
     } catch (Exception e) {
-      return 0;
+      // IGNORE IT
     }
+    return 0;
   }
 
   protected int hideRecord(final ODatabaseDocument iDatabase, final ORID rid) {
@@ -363,9 +368,15 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
 
     ORecordInternal.setContentChanged(newRecord, updateContent);
     ORecordInternal.getDirtyManager(newRecord).cleanForSave();
-    final ORecord currentRecord;
+    ORecord currentRecord = null;
     if (newRecord instanceof ODocument) {
-      currentRecord = iDatabase.load(rid);
+      try {
+        currentRecord = iDatabase.load(rid);
+      } catch (ORecordNotFoundException e) {
+        // MAINTAIN COHERENT THE BEHAVIOR FOR ALL THE STORAGE TYPES
+        if (e.getCause() instanceof OOfflineClusterException)
+          throw (OOfflineClusterException) e.getCause();
+      }
 
       if (currentRecord == null)
         throw new ORecordNotFoundException(rid.toString());

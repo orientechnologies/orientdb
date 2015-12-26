@@ -36,6 +36,25 @@ import java.util.List;
  */
 public class LuceneFacetTest extends BaseLuceneTest {
 
+  @BeforeClass
+  public void init() {
+    initDB();
+    OSchema schema = databaseDocumentTx.getMetadata().getSchema();
+    OClass oClass = schema.createClass("Item");
+
+    oClass.createProperty("name", OType.STRING);
+    oClass.createProperty("category", OType.STRING);
+
+    databaseDocumentTx.command(new OCommandSQL(
+        "create index Item.name_category on Item (name,category) FULLTEXT ENGINE LUCENE METADATA { 'facetFields' : ['category']}"))
+        .execute();
+  }
+
+  @AfterClass
+  public void deInit() {
+    deInitDB();
+  }
+
   @Test
   public void baseFacetTest() {
 
@@ -62,9 +81,8 @@ public class LuceneFacetTest extends BaseLuceneTest {
     doc.field("category", "Electronic/Computer");
 
     databaseDocumentTx.save(doc);
-
-    List<ODocument> result = databaseDocumentTx.command(
-        new OSQLSynchQuery<ODocument>("select *,$facet from Item where name lucene '(name:P*)' limit 1 ")).execute();
+    List<ODocument> result = databaseDocumentTx
+        .command(new OSQLSynchQuery<ODocument>("select *,$facet from Item where name lucene '(name:P*)' limit 1 ")).execute();
 
     Assert.assertEquals(result.size(), 1);
 
@@ -86,9 +104,8 @@ public class LuceneFacetTest extends BaseLuceneTest {
     Assert.assertEquals(labelValues.field("value"), 2);
     Assert.assertEquals(labelValues.field("label"), "Electronic");
 
-    result = databaseDocumentTx.command(
-        new OSQLSynchQuery<ODocument>(
-            "select *,$facet from Item where name lucene { 'q' : 'H*', 'drillDown' : 'category:Electronic' }  limit 1 ")).execute();
+    result = databaseDocumentTx.command(new OSQLSynchQuery<ODocument>(
+        "select *,$facet from Item where name lucene { 'q' : 'H*', 'drillDown' : 'category:Electronic' }  limit 1 ")).execute();
 
     Assert.assertEquals(result.size(), 1);
 
@@ -116,28 +133,6 @@ public class LuceneFacetTest extends BaseLuceneTest {
     Assert.assertEquals(labelValues.field("value"), 1);
     Assert.assertEquals(labelValues.field("label"), "Computer");
 
-  }
-
-  @BeforeClass
-  public void init() {
-    initDB();
-    OSchema schema = databaseDocumentTx.getMetadata().getSchema();
-    OClass oClass = schema.createClass("Item");
-
-    oClass.createProperty("name", OType.STRING);
-    oClass.createProperty("category", OType.STRING);
-
-    databaseDocumentTx
-        .command(
-            new OCommandSQL(
-                "create index Item.name_category on Item (name,category) FULLTEXT ENGINE LUCENE METADATA { 'facetFields' : ['category']}"))
-        .execute();
-
-  }
-
-  @AfterClass
-  public void deInit() {
-    deInitDB();
   }
 
 }

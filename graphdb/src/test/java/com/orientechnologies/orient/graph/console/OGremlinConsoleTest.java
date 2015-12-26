@@ -57,6 +57,9 @@ public class OGremlinConsoleTest {
       try {
         List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from V"));
         Assert.assertFalse(result.isEmpty());
+        result = db.query(new OSQLSynchQuery<ODocument>("select from V where name is null"));
+        Assert.assertEquals(1,result.size());
+
       } finally {
         db.close();
       }

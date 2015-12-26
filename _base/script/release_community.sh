@@ -9,12 +9,12 @@ echo "Releasing OrientDB $1..."
 
 DIR=distribution/target/orientdb-community-$1-distribution.dir/orientdb-community-$1/
 
-cp ../drivers/orientdb-jdbc/target/orientdb-jdbc-$1.jar $DIR/lib/
+#cp ../drivers/orientdb-jdbc/target/orientdb-jdbc-$1.jar $DIR/lib/
 
-cp ../modules/orientdb-lucene/target/orientdb-lucene-$1-dist.jar $DIR/plugins/
+#cp ../modules/orientdb-spatial/target/orientdb-spatial-$1-dist.jar $DIR/plugins/
 
-cp ../modules/orientdb-etl/target/orientdb-etl-$1.jar $DIR/lib/
-cp ../modules/orientdb-etl/script/oetl.* $DIR/bin/
+#cp ../modules/orientdb-etl/target/orientdb-etl-$1.jar $DIR/lib/
+#cp ../modules/orientdb-etl/script/oetl.* $DIR/bin/
 
 cd distribution/target/
 

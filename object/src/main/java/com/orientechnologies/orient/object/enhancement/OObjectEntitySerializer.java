@@ -89,6 +89,8 @@ import java.util.concurrent.Callable;
  */
 public class OObjectEntitySerializer {
 
+  public static final String SIMPLE_NAME = OObjectEntitySerializedSchema.class.getSimpleName();
+
   public static class OObjectEntitySerializedSchema {
     public final Set<Class<?>>                           classes             = new HashSet<Class<?>>();
     public final HashMap<Class<?>, List<String>>         allFields           = new HashMap<Class<?>, List<String>>();
@@ -102,6 +104,9 @@ public class OObjectEntitySerializer {
     public final HashMap<Class<?>, Field>                fieldIds            = new HashMap<Class<?>, Field>();
     public final HashMap<Class<?>, Field>                fieldVersions       = new HashMap<Class<?>, Field>();
     public final HashMap<String, List<Method>>           callbacks           = new HashMap<String, List<Method>>();
+    public final HashMap<Class<?>, Field[]>              declaredFields      = new HashMap<Class<?>, Field[]>();
+    public final HashMap<Class<?>, Annotation[]>         declaredAnnotations = new HashMap<Class<?>, Annotation[]>();
+    public final HashMap<Class<?>, Class<?>>             enclosingClasses    = new HashMap<Class<?>, Class<?>>();
   }
 
   protected static OObjectEntitySerializedSchema getCurrentSerializedSchema() {
@@ -109,7 +114,7 @@ public class OObjectEntitySerializer {
       return null;
 
     OStorage storage = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage();
-    OObjectEntitySerializedSchema serializedShchema = storage.getResource(OObjectEntitySerializedSchema.class.getSimpleName(),
+    OObjectEntitySerializedSchema serializedShchema = storage.getResource(SIMPLE_NAME,
         new Callable<OObjectEntitySerializedSchema>() {
           @Override
           public OObjectEntitySerializedSchema call() throws Exception {
@@ -250,11 +255,13 @@ public class OObjectEntitySerializer {
         if (returnNonProxiedInstance) {
           o = getNonProxiedInstance(o);
         }
-        ORID identity = handler.getDoc().getIdentity();
-        if (!alreadyDetached.containsKey(identity)) {
-          alreadyDetached.put(identity, o);
-        } else if (returnNonProxiedInstance) {
-          return (T) alreadyDetached.get(identity);
+        if(!handler.getDoc().isEmbedded()) {
+          ORID identity = handler.getDoc().getIdentity();
+          if (!alreadyDetached.containsKey(identity)) {
+            alreadyDetached.put(identity, o);
+          } else if (returnNonProxiedInstance) {
+            return (T) alreadyDetached.get(identity);
+          }
         }
         handler.detachAll(o, returnNonProxiedInstance, alreadyDetached, lazyObjects);
       } catch (IllegalArgumentException e) {
@@ -1030,7 +1037,7 @@ public class OObjectEntitySerializer {
   }
 
   public static Field getField(String fieldName, Class<?> iClass) {
-    for (Field f : iClass.getDeclaredFields()) {
+    for (Field f : getDeclaredFields(iClass)) {
       if (f.getName().equals(fieldName))
         return f;
     }
@@ -1167,7 +1174,7 @@ public class OObjectEntitySerializer {
 
     OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
     while (!currentClass.equals(Object.class) && serializedSchema.classes.contains(pojoClass)) {
-      for (Field p : currentClass.getDeclaredFields()) {
+      for (Field p : getDeclaredFields(currentClass)) {
         if (Modifier.isStatic(p.getModifiers()) || Modifier.isNative(p.getModifiers()) || Modifier.isTransient(p.getModifiers())
             || p.getType().isAnonymousClass())
           continue;
@@ -1396,5 +1403,49 @@ public class OObjectEntitySerializer {
       registerClass(f.getDeclaringClass());
     return isEmbeddedField(f.getDeclaringClass(), f.getName());
   }
+
+    /**
+     * Retrieves and returns all declared {@link Field}s from the given class.
+     *
+     * @param clazz The class type.
+     * @return All declared {@link Field}s for the object instance.
+     */
+    public static Field[] getDeclaredFields(Class<?> clazz) {
+        final OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
+        //fields won't change during the jvm lifetime and so they are cached
+        Field[] fields = serializedSchema.declaredFields.get(clazz);
+        if (fields == null) {
+            fields = clazz.getDeclaredFields();
+            serializedSchema.declaredFields.put(clazz, fields);
+        }
+        return fields;
+    }
+
+    /**
+     * Retrieves and returns all declared {@link Field}s from the given class.
+     *
+     * @param clazz The class type.
+     * @return All declared {@link Field}s for the object instance.
+     */
+    public static Annotation[] getDeclaredAnnotations(Class<?> clazz) {
+        final OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
+        //annotations won't change during the jvm lifetime and so they are cached
+        Annotation[] annotations = serializedSchema.declaredAnnotations.get(clazz);
+        if (annotations == null) {
+            annotations = clazz.getDeclaredAnnotations();
+            serializedSchema.declaredAnnotations.put(clazz, annotations);
+        }
+        return annotations;
+    }
+
+    public static Class<?> getEnclosingClass(Class<?> clazz) {
+        final OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
+        Class<?> enclosingClass = serializedSchema.enclosingClasses.get(clazz);
+        if (enclosingClass == null) {
+            enclosingClass = clazz.getEnclosingClass();
+            serializedSchema.enclosingClasses.put(clazz, enclosingClass);
+        }
+        return enclosingClass;
+    }
 
 }

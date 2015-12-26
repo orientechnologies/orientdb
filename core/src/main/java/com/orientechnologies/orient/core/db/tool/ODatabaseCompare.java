@@ -19,6 +19,15 @@
  */
 package com.orientechnologies.orient.core.db.tool;
 
+import static com.orientechnologies.orient.core.record.impl.ODocumentHelper.makeDbCall;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -42,15 +51,6 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-
-import static com.orientechnologies.orient.core.record.impl.ODocumentHelper.makeDbCall;
 
 public class ODatabaseCompare extends ODatabaseImpExpAbstract {
   private OStorage storage1;
@@ -100,20 +100,9 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
     excludeClusters.add(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME);
   }
 
-  public void setCompareIndexMetadata(boolean compareIndexMetadata) {
-    this.compareIndexMetadata = compareIndexMetadata;
-  }
-
-  public boolean isCompareEntriesForAutomaticIndexes() {
-    return compareEntriesForAutomaticIndexes;
-  }
-
-  public void setCompareEntriesForAutomaticIndexes(boolean compareEntriesForAutomaticIndexes) {
-    this.compareEntriesForAutomaticIndexes = compareEntriesForAutomaticIndexes;
-  }
-
-  public void setAutoDetectExportImportMap(boolean autoDetectExportImportMap) {
-    this.autoDetectExportImportMap = autoDetectExportImportMap;
+  @Override
+  public void run() {
+    compare();
   }
 
   public boolean compare() {
@@ -824,6 +813,22 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
     }
 
     return true;
+  }
+
+  public void setCompareIndexMetadata(boolean compareIndexMetadata) {
+    this.compareIndexMetadata = compareIndexMetadata;
+  }
+
+  public boolean isCompareEntriesForAutomaticIndexes() {
+    return compareEntriesForAutomaticIndexes;
+  }
+
+  public void setCompareEntriesForAutomaticIndexes(boolean compareEntriesForAutomaticIndexes) {
+    this.compareEntriesForAutomaticIndexes = compareEntriesForAutomaticIndexes;
+  }
+
+  public void setAutoDetectExportImportMap(boolean autoDetectExportImportMap) {
+    this.autoDetectExportImportMap = autoDetectExportImportMap;
   }
 
   private void convertSchemaDoc(final ODocument document) {

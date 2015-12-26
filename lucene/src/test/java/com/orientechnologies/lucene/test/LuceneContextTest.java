@@ -39,22 +39,13 @@ import java.util.List;
 @Test(groups = "embedded")
 public class LuceneContextTest extends BaseLuceneTest {
 
-  public LuceneContextTest() {
-  }
-
-  public LuceneContextTest(boolean remote) {
-
-    //super(remote);
-  }
-
-
   public void testContext() {
     InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql");
 
     databaseDocumentTx.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
 
-    List<ODocument> docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
-        "select *,$score from Song where [title] LUCENE \"(title:man)\""));
+    List<ODocument> docs = databaseDocumentTx
+        .query(new OSQLSynchQuery<ODocument>("select *,$score from Song where [title] LUCENE \"(title:man)\""));
 
     Assert.assertEquals(docs.size(), 14);
 
@@ -71,7 +62,6 @@ public class LuceneContextTest extends BaseLuceneTest {
     Assert.assertEquals(docs.size(), 1);
 
     ODocument doc = docs.iterator().next();
-
     Assert.assertEquals(doc.field("$totalHits"), 14);
     Assert.assertEquals(doc.field("$Song_title_totalHits"), 14);
 
@@ -96,6 +86,5 @@ public class LuceneContextTest extends BaseLuceneTest {
   public void deInit() {
     deInitDB();
   }
-
 
 }

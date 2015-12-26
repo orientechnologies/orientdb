@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.core.storage.cache;
 
+import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 
@@ -60,9 +61,8 @@ public interface OWriteCache {
 
   Future store(long fileId, long pageIndex, OCachePointer dataPointer);
 
-  OCachePointer load(long fileId, long pageIndex, boolean addNewPages) throws IOException;
-
-  OCachePointer[] loadPages(long fileId, long pageIndex, int prefetchPages) throws IOException;
+  OCachePointer[] load(long fileId, long startPageIndex, int pageCount, boolean addNewPages, OModifiableBoolean cacheHit)
+      throws IOException;
 
   void flush(long fileId);
 

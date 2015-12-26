@@ -237,4 +237,8 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
     return 0;
   }
 
+  @Override
+  public void shutdown() {
+    close(true, false);
+  }
 }

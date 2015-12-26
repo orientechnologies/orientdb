@@ -423,12 +423,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
         // // @COMPATIBILITY 1.0RC9
         metadata.getSchema().createClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
 
-      if (OGlobalConfiguration.DB_MAKE_FULL_CHECKPOINT_ON_SCHEMA_CHANGE.getValueAsBoolean())
-        metadata.getSchema().setFullCheckpointOnChange(true);
-
-      if (OGlobalConfiguration.DB_MAKE_FULL_CHECKPOINT_ON_INDEX_CHANGE.getValueAsBoolean())
-        metadata.getIndexManager().setFullCheckpointOnChange(true);
-      getStorage().synch();
       // WAKE UP DB LIFECYCLE LISTENER
       for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
         it.next().onCreate(getDatabaseOwner());
@@ -937,7 +931,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
    * {@inheritDoc}
    */
   public <DB extends ODatabase<?>> DB registerHook(final ORecordHook iHookImpl, final ORecordHook.HOOK_POSITION iPosition) {
+    checkOpeness();
     checkIfActive();
+
     final Map<ORecordHook, ORecordHook.HOOK_POSITION> tmp = new LinkedHashMap<ORecordHook, ORecordHook.HOOK_POSITION>(hooks);
     tmp.put(iHookImpl, iPosition);
     hooks.clear();
@@ -1806,7 +1802,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
       return (RET) iRecord;
     } catch (OOfflineClusterException t) {
       throw t;
-    } catch (Exception t) {
+    } catch (ORecordNotFoundException t) {
+      throw t;
+    } catch (Throwable t) {
       if (rid.isTemporary())
         throw OException.wrapException(new ODatabaseException("Error on retrieving record using temporary RecordId: " + rid), t);
       else
@@ -2837,6 +2835,14 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
   }
 
   /**
+   * @return <code>true</code> if database is obtained from the pool and <code>false</code> otherwise.
+   */
+  @Override
+  public boolean isPooled() {
+    return false;
+  }
+
+  /**
    * Use #activateOnCurrentThread instead.
    */
   @Deprecated
@@ -2934,16 +2940,11 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
     // // @COMPATIBILITY 1.0RC9
     // metadata.getSchema().createClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
 
-    if (OGlobalConfiguration.DB_MAKE_FULL_CHECKPOINT_ON_SCHEMA_CHANGE.getValueAsBoolean())
-      metadata.getSchema().setFullCheckpointOnChange(true);
-
-    if (OGlobalConfiguration.DB_MAKE_FULL_CHECKPOINT_ON_INDEX_CHANGE.getValueAsBoolean())
-      metadata.getIndexManager().setFullCheckpointOnChange(true);
-
     initialized = true;
   }
 
   private void installHooks() {
+    hooks.clear();
     registerHook(new OClassTrigger(this), ORecordHook.HOOK_POSITION.FIRST);
     registerHook(new ORestrictedAccessHook(this), ORecordHook.HOOK_POSITION.FIRST);
     registerHook(new OUserTrigger(this), ORecordHook.HOOK_POSITION.EARLY);

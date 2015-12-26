@@ -1,18 +1,5 @@
 package com.orientechnologies.orient.server.token;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
-import java.util.Random;
-import java.util.UUID;
-
-import javax.crypto.Mac;
-import javax.swing.*;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.common.log.OLogManager;
@@ -33,22 +20,33 @@ import com.orientechnologies.orient.server.OTokenHandler;
 import com.orientechnologies.orient.server.binary.impl.OBinaryToken;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
 
+import javax.crypto.Mac;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
+import java.util.Random;
+import java.util.UUID;
+
 /**
  * Created by emrul on 27/10/2014.
  *
  * @author Emrul Islam <emrul@emrul.com> Copyright 2014 Emrul Islam
  */
 public class OTokenHandlerImpl implements OTokenHandler {
-  public static final String            ENCRYPTION_ALGORITHM_DEFAULT = "HmacSHA256";
+  public static final String ENCRYPTION_ALGORITHM_DEFAULT = "HmacSHA256";
 
-  private static String                 algorithm                    = ENCRYPTION_ALGORITHM_DEFAULT;
-  private static final ThreadLocal<Mac> threadLocalMac               = new MacThreadLocal();
+  private static String                 algorithm      = ENCRYPTION_ALGORITHM_DEFAULT;
+  private static final ThreadLocal<Mac> threadLocalMac = new MacThreadLocal();
 
-  protected static final int            JWT_DELIMITER                = '.';
-  private OBinaryTokenSerializer        binarySerializer;
-  private long                          sessionInMills               = 1000 * 60 * 60;              // 1 HOUR
-  private OKeyProvider                  keyProvider;
-  private Random                        keyGenerator                 = new Random();
+  protected static final int     JWT_DELIMITER  = '.';
+  private OBinaryTokenSerializer binarySerializer;
+  private long                   sessionInMills = 1000 * 60 * 60; // 1 HOUR
+  private OKeyProvider           keyProvider;
+  private Random                 keyGenerator   = new Random();
 
   public OTokenHandlerImpl(OServer server) {
     byte[] key = null;
@@ -187,7 +185,8 @@ public class OTokenHandlerImpl implements OTokenHandler {
     return tokenByteOS.toByteArray();
   }
 
-  public byte[] getSignedBinaryToken(final ODatabaseDocumentInternal db, final OSecurityUser user, final ONetworkProtocolData data) {
+  public byte[] getSignedBinaryToken(final ODatabaseDocumentInternal db, final OSecurityUser user,
+      final ONetworkProtocolData data) {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     try {
       final OBinaryToken token = new OBinaryToken();
@@ -388,7 +387,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
       final byte[] calculatedSignature = mac.doFinal();
       boolean valid = Arrays.equals(calculatedSignature, signature);
       if (!valid) {
-        OLogManager.instance().warn(this, " signature failure: %s", OBase64Utils.encodeBytes(base));
+        OLogManager.instance().warn(this, "Signature failure: %s", OBase64Utils.encodeBytes(base));
       }
       return valid;
 

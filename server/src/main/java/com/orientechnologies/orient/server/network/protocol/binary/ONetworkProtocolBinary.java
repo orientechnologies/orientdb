@@ -19,6 +19,19 @@
  */
 package com.orientechnologies.orient.server.network.protocol.binary;
 
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
+import java.net.SocketException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.UUID;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
@@ -49,7 +62,6 @@ import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
-import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OTransactionAbortedException;
 import com.orientechnologies.orient.core.fetch.OFetchContext;
@@ -99,19 +111,6 @@ import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
-
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.net.Socket;
-import java.net.SocketException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.UUID;
 
 public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected OClientConnection connection;
@@ -197,7 +196,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   }
 
   private void solveTokenSession() throws IOException {
-    if (requestType == OChannelBinaryProtocol.REQUEST_CONNECT || requestType == OChannelBinaryProtocol.REQUEST_DB_OPEN || requestType == OChannelBinaryProtocol.REQUEST_SHUTDOWN) {
+    if (requestType == OChannelBinaryProtocol.REQUEST_CONNECT || requestType == OChannelBinaryProtocol.REQUEST_DB_OPEN
+        || requestType == OChannelBinaryProtocol.REQUEST_SHUTDOWN) {
       connection = server.getClientConnectionManager().getConnection(clientTxId, this);
       if (clientTxId < 0) {
         short protocolId = 0;
@@ -807,10 +807,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     final String user = channel.readString();
     final String passwd = channel.readString();
     connection.database = (ODatabaseDocumentTx) server.openDatabase(dbURL, user, passwd, connection.data);
-    byte[] token =null;
+    byte[] token = null;
 
     if (Boolean.TRUE.equals(tokenBased)) {
-       token = tokenHandler.getSignedBinaryToken(connection.database, connection.database.getUser(), connection.data);
+      token = tokenHandler.getSignedBinaryToken(connection.database, connection.database.getUser(), connection.data);
       // TODO: do not use the parse split getSignedBinaryToken in two methods.
       try {
         getServer().getClientConnectionManager().connect(this, connection, token, tokenHandler.parseBinaryToken(token));
@@ -927,8 +927,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_ERROR);
       channel.writeInt(iClientTxId);
       if (tokenBased != null && Boolean.TRUE.equals(tokenBased) && requestType != OChannelBinaryProtocol.REQUEST_CONNECT
-          && (requestType != OChannelBinaryProtocol.REQUEST_DB_OPEN && requestType != OChannelBinaryProtocol.REQUEST_SHUTDOWN || (connection != null && connection.data != null
-              && connection.data.protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_32)) ||  requestType == OChannelBinaryProtocol.REQUEST_DB_REOPEN) {
+          && (requestType != OChannelBinaryProtocol.REQUEST_DB_OPEN && requestType != OChannelBinaryProtocol.REQUEST_SHUTDOWN
+              || (connection != null && connection.data != null
+                  && connection.data.protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_32))
+          || requestType == OChannelBinaryProtocol.REQUEST_DB_REOPEN) {
         // TODO: Check if the token is expiring and if it is send a new token
 
         if (token != null) {
@@ -948,7 +950,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       sendErrorDetails(current);
 
       serializeExceptionObject(current);
-
 
       channel.flush();
 
@@ -995,7 +996,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       return;
     }
 
-    OLogManager.instance().error(this, "Authentication error of remote client %s:%d: shutdown is aborted.", channel.socket.getInetAddress(), channel.socket.getPort());
+    OLogManager.instance().error(this, "Authentication error of remote client %s:%d: shutdown is aborted.",
+        channel.socket.getInetAddress(), channel.socket.getPort());
 
     sendErrorOrDropConnection(clientTxId, new OSecurityAccessException("Invalid user/password to shutdown the server"));
   }
@@ -1768,7 +1770,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       }
 
     } else {
-      final ORecord record = connection.database.load(rid, fetchPlanString, ignoreCache, loadTombstones, OStorage.LOCKING_STRATEGY.NONE);
+      final ORecord record = connection.database.load(rid, fetchPlanString, ignoreCache, loadTombstones,
+          OStorage.LOCKING_STRATEGY.NONE);
 
       beginResponse();
       try {
@@ -2074,6 +2077,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
   private void serializeExceptionObject(Throwable original) throws IOException {
     try {
+      final ODistributedServerManager srvMgr = server.getDistributedManager();
+      if (srvMgr != null)
+        original = srvMgr.convertException(original);
+
       final OMemoryStream memoryStream = new OMemoryStream();
       final ObjectOutputStream objectOutputStream = new ObjectOutputStream(memoryStream);
 
@@ -2318,7 +2325,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     try {
       sendOk(clientTxId);
 
-      final OPhysicalPosition[] previousPositions = connection.database.getStorage().floorPhysicalPositions(clusterId, new OPhysicalPosition(clusterPosition));
+      final OPhysicalPosition[] previousPositions = connection.database.getStorage().floorPhysicalPositions(clusterId,
+          new OPhysicalPosition(clusterPosition));
 
       if (previousPositions != null) {
         channel.writeInt(previousPositions.length);
@@ -2348,7 +2356,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     try {
       sendOk(clientTxId);
 
-      OPhysicalPosition[] nextPositions = connection.database.getStorage().higherPhysicalPositions(clusterId, new OPhysicalPosition(clusterPosition));
+      OPhysicalPosition[] nextPositions = connection.database.getStorage().higherPhysicalPositions(clusterId,
+          new OPhysicalPosition(clusterPosition));
 
       if (nextPositions != null) {
 
@@ -2376,7 +2385,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     try {
       sendOk(clientTxId);
 
-      final OPhysicalPosition[] previousPositions = connection.database.getStorage().ceilingPhysicalPositions(clusterId, new OPhysicalPosition(clusterPosition));
+      final OPhysicalPosition[] previousPositions = connection.database.getStorage().ceilingPhysicalPositions(clusterId,
+          new OPhysicalPosition(clusterPosition));
 
       if (previousPositions != null) {
         channel.writeInt(previousPositions.length);

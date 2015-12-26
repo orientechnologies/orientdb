@@ -94,7 +94,6 @@ public class OSchemaShared extends ODocumentWrapperNoClass
   private final List<OGlobalProperty>              properties             = new ArrayList<OGlobalProperty>();
   private final Map<String, OGlobalProperty>       propertiesByNameType   = new HashMap<String, OGlobalProperty>();
   private volatile int                             version                = 0;
-  private volatile boolean                         fullCheckpointOnChange = false;
   private volatile OImmutableSchema                snapshot;
 
   private static Set<String> internalClasses = new HashSet<String>();
@@ -145,7 +144,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass
 
     for (int i = 0; i < nameSize; ++i) {
       final char c = iName.charAt(i);
-      if (c == ':' || c == ',' || c == ';' || c == ' ' || c == '%' || c == '@' || c == '=' || c == '.' || c == '#')
+      if (c == ':' || c == ',' || c == ';' || c == ' ' || c == '@' || c == '=' || c == '.' || c == '#')
         // INVALID CHARACTER
         return c;
     }
@@ -172,14 +171,6 @@ public class OSchemaShared extends ODocumentWrapperNoClass
     }
 
     return null;
-  }
-
-  public boolean isFullCheckpointOnChange() {
-    return fullCheckpointOnChange;
-  }
-
-  public void setFullCheckpointOnChange(boolean fullCheckpointOnChange) {
-    this.fullCheckpointOnChange = fullCheckpointOnChange;
   }
 
   @Override
@@ -1197,17 +1188,21 @@ public class OSchemaShared extends ODocumentWrapperNoClass
       } else {
         // DETERMINE THE BEST NUMBER BASED ON AVAILABLE CORES
         final int cpus = Runtime.getRuntime().availableProcessors();
-        minimumClusters = cpus > 16 ? 16 : cpus;
+        minimumClusters = cpus > 64 ? 64 : cpus;
       }
     }
 
     clusterIds = new int[minimumClusters];
+    int firstDynamicCluster = 0;
     clusterIds[0] = database.getClusterIdByName(className);
-    if (clusterIds[0] == -1)
+    if (clusterIds[0] == -1) {
+      // JUST KEEP THE CLASS NAME. THIS IS FOR LEGACY REASONS
       clusterIds[0] = database.addCluster(className);
+      firstDynamicCluster = 1;
+    }
 
-    if (minimumClusters > 1) {
-      for (int i = 1; i < minimumClusters; ++i) {
+    if (minimumClusters > firstDynamicCluster) {
+      for (int i = firstDynamicCluster; i < minimumClusters; ++i) {
         clusterIds[i] = database.getClusterIdByName(className + "_" + i);
         if (clusterIds[i] == -1)
           clusterIds[i] = database.addCluster(className + "_" + i);
@@ -1285,8 +1280,6 @@ public class OSchemaShared extends ODocumentWrapperNoClass
         try {
           toStream();
           document.save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
-          if (fullCheckpointOnChange)
-            getDatabase().getStorage().synch();
         } catch (OConcurrentModificationException e) {
           reload(null, true);
           throw e;

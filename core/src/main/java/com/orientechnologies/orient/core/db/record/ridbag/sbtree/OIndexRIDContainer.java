@@ -82,7 +82,7 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
         .getUnderlying();
     final OAtomicOperation atomicOperation;
     try {
-      atomicOperation = storage.getAtomicOperationsManager().startAtomicOperation(fileName);
+      atomicOperation = storage.getAtomicOperationsManager().startAtomicOperation(fileName, true);
     } catch (IOException e) {
       throw OException.wrapException(new OIndexEngineException("Error creation of sbtree with name " + fileName, fileName), e);
     }
