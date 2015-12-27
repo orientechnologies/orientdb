@@ -343,7 +343,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 
     final ORecordOperation rec = getRecordEntry(oldRid);
     if (rec != null) {
-      updatedRids.put(newRid,oldRid);
+      updatedRids.put(newRid,oldRid.copy());
 
       if (!rec.getRecord().getIdentity().equals(newRid)) {
         ORecordInternal.onBeforeIdentityChanged(rec.getRecord());
