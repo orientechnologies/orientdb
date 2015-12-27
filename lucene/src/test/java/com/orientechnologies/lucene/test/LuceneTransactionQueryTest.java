@@ -68,13 +68,13 @@ public class LuceneTransactionQueryTest extends BaseConfiguredLuceneTest {
     databaseDocumentTx.save(doc);
 
     String query = "select from C1 where p1 lucene \"abc\" ";
-    List<ODocument> vertices = ODatabaseRecordThreadLocal.INSTANCE.get().command(new OSQLSynchQuery<ODocument>(query)).execute();
+    List<ODocument> vertices = ODatabaseRecordThreadLocal.instance().get().command(new OSQLSynchQuery<ODocument>(query)).execute();
 
     Assert.assertEquals(vertices.size(), 1);
     databaseDocumentTx.rollback();
 
     query = "select from C1 where p1 lucene \"abc\" ";
-    vertices = ODatabaseRecordThreadLocal.INSTANCE.get().command(new OSQLSynchQuery<ODocument>(query)).execute();
+    vertices = ODatabaseRecordThreadLocal.instance().get().command(new OSQLSynchQuery<ODocument>(query)).execute();
     Assert.assertEquals(vertices.size(), 0);
 
   }
@@ -91,7 +91,7 @@ public class LuceneTransactionQueryTest extends BaseConfiguredLuceneTest {
     databaseDocumentTx.save(doc);
 
     String query = "select from C1 where p1 lucene \"abc\" ";
-    List<ODocument> vertices = ODatabaseRecordThreadLocal.INSTANCE.get().command(new OSQLSynchQuery<ODocument>(query)).execute();
+    List<ODocument> vertices = ODatabaseRecordThreadLocal.instance().get().command(new OSQLSynchQuery<ODocument>(query)).execute();
 
     Assert.assertEquals(vertices.size(), 1);
 
@@ -160,7 +160,7 @@ public class LuceneTransactionQueryTest extends BaseConfiguredLuceneTest {
     databaseDocumentTx.save(doc);
 
     String query = "select from C1 where p1 lucene \"update\" ";
-    List<ODocument> vertices = ODatabaseRecordThreadLocal.INSTANCE.get().command(new OSQLSynchQuery<ODocument>(query)).execute();
+    List<ODocument> vertices = ODatabaseRecordThreadLocal.instance().get().command(new OSQLSynchQuery<ODocument>(query)).execute();
 
     Assert.assertEquals(vertices.size(), 1);
 

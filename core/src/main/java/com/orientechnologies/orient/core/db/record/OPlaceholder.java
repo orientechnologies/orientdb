@@ -114,22 +114,22 @@ public class OPlaceholder implements OIdentifiable, Externalizable {
 
   @Override
   public void lock(final boolean iExclusive) {
-    ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction().lockRecord(this,
+    ODatabaseRecordThreadLocal.instance().get().getTransaction().lockRecord(this,
         iExclusive ? OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK : OStorage.LOCKING_STRATEGY.SHARED_LOCK);
   }
 
   @Override
   public boolean isLocked() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction().isLockedRecord(this);
+    return ODatabaseRecordThreadLocal.instance().get().getTransaction().isLockedRecord(this);
   }
 
   @Override
   public OStorage.LOCKING_STRATEGY lockingStrategy() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction().lockingStrategy(this);
+    return ODatabaseRecordThreadLocal.instance().get().getTransaction().lockingStrategy(this);
   }
 
   @Override
   public void unlock() {
-    ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction().unlockRecord(this);
+    ODatabaseRecordThreadLocal.instance().get().getTransaction().unlockRecord(this);
   }
 }

@@ -49,7 +49,7 @@ public class ODatabaseScriptManager {
               @Override
               public ScriptEngine create() {
                 final ScriptEngine scriptEngine = scriptManager.getEngine(language);
-                final String library = scriptManager.getLibrary(ODatabaseRecordThreadLocal.INSTANCE.get(), language);
+                final String library = scriptManager.getLibrary(ODatabaseRecordThreadLocal.instance().get(), language);
 
                 if (library != null)
                   try {

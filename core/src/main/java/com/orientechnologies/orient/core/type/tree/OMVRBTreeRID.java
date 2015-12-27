@@ -64,12 +64,12 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
   }
 
   public OMVRBTreeRID() {
-    this(new OMVRBTreeRIDProvider(null, ODatabaseRecordThreadLocal.INSTANCE.get().getClusterIdByName(
+    this(new OMVRBTreeRIDProvider(null, ODatabaseRecordThreadLocal.instance().get().getClusterIdByName(
         OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME)));
   }
 
   public OMVRBTreeRID(int binaryThreshold) {
-    this(new OMVRBTreeRIDProvider(null, ODatabaseRecordThreadLocal.INSTANCE.get().getClusterIdByName(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME), binaryThreshold));
+    this(new OMVRBTreeRIDProvider(null, ODatabaseRecordThreadLocal.instance().get().getClusterIdByName(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME), binaryThreshold));
   }
 
   public OMVRBTreeRID(final ODocument iRecord) {
@@ -433,7 +433,7 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
           // PUT THE ITEM INTO THE TREE
           internalPut(record.getIdentity(), null);
         } else {
-          assert record.getIdentity().isValid() || (ODatabaseRecordThreadLocal.INSTANCE.get()
+          assert record.getIdentity().isValid() || (ODatabaseRecordThreadLocal.instance().get()
                                                     .getStorage() instanceof OStorageProxy) : "Impossible to serialize invalid link " + record.getIdentity();
         }
       }
@@ -576,7 +576,7 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 
     if (((OMVRBTreeRIDProvider) getProvider()).isEmbeddedStreaming())
       setDirtyOwner();
-    else if (ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction().getStatus() != OTransaction.TXSTATUS.BEGUN)
+    else if (ODatabaseRecordThreadLocal.instance().get().getTransaction().getStatus() != OTransaction.TXSTATUS.BEGUN)
       // SAVE IT RIGHT NOW SINCE IT'S DISCONNECTED FROM OWNER
       save();
 

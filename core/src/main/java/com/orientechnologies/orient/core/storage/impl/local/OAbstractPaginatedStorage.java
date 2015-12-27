@@ -1284,7 +1284,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     checkOpeness();
     checkLowDiskSpaceAndFullCheckpointRequests();
 
-    final ODatabaseDocumentInternal databaseRecord = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocumentInternal databaseRecord = ODatabaseRecordThreadLocal.instance().get();
     ((OMetadataInternal) databaseRecord.getMetadata()).makeThreadLocalSchemaSnapshot();
 
     stateLock.acquireReadLock();
@@ -2455,7 +2455,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     try {
 
-      ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+      ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
 
       // CALL BEFORE COMMAND
       Iterable<ODatabaseListener> listeners = db.getListeners();
@@ -2513,12 +2513,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     } finally {
       if (Orient.instance().getProfiler().isRecording()) {
-        final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+        final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
         if (db != null) {
           final OSecurityUser user = db.getUser();
           final String userString = user != null ? user.toString() : null;
           Orient.instance().getProfiler()
-              .stopChrono("db." + ODatabaseRecordThreadLocal.INSTANCE.get().getName() + ".command." + iCommand.toString(),
+              .stopChrono("db." + ODatabaseRecordThreadLocal.instance().get().getName() + ".command." + iCommand.toString(),
                   "Command executed against the database", beginTime, "db.*.command.*", null, userString);
         }
       }

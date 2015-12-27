@@ -138,16 +138,34 @@ public class Orient extends OListenerManger<OOrientListener> {
     }
   }
 
-  protected Orient() {
+  private Orient() {
     super(true);
 
     threadGroup = new ThreadGroup("OrientDB");
     threadGroup.setDaemon(false);
   }
 
-  public static Orient instance() {
-    return instance;
-  }
+   public static Orient instance() {
+
+        return OrientHolder.INSTANCE;
+    }
+
+    private static class OrientHolder {
+
+        private static final Orient INSTANCE = new Orient();
+
+        static {
+            initOrient();
+        }
+
+        private static void initOrient() {
+            try {
+                INSTANCE.startup();
+            } catch (Throwable t) {
+                OLogManager.instance().error(INSTANCE, "Can not add Listener to Orient", t);
+            }
+        }
+    }
 
   public static String getHomePath() {
     String v = System.getProperty("orient.home");

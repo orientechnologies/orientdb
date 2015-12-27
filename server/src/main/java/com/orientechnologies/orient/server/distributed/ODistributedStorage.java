@@ -315,7 +315,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
           result = dManager.sendRequest(getName(), involvedClusters, nodes, task, EXECUTION_MODE.RESPONSE);
           if (exec.involveSchema())
             // UPDATE THE SCHEMA
-            dManager.propagateSchemaChanges(ODatabaseRecordThreadLocal.INSTANCE.get());
+            dManager.propagateSchemaChanges(ODatabaseRecordThreadLocal.instance().get());
         }
 
         break;
@@ -495,7 +495,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       String masterNode = nodes.get(0);
       if (!masterNode.equals(localNodeName)) {
         final OCluster cl = getClusterByName(clusterName);
-        final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+        final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
         final OClass cls = db.getMetadata().getSchema().getClassByClusterId(cl.getId());
         String newClusterName = null;
         if (cls != null) {
@@ -551,7 +551,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         @Override
         public Object call() throws Exception {
           // USE THE DATABASE TO CALL HOOKS
-          final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+          final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
 
           final ORecord record = Orient.instance().getRecordFactoryManager().newInstance(iRecordType);
           ORecordInternal.fill(record, iRecordId, iRecordVersion, iContent, true);
@@ -761,7 +761,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         @Override
         public Object call() throws Exception {
           // USE THE DATABASE TO CALL HOOKS
-          final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+          final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
 
           final ORecord record = Orient.instance().getRecordFactoryManager().newInstance(iRecordType);
           ORecordInternal.fill(record, iRecordId, iVersion, iContent, true);
@@ -855,7 +855,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         @Override
         public Object call() throws Exception {
           // USE THE DATABASE TO CALL HOOKS
-          final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+          final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
           try {
             db.delete(iRecordId, iVersion);
             return new OStorageOperationResult<Boolean>(true);
@@ -1627,7 +1627,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     if (OExecutionThreadLocal.INSTANCE.get().onAsyncReplicationError != null) {
 
       final OAsyncReplicationError subCallback = OExecutionThreadLocal.INSTANCE.get().onAsyncReplicationError;
-      final ODatabaseDocumentTx currentDatabase = (ODatabaseDocumentTx) ODatabaseRecordThreadLocal.INSTANCE.get();
+      final ODatabaseDocumentTx currentDatabase = (ODatabaseDocumentTx) ODatabaseRecordThreadLocal.instance().get();
       final ODatabaseDocumentTx copyDatabase = currentDatabase.copy();
       currentDatabase.activateOnCurrentThread();
 

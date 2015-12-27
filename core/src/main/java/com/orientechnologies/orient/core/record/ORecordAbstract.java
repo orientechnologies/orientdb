@@ -242,11 +242,11 @@ public abstract class ORecordAbstract implements ORecord {
   }
 
   public ODatabaseDocumentInternal getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
+    return ODatabaseRecordThreadLocal.instance().get();
   }
 
   public ODatabaseDocument getDatabaseIfDefined() {
-    return ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    return ODatabaseRecordThreadLocal.instance().getIfDefined();
   }
 
   public ORecord reload() {
@@ -309,23 +309,23 @@ public abstract class ORecordAbstract implements ORecord {
 
   @Override
   public void lock(final boolean iExclusive) {
-    ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction().lockRecord(this,
+    ODatabaseRecordThreadLocal.instance().get().getTransaction().lockRecord(this,
         iExclusive ? OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK : OStorage.LOCKING_STRATEGY.SHARED_LOCK);
   }
 
   @Override
   public boolean isLocked() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction().isLockedRecord(this);
+    return ODatabaseRecordThreadLocal.instance().get().getTransaction().isLockedRecord(this);
   }
 
   @Override
   public OStorage.LOCKING_STRATEGY lockingStrategy() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction().lockingStrategy(this);
+    return ODatabaseRecordThreadLocal.instance().get().getTransaction().lockingStrategy(this);
   }
 
   @Override
   public void unlock() {
-    ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction().unlockRecord(this);
+    ODatabaseRecordThreadLocal.instance().get().getTransaction().unlockRecord(this);
   }
 
   @Override
@@ -438,11 +438,11 @@ public abstract class ORecordAbstract implements ORecord {
   }
 
   protected ODatabaseDocumentInternal getDatabaseInternal() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
+    return ODatabaseRecordThreadLocal.instance().get();
   }
 
   protected ODatabaseDocumentInternal getDatabaseIfDefinedInternal() {
-    return ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    return ODatabaseRecordThreadLocal.instance().getIfDefined();
   }
 
   /**
@@ -500,7 +500,7 @@ public abstract class ORecordAbstract implements ORecord {
   }
 
   protected void checkForLoading() {
-    if (_status == ORecordElement.STATUS.NOT_LOADED && ODatabaseRecordThreadLocal.INSTANCE.isDefined())
+    if (_status == ORecordElement.STATUS.NOT_LOADED && ODatabaseRecordThreadLocal.instance().isDefined())
       reload(null, true);
   }
 

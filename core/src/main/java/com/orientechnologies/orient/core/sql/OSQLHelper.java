@@ -334,7 +334,7 @@ public class OSQLHelper {
         if (fieldValue instanceof OCommandSQL) {
           final OCommandSQL cmd = (OCommandSQL) fieldValue;
           cmd.getContext().setParent(iContext);
-          fieldValue = ODatabaseRecordThreadLocal.INSTANCE.get().command(cmd).execute();
+          fieldValue = ODatabaseRecordThreadLocal.instance().get().command(cmd).execute();
 
           // CHECK FOR CONVERSIONS
           OImmutableClass immutableClass = ODocumentInternal.getImmutableSchemaClass(iDocument);

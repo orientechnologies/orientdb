@@ -56,7 +56,7 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
   }
 
   protected static ODatabaseDocumentInternal getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
+    return ODatabaseRecordThreadLocal.instance().get();
   }
 
   @Override

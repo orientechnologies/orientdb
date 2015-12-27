@@ -61,7 +61,7 @@ public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
       // NOT DOCUMENT OR GRAPHDB? IGNORE IT
       return null;
 
-    final ODatabaseDocumentTx db = OGremlinHelper.getGraphDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
+    final ODatabaseDocumentTx db = OGremlinHelper.getGraphDatabase(ODatabaseRecordThreadLocal.instance().get());
 
     result = new ArrayList<Object>();
 

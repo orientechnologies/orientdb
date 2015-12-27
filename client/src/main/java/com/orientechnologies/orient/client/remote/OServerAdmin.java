@@ -367,7 +367,7 @@ public class OServerAdmin {
       Orient.instance().unregisterStorage(s);
     }
 
-    ODatabaseRecordThreadLocal.INSTANCE.remove();
+    ODatabaseRecordThreadLocal.instance().remove();
 
     return this;
   }

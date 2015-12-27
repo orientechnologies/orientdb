@@ -212,7 +212,7 @@ public class OStreamSerializerOldRIDContainer implements OStreamSerializer, OBin
         (Integer) doc.field("rootOffset"));
     final String fileName = doc.field("file");
 
-    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
     return new OIndexRIDContainer(fileName, new OIndexRIDContainerSBTree(fileName, rootPointer, false,
         (OAbstractPaginatedStorage) db.getStorage().getUnderlying()), false, false);
   }

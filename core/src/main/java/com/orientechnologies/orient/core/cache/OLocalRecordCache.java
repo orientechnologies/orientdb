@@ -43,7 +43,7 @@ public class OLocalRecordCache extends OAbstractRecordCache {
 
   @Override
   public void startup() {
-    ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    ODatabaseDocument db = ODatabaseRecordThreadLocal.instance().get();
 
     profilerPrefix = "db." + db.getName() + ".cache.level1.";
     profilerMetadataPrefix = "db.*.cache.level1.";

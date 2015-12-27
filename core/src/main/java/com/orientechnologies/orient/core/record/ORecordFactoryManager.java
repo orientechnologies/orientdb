@@ -77,7 +77,7 @@ public class ORecordFactoryManager {
   }
 
   public ORecord newInstance() {
-    final ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocument database = ODatabaseRecordThreadLocal.instance().get();
     try {
       return (ORecord) getFactory(database.getRecordType()).newRecord();
     } catch (Exception e) {

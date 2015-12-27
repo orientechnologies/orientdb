@@ -47,7 +47,7 @@ public class ODictionary<T extends Object> {
       return null;
 
     if (value instanceof ORID)
-      return (RET) ODatabaseRecordThreadLocal.INSTANCE.get().load(((ORID) value), iFetchPlan);
+      return (RET) ODatabaseRecordThreadLocal.instance().get().load(((ORID) value), iFetchPlan);
 
     return (RET) ((ODocument) value).load(iFetchPlan);
   }

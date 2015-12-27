@@ -71,7 +71,7 @@ public class OLazyRecordIterator implements OLazyIterator<OIdentifiable>, OReset
     if (value == null)
       return null;
 
-    if (value instanceof ORecordId && autoConvert2Record && ODatabaseRecordThreadLocal.INSTANCE.isDefined()) {
+    if (value instanceof ORecordId && autoConvert2Record && ODatabaseRecordThreadLocal.instance().isDefined()) {
       try {
         final ORecord rec = ((ORecordId) value).getRecord();
         if (sourceRecord != null && rec != null)

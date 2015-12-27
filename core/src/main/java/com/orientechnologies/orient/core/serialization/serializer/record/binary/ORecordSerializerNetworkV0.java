@@ -247,7 +247,7 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
 
     final List<String> result = new ArrayList<String>();
 
-    final OMetadataInternal metadata = (OMetadataInternal) ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata();
+    final OMetadataInternal metadata = (OMetadataInternal) ODatabaseRecordThreadLocal.instance().get().getMetadata();
     final OImmutableSchema _schema = metadata.getImmutableSchemaSnapshot();
 
     String fieldName;

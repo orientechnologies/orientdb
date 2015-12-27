@@ -73,12 +73,12 @@ public class LocalPaginatedStorageLinkBagCrashRestore {
 
         try {
           ODatabaseDocumentTx base_db = poolFactory.get(URL_BASE, "admin", "admin").acquire();
-          ODatabaseRecordThreadLocal.INSTANCE.set(base_db);
+          ODatabaseRecordThreadLocal.instance().set(base_db);
 
           ODocument base_document = addDocument(ts);
 
           ODatabaseDocumentTx test_db = poolFactory.get(URL_TEST, "admin", "admin").acquire();
-          ODatabaseRecordThreadLocal.INSTANCE.set(test_db);
+          ODatabaseRecordThreadLocal.instance().set(test_db);
           ODocument test_document = addDocument(ts);
 
           Assert.assertTrue(ODocumentHelper.hasSameContentOf(base_document, base_db, test_document, test_db, null));
@@ -329,14 +329,14 @@ public class LocalPaginatedStorageLinkBagCrashRestore {
       for (OPhysicalPosition physicalPosition : physicalPositions) {
         rid.clusterPosition = physicalPosition.clusterPosition;
 
-        ODatabaseRecordThreadLocal.INSTANCE.set(base_db);
+        ODatabaseRecordThreadLocal.instance().set(base_db);
         ODocument baseDocument = base_db.load(rid);
         baseDocument.setLazyLoad(false);
 
-        ODatabaseRecordThreadLocal.INSTANCE.set(test_db);
+        ODatabaseRecordThreadLocal.instance().set(test_db);
         ODocument testDocument = test_db.load(rid);
         if (testDocument == null) {
-          ODatabaseRecordThreadLocal.INSTANCE.set(base_db);
+          ODatabaseRecordThreadLocal.instance().set(base_db);
           if (((Long) baseDocument.field("ts")) < minTs)
             minTs = baseDocument.field("ts");
         } else {
@@ -344,24 +344,24 @@ public class LocalPaginatedStorageLinkBagCrashRestore {
           long baseTs;
           long testTs;
 
-          ODatabaseRecordThreadLocal.INSTANCE.set(base_db);
+          ODatabaseRecordThreadLocal.instance().set(base_db);
           baseTs = baseDocument.field("ts");
 
-          ODatabaseRecordThreadLocal.INSTANCE.set(test_db);
+          ODatabaseRecordThreadLocal.instance().set(test_db);
           testTs = testDocument.field("ts");
 
           boolean equals = baseTs == testTs;
 
           if (equals) {
             Set<ORID> baseRids = new HashSet<ORID>();
-            ODatabaseRecordThreadLocal.INSTANCE.set(base_db);
+            ODatabaseRecordThreadLocal.instance().set(base_db);
             ORidBag baseRidBag = baseDocument.field("ridBag");
 
             for (OIdentifiable baseIdentifiable : baseRidBag)
               baseRids.add(baseIdentifiable.getIdentity());
 
             Set<ORID> testRids = new HashSet<ORID>();
-            ODatabaseRecordThreadLocal.INSTANCE.set(test_db);
+            ODatabaseRecordThreadLocal.instance().set(test_db);
             ORidBag testRidBag = testDocument.field("ridBag");
 
             for (OIdentifiable testIdentifiable : testRidBag)

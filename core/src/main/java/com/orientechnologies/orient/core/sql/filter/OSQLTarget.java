@@ -242,10 +242,10 @@ public class OSQLTarget extends OBaseParser {
           targetRecords = new ArrayList<OIdentifiable>();
 
           if (metadataTarget.equals(OCommandExecutorSQLAbstract.METADATA_SCHEMA)) {
-            ((ArrayList<OIdentifiable>) targetRecords).add(new ORecordId(ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
+            ((ArrayList<OIdentifiable>) targetRecords).add(new ORecordId(ODatabaseRecordThreadLocal.instance().get().getStorage()
                 .getConfiguration().schemaRecordId));
           } else if (metadataTarget.equals(OCommandExecutorSQLAbstract.METADATA_INDEXMGR)) {
-            ((ArrayList<OIdentifiable>) targetRecords).add(new ORecordId(ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
+            ((ArrayList<OIdentifiable>) targetRecords).add(new ORecordId(ODatabaseRecordThreadLocal.instance().get().getStorage()
                 .getConfiguration().indexMgrRecordId));
           } else
             throw new OQueryParsingException("Metadata element not supported: " + metadataTarget);
@@ -255,7 +255,7 @@ public class OSQLTarget extends OBaseParser {
           final String key = originalSubjectName.substring(OCommandExecutorSQLAbstract.DICTIONARY_PREFIX.length());
           targetRecords = new ArrayList<OIdentifiable>();
 
-          final OIdentifiable value = ODatabaseRecordThreadLocal.INSTANCE.get().getDictionary().get(key);
+          final OIdentifiable value = ODatabaseRecordThreadLocal.instance().get().getDictionary().get(key);
           if (value != null)
             ((List<OIdentifiable>) targetRecords).add(value);
 
@@ -277,10 +277,10 @@ public class OSQLTarget extends OBaseParser {
           if (targetClasses == null)
             targetClasses = new HashMap<String, String>();
 
-          final OClass cls = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema().getClass(subjectName);
+          final OClass cls = ODatabaseRecordThreadLocal.instance().get().getMetadata().getSchema().getClass(subjectName);
           if (cls == null)
             throw new OCommandExecutionException("Class '" + subjectName + "' was not found in database '"
-                + ODatabaseRecordThreadLocal.INSTANCE.get().getName() + "'");
+                + ODatabaseRecordThreadLocal.instance().get().getName() + "'");
 
           targetClasses.put(cls.getName(), alias);
         }

@@ -48,7 +48,7 @@ public class OQueryOperatorInstanceof extends OQueryOperatorEqualityNotNulls {
 	protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
 			final Object iRight, OCommandContext iContext) {
 
-		final OSchema schema = ((OMetadataInternal)ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata()).getImmutableSchemaSnapshot();
+		final OSchema schema = ((OMetadataInternal)ODatabaseRecordThreadLocal.instance().get().getMetadata()).getImmutableSchemaSnapshot();
 
 		final String baseClassName = iRight.toString();
 		final OClass baseClass = schema.getClass(baseClassName);

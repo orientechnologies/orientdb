@@ -113,7 +113,7 @@ public class OrientGraphFactoryTest {
     g.addVertex(null);
     g.commit();
     g.shutdown();
-    assertNull(ODatabaseRecordThreadLocal.INSTANCE.getIfDefined());
+    assertNull(ODatabaseRecordThreadLocal.instance().getIfDefined());
     factory.close();
   }
 

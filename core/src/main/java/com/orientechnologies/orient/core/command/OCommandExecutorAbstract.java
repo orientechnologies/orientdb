@@ -53,7 +53,7 @@ public abstract class OCommandExecutorAbstract extends OBaseParser implements OC
   protected OCommandContext     context;
 
   public static ODatabaseDocumentInternal getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
+    return ODatabaseRecordThreadLocal.instance().get();
   }
 
   public OCommandExecutorAbstract init(final OCommandRequestText iRequest) {
