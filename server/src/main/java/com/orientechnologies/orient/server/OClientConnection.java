@@ -19,9 +19,12 @@
  */
 package com.orientechnologies.orient.server;
 
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
+import com.orientechnologies.orient.enterprise.channel.binary.OTokenSecurityException;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
@@ -127,4 +130,55 @@ public class OClientConnection {
   public byte[] getTokenBytes() {
     return tokenBytes;
   }
+
+
+  public void validateSession(byte [] tokenFromNetwork, OTokenHandler handler){
+    if(tokenFromNetwork == null || tokenFromNetwork.length == 0){
+     //TODO: already authenticated on this connection.
+    } else {
+      if(tokenBytes != null && tokenBytes.length > 0){
+        if(tokenBytes.equals(tokenFromNetwork))
+          //SAME SESSION AND TOKEN DO NOTHING
+          return;
+      }
+      OToken token = null;
+      try {
+        if (tokenFromNetwork != null)
+          token = handler.parseBinaryToken(tokenFromNetwork);
+      } catch (Exception e) {
+        throw OException.wrapException(new OSystemException("error on token parse"), e);
+      }
+      if (token == null || !token.getIsVerified()) {
+        throw new OTokenSecurityException("The token provided is not a valid token, signature does not match");
+      }
+      if (!handler.validateBinaryToken(token)) {
+        throw new OTokenSecurityException("The token provided is expired");
+      }
+
+      if (tokenBased == null) {
+        tokenBased = Boolean.TRUE;
+      }
+      this.tokenBytes = tokenFromNetwork;
+      this.token = token;
+    }
+  }
+
+
+  public void endOperation(){
+    if (database != null)
+      if (!database.isClosed() && database.getLocalCache() != null)
+        database.getLocalCache().clear();
+
+    data.lastCommandExecutionTime = System.currentTimeMillis() - data.lastCommandReceived;
+    data.totalCommandExecutionTime += data.lastCommandExecutionTime;
+
+    data.lastCommandInfo = data.commandInfo;
+    data.lastCommandDetail = data.commandDetail;
+
+    data.commandDetail = "-";
+
+    release();
+
+  }
+
 }

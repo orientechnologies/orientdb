@@ -164,7 +164,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     waitNodeIsOnline();
 
 
-    solveTokenSession();
+    solveSession();
 
     if (connection != null) {
       if (connection.database != null) {
@@ -192,7 +192,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     OServerPluginHelper.invokeHandlerCallbackOnBeforeClientRequest(server, connection, (byte) requestType);
   }
 
-  private void solveTokenSession() throws IOException {
+  private void solveSession() throws IOException {
     connection = server.getClientConnectionManager().getConnection(clientTxId, this);
     boolean noToken =false;
     if(connection == null && clientTxId < 0 && requestType != OChannelBinaryProtocol.REQUEST_DB_REOPEN){
@@ -231,6 +231,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     } else {
       byte[] bytes = channel.readBytes();
       if(connection == null && bytes != null && bytes.length >0){
+        //THIS IS THE CASE OF A TOKEN OPERATION WITHOUT HANDSHAKE ON THIS CONNECTION.
         connection = server.getClientConnectionManager().connect(this);
         connection.tokenBytes = bytes;
       }
@@ -240,6 +241,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       if (requestType != OChannelBinaryProtocol.REQUEST_DB_REOPEN)
         connection.acquire();
       if (!Arrays.equals(bytes, connection.tokenBytes) || connection.database == null) {
+
         OToken token = null;
         try {
           if (bytes!= null)
@@ -253,11 +255,12 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         if (connection.tokenBased == null) {
           connection.tokenBased = Boolean.TRUE;
         }
-        connection.tokenBytes = bytes;
-        connection.token = token;
         if (!server.getTokenHandler().validateBinaryToken(token)) {
           throw new OTokenSecurityException("The token provided is expired");
         }
+        connection.tokenBytes = bytes;
+        connection.token = token;
+
         if (connection.database != null && !connection.database.isClosed()) {
           connection.database.activateOnCurrentThread();
           connection.database.close();
@@ -295,48 +298,14 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     }
   }
 
-  private void solveSimpleSession() throws IOException {
-    connection = server.getClientConnectionManager().getConnection(clientTxId, this);
-    if (clientTxId < 0) {
-      short protocolId = 0;
-
-      if (connection != null)
-        protocolId = connection.data.protocolVersion;
-
-      connection = server.getClientConnectionManager().connect(this);
-
-      if (connection != null) {
-        connection.data.protocolVersion = protocolId;
-        connection.data.sessionId = clientTxId;
-      }
-    }
-    if (connection != null) {
-      //This should not be needed
-      connection.tokenBytes = null;
-      connection.acquire();
-    }
-  }
-
   @Override
   protected void onAfterRequest() throws IOException {
     OServerPluginHelper.invokeHandlerCallbackOnAfterClientRequest(server, connection, (byte) requestType);
 
     if (connection != null) {
-      if (connection.database != null)
-        if (!connection.database.isClosed() && connection.database.getLocalCache() != null)
-          connection.database.getLocalCache().clear();
-
-      connection.data.lastCommandExecutionTime = System.currentTimeMillis() - connection.data.lastCommandReceived;
-      connection.data.totalCommandExecutionTime += connection.data.lastCommandExecutionTime;
-
-      connection.data.lastCommandInfo = connection.data.commandInfo;
-      connection.data.lastCommandDetail = connection.data.commandDetail;
-
-      setDataCommandInfo("Listening");
-      connection.data.commandDetail = "-";
-
-      connection.release();
+      connection.endOperation();
     }
+    setDataCommandInfo("Listening");
   }
 
   protected boolean executeRequest() throws IOException {
