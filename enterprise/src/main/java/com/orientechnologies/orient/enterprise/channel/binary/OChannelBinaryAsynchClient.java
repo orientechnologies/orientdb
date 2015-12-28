@@ -458,10 +458,9 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     }
 
     if (throwable instanceof Throwable) {
-      throw new OResponseProcessingException("Exception during response processing");
+      throw new OResponseProcessingException("Exception during response processing",(Throwable)throwable);
     }
     // WRAP IT
-
     else
       OLogManager.instance().error(this,
           "Error during exception serialization, serialized exception is not Throwable, exception type is "
