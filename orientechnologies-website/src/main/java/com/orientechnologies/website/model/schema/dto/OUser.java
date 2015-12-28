@@ -38,6 +38,7 @@ public class OUser implements UserDetails {
 
   private Integer clientId;
 
+
   public Boolean getNotification() {
     return notification;
   }
@@ -220,6 +221,7 @@ public class OUser implements UserDetails {
   public void setChatNotification(Boolean chatNotification) {
     this.chatNotification = chatNotification;
   }
+
 
   public String getLogin() {
     return getName();

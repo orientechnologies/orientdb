@@ -1,7 +1,11 @@
 'use strict';
 
 
-angular.module('webappApp').factory("ChatService", function ($rootScope, $location, $timeout, $window,$q, User, Organization,AccessToken) {
+<<<<<<< Updated upstream
+angular.module('webappApp').factory("ChatService", function ($rootScope, $location, $timeout, $window, $q, User, Organization) {
+=======
+angular.module('webappApp').factory("ChatService", function ($rootScope, $location, $timeout, $window, User, Organization,AccessToken) {
+>>>>>>> Stashed changes
 
 
   var favicon = new Favico({

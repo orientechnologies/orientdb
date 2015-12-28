@@ -212,7 +212,18 @@
             class="fa fa-gear pull-right"></i></button>
         </div>
         <div class="col-md-12 milestone" ng-show="issue.client">
-          <span class="label label-default">{{issue.client.name}}</span>
+          <span class="label label-default">
+            {{issue.client.name}}
+            <span ng-if="issue.client.supported">
+              (Supported)
+            </span>
+            <span ng-if="!issue.client.supported">
+              (Not Supported)
+            </span>
+             <span ng-if="issue.client.expired">
+              (Expired)
+            </span>
+          </span>
         </div>
         <div class="col-md-12">
           <hr>
@@ -251,7 +262,9 @@
       </div>
       <div class="row issue-assignee">
         <div class="col-md-12">
-          <button class="btn btn-transparent" ng-disabled="!isMember && !isSupport" data-placement="bottom-right"
+          <button class="btn btn-transparent"
+                  ng-disabled="!canAssignIssue()"
+                  data-placement="bottom-right"
                   data-template="views/issues/popover/assignee.html" title="{{popover.title}}"
                   data-content="{{popover.content}}" data-auto-close="1" data-trigger="click" bs-popover>
             Assignee <i

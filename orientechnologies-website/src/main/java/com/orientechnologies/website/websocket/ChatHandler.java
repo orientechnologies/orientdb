@@ -2,8 +2,13 @@ package com.orientechnologies.website.websocket;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.website.model.schema.dto.Client;
 import com.orientechnologies.website.model.schema.dto.Message;
+import com.orientechnologies.website.model.schema.dto.OUser;
 import com.orientechnologies.website.repository.MessageRepository;
+import com.orientechnologies.website.repository.UserRepository;
+import com.orientechnologies.website.security.OSecurityManager;
+import com.orientechnologies.website.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
@@ -30,6 +35,15 @@ public class ChatHandler extends TextWebSocketHandler {
   @Autowired
   protected MessageRepository                   messageRepository;
 
+  @Autowired
+  protected OSecurityManager                    securityManager;
+
+  @Autowired
+  UserRepository                                userRepository;
+
+  @Autowired
+  UserService                                   userService;
+
   @Override
   protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
 
@@ -37,13 +51,30 @@ public class ChatHandler extends TextWebSocketHandler {
     if ("join".equals(msg.field("action"))) {
       List<Integer> roomsIds = msg.field("rooms");
 
+      String token = msg.field("token");
+      String org = msg.field("organization");
+
+      if(token == null || org ==null){
+        session.close();
+        return;
+      }
+      final OUser user = userRepository.findByGithubToken(token);
+
+      if (user == null) {
+        session.close();
+        return;
+      }
+
       for (Integer roomsId : roomsIds) {
         Set<WebSocketSession> sessions = rooms.get(roomsId);
         if (sessions == null) {
           sessions = new HashSet<WebSocketSession>();
           rooms.put(roomsId, sessions);
         }
-        sessions.add(session);
+        Client client = userService.getClient(user, org);
+        if (userService.isMember(user, org) || (userService.isClient(user, org) && client.getClientId().equals(roomsId))) {
+          sessions.add(session);
+        }
       }
     }
     if ("heartbeat".equals(msg.field("action"))) {

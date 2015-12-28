@@ -94,6 +94,20 @@ public class UserRepositoryImpl extends OrientBaseRepository<OUser> implements U
   }
 
   @Override
+  public List<Organization> findMyorganizationContributors(String username) {
+    OrientGraph db = dbFactory.getGraph();
+    String query = String.format("select expand(in('HasContributor')[@class = 'Organization']) from %s where name = '%s'",
+        getEntityClass().getSimpleName(), username);
+    Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
+
+    List<Organization> organization = new ArrayList<Organization>();
+    for (OrientVertex vertice : vertices) {
+      organization.add(OOrganization.NAME.fromDoc(vertice.getRecord(), db));
+    }
+    return organization;
+  }
+
+  @Override
   public List<Organization> findMyClientOrganization(String username) {
     OrientGraph db = dbFactory.getGraph();
     String query = String.format("select expand(in('HasMember')[@class = 'Client'].in('HasClient')) from %s where name = '%s'",

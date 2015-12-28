@@ -134,6 +134,10 @@ angular.module('webappApp')
       $scope.members = data.plain();
     })
 
+    Organization.all("contributors").getList().then(function (data) {
+      $scope.contributors = data.plain();
+    })
+
     Organization.all("priorities").getList().then(function (data) {
       $scope.priorities = data.plain();
     })
@@ -173,6 +177,12 @@ angular.module('webappApp')
       })
     })
 
+
+    $scope.addContributor = function () {
+      Organization.all('contributors').one($scope.newContributor).post().then(function (data) {
+        $scope.newContributor = null;
+      })
+    }
 
     $scope.syncRepo = function (repo) {
       Repo.one(repo.name).all("sync").post().then(function (data) {

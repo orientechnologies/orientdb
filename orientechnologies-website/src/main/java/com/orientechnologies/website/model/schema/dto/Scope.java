@@ -9,59 +9,61 @@ import java.util.List;
  */
 public class Scope {
 
-    @JsonIgnore
-    protected String id;
-    protected String name;
-    protected Integer number;
-    protected OUser owner;
-    protected List<OUser> members;
-    protected Repository repository;
+  @JsonIgnore
+  protected String      id;
+  protected String      name;
+  protected Integer     number;
+  @JsonIgnore
+  protected OUser       owner;
+  @JsonIgnore
+  protected List<OUser> members;
+  protected Repository  repository;
 
-    public String getId() {
-        return id;
-    }
+  public String getId() {
+    return id;
+  }
 
-    public void setId(String id) {
-        this.id = id;
-    }
+  public void setId(String id) {
+    this.id = id;
+  }
 
-    public String getName() {
-        return name;
-    }
+  public String getName() {
+    return name;
+  }
 
-    public void setName(String name) {
-        this.name = name;
-    }
+  public void setName(String name) {
+    this.name = name;
+  }
 
-    public Repository getRepository() {
-        return repository;
-    }
+  public Repository getRepository() {
+    return repository;
+  }
 
-    public void setRepository(Repository repository) {
-        this.repository = repository;
-    }
+  public void setRepository(Repository repository) {
+    this.repository = repository;
+  }
 
-    public Integer getNumber() {
-        return number;
-    }
+  public Integer getNumber() {
+    return number;
+  }
 
-    public void setNumber(Integer number) {
-        this.number = number;
-    }
+  public void setNumber(Integer number) {
+    this.number = number;
+  }
 
-    public OUser getOwner() {
-        return owner;
-    }
+  public OUser getOwner() {
+    return owner;
+  }
 
-    public void setOwner(OUser owner) {
-        this.owner = owner;
-    }
+  public void setOwner(OUser owner) {
+    this.owner = owner;
+  }
 
-    public List<OUser> getMembers() {
-        return members;
-    }
+  public List<OUser> getMembers() {
+    return members;
+  }
 
-    public void setMembers(List<OUser> members) {
-        this.members = members;
-    }
+  public void setMembers(List<OUser> members) {
+    this.members = members;
+  }
 }

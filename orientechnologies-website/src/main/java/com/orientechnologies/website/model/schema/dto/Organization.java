@@ -1,5 +1,6 @@
 package com.orientechnologies.website.model.schema.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.orientechnologies.website.model.schema.Identity;
 
 /**
@@ -9,8 +10,10 @@ public class Organization extends Identity {
 
   private String  name;
 
+  @JsonIgnore
   private Integer closingDays;
 
+  @JsonIgnore
   private String  closingMessage;
 
   public String getName() {

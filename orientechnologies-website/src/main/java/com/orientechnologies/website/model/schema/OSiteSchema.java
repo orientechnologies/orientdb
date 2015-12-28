@@ -40,6 +40,7 @@ public class OSiteSchema {
     addEdgeClass(HasEvent.class);
     addEdgeClass(HasIssue.class);
     addEdgeClass(HasMember.class);
+    addEdgeClass(HasContributor.class);
     addEdgeClass(HasOwner.class);
     addEdgeClass(HasOpened.class);
     addEdgeClass(HasVersion.class);

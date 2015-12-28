@@ -896,6 +896,20 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
     return users;
   }
 
+  @Override
+  public List<OUser> findContributors(String name) {
+    OrientGraph db = dbFactory.getGraph();
+    String query = String.format("select expand(set(out('HasContributor'))) from Organization where name = '%s'", name);
+    Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
+
+    List<OUser> users = new ArrayList<OUser>();
+    for (OrientVertex vertice : vertices) {
+      ODocument doc = vertice.getRecord();
+      users.add(com.orientechnologies.website.model.schema.OUser.NAME.fromDoc(doc, db));
+    }
+    return users;
+  }
+
   @Transactional
   @Override
   public void setCurrentMilestones(String name, String title, Boolean current) {

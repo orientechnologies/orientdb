@@ -1,5 +1,7 @@
 package com.orientechnologies.website.model.schema.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 /**
  * Created by Enrico Risa on 24/10/14.
  */
@@ -12,12 +14,17 @@ public class Client {
   protected boolean support;
   protected boolean supported;
 
+  protected boolean expired;
+  @JsonIgnore
   protected String  supportEmail;
 
+  @JsonIgnore
   protected String  supportSubject;
 
+  @JsonIgnore
   protected String  supportSubjectUpdate;
 
+  @JsonIgnore
   protected String  supportTemplate;
 
   public Integer getClientId() {
@@ -90,5 +97,14 @@ public class Client {
 
   public void setSupportSubjectUpdate(String supportSubjectUpdate) {
     this.supportSubjectUpdate = supportSubjectUpdate;
+  }
+
+
+  public boolean isExpired() {
+    return expired;
+  }
+
+  public void setExpired(boolean expired) {
+    this.expired = expired;
   }
 }

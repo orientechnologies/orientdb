@@ -18,6 +18,8 @@ public class UserDTO extends OUser {
 
   public List<Organization> clientsOf;
 
+  public List<Organization> contributorsOf;
+
   public List<Repository> getRepositories() {
     return repositories;
   }
@@ -26,6 +28,42 @@ public class UserDTO extends OUser {
 
   private Boolean      confirmed;
 
+
+
+  @Override
+  public Boolean getNotification() {
+    return super.getNotification();
+  }
+
+  @Override
+  public Boolean getWatching() {
+    return super.getWatching();
+  }
+
+  @Override
+  public Boolean getChatNotification() {
+    return super.getChatNotification();
+  }
+
+  @Override
+  public String getFirstName() {
+    return super.getFirstName();
+  }
+
+  @Override
+  public String getSecondName() {
+    return super.getSecondName();
+  }
+
+  @Override
+  public String getWorkingEmail() {
+    return super.getWorkingEmail();
+  }
+
+  @Override
+  public String getCompany() {
+    return super.getCompany();
+  }
 
   public void setRepositories(List<Repository> repositories) {
     this.repositories = repositories;
@@ -53,5 +91,13 @@ public class UserDTO extends OUser {
 
   public void setConfirmed(Boolean confirmed) {
     this.confirmed = confirmed;
+  }
+
+  public void setContributorsOf(List<Organization> contributorsOf) {
+    this.contributorsOf = contributorsOf;
+  }
+
+  public List<Organization> getContributorsOf() {
+    return contributorsOf;
   }
 }

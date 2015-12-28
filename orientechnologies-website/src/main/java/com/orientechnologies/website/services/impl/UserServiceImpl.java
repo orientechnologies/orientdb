@@ -11,6 +11,7 @@ import com.orientechnologies.website.model.schema.HasVersion;
 import com.orientechnologies.website.model.schema.dto.*;
 import com.orientechnologies.website.model.schema.dto.web.UserDTO;
 import com.orientechnologies.website.repository.EnvironmentRepository;
+import com.orientechnologies.website.repository.OrganizationRepository;
 import com.orientechnologies.website.repository.RepositoryRepository;
 import com.orientechnologies.website.repository.UserRepository;
 import com.orientechnologies.website.services.OrganizationService;
@@ -23,7 +24,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Created by Enrico Risa on 20/10/14.
@@ -32,22 +35,25 @@ import java.util.List;
 public class UserServiceImpl implements UserService {
 
   @Autowired
-  private OrientDBFactory       dbFactory;
+  private OrientDBFactory        dbFactory;
 
   @Autowired
-  private UserRepository        userRepository;
+  private UserRepository         userRepository;
 
   @Autowired
-  private OrganizationService   organizationService;
+  private OrganizationService    organizationService;
 
   @Autowired
-  private EnvironmentRepository environmentRepository;
+  private OrganizationRepository organizationRepository;
 
   @Autowired
-  private RepositoryRepository  repositoryRepository;
+  private EnvironmentRepository  environmentRepository;
 
   @Autowired
-  protected GitHubConfiguration gitHubConfiguration;
+  private RepositoryRepository   repositoryRepository;
+
+  @Autowired
+  protected GitHubConfiguration  gitHubConfiguration;
 
   @Transactional
   @Override
@@ -86,11 +92,13 @@ public class UserServiceImpl implements UserService {
     List<Repository> repositoryList = userRepository.findMyRepositories(user.getUsername());
     userDTO.setClientsOf(userRepository.findMyClientOrganization(user.getUsername()));
     userDTO.setClients(userRepository.findAllMyClientMember(user.getUsername()));
+    userDTO.setContributorsOf(userRepository.findMyorganizationContributors(user.getUsername()));
     userDTO.setRepositories(repositoryList);
     userDTO.setConfirmed(user.getConfirmed());
     userDTO.setNotification(user.getNotification());
     userDTO.setWatching(user.getWatching());
     userDTO.setChatNotification(user.getChatNotification());
+
     return userDTO;
   }
 
@@ -205,12 +213,33 @@ public class UserServiceImpl implements UserService {
   @Override
   public void profileIssue(OUser current, Issue issue, String organization) {
 
+    blankInfo(issue.getUser());
+
+    if (issue.getAssignee() != null) {
+      blankInfo(issue.getAssignee());
+    }
     if (!isMember(current, organization) && !isSupport(current, organization) && !isCurrentClient(current, issue, organization)) {
-      blankInfo(issue.getUser());
+
       blankClientInfo(issue);
     } else {
       Client client = getClient(issue.getUser(), organization);
+
       if (client != null) {
+
+        if (issue.getClient() != null) {
+          List<Contract> clientContracts = organizationRepository.findClientContracts(organization, client.getClientId());
+
+          List<Contract> collect = clientContracts.stream().filter(c -> {
+
+            if (c.getFrom() != null && c.getTo() != null) {
+              Date now = new Date();
+              return c.getFrom().after(now) && c.getTo().before(now);
+            }
+
+            return false;
+          }).collect(Collectors.toList());
+          issue.getClient().setExpired(collect.size() == 0);
+        }
         issue.getUser().setIsClient(true);
         issue.getUser().setClientName(client.getName());
         issue.getUser().setClientId(client.getClientId());

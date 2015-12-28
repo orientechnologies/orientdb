@@ -17,6 +17,8 @@ public interface UserRepository extends BaseRepository<OUser> {
 
   public List<Repository> findMyRepositories(String username);
 
+  public List<Organization> findMyorganizationContributors(String username);
+
   public List<Organization> findMyorganization(String username);
 
   public List<Organization> findMyClientOrganization(String username);

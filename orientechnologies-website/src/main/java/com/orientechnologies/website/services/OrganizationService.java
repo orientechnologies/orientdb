@@ -15,6 +15,9 @@ public interface OrganizationService {
 
   public void addMember(String org, String username) throws ServiceException;
 
+  @Transactional
+  public void addContributor(String org, String username) throws ServiceException;
+
   public void registerOrganization(String name) throws ServiceException;
 
   public Client registerClient(String org, Client client);

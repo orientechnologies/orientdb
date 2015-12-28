@@ -144,10 +144,23 @@ public class OrganizationController extends ExceptionController {
     organizationService.addMember(name, username);
   }
 
+  @RequestMapping(value = "{name}/contributors/{username}", method = RequestMethod.POST)
+  @ResponseStatus(HttpStatus.OK)
+  public void addContributorToOrg(@PathVariable("name") String name, @PathVariable("username") String username) {
+
+    organizationService.addContributor(name, username);
+  }
+
   @RequestMapping(value = "{name}/members", method = RequestMethod.GET)
   @ResponseStatus(HttpStatus.OK)
   public List<OUser> findMembers(@PathVariable("name") String name) {
     return orgRepository.findMembers(name);
+  }
+
+  @RequestMapping(value = "{name}/contributors", method = RequestMethod.GET)
+  @ResponseStatus(HttpStatus.OK)
+  public List<OUser> findContributors(@PathVariable("name") String name) {
+    return orgRepository.findContributors(name);
   }
 
   @RequestMapping(value = "{name}/milestones", method = RequestMethod.GET)
@@ -978,18 +991,20 @@ public class OrganizationController extends ExceptionController {
 
   @RequestMapping(value = "{name}/reports/issuesPerClient/{label}", method = RequestMethod.GET)
   @ResponseStatus(HttpStatus.OK)
-  public ResponseEntity<List<SimpleReportPoint>> totalIssuesPerClient(@PathVariable("name") String name, @PathVariable("label") String label) {
+  public ResponseEntity<List<SimpleReportPoint>> totalIssuesPerClient(@PathVariable("name") String name,
+      @PathVariable("label") String label) {
     if (securityManager.isCurrentMember(name)) {
       List<Issue> all = orgRepository.findOrganizationIssues(name);
 
       Label labelObj = new Label();
       labelObj.setName(label);
 
-
-      List<SimpleReportPoint> result = all.stream().filter(issue -> issue.getClient() != null)
-          .filter(issue->label == null || "null".equals(label) || "all".equals(label) ?
-              true :
-              issue.getLabels() != null && issue.getLabels().contains(labelObj))
+      List<SimpleReportPoint> result = all
+          .stream()
+          .filter(issue -> issue.getClient() != null)
+          .filter(
+              issue -> label == null || "null".equals(label) || "all".equals(label) ? true : issue.getLabels() != null
+                  && issue.getLabels().contains(labelObj))
           .collect(Collectors.groupingBy(issue -> issue.getClient().getName(), Collectors.counting())).entrySet().stream()
           .map(foo -> new SimpleReportPoint(foo.getKey(), null, foo.getValue().doubleValue())
 
@@ -1004,18 +1019,21 @@ public class OrganizationController extends ExceptionController {
 
   @RequestMapping(value = "{name}/reports/openIssuesPerClient/{label}", method = RequestMethod.GET)
   @ResponseStatus(HttpStatus.OK)
-  public ResponseEntity<List<SimpleReportPoint>> totalOpenIssuesPerClient(@PathVariable("name") String name, @PathVariable("label") String label) {
+  public ResponseEntity<List<SimpleReportPoint>> totalOpenIssuesPerClient(@PathVariable("name") String name,
+      @PathVariable("label") String label) {
     if (securityManager.isCurrentMember(name)) {
       List<Issue> all = orgRepository.findOrganizationIssues(name);
 
       Label labelObj = new Label();
       labelObj.setName(label);
 
-
-      List<SimpleReportPoint> result = all.stream().filter(issue -> issue.getClient() != null).filter(issue -> !issue.isClosed())
-          .filter(issue->label == null || "null".equals(label) || "all".equals(label) ?
-              true :
-              issue.getLabels() != null && issue.getLabels().contains(labelObj))
+      List<SimpleReportPoint> result = all
+          .stream()
+          .filter(issue -> issue.getClient() != null)
+          .filter(issue -> !issue.isClosed())
+          .filter(
+              issue -> label == null || "null".equals(label) || "all".equals(label) ? true : issue.getLabels() != null
+                  && issue.getLabels().contains(labelObj))
           .collect(Collectors.groupingBy(issue -> issue.getClient().getName(), Collectors.counting())).entrySet().stream()
           .map(foo -> new SimpleReportPoint(foo.getKey(), null, foo.getValue().doubleValue())
 
@@ -1030,14 +1048,20 @@ public class OrganizationController extends ExceptionController {
 
   @RequestMapping(value = "{name}/reports/closedIssuesPerClient/{label}", method = RequestMethod.GET)
   @ResponseStatus(HttpStatus.OK)
-  public ResponseEntity<List<SimpleReportPoint>> totalClosedIssuesPerClient(@PathVariable("name") String name, @PathVariable("label") String label) {
+  public ResponseEntity<List<SimpleReportPoint>> totalClosedIssuesPerClient(@PathVariable("name") String name,
+      @PathVariable("label") String label) {
     if (securityManager.isCurrentMember(name)) {
       List<Issue> all = orgRepository.findOrganizationIssues(name);
       Label labelObj = new Label();
       labelObj.setName(label);
 
-      List<SimpleReportPoint> result = all.stream().filter(issue -> issue.getClient() != null).filter(issue -> issue.isClosed())
-          .filter(issue->label == null || "null".equals(label) || "all".equals(label) ? true : issue.getLabels() != null && issue.getLabels().contains(labelObj))
+      List<SimpleReportPoint> result = all
+          .stream()
+          .filter(issue -> issue.getClient() != null)
+          .filter(issue -> issue.isClosed())
+          .filter(
+              issue -> label == null || "null".equals(label) || "all".equals(label) ? true : issue.getLabels() != null
+                  && issue.getLabels().contains(labelObj))
           .collect(Collectors.groupingBy(issue -> issue.getClient().getName(), Collectors.counting())).entrySet().stream()
           .map(foo -> new SimpleReportPoint(foo.getKey(), null, foo.getValue().doubleValue())
 

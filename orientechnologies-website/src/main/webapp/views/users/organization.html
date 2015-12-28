@@ -70,6 +70,41 @@
       </div>
     </div>
   </div>
+
+  <div class="row">
+    <div class="col-md-2">
+      <h4> Contributors</h4>
+    </div>
+    <div class="col-md-offset-6 col-md-4">
+      <form ng-submit="addContributor()">
+        <div class="form-group">
+          <div class="input-group">
+            <input type="text" class="form-control" ng-model="newContributor" placeholder="Add Contributor"/>
+                  <span class="input-group-btn">
+                        <button class="btn btn-success" type="submit">Add</button>
+                    </span>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <div class="panel panel-default">
+        <div class="panel-body">
+          <table>
+            <tbody>
+            <tr ng-repeat="contributor in contributors">
+              <td>
+                <avatar dim="50" name="true" user="contributor"></avatar>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
   <div class="row">
     <div class="col-md-2">
       <h4> Repositories</h4>

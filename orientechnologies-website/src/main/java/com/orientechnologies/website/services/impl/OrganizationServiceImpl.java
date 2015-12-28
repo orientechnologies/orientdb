@@ -141,6 +141,25 @@ public class OrganizationServiceImpl implements OrganizationService {
 
   }
 
+  @Override
+  public void addContributor(String org, String username) throws ServiceException {
+
+    Organization organization = organizationRepository.findOneByName(org);
+    if (organization != null) {
+
+      OUser developer = userRepository.findUserByLogin(username);
+      if (developer == null) {
+        developer = new OUser(username, null, null);
+        developer = userRepository.save(developer);
+      }
+      createContributorship(organization, developer);
+
+    } else {
+      throw ServiceException.create(HttpStatus.NOT_FOUND.value()).withMessage("Organization not Found");
+    }
+
+  }
+
   @Transactional
   @Override
   public void registerOrganization(String name) throws ServiceException {
@@ -552,6 +571,16 @@ public class OrganizationServiceImpl implements OrganizationService {
     OrientVertex devVertex = graph.getVertex(new ORecordId(user.getRid()));
 
     orgVertex.addEdge(HasMember.class.getSimpleName(), devVertex);
+
+  }
+
+  public void createContributorship(Organization organization, OUser user) {
+    OrientGraph graph = dbFactory.getGraph();
+
+    OrientVertex orgVertex = graph.getVertex(new ORecordId(organization.getId()));
+    OrientVertex devVertex = graph.getVertex(new ORecordId(user.getRid()));
+
+    orgVertex.addEdge(HasContributor.class.getSimpleName(), devVertex);
 
   }
 

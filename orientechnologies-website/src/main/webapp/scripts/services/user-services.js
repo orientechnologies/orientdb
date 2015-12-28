@@ -42,6 +42,15 @@ angular.module('webappApp').factory("User", function (Restangular, $q) {
       })
       return found;
     },
+    isContributor: function (org) {
+      var found = false
+      this.current.contributorsOf.forEach(function (e) {
+        if (e.name == org) {
+          found = true;
+        }
+      })
+      return found;
+    },
     isSupport: function (org) {
       var client = this.getClient(org);
       return this.isClient(org) && client.support;
