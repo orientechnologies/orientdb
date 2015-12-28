@@ -26,7 +26,7 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 
 /**
  * This page will contain value if it exceeds value limit for SBTree. Value is stored as list of linked pages. Following format is
@@ -54,8 +54,8 @@ public class OSBTreeValuePage extends ODurablePage {
 
   public static final int  MAX_BINARY_VALUE_SIZE      = MAX_PAGE_SIZE_BYTES - BINARY_CONTENT_OFFSET;
 
-  public OSBTreeValuePage(OCacheEntry cacheEntry, OWALChangesTree changesTree, boolean isNew) throws IOException {
-    super(cacheEntry, changesTree);
+  public OSBTreeValuePage(OCacheEntry cacheEntry, OWALChanges changes, boolean isNew) throws IOException {
+    super(cacheEntry, changes);
 
     if (isNew) {
       setNextFreeListPage(-1);

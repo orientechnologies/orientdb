@@ -21,7 +21,7 @@
 package com.orientechnologies.common.serialization.types;
 
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.PointerWrapper;
 
 /**
  * Serializer for boolean type .
@@ -108,7 +108,7 @@ public class OBooleanSerializer implements OBinarySerializer<Boolean> {
   }
 
   @Override
-  public Boolean deserializeFromDirectMemoryObject(OWALChangesTree.PointerWrapper wrapper, long offset) {
+  public Boolean deserializeFromDirectMemoryObject(PointerWrapper wrapper, long offset) {
     return wrapper.getByte(offset) > 0;
   }
 
@@ -116,7 +116,7 @@ public class OBooleanSerializer implements OBinarySerializer<Boolean> {
     return pointer.getByte(offset) > 0;
   }
 
-  public boolean deserializeFromDirectMemory(OWALChangesTree.PointerWrapper wrapper, long offset) {
+  public boolean deserializeFromDirectMemory(PointerWrapper wrapper, long offset) {
     return wrapper.getByte(offset) > 0;
   }
 
@@ -126,7 +126,7 @@ public class OBooleanSerializer implements OBinarySerializer<Boolean> {
   }
 
   @Override
-  public int getObjectSizeInDirectMemory(OWALChangesTree.PointerWrapper wrapper, long offset) {
+  public int getObjectSizeInDirectMemory(PointerWrapper wrapper, long offset) {
     return BOOLEAN_SIZE;
   }
 
