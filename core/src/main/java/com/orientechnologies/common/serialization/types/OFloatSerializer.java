@@ -23,7 +23,7 @@ package com.orientechnologies.common.serialization.types;
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.PointerWrapper;
 
 import java.nio.ByteOrder;
 
@@ -87,7 +87,7 @@ public class OFloatSerializer implements OBinarySerializer<Float> {
   }
 
   @Override
-  public Float deserializeFromDirectMemoryObject(OWALChangesTree.PointerWrapper wrapper, long offset) {
+  public Float deserializeFromDirectMemoryObject(PointerWrapper wrapper, long offset) {
     return Float.intBitsToFloat(wrapper.getInt(offset));
   }
 
@@ -108,7 +108,7 @@ public class OFloatSerializer implements OBinarySerializer<Float> {
     return Float.intBitsToFloat(pointer.getInt(offset));
   }
 
-  public float deserializeFromDirectMemory(OWALChangesTree.PointerWrapper wrapper, final long offset) {
+  public float deserializeFromDirectMemory(PointerWrapper wrapper, final long offset) {
     return Float.intBitsToFloat(wrapper.getInt(offset));
   }
 
@@ -118,7 +118,7 @@ public class OFloatSerializer implements OBinarySerializer<Float> {
   }
 
   @Override
-  public int getObjectSizeInDirectMemory(OWALChangesTree.PointerWrapper wrapper, long offset) {
+  public int getObjectSizeInDirectMemory(PointerWrapper wrapper, long offset) {
     return FLOAT_SIZE;
   }
 

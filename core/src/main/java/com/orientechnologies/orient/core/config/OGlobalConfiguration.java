@@ -387,7 +387,7 @@ public enum OGlobalConfiguration {
 
   NETWORK_BINARY_READ_RESPONSE_MAX_TIMES("network.binary.readResponse.maxTimes",
       "Maximum attempts, until a response can be read. Otherwise, the response will be dropped from the channel.", Integer.class,
-      20, true),
+      10000, true),
 
   NETWORK_BINARY_DEBUG("network.binary.debug", "Debug mode: print all data incoming on the binary channel.", Boolean.class, false,
       true),

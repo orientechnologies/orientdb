@@ -23,7 +23,7 @@ package com.orientechnologies.common.serialization.types;
 import java.util.UUID;
 
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.PointerWrapper;
 
 /**
  * @author Artem Orobets (enisher-at-gmail.com)
@@ -106,7 +106,7 @@ public class OUUIDSerializer implements OBinarySerializer<UUID> {
   }
 
   @Override
-  public UUID deserializeFromDirectMemoryObject(OWALChangesTree.PointerWrapper wrapper, long offset) {
+  public UUID deserializeFromDirectMemoryObject(PointerWrapper wrapper, long offset) {
     final long mostSignificantBits = OLongSerializer.INSTANCE.deserializeFromDirectMemory(wrapper, offset);
     final long leastSignificantBits = OLongSerializer.INSTANCE.deserializeFromDirectMemory(wrapper, offset
         + OLongSerializer.LONG_SIZE);
@@ -120,7 +120,7 @@ public class OUUIDSerializer implements OBinarySerializer<UUID> {
   }
 
   @Override
-  public int getObjectSizeInDirectMemory(OWALChangesTree.PointerWrapper wrapper, long offset) {
+  public int getObjectSizeInDirectMemory(PointerWrapper wrapper, long offset) {
     return UUID_SIZE;
   }
 

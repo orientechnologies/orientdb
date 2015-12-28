@@ -249,16 +249,15 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
 
           final long start = System.currentTimeMillis();
 
-          // WAIT 1 SECOND AND RETRY
-          readCondition.await(1, TimeUnit.SECONDS);
-          final long now = System.currentTimeMillis();
+          // WAIT MAX 30 SECOND AND RETRY, THIS IS UNBLOCKED BY ANOTHER THREAD IN CASE THE RESPONSE FOR THIS IS ARRIVED
+          readCondition.await(30, TimeUnit.SECONDS);
 
-          if (debug)
-            OLogManager.instance().debug(this, "Waked up: slept %dms, checking again from %s for session %d", (now - start),
-                socket.getLocalAddress(), iRequesterId);
+          if (debug) {
+            final long now = System.currentTimeMillis();
+            OLogManager.instance().debug(this, "Waked up: slept %dms, checking again from %s for session %d", (now - start), socket.getLocalAddress(), iRequesterId);
+          }
 
-          if (now - start >= 1000)
-            unreadResponse++;
+          unreadResponse++;
 
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();

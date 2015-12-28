@@ -24,7 +24,7 @@ import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.PointerWrapper;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -146,7 +146,7 @@ public class IndexCustomKeyTest extends DocumentDBBaseTest {
     }
 
     @Override
-    public ComparableBinary deserializeFromDirectMemoryObject(OWALChangesTree.PointerWrapper wrapper, long offset) {
+    public ComparableBinary deserializeFromDirectMemoryObject(PointerWrapper wrapper, long offset) {
       return new ComparableBinary(wrapper.get(offset, LENGTH));
     }
 
@@ -156,7 +156,7 @@ public class IndexCustomKeyTest extends DocumentDBBaseTest {
     }
 
     @Override
-    public int getObjectSizeInDirectMemory(OWALChangesTree.PointerWrapper wrapper, long offset) {
+    public int getObjectSizeInDirectMemory(PointerWrapper wrapper, long offset) {
       return LENGTH;
     }
 

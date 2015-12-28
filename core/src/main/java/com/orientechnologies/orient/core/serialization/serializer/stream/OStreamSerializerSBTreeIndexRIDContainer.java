@@ -32,7 +32,7 @@ import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContai
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.PointerWrapper;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -237,7 +237,7 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
   }
 
   @Override
-  public OIndexRIDContainer deserializeFromDirectMemoryObject(OWALChangesTree.PointerWrapper wrapper, long offset) {
+  public OIndexRIDContainer deserializeFromDirectMemoryObject(PointerWrapper wrapper, long offset) {
     final long fileId = LONG_SERIALIZER.deserializeFromDirectMemory(wrapper, offset + FILE_ID_OFFSET);
     final boolean durable = BOOLEAN_SERIALIZER.deserializeFromDirectMemory(wrapper, offset + DURABLE_OFFSET);
 
@@ -273,7 +273,7 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
   }
 
   @Override
-  public int getObjectSizeInDirectMemory(OWALChangesTree.PointerWrapper wrapper, long offset) {
+  public int getObjectSizeInDirectMemory(PointerWrapper wrapper, long offset) {
     if (BOOLEAN_SERIALIZER.deserializeFromDirectMemory(wrapper, offset + EMBEDDED_OFFSET)) {
       return embeddedObjectSerializedSize(INT_SERIALIZER.deserializeFromDirectMemory(wrapper, offset + EMBEDDED_SIZE_OFFSET));
     } else {
