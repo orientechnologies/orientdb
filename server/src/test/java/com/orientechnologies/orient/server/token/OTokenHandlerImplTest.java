@@ -31,7 +31,7 @@ public class OTokenHandlerImplTest {
     }
   }
 
-  @Test(enabled = false)
+  @Test()
   public void testWebTokenCreationValidation() throws InvalidKeyException, NoSuchAlgorithmException, IOException {
     ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + OTokenHandlerImplTest.class.getSimpleName());
     db.create();
@@ -168,6 +168,7 @@ public class OTokenHandlerImplTest {
     }
   }
 
+  @Test
   public void testTokenNotRenew() {
     ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + OTokenHandlerImplTest.class.getSimpleName());
     db.create();
@@ -185,13 +186,14 @@ public class OTokenHandlerImplTest {
       OToken tok = handler.parseBinaryToken(token);
       token = handler.renewIfNeeded(tok);
 
-      assertEquals(token.length, 0);
+      assertEquals(0,token.length);
 
     } finally {
       db.drop();
     }
   }
 
+  @Test
   public void testTokenRenew() {
     ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + OTokenHandlerImplTest.class.getSimpleName());
     db.create();
@@ -207,7 +209,7 @@ public class OTokenHandlerImplTest {
       byte[] token = handler.getSignedBinaryToken(db, original, data);
 
       OToken tok = handler.parseBinaryToken(token);
-      tok.setExpiry(System.currentTimeMillis() + (handler.getSessionInMills() / 2 - 1));
+      tok.setExpiry(System.currentTimeMillis() + (handler.getSessionInMills() / 2 ) - 1);
       token = handler.renewIfNeeded(tok);
 
       assertTrue(token.length != 0);
