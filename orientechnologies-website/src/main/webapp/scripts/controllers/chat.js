@@ -14,7 +14,8 @@ angular.module('webappApp')
     $scope.changingRoute = false;
     $scope.isNew = false;
     $scope.connectionLost = false;
-    $scope.placeholder = "Click here to type a message(Supports Markdown). Enter to send.";
+    $scope.placeholder = "Click here to type a message(Supports Markdown). Enter to send.\n" +
+      "NOTE : if you have any problem feel free to use the chat to discuss with us, but please open a new issue if you suspect the problem might be a bug.";
     $scope.clientId = $routeParams.id;
 
 
