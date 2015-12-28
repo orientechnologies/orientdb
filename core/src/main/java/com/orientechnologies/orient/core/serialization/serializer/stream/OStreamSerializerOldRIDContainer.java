@@ -36,7 +36,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.PointerWrapper;
 
 /**
  * Serializer of OIndexRIDContainer for back-compatibility with v1.6.1.
@@ -159,7 +159,7 @@ public class OStreamSerializerOldRIDContainer implements OStreamSerializer, OBin
   }
 
   @Override
-  public OIndexRIDContainer deserializeFromDirectMemoryObject(OWALChangesTree.PointerWrapper wrapper, long offset) {
+  public OIndexRIDContainer deserializeFromDirectMemoryObject(PointerWrapper wrapper, long offset) {
     final byte[] serializedSet = OBinaryTypeSerializer.INSTANCE.deserializeFromDirectMemoryObject(wrapper, offset);
 
     final String s = OBinaryProtocol.bytes2string(serializedSet);
@@ -177,7 +177,7 @@ public class OStreamSerializerOldRIDContainer implements OStreamSerializer, OBin
   }
 
   @Override
-  public int getObjectSizeInDirectMemory(OWALChangesTree.PointerWrapper wrapper, long offset) {
+  public int getObjectSizeInDirectMemory(PointerWrapper wrapper, long offset) {
     return OBinaryTypeSerializer.INSTANCE.getObjectSizeInDirectMemory(wrapper, offset);
   }
 

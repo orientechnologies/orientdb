@@ -21,7 +21,7 @@
 package com.orientechnologies.common.serialization.types;
 
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.PointerWrapper;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -108,7 +108,7 @@ public class ODecimalSerializer implements OBinarySerializer<BigDecimal> {
   }
 
   @Override
-  public BigDecimal deserializeFromDirectMemoryObject(OWALChangesTree.PointerWrapper wrapper, long offset) {
+  public BigDecimal deserializeFromDirectMemoryObject(PointerWrapper wrapper, long offset) {
     final int scale = wrapper.getInt(offset);
     offset += OIntegerSerializer.INT_SIZE;
 
@@ -125,7 +125,7 @@ public class ODecimalSerializer implements OBinarySerializer<BigDecimal> {
   }
 
   @Override
-  public int getObjectSizeInDirectMemory(OWALChangesTree.PointerWrapper wrapper, long offset) {
+  public int getObjectSizeInDirectMemory(PointerWrapper wrapper, long offset) {
     final int size = OIntegerSerializer.INT_SIZE
         + OBinaryTypeSerializer.INSTANCE.getObjectSizeInDirectMemory(wrapper, offset + OIntegerSerializer.INT_SIZE);
     return size;

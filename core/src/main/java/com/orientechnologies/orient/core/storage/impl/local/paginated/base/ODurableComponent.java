@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OStoragePerformanceStatistic;
 
@@ -115,11 +115,11 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     return atomicOperationsManager.startAtomicOperation(this, trackNonTxOperations);
   }
 
-  protected OWALChangesTree getChangesTree(OAtomicOperation atomicOperation, OCacheEntry entry) {
+  protected OWALChanges getChanges(OAtomicOperation atomicOperation, OCacheEntry entry) {
     if (atomicOperation == null)
       return null;
 
-    return atomicOperation.getChangesTree(entry.getFileId(), entry.getPageIndex());
+    return atomicOperation.getChanges(entry.getFileId(), entry.getPageIndex());
   }
 
   protected long getFilledUpTo(OAtomicOperation atomicOperation, long fileId) throws IOException {

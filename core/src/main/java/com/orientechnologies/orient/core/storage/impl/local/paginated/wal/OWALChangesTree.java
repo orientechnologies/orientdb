@@ -9,7 +9,7 @@ import com.orientechnologies.common.types.OModifiableInteger;
 
 import java.util.*;
 
-public class OWALChangesTree {
+public class OWALChangesTree implements OWALChanges {
   private static final boolean BLACK          = false;
   private static final boolean RED            = true;
 
@@ -117,6 +117,36 @@ public class OWALChangesTree {
     applyChanges(value, offset, end, result);
 
     return OLongSerializer.INSTANCE.deserializeNative(value, 0);
+  }
+
+  @Override
+  public void setIntValue(ODirectMemoryPointer pointer, int offset, int value) {
+    byte[] svalue = new byte[OIntegerSerializer.INT_SIZE];
+    OIntegerSerializer.INSTANCE.serializeNative(value, svalue, 0);
+    add(svalue, offset);
+  }
+
+  @Override
+  public void setLongValue(ODirectMemoryPointer pointer, int offset, long value) {
+    byte[] svalue = new byte[OLongSerializer.LONG_SIZE];
+    OLongSerializer.INSTANCE.serializeNative(value, svalue, 0);
+    add(svalue, offset);
+  }
+
+  @Override
+  public void moveData(ODirectMemoryPointer pointer, int from, int to, int len) {
+    byte[] content = getBinaryValue(pointer, from, len);
+    add(content, to);
+  }
+
+  @Override
+  public void setBinaryValue(ODirectMemoryPointer pointer, int offset, byte[] value) {
+    add(value, offset);
+  }
+
+  @Override
+  public void setByteValue(ODirectMemoryPointer pointer, int offset, byte value) {
+    add(new byte[] { value }, offset);
   }
 
   public void add(byte[] value, int start) {
@@ -299,7 +329,7 @@ public class OWALChangesTree {
   }
 
   public PointerWrapper wrap(final ODirectMemoryPointer pointer) {
-    return new PointerWrapper(pointer);
+    return new PointerWrapper(this, pointer);
   }
 
   public int getSerializedSize() {
@@ -760,36 +790,4 @@ public class OWALChangesTree {
     }
   }
 
-  public final class PointerWrapper {
-    private final ODirectMemoryPointer pointer;
-
-    private PointerWrapper(ODirectMemoryPointer pointer) {
-      this.pointer = pointer;
-    }
-
-    public byte getByte(long offset) {
-      return OWALChangesTree.this.getByteValue(pointer, (int) offset);
-    }
-
-    public short getShort(long offset) {
-      return OWALChangesTree.this.getShortValue(pointer, (int) offset);
-    }
-
-    public int getInt(long offset) {
-      return OWALChangesTree.this.getIntValue(pointer, (int) offset);
-    }
-
-    public long getLong(long offset) {
-      return OWALChangesTree.this.getLongValue(pointer, (int) offset);
-    }
-
-    public byte[] get(long offset, int len) {
-      return OWALChangesTree.this.getBinaryValue(pointer, (int) offset, len);
-    }
-
-    public char getChar(long offset) {
-      return (char) OWALChangesTree.this.getShortValue(pointer, (int) offset);
-    }
-
-  }
 }

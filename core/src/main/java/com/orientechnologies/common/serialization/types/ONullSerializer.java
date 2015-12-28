@@ -21,7 +21,7 @@
 package com.orientechnologies.common.serialization.types;
 
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.PointerWrapper;
 
 /**
  * Serializes and deserializes null values.
@@ -75,7 +75,7 @@ public class ONullSerializer implements OBinarySerializer<Object> {
   }
 
   @Override
-  public Object deserializeFromDirectMemoryObject(OWALChangesTree.PointerWrapper wrapper, long offset) {
+  public Object deserializeFromDirectMemoryObject(PointerWrapper wrapper, long offset) {
     return null;
   }
 
@@ -85,7 +85,7 @@ public class ONullSerializer implements OBinarySerializer<Object> {
   }
 
   @Override
-  public int getObjectSizeInDirectMemory(OWALChangesTree.PointerWrapper wrapper, long offset) {
+  public int getObjectSizeInDirectMemory(PointerWrapper wrapper, long offset) {
     return 0;
   }
 

@@ -21,7 +21,7 @@
 package com.orientechnologies.common.serialization.types;
 
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.PointerWrapper;
 
 /**
  * Serializer for {@link String} type.
@@ -154,7 +154,7 @@ public class OStringSerializer implements OBinarySerializer<String> {
   }
 
   @Override
-  public String deserializeFromDirectMemoryObject(OWALChangesTree.PointerWrapper wrapper, long offset) {
+  public String deserializeFromDirectMemoryObject(PointerWrapper wrapper, long offset) {
     int len = wrapper.getInt(offset);
 
     final char[] buffer = new char[len];
@@ -174,7 +174,7 @@ public class OStringSerializer implements OBinarySerializer<String> {
   }
 
   @Override
-  public int getObjectSizeInDirectMemory(OWALChangesTree.PointerWrapper wrapper, long offset) {
+  public int getObjectSizeInDirectMemory(PointerWrapper wrapper, long offset) {
     return wrapper.getInt(offset) * 2 + OIntegerSerializer.INT_SIZE;
   }
 
