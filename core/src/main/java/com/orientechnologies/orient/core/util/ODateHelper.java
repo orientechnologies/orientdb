@@ -39,14 +39,14 @@ public class ODateHelper {
   }
 
   public static TimeZone getDatabaseTimeZone() {
-    final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocument db = ODatabaseRecordThreadLocal.instance().getIfDefined();
     if (db != null && !db.isClosed())
-      return ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getTimeZone();
+      return ODatabaseRecordThreadLocal.instance().get().getStorage().getConfiguration().getTimeZone();
     return TimeZone.getDefault();
   }
 
   public static DateFormat getDateFormatInstance() {
-    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
     if (db != null && !db.isClosed())
       return db.getStorage().getConfiguration().getDateFormatInstance();
     else
@@ -54,7 +54,7 @@ public class ODateHelper {
   }
 
   public static String getDateFormat() {
-    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
     if (db != null && !db.isClosed())
       return db.getStorage().getConfiguration().getDateFormat();
     else
@@ -62,7 +62,7 @@ public class ODateHelper {
   }
 
   public static DateFormat getDateTimeFormatInstance() {
-    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
     if (db != null && !db.isClosed())
       return db.getStorage().getConfiguration().getDateTimeFormatInstance();
     else
@@ -70,7 +70,7 @@ public class ODateHelper {
   }
 
   public static String getDateTimeFormat() {
-    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
     if (db != null && !db.isClosed())
       return db.getStorage().getConfiguration().getDateTimeFormat();
     else

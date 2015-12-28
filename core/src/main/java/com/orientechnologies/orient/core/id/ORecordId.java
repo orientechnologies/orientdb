@@ -277,23 +277,23 @@ public class ORecordId implements ORID {
 
   @Override
   public void lock(final boolean iExclusive) {
-    ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction().lockRecord(this,
+    ODatabaseRecordThreadLocal.instance().get().getTransaction().lockRecord(this,
         iExclusive ? OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK : OStorage.LOCKING_STRATEGY.SHARED_LOCK);
   }
 
   @Override
   public boolean isLocked() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction().isLockedRecord(this);
+    return ODatabaseRecordThreadLocal.instance().get().getTransaction().isLockedRecord(this);
   }
 
   @Override
   public OStorage.LOCKING_STRATEGY lockingStrategy() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction().lockingStrategy(this);
+    return ODatabaseRecordThreadLocal.instance().get().getTransaction().lockingStrategy(this);
   }
 
   @Override
   public void unlock() {
-    ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction().unlockRecord(this);
+    ODatabaseRecordThreadLocal.instance().get().getTransaction().unlockRecord(this);
   }
 
   public String next() {
@@ -314,10 +314,10 @@ public class ORecordId implements ORID {
     if (!isValid())
       return null;
 
-    final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocument db = ODatabaseRecordThreadLocal.instance().get();
     if (db == null)
       throw new ODatabaseException(
-          "No database found in current thread local space. If you manually control databases over threads assure to set the current database before to use it by calling: ODatabaseRecordThreadLocal.INSTANCE.set(db);");
+          "No database found in current thread local space. If you manually control databases over threads assure to set the current database before to use it by calling: ODatabaseRecordThreadLocal.instance().set(db);");
 
     return (T) db.load(this);
   }

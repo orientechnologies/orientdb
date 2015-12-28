@@ -733,7 +733,7 @@ public class OImmutableClass implements OClass {
   }
 
   private ODatabaseDocumentInternal getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
+    return ODatabaseRecordThreadLocal.instance().get();
   }
 
   private Map<String, String> getCustomInternal() {

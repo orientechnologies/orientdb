@@ -74,7 +74,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.ORidBagUpd
  * @author Artem Orobets (enisher-at-gmail.com)
  */
 public class OSBTreeRidBag implements ORidBagDelegate {
-  private final OSBTreeCollectionManager                               collectionManager   = ODatabaseRecordThreadLocal.INSTANCE
+  private final OSBTreeCollectionManager                               collectionManager   = ODatabaseRecordThreadLocal.instance()
                                                                                                .get().getSbTreeCollectionManager();
   private final NavigableMap<OIdentifiable, Change>                    changes             = new ConcurrentSkipListMap<OIdentifiable, Change>();
   /**
@@ -814,7 +814,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
   @Override
   public int getSerializedSize() {
     int result = 2 * OLongSerializer.LONG_SIZE + 3 * OIntegerSerializer.INT_SIZE;
-    if (ODatabaseRecordThreadLocal.INSTANCE.get().getStorage() instanceof OStorageProxy
+    if (ODatabaseRecordThreadLocal.instance().get().getStorage() instanceof OStorageProxy
         || ORecordSerializationContext.getContext() == null)
       result += getChangesSerializedSize();
     return result;
@@ -841,7 +841,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     newEntries.clear();
 
     final ORecordSerializationContext context;
-    boolean remoteMode = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage() instanceof OStorageProxy;
+    boolean remoteMode = ODatabaseRecordThreadLocal.instance().get().getStorage() instanceof OStorageProxy;
     if (remoteMode) {
       context = null;
     } else
@@ -852,7 +852,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
       if (context != null) {
         final int clusterId = getHighLevelDocClusterId();
         assert clusterId > -1;
-        collectionPointer = ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager()
+        collectionPointer = ODatabaseRecordThreadLocal.instance().get().getSbTreeCollectionManager()
             .createSBTree(clusterId, ownerUuid);
       }
     }

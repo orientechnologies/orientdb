@@ -376,7 +376,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    */
   @Override
   public void lock(final boolean iExclusive) {
-    ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction().lockRecord(this,
+    ODatabaseRecordThreadLocal.instance().get().getTransaction().lockRecord(this,
         iExclusive ? OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK : OStorage.LOCKING_STRATEGY.SHARED_LOCK);
   }
 
@@ -385,12 +385,12 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    */
   @Override
   public boolean isLocked() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction().isLockedRecord(this);
+    return ODatabaseRecordThreadLocal.instance().get().getTransaction().isLockedRecord(this);
   }
 
   @Override
   public OStorage.LOCKING_STRATEGY lockingStrategy() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction().lockingStrategy(this);
+    return ODatabaseRecordThreadLocal.instance().get().getTransaction().lockingStrategy(this);
   }
 
   /**
@@ -400,7 +400,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    */
   @Override
   public void unlock() {
-    ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction().unlockRecord(this);
+    ODatabaseRecordThreadLocal.instance().get().getTransaction().unlockRecord(this);
   }
 
   /**

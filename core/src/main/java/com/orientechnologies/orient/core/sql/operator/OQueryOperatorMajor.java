@@ -53,7 +53,7 @@ public class OQueryOperatorMajor extends OQueryOperatorEqualityNotNulls {
 
   public OQueryOperatorMajor() {
     super(">", 5, false);
-    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
     if (db != null)
       binaryEvaluate = db.getSerializer().getSupportBinaryEvaluate();
   }

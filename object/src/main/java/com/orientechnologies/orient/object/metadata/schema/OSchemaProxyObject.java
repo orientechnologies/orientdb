@@ -248,7 +248,7 @@ public class OSchemaProxyObject implements OSchema {
    *          :- the Class<?> to generate
    */
   public synchronized void generateSchema(final Class<?> iClass) {
-    generateSchema(iClass, ODatabaseRecordThreadLocal.INSTANCE.get());
+    generateSchema(iClass, ODatabaseRecordThreadLocal.instance().get());
   }
 
   /**
@@ -348,7 +348,7 @@ public class OSchemaProxyObject implements OSchema {
    * Checks if all registered entities has schema generated, if not it generates it
    */
   public synchronized void synchronizeSchema() {
-    OObjectDatabaseTx database = ((OObjectDatabaseTx) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner());
+    OObjectDatabaseTx database = ((OObjectDatabaseTx) ODatabaseRecordThreadLocal.instance().get().getDatabaseOwner());
     Collection<Class<?>> registeredEntities = database.getEntityManager().getRegisteredEntities();
     boolean automaticSchemaGeneration = database.isAutomaticSchemaGeneration();
     boolean reloadSchema = false;
@@ -411,7 +411,7 @@ public class OSchemaProxyObject implements OSchema {
         // ODOCUMENT FIELDS
         currentClass = Object.class;
 
-      if (ODatabaseRecordThreadLocal.INSTANCE.get() != null && !ODatabaseRecordThreadLocal.INSTANCE.get().isClosed()
+      if (ODatabaseRecordThreadLocal.instance().get() != null && !ODatabaseRecordThreadLocal.instance().get().isClosed()
           && !currentClass.equals(Object.class)) {
         OClass oSuperClass;
         OClass currentOClass = database.getMetadata().getSchema().getClass(iClassName);

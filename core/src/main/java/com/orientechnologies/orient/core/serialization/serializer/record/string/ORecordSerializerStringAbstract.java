@@ -200,21 +200,21 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
       break;
 
     case EMBEDDEDSET:
-      ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedCollectionToStream(ODatabaseRecordThreadLocal.INSTANCE.getIfDefined(),
+      ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedCollectionToStream(ODatabaseRecordThreadLocal.instance().getIfDefined(),
           null, iBuffer, null, null, iValue, null, true, true);
       PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.embedSet2string"), "Serialize embeddedset to string",
           timer);
       break;
 
     case EMBEDDEDLIST:
-      ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedCollectionToStream(ODatabaseRecordThreadLocal.INSTANCE.getIfDefined(),
+      ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedCollectionToStream(ODatabaseRecordThreadLocal.instance().getIfDefined(),
           null, iBuffer, null, null, iValue, null, true, false);
       PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.embedList2string"),
           "Serialize embeddedlist to string", timer);
       break;
 
     case EMBEDDEDMAP:
-      ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedMapToStream(ODatabaseRecordThreadLocal.INSTANCE.getIfDefined(), null,
+      ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedMapToStream(ODatabaseRecordThreadLocal.instance().getIfDefined(), null,
           iBuffer, null, null, iValue, null, true);
       PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.embedMap2string"), "Serialize embeddedmap to string",
           timer);
@@ -658,7 +658,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
   }
 
   public ORecord fromString(final String iSource) {
-    return fromString(iSource, (ORecord) ODatabaseRecordThreadLocal.INSTANCE.get().newInstance(), null);
+    return fromString(iSource, (ORecord) ODatabaseRecordThreadLocal.instance().get().newInstance(), null);
   }
 
   @Override

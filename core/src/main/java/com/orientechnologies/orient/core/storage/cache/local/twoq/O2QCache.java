@@ -706,7 +706,8 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
       } catch (MalformedObjectNameException e) {
         throw OException.wrapException(new OReadCacheException("Error during registration of read cache MBean"), e);
       } catch (InstanceAlreadyExistsException e) {
-        throw OException.wrapException(new OReadCacheException("Error during registration of read cache MBean"), e);
+        //throw OException.wrapException(new OReadCacheException("MBean already registred"), e);
+        OLogManager.instance().info(this, "MBean "+MBEAN_NAME+" already registred");
       } catch (MBeanRegistrationException e) {
         throw OException.wrapException(new OReadCacheException("Error during registration of read cache MBean"), e);
       } catch (NotCompliantMBeanException e) {

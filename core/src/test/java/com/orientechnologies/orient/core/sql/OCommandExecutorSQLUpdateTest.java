@@ -217,7 +217,7 @@ public class OCommandExecutorSQLUpdateTest {
   public void testBooleanListNamedParameter(){
     ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:testBooleanListNamedParameter");
     try {
-      ODatabaseRecordThreadLocal.INSTANCE.set(db);
+      ODatabaseRecordThreadLocal.instance().set(db);
       db.create();
       db.getMetadata().getSchema().createClass("test");
 

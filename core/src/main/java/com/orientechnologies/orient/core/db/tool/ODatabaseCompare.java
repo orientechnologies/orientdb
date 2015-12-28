@@ -636,9 +636,9 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
       final long db1Max = db1Range[1];
       final long db2Max = db2Range[1];
 
-      ODatabaseRecordThreadLocal.INSTANCE.set(databaseDocumentTxOne);
+      ODatabaseRecordThreadLocal.instance().set(databaseDocumentTxOne);
       final ODocument doc1 = new ODocument();
-      ODatabaseRecordThreadLocal.INSTANCE.set(databaseDocumentTxTwo);
+      ODatabaseRecordThreadLocal.instance().set(databaseDocumentTxTwo);
       final ODocument doc2 = new ODocument();
 
       final ORecordId rid = new ORecordId(clusterId);

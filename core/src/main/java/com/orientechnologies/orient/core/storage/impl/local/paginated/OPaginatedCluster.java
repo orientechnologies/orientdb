@@ -333,7 +333,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
             throw new IllegalArgumentException(
                 "Cannot change compression setting on cluster '" + getName() + "' because it is not empty");
           setCompressionInternal(stringValue,
-              ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getContextConfiguration()
+              ODatabaseRecordThreadLocal.instance().get().getStorage().getConfiguration().getContextConfiguration()
                   .getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY));
           break;
         case CONFLICTSTRATEGY:
@@ -351,7 +351,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
             throw new IllegalArgumentException(
                 "Cannot change encryption setting on cluster '" + getName() + "' because it is not empty");
           setEncryptionInternal(stringValue,
-              ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getContextConfiguration()
+              ODatabaseRecordThreadLocal.instance().get().getStorage().getConfiguration().getContextConfiguration()
                   .getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY));
           break;
         default:

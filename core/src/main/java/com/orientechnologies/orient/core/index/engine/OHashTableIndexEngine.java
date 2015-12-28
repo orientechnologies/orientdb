@@ -402,6 +402,6 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   }
 
   private ODatabaseDocumentInternal getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
+    return ODatabaseRecordThreadLocal.instance().get();
   }
 }

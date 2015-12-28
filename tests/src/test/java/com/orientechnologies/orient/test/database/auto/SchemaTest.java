@@ -187,7 +187,7 @@ public class SchemaTest extends DocumentDBBaseTest {
 
       @Override
       public void run() {
-        ODatabaseRecordThreadLocal.INSTANCE.set(database);
+        ODatabaseRecordThreadLocal.instance().set(database);
         ODocument doc = new ODocument("NewClass");
         database.save(doc);
 

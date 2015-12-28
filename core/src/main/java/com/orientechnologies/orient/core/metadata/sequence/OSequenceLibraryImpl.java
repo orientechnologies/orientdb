@@ -33,7 +33,7 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
     sequences.clear();
 
     //
-    final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocument db = ODatabaseRecordThreadLocal.instance().get();
     if (((OMetadataInternal) db.getMetadata()).getImmutableSchemaSnapshot().existsClass(OSequence.CLASS_NAME)) {
       List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("SELECT FROM " + OSequence.CLASS_NAME));
       for (ODocument document : result) {
@@ -126,7 +126,7 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
   }
 
   private void init() {
-    final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocument db = ODatabaseRecordThreadLocal.instance().get();
     if (db.getMetadata().getSchema().existsClass(OSequence.CLASS_NAME)) {
       return;
     }

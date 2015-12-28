@@ -134,7 +134,7 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
                                         Map<String, String> engineProperties) {
 
     if (LUCENEEXP_ALGORITHM.equalsIgnoreCase(algorithm)) {
-      final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.instance().getIfDefined();
 
       OLogManager.instance()
                  .info(this, "CREATE ENGINE database:: %s , name:: %s , algoritmh:: %s", database.getName(), name, algorithm);

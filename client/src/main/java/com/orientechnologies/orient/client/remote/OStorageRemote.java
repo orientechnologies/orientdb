@@ -434,7 +434,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
               ppos.recordVersion = 0;
 
             if (network.getSrvProtocolVersion() >= 20)
-              readCollectionChanges(network, ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager());
+              readCollectionChanges(network, ODatabaseRecordThreadLocal.instance().get().getSbTreeCollectionManager());
 
             return new OStorageOperationResult<OPhysicalPosition>(ppos);
           } finally {
@@ -446,7 +446,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           if (iCallback != null) {
             final int sessionId = getSessionId();
             final String curUrl = getServerURL();
-            final OSBTreeCollectionManager collectionManager = ODatabaseRecordThreadLocal.INSTANCE.get()
+            final OSBTreeCollectionManager collectionManager = ODatabaseRecordThreadLocal.instance().get()
                                                                  .getSbTreeCollectionManager();
             Callable<Object> response = new Callable<Object>() {
               public Object call() throws Exception {
@@ -549,7 +549,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           byte[] bytes = network.readBytes();
           ORawBuffer buffer = new ORawBuffer(bytes, recVersion, type);
 
-          final ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+          final ODatabaseDocument database = ODatabaseRecordThreadLocal.instance().getIfDefined();
           ORecord record;
 
           while (network.readByte() == 2) {
@@ -607,7 +607,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             buffer = new ORawBuffer(bytes, recVersion, type);
           }
 
-          final ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+          final ODatabaseDocument database = ODatabaseRecordThreadLocal.instance().getIfDefined();
           ORecord record;
           while (network.readByte() == 2) {
             record = (ORecord) OChannelBinaryProtocol.readIdentifiable(network);
@@ -698,7 +698,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           try {
             beginResponse(network);
             OStorageOperationResult<Integer> r = new OStorageOperationResult<Integer>(network.readVersion());
-            readCollectionChanges(network, ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager());
+            readCollectionChanges(network, ODatabaseRecordThreadLocal.instance().get().getSbTreeCollectionManager());
             return r;
           } finally {
             endResponse(network);
@@ -707,7 +707,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         case 1:
           // ASYNCHRONOUS
           final int sessionId = getSessionId();
-          final OSBTreeCollectionManager collectionManager = ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager();
+          final OSBTreeCollectionManager collectionManager = ODatabaseRecordThreadLocal.instance().get().getSbTreeCollectionManager();
           Callable<Object> response = new Callable<Object>() {
             public Object call() throws Exception {
               int result;
@@ -1092,7 +1092,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     if (!(iCommand instanceof OSerializableStream))
       throw new OCommandExecutionException("Cannot serialize the command to be executed to the server side.");
     final boolean live = iCommand instanceof OLiveQuery;
-    final ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocument database = ODatabaseRecordThreadLocal.instance().get();
 
     return networkOperation(new OStorageRemoteOperation<Object>() {
       @Override
@@ -1327,7 +1327,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             }
 
             if (network.getSrvProtocolVersion() >= 20)
-              readCollectionChanges(network, ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager());
+              readCollectionChanges(network, ODatabaseRecordThreadLocal.instance().get().getSbTreeCollectionManager());
 
           } finally {
             endResponse(network);

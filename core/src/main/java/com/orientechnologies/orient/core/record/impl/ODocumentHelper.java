@@ -188,8 +188,8 @@ public class ODocumentHelper {
         throw new IllegalArgumentException(
             "Property '" + iFieldName + "' of type '" + iFieldType + "' cannot accept value of type: " + iValue.getClass());
     } else if (Date.class.isAssignableFrom(iFieldType)) {
-      if (iValue instanceof String && ODatabaseRecordThreadLocal.INSTANCE.isDefined()) {
-        final OStorageConfiguration config = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration();
+      if (iValue instanceof String && ODatabaseRecordThreadLocal.instance().isDefined()) {
+        final OStorageConfiguration config = ODatabaseRecordThreadLocal.instance().get().getStorage().getConfiguration();
 
         DateFormat formatter = config.getDateFormatInstance();
 
@@ -722,7 +722,7 @@ public class ODocumentHelper {
         result = new Date(((Number) currentValue).longValue());
       else
         try {
-          result = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateFormatInstance()
+          result = ODatabaseRecordThreadLocal.instance().get().getStorage().getConfiguration().getDateFormatInstance()
               .parse(currentValue.toString());
         } catch (ParseException e) {
         }
@@ -733,7 +733,7 @@ public class ODocumentHelper {
         result = new Date(((Number) currentValue).longValue());
       else
         try {
-          result = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateTimeFormatInstance()
+          result = ODatabaseRecordThreadLocal.instance().get().getStorage().getConfiguration().getDateTimeFormatInstance()
               .parse(currentValue.toString());
         } catch (ParseException e) {
         }

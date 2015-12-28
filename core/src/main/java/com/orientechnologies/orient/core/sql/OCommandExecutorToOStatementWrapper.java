@@ -70,7 +70,7 @@ public class OCommandExecutorToOStatementWrapper implements OCommandExecutor {
   }
 
   public static ODatabaseDocumentInternal getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
+    return ODatabaseRecordThreadLocal.instance().get();
   }
 
   @Override

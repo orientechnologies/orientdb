@@ -378,9 +378,9 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   public void makeActive() {
     activeGraph.set(this);
 
-    final ODatabaseDocument tlDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocument tlDb = ODatabaseRecordThreadLocal.instance().getIfDefined();
     if (database != null && tlDb != database)
-      ODatabaseRecordThreadLocal.INSTANCE.set(database);
+      ODatabaseRecordThreadLocal.instance().set(database);
   }
 
   /**
@@ -1120,7 +1120,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    *          Underlying database object
    */
   public OrientBaseGraph reuse(final ODatabaseDocumentTx iDatabase) {
-    ODatabaseRecordThreadLocal.INSTANCE.set(iDatabase);
+    ODatabaseRecordThreadLocal.instance().set(iDatabase);
     this.url = iDatabase.getURL();
     database = iDatabase;
 
@@ -1797,11 +1797,11 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     if (getThreadMode() == THREAD_MODE.MANUAL)
       return;
 
-    final ODatabaseDocument tlDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocument tlDb = ODatabaseRecordThreadLocal.instance().getIfDefined();
     if (getThreadMode() == THREAD_MODE.ALWAYS_AUTOSET || tlDb == null) {
       if (database != null && tlDb != database)
         // SET IT
-        ODatabaseRecordThreadLocal.INSTANCE.set(database);
+        ODatabaseRecordThreadLocal.instance().set(database);
     }
   }
 
@@ -1822,7 +1822,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     } else {
       activeGraph.set(null);
       if (updateDb)
-        ODatabaseRecordThreadLocal.INSTANCE.set(null);
+        ODatabaseRecordThreadLocal.instance().set(null);
     }
 
   }

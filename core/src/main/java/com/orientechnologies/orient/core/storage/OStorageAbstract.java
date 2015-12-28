@@ -205,7 +205,7 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
 
   public void checkForClusterPermissions(final String iClusterName) {
     // CHECK FOR ORESTRICTED
-    OMetadata metaData = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata();
+    OMetadata metaData = ODatabaseRecordThreadLocal.instance().get().getMetadata();
     if (metaData != null) {
       final Set<OClass> classes = ((OMetadataInternal) metaData).getImmutableSchemaSnapshot().getClassesRelyOnCluster(iClusterName);
       for (OClass c : classes) {

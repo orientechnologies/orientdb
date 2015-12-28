@@ -385,11 +385,11 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
   }
 
   protected static ODatabaseDocumentInternal getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
+    return ODatabaseRecordThreadLocal.instance().get();
   }
 
   protected ODatabaseDocumentInternal getDatabaseIfDefined() {
-    return ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    return ODatabaseRecordThreadLocal.instance().getIfDefined();
   }
 
   protected void addIndexInternal(final OIndex<?> index) {

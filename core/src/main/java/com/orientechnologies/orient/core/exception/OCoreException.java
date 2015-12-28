@@ -41,7 +41,7 @@ public abstract class OCoreException extends OException {
       this.componentName = null;
     }
 
-    final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.instance().getIfDefined();
     if (database != null) {
       storageURL = database.getURL();
     } else {

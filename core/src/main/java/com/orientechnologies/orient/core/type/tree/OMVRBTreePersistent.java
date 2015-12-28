@@ -261,7 +261,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
       recordsToCommit.clear();
       root = null;
 
-      final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
       if (db != null && !db.isClosed() && db.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage) {
         // RELOAD IT
         try {

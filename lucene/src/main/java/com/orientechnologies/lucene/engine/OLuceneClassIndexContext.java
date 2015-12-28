@@ -27,7 +27,7 @@ public class OLuceneClassIndexContext {
     this.metadata = metadata;
 
     OLogManager.instance().info(this, "index definition:: " + definition);
-    indexClass = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema().getClass(definition.getClassName());
+    indexClass = ODatabaseRecordThreadLocal.instance().get().getMetadata().getSchema().getClass(definition.getClassName());
 
     updateFieldToStore(definition);
   }

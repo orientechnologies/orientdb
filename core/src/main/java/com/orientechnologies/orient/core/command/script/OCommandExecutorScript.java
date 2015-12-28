@@ -101,7 +101,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
   }
 
   protected Object executeJsr223Script(final String language, final OCommandContext iContext, final Map<Object, Object> iArgs) {
-    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
 
     final OScriptManager scriptManager = Orient.instance().getScriptManager();
     CompiledScript compiledScript = request.getCompiledScript();
@@ -145,7 +145,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
 
   // TODO: CREATE A REGULAR JSR223 SCRIPT IMPL
   protected Object executeSQL() {
-    ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    ODatabaseDocument db = ODatabaseRecordThreadLocal.instance().getIfDefined();
     try {
 
       return executeSQLScript(parserText, db);

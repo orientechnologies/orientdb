@@ -86,7 +86,7 @@ public class OFunctionCall extends SimpleNode {
   }
 
   public static ODatabaseDocumentInternal getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
+    return ODatabaseRecordThreadLocal.instance().get();
   }
 
   public boolean isIndexedFunctionCall() {

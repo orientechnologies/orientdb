@@ -184,7 +184,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       connection.data.commandDetail = "-";
       connection.data.lastCommandReceived = System.currentTimeMillis();
     } else {
-      ODatabaseRecordThreadLocal.INSTANCE.remove();
+      ODatabaseRecordThreadLocal.instance().remove();
       if (requestType != OChannelBinaryProtocol.REQUEST_DB_CLOSE && requestType != OChannelBinaryProtocol.REQUEST_SHUTDOWN) {
         OLogManager.instance().debug(this, "Found unknown session %d, shutdown current connection", clientTxId);
         shutdown();

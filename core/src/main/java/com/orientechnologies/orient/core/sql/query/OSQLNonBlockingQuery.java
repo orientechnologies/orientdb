@@ -242,7 +242,7 @@ public class OSQLNonBlockingQuery<T extends Object> extends OSQLQuery<T> impleme
 
   @Override
   public <RET> RET execute(final Object... iArgs) {
-    final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.instance().get();
 
     final ONonBlockingQueryFuture future = new ONonBlockingQueryFuture();
 

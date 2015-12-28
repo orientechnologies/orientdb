@@ -87,7 +87,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       // JUST THE REFERENCE
       rid = (ORID) iLinked;
 
-      assert rid.getIdentity().isValid() || (ODatabaseRecordThreadLocal.INSTANCE.get().getStorage() instanceof OStorageProxy) : "Impossible to serialize invalid link "
+      assert rid.getIdentity().isValid() || (ODatabaseRecordThreadLocal.instance().get().getStorage() instanceof OStorageProxy) : "Impossible to serialize invalid link "
           + rid.getIdentity();
       resultRid = rid;
     } else {
@@ -108,10 +108,10 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       ORecord iLinkedRecord = ((OIdentifiable) iLinked).getRecord();
       rid = iLinkedRecord.getIdentity();
 
-      assert rid.getIdentity().isValid() || (ODatabaseRecordThreadLocal.INSTANCE.get().getStorage() instanceof OStorageProxy) : "Impossible to serialize invalid link "
+      assert rid.getIdentity().isValid() || (ODatabaseRecordThreadLocal.instance().get().getStorage() instanceof OStorageProxy) : "Impossible to serialize invalid link "
           + rid.getIdentity();
 
-      final ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.get();
+      final ODatabaseDocument database = ODatabaseRecordThreadLocal.instance().get();
       if (iParentRecord != null) {
         if (!database.isRetainRecords())
           // REPLACE CURRENT RECORD WITH ITS ID: THIS SAVES A LOT OF MEMORY
@@ -186,7 +186,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       if (iValue.length() > 1) {
         int pos = iValue.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
         if (pos > -1)
-          ((OMetadataInternal) ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata()).getImmutableSchemaSnapshot().getClass(
+          ((OMetadataInternal) ODatabaseRecordThreadLocal.instance().get().getMetadata()).getImmutableSchemaSnapshot().getClass(
               iValue.substring(1, pos));
         else
           pos = 0;
@@ -555,8 +555,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
               record = ((ODocumentSerializable) o.getValue()).toDocument();
               record.field(ODocumentSerializable.CLASS_NAME, o.getValue().getClass().getName());
             } else {
-              if (iDatabase == null && ODatabaseRecordThreadLocal.INSTANCE.isDefined())
-                iDatabase = ODatabaseRecordThreadLocal.INSTANCE.get();
+              if (iDatabase == null && ODatabaseRecordThreadLocal.instance().isDefined())
+                iDatabase = ODatabaseRecordThreadLocal.instance().get();
 
               record = OObjectSerializerHelperManager.getInstance().toStream(
                   o.getValue(),
@@ -754,7 +754,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
             linkedType = OType.EMBEDDED;
 
           assert linkedType == OType.EMBEDDED || id.getIdentity().isValid()
-              || (ODatabaseRecordThreadLocal.INSTANCE.get().getStorage() instanceof OStorageProxy) : "Impossible to serialize invalid link "
+              || (ODatabaseRecordThreadLocal.instance().get().getStorage() instanceof OStorageProxy) : "Impossible to serialize invalid link "
               + id.getIdentity();
 
           linkedClass = ODocumentInternal.getImmutableSchemaClass(doc);
@@ -770,8 +770,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       else if (linkedType != OType.LINK && (linkedClass != null || doc != null)) {
         if (id == null) {
           // EMBEDDED OBJECTS
-          if (iDatabase == null && ODatabaseRecordThreadLocal.INSTANCE.isDefined())
-            iDatabase = ODatabaseRecordThreadLocal.INSTANCE.get();
+          if (iDatabase == null && ODatabaseRecordThreadLocal.instance().isDefined())
+            iDatabase = ODatabaseRecordThreadLocal.instance().get();
 
           id = OObjectSerializerHelperManager.getInstance().toStream(
               o,

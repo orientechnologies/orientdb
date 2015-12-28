@@ -411,7 +411,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     final byte[] stream;
     try {
       String dbSerializerName = null;
-      if (ODatabaseRecordThreadLocal.INSTANCE.getIfDefined() != null)
+      if (ODatabaseRecordThreadLocal.instance().getIfDefined() != null)
         dbSerializerName = ((ODatabaseDocumentInternal) iRecord.getDatabase()).getSerializer().toString();
       String name = getRecordSerializerName();
       if (ORecordInternal.getRecordType(iRecord) == ODocument.RECORD_TYPE
@@ -454,7 +454,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
 
   protected int trimCsvSerializedContent(final byte[] stream) {
     int realLength = stream.length;
-    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
     if (db != null && db instanceof ODatabaseDocument) {
       if (ORecordSerializerSchemaAware2CSV.NAME.equals(getRecordSerializerName())) {
         // TRIM TAILING SPACES (DUE TO OVERSIZE)

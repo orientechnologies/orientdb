@@ -54,7 +54,7 @@ public class OObjectDatabaseTxPooled extends OObjectDatabaseTx implements ODatab
       open((String) iAdditionalArgs[0], (String) iAdditionalArgs[1]);
     init();
     // getMetadata().reload();
-    ODatabaseRecordThreadLocal.INSTANCE.set(getUnderlying());
+    ODatabaseRecordThreadLocal.instance().set(getUnderlying());
 
     try {
       underlying.callOnOpenListeners();

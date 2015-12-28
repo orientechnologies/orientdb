@@ -212,7 +212,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
           }
         } else if (needReload && fieldName.equals(ODocumentHelper.ATTRIBUTE_RID) && iRecord instanceof ODocument) {
           if (fieldValue != null && fieldValue.length() > 0) {
-            ORecord localRecord = ODatabaseRecordThreadLocal.INSTANCE.get().load(new ORecordId(fieldValueAsString));
+            ORecord localRecord = ODatabaseRecordThreadLocal.instance().get().load(new ORecordId(fieldValueAsString));
             if (localRecord != null)
               iRecord = localRecord;
           }
@@ -609,7 +609,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     if (shouldBeDeserializedAsEmbedded(recordInternal, iType))
       ODocumentInternal.addOwner(recordInternal, iRecord);
     else {
-      ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      ODatabaseDocument database = ODatabaseRecordThreadLocal.instance().getIfDefined();
 
       if (rid.isPersistent() && database != null) {
         ODocument documentToMerge = database.load(rid);
