@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.client.remote;
 
+import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
@@ -1670,7 +1671,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
     // CHECK IF THE EXCEPTION SHOULD BE JUST PROPAGATED
     if (!(firstCause instanceof IOException) && !(firstCause instanceof OIOException)
-        && !(firstCause instanceof IllegalMonitorStateException)) {
+        && !(firstCause instanceof IllegalMonitorStateException) && !(firstCause instanceof OOfflineNodeException)) {
       if (exception instanceof OException)
         // NOT AN IO CAUSE, JUST PROPAGATE IT
         throw (OException) exception;
