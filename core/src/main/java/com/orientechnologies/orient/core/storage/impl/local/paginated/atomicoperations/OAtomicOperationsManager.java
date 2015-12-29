@@ -116,6 +116,9 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     this.storagePerformanceStatistic = storage.getStoragePerformanceStatistic();
   }
 
+  /**
+   * @see #startAtomicOperation(String, boolean)
+   */
   public OAtomicOperation startAtomicOperation(ODurableComponent durableComponent, boolean trackNonTxOperations)
       throws IOException {
     if (durableComponent != null)
@@ -124,6 +127,27 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     return startAtomicOperation((String) null, trackNonTxOperations);
   }
 
+  /**
+   * Starts atomic operation inside of current thread.
+   * If atomic operation has been already started , current atomic operation instance will be returned.
+   * All durable components have to call this method at the beginning of any data modification operation.
+   * <p>
+   * In current implementation of atomic operation, each component which is participated in atomic operation is hold under exclusive
+   * lock till atomic operation will not be completed (committed or rollbacked).
+   * <p>
+   * If other thread is going to read data from component it has to acquire read lock inside of atomic operation manager {@link #acquireReadLock(ODurableComponent)}
+   * , otherwise data consistency will be compromised.
+   * <p>
+   * Atomic operation may be delayed if start of atomic operations is prohibited by call of {@link #freezeAtomicOperations(Class, String)}
+   * method. If mentioned above method is called then execution of current method will be stopped till call of {@link #releaseAtomicOperations(long)}
+   * method or exception will be thrown. Concrete behaviour depends on real values of parameters of {@link #freezeAtomicOperations(Class, String)} method.
+   *
+   * @param trackNonTxOperations If this flag set to <code>true</code> then special record {@link ONonTxOperationPerformedWALRecord} will be added to
+   *                             WAL in case of atomic operation is started outside of active storage transaction. During storage restore procedure
+   *                             this record is monitored and if given record is present then rebuild of all indexes is performed.
+   * @param fullName             Name of component which is going participate in atomic operation.
+   * @return Instance of active atomic operation.
+   */
   public OAtomicOperation startAtomicOperation(String fullName, boolean trackNonTxOperations) throws IOException {
     if (writeAheadLog == null)
       return null;

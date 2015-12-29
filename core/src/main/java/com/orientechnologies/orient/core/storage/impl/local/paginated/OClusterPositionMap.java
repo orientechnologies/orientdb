@@ -615,9 +615,4 @@ public class OClusterPositionMap extends ODurableComponent {
       completeOperation();
     }
   }
-
-  @Override
-  protected OAtomicOperation startAtomicOperation(boolean trackNonTxOperations) throws IOException {
-    return atomicOperationsManager.startAtomicOperation(this, trackNonTxOperations);
-  }
 }

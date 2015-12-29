@@ -199,11 +199,6 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
   }
 
   @Override
-  protected OAtomicOperation startAtomicOperation(boolean trackNonTxOperations) throws IOException {
-    return atomicOperationsManager.startAtomicOperation(this, trackNonTxOperations);
-  }
-
-  @Override
   public OBinarySerializer<K> getKeySerializer() {
     acquireSharedLock();
     try {
