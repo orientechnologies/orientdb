@@ -1799,6 +1799,14 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           }
 
           OLogManager.instance().error(this, "Can not open database with url " + currentURL, e);
+        } catch (OOfflineNodeException e) {
+          if (network != null) {
+            // REMOVE THE NETWORK CONNECTION IF ANY
+            engine.getConnectionManager().remove(network);
+            network = null;
+          }
+
+          OLogManager.instance().error(this, "Can not open database with url " + currentURL, e);
         } catch (OSecurityException ex) {
           OLogManager.instance().debug(this, "Invalidate token for url=%s", ex, currentURL);
           tokens.remove(currentURL);
