@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.network.protocol;
 
+import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.thread.OSoftThread;
@@ -76,7 +77,7 @@ public abstract class ONetworkProtocol extends OSoftThread {
       }
 
       // TIMEOUT
-      throw new OTimeoutException("Cannot execute operation while the node is not online (status=" + mgr.getNodeStatus() + ")");
+      throw new OOfflineNodeException("Cannot execute operation while the node is not online (status=" + mgr.getNodeStatus() + ")");
     }
   }
 }
