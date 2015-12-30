@@ -91,22 +91,6 @@ public class OAuditingLoggingThread extends Thread {
     db.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSecurityNull.class);
     try {
       db.open("admin", "any");
-
-      // synchronized (getClass()) {
-      // // CHANGE ALL THE ROLE BUT ADMIN TO AVOIDING ACTING ON AUDITING RESOURCES
-      // final List<ODocument> roles = db.query(new OSQLSynchQuery<ODocument>("select from ORole"));
-      //
-      // for (ODocument r : roles) {
-      // final ORole role = new ORole(r);
-      // if (!"admin".equalsIgnoreCase(role.getName())) {
-      // if (role.allow(ORule.ResourceGeneric.CLASS, OAuditingHook.AUDITING_LOG_DEF_CLASSNAME, ORole.PERMISSION_READ)) {
-      // role.addRule(ORule.ResourceGeneric.CLASS, OAuditingHook.AUDITING_LOG_DEF_CLASSNAME, ORole.PERMISSION_NONE);
-      // role.addRule(ORule.ResourceGeneric.CLUSTER, OAuditingHook.AUDITING_LOG_DEF_CLASSNAME, ORole.PERMISSION_NONE);
-      // }
-      // role.save();
-      // }
-      // }
-      // }
     } catch (Exception e) {
       OLogManager.instance().error(this, "Cannot open database '%s'", e, databaseURL);
     }

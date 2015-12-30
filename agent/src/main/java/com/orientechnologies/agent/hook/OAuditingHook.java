@@ -14,28 +14,26 @@
  *
  */
 
-package com.orientechnologies.agent.hook;
+package com.orientechnologies.agent.auditing;
 
 import com.orientechnologies.common.parser.OVariableParser;
 import com.orientechnologies.common.parser.OVariableParserListener;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseListener;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.hook.ORecordHookAbstract;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
@@ -48,7 +46,9 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
   private final String                            auditClassName;
   private final Map<String, OAuditingClassConfig> classes                    = new HashMap<String, OAuditingClassConfig>(20);
   private final OAuditingLoggingThread            auditingThread;
-  private final LinkedBlockingQueue<ODocument>    auditingQueue;
+
+  private Map<ODatabaseDocument, List<ODocument>> operations                 = new ConcurrentHashMap<ODatabaseDocument, List<ODocument>>();
+  private volatile LinkedBlockingQueue<ODocument> auditingQueue;
   private Set<OAuditingCommandConfig>             commands                   = new HashSet<OAuditingCommandConfig>();
   private boolean                                 onGlobalCreate;
   private boolean                                 onGlobalRead;
@@ -116,12 +116,11 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
     }
   }
 
-  public OAuditingHook(final String iConfiguration) {
-    this(new ODocument().fromJSON(iConfiguration, "noMap"));
-
+  public OAuditingHook(final String iConfiguration, final ODatabaseInternal iDatabase) {
+    this(new ODocument().fromJSON(iConfiguration, "noMap"), iDatabase);
   }
 
-  public OAuditingHook(final ODocument iConfiguration) {
+  public OAuditingHook(final ODocument iConfiguration, final ODatabaseInternal iDatabase) {
     this.iConfiguration = iConfiguration;
     if (iConfiguration.containsField("auditClassName"))
       auditClassName = iConfiguration.field("auditClassName");
@@ -169,25 +168,114 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
     auditingQueue = new LinkedBlockingQueue<ODocument>();
     auditingThread = new OAuditingLoggingThread(ODatabaseRecordThreadLocal.INSTANCE.get().getURL(),
         ODatabaseRecordThreadLocal.INSTANCE.get().getName(), auditingQueue);
+
+    iDatabase.registerListener(this);
+    iDatabase.registerHook(this);
+
     auditingThread.start();
+  }
+
+  @Override
+  public void onCreate(ODatabase iDatabase) {
+  }
+
+  @Override
+  public void onDelete(ODatabase iDatabase) {
+  }
+
+  @Override
+  public void onOpen(ODatabase iDatabase) {
+  }
+
+  @Override
+  public void onBeforeTxBegin(ODatabase iDatabase) {
+  }
+
+  @Override
+  public void onBeforeTxRollback(ODatabase iDatabase) {
+  }
+
+  @Override
+  public void onAfterTxRollback(ODatabase iDatabase) {
+
+    synchronized (operations) {
+      operations.remove(iDatabase);
+    }
+  }
+
+  @Override
+  public void onBeforeTxCommit(ODatabase iDatabase) {
+
+  }
+
+  @Override
+  public void onAfterTxCommit(ODatabase iDatabase) {
+
+    List<ODocument> oDocuments = null;
+
+    synchronized (operations) {
+      oDocuments = operations.remove(iDatabase);
+    }
+    if (oDocuments != null) {
+      for (ODocument oDocument : oDocuments) {
+        auditingQueue.offer(oDocument);
+      }
+    }
+  }
+
+  @Override
+  public void onClose(ODatabase iDatabase) {
+  }
+
+  @Override
+  public void onBeforeCommand(OCommandRequestText iCommand, OCommandExecutor executor) {
+  }
+
+  @Override
+  public void onAfterCommand(OCommandRequestText iCommand, OCommandExecutor executor, Object result) {
+    logCommand(iCommand.getText());
+  }
+
+  @Override
+  public boolean onCorruptionRepairDatabase(ODatabase iDatabase, String iReason, String iWhatWillbeFixed) {
+    return false;
   }
 
   private void createClassIfNotExists() {
     final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
-    OClass cls = db.getMetadata().getSchema().getClass(auditClassName);
+
+    OSchema schema = db.getMetadata().getSchema();
+    OClass cls = schema.getClass(auditClassName);
     if (cls == null) {
       // CREATE THE CLASS WITH ALL PROPERTIES (SCHEMA-FULL)
-      cls = db.getMetadata().getSchema().createClass(auditClassName);
-      cls.createProperty("date", OType.DATETIME);
-      cls.createProperty("user", OType.LINK);
-      cls.createProperty("operation", OType.BYTE);
-      cls.createProperty("record", OType.LINK);
-      cls.createProperty("changes", OType.EMBEDDED);
-      cls.createProperty("note", OType.STRING);
+      try {
+        cls = db.getMetadata().getSchema().createClass(auditClassName);
+        cls.createProperty("date", OType.DATETIME);
+        cls.createProperty("user", OType.LINK);
+        cls.createProperty("operation", OType.BYTE);
+        cls.createProperty("record", OType.LINK);
+        cls.createProperty("changes", OType.EMBEDDED);
+        cls.createProperty("note", OType.STRING);
+      } catch (OSchemaException e) {
+        // Schema Exists
+      }
+    } else {
+      // CHECK FOR CLUSTERS
+      // WHY
+      // for (int clId : cls.getClusterIds()) {
+      // try {
+      // final OCluster cluster = db.getStorage().getClusterById(clId);
+      // if (cluster == null)
+      // db.getStorage().addCluster(auditClassName, true, clId);
+      // } catch (IllegalArgumentException e) {
+      //
+      // db.getStorage().addCluster(auditClassName, true, clId);
+      // }
+      // }
     }
   }
 
-  public ODocument getiConfiguration() {
+  public ODocument getConfiguration() {
     return iConfiguration;
   }
 
@@ -228,7 +316,7 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
     return DISTRIBUTED_EXECUTION_MODE.SOURCE_NODE;
   }
 
-  protected void logCommand(String command) {
+  protected void logCommand(final String command) {
 
     for (OAuditingCommandConfig cfg : commands) {
       if (command.matches(cfg.regex)) {
@@ -260,6 +348,10 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
   }
 
   protected void log(final byte iOperation, final ORecord iRecord) {
+    if (auditingQueue == null)
+      // LOGGING THREAD UNACTIVE, SKIP THE LOG
+      return;
+
     final OAuditingClassConfig cfg = getAuditConfiguration(iRecord);
     if (cfg == null)
       // SKIP
@@ -322,7 +414,18 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
     if (note != null)
       doc.field("note", formatNote(iRecord, note));
 
-    auditingQueue.offer(doc);
+    if (db.getTransaction().isActive()) {
+      synchronized (operations) {
+        List<ODocument> oDocuments = operations.get(db);
+        if (oDocuments == null) {
+          oDocuments = new ArrayList<ODocument>();
+          operations.put(db, oDocuments);
+        }
+        oDocuments.add(doc);
+      }
+    } else {
+      auditingQueue.offer(doc);
+    }
   }
 
   private String formatNote(final ORecord iRecord, final String iNote) {
@@ -379,74 +482,9 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
   }
 
   public void shutdown(final boolean waitForAllLogs) {
-    if (auditingThread != null)
+    if (auditingThread != null) {
       auditingThread.sendShutdown(waitForAllLogs);
-  }
-
-  @Override
-  public void onCreate(ODatabase iDatabase) {
-
-  }
-
-  @Override
-  public void onDelete(final ODatabase iDatabase) {
-    if (iDatabase != null)
-      iDatabase.unregisterHook(this);
-
-    if (auditingThread != null)
-      auditingThread.sendShutdown(false);
-  }
-
-  @Override
-  public void onOpen(ODatabase iDatabase) {
-
-  }
-
-  @Override
-  public void onBeforeTxBegin(ODatabase iDatabase) {
-
-  }
-
-  @Override
-  public void onBeforeTxRollback(ODatabase iDatabase) {
-
-  }
-
-  @Override
-  public void onAfterTxRollback(ODatabase iDatabase) {
-
-  }
-
-  @Override
-  public void onBeforeTxCommit(ODatabase iDatabase) {
-
-  }
-
-  @Override
-  public void onAfterTxCommit(ODatabase iDatabase) {
-
-  }
-
-  @Override
-  public void onClose(ODatabase iDatabase) {
-    if (iDatabase != null)
-      iDatabase.unregisterHook(this);
-
-    if (auditingThread != null)
-      auditingThread.sendShutdown(true);
-  }
-
-  @Override
-  public void onBeforeCommand(OCommandRequestText iCommand, OCommandExecutor executor) {
-  }
-
-  @Override
-  public void onAfterCommand(OCommandRequestText iCommand, OCommandExecutor executor, Object result) {
-    logCommand(iCommand.getText());
-  }
-
-  @Override
-  public boolean onCorruptionRepairDatabase(ODatabase iDatabase, String iReason, String iWhatWillbeFixed) {
-    return false;
+      auditingQueue = null;
+    }
   }
 }

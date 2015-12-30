@@ -21,9 +21,11 @@
 package com.orientechnologies.agent.hook;
 
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import junit.framework.TestCase;
@@ -36,7 +38,7 @@ import java.util.Date;
  * @author Luca Garulli
  */
 public class AuditingTest extends TestCase {
-  private OrientGraphNoTx graph;
+  protected OrientBaseGraph graph;
 
   @Override
   protected void setUp() {
@@ -53,20 +55,26 @@ public class AuditingTest extends TestCase {
     // TEST CASE OF USER CLASS
     OrientVertex v = graph.addVertex("class:User", "name", "Jill");
 
+    graph.commit();
+
     waitForPropagation();
 
     assertEquals(1, graph.getRawGraph().countClass("AuditingLog"));
     ODocument log = getLastLog();
 
     assertTrue(((Date) log.field("date")).compareTo(new Date()) <= 0);
+
     assertEquals("admin", ((ODocument) log.field("user")).field("name"));
     assertEquals(ORecordOperation.CREATED, log.field("operation"));
+    assertTrue("Should Be a valid record id", ((ORecordId) log.rawField("record")).isPersistent());
     assertEquals(v.getIdentity(), log.rawField("record"));
     assertEquals("Created new user Jill", log.field("note"));
     assertNull(log.field("changes"));
 
     // TEST CASE OF V CLASS
     v = graph.addVertex(null, "name", "Jill");
+
+    graph.commit();
 
     waitForPropagation();
 
@@ -76,6 +84,7 @@ public class AuditingTest extends TestCase {
     assertTrue(((Date) log.field("date")).compareTo(new Date()) <= 0);
     assertEquals("admin", ((ODocument) log.field("user")).field("name"));
     assertEquals(ORecordOperation.CREATED, log.field("operation"));
+    assertTrue("Should Be a valid record id", ((ORecordId) log.rawField("record")).isPersistent());
     assertEquals(v.getIdentity(), log.rawField("record"));
     assertEquals("Created vertex of class V", log.field("note"));
     assertNull(log.field("changes"));
@@ -96,14 +105,22 @@ public class AuditingTest extends TestCase {
     // TEST CASE OF USER CLASS
     OrientVertex v = graph.addVertex("class:User", "name", "Jill");
 
+    graph.commit();
+
     waitForPropagation();
 
     assertEquals(1, graph.getRawGraph().countClass("AuditingLog"));
     ODocument log = getLastLog();
 
+    assertLog(v, log, ORecordOperation.CREATED);
+  }
+
+  private void assertLog(OrientVertex v, ODocument log, byte operation) {
     assertTrue(((Date) log.field("date")).compareTo(new Date()) <= 0);
     assertEquals("admin", ((ODocument) log.field("user")).field("name"));
-    assertEquals(ORecordOperation.CREATED, log.field("operation"));
+    assertEquals(operation, log.field("operation"));
+    assertTrue("Should Be a valid record id", ((ORecordId) log.rawField("record")).isPersistent());
+    ;
     assertEquals(v.getIdentity(), log.rawField("record"));
     assertEquals("Created vertex of class User", log.field("note"));
     assertNull(log.field("changes"));
@@ -133,14 +150,17 @@ public class AuditingTest extends TestCase {
     // TEST CREATE
     OrientVertex v = graph.addVertex("class:User", "name", "Jill");
 
+    graph.commit();
     waitForPropagation();
 
     assertEquals(1, graph.getRawGraph().countClass("AuditingLog"));
     ODocument log = getLastLog();
 
     assertTrue(((Date) log.field("date")).compareTo(new Date()) <= 0);
+
     assertEquals("admin", ((ODocument) log.field("user")).field("name"));
     assertEquals(ORecordOperation.CREATED, log.field("operation"));
+    assertTrue("Should Be a valid record id", ((ORecordId) log.rawField("record")).isPersistent());
     assertEquals(v.getIdentity(), log.rawField("record"));
     assertEquals("Created vertex of class User", log.field("note"));
     assertNull(log.field("changes"));
@@ -148,20 +168,26 @@ public class AuditingTest extends TestCase {
     // TEST UPDATE
     v.setProperty("name", "Jay");
 
+    graph.commit();
+
     waitForPropagation();
 
     assertEquals(2, graph.getRawGraph().countClass("AuditingLog"));
     log = getLastLog();
 
     assertTrue(((Date) log.field("date")).compareTo(new Date()) <= 0);
+
     assertEquals("admin", ((ODocument) log.field("user")).field("name"));
     assertEquals(ORecordOperation.UPDATED, log.field("operation"));
+    assertTrue("Should Be a valid record id", ((ORecordId) log.rawField("record")).isPersistent());
     assertEquals(v.getIdentity(), log.rawField("record"));
     assertEquals("Updated vertex of class User", log.field("note"));
     assertNotNull(log.field("changes"));
 
     // TEST READ
     v.reload();
+
+    graph.commit();
 
     waitForPropagation();
 
@@ -171,12 +197,15 @@ public class AuditingTest extends TestCase {
     assertTrue(((Date) log.field("date")).compareTo(new Date()) <= 0);
     assertEquals("admin", ((ODocument) log.field("user")).field("name"));
     assertEquals(ORecordOperation.LOADED, log.field("operation"));
+    assertTrue("Should Be a valid record id", ((ORecordId) log.rawField("record")).isPersistent());
     assertEquals(v.getIdentity(), log.rawField("record"));
     assertEquals("Read vertex of class User", log.field("note"));
     assertNull(log.field("changes"));
 
     // TEST DELETE
     v.remove();
+
+    graph.commit();
 
     waitForPropagation();
 
@@ -187,6 +216,7 @@ public class AuditingTest extends TestCase {
     assertTrue(((Date) log.field("date")).compareTo(new Date()) <= 0);
     assertEquals("admin", ((ODocument) log.field("user")).field("name"));
     assertEquals(ORecordOperation.DELETED, log.field("operation"));
+    assertTrue("Should Be a valid record id", ((ORecordId) log.rawField("record")).isPersistent());
     assertEquals(v.getIdentity(), log.rawField("record"));
     assertEquals("Deleted vertex of class User", log.field("note"));
     assertNull(log.field("changes"));
