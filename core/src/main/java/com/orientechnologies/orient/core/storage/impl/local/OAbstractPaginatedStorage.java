@@ -1285,7 +1285,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     checkOpeness();
     checkLowDiskSpaceAndFullCheckpointRequests();
 
-    final ODatabaseDocumentInternal databaseRecord = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocumentInternal databaseRecord = (ODatabaseDocumentInternal) clientTx.getDatabase();
     ((OMetadataInternal) databaseRecord.getMetadata()).makeThreadLocalSchemaSnapshot();
 
     stateLock.acquireReadLock();
@@ -1302,14 +1302,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           makeStorageDirty();
           startStorageTx(clientTx);
 
-          final List<ORecordOperation> tmpEntries = new ArrayList<ORecordOperation>();
+          final Iterable<ORecordOperation> entries = (Iterable<ORecordOperation>) clientTx.getAllRecordEntries();
 
-          for (ORecordOperation txEntry : clientTx.getCurrentRecordEntries())
-            tmpEntries.add(txEntry);
-
-          clientTx.clearRecordEntries();
-
-          for (ORecordOperation txEntry : tmpEntries) {
+          for (ORecordOperation txEntry : entries) {
             if (txEntry.type == ORecordOperation.CREATED || txEntry.type == ORecordOperation.UPDATED) {
               final ORecord record = txEntry.getRecord();
               if (record instanceof ODocument)
@@ -1317,14 +1312,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             }
           }
 
-          for (ORecordOperation txEntry : tmpEntries) {
+          for (ORecordOperation txEntry : entries) {
             if (txEntry.getRecord().isDirty()) {
               if (txEntry.type == ORecordOperation.CREATED)
                 saveNew(txEntry, clientTx);
             }
           }
 
-          for (ORecordOperation txEntry : tmpEntries) {
+          for (ORecordOperation txEntry : entries) {
             if (txEntry.type != ORecordOperation.CREATED)
               // COMMIT ALL THE SINGLE ENTRIES ONE BY ONE
               commitEntry(clientTx, txEntry);
@@ -1335,7 +1330,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
           endStorageTx();
 
-          OTransactionAbstract.updateCacheFromEntries(clientTx, clientTx.getAllRecordEntries(), true);
+          OTransactionAbstract.updateCacheFromEntries(clientTx, entries, true);
 
         } catch (IOException ioe) {
           makeRollback(clientTx, ioe);
@@ -2125,7 +2120,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                 nextToInspect = (ORecord) oIdentifiable;
                 break;
               } else {
-                nextToInspect = oIdentifiable.getRecord();
+                nextToInspect = tx.getRecord(oIdentifiable.getIdentity());
                 if (nextToInspect.getIdentity().isNew())
                   break;
                 else

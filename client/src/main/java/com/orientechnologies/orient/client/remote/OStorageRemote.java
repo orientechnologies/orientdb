@@ -1264,36 +1264,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             network.writeInt(iTx.getId());
             network.writeByte((byte) (iTx.isUsingLog() ? 1 : 0));
 
-            final List<ORecordOperation> tmpEntries = new ArrayList<ORecordOperation>();
-
-            if (iTx.getCurrentRecordEntries().iterator().hasNext()) {
-              for (ORecordOperation txEntry : iTx.getCurrentRecordEntries())
-                committedEntries.add(txEntry);
-              while (iTx.getCurrentRecordEntries().iterator().hasNext()) {
-                for (ORecordOperation txEntry : iTx.getCurrentRecordEntries())
-                  tmpEntries.add(txEntry);
-
-                iTx.clearRecordEntries();
-
-                if (tmpEntries.size() > 0) {
-                  for (ORecordOperation txEntry : tmpEntries) {
-                    commitEntry(network, txEntry);
-                  }
-                  tmpEntries.clear();
-                }
-              }
-            } else if (committedEntries.size() > 0) {
-              tmpEntries.addAll(committedEntries);
-              while (!tmpEntries.isEmpty()) {
-                iTx.clearRecordEntries();
-                for (ORecordOperation txEntry : tmpEntries) {
-                  ORecordInternal.clearSource(txEntry.getRecord());
-                  commitEntry(network, txEntry);
-                }
-                tmpEntries.clear();
-                for (ORecordOperation txEntry : iTx.getCurrentRecordEntries())
-                  tmpEntries.add(txEntry);
-              }
+            for (ORecordOperation txEntry : iTx.getAllRecordEntries()) {
+              commitEntry(network, txEntry);
             }
 
             // END OF RECORD ENTRIES
