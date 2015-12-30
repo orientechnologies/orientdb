@@ -742,10 +742,6 @@ public class OStorageRemoteThread implements OStorageProxy {
     return false;
   }
 
-  protected void handleException(final OChannelBinaryAsynchClient iNetwork, final String iMessage, final Exception iException) {
-    delegate.handleException(iNetwork, iMessage, iException);
-  }
-
   protected void pushSession() {
     delegate.setSessionId(serverURL, sessionId, token);
   }

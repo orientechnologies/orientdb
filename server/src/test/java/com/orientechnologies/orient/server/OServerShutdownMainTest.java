@@ -30,7 +30,7 @@ public class OServerShutdownMainTest {
   private String  prevOrientHome;
 
   @BeforeMethod
-  public void startupOserver() throws Exception {
+  public void startupOServer() throws Exception {
 
     OLogManager.instance().setConsoleLevel(Level.OFF.getName());
     prevPassword = System.setProperty("ORIENTDB_ROOT_PASSWORD", "rootPassword");
@@ -73,7 +73,7 @@ public class OServerShutdownMainTest {
   }
 
   @Test(enabled = true)
-  public void shouldShutdowServerWithDirectCall() throws Exception {
+  public void shouldShutdownServerWithDirectCall() throws Exception {
 
     OServerShutdownMain shutdownMain = new OServerShutdownMain("localhost", "2424", "root", "rootPassword");
     shutdownMain.connect(5000);
@@ -84,7 +84,7 @@ public class OServerShutdownMainTest {
   }
 
   @Test(enabled = true)
-  public void shouldShutdowServerParsingShortArguments() throws Exception {
+  public void shouldShutdownServerParsingShortArguments() throws Exception {
 
     OServerShutdownMain.main(new String[] { "-h", "localhost", "-P", "2424", "-p", "rootPassword", "-u", "root" });
 
@@ -94,7 +94,7 @@ public class OServerShutdownMainTest {
   }
 
   @Test(enabled = true)
-  public void shouldShutdowServerParsingLongArguments() throws Exception {
+  public void shouldShutdownServerParsingLongArguments() throws Exception {
 
     OServerShutdownMain
         .main(new String[] { "--host", "localhost", "--ports", "2424", "--password", "rootPassword", "--user", "root" });

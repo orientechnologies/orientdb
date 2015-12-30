@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.client.remote;
 
+import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
@@ -1263,36 +1264,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             network.writeInt(iTx.getId());
             network.writeByte((byte) (iTx.isUsingLog() ? 1 : 0));
 
-            final List<ORecordOperation> tmpEntries = new ArrayList<ORecordOperation>();
-
-            if (iTx.getCurrentRecordEntries().iterator().hasNext()) {
-              for (ORecordOperation txEntry : iTx.getCurrentRecordEntries())
-                committedEntries.add(txEntry);
-              while (iTx.getCurrentRecordEntries().iterator().hasNext()) {
-                for (ORecordOperation txEntry : iTx.getCurrentRecordEntries())
-                  tmpEntries.add(txEntry);
-
-                iTx.clearRecordEntries();
-
-                if (tmpEntries.size() > 0) {
-                  for (ORecordOperation txEntry : tmpEntries) {
-                    commitEntry(network, txEntry);
-                  }
-                  tmpEntries.clear();
-                }
-              }
-            } else if (committedEntries.size() > 0) {
-              tmpEntries.addAll(committedEntries);
-              while (!tmpEntries.isEmpty()) {
-                iTx.clearRecordEntries();
-                for (ORecordOperation txEntry : tmpEntries) {
-                  ORecordInternal.clearSource(txEntry.getRecord());
-                  commitEntry(network, txEntry);
-                }
-                tmpEntries.clear();
-                for (ORecordOperation txEntry : iTx.getCurrentRecordEntries())
-                  tmpEntries.add(txEntry);
-              }
+            for (ORecordOperation txEntry : iTx.getAllRecordEntries()) {
+              commitEntry(network, txEntry);
             }
 
             // END OF RECORD ENTRIES
@@ -1590,7 +1563,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         addHost(iConnectedURL);
 
         for (ODocument m : members)
-          if (m != null && !serverURLs.contains((String) m.field("name"))) {
+          if (m != null && !serverURLs.contains((String) m.field("name")) && "ONLINE".equals(m.field("status"))) {
             final Collection<Map<String, Object>> listeners = ((Collection<Map<String, Object>>) m.field("listeners"));
             if (listeners == null)
               throw new ODatabaseException("Received bad distributed configuration: missing 'listeners' array field");
@@ -1670,7 +1643,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
     // CHECK IF THE EXCEPTION SHOULD BE JUST PROPAGATED
     if (!(firstCause instanceof IOException) && !(firstCause instanceof OIOException)
-        && !(firstCause instanceof IllegalMonitorStateException)) {
+        && !(firstCause instanceof IllegalMonitorStateException) && !(firstCause instanceof OOfflineNodeException)) {
       if (exception instanceof OException)
         // NOT AN IO CAUSE, JUST PROPAGATE IT
         throw (OException) exception;
@@ -1791,6 +1764,14 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             }
           }
         } catch (OIOException e) {
+          if (network != null) {
+            // REMOVE THE NETWORK CONNECTION IF ANY
+            engine.getConnectionManager().remove(network);
+            network = null;
+          }
+
+          OLogManager.instance().error(this, "Can not open database with url " + currentURL, e);
+        } catch (OOfflineNodeException e) {
           if (network != null) {
             // REMOVE THE NETWORK CONNECTION IF ANY
             engine.getConnectionManager().remove(network);

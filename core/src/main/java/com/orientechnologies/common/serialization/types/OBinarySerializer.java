@@ -21,7 +21,7 @@
 package com.orientechnologies.common.serialization.types;
 
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.PointerWrapper;
 
 /**
  * This interface is used for serializing OrientDB datatypes in binary format. Serialized content is written into buffer that will
@@ -123,9 +123,9 @@ public interface OBinarySerializer<T> {
 
   int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset);
 
-  T deserializeFromDirectMemoryObject(OWALChangesTree.PointerWrapper wrapper, long offset);
+  T deserializeFromDirectMemoryObject(PointerWrapper wrapper, long offset);
 
-  int getObjectSizeInDirectMemory(OWALChangesTree.PointerWrapper wrapper, long offset);
+  int getObjectSizeInDirectMemory(PointerWrapper wrapper, long offset);
 
   T preprocess(T value, Object... hints);
 }

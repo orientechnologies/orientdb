@@ -25,7 +25,7 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.PointerWrapper;
 
 /**
  * Serializer that is used for serialization of non {@link com.orientechnologies.orient.core.index.OCompositeKey} keys in index.
@@ -143,7 +143,7 @@ public class OSimpleKeySerializer<T extends Comparable<?>> implements OBinarySer
   }
 
   @Override
-  public T deserializeFromDirectMemoryObject(OWALChangesTree.PointerWrapper wrapper, long offset) {
+  public T deserializeFromDirectMemoryObject(PointerWrapper wrapper, long offset) {
     final byte typeId = wrapper.getByte(offset++);
 
     init(typeId);
@@ -160,7 +160,7 @@ public class OSimpleKeySerializer<T extends Comparable<?>> implements OBinarySer
   }
 
   @Override
-  public int getObjectSizeInDirectMemory(OWALChangesTree.PointerWrapper wrapper, long offset) {
+  public int getObjectSizeInDirectMemory(PointerWrapper wrapper, long offset) {
     final byte serializerId = wrapper.getByte(offset);
     init(serializerId);
     return OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE

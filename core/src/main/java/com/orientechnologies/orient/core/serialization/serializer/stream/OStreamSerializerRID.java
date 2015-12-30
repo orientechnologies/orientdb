@@ -25,7 +25,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.PointerWrapper;
 
 import java.io.IOException;
 
@@ -95,7 +95,7 @@ public class OStreamSerializerRID implements OStreamSerializer, OBinarySerialize
   }
 
   @Override
-  public OIdentifiable deserializeFromDirectMemoryObject(OWALChangesTree.PointerWrapper wrapper, long offset) {
+  public OIdentifiable deserializeFromDirectMemoryObject(PointerWrapper wrapper, long offset) {
     return OLinkSerializer.INSTANCE.deserializeFromDirectMemoryObject(wrapper, offset);
   }
 
@@ -105,7 +105,7 @@ public class OStreamSerializerRID implements OStreamSerializer, OBinarySerialize
   }
 
   @Override
-  public int getObjectSizeInDirectMemory(OWALChangesTree.PointerWrapper wrapper, long offset) {
+  public int getObjectSizeInDirectMemory(PointerWrapper wrapper, long offset) {
     return OLinkSerializer.INSTANCE.getObjectSizeInDirectMemory(wrapper, offset);
   }
 

@@ -2554,7 +2554,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
     long deletedInTx = 0;
     long addedInTx = 0;
     if (getTransaction().isActive())
-      for (ORecordOperation op : getTransaction().getCurrentRecordEntries()) {
+      for (ORecordOperation op : getTransaction().getAllRecordEntries()) {
         if (op.type == ORecordOperation.DELETED) {
           final ORecord rec = op.getRecord();
           if (rec != null && rec instanceof ODocument) {
