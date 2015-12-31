@@ -221,7 +221,10 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
       break;
 
     case EMBEDDED:
-      OStringSerializerEmbedded.INSTANCE.toStream(iBuffer, iValue);
+      if(iValue instanceof  ODocument){
+        ORecordSerializerSchemaAware2CSV.INSTANCE.toString((ODocument)iValue,iBuffer,null);
+      } else
+       OStringSerializerEmbedded.INSTANCE.toStream(iBuffer, iValue);
       PROFILER
           .stopChrono(PROFILER.getProcessMetric("serializer.record.string.embed2string"), "Serialize embedded to string", timer);
       break;
