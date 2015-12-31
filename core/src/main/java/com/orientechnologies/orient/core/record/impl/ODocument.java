@@ -60,7 +60,6 @@ import com.orientechnologies.orient.core.record.ORecordListener;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
-import com.orientechnologies.orient.core.serialization.serializer.ONetworkThreadLocalSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
@@ -2324,9 +2323,6 @@ public class ODocument extends ORecordAbstract
     STATUS prev = _status;
     _status = STATUS.MARSHALLING;
     try {
-      if (ONetworkThreadLocalSerializer.getNetworkSerializer() != null)
-        return ONetworkThreadLocalSerializer.getNetworkSerializer().toStream(this, iOnlyDelta);
-
       if (_source == null)
         _source = _recordFormat.toStream(this, iOnlyDelta);
     } finally {

@@ -19,10 +19,6 @@
  */
 package com.orientechnologies.orient.server.network.protocol.binary;
 
-import java.io.IOException;
-import java.net.Socket;
-import java.util.logging.Level;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -47,7 +43,6 @@ import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.ONetworkThreadLocalSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
@@ -64,6 +59,10 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OTokenHandler;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
+
+import java.io.IOException;
+import java.net.Socket;
+import java.util.logging.Level;
 
 /**
  * Abstract base class for binary network implementations.
@@ -147,13 +146,8 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     String name = getRecordSerializerName();
     if (ORecordInternal.getRecordType(record) == ODocument.RECORD_TYPE && !dbSerializerName.equals(name)) {
       ORecordInternal.fill(record, rid, version, null, true);
-      try {
-        ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(name);
-        ONetworkThreadLocalSerializer.setNetworkSerializer(ser);
-        record.fromStream(buffer);
-      } finally {
-        ONetworkThreadLocalSerializer.setNetworkSerializer(null);
-      }
+      ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(name);
+      ser.fromStream(buffer,record,null);
       record.setDirty();
     } else
       ORecordInternal.fill(record, rid, version, buffer, true);
@@ -409,23 +403,18 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
   public byte[] getRecordBytes(final ORecord iRecord) {
 
     final byte[] stream;
-    try {
-      String dbSerializerName = null;
-      if (ODatabaseRecordThreadLocal.INSTANCE.getIfDefined() != null)
-        dbSerializerName = ((ODatabaseDocumentInternal) iRecord.getDatabase()).getSerializer().toString();
-      String name = getRecordSerializerName();
-      if (ORecordInternal.getRecordType(iRecord) == ODocument.RECORD_TYPE
-          && (dbSerializerName == null || !dbSerializerName.equals(name))) {
-        ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(dbSerializerName);
-        ONetworkThreadLocalSerializer.setNetworkSerializer(ser);
-        ((ODocument) iRecord).deserializeFields();
-        ser = ORecordSerializerFactory.instance().getFormat(name);
-        ONetworkThreadLocalSerializer.setNetworkSerializer(ser);
-      }
+    String dbSerializerName = null;
+    if (ODatabaseRecordThreadLocal.INSTANCE.getIfDefined() != null)
+      dbSerializerName = ((ODatabaseDocumentInternal) iRecord.getDatabase()).getSerializer().toString();
+    String name = getRecordSerializerName();
+    if (ORecordInternal.getRecordType(iRecord) == ODocument.RECORD_TYPE
+        && (dbSerializerName == null || !dbSerializerName.equals(name))) {
+      ((ODocument) iRecord).deserializeFields();
+      ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(name);
+      stream= ser.toStream(iRecord,false);
+    } else
       stream = iRecord.toStream();
-    } finally {
-      ONetworkThreadLocalSerializer.setNetworkSerializer(null);
-    }
+
     return stream;
   }
 
