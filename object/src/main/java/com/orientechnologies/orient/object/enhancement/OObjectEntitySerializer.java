@@ -109,9 +109,6 @@ public class OObjectEntitySerializer {
   }
 
   protected static OObjectEntitySerializedSchema getCurrentSerializedSchema() {
-    if (!ODatabaseRecordThreadLocal.INSTANCE.isDefined())
-      return null;
-
     OStorage storage = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage();
     OObjectEntitySerializedSchema serializedShchema = storage.getResource(SIMPLE_NAME,
         new Callable<OObjectEntitySerializedSchema>() {
