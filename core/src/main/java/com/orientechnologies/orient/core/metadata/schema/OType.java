@@ -324,7 +324,7 @@ public enum OType {
     if (iTargetClass.isAssignableFrom(iValue.getClass()))
       // COMPATIBLE TYPES: DON'T CONVERT IT
       return iValue;
-    
+
     try {
       if (iValue instanceof OBinary && iTargetClass.isAssignableFrom(byte[].class))
         return ((OBinary) iValue).toByteArray();
