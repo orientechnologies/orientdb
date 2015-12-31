@@ -81,6 +81,12 @@ public class OTypeConvertTest {
   //
 
   @Test
+  public void testToBytePrimitiveFromByte() {
+    Object result = OType.convert((byte)10, Byte.TYPE);
+    assertEquals(result, (byte)10);
+  }
+  
+  @Test
   public void testToByteFromByte() {
     Object result = OType.convert((byte)10, Byte.class);
     assertEquals(result, (byte)10);
@@ -103,6 +109,12 @@ public class OTypeConvertTest {
   // To Short
   //
 
+  @Test
+  public void testToShortPrmitveFromShort() {
+    Object result = OType.convert((short)10, Short.TYPE);
+    assertEquals(result, (short)10);
+  }
+  
   @Test
   public void testToShortFromShort() {
     Object result = OType.convert((short)10, Short.class);
@@ -127,6 +139,12 @@ public class OTypeConvertTest {
   //
 
   @Test
+  public void testToIntegerPrimitveFromInteger() {
+    Object result = OType.convert(10, Integer.TYPE);
+    assertEquals(result, 10);
+  }
+  
+  @Test
   public void testToIntegerFromInteger() {
     Object result = OType.convert(10, Integer.class);
     assertEquals(result, 10);
@@ -150,6 +168,12 @@ public class OTypeConvertTest {
   //
 
   @Test
+  public void testToLongPrimitiveFromLong() {
+    Object result = OType.convert(10L, Long.TYPE);
+    assertEquals(result, 10L);
+  }
+  
+  @Test
   public void testToLongFromLong() {
     Object result = OType.convert(10L, Long.class);
     assertEquals(result, 10L);
@@ -172,6 +196,12 @@ public class OTypeConvertTest {
   // To Float
   //
 
+  @Test
+  public void testToFloatPrimitiveFromFloat() {
+    Object result = OType.convert(10.65f, Float.TYPE);
+    assertEquals(result, 10.65f);
+  }
+  
   @Test
   public void testToFloatFromFloat() {
     Object result = OType.convert(10.65f, Float.class);
@@ -219,6 +249,12 @@ public class OTypeConvertTest {
   //
 
   @Test
+  public void testToDoublePrimitiveFromDouble() {
+    Object result = OType.convert(5.4D, Double.TYPE);
+    assertEquals(result, 5.4D);
+  }
+  
+  @Test
   public void testToDoubleFromDouble() {
     Object result = OType.convert(5.4D, Double.class);
     assertEquals(result, 5.4D);
@@ -246,6 +282,12 @@ public class OTypeConvertTest {
   // To Boolean
   //
 
+  @Test
+  public void testToBooleanPrimitiveFromBoolean() {
+    Object result = OType.convert(true, Boolean.TYPE);
+    assertEquals(result, true);
+  }
+  
   @Test
   public void testToBooleanFromBoolean() {
     Object result = OType.convert(true, Boolean.class);

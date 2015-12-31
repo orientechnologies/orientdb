@@ -324,7 +324,7 @@ public enum OType {
     if (iTargetClass.isAssignableFrom(iValue.getClass()))
       // COMPATIBLE TYPES: DON'T CONVERT IT
       return iValue;
-
+    
     try {
       if (iValue instanceof OBinary && iTargetClass.isAssignableFrom(byte[].class))
         return ((OBinary) iValue).toByteArray();
@@ -337,25 +337,33 @@ public enum OType {
           return ((Class<Enum>) iTargetClass).getEnumConstants()[((Number) iValue).intValue()];
         return Enum.valueOf((Class<Enum>) iTargetClass, iValue.toString());
       } else if (iTargetClass.equals(Byte.TYPE) || iTargetClass.equals(Byte.class)) {
-        if (iValue instanceof String)
+        if (iValue instanceof Byte)
+          return iValue;
+        else if (iValue instanceof String)
           return Byte.parseByte((String) iValue);
         else
           return ((Number) iValue).byteValue();
 
       } else if (iTargetClass.equals(Short.TYPE) || iTargetClass.equals(Short.class)) {
-        if (iValue instanceof String)
+        if (iValue instanceof Short)
+          return iValue;
+        else if (iValue instanceof String)
           return Short.parseShort((String) iValue);
         else
           return ((Number) iValue).shortValue();
 
       } else if (iTargetClass.equals(Integer.TYPE) || iTargetClass.equals(Integer.class)) {
-        if (iValue instanceof String)
+        if (iValue instanceof Integer)
+          return iValue;
+        else if (iValue instanceof String)
           return Integer.parseInt((String) iValue);
         else
           return ((Number) iValue).intValue();
 
       } else if (iTargetClass.equals(Long.TYPE) || iTargetClass.equals(Long.class)) {
-        if (iValue instanceof String)
+        if (iValue instanceof Long)
+          return iValue;
+        else if (iValue instanceof String)
           return Long.parseLong((String) iValue);
         else if (iValue instanceof Date)
           return ((Date) iValue).getTime();
@@ -363,7 +371,9 @@ public enum OType {
           return ((Number) iValue).longValue();
 
       } else if (iTargetClass.equals(Float.TYPE) || iTargetClass.equals(Float.class)) {
-        if (iValue instanceof String)
+        if (iValue instanceof Float)
+          return iValue;
+        else if (iValue instanceof String)
           return Float.parseFloat((String) iValue);
         else
           return ((Number) iValue).floatValue();
@@ -375,7 +385,9 @@ public enum OType {
           return new BigDecimal(iValue.toString());
 
       } else if (iTargetClass.equals(Double.TYPE) || iTargetClass.equals(Double.class)) {
-        if (iValue instanceof String)
+        if (iValue instanceof Double)
+          return iValue;
+        else if (iValue instanceof String)
           return Double.parseDouble((String) iValue);
         else if (iValue instanceof Float)
           // THIS IS NECESSARY DUE TO A BUG/STRANGE BEHAVIOR OF JAVA BY LOSSING PRECISION
@@ -384,7 +396,9 @@ public enum OType {
           return ((Number) iValue).doubleValue();
 
       } else if (iTargetClass.equals(Boolean.TYPE) || iTargetClass.equals(Boolean.class)) {
-        if (iValue instanceof String) {
+        if (iValue instanceof Boolean)
+          return ((Boolean) iValue).booleanValue();
+        else if (iValue instanceof String) {
           if (((String) iValue).equalsIgnoreCase("true"))
             return Boolean.TRUE;
           else if (((String) iValue).equalsIgnoreCase("false"))
