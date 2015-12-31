@@ -482,7 +482,7 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.7.4.201502262128</version>
+                <version>0.7.5.201505241946</version>
                 <configuration>
                     <destFile>${project.basedir}/../target/jacoco.exec</destFile>
                     <dataFile>${project.basedir}/../target/jacoco.exec</dataFile>
@@ -496,9 +496,8 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-report-plugin</artifactId>
-                <version>2.12.2</version>
+                <version>2.19</version>
             </plugin>
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
