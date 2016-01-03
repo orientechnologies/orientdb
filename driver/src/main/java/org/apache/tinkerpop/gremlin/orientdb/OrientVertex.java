@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.tinkerpop.gremlin.structure.Direction;
@@ -25,12 +26,10 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 
@@ -171,13 +170,12 @@ public final class OrientVertex extends OrientElement implements Vertex {
 
     public void remove() {
         ODocument doc = getRawDocument();
-        if (doc.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
+        if (doc.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED)
             doc.load();
-        }
 
         Iterator<Edge> allEdges = edges(Direction.BOTH, "E");
         while (allEdges.hasNext())
-            doc.getDatabase().delete((ORID) allEdges.next().id());
+            allEdges.next().remove();
 
         doc.getDatabase().delete(doc.getIdentity());
     }
@@ -252,7 +250,7 @@ public final class OrientVertex extends OrientElement implements Vertex {
     public Iterator<Edge> edges(final Direction direction, String... edgeLabels) {
         final ODocument doc = getRawDocument();
 
-        final List<Stream<OIdentifiable>> streamVertices = new ArrayList<>();
+        final List<List<OIdentifiable>> streamVertices = new ArrayList<>();
 
         for (String fieldName : doc.fieldNames()) {
             final OPair<Direction, String> connection = getConnection(direction, fieldName, edgeLabels);
@@ -265,15 +263,14 @@ public final class OrientVertex extends OrientElement implements Vertex {
                 continue;
 
             if (fieldValue instanceof ORidBag)
-                streamVertices.add(asStream(((ORidBag) fieldValue).rawIterator()));
+                streamVertices.add(asStream(((ORidBag) fieldValue).iterator()).collect(Collectors.toList()));
             else
                 throw new IllegalStateException("Invalid content found in " + fieldName + " field: " + fieldValue);
         }
 
         return streamVertices.stream()
-                .flatMap(edges -> edges)
+                .flatMap(edges -> edges.stream())
                 .map(oIdentifiable -> new OrientEdge(graph, oIdentifiable.getRecord()))
-                .distinct()
                 .map(edge -> (Edge) edge)
                 .iterator();
     }

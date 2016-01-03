@@ -1,10 +1,12 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static java.util.stream.Collectors.toMap;
 import static org.apache.tinkerpop.gremlin.structure.Transaction.CLOSE_BEHAVIOR.COMMIT;
 import static org.apache.tinkerpop.gremlin.structure.Transaction.CLOSE_BEHAVIOR.ROLLBACK;
 import static org.apache.tinkerpop.gremlin.structure.VertexProperty.Cardinality.single;
 import static org.hamcrest.Matchers.hasEntry;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -15,14 +17,18 @@ import static org.junit.Assert.assertTrue;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.apache.tinkerpop.gremlin.structure.Direction;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Property;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.VertexProperty;
+import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Test;
+
+import com.google.common.collect.Lists;
 
 public class OrientGraphTest {
 
@@ -259,6 +265,24 @@ public class OrientGraphTest {
             assertThat(keysValues, not(hasEntry("meta_key_2", "meta_value_2")));
 
             graph.close();
+        }
+    }
+
+    @Test
+    public void removeVertex() throws Exception {
+        try (Graph graph = graphFactory().getTx()) {
+            Vertex v1 = graph.addVertex();
+            Vertex v2 = graph.addVertex();
+            v1.addEdge("label1", v2);
+            v2.addEdge("label2", v1);
+
+            assertThat(newArrayList(v2.edges(Direction.IN, "label1")), hasSize(1));
+            assertThat(newArrayList(v2.edges(Direction.OUT, "label2")), hasSize(1));
+
+            v1.remove();
+
+            assertThat(newArrayList(v2.edges(Direction.IN, "label1")), hasSize(0));
+            assertThat(newArrayList(v2.edges(Direction.OUT, "label2")), hasSize(0));
         }
     }
 

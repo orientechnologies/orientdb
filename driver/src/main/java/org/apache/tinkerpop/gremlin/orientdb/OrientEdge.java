@@ -18,7 +18,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-public class OrientEdge extends OrientElement implements Edge {
+public final class OrientEdge extends OrientElement implements Edge {
 
     private static final List<String> INTERNAL_FIELDS = Arrays.asList("@rid", "@class", "in", "out");
 
@@ -101,6 +101,10 @@ public class OrientEdge extends OrientElement implements Edge {
         final String fieldName = OrientVertex.getConnectionFieldName(direction, this.label());
         ODocument doc = this.getVertex(direction).getRawDocument();
         Object found = doc.field(fieldName);
+        if (found == null)
+            //already removed
+            return;
+
         if (found instanceof ORidBag) {
             ORidBag bag = (ORidBag) found;
             bag.remove(this.getRawElement());
