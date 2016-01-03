@@ -24,12 +24,13 @@ import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 
@@ -175,9 +176,8 @@ public final class OrientVertex extends OrientElement implements Vertex {
         }
 
         Iterator<Edge> allEdges = edges(Direction.BOTH, "E");
-        while (allEdges.hasNext()) {
-            allEdges.next().remove();
-        }
+        while (allEdges.hasNext())
+            doc.getDatabase().delete((ORID) allEdges.next().id());
 
         doc.getDatabase().delete(doc.getIdentity());
     }
@@ -252,7 +252,8 @@ public final class OrientVertex extends OrientElement implements Vertex {
     public Iterator<Edge> edges(final Direction direction, String... edgeLabels) {
         final ODocument doc = getRawDocument();
 
-        final OMultiCollectionIterator<Edge> iterable = new OMultiCollectionIterator<Edge>().setEmbedded(true);
+        final List<Stream<OIdentifiable>> streamVertices = new ArrayList<>();
+
         for (String fieldName : doc.fieldNames()) {
             final OPair<Direction, String> connection = getConnection(direction, fieldName, edgeLabels);
             if (connection == null)
@@ -260,38 +261,21 @@ public final class OrientVertex extends OrientElement implements Vertex {
                 continue;
 
             final Object fieldValue = doc.field(fieldName);
-            if (fieldValue != null) {
-                final OrientVertex iDestination = null;
-                final OIdentifiable destinationVId = null;
+            if (fieldValue == null)
+                continue;
 
-                if (fieldValue instanceof OIdentifiable) {
-                    addSingleEdge(doc, iterable, fieldName, connection, fieldValue, destinationVId, edgeLabels);
-
-                } else if (fieldValue instanceof Collection<?>) {
-                    Collection<?> coll = (Collection<?>) fieldValue;
-
-                    if (coll.size() == 1) {
-                        // SINGLE ITEM: AVOID CALLING ITERATOR
-                        if (coll instanceof ORecordLazyMultiValue)
-                            addSingleEdge(doc, iterable, fieldName, connection, ((ORecordLazyMultiValue) coll).rawIterator().next(), destinationVId, edgeLabels);
-                        else if (coll instanceof List<?>)
-                            addSingleEdge(doc, iterable, fieldName, connection, ((List<?>) coll).get(0), destinationVId, edgeLabels);
-                        else
-                            addSingleEdge(doc, iterable, fieldName, connection, coll.iterator().next(), destinationVId, edgeLabels);
-                    } else {
-                        // CREATE LAZY Iterable AGAINST COLLECTION FIELD
-                        if (coll instanceof ORecordLazyMultiValue) {
-                            iterable.add(new OrientEdgeIterator(this, iDestination, coll, ((ORecordLazyMultiValue) coll).rawIterator(), connection, edgeLabels, ((ORecordLazyMultiValue) coll).size()));
-                        } else
-                            iterable.add(new OrientEdgeIterator(this, iDestination, coll, coll.iterator(), connection, edgeLabels, -1));
-                    }
-                } else if (fieldValue instanceof ORidBag) {
-                    ORidBag bag = (ORidBag) fieldValue;
-                    iterable.add(new OrientEdgeIterator(this, iDestination, fieldValue, bag.rawIterator(), connection, edgeLabels, ((ORidBag) fieldValue).size()));
-                }
-            }
+            if (fieldValue instanceof ORidBag)
+                streamVertices.add(asStream(((ORidBag) fieldValue).rawIterator()));
+            else
+                throw new IllegalStateException("Invalid content found in " + fieldName + " field: " + fieldValue);
         }
-        return iterable;
+
+        return streamVertices.stream()
+                .flatMap(edges -> edges)
+                .map(oIdentifiable -> new OrientEdge(graph, oIdentifiable.getRecord()))
+                .distinct()
+                .map(edge -> (Edge) edge)
+                .iterator();
     }
 
     /**
