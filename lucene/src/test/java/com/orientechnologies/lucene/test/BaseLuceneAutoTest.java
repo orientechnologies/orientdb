@@ -18,22 +18,21 @@
 
 package com.orientechnologies.lucene.test;
 
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
+import org.junit.After;
+import org.junit.Before;
 
 /**
  * Created by Enrico Risa on 02/09/15.
  */
 public abstract class BaseLuceneAutoTest extends BaseLuceneTest {
 
+  @Before
+  public void init() {
+    initDB();
+  }
 
-    @BeforeClass
-    public void init() {
-        initDB();
-    }
-
-    @AfterClass
-    public void deInit() {
-       deInitDB();
-   }
+  @After
+  public void deInit() {
+    deInitDB();
+  }
 }

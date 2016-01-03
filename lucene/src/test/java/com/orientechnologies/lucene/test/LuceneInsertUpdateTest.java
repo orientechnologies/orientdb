@@ -25,10 +25,10 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.Collection;
 
@@ -36,19 +36,15 @@ import java.util.Collection;
  * Created by enricorisa on 28/06/14.
  */
 
-@Test(groups = "embedded")
 public class LuceneInsertUpdateTest extends BaseLuceneTest {
 
   public LuceneInsertUpdateTest() {
     super();
   }
 
-  public LuceneInsertUpdateTest(boolean remote) {
 
-    //super(remote);
-  }
 
-  @BeforeClass
+  @Before
   public void init() {
     initDB();
 
@@ -59,7 +55,7 @@ public class LuceneInsertUpdateTest extends BaseLuceneTest {
     databaseDocumentTx.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
   }
 
-  @AfterClass
+  @After
   public void deInit() {
     deInitDB();
   }

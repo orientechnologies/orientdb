@@ -32,9 +32,9 @@ import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.memory.MemoryIndex;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
 
 import java.util.List;
 
@@ -43,8 +43,7 @@ import java.util.List;
  */
 public class LuceneBooleanIndex extends BaseLuceneTest {
 
-
-  @BeforeClass
+  @Before
   public void init() {
     initDB();
     OSchema schema = databaseDocumentTx.getMetadata().getSchema();
@@ -54,11 +53,11 @@ public class LuceneBooleanIndex extends BaseLuceneTest {
     song.createProperty("isDeleted", OType.BOOLEAN);
 
     databaseDocumentTx.command(new OCommandSQL("create index Person.isDeleted on Person (isDeleted) FULLTEXT ENGINE LUCENE"))
-        .execute();
+                      .execute();
 
   }
 
-  @AfterClass
+  @After
   public void deInit() {
     deInitDB();
   }

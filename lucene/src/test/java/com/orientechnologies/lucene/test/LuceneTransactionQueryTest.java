@@ -27,9 +27,9 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
-import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -39,17 +39,12 @@ import java.util.List;
 /**
  * Created by Enrico Risa on 10/08/15.
  */
-@Test(groups = "embedded")
 public class LuceneTransactionQueryTest extends BaseConfiguredLuceneTest {
 
   public LuceneTransactionQueryTest() {
   }
 
-  public LuceneTransactionQueryTest(boolean remote) {
-    super(remote);
-  }
-
-  @BeforeClass
+  @Before
   @Override
   public void init() {
     super.init();

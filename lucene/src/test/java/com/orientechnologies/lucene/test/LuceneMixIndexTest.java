@@ -25,9 +25,10 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import java.io.InputStream;
 import java.util.List;
@@ -35,11 +36,9 @@ import java.util.List;
 /**
  * Created by Enrico Risa on 02/09/15.
  */
-@Test(groups = "embedded")
 public class LuceneMixIndexTest extends BaseLuceneAutoTest {
 
-
-  @BeforeClass
+  @Before
   @Override
   public void init() {
     super.init();
@@ -55,7 +54,7 @@ public class LuceneMixIndexTest extends BaseLuceneAutoTest {
     databaseDocumentTx.command(new OCommandSQL("create index Song.author on Song (author) NOTUNIQUE")).execute();
 
     databaseDocumentTx.command(new OCommandSQL("create index Song.composite on Song (title,lyrics) FULLTEXT ENGINE LUCENE"))
-        .execute();
+                      .execute();
 
     // databaseDocumentTx.command(new OCommandSQL("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE")).execute();
 
@@ -88,7 +87,8 @@ public class LuceneMixIndexTest extends BaseLuceneAutoTest {
 
   }
 
-  @Test(enabled = false)
+  @Test
+  @Ignore
   public void testMixCompositeQuery() {
 
     List<ODocument> docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(

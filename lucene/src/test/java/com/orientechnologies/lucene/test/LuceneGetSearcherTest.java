@@ -24,9 +24,10 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.IOException;
 
@@ -35,7 +36,7 @@ import java.io.IOException;
  */
 public class LuceneGetSearcherTest extends BaseLuceneTest {
 
-  @BeforeClass
+  @Before
   public void init() {
     initDB();
     OSchema schema = databaseDocumentTx.getMetadata().getSchema();
@@ -45,15 +46,16 @@ public class LuceneGetSearcherTest extends BaseLuceneTest {
     song.createProperty("isDeleted", OType.BOOLEAN);
 
     databaseDocumentTx.command(new OCommandSQL("create index Person.isDeleted on Person (isDeleted) FULLTEXT ENGINE LUCENE"))
-        .execute();
+                      .execute();
 
   }
 
-  @AfterClass
+  @After
   public void deInit() {
     deInitDB();
   }
 
+  @Test
   public void testSearcherInstance() {
 
     OIndex<?> index = databaseDocumentTx.getMetadata().getIndexManager().getIndex("Person.isDeleted");

@@ -1,7 +1,9 @@
 {
   "type": "Feature",
   "id": "DEU",
-  "properties": {"name": "Germany"},
+  "properties": {
+    "name": "Germany"
+  },
   "geometry": {
     "type": "Polygon",
     "coordinates": [

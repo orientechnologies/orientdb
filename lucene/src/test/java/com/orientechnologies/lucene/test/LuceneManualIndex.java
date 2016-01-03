@@ -22,11 +22,10 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.assertj.core.api.Assertions;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.List;
 
@@ -35,8 +34,7 @@ import java.util.List;
  */
 public class LuceneManualIndex extends BaseLuceneTest {
 
-
-  @BeforeClass
+  @Before
   public void init() {
     initDB();
     databaseDocumentTx.command(new OCommandSQL("create index manual FULLTEXT ENGINE LUCENE STRING,STRING")).execute();
@@ -54,16 +52,15 @@ public class LuceneManualIndex extends BaseLuceneTest {
     Assert.assertEquals(manual.getSize(), 3);
 
     List<ODocument> docs = databaseDocumentTx.command(new OSQLSynchQuery("select from index:manual where key LUCENE 'Enrico'"))
-        .execute();
+                                             .execute();
     Assert.assertEquals(docs.size(), 1);
 
     ODocument document = docs.get(0);
-    System.out.println(document );
+    System.out.println(document);
 
   }
 
-
-  @AfterClass
+  @After
   public void deInit() {
     deInitDB();
   }

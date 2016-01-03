@@ -23,15 +23,14 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Created by enricorisa on 03/09/14.
  */
-@Test(groups = "embedded")
 public class GraphEmbeddedTest extends BaseLuceneTest {
 
   private OrientGraph graph;
@@ -40,12 +39,9 @@ public class GraphEmbeddedTest extends BaseLuceneTest {
 
   }
 
-  public GraphEmbeddedTest(boolean remote) {
 
-    //super(remote);
-  }
 
-  @BeforeClass
+  @Before
   public void init() {
     initDB();
     graph = new OrientGraph(databaseDocumentTx, false);
@@ -57,7 +53,7 @@ public class GraphEmbeddedTest extends BaseLuceneTest {
     databaseDocumentTx.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
   }
 
-  @AfterClass
+  @After
   public void deInit() {
     deInitDB();
   }
@@ -80,6 +76,5 @@ public class GraphEmbeddedTest extends BaseLuceneTest {
     }
     Assert.assertEquals(size, 1);
   }
-
 
 }

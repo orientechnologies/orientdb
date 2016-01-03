@@ -24,10 +24,10 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.Collection;
 
@@ -35,19 +35,13 @@ import java.util.Collection;
  * Created by enricorisa on 28/06/14.
  */
 
-@Test(groups = "embedded")
 public class LuceneInsertUpdateSingleDocumentNoTxTest extends BaseLuceneTest {
 
   public LuceneInsertUpdateSingleDocumentNoTxTest() {
     super();
   }
 
-  public LuceneInsertUpdateSingleDocumentNoTxTest(boolean remote) {
-
-    //super(remote);
-  }
-
-  @BeforeClass
+  @Before
   public void init() {
     initDB();
     OSchema schema = databaseDocumentTx.getMetadata().getSchema();
@@ -60,7 +54,7 @@ public class LuceneInsertUpdateSingleDocumentNoTxTest extends BaseLuceneTest {
 
   }
 
-  @AfterClass
+  @After
   public void deInit() {
     deInitDB();
   }
