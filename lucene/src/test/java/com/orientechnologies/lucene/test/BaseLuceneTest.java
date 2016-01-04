@@ -98,8 +98,6 @@ public abstract class BaseLuceneTest {
     if (storageType == null)
       storageType = OEngineMemory.NAME;
 
-    storageType = OEngineLocalPaginated.NAME;
-
     buildDirectory = System.getProperty("buildDirectory", ".");
     if (buildDirectory == null)
       buildDirectory = ".";
