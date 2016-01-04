@@ -92,7 +92,6 @@ public final class OrientGraphFactory {
         if (txActive) {
             // REOPEN IT AGAIN
             db.begin();
-            // db.getTransaction().setUsingLog(settings.isUseLog());
         }
     }
 
