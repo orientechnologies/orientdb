@@ -21,7 +21,10 @@
 package com.orientechnologies.common.serialization.types;
 
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.PointerWrapper;
+
+import java.nio.ByteBuffer;
 
 /**
  * Serializer for boolean type .
@@ -142,4 +145,38 @@ public class OBooleanSerializer implements OBinarySerializer<Boolean> {
   public Boolean preprocess(final Boolean value, final Object... hints) {
     return value;
   }
+
+  @Override
+  public void serializeInByteBufferObject(Boolean object, ByteBuffer buffer, Object... hints) {
+    buffer.put(object.booleanValue() ? (byte) 1 : (byte) 0);
+  }
+
+  @Override
+  public Boolean deserializeFromByteBufferObject(ByteBuffer buffer) {
+    return buffer.get() > 0;
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
+    return BOOLEAN_SIZE;
+  }
+
+  @Override
+  public Boolean deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+    return walChanges.getByteValue(buffer, offset) > 0;
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(ByteBuffer buffer, int offset, OWALChanges walChanges) {
+    return BOOLEAN_SIZE;
+  }
+
+  public boolean deserializeFromByteBuffer(ByteBuffer buffer) {
+    return buffer.get() > 0;
+  }
+
+  public boolean deserializeFromByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+    return walChanges.getByteValue(buffer, offset) > 0;
+  }
+
 }

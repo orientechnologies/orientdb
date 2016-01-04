@@ -2,6 +2,8 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 
+import java.nio.ByteBuffer;
+
 /**
  * keep partial changes of a page for a transaction.
  * <p>
@@ -13,41 +15,32 @@ import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
  */
 public interface OWALChanges {
 
-  byte getByteValue(ODirectMemoryPointer pointer, int offset);
+  byte getByteValue(ByteBuffer buffer, int offset);
 
-  byte[] getBinaryValue(ODirectMemoryPointer pointer, int offset, int len);
+  byte[] getBinaryValue(ByteBuffer buffer, int offset, int len);
 
-  short getShortValue(ODirectMemoryPointer pointer, int offset);
+  short getShortValue(ByteBuffer buffer, int offset);
 
-  int getIntValue(ODirectMemoryPointer pointer, int offset);
+  int getIntValue(ByteBuffer buffer, int offset);
 
-  long getLongValue(ODirectMemoryPointer pointer, int offset);
+  long getLongValue(ByteBuffer buffer, int offset);
 
-  void setLongValue(ODirectMemoryPointer pointer, int offset, long value);
+  void setLongValue(ByteBuffer buffer, long value, int offset);
 
-  void setIntValue(ODirectMemoryPointer pointer, int offset, int value);
+  void setIntValue(ByteBuffer buffer, int value, int offset);
 
-  void setByteValue(ODirectMemoryPointer pointer, int offset, byte value);
+  void setByteValue(ByteBuffer buffer, byte value, int offset);
 
-  void setBinaryValue(ODirectMemoryPointer pointer, int offset, byte[] value);
+  void setBinaryValue(ByteBuffer buffer, byte[] value, int offset);
 
-  void moveData(ODirectMemoryPointer pointer, int from, int to, int len);
-
-  /**
-   * Create a pointer wrapper that keep a page plus the relative changes.
-   *
-   * @param pointer the pointer to wrap.
-   * @return pointer wrapper.
-   */
-  PointerWrapper wrap(final ODirectMemoryPointer pointer);
-
+  void moveData(ByteBuffer buffer, int from, int to, int len);
 
   /**
    * Apply the changes to a page.
    *
-   * @param pointer of the page where apply the changes.
+   * @param buffer Presents page where apply the changes.
    */
-  void applyChanges(ODirectMemoryPointer pointer);
+  void applyChanges(ByteBuffer buffer);
 
   /**
    * Return the size needed in a buffer in case of serialization.

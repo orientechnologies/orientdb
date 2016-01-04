@@ -21,7 +21,10 @@
 package com.orientechnologies.common.serialization.types;
 
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.PointerWrapper;
+
+import java.nio.ByteBuffer;
 
 /**
  * Serializer for byte type .
@@ -136,4 +139,38 @@ public class OByteSerializer implements OBinarySerializer<Byte> {
   public Byte preprocess(Byte value, Object... hints) {
     return value;
   }
+
+  @Override
+  public void serializeInByteBufferObject(Byte object, ByteBuffer buffer, Object... hints) {
+    buffer.put(object);
+  }
+
+  @Override
+  public Byte deserializeFromByteBufferObject(ByteBuffer buffer) {
+    return buffer.get();
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
+    return BYTE_SIZE;
+  }
+
+  @Override
+  public Byte deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+    return walChanges.getByteValue(buffer, offset);
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(ByteBuffer buffer, int offset, OWALChanges walChanges) {
+    return BYTE_SIZE;
+  }
+
+  public byte deserializeFromByteBuffer(ByteBuffer buffer) {
+    return buffer.get();
+  }
+
+  public byte deserializeFromByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+    return walChanges.getByteValue(buffer, offset);
+  }
+
 }

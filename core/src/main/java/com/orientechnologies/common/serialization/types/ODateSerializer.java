@@ -21,8 +21,10 @@
 package com.orientechnologies.common.serialization.types;
 
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.PointerWrapper;
 
+import java.nio.ByteBuffer;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -138,5 +140,39 @@ public class ODateSerializer implements OBinarySerializer<Date> {
     calendar.set(Calendar.MILLISECOND, 0);
 
     return calendar.getTime();
+  }
+
+  @Override
+  public void serializeInByteBufferObject(Date object, ByteBuffer buffer, Object... hints) {
+    final Calendar calendar = Calendar.getInstance();
+    calendar.setTime(object);
+    calendar.set(Calendar.HOUR_OF_DAY, 0);
+    calendar.set(Calendar.MINUTE, 0);
+    calendar.set(Calendar.SECOND, 0);
+    calendar.set(Calendar.MILLISECOND, 0);
+    final ODateTimeSerializer dateTimeSerializer = ODateTimeSerializer.INSTANCE;
+    dateTimeSerializer.serializeInByteBufferObject(calendar.getTime(), buffer);
+  }
+
+  @Override
+  public Date deserializeFromByteBufferObject(ByteBuffer buffer) {
+    final ODateTimeSerializer dateTimeSerializer = ODateTimeSerializer.INSTANCE;
+    return dateTimeSerializer.deserializeFromByteBufferObject(buffer);
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
+    return OLongSerializer.LONG_SIZE;
+  }
+
+  @Override
+  public Date deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+    final ODateTimeSerializer dateTimeSerializer = ODateTimeSerializer.INSTANCE;
+    return dateTimeSerializer.deserializeFromByteBufferObject(buffer, walChanges, offset);
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(ByteBuffer buffer, int offset, OWALChanges walChanges) {
+    return OLongSerializer.LONG_SIZE;
   }
 }

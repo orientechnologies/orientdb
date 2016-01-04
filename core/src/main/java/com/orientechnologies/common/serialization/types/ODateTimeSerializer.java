@@ -21,8 +21,10 @@
 package com.orientechnologies.common.serialization.types;
 
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.PointerWrapper;
 
+import java.nio.ByteBuffer;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -33,7 +35,7 @@ import java.util.Date;
  * @since 20.01.12
  */
 public class ODateTimeSerializer implements OBinarySerializer<Date> {
-  public static final byte          ID       = 5;
+  public static final byte                ID       = 5;
   public static final ODateTimeSerializer INSTANCE = new ODateTimeSerializer();
 
   public int getObjectSize(Date object, Object... hints) {
@@ -120,5 +122,36 @@ public class ODateTimeSerializer implements OBinarySerializer<Date> {
   @Override
   public Date preprocess(Date value, Object... hints) {
     return value;
+  }
+
+  @Override
+  public void serializeInByteBufferObject(Date object, ByteBuffer buffer, Object... hints) {
+    final Calendar calendar = Calendar.getInstance();
+    calendar.setTime(object);
+    OLongSerializer.INSTANCE.serializeInByteBufferObject(calendar.getTimeInMillis(), buffer);
+  }
+
+  @Override
+  public Date deserializeFromByteBufferObject(ByteBuffer buffer) {
+    final Calendar calendar = Calendar.getInstance();
+    calendar.setTimeInMillis(OLongSerializer.INSTANCE.deserializeFromByteBuffer(buffer));
+    return calendar.getTime();
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
+    return OLongSerializer.LONG_SIZE;
+  }
+
+  @Override
+  public Date deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+    final Calendar calendar = Calendar.getInstance();
+    calendar.setTimeInMillis(OLongSerializer.INSTANCE.deserializeFromByteBuffer(buffer, walChanges, offset));
+    return calendar.getTime();
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(ByteBuffer buffer, int offset, OWALChanges walChanges) {
+    return OLongSerializer.LONG_SIZE;
   }
 }

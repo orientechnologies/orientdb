@@ -21,7 +21,10 @@
 package com.orientechnologies.common.serialization.types;
 
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.PointerWrapper;
+
+import java.nio.ByteBuffer;
 
 /**
  * This interface is used for serializing OrientDB datatypes in binary format. Serialized content is written into buffer that will
@@ -68,7 +71,7 @@ public interface OBinarySerializer<T> {
    * @param startPosition is the position to start reading from
    * @return instance of the deserialized object
    */
-   T deserialize(byte[] stream, int startPosition);
+  T deserialize(byte[] stream, int startPosition);
 
   /**
    * @return Identifier of given serializer.
@@ -82,7 +85,7 @@ public interface OBinarySerializer<T> {
 
   /**
    * @return Length of serialized data if {@link #isFixedLength()} method returns <code>true</code>. If {@link #isFixedLength()}
-   *         method return <code>false</code> returned value is undefined.
+   * method return <code>false</code> returned value is undefined.
    */
   int getFixedLength();
 
@@ -128,4 +131,14 @@ public interface OBinarySerializer<T> {
   int getObjectSizeInDirectMemory(PointerWrapper wrapper, long offset);
 
   T preprocess(T value, Object... hints);
+
+  void serializeInByteBufferObject(T object, ByteBuffer buffer, Object... hints);
+
+  T deserializeFromByteBufferObject(ByteBuffer buffer);
+
+  int getObjectSizeInByteBuffer(ByteBuffer buffer);
+
+  T deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset);
+
+  int getObjectSizeInByteBuffer(ByteBuffer buffer, int offset, OWALChanges walChanges);
 }
