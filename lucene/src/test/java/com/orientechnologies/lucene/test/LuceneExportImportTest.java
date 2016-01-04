@@ -28,10 +28,10 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -43,9 +43,7 @@ import java.util.zip.GZIPInputStream;
  */
 public class LuceneExportImportTest extends BaseLuceneTest {
 
-
-
-  @BeforeClass
+  @Before
   public void init() {
     initDB();
 
@@ -95,13 +93,13 @@ public class LuceneExportImportTest extends BaseLuceneTest {
 
     Assert.assertNotNull(index);
     Assert.assertEquals(index.getType(), "FULLTEXT");
-//    Assert.assertEquals(index.getAlgorithm(), "LUCENE");
+    //    Assert.assertEquals(index.getAlgorithm(), "LUCENE");
 
     query = databaseDocumentTx.query(new OSQLSynchQuery<Object>("select from City where name lucene 'Rome'"));
     Assert.assertEquals(query.size(), 1);
   }
 
-  @AfterClass
+  @After
   public void deInit() {
 
   }

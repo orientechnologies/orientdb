@@ -17,6 +17,7 @@
 package com.orientechnologies.orient.core.sql.method.misc;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -24,6 +25,7 @@ import java.util.Set;
 import com.orientechnologies.common.util.OSizeable;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Transforms current value in a Set.
@@ -50,12 +52,12 @@ public class OSQLMethodAsSet extends OAbstractSQLMethod {
     if (ioResult == null)
     // NULL VALUE, RETURN AN EMPTY SET
     {
-      return new HashSet<Object>();
+      return Collections.EMPTY_SET;
     }
 
     if (ioResult instanceof Collection<?>) {
       return new HashSet<Object>((Collection<Object>) ioResult);
-    } else if (ioResult instanceof Iterable<?>) {
+    } else if (!(ioResult instanceof ODocument) && ioResult instanceof Iterable<?>) {
       ioResult = ((Iterable<?>) ioResult).iterator();
     }
 
@@ -70,8 +72,6 @@ public class OSQLMethodAsSet extends OAbstractSQLMethod {
     }
 
     // SINGLE ITEM: ADD IT AS UNIQUE ITEM
-    final Set<Object> set = new HashSet<Object>();
-    set.add(ioResult);
-    return set;
+    return Collections.singleton(ioResult);
   }
 }

@@ -7,24 +7,32 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.serialization.types.OShortSerializer;
 import com.orientechnologies.common.types.OModifiableInteger;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Queue;
 
 public class OWALChangesTree implements OWALChanges {
-  private static final boolean BLACK          = false;
-  private static final boolean RED            = true;
+  private static final boolean BLACK = false;
+  private static final boolean RED   = true;
 
-  private Node                 root           = null;
-  private int                  version        = 0;
+  private Node root    = null;
+  private int  version = 0;
 
-  private boolean              debug;
+  private boolean debug;
 
-  private int                  serializedSize = OIntegerSerializer.INT_SIZE;
+  private int serializedSize = OIntegerSerializer.INT_SIZE;
 
   public void setDebug(boolean debug) {
     this.debug = debug;
   }
 
   public byte getByteValue(ODirectMemoryPointer pointer, int offset) {
+    if (root == null && pointer != null)
+      return pointer.getByte(offset);
+
     final int end = offset + OByteSerializer.BYTE_SIZE;
     final List<Node> result = new ArrayList<Node>();
     findIntervals(root, offset, end, result);
@@ -39,6 +47,9 @@ public class OWALChangesTree implements OWALChanges {
   }
 
   public byte[] getBinaryValue(ODirectMemoryPointer pointer, int offset, int len) {
+    if (root == null && pointer != null)
+      return pointer.get(offset, len);
+
     final int end = offset + len;
 
     final List<Node> result = new ArrayList<Node>();
@@ -60,6 +71,9 @@ public class OWALChangesTree implements OWALChanges {
   }
 
   public short getShortValue(ODirectMemoryPointer pointer, int offset) {
+    if (root == null && pointer != null)
+      return pointer.getShort(offset);
+
     int end = offset + OShortSerializer.SHORT_SIZE;
 
     final List<Node> result = new ArrayList<Node>();
@@ -79,7 +93,10 @@ public class OWALChangesTree implements OWALChanges {
     return OShortSerializer.INSTANCE.deserializeNative(value, 0);
   }
 
-  public int getIntValue(ODirectMemoryPointer pointer, int offset) {
+  public int getIntValue(final ODirectMemoryPointer pointer, final int offset) {
+    if (root == null && pointer != null)
+      return pointer.getInt(offset);
+
     int end = offset + OIntegerSerializer.INT_SIZE;
 
     final List<Node> result = new ArrayList<Node>();
@@ -100,6 +117,9 @@ public class OWALChangesTree implements OWALChanges {
   }
 
   public long getLongValue(ODirectMemoryPointer pointer, int offset) {
+    if (root == null && pointer != null)
+      return pointer.getLong(offset);
+
     int end = offset + OLongSerializer.LONG_SIZE;
 
     final List<Node> result = new ArrayList<Node>();
@@ -315,13 +335,14 @@ public class OWALChangesTree implements OWALChanges {
       if (vLength <= 0)
         continue;
 
-      System.arraycopy(activeNode.value, deltaStart >= 0 ? activeStart - activeNode.start : activeStart - activeNode.start
-          - deltaStart, values, deltaStart >= 0 ? deltaStart : 0, vLength);
+      System.arraycopy(activeNode.value,
+          deltaStart >= 0 ? activeStart - activeNode.start : activeStart - activeNode.start - deltaStart, values,
+          deltaStart >= 0 ? deltaStart : 0, vLength);
     }
   }
 
   public void applyChanges(ODirectMemoryPointer pointer) {
-    if (root == null)
+    if (root == null && pointer != null)
       return;
 
     final Queue<Node> processedNodes = new ArrayDeque<Node>();
@@ -767,13 +788,13 @@ public class OWALChangesTree implements OWALChanges {
     private byte[]  value;
     private int     version;
 
-    private int     start;
-    private int     end;
-    private int     maxEnd;
+    private int start;
+    private int end;
+    private int maxEnd;
 
-    private Node    parent;
-    private Node    left;
-    private Node    right;
+    private Node parent;
+    private Node left;
+    private Node right;
 
     public Node(byte[] value, int start, boolean color, int version) {
       this.color = color;

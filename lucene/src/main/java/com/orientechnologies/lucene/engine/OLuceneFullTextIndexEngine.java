@@ -112,9 +112,8 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
   @Override
   public Object getInTx(Object key, OLuceneTxChanges changes) {
-    Query q = null;
     try {
-      q = queryBuilder.query(index, key, queryAnalyzer());
+      Query q = queryBuilder.query(index, key, queryAnalyzer());
       OCommandContext context = null;
       if (key instanceof OFullTextCompositeKey) {
         context = ((OFullTextCompositeKey) key).getContext();

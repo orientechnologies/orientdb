@@ -24,9 +24,9 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -40,7 +40,7 @@ public class LuceneCreateJavaApi extends BaseLuceneTest {
     //super(false);
   }
 
-  @BeforeClass
+  @Before
   public void init() {
     initDB();
     OSchema schema = databaseDocumentTx.getMetadata().getSchema();
@@ -52,7 +52,7 @@ public class LuceneCreateJavaApi extends BaseLuceneTest {
     song.createProperty("description", OType.STRING);
   }
 
-  @AfterClass
+  @After
   public void deInit() {
     deInitDB();
   }
@@ -65,15 +65,13 @@ public class LuceneCreateJavaApi extends BaseLuceneTest {
 
     ODocument meta = new ODocument().field("analyzer", StandardAnalyzer.class.getName());
     OIndex<?> lucene = song.createIndex("Song.title", OClass.INDEX_TYPE.FULLTEXT.toString(), null, meta, "LUCENE",
-        new String[] { "title" });
-
+                                        new String[] { "title" });
 
     assertThat(lucene).isNotNull();
 
     assertThat(lucene.getMetadata().containsField("analyzer")).isTrue();
 
     assertThat(lucene.getMetadata().field("analyzer")).isEqualTo(StandardAnalyzer.class.getName());
-
 
   }
 
@@ -84,7 +82,7 @@ public class LuceneCreateJavaApi extends BaseLuceneTest {
     OClass song = schema.getClass("Song");
 
     OIndex<?> lucene = song.createIndex("Song.author_description", OClass.INDEX_TYPE.FULLTEXT.toString(), null, null, "LUCENE",
-        new String[] { "author", "description" });
+                                        new String[] { "author", "description" });
 
     assertThat(lucene).isNotNull();
 
@@ -93,7 +91,5 @@ public class LuceneCreateJavaApi extends BaseLuceneTest {
     assertThat(lucene.getMetadata().field("analyzer")).isEqualTo(StandardAnalyzer.class.getName());
 
   }
-
-
 
 }

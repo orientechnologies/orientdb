@@ -23,26 +23,21 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Created by Enrico Risa on 14/08/15.
  */
-@Test
 public class LuceneIndexCreateDropTest extends BaseLuceneTest {
 
   public LuceneIndexCreateDropTest() {
   }
 
-  public LuceneIndexCreateDropTest(boolean remote) {
-
-    //super(remote);
-  }
 
 
-  @BeforeClass
+  @Before
   public void init() {
     initDB();
 
@@ -58,7 +53,7 @@ public class LuceneIndexCreateDropTest extends BaseLuceneTest {
     databaseDocumentTx.command(new OCommandSQL("drop index City.name")).execute();
   }
 
-  @AfterClass
+  @After
   public void deInit() {
     deInitDB();
   }

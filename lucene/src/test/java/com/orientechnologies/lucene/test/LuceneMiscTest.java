@@ -27,8 +27,8 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.util.HashMap;
 import java.util.List;
@@ -37,11 +37,9 @@ import java.util.Map;
 /**
  * Created by Enrico Risa on 18/09/15.
  */
-@Test(groups = "embedded")
 public class LuceneMiscTest {
 
   // TODO Re-enable when removed check syntax on ODB
-  @Test(enabled = false)
   public void testDoubleLucene() {
     OrientGraphNoTx graph = new OrientGraphNoTx("memory:doubleLucene");
 
@@ -57,7 +55,7 @@ public class LuceneMiscTest {
       db.command(new OCommandSQL("insert into Test set attr1='bar', attr2='foo'")).execute();
 
       List<ODocument> results = db.command(new OCommandSQL("select from Test where attr1 lucene 'foo*' OR attr2 lucene 'foo*'"))
-          .execute();
+                                  .execute();
       Assert.assertEquals(results.size(), 2);
 
       results = db.command(new OCommandSQL("select from Test where attr1 lucene 'bar*' OR attr2 lucene 'bar*'")).execute();
@@ -79,7 +77,7 @@ public class LuceneMiscTest {
   }
 
   // TODO Re-enable when removed check syntax on ODB
-  @Test(enabled = false)
+  @Test
   public void testSubLucene() {
 
     OrientGraphNoTx graph = new OrientGraphNoTx("memory:doubleLucene");

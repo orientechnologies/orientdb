@@ -22,83 +22,71 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.List;
 
 /**
  * Created by enricorisa on 03/09/14.
  */
-@Test(groups = "embedded")
 public class DocumentEmbeddedTest extends BaseLuceneTest {
 
+  public DocumentEmbeddedTest() {
 
-    public DocumentEmbeddedTest() {
-
-    }
-
-    public DocumentEmbeddedTest(boolean remote) {
-
-//        super(remote);
-    }
-
-    @BeforeClass
-    public void init() {
-        initDB();
-        OClass type = databaseDocumentTx.getMetadata().getSchema().createClass("City");
-        type.createProperty("name", OType.STRING);
-
-        databaseDocumentTx.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
-    }
-
-    @AfterClass
-    public void deInit() {
-        deInitDB();
-    }
-
-    @Test
-    public void embeddedNoTx() {
+  }
 
 
-        ODocument doc = new ODocument("City");
 
-        doc.field("name", "London");
-        databaseDocumentTx.save(doc);
+  @Before
+  public void init() {
+    initDB();
+    OClass type = databaseDocumentTx.getMetadata().getSchema().createClass("City");
+    type.createProperty("name", OType.STRING);
 
-        doc = new ODocument("City");
-        doc.field("name", "Rome");
+    databaseDocumentTx.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
+  }
 
-        databaseDocumentTx.save(doc);
+  @After
+  public void deInit() {
+    deInitDB();
+  }
 
+  @Test
+  public void embeddedNoTx() {
 
-        List<ODocument> results = databaseDocumentTx.command(new OCommandSQL("select from City where name lucene 'London'")).execute();
+    ODocument doc = new ODocument("City");
 
+    doc.field("name", "London");
+    databaseDocumentTx.save(doc);
 
-        Assert.assertEquals(results.size(), 1);
-    }
+    doc = new ODocument("City");
+    doc.field("name", "Rome");
 
-    @Test
-    public void embeddedTx() {
+    databaseDocumentTx.save(doc);
 
+    List<ODocument> results = databaseDocumentTx.command(new OCommandSQL("select from City where name lucene 'London'")).execute();
 
-        ODocument doc = new ODocument("City");
+    Assert.assertEquals(results.size(), 1);
+  }
 
+  @Test
+  public void embeddedTx() {
 
-        databaseDocumentTx.begin();
-        doc.field("name", "Berlin");
+    ODocument doc = new ODocument("City");
 
-        databaseDocumentTx.save(doc);
+    databaseDocumentTx.begin();
+    doc.field("name", "Berlin");
 
-        databaseDocumentTx.commit();
+    databaseDocumentTx.save(doc);
 
-        List<ODocument> results = databaseDocumentTx.command(new OCommandSQL("select from City where name lucene 'Berlin'")).execute();
+    databaseDocumentTx.commit();
 
+    List<ODocument> results = databaseDocumentTx.command(new OCommandSQL("select from City where name lucene 'Berlin'")).execute();
 
-        Assert.assertEquals(results.size(), 1);
-    }
-
+    Assert.assertEquals(results.size(), 1);
+  }
 
 }

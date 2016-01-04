@@ -26,31 +26,30 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Created by enricorisa on 28/06/14.
  */
 
-@Test(groups = "embedded")
 public class LuceneListIndexing extends BaseLuceneTest {
 
   public LuceneListIndexing() {
     super();
   }
 
-  public LuceneListIndexing(boolean remote) {
-
-    //super(remote);
-  }
 
 
-  @BeforeClass
+  @Before
   public void init() {
     initDB();
 
@@ -68,10 +67,10 @@ public class LuceneListIndexing extends BaseLuceneTest {
     databaseDocumentTx.command(new OCommandSQL("create index City.tags on City (tags) FULLTEXT ENGINE LUCENE")).execute();
 
     databaseDocumentTx.command(new OCommandSQL("create index Person.name_tags on Person (name,tags) FULLTEXT ENGINE LUCENE"))
-        .execute();
+                      .execute();
   }
 
-  @AfterClass
+  @After
   public void deInit() {
     deInitDB();
   }
