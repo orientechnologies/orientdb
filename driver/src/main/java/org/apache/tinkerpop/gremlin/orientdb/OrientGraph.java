@@ -210,9 +210,6 @@ public final class OrientGraph implements Graph {
     public Stream<OrientVertex> getIndexedVertices(OIndex<Object> index, Optional<Object> valueOption) {
         makeActive();
 
-        // if (iKey.equals("@class"))
-        // return getVerticesOfClass(iValue.toString());
-
         if (index == null) {
             // NO INDEX
             return Collections.<OrientVertex> emptyList().stream();

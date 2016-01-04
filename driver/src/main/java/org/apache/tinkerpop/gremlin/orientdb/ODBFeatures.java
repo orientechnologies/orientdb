@@ -1,7 +1,6 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
 import org.apache.tinkerpop.gremlin.structure.Graph.Features;
-import org.apache.tinkerpop.gremlin.structure.Graph.Features.GraphFeatures;
 import org.apache.tinkerpop.gremlin.structure.Graph.Features.VariableFeatures;
 import org.apache.tinkerpop.gremlin.structure.Graph.Features.VertexPropertyFeatures;
 import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
@@ -83,9 +82,6 @@ public class ODBFeatures {
 
         static final OrientVertexFeatures INSTANCE = new OrientVertexFeatures();
 
-        private OrientVertexFeatures() {
-        }
-
         @Override
         public boolean supportsMultiProperties() {
             return false;
@@ -101,9 +97,6 @@ public class ODBFeatures {
     public static class OrientEdgeFeatures extends OrientElementFeatures implements Features.EdgeFeatures {
 
         static final OrientEdgeFeatures INSTANCE = new OrientEdgeFeatures();
-
-        private OrientEdgeFeatures() {
-        }
 
     }
 
