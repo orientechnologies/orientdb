@@ -23,24 +23,25 @@ package com.orientechnologies.common.serialization.types;
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.PointerWrapper;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 
+import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 /**
  * Serializer for {@link Integer} type.
- * 
+ *
  * @author Ilya Bershadskiy (ibersh20-at-gmail.com)
  * @since 17.01.12
  */
 public class OIntegerSerializer implements OBinarySerializer<Integer> {
-  public static final byte              ID        = 8;
+  public static final  byte               ID        = 8;
   /**
    * size of int value in bytes
    */
-  public static final int               INT_SIZE  = 4;
-  private static final OBinaryConverter CONVERTER = OBinaryConverterFactory.getConverter();
-  public static final OIntegerSerializer      INSTANCE  = new OIntegerSerializer();
+  public static final  int                INT_SIZE  = 4;
+  private static final OBinaryConverter   CONVERTER = OBinaryConverterFactory.getConverter();
+  public static final  OIntegerSerializer INSTANCE  = new OIntegerSerializer();
 
   public int getObjectSize(Integer object, Object... hints) {
     return INT_SIZE;
@@ -62,8 +63,8 @@ public class OIntegerSerializer implements OBinarySerializer<Integer> {
   }
 
   public int deserializeLiteral(final byte[] stream, final int startPosition) {
-    return (stream[startPosition]) << 24 | (0xff & stream[startPosition + 1]) << 16 | (0xff & stream[startPosition + 2]) << 8
-        | ((0xff & stream[startPosition + 3]));
+    return (stream[startPosition]) << 24 | (0xff & stream[startPosition + 1]) << 16 | (0xff & stream[startPosition + 2]) << 8 | ((
+        0xff & stream[startPosition + 3]));
   }
 
   public int getObjectSize(final byte[] stream, final int startPosition) {
@@ -99,11 +100,6 @@ public class OIntegerSerializer implements OBinarySerializer<Integer> {
     return pointer.getInt(offset);
   }
 
-  @Override
-  public Integer deserializeFromDirectMemoryObject(PointerWrapper wrapper, long offset) {
-    return wrapper.getInt(offset);
-  }
-
   public void serializeNative(int object, byte[] stream, int startPosition, Object... hints) {
     CONVERTER.putInt(stream, startPosition, object, ByteOrder.nativeOrder());
   }
@@ -121,17 +117,8 @@ public class OIntegerSerializer implements OBinarySerializer<Integer> {
     return pointer.getInt(offset);
   }
 
-  public int deserializeFromDirectMemory(PointerWrapper wrapper, final long offset) {
-    return wrapper.getInt(offset);
-  }
-
   @Override
   public int getObjectSizeInDirectMemory(final ODirectMemoryPointer pointer, final long offset) {
-    return INT_SIZE;
-  }
-
-  @Override
-  public int getObjectSizeInDirectMemory(PointerWrapper wrapper, long offset) {
     return INT_SIZE;
   }
 
@@ -147,4 +134,42 @@ public class OIntegerSerializer implements OBinarySerializer<Integer> {
   public Integer preprocess(final Integer value, final Object... hints) {
     return value;
   }
+
+  @Override
+  public void serializeInByteBufferObject(Integer object, ByteBuffer buffer, Object... hints) {
+    buffer.putInt(object);
+  }
+
+  @Override
+  public Integer deserializeFromByteBufferObject(ByteBuffer buffer) {
+    return buffer.getInt();
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
+    return INT_SIZE;
+  }
+
+  @Override
+  public Integer deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+    return walChanges.getIntValue(buffer, offset);
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+    return INT_SIZE;
+  }
+
+  public void serializeInByteBuffer(final int value, final ByteBuffer buffer) {
+    buffer.putInt(value);
+  }
+
+  public int deserializeFromByteBuffer(final ByteBuffer buffer) {
+    return buffer.getInt();
+  }
+
+  public int deserializeFromByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+    return walChanges.getIntValue(buffer, offset);
+  }
+
 }

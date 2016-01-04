@@ -22,7 +22,6 @@ package com.orientechnologies.common.serialization.types;
 
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.PointerWrapper;
 
 import java.nio.ByteBuffer;
 import java.util.Calendar;
@@ -107,18 +106,7 @@ public class ODateSerializer implements OBinarySerializer<Date> {
   }
 
   @Override
-  public Date deserializeFromDirectMemoryObject(PointerWrapper wrapper, long offset) {
-    final ODateTimeSerializer dateTimeSerializer = ODateTimeSerializer.INSTANCE;
-    return dateTimeSerializer.deserializeFromDirectMemoryObject(wrapper, offset);
-  }
-
-  @Override
   public int getObjectSizeInDirectMemory(final ODirectMemoryPointer pointer, final long offset) {
-    return OLongSerializer.LONG_SIZE;
-  }
-
-  @Override
-  public int getObjectSizeInDirectMemory(PointerWrapper wrapper, long offset) {
     return OLongSerializer.LONG_SIZE;
   }
 
@@ -172,7 +160,7 @@ public class ODateSerializer implements OBinarySerializer<Date> {
   }
 
   @Override
-  public int getObjectSizeInByteBuffer(ByteBuffer buffer, int offset, OWALChanges walChanges) {
+  public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return OLongSerializer.LONG_SIZE;
   }
 }

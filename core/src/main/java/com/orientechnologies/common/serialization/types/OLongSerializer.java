@@ -24,7 +24,6 @@ import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.PointerWrapper;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -107,11 +106,6 @@ public class OLongSerializer implements OBinarySerializer<Long> {
     return pointer.getLong(offset);
   }
 
-  @Override
-  public Long deserializeFromDirectMemoryObject(PointerWrapper wrapper, long offset) {
-    return wrapper.getLong(offset);
-  }
-
   public void serializeNative(final long object, final byte[] stream, final int startPosition, final Object... hints) {
     CONVERTER.putLong(stream, startPosition, object, ByteOrder.nativeOrder());
   }
@@ -129,17 +123,8 @@ public class OLongSerializer implements OBinarySerializer<Long> {
     return pointer.getLong(offset);
   }
 
-  public long deserializeFromDirectMemory(final PointerWrapper wrapper, final long offset) {
-    return wrapper.getLong(offset);
-  }
-
   @Override
   public int getObjectSizeInDirectMemory(final ODirectMemoryPointer pointer, final long offset) {
-    return LONG_SIZE;
-  }
-
-  @Override
-  public int getObjectSizeInDirectMemory(PointerWrapper wrapper, long offset) {
     return LONG_SIZE;
   }
 
@@ -156,11 +141,40 @@ public class OLongSerializer implements OBinarySerializer<Long> {
     return value;
   }
 
+  @Override
+  public void serializeInByteBufferObject(Long object, ByteBuffer buffer, Object... hints) {
+    buffer.putLong(object);
+  }
+
+  @Override
+  public Long deserializeFromByteBufferObject(ByteBuffer buffer) {
+    return buffer.getLong();
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
+    return LONG_SIZE;
+  }
+
+  @Override
+  public Long deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+    return walChanges.getLongValue(buffer, offset);
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+    return LONG_SIZE;
+  }
+
   public long deserializeFromByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return walChanges.getLongValue(buffer, offset);
   }
 
   public long deserializeFromByteBuffer(ByteBuffer buffer) {
     return buffer.getLong();
+  }
+
+  public void serializeInByteBuffer(long object, ByteBuffer buffer, Object... hints) {
+    buffer.putLong(object);
   }
 }

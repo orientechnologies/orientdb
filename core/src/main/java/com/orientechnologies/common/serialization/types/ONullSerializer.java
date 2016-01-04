@@ -21,7 +21,9 @@
 package com.orientechnologies.common.serialization.types;
 
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.PointerWrapper;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
+
+import java.nio.ByteBuffer;
 
 /**
  * Serializes and deserializes null values.
@@ -75,17 +77,7 @@ public class ONullSerializer implements OBinarySerializer<Object> {
   }
 
   @Override
-  public Object deserializeFromDirectMemoryObject(PointerWrapper wrapper, long offset) {
-    return null;
-  }
-
-  @Override
   public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
-    return 0;
-  }
-
-  @Override
-  public int getObjectSizeInDirectMemory(PointerWrapper wrapper, long offset) {
     return 0;
   }
 
@@ -100,5 +92,29 @@ public class ONullSerializer implements OBinarySerializer<Object> {
   @Override
   public Object preprocess(Object value, Object... hints) {
     return null;
+  }
+
+  @Override
+  public void serializeInByteBufferObject(Object object, ByteBuffer buffer, Object... hints) {
+  }
+
+  @Override
+  public Object deserializeFromByteBufferObject(ByteBuffer buffer) {
+    return null;
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
+    return 0;
+  }
+
+  @Override
+  public Object deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+    return null;
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+    return 0;
   }
 }

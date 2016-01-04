@@ -26,18 +26,19 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.PointerWrapper;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 public class OStreamSerializerListRID implements OStreamSerializer, OBinarySerializer<OMVRBTreeRIDSet> {
-  public static final String                            NAME     = "y";
-  public static final OStreamSerializerListRID          INSTANCE = new OStreamSerializerListRID();
+  public static final  String                           NAME     = "y";
+  public static final  OStreamSerializerListRID         INSTANCE = new OStreamSerializerListRID();
   private static final ORecordSerializerSchemaAware2CSV FORMAT   = (ORecordSerializerSchemaAware2CSV) ORecordSerializerFactory
-                                                                     .instance().getFormat(ORecordSerializerSchemaAware2CSV.NAME);
+      .instance().getFormat(ORecordSerializerSchemaAware2CSV.NAME);
 
-  public static final byte                              ID       = 19;
+  public static final byte ID = 19;
 
   public Object fromStream(final byte[] iStream) throws IOException {
     if (iStream == null)
@@ -137,26 +138,42 @@ public class OStreamSerializerListRID implements OStreamSerializer, OBinarySeria
   }
 
   @Override
-  public OMVRBTreeRIDSet deserializeFromDirectMemoryObject(PointerWrapper wrapper, long offset) {
-    final byte[] serializedSet = OBinaryTypeSerializer.INSTANCE.deserializeFromDirectMemoryObject(wrapper, offset);
-
-    final String s = OBinaryProtocol.bytes2string(serializedSet);
-
-    return (OMVRBTreeRIDSet) FORMAT.embeddedCollectionFromStream(null, OType.EMBEDDEDSET, null, OType.LINK, s);
-  }
-
-  @Override
   public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
     return OBinaryTypeSerializer.INSTANCE.getObjectSizeInDirectMemory(pointer, offset);
   }
 
   @Override
-  public int getObjectSizeInDirectMemory(PointerWrapper wrapper, long offset) {
-    return OBinaryTypeSerializer.INSTANCE.getObjectSizeInDirectMemory(wrapper, offset);
+  public OMVRBTreeRIDSet preprocess(OMVRBTreeRIDSet value, Object... hints) {
+    return value;
   }
 
   @Override
-  public OMVRBTreeRIDSet preprocess(OMVRBTreeRIDSet value, Object... hints) {
-    return value;
+  public void serializeInByteBufferObject(OMVRBTreeRIDSet object, ByteBuffer buffer, Object... hints) {
+    final byte[] serializedSet = object.toStream();
+    OBinaryTypeSerializer.INSTANCE.serializeInByteBufferObject(serializedSet, buffer);
+  }
+
+  @Override
+  public OMVRBTreeRIDSet deserializeFromByteBufferObject(ByteBuffer buffer) {
+    final byte[] serializedSet = OBinaryTypeSerializer.INSTANCE.deserializeFromByteBufferObject(buffer);
+    final String s = OBinaryProtocol.bytes2string(serializedSet);
+    return (OMVRBTreeRIDSet) FORMAT.embeddedCollectionFromStream(null, OType.EMBEDDEDSET, null, OType.LINK, s);
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
+    return OBinaryTypeSerializer.INSTANCE.getObjectSizeInByteBuffer(buffer);
+  }
+
+  @Override
+  public OMVRBTreeRIDSet deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+    final byte[] serializedSet = OBinaryTypeSerializer.INSTANCE.deserializeFromByteBufferObject(buffer, walChanges, offset);
+    final String s = OBinaryProtocol.bytes2string(serializedSet);
+    return (OMVRBTreeRIDSet) FORMAT.embeddedCollectionFromStream(null, OType.EMBEDDEDSET, null, OType.LINK, s);
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+    return OBinaryTypeSerializer.INSTANCE.getObjectSizeInByteBuffer(buffer, walChanges, offset);
   }
 }

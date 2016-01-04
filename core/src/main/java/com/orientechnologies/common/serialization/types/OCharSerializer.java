@@ -24,7 +24,6 @@ import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.PointerWrapper;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -114,17 +113,7 @@ public class OCharSerializer implements OBinarySerializer<Character> {
   }
 
   @Override
-  public Character deserializeFromDirectMemoryObject(PointerWrapper wrapper, long offset) {
-    return (char) wrapper.getShort(offset);
-  }
-
-  @Override
   public int getObjectSizeInDirectMemory(final ODirectMemoryPointer pointer, final long offset) {
-    return CHAR_SIZE;
-  }
-
-  @Override
-  public int getObjectSizeInDirectMemory(PointerWrapper wrapper, long offset) {
     return CHAR_SIZE;
   }
 
@@ -162,7 +151,7 @@ public class OCharSerializer implements OBinarySerializer<Character> {
   }
 
   @Override
-  public int getObjectSizeInByteBuffer(ByteBuffer buffer, int offset, OWALChanges walChanges) {
+  public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return CHAR_SIZE;
   }
 

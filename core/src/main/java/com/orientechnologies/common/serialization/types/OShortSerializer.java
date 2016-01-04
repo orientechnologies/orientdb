@@ -23,8 +23,9 @@ package com.orientechnologies.common.serialization.types;
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.PointerWrapper;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 
+import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 /**
@@ -95,11 +96,6 @@ public class OShortSerializer implements OBinarySerializer<Short> {
     return pointer.getShort(offset);
   }
 
-  @Override
-  public Short deserializeFromDirectMemoryObject(PointerWrapper wrapper, long offset) {
-    return wrapper.getShort(offset);
-  }
-
   public void serializeNative(final short object, final byte[] stream, final int startPosition, final Object... hints) {
     CONVERTER.putShort(stream, startPosition, object, ByteOrder.nativeOrder());
   }
@@ -116,17 +112,8 @@ public class OShortSerializer implements OBinarySerializer<Short> {
     return pointer.getShort(offset);
   }
 
-  public short deserializeFromDirectMemory(PointerWrapper wrapper, long offset) {
-    return wrapper.getShort(offset);
-  }
-
   @Override
   public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
-    return SHORT_SIZE;
-  }
-
-  @Override
-  public int getObjectSizeInDirectMemory(PointerWrapper wrapper, long offset) {
     return SHORT_SIZE;
   }
 
@@ -141,5 +128,42 @@ public class OShortSerializer implements OBinarySerializer<Short> {
   @Override
   public Short preprocess(Short value, Object... hints) {
     return value;
+  }
+
+  @Override
+  public void serializeInByteBufferObject(Short object, ByteBuffer buffer, Object... hints) {
+    buffer.putShort(object);
+  }
+
+  @Override
+  public Short deserializeFromByteBufferObject(ByteBuffer buffer) {
+    return buffer.getShort();
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
+    return SHORT_SIZE;
+  }
+
+  @Override
+  public Short deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+    return walChanges.getShortValue(buffer, offset);
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+    return SHORT_SIZE;
+  }
+
+  public void serializeInByteBuffer(short object, ByteBuffer buffer, Object... hints) {
+    buffer.putShort(object);
+  }
+
+  public short deserializeFromByteBuffer(ByteBuffer buffer) {
+    return buffer.getShort();
+  }
+
+  public short deserializeFromByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+    return walChanges.getShortValue(buffer, offset);
   }
 }

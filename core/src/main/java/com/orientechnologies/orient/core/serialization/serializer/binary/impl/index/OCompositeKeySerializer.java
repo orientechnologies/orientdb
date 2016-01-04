@@ -33,7 +33,6 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.OBinary
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.PointerWrapper;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -320,39 +319,12 @@ public class OCompositeKeySerializer implements OBinarySerializer<OCompositeKey>
     return compositeKey;
   }
 
-  @Override
-  public OCompositeKey deserializeFromDirectMemoryObject(PointerWrapper wrapper, long offset) {
-    final OCompositeKey compositeKey = new OCompositeKey();
-
-    offset += OIntegerSerializer.INT_SIZE;
-
-    final int keysSize = wrapper.getInt(offset);
-    offset += OIntegerSerializer.INT_SIZE;
-
-    final OBinarySerializerFactory factory = OBinarySerializerFactory.getInstance();
-    for (int i = 0; i < keysSize; i++) {
-      final byte serializerId = wrapper.getByte(offset);
-      offset += OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE;
-
-      OBinarySerializer<Object> binarySerializer = (OBinarySerializer<Object>) factory.getObjectSerializer(serializerId);
-      final Object key = binarySerializer.deserializeFromDirectMemoryObject(wrapper, offset);
-      compositeKey.addKey(key);
-
-      offset += binarySerializer.getObjectSize(key);
-    }
-
-    return compositeKey;
-  }
 
   @Override
   public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
     return pointer.getInt(offset);
   }
 
-  @Override
-  public int getObjectSizeInDirectMemory(PointerWrapper wrapper, long offset) {
-    return wrapper.getInt(offset);
-  }
 
   public boolean isFixedLength() {
     return false;
@@ -475,7 +447,7 @@ public class OCompositeKeySerializer implements OBinarySerializer<OCompositeKey>
   }
 
   @Override
-  public int getObjectSizeInByteBuffer(ByteBuffer buffer, int offset, OWALChanges walChanges) {
+  public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return walChanges.getIntValue(buffer, offset);
   }
 }
