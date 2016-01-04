@@ -350,7 +350,10 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       iClassName = "-" + iClassName;
 
     try {
-      return URLEncoder.encode(iClassName, "UTF-8");
+        return URLEncoder.encode(iClassName, "UTF-8")    // default URL encoding
+                         .replaceAll("\\.", "%2E")       // encode invalid '.'
+                         .replaceAll("_", "%5F")         // encode reserved '_'
+                         .replaceAll("\\%", "_");        // replace invalid '%' with reserved '_'
     } catch (UnsupportedEncodingException e) {
       OLogManager.instance().error(null, "Error on encoding class name using encoding '%s'", e, "UTF-8");
       return iClassName;
@@ -368,7 +371,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       iClassName = iClassName.substring(1);
 
     try {
-      return URLDecoder.decode(iClassName, "UTF-8");
+        // replace reserved '_' with invalid '%' and apply default URL decoding
+        return URLDecoder.decode(iClassName.replaceAll("_", "%"), "UTF-8");
     } catch (UnsupportedEncodingException e) {
       OLogManager.instance().error(null, "Error on decoding class name using encoding '%s'", e, "UTF-8");
       return iClassName;
