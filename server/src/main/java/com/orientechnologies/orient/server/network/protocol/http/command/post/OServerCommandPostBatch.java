@@ -153,6 +153,13 @@ public class OServerCommandPostBatch extends OServerCommandDocumentAbstract {
           if (command == null)
             throw new IllegalArgumentException("command parameter is null");
 
+          Object params = operation.get("parameters");
+          if (params instanceof Collection) {
+            final Object[] paramArray = new Object[((Collection) params).size()];
+            ((Collection) params).toArray(paramArray);
+            params = paramArray;
+          }
+
           String commandAsString = null;
           if (command != null)
             if (OMultiValue.isMultiValue(command)) {
@@ -167,7 +174,12 @@ public class OServerCommandPostBatch extends OServerCommandDocumentAbstract {
 
           final OCommandRequestText cmd = (OCommandRequestText) OCommandManager.instance().getRequester(language);
           cmd.setText(commandAsString);
-          lastResult = db.command(cmd).execute();
+
+          if(params==null){
+            lastResult = db.command(cmd).execute();
+          }else {
+            lastResult = db.command(cmd).execute(params);
+          }
         } else if (type.equals("script")) {
           // COMMAND
           final String language = (String) operation.get("language");
