@@ -143,6 +143,9 @@ public class OClientConnectionManager {
       session = new OClientSessions(tokenBytes, token);
       sessions.put(new OHashToken(tokenBytes), session);
     }
+    connection.tokenBytes = tokenBytes;
+    connection.tokenBased = true;
+    connection.token = token;
     session.addConnection(connection);
     OLogManager.instance().config(this, "Remote client connected from: " + connection);
 
@@ -166,6 +169,9 @@ public class OClientConnectionManager {
         sessions.put(new OHashToken(tokenBytes), sess);
       }
     }
+    connection.tokenBytes = tokenBytes;
+    connection.tokenBased = true;
+    connection.token = token;
     sess.addConnection(connection);
     return connection;
   }

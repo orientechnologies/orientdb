@@ -45,7 +45,6 @@ public class OClientConnectionManagerTest {
     OClientConnection ret = manager.connect(protocol);
     manager.connect(protocol, ret, atoken, token);
     assertNotNull(ret);
-    ret.tokenBytes = atoken;
     OClientSessions sess = manager.getSession(ret);
     assertNotNull(sess);
     assertEquals(sess.getConnections().size(), 1);
