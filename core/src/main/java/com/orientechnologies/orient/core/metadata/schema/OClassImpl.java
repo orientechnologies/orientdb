@@ -1132,7 +1132,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
         final String cmd = String.format("alter class `%s` addcluster `%s`", name, clusterNameOrId);
         database.command(new OCommandSQL(cmd)).execute();
       } else if (isDistributedCommand()) {
-        final int clusterId = createClusterIfNeeded(clusterNameOrId);
+        final int clusterId = owner.createClusterIfNeeded(clusterNameOrId);
         addClusterIdInternal(clusterId);
 
         final String cmd = String.format("alter class `%s` addcluster `%s`", name, clusterNameOrId);
@@ -1142,7 +1142,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
         database.command(commandSQL).execute();
       } else {
-        final int clusterId = createClusterIfNeeded(clusterNameOrId);
+        final int clusterId = owner.createClusterIfNeeded(clusterNameOrId);
         addClusterIdInternal(clusterId);
       }
     } finally {
@@ -1680,7 +1680,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       break;
     }
     case REMOVECLUSTER:
-      int clId = getClusterId(stringValue);
+      int clId = owner.getClusterId(stringValue);
       if (clId == NOT_EXISTENT_CLUSTER_ID)
         throw new IllegalArgumentException("Cluster id '" + stringValue + "' cannot be removed");
       removeClusterId(clId);
@@ -2281,22 +2281,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     }
   }
 
-  private int createClusterIfNeeded(String nameOrId) {
-    final String[] parts = nameOrId.split(" ");
-    int clId = getClusterId(parts[0]);
-
-    if (clId == NOT_EXISTENT_CLUSTER_ID) {
-      try {
-        clId = Integer.parseInt(parts[0]);
-        throw new IllegalArgumentException("Cluster id '" + clId + "' cannot be added");
-      } catch (NumberFormatException e) {
-        clId = getDatabase().addCluster(parts[0]);
-      }
-    }
-
-    return clId;
-  }
-
   private OClass addClusterIdInternal(final int clusterId) {
     acquireSchemaWriteLock();
     try {
@@ -2525,16 +2509,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   private void validatePropertyName(final String propertyName) {
-  }
-
-  private int getClusterId(final String stringValue) {
-    int clId;
-    try {
-      clId = Integer.parseInt(stringValue);
-    } catch (NumberFormatException e) {
-      clId = getDatabase().getClusterIdByName(stringValue);
-    }
-    return clId;
   }
 
   private void addClusterIdToIndexes(int iId) {

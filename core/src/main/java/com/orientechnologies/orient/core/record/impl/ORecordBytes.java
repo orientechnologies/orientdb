@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
  * using the reset() at every re-use.
  */
 @SuppressWarnings({ "unchecked" })
+@Deprecated
 public class ORecordBytes extends ORecordAbstract {
   private static final long   serialVersionUID = 1L;
 
