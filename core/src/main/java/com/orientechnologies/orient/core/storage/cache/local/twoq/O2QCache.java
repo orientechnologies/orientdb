@@ -1148,7 +1148,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
 
   @Override
   public long getUsedMemory() {
-    return ((long) (am.size() + a1in.size())) * (2 * ODurablePage.PAGE_PADDING + pageSize);
+    return ((long) (am.size() + a1in.size())) * pageSize;
   }
 
   @Override
@@ -1181,7 +1181,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
   }
 
   private int normalizeMemory(long maxSize, int pageSize) {
-    long tmpMaxSize = maxSize / (pageSize + 2 * OWOWCache.PAGE_PADDING);
+    long tmpMaxSize = maxSize / pageSize;
     if (tmpMaxSize >= Integer.MAX_VALUE) {
       return Integer.MAX_VALUE;
     } else {

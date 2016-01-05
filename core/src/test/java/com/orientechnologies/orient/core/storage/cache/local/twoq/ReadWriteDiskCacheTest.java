@@ -40,9 +40,9 @@ public class ReadWriteDiskCacheTest {
   private static final int systemOffset            = OIntegerSerializer.INT_SIZE + 3 * OLongSerializer.LONG_SIZE;
   public static final  int userDataSize            = 8;
   public static final  int PAGE_SIZE               = userDataSize + systemOffset;
-  public static final  int READ_CACHE_MAX_MEMORY   = 4 * (PAGE_SIZE + 2 * OWOWCache.PAGE_PADDING);
+  public static final  int READ_CACHE_MAX_MEMORY   = 4 * PAGE_SIZE;
   public static final  int writeCacheAmountOfPages = 15000;
-  public static final  int WRITE_CACHE_MAX_SIZE    = writeCacheAmountOfPages * (PAGE_SIZE + 2 * OWOWCache.PAGE_PADDING);
+  public static final  int WRITE_CACHE_MAX_SIZE    = writeCacheAmountOfPages * PAGE_SIZE;
 
   private O2QCache    readBuffer;
   private OWriteCache writeBuffer;
@@ -166,7 +166,7 @@ public class ReadWriteDiskCacheTest {
 
       final ByteBuffer buffer = entries[i].getCachePointer().getBuffer();
 
-      buffer.position(systemOffset + OWOWCache.PAGE_PADDING);
+      buffer.position(systemOffset);
       buffer.put(new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i });
 
       entries[i].getCachePointer().releaseExclusiveLock();
@@ -213,7 +213,7 @@ public class ReadWriteDiskCacheTest {
       entries[i].markDirty();
 
       final ByteBuffer buffer = entries[i].getCachePointer().getBuffer();
-      buffer.position(systemOffset + OWOWCache.PAGE_PADDING);
+      buffer.position(systemOffset);
       buffer.put(new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i });
 
       setLsn(buffer, new OLogSequenceNumber(1, i));
@@ -291,7 +291,7 @@ public class ReadWriteDiskCacheTest {
       entries[i].markDirty();
 
       final ByteBuffer buffer = entries[i].getCachePointer().getBuffer();
-      buffer.position(systemOffset + OWOWCache.PAGE_PADDING);
+      buffer.position(systemOffset);
       buffer.put(new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i });
       setLsn(buffer, new OLogSequenceNumber(1, i));
 
@@ -369,7 +369,7 @@ public class ReadWriteDiskCacheTest {
       entries[i].markDirty();
 
       final ByteBuffer buffer = entries[i].getCachePointer().getBuffer();
-      buffer.position(systemOffset + OWOWCache.PAGE_PADDING);
+      buffer.position(systemOffset);
       buffer.put(new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i });
       setLsn(buffer, new OLogSequenceNumber(1, i));
 
@@ -418,7 +418,7 @@ public class ReadWriteDiskCacheTest {
         }
 
         final ByteBuffer buffer = cacheEntry.getCachePointer().getBuffer();
-        buffer.position(OWOWCache.PAGE_PADDING + systemOffset);
+        buffer.position(systemOffset);
         buffer.put(userData);
 
         setLsn(buffer, new OLogSequenceNumber(1, i));
@@ -485,7 +485,7 @@ public class ReadWriteDiskCacheTest {
         }
 
         final ByteBuffer buffer = cacheEntry.getCachePointer().getBuffer();
-        buffer.position(OWOWCache.PAGE_PADDING + systemOffset);
+        buffer.position(systemOffset);
         buffer.put(userData);
 
         setLsn(buffer, new OLogSequenceNumber(1, i));
@@ -570,7 +570,7 @@ public class ReadWriteDiskCacheTest {
         }
 
         final ByteBuffer buffer = cacheEntry.getCachePointer().getBuffer();
-        buffer.position(OWOWCache.PAGE_PADDING + systemOffset);
+        buffer.position(systemOffset);
         buffer.put(userData);
 
         setLsn(buffer, new OLogSequenceNumber(1, i));
@@ -629,7 +629,7 @@ public class ReadWriteDiskCacheTest {
     Assert.assertEquals(a1in.size(), 2); // pages 5 - 6
 
     //change cache max size so at least single page may be put in a1in queue
-    readBuffer.changeMaximumAmountOfMemory(5 * (PAGE_SIZE + 2 * OWOWCache.PAGE_PADDING));
+    readBuffer.changeMaximumAmountOfMemory(5 * (PAGE_SIZE));
 
     //load page 0, and prefetch pages 1 (am), 2,3 (a1out) and 4 (pinned page)
     //so 5 pages in total, but we may only load 4 pages (1 page is pinned),so we have
@@ -653,7 +653,7 @@ public class ReadWriteDiskCacheTest {
 
     Assert.assertNotNull(a1in.get(fileId, 0));
 
-    readBuffer.changeMaximumAmountOfMemory(4 * (PAGE_SIZE + 2 * OWOWCache.PAGE_PADDING));
+    readBuffer.changeMaximumAmountOfMemory(4 * (PAGE_SIZE));
   }
 
   public void testLoadAndLockForReadShouldHitCache() throws Exception {
@@ -698,7 +698,7 @@ public class ReadWriteDiskCacheTest {
 
       entries[i].markDirty();
       ByteBuffer buffer = entries[i].getCachePointer().getBuffer();
-      buffer.position(systemOffset + OWOWCache.PAGE_PADDING);
+      buffer.position(systemOffset);
       buffer.put(new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i });
 
       entries[i].getCachePointer().releaseExclusiveLock();
@@ -744,7 +744,7 @@ public class ReadWriteDiskCacheTest {
       entries[i].getCachePointer().acquireExclusiveLock();
 
       final ByteBuffer buffer = entries[i].getCachePointer().getBuffer();
-      buffer.position(systemOffset + OWOWCache.PAGE_PADDING);
+      buffer.position(systemOffset);
       content[i] = new byte[8];
       buffer.get(content[i]);
 
@@ -779,7 +779,7 @@ public class ReadWriteDiskCacheTest {
         entries[i].markDirty();
 
         final ByteBuffer buffer = entries[i].getCachePointer().getBuffer();
-        buffer.position(systemOffset + OWOWCache.PAGE_PADDING);
+        buffer.position(systemOffset);
         buffer.put(new byte[] { (byte) i, 1, 2, seed, 4, 5, (byte) j, (byte) i });
 
         entries[i].getCachePointer().releaseExclusiveLock();
@@ -828,7 +828,7 @@ public class ReadWriteDiskCacheTest {
       entries[i].markDirty();
 
       final ByteBuffer buffer = entries[i].getCachePointer().getBuffer();
-      buffer.position(systemOffset + OWOWCache.PAGE_PADDING);
+      buffer.position(systemOffset);
       buffer.put(new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 });
 
       entries[i].getCachePointer().releaseExclusiveLock();
@@ -879,14 +879,14 @@ public class ReadWriteDiskCacheTest {
         entries[i].markDirty();
 
         ByteBuffer buffer = entries[i].getCachePointer().getBuffer();
-        buffer.position(systemOffset + OWOWCache.PAGE_PADDING);
+        buffer.position(systemOffset);
         buffer.put(new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 });
 
         if (i - 4 >= 0) {
           readBuffer.load(fileId, i - 4, false, writeBuffer, 0, storagePerformanceStatistic);
 
           buffer = entries[i - 4].getCachePointer().getBuffer();
-          buffer.position(systemOffset + OWOWCache.PAGE_PADDING);
+          buffer.position(systemOffset);
           buffer.put(new byte[] { (byte) (i - 4), 1, 2, seed, 4, 5, 6, 7 });
         }
       }
@@ -915,7 +915,7 @@ public class ReadWriteDiskCacheTest {
       entries[i].markDirty();
 
       final ByteBuffer buffer = entries[i].getCachePointer().getBuffer();
-      buffer.position(systemOffset + OWOWCache.PAGE_PADDING);
+      buffer.position(systemOffset);
       buffer.put(new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 });
 
       entries[i].getCachePointer().releaseExclusiveLock();
@@ -941,7 +941,7 @@ public class ReadWriteDiskCacheTest {
 
       entries[i].markDirty();
       final ByteBuffer buffer = entries[i].getCachePointer().getBuffer();
-      buffer.position(systemOffset + OWOWCache.PAGE_PADDING);
+      buffer.position(systemOffset);
       buffer.put(new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 });
       entries[i].getCachePointer().releaseExclusiveLock();
       readBuffer.release(entries[i], writeBuffer, storagePerformanceStatistic);
@@ -985,7 +985,7 @@ public class ReadWriteDiskCacheTest {
       entries[i].markDirty();
 
       final ByteBuffer buffer = entries[i].getCachePointer().getBuffer();
-      buffer.position(systemOffset + OWOWCache.PAGE_PADDING);
+      buffer.position(systemOffset);
       buffer.put(new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 });
 
       entries[i].getCachePointer().releaseExclusiveLock();
@@ -1027,11 +1027,9 @@ public class ReadWriteDiskCacheTest {
         "readWriteDiskCacheTest.tst", 0);
     segmentConfiguration.fileType = OFileClassic.NAME;
 
-    writeBuffer = new OWOWCache(false, 8 + systemOffset, 10000, writeAheadLog, 100,
-        2 * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING),
-        2 * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING) + 4 * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING), storageLocal,
-        false, 10);
-    readBuffer = new O2QCache(4 * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING), 8 + systemOffset, false, 20);
+    writeBuffer = new OWOWCache(false, 8 + systemOffset, 10000, writeAheadLog, 100, 2 * (8 + systemOffset),
+        2 * (8 + systemOffset) + 4 * (8 + systemOffset), storageLocal, false, 10);
+    readBuffer = new O2QCache(4 * (8 + systemOffset), 8 + systemOffset, false, 20);
 
     long fileId = readBuffer.addFile(fileName, writeBuffer);
     OLogSequenceNumber lsnToFlush = null;
@@ -1114,7 +1112,7 @@ public class ReadWriteDiskCacheTest {
   }
 
   private void setLsn(ByteBuffer buffer, OLogSequenceNumber lsn) {
-    buffer.position(OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE + OWOWCache.PAGE_PADDING);
+    buffer.position(OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE);
 
     OLongSerializer.INSTANCE.serializeInByteBuffer(lsn.getSegment(), buffer);
     OLongSerializer.INSTANCE.serializeInByteBuffer(lsn.getPosition(), buffer);

@@ -169,9 +169,9 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
 
   @Override
   public OCacheEntry load(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache, final int pageCount,
-                          OStoragePerformanceStatistic storagePerformanceStatistic) {
-    final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic =
-        OSessionStoragePerformanceStatistic.getStatisticInstance();
+      OStoragePerformanceStatistic storagePerformanceStatistic) {
+    final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = OSessionStoragePerformanceStatistic
+        .getStatisticInstance();
 
     if (sessionStoragePerformanceStatistic != null) {
       sessionStoragePerformanceStatistic.startPageReadFromCacheTimer();
@@ -205,9 +205,9 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
 
   @Override
   public OCacheEntry allocateNewPage(long fileId, OWriteCache writeCache,
-                                     OStoragePerformanceStatistic storagePerformanceStatistic) {
-    final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic =
-        OSessionStoragePerformanceStatistic.getStatisticInstance();
+      OStoragePerformanceStatistic storagePerformanceStatistic) {
+    final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = OSessionStoragePerformanceStatistic
+        .getStatisticInstance();
 
     if (sessionStoragePerformanceStatistic != null) {
       sessionStoragePerformanceStatistic.startPageReadFromCacheTimer();
@@ -520,7 +520,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
     for (MemoryFile file : files.values())
       totalPages += file.getUsedMemory();
 
-    return totalPages * (pageSize + 2 * OWOWCache.PAGE_PADDING);
+    return totalPages * pageSize;
   }
 
   @Override

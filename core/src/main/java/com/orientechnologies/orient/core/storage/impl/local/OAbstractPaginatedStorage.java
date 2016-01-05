@@ -3125,7 +3125,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             final ByteBuffer buffer = cacheEntry.getCachePointer().getBuffer();
             final OLogSequenceNumber backedUpPageLsn = ODurablePage.getLogSequenceNumber(OLongSerializer.LONG_SIZE, data);
             if (isFull) {
-              buffer.position(OWOWCache.PAGE_PADDING);
+              buffer.position(0);
               buffer.put(data, OLongSerializer.LONG_SIZE, data.length - OLongSerializer.LONG_SIZE);
               cacheEntry.markDirty();
 
@@ -3135,7 +3135,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             } else {
               final OLogSequenceNumber currentPageLsn = ODurablePage.getLogSequenceNumberFromPage(buffer);
               if (backedUpPageLsn.compareTo(currentPageLsn) > 0) {
-                buffer.position(OWOWCache.PAGE_PADDING);
+                buffer.position(0);
                 buffer.put(data, OLongSerializer.LONG_SIZE, data.length - OLongSerializer.LONG_SIZE);
 
                 cacheEntry.markDirty();

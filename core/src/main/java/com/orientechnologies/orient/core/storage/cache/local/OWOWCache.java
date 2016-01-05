@@ -91,8 +91,6 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
   private final int MAX_PAGES_PER_FLUSH;
 
-  public static final int PAGE_PADDING = 8;
-
   public static final String NAME_ID_MAP_EXTENSION = ".cm";
 
   private static final String NAME_ID_MAP = "name_id_map" + NAME_ID_MAP_EXTENSION;
@@ -199,7 +197,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   }
 
   private int normalizeMemory(final long maxSize, final int pageSize) {
-    final long tmpMaxSize = maxSize / (pageSize + 2 * OWOWCache.PAGE_PADDING);
+    final long tmpMaxSize = maxSize / pageSize;
     if (tmpMaxSize >= Integer.MAX_VALUE) {
       return Integer.MAX_VALUE;
     } else {
