@@ -27,6 +27,10 @@
 This document contains the last changes of OrientDB Community Edition.
 
 -----------------------------------------------------------------------------------------------------------------------------------
+VERSION 2.1.9 - (January, 5 2016)
+- Core (2): https://github.com/orientechnologies/orientdb/issues?q=milestone%3A2.1.9
+
+-----------------------------------------------------------------------------------------------------------------------------------
 VERSION 2.1.8 - (December, 16 2015)
 - Core (2): https://github.com/orientechnologies/orientdb/issues?q=milestone%3A2.1.8
 - Studio (3): https://github.com/orientechnologies/orientdb-studio/issues?q=milestone%3A2.1.8
