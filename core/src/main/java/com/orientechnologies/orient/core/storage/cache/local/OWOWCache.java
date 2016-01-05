@@ -149,11 +149,14 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   private final AtomicLong            lastAmountOfFlushedPages = new AtomicLong();
   private final AtomicLong            durationOfLastFlush      = new AtomicLong();
 
+  private final OByteBufferPool bufferPool;
+
   private final       AtomicBoolean mbeanIsRegistered = new AtomicBoolean();
   public static final String        MBEAN_NAME        = "com.orientechnologies.orient.core.storage.cache.local:type=OWOWCacheMXBean";
 
-  public OWOWCache(boolean syncOnPageFlush, int pageSize, long groupTTL, OWriteAheadLog writeAheadLog, long pageFlushInterval,
-      long writeCacheMaxSize, long cacheMaxSize, OLocalPaginatedStorage storageLocal, boolean checkMinSize, int id) {
+  public OWOWCache(boolean syncOnPageFlush, int pageSize, OByteBufferPool bufferPool, long groupTTL, OWriteAheadLog writeAheadLog,
+      long pageFlushInterval, long writeCacheMaxSize, long cacheMaxSize, OLocalPaginatedStorage storageLocal, boolean checkMinSize,
+      int id) {
     filesLock.acquireWriteLock();
     try {
       this.id = id;
@@ -163,6 +166,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       this.pageSize = pageSize;
       this.groupTTL = groupTTL;
       this.writeAheadLog = writeAheadLog;
+      this.bufferPool = bufferPool;
 
       int writeNormalizedSize = normalizeMemory(writeCacheMaxSize, pageSize);
       if (checkMinSize && writeNormalizedSize < MIN_CACHE_SIZE)
@@ -1240,7 +1244,6 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     final long firstPageStartPosition = startPageIndex * pageSize;
     final long firstPageEndPosition = firstPageStartPosition + pageSize;
 
-    final OByteBufferPool bufferPool = OByteBufferPool.instance();
     if (fileClassic.getFileSize() >= firstPageEndPosition) {
       final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = OSessionStoragePerformanceStatistic
           .getStatisticInstance();

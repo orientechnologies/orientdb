@@ -3,6 +3,7 @@ package com.orientechnologies.common.directmemory;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class OByteBufferPool {
@@ -19,7 +20,7 @@ public class OByteBufferPool {
 
   public OByteBufferPool(int pageSize) {
     this.pageSize = pageSize;
-    this.zeroPage = ByteBuffer.allocateDirect(pageSize);
+    this.zeroPage = ByteBuffer.allocateDirect(pageSize).order(ByteOrder.nativeOrder());
   }
 
   public ByteBuffer acquireDirect(boolean clear) {
@@ -36,7 +37,7 @@ public class OByteBufferPool {
       return buffer;
     }
 
-    return ByteBuffer.allocateDirect(pageSize);
+    return ByteBuffer.allocateDirect(pageSize).order(ByteOrder.nativeOrder());
   }
 
   public void release(ByteBuffer buffer) {

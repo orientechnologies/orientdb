@@ -200,7 +200,7 @@ public class WALChangesTreeTest {
     Assert.assertEquals(getByteArray(buffer, 60, 1), new byte[] { 60 });
     Assert.assertEquals(getByteArray(buffer, 40, 1), new byte[] { 40 });
     Assert.assertEquals(getByteArray(buffer, 30, 1), new byte[] { 30 });
-    Assert.assertEquals(getByteArray(buffer, 25, 1), new byte[] { 35 });
+    Assert.assertEquals(getByteArray(buffer, 35, 1), new byte[] { 35 });
   }
 
   public void testInsertRandom() {

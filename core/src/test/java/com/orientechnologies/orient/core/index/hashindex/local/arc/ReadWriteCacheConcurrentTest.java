@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.index.hashindex.local.arc;
 
+import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.Orient;
@@ -108,7 +109,8 @@ public class ReadWriteCacheConcurrentTest {
   }
 
   private void initBuffer() throws IOException {
-    writeBuffer = new OWOWCache(false, 8 + systemOffset, 10000, null, -1, 15000 * (8 + systemOffset),
+    writeBuffer = new OWOWCache(false, 8 + systemOffset, new OByteBufferPool(8 + systemOffset), 10000, null, -1,
+        15000 * (8 + systemOffset),
         4 * (8 + systemOffset) + 15000 * (8 + systemOffset), storageLocal,
         true, 1);
     readBuffer = new O2QCache(4 * (8 + systemOffset), 8 + systemOffset, true, 20);

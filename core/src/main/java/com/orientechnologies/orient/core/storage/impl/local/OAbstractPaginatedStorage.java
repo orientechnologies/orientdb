@@ -2941,8 +2941,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
             final byte[] data = new byte[pageSize + OLongSerializer.LONG_SIZE];
             OLongSerializer.INSTANCE.serializeNative(pageIndex, data, 0);
-            ODurablePage
-                .getPageData(cacheEntry.getCachePointer().getBuffer().duplicate(), data, OLongSerializer.LONG_SIZE, pageSize);
+            ODurablePage.getPageData(cacheEntry.getCachePointer().getBuffer(), data, OLongSerializer.LONG_SIZE, pageSize);
 
             stream.write(data);
 

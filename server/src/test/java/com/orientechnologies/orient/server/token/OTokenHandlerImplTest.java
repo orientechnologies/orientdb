@@ -31,7 +31,7 @@ public class OTokenHandlerImplTest {
     }
   }
 
-  @Test()
+  @Test(enabled = false)
   public void testWebTokenCreationValidation() throws InvalidKeyException, NoSuchAlgorithmException, IOException {
     ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + OTokenHandlerImplTest.class.getSimpleName());
     db.create();

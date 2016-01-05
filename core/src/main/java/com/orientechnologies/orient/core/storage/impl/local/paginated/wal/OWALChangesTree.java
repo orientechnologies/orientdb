@@ -132,7 +132,7 @@ public class OWALChangesTree implements OWALChanges {
   }
 
   @Override
-  public void setIntValue(ByteBuffer buffer, int offset, int value) {
+  public void setIntValue(ByteBuffer buffer, int value, int offset) {
     byte[] svalue = new byte[OIntegerSerializer.INT_SIZE];
     OIntegerSerializer.INSTANCE.serializeNative(value, svalue, 0);
     add(svalue, offset);

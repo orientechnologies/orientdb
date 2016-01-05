@@ -58,6 +58,7 @@ public class OCachePointer {
       if (buffer != null) {
         final ByteBuffer b = buffer.duplicate();
         b.position(0);
+        b.order(buffer.order());
         return b;
       }
 
@@ -247,6 +248,9 @@ public class OCachePointer {
       return false;
 
     OCachePointer that = (OCachePointer) o;
+
+    buffer.position(0);
+    that.buffer.position(0);
 
     if (buffer != null ? !buffer.equals(that.buffer) : that.buffer != null)
       return false;
