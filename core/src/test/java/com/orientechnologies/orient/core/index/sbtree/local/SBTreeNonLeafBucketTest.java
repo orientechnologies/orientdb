@@ -1,7 +1,9 @@
 package com.orientechnologies.orient.core.index.sbtree.local;
 
+import java.nio.ByteBuffer;
 import java.util.*;
 
+import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.directmemory.ODirectMemoryPointerFactory;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
@@ -22,9 +24,10 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
 @Test
 public class SBTreeNonLeafBucketTest {
   public void testInitialization() throws Exception {
-    ODirectMemoryPointer pointer = ODirectMemoryPointerFactory.instance().createPointer(
-        OSBTreeBucket.MAX_PAGE_SIZE_BYTES + ODurablePage.PAGE_PADDING);
-    OCachePointer cachePointer = new OCachePointer(pointer, new OLogSequenceNumber(0, 0), 0, 0);
+    final OByteBufferPool bufferPool = OByteBufferPool.instance();
+    final ByteBuffer buffer = bufferPool.acquireDirect(true);
+
+    OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, new OLogSequenceNumber(0, 0), 0, 0);
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     cachePointer.incrementReferrer();
 
@@ -53,9 +56,10 @@ public class SBTreeNonLeafBucketTest {
       keys.add(random.nextLong());
     }
 
-    ODirectMemoryPointer pointer = ODirectMemoryPointerFactory.instance().createPointer(
-        OSBTreeBucket.MAX_PAGE_SIZE_BYTES + ODurablePage.PAGE_PADDING);
-    OCachePointer cachePointer = new OCachePointer(pointer, new OLogSequenceNumber(0, 0), 0, 0);
+    final OByteBufferPool bufferPool = OByteBufferPool.instance();
+    final ByteBuffer buffer = bufferPool.acquireDirect(true);
+
+    OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, new OLogSequenceNumber(0, 0), 0, 0);
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     cachePointer.incrementReferrer();
 
@@ -115,9 +119,10 @@ public class SBTreeNonLeafBucketTest {
       keys.add(random.nextLong());
     }
 
-    ODirectMemoryPointer pointer = ODirectMemoryPointerFactory.instance().createPointer(
-        OSBTreeBucket.MAX_PAGE_SIZE_BYTES + ODurablePage.PAGE_PADDING);
-    OCachePointer cachePointer = new OCachePointer(pointer, new OLogSequenceNumber(0, 0), 0, 0);
+    final OByteBufferPool bufferPool = OByteBufferPool.instance();
+    final ByteBuffer buffer = bufferPool.acquireDirect(true);
+
+    OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, new OLogSequenceNumber(0, 0), 0, 0);
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
 
     cachePointer.incrementReferrer();
@@ -156,10 +161,9 @@ public class SBTreeNonLeafBucketTest {
     for (Map.Entry<Long, Integer> keyIndexEntry : keyIndexMap.entrySet()) {
       OSBTreeBucket.SBTreeEntry<Long, OIdentifiable> entry = treeBucket.getEntry(keyIndexEntry.getValue());
 
-      Assert.assertEquals(
-          entry,
-          new OSBTreeBucket.SBTreeEntry<Long, OIdentifiable>(keyIndexEntry.getValue(), keyIndexEntry.getValue() + 1, keyIndexEntry
-              .getKey(), null));
+      Assert.assertEquals(entry,
+          new OSBTreeBucket.SBTreeEntry<Long, OIdentifiable>(keyIndexEntry.getValue(), keyIndexEntry.getValue() + 1,
+              keyIndexEntry.getKey(), null));
     }
 
     int keysToAdd = originalSize - treeBucket.size();
@@ -178,10 +182,9 @@ public class SBTreeNonLeafBucketTest {
     for (Map.Entry<Long, Integer> keyIndexEntry : keyIndexMap.entrySet()) {
       OSBTreeBucket.SBTreeEntry<Long, OIdentifiable> entry = treeBucket.getEntry(keyIndexEntry.getValue());
 
-      Assert.assertEquals(
-          entry,
-          new OSBTreeBucket.SBTreeEntry<Long, OIdentifiable>(keyIndexEntry.getValue(), keyIndexEntry.getValue() + 1, keyIndexEntry
-              .getKey(), null));
+      Assert.assertEquals(entry,
+          new OSBTreeBucket.SBTreeEntry<Long, OIdentifiable>(keyIndexEntry.getValue(), keyIndexEntry.getValue() + 1,
+              keyIndexEntry.getKey(), null));
     }
 
     Assert.assertEquals(treeBucket.size(), originalSize);

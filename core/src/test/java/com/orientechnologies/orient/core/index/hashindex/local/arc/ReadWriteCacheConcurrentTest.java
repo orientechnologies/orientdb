@@ -20,6 +20,7 @@ import org.testng.annotations.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -255,8 +256,9 @@ public class ReadWriteCacheConcurrentTest {
 
       pointer.acquireExclusiveLock();
 
-      pointer.getDataPointer().set(systemOffset + OWOWCache.PAGE_PADDING,
-          new byte[] { version.byteValue(), 2, 3, seed, 5, 6, (byte) fileNumber, (byte) (pageIndex & 0xFF) }, 0, 8);
+      final ByteBuffer buffer = pointer.getBuffer();
+      buffer.position(systemOffset + OWOWCache.PAGE_PADDING);
+      buffer.put(new byte[] { version.byteValue(), 2, 3, seed, 5, 6, (byte) fileNumber, (byte) (pageIndex & 0xFF) });
       cacheEntry.markDirty();
 
       pointer.releaseExclusiveLock();
@@ -313,7 +315,11 @@ public class ReadWriteCacheConcurrentTest {
           .load(fileIds.get(fileNumber), pageIndex, false, writeBuffer, 1, storagePerformanceStatistic);
       OCachePointer pointer = cacheEntry.getCachePointer();
 
-      byte[] content = pointer.getDataPointer().get(systemOffset + OWOWCache.PAGE_PADDING, 8);
+      final ByteBuffer buffer = pointer.getBuffer();
+      buffer.position(systemOffset + OWOWCache.PAGE_PADDING);
+      byte[] content = new byte[8];
+      buffer.get(content);
+
 
       readBuffer.release(cacheEntry, writeBuffer, storagePerformanceStatistic);
 

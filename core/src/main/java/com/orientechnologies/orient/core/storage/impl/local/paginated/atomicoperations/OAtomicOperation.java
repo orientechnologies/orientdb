@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OStoragePerformanceStatistic;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.*;
 
 /**
@@ -98,8 +99,8 @@ public class OAtomicOperation {
 
     if (changesContainer.isNew) {
       if (pageIndex <= changesContainer.maxNewPageIndex)
-        return new OCacheEntry(fileId, pageIndex,
-            new OCachePointer((ODirectMemoryPointer) null, new OLogSequenceNumber(-1, -1), fileId, pageIndex), false);
+        return new OCacheEntry(fileId, pageIndex, new OCachePointer(null, null, new OLogSequenceNumber(-1, -1), fileId, pageIndex),
+            false);
       else
         return null;
     } else {
@@ -113,7 +114,7 @@ public class OAtomicOperation {
 
         if (pageChangesContainer.isNew)
           return new OCacheEntry(fileId, pageIndex,
-              new OCachePointer((ODirectMemoryPointer) null, new OLogSequenceNumber(-1, -1), fileId, pageIndex), false);
+              new OCachePointer(null, null, new OLogSequenceNumber(-1, -1), fileId, pageIndex), false);
         else
           return readCache.load(fileId, pageIndex, checkPinnedPages, writeCache, pageCount, storagePerformanceStatistic);
       }
@@ -181,15 +182,15 @@ public class OAtomicOperation {
     changesContainer.pageChangesMap.put(filledUpTo, pageChangesContainer);
     changesContainer.maxNewPageIndex = filledUpTo;
 
-    return new OCacheEntry(fileId, filledUpTo,
-        new OCachePointer((ODirectMemoryPointer) null, new OLogSequenceNumber(-1, -1), fileId, filledUpTo), false);
+    return new OCacheEntry(fileId, filledUpTo, new OCachePointer(null, null, new OLogSequenceNumber(-1, -1), fileId, filledUpTo),
+        false);
   }
 
   public void releasePage(OCacheEntry cacheEntry) {
     if (deletedFiles.contains(cacheEntry.getFileId()))
       throw new OStorageException("File with id " + cacheEntry.getFileId() + " is deleted.");
 
-    if (cacheEntry.getCachePointer().getDataPointer() != null)
+    if (cacheEntry.getCachePointer().getBuffer() != null)
       readCache.release(cacheEntry, writeCache, storagePerformanceStatistic);
   }
 

@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.core.storage.impl.memory;
 
+import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.directmemory.ODirectMemoryPointerFactory;
 import com.orientechnologies.common.types.OModifiableBoolean;
@@ -40,6 +41,7 @@ import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionSt
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OStoragePerformanceStatistic;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -447,9 +449,10 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
             index = lastIndex + 1;
           }
 
-          final ODirectMemoryPointer directMemoryPointer = ODirectMemoryPointerFactory.instance()
-              .createPointer(new byte[pageSize + 2 * ODurablePage.PAGE_PADDING]);
-          final OCachePointer cachePointer = new OCachePointer(directMemoryPointer, new OLogSequenceNumber(-1, -1), id, index);
+          final OByteBufferPool bufferPool = OByteBufferPool.instance();
+          final ByteBuffer buffer = bufferPool.acquireDirect(true);
+
+          final OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, new OLogSequenceNumber(-1, -1), id, index);
           cachePointer.incrementReferrer();
 
           cacheEntry = new OCacheEntry(composeFileId(storageId, id), index, cachePointer, false);
