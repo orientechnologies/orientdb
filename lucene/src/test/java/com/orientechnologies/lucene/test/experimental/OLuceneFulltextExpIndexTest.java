@@ -33,7 +33,6 @@ public class OLuceneFulltextExpIndexTest extends BaseLuceneTest {
   }
 
   @Before
-
   public void init() throws IOException {
     OLogManager.instance().installCustomFormatter();
     OLogManager.instance().setConsoleLevel(Level.INFO.getName());
