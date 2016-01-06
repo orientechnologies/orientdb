@@ -172,7 +172,9 @@ public class OFileClassic implements OFile {
   }
 
   @Override
-  public void read(long offset, ByteBuffer[] buffers) throws IOException {
+  public long read(long offset, ByteBuffer[] buffers) throws IOException {
+    int bytesRead = 0;
+
     int attempts = 0;
 
     while (true) {
@@ -182,7 +184,7 @@ public class OFileClassic implements OFile {
           offset += HEADER_SIZE;
 
           channel.position(offset);
-          channel.read(buffers);
+          bytesRead = (int) channel.read(buffers);
 
           break;
 
@@ -195,6 +197,8 @@ public class OFileClassic implements OFile {
         reopenFile(attempts, e);
       }
     }
+
+    return bytesRead;
   }
 
   @Override

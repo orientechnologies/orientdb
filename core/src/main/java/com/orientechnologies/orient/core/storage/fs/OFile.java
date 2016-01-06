@@ -121,7 +121,7 @@ public interface OFile {
 
   void read(long offset, ByteBuffer buffer) throws IOException;
 
-  void read(long offset, ByteBuffer[] buffers) throws IOException;
+  long read(long offset, ByteBuffer[] buffers) throws IOException;
 
   void write(long offset, ByteBuffer buffer) throws IOException;
 }

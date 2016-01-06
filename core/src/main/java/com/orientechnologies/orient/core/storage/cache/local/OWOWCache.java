@@ -627,17 +627,18 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
             return pagePointers;
 
           for (int n = 0; n < pagePointers.length; n++) {
+            pagePointers[n].incrementReadersReferrer();
+
             if (n > 0) {
               pageGroup = writeCachePages.get(pageKeys[n]);
 
               assert pageKeys[n].pageIndex == pagePointers[n].getPageIndex();
 
               if (pageGroup != null) {
+                pagePointers[n].decrementReadersReferrer();
                 pagePointers[n] = pageGroup.page;
               }
             }
-
-            pagePointers[n].incrementReadersReferrer();
           }
 
           return pagePointers;
@@ -1271,14 +1272,22 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         final ByteBuffer[] buffers = new ByteBuffer[realPageCount];
         for (int i = 0; i < buffers.length; i++) {
           buffers[i] = bufferPool.acquireDirect(false);
+          assert buffers[i].position() == 0;
         }
 
-        fileClassic.read(firstPageStartPosition, buffers);
+        final long bytesRead = fileClassic.read(firstPageStartPosition, buffers);
+        assert bytesRead % pageSize == 0;
 
-        final OCachePointer[] dataPointers = new OCachePointer[realPageCount];
-        for (int n = 0; n < dataPointers.length; n++) {
+        final int buffersRead = (int) (bytesRead / pageSize);
+
+        final OCachePointer[] dataPointers = new OCachePointer[buffersRead];
+        for (int n = 0; n < buffersRead; n++) {
           buffers[n].position(0);
           dataPointers[n] = new OCachePointer(buffers[n], bufferPool, lastLsn, fileId, startPageIndex + n);
+        }
+
+        for (int n = buffersRead; n < buffers.length; n++) {
+          bufferPool.release(buffers[n]);
         }
 
         pagesRead = dataPointers.length;
