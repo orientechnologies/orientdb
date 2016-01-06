@@ -1765,8 +1765,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
         final String fieldName = OIndexDefinitionFactory.extractFieldName(fieldToIndex);
 
         if (!fieldName.equals("@rid") && !existsProperty(fieldName))
-          throw new OIndexException("Index with name : '" + name + "' cannot be created on class : '" + this.name
-              + "' because field: '" + fieldName + "' is absent in class definition.");
+          throw new OIndexException("Index with name : '" + name + "' cannot be created on class '" + this.name
+              + "' because field '" + fieldName + "' is absent in class definition.");
       }
 
       indexDefinition = OIndexDefinitionFactory.createIndexDefinition(this, Arrays.asList(fields), extractFieldTypes(fields), null,
