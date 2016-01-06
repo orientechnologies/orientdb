@@ -23,7 +23,6 @@ import org.apache.tinkerpop.gremlin.structure.Element;
 import org.apache.tinkerpop.gremlin.structure.FeatureSupportTest.GraphFunctionalityTest;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.GraphTest;
-import org.apache.tinkerpop.gremlin.structure.EdgeTest.BasicEdgeTest;
 import org.junit.AssumptionViolatedException;
 
 import com.google.common.collect.Sets;
@@ -51,10 +50,6 @@ public class OrientGraphProvider extends AbstractGraphProvider {
         // OrientDB can not modify schema when the transaction is on, which
         // break the tests
         IGNORED_TESTS.put(GraphFunctionalityTest.class, asList("shouldSupportTransactionsIfAGraphConstructsATx"));
-
-        // this test falls into an infinite loop, it tries to remove all edges,
-        // but for each edge it removes 2 more are added
-        IGNORED_TESTS.put(BasicEdgeTest.class, asList("shouldNotHaveAConcurrentModificationExceptionWhenIteratingAndRemovingAddingEdges"));
     }
 
     @Override
