@@ -232,7 +232,7 @@ public class OrientEdge extends OrientElement implements Edge {
   public String getLabel() {
     if (label != null)
       // LIGHTWEIGHT EDGE
-      return OrientBaseGraph.decodeClassName(label);
+      return label;
     else if (rawElement != null) {
       if (settings != null && settings.isUseClassForEdgeLabel()) {
         final String clsName = getRecord().getClassName();
