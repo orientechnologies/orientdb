@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server;
 
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
@@ -39,7 +40,7 @@ public class OClientConnection {
   public volatile OServerUserConfiguration serverUser;
   private Lock                             lock = new ReentrantLock();
 
-  public ONetworkProtocolData              data = new ONetworkProtocolData();
+  public ONetworkProtocolData data = new ONetworkProtocolData();
 
   public OClientConnection(final int id, final ONetworkProtocol protocol) throws IOException {
     this.id = id;
@@ -49,8 +50,10 @@ public class OClientConnection {
 
   public void close() {
     if (database != null) {
-      if (!database.isClosed())
+      if (!database.isClosed()) {
+        ODatabaseRecordThreadLocal.INSTANCE.set(database);
         database.close();
+      }
 
       database = null;
     }
@@ -72,11 +75,10 @@ public class OClientConnection {
 
   @Override
   public String toString() {
-    return "OClientConnection [id="
-        + id
-        + ", source="
-        + (protocol != null && protocol.getChannel() != null && protocol.getChannel().socket != null ? protocol.getChannel().socket
-            .getRemoteSocketAddress() : "?") + ", since=" + since + "]";
+    return "OClientConnection [id=" + id + ", source="
+        + (protocol != null && protocol.getChannel() != null && protocol.getChannel().socket != null
+            ? protocol.getChannel().socket.getRemoteSocketAddress() : "?")
+        + ", since=" + since + "]";
   }
 
   /**
