@@ -94,8 +94,6 @@ public class OAtomicOperation {
       fileChanges.put(fileId, changesContainer);
     }
 
-    FilePageChanges pageChangesContainer = changesContainer.pageChangesMap.get(pageIndex);
-
     if (changesContainer.isNew) {
       if (pageIndex <= changesContainer.maxNewPageIndex)
         return new OCacheEntry(fileId, pageIndex,
@@ -103,6 +101,8 @@ public class OAtomicOperation {
       else
         return null;
     } else {
+      FilePageChanges pageChangesContainer = changesContainer.pageChangesMap.get(pageIndex);
+
       final long filledUpTo = filledUpTo(fileId);
 
       if (pageIndex < filledUpTo) {
