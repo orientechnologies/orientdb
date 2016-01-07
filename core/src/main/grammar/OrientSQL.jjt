@@ -427,8 +427,6 @@ TOKEN :
 |
   < METADATA_IDENTIFIER: "metadata:" <IDENTIFIER>  >
 |
-  < NAMED_PARAMETER:  <COLON> <LETTER> (<PART_LETTER>)*  >
-|
   < #LETTER:
       [  "A"-"Z",
          "_",
@@ -1419,19 +1417,27 @@ OPositionalParameter PositionalParameter():
 
 ONamedParameter NamedParameter():
 {
-    Token token;
+OIdentifier identifierParam;
+Token token;
 }
 {
     (
-	    token = <NAMED_PARAMETER>
+	    <COLON>
+	    (
+	    	identifierParam = Identifier() { jjtThis.paramName = identifierParam.toString(); }
+	    	|
+	    	token = <SKIP2> {jjtThis.paramName = token.image;}
+	    	|
+            token = <LIMIT> {jjtThis.paramName = token.image;}
+	    )
 	)
 	{
-	 jjtThis.paramName = token.image.substring(1);
 	 jjtThis.paramNumber = inputParamCount;
      inputParamCount++;
 	 return jjtThis;
 	}
 }
+
 
 OProjection Projection():
 {
