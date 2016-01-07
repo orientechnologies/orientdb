@@ -606,12 +606,14 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
     OSchema schema = database.getMetadata().getSchema();
     Collection<OClass> classes = schema.getClasses();
-
+    OClass orole = schema.getClass(ORole.CLASS_NAME);
+    OClass ouser = schema.getClass(OUser.CLASS_NAME);
+    OClass oidentity = schema.getClass(OIdentity.CLASS_NAME);
     final Map<String, OClass> classesToDrop = new HashMap<String, OClass>();
     for (OClass dbClass : classes) {
       String className = dbClass.getName();
-      if (!className.equalsIgnoreCase(ORole.CLASS_NAME) && !className.equalsIgnoreCase(OUser.CLASS_NAME)
-          && !className.equalsIgnoreCase(OIdentity.CLASS_NAME)) {
+
+      if (!dbClass.isSuperClassOf(orole) && !dbClass.isSuperClassOf(ouser) && !dbClass.isSuperClassOf(oidentity)) {
         classesToDrop.put(className, dbClass);
       }
     }
@@ -622,11 +624,13 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       for (String className : classesToDrop.keySet()) {
         boolean isSuperClass = false;
         for (OClass dbClass : classesToDrop.values()) {
-          OClass parentClass = dbClass.getSuperClass();
-          if (parentClass != null) {
-            if (className.equalsIgnoreCase(parentClass.getName())) {
-              isSuperClass = true;
-              break;
+          List<OClass> parentClasses = dbClass.getSuperClasses();
+          if (parentClasses != null) {
+            for(OClass parentClass:parentClasses) {
+              if (className.equalsIgnoreCase(parentClass.getName())) {
+                isSuperClass = true;
+                break;
+              }
             }
           }
         }
@@ -905,7 +909,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       // REBUILD ALL THE INHERITANCE
       for (Map.Entry<OClass, List<String>> entry : superClasses.entrySet())
         for (String s : entry.getValue()) {
-          entry.getKey().addSuperClass(database.getMetadata().getSchema().getClass(s));
+          OClass superClass = database.getMetadata().getSchema().getClass(s);;
+          if(!entry.getKey().getSuperClasses().contains(superClass))
+            entry.getKey().addSuperClass(superClass);
         }
 
       // SET ALL THE LINKED CLASSES

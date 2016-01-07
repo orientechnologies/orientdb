@@ -109,9 +109,6 @@ public class OObjectEntitySerializer {
   }
 
   protected static OObjectEntitySerializedSchema getCurrentSerializedSchema() {
-    if (!ODatabaseRecordThreadLocal.INSTANCE.isDefined())
-      return null;
-
     OStorage storage = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage();
     OObjectEntitySerializedSchema serializedShchema = storage.getResource(SIMPLE_NAME,
         new Callable<OObjectEntitySerializedSchema>() {
@@ -253,11 +250,13 @@ public class OObjectEntitySerializer {
         if (returnNonProxiedInstance) {
           o = getNonProxiedInstance(o);
         }
-        ORID identity = handler.getDoc().getIdentity();
-        if (!alreadyDetached.containsKey(identity)) {
-          alreadyDetached.put(identity, o);
-        } else if (returnNonProxiedInstance) {
-          return (T) alreadyDetached.get(identity);
+        if(!handler.getDoc().isEmbedded()) {
+          ORID identity = handler.getDoc().getIdentity();
+          if (!alreadyDetached.containsKey(identity)) {
+            alreadyDetached.put(identity, o);
+          } else if (returnNonProxiedInstance) {
+            return (T) alreadyDetached.get(identity);
+          }
         }
         handler.detachAll(o, returnNonProxiedInstance, alreadyDetached);
       } catch (IllegalArgumentException e) {

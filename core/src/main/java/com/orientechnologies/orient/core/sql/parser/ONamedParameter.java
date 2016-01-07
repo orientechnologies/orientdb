@@ -6,8 +6,8 @@ import java.util.Map;
 
 public class ONamedParameter extends OInputParameter {
 
-  protected int         paramNumber;
-  protected OIdentifier paramName;
+  protected int    paramNumber;
+  protected String paramName;
 
   public ONamedParameter(int id) {
     super(id);
@@ -24,12 +24,12 @@ public class ONamedParameter extends OInputParameter {
 
   @Override
   public String toString() {
-    return ":" + paramName.toString();
+    return ":" + paramName;
   }
 
   public Object bindFromInputParams(Map<Object, Object> params) {
     if (params != null) {
-      String key = paramName.toString();
+      String key = paramName;
       if (params.containsKey(key)) {
         return toParsedTree(params.get(key));
       }

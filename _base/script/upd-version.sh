@@ -5,6 +5,8 @@ then
     exit
 fi
 
+echo "This script is UNSAFE, please DOUBLE CHECK the result BEFORE COMMIT"
+
 echo "Updating version from $2 to $3 in directory $1 and subfolders"
 
 TFILE="/tmp/out.tmp.$$"

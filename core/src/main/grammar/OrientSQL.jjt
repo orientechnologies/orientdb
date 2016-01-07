@@ -1416,10 +1416,20 @@ OPositionalParameter PositionalParameter():
 }
 
 ONamedParameter NamedParameter():
-{}
+{
+OIdentifier identifierParam;
+Token token;
+}
 {
     (
-	    <COLON> jjtThis.paramName = Identifier()
+	    <COLON>
+	    (
+	    	identifierParam = Identifier() { jjtThis.paramName = identifierParam.toString(); }
+	    	|
+	    	token = <SKIP2> {jjtThis.paramName = token.image;}
+	    	|
+            token = <LIMIT> {jjtThis.paramName = token.image;}
+	    )
 	)
 	{
 	 jjtThis.paramNumber = inputParamCount;
@@ -1427,6 +1437,7 @@ ONamedParameter NamedParameter():
 	 return jjtThis;
 	}
 }
+
 
 OProjection Projection():
 {
