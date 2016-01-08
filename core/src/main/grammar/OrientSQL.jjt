@@ -653,6 +653,10 @@ OStatement Statement():
 		|
 		LOOKAHEAD(TruncateClassStatement())
 		result = TruncateClassStatement()
+		|
+		LOOKAHEAD(TruncateClusterStatement())
+        result = TruncateClusterStatement()
+
 
 	) [ <SEMICOLON> ]
 	{
@@ -3279,6 +3283,19 @@ OTruncateClassStatement TruncateClassStatement():
 	<TRUNCATE> <CLASS>
 	jjtThis.className = Identifier()
 	[ <POLYMORPHIC> {jjtThis.polymorphic = true;} ]
+	[ <UNSAFE> {jjtThis.unsafe = true;} ]
+	{ return jjtThis; }
+}
+
+OTruncateClusterStatement TruncateClusterStatement():
+{}
+{
+	<TRUNCATE> <CLUSTER>
+	(
+		jjtThis.clusterName = Identifier()
+		|
+		jjtThis.clusterNumber = Integer()
+	)
 	[ <UNSAFE> {jjtThis.unsafe = true;} ]
 	{ return jjtThis; }
 }
