@@ -251,23 +251,20 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
   @Override
   public void serializeInByteBufferObject(OIndexRIDContainer object, ByteBuffer buffer, Object... hints) {
     final int offset = buffer.position();
-    buffer.position(offset + FILE_ID_OFFSET);
-    LONG_SERIALIZER.serializeInByteBuffer(object.getFileId(), buffer);
+    buffer.putLong(offset + FILE_ID_OFFSET, object.getFileId());
 
     final boolean embedded = object.isEmbedded();
     final boolean durable = object.isDurableNonTxMode();
 
-    buffer.position(offset + EMBEDDED_OFFSET);
-    BOOLEAN_SERIALIZER.serializeInByteBuffer(embedded, buffer);
-    buffer.position(offset + DURABLE_OFFSET);
-    BOOLEAN_SERIALIZER.serializeInByteBufferObject(durable, buffer);
+    buffer.put(offset + EMBEDDED_OFFSET, (byte) (embedded ? 1 : 0));
+    buffer.put(offset + DURABLE_OFFSET, (byte) (durable ? 1 : 0));
 
     if (embedded) {
-      buffer.position(offset + EMBEDDED_SIZE_OFFSET);
-      INT_SERIALIZER.serializeInByteBuffer(object.size(), buffer);
+      buffer.putInt(offset + EMBEDDED_SIZE_OFFSET, object.size());
 
       final int p = offset + EMBEDDED_VALUES_OFFSET;
       buffer.position(p);
+
       for (OIdentifiable ids : object) {
         LINK_SERIALIZER.serializeInByteBufferObject(ids, buffer);
       }
@@ -275,41 +272,31 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
       final OIndexRIDContainerSBTree underlying = (OIndexRIDContainerSBTree) object.getUnderlying();
       final OBonsaiBucketPointer rootPointer = underlying.getRootPointer();
 
-      buffer.position(offset + SBTREE_ROOTINDEX_OFFSET);
-      LONG_SERIALIZER.serializeInByteBuffer(rootPointer.getPageIndex(), buffer);
-      buffer.position(offset + SBTREE_ROOTOFFSET_OFFSET);
-      INT_SERIALIZER.serializeInByteBuffer(rootPointer.getPageOffset(), buffer);
+      buffer.putLong(offset + SBTREE_ROOTINDEX_OFFSET, rootPointer.getPageIndex());
+      buffer.putInt(offset + SBTREE_ROOTOFFSET_OFFSET, rootPointer.getPageOffset());
     }
   }
 
   @Override
   public OIndexRIDContainer deserializeFromByteBufferObject(ByteBuffer buffer) {
     final int offset = buffer.position();
-    buffer.position(offset + FILE_ID_OFFSET);
+    final long fileId = buffer.getLong(offset + FILE_ID_OFFSET);
+    final boolean durable = buffer.get(offset + DURABLE_OFFSET) > 0;
 
-    final long fileId = LONG_SERIALIZER.deserializeFromByteBuffer(buffer);
-
-    buffer.position(offset + DURABLE_OFFSET);
-    final boolean durable = BOOLEAN_SERIALIZER.deserializeFromByteBuffer(buffer);
-
-    buffer.position(offset + EMBEDDED_OFFSET);
-    if (BOOLEAN_SERIALIZER.deserializeFromByteBuffer(buffer)) {
-      buffer.position(offset + EMBEDDED_SIZE_OFFSET);
-      final int size = INT_SERIALIZER.deserializeFromByteBuffer(buffer);
+    if (buffer.get(offset + EMBEDDED_OFFSET) > 0) {
+      final int size = buffer.getInt(offset + EMBEDDED_SIZE_OFFSET);
       final Set<OIdentifiable> underlying = new HashSet<OIdentifiable>(Math.max((int) (size / .75f) + 1, 16));
-      final int p = offset + EMBEDDED_VALUES_OFFSET;
 
+      final int p = offset + EMBEDDED_VALUES_OFFSET;
+      buffer.position(p);
       for (int i = 0; i < size; i++) {
         underlying.add(LINK_SERIALIZER.deserializeFromByteBufferObject(buffer));
       }
 
       return new OIndexRIDContainer(fileId, underlying, durable);
     } else {
-      buffer.position(offset + SBTREE_ROOTINDEX_OFFSET);
-      final long pageIndex = LONG_SERIALIZER.deserializeFromByteBuffer(buffer);
-
-      buffer.position(offset + SBTREE_ROOTOFFSET_OFFSET);
-      final int pageOffset = INT_SERIALIZER.deserializeFromByteBuffer(buffer);
+      final long pageIndex = buffer.getLong(offset + SBTREE_ROOTINDEX_OFFSET);
+      final int pageOffset = buffer.getInt(offset + SBTREE_ROOTOFFSET_OFFSET);
 
       final OBonsaiBucketPointer rootPointer = new OBonsaiBucketPointer(pageIndex, pageOffset);
       final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
@@ -322,10 +309,9 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
     final int offset = buffer.position();
-    buffer.position(offset + EMBEDDED_OFFSET);
-    if (BOOLEAN_SERIALIZER.deserializeFromByteBuffer(buffer)) {
-      buffer.position(offset + EMBEDDED_SIZE_OFFSET);
-      return embeddedObjectSerializedSize(INT_SERIALIZER.deserializeFromByteBuffer(buffer));
+    buffer.position();
+    if (buffer.get(offset + EMBEDDED_OFFSET) > 0) {
+      return embeddedObjectSerializedSize(buffer.getInt(offset + EMBEDDED_SIZE_OFFSET));
     } else {
       return SBTREE_CONTAINER_SIZE;
     }
@@ -333,11 +319,11 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
 
   @Override
   public OIndexRIDContainer deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
-    final long fileId = LONG_SERIALIZER.deserializeFromByteBuffer(buffer, walChanges, offset + FILE_ID_OFFSET);
-    final boolean durable = BOOLEAN_SERIALIZER.deserializeFromByteBuffer(buffer, walChanges, offset + DURABLE_OFFSET);
+    final long fileId = walChanges.getLongValue(buffer, offset + FILE_ID_OFFSET);
+    final boolean durable = walChanges.getByteValue(buffer, offset + DURABLE_OFFSET) > 0;
 
-    if (BOOLEAN_SERIALIZER.deserializeFromByteBuffer(buffer, walChanges, offset + EMBEDDED_OFFSET)) {
-      final int size = INT_SERIALIZER.deserializeFromByteBuffer(buffer, walChanges, offset + EMBEDDED_SIZE_OFFSET);
+    if (walChanges.getByteValue(buffer, offset + EMBEDDED_OFFSET) > 0) {
+      final int size = walChanges.getIntValue(buffer, offset + EMBEDDED_SIZE_OFFSET);
       final Set<OIdentifiable> underlying = new HashSet<OIdentifiable>(Math.max((int) (size / .75f) + 1, 16));
 
       int p = offset + EMBEDDED_VALUES_OFFSET;
@@ -348,8 +334,8 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
 
       return new OIndexRIDContainer(fileId, underlying, durable);
     } else {
-      final long pageIndex = LONG_SERIALIZER.deserializeFromByteBuffer(buffer, walChanges, offset + SBTREE_ROOTINDEX_OFFSET);
-      final int pageOffset = INT_SERIALIZER.deserializeFromByteBuffer(buffer, walChanges, offset + SBTREE_ROOTOFFSET_OFFSET);
+      final long pageIndex = walChanges.getLongValue(buffer, offset + SBTREE_ROOTINDEX_OFFSET);
+      final int pageOffset = walChanges.getIntValue(buffer, offset + SBTREE_ROOTOFFSET_OFFSET);
       final OBonsaiBucketPointer rootPointer = new OBonsaiBucketPointer(pageIndex, pageOffset);
       final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
       final OIndexRIDContainerSBTree underlying = new OIndexRIDContainerSBTree(fileId, rootPointer, durable,
@@ -360,9 +346,8 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
 
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
-    if (BOOLEAN_SERIALIZER.deserializeFromByteBuffer(buffer, walChanges, offset + EMBEDDED_OFFSET)) {
-      return embeddedObjectSerializedSize(
-          INT_SERIALIZER.deserializeFromByteBuffer(buffer, walChanges, offset + EMBEDDED_SIZE_OFFSET));
+    if (walChanges.getByteValue(buffer, offset + EMBEDDED_OFFSET) > 0) {
+      return embeddedObjectSerializedSize(walChanges.getIntValue(buffer, offset + EMBEDDED_SIZE_OFFSET));
     } else {
       return SBTREE_CONTAINER_SIZE;
     }

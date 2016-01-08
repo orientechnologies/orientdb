@@ -165,16 +165,4 @@ public class OLongSerializer implements OBinarySerializer<Long> {
   public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return LONG_SIZE;
   }
-
-  public long deserializeFromByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
-    return walChanges.getLongValue(buffer, offset);
-  }
-
-  public long deserializeFromByteBuffer(ByteBuffer buffer) {
-    return buffer.getLong();
-  }
-
-  public void serializeInByteBuffer(long object, ByteBuffer buffer, Object... hints) {
-    buffer.putLong(object);
-  }
 }

@@ -258,7 +258,7 @@ public class ReadWriteCacheConcurrentTest {
 
       pointer.acquireExclusiveLock();
 
-      final ByteBuffer buffer = pointer.getBuffer();
+      final ByteBuffer buffer = pointer.getSharedBuffer();
       buffer.position(systemOffset);
       buffer.put(new byte[] { version.byteValue(), 2, 3, seed, 5, 6, (byte) fileNumber, (byte) (pageIndex & 0xFF) });
       cacheEntry.markDirty();
@@ -317,7 +317,7 @@ public class ReadWriteCacheConcurrentTest {
           .load(fileIds.get(fileNumber), pageIndex, false, writeBuffer, 1, storagePerformanceStatistic);
       OCachePointer pointer = cacheEntry.getCachePointer();
 
-      final ByteBuffer buffer = pointer.getBuffer();
+      final ByteBuffer buffer = pointer.getSharedBuffer();
       buffer.position(systemOffset);
       byte[] content = new byte[8];
       buffer.get(content);

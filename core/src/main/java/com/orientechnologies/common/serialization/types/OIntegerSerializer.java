@@ -159,17 +159,4 @@ public class OIntegerSerializer implements OBinarySerializer<Integer> {
   public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return INT_SIZE;
   }
-
-  public void serializeInByteBuffer(final int value, final ByteBuffer buffer) {
-    buffer.putInt(value);
-  }
-
-  public int deserializeFromByteBuffer(final ByteBuffer buffer) {
-    return buffer.getInt();
-  }
-
-  public int deserializeFromByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
-    return walChanges.getIntValue(buffer, offset);
-  }
-
 }

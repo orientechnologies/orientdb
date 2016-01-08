@@ -118,14 +118,14 @@ public class OUUIDSerializer implements OBinarySerializer<UUID> {
 
   @Override
   public void serializeInByteBufferObject(UUID object, ByteBuffer buffer, Object... hints) {
-    OLongSerializer.INSTANCE.serializeInByteBuffer(object.getMostSignificantBits(), buffer);
-    OLongSerializer.INSTANCE.serializeInByteBuffer(object.getLeastSignificantBits(), buffer);
+    buffer.putLong(object.getMostSignificantBits());
+    buffer.putLong(object.getLeastSignificantBits());
   }
 
   @Override
   public UUID deserializeFromByteBufferObject(ByteBuffer buffer) {
-    final long mostSignificantBits = OLongSerializer.INSTANCE.deserializeFromByteBuffer(buffer);
-    final long leastSignificantBits = OLongSerializer.INSTANCE.deserializeFromByteBuffer(buffer);
+    final long mostSignificantBits = buffer.getLong();
+    final long leastSignificantBits = buffer.getLong();
     return new UUID(mostSignificantBits, leastSignificantBits);
   }
 
@@ -136,8 +136,8 @@ public class OUUIDSerializer implements OBinarySerializer<UUID> {
 
   @Override
   public UUID deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
-    final long mostSignificantBits = OLongSerializer.INSTANCE.deserializeFromByteBuffer(buffer, walChanges, offset);
-    final long leastSignificantBits = OLongSerializer.INSTANCE.deserializeFromByteBuffer(buffer, walChanges, offset);
+    final long mostSignificantBits = walChanges.getLongValue(buffer, offset);
+    final long leastSignificantBits = walChanges.getLongValue(buffer, offset);
     return new UUID(mostSignificantBits, leastSignificantBits);
   }
 

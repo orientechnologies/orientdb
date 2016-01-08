@@ -20,8 +20,6 @@
 package com.orientechnologies.orient.core.storage.cache;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
-import com.orientechnologies.common.directmemory.ODirectMemoryPointerFactory;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 
 import java.nio.ByteBuffer;
@@ -203,8 +201,12 @@ public class OCachePointer {
       throw new IllegalStateException("Invalid direct memory state, number of referrers can not be negative " + rf);
   }
 
-  public ByteBuffer getBuffer() {
+  public ByteBuffer getSharedBuffer() {
     return threadLocalBuffer.get();
+  }
+
+  public ByteBuffer getExclusiveBuffer() {
+    return buffer;
   }
 
   public void acquireExclusiveLock() {

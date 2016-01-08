@@ -16,11 +16,11 @@
 
 package com.orientechnologies.common.serialization.types;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Calendar;
 import java.util.Date;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
-import com.orientechnologies.common.directmemory.ODirectMemoryPointerFactory;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -31,10 +31,10 @@ import org.testng.annotations.Test;
  */
 @Test
 public class DateSerializerTest {
-  private final static int FIELD_SIZE = 8;
-  private final byte[]     stream     = new byte[FIELD_SIZE];
-  private final Date       OBJECT     = new Date();
-  private ODateSerializer  dateSerializer;
+  private final static int    FIELD_SIZE = 8;
+  private final        byte[] stream     = new byte[FIELD_SIZE];
+  private final        Date   OBJECT     = new Date();
+  private ODateSerializer dateSerializer;
 
   @BeforeClass
   public void beforeClass() {
@@ -76,11 +76,11 @@ public class DateSerializerTest {
     calendar.set(Calendar.SECOND, 0);
     calendar.set(Calendar.MILLISECOND, 0);
 
-    ODirectMemoryPointer pointer = ODirectMemoryPointerFactory.instance().createPointer(stream);
-    try {
-      Assert.assertEquals(dateSerializer.deserializeFromDirectMemoryObject(pointer, 0), calendar.getTime());
-    } finally {
-      pointer.free();
-    }
+    ByteBuffer buffer = ByteBuffer.allocateDirect(stream.length).order(ByteOrder.nativeOrder());
+    buffer.position(0);
+    buffer.put(stream);
+    buffer.position(0);
+
+    Assert.assertEquals(dateSerializer.deserializeFromByteBufferObject(buffer), calendar.getTime());
   }
 }

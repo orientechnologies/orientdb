@@ -16,11 +16,12 @@
 
 package com.orientechnologies.common.serialization.types;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
-import com.orientechnologies.common.directmemory.ODirectMemoryPointerFactory;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 /**
  * @author Ilya Bershadskiy (ibersh20-at-gmail.com)
@@ -30,8 +31,8 @@ import org.testng.annotations.Test;
 public class IntegerSerializerTest {
   private static final int     FIELD_SIZE = 4;
   private static final Integer OBJECT     = 1;
-  private OIntegerSerializer   integerSerializer;
-  byte[]                       stream     = new byte[FIELD_SIZE];
+  private OIntegerSerializer integerSerializer;
+  byte[] stream = new byte[FIELD_SIZE];
 
   @BeforeClass
   public void beforeClass() {
@@ -55,11 +56,10 @@ public class IntegerSerializerTest {
   public void testNativeDirectMemoryCompatibility() {
     integerSerializer.serializeNative(OBJECT, stream, 0);
 
-    ODirectMemoryPointer pointer = ODirectMemoryPointerFactory.instance().createPointer(stream);
-    try {
-      Assert.assertEquals(integerSerializer.deserializeFromDirectMemoryObject(pointer, 0), OBJECT);
-    } finally {
-      pointer.free();
-    }
+    ByteBuffer buffer = ByteBuffer.allocateDirect(stream.length).order(ByteOrder.nativeOrder());
+    buffer.put(stream);
+    buffer.position(0);
+
+    Assert.assertEquals(integerSerializer.deserializeFromByteBufferObject(buffer), OBJECT);
   }
 }

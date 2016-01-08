@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.core;
 
-import java.io.IOException;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.*;
@@ -35,7 +34,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryPointerFactory;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.listener.OListenerManger;
@@ -223,8 +221,6 @@ public class Orient extends OListenerManger<OOrientListener> {
         }
       });
 
-      ODirectMemoryPointerFactory.instance().onStartup();
-
       // REGISTER THE EMBEDDED ENGINE
       registerEngine(new OEngineLocalPaginated());
       registerEngine(new OEngineMemory());
@@ -331,8 +327,6 @@ public class Orient extends OListenerManger<OOrientListener> {
       }
 
       System.gc();
-
-      ODirectMemoryPointerFactory.instance().onShutdown();
 
       OLogManager.instance().info(this, "OrientDB Engine shutdown complete");
       OLogManager.instance().flush();

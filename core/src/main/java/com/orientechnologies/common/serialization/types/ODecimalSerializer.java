@@ -130,7 +130,7 @@ public class ODecimalSerializer implements OBinarySerializer<BigDecimal> {
 
   @Override
   public void serializeInByteBufferObject(BigDecimal object, ByteBuffer buffer, Object... hints) {
-    OIntegerSerializer.INSTANCE.serializeInByteBuffer(object.scale(), buffer);
+    buffer.putInt(object.scale());
     OBinaryTypeSerializer.INSTANCE.serializeInByteBufferObject(object.unscaledValue().toByteArray(), buffer);
   }
 

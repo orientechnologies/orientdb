@@ -154,12 +154,4 @@ public class OCharSerializer implements OBinarySerializer<Character> {
   public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return CHAR_SIZE;
   }
-
-  public char deserializeFromByteBuffer(ByteBuffer buffer) {
-    return buffer.getChar();
-  }
-
-  public char deserializeFromByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
-    return (char) walChanges.getShortValue(buffer, offset);
-  }
 }

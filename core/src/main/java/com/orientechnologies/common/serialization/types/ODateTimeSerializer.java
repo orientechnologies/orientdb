@@ -115,13 +115,13 @@ public class ODateTimeSerializer implements OBinarySerializer<Date> {
   public void serializeInByteBufferObject(Date object, ByteBuffer buffer, Object... hints) {
     final Calendar calendar = Calendar.getInstance();
     calendar.setTime(object);
-    OLongSerializer.INSTANCE.serializeInByteBufferObject(calendar.getTimeInMillis(), buffer);
+    buffer.putLong(calendar.getTimeInMillis());
   }
 
   @Override
   public Date deserializeFromByteBufferObject(ByteBuffer buffer) {
     final Calendar calendar = Calendar.getInstance();
-    calendar.setTimeInMillis(OLongSerializer.INSTANCE.deserializeFromByteBuffer(buffer));
+    calendar.setTimeInMillis(buffer.getLong());
     return calendar.getTime();
   }
 
@@ -133,7 +133,7 @@ public class ODateTimeSerializer implements OBinarySerializer<Date> {
   @Override
   public Date deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     final Calendar calendar = Calendar.getInstance();
-    calendar.setTimeInMillis(OLongSerializer.INSTANCE.deserializeFromByteBuffer(buffer, walChanges, offset));
+    calendar.setTimeInMillis(walChanges.getLongValue(buffer, offset));
     return calendar.getTime();
   }
 

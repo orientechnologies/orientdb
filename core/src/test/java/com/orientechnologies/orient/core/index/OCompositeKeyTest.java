@@ -1,10 +1,11 @@
 package com.orientechnologies.orient.core.index;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
-import com.orientechnologies.common.directmemory.ODirectMemoryPointerFactory;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
 import org.testng.annotations.Test;
+
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 import static org.testng.Assert.*;
 
@@ -238,21 +239,21 @@ public class OCompositeKeyTest {
     assertNotSame(compositeKeyOne, compositeKeyTwo);
   }
 
-  public void testDirectMemoryBinarySerializationCompositeKeyNull() {
+  public void testByteBufferBinarySerializationCompositeKeyNull() {
     final OCompositeKey compositeKeyOne = new OCompositeKey();
     compositeKeyOne.addKey(1);
     compositeKeyOne.addKey(null);
     compositeKeyOne.addKey(2);
 
     int len = OCompositeKeySerializer.INSTANCE.getObjectSize(compositeKeyOne);
-    ODirectMemoryPointer directMemoryPointer = ODirectMemoryPointerFactory.instance().createPointer(len);
 
-    OCompositeKeySerializer.INSTANCE.serializeInDirectMemoryObject(compositeKeyOne, directMemoryPointer, 0);
+    ByteBuffer buffer = ByteBuffer.allocateDirect(len).order(ByteOrder.nativeOrder());
+    OCompositeKeySerializer.INSTANCE.serializeInByteBufferObject(compositeKeyOne, buffer);
+    buffer.position(0);
 
-    final OCompositeKey compositeKeyTwo = OCompositeKeySerializer.INSTANCE.deserializeFromDirectMemoryObject(directMemoryPointer, 0);
+    final OCompositeKey compositeKeyTwo = OCompositeKeySerializer.INSTANCE.deserializeFromByteBufferObject(buffer);
 
     assertEquals(compositeKeyOne, compositeKeyTwo);
     assertNotSame(compositeKeyOne, compositeKeyTwo);
-    directMemoryPointer.free();
   }
 }

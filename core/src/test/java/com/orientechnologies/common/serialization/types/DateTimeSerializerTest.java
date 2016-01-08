@@ -16,12 +16,12 @@
 
 package com.orientechnologies.common.serialization.types;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
-import com.orientechnologies.common.directmemory.ODirectMemoryPointerFactory;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Date;
 
 /**
@@ -30,10 +30,10 @@ import java.util.Date;
  */
 @Test
 public class DateTimeSerializerTest {
-  private final static int    FIELD_SIZE = 8;
-  private static final Date   OBJECT     = new Date();
+  private final static int  FIELD_SIZE = 8;
+  private static final Date OBJECT     = new Date();
   private ODateTimeSerializer dateTimeSerializer;
-  private static final byte[] stream     = new byte[FIELD_SIZE];
+  private static final byte[] stream = new byte[FIELD_SIZE];
 
   @BeforeClass
   public void beforeClass() {
@@ -57,12 +57,10 @@ public class DateTimeSerializerTest {
   public void testNativeDirectMemoryCompatibility() {
     dateTimeSerializer.serializeNativeObject(OBJECT, stream, 0);
 
-    ODirectMemoryPointer pointer = ODirectMemoryPointerFactory.instance().createPointer(stream);
-    try {
-      Assert.assertEquals(dateTimeSerializer.deserializeFromDirectMemoryObject(pointer, 0), OBJECT);
-    } finally {
-      pointer.free();
-    }
+    ByteBuffer buffer = ByteBuffer.allocateDirect(stream.length).order(ByteOrder.nativeOrder());
+    buffer.put(stream);
+    buffer.position(0);
 
+    Assert.assertEquals(dateTimeSerializer.deserializeFromByteBufferObject(buffer), OBJECT);
   }
 }

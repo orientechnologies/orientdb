@@ -118,7 +118,7 @@ public class WOWCacheTest {
       final OCachePointer cachePointer = wowCache.load(fileId, i, 1, true, new OModifiableBoolean())[0];
       cachePointer.acquireExclusiveLock();
 
-      ByteBuffer buffer = cachePointer.getBuffer();
+      ByteBuffer buffer = cachePointer.getSharedBuffer();
       buffer.position(systemOffset);
       buffer.put(data);
       cachePointer.releaseExclusiveLock();
@@ -132,7 +132,7 @@ public class WOWCacheTest {
 
       OCachePointer cachePointer = wowCache.load(fileId, i, 1, false, new OModifiableBoolean())[0];
       byte[] dataTwo = new byte[8];
-      ByteBuffer buffer = cachePointer.getBuffer();
+      ByteBuffer buffer = cachePointer.getSharedBuffer();
       buffer.position(systemOffset);
       buffer.get(dataTwo);
       cachePointer.decrementReferrer();
@@ -164,7 +164,7 @@ public class WOWCacheTest {
 
       final OCachePointer cachePointer = wowCache.load(fileId, pageIndex, 1, true, new OModifiableBoolean())[0];
       cachePointer.acquireExclusiveLock();
-      ByteBuffer buffer = cachePointer.getBuffer();
+      ByteBuffer buffer = cachePointer.getSharedBuffer();
       buffer.position(systemOffset);
       buffer.put(data);
       cachePointer.releaseExclusiveLock();
@@ -179,7 +179,7 @@ public class WOWCacheTest {
 
       OCachePointer cachePointer = wowCache.load(fileId, pageIndex, 1, false, new OModifiableBoolean())[0];
       byte[] dataTwo = new byte[8];
-      ByteBuffer buffer = cachePointer.getBuffer();
+      ByteBuffer buffer = cachePointer.getSharedBuffer();
       buffer.position(systemOffset);
       buffer.get(dataTwo);
 
@@ -201,7 +201,7 @@ public class WOWCacheTest {
       final OCachePointer cachePointer = wowCache.load(fileId, pageIndex, 1, true, new OModifiableBoolean())[0];
 
       cachePointer.acquireExclusiveLock();
-      ByteBuffer buffer = cachePointer.getBuffer();
+      ByteBuffer buffer = cachePointer.getSharedBuffer();
       buffer.position(systemOffset);
       buffer.put(data);
       cachePointer.releaseExclusiveLock();
@@ -215,7 +215,7 @@ public class WOWCacheTest {
       byte[] dataOne = entry.getValue();
       OCachePointer cachePointer = wowCache.load(fileId, pageIndex, 1, false, new OModifiableBoolean())[0];
       byte[] dataTwo = new byte[8];
-      ByteBuffer buffer = cachePointer.getBuffer();
+      ByteBuffer buffer = cachePointer.getSharedBuffer();
       buffer.position(systemOffset);
       buffer.get(dataTwo);
       cachePointer.decrementReferrer();
@@ -245,7 +245,7 @@ public class WOWCacheTest {
 
       final OCachePointer cachePointer = wowCache.load(fileId, i, 1, true, new OModifiableBoolean())[0];
       cachePointer.acquireExclusiveLock();
-      ByteBuffer buffer = cachePointer.getBuffer();
+      ByteBuffer buffer = cachePointer.getSharedBuffer();
       buffer.position(systemOffset);
       buffer.put(data);
       cachePointer.releaseExclusiveLock();
@@ -259,7 +259,7 @@ public class WOWCacheTest {
 
       OCachePointer cachePointer = wowCache.load(fileId, i, 1, false, new OModifiableBoolean())[0];
       byte[] dataTwo = new byte[8];
-      ByteBuffer buffer = cachePointer.getBuffer();
+      ByteBuffer buffer = cachePointer.getSharedBuffer();
       buffer.position(systemOffset);
       buffer.get(dataTwo);
       cachePointer.decrementReferrer();

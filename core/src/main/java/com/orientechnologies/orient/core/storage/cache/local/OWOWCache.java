@@ -24,8 +24,6 @@ import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.ONewLockManager;
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.directmemory.OByteBufferPool;
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
-import com.orientechnologies.common.directmemory.ODirectMemoryPointerFactory;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -1586,7 +1584,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
               continue;
 
             try {
-              final ByteBuffer buffer = pagePointer.getBuffer();
+              final ByteBuffer buffer = pagePointer.getSharedBuffer();
               flushPage(entry.fileId, entry.pageIndex, buffer);
 
               final OLogSequenceNumber flushedLSN = ODurablePage.getLogSequenceNumberFromPage(buffer);
@@ -1658,7 +1656,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
               continue;
 
             try {
-              final ByteBuffer buffer = pagePointer.getBuffer();
+              final ByteBuffer buffer = pagePointer.getSharedBuffer();
               flushPage(pageKey.fileId, pageKey.pageIndex, buffer);
 
               final OLogSequenceNumber flushedLSN = ODurablePage.getLogSequenceNumberFromPage(buffer);
@@ -1771,7 +1769,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
             continue;
 
           try {
-            final ByteBuffer buffer = pagePointer.getBuffer();
+            final ByteBuffer buffer = pagePointer.getSharedBuffer();
             flushPage(pageKey.fileId, pageKey.pageIndex, buffer);
           } finally {
             pagePointer.releaseSharedLock();

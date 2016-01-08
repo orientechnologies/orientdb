@@ -18,9 +18,9 @@ package com.orientechnologies.common.serialization.types;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
-import com.orientechnologies.common.directmemory.ODirectMemoryPointerFactory;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -34,7 +34,7 @@ public class DecimalSerializerTest {
   private final static int        FIELD_SIZE = 9;
   private static final byte[]     stream     = new byte[FIELD_SIZE];
   private static final BigDecimal OBJECT     = new BigDecimal(new BigInteger("20"), 2);
-  private ODecimalSerializer      decimalSerializer;
+  private ODecimalSerializer decimalSerializer;
 
   @BeforeClass
   public void beforeClass() {
@@ -57,11 +57,11 @@ public class DecimalSerializerTest {
 
   public void testNativeDirectMemoryCompatibility() {
     decimalSerializer.serializeNativeObject(OBJECT, stream, 0);
-    ODirectMemoryPointer pointer = ODirectMemoryPointerFactory.instance().createPointer(stream);
-    try {
-      Assert.assertEquals(decimalSerializer.deserializeFromDirectMemoryObject(pointer, 0), OBJECT);
-    } finally {
-      pointer.free();
-    }
+
+    final ByteBuffer buffer = ByteBuffer.allocateDirect(stream.length).order(ByteOrder.nativeOrder());
+    buffer.put(stream);
+    buffer.position(0);
+
+    Assert.assertEquals(decimalSerializer.deserializeFromByteBufferObject(buffer), OBJECT);
   }
 }

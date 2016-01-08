@@ -149,13 +149,4 @@ public class OByteSerializer implements OBinarySerializer<Byte> {
   public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return BYTE_SIZE;
   }
-
-  public byte deserializeFromByteBuffer(ByteBuffer buffer) {
-    return buffer.get();
-  }
-
-  public byte deserializeFromByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
-    return walChanges.getByteValue(buffer, offset);
-  }
-
 }

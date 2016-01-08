@@ -155,16 +155,4 @@ public class OBooleanSerializer implements OBinarySerializer<Boolean> {
   public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return BOOLEAN_SIZE;
   }
-
-  public boolean deserializeFromByteBuffer(ByteBuffer buffer) {
-    return buffer.get() > 0;
-  }
-
-  public boolean deserializeFromByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
-    return walChanges.getByteValue(buffer, offset) > 0;
-  }
-
-  public void serializeInByteBuffer(boolean object, ByteBuffer buffer, Object... hints) {
-    buffer.put(object ? (byte) 1 : (byte) 0);
-  }
 }
