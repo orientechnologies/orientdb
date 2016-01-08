@@ -1023,12 +1023,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       if (executionModeSynch == null)
         executionModeSynch = Boolean.TRUE;
 
-      final List<ORecordOperation> tmpEntries = new ArrayList<ORecordOperation>();
-
-      for (ORecordOperation txEntry : iTx.getCurrentRecordEntries())
-        tmpEntries.add(txEntry);
-
-      iTx.clearRecordEntries();
+      final Iterable<ORecordOperation> tmpEntries = (Iterable<ORecordOperation>) iTx.getAllRecordEntries();
 
       for (ORecordOperation op : tmpEntries) {
         final OAbstractRecordReplicatedTask task;
@@ -1063,6 +1058,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
             throw new ORecordNotFoundException("Cannot update record '" + rid + "' because has been deleted");
 
           final int v = executionModeSynch ? record.getVersion() : record.getVersion();
+
           task = new OUpdateRecordTask(rid, previousContent.getResult().getBuffer(), previousContent.getResult().version,
               record.toStream(), v, ORecordInternal.getRecordType(record));
 
@@ -1216,7 +1212,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   }
 
   protected boolean processCommitResult(String localNodeName, OTransaction iTx, OTxTask txTask, Set<String> involvedClusters,
-      List<ORecordOperation> tmpEntries, Set<String> nodes, int autoRetryDelay, Object result) throws InterruptedException {
+      Iterable<ORecordOperation> tmpEntries, Set<String> nodes, int autoRetryDelay, Object result) throws InterruptedException {
     if (result instanceof OTxTaskResult) {
       final OTxTaskResult txResult = ((OTxTaskResult) result);
 

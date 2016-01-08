@@ -8,7 +8,12 @@ import com.orientechnologies.common.serialization.types.OShortSerializer;
 import com.orientechnologies.common.types.OModifiableInteger;
 
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Queue;
 
 public class OWALChangesTree implements OWALChanges {
   private static final boolean BLACK = false;
@@ -26,11 +31,16 @@ public class OWALChangesTree implements OWALChanges {
   }
 
   public byte getByteValue(ByteBuffer buffer, int offset) {
+    if (root == null && buffer != null) {
+      return buffer.get(offset);
+    }
+
     final int end = offset + OByteSerializer.BYTE_SIZE;
     final List<Node> result = new ArrayList<Node>();
     findIntervals(root, offset, end, result);
 
-    if (buffer != null && result.isEmpty())
+    if (buffer != null
+        && result.isEmpty())
       return buffer.get(offset);
 
     byte[] value = new byte[] { 0 };
@@ -40,6 +50,12 @@ public class OWALChangesTree implements OWALChanges {
   }
 
   public byte[] getBinaryValue(ByteBuffer buffer, int offset, int len) {
+    if (root == null && buffer != null) {
+      final byte[] value = new byte[len];
+      buffer.position(offset);
+      buffer.get(value);
+    }
+
     final int end = offset + len;
 
     final List<Node> result = new ArrayList<Node>();
@@ -66,6 +82,9 @@ public class OWALChangesTree implements OWALChanges {
   }
 
   public short getShortValue(ByteBuffer buffer, int offset) {
+    if (root == null && buffer != null) {
+      return buffer.getShort(offset);
+    }
     int end = offset + OShortSerializer.SHORT_SIZE;
 
     final List<Node> result = new ArrayList<Node>();
@@ -88,6 +107,9 @@ public class OWALChangesTree implements OWALChanges {
   }
 
   public int getIntValue(ByteBuffer buffer, int offset) {
+    if (root == null && buffer != null) {
+      return buffer.getInt(offset);
+    }
     int end = offset + OIntegerSerializer.INT_SIZE;
 
     final List<Node> result = new ArrayList<Node>();
@@ -110,6 +132,9 @@ public class OWALChangesTree implements OWALChanges {
   }
 
   public long getLongValue(ByteBuffer buffer, int offset) {
+    if (root == null && buffer != null) {
+      return buffer.getLong(offset);
+    }
     int end = offset + OLongSerializer.LONG_SIZE;
 
     final List<Node> result = new ArrayList<Node>();

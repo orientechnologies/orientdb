@@ -19,9 +19,11 @@ package com.orientechnologies.orient.core.sql.method.misc;
 import com.orientechnologies.common.util.OSizeable;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -48,14 +50,14 @@ public class OSQLMethodAsList extends OAbstractSQLMethod {
     }
 
     if (ioResult == null)
-    // NULL VALUE, RETURN AN EMPTY SET
+    // NULL VALUE, RETURN AN EMPTY LIST
     {
-      return new ArrayList<Object>();
+      return Collections.EMPTY_LIST;
     }
 
     if (ioResult instanceof Collection<?>) {
       return new ArrayList<Object>((Collection<Object>) ioResult);
-    } else if (ioResult instanceof Iterable<?>) {
+    } else if (!(ioResult instanceof ODocument) && ioResult instanceof Iterable<?>) {
       ioResult = ((Iterable<?>) ioResult).iterator();
     }
 
@@ -70,8 +72,6 @@ public class OSQLMethodAsList extends OAbstractSQLMethod {
     }
 
     // SINGLE ITEM: ADD IT AS UNIQUE ITEM
-    final List<Object> list = new ArrayList<Object>();
-    list.add(ioResult);
-    return list;
+    return Collections.singletonList(ioResult);
   }
 }

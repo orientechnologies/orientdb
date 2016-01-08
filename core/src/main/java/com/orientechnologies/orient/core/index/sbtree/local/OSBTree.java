@@ -872,11 +872,6 @@ public class OSBTree<K, V> extends ODurableComponent {
     }
   }
 
-  @Override
-  protected OAtomicOperation startAtomicOperation(boolean trackNonTxOperations) throws IOException {
-    return atomicOperationsManager.startAtomicOperation(this, trackNonTxOperations);
-  }
-
   private void checkNullSupport(K key) {
     if (key == null && !nullPointerSupport)
       throw new OSBTreeException("Null keys are not supported.", this);

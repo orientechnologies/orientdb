@@ -20,8 +20,14 @@ package com.orientechnologies.lucene.test;
 
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.facet.*;
+import org.apache.lucene.facet.DrillDownQuery;
+import org.apache.lucene.facet.DrillSideways;
 import org.apache.lucene.facet.DrillSideways.DrillSidewaysResult;
+import org.apache.lucene.facet.FacetField;
+import org.apache.lucene.facet.FacetResult;
+import org.apache.lucene.facet.Facets;
+import org.apache.lucene.facet.FacetsCollector;
+import org.apache.lucene.facet.FacetsConfig;
 import org.apache.lucene.facet.taxonomy.FastTaxonomyFacetCounts;
 import org.apache.lucene.facet.taxonomy.TaxonomyReader;
 import org.apache.lucene.facet.taxonomy.directory.DirectoryTaxonomyReader;
@@ -39,19 +45,25 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Shows simple usage of faceted indexing and search. */
+/**
+ * Shows simple usage of faceted indexing and search.
+ */
 public class LuceneNativeFacet {
 
   private final Directory    indexDir = new RAMDirectory();
   private final Directory    taxoDir  = new RAMDirectory();
   private final FacetsConfig config   = new FacetsConfig();
 
-  /** Empty constructor */
+  /**
+   * Empty constructor
+   */
   public LuceneNativeFacet() {
     config.setHierarchical("Publish Date", true);
   }
 
-  /** Runs the search and drill-down examples and prints the results. */
+  /**
+   * Runs the search and drill-down examples and prints the results.
+   */
   public static void main(String[] args) throws Exception {
     System.out.println("Facet counting example:");
     System.out.println("-----------------------");
@@ -77,10 +89,44 @@ public class LuceneNativeFacet {
     }
   }
 
-  /** Build the example index. */
+  /**
+   * Runs the search example.
+   */
+  public List<FacetResult> runFacetOnly() throws IOException {
+    index();
+    return facetsOnly();
+  }
+
+  /**
+   * Runs the search example.
+   */
+  public List<FacetResult> runSearch() throws IOException {
+    index();
+    return facetsWithSearch();
+  }
+
+  /**
+   * Runs the drill-down example.
+   */
+  public FacetResult runDrillDown() throws IOException {
+    index();
+    return drillDown();
+  }
+
+  /**
+   * Runs the drill-sideways example.
+   */
+  public List<FacetResult> runDrillSideways() throws IOException {
+    index();
+    return drillSideways();
+  }
+
+  /**
+   * Build the example index.
+   */
   private void index() throws IOException {
     IndexWriter indexWriter = new IndexWriter(indexDir,
-        new IndexWriterConfig(new WhitespaceAnalyzer()).setOpenMode(OpenMode.CREATE));
+                                              new IndexWriterConfig(new WhitespaceAnalyzer()).setOpenMode(OpenMode.CREATE));
 
     // Writes facet ords to a separate directory from the main index
     DirectoryTaxonomyWriter taxoWriter = new DirectoryTaxonomyWriter(taxoDir);
@@ -114,34 +160,9 @@ public class LuceneNativeFacet {
     taxoWriter.close();
   }
 
-  /** User runs a query and counts facets. */
-  private List<FacetResult> facetsWithSearch() throws IOException {
-    DirectoryReader indexReader = DirectoryReader.open(indexDir);
-    IndexSearcher searcher = new IndexSearcher(indexReader);
-    TaxonomyReader taxoReader = new DirectoryTaxonomyReader(taxoDir);
-
-    FacetsCollector fc = new FacetsCollector();
-
-    // MatchAllDocsQuery is for "browsing" (counts facets
-    // for all non-deleted docs in the index); normally
-    // you'd use a "normal" query:
-    FacetsCollector.search(searcher, new MatchAllDocsQuery(), 10, fc);
-
-    // Retrieve results
-    List<FacetResult> results = new ArrayList<FacetResult>();
-
-    // Count both "Publish Date" and "Author" dimensions
-    Facets facets = new FastTaxonomyFacetCounts(taxoReader, config, fc);
-    results.add(facets.getTopChildren(10, "Author"));
-    results.add(facets.getTopChildren(10, "Publish Date"));
-
-    indexReader.close();
-    taxoReader.close();
-
-    return results;
-  }
-
-  /** User runs a query and counts facets only without collecting the matching documents. */
+  /**
+   * User runs a query and counts facets only without collecting the matching documents.
+   */
   private List<FacetResult> facetsOnly() throws IOException {
     DirectoryReader indexReader = DirectoryReader.open(indexDir);
     IndexSearcher searcher = new IndexSearcher(indexReader);
@@ -160,6 +181,35 @@ public class LuceneNativeFacet {
     // Count both "Publish Date" and "Author" dimensions
     Facets facets = new FastTaxonomyFacetCounts(taxoReader, config, fc);
 
+    results.add(facets.getTopChildren(10, "Author"));
+    results.add(facets.getTopChildren(10, "Publish Date"));
+
+    indexReader.close();
+    taxoReader.close();
+
+    return results;
+  }
+
+  /**
+   * User runs a query and counts facets.
+   */
+  private List<FacetResult> facetsWithSearch() throws IOException {
+    DirectoryReader indexReader = DirectoryReader.open(indexDir);
+    IndexSearcher searcher = new IndexSearcher(indexReader);
+    TaxonomyReader taxoReader = new DirectoryTaxonomyReader(taxoDir);
+
+    FacetsCollector fc = new FacetsCollector();
+
+    // MatchAllDocsQuery is for "browsing" (counts facets
+    // for all non-deleted docs in the index); normally
+    // you'd use a "normal" query:
+    FacetsCollector.search(searcher, new MatchAllDocsQuery(), 10, fc);
+
+    // Retrieve results
+    List<FacetResult> results = new ArrayList<FacetResult>();
+
+    // Count both "Publish Date" and "Author" dimensions
+    Facets facets = new FastTaxonomyFacetCounts(taxoReader, config, fc);
     results.add(facets.getTopChildren(10, "Author"));
     results.add(facets.getTopChildren(10, "Publish Date"));
 
@@ -222,30 +272,6 @@ public class LuceneNativeFacet {
     taxoReader.close();
 
     return facets;
-  }
-
-  /** Runs the search example. */
-  public List<FacetResult> runFacetOnly() throws IOException {
-    index();
-    return facetsOnly();
-  }
-
-  /** Runs the search example. */
-  public List<FacetResult> runSearch() throws IOException {
-    index();
-    return facetsWithSearch();
-  }
-
-  /** Runs the drill-down example. */
-  public FacetResult runDrillDown() throws IOException {
-    index();
-    return drillDown();
-  }
-
-  /** Runs the drill-sideways example. */
-  public List<FacetResult> runDrillSideways() throws IOException {
-    index();
-    return drillSideways();
   }
 
 }

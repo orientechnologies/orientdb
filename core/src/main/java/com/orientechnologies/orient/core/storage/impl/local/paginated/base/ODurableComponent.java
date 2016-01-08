@@ -111,6 +111,9 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     atomicOperationsManager.endAtomicOperation(rollback, e);
   }
 
+  /**
+   * @see OAtomicOperationsManager#startAtomicOperation(com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent, boolean)
+   */
   protected OAtomicOperation startAtomicOperation(boolean trackNonTxOperations) throws IOException {
     return atomicOperationsManager.startAtomicOperation(this, trackNonTxOperations);
   }

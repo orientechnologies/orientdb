@@ -26,8 +26,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -36,16 +36,9 @@ import java.util.List;
 /**
  * Created by Enrico Risa on 10/08/15.
  */
-@Test(groups = "embedded")
 public class LuceneTransactionEmbeddedQueryTest {
 
   public LuceneTransactionEmbeddedQueryTest() {
-  }
-
-  protected void createSchema(ODatabaseDocumentTx db) {
-    final OrientVertexType c1 = new OrientGraphNoTx(db).createVertexType("C1");
-    c1.createProperty("p1", OType.EMBEDDEDLIST, OType.STRING);
-    c1.createIndex("C1.p1", "FULLTEXT", null, null, "LUCENE", new String[] { "p1" });
   }
 
   @Test
@@ -72,6 +65,12 @@ public class LuceneTransactionEmbeddedQueryTest {
     } finally {
       db.drop();
     }
+  }
+
+  protected void createSchema(ODatabaseDocumentTx db) {
+    final OrientVertexType c1 = new OrientGraphNoTx(db).createVertexType("C1");
+    c1.createProperty("p1", OType.EMBEDDEDLIST, OType.STRING);
+    c1.createIndex("C1.p1", "FULLTEXT", null, null, "LUCENE", new String[] { "p1" });
   }
 
   @Test

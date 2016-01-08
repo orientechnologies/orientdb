@@ -16,15 +16,17 @@
  */
 package com.orientechnologies.orient.core.sql.method.misc;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
- * Transforms current value in a Map.
+ * Transforms current value into a Map.
  * 
  * @author Luca Garulli
  */
@@ -46,9 +48,15 @@ public class OSQLMethodAsMap extends OAbstractSQLMethod {
     }
 
     if (ioResult == null)
-    // NULL VALUE, RETURN AN EMPTY SET
+    // NULL VALUE, RETURN AN EMPTY MAP
     {
-      return new HashMap<Object, Object>();
+      return Collections.EMPTY_MAP;
+    }
+    
+    if (ioResult instanceof ODocument)
+    // CONVERT ODOCUMENT TO MAP
+    {
+      return ((ODocument) ioResult).toMap();
     }
 
     Iterator<Object> iter;

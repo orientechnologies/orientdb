@@ -18,9 +18,11 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.RAMDirectory;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import java.io.IOException;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Created by frank on 9/28/15.
@@ -62,7 +64,6 @@ public class TestVertexIndex {
 
     writer.commit();
 
-
     IndexReader reader = DirectoryReader.open(directory);
 
     IndexSearcher searcher = new IndexSearcher(reader);
@@ -73,15 +74,14 @@ public class TestVertexIndex {
 
     final Query query = queryParser.parse("name:Max AND name:Wat*");
 
-
     final TopDocs topDocs = searcher.search(query, 10);
 
-    System.out.println("total docs:: " + topDocs.totalHits);
-    for (int i = 0; i < topDocs.totalHits; i++){
+    assertThat(topDocs.totalHits).isEqualTo(2);
+    for (int i = 0; i < topDocs.totalHits; i++) {
 
       final Document found = searcher.doc(topDocs.scoreDocs[i].doc);
 
-      System.out.println("found:: " + found.get("name"));
+      assertThat(found.get("name")).startsWith("Max");
 
     }
 

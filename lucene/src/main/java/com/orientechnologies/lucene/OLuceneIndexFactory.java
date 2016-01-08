@@ -158,24 +158,27 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
 
   @Override
   public void onCreate(ODatabaseInternal iDatabase) {
+    OLogManager.instance().info(this, "onCreate");
 
   }
 
   @Override
   public void onOpen(ODatabaseInternal iDatabase) {
+    OLogManager.instance().info(this, "onOpen");
 
   }
 
   @Override
   public void onClose(ODatabaseInternal iDatabase) {
 
+    OLogManager.instance().info(this, "onClose");
   }
 
   @Override
   public void onDrop(final ODatabaseInternal iDatabase) {
+    OLogManager.instance().info(this, "---->>> onDrop");
     try {
-      OLogManager.instance()
-                 .debug(this, "Dropping Lucene indexes...");
+      OLogManager.instance().info(this, "Dropping Lucene indexes...");
       for (OIndex idx : iDatabase.getMetadata().getIndexManager().getIndexes()) {
 
         if (idx.getInternal() instanceof OLuceneFullTextExpIndex
@@ -184,7 +187,14 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
           OLogManager.instance().debug(this, "- index '%s'", idx.getName());
           idx.delete();
         }
+        if (idx.getInternal() instanceof OLuceneFullTextExpIndex) {
+
+          OLuceneStorage luceneStorage = this.db2luceneEngine.get(iDatabase);
+
+          luceneStorage.delete(iDatabase);
+        }
       }
+
     } catch (Exception e) {
       OLogManager.instance()
                  .warn(this, "Error on dropping Lucene indexes", e);

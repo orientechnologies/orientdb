@@ -5,9 +5,9 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.analysis.en.EnglishAnalyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.junit.Before;
+import org.junit.Test;
 import org.mockito.Mockito;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
 
 import static com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory.AnalyzerKind.INDEX;
 import static com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory.AnalyzerKind.QUERY;
@@ -24,7 +24,7 @@ public class OLuceneAnalyzerFactoryTest {
   private ODocument              metadata;
   private OIndexDefinition       indexDef;
 
-  @BeforeTest
+  @Before
   public void before() {
 
     analyzerFactory = new OLuceneAnalyzerFactory();
@@ -35,13 +35,13 @@ public class OLuceneAnalyzerFactoryTest {
     metadata = new ODocument()
         .fromJSON(
             "{"
-            + "\"analyzer\":\"" + StandardAnalyzer.class.getName() + "\" , "
-            + "\"index_analyzer\":\"" + KeywordAnalyzer.class.getName() + "\" , "
-            + "\"title_index_analyzer\":\"" + EnglishAnalyzer.class.getName() + "\" , "
-            + "\"title_query_analyzer\":\"" + EnglishAnalyzer.class.getName() + "\" , "
+            +                                                                    "\"analyzer\":\""                                                  +                                                StandardAnalyzer.class.getName() + "\" , "
+            +                                                                    "\"index_analyzer\":\"" +                                          KeywordAnalyzer.class.getName()          + "\" , "
+            +                                                                    "\"title_index_analyzer\":\""                                      +                                    EnglishAnalyzer.class.getName() + "\" , "
+            +                                                                    "\"title_query_analyzer\":\""                                      + EnglishAnalyzer.class.getName() + "\" , "
             + "\"author_query_analyzer\":\"" + KeywordAnalyzer.class.getName() + "\","
-            + "\"lyrics_index_analyzer\":\"" + EnglishAnalyzer.class.getName() + "\""
-            + "}");
+            +                                                                    "\"lyrics_index_analyzer\":\"" + EnglishAnalyzer.class.getName() + "\""
+            +                                                                    "}");
 
     indexDef = Mockito.mock(OIndexDefinition.class);
 
@@ -49,7 +49,7 @@ public class OLuceneAnalyzerFactoryTest {
 
   }
 
-  @Test(enabled = false)
+  @Test
   public void jsonTest() throws Exception {
 
     ODocument doc = new ODocument()
@@ -66,13 +66,12 @@ public class OLuceneAnalyzerFactoryTest {
             + "      \"is\"\n"
             + "    ]\n"
             + "  }\n"
-            + "}","noMap");
+            + "}", "noMap");
 
     System.out.println(doc.toJSON());
 
     ODocument description_index_analyzer = doc.field("description_index_analyzer");
-    ODocument index_analyzer = doc.field("index_analyzer");
-
+    //    ODocument index_analyzer = doc.field("index_analyzer");
 
     System.out.println(description_index_analyzer.toJSON());
   }

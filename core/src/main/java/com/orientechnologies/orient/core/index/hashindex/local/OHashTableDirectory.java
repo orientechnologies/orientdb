@@ -699,9 +699,4 @@ public class OHashTableDirectory extends ODurableComponent {
 
     return (nodeIndex - ODirectoryFirstPage.NODES_PER_PAGE) % ODirectoryPage.NODES_PER_PAGE;
   }
-
-  @Override
-  protected OAtomicOperation startAtomicOperation(boolean trackNonTxOperations) throws IOException {
-    return atomicOperationsManager.startAtomicOperation(this, trackNonTxOperations);
-  }
 }

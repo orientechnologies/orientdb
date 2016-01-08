@@ -617,9 +617,9 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object>implements O
     if (!underlying.getTransaction().isActive()) {
       // COPY ALL TX ENTRIES
       final List<ORecordOperation> newEntries;
-      if (getTransaction().getCurrentRecordEntries() != null) {
+      if (getTransaction().getAllRecordEntries() != null) {
         newEntries = new ArrayList<ORecordOperation>();
-        for (ORecordOperation entry : getTransaction().getCurrentRecordEntries())
+        for (ORecordOperation entry : getTransaction().getAllRecordEntries())
           if (entry.type == ORecordOperation.CREATED)
             newEntries.add(entry);
       } else
