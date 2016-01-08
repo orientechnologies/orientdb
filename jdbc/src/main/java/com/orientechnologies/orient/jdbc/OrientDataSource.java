@@ -17,11 +17,13 @@
  */
 package com.orientechnologies.orient.jdbc;
 
+import javax.sql.DataSource;
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
+import java.util.Properties;
 import java.util.logging.Logger;
 
 import javax.sql.DataSource;
@@ -52,13 +54,13 @@ public class OrientDataSource implements DataSource {
 
   }
 
+  public int getLoginTimeout() throws SQLException {
+    return loginTimeout;
+  }
+
   public void setLoginTimeout(int seconds) throws SQLException {
     this.loginTimeout = seconds;
 
-  }
-
-  public int getLoginTimeout() throws SQLException {
-    return loginTimeout;
   }
 
   public <T> T unwrap(Class<T> iface) throws SQLException {
@@ -74,7 +76,17 @@ public class OrientDataSource implements DataSource {
   }
 
   public Connection getConnection(String username, String password) throws SQLException {
-    return DriverManager.getConnection(url, username, password);
+    Properties info = new Properties();
+    info.put("user", username);
+    info.put("password", password);
+
+    return getConnection(info);
+  }
+
+  public Connection getConnection(Properties info) throws SQLException {
+    if (!info.contains("username")) info.put("username", username);
+    if (!info.contains("password")) info.put("password", password);
+    return DriverManager.getConnection(url, info);
   }
 
   public void setUrl(String url) {
