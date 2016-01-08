@@ -52,7 +52,7 @@ public class OSQLMethodAsMap extends OAbstractSQLMethod {
     {
       return Collections.EMPTY_MAP;
     }
-    
+
     if (ioResult instanceof ODocument)
     // CONVERT ODOCUMENT TO MAP
     {

@@ -43,7 +43,7 @@ public class OStringSerializerEmbedded implements OStringSerializer {
       return null;
 
     final ODocument instance = new ODocument();
-    ORecordSerializerSchemaAware2CSV.INSTANCE.fromStream(OBinaryProtocol.string2bytes(iStream),instance,null);
+    ORecordSerializerSchemaAware2CSV.INSTANCE.fromStream(OBinaryProtocol.string2bytes(iStream), instance, null);
 
     final String className = instance.field(ODocumentSerializable.CLASS_NAME);
     if (className == null)

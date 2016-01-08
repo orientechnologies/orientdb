@@ -56,11 +56,11 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
   /**
    * USE THIS AS RESPONSE TO REPORT A DELETED RECORD IN TX
    */
-  public static final ORecord                                 DELETED_RECORD        = new ORecordBytes();
-  protected Map<ORID, ORID>                                   updatedRids           = new HashMap<ORID, ORID>();
-  protected Map<ORID, ORecordOperation>                       allEntries            = new HashMap<ORID, ORecordOperation>();
-  protected Map<String, OTransactionIndexChanges>             indexEntries          = new LinkedHashMap<String, OTransactionIndexChanges>();
-  protected Map<ORID, List<OTransactionRecordIndexOperation>> recordIndexOperations = new HashMap<ORID, List<OTransactionRecordIndexOperation>>();
+  public static final ORecord                                           DELETED_RECORD        = new ORecordBytes();
+  protected           Map<ORID, ORID>                                   updatedRids           = new HashMap<ORID, ORID>();
+  protected           Map<ORID, ORecordOperation>                       allEntries            = new HashMap<ORID, ORecordOperation>();
+  protected           Map<String, OTransactionIndexChanges>             indexEntries          = new LinkedHashMap<String, OTransactionIndexChanges>();
+  protected           Map<ORID, List<OTransactionRecordIndexOperation>> recordIndexOperations = new HashMap<ORID, List<OTransactionRecordIndexOperation>>();
   protected int                                               id;
   protected int                                               newObjectCounter      = -2;
   protected Map<String, Object>                               userData              = new HashMap<String, Object>();
@@ -166,10 +166,10 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
     if (e != null)
       return e;
 
-    if(!updatedRids.isEmpty()){
+    if (!updatedRids.isEmpty()) {
       ORID r = updatedRids.get(rid);
-      if(r != null)
-        return  allEntries.get(r);
+      if (r != null)
+        return allEntries.get(r);
     }
 
     return null;
@@ -343,7 +343,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 
     final ORecordOperation rec = getRecordEntry(oldRid);
     if (rec != null) {
-      updatedRids.put(newRid,oldRid.copy());
+      updatedRids.put(newRid, oldRid.copy());
 
       if (!rec.getRecord().getIdentity().equals(newRid)) {
         ORecordInternal.onBeforeIdentityChanged(rec.getRecord());

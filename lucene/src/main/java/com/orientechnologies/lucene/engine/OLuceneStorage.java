@@ -87,7 +87,7 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
 
   public OLuceneStorage(String name, DocBuilder builder, OQueryBuilder queryBuilder) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(),
-          OGlobalConfiguration.MVRBTREE_TIMEOUT.getValueAsInteger(), true);
+        OGlobalConfiguration.MVRBTREE_TIMEOUT.getValueAsInteger(), true);
     this.name = name;
     this.builder = builder;
     this.queryBuilder = queryBuilder;
@@ -208,7 +208,7 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
     initializerAnalyzers(indexContext.indexClass, indexContext.metadata);
 
     OLogManager.instance()
-               .info(this, "DONE INIT initIndex:: indexAnalyzer::  " + indexAnalyzer + " queryanalzer:: " + queryAnalyzer);
+        .info(this, "DONE INIT initIndex:: indexAnalyzer::  " + indexAnalyzer + " queryanalzer:: " + queryAnalyzer);
 
   }
 
@@ -286,7 +286,7 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
   }
 
   public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-                     OBinarySerializer keySerializer, int keySize) {
+      OBinarySerializer keySerializer, int keySize) {
 
     OLogManager.instance().info(this, "CREATE:: ");
 
@@ -348,7 +348,7 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
   }
 
   public void load(String indexName, OBinarySerializer valueSerializer, boolean isAutomatic, OBinarySerializer keySerializer,
-                   OType[] keyTypes, boolean nullPointerSupport, int keySize) {
+      OType[] keyTypes, boolean nullPointerSupport, int keySize) {
 
     OLogManager.instance().info(this, "LOAD:: " + indexName);
   }
@@ -384,12 +384,12 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
   }
 
   public OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
-                                            boolean ascSortOrder, ValuesTransformer transformer) {
+      boolean ascSortOrder, ValuesTransformer transformer) {
     return null;
   }
 
   public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
-                                          ValuesTransformer transformer) {
+      ValuesTransformer transformer) {
     return null;
   }
 

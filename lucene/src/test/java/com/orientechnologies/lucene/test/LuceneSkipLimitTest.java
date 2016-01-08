@@ -49,21 +49,21 @@ public class LuceneSkipLimitTest extends BaseLuceneTest {
 
     databaseDocumentTx.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
 
-    List<ODocument> docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
-        "select * from Song where [title] LUCENE \"(title:man)\""));
+    List<ODocument> docs = databaseDocumentTx
+        .query(new OSQLSynchQuery<ODocument>("select * from Song where [title] LUCENE \"(title:man)\""));
 
     Assert.assertEquals(docs.size(), 14);
 
     ODocument doc = docs.get(9);
-    docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
-        "select * from Song where [title] LUCENE \"(title:man)\" skip 10 limit 10"));
+    docs = databaseDocumentTx
+        .query(new OSQLSynchQuery<ODocument>("select * from Song where [title] LUCENE \"(title:man)\" skip 10 limit 10"));
 
     Assert.assertEquals(docs.size(), 4);
 
     Assert.assertEquals(docs.contains(doc), false);
 
-    docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
-        "select * from Song where [title] LUCENE \"(title:man)\" skip 14 limit 10"));
+    docs = databaseDocumentTx
+        .query(new OSQLSynchQuery<ODocument>("select * from Song where [title] LUCENE \"(title:man)\" skip 14 limit 10"));
 
     Assert.assertEquals(docs.size(), 0);
   }

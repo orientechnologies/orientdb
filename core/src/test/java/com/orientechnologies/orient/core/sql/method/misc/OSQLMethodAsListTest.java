@@ -14,7 +14,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * Tests the "asList()" method implemented by the OSQLMethodAsList class.  Note
  * that the only input to the execute() method from the OSQLMethod interface
  * that is used is the ioResult argument (the 4th argument).
- * 
+ *
  * @author Michael MacFadden
  */
 @Test
@@ -65,45 +65,45 @@ public class OSQLMethodAsListTest {
     ArrayList<Object> expected = new ArrayList<Object>();
     expected.add(1);
     expected.add("2");
-    
-    TestIterable<Object> anIterable = new TestIterable<Object>(expected); 
+
+    TestIterable<Object> anIterable = new TestIterable<Object>(expected);
     Object result = function.execute(null, null, null, anIterable, null);
 
     assertEquals(result, expected);
   }
-  
+
   public void testIterator() {
     // The expected behavior is to return a list with all of the elements
     // of the iterator in it, in order of the iterator.
     ArrayList<Object> expected = new ArrayList<Object>();
     expected.add(1);
     expected.add("2");
-    
-    TestIterable<Object> anIterable = new TestIterable<Object>(expected); 
+
+    TestIterable<Object> anIterable = new TestIterable<Object>(expected);
     Object result = function.execute(null, null, null, anIterable.iterator(), null);
 
     assertEquals(result, expected);
   }
-  
+
   public void testODocument() {
     // The expected behavior is to return a list with only the single
     // ODocument in it.
     ODocument doc = new ODocument();
     doc.field("f1", 1);
     doc.field("f2", 2);
-    
+
     Object result = function.execute(null, null, null, doc, null);
 
     ArrayList<Object> expected = new ArrayList<Object>();
     expected.add(doc);
-    
+
     assertEquals(result, expected);
   }
-  
+
   public void testOtherSingleValue() {
     // The expected behavior is to return a list with only the single
     // element in it.
-    
+
     Object result = function.execute(null, null, null, new Integer(4), null);
     ArrayList<Object> expected = new ArrayList<Object>();
     expected.add(new Integer(4));

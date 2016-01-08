@@ -61,11 +61,9 @@ public class LuceneMultiFieldTest extends BaseLuceneTest {
     //        .execute();
 
     databaseDocumentTx.command(new OCommandSQL(
-        "create index Song.title_author on Song (title,author) FULLTEXT ENGINE LUCENE METADATA {"
-        + "\"title_index_analyzer\":\"" + EnglishAnalyzer.class.getName() + "\" , "
-        + "\"title_query_analyzer\":\"" + EnglishAnalyzer.class.getName() + "\" , "
-        + "\"author_index_analyzer\":\""
-        + StandardAnalyzer.class.getName() + "\"}")).execute();
+        "create index Song.title_author on Song (title,author) FULLTEXT ENGINE LUCENE METADATA {" + "\"title_index_analyzer\":\""
+            + EnglishAnalyzer.class.getName() + "\" , " + "\"title_query_analyzer\":\"" + EnglishAnalyzer.class.getName() + "\" , "
+            + "\"author_index_analyzer\":\"" + StandardAnalyzer.class.getName() + "\"}")).execute();
 
     final ODocument index = databaseDocumentTx.getMetadata().getIndexManager().getIndex("Song.title_author").getMetadata();
 
@@ -136,9 +134,9 @@ public class LuceneMultiFieldTest extends BaseLuceneTest {
   public void testSelectOnIndexWithIgnoreNullValuesToFalse() {
     //#5579
     String script = "create class Item\n" + "create property Item.title string\n" + "create property Item.summary string\n"
-                    + "create property Item.content string\n"
-                    + "create index Item.i_lucene on Item(title, summary, content) fulltext engine lucene METADATA {ignoreNullValues:false}\n"
-                    + "insert into Item set title = 'test', content = 'this is a test'\n";
+        + "create property Item.content string\n"
+        + "create index Item.i_lucene on Item(title, summary, content) fulltext engine lucene METADATA {ignoreNullValues:false}\n"
+        + "insert into Item set title = 'test', content = 'this is a test'\n";
     databaseDocumentTx.command(new OCommandScript("sql", script)).execute();
 
     List<ODocument> docs;

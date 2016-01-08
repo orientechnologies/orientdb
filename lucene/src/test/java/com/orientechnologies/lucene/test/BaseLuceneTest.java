@@ -156,14 +156,12 @@ public abstract class BaseLuceneTest {
     final ProcessBuilder processBuilder;
     if (testMode != null && testPort != null) {
       processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-classpath", System.getProperty("java.class.path"),
-                                          "-DORIENTDB_HOME=" + buildDirectory, "-Dorient.server.testMode=" + testMode,
-                                          "-Dorient.server.port=" + testPort,
-                                          RemoteDBRunner.class.getName(), getDatabaseName(), "" + drop, storageType);
+          "-DORIENTDB_HOME=" + buildDirectory, "-Dorient.server.testMode=" + testMode, "-Dorient.server.port=" + testPort,
+          RemoteDBRunner.class.getName(), getDatabaseName(), "" + drop, storageType);
 
     } else {
       processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-classpath", System.getProperty("java.class.path"),
-                                          "-DORIENTDB_HOME=" + buildDirectory, RemoteDBRunner.class.getName(), getDatabaseName(),
-                                          "" + drop, storageType);
+          "-DORIENTDB_HOME=" + buildDirectory, RemoteDBRunner.class.getName(), getDatabaseName(), "" + drop, storageType);
     }
 
     process = processBuilder.start();

@@ -54,12 +54,12 @@ public class LuceneCreateIndexTest extends LuceneSingleFieldEmbeddedTest {
 
     databaseDocumentTx.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
 
-    databaseDocumentTx.command(
-        new OCommandSQL(                                     "create index Song.title on Song (title) FULLTEXT ENGINE LUCENE METADATA {\"analyzer\":\""
-                        + StandardAnalyzer.class.getName() + "\"}")).execute();
-    databaseDocumentTx.command(
-        new OCommandSQL(                                     "create index Song.author on Song (author) FULLTEXT ENGINE LUCENE METADATA {\"analyzer\":\""
-                        + StandardAnalyzer.class.getName() + "\"}")).execute();
+    databaseDocumentTx.command(new OCommandSQL(
+        "create index Song.title on Song (title) FULLTEXT ENGINE LUCENE METADATA {\"analyzer\":\"" + StandardAnalyzer.class
+            .getName() + "\"}")).execute();
+    databaseDocumentTx.command(new OCommandSQL(
+        "create index Song.author on Song (author) FULLTEXT ENGINE LUCENE METADATA {\"analyzer\":\"" + StandardAnalyzer.class
+            .getName() + "\"}")).execute();
 
     ODocument doc = new ODocument("Song");
 

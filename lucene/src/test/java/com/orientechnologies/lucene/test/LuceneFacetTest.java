@@ -48,7 +48,7 @@ public class LuceneFacetTest extends BaseLuceneTest {
 
     databaseDocumentTx.command(new OCommandSQL(
         "create index Item.name_category on Item (name,category) FULLTEXT ENGINE LUCENE METADATA { 'facetFields' : ['category']}"))
-                      .execute();
+        .execute();
 
     ODocument doc = new ODocument("Item");
     doc.field("name", "Pioneer");

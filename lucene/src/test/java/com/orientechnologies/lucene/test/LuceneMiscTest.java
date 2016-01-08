@@ -55,7 +55,7 @@ public class LuceneMiscTest {
       db.command(new OCommandSQL("insert into Test set attr1='bar', attr2='foo'")).execute();
 
       List<ODocument> results = db.command(new OCommandSQL("select from Test where attr1 lucene 'foo*' OR attr2 lucene 'foo*'"))
-                                  .execute();
+          .execute();
       Assert.assertEquals(results.size(), 2);
 
       results = db.command(new OCommandSQL("select from Test where attr1 lucene 'bar*' OR attr2 lucene 'bar*'")).execute();

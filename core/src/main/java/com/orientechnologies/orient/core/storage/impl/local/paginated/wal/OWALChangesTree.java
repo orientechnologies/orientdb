@@ -39,8 +39,7 @@ public class OWALChangesTree implements OWALChanges {
     final List<Node> result = new ArrayList<Node>();
     findIntervals(root, offset, end, result);
 
-    if (buffer != null
-        && result.isEmpty())
+    if (buffer != null && result.isEmpty())
       return buffer.get(offset);
 
     byte[] value = new byte[] { 0 };

@@ -39,8 +39,6 @@ public class GraphEmbeddedTest extends BaseLuceneTest {
 
   }
 
-
-
   @Before
   public void init() {
     initDB();

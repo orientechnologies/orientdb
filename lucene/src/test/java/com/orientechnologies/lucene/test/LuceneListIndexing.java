@@ -47,8 +47,6 @@ public class LuceneListIndexing extends BaseLuceneTest {
     super();
   }
 
-
-
   @Before
   public void init() {
     initDB();
@@ -67,7 +65,7 @@ public class LuceneListIndexing extends BaseLuceneTest {
     databaseDocumentTx.command(new OCommandSQL("create index City.tags on City (tags) FULLTEXT ENGINE LUCENE")).execute();
 
     databaseDocumentTx.command(new OCommandSQL("create index Person.name_tags on Person (name,tags) FULLTEXT ENGINE LUCENE"))
-                      .execute();
+        .execute();
   }
 
   @After

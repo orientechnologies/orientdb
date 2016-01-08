@@ -38,8 +38,6 @@ public class DocumentEmbeddedTest extends BaseLuceneTest {
 
   }
 
-
-
   @Before
   public void init() {
     initDB();

@@ -65,7 +65,7 @@ public class LuceneCreateJavaApi extends BaseLuceneTest {
 
     ODocument meta = new ODocument().field("analyzer", StandardAnalyzer.class.getName());
     OIndex<?> lucene = song.createIndex("Song.title", OClass.INDEX_TYPE.FULLTEXT.toString(), null, meta, "LUCENE",
-                                        new String[] { "title" });
+        new String[] { "title" });
 
     assertThat(lucene).isNotNull();
 
@@ -82,7 +82,7 @@ public class LuceneCreateJavaApi extends BaseLuceneTest {
     OClass song = schema.getClass("Song");
 
     OIndex<?> lucene = song.createIndex("Song.author_description", OClass.INDEX_TYPE.FULLTEXT.toString(), null, null, "LUCENE",
-                                        new String[] { "author", "description" });
+        new String[] { "author", "description" });
 
     assertThat(lucene).isNotNull();
 

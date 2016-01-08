@@ -100,7 +100,7 @@ public class OLuceneFacetManager {
 
   protected String getIndexFacetPath(OLocalPaginatedStorage storageLocalAbstract) {
     return storageLocalAbstract.getStoragePath() + File.separator + owner.OLUCENE_BASE_DIR + File.separator + owner.indexName
-           + FACET;
+        + FACET;
   }
 
   public void delete() {

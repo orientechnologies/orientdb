@@ -38,8 +38,6 @@ public class LuceneQueryErrorTest extends BaseLuceneTest {
   public LuceneQueryErrorTest() {
   }
 
-
-
   @Before
   public void init() {
     initDB();
