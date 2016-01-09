@@ -595,7 +595,7 @@ public enum OGlobalConfiguration {
    */
   @OApi(maturity = OApi.MATURITY.NEW)DISTRIBUTED_QUEUE_MAXSIZE("distributed.queueMaxSize",
       "Maximum queue size to mark a node as stalled. If the numer of messages in queue are more than this values, the node is restarted with a remote command (0 = no maximum, which means up to 2^31-1 entries).",
-      Integer.class, 100),
+      Integer.class, 10000),
 
   /**
    * @Since 2.1.3
