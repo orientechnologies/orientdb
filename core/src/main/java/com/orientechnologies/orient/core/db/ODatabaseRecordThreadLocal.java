@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 
 public class ODatabaseRecordThreadLocal extends ThreadLocal<ODatabaseDocumentInternal> {
 
-  public static volatile ODatabaseRecordThreadLocal INSTANCE = new ODatabaseRecordThreadLocal();
   private ODatabaseRecordThreadLocal() {
     }
 
