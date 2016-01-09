@@ -26,7 +26,7 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 
 public class ODatabaseRecordThreadLocal extends ThreadLocal<ODatabaseDocumentInternal> {
 
-  private ODatabaseRecordThreadLocal() {
+    private ODatabaseRecordThreadLocal() {
     }
 
     public static ODatabaseRecordThreadLocal instance() {
@@ -38,57 +38,56 @@ public class ODatabaseRecordThreadLocal extends ThreadLocal<ODatabaseDocumentInt
         private static final ODatabaseRecordThreadLocal INSTANCE = new ODatabaseRecordThreadLocal();
 
         static {
-                addOrientListener();
+            addOrientListener();
         }
-        
+
         private static void addOrientListener() {
             try {
-            Orient.instance().registerListener(new OOrientListenerAbstract() {                    
-                });            
+                Orient.instance().registerListener(new OOrientListenerAbstract() {
+                });
             } catch (Throwable t) {
                 OLogManager.instance().error(INSTANCE, "Can not add Listener to Orient", t);
             }
-            
+
         }
     }
 
-  
-  @Override
-  public ODatabaseDocumentInternal get() {
-    ODatabaseDocumentInternal db = super.get();
-    if (db == null) {
-      if (Orient.instance().getDatabaseThreadFactory() == null) {
-        throw new ODatabaseException(
-            "Database instance is not set in current thread. Assure to set it with: ODatabaseRecordThreadLocal.instance().set(db);");
-      } else {
-        db = Orient.instance().getDatabaseThreadFactory().getThreadDatabase();
+    @Override
+    public ODatabaseDocumentInternal get() {
+        ODatabaseDocumentInternal db = super.get();
         if (db == null) {
-          throw new ODatabaseException(
-              "Database instance is not set in current thread. Assure to set it with: ODatabaseRecordThreadLocal.instance().set(db);");
-        } else {
-          set(db);
+            if (Orient.instance().getDatabaseThreadFactory() == null) {
+                throw new ODatabaseException(
+                        "Database instance is not set in current thread. Assure to set it with: ODatabaseRecordThreadLocal.instance().set(db);");
+            } else {
+                db = Orient.instance().getDatabaseThreadFactory().getThreadDatabase();
+                if (db == null) {
+                    throw new ODatabaseException(
+                            "Database instance is not set in current thread. Assure to set it with: ODatabaseRecordThreadLocal.instance().set(db);");
+                } else {
+                    set(db);
+                }
+            }
         }
-      }
+        return db;
     }
-    return db;
-  }
 
-  @Override
-  public void remove() {
-    super.remove();
-  }
+    @Override
+    public void remove() {
+        super.remove();
+    }
 
-  @Override
-  public void set(final ODatabaseDocumentInternal value) {
-    super.set(value);
-  }
+    @Override
+    public void set(final ODatabaseDocumentInternal value) {
+        super.set(value);
+    }
 
-  public ODatabaseDocumentInternal getIfDefined() {
-    return super.get();
-  }
+    public ODatabaseDocumentInternal getIfDefined() {
+        return super.get();
+    }
 
-  public boolean isDefined() {
-    return super.get() != null;
-  }
+    public boolean isDefined() {
+        return super.get() != null;
+    }
 
 }
