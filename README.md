@@ -2,7 +2,7 @@
 
 |master branch |develop branch  |
 |---|---|
-|[![Build Status](http://helios.orientdb.com/buildStatus/icon?job=orientdb-master-ci)](http://helios.orientdb.com/job/orientdb-master-ci/)|[![Build Status](http://helios.orientdb.com/buildStatus/icon?job=orientdb-develop)](http://helios.orientdb.com/job/orientdb-develop/)|
+|[![Build Status](http://helios.orientdb.com/buildStatus/icon?job=orientdb-master-ci&a.png)](http://helios.orientdb.com/job/orientdb-master-ci/)|[![Build Status](http://helios.orientdb.com/buildStatus/icon?job=orientdb-develop&a.png)](http://helios.orientdb.com/job/orientdb-develop/)|
 
 
 <img src="http://orientdb.com/orientdb-studio_800px.png">
