@@ -2,7 +2,7 @@
 
 |master branch |develop branch  |
 |---|---|
-| <img src="http://helios.orientdb.com/buildStatus/icon?job=orientdb-master-ci"> | <img src="http://helios.orientdb.com/buildStatus/icon?job=orientdb-develop">|
+| <img src="http://helios.orientdb.com/buildStatus/icon?job=orientdb-master-ci&img.png"/> | <img src="http://helios.orientdb.com/buildStatus/icon?job=orientdb-develop&img.png"/>|
 
 
 <img src="http://orientdb.com/orientdb-studio_800px.png">
