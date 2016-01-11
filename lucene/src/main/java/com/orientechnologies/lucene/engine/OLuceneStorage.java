@@ -16,6 +16,32 @@
 
 package com.orientechnologies.lucene.engine;
 
+import static com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract.OLUCENE_BASE_DIR;
+import static com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract.RID;
+
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.index.TrackingIndexWriter;
+import org.apache.lucene.search.ControlledRealTimeReopenThread;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.SearcherManager;
+import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.NIOFSDirectory;
+import org.apache.lucene.store.RAMDirectory;
+
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
@@ -42,31 +68,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.IndexWriterConfig;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.index.TrackingIndexWriter;
-import org.apache.lucene.search.ControlledRealTimeReopenThread;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.SearcherManager;
-import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.NIOFSDirectory;
-import org.apache.lucene.store.RAMDirectory;
-
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.TimerTask;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import static com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract.OLUCENE_BASE_DIR;
-import static com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract.RID;
 
 public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements OOrientListener {
 
@@ -207,12 +208,7 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
     initializerAnalyzers(indexContext.indexClass, indexContext.metadata);
 
     OLogManager.instance().info(this,
-<<<<<<< HEAD
         "DONE INIT initIndex:: indexAnalyzer::  " + indexAnalyzer + " queryAnalyzer:: " + queryAnalyzer);
-=======
-        "DONE INIT initIndex:: indexAnalyzer::  " + indexAnalyzer + " queryanalzer:: " + queryAnalyzer);
-
->>>>>>> origin/autosharding-index
   }
 
   private void initializerAnalyzers(OClass indexClass, ODocument metadata) {
@@ -283,14 +279,8 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
     return null;
   }
 
-<<<<<<< HEAD
   public void init() {
     OLogManager.instance().info(this, "INIT");
-
-=======
-  public void flush() {
-    commit();
->>>>>>> origin/autosharding-index
   }
 
   public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
