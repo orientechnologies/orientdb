@@ -8,10 +8,20 @@ import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.in;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
 
@@ -24,7 +34,6 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
   }
 
   @Test
-
   public void verifyDriverAndDatabaseVersions() throws SQLException {
 
     assertEquals("memory:test", metaData.getURL());
@@ -42,7 +51,6 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
   }
 
   @Test
-
   public void shouldRetrievePrimaryKeysMetadata() throws SQLException {
 
     ResultSet primaryKeys = metaData.getPrimaryKeys(null, null, "Item");
@@ -59,7 +67,6 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
   }
 
   @Test
-
   public void shouldRetrieveTableTypes() throws SQLException {
 
     ResultSet tableTypes = metaData.getTableTypes();
@@ -73,7 +80,6 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
   }
 
   @Test
-
   public void shouldRetrieveKeywords() throws SQLException {
 
     final String keywordsStr = metaData.getSQLKeywords();
@@ -82,26 +88,43 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
   }
 
   @Test
+  public void shouldRetrieveUniqueIndexInfoForTable() throws Exception {
+
+    ResultSet indexInfo = metaData.getIndexInfo("test", "test", "Item", true, false);
+
+    indexInfo.next();
+
+    assertThat(indexInfo.getString("INDEX_NAME")).isEqualTo("Item.intKey");
+    assertThat(indexInfo.getBoolean("NON_UNIQUE")).isFalse();
+
+    indexInfo.next();
+
+    assertThat(indexInfo.getString("INDEX_NAME")).isEqualTo("Item.stringKey");
+    assertThat(indexInfo.getBoolean("NON_UNIQUE")).isFalse();
+
+  }
+
+  @Test
   public void getFields() throws SQLException {
     ResultSet rs = conn.createStatement().executeQuery("select from OUser");
 
-    ResultSetMetaData metaData = rs.getMetaData();
+    ResultSetMetaData rsMetaData = rs.getMetaData();
 
-    int cc = metaData.getColumnCount();
+    int cc = rsMetaData.getColumnCount();
     Set<String> colset = new HashSet<String>();
     List<Map<String, Object>> columns = new ArrayList<Map<String, Object>>(cc);
     for (int i = 1; i <= cc; i++) {
-      String name = metaData.getColumnLabel(i);
-      if (colset.contains(name))
-        continue;
+      String name = rsMetaData.getColumnLabel(i);
+      //      if (colset.contains(name))
+      //        continue;
       colset.add(name);
       Map<String, Object> field = new HashMap<String, Object>();
       field.put("name", name);
 
       try {
-        String catalog = metaData.getCatalogName(i);
-        String schema = metaData.getSchemaName(i);
-        String table = metaData.getTableName(i);
+        String catalog = rsMetaData.getCatalogName(i);
+        String schema = rsMetaData.getSchemaName(i);
+        String table = rsMetaData.getTableName(i);
         ResultSet rsmc = conn.getMetaData().getColumns(catalog, schema, table, name);
         while (rsmc.next()) {
           field.put("description", rsmc.getString("REMARKS"));
@@ -119,7 +142,6 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
   }
 
   @Test
-
   public void shouldFetchAllTables() throws SQLException {
     ResultSet rs = this.metaData.getTables(null, null, null, null);
     int tableCount = rsSizeOf(rs);
@@ -135,6 +157,17 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
       tableCount++;
     }
     return tableCount;
+  }
+
+  @Test
+  public void shouldFillSchemaAndCatalogWithDatabaseName() throws SQLException {
+    ResultSet rs = this.metaData.getTables(null, null, null, null);
+
+    while (rs.next()) {
+      assertThat(rs.getString("TABLE_SCHEM")).isEqualTo("test");
+      assertThat(rs.getString("TABLE_CAT")).isEqualTo("test");
+    }
+
   }
 
   @Test
@@ -165,7 +198,6 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
   }
 
   @Test
-
   public void shouldGetSingleColumnOfArticle() throws SQLException {
     ResultSet rs = this.metaData.getColumns(null, null, "Article", "uuid");
 
@@ -173,7 +205,6 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
   }
 
   @Test
-
   public void shouldGetAllColumnsOfArticle() throws SQLException {
     ResultSet rs = this.metaData.getColumns(null, null, "Article", null);
 
@@ -181,7 +212,6 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
   }
 
   @Test
-
   //FIXME this is not a test: what is the target?
   public void shouldGetAllFields() throws SQLException {
     ResultSet rsmc = conn.getMetaData().getColumns(null, null, "OUser", null);

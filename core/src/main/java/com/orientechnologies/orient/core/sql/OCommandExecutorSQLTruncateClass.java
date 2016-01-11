@@ -48,45 +48,56 @@ public class OCommandExecutorSQLTruncateClass extends OCommandExecutorSQLAbstrac
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLTruncateClass parse(final OCommandRequest iRequest) {
-    final ODatabaseDocument database = getDatabase();
+    final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
 
-    init((OCommandRequestText) iRequest);
+    String queryText = textRequest.getText();
+    String originalQuery = queryText;
+    try {
+      queryText = preParse(queryText, iRequest);
+      textRequest.setText(queryText);
 
-    StringBuilder word = new StringBuilder();
+      final ODatabaseDocument database = getDatabase();
 
-    int oldPos = 0;
-    int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_TRUNCATE))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_TRUNCATE + " not found. Use " + getSyntax(), parserText, oldPos);
+      init((OCommandRequestText) iRequest);
 
-    oldPos = pos;
-    pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_CLASS))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLASS + " not found. Use " + getSyntax(), parserText, oldPos);
+      StringBuilder word = new StringBuilder();
 
-    oldPos = pos;
-    pos = nextWord(parserText, parserText, oldPos, word, true);
-    if (pos == -1)
-      throw new OCommandSQLParsingException("Expected class name. Use " + getSyntax(), parserText, oldPos);
+      int oldPos = 0;
+      int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
+      if (pos == -1 || !word.toString().equals(KEYWORD_TRUNCATE))
+        throw new OCommandSQLParsingException("Keyword " + KEYWORD_TRUNCATE + " not found. Use " + getSyntax(), parserText, oldPos);
 
-    final String className = word.toString();
-    schemaClass = database.getMetadata().getSchema().getClass(className);
+      oldPos = pos;
+      pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
+      if (pos == -1 || !word.toString().equals(KEYWORD_CLASS))
+        throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLASS + " not found. Use " + getSyntax(), parserText, oldPos);
 
-    if (schemaClass == null)
-      throw new OCommandSQLParsingException("Class '" + className + "' not found", parserText, oldPos);
-
-    oldPos = pos;
-    pos = nextWord(parserText, parserText, oldPos, word, true);
-
-    while (pos > 0) {
-      String nextWord = word.toString();
-      if (nextWord.toUpperCase().equals(KEYWORD_UNSAFE)) {
-        unsafe = true;
-      } else if (nextWord.toUpperCase().equals(KEYWORD_POLYMORPHIC)) {
-        deep = true;
-      }
       oldPos = pos;
       pos = nextWord(parserText, parserText, oldPos, word, true);
+      if (pos == -1)
+        throw new OCommandSQLParsingException("Expected class name. Use " + getSyntax(), parserText, oldPos);
+
+      final String className = word.toString();
+      schemaClass = database.getMetadata().getSchema().getClass(className);
+
+      if (schemaClass == null)
+        throw new OCommandSQLParsingException("Class '" + className + "' not found", parserText, oldPos);
+
+      oldPos = pos;
+      pos = nextWord(parserText, parserText, oldPos, word, true);
+
+      while (pos > 0) {
+        String nextWord = word.toString();
+        if (nextWord.toUpperCase().equals(KEYWORD_UNSAFE)) {
+          unsafe = true;
+        } else if (nextWord.toUpperCase().equals(KEYWORD_POLYMORPHIC)) {
+          deep = true;
+        }
+        oldPos = pos;
+        pos = nextWord(parserText, parserText, oldPos, word, true);
+      }
+    } finally {
+      textRequest.setText(originalQuery);
     }
 
     return this;

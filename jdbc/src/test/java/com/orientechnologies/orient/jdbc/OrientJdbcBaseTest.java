@@ -4,7 +4,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 
 import java.io.File;
 import java.sql.DriverManager;
@@ -12,17 +11,10 @@ import java.util.Properties;
 
 import static com.orientechnologies.orient.jdbc.OrientDbCreationHelper.createSchemaDB;
 import static com.orientechnologies.orient.jdbc.OrientDbCreationHelper.loadDB;
-import static java.lang.Class.forName;
 
 public abstract class OrientJdbcBaseTest {
 
   protected OrientJdbcConnection conn;
-
-  @BeforeClass
-  public static void loadDriver() throws ClassNotFoundException {
-//    forName(OrientJdbcDriver.class.getName());
-
-  }
 
   @Before
   public void prepareDatabase() throws Exception {

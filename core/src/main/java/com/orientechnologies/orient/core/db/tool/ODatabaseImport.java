@@ -70,7 +70,6 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 
@@ -1150,7 +1149,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           .equalsIgnoreCase(OMetadataDefault.CLUSTER_INTERNAL_NAME) || name
           .equalsIgnoreCase(OMetadataDefault.CLUSTER_INDEX_NAME))) {
         if (!merge)
-          database.command(new OCommandSQL("truncate cluster " + name)).execute();
+          database.command(new OCommandSQL("truncate cluster `" + name + "`")).execute();
 
         for (OIndex existingIndex : database.getMetadata().getIndexManager().getIndexes()) {
           if (existingIndex.getClusters().contains(name)) {

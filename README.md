@@ -1,5 +1,8 @@
 ## OrientDB
 
+master branch <img src="http://helios.orientdb.com/buildStatus/icon?job=orientdb-master-ci&img.png"/>, develop branch <img src="http://helios.orientdb.com/buildStatus/icon?job=orientdb-develop&img.png"/>
+
+
 <img src="http://orientdb.com/orientdb-studio_800px.png">
 
 ## What is OrientDB?

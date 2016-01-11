@@ -230,6 +230,10 @@ TOKEN:
 	|
 	< OFF: ( "o" | "O" ) ( "f" | "F" ) ( "f" | "F" ) >
 	|
+	< TRUNCATE: ( "t" | "T" ) ( "r" | "R" ) ( "u" | "U" ) ( "n" | "N" ) ( "c" | "C" ) ( "a" | "A" ) ( "t" | "T" ) ( "e" | "E" ) >
+	|
+	< POLYMORPHIC: ( "p" | "P" ) ( "o" | "O" ) ( "l" | "L" ) ( "y" | "Y" ) ( "m" | "M" ) ( "o" | "O" ) ( "r" | "R" ) ( "p" | "P" ) ( "h" | "H" ) ( "i" | "I" ) ( "c" | "C" ) >
+	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
 	< RECORD_ATTRIBUTE: <RID_ATTR> | <CLASS_ATTR> | <VERSION_ATTR> | <SIZE_ATTR> | <TYPE_ATTR> | <RAW_ATTR> | <RID_ID_ATTR> | <RID_POS_ATTR> | <FIELDS_ATTR> >
@@ -540,159 +544,9 @@ OIdentifier Identifier():
     |
     token = <OFF>
     |
+    token = <TRUNCATE>
+    |
     quotedToken = <QUOTED_IDENTIFIER>
-    /*
-    (
-    //TODO REPLACE THIS WITH <QUOTED_IDENTIFIER>
-        <BACKTICK>
-        (
-            token = <IDENTIFIER>
-            |
-            token = <SELECT>
-            |
-            token = <TRAVERSE>
-            |
-            token = <INSERT>
-            |
-            token = <CREATE>
-            |
-            token = <DELETE>
-            |
-            token = <VERTEX>
-            |
-            token = <EDGE>
-            |
-            token = <UPDATE>
-            |
-            token = <UPSERT>
-            |
-            token = <FROM>
-            |
-            token = <TO>
-            |
-            token = <WHERE>
-            |
-            token = <WHILE>
-            |
-            token = <INTO>
-            |
-            token = <VALUES>
-            |
-            token = <SET>
-            |
-            token = <ADD>
-            |
-            token = <PUT>
-            |
-            token = <MERGE>
-            |
-            token = <CONTENT>
-            |
-            token = <REMOVE>
-            |
-            token = <INCREMENT>
-            |
-            token = <AND>
-            |
-            token = <OR>
-            |
-            token = <NULL>
-            |
-            token = <DEFINED>
-            |
-            token = <ORDER>
-            |
-            token = <GROUP>
-            |
-            token = <BY>
-            |
-            token = <LIMIT>
-            |
-            token = <SKIP2>
-            |
-            token = <OFFSET>
-            |
-            token = <TIMEOUT>
-            |
-            token = <ASC>
-            |
-            token = <AS>
-            |
-            token = <DESC>
-            |
-            token = <FETCHPLAN>
-            |
-            token = <RETURN>
-            |
-            token = <BEFORE>
-            |
-            token = <AFTER>
-            |
-            token = <LOCK>
-            |
-            token = <RECORD>
-            |
-            token = <WAIT>
-            |
-            token = <RETRY>
-            |
-            token = <LET>
-            |
-            token = <NOCACHE>
-            |
-            token = <UNSAFE>
-            |
-            token = <PARALLEL>
-            |
-            token = <STRATEGY>
-            |
-            token = <DEPTH_FIRST>
-            |
-            token = <BREADTH_FIRST>
-            |
-            token = <LUCENE>
-            |
-            token = <NEAR>
-            |
-            token = <WITHIN>
-            |
-            token = <UNWIND>
-            |
-            token = <MAXDEPTH>
-            |
-            token = <NOT>
-            |
-            token = <IN>
-            |
-            token = <LIKE>
-            |
-            token = <IS>
-            |
-            token = <BETWEEN>
-            |
-            token = <CONTAINS>
-            |
-            token = <CONTAINSALL>
-            |
-            token = <CONTAINSKEY>
-            |
-            token = <CONTAINSVALUE>
-            |
-            token = <CONTAINSTEXT>
-            |
-            token = <MATCHES>
-            |
-            token = <KEY>
-            |
-            token = <INSTANCEOF>
-            |
-            token = <CLUSTER>
-            |
-            token = <EXCEPTION>
-        )
-        <BACKTICK>
-    )
-    */
 ) {
 
     if(token!=null){
@@ -796,6 +650,13 @@ OStatement Statement():
 		result = MatchStatement()
 		|
 		result = ProfileStorageStatement()
+		|
+		LOOKAHEAD(TruncateClassStatement())
+		result = TruncateClassStatement()
+		|
+		LOOKAHEAD(TruncateClusterStatement())
+        result = TruncateClusterStatement()
+
 
 	) [ <SEMICOLON> ]
 	{
@@ -3414,4 +3275,27 @@ OProfileStorageStatement ProfileStorageStatement():
 		<OFF> {jjtThis.on = false;}
 	)
 	{return jjtThis;}
+}
+
+OTruncateClassStatement TruncateClassStatement():
+{}
+{
+	<TRUNCATE> <CLASS>
+	jjtThis.className = Identifier()
+	[ <POLYMORPHIC> {jjtThis.polymorphic = true;} ]
+	[ <UNSAFE> {jjtThis.unsafe = true;} ]
+	{ return jjtThis; }
+}
+
+OTruncateClusterStatement TruncateClusterStatement():
+{}
+{
+	<TRUNCATE> <CLUSTER>
+	(
+		jjtThis.clusterName = Identifier()
+		|
+		jjtThis.clusterNumber = Integer()
+	)
+	[ <UNSAFE> {jjtThis.unsafe = true;} ]
+	{ return jjtThis; }
 }

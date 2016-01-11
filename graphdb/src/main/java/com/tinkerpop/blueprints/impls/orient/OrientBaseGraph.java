@@ -1210,6 +1210,13 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   }
 
   /**
+   * begins current transaction (if the graph is transactional)
+   */
+  public void begin() {
+    makeActive();
+  }
+
+  /**
    * Commits the current active transaction.
    */
   public void commit() {

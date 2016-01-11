@@ -134,6 +134,8 @@ public interface OrientSqlTreeConstants
   public int JJTINPATHITEMOPT = 128;
   public int JJTBOTHPATHITEMOPT = 129;
   public int JJTPROFILESTORAGESTATEMENT = 130;
+  public int JJTTRUNCATECLASSSTATEMENT = 131;
+  public int JJTTRUNCATECLUSTERSTATEMENT = 132;
 
 
   public String[] jjtNodeName = {
@@ -268,6 +270,8 @@ public interface OrientSqlTreeConstants
     "InPathItemOpt",
     "BothPathItemOpt",
     "ProfileStorageStatement",
+    "TruncateClassStatement",
+    "TruncateClusterStatement",
   };
 }
-/* JavaCC - OriginalChecksum=926d17141b0f6bebfe375776915cc889 (do not edit this line) */
+/* JavaCC - OriginalChecksum=ad7a7d9c8ce3638be0f003c773f2c2cd (do not edit this line) */
