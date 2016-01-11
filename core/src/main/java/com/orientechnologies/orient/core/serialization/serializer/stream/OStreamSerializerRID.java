@@ -19,6 +19,8 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.stream;
 
+import java.io.IOException;
+
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -26,8 +28,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.PointerWrapper;
-
-import java.io.IOException;
 
 public class OStreamSerializerRID implements OStreamSerializer, OBinarySerializer<OIdentifiable> {
   public static final String               NAME     = "p";

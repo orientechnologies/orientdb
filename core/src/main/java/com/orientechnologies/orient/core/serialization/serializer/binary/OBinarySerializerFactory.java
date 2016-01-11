@@ -31,7 +31,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OSimpleKeySerializer;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerListRID;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerOldRIDContainer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerRID;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerSBTreeIndexRIDContainer;
@@ -79,7 +78,6 @@ public class OBinarySerializerFactory {
     factory.registerSerializer(OBinaryTypeSerializer.INSTANCE, OType.BINARY);
     factory.registerSerializer(ODecimalSerializer.INSTANCE, OType.DECIMAL);
 
-    factory.registerSerializer(OStreamSerializerListRID.INSTANCE, null);
     factory.registerSerializer(OStreamSerializerOldRIDContainer.INSTANCE, null);
 
     factory.registerSerializer(OStreamSerializerSBTreeIndexRIDContainer.INSTANCE, null);
