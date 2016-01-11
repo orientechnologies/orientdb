@@ -64,14 +64,11 @@ import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OClassIndexManager;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexAbstract;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
-import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.function.OFunctionTrigger;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.*;
@@ -114,13 +111,6 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.Callable;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.Callable;
-
 @SuppressWarnings("unchecked")
 public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>implements ODatabaseDocumentInternal {
 
@@ -151,7 +141,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
   private byte                                              recordType;
   @Deprecated
   private String                                            recordFormat;
-  private Map<ORecordHook, ORecordHook.HOOK_POSITION>       hooks           = new LinkedHashMap<ORecordHook, ORecordHook.HOOK_POSITION>();
+  private final Map<ORecordHook, ORecordHook.HOOK_POSITION> hooks           = new LinkedHashMap<ORecordHook, ORecordHook.HOOK_POSITION>();
   private boolean                                           retainRecords   = true;
   private OLocalRecordCache                                 localCache;
   private boolean                                           mvcc;
@@ -394,7 +384,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
       getStorage().getConfiguration().setRecordSerializer(getSerializer().toString());
       getStorage().getConfiguration().setRecordSerializerVersion(getSerializer().getCurrentVersion());
 
-      // since 2.1 newly created databases use strinct SQL validation by default
+      // since 2.1 newly created databases use strict SQL validation by default
       getStorage().getConfiguration().setProperty(OStatement.CUSTOM_STRICT_SQL, "true");
 
       getStorage().getConfiguration().update();
@@ -475,7 +465,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
   }
 
   /**
-   * Returns a copy of current database if it's open. The retuned instance can be used by another thread without affecting current
+   * Returns a copy of current database if it's open. The returned instance can be used by another thread without affecting current
    * instance. The database copy is not set in thread local.
    */
   public ODatabaseDocumentTx copy() {
@@ -869,6 +859,10 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
     this.status = status;
   }
 
+  /**
+   * Deprecated since v2.2
+   */
+  @Deprecated
   public void setDefaultClusterIdInternal(final int iDefClusterId) {
     checkIfActive();
     getStorage().setDefaultClusterId(iDefClusterId);
@@ -1122,7 +1116,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
       return;
     }
 
-
     try {
       commit(true);
     } catch (Exception e) {
@@ -1372,6 +1365,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
       throw new IllegalArgumentException("Database type cannot be changed at run-time");
 
     case DATEFORMAT:
+      if (stringValue == null)
+        throw new IllegalArgumentException("date format is null");
+
       // CHECK FORMAT
       new SimpleDateFormat(stringValue).format(new Date());
 
@@ -1380,6 +1376,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
       break;
 
     case DATETIMEFORMAT:
+      if (stringValue == null)
+        throw new IllegalArgumentException("date format is null");
+
       // CHECK FORMAT
       new SimpleDateFormat(stringValue).format(new Date());
 
@@ -1658,7 +1657,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
 
       final Set<ORecord> records = new HashSet<ORecord>(iRids.size() > 0 ? iRids.size() : 1);
 
-      if (iRids == null || iRids.isEmpty())
+      if (iRids.isEmpty())
         return records;
 
       final Collection<ORecordId> rids = new ArrayList<ORecordId>(iRids);
@@ -1866,8 +1865,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
       throw new ODatabaseException(
           "Cannot create record because it has no identity. Probably is not a regular record or contains projections of fields rather than a full record");
 
-    final Set<OIndex<?>> lockedIndexes = new HashSet<OIndex<?>>();
-
     record.setInternalStatus(ORecordElement.STATUS.MARSHALLING);
     try {
       final boolean wasNew = forceCreate || rid.isNew();
@@ -1886,7 +1883,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
       byte[] stream = null;
       final OStorageOperationResult<Integer> operationResult;
 
-      ((OMetadataInternal) getMetadata()).makeThreadLocalSchemaSnapshot();
+      getMetadata().makeThreadLocalSchemaSnapshot();
       if (record instanceof ODocument)
         ODocumentInternal.checkClass((ODocument) record, this);
       ORecordSerializationContext.pushContext();
@@ -2017,7 +2014,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
     checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_DELETE, getClusterNameById(rid.clusterId));
 
     ORecordSerializationContext.pushContext();
-    ((OMetadataInternal) getMetadata()).makeThreadLocalSchemaSnapshot();
+    getMetadata().makeThreadLocalSchemaSnapshot();
     try {
       if (record instanceof ODocument) {
         ODocumentInternal.checkClass((ODocument) record, this);
@@ -2069,7 +2066,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
       }
     } finally {
       ORecordSerializationContext.pullContext();
-      ((OMetadataInternal) getMetadata()).clearThreadLocalSchemaSnapshot();
+      getMetadata().clearThreadLocalSchemaSnapshot();
     }
   }
 
@@ -2093,7 +2090,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
 
     checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_DELETE, getClusterNameById(rid.clusterId));
 
-    ((OMetadataInternal) getMetadata()).makeThreadLocalSchemaSnapshot();
+    getMetadata().makeThreadLocalSchemaSnapshot();
     if (record instanceof ODocument)
       ODocumentInternal.checkClass((ODocument) record, this);
     ORecordSerializationContext.pushContext();
@@ -2109,7 +2106,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
       return operationResult.getResult();
     } finally {
       ORecordSerializationContext.pullContext();
-      ((OMetadataInternal) getMetadata()).clearThreadLocalSchemaSnapshot();
+      getMetadata().clearThreadLocalSchemaSnapshot();
     }
   }
 
@@ -2179,7 +2176,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
 
     final long startTime = Orient.instance().getProfiler().startChrono();
 
-    final Collection<? extends OIndex<?>> indexes = getMetadata().getIndexManager().getIndexes();
     final OFreezableStorage storage = getFreezableStorage();
     if (storage != null) {
       storage.freeze(throwException);
@@ -2544,7 +2540,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
    * Returns the number of the records of the class iClassName considering also sub classes if polymorphic is true.
    */
   public long countClass(final String iClassName, final boolean iPolymorphic) {
-    final OClass cls = ((OMetadataInternal) getMetadata()).getImmutableSchemaSnapshot().getClass(iClassName);
+    final OClass cls = getMetadata().getImmutableSchemaSnapshot().getClass(iClassName);
 
     if (cls == null)
       throw new IllegalArgumentException("Class '" + iClassName + "' not found in database");
@@ -2868,16 +2864,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
     return db == this;
   }
 
-  protected void checkTransaction() {
-    if (currentTx == null || currentTx.getStatus() == OTransaction.TXSTATUS.INVALID)
-      throw new OTransactionException("Transaction not started");
-  }
-
-  @Deprecated
-  protected ORecordSerializer resolveFormat(final Object iObject) {
-    return ORecordSerializerFactory.instance().getFormatForObject(iObject, recordFormat);
-  }
-
   protected void checkOpeness() {
     if (isClosed())
       throw new ODatabaseException("Database '" + getURL() + "' is closed");
@@ -3032,7 +3018,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
     if (rid.clusterId > -1 && getStorageVersions().classesAreDetectedByClusterId() && isNew && record instanceof ODocument) {
       final ODocument recordSchemaAware = (ODocument) record;
       final OClass recordClass = ODocumentInternal.getImmutableSchemaClass(recordSchemaAware);
-      final OClass clusterIdClass = ((OMetadataInternal) metadata).getImmutableSchemaSnapshot().getClassByClusterId(rid.clusterId);
+      final OClass clusterIdClass = metadata.getImmutableSchemaSnapshot().getClassByClusterId(rid.clusterId);
       if (recordClass == null && clusterIdClass != null || clusterIdClass == null && recordClass != null
           || (recordClass != null && !recordClass.equals(clusterIdClass)))
         throw new OSchemaException("Record saved into cluster '" + iClusterName + "' should be saved with class '" + clusterIdClass
@@ -3060,12 +3046,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
     else {
       OLogManager.instance().error(this, "Storage of type " + s.getType() + " does not support freeze operation");
       return null;
-    }
-  }
-
-  private void flushIndexes(final List<OIndexAbstract<?>> indexesToFlush) {
-    for (OIndexAbstract<?> index : indexesToFlush) {
-      index.flush();
     }
   }
 
