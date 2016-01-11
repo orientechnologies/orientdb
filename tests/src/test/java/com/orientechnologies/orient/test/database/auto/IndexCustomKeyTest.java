@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OBinaryTypeSerializer;
 import com.orientechnologies.orient.core.exception.OSerializationException;
@@ -134,23 +133,6 @@ public class IndexCustomKeyTest extends DocumentDBBaseTest {
     public ComparableBinary deserializeNativeObject(byte[] stream, int startPosition) {
       return deserialize(stream, startPosition);
     }
-
-    @Override
-    public void serializeInDirectMemoryObject(ComparableBinary object, ODirectMemoryPointer pointer, long offset, Object... hints) {
-      final byte[] buffer = object.toByteArray();
-      pointer.set(offset, buffer, 0, buffer.length);
-    }
-
-    @Override
-    public ComparableBinary deserializeFromDirectMemoryObject(ODirectMemoryPointer pointer, long offset) {
-      return new ComparableBinary(pointer.get(offset, LENGTH));
-    }
-
-    @Override
-    public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
-      return LENGTH;
-    }
-
 
     @Override
     public boolean isFixedLength() {

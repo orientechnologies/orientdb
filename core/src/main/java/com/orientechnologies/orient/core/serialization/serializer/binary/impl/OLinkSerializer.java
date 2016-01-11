@@ -20,7 +20,6 @@
 
 package com.orientechnologies.orient.core.serialization.serializer.binary.impl;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.serialization.types.OShortSerializer;
@@ -87,37 +86,6 @@ public class OLinkSerializer implements OBinarySerializer<OIdentifiable> {
     // Wrong implementation but needed for binary compatibility should be used deserializeNative
     final long clusterPosition = OLongSerializer.INSTANCE.deserialize(stream, startPosition + OShortSerializer.SHORT_SIZE);
     return new ORecordId(clusterId, clusterPosition);
-  }
-
-  @Override
-  public void serializeInDirectMemoryObject(OIdentifiable rid, ODirectMemoryPointer pointer, long offset, Object... hints) {
-    final ORID r = rid.getIdentity();
-
-    OShortSerializer.INSTANCE.serializeInDirectMemory((short) r.getClusterId(), pointer, offset);
-    // Wrong implementation but needed for binary compatibility
-    byte[] stream = new byte[OLongSerializer.LONG_SIZE];
-    OLongSerializer.INSTANCE.serialize(r.getClusterPosition(), stream, 0);
-    pointer.set(offset + OShortSerializer.SHORT_SIZE, stream, 0, OLongSerializer.LONG_SIZE);
-    // OLongSerializer.INSTANCE.serializeInDirectMemory(r.getClusterPosition(), pointer, offset + OShortSerializer.SHORT_SIZE);
-  }
-
-  @Override
-  public OIdentifiable deserializeFromDirectMemoryObject(ODirectMemoryPointer pointer, long offset) {
-    final int clusterId = OShortSerializer.INSTANCE.deserializeFromDirectMemory(pointer, offset);
-
-    // Wrong implementation but needed for binary compatibility
-    final long clusterPosition = OLongSerializer.INSTANCE.deserialize(
-        pointer.get(offset + OShortSerializer.SHORT_SIZE, OLongSerializer.LONG_SIZE), 0);
-
-    // final long clusterPosition = OLongSerializer.INSTANCE
-    // .deserializeFromDirectMemory(pointer, offset + OShortSerializer.SHORT_SIZE);
-
-    return new ORecordId(clusterId, clusterPosition);
-  }
-
-  @Override
-  public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
-    return RID_SIZE;
   }
 
   public boolean isFixedLength() {

@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.stream;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
@@ -83,21 +82,6 @@ public class OStreamSerializerRID implements OStreamSerializer, OBinarySerialize
 
   public OIdentifiable deserializeNativeObject(byte[] stream, int startPosition) {
     return OLinkSerializer.INSTANCE.deserializeNativeObject(stream, startPosition);
-  }
-
-  @Override
-  public void serializeInDirectMemoryObject(OIdentifiable object, ODirectMemoryPointer pointer, long offset, Object... hints) {
-    OLinkSerializer.INSTANCE.serializeInDirectMemoryObject(object, pointer, offset);
-  }
-
-  @Override
-  public OIdentifiable deserializeFromDirectMemoryObject(ODirectMemoryPointer pointer, long offset) {
-    return OLinkSerializer.INSTANCE.deserializeFromDirectMemoryObject(pointer, offset);
-  }
-
-  @Override
-  public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
-    return OLinkSerializer.INSTANCE.getObjectSizeInDirectMemory(pointer, offset);
   }
 
   public boolean isFixedLength() {

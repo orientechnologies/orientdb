@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.stream;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OBooleanSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -175,68 +174,6 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
   @Override
   public int getObjectSizeNative(byte[] stream, int startPosition) {
     throw new UnsupportedOperationException("not implemented yet");
-  }
-
-  @Override
-  public void serializeInDirectMemoryObject(OIndexRIDContainer object, ODirectMemoryPointer pointer, long offset, Object... hints) {
-    LONG_SERIALIZER.serializeInDirectMemory(object.getFileId(), pointer, offset + FILE_ID_OFFSET);
-
-    final boolean embedded = object.isEmbedded();
-    final boolean durable = object.isDurableNonTxMode();
-
-    BOOLEAN_SERIALIZER.serializeInDirectMemoryObject(embedded, pointer, offset + EMBEDDED_OFFSET);
-    BOOLEAN_SERIALIZER.serializeInDirectMemoryObject(durable, pointer, offset + DURABLE_OFFSET);
-
-    if (embedded) {
-      INT_SERIALIZER.serializeInDirectMemory(object.size(), pointer, offset + EMBEDDED_SIZE_OFFSET);
-
-      long p = offset + EMBEDDED_VALUES_OFFSET;
-      for (OIdentifiable ids : object) {
-        LINK_SERIALIZER.serializeInDirectMemoryObject(ids, pointer, p);
-        p += RID_SIZE;
-      }
-    } else {
-      final OIndexRIDContainerSBTree underlying = (OIndexRIDContainerSBTree) object.getUnderlying();
-      final OBonsaiBucketPointer rootPointer = underlying.getRootPointer();
-      LONG_SERIALIZER.serializeInDirectMemory(rootPointer.getPageIndex(), pointer, offset + SBTREE_ROOTINDEX_OFFSET);
-      INT_SERIALIZER.serializeInDirectMemory(rootPointer.getPageOffset(), pointer, offset + SBTREE_ROOTOFFSET_OFFSET);
-    }
-  }
-
-  @Override
-  public OIndexRIDContainer deserializeFromDirectMemoryObject(ODirectMemoryPointer pointer, long offset) {
-    final long fileId = LONG_SERIALIZER.deserializeFromDirectMemory(pointer, offset + FILE_ID_OFFSET);
-    final boolean durable = BOOLEAN_SERIALIZER.deserializeFromDirectMemory(pointer, offset + DURABLE_OFFSET);
-
-    if (BOOLEAN_SERIALIZER.deserializeFromDirectMemory(pointer, offset + EMBEDDED_OFFSET)) {
-      final int size = INT_SERIALIZER.deserializeFromDirectMemory(pointer, offset + EMBEDDED_SIZE_OFFSET);
-      final Set<OIdentifiable> underlying = new HashSet<OIdentifiable>(Math.max((int) (size / .75f) + 1, 16));
-
-      long p = offset + EMBEDDED_VALUES_OFFSET;
-      for (int i = 0; i < size; i++) {
-        underlying.add(LINK_SERIALIZER.deserializeFromDirectMemoryObject(pointer, p));
-        p += RID_SIZE;
-      }
-
-      return new OIndexRIDContainer(fileId, underlying, durable);
-    } else {
-      final long pageIndex = LONG_SERIALIZER.deserializeFromDirectMemory(pointer, offset + SBTREE_ROOTINDEX_OFFSET);
-      final int pageOffset = INT_SERIALIZER.deserializeFromDirectMemory(pointer, offset + SBTREE_ROOTOFFSET_OFFSET);
-      final OBonsaiBucketPointer rootPointer = new OBonsaiBucketPointer(pageIndex, pageOffset);
-      final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
-      final OIndexRIDContainerSBTree underlying = new OIndexRIDContainerSBTree(fileId, rootPointer, durable,
-          (OAbstractPaginatedStorage) db.getStorage().getUnderlying());
-      return new OIndexRIDContainer(fileId, underlying, durable);
-    }
-  }
-
-  @Override
-  public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
-    if (BOOLEAN_SERIALIZER.deserializeFromDirectMemory(pointer, offset + EMBEDDED_OFFSET)) {
-      return embeddedObjectSerializedSize(INT_SERIALIZER.deserializeFromDirectMemory(pointer, offset + EMBEDDED_SIZE_OFFSET));
-    } else {
-      return SBTREE_CONTAINER_SIZE;
-    }
   }
 
   @Override

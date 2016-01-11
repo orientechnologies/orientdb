@@ -89,17 +89,6 @@ public class OIntegerSerializer implements OBinarySerializer<Integer> {
     return CONVERTER.getInt(stream, startPosition, ByteOrder.nativeOrder());
   }
 
-  @Override
-  public void serializeInDirectMemoryObject(final Integer object, final ODirectMemoryPointer pointer, final long offset,
-      final Object... hints) {
-    pointer.setInt(offset, object);
-  }
-
-  @Override
-  public Integer deserializeFromDirectMemoryObject(final ODirectMemoryPointer pointer, final long offset) {
-    return pointer.getInt(offset);
-  }
-
   public void serializeNative(int object, byte[] stream, int startPosition, Object... hints) {
     CONVERTER.putInt(stream, startPosition, object, ByteOrder.nativeOrder());
   }
@@ -115,11 +104,6 @@ public class OIntegerSerializer implements OBinarySerializer<Integer> {
 
   public int deserializeFromDirectMemory(final ODirectMemoryPointer pointer, final long offset) {
     return pointer.getInt(offset);
-  }
-
-  @Override
-  public int getObjectSizeInDirectMemory(final ODirectMemoryPointer pointer, final long offset) {
-    return INT_SIZE;
   }
 
   public boolean isFixedLength() {

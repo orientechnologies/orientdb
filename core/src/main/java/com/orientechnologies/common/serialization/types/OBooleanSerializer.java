@@ -93,29 +93,13 @@ public class OBooleanSerializer implements OBinarySerializer<Boolean> {
     pointer.setByte(offset, object ? (byte) 1 : 0);
   }
 
-  @Override
-  public void serializeInDirectMemoryObject(final Boolean object, final ODirectMemoryPointer pointer, final long offset,
-      final Object... hints) {
-    pointer.setByte(offset, object.booleanValue() ? (byte) 1 : 0);
-  }
-
   public void serializeInDirectMemory(final boolean object, final ODirectMemoryPointer pointer, final long offset,
       final Object... hints) {
     pointer.setByte(offset, object ? (byte) 1 : 0);
   }
 
-  @Override
-  public Boolean deserializeFromDirectMemoryObject(final ODirectMemoryPointer pointer, final long offset) {
-    return pointer.getByte(offset) > 0;
-  }
-
   public boolean deserializeFromDirectMemory(final ODirectMemoryPointer pointer, final long offset) {
     return pointer.getByte(offset) > 0;
-  }
-
-  @Override
-  public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
-    return BOOLEAN_SIZE;
   }
 
   public boolean isFixedLength() {

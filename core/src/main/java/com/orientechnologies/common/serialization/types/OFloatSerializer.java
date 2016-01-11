@@ -77,16 +77,6 @@ public class OFloatSerializer implements OBinarySerializer<Float> {
     return Float.intBitsToFloat(CONVERTER.getInt(stream, startPosition, ByteOrder.nativeOrder()));
   }
 
-  @Override
-  public void serializeInDirectMemoryObject(Float object, ODirectMemoryPointer pointer, long offset, Object... hints) {
-    pointer.setInt(offset, Float.floatToIntBits(object));
-  }
-
-  @Override
-  public Float deserializeFromDirectMemoryObject(ODirectMemoryPointer pointer, long offset) {
-    return Float.intBitsToFloat(pointer.getInt(offset));
-  }
-
   public void serializeNative(final float object, final byte[] stream, final int startPosition, final Object... hints) {
     CONVERTER.putInt(stream, startPosition, Float.floatToIntBits(object), ByteOrder.nativeOrder());
   }
@@ -102,11 +92,6 @@ public class OFloatSerializer implements OBinarySerializer<Float> {
 
   public float deserializeFromDirectMemory(final ODirectMemoryPointer pointer, final long offset) {
     return Float.intBitsToFloat(pointer.getInt(offset));
-  }
-
-  @Override
-  public int getObjectSizeInDirectMemory(final ODirectMemoryPointer pointer, final long offset) {
-    return FLOAT_SIZE;
   }
 
   public boolean isFixedLength() {

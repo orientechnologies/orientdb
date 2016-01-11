@@ -20,7 +20,6 @@
 
 package com.orientechnologies.common.serialization.types;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 
 import java.nio.ByteBuffer;
@@ -65,20 +64,6 @@ public class ONullSerializer implements OBinarySerializer<Object> {
 
   public Object deserializeNativeObject(byte[] stream, int startPosition) {
     return null;
-  }
-
-  @Override
-  public void serializeInDirectMemoryObject(Object object, ODirectMemoryPointer pointer, long offset, Object... hints) {
-  }
-
-  @Override
-  public Object deserializeFromDirectMemoryObject(ODirectMemoryPointer pointer, long offset) {
-    return null;
-  }
-
-  @Override
-  public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
-    return 0;
   }
 
   public boolean isFixedLength() {

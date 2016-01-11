@@ -20,7 +20,6 @@
 
 package com.orientechnologies.orient.core.serialization.serializer.binary.impl.index;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.ONullSerializer;
@@ -242,49 +241,6 @@ public class OCompositeKeySerializer implements OBinarySerializer<OCompositeKey>
     return compositeKey;
   }
 
-  @Override
-  public void serializeInDirectMemoryObject(OCompositeKey compositeKey, ODirectMemoryPointer pointer, long offset,
-      Object... hints) {
-    final OType[] types = getKeyTypes(hints);
-
-    final List<Object> keys = compositeKey.getKeys();
-    final int keysSize = keys.size();
-
-    final long oldStartOffset = offset;
-
-    offset += OIntegerSerializer.INT_SIZE;
-
-    pointer.setInt(offset, keysSize);
-
-    offset += OIntegerSerializer.INT_SIZE;
-
-    final OBinarySerializerFactory factory = OBinarySerializerFactory.getInstance();
-
-    for (int i = 0; i < keys.size(); i++) {
-      final Object key = keys.get(i);
-
-      OBinarySerializer<Object> binarySerializer;
-      if (key != null) {
-        final OType type;
-        if (types.length > i)
-          type = types[i];
-        else
-          type = OType.getTypeByClass(key.getClass());
-
-        binarySerializer = factory.getObjectSerializer(type);
-      } else
-        binarySerializer = ONullSerializer.INSTANCE;
-
-      pointer.setByte(offset, binarySerializer.getId());
-      offset += OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE;
-
-      binarySerializer.serializeInDirectMemoryObject(key, pointer, offset);
-      offset += binarySerializer.getObjectSize(key);
-    }
-
-    pointer.setInt(oldStartOffset, (int) (offset - oldStartOffset));
-  }
-
   private OType[] getKeyTypes(Object[] hints) {
     final OType[] types;
 
@@ -294,37 +250,6 @@ public class OCompositeKeySerializer implements OBinarySerializer<OCompositeKey>
       types = OCommonConst.EMPTY_TYPES_ARRAY;
     return types;
   }
-
-  @Override
-  public OCompositeKey deserializeFromDirectMemoryObject(ODirectMemoryPointer pointer, long offset) {
-    final OCompositeKey compositeKey = new OCompositeKey();
-
-    offset += OIntegerSerializer.INT_SIZE;
-
-    final int keysSize = pointer.getInt(offset);
-    offset += OIntegerSerializer.INT_SIZE;
-
-    final OBinarySerializerFactory factory = OBinarySerializerFactory.getInstance();
-    for (int i = 0; i < keysSize; i++) {
-      final byte serializerId = pointer.getByte(offset);
-      offset += OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE;
-
-      OBinarySerializer<Object> binarySerializer = (OBinarySerializer<Object>) factory.getObjectSerializer(serializerId);
-      final Object key = binarySerializer.deserializeFromDirectMemoryObject(pointer, offset);
-      compositeKey.addKey(key);
-
-      offset += binarySerializer.getObjectSize(key);
-    }
-
-    return compositeKey;
-  }
-
-
-  @Override
-  public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
-    return pointer.getInt(offset);
-  }
-
 
   public boolean isFixedLength() {
     return false;

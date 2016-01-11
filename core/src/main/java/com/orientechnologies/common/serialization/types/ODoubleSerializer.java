@@ -85,30 +85,13 @@ public class ODoubleSerializer implements OBinarySerializer<Double> {
     return Double.longBitsToDouble(CONVERTER.getLong(stream, startPosition, ByteOrder.nativeOrder()));
   }
 
-  @Override
-  public void serializeInDirectMemoryObject(final Double object, final ODirectMemoryPointer pointer, final long offset,
-      final Object... hints) {
-    pointer.setLong(offset, Double.doubleToLongBits(object));
-  }
-
   public void serializeInDirectMemory(final double object, final ODirectMemoryPointer pointer, final long offset,
       final Object... hints) {
     pointer.setLong(offset, Double.doubleToLongBits(object));
   }
 
-  @Override
-  public Double deserializeFromDirectMemoryObject(final ODirectMemoryPointer pointer, final long offset) {
-    return Double.longBitsToDouble(pointer.getLong(offset));
-  }
-
-
   public double deserializeFromDirectMemory(final ODirectMemoryPointer pointer, final long offset) {
     return Double.longBitsToDouble(pointer.getLong(offset));
-  }
-
-  @Override
-  public int getObjectSizeInDirectMemory(final ODirectMemoryPointer pointer, final long offset) {
-    return DOUBLE_SIZE;
   }
 
   public boolean isFixedLength() {

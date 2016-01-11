@@ -119,12 +119,6 @@ public interface OBinarySerializer<T> {
    */
   int getObjectSizeNative(byte[] stream, int startPosition);
 
-  void serializeInDirectMemoryObject(T object, ODirectMemoryPointer pointer, long offset, Object... hints);
-
-  T deserializeFromDirectMemoryObject(ODirectMemoryPointer pointer, long offset);
-
-  int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset);
-
   T preprocess(T value, Object... hints);
 
   void serializeInByteBufferObject(T object, ByteBuffer buffer, Object... hints);

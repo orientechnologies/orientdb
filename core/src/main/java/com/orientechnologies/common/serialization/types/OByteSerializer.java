@@ -89,27 +89,12 @@ public class OByteSerializer implements OBinarySerializer<Byte> {
     return stream[startPosition];
   }
 
-  @Override
-  public void serializeInDirectMemoryObject(final Byte object, ODirectMemoryPointer pointer, long offset, Object... hints) {
-    pointer.setByte(offset, object);
-  }
-
   public void serializeInDirectMemory(final byte object, ODirectMemoryPointer pointer, long offset, Object... hints) {
     pointer.setByte(offset, object);
   }
 
-  @Override
-  public Byte deserializeFromDirectMemoryObject(final ODirectMemoryPointer pointer, final long offset) {
-    return pointer.getByte(offset);
-  }
-
   public byte deserializeFromDirectMemory(final ODirectMemoryPointer pointer, final long offset) {
     return pointer.getByte(offset);
-  }
-
-  @Override
-  public int getObjectSizeInDirectMemory(final ODirectMemoryPointer pointer, final long offset) {
-    return BYTE_SIZE;
   }
 
   public boolean isFixedLength() {

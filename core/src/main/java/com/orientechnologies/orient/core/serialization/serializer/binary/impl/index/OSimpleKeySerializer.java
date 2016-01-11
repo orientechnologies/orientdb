@@ -20,7 +20,6 @@
 
 package com.orientechnologies.orient.core.serialization.serializer.binary.impl.index;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -127,30 +126,6 @@ public class OSimpleKeySerializer<T extends Comparable<?>> implements OBinarySer
 
     init(typeId);
     return (T) binarySerializer.deserializeNativeObject(stream, startPosition);
-  }
-
-  @Override
-  public void serializeInDirectMemoryObject(T object, ODirectMemoryPointer pointer, long offset, Object... hints) {
-    init(object, hints);
-    pointer.setByte(offset++, binarySerializer.getId());
-    binarySerializer.serializeInDirectMemoryObject(object, pointer, offset);
-  }
-
-  @Override
-  public T deserializeFromDirectMemoryObject(ODirectMemoryPointer pointer, long offset) {
-    final byte typeId = pointer.getByte(offset++);
-
-    init(typeId);
-    return (T) binarySerializer.deserializeFromDirectMemoryObject(pointer, offset);
-  }
-
-  @Override
-  public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
-    final byte serializerId = pointer.getByte(offset);
-    init(serializerId);
-    return OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE
-        + binarySerializer.getObjectSizeInDirectMemory(pointer, OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE + offset);
-
   }
 
   public boolean isFixedLength() {

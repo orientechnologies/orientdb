@@ -20,7 +20,6 @@
 
 package com.orientechnologies.common.serialization.types;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 
 import java.nio.ByteBuffer;
@@ -84,30 +83,6 @@ public class ODateSerializer implements OBinarySerializer<Date> {
   public Date deserializeNativeObject(byte[] stream, int startPosition) {
     ODateTimeSerializer dateTimeSerializer = ODateTimeSerializer.INSTANCE;
     return dateTimeSerializer.deserializeNativeObject(stream, startPosition);
-  }
-
-  @Override
-  public void serializeInDirectMemoryObject(final Date object, final ODirectMemoryPointer pointer, final long offset,
-      final Object... hints) {
-    final Calendar calendar = Calendar.getInstance();
-    calendar.setTime(object);
-    calendar.set(Calendar.HOUR_OF_DAY, 0);
-    calendar.set(Calendar.MINUTE, 0);
-    calendar.set(Calendar.SECOND, 0);
-    calendar.set(Calendar.MILLISECOND, 0);
-    final ODateTimeSerializer dateTimeSerializer = ODateTimeSerializer.INSTANCE;
-    dateTimeSerializer.serializeInDirectMemoryObject(calendar.getTime(), pointer, offset);
-  }
-
-  @Override
-  public Date deserializeFromDirectMemoryObject(final ODirectMemoryPointer pointer, final long offset) {
-    final ODateTimeSerializer dateTimeSerializer = ODateTimeSerializer.INSTANCE;
-    return dateTimeSerializer.deserializeFromDirectMemoryObject(pointer, offset);
-  }
-
-  @Override
-  public int getObjectSizeInDirectMemory(final ODirectMemoryPointer pointer, final long offset) {
-    return OLongSerializer.LONG_SIZE;
   }
 
   public boolean isFixedLength() {

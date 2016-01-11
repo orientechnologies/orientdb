@@ -101,22 +101,6 @@ public class OCharSerializer implements OBinarySerializer<Character> {
     return pointer.getChar(offset);
   }
 
-  @Override
-  public void serializeInDirectMemoryObject(final Character object, final ODirectMemoryPointer pointer, final long offset,
-      final Object... hints) {
-    pointer.setChar(offset, object);
-  }
-
-  @Override
-  public Character deserializeFromDirectMemoryObject(final ODirectMemoryPointer pointer, final long offset) {
-    return pointer.getChar(offset);
-  }
-
-  @Override
-  public int getObjectSizeInDirectMemory(final ODirectMemoryPointer pointer, final long offset) {
-    return CHAR_SIZE;
-  }
-
   public boolean isFixedLength() {
     return true;
   }

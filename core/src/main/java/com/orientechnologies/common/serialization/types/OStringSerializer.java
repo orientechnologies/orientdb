@@ -20,7 +20,6 @@
 
 package com.orientechnologies.common.serialization.types;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 
 import java.nio.ByteBuffer;
@@ -114,50 +113,6 @@ public class OStringSerializer implements OBinarySerializer<String> {
     }
 
     return new String(buffer);
-  }
-
-  @Override
-  public void serializeInDirectMemoryObject(String object, ODirectMemoryPointer pointer, long offset, Object... hints) {
-    int length = object.length();
-    pointer.setInt(offset, length);
-
-    offset += OIntegerSerializer.INT_SIZE;
-
-    byte[] binaryData = new byte[length * 2];
-    char[] stringContent = new char[length];
-
-    object.getChars(0, length, stringContent, 0);
-
-    int counter = 0;
-    for (char character : stringContent) {
-      binaryData[counter] = (byte) character;
-      counter++;
-
-      binaryData[counter] = (byte) (character >>> 8);
-      counter++;
-    }
-
-    pointer.set(offset, binaryData, 0, binaryData.length);
-  }
-
-  @Override
-  public String deserializeFromDirectMemoryObject(ODirectMemoryPointer pointer, long offset) {
-    int len = pointer.getInt(offset);
-
-    final char[] buffer = new char[len];
-    offset += OIntegerSerializer.INT_SIZE;
-
-    byte[] binaryData = pointer.get(offset, buffer.length * 2);
-
-    for (int i = 0; i < len; i++)
-      buffer[i] = (char) ((0xFF & binaryData[i << 1]) | ((0xFF & binaryData[(i << 1) + 1]) << 8));
-
-    return new String(buffer);
-  }
-
-  @Override
-  public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
-    return pointer.getInt(offset) * 2 + OIntegerSerializer.INT_SIZE;
   }
 
   public boolean isFixedLength() {

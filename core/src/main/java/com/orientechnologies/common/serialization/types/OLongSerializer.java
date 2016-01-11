@@ -95,17 +95,6 @@ public class OLongSerializer implements OBinarySerializer<Long> {
     return CONVERTER.getLong(stream, startPosition, ByteOrder.nativeOrder());
   }
 
-  @Override
-  public void serializeInDirectMemoryObject(final Long object, final ODirectMemoryPointer pointer, final long offset,
-      final Object... hints) {
-    pointer.setLong(offset, object);
-  }
-
-  @Override
-  public Long deserializeFromDirectMemoryObject(final ODirectMemoryPointer pointer, final long offset) {
-    return pointer.getLong(offset);
-  }
-
   public void serializeNative(final long object, final byte[] stream, final int startPosition, final Object... hints) {
     CONVERTER.putLong(stream, startPosition, object, ByteOrder.nativeOrder());
   }
@@ -121,11 +110,6 @@ public class OLongSerializer implements OBinarySerializer<Long> {
 
   public long deserializeFromDirectMemory(final ODirectMemoryPointer pointer, final long offset) {
     return pointer.getLong(offset);
-  }
-
-  @Override
-  public int getObjectSizeInDirectMemory(final ODirectMemoryPointer pointer, final long offset) {
-    return LONG_SIZE;
   }
 
   public boolean isFixedLength() {

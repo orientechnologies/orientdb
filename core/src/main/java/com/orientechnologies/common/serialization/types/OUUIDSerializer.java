@@ -23,7 +23,6 @@ package com.orientechnologies.common.serialization.types;
 import java.nio.ByteBuffer;
 import java.util.UUID;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 
 /**
@@ -88,26 +87,6 @@ public class OUUIDSerializer implements OBinarySerializer<UUID> {
 
   @Override
   public int getObjectSizeNative(final byte[] stream, final int startPosition) {
-    return UUID_SIZE;
-  }
-
-  @Override
-  public void serializeInDirectMemoryObject(UUID object, ODirectMemoryPointer pointer, long offset, Object... hints) {
-    OLongSerializer.INSTANCE.serializeInDirectMemory(object.getMostSignificantBits(), pointer, offset, hints);
-    OLongSerializer.INSTANCE
-        .serializeInDirectMemory(object.getLeastSignificantBits(), pointer, offset + OLongSerializer.LONG_SIZE, hints);
-  }
-
-  @Override
-  public UUID deserializeFromDirectMemoryObject(final ODirectMemoryPointer pointer, final long offset) {
-    final long mostSignificantBits = OLongSerializer.INSTANCE.deserializeFromDirectMemory(pointer, offset);
-    final long leastSignificantBits = OLongSerializer.INSTANCE
-        .deserializeFromDirectMemory(pointer, offset + OLongSerializer.LONG_SIZE);
-    return new UUID(mostSignificantBits, leastSignificantBits);
-  }
-
-  @Override
-  public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
     return UUID_SIZE;
   }
 
