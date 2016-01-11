@@ -76,7 +76,11 @@ public class OLuceneFullTextExpIndexEngine implements OLuceneIndexEngine, OOrien
   @Override
   public void init(String indexName, String indexType, OIndexDefinition indexDefinition, boolean isAutomatic,
       ODocument indexMetadata) {
+<<<<<<< HEAD
     this.name = indexName;
+=======
+    this.indexName = indexName;
+>>>>>>> origin/autosharding-index
     this.indexType = indexType;
     this.indexDefinition = indexDefinition;
     this.isAutomatic = isAutomatic;
@@ -157,6 +161,29 @@ public class OLuceneFullTextExpIndexEngine implements OLuceneIndexEngine, OOrien
 
   }
 
+<<<<<<< HEAD
+=======
+  private Set<OIdentifiable> getResults(Query query, OCommandContext context, Object key, OLuceneTxChanges changes) {
+    OLogManager.instance().info(this, "getResults:: " + query);
+
+    try {
+      IndexSearcher searcher = searcher();
+      QueryContext queryContext = new QueryContext(context, searcher, query).setChanges(changes);
+      // if (facetManager.supportsFacets()) {
+      // facetManager.addFacetContext(queryContext, key);
+      // }
+      OLuceneAbstractResultSet resultSet = LuceneResultSetFactory.INSTANCE.create(this, queryContext);
+
+      OLogManager.instance().info(this, "getResults (restul Set) :: " + resultSet.size());
+
+      return resultSet;
+    } catch (IOException e) {
+      throw OIOException.wrapException(new OIndexException("Error reading from Lucene index"), e);
+    }
+
+  }
+
+>>>>>>> origin/autosharding-index
   @Override
   public long sizeInTx(OLuceneTxChanges changes) {
     return luceneStorage.sizeInTx(changes);
@@ -174,10 +201,13 @@ public class OLuceneFullTextExpIndexEngine implements OLuceneIndexEngine, OOrien
     return luceneStorage.deleteQuery(name, key, value);
   }
 
+<<<<<<< HEAD
   protected ODatabaseDocumentInternal getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 
+=======
+>>>>>>> origin/autosharding-index
   @Override
   public void flush() {
     luceneStorage.flush();

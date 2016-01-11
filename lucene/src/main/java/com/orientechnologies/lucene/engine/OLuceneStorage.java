@@ -207,7 +207,12 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
     initializerAnalyzers(indexContext.indexClass, indexContext.metadata);
 
     OLogManager.instance().info(this,
+<<<<<<< HEAD
         "DONE INIT initIndex:: indexAnalyzer::  " + indexAnalyzer + " queryAnalyzer:: " + queryAnalyzer);
+=======
+        "DONE INIT initIndex:: indexAnalyzer::  " + indexAnalyzer + " queryanalzer:: " + queryAnalyzer);
+
+>>>>>>> origin/autosharding-index
   }
 
   private void initializerAnalyzers(OClass indexClass, ODocument metadata) {
@@ -278,9 +283,14 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
     return null;
   }
 
+<<<<<<< HEAD
   public void init() {
     OLogManager.instance().info(this, "INIT");
 
+=======
+  public void flush() {
+    commit();
+>>>>>>> origin/autosharding-index
   }
 
   public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
