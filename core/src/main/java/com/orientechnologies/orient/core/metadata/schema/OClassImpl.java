@@ -433,11 +433,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
           cls = (OClassImpl) ((OClassAbstractDelegate) superClass).delegate;
         else
           cls = (OClassImpl) superClass;
-        if(newSuperClasses.contains(cls)){
-          throw new OSchemaException("Duplicate superclass:'" + cls.getName() + "'");
-        }
         newSuperClasses.add(cls);
       }
+
       checkParametersConflict(newSuperClasses);
       List<OClassImpl> toAddList = new ArrayList<OClassImpl>(newSuperClasses);
       toAddList.removeAll(superClasses);
@@ -503,7 +501,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
           user.allow(ORule.ResourceGeneric.CLASS, cls.getName(), ORole.PERMISSION_UPDATE);
 
         if (superClasses.contains(superClass)) {
-          throw new OSchemaException(" Class:'" + this.getName() + "' has already class:'" + superClass.getName() + "' as superclass ");
+          throw new OSchemaException(
+              "Class: '" + this.getName() + "' already has the class '" + superClass.getName() + "' as superclass");
         }
 
         cls.addBaseClass(this);
@@ -2511,5 +2510,4 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     return getDatabase().getStorage() instanceof OAutoshardedStorage
         && OScenarioThreadLocal.INSTANCE.getRunMode() != OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED;
   }
-
 }
