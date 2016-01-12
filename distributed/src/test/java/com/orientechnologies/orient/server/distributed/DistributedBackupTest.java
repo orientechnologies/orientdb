@@ -17,8 +17,8 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+import org.junit.Assert;
 import org.junit.Test;
-import org.testng.Assert;
 
 import java.io.FileOutputStream;
 import java.io.OutputStream;
