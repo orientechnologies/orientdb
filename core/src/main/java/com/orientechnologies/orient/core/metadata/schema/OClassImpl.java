@@ -434,6 +434,11 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
           cls = (OClassImpl) ((OClassAbstractDelegate) superClass).delegate;
         else
           cls = (OClassImpl) superClass;
+
+        if (newSuperClasses.contains(cls)) {
+          throw new OSchemaException("Duplicated superclass '" + cls.getName() + "'");
+        }
+
         newSuperClasses.add(cls);
       }
 
