@@ -28,9 +28,9 @@ public final class OrientEdge extends OrientElement implements Edge {
 
     public OrientEdge(OrientGraph graph, OIdentifiable rawElement, final OIdentifiable out, final OIdentifiable in, final String iLabel) {
         super(graph, rawElement);
-        vOut = checkNotNull(out);
-        vIn = checkNotNull(in);
-        label = checkNotNull(iLabel);
+        vOut = checkNotNull(out, "out vertex on edge " + rawElement);
+        vIn = checkNotNull(in, "out vertex on edge " + rawElement);
+        label = checkNotNull(iLabel, "label on edge " + rawElement);
     }
 
     public OrientEdge(OrientGraph graph, String className, final OIdentifiable out, final OIdentifiable in, final String iLabel) {
