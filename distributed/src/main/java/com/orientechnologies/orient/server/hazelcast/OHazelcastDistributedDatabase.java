@@ -193,29 +193,28 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
   protected int getAvailableNodes(final ODistributedRequest iRequest, final Collection<String> iNodes, final String databaseName,
       OPair<String, IQueue>[] reqQueues) {
+
+    final boolean requiredNodeOnline = iRequest.getTask().isRequireNodeOnline();
+
     int availableNodes;
-    if (iRequest.getTask().isRequireNodeOnline()) {
-      // CHECK THE ONLINE NODES
-      availableNodes = 0;
-      int i = 0;
-      for (String node : iNodes) {
-        if (reqQueues[i].getValue() != null && manager.isNodeAvailable(node, databaseName))
-          availableNodes++;
-        else {
-          if (ODistributedServerLog.isDebugEnabled())
-            ODistributedServerLog.debug(this, getLocalNodeName(), node, DIRECTION.OUT,
-                "skip expected response from node '%s' for request %s because it's not online (queue=%s)", node, iRequest,
-                reqQueues[i].getValue() != null);
-        }
-        ++i;
+    // CHECK THE ONLINE NODES
+    availableNodes = 0;
+    int i = 0;
+    for (String node : iNodes) {
+      final boolean include = requiredNodeOnline ? manager.isNodeOnline(node, databaseName)
+          : manager.isNodeAvailable(node, databaseName);
+
+      if (include && reqQueues[i].getValue() != null)
+        availableNodes++;
+      else {
+        if (ODistributedServerLog.isDebugEnabled())
+          ODistributedServerLog.debug(this, getLocalNodeName(), node, DIRECTION.OUT,
+              "skip expected response from node '%s' for request %s because it's not online (queue=%s)", node, iRequest,
+              reqQueues[i].getValue() != null);
       }
-    } else {
-      // EXPECT ANSWER FROM ALL NODES WITH A QUEUE
-      availableNodes = 0;
-      for (OPair<String, IQueue> q : reqQueues)
-        if (q.getValue() != null)
-          availableNodes++;
+      ++i;
     }
+
     return availableNodes;
   }
 
@@ -414,10 +413,14 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
     // WAIT FOR THE MINIMUM SYNCHRONOUS RESPONSES (QUORUM)
     if (!currentResponseMgr.waitForSynchronousResponses()) {
-      ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.IN,
-          "timeout (%dms) on waiting for synchronous responses from nodes=%s responsesSoFar=%s request=%s",
-          System.currentTimeMillis() - beginTime, currentResponseMgr.getExpectedNodes(), currentResponseMgr.getRespondingNodes(),
-          iRequest);
+      final long elapsed = System.currentTimeMillis() - beginTime;
+
+      if (elapsed > currentResponseMgr.getSynchTimeout()) {
+
+        ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.IN,
+            "timeout (%dms) on waiting for synchronous responses from nodes=%s responsesSoFar=%s request=%s", elapsed,
+            currentResponseMgr.getExpectedNodes(), currentResponseMgr.getRespondingNodes(), iRequest);
+      }
     }
 
     return currentResponseMgr.getFinalResponse();
