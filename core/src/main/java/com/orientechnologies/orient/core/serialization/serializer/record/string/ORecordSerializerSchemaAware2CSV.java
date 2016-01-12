@@ -286,9 +286,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
   }
 
   @Override
-  protected StringBuilder toString(ORecord iRecord, final StringBuilder iOutput, final String iFormat,
-      OUserObject2RecordHandler iObjHandler, final Map<ODocument, Boolean> iMarshalledRecords, final boolean iOnlyDelta,
-      final boolean autoDetectCollectionType) {
+  protected StringBuilder toString(ORecord iRecord, final StringBuilder iOutput, final String iFormat, OUserObject2RecordHandler iObjHandler, final boolean iOnlyDelta, final boolean autoDetectCollectionType) {
     if (iRecord == null)
       throw new OSerializationException("Expected a record but was null");
 
@@ -302,12 +300,6 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
       iOutput.append(OStringSerializerHelper.CLASS_SEPARATOR);
     }
 
-    // CHECK IF THE RECORD IS PENDING TO BE MARSHALLED
-    if (iMarshalledRecords != null)
-      if (iMarshalledRecords.containsKey(record)) {
-        return iOutput;
-      } else
-        iMarshalledRecords.put(record, Boolean.TRUE);
 
     OProperty prop;
     OType type;
@@ -512,13 +504,10 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
       iOutput.append(fieldName);
       iOutput.append(FIELD_VALUE_SEPARATOR);
-      fieldToStream(record, iOutput, iObjHandler, type, linkedClass, linkedType, fieldName, fieldValue, iMarshalledRecords, true);
+      fieldToStream(record, iOutput, iObjHandler, type, linkedClass, linkedType, fieldName, fieldValue, true);
 
       i++;
     }
-
-    if (iMarshalledRecords != null)
-      iMarshalledRecords.remove(record);
 
     // GET THE OVERSIZE IF ANY
     final float overSize;

@@ -313,9 +313,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
     return map;
   }
 
-  public void fieldToStream(final ODocument iRecord, final StringBuilder iOutput, OUserObject2RecordHandler iObjHandler,
-      final OType iType, final OClass iLinkedClass, final OType iLinkedType, final String iName, final Object iValue,
-      final Map<ODocument, Boolean> iMarshalledRecords, final boolean iSaveOnlyDirty) {
+  public void fieldToStream(final ODocument iRecord, final StringBuilder iOutput, OUserObject2RecordHandler iObjHandler, final OType iType, final OClass iLinkedClass, final OType iLinkedType, final String iName, final Object iValue,
+                             final boolean iSaveOnlyDirty) {
     if (iValue == null)
       return;
 
@@ -331,8 +330,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
       if (!((OIdentifiable) iValue).getIdentity().isValid() && iValue instanceof ODocument && ((ODocument) iValue).isEmbedded()) {
         // WRONG: IT'S EMBEDDED!
-        fieldToStream(iRecord, iOutput, iObjHandler, OType.EMBEDDED, iLinkedClass, iLinkedType, iName, iValue, iMarshalledRecords,
-            iSaveOnlyDirty);
+        fieldToStream(iRecord, iOutput, iObjHandler, OType.EMBEDDED, iLinkedClass, iLinkedType, iName, iValue, iSaveOnlyDirty);
       } else {
         final Object link = linkToStream(iOutput, iRecord, iValue);
         if (link != null)
@@ -496,14 +494,14 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
     case EMBEDDED:
       if (iValue instanceof ORecord) {
         iOutput.append(OStringSerializerHelper.EMBEDDED_BEGIN);
-        toString((ORecord) iValue, iOutput, null, iObjHandler, iMarshalledRecords, false, true);
+        toString((ORecord) iValue, iOutput, null, iObjHandler, false, true);
         iOutput.append(OStringSerializerHelper.EMBEDDED_END);
       } else if (iValue instanceof ODocumentSerializable) {
         final ODocument doc = ((ODocumentSerializable) iValue).toDocument();
         doc.field(ODocumentSerializable.CLASS_NAME, iValue.getClass().getName());
 
         iOutput.append(OStringSerializerHelper.EMBEDDED_BEGIN);
-        toString(doc, iOutput, null, iObjHandler, iMarshalledRecords, false, true);
+        toString(doc, iOutput, null, iObjHandler, false, true);
         iOutput.append(OStringSerializerHelper.EMBEDDED_END);
 
       } else if (iValue != null)
@@ -513,21 +511,21 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       break;
 
     case EMBEDDEDLIST:
-      embeddedCollectionToStream(null, iObjHandler, iOutput, iLinkedClass, iLinkedType, iValue, iMarshalledRecords, iSaveOnlyDirty,
+      embeddedCollectionToStream(null, iObjHandler, iOutput, iLinkedClass, iLinkedType, iValue, iSaveOnlyDirty,
           false);
       PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.embedList2string"),
           "Serialize embeddedlist to string", timer);
       break;
 
     case EMBEDDEDSET:
-      embeddedCollectionToStream(null, iObjHandler, iOutput, iLinkedClass, iLinkedType, iValue, iMarshalledRecords, iSaveOnlyDirty,
+      embeddedCollectionToStream(null, iObjHandler, iOutput, iLinkedClass, iLinkedType, iValue, iSaveOnlyDirty,
           true);
       PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.embedSet2string"), "Serialize embeddedset to string",
           timer);
       break;
 
     case EMBEDDEDMAP: {
-      embeddedMapToStream(null, iObjHandler, iOutput, iLinkedClass, iLinkedType, iValue, iMarshalledRecords, iSaveOnlyDirty);
+      embeddedMapToStream(null, iObjHandler, iOutput, iLinkedClass, iLinkedType, iValue, iSaveOnlyDirty);
       PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.embedMap2string"), "Serialize embeddedmap to string",
           timer);
       break;
@@ -545,9 +543,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
     }
   }
 
-  public void embeddedMapToStream(ODatabase<?> iDatabase, final OUserObject2RecordHandler iObjHandler, final StringBuilder iOutput,
-      final OClass iLinkedClass, OType iLinkedType, final Object iValue, final Map<ODocument, Boolean> iMarshalledRecords,
-      final boolean iSaveOnlyDirty) {
+  public void embeddedMapToStream(ODatabase<?> iDatabase, final OUserObject2RecordHandler iObjHandler, final StringBuilder iOutput, final OClass iLinkedClass, OType iLinkedType, final Object iValue, final boolean iSaveOnlyDirty) {
     iOutput.append(OStringSerializerHelper.MAP_BEGIN);
 
     if (iValue != null) {
@@ -600,7 +596,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
                   }, null, iSaveOnlyDirty);
             }
             iOutput.append(OStringSerializerHelper.EMBEDDED_BEGIN);
-            toString(record, iOutput, null, iObjHandler, iMarshalledRecords, false, true);
+            toString(record, iOutput, null, iObjHandler, false, true);
             iOutput.append(OStringSerializerHelper.EMBEDDED_END);
           } else if (o.getValue() instanceof Set<?>) {
             // SUB SET
@@ -714,9 +710,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
     return coll;
   }
 
-  public StringBuilder embeddedCollectionToStream(ODatabase<?> iDatabase, final OUserObject2RecordHandler iObjHandler,
-      final StringBuilder iOutput, final OClass iLinkedClass, final OType iLinkedType, final Object iValue,
-      final Map<ODocument, Boolean> iMarshalledRecords, final boolean iSaveOnlyDirty, final boolean iSet) {
+  public StringBuilder embeddedCollectionToStream(ODatabase<?> iDatabase, final OUserObject2RecordHandler iObjHandler, final StringBuilder iOutput, final OClass iLinkedClass, final OType iLinkedType, final Object iValue,
+                                                   final boolean iSaveOnlyDirty, final boolean iSet) {
     iOutput.append(iSet ? OStringSerializerHelper.SET_BEGIN : OStringSerializerHelper.LIST_BEGIN);
 
     final Iterator<Object> iterator = OMultiValue.getMultiValueIterator(iValue, false);
@@ -807,7 +802,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
                 }
               }, null, iSaveOnlyDirty);
         }
-        toString(doc, iOutput, null, iObjHandler, iMarshalledRecords, false, true);
+        toString(doc, iOutput, null, iObjHandler, false, true);
       } else {
         // EMBEDDED LITERALS
         if (iLinkedType == null) {
