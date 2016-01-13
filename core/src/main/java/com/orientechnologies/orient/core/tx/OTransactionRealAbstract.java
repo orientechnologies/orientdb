@@ -58,7 +58,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
    */
   public static final ORecord                                 DELETED_RECORD        = new ORecordBytes();
   protected Map<ORID, ORID>                                   updatedRids           = new HashMap<ORID, ORID>();
-  protected Map<ORID, ORecordOperation>                       allEntries            = new HashMap<ORID, ORecordOperation>();
+  protected Map<ORID, ORecordOperation>                       allEntries            = new LinkedHashMap<ORID, ORecordOperation>();
   protected Map<String, OTransactionIndexChanges>             indexEntries          = new LinkedHashMap<String, OTransactionIndexChanges>();
   protected Map<ORID, List<OTransactionRecordIndexOperation>> recordIndexOperations = new HashMap<ORID, List<OTransactionRecordIndexOperation>>();
   protected int                                               id;
