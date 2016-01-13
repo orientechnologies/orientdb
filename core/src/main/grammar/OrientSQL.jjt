@@ -667,7 +667,9 @@ OStatement Statement():
 		|
 		LOOKAHEAD(FindReferencesStatement())
 		result = FindReferencesStatement()
-
+		|
+		LOOKAHEAD(TruncateRecordStatement())
+        result = TruncateRecordStatement()
 	) [ <SEMICOLON> ]
 	{
 	    return result;
@@ -3309,6 +3311,28 @@ OTruncateClusterStatement TruncateClusterStatement():
 		jjtThis.clusterNumber = Integer()
 	)
 	[ <UNSAFE> {jjtThis.unsafe = true;} ]
+	{ return jjtThis; }
+}
+
+OTruncateRecordStatement TruncateRecordStatement():
+{ ORid lastRecord; }
+{
+	<TRUNCATE> <RECORD>
+	(
+		jjtThis.record = Rid()
+		|
+		(
+			<LBRACKET> { jjtThis.records = new ArrayList<ORid>(); }
+			[
+				lastRecord = Rid() { jjtThis.records.add(lastRecord); }
+				(
+					<COMMA>
+					lastRecord = Rid() { jjtThis.records.add(lastRecord); }
+				)*
+			]
+			<RBRACKET>
+		)
+	)
 	{ return jjtThis; }
 }
 

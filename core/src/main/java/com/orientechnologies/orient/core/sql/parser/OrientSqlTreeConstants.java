@@ -136,7 +136,8 @@ public interface OrientSqlTreeConstants
   public int JJTPROFILESTORAGESTATEMENT = 130;
   public int JJTTRUNCATECLASSSTATEMENT = 131;
   public int JJTTRUNCATECLUSTERSTATEMENT = 132;
-  public int JJTFINDREFERENCESSTATEMENT = 133;
+  public int JJTTRUNCATERECORDSTATEMENT = 133;
+  public int JJTFINDREFERENCESSTATEMENT = 134;
 
 
   public String[] jjtNodeName = {
@@ -273,7 +274,8 @@ public interface OrientSqlTreeConstants
     "ProfileStorageStatement",
     "TruncateClassStatement",
     "TruncateClusterStatement",
+    "TruncateRecordStatement",
     "FindReferencesStatement",
   };
 }
-/* JavaCC - OriginalChecksum=72f6aa7e32680fd227b73da59a09a5c8 (do not edit this line) */
+/* JavaCC - OriginalChecksum=81feb6ff8240827c01ad8f5b588f6809 (do not edit this line) */
