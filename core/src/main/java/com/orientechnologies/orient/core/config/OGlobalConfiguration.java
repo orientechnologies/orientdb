@@ -183,6 +183,7 @@ public enum OGlobalConfiguration {
   WAL_RESTORE_BATCH_SIZE("storage.wal.restore.batchSize",
       "Amount of WAL records, which are read at once in a single batch during a restore procedure.", Integer.class, 1000),
 
+  @Deprecated
   WAL_READ_CACHE_SIZE("storage.wal.readCacheSize", "Size of WAL read cache in amount of pages.", Integer.class, 1000),
 
   WAL_FUZZY_CHECKPOINT_SHUTDOWN_TIMEOUT("storage.wal.fuzzyCheckpointShutdownWait",

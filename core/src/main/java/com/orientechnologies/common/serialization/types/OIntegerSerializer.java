@@ -20,7 +20,6 @@
 
 package com.orientechnologies.common.serialization.types;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
@@ -95,15 +94,6 @@ public class OIntegerSerializer implements OBinarySerializer<Integer> {
 
   public int deserializeNative(final byte[] stream, final int startPosition) {
     return CONVERTER.getInt(stream, startPosition, ByteOrder.nativeOrder());
-  }
-
-  public void serializeInDirectMemory(final int object, final ODirectMemoryPointer pointer, final long offset,
-      final Object... hints) {
-    pointer.setInt(offset, object);
-  }
-
-  public int deserializeFromDirectMemory(final ODirectMemoryPointer pointer, final long offset) {
-    return pointer.getInt(offset);
   }
 
   public boolean isFixedLength() {

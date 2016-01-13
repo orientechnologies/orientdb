@@ -20,7 +20,6 @@
 
 package com.orientechnologies.common.serialization.types;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 
 import java.nio.ByteBuffer;
@@ -87,19 +86,6 @@ public class OBooleanSerializer implements OBinarySerializer<Boolean> {
 
   public boolean deserializeNative(final byte[] stream, final int startPosition) {
     return deserializeLiteral(stream, startPosition);
-  }
-
-  public void serializeInDirectMemory(Boolean object, ODirectMemoryPointer pointer, long offset, Object... hints) {
-    pointer.setByte(offset, object ? (byte) 1 : 0);
-  }
-
-  public void serializeInDirectMemory(final boolean object, final ODirectMemoryPointer pointer, final long offset,
-      final Object... hints) {
-    pointer.setByte(offset, object ? (byte) 1 : 0);
-  }
-
-  public boolean deserializeFromDirectMemory(final ODirectMemoryPointer pointer, final long offset) {
-    return pointer.getByte(offset) > 0;
   }
 
   public boolean isFixedLength() {

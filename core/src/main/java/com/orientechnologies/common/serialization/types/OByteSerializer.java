@@ -20,7 +20,6 @@
 
 package com.orientechnologies.common.serialization.types;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 
 import java.nio.ByteBuffer;
@@ -87,14 +86,6 @@ public class OByteSerializer implements OBinarySerializer<Byte> {
 
   public byte deserializeNative(final byte[] stream, final int startPosition) {
     return stream[startPosition];
-  }
-
-  public void serializeInDirectMemory(final byte object, ODirectMemoryPointer pointer, long offset, Object... hints) {
-    pointer.setByte(offset, object);
-  }
-
-  public byte deserializeFromDirectMemory(final ODirectMemoryPointer pointer, final long offset) {
-    return pointer.getByte(offset);
   }
 
   public boolean isFixedLength() {

@@ -72,4 +72,36 @@ public class BooleanSerializerTest {
     buffer = ByteBuffer.allocateDirect(stream.length).order(ByteOrder.nativeOrder());
     Assert.assertEquals(booleanSerializer.deserializeFromByteBufferObject(buffer), OBJECT_FALSE);
   }
+
+  public void testSerializationByteBuffer() {
+    final int serializationOffset = 5;
+
+    ByteBuffer buffer = ByteBuffer.allocate(FIELD_SIZE + serializationOffset);
+
+    buffer.position(serializationOffset);
+    booleanSerializer.serializeInByteBufferObject(OBJECT_TRUE, buffer);
+
+    int binarySize = buffer.position() - serializationOffset;
+    Assert.assertEquals(binarySize, FIELD_SIZE);
+
+    buffer.position(serializationOffset);
+    Assert.assertEquals(booleanSerializer.getObjectSizeInByteBuffer(buffer), FIELD_SIZE);
+
+    buffer.position(serializationOffset);
+    Assert.assertEquals(booleanSerializer.deserializeFromByteBufferObject(buffer), OBJECT_TRUE);
+
+    buffer = ByteBuffer.allocate(FIELD_SIZE + serializationOffset);
+
+    buffer.position(serializationOffset);
+    booleanSerializer.serializeInByteBufferObject(OBJECT_FALSE, buffer);
+
+    binarySize = buffer.position() - serializationOffset;
+    Assert.assertEquals(binarySize, FIELD_SIZE);
+
+    buffer.position(serializationOffset);
+    Assert.assertEquals(booleanSerializer.getObjectSizeInByteBuffer(buffer), FIELD_SIZE);
+
+    buffer.position(serializationOffset);
+    Assert.assertEquals(booleanSerializer.deserializeFromByteBufferObject(buffer), OBJECT_FALSE);
+  }
 }

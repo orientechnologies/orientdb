@@ -1,7 +1,5 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
-
 import java.nio.ByteBuffer;
 
 /**

@@ -20,7 +20,6 @@
 
 package com.orientechnologies.common.serialization.types;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
@@ -92,14 +91,6 @@ public class OShortSerializer implements OBinarySerializer<Short> {
 
   public short deserializeNative(byte[] stream, int startPosition) {
     return CONVERTER.getShort(stream, startPosition, ByteOrder.nativeOrder());
-  }
-
-  public void serializeInDirectMemory(short object, ODirectMemoryPointer pointer, long offset, Object... hints) {
-    pointer.setShort(offset, object);
-  }
-
-  public short deserializeFromDirectMemory(ODirectMemoryPointer pointer, long offset) {
-    return pointer.getShort(offset);
   }
 
   public boolean isFixedLength() {

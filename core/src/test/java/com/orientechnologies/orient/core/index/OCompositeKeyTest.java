@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.nio.ByteBuffer;
@@ -240,17 +241,24 @@ public class OCompositeKeyTest {
   }
 
   public void testByteBufferBinarySerializationCompositeKeyNull() {
+    final int serializationOffset = 5;
+
     final OCompositeKey compositeKeyOne = new OCompositeKey();
     compositeKeyOne.addKey(1);
     compositeKeyOne.addKey(null);
     compositeKeyOne.addKey(2);
 
-    int len = OCompositeKeySerializer.INSTANCE.getObjectSize(compositeKeyOne);
+    final int len = OCompositeKeySerializer.INSTANCE.getObjectSize(compositeKeyOne);
 
-    ByteBuffer buffer = ByteBuffer.allocateDirect(len).order(ByteOrder.nativeOrder());
+    final ByteBuffer buffer = ByteBuffer.allocate(len + serializationOffset);
+    buffer.position(serializationOffset);
+
     OCompositeKeySerializer.INSTANCE.serializeInByteBufferObject(compositeKeyOne, buffer);
-    buffer.position(0);
 
+    buffer.position(serializationOffset);
+    Assert.assertEquals(OCompositeKeySerializer.INSTANCE.getObjectSizeInByteBuffer(buffer), len);
+
+    buffer.position(serializationOffset);
     final OCompositeKey compositeKeyTwo = OCompositeKeySerializer.INSTANCE.deserializeFromByteBufferObject(buffer);
 
     assertEquals(compositeKeyOne, compositeKeyTwo);

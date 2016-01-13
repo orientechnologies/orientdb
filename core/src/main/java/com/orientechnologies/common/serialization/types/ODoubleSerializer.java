@@ -20,7 +20,6 @@
 
 package com.orientechnologies.common.serialization.types;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
@@ -83,15 +82,6 @@ public class ODoubleSerializer implements OBinarySerializer<Double> {
   @Override
   public Double deserializeNativeObject(byte[] stream, int startPosition) {
     return Double.longBitsToDouble(CONVERTER.getLong(stream, startPosition, ByteOrder.nativeOrder()));
-  }
-
-  public void serializeInDirectMemory(final double object, final ODirectMemoryPointer pointer, final long offset,
-      final Object... hints) {
-    pointer.setLong(offset, Double.doubleToLongBits(object));
-  }
-
-  public double deserializeFromDirectMemory(final ODirectMemoryPointer pointer, final long offset) {
-    return Double.longBitsToDouble(pointer.getLong(offset));
   }
 
   public boolean isFixedLength() {
