@@ -62,4 +62,24 @@ public class ShortSerializerTest {
 
     Assert.assertEquals(shortSerializer.deserializeFromByteBufferObject(buffer), OBJECT);
   }
+
+  public void testSerializationInByteBuffer() {
+    final int serializationOffset = 5;
+
+    final ByteBuffer buffer = ByteBuffer.allocate(FIELD_SIZE + serializationOffset);
+    buffer.position(serializationOffset);
+
+    shortSerializer.serializeInByteBufferObject(OBJECT, buffer);
+
+    final int binarySize = buffer.position() - serializationOffset;
+    Assert.assertEquals(binarySize, FIELD_SIZE);
+
+    buffer.position(serializationOffset);
+    Assert.assertEquals(shortSerializer.getObjectSizeInByteBuffer(buffer), FIELD_SIZE);
+
+    buffer.position(serializationOffset);
+    Assert.assertEquals(shortSerializer.deserializeFromByteBufferObject(buffer), OBJECT);
+
+    Assert.assertEquals(buffer.position() - serializationOffset, FIELD_SIZE);
+  }
 }

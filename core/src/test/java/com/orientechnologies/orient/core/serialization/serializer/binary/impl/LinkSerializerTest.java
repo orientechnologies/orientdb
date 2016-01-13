@@ -24,17 +24,20 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.serialization.types.OShortSerializer;
 import com.orientechnologies.orient.core.id.ORecordId;
 
+import java.nio.ByteBuffer;
+
 /**
  * @author Ilya Bershadskiy (ibersh20-at-gmail.com)
  * @since 07.02.12
  */
+@Test
 public class LinkSerializerTest {
-  private static final int  FIELD_SIZE = OShortSerializer.SHORT_SIZE + OLongSerializer.LONG_SIZE;
-  byte[]                    stream     = new byte[FIELD_SIZE];
-  private static final int  clusterId  = 5;
-  private static final long position   = 100500L;
-  private ORecordId         OBJECT;
-  private OLinkSerializer   linkSerializer;
+  private static final int FIELD_SIZE = OShortSerializer.SHORT_SIZE + OLongSerializer.LONG_SIZE;
+  byte[] stream = new byte[FIELD_SIZE];
+  private static final int  clusterId = 5;
+  private static final long position  = 100500L;
+  private ORecordId       OBJECT;
+  private OLinkSerializer linkSerializer;
 
   @BeforeClass
   public void beforeClass() {
@@ -42,14 +45,32 @@ public class LinkSerializerTest {
     linkSerializer = new OLinkSerializer();
   }
 
-  @Test
   public void testFieldSize() {
     Assert.assertEquals(linkSerializer.getObjectSize(null), FIELD_SIZE);
   }
 
-  @Test
   public void testSerialize() {
     linkSerializer.serialize(OBJECT, stream, 0);
     Assert.assertEquals(linkSerializer.deserialize(stream, 0), OBJECT);
+  }
+
+  public void testSerializeInByteBuffer() {
+    final int serializationOffset = 5;
+
+    final ByteBuffer buffer = ByteBuffer.allocate(FIELD_SIZE + serializationOffset);
+
+    buffer.position(serializationOffset);
+    linkSerializer.serializeInByteBufferObject(OBJECT, buffer);
+
+    final int binarySize = buffer.position() - serializationOffset;
+    Assert.assertEquals(binarySize, FIELD_SIZE);
+
+    buffer.position(serializationOffset);
+    Assert.assertEquals(linkSerializer.getObjectSizeInByteBuffer(buffer), FIELD_SIZE);
+
+    buffer.position(serializationOffset);
+    Assert.assertEquals(linkSerializer.deserializeFromByteBufferObject(buffer), OBJECT);
+
+    Assert.assertEquals(buffer.position() - serializationOffset, FIELD_SIZE);
   }
 }

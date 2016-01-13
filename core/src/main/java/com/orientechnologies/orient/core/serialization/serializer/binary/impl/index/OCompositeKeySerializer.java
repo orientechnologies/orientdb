@@ -318,10 +318,13 @@ public class OCompositeKeySerializer implements OBinarySerializer<OCompositeKey>
       binarySerializer.serializeInByteBufferObject(key, buffer);
     }
 
+    final int finalPosition = buffer.position();
     final int serializedSize = buffer.position() - oldStartOffset;
 
     buffer.position(oldStartOffset);
     buffer.putInt(serializedSize);
+
+    buffer.position(finalPosition);
   }
 
   @Override

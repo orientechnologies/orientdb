@@ -255,6 +255,9 @@ public class OCompositeKeyTest {
 
     OCompositeKeySerializer.INSTANCE.serializeInByteBufferObject(compositeKeyOne, buffer);
 
+    final int binarySize = buffer.position() - serializationOffset;
+    Assert.assertEquals(binarySize, len);
+
     buffer.position(serializationOffset);
     Assert.assertEquals(OCompositeKeySerializer.INSTANCE.getObjectSizeInByteBuffer(buffer), len);
 
@@ -263,5 +266,7 @@ public class OCompositeKeyTest {
 
     assertEquals(compositeKeyOne, compositeKeyTwo);
     assertNotSame(compositeKeyOne, compositeKeyTwo);
+
+    Assert.assertEquals(buffer.position() - serializationOffset, len);
   }
 }

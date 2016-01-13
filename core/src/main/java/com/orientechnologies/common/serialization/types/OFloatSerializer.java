@@ -121,16 +121,4 @@ public class OFloatSerializer implements OBinarySerializer<Float> {
   public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return FLOAT_SIZE;
   }
-
-  public void serializeInByteBuffer(float object, ByteBuffer buffer, Object... hints) {
-    buffer.putInt(Float.floatToIntBits(object));
-  }
-
-  public float deserializeFromByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
-    return Float.intBitsToFloat(walChanges.getIntValue(buffer, offset));
-  }
-
-  public float deserializeFromByteBuffer(ByteBuffer buffer) {
-    return Float.intBitsToFloat(buffer.getInt());
-  }
 }
