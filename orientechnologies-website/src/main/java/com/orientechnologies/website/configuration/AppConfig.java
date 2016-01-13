@@ -18,4 +18,7 @@ public class AppConfig {
 
     @Value("${escalate.mail}")
     public String escalateMil;
+
+    @Value("${escalate.mailcc}")
+    public String escalateMilcc;
 }

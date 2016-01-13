@@ -72,6 +72,8 @@ public interface OrganizationRepository extends BaseRepository<Organization> {
 
   List<OUser> findContributors(String name);
 
+  List<OUser> findSupportUsers(String name);
+
   List<Milestone> findMilestones(String name);
 
   List<Label> findLabels(String name);

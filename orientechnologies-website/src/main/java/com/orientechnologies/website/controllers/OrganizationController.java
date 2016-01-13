@@ -163,6 +163,16 @@ public class OrganizationController extends ExceptionController {
     return orgRepository.findContributors(name);
   }
 
+  @RequestMapping(value = "{name}/assignee", method = RequestMethod.GET)
+  @ResponseStatus(HttpStatus.OK)
+  public Collection<OUser> findAssignee(@PathVariable("name") String name) {
+
+    List<OUser> contributors = orgRepository.findContributors(name);
+    List<OUser> supportUsers = orgRepository.findSupportUsers(name);
+    contributors.addAll(supportUsers);
+    return contributors;
+  }
+
   @RequestMapping(value = "{name}/milestones", method = RequestMethod.GET)
   @ResponseStatus(HttpStatus.OK)
   public List<Milestone> findMilestones(@PathVariable("name") String name) {

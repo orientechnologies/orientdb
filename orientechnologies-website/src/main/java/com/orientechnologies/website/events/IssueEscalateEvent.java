@@ -52,11 +52,11 @@ public class IssueEscalateEvent extends EventInternal<Map<String, Object>> {
     String htmlContent = templateEngine.process("escalate.html", context);
     SimpleMailMessage mailMessage = new SimpleMailMessage();
     mailMessage.setTo(config.escalateMil);
+    mailMessage.setCc(config.escalateMilcc);
     mailMessage.setFrom(user.getName());
     mailMessage.setSubject(fillSubjectTags(issue));
     mailMessage.setText(htmlContent);
     sender.send(mailMessage);
-
 
     logIssueEvent(issue);
     postHandle();

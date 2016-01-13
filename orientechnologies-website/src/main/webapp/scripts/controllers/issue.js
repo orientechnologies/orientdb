@@ -492,7 +492,7 @@ angular.module('webappApp')
       var promises = []
 
       promises.push(Repo.one($scope.repo).all("teams").getList());
-      promises.push(Organization.all('contributors').getList());
+      promises.push(Organization.all('assignee').getList());
 
       $q.all(promises).then(function (results) {
         if ($scope.issue.confidential) {
