@@ -21,6 +21,8 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -83,5 +85,18 @@ public class DecimalSerializerTest {
     Assert.assertEquals(decimalSerializer.deserializeFromByteBufferObject(buffer), OBJECT);
 
     Assert.assertEquals(buffer.position() - serializationOffset, FIELD_SIZE);
+  }
+
+  public void testSerializeWALChanges() {
+    final int serializationOffset = 5;
+    final ByteBuffer buffer = ByteBuffer.allocateDirect(FIELD_SIZE + serializationOffset).order(ByteOrder.nativeOrder());
+
+    final byte[] data = new byte[FIELD_SIZE];
+    decimalSerializer.serializeNativeObject(OBJECT, data, 0);
+    final OWALChanges walChanges = new OWALChangesTree();
+    walChanges.setBinaryValue(buffer, data, serializationOffset);
+
+    Assert.assertEquals(decimalSerializer.getObjectSizeInByteBuffer(buffer, walChanges, serializationOffset), FIELD_SIZE);
+    Assert.assertEquals(decimalSerializer.deserializeFromByteBufferObject(buffer, walChanges, serializationOffset), OBJECT);
   }
 }

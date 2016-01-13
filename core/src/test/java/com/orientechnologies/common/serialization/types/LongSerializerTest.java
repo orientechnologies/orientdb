@@ -16,6 +16,8 @@
 
 package com.orientechnologies.common.serialization.types;
 
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -81,5 +83,19 @@ public class LongSerializerTest {
     Assert.assertEquals(longSerializer.deserializeFromByteBufferObject(buffer), OBJECT);
 
     Assert.assertEquals(buffer.position() - serializationOffset, FIELD_SIZE);
+  }
+
+  public void testSerializationWALChanges() {
+    final int serializationOffset = 5;
+
+    final ByteBuffer buffer = ByteBuffer.allocateDirect(FIELD_SIZE + serializationOffset);
+    final byte[] data = new byte[FIELD_SIZE];
+    longSerializer.serializeNative(OBJECT, data, 0);
+
+    OWALChanges walChanges = new OWALChangesTree();
+    walChanges.setBinaryValue(buffer, data, serializationOffset);
+
+    Assert.assertEquals(longSerializer.getObjectSizeInByteBuffer(buffer, walChanges, serializationOffset), FIELD_SIZE);
+    Assert.assertEquals(longSerializer.deserializeFromByteBufferObject(buffer, walChanges, serializationOffset), OBJECT);
   }
 }

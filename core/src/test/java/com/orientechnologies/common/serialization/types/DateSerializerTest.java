@@ -21,6 +21,8 @@ import java.nio.ByteOrder;
 import java.util.Calendar;
 import java.util.Date;
 
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -109,5 +111,25 @@ public class DateSerializerTest {
     Assert.assertEquals(dateSerializer.deserializeFromByteBufferObject(buffer), calendar.getTime());
 
     Assert.assertEquals(buffer.position() - serializationOffset, binarySize);
+  }
+
+  public void testSerializeWALChanges() {
+    final int serializationOffset = 5;
+    final ByteBuffer buffer = ByteBuffer.allocateDirect(FIELD_SIZE + serializationOffset).order(ByteOrder.nativeOrder());
+    final byte[] data = new byte[FIELD_SIZE];
+    dateSerializer.serializeNativeObject(OBJECT, data, 0);
+    final OWALChanges walChanges = new OWALChangesTree();
+    walChanges.setBinaryValue(buffer, data, serializationOffset);
+
+    Calendar calendar = Calendar.getInstance();
+    calendar.setTime(OBJECT);
+    calendar.set(Calendar.HOUR_OF_DAY, 0);
+    calendar.set(Calendar.MINUTE, 0);
+    calendar.set(Calendar.SECOND, 0);
+    calendar.set(Calendar.MILLISECOND, 0);
+
+    Assert.assertEquals(dateSerializer.getObjectSizeInByteBuffer(buffer, walChanges, serializationOffset), FIELD_SIZE);
+    Assert
+        .assertEquals(dateSerializer.deserializeFromByteBufferObject(buffer, walChanges, serializationOffset), calendar.getTime());
   }
 }

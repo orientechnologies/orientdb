@@ -34,13 +34,13 @@ import java.nio.ByteOrder;
  * @since 18.01.12
  */
 public class OShortSerializer implements OBinarySerializer<Short> {
-  public static final byte              ID         = 12;
+  public static final  byte             ID         = 12;
   /**
    * size of short value in bytes
    */
-  public static final int               SHORT_SIZE = 2;
+  public static final  int              SHORT_SIZE = 2;
   private static final OBinaryConverter CONVERTER  = OBinaryConverterFactory.getConverter();
-  public static final OShortSerializer        INSTANCE   = new OShortSerializer();
+  public static final  OShortSerializer INSTANCE   = new OShortSerializer();
 
   public int getObjectSize(Short object, Object... hints) {
     return SHORT_SIZE;
@@ -129,17 +129,5 @@ public class OShortSerializer implements OBinarySerializer<Short> {
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return SHORT_SIZE;
-  }
-
-  public void serializeInByteBuffer(short object, ByteBuffer buffer, Object... hints) {
-    buffer.putShort(object);
-  }
-
-  public short deserializeFromByteBuffer(ByteBuffer buffer) {
-    return buffer.getShort();
-  }
-
-  public short deserializeFromByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
-    return walChanges.getShortValue(buffer, offset);
   }
 }

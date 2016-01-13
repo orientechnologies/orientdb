@@ -1,10 +1,13 @@
 package com.orientechnologies.common.serialization.types;
 
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.UUID;
 
 @Test
@@ -39,6 +42,21 @@ public class OUUIDSerializerTest {
     Assert.assertEquals(uuidSerializer.deserializeFromByteBufferObject(buffer), OBJECT);
 
     Assert.assertEquals(buffer.position() - serializationOffset, FIELD_SIZE);
+  }
+
+  public void testsSerializationWALChanges() {
+    final int serializationOffset = 5;
+
+    final ByteBuffer buffer = ByteBuffer.allocateDirect(FIELD_SIZE + serializationOffset).order(ByteOrder.nativeOrder());
+    final byte[] data = new byte[FIELD_SIZE];
+
+    uuidSerializer.serializeNativeObject(OBJECT, data, 0);
+
+    OWALChanges walChanges = new OWALChangesTree();
+    walChanges.setBinaryValue(buffer, data, serializationOffset);
+
+    Assert.assertEquals(uuidSerializer.getObjectSizeInByteBuffer(buffer, walChanges, serializationOffset), FIELD_SIZE);
+    Assert.assertEquals(uuidSerializer.deserializeFromByteBufferObject(buffer, walChanges, serializationOffset), OBJECT);
   }
 
 }

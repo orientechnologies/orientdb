@@ -116,7 +116,7 @@ public class OUUIDSerializer implements OBinarySerializer<UUID> {
   @Override
   public UUID deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     final long mostSignificantBits = walChanges.getLongValue(buffer, offset);
-    final long leastSignificantBits = walChanges.getLongValue(buffer, offset);
+    final long leastSignificantBits = walChanges.getLongValue(buffer, offset + OLongSerializer.LONG_SIZE);
     return new UUID(mostSignificantBits, leastSignificantBits);
   }
 

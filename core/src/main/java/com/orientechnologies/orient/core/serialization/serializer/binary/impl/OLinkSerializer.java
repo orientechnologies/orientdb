@@ -42,10 +42,10 @@ import static com.orientechnologies.orient.core.serialization.OBinaryProtocol.sh
  * @since 07.02.12
  */
 public class OLinkSerializer implements OBinarySerializer<OIdentifiable> {
-  public static final byte      ID               = 9;
-  private static final int      CLUSTER_POS_SIZE = OLongSerializer.LONG_SIZE;
-  public static final int       RID_SIZE         = OShortSerializer.SHORT_SIZE + CLUSTER_POS_SIZE;
-  public static final OLinkSerializer INSTANCE         = new OLinkSerializer();
+  public static final  byte            ID               = 9;
+  private static final int             CLUSTER_POS_SIZE = OLongSerializer.LONG_SIZE;
+  public static final  int             RID_SIZE         = OShortSerializer.SHORT_SIZE + CLUSTER_POS_SIZE;
+  public static final  OLinkSerializer INSTANCE         = new OLinkSerializer();
 
   public int getObjectSize(final OIdentifiable rid, Object... hints) {
     return RID_SIZE;
@@ -108,7 +108,7 @@ public class OLinkSerializer implements OBinarySerializer<OIdentifiable> {
   public void serializeInByteBufferObject(OIdentifiable object, ByteBuffer buffer, Object... hints) {
     final ORID r = object.getIdentity();
 
-    OShortSerializer.INSTANCE.serializeInByteBuffer((short) r.getClusterId(), buffer);
+    buffer.putShort((short) r.getClusterId());
     // Wrong implementation but needed for binary compatibility
     byte[] stream = new byte[OLongSerializer.LONG_SIZE];
     OLongSerializer.INSTANCE.serialize(r.getClusterPosition(), stream, 0);
@@ -117,7 +117,7 @@ public class OLinkSerializer implements OBinarySerializer<OIdentifiable> {
 
   @Override
   public OIdentifiable deserializeFromByteBufferObject(ByteBuffer buffer) {
-    final int clusterId = OShortSerializer.INSTANCE.deserializeFromByteBuffer(buffer);
+    final int clusterId = buffer.getShort();
 
     final byte[] stream = new byte[OLongSerializer.LONG_SIZE];
     buffer.get(stream);
@@ -134,7 +134,7 @@ public class OLinkSerializer implements OBinarySerializer<OIdentifiable> {
 
   @Override
   public OIdentifiable deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
-    final int clusterId = OShortSerializer.INSTANCE.deserializeFromByteBuffer(buffer, walChanges, offset);
+    final int clusterId = walChanges.getShortValue(buffer, offset);
 
     // Wrong implementation but needed for binary compatibility
     final long clusterPosition = OLongSerializer.INSTANCE
