@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
+import com.sun.corba.se.spi.orbutil.fsm.Input;
 
 import java.io.File;
 import java.io.PrintStream;
@@ -65,6 +66,9 @@ public enum OGlobalConfiguration {
 
   // MEMORY
   MEMORY_USE_UNSAFE("memory.useUnsafe", "Indicates whether Unsafe will be used, if it is present.", Boolean.class, true),
+
+  MEMORY_CHUNK_SIZE("memory.chunk.size", "Size of single memory chunk (in bytes) which will be preallocated by OrientDB",
+      Integer.class, Integer.MAX_VALUE),
 
   DIRECT_MEMORY_SAFE_MODE("memory.directMemory.safeMode",
       "Indicates whether to perform a range check before each direct memory update. It is true by default, "
@@ -183,8 +187,7 @@ public enum OGlobalConfiguration {
   WAL_RESTORE_BATCH_SIZE("storage.wal.restore.batchSize",
       "Amount of WAL records, which are read at once in a single batch during a restore procedure.", Integer.class, 1000),
 
-  @Deprecated
-  WAL_READ_CACHE_SIZE("storage.wal.readCacheSize", "Size of WAL read cache in amount of pages.", Integer.class, 1000),
+  @Deprecated WAL_READ_CACHE_SIZE("storage.wal.readCacheSize", "Size of WAL read cache in amount of pages.", Integer.class, 1000),
 
   WAL_FUZZY_CHECKPOINT_SHUTDOWN_TIMEOUT("storage.wal.fuzzyCheckpointShutdownWait",
       "The amount of time the DB should wait until it shuts down (in seconds).", Integer.class, 60 * 10),
