@@ -78,7 +78,7 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Set<OIdentifiable>> {
     private Object nextKey;
 
     private Iterator<OIdentifiable> valuesIterator = new OEmptyIterator<OIdentifiable>();
-    private Object                  key;
+    private Object key;
 
     public PureTxBetweenIndexForwardCursor(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
         OTransactionIndexChanges indexChanges) {
@@ -155,7 +155,7 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Set<OIdentifiable>> {
     private Object nextKey;
 
     private Iterator<OIdentifiable> valuesIterator = new OEmptyIterator<OIdentifiable>();
-    private Object                  key;
+    private Object key;
 
     public PureTxBetweenIndexBackwardCursor(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
         OTransactionIndexChanges indexChanges) {
@@ -229,7 +229,7 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Set<OIdentifiable>> {
     private final OIndexCursor             backedCursor;
     private final boolean                  ascOrder;
     private final OTransactionIndexChanges indexChanges;
-    private OIndexCursor                   txBetweenIndexCursor;
+    private       OIndexCursor             txBetweenIndexCursor;
 
     private Map.Entry<Object, OIdentifiable> nextTxEntry;
     private Map.Entry<Object, OIdentifiable> nextBackedEntry;

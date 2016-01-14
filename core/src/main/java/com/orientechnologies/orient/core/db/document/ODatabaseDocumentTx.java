@@ -140,8 +140,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
   private byte                                              recordType;
   @Deprecated
   private String                                            recordFormat;
-  private final Map<ORecordHook, ORecordHook.HOOK_POSITION> hooks           = new LinkedHashMap<ORecordHook, ORecordHook.HOOK_POSITION>();
-  private boolean                                           retainRecords   = true;
+  private final Map<ORecordHook, ORecordHook.HOOK_POSITION> hooks         = new LinkedHashMap<ORecordHook, ORecordHook.HOOK_POSITION>();
+  private       boolean                                     retainRecords = true;
   private OLocalRecordCache                                 localCache;
   private boolean                                           mvcc;
   private OCurrentStorageComponentsFactory                  componentsFactory;

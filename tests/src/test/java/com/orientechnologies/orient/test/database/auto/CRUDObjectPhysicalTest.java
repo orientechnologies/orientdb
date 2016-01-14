@@ -2458,8 +2458,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
   public void queryById() {
     List<Profile> result1 = database.query(new OSQLSynchQuery<Profile>("select from Profile limit 1"));
 
-    List<Profile> result2 = database.query(new OSQLSynchQuery<Profile>("select from Profile where @rid = ?"),
-        result1.get(0).getId());
+    List<Profile> result2 = database
+        .query(new OSQLSynchQuery<Profile>("select from Profile where @rid = ?"), result1.get(0).getId());
 
     Assert.assertTrue(result2.size() != 0);
   }

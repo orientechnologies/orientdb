@@ -206,8 +206,9 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     availableNodes = 0;
     int i = 0;
     for (String node : iNodes) {
-      final boolean include = requiredNodeOnline ? manager.isNodeOnline(node, databaseName)
-          : manager.isNodeAvailable(node, databaseName);
+      final boolean include = requiredNodeOnline ?
+          manager.isNodeOnline(node, databaseName) :
+          manager.isNodeAvailable(node, databaseName);
 
       if (include && reqQueues[i].getValue() != null)
         availableNodes++;

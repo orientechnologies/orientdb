@@ -3,9 +3,9 @@ package com.orientechnologies.orient.core.sql.parser;
 import org.testng.annotations.Test;
 
 @Test
-public class OFindReferencesTest extends OParserTestAbstract{
+public class OFindReferencesTest extends OParserTestAbstract {
 
-  public void testSyntax(){
+  public void testSyntax() {
     checkRightSyntax("FIND REFERENCES #12:0");
     checkRightSyntax("find references #12:0");
     checkRightSyntax("FIND REFERENCES #12:0 [Person]");

@@ -53,7 +53,6 @@ public class AlterPropertyTest {
     assertEquals(property, classA.getProperty("propertyNew"));
   }
 
-
   @Test
   public void testLinkedMapPropertyLinkedType() {
     OSchema schema = db.getMetadata().getSchema();
@@ -67,7 +66,7 @@ public class AlterPropertyTest {
 
     OProperty prop = classA.getProperty("propertyMap");
     assertNull(prop);
-  }  
+  }
 
   @Test
   public void testLinkedMapPropertyLinkedClass() {

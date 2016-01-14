@@ -326,7 +326,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
   }
 
   @Override
-  public StringBuilder toString(final ORecord iRecord, final StringBuilder iOutput, final String iFormat, final OUserObject2RecordHandler iObjHandler, boolean iOnlyDelta, boolean autoDetectCollectionType) {
+  public StringBuilder toString(final ORecord iRecord, final StringBuilder iOutput, final String iFormat,
+      final OUserObject2RecordHandler iObjHandler, boolean iOnlyDelta, boolean autoDetectCollectionType) {
     try {
       final StringWriter buffer = new StringWriter(INITIAL_SIZE);
       final OJSONWriter json = new OJSONWriter(buffer, iFormat);

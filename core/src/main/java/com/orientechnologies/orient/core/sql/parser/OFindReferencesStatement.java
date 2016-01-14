@@ -21,20 +21,21 @@ public class OFindReferencesStatement extends OStatement {
 
   }
 
-  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("FIND REFERENCES ");
-    if(rid!=null){
+    if (rid != null) {
       rid.toString(params, builder);
-    }else{
+    } else {
       builder.append(" ( ");
       subQuery.toString(params, builder);
       builder.append(" )");
     }
-    if(targets!=null){
+    if (targets != null) {
       builder.append(" [");
       boolean first = true;
-      for(SimpleNode node:targets){
-        if(!first){
+      for (SimpleNode node : targets) {
+        if (!first) {
           builder.append(",");
         }
         node.toString(params, builder);

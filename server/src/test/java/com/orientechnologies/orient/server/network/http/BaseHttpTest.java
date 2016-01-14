@@ -35,22 +35,22 @@ import com.orientechnologies.orient.server.OServer;
 public abstract class BaseHttpTest {
 
   private static OServer server;
-  private boolean        autoshutdownServer = false;
+  private boolean autoshutdownServer = false;
 
-  private String  serverCfg    = "/com/orientechnologies/orient/server/network/orientdb-server-config-httponly.xml";
-  private String  protocol     = "http";
-  private String  host         = "localhost";
-  private int     port         = 2499;
-  private String  realm        = "OrientDB-";
-  private String  userName     = "admin";
-  private String  userPassword = "admin";
-  private String  databaseName;
-  private Boolean keepAlive    = null;
+  private String serverCfg    = "/com/orientechnologies/orient/server/network/orientdb-server-config-httponly.xml";
+  private String protocol     = "http";
+  private String host         = "localhost";
+  private int    port         = 2499;
+  private String realm        = "OrientDB-";
+  private String userName     = "admin";
+  private String userPassword = "admin";
+  private String databaseName;
+  private Boolean keepAlive = null;
 
   private HttpRequestBase    request;
   private AbstractHttpEntity payload;
   private HttpResponse       response;
-  private int                retry = 1;
+  private int retry = 1;
 
   public enum CONTENT {
     TEXT, JSON

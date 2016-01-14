@@ -75,26 +75,26 @@ public class Orient extends OListenerManger<OOrientListener> {
   public static final String ORIENTDB_HOME = "ORIENTDB_HOME";
   public static final String URL_SYNTAX    = "<engine>:<db-type>:<db-name>[?<db-param>=<db-value>[&]]*";
 
-  private static final Orient     instance               = new Orient();
+  private static final    Orient  instance               = new Orient();
   private static volatile boolean registerDatabaseByPath = false;
 
   private final ConcurrentMap<String, OEngine>      engines    = new ConcurrentHashMap<String, OEngine>();
   private final ConcurrentMap<String, OStorage>     storages   = new ConcurrentHashMap<String, OStorage>();
   private final ConcurrentHashMap<Integer, Boolean> storageIds = new ConcurrentHashMap<Integer, Boolean>();
 
-  private final Map<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY> dbLifecycleListeners          = new LinkedHashMap<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY>();
-  private final OScriptManager                                                       scriptManager                 = new OScriptManager();
-  private final ThreadGroup                                                          threadGroup;
-  private final AtomicInteger                                                        serialId                      = new AtomicInteger();
-  private final ReadWriteLock                                                        engineLock                    = new ReentrantReadWriteLock();
-  private final ORecordConflictStrategyFactory                                       recordConflictStrategy        = new ORecordConflictStrategyFactory();
-  private final ReferenceQueue<OOrientStartupListener>                               removedStartupListenersQueue  = new ReferenceQueue<OOrientStartupListener>();
-  private final ReferenceQueue<OOrientShutdownListener>                              removedShutdownListenersQueue = new ReferenceQueue<OOrientShutdownListener>();
-  private final Set<OOrientStartupListener>                                          startupListeners              = Collections
+  private final Map<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY> dbLifecycleListeners = new LinkedHashMap<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY>();
+  private final OScriptManager                                                       scriptManager        = new OScriptManager();
+  private final ThreadGroup threadGroup;
+  private final AtomicInteger                                        serialId                      = new AtomicInteger();
+  private final ReadWriteLock                                        engineLock                    = new ReentrantReadWriteLock();
+  private final ORecordConflictStrategyFactory                       recordConflictStrategy        = new ORecordConflictStrategyFactory();
+  private final ReferenceQueue<OOrientStartupListener>               removedStartupListenersQueue  = new ReferenceQueue<OOrientStartupListener>();
+  private final ReferenceQueue<OOrientShutdownListener>              removedShutdownListenersQueue = new ReferenceQueue<OOrientShutdownListener>();
+  private final Set<OOrientStartupListener>                          startupListeners              = Collections
       .newSetFromMap(new ConcurrentHashMap<OOrientStartupListener, Boolean>());
-  private final Set<WeakHashSetValueHolder<OOrientStartupListener>>                  weakStartupListeners          = Collections
+  private final Set<WeakHashSetValueHolder<OOrientStartupListener>>  weakStartupListeners          = Collections
       .newSetFromMap(new ConcurrentHashMap<WeakHashSetValueHolder<OOrientStartupListener>, Boolean>());
-  private final Set<WeakHashSetValueHolder<OOrientShutdownListener>>                 weakShutdownListeners         = Collections
+  private final Set<WeakHashSetValueHolder<OOrientShutdownListener>> weakShutdownListeners         = Collections
       .newSetFromMap(new ConcurrentHashMap<WeakHashSetValueHolder<OOrientShutdownListener>, Boolean>());
 
   private final OLocalRecordCacheFactory localRecordCache = new OLocalRecordCacheFactoryImpl();
@@ -103,15 +103,15 @@ public class Orient extends OListenerManger<OOrientListener> {
     instance.startup();
   }
 
-  private String                         os;
-  private volatile Timer                 timer;
+  private          String os;
+  private volatile Timer  timer;
   private volatile ORecordFactoryManager recordFactoryManager = new ORecordFactoryManager();
-  private OrientShutdownHook             shutdownHook;
-  private volatile OProfiler             profiler;
-  private ODatabaseThreadLocalFactory    databaseThreadFactory;
-  private volatile boolean               active               = false;
-  private ThreadPoolExecutor             workers;
-  private OSignalHandler                 signalHandler;
+  private          OrientShutdownHook          shutdownHook;
+  private volatile OProfiler                   profiler;
+  private          ODatabaseThreadLocalFactory databaseThreadFactory;
+  private volatile boolean active = false;
+  private ThreadPoolExecutor workers;
+  private OSignalHandler     signalHandler;
 
   private static class WeakHashSetValueHolder<T> extends WeakReference<T> {
     private final int hashCode;
@@ -485,8 +485,9 @@ public class Orient extends OListenerManger<OOrientListener> {
       final OEngine engine = engines.get(engineName.toLowerCase());
 
       if (engine == null)
-        throw new OConfigurationException("Error on opening database: the engine '" + engineName + "' was not found. URL was: "
-            + iURL + ". Registered engines are: " + engines.keySet());
+        throw new OConfigurationException(
+            "Error on opening database: the engine '" + engineName + "' was not found. URL was: " + iURL
+                + ". Registered engines are: " + engines.keySet());
 
       // SEARCH FOR DB-NAME
       iURL = iURL.substring(pos + 1);

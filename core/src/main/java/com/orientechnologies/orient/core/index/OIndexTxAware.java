@@ -52,8 +52,8 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
      * Any partially matched key will be used as search result.
      */
     NONE, /**
-           * The biggest partially matched key will be used as search result.
-           */
+     * The biggest partially matched key will be used as search result.
+     */
     HIGHEST_BOUNDARY,
 
     /**

@@ -151,16 +151,14 @@ public class OFetchHelper {
         depthLevel = iFieldDepthLevel;
 
       fieldValue = record.rawField(fieldName);
-      if (fieldValue == null || !(fieldValue instanceof OIdentifiable)
-          && (!(fieldValue instanceof ORecordLazyMultiValue) || !((ORecordLazyMultiValue) fieldValue).rawIterator().hasNext()
-              || !(((ORecordLazyMultiValue) fieldValue).rawIterator().next() instanceof OIdentifiable))
-          && (!(fieldValue instanceof Collection<?>) || ((Collection<?>) fieldValue).size() == 0
-              || !(((Collection<?>) fieldValue).iterator().next() instanceof OIdentifiable))
-          && (!(fieldValue.getClass().isArray()) || Array.getLength(fieldValue) == 0
-              || !(Array.get(fieldValue, 0) instanceof OIdentifiable))
-          && (!(fieldValue instanceof OMultiCollectionIterator<?>))
-          && (!(fieldValue instanceof Map<?, ?>) || ((Map<?, ?>) fieldValue).size() == 0
-              || !(((Map<?, ?>) fieldValue).values().iterator().next() instanceof OIdentifiable))) {
+      if (fieldValue == null || !(fieldValue instanceof OIdentifiable) && (!(fieldValue instanceof ORecordLazyMultiValue)
+          || !((ORecordLazyMultiValue) fieldValue).rawIterator().hasNext() || !(((ORecordLazyMultiValue) fieldValue).rawIterator()
+          .next() instanceof OIdentifiable)) && (!(fieldValue instanceof Collection<?>) || ((Collection<?>) fieldValue).size() == 0
+          || !(((Collection<?>) fieldValue).iterator().next() instanceof OIdentifiable)) && (!(fieldValue.getClass().isArray())
+          || Array.getLength(fieldValue) == 0 || !(Array.get(fieldValue, 0) instanceof OIdentifiable))
+          && (!(fieldValue instanceof OMultiCollectionIterator<?>)) && (!(fieldValue instanceof Map<?, ?>)
+          || ((Map<?, ?>) fieldValue).size() == 0 || !(((Map<?, ?>) fieldValue).values().iterator()
+          .next() instanceof OIdentifiable))) {
         continue;
       } else {
         try {
@@ -275,7 +273,7 @@ public class OFetchHelper {
   private static void processRecord(final ODocument record, final Object iUserObject, final OFetchPlan iFetchPlan,
       final int iCurrentLevel, final int iLevelFromRoot, final int iFieldDepthLevel, final Map<ORID, Integer> parsedRecords,
       final String iFieldPathFromRoot, final OFetchListener iListener, final OFetchContext iContext, final String iFormat)
-          throws IOException {
+      throws IOException {
 
     if (record == null)
       return;
@@ -301,8 +299,9 @@ public class OFetchHelper {
 
       fieldValue = record.rawField(fieldName);
 
-      boolean fetch = !iFormat.contains("shallow") && (!(fieldValue instanceof OIdentifiable) || depthLevel == -1
-          || iCurrentLevel <= depthLevel || (iFetchPlan != null && iFetchPlan.has(fieldPath, iCurrentLevel)));
+      boolean fetch =
+          !iFormat.contains("shallow") && (!(fieldValue instanceof OIdentifiable) || depthLevel == -1 || iCurrentLevel <= depthLevel
+              || (iFetchPlan != null && iFetchPlan.has(fieldPath, iCurrentLevel)));
 
       final boolean isEmbedded = isEmbedded(fieldValue);
 
@@ -311,14 +310,12 @@ public class OFetchHelper {
         fetch = true;
 
       if (iFormat.contains("shallow") || fieldValue == null || (!fetch && fieldValue instanceof OIdentifiable)
-          || !(fieldValue instanceof OIdentifiable)
-              && (!(fieldValue instanceof ORecordLazyMultiValue) || !((ORecordLazyMultiValue) fieldValue).rawIterator().hasNext()
-                  || !(((ORecordLazyMultiValue) fieldValue).rawIterator().next() instanceof OIdentifiable))
-              && (!(fieldValue.getClass().isArray()) || Array.getLength(fieldValue) == 0
-                  || !(Array.get(fieldValue, 0) instanceof OIdentifiable))
-              && (!(OMultiValue.getFirstValue(fieldValue) instanceof OIdentifiable
-                  || OMultiValue.getFirstValue(OMultiValue.getFirstValue(fieldValue)) instanceof OIdentifiable || OMultiValue
-                      .getFirstValue(OMultiValue.getFirstValue(OMultiValue.getFirstValue(fieldValue))) instanceof OIdentifiable))) {
+          || !(fieldValue instanceof OIdentifiable) && (!(fieldValue instanceof ORecordLazyMultiValue)
+          || !((ORecordLazyMultiValue) fieldValue).rawIterator().hasNext() || !(((ORecordLazyMultiValue) fieldValue).rawIterator()
+          .next() instanceof OIdentifiable)) && (!(fieldValue.getClass().isArray()) || Array.getLength(fieldValue) == 0 || !(Array
+          .get(fieldValue, 0) instanceof OIdentifiable)) && (!(OMultiValue.getFirstValue(fieldValue) instanceof OIdentifiable
+          || OMultiValue.getFirstValue(OMultiValue.getFirstValue(fieldValue)) instanceof OIdentifiable || OMultiValue
+          .getFirstValue(OMultiValue.getFirstValue(OMultiValue.getFirstValue(fieldValue))) instanceof OIdentifiable))) {
         iContext.onBeforeStandardField(fieldValue, fieldName, iUserObject);
         iListener.processStandardField(record, fieldValue, fieldName, iContext, iUserObject, iFormat);
         iContext.onAfterStandardField(fieldValue, fieldName, iUserObject);

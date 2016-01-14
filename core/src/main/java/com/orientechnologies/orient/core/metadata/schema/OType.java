@@ -112,7 +112,7 @@ public enum OType {
   protected static final OType[] TYPES = new OType[] { EMBEDDEDLIST, EMBEDDEDSET, EMBEDDEDMAP, LINK, CUSTOM, EMBEDDED, STRING,
       DATETIME };
 
-  protected static final OType[] TYPES_BY_ID = new OType[24];
+  protected static final OType[]              TYPES_BY_ID    = new OType[24];
   // Values previosly stored in javaTypes
   protected static final Map<Class<?>, OType> TYPES_BY_CLASS = new HashMap<Class<?>, OType>();
 
@@ -162,9 +162,9 @@ public enum OType {
     EMBEDDEDLIST.castable.add(EMBEDDEDSET);
   }
 
-  protected final String name;
-  protected final int id;
-  protected final Class<?> javaDefaultType;
+  protected final String     name;
+  protected final int        id;
+  protected final Class<?>   javaDefaultType;
   protected final Class<?>[] allowAssignmentFrom;
   protected final Set<OType> castable;
 
@@ -285,8 +285,8 @@ public enum OType {
 
     final Class<? extends Object> iType = iObject.getClass();
 
-    if (iType.isPrimitive() || Number.class.isAssignableFrom(iType) || String.class.isAssignableFrom(iType)
-        || Boolean.class.isAssignableFrom(iType) || Date.class.isAssignableFrom(iType)
+    if (iType.isPrimitive() || Number.class.isAssignableFrom(iType) || String.class.isAssignableFrom(iType) || Boolean.class
+        .isAssignableFrom(iType) || Date.class.isAssignableFrom(iType)
         || (iType.isArray() && (iType.equals(byte[].class) || iType.equals(char[].class) || iType.equals(int[].class)
             || iType.equals(long[].class) || iType.equals(double[].class) || iType.equals(float[].class)
             || iType.equals(short[].class) || iType.equals(Integer[].class) || iType.equals(String[].class)

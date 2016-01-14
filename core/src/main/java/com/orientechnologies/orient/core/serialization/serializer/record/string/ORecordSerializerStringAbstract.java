@@ -198,15 +198,17 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
       break;
 
     case EMBEDDEDSET:
-      ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedCollectionToStream(ODatabaseRecordThreadLocal.INSTANCE.getIfDefined(),
-          null, iBuffer, null, null, iValue, true, true);
+      ORecordSerializerSchemaAware2CSV.INSTANCE
+          .embeddedCollectionToStream(ODatabaseRecordThreadLocal.INSTANCE.getIfDefined(), null, iBuffer, null, null, iValue, true,
+              true);
       PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.embedSet2string"), "Serialize embeddedset to string",
           timer);
       break;
 
     case EMBEDDEDLIST:
-      ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedCollectionToStream(ODatabaseRecordThreadLocal.INSTANCE.getIfDefined(),
-          null, iBuffer, null, null, iValue, true, false);
+      ORecordSerializerSchemaAware2CSV.INSTANCE
+          .embeddedCollectionToStream(ODatabaseRecordThreadLocal.INSTANCE.getIfDefined(), null, iBuffer, null, null, iValue, true,
+              false);
       PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.embedList2string"),
           "Serialize embeddedlist to string", timer);
       break;
@@ -690,7 +692,8 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
     }
   }
 
-  protected abstract StringBuilder toString(final ORecord iRecord, final StringBuilder iOutput, final String iFormat, final OUserObject2RecordHandler iObjHandler, boolean iOnlyDelta, boolean autoDetectCollectionType);
+  protected abstract StringBuilder toString(final ORecord iRecord, final StringBuilder iOutput, final String iFormat,
+      final OUserObject2RecordHandler iObjHandler, boolean iOnlyDelta, boolean autoDetectCollectionType);
 
   public boolean getSupportBinaryEvaluate() {
     return false;
