@@ -122,7 +122,7 @@
                         <storage.diskCache.bufferSize>4096</storage.diskCache.bufferSize>
                         <memory.directMemory.trackMode>true</memory.directMemory.trackMode>
                     </systemPropertyVariables>
-                    <argLine>-Xmx3072m</argLine>
+                    <argLine>-Xmx3072m -XX:MaxDirectMemorySize=512g</argLine>
                 </configuration>
                 <executions>
                     <execution>

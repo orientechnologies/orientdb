@@ -36,7 +36,7 @@
         </osgi.import>
         <osgi.export>com.orientechnologies.orient.server.*</osgi.export>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <argLine>-ea -Xmx2048m -Dstorage.diskCache.bufferSize=4096
+        <argLine>-ea -Xmx2048m -XX:MaxDirectMemorySize=512g -Dstorage.diskCache.bufferSize=4096
             -Dsecurity.userPasswordSaltIterations=10 -Dmemory.directMemory.trackMode=true
         </argLine>
     </properties>

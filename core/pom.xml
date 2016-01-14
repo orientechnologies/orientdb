@@ -45,7 +45,7 @@
         </osgi.export>
         <jna.version>4.0.0</jna.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <argLine>-ea -Xmx3072m
+        <argLine>-ea -Xmx3072m -XX:MaxDirectMemorySize=512g
             -Dstorage.diskCache.bufferSize=4096
             -Dindex.flushAfterCreate=false
             -Dstorage.makeFullCheckpointAfterCreate=false
