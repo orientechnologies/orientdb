@@ -56,11 +56,11 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
   /**
    * USE THIS AS RESPONSE TO REPORT A DELETED RECORD IN TX
    */
-  public static final ORecord                                 DELETED_RECORD        = new ORecordBytes();
-  protected Map<ORID, ORID>                                   updatedRids           = new HashMap<ORID, ORID>();
-  protected Map<ORID, ORecordOperation>                       allEntries            = new LinkedHashMap<ORID, ORecordOperation>();
-  protected Map<String, OTransactionIndexChanges>             indexEntries          = new LinkedHashMap<String, OTransactionIndexChanges>();
-  protected Map<ORID, List<OTransactionRecordIndexOperation>> recordIndexOperations = new HashMap<ORID, List<OTransactionRecordIndexOperation>>();
+  public static final ORecord                                           DELETED_RECORD        = new ORecordBytes();
+  protected           Map<ORID, ORID>                                   updatedRids           = new HashMap<ORID, ORID>();
+  protected           Map<ORID, ORecordOperation>                       allEntries            = new LinkedHashMap<ORID, ORecordOperation>();
+  protected           Map<String, OTransactionIndexChanges>             indexEntries          = new LinkedHashMap<String, OTransactionIndexChanges>();
+  protected           Map<ORID, List<OTransactionRecordIndexOperation>> recordIndexOperations = new HashMap<ORID, List<OTransactionRecordIndexOperation>>();
   protected int                                               id;
   protected int                                               newObjectCounter      = -2;
   protected Map<String, Object>                               userData              = new HashMap<String, Object>();
