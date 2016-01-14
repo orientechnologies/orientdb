@@ -434,11 +434,14 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
           cls = (OClassImpl) ((OClassAbstractDelegate) superClass).delegate;
         else
           cls = (OClassImpl) superClass;
-        if(newSuperClasses.contains(cls)){
-          throw new OSchemaException("Duplicate superclass:'" + cls.getName() + "'");
+
+        if (newSuperClasses.contains(cls)) {
+          throw new OSchemaException("Duplicated superclass '" + cls.getName() + "'");
         }
+
         newSuperClasses.add(cls);
       }
+
       checkParametersConflict(newSuperClasses);
       List<OClassImpl> toAddList = new ArrayList<OClassImpl>(newSuperClasses);
       toAddList.removeAll(superClasses);
@@ -504,7 +507,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
           user.allow(ORule.ResourceGeneric.CLASS, cls.getName(), ORole.PERMISSION_UPDATE);
 
         if (superClasses.contains(superClass)) {
-          throw new OSchemaException(" Class:'" + this.getName() + "' has already class:'" + superClass.getName() + "' as superclass ");
+          throw new OSchemaException(
+              "Class: '" + this.getName() + "' already has the class '" + superClass.getName() + "' as superclass");
         }
 
         cls.addBaseClass(this);
@@ -1699,6 +1703,13 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
     final OPropertyImpl prop;
 
+    //This check are doubled becouse used by sql commands
+    if (linkedType != null)
+      OPropertyImpl.checkLinkTypeSupport(type);
+
+    if (linkedClass != null)
+      OPropertyImpl.checkSupportLinkedClass(type);
+
     acquireSchemaWriteLock();
     try {
       checkEmbedded();
@@ -2375,6 +2386,12 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     final ODatabaseDocumentInternal database = getDatabase();
     database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
+    if (linkedType != null)
+      OPropertyImpl.checkLinkTypeSupport(type);
+
+    if (linkedClass != null)
+      OPropertyImpl.checkSupportLinkedClass(type);
+
     OProperty property = null;
     acquireSchemaWriteLock();
     try {
@@ -2616,5 +2633,4 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     return getDatabase().getStorage() instanceof OAutoshardedStorage
         && OScenarioThreadLocal.INSTANCE.get() != OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED;
   }
-
 }

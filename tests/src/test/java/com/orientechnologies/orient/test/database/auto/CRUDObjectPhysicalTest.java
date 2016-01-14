@@ -15,6 +15,17 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.*;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.object.OLazyObjectSetInterface;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
@@ -33,7 +44,6 @@ import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
-import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.orientechnologies.orient.object.db.OObjectDatabasePool;
 import com.orientechnologies.orient.object.iterator.OObjectIteratorClass;
 import com.orientechnologies.orient.test.domain.base.*;
@@ -43,16 +53,6 @@ import com.orientechnologies.orient.test.domain.business.Child;
 import com.orientechnologies.orient.test.domain.business.City;
 import com.orientechnologies.orient.test.domain.business.Country;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.*;
 
 @Test(groups = { "crud", "object" })
 public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
@@ -482,8 +482,7 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
           + " not compatible with current Object Database loading management");
     }
     collectionObj = doc.field("set");
-    validImplementation = (collectionObj instanceof OTrackedSet<?>) || (collectionObj instanceof ORecordLazySet)
-        || (collectionObj instanceof OMVRBTreeRIDSet);
+    validImplementation = (collectionObj instanceof OTrackedSet<?>) || (collectionObj instanceof ORecordLazySet);
     if (!validImplementation) {
       Assert.fail("Document set implementation " + collectionObj.getClass().getName()
           + " not compatible with current Object Database management");
@@ -1938,8 +1937,7 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       try {
         p.getByteArray().toOutputStream(out);
-        Assert.assertEquals(
-            "this is a bytearray test. if you read this Object database has stored it correctlyVERSION2".getBytes(),
+        Assert.assertEquals("this is a bytearray test. if you read this Object database has stored it correctlyVERSION2".getBytes(),
             out.toByteArray());
         Assert.assertEquals("this is a bytearray test. if you read this Object database has stored it correctlyVERSION2",
             new String(out.toByteArray()));
@@ -1962,8 +1960,7 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       try {
         loaded.getByteArray().toOutputStream(out);
-        Assert.assertEquals(
-            "this is a bytearray test. if you read this Object database has stored it correctlyVERSION2".getBytes(),
+        Assert.assertEquals("this is a bytearray test. if you read this Object database has stored it correctlyVERSION2".getBytes(),
             out.toByteArray());
         Assert.assertEquals("this is a bytearray test. if you read this Object database has stored it correctlyVERSION2",
             new String(out.toByteArray()));
@@ -1987,8 +1984,7 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       try {
         p.getByteArray().toOutputStream(out);
-        Assert.assertEquals(
-            "this is a bytearray test. if you read this Object database has stored it correctlyVERSION2".getBytes(),
+        Assert.assertEquals("this is a bytearray test. if you read this Object database has stored it correctlyVERSION2".getBytes(),
             out.toByteArray());
         Assert.assertEquals("this is a bytearray test. if you read this Object database has stored it correctlyVERSION2",
             new String(out.toByteArray()));
@@ -2011,8 +2007,7 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       try {
         loaded.getByteArray().toOutputStream(out);
-        Assert.assertEquals(
-            "this is a bytearray test. if you read this Object database has stored it correctlyVERSION2".getBytes(),
+        Assert.assertEquals("this is a bytearray test. if you read this Object database has stored it correctlyVERSION2".getBytes(),
             out.toByteArray());
         Assert.assertEquals("this is a bytearray test. if you read this Object database has stored it correctlyVERSION2",
             new String(out.toByteArray()));
@@ -2125,8 +2120,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
   public void createLinked() {
     long profiles = database.countClass("Profile");
 
-    Profile neo = new Profile("Neo").setValue("test").setLocation(
-        new Address("residence", new City(new Country("Spain"), "Madrid"), "Rio de Castilla"));
+    Profile neo = new Profile("Neo").setValue("test")
+        .setLocation(new Address("residence", new City(new Country("Spain"), "Madrid"), "Rio de Castilla"));
     neo.addFollowing(new Profile("Morpheus"));
     neo.addFollowing(new Profile("Trinity"));
 
@@ -2185,8 +2180,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
   public void queryCross3Levels() {
     database.getMetadata().getSchema().reload();
 
-    final List<Profile> result = database.query(new OSQLSynchQuery<Profile>(
-        "select from Profile where location.city.country.name = 'Spain'"));
+    final List<Profile> result = database
+        .query(new OSQLSynchQuery<Profile>("select from Profile where location.city.country.name = 'Spain'"));
 
     Assert.assertTrue(result.size() > 0);
 
@@ -2463,8 +2458,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
   public void queryById() {
     List<Profile> result1 = database.query(new OSQLSynchQuery<Profile>("select from Profile limit 1"));
 
-    List<Profile> result2 = database.query(new OSQLSynchQuery<Profile>("select from Profile where @rid = ?"), result1.get(0)
-        .getId());
+    List<Profile> result2 = database.query(new OSQLSynchQuery<Profile>("select from Profile where @rid = ?"),
+        result1.get(0).getId());
 
     Assert.assertTrue(result2.size() != 0);
   }

@@ -219,7 +219,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
 
   @Override
   public boolean isRequireNodeOnline() {
-    return true;
+    return false;
   }
 
   @Override

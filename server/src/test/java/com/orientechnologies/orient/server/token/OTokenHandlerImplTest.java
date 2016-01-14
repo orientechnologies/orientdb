@@ -38,12 +38,13 @@ public class OTokenHandlerImplTest {
     try {
       OSecurityUser original = db.getUser();
       OTokenHandlerImpl handler = new OTokenHandlerImpl("any key".getBytes(), 60, "HmacSHA256");
+      byte[] token = handler.getSignedWebToken(db, original);
+
       try {
         // Make this thread wait at least 10 milliseconds before check the validity
         Thread.sleep(10);
       } catch (InterruptedException e) {
       }
-      byte[] token = handler.getSignedWebToken(db, original);
 
       OToken tok = handler.parseWebToken(token);
 
