@@ -20,8 +20,9 @@
 
 package com.orientechnologies.common.serialization.types;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.PointerWrapper;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
+
+import java.nio.ByteBuffer;
 
 /**
  * Serializer for {@link String} type.
@@ -114,12 +115,23 @@ public class OStringSerializer implements OBinarySerializer<String> {
     return new String(buffer);
   }
 
-  @Override
-  public void serializeInDirectMemoryObject(String object, ODirectMemoryPointer pointer, long offset, Object... hints) {
-    int length = object.length();
-    pointer.setInt(offset, length);
+  public boolean isFixedLength() {
+    return false;
+  }
 
-    offset += OIntegerSerializer.INT_SIZE;
+  public int getFixedLength() {
+    throw new UnsupportedOperationException("Length of serialized string is not fixed.");
+  }
+
+  @Override
+  public String preprocess(String value, Object... hints) {
+    return value;
+  }
+
+  @Override
+  public void serializeInByteBufferObject(String object, ByteBuffer buffer, Object... hints) {
+    int length = object.length();
+    buffer.putInt(length);
 
     byte[] binaryData = new byte[length * 2];
     char[] stringContent = new char[length];
@@ -135,59 +147,45 @@ public class OStringSerializer implements OBinarySerializer<String> {
       counter++;
     }
 
-    pointer.set(offset, binaryData, 0, binaryData.length);
+    buffer.put(binaryData);
   }
 
   @Override
-  public String deserializeFromDirectMemoryObject(ODirectMemoryPointer pointer, long offset) {
-    int len = pointer.getInt(offset);
+  public String deserializeFromByteBufferObject(ByteBuffer buffer) {
+    int len = buffer.getInt();
 
-    final char[] buffer = new char[len];
-    offset += OIntegerSerializer.INT_SIZE;
-
-    byte[] binaryData = pointer.get(offset, buffer.length * 2);
+    final char[] chars = new char[len];
+    final byte[] binaryData = new byte[2 * len];
+    buffer.get(binaryData);
 
     for (int i = 0; i < len; i++)
-      buffer[i] = (char) ((0xFF & binaryData[i << 1]) | ((0xFF & binaryData[(i << 1) + 1]) << 8));
+      chars[i] = (char) ((0xFF & binaryData[i << 1]) | ((0xFF & binaryData[(i << 1) + 1]) << 8));
 
-    return new String(buffer);
+    return new String(chars);
   }
 
   @Override
-  public String deserializeFromDirectMemoryObject(PointerWrapper wrapper, long offset) {
-    int len = wrapper.getInt(offset);
+  public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
+    return buffer.getInt() * 2 + OIntegerSerializer.INT_SIZE;
+  }
 
-    final char[] buffer = new char[len];
+  @Override
+  public String deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+    int len = walChanges.getIntValue(buffer, offset);
+
+    final char[] chars = new char[len];
     offset += OIntegerSerializer.INT_SIZE;
 
-    byte[] binaryData = wrapper.get(offset, buffer.length * 2);
+    byte[] binaryData = walChanges.getBinaryValue(buffer, offset, 2 * len);
 
     for (int i = 0; i < len; i++)
-      buffer[i] = (char) ((0xFF & binaryData[i << 1]) | ((0xFF & binaryData[(i << 1) + 1]) << 8));
+      chars[i] = (char) ((0xFF & binaryData[i << 1]) | ((0xFF & binaryData[(i << 1) + 1]) << 8));
 
-    return new String(buffer);
+    return new String(chars);
   }
 
   @Override
-  public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
-    return pointer.getInt(offset) * 2 + OIntegerSerializer.INT_SIZE;
-  }
-
-  @Override
-  public int getObjectSizeInDirectMemory(PointerWrapper wrapper, long offset) {
-    return wrapper.getInt(offset) * 2 + OIntegerSerializer.INT_SIZE;
-  }
-
-  public boolean isFixedLength() {
-    return false;
-  }
-
-  public int getFixedLength() {
-    throw new UnsupportedOperationException("Length of serialized string is not fixed.");
-  }
-
-  @Override
-  public String preprocess(String value, Object... hints) {
-    return value;
+  public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+    return walChanges.getIntValue(buffer, offset) * 2 + OIntegerSerializer.INT_SIZE;
   }
 }

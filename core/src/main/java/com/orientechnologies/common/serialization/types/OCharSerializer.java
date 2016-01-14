@@ -20,11 +20,11 @@
 
 package com.orientechnologies.common.serialization.types;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.PointerWrapper;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 
+import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 /**
@@ -35,10 +35,10 @@ public class OCharSerializer implements OBinarySerializer<Character> {
   /**
    * size of char value in bytes
    */
-  public static final int               CHAR_SIZE        = 2;
-  public static final byte              ID               = 3;
+  public static final  int              CHAR_SIZE        = 2;
+  public static final  byte             ID               = 3;
   private static final OBinaryConverter BINARY_CONVERTER = OBinaryConverterFactory.getConverter();
-  public static final OCharSerializer         INSTANCE         = new OCharSerializer();
+  public static final  OCharSerializer  INSTANCE         = new OCharSerializer();
 
   public int getObjectSize(final Character object, Object... hints) {
     return CHAR_SIZE;
@@ -91,41 +91,6 @@ public class OCharSerializer implements OBinarySerializer<Character> {
     return BINARY_CONVERTER.getChar(stream, startPosition, ByteOrder.nativeOrder());
   }
 
-  public void serializeInDirectMemory(final char object, final ODirectMemoryPointer pointer, final long offset,
-      final Object... hints) {
-    pointer.setChar(offset, object);
-  }
-
-  public Character deserializeFromDirectMemory(final ODirectMemoryPointer pointer, final long offset) {
-    return pointer.getChar(offset);
-  }
-
-  @Override
-  public void serializeInDirectMemoryObject(final Character object, final ODirectMemoryPointer pointer, final long offset,
-      final Object... hints) {
-    pointer.setChar(offset, object);
-  }
-
-  @Override
-  public Character deserializeFromDirectMemoryObject(final ODirectMemoryPointer pointer, final long offset) {
-    return pointer.getChar(offset);
-  }
-
-  @Override
-  public Character deserializeFromDirectMemoryObject(PointerWrapper wrapper, long offset) {
-    return (char) wrapper.getShort(offset);
-  }
-
-  @Override
-  public int getObjectSizeInDirectMemory(final ODirectMemoryPointer pointer, final long offset) {
-    return CHAR_SIZE;
-  }
-
-  @Override
-  public int getObjectSizeInDirectMemory(PointerWrapper wrapper, long offset) {
-    return CHAR_SIZE;
-  }
-
   public boolean isFixedLength() {
     return true;
   }
@@ -137,5 +102,30 @@ public class OCharSerializer implements OBinarySerializer<Character> {
   @Override
   public Character preprocess(final Character value, final Object... hints) {
     return value;
+  }
+
+  @Override
+  public void serializeInByteBufferObject(Character object, ByteBuffer buffer, Object... hints) {
+    buffer.putChar(object);
+  }
+
+  @Override
+  public Character deserializeFromByteBufferObject(ByteBuffer buffer) {
+    return buffer.getChar();
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
+    return CHAR_SIZE;
+  }
+
+  @Override
+  public Character deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+    return (char) walChanges.getShortValue(buffer, offset);
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+    return CHAR_SIZE;
   }
 }

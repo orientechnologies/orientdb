@@ -157,7 +157,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       operation.incrementCounter();
 
       if (fullName != null)
-        acquireExclusiveLockTillOperationComplete(fullName);
+        acquireExclusiveLockTillOperationComplete(operation, fullName);
 
       return operation;
     }
@@ -199,7 +199,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       writeAheadLog.log(new ONonTxOperationPerformedWALRecord());
 
     if (fullName != null)
-      acquireExclusiveLockTillOperationComplete(fullName);
+      acquireExclusiveLockTillOperationComplete(operation, fullName);
 
     return operation;
   }
@@ -391,11 +391,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     return operation;
   }
 
-  private void acquireExclusiveLockTillOperationComplete(String fullName) {
-    final OAtomicOperation operation = currentOperation.get();
-    if (operation == null)
-      return;
-
+  private void acquireExclusiveLockTillOperationComplete(OAtomicOperation operation, String fullName) {
     if (operation.containsInLockedObjects(fullName))
       return;
 

@@ -36,7 +36,6 @@ import java.util.zip.ZipOutputStream;
 
 import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.exception.OErrorCode;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
@@ -113,7 +112,6 @@ import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.cache.OPageDataVerificationError;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
-import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineCluster;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
@@ -2928,13 +2926,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         cacheEntry.acquireSharedLock();
         try {
           final OLogSequenceNumber pageLsn = ODurablePage
-              .getLogSequenceNumberFromPage(cacheEntry.getCachePointer().getDataPointer());
+              .getLogSequenceNumberFromPage(cacheEntry.getCachePointer().getSharedBuffer());
 
           if (changeLsn == null || pageLsn.compareTo(changeLsn) > 0) {
 
             final byte[] data = new byte[pageSize + OLongSerializer.LONG_SIZE];
             OLongSerializer.INSTANCE.serializeNative(pageIndex, data, 0);
-            ODurablePage.getPageData(cacheEntry.getCachePointer().getDataPointer(), data, OLongSerializer.LONG_SIZE, pageSize);
+            ODurablePage.getPageData(cacheEntry.getCachePointer().getSharedBuffer(), data, OLongSerializer.LONG_SIZE, pageSize);
 
             stream.write(data);
 
@@ -3112,19 +3110,22 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
           cacheEntry.acquireExclusiveLock();
           try {
-            final ODirectMemoryPointer pointer = cacheEntry.getCachePointer().getDataPointer();
+            final ByteBuffer buffer = cacheEntry.getCachePointer().getSharedBuffer();
             final OLogSequenceNumber backedUpPageLsn = ODurablePage.getLogSequenceNumber(OLongSerializer.LONG_SIZE, data);
             if (isFull) {
-              pointer.set(OWOWCache.PAGE_PADDING, data, OLongSerializer.LONG_SIZE, data.length - OLongSerializer.LONG_SIZE);
+              buffer.position(0);
+              buffer.put(data, OLongSerializer.LONG_SIZE, data.length - OLongSerializer.LONG_SIZE);
               cacheEntry.markDirty();
 
               if (maxLsn == null || maxLsn.compareTo(backedUpPageLsn) < 0) {
                 maxLsn = backedUpPageLsn;
               }
             } else {
-              final OLogSequenceNumber currentPageLsn = ODurablePage.getLogSequenceNumberFromPage(pointer);
+              final OLogSequenceNumber currentPageLsn = ODurablePage.getLogSequenceNumberFromPage(buffer);
               if (backedUpPageLsn.compareTo(currentPageLsn) > 0) {
-                pointer.set(OWOWCache.PAGE_PADDING, data, OLongSerializer.LONG_SIZE, data.length - OLongSerializer.LONG_SIZE);
+                buffer.position(0);
+                buffer.put(data, OLongSerializer.LONG_SIZE, data.length - OLongSerializer.LONG_SIZE);
+
                 cacheEntry.markDirty();
 
                 if (maxLsn == null || maxLsn.compareTo(backedUpPageLsn) < 0) {

@@ -9,6 +9,7 @@ import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OStoragePerformanceStatistic;
 import org.mockito.Mockito;
 import org.testng.Assert;
@@ -148,8 +149,9 @@ public class SBTreeTestBigValuesWAL extends SBTreeTestBigValues {
     when(actualStorage.getWALInstance()).thenReturn(writeAheadLog);
     actualAtomicOperationsManager = new OAtomicOperationsManager(actualStorage);
 
-    actualWriteCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 100000,
-        writeAheadLog, 100, 1648L * 1024 * 1024, 400L * 1024 * 1024 * 1024 + 1648L * 1024 * 1024, actualStorage, true, 1);
+    actualWriteCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024,
+        new OByteBufferPool(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024), 100000, writeAheadLog, 100,
+        1648L * 1024 * 1024, 400L * 1024 * 1024 * 1024 + 1648L * 1024 * 1024, actualStorage, true, 1);
     actualReadCache = new O2QCache(400L * 1024 * 1024 * 1024, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024,
         true, 20);
 
@@ -189,8 +191,9 @@ public class SBTreeTestBigValuesWAL extends SBTreeTestBigValues {
 
     OAtomicOperationsManager atomicOperationsManager = new OAtomicOperationsManager(expectedStorage);
 
-    expectedWriteCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000,
-        writeAheadLog, 100, 1648L * 1024 * 1024, 1648L * 1024 * 1024 + 400L * 1024 * 1024 * 1024, expectedStorage, true, 1);
+    expectedWriteCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024,
+        new OByteBufferPool(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024), 1000000, writeAheadLog, 100,
+        1648L * 1024 * 1024, 1648L * 1024 * 1024 + 400L * 1024 * 1024 * 1024, expectedStorage, true, 1);
     expectedReadCache = new O2QCache(400L * 1024 * 1024 * 1024,
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, false, 20);
 

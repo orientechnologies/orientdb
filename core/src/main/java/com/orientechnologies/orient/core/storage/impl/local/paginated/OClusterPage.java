@@ -54,7 +54,7 @@ public class OClusterPage extends ODurablePage {
   private static final int INDEX_ITEM_SIZE        = OIntegerSerializer.INT_SIZE + VERSION_SIZE;
   private static final int MARKED_AS_DELETED_FLAG = 1 << 16;
   private static final int POSITION_MASK          = 0xFFFF;
-  public static final int  PAGE_SIZE              = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
+  public static final  int PAGE_SIZE              = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
 
   public static final int MAX_ENTRY_SIZE = PAGE_SIZE - PAGE_INDEXES_OFFSET - INDEX_ITEM_SIZE;
 

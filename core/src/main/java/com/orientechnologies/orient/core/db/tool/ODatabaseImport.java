@@ -19,6 +19,27 @@
  */
 package com.orientechnologies.orient.core.db.tool;
 
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.lang.reflect.InvocationTargetException;
+import java.text.ParseException;
+import java.util.AbstractList;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.zip.GZIPInputStream;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.listener.OProgressListener;
@@ -70,29 +91,6 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
-import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
-
-import java.io.BufferedInputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.lang.reflect.InvocationTargetException;
-import java.text.ParseException;
-import java.util.AbstractList;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.zip.GZIPInputStream;
 
 /**
  * Import data from a file into a database.
@@ -235,13 +233,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       boolean updated = false;
       final Set result;
 
-      if (value instanceof OMVRBTreeRIDSet) {
-        OMVRBTreeRIDSet ridSet = new OMVRBTreeRIDSet(((OMVRBTreeRIDSet) value).getOwner());
-        ridSet.setAutoConvertToRecord(false);
-
-        result = ridSet;
-      } else
-        result = new HashSet();
+      result = new HashSet();
 
       final ResultCallback callback = new ResultCallback() {
         @Override
@@ -597,8 +589,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       schema.dropClass(OSecurityShared.RESTRICTED_CLASSNAME);
     if (schema.existsClass(OFunction.CLASS_NAME))
       schema.dropClass(OFunction.CLASS_NAME);
-    if (schema.existsClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME))
-      schema.dropClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
+    if (schema.existsClass("ORIDs"))
+      schema.dropClass("ORIDs");
     if (schema.existsClass(OClassTrigger.CLASSNAME))
       schema.dropClass(OClassTrigger.CLASSNAME);
     schema.save();
@@ -1336,7 +1328,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         return null;
 
       if (exporterVersion >= 3) {
-        int oridsId = database.getClusterIdByName(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
+        int oridsId = database.getClusterIdByName("ORIDs");
         int indexId = database.getClusterIdByName(OMetadataDefault.CLUSTER_INDEX_NAME);
 
         if (record.getIdentity().getClusterId() == indexId || record.getIdentity().getClusterId() == oridsId)

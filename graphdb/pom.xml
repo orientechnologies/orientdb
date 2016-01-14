@@ -44,7 +44,8 @@
         </osgi.export>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <argLine>-ea -Xmx3G -Xss2048k -Dstorage.diskCache.bufferSize=4096 -Dindex.flushAfterCreate=false
+        <argLine>-ea -Xmx3G -XX:MaxDirectMemorySize=512g -Xss2048k -Dstorage.diskCache.bufferSize=4096
+            -Dindex.flushAfterCreate=false
             -Dmemory.directMemory.trackMode=true
             -Dstorage.makeFullCheckpointAfterCreate=false
             -Dstorage.makeFullCheckpointAfterOpen=false

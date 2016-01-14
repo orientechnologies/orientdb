@@ -16,6 +16,22 @@
  */
 package com.orientechnologies.orient.object.enhancement;
 
+import java.lang.reflect.Array;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javassist.util.proxy.MethodHandler;
+import javassist.util.proxy.Proxy;
+import javassist.util.proxy.ProxyObject;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.reflection.OReflectionHelper;
@@ -39,7 +55,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.orientechnologies.orient.object.db.OObjectLazyList;
 import com.orientechnologies.orient.object.db.OObjectLazyMap;
 import com.orientechnologies.orient.object.db.OObjectLazySet;
@@ -51,21 +66,6 @@ import com.orientechnologies.orient.object.serialization.OObjectCustomSerializer
 import com.orientechnologies.orient.object.serialization.OObjectCustomSerializerMap;
 import com.orientechnologies.orient.object.serialization.OObjectCustomSerializerSet;
 import com.orientechnologies.orient.object.serialization.OObjectLazyCustomSerializer;
-import javassist.util.proxy.MethodHandler;
-import javassist.util.proxy.Proxy;
-import javassist.util.proxy.ProxyObject;
-
-import java.lang.reflect.Array;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Luca Molino (molino.luca--at--gmail.com)
@@ -708,7 +708,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
             && !customSerialization && (genericType == null || !genericType.isEnum()))) {
       value = new OObjectLazyList(self, (List<OIdentifiable>) value,
           OObjectEntitySerializer.isCascadeDeleteField(self.getClass(), f.getName()));
-    } else if (value instanceof ORecordLazySet || value instanceof OMVRBTreeRIDSet
+    } else if (value instanceof ORecordLazySet
         || (value instanceof OTrackedSet<?> && (genericType == null || !OReflectionHelper.isJavaType(genericType))
             && !customSerialization && (genericType == null || !genericType.isEnum()))) {
       value = new OObjectLazySet(self, (Set) value, OObjectEntitySerializer.isCascadeDeleteField(self.getClass(), f.getName()));

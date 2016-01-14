@@ -20,8 +20,7 @@
 
 package com.orientechnologies.orient.core.storage.impl.memory;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
-import com.orientechnologies.common.directmemory.ODirectMemoryPointerFactory;
+import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -32,14 +31,13 @@ import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.cache.OPageDataVerificationError;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
-import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OStoragePerformanceStatistic;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -167,9 +165,9 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
 
   @Override
   public OCacheEntry load(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache, final int pageCount,
-                          OStoragePerformanceStatistic storagePerformanceStatistic) {
-    final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic =
-        OSessionStoragePerformanceStatistic.getStatisticInstance();
+      OStoragePerformanceStatistic storagePerformanceStatistic) {
+    final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = OSessionStoragePerformanceStatistic
+        .getStatisticInstance();
 
     if (sessionStoragePerformanceStatistic != null) {
       sessionStoragePerformanceStatistic.startPageReadFromCacheTimer();
@@ -203,9 +201,9 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
 
   @Override
   public OCacheEntry allocateNewPage(long fileId, OWriteCache writeCache,
-                                     OStoragePerformanceStatistic storagePerformanceStatistic) {
-    final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic =
-        OSessionStoragePerformanceStatistic.getStatisticInstance();
+      OStoragePerformanceStatistic storagePerformanceStatistic) {
+    final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = OSessionStoragePerformanceStatistic
+        .getStatisticInstance();
 
     if (sessionStoragePerformanceStatistic != null) {
       sessionStoragePerformanceStatistic.startPageReadFromCacheTimer();
@@ -447,9 +445,10 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
             index = lastIndex + 1;
           }
 
-          final ODirectMemoryPointer directMemoryPointer = ODirectMemoryPointerFactory.instance()
-              .createPointer(new byte[pageSize + 2 * ODurablePage.PAGE_PADDING]);
-          final OCachePointer cachePointer = new OCachePointer(directMemoryPointer, new OLogSequenceNumber(-1, -1), id, index);
+          final OByteBufferPool bufferPool = OByteBufferPool.instance();
+          final ByteBuffer buffer = bufferPool.acquireDirect(true);
+
+          final OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, new OLogSequenceNumber(-1, -1), id, index);
           cachePointer.incrementReferrer();
 
           cacheEntry = new OCacheEntry(composeFileId(storageId, id), index, cachePointer, false);
@@ -517,7 +516,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
     for (MemoryFile file : files.values())
       totalPages += file.getUsedMemory();
 
-    return totalPages * (pageSize + 2 * OWOWCache.PAGE_PADDING);
+    return totalPages * pageSize;
   }
 
   @Override

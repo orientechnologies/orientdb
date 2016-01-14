@@ -147,7 +147,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     if (ORecordInternal.getRecordType(record) == ODocument.RECORD_TYPE && !dbSerializerName.equals(name)) {
       ORecordInternal.fill(record, rid, version, null, true);
       ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(name);
-      ser.fromStream(buffer,record,null);
+      ser.fromStream(buffer, record, null);
       record.setDirty();
     } else
       ORecordInternal.fill(record, rid, version, buffer, true);
@@ -407,11 +407,11 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     if (ODatabaseRecordThreadLocal.INSTANCE.getIfDefined() != null)
       dbSerializerName = ((ODatabaseDocumentInternal) iRecord.getDatabase()).getSerializer().toString();
     String name = getRecordSerializerName();
-    if (ORecordInternal.getRecordType(iRecord) == ODocument.RECORD_TYPE
-        && (dbSerializerName == null || !dbSerializerName.equals(name))) {
+    if (ORecordInternal.getRecordType(iRecord) == ODocument.RECORD_TYPE && (dbSerializerName == null || !dbSerializerName
+        .equals(name))) {
       ((ODocument) iRecord).deserializeFields();
       ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(name);
-      stream= ser.toStream(iRecord,false);
+      stream = ser.toStream(iRecord, false);
     } else
       stream = iRecord.toStream();
 

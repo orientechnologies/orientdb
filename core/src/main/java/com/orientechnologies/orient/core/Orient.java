@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.core;
 
-import java.io.IOException;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.*;
@@ -35,7 +34,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryPointerFactory;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.listener.OListenerManger;
@@ -57,6 +55,21 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.ORecordFactoryManager;
 import com.orientechnologies.orient.core.storage.OIdentifiableStorage;
 import com.orientechnologies.orient.core.storage.OStorage;
+
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Orient extends OListenerManger<OOrientListener> {
   public static final String ORIENTDB_HOME = "ORIENTDB_HOME";
@@ -166,7 +179,6 @@ public class Orient extends OListenerManger<OOrientListener> {
    * Tells if to register database by path. Default is false. Setting to true allows to have multiple databases in different path
    * with the same name.
    *
-   * @return
    * @see #setRegisterDatabaseByPath(boolean)
    */
   public static boolean isRegisterDatabaseByPath() {
@@ -176,8 +188,6 @@ public class Orient extends OListenerManger<OOrientListener> {
   /**
    * Register database by path. Default is false. Setting to true allows to have multiple databases in different path with the same
    * name.
-   *
-   * @param iValue
    */
   public static void setRegisterDatabaseByPath(final boolean iValue) {
     registerDatabaseByPath = iValue;
@@ -222,8 +232,6 @@ public class Orient extends OListenerManger<OOrientListener> {
           return false;
         }
       });
-
-      ODirectMemoryPointerFactory.instance().onStartup();
 
       // REGISTER THE EMBEDDED ENGINE
       registerEngine(new OEngineLocalPaginated());
@@ -331,8 +339,6 @@ public class Orient extends OListenerManger<OOrientListener> {
       }
 
       System.gc();
-
-      ODirectMemoryPointerFactory.instance().onShutdown();
 
       OLogManager.instance().info(this, "OrientDB Engine shutdown complete");
       OLogManager.instance().flush();
@@ -488,7 +494,7 @@ public class Orient extends OListenerManger<OOrientListener> {
       pos = iURL.indexOf('?');
 
       Map<String, String> parameters = null;
-      String dbPath = null;
+      final String dbPath;
       if (pos > 0) {
         dbPath = iURL.substring(0, pos);
         iURL = iURL.substring(pos + 1);
@@ -541,7 +547,7 @@ public class Orient extends OListenerManger<OOrientListener> {
   }
 
   public boolean isWindowsOS() {
-    return os.indexOf("win") >= 0;
+    return os.contains("win");
   }
 
   public OStorage getStorage(final String dbName) {
@@ -565,7 +571,8 @@ public class Orient extends OListenerManger<OOrientListener> {
   /**
    * Returns the engine by its name.
    *
-   * @param engineName Engine name to retrieve
+   * @param engineName
+   *          Engine name to retrieve
    * @return OEngine instance of found, otherwise null
    */
   public OEngine getEngine(final String engineName) {
@@ -604,8 +611,7 @@ public class Orient extends OListenerManger<OOrientListener> {
     try {
       // UNREGISTER ALL THE LISTENER ONE BY ONE AVOIDING SELF-RECURSION BY REMOVING FROM THE LIST
       final Iterable<OOrientListener> listenerCopy = getListenersCopy();
-      for (Iterator<OOrientListener> it = listenerCopy.iterator(); it.hasNext(); ) {
-        final OOrientListener l = it.next();
+      for (final OOrientListener l : listenerCopy) {
         unregisterListener(l);
         l.onStorageUnregistered(storage);
       }

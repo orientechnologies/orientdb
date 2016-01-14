@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.index.hashindex.local.arc;
 
+import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.Orient;
@@ -20,6 +21,7 @@ import org.testng.annotations.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -107,10 +109,11 @@ public class ReadWriteCacheConcurrentTest {
   }
 
   private void initBuffer() throws IOException {
-    writeBuffer = new OWOWCache(false, 8 + systemOffset, 10000, null, -1, 15000 * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING),
-        4 * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING) + 15000 * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING), storageLocal,
+    writeBuffer = new OWOWCache(false, 8 + systemOffset, new OByteBufferPool(8 + systemOffset), 10000, null, -1,
+        15000 * (8 + systemOffset),
+        4 * (8 + systemOffset) + 15000 * (8 + systemOffset), storageLocal,
         true, 1);
-    readBuffer = new O2QCache(4 * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING), 8 + systemOffset, true, 20);
+    readBuffer = new O2QCache(4 * (8 + systemOffset), 8 + systemOffset, true, 20);
   }
 
   @AfterClass
@@ -255,8 +258,9 @@ public class ReadWriteCacheConcurrentTest {
 
       pointer.acquireExclusiveLock();
 
-      pointer.getDataPointer().set(systemOffset + OWOWCache.PAGE_PADDING,
-          new byte[] { version.byteValue(), 2, 3, seed, 5, 6, (byte) fileNumber, (byte) (pageIndex & 0xFF) }, 0, 8);
+      final ByteBuffer buffer = pointer.getSharedBuffer();
+      buffer.position(systemOffset);
+      buffer.put(new byte[] { version.byteValue(), 2, 3, seed, 5, 6, (byte) fileNumber, (byte) (pageIndex & 0xFF) });
       cacheEntry.markDirty();
 
       pointer.releaseExclusiveLock();
@@ -313,7 +317,11 @@ public class ReadWriteCacheConcurrentTest {
           .load(fileIds.get(fileNumber), pageIndex, false, writeBuffer, 1, storagePerformanceStatistic);
       OCachePointer pointer = cacheEntry.getCachePointer();
 
-      byte[] content = pointer.getDataPointer().get(systemOffset + OWOWCache.PAGE_PADDING, 8);
+      final ByteBuffer buffer = pointer.getSharedBuffer();
+      buffer.position(systemOffset);
+      byte[] content = new byte[8];
+      buffer.get(content);
+
 
       readBuffer.release(cacheEntry, writeBuffer, storagePerformanceStatistic);
 

@@ -14,7 +14,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * Tests the "asSet()" method implemented by the OSQLMethodAsSet class. Note
  * that the only input to the execute() method from the OSQLMethod interface
  * that is used is the ioResult argument (the 4th argument).
- * 
+ *
  * @author Michael MacFadden
  */
 @Test

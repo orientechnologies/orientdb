@@ -207,8 +207,14 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
 
     initializerAnalyzers(indexContext.indexClass, indexContext.metadata);
 
+<<<<<<< HEAD
     OLogManager.instance().info(this,
         "DONE INIT initIndex:: indexAnalyzer::  " + indexAnalyzer + " queryAnalyzer:: " + queryAnalyzer);
+=======
+    OLogManager.instance()
+        .info(this, "DONE INIT initIndex:: indexAnalyzer::  " + indexAnalyzer + " queryanalzer:: " + queryAnalyzer);
+
+>>>>>>> develop
   }
 
   private void initializerAnalyzers(OClass indexClass, ODocument metadata) {

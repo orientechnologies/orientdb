@@ -57,6 +57,10 @@ public interface ORID extends OIdentifiable, OSerializableStream {
 
   String next();
 
+  /**
+   * Deprecated since v2.2
+   */
+  @Deprecated
   ORID nextRid();
 
   int toStream(OutputStream iStream) throws IOException;

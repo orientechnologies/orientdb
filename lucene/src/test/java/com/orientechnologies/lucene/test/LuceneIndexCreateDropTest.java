@@ -35,8 +35,6 @@ public class LuceneIndexCreateDropTest extends BaseLuceneTest {
   public LuceneIndexCreateDropTest() {
   }
 
-
-
   @Before
   public void init() {
     initDB();

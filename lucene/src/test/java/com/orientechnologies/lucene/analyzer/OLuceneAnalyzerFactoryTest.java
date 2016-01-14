@@ -34,14 +34,11 @@ public class OLuceneAnalyzerFactoryTest {
     //default analyzer for query is standard
     metadata = new ODocument()
         .fromJSON(
-            "{"
-            +                                                                    "\"analyzer\":\""                                                  +                                                StandardAnalyzer.class.getName() + "\" , "
-            +                                                                    "\"index_analyzer\":\"" +                                          KeywordAnalyzer.class.getName()          + "\" , "
-            +                                                                    "\"title_index_analyzer\":\""                                      +                                    EnglishAnalyzer.class.getName() + "\" , "
-            +                                                                    "\"title_query_analyzer\":\""                                      + EnglishAnalyzer.class.getName() + "\" , "
-            + "\"author_query_analyzer\":\"" + KeywordAnalyzer.class.getName() + "\","
-            +                                                                    "\"lyrics_index_analyzer\":\"" + EnglishAnalyzer.class.getName() + "\""
-            +                                                                    "}");
+            "{" + "\"analyzer\":\"" + StandardAnalyzer.class.getName() + "\" , " + "\"index_analyzer\":\"" + KeywordAnalyzer.class
+                .getName() + "\" , " + "\"title_index_analyzer\":\"" + EnglishAnalyzer.class.getName() + "\" , "
+                + "\"title_query_analyzer\":\"" + EnglishAnalyzer.class.getName() + "\" , " + "\"author_query_analyzer\":\""
+                + KeywordAnalyzer.class.getName() + "\"," + "\"lyrics_index_analyzer\":\"" + EnglishAnalyzer.class.getName() + "\""
+                + "}");
 
     indexDef = Mockito.mock(OIndexDefinition.class);
 
@@ -64,9 +61,7 @@ public class OLuceneAnalyzerFactoryTest {
             + "    \"stopwords\": [\n"
             + "      \"the\",\n"
             + "      \"is\"\n"
-            + "    ]\n"
-            + "  }\n"
-            + "}", "noMap");
+            + "    ]\n" + "  }\n" + "}", "noMap");
 
     System.out.println(doc.toJSON());
 

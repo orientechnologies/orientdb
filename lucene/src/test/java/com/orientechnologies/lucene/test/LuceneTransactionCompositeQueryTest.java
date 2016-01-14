@@ -43,7 +43,6 @@ public class LuceneTransactionCompositeQueryTest extends BaseConfiguredLuceneTes
   public LuceneTransactionCompositeQueryTest() {
   }
 
-
   @Before
   @Override
   public void init() {

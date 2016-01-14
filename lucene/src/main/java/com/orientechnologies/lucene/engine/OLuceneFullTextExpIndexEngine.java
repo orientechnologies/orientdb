@@ -178,7 +178,11 @@ public class OLuceneFullTextExpIndexEngine implements OLuceneIndexEngine, OOrien
 
   @Override
   public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
+<<<<<<< HEAD
       OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, ODocument metadata) {
+=======
+      OBinarySerializer keySerializer, int keySize) {
+>>>>>>> develop
     luceneStorage.create(valueSerializer, isAutomatic, keyTypes, nullPointerSupport, keySerializer, keySize);
   }
 
@@ -255,12 +259,21 @@ public class OLuceneFullTextExpIndexEngine implements OLuceneIndexEngine, OOrien
     Collection<OIdentifiable> container = (Collection<OIdentifiable>) value;
     for (OIdentifiable oIdentifiable : container) {
       Document doc = new Document();
+<<<<<<< HEAD
       doc.add(OLuceneIndexType.createField(RID, oIdentifiable.getIdentity().toString(), Field.Store.YES,
           Field.Index.NOT_ANALYZED_NO_NORMS));
       doc.add(OLuceneIndexType.createField("CLUSTER", oIdentifiable.getIdentity().getClusterId(), Field.Store.YES,
           Field.Index.NOT_ANALYZED_NO_NORMS));
       doc.add(OLuceneIndexType.createField("CLASS", indexContext.indexClass.getName(), Field.Store.YES,
           Field.Index.NOT_ANALYZED_NO_NORMS));
+=======
+      doc.add(OLuceneIndexType
+          .createField(RID, oIdentifiable.getIdentity().toString(), Field.Store.YES, Field.Index.NOT_ANALYZED_NO_NORMS));
+      doc.add(OLuceneIndexType
+          .createField("CLUSTER", oIdentifiable.getIdentity().getClusterId(), Field.Store.YES, Field.Index.NOT_ANALYZED_NO_NORMS));
+      doc.add(OLuceneIndexType
+          .createField("CLASS", indexContext.indexClass.getName(), Field.Store.YES, Field.Index.NOT_ANALYZED_NO_NORMS));
+>>>>>>> develop
 
       int i = 0;
       if (indexDefinition.isAutomatic()) {
@@ -289,8 +302,13 @@ public class OLuceneFullTextExpIndexEngine implements OLuceneIndexEngine, OOrien
           doc.add(OLuceneIndexType.createField(indexContext.indexClass.getName() + "." + field + STORED, val, Field.Store.YES,
               Field.Index.NOT_ANALYZED_NO_NORMS));
         }
+<<<<<<< HEAD
         doc.add(OLuceneIndexType.createField(indexContext.indexClass.getName() + "." + field, val, Field.Store.NO,
             Field.Index.ANALYZED));
+=======
+        doc.add(OLuceneIndexType
+            .createField(indexContext.indexClass.getName() + "." + field, val, Field.Store.NO, Field.Index.ANALYZED));
+>>>>>>> develop
       }
     }
 

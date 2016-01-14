@@ -20,14 +20,15 @@
 
 package com.orientechnologies.orient.core.serialization.serializer.binary.impl;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.serialization.types.OShortSerializer;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.PointerWrapper;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
+
+import java.nio.ByteBuffer;
 
 import static com.orientechnologies.orient.core.serialization.OBinaryProtocol.bytes2long;
 import static com.orientechnologies.orient.core.serialization.OBinaryProtocol.bytes2short;
@@ -41,10 +42,10 @@ import static com.orientechnologies.orient.core.serialization.OBinaryProtocol.sh
  * @since 07.02.12
  */
 public class OLinkSerializer implements OBinarySerializer<OIdentifiable> {
-  public static final byte      ID               = 9;
-  private static final int      CLUSTER_POS_SIZE = OLongSerializer.LONG_SIZE;
-  public static final int       RID_SIZE         = OShortSerializer.SHORT_SIZE + CLUSTER_POS_SIZE;
-  public static final OLinkSerializer INSTANCE         = new OLinkSerializer();
+  public static final  byte            ID               = 9;
+  private static final int             CLUSTER_POS_SIZE = OLongSerializer.LONG_SIZE;
+  public static final  int             RID_SIZE         = OShortSerializer.SHORT_SIZE + CLUSTER_POS_SIZE;
+  public static final  OLinkSerializer INSTANCE         = new OLinkSerializer();
 
   public int getObjectSize(final OIdentifiable rid, Object... hints) {
     return RID_SIZE;
@@ -87,56 +88,6 @@ public class OLinkSerializer implements OBinarySerializer<OIdentifiable> {
     return new ORecordId(clusterId, clusterPosition);
   }
 
-  @Override
-  public void serializeInDirectMemoryObject(OIdentifiable rid, ODirectMemoryPointer pointer, long offset, Object... hints) {
-    final ORID r = rid.getIdentity();
-
-    OShortSerializer.INSTANCE.serializeInDirectMemory((short) r.getClusterId(), pointer, offset);
-    // Wrong implementation but needed for binary compatibility
-    byte[] stream = new byte[OLongSerializer.LONG_SIZE];
-    OLongSerializer.INSTANCE.serialize(r.getClusterPosition(), stream, 0);
-    pointer.set(offset + OShortSerializer.SHORT_SIZE, stream, 0, OLongSerializer.LONG_SIZE);
-    // OLongSerializer.INSTANCE.serializeInDirectMemory(r.getClusterPosition(), pointer, offset + OShortSerializer.SHORT_SIZE);
-  }
-
-  @Override
-  public OIdentifiable deserializeFromDirectMemoryObject(ODirectMemoryPointer pointer, long offset) {
-    final int clusterId = OShortSerializer.INSTANCE.deserializeFromDirectMemory(pointer, offset);
-
-    // Wrong implementation but needed for binary compatibility
-    final long clusterPosition = OLongSerializer.INSTANCE.deserialize(
-        pointer.get(offset + OShortSerializer.SHORT_SIZE, OLongSerializer.LONG_SIZE), 0);
-
-    // final long clusterPosition = OLongSerializer.INSTANCE
-    // .deserializeFromDirectMemory(pointer, offset + OShortSerializer.SHORT_SIZE);
-
-    return new ORecordId(clusterId, clusterPosition);
-  }
-
-  @Override
-  public OIdentifiable deserializeFromDirectMemoryObject(PointerWrapper wrapper, long offset) {
-    final int clusterId = OShortSerializer.INSTANCE.deserializeFromDirectMemory(wrapper, offset);
-
-    // Wrong implementation but needed for binary compatibility
-    final long clusterPosition = OLongSerializer.INSTANCE.deserialize(
-        wrapper.get(offset + OShortSerializer.SHORT_SIZE, OLongSerializer.LONG_SIZE), 0);
-
-    // final long clusterPosition = OLongSerializer.INSTANCE
-    // .deserializeFromDirectMemory(pointer, offset + OShortSerializer.SHORT_SIZE);
-
-    return new ORecordId(clusterId, clusterPosition);
-  }
-
-  @Override
-  public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
-    return RID_SIZE;
-  }
-
-  @Override
-  public int getObjectSizeInDirectMemory(PointerWrapper wrapper, long offset) {
-    return RID_SIZE;
-  }
-
   public boolean isFixedLength() {
     return true;
   }
@@ -151,5 +102,52 @@ public class OLinkSerializer implements OBinarySerializer<OIdentifiable> {
       return null;
     else
       return value.getIdentity();
+  }
+
+  @Override
+  public void serializeInByteBufferObject(OIdentifiable object, ByteBuffer buffer, Object... hints) {
+    final ORID r = object.getIdentity();
+
+    buffer.putShort((short) r.getClusterId());
+    // Wrong implementation but needed for binary compatibility
+    byte[] stream = new byte[OLongSerializer.LONG_SIZE];
+    OLongSerializer.INSTANCE.serialize(r.getClusterPosition(), stream, 0);
+    buffer.put(stream);
+  }
+
+  @Override
+  public OIdentifiable deserializeFromByteBufferObject(ByteBuffer buffer) {
+    final int clusterId = buffer.getShort();
+
+    final byte[] stream = new byte[OLongSerializer.LONG_SIZE];
+    buffer.get(stream);
+    // Wrong implementation but needed for binary compatibility
+    final long clusterPosition = OLongSerializer.INSTANCE.deserialize(stream, 0);
+
+    return new ORecordId(clusterId, clusterPosition);
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
+    return RID_SIZE;
+  }
+
+  @Override
+  public OIdentifiable deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+    final int clusterId = walChanges.getShortValue(buffer, offset);
+
+    // Wrong implementation but needed for binary compatibility
+    final long clusterPosition = OLongSerializer.INSTANCE
+        .deserialize(walChanges.getBinaryValue(buffer, offset + OShortSerializer.SHORT_SIZE, OLongSerializer.LONG_SIZE), 0);
+
+    // final long clusterPosition = OLongSerializer.INSTANCE
+    // .deserializeFromDirectMemory(pointer, offset + OShortSerializer.SHORT_SIZE);
+
+    return new ORecordId(clusterId, clusterPosition);
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+    return RID_SIZE;
   }
 }

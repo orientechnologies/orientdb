@@ -382,7 +382,7 @@ public class ODocument extends ORecordAbstract
       }
     }
 
-    if (p.isReadonly() && iRecord instanceof ODocument && !ORecordVersionHelper.isTombstone(iRecord.getVersion())) {
+    if (p.isReadonly() && !ORecordVersionHelper.isTombstone(iRecord.getVersion())) {
       if (entry != null && (entry.changed || entry.timeLine != null) && !entry.created) {
         // check if the field is actually changed by equal.
         // this is due to a limitation in the merge algorithm used server side marking all non simple fields as dirty
@@ -705,6 +705,7 @@ public class ODocument extends ORecordAbstract
    * </p>
    *
    * @param iValue
+   *          String representation of the record.
    */
   @Deprecated
   public void fromString(final String iValue) {
@@ -879,7 +880,8 @@ public class ODocument extends ORecordAbstract
         if (iFieldType == original)
           return value;
       }
-      Object newValue = null;
+
+      final Object newValue;
 
       if (iFieldType == OType.BINARY && value instanceof String)
         newValue = OStringSerializerHelper.getBinaryContent(value);
@@ -996,7 +998,7 @@ public class ODocument extends ORecordAbstract
         if (iPropertyValue instanceof Number)
           v = ((Number) iPropertyValue).intValue();
         else
-          Integer.parseInt(iPropertyValue.toString());
+          v = Integer.parseInt(iPropertyValue.toString());
 
         _recordVersion = v;
       }
@@ -1031,7 +1033,8 @@ public class ODocument extends ORecordAbstract
             }
 
             final String indexPart = subFieldName.substring(1, subFieldNameLen - 1);
-            String indexAsString = ODocumentHelper.getIndexPart(null, indexPart).toString();
+            final Object indexPartObject = ODocumentHelper.getIndexPart(null, indexPart);
+            final String indexAsString = indexPartObject == null ? null : indexPartObject.toString();
 
             try {
               final int index = Integer.parseInt(indexAsString);
@@ -1214,6 +1217,7 @@ public class ODocument extends ORecordAbstract
    *          if true, the other document properties will always be added or overwritten. If false, the missed properties in the
    *          "other" document will be removed by original document
    * @param iMergeSingleItemsOfMultiValueFields
+   *          If true, merges single items of multi field fields (collections, maps, arrays, etc)
    *
    * @return
    */
@@ -1237,7 +1241,7 @@ public class ODocument extends ORecordAbstract
    *          if true, the other document properties will always be added or overwritten. If false, the missed properties in the
    *          "other" document will be removed by original document
    * @param iMergeSingleItemsOfMultiValueFields
-   *
+   *          If true, merges single items of multi field fields (collections, maps, arrays, etc)
    * @return
    */
   public ODocument merge(final Map<String, Object> iOther, final boolean iUpdateOnlyMode,
@@ -1318,7 +1322,7 @@ public class ODocument extends ORecordAbstract
             // Look wrong but is correct, it need to fail if there isn't next.
             iterator.next();
           }
-        Entry<String, Object> toRet = new Entry<String, Object>() {
+        final Entry<String, Object> toRet = new Entry<String, Object>() {
           private Entry<String, ODocumentEntry> intern = current;
 
           @Override
@@ -1777,7 +1781,7 @@ public class ODocument extends ORecordAbstract
    * @param iFieldName
    *          Field name
    * @param iFieldType
-   *          Type to set between OType enumaration values
+   *          Type to set between OType enumeration values
    */
   public ODocument setFieldType(final String iFieldName, final OType iFieldType) {
     checkForLoading();
@@ -1849,7 +1853,7 @@ public class ODocument extends ORecordAbstract
           }
 
         if (allFound)
-          // ALL THE REQUESTED FIELDS HAVE BEEN LOADED BEFORE AND AVAILABLES, AVOID UNMARSHALLIGN
+          // ALL THE REQUESTED FIELDS HAVE BEEN LOADED BEFORE AND AVAILABLE, AVOID UNMARSHALLIGN
           return true;
       }
     }
@@ -2132,7 +2136,7 @@ public class ODocument extends ORecordAbstract
 
       ODocumentEntry curValue = _fields.get(f);
 
-      if(curValue != null && curValue.exist()) {
+      if (curValue != null && curValue.exist()) {
         final Object value = curValue.value;
         if (iMergeSingleItemsOfMultiValueFields) {
           if (value instanceof Map<?, ?>) {
@@ -2157,7 +2161,7 @@ public class ODocument extends ORecordAbstract
         if (value instanceof ORidBag && otherValue instanceof ORidBag)
           bagsMerged = ((ORidBag) value).tryMerge((ORidBag) otherValue, iMergeSingleItemsOfMultiValueFields);
 
-        if (!bagsMerged && (value != null && !value.equals(otherValue)) || (value== null && otherValue != null)) {
+        if (!bagsMerged && (value != null && !value.equals(otherValue)) || (value == null && otherValue != null)) {
           if (otherValue instanceof ORidBag)
             // DESERIALIZE IT TO ASSURE TEMPORARY RIDS ARE TREATED CORRECTLY
             ((ORidBag) otherValue).convertLinks2Records();
@@ -2291,7 +2295,7 @@ public class ODocument extends ORecordAbstract
               map.put(object.getKey(), OType.convert(object.getValue(), linkedType.getDefaultJavaType()));
             }
             field(prop.getName(), map);
-          } else if (type == OType.EMBEDDEDSET && linkedType != null) {
+          } else if (type == OType.EMBEDDEDSET) {
             Set<Object> list = new OTrackedSet<Object>(this);
             Collection<Object> values = (Collection<Object>) value;
             for (Object object : values) {
@@ -2598,11 +2602,9 @@ public class ODocument extends ORecordAbstract
   }
 
   /**
-   * Check and convert the field of the document matching the types specified by the class.
-   *
-   * @param _clazz
-   */
-  private void convertFieldsToClass(OClass _clazz) {
+   * Checks and convert the field of the document matching the types specified by the class.
+   **/
+  private void convertFieldsToClass(final OClass _clazz) {
     for (OProperty prop : _clazz.properties()) {
       ODocumentEntry entry = _fields != null ? _fields.get(prop.getName()) : null;
       if (entry != null && entry.exist()) {
@@ -2631,7 +2633,7 @@ public class ODocument extends ORecordAbstract
 
     OClass _clazz = getImmutableSchemaClass();
     if (_clazz != null) {
-      // SCHEMAFULL?
+      // SCHEMA-FULL?
       final OProperty prop = _clazz.getProperty(iFieldName);
       if (prop != null) {
         entry.property = prop;
@@ -2690,7 +2692,7 @@ public class ODocument extends ORecordAbstract
     if (_className == null)
       fetchClassName();
 
-    final OSchema immutableSchema = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot();
+    final OSchema immutableSchema = database.getMetadata().getImmutableSchemaSnapshot();
     if (immutableSchema == null)
       return;
 

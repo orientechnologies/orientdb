@@ -14,7 +14,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * Tests the "asMap()" method implemented by the OSQLMethodAsMap class.  Note
  * that the only input to the execute() method from the OSQLMethod interface
  * that is used is the ioResult argument (the 4th argument).
- * 
+ *
  * @author Michael MacFadden
  */
 @Test
@@ -43,16 +43,16 @@ public class OSQLMethodAsMapTest {
     Object result = function.execute(null, null, null, null, null);
     assertEquals(result, new HashMap<Object, Object>());
   }
-  
+
   public void testODocument() {
     // The expected behavior is to return a map that has the field names mapped
     // to the field values of the ODocument.
     ODocument doc = new ODocument();
     doc.field("f1", 1);
     doc.field("f2", 2);
-    
+
     Object result = function.execute(null, null, null, doc, null);
-    
+
     assertEquals(result, doc.toMap());
   }
 
@@ -66,7 +66,7 @@ public class OSQLMethodAsMapTest {
     aCollection.add(1);
     aCollection.add("p2");
     aCollection.add(2);
-    
+
     Object result = function.execute(null, null, null, aCollection, null);
 
     HashMap<Object, Object> expected = new HashMap<Object, Object>();
@@ -75,7 +75,6 @@ public class OSQLMethodAsMapTest {
     assertEquals(result, expected);
   }
 
-  
   @Test
   public void testIterator() {
     // The expected behavior is to return a map where the even values (0th,
@@ -86,7 +85,7 @@ public class OSQLMethodAsMapTest {
     aCollection.add(1);
     aCollection.add("p2");
     aCollection.add(2);
-    
+
     Object result = function.execute(null, null, null, aCollection.iterator(), null);
 
     HashMap<Object, Object> expected = new HashMap<Object, Object>();
@@ -94,7 +93,7 @@ public class OSQLMethodAsMapTest {
     expected.put("p2", 2);
     assertEquals(result, expected);
   }
-  
+
   public void testOtherValue() {
     // The expected behavior is to return null.
     Object result = function.execute(null, null, null, new Integer(4), null);

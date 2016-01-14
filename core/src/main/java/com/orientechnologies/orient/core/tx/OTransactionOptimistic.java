@@ -198,8 +198,8 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
     // REMOVE ALL THE ENTRIES AND INVALIDATE THE DOCUMENTS TO AVOID TO BE RE-USED DIRTY AT USER-LEVEL. IN THIS WAY RE-LOADING MUST
     // EXECUTED
-//    for (ORecordOperation v : recordEntries.values())
-//      v.getRecord().unload();
+    //    for (ORecordOperation v : recordEntries.values())
+    //      v.getRecord().unload();
 
     for (ORecordOperation v : allEntries.values())
       v.getRecord().unload();

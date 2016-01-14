@@ -52,9 +52,9 @@ public class OLuceneFulltextExpIndexTest extends BaseLuceneTest {
     databaseDocumentTx.setProperty("CUSTOM", "strictSql=false");
     databaseDocumentTx.command(new OCommandSQL(
         "create index Song.all on Song (title,author,lyrics) FULLTEXTEXP ENGINE LUCENEEXP METADATA {"
-        + "\"title_index_analyzer\":\"" + StandardAnalyzer.class.getName() + "\" , " + "\"author_index_analyzer\":\""
-        + StandardAnalyzer.class.getName() + "\" , " + "\"lyrics_index_analyzer\":\"" + EnglishAnalyzer.class.getName()
-        + "\"}")).execute();
+            + "\"title_index_analyzer\":\"" + StandardAnalyzer.class.getName() + "\" , " + "\"author_index_analyzer\":\""
+            + StandardAnalyzer.class.getName() + "\" , " + "\"lyrics_index_analyzer\":\"" + EnglishAnalyzer.class.getName()
+            + "\"}")).execute();
 
     //     databaseDocumentTx.command(
     //     new OCommandSQL("create index Song.title on Song (title) FULLTEXTEXP ENGINE LUCENE METADATA {\"index_analyzer\":\""

@@ -147,6 +147,84 @@ public class OFileClassic implements OFile {
     }
   }
 
+  @Override
+  public void read(long offset, ByteBuffer buffer) throws IOException {
+    int attempts = 0;
+
+    while (true) {
+      try {
+        acquireReadLock();
+        try {
+          offset = checkRegions(offset, buffer.limit());
+          channel.read(buffer, offset);
+
+          break;
+
+        } finally {
+          releaseReadLock();
+          attempts++;
+        }
+      } catch (IOException e) {
+        OLogManager.instance().error(this, "Error during data read for file '" + getName() + "' " + attempts + "-th attempt", e);
+        reopenFile(attempts, e);
+      }
+    }
+  }
+
+  @Override
+  public long read(long offset, ByteBuffer[] buffers) throws IOException {
+    int bytesRead = 0;
+
+    int attempts = 0;
+
+    while (true) {
+      try {
+        acquireWriteLock();
+        try {
+          offset += HEADER_SIZE;
+
+          channel.position(offset);
+          bytesRead = (int) channel.read(buffers);
+
+          break;
+
+        } finally {
+          releaseWriteLock();
+          attempts++;
+        }
+      } catch (IOException e) {
+        OLogManager.instance().error(this, "Error during data read for file '" + getName() + "' " + attempts + "-th attempt", e);
+        reopenFile(attempts, e);
+      }
+    }
+
+    return bytesRead;
+  }
+
+  @Override
+  public void write(long offset, ByteBuffer buffer) throws IOException {
+    int attempts = 0;
+
+    while (true) {
+      try {
+        acquireWriteLock();
+        try {
+          offset += HEADER_SIZE;
+          channel.write(buffer, offset);
+          setDirty();
+
+          break;
+        } finally {
+          releaseWriteLock();
+          attempts++;
+        }
+      } catch (IOException e) {
+        OLogManager.instance().error(this, "Error during data write for file '" + getName() + "' " + attempts + "-th attempt", e);
+        reopenFile(attempts, e);
+      }
+    }
+  }
+
   public void write(long iOffset, byte[] iData, int iSize, int iArrayOffset) throws IOException {
     int attempts = 0;
 

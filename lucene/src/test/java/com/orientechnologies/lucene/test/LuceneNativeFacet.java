@@ -126,7 +126,7 @@ public class LuceneNativeFacet {
    */
   private void index() throws IOException {
     IndexWriter indexWriter = new IndexWriter(indexDir,
-                                              new IndexWriterConfig(new WhitespaceAnalyzer()).setOpenMode(OpenMode.CREATE));
+        new IndexWriterConfig(new WhitespaceAnalyzer()).setOpenMode(OpenMode.CREATE));
 
     // Writes facet ords to a separate directory from the main index
     DirectoryTaxonomyWriter taxoWriter = new DirectoryTaxonomyWriter(taxoDir);

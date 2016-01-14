@@ -41,7 +41,6 @@ public class LuceneInsertUpdateSingleDocumentTransactionTest extends BaseLuceneT
     super();
   }
 
-
   @Before
   public void init() {
     initDB();

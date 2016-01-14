@@ -148,7 +148,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 
         if (ORecordInternal.getRecordType(record) == ODocument.RECORD_TYPE && !dbSerializerName.equals(name)) {
           ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(name);
-          ser.fromStream(entry.getValue(),record,null);
+          ser.fromStream(entry.getValue(), record, null);
           record.setDirty();
           ORecordInternal.setContentChanged(record, contentChanged);
 

@@ -46,7 +46,7 @@ public class LuceneGetSearcherTest extends BaseLuceneTest {
     song.createProperty("isDeleted", OType.BOOLEAN);
 
     databaseDocumentTx.command(new OCommandSQL("create index Person.isDeleted on Person (isDeleted) FULLTEXT ENGINE LUCENE"))
-                      .execute();
+        .execute();
 
   }
 

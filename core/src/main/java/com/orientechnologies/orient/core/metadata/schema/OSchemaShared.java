@@ -724,16 +724,20 @@ public class OSchemaShared extends ODocumentWrapperNoClass
       classes.putAll(newClasses);
 
       // REBUILD THE INHERITANCE TREE
-      List<String> superClassNames;
+      Collection<String> superClassNames;
       String legacySuperClassName;
       List<OClass> superClasses;
       OClass superClass;
 
       for (ODocument c : storedClasses) {
+
         superClassNames = c.field("superClasses");
         legacySuperClassName = c.field("superClass");
         if (superClassNames == null)
           superClassNames = new ArrayList<String>();
+        else
+          superClassNames = new HashSet<String>(superClassNames);
+
         if (legacySuperClassName != null && !superClassNames.contains(legacySuperClassName))
           superClassNames.add(legacySuperClassName);
 
@@ -1145,7 +1149,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass
       final String key = className.toLowerCase();
 
       if (classes.containsKey(key))
-        throw new OSchemaException("Class " + className + " already exists in current database");
+        throw new OSchemaException("Class '" + className + "' already exists in current database");
 
       OClassImpl cls = new OClassImpl(this, className, clusterIds);
 

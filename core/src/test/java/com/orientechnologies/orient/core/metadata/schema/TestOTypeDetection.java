@@ -2,10 +2,6 @@ package com.orientechnologies.orient.core.metadata.schema;
 
 import static org.testng.AssertJUnit.assertEquals;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -34,7 +30,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
-import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 public class TestOTypeDetection {
 
@@ -145,8 +140,6 @@ public class TestOTypeDetection {
     assertEquals(OType.EMBEDDEDMAP, OType.getTypeByClass(HashMap.class));
 
     assertEquals(OType.EMBEDDEDMAP, OType.getTypeByClass(OTrackedMap.class));
-
-    assertEquals(OType.LINKSET, OType.getTypeByClass(OMVRBTreeRIDSet.class));
 
     assertEquals(OType.LINKSET, OType.getTypeByClass(ORecordLazySet.class));
 

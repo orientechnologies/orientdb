@@ -54,7 +54,6 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
-import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.orientechnologies.orient.core.util.ODateHelper;
 
 import java.io.Serializable;
@@ -872,7 +871,6 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   }
 
   private int writeLinkCollection(final BytesContainer bytes, final Collection<OIdentifiable> value) {
-    assert(!(value instanceof OMVRBTreeRIDSet));
     final int pos = OVarIntSerializer.write(bytes, value.size());
 
     final boolean disabledAutoConversion = value instanceof ORecordLazyMultiValue

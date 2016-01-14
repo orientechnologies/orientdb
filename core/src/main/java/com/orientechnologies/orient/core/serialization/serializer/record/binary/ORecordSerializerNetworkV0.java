@@ -65,7 +65,6 @@ import com.orientechnologies.orient.core.record.impl.ODocumentEntry;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
-import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.orientechnologies.orient.core.util.ODateHelper;
 
 public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
@@ -228,8 +227,8 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
       if (value != null) {
         final OType type = getFieldType(values[i].getValue());
         if (type == null) {
-          throw new OSerializationException("Impossible serialize value of type " + value.getClass()
-              + " with the ODocument binary serializer");
+          throw new OSerializationException(
+              "Impossible serialize value of type " + value.getClass() + " with the ODocument binary serializer");
         }
         pointer = serializeValue(bytes, value, type, getLinkedType(document, type, values[i].getKey()));
         OIntegerSerializer.INSTANCE.serializeLiteral(pointer, bytes.bytes, pos[i]);
@@ -468,7 +467,8 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
     return new ORecordId(OVarIntSerializer.readAsInteger(bytes), OVarIntSerializer.readAsLong(bytes));
   }
 
-  private Collection<?> readEmbeddedCollection(final BytesContainer bytes, final Collection<Object> found, final ODocument document) {
+  private Collection<?> readEmbeddedCollection(final BytesContainer bytes, final Collection<Object> found,
+      final ODocument document) {
     final int items = OVarIntSerializer.readAsInteger(bytes);
     OType type = readOType(bytes);
 
@@ -662,8 +662,8 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
       if (value != null) {
         final OType type = getTypeFromValueEmbedded(value);
         if (type == null) {
-          throw new OSerializationException("Impossible serialize value of type " + value.getClass()
-              + " with the ODocument binary serializer");
+          throw new OSerializationException(
+              "Impossible serialize value of type " + value.getClass() + " with the ODocument binary serializer");
         }
         pointer = serializeValue(bytes, value, type, null);
         OIntegerSerializer.INSTANCE.serializeLiteral(pointer, bytes.bytes, pos[i]);
@@ -692,7 +692,6 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
   }
 
   private int writeLinkCollection(final BytesContainer bytes, final Collection<OIdentifiable> value) {
-    assert (!(value instanceof OMVRBTreeRIDSet));
     final int pos = OVarIntSerializer.write(bytes, value.size());
 
     final boolean disabledAutoConversion = value instanceof ORecordLazyMultiValue
@@ -738,8 +737,8 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
         writeOType(bytes, bytes.alloc(1), type);
         serializeValue(bytes, itemValue, type, null);
       } else {
-        throw new OSerializationException("Impossible serialize value of type " + value.getClass()
-            + " with the ODocument binary serializer");
+        throw new OSerializationException(
+            "Impossible serialize value of type " + value.getClass() + " with the ODocument binary serializer");
       }
     }
     return pos;

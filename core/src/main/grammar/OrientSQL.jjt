@@ -234,6 +234,10 @@ TOKEN:
 	|
 	< POLYMORPHIC: ( "p" | "P" ) ( "o" | "O" ) ( "l" | "L" ) ( "y" | "Y" ) ( "m" | "M" ) ( "o" | "O" ) ( "r" | "R" ) ( "p" | "P" ) ( "h" | "H" ) ( "i" | "I" ) ( "c" | "C" ) >
 	|
+	< FIND: ( "f" | "F" ) ( "i" | "I" ) ( "n" | "N" ) ( "d" | "D" ) >
+	|
+	< REFERENCES: ( "r" | "R" ) ( "e" | "E" ) ( "f" | "F" ) ( "e" | "E" ) ( "r" | "R" ) ( "e" | "E" ) ( "n" | "N" ) ( "c" | "C" ) ( "e" | "E" ) ( "s" | "S" ) >
+	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
 	< RECORD_ATTRIBUTE: <RID_ATTR> | <CLASS_ATTR> | <VERSION_ATTR> | <SIZE_ATTR> | <TYPE_ATTR> | <RAW_ATTR> | <RID_ID_ATTR> | <RID_POS_ATTR> | <FIELDS_ATTR> >
@@ -546,6 +550,10 @@ OIdentifier Identifier():
     |
     token = <TRUNCATE>
     |
+    token = <FIND>
+	|
+	token = <REFERENCES>
+	|
     quotedToken = <QUOTED_IDENTIFIER>
 ) {
 
@@ -656,8 +664,12 @@ OStatement Statement():
 		|
 		LOOKAHEAD(TruncateClusterStatement())
         result = TruncateClusterStatement()
-
-
+		|
+		LOOKAHEAD(FindReferencesStatement())
+		result = FindReferencesStatement()
+		|
+		LOOKAHEAD(TruncateRecordStatement())
+        result = TruncateRecordStatement()
 	) [ <SEMICOLON> ]
 	{
 	    return result;
@@ -2023,6 +2035,8 @@ OFromItem FromItem():
     	            jjtThis.statement = TraverseStatement()
     	            |
                     jjtThis.statement = MatchStatement()
+					|
+					jjtThis.statement = FindReferencesStatement()
     	) <RPAREN>
     	|
     	jjtThis.inputParam = InputParameter()
@@ -3298,4 +3312,60 @@ OTruncateClusterStatement TruncateClusterStatement():
 	)
 	[ <UNSAFE> {jjtThis.unsafe = true;} ]
 	{ return jjtThis; }
+}
+
+OTruncateRecordStatement TruncateRecordStatement():
+{ ORid lastRecord; }
+{
+	<TRUNCATE> <RECORD>
+	(
+		jjtThis.record = Rid()
+		|
+		(
+			<LBRACKET> { jjtThis.records = new ArrayList<ORid>(); }
+			[
+				lastRecord = Rid() { jjtThis.records.add(lastRecord); }
+				(
+					<COMMA>
+					lastRecord = Rid() { jjtThis.records.add(lastRecord); }
+				)*
+			]
+			<RBRACKET>
+		)
+	)
+	{ return jjtThis; }
+}
+
+
+OFindReferencesStatement FindReferencesStatement():
+{ SimpleNode lastTarget; }
+{
+    <FIND> <REFERENCES>
+    (
+        jjtThis.rid = Rid()
+        |
+        (
+            <LPAREN>
+            jjtThis.subQuery = Statement()
+            <RPAREN>
+        )
+    )
+    [
+    	<LBRACKET> { jjtThis.targets = new ArrayList<SimpleNode>(); }
+    	(
+    		lastTarget = Identifier()
+    		|
+    		lastTarget = IndexIdentifier()
+    	){ jjtThis.targets.add(lastTarget); }
+    	(
+    		<COMMA>
+    		(
+				lastTarget = Identifier()
+				|
+				lastTarget = Cluster()
+			){ jjtThis.targets.add(lastTarget); }
+    	)*
+    	<RBRACKET>
+    ]
+    { return jjtThis; }
 }

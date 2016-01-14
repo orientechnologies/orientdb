@@ -19,6 +19,21 @@
  */
 package com.orientechnologies.orient.core.db.tool;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.zip.Deflater;
+import java.util.zip.GZIPOutputStream;
+
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -40,22 +55,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeMapProvider;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.zip.Deflater;
-import java.util.zip.GZIPOutputStream;
 
 /**
  * Export data from a database to a file.
@@ -323,7 +322,6 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
       writer.writeAttribute(2, true, "engine-build", engineBuild);
     writer.writeAttribute(2, true, "storage-config-version", OStorageConfiguration.CURRENT_VERSION);
     writer.writeAttribute(2, true, "schema-version", OSchemaShared.CURRENT_VERSION_NUMBER);
-    writer.writeAttribute(2, true, "mvrbtree-version", OMVRBTreeMapProvider.CURRENT_PROTOCOL_VERSION);
     writer.writeAttribute(2, true, "schemaRecordId", database.getStorage().getConfiguration().schemaRecordId);
     writer.writeAttribute(2, true, "indexMgrRecordId", database.getStorage().getConfiguration().indexMgrRecordId);
     writer.endObject(1, true);

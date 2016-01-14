@@ -21,8 +21,7 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.common.concur.lock.OInterruptedException;
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
-import com.orientechnologies.common.directmemory.ODirectMemoryPointerFactory;
+import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -46,6 +45,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.lang.ref.WeakReference;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -71,29 +71,32 @@ import java.util.zip.CRC32;
  * @since 25.04.13
  */
 public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
-  public static final String MASTER_RECORD_EXTENSION = ".wmr";
-  public static final String WAL_SEGMENT_EXTENSION   = ".wal";
-  private static final long  ONE_KB                  = 1024L;
+  public static final  String MASTER_RECORD_EXTENSION = ".wmr";
+  public static final  String WAL_SEGMENT_EXTENSION   = ".wal";
+  private static final long   ONE_KB                  = 1024L;
 
   private final long freeSpaceLimit = OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT.getValueAsLong() * 1024L * 1024L;
   private final long walSizeLimit   = OGlobalConfiguration.WAL_MAX_SIZE.getValueAsLong() * 1024L * 1024L;
 
-  private final List<LogSegment>       logSegments          = new ArrayList<LogSegment>();
-  private final int                    maxPagesCacheSize;
-  private final int                    commitDelay;
-  private final long                   maxSegmentSize;
-  private final File                   walLocation;
-  private final RandomAccessFile       masterRecordLSNHolder;
-  private final OLocalPaginatedStorage storage;
-  private boolean                      useFirstMasterRecord = true;
-  private long                         logSize;
-  private File                         masterRecordFile;
-  private OLogSequenceNumber           firstMasterRecord;
-  private OLogSequenceNumber           secondMasterRecord;
-  private volatile OLogSequenceNumber  flushedLsn;
-  private volatile OLogSequenceNumber  preventCutTill;
+  private final List<LogSegment> logSegments = new ArrayList<LogSegment>();
+  private final int              maxPagesCacheSize;
+  private final int              commitDelay;
+  private final long             maxSegmentSize;
+  private final File             walLocation;
+  private final RandomAccessFile masterRecordLSNHolder;
 
-  private boolean         segmentCreationFlag     = false;
+  private final OByteBufferPool byteBufferPool = OByteBufferPool.instance();
+
+  private final OLocalPaginatedStorage storage;
+  private boolean useFirstMasterRecord = true;
+  private          long               logSize;
+  private          File               masterRecordFile;
+  private          OLogSequenceNumber firstMasterRecord;
+  private          OLogSequenceNumber secondMasterRecord;
+  private volatile OLogSequenceNumber flushedLsn;
+  private volatile OLogSequenceNumber preventCutTill;
+
+  private       boolean   segmentCreationFlag     = false;
   private final Condition segmentCreationComplete = syncObject.newCondition();
 
   private final Set<OOperationUnitId>                               activeOperations        = new HashSet<OOperationUnitId>();
@@ -116,10 +119,10 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   private final class LogSegment implements Comparable<LogSegment> {
-    private final RandomAccessFile                rndFile;
-    private final File                            file;
-    private final long                            order;
-    private final int                             maxPagesCacheSize;
+    private final RandomAccessFile rndFile;
+    private final File             file;
+    private final long             order;
+    private final int              maxPagesCacheSize;
     private final ConcurrentLinkedQueue<OWALPage> pagesCache     = new ConcurrentLinkedQueue<OWALPage>();
     private final ScheduledExecutorService        commitExecutor = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
       @Override
@@ -130,12 +133,12 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
         return thread;
       }
     });
-    private long                                  filledUpTo;
-    private boolean                               closed;
-    private OWALPage                              currentPage;
-    private long                                  nextPositionToFlush;
-    private OLogSequenceNumber                    last           = null;
-    private OLogSequenceNumber                    pendingLSNToFlush;
+    private long     filledUpTo;
+    private boolean  closed;
+    private OWALPage currentPage;
+    private long     nextPositionToFlush;
+    private OLogSequenceNumber last = null;
+    private OLogSequenceNumber pendingLSNToFlush;
 
     private volatile boolean flushNewData = true;
 
@@ -166,7 +169,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
 
         final int maxSize = pagesCache.size();
 
-        ODirectMemoryPointer[] pagesToFlush = new ODirectMemoryPointer[maxSize];
+        ByteBuffer[] pagesToFlush = new ByteBuffer[maxSize];
 
         long filePointer = nextPositionToFlush;
 
@@ -194,15 +197,24 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
               pos += page.getSerializedRecordSize(pos);
             }
 
-            ODirectMemoryPointer dataPointer;
+            final ByteBuffer dataBuffer;
+
             if (flushedPages == maxSize - 1) {
-              dataPointer = ODirectMemoryPointerFactory.instance().createPointer(OWALPage.PAGE_SIZE);
-              page.getPagePointer().moveData(0, dataPointer, 0, OWALPage.PAGE_SIZE);
+              dataBuffer = byteBufferPool.acquireDirect(false);
+
+              final ByteBuffer pageBuffer = page.getByteBuffer();
+
+              pageBuffer.position(0);
+              dataBuffer.position(0);
+
+              dataBuffer.put(pageBuffer);
             } else {
-              dataPointer = page.getPagePointer();
+              ByteBuffer buffer = page.getByteBuffer();
+              dataBuffer = buffer.duplicate();
+              dataBuffer.order(buffer.order());
             }
 
-            pagesToFlush[flushedPages] = dataPointer;
+            pagesToFlush[flushedPages] = dataBuffer;
           }
 
           flushedPages++;
@@ -211,10 +223,13 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
         synchronized (rndFile) {
           rndFile.seek(filePointer);
           for (int i = 0; i < pagesToFlush.length; i++) {
-            ODirectMemoryPointer dataPointer = pagesToFlush[i];
-            byte[] pageContent = dataPointer.get(0, OWALPage.PAGE_SIZE);
+            final ByteBuffer dataBuffer = pagesToFlush[i];
+            byte[] pageContent = new byte[OWALPage.PAGE_SIZE];
+            dataBuffer.position(0);
+            dataBuffer.get(pageContent);
+
             if (i == pagesToFlush.length - 1)
-              dataPointer.free();
+              byteBufferPool.release(dataBuffer);
 
             flushPage(pageContent);
             filePointer += OWALPage.PAGE_SIZE;
@@ -231,10 +246,10 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
 
         for (int i = 0; i < flushedPages - 1; i++) {
           OWALPage page = pagesCache.poll();
-          page.getPagePointer().free();
+          byteBufferPool.release(page.getByteBuffer());
         }
 
-        assert!pagesCache.isEmpty();
+        assert !pagesCache.isEmpty();
 
         final long freeSpace = walLocation.getFreeSpace();
         if (freeSpace < freeSpaceLimit) {
@@ -277,8 +292,8 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       if (!commitExecutor.isShutdown()) {
         commitExecutor.shutdown();
         try {
-          if (!commitExecutor.awaitTermination(OGlobalConfiguration.WAL_SHUTDOWN_TIMEOUT.getValueAsInteger(),
-              TimeUnit.MILLISECONDS))
+          if (!commitExecutor
+              .awaitTermination(OGlobalConfiguration.WAL_SHUTDOWN_TIMEOUT.getValueAsInteger(), TimeUnit.MILLISECONDS))
             throw new OStorageException("WAL flush task for '" + getPath() + "' segment cannot be stopped");
 
         } catch (InterruptedException e) {
@@ -381,8 +396,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
 
       while (pos < record.length) {
         if (currentPage == null) {
-          ODirectMemoryPointer pointer = ODirectMemoryPointerFactory.instance().createPointer(OWALPage.PAGE_SIZE);
-          currentPage = new OWALPage(pointer, true);
+          currentPage = new OWALPage(byteBufferPool.acquireDirect(false), true);
           pagesCache.add(currentPage);
           filledUpTo += OWALPage.RECORDS_OFFSET;
         }
@@ -390,8 +404,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
         int freeSpace = currentPage.getFreeSpace();
         if (freeSpace < OWALPage.MIN_RECORD_SIZE) {
           filledUpTo += freeSpace + OWALPage.RECORDS_OFFSET;
-          ODirectMemoryPointer pointer = ODirectMemoryPointerFactory.instance().createPointer(OWALPage.PAGE_SIZE);
-          currentPage = new OWALPage(pointer, true);
+          currentPage = new OWALPage(byteBufferPool.acquireDirect(false), true);
           pagesCache.add(currentPage);
           pageIndex++;
 
@@ -429,8 +442,8 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       }
 
       if (pagesCache.size() > maxPagesCacheSize) {
-        OLogManager.instance().info(this, "Max cache limit is reached (%d vs. %d), sync flush is performed", maxPagesCacheSize,
-            pagesCache.size());
+        OLogManager.instance()
+            .info(this, "Max cache limit is reached (%d vs. %d), sync flush is performed", maxPagesCacheSize, pagesCache.size());
         flush();
       }
 
@@ -468,9 +481,10 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
         if (!checkPageIntegrity(pageContent))
           throw new OWALPageBrokenException("WAL page with index " + pageIndex + " is broken");
 
-        ODirectMemoryPointer pointer = ODirectMemoryPointerFactory.instance().createPointer(pageContent);
+        final ByteBuffer buffer = byteBufferPool.acquireDirect(false);
+        buffer.put(pageContent);
         try {
-          OWALPage page = new OWALPage(pointer, false);
+          OWALPage page = new OWALPage(buffer, false);
 
           byte[] content = page.getRecord(pageOffset);
           if (record == null)
@@ -495,7 +509,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
             break;
           }
         } finally {
-          pointer.free();
+          byteBufferPool.release(buffer);
         }
       }
 
@@ -551,7 +565,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
 
         if (!pagesCache.isEmpty()) {
           for (OWALPage page : pagesCache)
-            page.getPagePointer().free();
+            byteBufferPool.release(page.getByteBuffer());
         }
 
         currentPage = null;
@@ -592,13 +606,14 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
         rndFile.readFully(content);
 
         if (checkPageIntegrity(content)) {
-          ODirectMemoryPointer pointer = ODirectMemoryPointerFactory.instance().createPointer(content);
-          currentPage = new OWALPage(pointer, false);
+          final ByteBuffer pageBuffer = byteBufferPool.acquireDirect(false);
+          pageBuffer.put(content);
+          currentPage = new OWALPage(pageBuffer, false);
           filledUpTo = (pagesCount - 1) * OWALPage.PAGE_SIZE + currentPage.getFilledUpTo();
           nextPositionToFlush = (pagesCount - 1) * OWALPage.PAGE_SIZE;
         } else {
-          ODirectMemoryPointer pointer = ODirectMemoryPointerFactory.instance().createPointer(OWALPage.PAGE_SIZE);
-          currentPage = new OWALPage(pointer, true);
+          final ByteBuffer pageBuffer = byteBufferPool.acquireDirect(false);
+          currentPage = new OWALPage(pageBuffer, true);
           filledUpTo = pagesCount * OWALPage.PAGE_SIZE + currentPage.getFilledUpTo();
           nextPositionToFlush = pagesCount * OWALPage.PAGE_SIZE;
         }
@@ -886,8 +901,8 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     try {
       checkForClose();
 
-      if (segmentCreationFlag && record instanceof OOperationUnitRecord
-          && !activeOperations.contains(((OOperationUnitRecord) record).getOperationUnitId())) {
+      if (segmentCreationFlag && record instanceof OOperationUnitRecord && !activeOperations
+          .contains(((OOperationUnitRecord) record).getOperationUnitId())) {
         while (segmentCreationFlag) {
           try {
             segmentCreationComplete.await();
@@ -925,8 +940,8 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       if (last.filledUpTo() >= maxSegmentSize) {
         segmentCreationFlag = true;
 
-        if (record instanceof OAtomicUnitEndRecord && activeOperations.size() == 1
-            || (!(record instanceof OOperationUnitRecord) && activeOperations.isEmpty())) {
+        if (record instanceof OAtomicUnitEndRecord && activeOperations.size() == 1 || (!(record instanceof OOperationUnitRecord)
+            && activeOperations.isEmpty())) {
           last.stopFlush(true);
 
           last = new LogSegment(new File(walLocation, getSegmentName(last.getOrder() + 1)), maxPagesCacheSize);
@@ -1320,8 +1335,8 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       crc32.update(serializedLSN);
 
       if (firstCRC != ((int) crc32.getValue())) {
-        OLogManager.instance().error(this, "Cannot restore %d WAL master record for storage %s crc check is failed", index,
-            storageName);
+        OLogManager.instance()
+            .error(this, "Cannot restore %d WAL master record for storage %s crc check is failed", index, storageName);
         return null;
       }
 
@@ -1341,11 +1356,12 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     OLongSerializer.INSTANCE.serializeLiteral(masterRecord.getPosition(), serializedLSN, OLongSerializer.LONG_SIZE);
     crc32.update(serializedLSN);
 
-    byte [] record = new byte[OIntegerSerializer.INT_SIZE + 2 * OLongSerializer.LONG_SIZE];
+    byte[] record = new byte[OIntegerSerializer.INT_SIZE + 2 * OLongSerializer.LONG_SIZE];
 
-    OIntegerSerializer.INSTANCE.serializeLiteral((int)crc32.getValue(),record,0);
-    OLongSerializer.INSTANCE.serializeLiteral(masterRecord.getSegment(),record,OIntegerSerializer.INT_SIZE);
-    OLongSerializer.INSTANCE.serializeLiteral(masterRecord.getPosition(),record,OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE);
+    OIntegerSerializer.INSTANCE.serializeLiteral((int) crc32.getValue(), record, 0);
+    OLongSerializer.INSTANCE.serializeLiteral(masterRecord.getSegment(), record, OIntegerSerializer.INT_SIZE);
+    OLongSerializer.INSTANCE
+        .serializeLiteral(masterRecord.getPosition(), record, OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE);
     masterRecordLSNHolder.write(record);
   }
 
