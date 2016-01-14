@@ -108,35 +108,36 @@ public interface OrientSqlTreeConstants
   public int JJTMATCHESCONDITION = 102;
   public int JJTORDERBY = 103;
   public int JJTGROUPBY = 104;
-  public int JJTUNWIND                   = 105;
-  public int JJTLIMIT                    = 106;
-  public int JJTSKIP                     = 107;
-  public int JJTBATCH                    = 108;
-  public int JJTTIMEOUT                  = 109;
-  public int JJTWAIT                     = 110;
-  public int JJTRETRY                    = 111;
-  public int JJTCOLLECTION               = 112;
-  public int JJTFETCHPLAN                = 113;
-  public int JJTFETCHPLANITEM            = 114;
-  public int JJTTRAVERSEPROJECTIONITEM   = 115;
-  public int JJTJSON                     = 116;
-  public int JJTMATCHEXPRESSION          = 117;
-  public int JJTMATCHPATHITEM            = 118;
-  public int JJTMATCHPATHITEMFIRST       = 119;
-  public int JJTMULTIMATCHPATHITEM       = 120;
+  public int JJTUNWIND = 105;
+  public int JJTLIMIT = 106;
+  public int JJTSKIP = 107;
+  public int JJTBATCH = 108;
+  public int JJTTIMEOUT = 109;
+  public int JJTWAIT = 110;
+  public int JJTRETRY = 111;
+  public int JJTCOLLECTION = 112;
+  public int JJTFETCHPLAN = 113;
+  public int JJTFETCHPLANITEM = 114;
+  public int JJTTRAVERSEPROJECTIONITEM = 115;
+  public int JJTJSON = 116;
+  public int JJTMATCHEXPRESSION = 117;
+  public int JJTMATCHPATHITEM = 118;
+  public int JJTMATCHPATHITEMFIRST = 119;
+  public int JJTMULTIMATCHPATHITEM = 120;
   public int JJTMULTIMATCHPATHITEMARROWS = 121;
-  public int JJTMATCHFILTER              = 122;
-  public int JJTMATCHFILTERITEM          = 123;
-  public int JJTOUTPATHITEM              = 124;
-  public int JJTINPATHITEM               = 125;
-  public int JJTBOTHPATHITEM             = 126;
-  public int JJTOUTPATHITEMOPT           = 127;
-  public int JJTINPATHITEMOPT            = 128;
-  public int JJTBOTHPATHITEMOPT          = 129;
-  public int JJTPROFILESTORAGESTATEMENT  = 130;
-  public int JJTTRUNCATECLASSSTATEMENT   = 131;
+  public int JJTMATCHFILTER = 122;
+  public int JJTMATCHFILTERITEM = 123;
+  public int JJTOUTPATHITEM = 124;
+  public int JJTINPATHITEM = 125;
+  public int JJTBOTHPATHITEM = 126;
+  public int JJTOUTPATHITEMOPT = 127;
+  public int JJTINPATHITEMOPT = 128;
+  public int JJTBOTHPATHITEMOPT = 129;
+  public int JJTPROFILESTORAGESTATEMENT = 130;
+  public int JJTTRUNCATECLASSSTATEMENT = 131;
   public int JJTTRUNCATECLUSTERSTATEMENT = 132;
-  public int JJTFINDREFERENCESSTATEMENT  = 133;
+  public int JJTTRUNCATERECORDSTATEMENT = 133;
+  public int JJTFINDREFERENCESSTATEMENT = 134;
 
 
   public String[] jjtNodeName = {
@@ -271,7 +272,10 @@ public interface OrientSqlTreeConstants
     "InPathItemOpt",
     "BothPathItemOpt",
     "ProfileStorageStatement",
-    "TruncateClassStatement", "TruncateClusterStatement", "FindReferencesStatement",
+    "TruncateClassStatement",
+    "TruncateClusterStatement",
+    "TruncateRecordStatement",
+    "FindReferencesStatement",
   };
 }
-/* JavaCC - OriginalChecksum=72f6aa7e32680fd227b73da59a09a5c8 (do not edit this line) */
+/* JavaCC - OriginalChecksum=81feb6ff8240827c01ad8f5b588f6809 (do not edit this line) */
