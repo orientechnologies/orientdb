@@ -32,7 +32,7 @@ else
 fi
 export JAVA
 
-ORIENTDB_SETTINGS="-Djava.util.logging.config.file=\"$ORIENTDB_HOME/config/orientdb-client-log.properties\" -Djava.awt.headless=true"
+ORIENTDB_SETTINGS="-XX:MaxDirectMemorySize=512g -Djava.util.logging.config.file=\"$ORIENTDB_HOME/config/orientdb-client-log.properties\" -Djava.awt.headless=true"
 #JAVA_OPTS=-Xmx1024m
 KEYSTORE="$ORIENTDB_HOME/config/cert/orientdb-console.ks"
 KEYSTORE_PASS=password
