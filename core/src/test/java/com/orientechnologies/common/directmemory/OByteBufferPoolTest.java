@@ -68,6 +68,7 @@ public class OByteBufferPoolTest {
     }
   }
 
+  @Test(enabled = false)
   public void testAcquireReleasePageWithPreallocationInMT() throws Exception {
     final OByteBufferPool pool = new OByteBufferPool(10, 10000, 300);
 
