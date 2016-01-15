@@ -760,9 +760,12 @@ public class OServer {
   }
 
   public void addUser(final String iName, String iPassword, final String iPermissions) throws IOException {
-    if (iPassword == null)
+    if (iPassword == null) {
       // AUTO GENERATE PASSWORD
-      iPassword = OSecurityManager.instance().createSHA256(String.valueOf(random.nextLong()));
+      final byte[] buffer = new byte[32];
+      random.nextBytes(buffer);
+      iPassword = OSecurityManager.instance().createSHA256(OSecurityManager.byteArrayToHexStr(buffer));
+    }
 
     // HASH THE PASSWORD
     iPassword = OSecurityManager.instance().createHash(iPassword, OSecurityManager.PBKDF2_ALGORITHM, true);

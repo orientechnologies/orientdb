@@ -240,7 +240,7 @@ public class OSecurityManager {
     return diff == 0;
   }
 
-  private static String byteArrayToHexStr(final byte[] data) {
+  public static String byteArrayToHexStr(final byte[] data) {
     if (data == null)
       return null;
 
