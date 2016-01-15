@@ -15,11 +15,13 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import org.junit.Test;
 import org.testng.Assert;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.util.concurrent.Callable;
@@ -27,8 +29,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Distributed BACKUP test against "plocal" protocol.
+ * 
+ * @author Luca Garulli
  */
-public class DistributedBackupTest extends AbstractServerClusterTest {
+public class DistributedBackupEmbeddedTest extends AbstractServerClusterTest {
   final static int SERVERS  = 3;
   final static int VERTICES = 1000;
 
@@ -62,6 +66,17 @@ public class DistributedBackupTest extends AbstractServerClusterTest {
 
               insertVertices();
 
+              banner("WAITING "
+                  + (OGlobalConfiguration.DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT.getValueAsInteger() * serverInstance.size() * 2)
+                  + "ms ...");
+
+              try {
+                // TRY TO CAUSE A TIMEOUT
+                Thread.sleep(
+                    OGlobalConfiguration.DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT.getValueAsInteger() * serverInstance.size() * 2);
+              } catch (InterruptedException e) {
+              }
+
               finished.set(true);
             }
           }).start();
@@ -84,6 +99,10 @@ public class DistributedBackupTest extends AbstractServerClusterTest {
 
     } finally {
       graphNoTx.shutdown();
+
+      final File f = new File("backup.zip");
+      if (f.exists())
+        f.delete();
     }
   }
 
