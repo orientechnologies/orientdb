@@ -77,7 +77,6 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
   protected final String                              databaseName;
   protected final Lock                                requestLock;
   protected final int                                 numWorkers                     = 8;
-  protected volatile boolean                          restoringMessages              = false;
   protected final AtomicBoolean                       status                         = new AtomicBoolean(false);
   protected final List<ODistributedWorker>            workers                        = new ArrayList<ODistributedWorker>();
   protected final AtomicLong                          waitForMessageId               = new AtomicLong(-1);
@@ -211,16 +210,17 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
   protected int getAvailableNodes(final ODistributedRequest iRequest, final Collection<String> iNodes, final String databaseName,
       OPair<String, IQueue>[] reqQueues) {
 
-    final boolean requiredNodeOnline = iRequest.getTask().isRequireNodeOnline();
+    // final boolean requiredNodeOnline = iRequest.getTask().isRequireNodeOnline();
 
     int availableNodes;
     // CHECK THE ONLINE NODES
     availableNodes = 0;
     int i = 0;
     for (String node : iNodes) {
-      final boolean include = requiredNodeOnline ?
-          manager.isNodeOnline(node, databaseName) :
-          manager.isNodeAvailable(node, databaseName);
+      // final boolean include = requiredNodeOnline ? manager.isNodeOnline(node, databaseName)
+      // : manager.isNodeAvailable(node, databaseName);
+
+      final boolean include = manager.isNodeAvailable(node, databaseName);
 
       if (include && reqQueues[i].getValue() != null)
         availableNodes++;
@@ -234,10 +234,6 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     }
 
     return availableNodes;
-  }
-
-  public boolean isRestoringMessages() {
-    return restoringMessages;
   }
 
   public OHazelcastDistributedDatabase configureDatabase(final Callable<Void> iCallback) {
@@ -349,7 +345,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
     msgService.checkForPendingMessages(requestQueue, queueName);
 
-    final ODistributedWorker listenerThread = new ODistributedWorker(this, requestQueue, databaseName, 0, restoringMessages);
+    final ODistributedWorker listenerThread = new ODistributedWorker(this, requestQueue, databaseName, 0);
     listenerThread.initDatabaseInstance();
 
     listenerThread.start();

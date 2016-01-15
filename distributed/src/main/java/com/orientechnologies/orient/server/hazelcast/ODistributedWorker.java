@@ -69,55 +69,30 @@ public class ODistributedWorker extends Thread {
       LOCAL_QUEUE_MAXSIZE);
   protected volatile ODatabaseDocumentTx              database;
   protected volatile OUser                            lastUser;
-  protected boolean                                   restoringMessages;
   protected volatile boolean                          running             = true;
 
   public ODistributedWorker(final OHazelcastDistributedDatabase iDistributed, final IQueue iRequestQueue,
-      final String iDatabaseName, final int i, final boolean iRestoringMessages) {
+      final String iDatabaseName, final int i) {
     setName("OrientDB DistributedWorker node=" + iDistributed.getLocalNodeName() + " db=" + iDatabaseName + " id=" + i);
     distributed = iDistributed;
     requestQueue = iRequestQueue;
     databaseName = iDatabaseName;
     manager = distributed.manager;
     msgService = distributed.msgService;
-    restoringMessages = iRestoringMessages;
   }
 
   @Override
   public void run() {
-    final int queuedMsg = requestQueue.size();
-
-    long lastMessageId = -1;
-
     for (long processedMessages = 0; running; processedMessages++) {
-      if (restoringMessages && processedMessages >= queuedMsg) {
-        // END OF RESTORING MESSAGES, SET IT ONLINE
-        ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
-            "executed all pending tasks in queue (%d), set restoringMessages=false and database '%s' as online. Last req=%d",
-            queuedMsg, databaseName, lastMessageId);
-
-        restoringMessages = false;
-      }
-
       String senderNode = null;
       ODistributedRequest message = null;
       try {
         message = readRequest();
 
         if (message != null) {
-          lastMessageId = message.getId();
-          // DECIDE TO USE THE HZ MAP ONLY IF THE COMMAND IS NOT IDEMPOTENT (ALL BUT READ-RECORD/SQL SELECT/SQL TRAVERSE
-          // final boolean saveAsPending = !message.getTask().isIdempotent();
-          // if (saveAsPending)
-          // SAVE THE MESSAGE IN TO THE UNDO MAP IN CASE OF FAILURE
-          // lastPendingMessagesMap.put(databaseName, message);
-
+          message.getId();
           senderNode = message.getSenderNodeName();
           onMessage(message);
-
-          // if (saveAsPending)
-          // OK: REMOVE THE UNDO BUFFER
-          // lastPendingMessagesMap.remove(databaseName);
         }
 
       } catch (InterruptedException e) {

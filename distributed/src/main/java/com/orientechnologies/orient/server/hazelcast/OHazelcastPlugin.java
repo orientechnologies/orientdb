@@ -750,8 +750,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           iEvent.getMember(), eventNodeName);
 
       final ODocument cfg = (ODocument) iEvent.getValue();
+
+      if (!activeNodes.containsKey((String) cfg.field("name")))
+        updateLastClusterChange();
+
       activeNodes.put((String) cfg.field("name"), (Member) iEvent.getMember());
-      updateLastClusterChange();
 
     } else if (key.startsWith(CONFIG_DATABASE_PREFIX)) {
       if (!iEvent.getMember().equals(hazelcastInstance.getCluster().getLocalMember())) {
@@ -976,6 +979,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
     // GET ALL THE OTHER SERVERS
     final Collection<String> nodes = cfg.getServers(null, nodeName);
+
+    filterAvailableNodes(nodes, databaseName);
 
     ODistributedServerLog.warn(this, nodeName, nodes.toString(), DIRECTION.OUT,
         "requesting delta database sync for '%s' on local server...", databaseName);
@@ -1579,7 +1584,22 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
         ODistributedConfiguration cfg = getDatabaseConfiguration(databaseName);
 
-        if (!getConfigurationMap().containsKey(CONFIG_DATABASE_PREFIX + databaseName)) {
+        boolean publishCfg = !getConfigurationMap().containsKey(CONFIG_DATABASE_PREFIX + databaseName);
+
+        if (activeNodes.size() == 1 && !cfg.isHotAlignment()) {
+          // REMOVE DEAD NODES
+          final Set<String> cfgServers = cfg.getAllConfiguredServers();
+          for (String cfgServer : cfgServers) {
+            if (!isNodeAvailable(cfgServer, databaseName)) {
+              ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE,
+                  "Removing offline server '%s' for database '%s' in distributed configuration", cfgServer, databaseName);
+              cfg.removeNodeInServerList(cfgServer, true);
+              publishCfg = true;
+            }
+          }
+        }
+
+        if (publishCfg) {
           // PUBLISH CFG FIRST TIME
           ODocument cfgDoc = cfg.serialize();
           ORecordInternal.setRecordSerializer(cfgDoc, ODatabaseDocumentTx.getDefaultSerializer());
@@ -2023,5 +2043,13 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         nodes.add(entry.getKey());
     }
     return nodes;
+  }
+
+  public void filterAvailableNodes(Collection<String> iNodes, final String databaseName) {
+    for (Iterator<String> it = iNodes.iterator(); it.hasNext();) {
+      final String nodeName = it.next();
+      if (!isNodeAvailable(nodeName, databaseName))
+        it.remove();
+    }
   }
 }

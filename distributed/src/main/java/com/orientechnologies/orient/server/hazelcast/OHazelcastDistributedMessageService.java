@@ -78,7 +78,7 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
     for (int i = 0; i < responseTimeMetrics.length; ++i)
       responseTimeMetrics[i] = -1;
 
-    // CREAT THE QUEUE
+    // CREATE THE QUEUE
     final String queueName = getResponseQueueName(manager.getLocalNodeName());
     nodeResponseQueue = getQueue(queueName);
 
@@ -86,8 +86,8 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
       ODistributedServerLog.debug(this, getLocalNodeNameAndThread(), null, DIRECTION.NONE,
           "listening for incoming responses on queue: %s", queueName);
 
-    // TODO: CHECK IF SET TO TRUE (UNQUEUE MSG) WHEN HOT-ALIGNMENT = TRUE
-    checkForPendingMessages(nodeResponseQueue, queueName);
+    // RESET RESPONSE QUEUE
+    nodeResponseQueue.clear();
 
     // CREATE TASK THAT CHECK ASYNCHRONOUS MESSAGE RECEIVED
     asynchMessageManager = new TimerTask() {
@@ -396,11 +396,11 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
   protected void checkForPendingMessages(final IQueue iQueue, final String iQueueName) {
     final int queueSize = iQueue.size();
     if (queueSize > 0) {
-      ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
-          "found %d messages in queue %s, clearing them...", queueSize, iQueueName);
+      ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, DIRECTION.NONE, "Found %d messages in queue '%s'. Clearing queue now...",
+          queueSize, iQueueName);
       iQueue.clear();
     } else
-      ODistributedServerLog.info(this, manager.getLocalNodeName(), null, DIRECTION.NONE, "found no previous messages in queue %s",
+      ODistributedServerLog.info(this, manager.getLocalNodeName(), null, DIRECTION.NONE, "Found no previous messages in queue '%s'",
           iQueueName);
   }
 
@@ -408,7 +408,6 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
    * Returns the queue. If not exists create and register it.
    */
   public <T> IQueue<T> getQueue(final String iQueueName) {
-    // configureQueue(iQueueName, 0, 0);
     return (IQueue<T>) manager.getHazelcastInstance().getQueue(iQueueName);
   }
 
