@@ -17,6 +17,7 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.hazelcast.core.IQueue;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastDistributedMessageService;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
@@ -24,33 +25,36 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Callable;
 
 /**
- * Starts 3 servers, backup on node3, check other nodes can work in the meanwhile and node3 is realigned once backup is finished.
+ * Starts 3 servers, lock on node3 simulating a unknown stall situation, checks:
+ * <ul>
+ * <li>other nodes can work in the meanwhile</li>
+ * <li>node3 is restarted automatically</li>
+ * <li>node3 is realigned once backup is finished</li>
+ * </ul>
  */
-public class OneNodeBackupTest extends AbstractServerClusterTxTest {
-  final static int SERVERS          = 3;
-  protected Timer  timer            = new Timer(true);
-  volatile boolean inserting        = true;
-  volatile int     serverStarted    = 0;
-  volatile boolean backupInProgress = false;
+public class AutoRestartStalledNodeTest extends AbstractServerClusterTxTest {
+  final static int SERVERS       = 3;
+  protected Timer  timer         = new Timer(true);
+  volatile boolean inserting     = true;
+  volatile int     serverStarted = 0;
+  volatile boolean nodeStalled   = false;
 
   @Test
   public void test() throws Exception {
-    // SET MAXQUEUE SIZE LOWER TO TEST THE NODE IS NOT RESTARTED AUTOMATICALLY
+    // SET MAXQUEUE SIZE LOWER TO TEST THE NODE IS RESTARTED AUTOMATICALLY
     final long queueMaxSize = OGlobalConfiguration.DISTRIBUTED_QUEUE_MAXSIZE.getValueAsLong();
-    OGlobalConfiguration.DISTRIBUTED_QUEUE_MAXSIZE.setValue(1000);
+    OGlobalConfiguration.DISTRIBUTED_QUEUE_MAXSIZE.setValue(9);
 
     try {
       startupNodesInSequence = true;
-      count = 1500;
+      useTransactions = false;
+      count = 500;
       maxRetries = 10;
       init(SERVERS);
       prepare(false);
@@ -101,38 +105,29 @@ public class OneNodeBackupTest extends AbstractServerClusterTxTest {
         public void run() {
           Assert.assertTrue("Insert was too fast", inserting);
 
-          banner("STARTING BACKUP SERVER " + (SERVERS - 1));
+          banner("STARTING LOCKING SERVER " + (SERVERS - 1));
 
           OrientGraphFactory factory = new OrientGraphFactory(
               "plocal:target/server" + (SERVERS - 1) + "/databases/" + getDatabaseName());
           OrientGraphNoTx g = factory.getNoTx();
 
-          backupInProgress = true;
-          File file = null;
+          nodeStalled = true;
           try {
-            file = File.createTempFile("orientdb_test_backup", ".zip");
-            if (file.exists())
-              Assert.assertTrue(file.delete());
-
-            g.getRawGraph().backup(new FileOutputStream(file), null, new Callable<Object>() {
+            final OAbstractPaginatedStorage stg = (OAbstractPaginatedStorage) g.getRawGraph().getStorage().getUnderlying();
+            stg.callInLock(new Callable<Object>() {
               @Override
               public Object call() throws Exception {
 
-                // SIMULATE LONG BACKUP
-                Thread.sleep(10000);
+                // SIMULATE LONG WAIT
+                Thread.sleep(3000);
 
                 return null;
               }
-            }, null, 9, 1000000);
+            }, true);
 
-          } catch (IOException e) {
-            e.printStackTrace();
           } finally {
-            banner("COMPLETED BACKUP SERVER " + (SERVERS - 1));
-            backupInProgress = false;
-
-            if (file != null)
-              file.delete();
+            banner("RELEASED STALLED SERVER " + (SERVERS - 1));
+            nodeStalled = false;
           }
         }
       }, 5000);
@@ -142,7 +137,7 @@ public class OneNodeBackupTest extends AbstractServerClusterTxTest {
   @Override
   protected void onAfterExecution() throws Exception {
     inserting = false;
-    Assert.assertFalse(backupInProgress);
+    Assert.assertFalse(nodeStalled);
   }
 
   protected String getDatabaseURL(final ServerRun server) {
@@ -151,6 +146,6 @@ public class OneNodeBackupTest extends AbstractServerClusterTxTest {
 
   @Override
   public String getDatabaseName() {
-    return "distributed-backup1node";
+    return "distributed-autorestartstallednode";
   }
 }
