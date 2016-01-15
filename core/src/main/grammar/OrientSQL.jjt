@@ -647,6 +647,13 @@ OSelectWithoutTargetStatement SelectWithoutTargetStatement():
         jjtThis.projection = Projection()
     	[ jjtThis.letClause = LetClause() ]
     	[ jjtThis.unwind = Unwind() ]
+    	(
+			[
+				jjtThis.skip = Skip() [ jjtThis.limit = Limit() ]
+				|
+				jjtThis.limit = Limit() [ jjtThis.skip = Skip() ]
+			]
+		)
     	[ jjtThis.fetchPlan = FetchPlan() ]
     	[ jjtThis.timeout = Timeout() ]
         [ <LOCK>  <RECORD> {jjtThis.lockRecord = true;} ]
