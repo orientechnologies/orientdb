@@ -2085,14 +2085,14 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
               if (otherVertexRecord != null)
                 otherVertexRecord.save();
 
+              break;
+
             } catch (ONeedRetryException e) {
               // RETRY
             }
           }
         }
-
-      } else
-        throw new IllegalStateException("Invalid content found in " + iFieldName + " field");
+      }
     }
   }
 
