@@ -1676,8 +1676,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         // ADD CURRENT SERVER AS FIRST
         addHost(iConnectedURL);
 
-        for (ODocument m : members)
-          if (m != null && !serverURLs.contains((String) m.field("name"))) {
+        for (ODocument m : members) {
+          if (m != null) {
             final Collection<Map<String, Object>> listeners = ((Collection<Map<String, Object>>) m.field("listeners"));
             if (listeners == null)
               throw new ODatabaseException("Received bad distributed configuration: missing 'listeners' array field");
@@ -1690,6 +1690,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
               }
             }
           }
+        }
       }
     }
   }
