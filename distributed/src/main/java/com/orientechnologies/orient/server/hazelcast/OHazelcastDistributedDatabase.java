@@ -156,16 +156,28 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
         msgService.registerRequest(iRequest.getId(), currentResponseMgr);
 
         for (OPair<String, IQueue> entry : reqQueues) {
+          final String node = entry.getKey();
           final IQueue queue = entry.getValue();
 
           if (queue != null) {
             if (queueMaxSize > 0 && queue.size() > queueMaxSize) {
-              ODistributedServerLog.warn(this, getLocalNodeName(), iNodes.toString(), DIRECTION.OUT,
-                  "queue has too many messages (%d), treating the node as in stall: trying to restart it...", queue.size());
-              queue.clear();
+              final ODistributedServerManager.DB_STATUS nodeStatus = manager.getDatabaseStatus(node, databaseName);
+              if (nodeStatus == ODistributedServerManager.DB_STATUS.SYNCHRONIZING
+                  || nodeStatus == ODistributedServerManager.DB_STATUS.BACKUP) {
 
-              manager.disconnectNode(entry.getKey());
+                // BACKUP OR SYNCHRONIZING: SEND THE MESSAGE AS WELL
+                queue.offer(iRequest, timeout, TimeUnit.MILLISECONDS);
 
+              } else {
+                // NODE SEEMS IN STALL FOR UNKNOWN REASON
+                ODistributedServerLog.warn(this, getLocalNodeName(), iNodes.toString(), DIRECTION.OUT,
+                    "queue has too many messages (%d), treating the node as in stall: trying to restart it...", queue.size());
+
+                // CLEAR THE QUEUE TO AVOID AN OOM IN THE CLUSTER
+                queue.clear();
+
+                manager.disconnectNode(entry.getKey());
+              }
             } else {
               // SEND THE MESSAGE
               queue.offer(iRequest, timeout, TimeUnit.MILLISECONDS);
