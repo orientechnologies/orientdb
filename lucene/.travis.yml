@@ -1,9 +1,0 @@
-sudo: false
-language: java
-install: mvn install
-branches:
-  only:
-  - develop
-  - 2.1.x
-jdk:
-- oraclejdk8
