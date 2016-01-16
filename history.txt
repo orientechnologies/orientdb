@@ -1,0 +1,1015 @@
+           .                                          
+          .`        `                                 
+          ,      `:.                                  
+         `,`    ,:`                                   
+         .,.   :,,                                    
+         .,,  ,,,                                     
+    .    .,.:::::  ````                                 :::::::::     :::::::::
+    ,`   .::,,,,::.,,,,,,`;;                      .:    ::::::::::    :::    :::
+    `,.  ::,,,,,,,:.,,.`  `                       .:    :::      :::  :::     :::
+     ,,:,:,,,,,,,,::.   `        `         ``     .:    :::      :::  :::     :::
+      ,,:.,,,,,,,,,: `::, ,,   ::,::`   : :,::`  ::::   :::      :::  :::    :::
+       ,:,,,,,,,,,,::,:   ,,  :.    :   ::    :   .:    :::      :::  :::::::
+        :,,,,,,,,,,:,::   ,,  :      :  :     :   .:    :::      :::  :::::::::
+  `     :,,,,,,,,,,:,::,  ,, .::::::::  :     :   .:    :::      :::  :::     :::
+  `,...,,:,,,,,,,,,: .:,. ,, ,,         :     :   .:    :::      :::  :::     :::
+    .,,,,::,,,,,,,:  `: , ,,  :     `   :     :   .:    :::      :::  :::     :::
+      ...,::,,,,::.. `:  .,,  :,    :   :     :   .:    :::::::::::   :::     :::
+           ,::::,,,. `:   ,,   :::::    :     :   .:    :::::::::     ::::::::::
+           ,,:` `,,.                                  
+          ,,,    .,`                                            MULTI-MODEL
+         ,,.     `,                                       GRAPH DOCUMENT DATABASE
+       ``        `.                                         
+                 ``                                          COMMUNITY EDITION
+                 `                                             orientdb.com
+
+
+This document contains the last changes of OrientDB Community Edition.
+
+-----------------------------------------------------------------------------------------------------------------------------------
+VERSION 2.1.8 - (December, 16 2015)
+- Core (2): https://github.com/orientechnologies/orientdb/issues?q=milestone%3A2.1.8
+- Studio (3): https://github.com/orientechnologies/orientdb-studio/issues?q=milestone%3A2.1.8
+
+-----------------------------------------------------------------------------------------------------------------------------------
+VERSION 2.1.7 - (December, 8 2015)
+- Core (17): https://github.com/orientechnologies/orientdb/issues?q=milestone%3A2.1.7
+
+-----------------------------------------------------------------------------------------------------------------------------------
+VERSION 2.1.6 - (November, 23 2015)
+- Core (30): https://github.com/orientechnologies/orientdb/issues?q=milestone%3A2.1.6
+
+-----------------------------------------------------------------------------------------------------------------------------------
+VERSION 2.1.5 - (October, 29 2015)
+- Core (27): https://github.com/orientechnologies/orientdb/issues?q=milestone%3A2.1.5
+
+Starting from this release, ETL, Lucene and JDBC repositories are part of the core.
+
+-----------------------------------------------------------------------------------------------------------------------------------
+VERSION 2.1.4 - (October, 13 2015)
+- Core (32): https://github.com/orientechnologies/orientdb/issues?q=milestone%3A2.1.4+is%3Aclosed
+- Lucene(2): https://github.com/orientechnologies/orientdb-lucene/issues?q=milestone%3A2.1.4+is%3Aclosed
+
+-----------------------------------------------------------------------------------------------------------------------------------
+VERSION 2.1.3 - (October, 4 2015)
+- Core (42): https://github.com/orientechnologies/orientdb/issues?page=2&q=milestone%3A2.1.3
+- ETL (4)..: https://github.com/orientechnologies/orientdb-etl/issues?q=milestone%3A2.1.3
+- Lucene(4): https://github.com/orientechnologies/orientdb-lucene/issues?q=milestone%3A2.1.3
+- JDBC (4).: https://github.com/orientechnologies/orientdb-jdbc/issues?q=milestone%3A2.1.3
+
+-----------------------------------------------------------------------------------------------------------------------------------
+VERSION 2.1.2 - (September, 10 2015)
+- Core (9).: https://github.com/orientechnologies/orientdb/issues?q=is%3Aissue+milestone%3A2.1.2+is%3Aclosed
+
+-----------------------------------------------------------------------------------------------------------------------------------
+VERSION 2.1.1 - (August, 31 2015)
+- Core (23).: https://github.com/orientechnologies/orientdb/issues?q=is%3Aissue+milestone%3A2.1.1+is%3Aclosed
+- Studio (1): https://github.com/orientechnologies/orientdb-studio/issues?q=milestone%3A2.1.1+is%3Aclosed
+- ETL (1)...: https://github.com/orientechnologies/orientdb-etl/issues?q=milestone%3A2.1.1+is%3Aclosed
+
+-----------------------------------------------------------------------------------------------------------------------------------
+VERSION 2.1.0 (GA) - (August, 5 2015)
+- New Studio Server Management console
+- 31 issues resolved from OrientDB 2.1-rc6.
+
+CHANGELOG:
+- Core (30)..: https://github.com/orientechnologies/orientdb/issues?q=milestone%3A%222.1+GA%22+is%3Aclosed
+- Studio (1).: https://github.com/orientechnologies/orientdb-studio/issues?q=is%3Aissue+milestone%3A%222.1+GA%22+is%3Aclosed
+
+-----------------------------------------------------------------------------------------------------------------------------------
+VERSION 2.1-rc6 - (July, 28th 2015)
+- 153 issues resolved from OrientDB 2.1-rc5.
+
+CHANGELOG:
+- Core (126).: https://github.com/orientechnologies/orientdb/issues?q=milestone%3A2.1-rc6+is%3Aclosed
+- ETL (6)....: https://github.com/orientechnologies/orientdb-etl/issues?q=milestone%3A2.1-rc6+is%3Aclosed
+- Lucene (8).: https://github.com/orientechnologies/orientdb-lucene/issues?q=milestone%3A2.1-rc6+is%3Aclosed
+- JDBC (1)...: https://github.com/orientechnologies/orientdb-jdbc/issues?q=milestone%3A2.1-rc6+is%3Aclosed
+- Studio (12): https://github.com/orientechnologies/orientdb-studio/issues?q=milestone%3A2.1-rc6+is%3Aclosed
+
+-----------------------------------------------------------------------------------------------------------------------------------
+VERSION 2.1-rc5 - (July, 3rd 2015)
+- Bug fixing: 43 issues from 2.1-rc4.
+
+https://github.com/orientechnologies/orientdb/issues?q=is%3Aissue+milestone%3A2.1-rc5+is%3Aclosed
+
+---------------------------------------------------------------------------------------------------
+VERSION 2.1-rc4 - (June, 17th 2015)
+- Bug fixing: 45 issues from 2.1-rc3.
+
+https://github.com/orientechnologies/orientdb/issues?q=is%3Aissue+milestone%3A2.1-rc4+is%3Aclosed
+
+---------------------------------------------------------------------------------------------------
+VERSION 2.1-rc3 - (May, 22nd 2015)
+- Bug fixing: 38 issues from 2.1-rc2.
+
+https://github.com/orientechnologies/orientdb/issues?q=is%3Aissue+milestone%3A2.1-rc3+is%3Aclosed
+
+---------------------------------------------------------------------------------------------------
+VERSION 2.0.9 - (May, 14th 2015)
+- Bug fixing: 21 issues from 2.0.8.
+
+https://github.com/orientechnologies/orientdb/issues?q=milestone%3A2.0.9+is%3Aclosed
+
+---------------------------------------------------------------------------------------------------
+VERSION 2.0.8 - (April, 22nd 2015)
+- Bug fixing: 17 issues from 2.0.7.
+
+https://github.com/orientechnologies/orientdb/issues?q=milestone%3A2.0.8+is%3Aclosed
+
+---------------------------------------------------------------------------------------------------
+VERSION 2.1-rc2 - (May, 5th 2015)
+- Bug fixing: 32 issues from 2.1-rc1.
+
+https://github.com/orientechnologies/orientdb/issues?q=is%3Aissue+milestone%3A2.1-rc2+is%3Aclosed
+---------------------------------------------------------------------------------------------------
+VERSION 2.1-rc1 - (April, 16th 2015)
+
+https://github.com/orientechnologies/orientdb/issues?q=milestone%3A2.1-rc1+is%3Aclosed
+
+- Schema: Support for Multiple inheritance where classes can extend from multiple super classes
+          Support for default values (functions are allowed)
+- Core: Improved WAL management (Journal) to enforce Consistency with transactions 
+        Fetch-plan supports wildcard for names
+- SQL: New SQL parser by default on with new databases and off with those created with old versions
+       Prepared Statements and substitution of parameters and target
+       New Live Query to write Reactive applications
+       New optimization about using of indexes in sub-classes if present
+       New concat() function
+- Distributed: Support for slave (read-only) nodes
+               Included Hazelcast-all.jar including also Cloud support
+- ETL: Skip duplicated vertices
+- Bug fixing: 104 issues in total
+
+---------------------------------------------------------------------------------------------------
+VERSION 2.0.7 - (April, 14th 2015)
+- Bug fixing: 10 issues from 2.0.6.
+https://github.com/orientechnologies/orientdb/issues?q=milestone%3A2.0.7+is%3Aclosed
+
+---------------------------------------------------------------------------------------------------
+VERSION 2.0.6 - (March, 31st 2015)
+- Bug fixing: 19 issues from 2.0.5.
+
+https://github.com/orientechnologies/orientdb/issues?q=milestone%3A2.0.6+is%3Aclosed
+
+---------------------------------------------------------------------------------------------------
+VERSION 2.0.5 - (March, 12th 2015)
+- Bug fixing: 11 issues from 2.0.4.
+
+https://github.com/orientechnologies/orientdb/issues?q=milestone%3A2.0.5+is%3Aclosed
+
+---------------------------------------------------------------------------------------------------
+VERSION 2.0.4 - (March, 3rd 2015)
+- Bug fixing: 7 issues from 2.0.3.
+
+https://github.com/orientechnologies/orientdb/issues?q=milestone%3A2.0.4+is%3Aclosed
+
+---------------------------------------------------------------------------------------------------
+VERSION 2.0.3 - (February, 20th 2015)
+- Bug fixing: 10 issues from 2.0.2.
+
+https://github.com/orientechnologies/orientdb/issues?q=milestone%3A%222.0.3+%28hotfix%29%22+is%3Aclosed
+
+---------------------------------------------------------------------------------------------------
+VERSION 2.0.2 - (February, 9th 2015)
+- Bug fixing: 11 issues from 2.0.1.
+
+https://github.com/orientechnologies/orientdb/issues?q=milestone%3A%222.0.2+%28hotfix%29%22+is%3Aclosed
+
+---------------------------------------------------------------------------------------------------
+VERSION 2.0.1 - (January, 28th 2015)
+- Bug fixing: 10 issues from 2.0.
+
+Full list: https://github.com/orientechnologies/orientdb/issues?q=milestone%3A2.0.1+is%3Aclosed
+
+---------------------------------------------------------------------------------------------------
+VERSION 2.0 - (January, 20th 2015)
+- Core: logged database name on server and embedded messages
+- SQL: added UNSAFE to CREATE PROPERTY command to avoid slow checks
+       auto conversion from map when working on EMBEDDED types
+- Bug fixing: 54 total issues from 2.0-RC2.
+
+Full list: https://github.com/orientechnologies/orientdb/issues?q=is%3Aissue+milestone%3A%222.0+Final%22+is%3Aclosed
+
+---------------------------------------------------------------------------------------------------
+VERSION 2.0-RC2 - (January, 12th 2015)
+- Bug fixing: 86 total issues from 2.0-RC1.
+
+Full list: https://github.com/orientechnologies/orientdb/issues?q=milestone%3A2.0-rc2+is%3Aclosed
+
+---------------------------------------------------------------------------------------------------
+VERSION 2.0-RC1 - (December, 17th 2014)
+- Core: Avoid rebuild of indexes if working in Transactional mode
+- Javascript: Invoking of JS functions now is 10x faster
+- Network: Support for state less requests using Token
+- Graph API: Disabled light weight edges by default
+- Bug fixing: 87 total issues from 2.0-M3.
+
+Full list: https://github.com/orientechnologies/orientdb/issues?q=milestone%3A%222.0-RC1+(Release+Candidate)%22+is%3Aclosed
+---------------------------------------------------------------------------------------------------
+VERSION 2.0-M3 - (November, 18th 2014)
+- Core: Cluster selection strategy now can decide on the input document content
+        Better automatic alloc of Heap and Disk-Cache
+        Clusters can be detached (offline) and re-attached (online)
+        FetchPlan: support for wildcards
+        Improved pools
+        Using SIGTRAP (kill -5) to dump OrientDB information
+        Fixed connection pool problem on high usage
+        Cache is always ON and can’t be disabled anymore. This avoids many common issues with users
+- Schema: used immutable instances to reduce locking contention
+- Graph API: New OGraphBatchInsertBasic and OGraphBatchInsert API for massive insertion on graphs:
+             13x faster than Blueprints
+- Document API: Removed a couple of internal layers to speedup and simplify implementation
+- Studio: Simplified database creation (graph - no lightweight edges by default)
+- Console: Displayed also @class
+- Bug fixing: 115 total issues from 2.0-M2.
+
+Full list: https://github.com/orientechnologies/orientdb/issues?q=milestone%3A2.0-M3+is%3Aclosed
+---------------------------------------------------------------------------------------------------
+VERSION 2.0-M2 - (September, 29th 2014)
+
+- Studio: Improved Graph Editor, fixed many bugs to improve UX
+- Server: On first run ask for root password. Blank means auto-generate (like before)
+- Core: Added ODocument.fromMap() and ODocument.toMap()
+        Removed memory OWatchDog thread
+        Pool, new methods to get internal information
+        Merged in core commons and native-os modules
+        Auto configure of Off-Heap memory used by DiskCache
+- Graph API: new requireTransaction setting to check TX is begun on graph changes
+- Distributed: Supported asynchronous replication via API and Configuration
+               On first run ask for node name. Blank means auto-generate (like before)
+               Unified script and config with stand-alone server
+
+- Bug fixing: 40 from 2.0-M1.
+
+Full list: https://github.com/orientechnologies/orientdb/issues?q=milestone%3A2.0-M2+is%3Aclosed
+---------------------------------------------------------------------------------------------------
+VERSION 2.0-M1 - (September, 17th 2014)
+
+- Studio: New Layout, new Graph Editor, new Security panel (Users and Roles management)
+- Security: Added configurable SSL keystore and truststore
+- Memory: In-Memory database uses off-heap cache
+- Graph API: New OrientGraphAsynch, first experimental version of asynchronous graph
+             New SQL MOVE VERTEX command to refactor portion of graphs and to move vertices between
+               distributed nodes
+             Improved OrientGraphFactory performance reducing recycling time. Added central config
+               of generated graphs in Factory
+             Creation of edges doesn’t update both vertices anymore. Much faster now
+- Console: Improved layout
+- Distributed: 3x of performance improvement
+- Core: New Schema Driver Serialization: avoid writing field names for records with Schema
+         
+        Added strategies to manage conflict: by content and auto-merge. Furthermore can be injected
+          custom strategy via Java API
+        New RWLocks to speedup internal parallelism        
+        Disabled SNAPPY compression by default
+        Improved schema concurrency
+        Removed 2nd level cache
+- SQL: New UUID() function to generate Unique IDs
+       New statistic functions: mode(), variance(), stddev(), median(), percentile()
+       New SQL MOVE VERTEX command to refactor portion of graphs and to move vertices between
+       Rewritten implementation of shortestPath() function
+       Improvement for “order by @rid desc” to browse results in opposite direction without
+          use an index or RAM.
+- Configuration: Global settings are copied in database at creation time and can be update
+- Bug fixing: 20 from 1.7.9, hundreds from 1.7.
+
+Full list: https://github.com/orientechnologies/orientdb/issues?q=milestone%3A2.0-M1+is%3Aclosed
+
+---------------------------------------------------------------------------------------------------
+VERSION 1.7.8 - (August, 13th 2014)
+
+- DevOps: new bin/backup.sh with -lvm option to execute a non-blocking backup on Linux with LVM
+          installed
+- Hot fixes:
+   https://github.com/orientechnologies/orientdb/issues?q=is%3Aissue+milestone%3A1.7.8+is%3Aclosed
+
+---------------------------------------------------------------------------------------------------
+VERSION 1.7.7 - (July, 23th 2014)
+
+Hot fixes: https://github.com/orientechnologies/orientdb/issues?milestone=24&page=1&state=closed
+
+---------------------------------------------------------------------------------------------------
+VERSION 1.7.6 - (July, 16th 2014)
+
+Hot fixes: https://github.com/orientechnologies/orientdb/issues?milestone=23&page=1&state=closed
+
+---------------------------------------------------------------------------------------------------
+VERSION 1.7.5 - (July, 10th 2014)
+
+Hot fixes: https://github.com/orientechnologies/orientdb/issues?milestone=22&page=1&state=closed
+
+---------------------------------------------------------------------------------------------------
+VERSION 1.7.4 - (June, 23rd 2014)
+
+Hot fixes: https://github.com/orientechnologies/orientdb/issues?milestone=21&page=1&state=closed
+
+---------------------------------------------------------------------------------------------------
+VERSION 1.7.3 - (June, 12th 2014)
+
+Hot fixes: https://github.com/orientechnologies/orientdb/issues?milestone=20&page=1&state=closed
+
+---------------------------------------------------------------------------------------------------
+VERSION 1.7.2 - (June, 7th 2014)
+
+Hot fixes: https://github.com/orientechnologies/orientdb/issues?milestone=19&page=1&state=closed
+
+---------------------------------------------------------------------------------------------------
+VERSION 1.7.1 - (June, 4th 2014)
+---------------------------------------------------------------------------------------------------
+Hot fixes: https://github.com/orientechnologies/orientdb/issues?milestone=18&page=1&state=closed
+
+---------------------------------------------------------------------------------------------------
+VERSION 1.7 - (May, 27th 2014)
+
+- Core: new “minimumclusters” to auto-create X clusters per class
+        new cluster strategy to pick the cluster. Available round-robin, default and balanced
+        added record locking via API
+        removed rw/locks on schema and index manager
+        cached most used users and roles in RAM (configurable)
+- Server: New support for SSL connections on binary and HTTP protocols 
+- Console: New “script” command to execute multiple SQL statements + transaction control
+           New “next” command to move the cursor on the next record in the result set
+           New “pref” command to move the cursor on the previous record in the result set
+           New “move <predicate>” command to move from current record by executing a predicate
+           New “eval <predicate>” command to evaluate a predicate against current record
+           Ability to ignore errors by setting “set ignore = true”
+- Distributed: New support for sharding
+               Simplified (JSON) configuration
+- Graph: New functions to return the traversed items: traversedVertex(), traversedEdge() and
+          traversedElement()
+         addEdge() can takes ORID to use implicitly last record version
+- SQL: New PARALLEL keyword to run the query on multiple threads
+       New “INSERT INTO … SELECT” to copy records
+       New “INSERT INTO … RETURN <expression>” to return expressions on INSERT
+       New “UPDATE … RETURN <expression>” to return expressions on UPDATE
+       distance() accepts measure unit (default = km)
+- HTTP: added support for context variables in SCRIPT command
+- Indexes: Added Full-Text Lucene indexes (as plugin)
+           Added GEO Spatial Lucene indexes (as plugin)
+           Added WAL (Journal) support for Hash-Index so can be used in Transactions
+           Added NULL support for composite and non-composite indexes
+           Full-Text can be configured through METADATA keyword
+           Full-Text now indexes also sub-words
+           Improved SQL optimizer by avoiding calling evaluate() when not needed
+           LINKSET types can be indexed now
+           RID can be used on composite indexes
+- Studio: Bookmarks for queries
+          Ability to interrupt running commands
+- Bug fixing: 135 issues in total
+
+Full list: https://github.com/orientechnologies/orientdb/issues?labels=&milestone=16&page=1&state=closed
+
+---------------------------------------------------------------------------------------------------
+VERSION 1.7-rc2 - (March, 25th 2014)
+
+- Core: supported retro-compatibility for databases created with OrientDB v1.5 or further (#1899)
+        improved performance on ORDER BY against indexes (#1843)
+        improved performance on RENAME CLASS (#1818)
+- Graph: added support for vertex-centric traversal by using SQL (#2079)
+-        added support for vertex-centric traversal by using SQL (#2079)
+- SQL: new UPSERT keyword to execute an INSERT or UPDATE based on a condition (#2032)
+       UPDATE now can ADD also to sub-document fields (#2031)
+- Indexes: added support for external engines (#1774)
+- Studio: new Query Timeline to the History, new Index Panel, Fixed many bugs
+- Bug fixing: 62 bugs in total
+
+Full list: https://github.com/orientechnologies/orientdb/issues?labels=&milestone=13&page=3&state=closed
+
+---------------------------------------------------------------------------------------------------
+VERSION 1.7-rc1 - (February, 6th 2014)
+
+- Engine: new LINKBag to manage LINKS by using SBTree indexes. This drastically improved performance
+- SQL: new LOCK keyword to specify locking strategy
+       new RETURNING keyword to let to UPDATE and DELETE commands to return modified records
+       new include() and exclude() to respectively include or exclude fields of documents
+       operator [] now can be used in chain, also with functions
+       projections can be reused as variables
+       support for LET also in UPDATE and DELETE commands
+- Graph API: support for ordered edge list
+             new detach() and attach() method to work with Graph Element offline
+             new OrientGraphFactory to manage pooled instances
+- HTTP: new support for ETag, If-Match and If-None-Match headers
+        new PATCH method against /document command and /documentbyclass for partial updates
+- Distributed: database deploy now is chunked to avoid RAM saturation
+- Backup and Restore: improved speed from 5x to 50x
+- Studio: new CSV download of Query result
+
+Full list: https://github.com/orientechnologies/orientdb/issues?milestone=15&page=1&state=closed
+
+---------------------------------------------------------------------------------------------------
+VERSION 1.6.4 - (January, 16th 2014)
+
+- Integrated Blueprints API in “graphdb” module
+- Bug fixing
+
+---------------------------------------------------------------------------------------------------
+VERSION 1.6.3 - (December, 27th 2013)
+
+- Bug fixing
+
+---------------------------------------------------------------------------------------------------
+VERSION 1.6.3 - (December, 27th 2013)
+
+- Bug fixing
+
+---------------------------------------------------------------------------------------------------
+VERSION 1.6.2 - (December, 9th 2013)
+
+- Support for COLLATE to case insensitive compare fields
+- Bug fixing
+
+Full list: https://github.com/orientechnologies/orientdb/issues?milestone=11&page=1&state=closed
+
+---------------------------------------------------------------------------------------------------
+VERSION 1.6.1 - (November, 20th 2013)
+
+- Bug fixing
+
+Full list: https://github.com/orientechnologies/orientdb/issues?milestone=10&page=1&state=closed
+
+---------------------------------------------------------------------------------------------------
+VERSION 1.6 - (October, 31nd 2013)
+
+- SBTree: new index engine with the support for transactions and range queries
+- Distributed: new Architecture based on Hazelcast, new Distributed Transaction support across
+  nodes, new Database Sharding feature
+- Studio: total rewriting in a new tool hosted on separate project
+- HTTP: execute commands in batch mode, partial document updates, JSON as return of create and
+        update documents, management of multi databases in the same connection
+- Scripts: new Orient variable to get database instances, new switchUser() API to change current
+           user
+- Plugins: new hot deployment plugin as folders, zip and jar files
+- SQL: new target "metadata" to retrieve schema and indexes
+- Console: new silent mode
+- Many features and performance improvements on plocal and hash indexes
+- Bug fixing
+
+Full list: https://github.com/orientechnologies/orientdb/issues?milestone=8&state=closed
+
+---------------------------------------------------------------------------------------------------
+VERSION 1.5.1 - (September, 3rd 2013)
+
+- New PLOCAL (Paginated Local) storage engine. In comparison with LOCAL it's more durable (no usage
+  of MMAP) and supports better concurrency on parallel transactions
+- New Hash Index type with better performance on lookups. It does not support ranges
+- New "transactional" SQL command to execute commands inside a transaction. This is useful for
+  "create edge" SQL command to avoid the graph get corrupted
+- Import now migrates RIDs allowing to import databases in a different one from the original
+- "Breadth first" strategy added on traversing (Java and SQL APIs)
+- Server can limit maximum live connections (to prevent DOS)
+- Fetch plan support in SQL statements and in binary protocol for synchronous commands too
+- Distributed configuration
+- Bug fixing
+
+Full list: https://github.com/orientechnologies/orientdb/issues?milestone=5&page=1&state=closed
+
+---------------------------------------------------------------------------------------------------
+VERSION 1.4.2 - (July, 29th 2013)
+---------------------------------------------------------------------------------------------------
+- Bug fixing
+
+Full list: https://github.com/orientechnologies/orientdb/issues?milestone=7&page=1&state=closed
+
+---------------------------------------------------------------------------------------------------
+VERSION 1.4.1 - (June, 18th 2013)
+---------------------------------------------------------------------------------------------------
+- Bug fixing
+
+Full list: https://github.com/nuvolabase/orientdb/issues?milestone=6&page=1&state=closed
+
+---------------------------------------------------------------------------------------------------
+VERSION 1.4.0 - (June, 7th 2013)
+---------------------------------------------------------------------------------------------------
+- Graph: total rewrite of Blueprints API that now are the default Java interface, support for
+         light-weight edges (no document), labeled relationships using separate classes and vertex
+         fields
+- Storage: new Paged-Local compressed "plocal" engine  (not yet transactional)
+- SQL: INSERT and UPDATE supports JSON syntax, improved usage of indexes upon ORDER BY, supported
+       timeout in query and global, new create function command, flatten() now is expand(), new
+       OSQLMethod classes to handle methods even in chain, new encode() and decode() functions,
+       support for new dictionary:<key> as target in SELECT and TRAVERSE
+- new SCHEDULER component using CRON syntax
+- new OTriggered class to use JS as hook
+- MMap: auto flush of pages on regular basis
+- Fetch-plan: support for skip field using "-2"
+- Index: auto rebuild in background, usage of different data-segment
+- Export: supported partial export like schema, few clusters, etc.
+- Console: improved formatting of resultsets
+- HTTP: new /batch command supporting transaction too, faster connection through /connect command,
+        /document returns a JSON
+- Studio: UML display of class
+
+Full list: https://github.com/nuvolabase/orientdb/issues?milestone=2&state=closed
+
+-------------------------------------------------------------------------------
+VERSION 1.3.0 - (December, 19th 2012)
+-------------------------------------------------------------------------------
+- SQL: new eval() function to execute expressions
+- SQL: new if(), ifnull() and coalesce() functions
+- SQL: supported server-side configuration for functions
+- SQL: new DELETE VERTEX and DELETE EDGE commands
+- SQL: execution of database functions from SQL commands
+- SQL: new create cluster command
+- Graph: bundled 2 algorithms: Dijkstra and ShortestPath between vertices
+- Performance: improved opening time when a connections is reused from pool
+- Performance: better management of indexes in ORDER BY
+- Schema: new API to handle custom fields
+- HTTP/REST: new support for fetch-plan and limit in "command"
+- Moved from Google Code to GitHub: https://github.com/nuvolabase/orientdb
+
+Full list: https://github.com/nuvolabase/orientdb/issues?milestone=1&page=1&state=closed
+
+-------------------------------------------------------------------------------
+VERSION 1.2.0 - (October, 10th 2012)
+-------------------------------------------------------------------------------
+- Functions: these are like Stored Procedures for RDBMS but in Javascript
+- Record Level Security, just let the class to protect overriding the
+  ORestricted abstract class
+- Profiler: generation of snapshots
+- JMX now is a plugin (not more installed by default)
+- Automatic rebuild of schema index on restart after a crash/hard shutdown
+- SQL: new EXPLAIN command to profile any commands, new SQL LET keyword to set
+       context variables, support for Sub-Queries in CREATE EDGE
+- Object Database JPA interface: support for configurable naming policy
+- Supported abstract classes (without record cluster)
+- Partial unmarshalling of fields to speed up queries
+- Automatic backup can start at concrete time
+- Console: prompt password if not provided
+- Renamed traverse's WHERE in WHILE
+- 65 bugs fixed!
+
+Full list: http://code.google.com/p/orient/issues/list?can=1&q=label%3Av1.2.0%2Cv1.2
+
+-------------------------------------------------------------------------------
+VERSION 1.1.0 - (July, 24th 2012)
+-------------------------------------------------------------------------------
+- New distributed server architecture with balance of workload, full
+  replication and management of failures
+- New MMAP manager optimized for 64bit OS
+- Index: new support for binary keys and collections in composite keys
+- Support for in-memory database replication
+- Object Database added support for attach/detach, ENUM and binary
+  data (ORecordBytes)
+- SQL: new DROP CLUSTER command, INSERT now supports clusters,
+  new CREATE VERTEX and CREATE EDGE commands
+- Support for Gephi visual tool
+- 50 bugs fixed
+
+Full list: http://code.google.com/p/orient/issues/list?can=1&q=label%3Av1.1.0
+
+-------------------------------------------------------------------------------
+VERSION 1.0.1 - (May, 22nd 2012)
+-------------------------------------------------------------------------------
+- support for TinkerPop 2.0 technology stack
+- new OBinary type to index binary field
+- Bugs fixed
+
+Full list: http://code.google.com/p/orient/issues/list?can=1&q=label%3Av1.0.1
+
+-------------------------------------------------------------------------------
+VERSION 1.0 - (May, 14th 2012)
+-------------------------------------------------------------------------------
+- new Multi-Master Replication architecture
+- new Object Database interface that use run-time enhancement. Now handles lazy
+  loading, it's lighter and faster than before
+- new OTraverse class to traverse graphs via Java API using a stack-free
+  approach
+- Data segments: added support for multiple ones and create/drop commands
+- new ODocument.undo() to revert local changes
+- new Server Side Scripting support
+- Query: new context variables
+- Console: new check database command
+- Studio: improved Graph management
+- Improved OSGi support
+- Fixed more than 40 bugs
+
+Full list: http://code.google.com/p/orient/issues/list?can=1&q=label%3Av1.0
+
+-------------------------------------------------------------------------------
+VERSION 1.0rc9 - (March, 26th 2012)
+-------------------------------------------------------------------------------
+- Studio new look&feel and improved Query panel
+- SQL: new sub query, new SKIP keyword for pagination,
+       INSERT accepts SET syntax like SQL UPDATE
+- Update Tinkerpop stack: Gremlin 1.5, Blueprints 1.2 and Pipes 1.0
+- Schema: new support for metadata on property
+- Many bug fixed, 35 issues in total
+
+Full list: http://code.google.com/p/orient/issues/list?can=1&q=label%3Av1.0rc9
+
+-------------------------------------------------------------------------------
+VERSION 1.0rc8 - (February, 2nd 2012)
+-------------------------------------------------------------------------------
+- New TRAVERSE command to traverse records by relationships
+- New fetch-plan to support more complex use cases
+- Asynchronous API to speedup insert, update and delete via remote network
+- New DECIMAL type to handle currency without pains of float and double types
+- Strict schema mode to work like a Relational DBMS
+- Resolved the "big-node" problem when a record has many links to other
+  records by using a MVRB-Tree to handle relationships
+- SQL: new NOT and INSTANCEOF operators
+- Index works also against MAP types
+- Supported JPA @Embedded annotation
+- Many bug fixed, 54 issues in total
+
+Full list: http://code.google.com/p/orient/issues/list?can=1&q=label%3Av1.0rc8
+
+-------------------------------------------------------------------------------
+VERSION 1.0rc7 - (December, 5th 2011)
+-------------------------------------------------------------------------------
+- Transactions: Improved speed, up to 500x! (issue 538)
+- New Multi-Master replication (issue 589). Will be final in the next v1.0
+- SQL insert supports MAP syntax (issue 582), new date() function
+- HTTP interface: JSONP support (issue 587), new create database (issue 566),
+  new import/export database (issue 567, 568)
+- many bug fixed, 34 issues in total
+
+Full list: http://code.google.com/p/orient/issues/list?can=1&q=label%3Av1.0rc7
+-------------------------------------------------------------------------------
+VERSION 1.0rc6 - (October, 11th 2011)
+-------------------------------------------------------------------------------
+- SQL engine: improved link navigation (issue 230)
+- Console: new "list databases" command (issue 389)
+- Index: supported composite indexes (issue 405), indexing of collections
+        (issue 554)
+- JPA: supported @Embedded (issue 436) and @Transient annotations
+- Object Database: Disable/Enable lazy loading (issue 563)
+- Server: new Automatic backup task (issue 556), now installable as
+          Windows Service (issue 61)
+- Client: Load balancing in clustered configuration (issue 557)
+
+-------------------------------------------------------------------------------
+VERSION 1.0rc5 - (August, 22nd 2011)
+-------------------------------------------------------------------------------
+- SQL engine: new [] operator to extract items from lists, sets, maps and
+  arrays
+- SQL engine: ORDER BY works with projection alias
+- SQL engine: Cross trees and graphs in projections
+- SQL engine: IN operator uses Index when available
+- Fixed all known bugs on transaction recovery
+- Rewritten the memory management of MVRB-Tree: now it's faster and uses much
+  less RAM
+- Java 5 cmopatibility of common and core subprojects
+- 16 issues fixed in total
+
+Full list: http://code.google.com/p/orient/issues/list?can=1&q=label%3Av1.0rc5
+
+-------------------------------------------------------------------------------
+VERSION 1.0rc4 - (August, 1st 2011)
+-------------------------------------------------------------------------------
+- SQL engine: improved mixing functions and operators all together in complex
+  combinations
+- SQL engine: supported array, collection and maps as query parameters
+- New SQL TRUNCATE RECORD command
+- JARs are OSGi compliant
+- GraphDB: Renamed Vertex "outEdges" and "inEdges" in respectively "out" and 
+  "in"
+- Fixed problems with drop clusters
+- 21 issues fixed in total
+
+Full list: http://code.google.com/p/orient/issues/list?can=1&q=label%3Av1.0rc4
+
+-------------------------------------------------------------------------------
+VERSION 1.0rc3 - (July, 14th 2011)
+-------------------------------------------------------------------------------
+- Improved Index manager to use index also with multiple query condition
+  (many thanks to the Exigen team!) 
+- Fixed problems with schema refreshing
+- Fixed a lot of bugs with distributed clustered configuration (thanks to the
+  NuvolaBase team!) 
+- New SQL ALTER CUSTER command
+- New SQL operator EXISTS
+- GraphDB: new SQL GREMLIN() operator to execute Gremlin scripts against the
+  SQL query resultset
+- GraphDB: integrated Gremlin as command script implementation
+- Improved disk space allocation
+- Improved performance in general
+- 34 issues fixed in total!
+
+Full list: http://code.google.com/p/orient/issues/list?can=1&q=label%3Av1.0rc3
+
+-------------------------------------------------------------------------------
+VERSION 1.0rc2 - (June, 17th 2011)
+-------------------------------------------------------------------------------
+- Fixed multi-threads problems
+- Speeded up index searching
+- Refactored schema, index and security managers to work in multi-threads
+- When use remote as protocol, triggers now work at server-side level
+- New SQL BETWEEN operator, useful specially against indexes to execute
+  ranged queries
+- New SQL ALTER CLASS and ALTER PROPERTy to refactor the db schema
+- New Console DROP DATABASE command
+- New Console INDEXES command that displays the configured indexes
+- New DATE type to handle dates only with YYYY/MM/SS
+- New SQL distinct() function
+- New SQL union(), intersect() and difference() functions to work with
+  collections
+- MVCC (Multi-version Concurrency Control) system is enabled also outside
+  transactions by default, but can be turned off
+- Supported +, -, *, / and % math operations in SQL Query
+- Enforced security checks
+- GraphDB support multiple edges between two vertexes
+- Core is Java5 compatible, the server needs Java6
+- 80 issues fixed in total!
+
+Full list: http://code.google.com/p/orient/issues/list?can=1&q=label%3Av1.0rc2
+
+-------------------------------------------------------------------------------
+VERSION 1.0rc1 - (May, 3rd 2011)
+-------------------------------------------------------------------------------
+- New defrag algorithm to reduce holes and therefore disk space
+- New super fast lazy collections that optimizes marshalling/unmarshalling
+- HTTP protocol handles multipart requestes
+- New HTTP Download and Upload commands
+- Fixed problems with cluster configuration when multiple dbs was opened
+- Added 8 new configuration parameters
+- new OLockManager class to lock at record level
+- Many bugs fixed
+
+Full list: http://code.google.com/p/orient/issues/list?can=1&q=label:v1.0rc1
+
+-------------------------------------------------------------------------------
+VERSION 0.9.25 - (March, 2nd 2011)
+-------------------------------------------------------------------------------
+- Brand new memory model with level-1 and level-2 caches (Issue #242)
+- SQL prepared statement (Issue #49)
+- SQL Projections with the support of links (Issue #15)
+- Graphical editor for documents in OrientDB Studio app (Issue #217)
+- Graph representation in OrientDB Studio app
+- Support for JPA annotation by the Object Database interface (Issue #102)
+- Smart Console under bash: history, auto completition, etc. (Issue #228)
+- Operations to work with GEO-spatial points (Issue #182)
+- @rid support in SQL UPDATE statement (Issue #72)
+- Range queries against Indexes (Issue #231)
+- 100% support of TinkerPop Blueprints 0.5
+- Many bugs fixed
+
+Full list: http://code.google.com/p/orient/issues/list?can=1&q=label:v0.9.25
+
+-------------------------------------------------------------------------------
+VERSION 0.9.24 - (December, 10th 2010)
+-------------------------------------------------------------------------------
+New features:
+- Support for Clustering with synchronous and asynchronous replication
+- New SQL RANGE keyword: SELECT FROM ... WHERE ... RANGE <from> [,<to>]
+- New SQL LIMIT keyword: SELECT FROM ... WHERE ... LIMIT 20
+- Improved CREATE INDEX command
+- New REMOVE INDEX command
+- New console command INFO CLASS
+- New console command TRUNCATE CLASS and TRUNCATE CLUSTER
+- MRB+Tree now is faster and stable
+- Improved import/export commands
+- Improved JSON compliance
+- Improved TRAVERSE operator with the optional field list to traverse
+- Fixed a lot of bugs
+
+For the complete list:
+http://code.google.com/p/orient/issues/list?can=1&q=label:v0.9.24
+
+-------------------------------------------------------------------------------
+VERSION 0.9.23 - (October, 18th 2010)
+-------------------------------------------------------------------------------
+New features:
+- Issue  92: Support for logical cluster in TX
+- Issue 125: Cross-domain access to the DB server for Silverlight and Flash
+             clients
+Bugs:
+- Issue  65: Slow query on Index when the value isn't in the database
+- Issue  73: OrientDB Studio issues
+- Issue  83: ClassCastException occurs
+- Issue  99: Deleting docs one by one will cause exception
+- Issue 110: ClassCastException occurs in OrientDB Studio
+- Issue 113: RegisterEntityClasses once with ODatabaseObjectPool should be
+             enough
+- Issue 115: Concurrent access fails various ways and performance is bad
+- Issue 116: Referenced POJOs are not stored during save
+- Issue 117: TreeMap performance degrades under high load
+- Issue 118: Registering classes should use fully qualified class name, not
+             strings
+- Issue 119: Error occurs call OSQLQuery method with the query string that
+             starts with white space.
+- Issue 121: Debug option in base-build.xml
+- Issue 122: An error has occurred while building the revision 1465
+- Issue 131: REST api record update requires to repeat all attributes
+- Issue 132: Error 500 on curl POST to REST api
+- Issue 133: REST api: cannot change record class?
+- Issue 135: Stacktrace contradiction, Type BINARY must be a collection
+- Fixed other minor bugs
+
+-------------------------------------------------------------------------------
+VERSION 0.9.22 - (September, 15th 2010)
+-------------------------------------------------------------------------------
+New features:
+- Issue  21: Full text index against schema fields
+- Issue  91: SQL UPDATE against collections and maps
+- Issue  94: Support for GREMLIN graph language
+- Issue 108: Regular expression support in WHERE clause
+- Issue 109: Support for memory clusters inside regular persistent database
+
+Bugs:
+- Issue  86: Cannot insert record from console
+- Issue  87: Cannot query records from OrientDB Studio Command-page
+- Issue 100: Transaction does not work as expected
+- Issue 101: Error in using orient queries having ' character
+- Issue 104: Bulk record creation in cluster with pre-created indices causes
+             ClassCastException
+- Issue 105: Error in using UPDATE query
+- Fixed other minor bugs
+
+-------------------------------------------------------------------------------
+VERSION 0.9.21 - (July, 29th 2010)
+-------------------------------------------------------------------------------
+- Issue 60: GraphDB implementation
+- Issue 8:  Import of exported database
+- Issue 70: Connection pool
+- Issue 67: Support lazy loaded collections and maps also for ODocument
+- Issue 66: Optimize loading of database schema at opening using the fetch plan
+- Issue 71: Support record internal field in queries
+- Issue 63: Server: logs by default should reside in files
+- Issue 69: Java 1.6 creep
+- Issue 74: Create class from console
+- Issue 75: Sequential document updates from different connections yields
+            conncurrent modification exception
+- Issue 78: Database corruption
+- Issue 79: Error parsing example query
+- Issue 80: Root cause not reported on query parsing
+- New annotations to control object mapping: ORawBinding, ODocumentId and
+  ODocumentInstance
+- Fixed other minor bugs
+
+-------------------------------------------------------------------------------
+VERSION 0.9.20 - (July, 12nd 2010)
+-------------------------------------------------------------------------------
+- New run-time Fetch Plans. Example: "parent:0 Address.city:1 *:-1" (Issue #54)
+- New database properties (Issue #54)
+- POJO callback on serialization/deserialization (Issue #56)
+- New annotation to use RAW binding (Issue #57)
+- Enhance the base-build.xml to create all required directories (Issue #58)
+- Fixed object graph management
+- Fixed other minor bugs
+
+-------------------------------------------------------------------------------
+VERSION 0.9.19 - beta (June, 25th 2010)
+-------------------------------------------------------------------------------
+- Issue #10: support for native inheritance between Documents and POJOs
+- Issue #45: implemented not-unique indexes
+- Issue #47: support ORDER BY clause in SQL SELECT statements
+- Issue #53: Improved description on errors 
+- Issue #50: Auto register Remote Engine if available
+- Fixed other bugs (user loading, logical cluster casts)
+-------------------------------------------------------------------------------
+VERSION 0.9.18 - beta (June, 21st 2010)
+-------------------------------------------------------------------------------
+- New SQL command "create link" to create physical connection between records.
+  Useful when import a Relational DBMS. Use the "inverse" form to map 1-N
+  relationships
+- New console command "import documents" to import JSON document 
+- New SQL command "create property" to add schema full properties
+- Added status in OUser and checked when login. By default is ACTIVE
+- Issue #44: support of ORID in queries. Example: SELECT FROM profile WHERE
+             friends IN [10:3, 10:1]
+- Fixed other bugs (not null, not equals, encoding)
+
+-------------------------------------------------------------------------------
+VERSION 0.9.17 - beta (June, 7th 2010)
+-------------------------------------------------------------------------------
+- New Index API to create a unique index for each property. This speed up the
+  performance of queries but slow down updates, inserts and deletes
+- OrientDB Studio: new rendering for links
+- Fixed bug on embedded type in collections
+
+-------------------------------------------------------------------------------
+VERSION 0.9.16 - beta (May, 31st 2010)
+-------------------------------------------------------------------------------
+- New Hook API. Like triggers of RDBMS but call Java app code
+- Fixed all the bugs reported by the user in the last weeks (schema and
+  serialization)
+
+-------------------------------------------------------------------------------
+VERSION 0.9.15 - beta (May, 27th 2010)
+-------------------------------------------------------------------------------
+- New management of users and roles
+- New SQL commands: GRANT and REVOKE to manage permissions
+- Enforced security in OrientDB Server with the support of Server users. The
+  Server administrator account is created at first start of the Server with
+  a random password
+- Fixed minor issues
+- Changed *.config files to *.xml
+
+-------------------------------------------------------------------------------
+VERSION 0.9.14 - beta (May, 21st 2010)
+-------------------------------------------------------------------------------
+- New Database structure. Logical clusters now are well integrated at storage
+  level
+- Improved OrientDB Studio with authentication, user, roles, clusters,
+  db and server properties, etc.
+- New User and Role management
+- More flexible management of types in ODocument instances
+- Supported HTTP Authentication basic
+- Fixed some bugs in concurrency with high number of clients
+
+-------------------------------------------------------------------------------
+VERSION 0.9.13 - beta (May, 10th 2010)
+-------------------------------------------------------------------------------
+- New HTTP RESTful interface to the OrientDB Server
+- New OrientDB Server Studio GUI to manage documents, requests and monitor the
+  active connections. It's 100% web client-side
+  application built with HTML, CSS and JQuery
+- Fixed minor bugs on http-connections
+
+-------------------------------------------------------------------------------
+VERSION 0.9.12 (beta) - beta (May, 5th 2010)
+-------------------------------------------------------------------------------
+- Full support to asynchronous remote command execution. Now only SQL has been
+  implemented (select, insert, update, delete)
+- Fixed bug on LIKE operator
+- Improved JMX monitoring support for OrientDB Server: active sessions,
+  configured handlers and protocols, status, etc.
+- Changed the default OrientDB Server port to 2424 and for OrientKV Server has
+  been assigned the 2431.
+
+-------------------------------------------------------------------------------
+VERSION 0.9.11 (beta) - beta (April, 28th 2010)
+-------------------------------------------------------------------------------
+- New support for SQL commands INSERT, UPDATE and DELETE. Now everybody that
+  knows SQL can start using OrientDB without the need to learn a complex syntax
+  or, at worst, a Map/Reduce!
+
+-------------------------------------------------------------------------------
+VERSION 0.9.10 (beta) - beta (April, 24th 2010)
+-------------------------------------------------------------------------------
+- Operator traverse now accepts optional parameters to limit deep of
+  recursivity: traverse(minDeep, maxDeep)
+- any() and all() can accept chain of field operators such. Example:
+  select from Profile where any() traverse(0,3) (any().indexOf( 'Navona' ) >-1)
+- Orient Server loads any db placed in $ORIENT_HOME/databases directory without
+  the need to configure them
+- Memory databases can be used and shared on any Orient Server instances."temp"
+  is the memory database pre-configured by default
+
+-------------------------------------------------------------------------------
+VERSION 0.9.9 (beta) - beta (April, 21st 2010)
+-------------------------------------------------------------------------------
+- Refactored SQL query engine to support external custom operators
+- Improved POJO <-> ODocument conversion and performance
+- New operators in test: any(), all() and traverse()
+- Migrated demo database from petshop to demo with a Twitter-like app called
+  "Whiz", specially useful to test traverse of graphs
+- Implemented constraints on date (min/max)
+- Fixed bug on circular references problem
+- New Lazy-loaded list of pojo from ODocument converted only upon request
+
+-------------------------------------------------------------------------------
+VERSION 0.9.8 (beta) - beta (April, 18th 2010)
+-------------------------------------------------------------------------------
+- Fixed issue #20 (http://code.google.com/p/orient/issues/detail?id=20)
+- Minor refactoring to support partitioning in Key/Value Server
+
+-------------------------------------------------------------------------------
+VERSION 0.9.7 (beta) - beta (April, 14th 2010)
+-------------------------------------------------------------------------------
+- Fixed problem on 'create database' and 'create cluster' console commands.
+- Removed buggy 'create record' command in favor of new SQL 'insert' available
+  in the next days
+
+-------------------------------------------------------------------------------
+VERSION 0.9.6 (beta) - beta (April, 12nd 2010)
+-------------------------------------------------------------------------------
+- Splitted Orient release in two: Database and Key/Value Server. Starting from
+  now the Key/Value Server is distributed separately
+
+-------------------------------------------------------------------------------
+VERSION 0.9.5 (beta) - beta (April, 9th 2010)
+-------------------------------------------------------------------------------
+- Improved the speed of Key/Value Server +35%
+- New console commands: get, set, properties, browse class, browse cluster,
+                        export record
+- The console now is able to display any kind of record
+- New method ODocument.toJSON() that export in JSON format
+
+-------------------------------------------------------------------------------
+VERSION 0.9.4 (beta) - beta (April, 8th 2010)
+-------------------------------------------------------------------------------
+- Fixed bug on Key/Value Server in HTTP protocol parsing
+- New benchmarks folder to test performance of the Key/Value Server
+- Renamed many classes to the final names
+
+-------------------------------------------------------------------------------
+VERSION 0.9.3 (beta) - beta (April, 6th 2010)
+-------------------------------------------------------------------------------
+- Added new console commands:
+  - dictionary keys
+  - dictionary get
+  - dictionary put
+  - load record
+  - display record
+- Fixed minor bug on serialization
+
+-------------------------------------------------------------------------------
+VERSION 0.9.2 (beta) - beta (April, 2nd 2010)
+-------------------------------------------------------------------------------
+First public release created by the knowledge acquired by Orient ODBMS. The new
+engine was totally rewritten in Java (before it was in C++) with a lot of
+improvement and new functionalities.
+
