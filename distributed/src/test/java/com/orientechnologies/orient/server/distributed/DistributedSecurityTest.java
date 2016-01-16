@@ -56,8 +56,8 @@ public class DistributedSecurityTest extends AbstractServerClusterTest {
 
         try {
           // TRY DELETING ALL OUSER VIA COMMAND
-          g.command(new OCommandSQL("delete from OUser")).execute();
-          Assert.assertTrue(false);
+          Long deleted = g.command(new OCommandSQL("delete from OUser")).execute();
+          Assert.assertEquals(deleted.longValue(), 0l);
         } catch (Exception e) {
           Assert.assertTrue(true);
         }

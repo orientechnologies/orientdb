@@ -32,7 +32,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
@@ -60,14 +59,14 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   public OCreateRecordTask() {
   }
 
-  public OCreateRecordTask(final ORecordId iRid, final byte[] iContent, final ORecordVersion iVersion, final byte iRecordType) {
+  public OCreateRecordTask(final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType) {
     super(iRid, iVersion);
     content = iContent;
     recordType = iRecordType;
   }
 
   public OCreateRecordTask(final ORecord record) {
-    this((ORecordId) record.getIdentity(), record.toStream(), record.getRecordVersion(), ORecordInternal.getRecordType(record));
+    this((ORecordId) record.getIdentity(), record.toStream(), record.getVersion(), ORecordInternal.getRecordType(record));
 
     if (rid.getClusterId() == ORID.CLUSTER_ID_INVALID) {
       final OClass clazz;
@@ -75,7 +74,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
         // PRE-ASSIGN THE CLUSTER ID ON CALLER NODE
         clusterId = clazz.getClusterSelection().getCluster(clazz, (ODocument) record);
       } else {
-        ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+        ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
         clusterId = db.getDefaultClusterId();
       }
     }
@@ -97,8 +96,8 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   @Override
   public Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
       throws Exception {
-    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "creating record %s/%s v.%s...",
-        database.getName(), rid.toString(), version.toString());
+    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "creating record %s/%s v.%d...",
+        database.getName(), rid.toString(), version);
 
     getRecord();
 
@@ -134,7 +133,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
       return null;
 
     final OPlaceholder badResult = (OPlaceholder) iBadResponse;
-    return new ODeleteRecordTask(new ORecordId(badResult.getIdentity()), badResult.getRecordVersion()).setDelayed(false);
+    return new ODeleteRecordTask(new ORecordId(badResult.getIdentity()), badResult.getVersion()).setDelayed(false);
   }
 
   @Override
@@ -143,7 +142,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
       return null;
 
     final OPlaceholder badResult = (OPlaceholder) iBadResponse;
-    return new ODeleteRecordTask(new ORecordId(badResult.getIdentity()), badResult.getRecordVersion()).setDelayed(false);
+    return new ODeleteRecordTask(new ORecordId(badResult.getIdentity()), badResult.getVersion()).setDelayed(false);
   }
 
   @Override

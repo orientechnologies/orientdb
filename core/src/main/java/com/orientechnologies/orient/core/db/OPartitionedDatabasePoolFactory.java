@@ -134,6 +134,10 @@ public class OPartitionedDatabasePoolFactory extends OOrientListenerAbstract {
       throw new IllegalStateException("Pool factory is closed");
   }
 
+  public boolean isClosed() {
+    return closed;
+  }
+  
   @Override
   public void onShutdown() {
     close();

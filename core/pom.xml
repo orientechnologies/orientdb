@@ -12,14 +12,14 @@
     ~ */ -->
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
         <groupId>com.orientechnologies</groupId>
         <artifactId>orientdb-parent</artifactId>
-        <version>2.1.8</version>
+        <version>2.2.0-SNAPSHOT</version>
         <relativePath>../</relativePath>
     </parent>
 
@@ -28,6 +28,7 @@
     <name>OrientDB Core</name>
 
     <properties>
+        <executeFindBugs>true</executeFindBugs>
         <osgi.import>
             com.orientechnologies.orient.graph.console;resolution:=optional,
             com.orientechnologies.orient.graph.gremlin;resolution:=optional,
@@ -44,7 +45,8 @@
         </osgi.export>
         <jna.version>4.0.0</jna.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <argLine>-ea -Xmx2048m
+        <argLine>-ea -Xmx3072m -XX:MaxDirectMemorySize=512g
+            -Dstorage.diskCache.bufferSize=4096
             -Dindex.flushAfterCreate=false
             -Dstorage.makeFullCheckpointAfterCreate=false
             -Dstorage.makeFullCheckpointAfterOpen=false
@@ -53,6 +55,8 @@
             -Dstorage.configuration.syncOnUpdate=false
             -Ddb.makeFullCheckpointOnIndexChange=false
             -Ddb.makeFullCheckpointOnSchemaChange=false
+            -Dsecurity.userPasswordSaltIterations=10
+            -Dmemory.directMemory.trackMode=true
         </argLine>
     </properties>
 
@@ -69,6 +73,7 @@
                 <exclude.test.4>**/SBTreeTestBigValues.java</exclude.test.4>
                 <exclude.test.5>**/OSBTreeBonsaiLocalTest.java</exclude.test.5>
                 <exclude.test.6>**/LocalPaginatedClusterTest.java</exclude.test.6>
+                <exclude.test.7>**/WOWCacheTest.java</exclude.test.7>
             </properties>
         </profile>
 
@@ -87,7 +92,9 @@
                 <exclude.test.4>empty.java</exclude.test.4>
                 <exclude.test.5>empty.java</exclude.test.5>
                 <exclude.test.6>empty.java</exclude.test.6>
+                <exclude.test.7>empty.java</exclude.test.7>
             </properties>
+
         </profile>
         <profile>
             <id>release</id>
@@ -104,9 +111,25 @@
                 <exclude.test.4>empty.java</exclude.test.4>
                 <exclude.test.5>empty.java</exclude.test.5>
                 <exclude.test.6>empty.java</exclude.test.6>
+                <exclude.test.7>empty.java</exclude.test.7>
             </properties>
+
+        </profile>
+        <profile>
+            <id>localDeploy</id>
+            <activation>
+                <property>
+                    <name>localDeploy</name>
+                </property>
+            </activation>
         </profile>
     </profiles>
+
+    <reporting>
+        <plugins>
+
+        </plugins>
+    </reporting>
 
     <build>
         <plugins>
@@ -143,6 +166,7 @@
                         <exclude>${exclude.test.4}</exclude>
                         <exclude>${exclude.test.5}</exclude>
                         <exclude>${exclude.test.6}</exclude>
+                        <exclude>${exclude.test.7}</exclude>
                     </excludes>
                 </configuration>
             </plugin>
@@ -184,35 +208,17 @@
         </dependency>
 
         <dependency>
-            <groupId>net.java.dev.jna</groupId>
-            <artifactId>jna</artifactId>
-            <version>${jna.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>net.java.dev.jna</groupId>
-            <artifactId>jna-platform</artifactId>
-            <version>${jna.version}</version>
-        </dependency>
-
-
-        <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-test-commons</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
+
         <dependency>
-            <groupId>org.testng</groupId>
-            <artifactId>testng</artifactId>
-            <version>6.8.8</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-all</artifactId>
-            <version>1.9.5</version>
-            <scope>test</scope>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>findbugs</artifactId>
+            <version>3.0.1</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 

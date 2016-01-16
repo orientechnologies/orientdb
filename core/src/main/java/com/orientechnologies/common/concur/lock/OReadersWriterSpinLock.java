@@ -30,19 +30,22 @@ import com.orientechnologies.common.types.OModifiableInteger;
 import com.orientechnologies.orient.core.OOrientShutdownListener;
 import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 8/18/14
  */
+@SuppressFBWarnings("SE_TRANSIENT_FIELD_NOT_RESTORED")
 public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer {
-  private final ODistributedCounter distributedCounter = new ODistributedCounter();
+  private static final long serialVersionUID = 7975120282194559960L;
 
-  private final AtomicReference<WNode>          tail      = new AtomicReference<WNode>();
-  private final ThreadLocal<OModifiableInteger> lockHolds = new InitOModifiableInteger();
+  private final transient ODistributedCounter distributedCounter = new ODistributedCounter();
+  private final transient AtomicReference<WNode> tail = new AtomicReference<WNode>();
+  private final transient ThreadLocal<OModifiableInteger> lockHolds = new InitOModifiableInteger();
 
-  private final ThreadLocal<WNode> myNode   = new InitWNode();
-  private final ThreadLocal<WNode> predNode = new ThreadLocal<WNode>();
+  private final transient ThreadLocal<WNode> myNode = new InitWNode();
+  private final transient ThreadLocal<WNode> predNode = new ThreadLocal<WNode>();
 
   public OReadersWriterSpinLock() {
     final WNode wNode = new WNode();

@@ -19,16 +19,11 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
@@ -44,8 +39,7 @@ public class OCommandExecutorSQLDeleteVertexTest {
 
   @BeforeClass
   public static void init() throws Exception {
-    db = Orient.instance().getDatabaseFactory()
-        .createDatabase("graph", "memory:" + OCommandExecutorSQLDeleteVertexTest.class.getSimpleName());
+    db = new ODatabaseDocumentTx("memory:" + OCommandExecutorSQLDeleteVertexTest.class.getSimpleName());
     if (db.exists()) {
       db.open("admin", "admin");
       db.drop();
@@ -99,6 +93,7 @@ public class OCommandExecutorSQLDeleteVertexTest {
 
   }
 
+
   @Test
   public void testDeleteVertexFromSubquery() throws Exception {
     // for issue #4523
@@ -108,10 +103,8 @@ public class OCommandExecutorSQLDeleteVertexTest {
     }
 
     final int res = (Integer) db.command(new OCommandSQL("delete vertex from (select from User)")).execute();
-
     List<?> result = db.query(new OSQLSynchQuery("select from User"));
     Assert.assertEquals(result.size(), 0);
-
   }
 
   @Test

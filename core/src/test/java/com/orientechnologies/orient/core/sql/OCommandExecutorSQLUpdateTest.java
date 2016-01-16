@@ -1,3 +1,22 @@
+/*
+ *
+ *  *  Copyright 2015 Orient Technologies LTD (info(at)orientdb.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientdb.com
+ *
+ */
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.orient.core.command.script.OCommandScript;
@@ -52,7 +71,6 @@ public class OCommandExecutorSQLUpdateTest {
     final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLUpdateTestContent");
     db.create();
     try {
-      db.command(new OCommandSQL("CREATE class V")).execute();
       db.command(new OCommandSQL("insert into V (name) values ('bar')")).execute();
       db.command(new OCommandSQL("UPDATE V content {\"value\":\"foo\"}")).execute();
       Iterable result = db.query(new OSQLSynchQuery<Object>("select from V"));
@@ -68,7 +86,6 @@ public class OCommandExecutorSQLUpdateTest {
     final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLUpdateTestContentParse");
     db.create();
     try {
-      db.command(new OCommandSQL("CREATE class V")).execute();
       db.command(new OCommandSQL("insert into V (name) values ('bar')")).execute();
       db.command(new OCommandSQL("UPDATE V content {\"value\":\"foo\\\\\"}")).execute();
       Iterable result = db.query(new OSQLSynchQuery<Object>("select from V"));
@@ -116,42 +133,42 @@ public class OCommandExecutorSQLUpdateTest {
     }
 
   }
+    @Test
+    public void testNamedParamsSyntax() {
+      //issue #4470
+      String className = getClass().getSimpleName() + "_NamedParamsSyntax";
+      final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:"+className);
+      db.create();
 
-  @Test
-  public void testNamedParamsSyntax() {
-    // issue #4470
-    String className = getClass().getSimpleName() + "_NamedParamsSyntax";
-    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + className);
-    db.create();
+      try {
+        db.command(new OCommandSQL("create class " + className)).execute();
 
-    try {
-      db.command(new OCommandSQL("create class " + className)).execute();
+        Map<String, Object> params = new HashMap<String, Object>();
+        params.put("name", "foo");
+        params.put("full_name", "foo");
+        params.put("html_url", "foo");
+        params.put("description", "foo");
+        params.put("git_url", "foo");
+        params.put("ssh_url", "foo");
+        params.put("clone_url", "foo");
+        params.put("svn_url", "foo");
 
-      Map<String, Object> params = new HashMap<String, Object>();
-      params.put("name", "foo");
-      params.put("full_name", "foo");
-      params.put("html_url", "foo");
-      params.put("description", "foo");
-      params.put("git_url", "foo");
-      params.put("ssh_url", "foo");
-      params.put("clone_url", "foo");
-      params.put("svn_url", "foo");
+        OCommandSQL sql1 = new OCommandSQL("update " + className
+            + " SET name = :name, full_name = :full_name, html_url = :html_url, description = :description, "
+            + "git_url = :git_url, ssh_url = :ssh_url, clone_url = :clone_url, svn_url = :svn_url"
+            + "UPSERT WHERE full_name = :full_name");
+        db.command(sql1).execute(params);
 
-      OCommandSQL sql1 = new OCommandSQL("update " + className
-          + " SET name = :name, full_name = :full_name, html_url = :html_url, description = :description, "
-          + "git_url = :git_url, ssh_url = :ssh_url, clone_url = :clone_url, svn_url = :svn_url"
-          + "UPSERT WHERE full_name = :full_name");
-      db.command(sql1).execute(params);
-
-      OCommandSQL sql2 = new OCommandSQL("update " + className
-          + " SET name = :name, html_url = :html_url, description = :description, "
-          + "git_url = :git_url, ssh_url = :ssh_url, clone_url = :clone_url, svn_url = :svn_url"
-          + "UPSERT WHERE full_name = :full_name");
-      db.command(sql2).execute(params);
-    } finally {
-      db.close();
+        OCommandSQL sql2 = new OCommandSQL("update " + className
+            + " SET name = :name, html_url = :html_url, description = :description, "
+            + "git_url = :git_url, ssh_url = :ssh_url, clone_url = :clone_url, svn_url = :svn_url"
+            + "UPSERT WHERE full_name = :full_name");
+        db.command(sql2).execute(params);
+      }finally{
+        db.close();
+      }
     }
-  }
+
 
   @Test
   public void testUpsertSetPut() throws Exception {
@@ -171,6 +188,7 @@ public class OCommandExecutorSQLUpdateTest {
       db.close();
     }
   }
+
 
   @Test
   public void testUpdateParamDate() throws Exception {
@@ -196,10 +214,10 @@ public class OCommandExecutorSQLUpdateTest {
 
   // issue #4776
   @Test
-  public void testBooleanListNamedParameter() {
+  public void testBooleanListNamedParameter(){
     ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:testBooleanListNamedParameter");
     try {
-      ODatabaseRecordThreadLocal.INSTANCE.set(db);
+      ODatabaseRecordThreadLocal.instance().set(db);
       db.create();
       db.getMetadata().getSchema().createClass("test");
 
@@ -217,15 +235,12 @@ public class OCommandExecutorSQLUpdateTest {
 
       Map<String, Object> params = new HashMap<String, Object>();
 
-      // This works.
       params.put("boolean", true);
 
-      // This works
       List<Object> integerList = new ArrayList<Object>();
       integerList.add(1);
       params.put("integerList", integerList);
 
-      // This does not.
       List<Object> booleanList = new ArrayList<Object>();
       booleanList.add(true);
       params.put("booleanList", booleanList);
@@ -241,11 +256,45 @@ public class OCommandExecutorSQLUpdateTest {
       assertNotNull(resultBooleanList);
       assertEquals(resultBooleanList.size(), 1);
       assertEquals(resultBooleanList.iterator().next(), true);
-    } finally {
+    }finally{
       db.close();
     }
   }
+  
+  @Test
+  public void testIncrementWithDotNotationField() throws Exception {
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLUpdateTestIncrementWithDotNotationField");
+    db.create();
 
+    db.command(new OCommandSQL("CREATE class test")).execute();
+
+    final ODocument test = new ODocument("test");
+    test.field("id", "id1");
+    test.field("count", 20);
+    
+    Map<String, Integer> nestedCound = new HashMap<String, Integer>();
+    nestedCound.put("nestedCount", 10);
+    test.field("map", nestedCound);
+
+    db.save(test);
+
+    ODocument queried = (ODocument) db.query(new OSQLSynchQuery<Object>("SELECT FROM test WHERE id = \"id1\"")).get(0);;
+    
+    db.command(new OCommandSQL("UPDATE test INCREMENT count = 2")).execute();
+    queried.reload(); 
+    assertEquals(queried.field("count"), 22);
+    
+    db.command(new OCommandSQL("UPDATE test INCREMENT `map.nestedCount` = 5")).execute();
+    queried.reload();
+    assertEquals(queried.field("map.nestedCount"), 15);
+    
+    db.command(new OCommandSQL("UPDATE test INCREMENT map.nestedCount = 5")).execute();
+    queried.reload();
+    assertEquals(queried.field("map.nestedCount"), 20);
+
+    db.close();
+  }
+  
   @Test
   public void testSingleQuoteInNamedParameter() throws Exception {
     final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLUpdateTestSingleQuoteInNamedParameter");
@@ -255,23 +304,23 @@ public class OCommandExecutorSQLUpdateTest {
 
     final ODocument test = new ODocument("test");
     test.field("text", "initial value");
-
+    
     db.save(test);
 
     ODocument queried = (ODocument) db.query(new OSQLSynchQuery<Object>("SELECT FROM test")).get(0);
     assertEquals(queried.field("text"), "initial value");
-
+    
     OCommandSQL command = new OCommandSQL("UPDATE test SET text = :text");
-    Map<String, Object> params = new HashMap<String, Object>();
+    Map<String, Object> params = new HashMap<String,Object>();
     params.put("text", "single \"");
-
+    
     db.command(command).execute(params);
-    queried.reload();
+    queried.reload(); 
     assertEquals(queried.field("text"), "single \"");
-
+    
     db.close();
   }
-
+  
   @Test
   public void testQuotedStringInNamedParameter() throws Exception {
     final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLUpdateTestQuotedStringInNamedParameter");
@@ -281,46 +330,20 @@ public class OCommandExecutorSQLUpdateTest {
 
     final ODocument test = new ODocument("test");
     test.field("text", "initial value");
-
+    
     db.save(test);
 
     ODocument queried = (ODocument) db.query(new OSQLSynchQuery<Object>("SELECT FROM test")).get(0);
     assertEquals(queried.field("text"), "initial value");
-
+    
     OCommandSQL command = new OCommandSQL("UPDATE test SET text = :text");
-    Map<String, Object> params = new HashMap<String, Object>();
+    Map<String, Object> params = new HashMap<String,Object>();
     params.put("text", "quoted \"value\" string");
-
+    
     db.command(command).execute(params);
-    queried.reload();
+    queried.reload(); 
     assertEquals(queried.field("text"), "quoted \"value\" string");
-
-    db.close();
-  }
-
-  @Test
-  public void testSingleQuoteStringInNamedParameter() throws Exception {
-    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLUpdateTestSingleQuoteStringInNamedParameter");
-    db.create();
-
-    db.command(new OCommandSQL("CREATE class test")).execute();
-
-    final ODocument test = new ODocument("test");
-    test.field("text", "initial value");
-
-    db.save(test);
-
-    ODocument queried = (ODocument) db.query(new OSQLSynchQuery<Object>("SELECT FROM test")).get(0);
-    assertEquals(queried.field("text"), "initial value");
-
-    OCommandSQL command = new OCommandSQL("UPDATE test SET text = :text");
-    Map<String, Object> params = new HashMap<String, Object>();
-    params.put("text", "quoted 'value' string");
-
-    db.command(command).execute(params);
-    queried.reload();
-    assertEquals(queried.field("text"), "quoted 'value' string");
-
+    
     db.close();
   }
 
@@ -331,7 +354,9 @@ public class OCommandExecutorSQLUpdateTest {
 
     db.command(new OCommandSQL("CREATE class testquotesinjson")).execute();
     db.command(new OCommandSQL("UPDATE testquotesinjson SET value = {\"f12\":'test\\\\'} UPSERT WHERE key = \"test\"")).execute();
-    // db.command(new OCommandSQL("update V set value.f12 = 'asdf\\\\' WHERE key = \"test\"")).execute();
+//    db.command(new OCommandSQL("update V set value.f12 = 'asdf\\\\' WHERE key = \"test\"")).execute();
+
+
 
     ODocument queried = (ODocument) db.query(new OSQLSynchQuery<Object>("SELECT FROM testquotesinjson")).get(0);
     assertEquals(queried.field("value.f12"), "test\\");
@@ -362,4 +387,5 @@ public class OCommandExecutorSQLUpdateTest {
     assertEquals(result.get(0).field("name"), "baz");
     db.close();
   }
+  
 }

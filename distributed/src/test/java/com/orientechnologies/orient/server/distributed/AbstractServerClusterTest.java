@@ -18,9 +18,12 @@ package com.orientechnologies.orient.server.distributed;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.instance.GroupProperties;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import org.junit.Assert;
 
 import java.io.IOException;
@@ -34,12 +37,13 @@ import java.util.List;
 public abstract class AbstractServerClusterTest {
   protected int     delayServerStartup     = 0;
   protected int     delayServerAlign       = 0;
-  protected boolean startupNodesInSequence = true;
   protected String  rootDirectory          = "target/servers/";
+  protected boolean startupNodesInSequence = true;
 
   protected List<ServerRun> serverInstance = new ArrayList<ServerRun>();
 
   protected AbstractServerClusterTest() {
+    OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.setValue(true);
   }
 
   @SuppressWarnings("unchecked")
@@ -95,8 +99,9 @@ public abstract class AbstractServerClusterTest {
     try {
 
       if (startupNodesInSequence) {
-        for (ServerRun server : serverInstance) {
+        for (final ServerRun server : serverInstance) {
           banner("STARTING SERVER -> " + server.getServerId() + "...");
+
           server.startServer(getDistributedServerConfiguration(server));
 
           if (delayServerStartup > 0)
@@ -114,11 +119,12 @@ public abstract class AbstractServerClusterTest {
             public void run() {
               banner("STARTING SERVER -> " + server.getServerId() + "...");
               try {
+                onServerStarting(server);
                 server.startServer(getDistributedServerConfiguration(server));
+                onServerStarted(server);
               } catch (Exception e) {
                 e.printStackTrace();
               }
-              onServerStarted(server);
             }
           });
           thread.start();
@@ -146,7 +152,11 @@ public abstract class AbstractServerClusterTest {
       } finally {
         onAfterExecution();
       }
-
+    } catch (Exception e) {
+      System.out.println("ERROR: ");
+      e.printStackTrace();
+      OLogManager.instance().flush();
+      throw e;
     } finally {
       banner("Test finished");
 
@@ -165,6 +175,7 @@ public abstract class AbstractServerClusterTest {
       banner("Clean server directories...");
       deleteServers();
     }
+
   }
 
   protected void banner(final String iMessage) {
@@ -181,6 +192,9 @@ public abstract class AbstractServerClusterTest {
     OLogManager.instance().flush();
     System.out.println("\n" + iMessage);
     System.out.flush();
+  }
+
+  protected void onServerStarting(ServerRun server) {
   }
 
   protected void onServerStarted(ServerRun server) {
@@ -215,12 +229,22 @@ public abstract class AbstractServerClusterTest {
    * @throws IOException
    */
   protected void prepare(final boolean iCopyDatabaseToNodes, final boolean iCreateDatabase) throws IOException {
+    prepare(iCopyDatabaseToNodes, iCreateDatabase, null);
+  }
+
+  /**
+   * Create the database on first node only
+   *
+   * @throws IOException
+   */
+  protected void prepare(final boolean iCopyDatabaseToNodes, final boolean iCreateDatabase,
+      final OCallable<Object, OrientGraphFactory> iCfgCallback) throws IOException {
     // CREATE THE DATABASE
     final Iterator<ServerRun> it = serverInstance.iterator();
     final ServerRun master = it.next();
 
     if (iCreateDatabase) {
-      final OrientBaseGraph graph = master.createDatabase(getDatabaseName());
+      final OrientBaseGraph graph = master.createDatabase(getDatabaseName(), iCfgCallback);
       try {
         onAfterDatabaseCreation(graph);
       } finally {

@@ -25,95 +25,67 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
 
-import java.io.BufferedReader;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.List;
 
 /**
  * Created by enricorisa on 08/10/14.
  */
-@Test(groups = "embedded")
 public class LuceneSkipLimitTest extends BaseLuceneTest {
 
-    public LuceneSkipLimitTest() {
-    }
+  public LuceneSkipLimitTest() {
+  }
 
-    public LuceneSkipLimitTest(boolean remote) {
-        super();
-    }
+  public LuceneSkipLimitTest(boolean remote) {
+    //super(remote);
+  }
 
-    @Override
-    protected String getDatabaseName() {
-        return "LuceneSkipLimitTest";
-    }
+  public void testContext() {
+    InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql");
 
-    public void testContext() {
-        InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql");
+    databaseDocumentTx.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
 
-        databaseDocumentTx.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
+    List<ODocument> docs = databaseDocumentTx
+        .query(new OSQLSynchQuery<ODocument>("select * from Song where [title] LUCENE \"(title:man)\""));
 
+    Assert.assertEquals(docs.size(), 14);
 
-        List<ODocument> docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
-                "select * from Song where [title] LUCENE \"(title:man)\""));
+    ODocument doc = docs.get(9);
+    docs = databaseDocumentTx
+        .query(new OSQLSynchQuery<ODocument>("select * from Song where [title] LUCENE \"(title:man)\" skip 10 limit 10"));
 
+    Assert.assertEquals(docs.size(), 4);
 
-        Assert.assertEquals(docs.size(), 14);
+    Assert.assertEquals(docs.contains(doc), false);
 
-        ODocument doc = docs.get(9);
-        docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
-                "select * from Song where [title] LUCENE \"(title:man)\" skip 10 limit 10"));
+    docs = databaseDocumentTx
+        .query(new OSQLSynchQuery<ODocument>("select * from Song where [title] LUCENE \"(title:man)\" skip 14 limit 10"));
 
-        Assert.assertEquals(docs.size(), 4);
+    Assert.assertEquals(docs.size(), 0);
+  }
 
-        Assert.assertEquals(docs.contains(doc), false);
+  @Before
+  public void init() {
+    initDB();
+    OSchema schema = databaseDocumentTx.getMetadata().getSchema();
+    OClass v = schema.getClass("V");
+    OClass song = schema.createClass("Song");
+    song.setSuperClass(v);
+    song.createProperty("title", OType.STRING);
+    song.createProperty("author", OType.STRING);
 
-        docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
-                "select * from Song where [title] LUCENE \"(title:man)\" skip 14 limit 10"));
+    databaseDocumentTx.command(new OCommandSQL("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE")).execute();
+    databaseDocumentTx.command(new OCommandSQL("create index Song.author on Song (author) FULLTEXT ENGINE LUCENE")).execute();
 
-        Assert.assertEquals(docs.size(), 0);
-    }
+  }
 
-    @BeforeClass
-    public void init() {
-        initDB();
-        OSchema schema = databaseDocumentTx.getMetadata().getSchema();
-        OClass v = schema.getClass("V");
-        OClass song = schema.createClass("Song");
-        song.setSuperClass(v);
-        song.createProperty("title", OType.STRING);
-        song.createProperty("author", OType.STRING);
-
-        databaseDocumentTx.command(new OCommandSQL("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE")).execute();
-        databaseDocumentTx.command(new OCommandSQL("create index Song.author on Song (author) FULLTEXT ENGINE LUCENE")).execute();
-
-    }
-
-    @AfterClass
-    public void deInit() {
-        deInitDB();
-    }
-
-    protected String getScriptFromStream(InputStream in) {
-        String script = "";
-        try {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-            StringBuilder out = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                out.append(line + "\n");
-            }
-            script = out.toString();
-            reader.close();
-        } catch (Exception e) {
-
-        }
-        return script;
-    }
+  @After
+  public void deInit() {
+    deInitDB();
+  }
 
 }

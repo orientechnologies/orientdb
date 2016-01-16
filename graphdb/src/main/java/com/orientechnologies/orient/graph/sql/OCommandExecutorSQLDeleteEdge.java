@@ -32,7 +32,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandExecutorSQLRetryAbstract;
+import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSetAware;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
@@ -58,7 +58,7 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * @author Luca Garulli
  */
-public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstract
+public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
     implements OCommandDistributedReplicateRequest, OCommandResultListener {
   public static final String               NAME          = "DELETE EDGE";
   private static final String              KEYWORD_BATCH = "BATCH";
@@ -102,7 +102,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
         originalTemp = parserText.substring(parserGetPreviousPosition(), parserGetCurrentPosition()).trim();
 
       final OModifiableBoolean shutdownFlag = new OModifiableBoolean();
-      ODatabaseDocumentInternal curDb = ODatabaseRecordThreadLocal.INSTANCE.get();
+      ODatabaseDocumentInternal curDb = ODatabaseRecordThreadLocal.instance().get();
       final OrientGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false, shutdownFlag);
       try {
         while (temp != null) {
@@ -143,8 +143,6 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
             compiledFilter = OSQLEngine.getInstance().parseCondition(where, getContext(), KEYWORD_WHERE);
             break;
 
-          } else if (temp.equals(KEYWORD_RETRY)) {
-            parseRetry();
           } else if (temp.equals(KEYWORD_BATCH)) {
             temp = parserNextWord(true);
             if (temp != null)
@@ -189,7 +187,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
       } finally {
         if (shutdownFlag.getValue())
           graph.shutdown(false, false);
-        ODatabaseRecordThreadLocal.INSTANCE.set(curDb);
+        ODatabaseRecordThreadLocal.instance().set(curDb);
       }
     } finally {
       textRequest.setText(originalQuery);
@@ -229,6 +227,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
       final Set<OrientEdge> edges = new HashSet<OrientEdge>();
       if (query == null) {
         OGraphCommandExecutorSQLFactory.runInConfiguredTxMode(new OGraphCommandExecutorSQLFactory.GraphCallBack<Object>() {
+
           @Override
           public Object call(OrientBaseGraph graph) {
             Set<OIdentifiable> fromIds = null;
@@ -384,6 +383,11 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
   public DISTRIBUTED_RESULT_MGMT getDistributedResultManagement() {
     return getDistributedExecutionMode() == DISTRIBUTED_EXECUTION_MODE.LOCAL ? DISTRIBUTED_RESULT_MGMT.CHECK_FOR_EQUALS
         : DISTRIBUTED_RESULT_MGMT.MERGE;
+  }
+
+  @Override
+  public Object getResult() {
+    return null;
   }
 
   public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {

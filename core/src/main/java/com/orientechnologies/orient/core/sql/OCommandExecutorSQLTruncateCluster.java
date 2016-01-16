@@ -19,12 +19,15 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.sql.parser.OIdentifier;
+import com.orientechnologies.orient.core.sql.parser.OTruncateClusterStatement;
 import com.orientechnologies.orient.core.storage.OCluster;
 
 import java.io.IOException;
@@ -43,30 +46,48 @@ public class OCommandExecutorSQLTruncateCluster extends OCommandExecutorSQLAbstr
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLTruncateCluster parse(final OCommandRequest iRequest) {
-    init((OCommandRequestText) iRequest);
+    final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
 
-    StringBuilder word = new StringBuilder();
+    String queryText = textRequest.getText();
+    String originalQuery = queryText;
+    try {
+      queryText = preParse(queryText, iRequest);
+      textRequest.setText(queryText);
 
-    int oldPos = 0;
-    int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_TRUNCATE))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_TRUNCATE + " not found. Use " + getSyntax(), parserText, oldPos);
+      init((OCommandRequestText) iRequest);
 
-    oldPos = pos;
-    pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_CLUSTER))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLUSTER + " not found. Use " + getSyntax(), parserText, oldPos);
+      StringBuilder word = new StringBuilder();
 
-    oldPos = pos;
-    pos = nextWord(parserText, parserText, oldPos, word, true);
-    if (pos == -1)
-      throw new OCommandSQLParsingException("Expected cluster name. Use " + getSyntax(), parserText, oldPos);
+      int oldPos = 0;
+      int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
+      if (pos == -1 || !word.toString().equals(KEYWORD_TRUNCATE))
+        throw new OCommandSQLParsingException("Keyword " + KEYWORD_TRUNCATE + " not found. Use " + getSyntax(), parserText, oldPos);
 
-    clusterName = word.toString();
+      oldPos = pos;
+      pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
+      if (pos == -1 || !word.toString().equals(KEYWORD_CLUSTER))
+        throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLUSTER + " not found. Use " + getSyntax(), parserText, oldPos);
 
-    final ODatabaseDocument database = getDatabase();
-    if (database.getClusterIdByName(clusterName) == -1)
-      throw new OCommandSQLParsingException("Cluster '" + clusterName + "' not found", parserText, oldPos);
+      oldPos = pos;
+      pos = nextWord(parserText, parserText, oldPos, word, true);
+      if (pos == -1)
+        throw new OCommandSQLParsingException("Expected cluster name. Use " + getSyntax(), parserText, oldPos);
+
+      clusterName = word.toString();
+
+      if (preParsedStatement != null) { // new parser, this will be removed and implemented with the new executor
+        OIdentifier name = ((OTruncateClusterStatement) preParsedStatement).clusterName;
+        if (name != null) {
+          clusterName = name.getValue();
+        }
+      }
+
+      final ODatabaseDocument database = getDatabase();
+      if (database.getClusterIdByName(clusterName) == -1)
+        throw new OCommandSQLParsingException("Cluster '" + clusterName + "' not found", parserText, oldPos);
+    } finally {
+      textRequest.setText(originalQuery);
+    }
     return this;
   }
 
@@ -84,7 +105,7 @@ public class OCommandExecutorSQLTruncateCluster extends OCommandExecutorSQLAbstr
     try {
       cluster.truncate();
     } catch (IOException e) {
-      throw new OCommandExecutionException("Error on executing command", e);
+      throw OException.wrapException(new OCommandExecutionException("Error on executing command"), e);
     }
 
     return recs;

@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
-import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationSetThreadLocal;
 
 public class ORecordSerializerBinary implements ORecordSerializer {
 
@@ -50,6 +49,14 @@ public class ORecordSerializerBinary implements ORecordSerializer {
     return CURRENT_RECORD_VERSION;
   }
 
+  public ODocumentSerializer getSerializer(final int iVersion) {
+    return serializerByVersion[iVersion];
+  }
+
+  public ODocumentSerializer getCurrentSerializer() {
+    return serializerByVersion[serializerByVersion.length - 1];
+  }
+
   @Override
   public String toString() {
     return NAME;
@@ -57,15 +64,14 @@ public class ORecordSerializerBinary implements ORecordSerializer {
 
   @Override
   public ORecord fromStream(final byte[] iSource, ORecord iRecord, final String[] iFields) {
-    if (iSource.length == 0)
+    if (iSource == null || iSource.length == 0)
       return iRecord;
     if (iRecord == null)
       iRecord = new ODocument();
     else
       checkTypeODocument(iRecord);
 
-    BytesContainer container = new BytesContainer(iSource);
-    container.skip(1);
+    final BytesContainer container = new BytesContainer(iSource).skip(1);
 
     try {
       if (iFields != null && iFields.length > 0)
@@ -89,25 +95,26 @@ public class ORecordSerializerBinary implements ORecordSerializer {
     // WRITE SERIALIZER VERSION
     int pos = container.alloc(1);
     container.bytes[pos] = CURRENT_RECORD_VERSION;
+    // SERIALIZE RECORD
+    serializerByVersion[CURRENT_RECORD_VERSION].serialize((ODocument) iSource, container, false);
 
-    if (!OSerializationSetThreadLocal.checkAndAdd((ODocument) iSource)) {
-      // SERIALIZE CLASS ONLY
-      serializerByVersion[CURRENT_RECORD_VERSION].serialize((ODocument) iSource, container, true);
+    return container.fitBytes();
+  }
 
-      // SET SERIALIZATION AS PARTIAL
-      OSerializationSetThreadLocal.setPartial((ODocument) iSource);
+  @Override
+  public String[] getFieldNames(final byte[] iSource) {
+    if (iSource == null || iSource.length == 0)
+      return new String[0];
 
-      return container.fitBytes();
-    }
+    final BytesContainer container = new BytesContainer(iSource).skip(1);
 
     try {
-      // SERIALIZE RECORD
-      serializerByVersion[CURRENT_RECORD_VERSION].serialize((ODocument) iSource, container, false);
-    } finally {
-      OSerializationSetThreadLocal.removeCheck((ODocument) iSource);
+      return serializerByVersion[iSource[0]].getFieldNames(container);
+    } catch (RuntimeException e) {
+      OLogManager.instance().warn(this, "Error deserializing record to get field-names, send this data for debugging: %s ",
+          OBase64Utils.encodeBytes(iSource));
+      throw e;
     }
-    
-    return container.fitBytes();
   }
 
   private void checkTypeODocument(final ORecord iRecord) {
@@ -117,4 +124,21 @@ public class ORecordSerializerBinary implements ORecordSerializer {
     }
   }
 
+  public byte[] writeClassOnly(ORecord iSource) {
+    final BytesContainer container = new BytesContainer();
+
+    // WRITE SERIALIZER VERSION
+    int pos = container.alloc(1);
+    container.bytes[pos] = CURRENT_RECORD_VERSION;
+
+    // SERIALIZE CLASS ONLY
+    serializerByVersion[CURRENT_RECORD_VERSION].serialize((ODocument) iSource, container, true);
+
+    return container.fitBytes();
+  }
+
+  @Override
+  public boolean getSupportBinaryEvaluate() {
+    return true;
+  }
 }

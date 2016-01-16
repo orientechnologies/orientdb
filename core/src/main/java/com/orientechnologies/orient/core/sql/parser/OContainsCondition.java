@@ -2,7 +2,11 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+
+import java.util.Collection;
+import java.util.Iterator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,36 +31,72 @@ public class OContainsCondition extends OBooleanExpression {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public boolean evaluate(OIdentifiable currentRecord) {
+  public boolean execute(Object left, Object right) {
+    if (left instanceof Collection) {
+      if (right instanceof Collection) {
+        return ((Collection) left).containsAll((Collection) right);
+      }
+      if (right instanceof Iterable) {
+        right = ((Iterable) right).iterator();
+      }
+      if (right instanceof Iterator) {
+        Iterator iterator = (Iterator) right;
+        while (iterator.hasNext()) {
+          Object next = iterator.next();
+          if (!((Collection) left).contains(next)) {
+            return false;
+          }
+        }
+      }
+      return ((Collection) left).contains(right);
+    }
+    if (left instanceof Iterable) {
+      left = ((Iterable) left).iterator();
+    }
+    if (left instanceof Iterator) {
+      if (right instanceof Iterable) {
+        right = ((Iterable) right).iterator();
+      }
+      Iterator leftIterator = (Iterator) right;
+      Iterator rightIterator = (Iterator) left;
+      while (leftIterator.hasNext()) {
+        Object leftItem = leftIterator.next();
+        boolean found = false;
+        while (rightIterator.hasNext()) {
+          Object rightItem = rightIterator.next();
+          if (leftItem != null && leftItem.equals(rightItem)) {
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          return false;
+        }
+      }
+      return true;
+    }
     return false;
   }
 
   @Override
-  public void replaceParameters(Map<Object, Object> params) {
-    left.replaceParameters(params);
-    if (right != null) {
-      right.replaceParameters(params);
-    }
-    if (condition != null) {
-      condition.replaceParameters(params);
-    }
+  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+    Object leftValue = left.execute(currentRecord, ctx);
+    Object rightValue = right.execute(currentRecord, ctx);
+    return execute(leftValue, rightValue);
+
   }
 
-  @Override
-  public String toString() {
-    StringBuilder result = new StringBuilder();
-    result.append(left.toString());
-    result.append(" CONTAINS ");
-    if (right != null) {
-      result.append(right.toString());
-    } else if (condition != null) {
-      result.append("(");
-      result.append(condition.toString());
-      result.append(")");
-    }
 
-    return result.toString();
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    left.toString(params, builder);
+    builder.append(" CONTAINS ");
+    if (right != null) {
+      right.toString(params, builder);
+    } else if (condition != null) {
+      builder.append("(");
+      condition.toString(params, builder);
+      builder.append(")");
+    }
   }
 
   @Override

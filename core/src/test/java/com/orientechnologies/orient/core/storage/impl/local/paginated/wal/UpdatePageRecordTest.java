@@ -14,8 +14,8 @@ public class UpdatePageRecordTest {
 
     OOperationUnitId unitId = OOperationUnitId.generateId();
 
-    OUpdatePageRecord serializedUpdatePageRecord = new OUpdatePageRecord(12, 100, unitId, changesTree,
-        new OLogSequenceNumber(0, 0));
+    OUpdatePageRecord serializedUpdatePageRecord = new OUpdatePageRecord(12, 100, unitId, changesTree
+    );
 
     byte[] content = new byte[serializedUpdatePageRecord.serializedSize() + 1];
 
@@ -34,8 +34,8 @@ public class UpdatePageRecordTest {
 
     OOperationUnitId unitId = OOperationUnitId.generateId();
 
-    OUpdatePageRecord serializedUpdatePageRecord = new OUpdatePageRecord(12, 100, unitId, changesTree,
-        new OLogSequenceNumber(0, 0));
+    OUpdatePageRecord serializedUpdatePageRecord = new OUpdatePageRecord(12, 100, unitId, changesTree
+    );
 
     byte[] content = new byte[serializedUpdatePageRecord.serializedSize() + 1];
 

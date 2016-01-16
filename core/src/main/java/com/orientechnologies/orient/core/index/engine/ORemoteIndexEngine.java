@@ -21,16 +21,27 @@ package com.orientechnologies.orient.core.index.engine;
 
 import java.util.Map;
 
+import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.*;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 
 /**
  * @author Andrey Lomakin
  * @since 18.07.13
  */
 public class ORemoteIndexEngine implements OIndexEngine {
+  private final String name;
+
+  public ORemoteIndexEngine(String name) {
+    this.name = name;
+  }
+
+  @Override
+  public String getName() {
+    return name;
+  }
+
   @Override
   public void init() {
   }
@@ -40,8 +51,8 @@ public class ORemoteIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void create(OIndexDefinition indexDefinition, String clusterIndexName, OStreamSerializer valueSerializer,
-      boolean isAutomatic) {
+  public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
+      OBinarySerializer keySerializer, int keySize) {
   }
 
   @Override
@@ -53,7 +64,8 @@ public class ORemoteIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void load(String indexName, OIndexDefinition indexDefinition, OStreamSerializer valueSerializer, boolean isAutomatic) {
+  public void load(String indexName, OBinarySerializer valueSerializer, boolean isAutomatic, OBinarySerializer keySerializer,
+      OType[] keyTypes, boolean nullPointerSupport, int keySize) {
   }
 
   @Override
@@ -65,7 +77,6 @@ public class ORemoteIndexEngine implements OIndexEngine {
   public boolean remove(Object key) {
     return false;
   }
-
 
   @Override
   public void clear() {
@@ -97,32 +108,17 @@ public class ORemoteIndexEngine implements OIndexEngine {
   @Override
   public OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
       boolean ascSortOrder, ValuesTransformer transformer) {
-    return new OIndexAbstractCursor() {
-      @Override
-      public Map.Entry<Object, OIdentifiable> nextEntry() {
-        return null;
-      }
-    };
+    return new EntriesBetweenCursor();
   }
 
   @Override
   public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
-    return new OIndexAbstractCursor() {
-      @Override
-      public Map.Entry nextEntry() {
-        return null;
-      }
-    };
+    return new EntriesMajorCursor();
   }
 
   @Override
   public OIndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
-    return new OIndexAbstractCursor() {
-      @Override
-      public Map.Entry nextEntry() {
-        return null;
-      }
-    };
+    return new EntriesMinorCursor();
   }
 
   @Override
@@ -153,5 +149,26 @@ public class ORemoteIndexEngine implements OIndexEngine {
   @Override
   public int getVersion() {
     return -1;
+  }
+
+  private static class EntriesBetweenCursor extends OIndexAbstractCursor {
+    @Override
+    public Map.Entry<Object, OIdentifiable> nextEntry() {
+      return null;
+    }
+  }
+
+  private static class EntriesMajorCursor extends OIndexAbstractCursor {
+    @Override
+    public Map.Entry nextEntry() {
+      return null;
+    }
+  }
+
+  private static class EntriesMinorCursor extends OIndexAbstractCursor {
+    @Override
+    public Map.Entry nextEntry() {
+      return null;
+    }
   }
 }

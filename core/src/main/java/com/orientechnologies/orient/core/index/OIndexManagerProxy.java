@@ -26,6 +26,7 @@ import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OProxedResource;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -165,15 +166,5 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManager> implement
 
   public void removeClassPropertyIndex(final OIndex<?> idx) {
     delegate.removeClassPropertyIndex(idx);
-  }
-
-  @Override
-  public boolean isFullCheckpointOnChange() {
-    return delegate.isFullCheckpointOnChange();
-  }
-
-  @Override
-  public void setFullCheckpointOnChange(boolean fullCheckpointOnChange) {
-    delegate.setFullCheckpointOnChange(fullCheckpointOnChange);
   }
 }

@@ -38,7 +38,7 @@ import java.util.Set;
  * 
  */
 @SuppressWarnings("unchecked")
-public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSchema {
+public class OSchemaProxy extends OProxedResource<OSchemaShared>implements OSchema {
 
   public OSchemaProxy(final OSchemaShared iDelegate, final ODatabaseDocumentInternal iDatabase) {
     super(iDelegate, iDatabase);
@@ -59,11 +59,6 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
 
   public OClass createClass(final Class<?> iClass) {
     return delegate.createClass(iClass);
-  }
-
-  public OClass createClass(final Class<?> iClass, final int iDefaultClusterId) {
-
-    return delegate.createClass(iClass, iDefaultClusterId);
   }
 
   public OClass createClass(final String iClassName) {
@@ -104,16 +99,6 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
   public OClass createClass(String iClassName, OClass... superClasses) {
 
     return delegate.createClass(iClassName, superClasses);
-  }
-
-  public OClass createClass(final String iClassName, final int iDefaultClusterId) {
-
-    return delegate.createClass(iClassName, iDefaultClusterId);
-  }
-
-  public OClass createClass(final String iClassName, final OClass iSuperClass, final int iDefaultClusterId) {
-
-    return delegate.createClass(iClassName, iSuperClass, iDefaultClusterId);
   }
 
   public OClass createClass(final String iClassName, final OClass iSuperClass, final int[] iClusterIds) {
@@ -223,6 +208,11 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
   }
 
   @Override
+  public OClass createClass(String className, int clusters, OClass... superClasses) {
+    return delegate.createClass(className, clusters, superClasses);
+  }
+
+  @Override
   public OClass getClassByClusterId(int clusterId) {
     return delegate.getClassByClusterId(clusterId);
   }
@@ -241,15 +231,6 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
     return delegate.createGlobalProperty(name, type, id);
   }
 
-  @Override
-  public boolean isFullCheckpointOnChange() {
-    return delegate.isFullCheckpointOnChange();
-  }
-
-  @Override
-  public void setFullCheckpointOnChange(boolean fullCheckpointOnChange) {
-    delegate.setFullCheckpointOnChange(fullCheckpointOnChange);
-  }
 
   @Override
   public OClusterSelectionFactory getClusterSelectionFactory() {

@@ -23,23 +23,16 @@ public class OGroupBy extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public String toString() {
-    StringBuilder result = new StringBuilder();
-    result.append("GROUP BY ");
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("GROUP BY ");
     for (int i = 0; i < items.size(); i++) {
       if (i > 0) {
-        result.append(", ");
+        builder.append(", ");
       }
-      result.append(items.get(i).toString());
+      items.get(i).toString(params, builder);
     }
-    return result.toString();
   }
 
-  public void replaceParameters(Map<Object, Object> params) {
-    for (OExpression expression : this.items) {
-      expression.replaceParameters(params);
-    }
-  }
+
 }
 /* JavaCC - OriginalChecksum=4739190aa6c1a3533a89b76a15bd6fdf (do not edit this line) */

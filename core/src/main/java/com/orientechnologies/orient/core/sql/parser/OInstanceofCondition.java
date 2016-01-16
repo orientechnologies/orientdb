@@ -2,6 +2,7 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 import java.util.Collections;
@@ -28,27 +29,20 @@ public class OInstanceofCondition extends OBooleanExpression {
   }
 
   @Override
-  public boolean evaluate(OIdentifiable currentRecord) {
+  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
     return false;
   }
 
-  @Override
-  public String toString() {
-    StringBuilder builder = new StringBuilder();
-    builder.append(left.toString());
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    left.toString(params, builder);
     builder.append(" instanceof ");
     if (right != null) {
-      builder.append(right.toString());
+      right.toString(params, builder);
     } else if (rightString != null) {
       builder.append(rightString);
     }
-    return builder.toString();
   }
 
-  @Override
-  public void replaceParameters(Map<Object, Object> params) {
-    left.replaceParameters(params);
-  }
 
   @Override
   public boolean supportsBasicCalculation() {

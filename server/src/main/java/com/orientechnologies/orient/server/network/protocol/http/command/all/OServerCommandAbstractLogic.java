@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.all;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.script.OCommandScriptException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -71,7 +72,7 @@ public abstract class OServerCommandAbstractLogic extends OServerCommandAuthenti
           final ODocument params = new ODocument().fromJSON(iRequest.content);
           functionResult = f.executeInContext(context, params.toMap());
         } catch (Exception e) {
-          throw new OCommandScriptException("Error on parsing parameters from request body", e);
+          throw OException.wrapException(new OCommandScriptException("Error on parsing parameters from request body"), e);
         }
       } else
         functionResult = f.executeInContext(context, args);

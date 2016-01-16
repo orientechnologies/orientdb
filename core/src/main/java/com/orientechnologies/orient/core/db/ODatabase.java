@@ -39,7 +39,6 @@ import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.util.OBackupable;
-import com.orientechnologies.orient.core.version.ORecordVersion;
 
 import java.io.Closeable;
 import java.util.Collection;
@@ -61,7 +60,7 @@ import java.util.Map;
  * @author Luca Garulli
  *
  */
-public interface ODatabase<T> extends OBackupable, Closeable, OUserObject2RecordHandler {
+public interface ODatabase<T> extends OBackupable, Closeable {
 
   enum OPTIONS {
     SECURITY
@@ -433,47 +432,6 @@ public interface ODatabase<T> extends OBackupable, Closeable, OUserObject2Record
    */
   void freeze(boolean throwException);
 
-  /**
-   * Flush cached cluster content to the disk.
-   *
-   * After this call users can perform only select queries. All write-related commands will queued till {@link #releaseCluster(int)}
-   * command will be called.
-   *
-   * Given command waits till all on going modifications in indexes or DB will be finished.
-   *
-   * IMPORTANT: This command is not reentrant.
-   *
-   * @param iClusterId
-   *          that must be released
-   */
-  void freezeCluster(int iClusterId);
-
-  /**
-   * Allows to execute write-related commands on the cluster
-   *
-   * @param iClusterId
-   *          that must be released
-   */
-  void releaseCluster(int iClusterId);
-
-  /**
-   * Flush cached cluster content to the disk.
-   *
-   * After this call users can perform only select queries. All write-related commands will queued till {@link #releaseCluster(int)}
-   * command will be called.
-   *
-   * Given command waits till all on going modifications in indexes or DB will be finished.
-   *
-   * IMPORTANT: This command is not reentrant.
-   *
-   * @param iClusterId
-   *          that must be released
-   * @param throwException
-   *          If <code>true</code> {@link com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException}
-   *          exception will be thrown in case of write command will be performed.
-   */
-  void freezeCluster(int iClusterId, boolean throwException);
-
   enum OPERATION_MODE {
     SYNCHRONOUS, ASYNCHRONOUS, ASYNCHRONOUS_NOANSWER
   }
@@ -498,11 +456,6 @@ public interface ODatabase<T> extends OBackupable, Closeable, OUserObject2Record
    * @see com.orientechnologies.orient.core.metadata.security.OSecurity
    */
   OSecurityUser getUser();
-
-  /**
-   * Set user for current database instance
-   */
-  void setUser(OSecurityUser user);
 
   /**
    * Loads the entity and return it.
@@ -673,7 +626,7 @@ public interface ODatabase<T> extends OBackupable, Closeable, OUserObject2Record
    * @param iRecordUpdatedCallback
    */
   <RET extends T> RET save(T iObject, OPERATION_MODE iMode, boolean iForceCreate,
-      ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback);
+      ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<Integer> iRecordUpdatedCallback);
 
   /**
    * Saves an entity in the specified cluster in synchronous mode. If the entity is not dirty, then the operation will be ignored.
@@ -704,7 +657,7 @@ public interface ODatabase<T> extends OBackupable, Closeable, OUserObject2Record
    * @param iRecordUpdatedCallback
    */
   <RET extends T> RET save(T iObject, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
-      ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback);
+      ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<Integer> iRecordUpdatedCallback);
 
   /**
    * Deletes an entity from the database in synchronous mode.
@@ -733,7 +686,7 @@ public interface ODatabase<T> extends OBackupable, Closeable, OUserObject2Record
    *          for MVCC
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
-  ODatabase<T> delete(ORID iRID, ORecordVersion iVersion);
+  ODatabase<T> delete(ORID iRID, int iVersion);
 
   /**
    * Hides records content by putting tombstone on the records position but does not delete record itself.
@@ -755,7 +708,7 @@ public interface ODatabase<T> extends OBackupable, Closeable, OUserObject2Record
 
   boolean hide(ORID rid);
 
-  ODatabase<T> cleanOutRecord(ORID rid, ORecordVersion version);
+  ODatabase<T> cleanOutRecord(ORID rid, int version);
 
   /**
    * Return active transaction. Cannot be null. If no transaction is active, then a OTransactionNoTx instance is returned.
@@ -927,4 +880,29 @@ public interface ODatabase<T> extends OBackupable, Closeable, OUserObject2Record
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
   <DB extends ODatabase<?>> DB setConflictStrategy(ORecordConflictStrategy iResolver);
+
+  /**
+   * Performs incremental backup of database content to the selected folder. This is thread safe operation and can be done in normal
+   * operational mode.
+   *
+   * If it will be first backup of data full content of database will be copied into folder otherwise only changes after last backup
+   * in the same folder will be copied.
+   *
+   * @param path
+   *          Path to backup folder.
+   * @since 2.2
+   * 
+   */
+  void incrementalBackup(String path);
+
+  /**
+   * Restores content of database stored using {@link #incrementalBackup(String)} method.
+   *
+   * During data restore database can not be used in normal mode you should wait till database restore will be finished.
+   * 
+   * @param path
+   *          Path to backup folder.
+   * @since 2.2
+   */
+  void incrementalRestore(String path);
 }

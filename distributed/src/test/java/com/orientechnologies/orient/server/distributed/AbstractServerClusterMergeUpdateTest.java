@@ -39,7 +39,8 @@ public abstract class AbstractServerClusterMergeUpdateTest  extends AbstractServ
       ODatabaseDocumentTx db1 = poolFactory.get(getDatabaseURL(serverInstance.get(1)), "admin", "admin").acquire();
       try {
         executeTest(db0, db1);
-      } finally {
+      } finally{
+        db0.activateOnCurrentThread();
         db0.close();
       }
     } finally {

@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 
 import java.util.Collections;
@@ -34,6 +35,10 @@ import java.util.Set;
 public class OLiveCommandExecutorSQLFactory implements OCommandExecutorSQLFactory {
 
   private static Map<String, Class<? extends OCommandExecutorSQLAbstract>> COMMANDS = new HashMap<String, Class<? extends OCommandExecutorSQLAbstract>>();
+
+  static {
+    init();
+  }
 
   public static void init() {
     if (COMMANDS.size() == 0) {
@@ -69,8 +74,8 @@ public class OLiveCommandExecutorSQLFactory implements OCommandExecutorSQLFactor
     try {
       return clazz.newInstance();
     } catch (Exception e) {
-      throw new OCommandExecutionException("Error in creation of command " + name
-          + "(). Probably there is not an empty constructor or the constructor generates errors", e);
+      throw OException.wrapException(new OCommandExecutionException("Error in creation of command " + name
+          + "(). Probably there is not an empty constructor or the constructor generates errors"), e);
     }
   }
 }

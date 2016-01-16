@@ -19,6 +19,21 @@
  */
 package com.orientechnologies.orient.core.db.tool;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.zip.Deflater;
+import java.util.zip.GZIPOutputStream;
+
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -40,22 +55,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeMapProvider;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.zip.Deflater;
-import java.util.zip.GZIPOutputStream;
 
 /**
  * Export data from a database to a file.
@@ -63,13 +62,12 @@ import java.util.zip.GZIPOutputStream;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ODatabaseExport extends ODatabaseImpExpAbstract {
-  public static final int VERSION           = 11;
+  public static final int VERSION = 11;
 
-  protected OJSONWriter   writer;
-  protected long          recordExported;
-  protected int           compressionLevel  = Deflater.BEST_SPEED;
-  protected int           compressionBuffer = 16384;              // 16Kb
-  protected boolean       noCompression     = false;
+  protected OJSONWriter writer;
+  protected long        recordExported;
+  protected int         compressionLevel  = Deflater.BEST_SPEED;
+  protected int         compressionBuffer = 16384;              // 16Kb
 
   public ODatabaseExport(final ODatabaseDocumentInternal iDatabase, final String iFileName, final OCommandOutputListener iListener)
       throws IOException {
@@ -78,40 +76,23 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     if (fileName == null)
       throw new IllegalArgumentException("file name missing");
 
-  }
-
-  protected void checkFile() {
-    if (!noCompression) {
-      if (!fileName.endsWith(".gz")) {
-        fileName += ".gz";
-      }
+    if (!fileName.endsWith(".gz")) {
+      fileName += ".gz";
     }
     final File f = new File(fileName);
     if (f.getParentFile() != null)
       f.getParentFile().mkdirs();
     if (f.exists())
       f.delete();
-  }
 
-  protected void initWriterIfNotExists() throws IOException {
-    if (writer == null) {
-      checkFile();
-      OutputStream outputStream;
-
-      if (noCompression) {
-        outputStream = new FileOutputStream(fileName);
-      } else {
-        outputStream = new GZIPOutputStream(new FileOutputStream(fileName), compressionBuffer) {
-          {
-            def.setLevel(compressionLevel);
-          }
-        };
+    final GZIPOutputStream gzipOS = new GZIPOutputStream(new FileOutputStream(fileName), compressionBuffer) {
+      {
+        def.setLevel(compressionLevel);
       }
+    };
 
-      writer = new OJSONWriter(new OutputStreamWriter(outputStream));
-      writer.beginObject();
-    }
-
+    writer = new OJSONWriter(new OutputStreamWriter(gzipOS));
+    writer.beginObject();
   }
 
   public ODatabaseExport(final ODatabaseDocumentInternal iDatabase, final OutputStream iOutputStream,
@@ -123,6 +104,11 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
   }
 
   @Override
+  public void run() {
+    exportDatabase();
+  }
+
+  @Override
   public ODatabaseExport setOptions(final String s) {
     super.setOptions(s);
     return this;
@@ -130,7 +116,6 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
   public ODatabaseExport exportDatabase() {
     try {
-      initWriterIfNotExists();
       listener.onMessage("\nStarted export of database '" + database.getName() + "' to " + fileName + "...");
 
       long time = System.currentTimeMillis();
@@ -160,7 +145,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     return this;
   }
 
-  private long exportRecords() throws IOException {
+  public long exportRecords() throws IOException {
     long totalFoundRecords = 0;
     long totalExportedRecords = 0;
 
@@ -233,12 +218,9 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
           if (rec != null) {
             final byte[] buffer = rec.toStream();
 
-            OLogManager
-                .instance()
-                .error(
-                    this,
-                    "\nError on exporting record %s. It seems corrupted; size: %d bytes, raw content (as string):\n==========\n%s\n==========",
-                    t, rec.getIdentity(), buffer.length, new String(buffer));
+            OLogManager.instance().error(this,
+                "\nError on exporting record %s. It seems corrupted; size: %d bytes, raw content (as string):\n==========\n%s\n==========",
+                t, rec.getIdentity(), buffer.length, new String(buffer));
           }
         }
       }
@@ -284,8 +266,6 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
       compressionLevel = Integer.parseInt(items.get(0));
     else if (option.equalsIgnoreCase("-compressionBuffer"))
       compressionBuffer = Integer.parseInt(items.get(0));
-    else if (option.equals("-noCompression"))
-      noCompression = true;
     else
       super.parseSetting(option, items);
   }
@@ -342,7 +322,6 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
       writer.writeAttribute(2, true, "engine-build", engineBuild);
     writer.writeAttribute(2, true, "storage-config-version", OStorageConfiguration.CURRENT_VERSION);
     writer.writeAttribute(2, true, "schema-version", OSchemaShared.CURRENT_VERSION_NUMBER);
-    writer.writeAttribute(2, true, "mvrbtree-version", OMVRBTreeMapProvider.CURRENT_PROTOCOL_VERSION);
     writer.writeAttribute(2, true, "schemaRecordId", database.getStorage().getConfiguration().schemaRecordId);
     writer.writeAttribute(2, true, "indexMgrRecordId", database.getStorage().getConfiguration().indexMgrRecordId);
     writer.endObject(1, true);
@@ -604,12 +583,9 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
         if (rec != null) {
           final byte[] buffer = rec.toStream();
 
-          OLogManager
-              .instance()
-              .error(
-                  this,
-                  "\nError on exporting record %s. It seems corrupted; size: %d bytes, raw content (as string):\n==========\n%s\n==========",
-                  t, rec.getIdentity(), buffer.length, new String(buffer));
+          OLogManager.instance().error(this,
+              "\nError on exporting record %s. It seems corrupted; size: %d bytes, raw content (as string):\n==========\n%s\n==========",
+              t, rec.getIdentity(), buffer.length, new String(buffer));
         }
       }
 

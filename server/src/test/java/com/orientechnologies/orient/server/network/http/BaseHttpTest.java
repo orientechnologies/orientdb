@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.server.network.http;
 
-import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.OServerMain;
+import java.io.IOException;
+
 import org.apache.http.Consts;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
@@ -25,7 +25,7 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 
-import java.io.IOException;
+import com.orientechnologies.orient.server.OServer;
 
 /**
  * Base test class for HTTP protocol.
@@ -34,23 +34,23 @@ import java.io.IOException;
  */
 public abstract class BaseHttpTest {
 
-  private static OServer     server;
-  private boolean            autoshutdownServer = false;
+  private static OServer server;
+  private boolean autoshutdownServer = false;
 
-  private String             serverCfg          = "/com/orientechnologies/orient/server/network/orientdb-server-config-httponly.xml";
-  private String             protocol           = "http";
-  private String             host               = "localhost";
-  private int                port               = 2498;
-  private String             realm              = "OrientDB-";
-  private String             userName           = "admin";
-  private String             userPassword       = "admin";
-  private String             databaseName;
-  private Boolean            keepAlive          = null;
+  private String serverCfg    = "/com/orientechnologies/orient/server/network/orientdb-server-config-httponly.xml";
+  private String protocol     = "http";
+  private String host         = "localhost";
+  private int    port         = 2499;
+  private String realm        = "OrientDB-";
+  private String userName     = "admin";
+  private String userPassword = "admin";
+  private String databaseName;
+  private Boolean keepAlive = null;
 
   private HttpRequestBase    request;
   private AbstractHttpEntity payload;
   private HttpResponse       response;
-  private int                retry              = 1;
+  private int retry = 1;
 
   public enum CONTENT {
     TEXT, JSON
@@ -63,7 +63,7 @@ public abstract class BaseHttpTest {
 
   protected void startServer() throws Exception {
     if (server == null) {
-      server = OServerMain.create();
+      server = new OServer(false);
       server.startup(getClass().getResourceAsStream(getServerCfg()));
       server.activate();
     }
@@ -74,6 +74,11 @@ public abstract class BaseHttpTest {
       server.shutdown();
       server = null;
     }
+  }
+
+  protected boolean isInDevelopmentMode() {
+    final String env = System.getProperty("orientdb.test.env");
+    return env == null || env.equals("dev");
   }
 
   protected BaseHttpTest exec() throws IOException {
@@ -99,11 +104,10 @@ public abstract class BaseHttpTest {
     if (payload != null && request instanceof HttpEntityEnclosingRequestBase)
       ((HttpEntityEnclosingRequestBase) request).setEntity(payload);
 
-
     final CloseableHttpClient httpClient = HttpClients.createDefault();
 
-//    DefaultHttpMethodRetryHandler retryhandler = new DefaultHttpMethodRetryHandler(retry, false);
-//    context.setAttribute(HttpMethodParams.RETRY_HANDLER, retryhandler);
+    // DefaultHttpMethodRetryHandler retryhandler = new DefaultHttpMethodRetryHandler(retry, false);
+    // context.setAttribute(HttpMethodParams.RETRY_HANDLER, retryhandler);
 
     response = httpClient.execute(targetHost, request, context);
 
@@ -204,5 +208,9 @@ public abstract class BaseHttpTest {
   protected BaseHttpTest setRealm(String realm) {
     this.realm = realm;
     return this;
+  }
+
+  public static OServer getServer() {
+    return server;
   }
 }

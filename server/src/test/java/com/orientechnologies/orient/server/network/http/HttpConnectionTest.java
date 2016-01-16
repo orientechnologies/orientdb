@@ -22,6 +22,10 @@ public class HttpConnectionTest extends BaseHttpDatabaseTest {
 
   @Test
   public void testTooManyConnect() throws Exception {
+    if (isInDevelopmentMode())
+      // SKIP IT
+      return;
+
     final int originalMax = OGlobalConfiguration.NETWORK_MAX_CONCURRENT_SESSIONS.getValueAsInteger();
     try {
 
@@ -64,6 +68,10 @@ public class HttpConnectionTest extends BaseHttpDatabaseTest {
   }
 
   protected void testConnectAutoDisconnect() throws Exception {
+    if (isInDevelopmentMode())
+      // SKIP IT
+      return;
+
     final int max = OGlobalConfiguration.NETWORK_MAX_CONCURRENT_SESSIONS.getValueAsInteger();
 
     int TOTAL = max * 3;
@@ -80,8 +88,8 @@ public class HttpConnectionTest extends BaseHttpDatabaseTest {
 
     Collection<ODocument> conns = null;
     for (int i = 0; i < 20; ++i) {
-      Assert.assertEquals(get("server").setKeepAlive(false).setUserName("root").setUserPassword("root").getResponse().getStatusLine().getStatusCode(),
-          200);
+      Assert.assertEquals(get("server").setKeepAlive(false).setUserName("root").setUserPassword("root").getResponse()
+          .getStatusLine().getStatusCode(), 200);
 
       final ODocument serverStatus = new ODocument().fromJSON(getResponse().getEntity().getContent());
       conns = serverStatus.field("connections");
@@ -93,7 +101,7 @@ public class HttpConnectionTest extends BaseHttpDatabaseTest {
       if (openConnections <= 1)
         break;
 
-      Thread.sleep(2000);
+      Thread.sleep(1000);
     }
 
     Assert.assertTrue(conns.size() <= 1);

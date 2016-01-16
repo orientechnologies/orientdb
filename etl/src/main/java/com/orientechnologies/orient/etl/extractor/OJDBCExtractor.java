@@ -18,6 +18,7 @@
 
 package com.orientechnologies.orient.etl.extractor;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -26,7 +27,12 @@ import com.orientechnologies.orient.etl.OETLProcessor;
 import com.orientechnologies.orient.etl.OExtractedItem;
 
 import java.io.Reader;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -65,15 +71,15 @@ public class OJDBCExtractor extends OAbstractExtractor {
     try {
       Class.forName(driverClass).newInstance();
     } catch (Exception e) {
-      throw new OConfigurationException("[JDBC extractor] JDBC Driver " + driverClass + " not found", e);
+      throw OException.wrapException(new OConfigurationException("[JDBC extractor] JDBC Driver " + driverClass + " not found"), e);
     }
 
     try {
       conn = DriverManager.getConnection(url, userName, userPassword);
     } catch (Exception e) {
 
-      throw new OConfigurationException("[JDBC extractor] error on connecting to JDBC url '" + url + "' using user '" + userName
-          + "' and the password provided", e);
+      throw OException.wrapException(new OConfigurationException("[JDBC extractor] error on connecting to JDBC url '" + url
+          + "' using user '" + userName + "' and the password provided"), e);
     }
   }
 

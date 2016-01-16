@@ -134,7 +134,7 @@ public class GiantFileTest {
         System.out.printf("Create Giant File: 100%%\n");
       }
     } catch (final IOException ex) {
-      throw new Exception("Failed to create giant file.", ex);
+      throw new Exception("Failed to create giant file", ex);
     } finally {
       raf.close();
     }
@@ -150,7 +150,7 @@ public class GiantFileTest {
 
     // TODO: is this assumption ok?
     // Get the currently open database for this thread and set intent.
-    final ODatabase database = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabase database = ODatabaseRecordThreadLocal.instance().get();
     database.declareIntent(new OIntentMassiveInsert());
 
     // Insert File data.

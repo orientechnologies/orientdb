@@ -46,28 +46,20 @@ public class OOrderByItem {
     this.rid = rid;
   }
 
-  @Override
-  public String toString() {
-    StringBuilder result = new StringBuilder();
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+
     if (alias != null) {
-      result.append(alias);
+      builder.append(alias);
       if (modifier != null) {
-        result.append(modifier.toString());
+        modifier.toString(params, builder);
       }
     } else if (recordAttr != null) {
-      result.append(recordAttr);
+      builder.append(recordAttr);
     } else if (rid != null) {
-      result.append(rid.toString());
+      rid.toString(params, builder);
     }
     if (type != null) {
-      result.append(" " + type);
-    }
-    return result.toString();
-  }
-
-  public void replaceParameters(Map<Object, Object> params) {
-    if(modifier!=null){
-      modifier.replaceParameters(params);
+      builder.append(" " + type);
     }
   }
 }

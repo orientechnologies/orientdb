@@ -4,7 +4,6 @@ import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 /**
@@ -27,6 +26,6 @@ public abstract class DocumentDBBaseTest extends BaseTest<ODatabaseDocumentTx> {
   }
 
   protected ODatabaseDocumentTx createDatabaseInstance(String url) {
-    return Orient.instance().getDatabaseFactory().createDatabase("graph", url);
+    return new ODatabaseDocumentTx(url);
   }
 }

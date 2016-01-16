@@ -1,27 +1,29 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.sql.query;
 
 import com.orientechnologies.orient.core.command.OCommandRequestAsynch;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -64,15 +66,20 @@ public class OSQLAsynchQuery<T extends Object> extends OSQLQuery<T> implements O
     resultListener = iResultListener;
   }
 
-  @SuppressWarnings("unchecked")
-  public <RET> RET execute2(final String iText, final Object... iArgs) {
-    text = iText;
-    return (RET) execute(iArgs);
+  @Override
+  public List<T> run(Object... iArgs) {
+    if (resultListener == null)
+      throw new OCommandExecutionException("Listener not found on asynch query");
+
+    return super.run(iArgs);
   }
 
-  public T executeFirst() {
-    execute(1);
-    return null;
+  /**
+   * Sets default non idempotent to avoid custom query deadlocks database.
+   */
+  @Override
+  public boolean isIdempotent() {
+    return false;
   }
 
   @Override

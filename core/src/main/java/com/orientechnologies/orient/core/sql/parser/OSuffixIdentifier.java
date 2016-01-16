@@ -2,6 +2,12 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+
+import java.util.Map;
+
 public class OSuffixIdentifier extends SimpleNode {
 
   protected OIdentifier      identifier;
@@ -21,16 +27,69 @@ public class OSuffixIdentifier extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public String toString() {
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (identifier != null) {
-      return identifier.toString();
+      identifier.toString(params, builder);
     } else if (recordAttribute != null) {
-      return recordAttribute.toString();
+      recordAttribute.toString(params, builder);
     } else if (star) {
-      return "*";
+      builder.append("*");
     }
-    return super.toString();
+  }
+
+  public Object execute(OIdentifiable iCurrentRecord, OCommandContext ctx) {
+    if (star) {
+      return iCurrentRecord;
+    }
+    if (identifier != null) {
+      String varName = identifier.getValue();
+      if (ctx.getVariable(varName) != null) {
+        return ctx.getVariable(varName);
+      }
+      return ((ODocument) iCurrentRecord.getRecord()).field(varName);
+    }
+    if (recordAttribute != null) {
+      return ((ODocument) iCurrentRecord.getRecord()).field(recordAttribute.name);
+    }
+    return null;
+  }
+
+  public Object execute(Object currentValue, OCommandContext ctx) {
+    if (currentValue == null) {
+      return null;
+    }
+    if (star) {
+      return currentValue;
+    }
+    if (identifier != null) {
+      String varName = identifier.getValue();
+      if (ctx.getVariable(varName) != null) {
+        return ctx.getVariable(varName);
+      }
+      if (currentValue instanceof OIdentifiable) {
+        return ((ODocument) ((OIdentifiable) currentValue).getRecord()).field(varName);
+      }
+      if (currentValue instanceof Map) {
+        return ((Map) currentValue).get(varName);
+      }
+      throw new UnsupportedOperationException("Implement SuffixIdentifier!");
+      // TODO other cases?
+    }
+    if (recordAttribute != null) {
+      if (currentValue instanceof OIdentifiable) {
+        return ((ODocument) ((OIdentifiable) currentValue).getRecord()).field(recordAttribute.name);
+      }
+      if (currentValue instanceof Map) {
+        return ((Map) currentValue).get(recordAttribute.name);
+      }
+      throw new UnsupportedOperationException("Implement SuffixIdentifier!");
+      // TODO other cases?
+    }
+    return null;
+  }
+
+  public boolean isBaseIdentifier() {
+    return identifier != null;
   }
 }
 /* JavaCC - OriginalChecksum=5d9be0188c7d6e2b67d691fb88a518f8 (do not edit this line) */

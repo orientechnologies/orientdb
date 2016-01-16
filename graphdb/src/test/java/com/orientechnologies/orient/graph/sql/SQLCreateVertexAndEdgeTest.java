@@ -15,7 +15,14 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
-import com.orientechnologies.orient.core.Orient;
+import java.util.List;
+
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -27,13 +34,6 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
-
-import java.util.List;
 
 @RunWith(JUnit4.class)
 public class SQLCreateVertexAndEdgeTest {
@@ -43,7 +43,7 @@ public class SQLCreateVertexAndEdgeTest {
   public SQLCreateVertexAndEdgeTest() {
     url = "memory:" + SQLCreateVertexAndEdgeTest.class.getSimpleName();
 
-    database = Orient.instance().getDatabaseFactory().createDatabase("graph", url);
+    database = new ODatabaseDocumentTx(url);
     if (database.exists())
       database.open("admin", "admin");
     else
@@ -211,7 +211,6 @@ public class SQLCreateVertexAndEdgeTest {
       cmd += "LET $removeRoleEdge = DELETE edge E WHERE out IN $groupVertices\n";
       cmd += "COMMIT\n";
       cmd += "RETURN $groupVertices\n";
-
 
       Object r = database.command(new OCommandScript("sql", cmd)).execute();
 

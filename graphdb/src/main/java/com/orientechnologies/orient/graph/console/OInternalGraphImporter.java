@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.graph.console;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.console.OConsoleDatabaseApp;
 import com.orientechnologies.orient.core.Orient;
@@ -25,10 +26,10 @@ public class OInternalGraphImporter {
   public void runImport(String inputFile, String dbURL) throws IOException, FileNotFoundException {
 
     if (inputFile == null)
-      throw new OException("needed an input file as first argument");
+      throw new OSystemException("needed an input file as first argument");
 
     if (dbURL == null)
-      throw new OException("needed an database location as second argument");
+      throw new OSystemException("needed an database location as second argument");
 
     ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbURL);
     ODatabaseHelper.deleteDatabase(db, db.getStorage().getType());

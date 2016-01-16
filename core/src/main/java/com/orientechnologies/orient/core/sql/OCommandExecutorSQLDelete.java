@@ -19,10 +19,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -41,6 +37,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
@@ -49,27 +46,31 @@ import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 /**
  * SQL UPDATE command.
  * 
  * @author Luca Garulli
  * 
  */
-public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest,
-    OCommandResultListener {
-  public static final String   NAME            = "DELETE FROM";
-  public static final String   KEYWORD_DELETE  = "DELETE";
-  private static final String  VALUE_NOT_FOUND = "_not_found_";
+public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract
+    implements OCommandDistributedReplicateRequest, OCommandResultListener {
+  public static final String  NAME            = "DELETE FROM";
+  public static final String  KEYWORD_DELETE  = "DELETE";
+  private static final String VALUE_NOT_FOUND = "_not_found_";
 
   private OSQLQuery<ODocument> query;
-  private String               indexName       = null;
-  private int                  recordCount     = 0;
-  private String               lockStrategy    = "NONE";
-  private String               returning       = "COUNT";
+  private String               indexName    = null;
+  private int                  recordCount  = 0;
+  private String               lockStrategy = "NONE";
+  private String               returning    = "COUNT";
   private List<ORecord>        allDeletedRecords;
 
-  private OSQLFilter           compiledFilter;
-  private boolean              unsafe          = false;
+  private OSQLFilter compiledFilter;
+  private boolean    unsafe = false;
 
   public OCommandExecutorSQLDelete() {
   }
@@ -275,7 +276,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
           allDeletedRecords.add(record);
 
         // RESET VERSION TO DISABLE MVCC AVOIDING THE CONCURRENT EXCEPTION IF LOCAL CACHE IS NOT UPDATED
-        record.getRecordVersion().disable();
+        ORecordInternal.setVersion(record, -1);
 
         if (!unsafe && record instanceof ODocument) {
           // CHECK IF ARE VERTICES OR EDGES
@@ -367,5 +368,10 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
   public DISTRIBUTED_RESULT_MGMT getDistributedResultManagement() {
     return getDistributedExecutionMode() == DISTRIBUTED_EXECUTION_MODE.LOCAL ? DISTRIBUTED_RESULT_MGMT.CHECK_FOR_EQUALS
         : DISTRIBUTED_RESULT_MGMT.MERGE;
+  }
+
+  @Override
+  public Object getResult() {
+    return null;
   }
 }

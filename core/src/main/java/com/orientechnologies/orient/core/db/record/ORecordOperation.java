@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -26,7 +27,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
-import com.orientechnologies.orient.core.version.OVersionFactory;
 
 /**
  * Contains the information about a database operation.
@@ -38,13 +38,13 @@ public class ORecordOperation implements OSerializableStream {
 
   private static final long serialVersionUID = 1L;
 
-  public static final byte  LOADED           = 0;
-  public static final byte  UPDATED          = 1;
-  public static final byte  DELETED          = 2;
-  public static final byte  CREATED          = 3;
+  public static final byte LOADED  = 0;
+  public static final byte UPDATED = 1;
+  public static final byte DELETED = 2;
+  public static final byte CREATED = 3;
 
-  public byte               type;
-  public OIdentifiable      record;
+  public byte          type;
+  public OIdentifiable record;
 
   public ORecordOperation() {
   }
@@ -100,7 +100,7 @@ public class ORecordOperation implements OSerializableStream {
       return stream.toByteArray();
 
     } catch (Exception e) {
-      throw new OSerializationException("Cannot serialize record operation", e);
+      throw OException.wrapException(new OSerializationException("Cannot serialize record operation"), e);
     }
   }
 
@@ -114,14 +114,14 @@ public class ORecordOperation implements OSerializableStream {
       case CREATED:
       case UPDATED:
         record = Orient.instance().getRecordFactoryManager().newInstance(stream.getAsByte());
-        ORecordInternal.fill((ORecord) record, rid, OVersionFactory.instance().createVersion(), stream.getAsByteArray(), true);
+        ORecordInternal.fill((ORecord) record, rid, 0, stream.getAsByteArray(), true);
         break;
       }
 
       return this;
 
     } catch (Exception e) {
-      throw new OSerializationException("Cannot deserialize record operation", e);
+      throw OException.wrapException(new OSerializationException("Cannot deserialize record operation"), e);
     }
   }
 

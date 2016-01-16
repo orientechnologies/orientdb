@@ -2,6 +2,7 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 import java.util.Collections;
@@ -9,10 +10,9 @@ import java.util.List;
 import java.util.Map;
 
 public class OMatchesCondition extends OBooleanExpression {
-  protected OExpression     expression;
-  protected String          right;
+  protected OExpression expression;
+  protected String      right;
   protected OInputParameter rightParam;
-  protected Object          paramValue;
 
   public OMatchesCondition(int id) {
     super(id);
@@ -27,41 +27,19 @@ public class OMatchesCondition extends OBooleanExpression {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public boolean evaluate(OIdentifiable currentRecord) {
+  @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
     return false;
   }
 
-  @Override
-  public void replaceParameters(Map<Object, Object> params) {
-    expression.replaceParameters(params);
-    if (rightParam != null) {
-      Object paramResult = rightParam.bindFromInputParams(params);
-      if (rightParam != paramResult) {
-        paramValue = paramResult;
-      }
 
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    expression.toString(params, builder);
+    builder.append(" MATCHES ");
+    if(right!=null) {
+      builder.append(right);
+    }else{
+      rightParam.toString(params, builder);
     }
-  }
-
-  @Override
-  public String toString() {
-    StringBuilder result = new StringBuilder();
-    result.append(expression.toString());
-    result.append(" MATCHES ");
-    if(rightParam!=null){
-      if (paramValue != null) {
-        if (paramValue instanceof String) {
-          paramValue = OExpression.encode((String) paramValue);
-          result.append("\"" + paramValue + "\"");
-        }
-      }else {
-        result.append(rightParam);
-      }
-    } else if (right != null) {
-      result.append(right);
-    }
-    return result.toString();
   }
 
   @Override

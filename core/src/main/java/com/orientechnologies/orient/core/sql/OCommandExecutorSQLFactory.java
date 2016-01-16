@@ -15,9 +15,10 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.Set;
-
+import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+
+import java.util.Set;
 
 /**
  * Factory to register new OCommandExecutorSQL.
@@ -29,7 +30,7 @@ public interface OCommandExecutorSQLFactory {
   /**
    * @return Set of supported command names of this factory
    */
-  public Set<String> getCommandNames();
+  Set<String> getCommandNames();
 
   /**
    * Create command for the given name. returned command may be a new instance each time or a constant.
@@ -39,5 +40,5 @@ public interface OCommandExecutorSQLFactory {
    * @throws OCommandExecutionException
    *           : when command creation fail
    */
-  public OCommandExecutorSQLAbstract createCommand(String name) throws OCommandExecutionException;
+  OCommandExecutor createCommand(String name) throws OCommandExecutionException;
 }

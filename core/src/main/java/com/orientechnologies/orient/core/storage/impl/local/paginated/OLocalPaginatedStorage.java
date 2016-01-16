@@ -20,6 +20,8 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
+import com.orientechnologies.common.directmemory.OByteBufferPool;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -41,22 +43,33 @@ import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODiskWriteAheadLog;
-import com.orientechnologies.orient.core.util.OBackupable;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 
-import java.io.*;
-import java.lang.String;
-import java.util.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * @author Andrey Lomakin
  * @since 28.03.13
  */
-public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements OFreezableStorage, OBackupable {
+public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements OFreezableStorage {
+
   private static String[] ALL_FILE_EXTENSIONS = { ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx", ".ocs", ".oef", ".oem", ".oet",
       ODiskWriteAheadLog.WAL_SEGMENT_EXTENSION, ODiskWriteAheadLog.MASTER_RECORD_EXTENSION,
       OHashTableIndexEngine.BUCKET_FILE_EXTENSION, OHashTableIndexEngine.METADATA_FILE_EXTENSION,
@@ -108,9 +121,21 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
   public void create(final Map<String, Object> iProperties) {
     final File storageFolder = new File(storagePath);
     if (!storageFolder.exists())
-      storageFolder.mkdirs();
+      if (!storageFolder.mkdirs())
+        throw new OStorageException("Cannot create folders in storage with path " + storagePath);
 
     super.create(iProperties);
+  }
+
+  @Override
+  protected String normalizeName(String name) {
+    final int firstIndexOf = name.lastIndexOf('/');
+    final int secondIndexOf = name.lastIndexOf(File.separator);
+
+    if (firstIndexOf >= 0 || secondIndexOf >= 0)
+      return name.substring(Math.max(firstIndexOf, secondIndexOf) + 1);
+    else
+      return name;
   }
 
   public boolean exists() {
@@ -175,6 +200,113 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
       close(true, false);
 
     OZIPCompressionUtil.uncompressDirectory(in, getStoragePath(), iListener);
+
+    open(null, null, null);
+  }
+
+  @Override
+  protected OLogSequenceNumber copyWALToIncrementalBackup(ZipOutputStream zipOutputStream, long startSegment) throws IOException {
+
+    File[] nonActiveSegments;
+
+    OLogSequenceNumber lastLSN;
+    long freezeId = getAtomicOperationsManager().freezeAtomicOperations(null, null);
+    try {
+      lastLSN = writeAheadLog.end();
+      writeAheadLog.newSegment();
+      nonActiveSegments = writeAheadLog.nonActiveSegments(startSegment);
+    } finally {
+      getAtomicOperationsManager().releaseAtomicOperations(freezeId);
+    }
+
+    for (final File nonActiveSegment : nonActiveSegments) {
+      final FileInputStream fileInputStream = new FileInputStream(nonActiveSegment);
+      try {
+        final BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
+        try {
+          final ZipEntry entry = new ZipEntry(nonActiveSegment.getName());
+          zipOutputStream.putNextEntry(entry);
+          try {
+            final byte[] buffer = new byte[4096];
+
+            int br = 0;
+
+            while ((br = bufferedInputStream.read(buffer)) >= 0) {
+              zipOutputStream.write(buffer, 0, br);
+            }
+          } finally {
+            zipOutputStream.closeEntry();
+          }
+        } finally {
+          bufferedInputStream.close();
+        }
+      } finally {
+        fileInputStream.close();
+      }
+    }
+
+    return lastLSN;
+  }
+
+  @Override
+  protected boolean isWritesAllowedDuringBackup() {
+    return true;
+  }
+
+  @Override
+  protected File createWalTempDirectory() {
+    final File walDirectory = new File(getStoragePath(), "walIncrementalBackupRestoreDirectory");
+
+    if (walDirectory.exists()) {
+      OFileUtils.deleteRecursively(walDirectory);
+    }
+
+    if (!walDirectory.mkdirs())
+      throw new OStorageException("Can not create temporary directory to store files created during incremental backup");
+
+    return walDirectory;
+  }
+
+  @Override
+  protected void addFileToDirectory(String name, InputStream stream, File directory) throws IOException {
+    final byte[] buffer = new byte[4096];
+
+    int rb = -1;
+    int bl = 0;
+
+    final File walBackupFile = new File(directory, name);
+    final FileOutputStream outputStream = new FileOutputStream(walBackupFile);
+    try {
+      final BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(outputStream);
+      try {
+        while (true) {
+          while (bl < buffer.length && (rb = stream.read(buffer, bl, buffer.length - bl)) > -1) {
+            bl += rb;
+          }
+
+          bufferedOutputStream.write(buffer, 0, bl);
+          bl = 0;
+
+          if (rb < 0) {
+            break;
+          }
+        }
+      } finally {
+        bufferedOutputStream.close();
+      }
+    } finally {
+      outputStream.close();
+    }
+  }
+
+  @Override
+  protected OWriteAheadLog createWalFromIBUFiles(File directory) throws IOException {
+    final OWriteAheadLog restoreWAL = new ODiskWriteAheadLog(OGlobalConfiguration.WAL_CACHE_SIZE.getValueAsInteger(),
+        OGlobalConfiguration.WAL_COMMIT_TIMEOUT.getValueAsInteger(),
+        ((long) OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE.getValueAsInteger()) * ONE_KB * ONE_KB, directory.getAbsolutePath(),
+        this);
+
+    return restoreWAL;
   }
 
   @Override
@@ -213,11 +345,12 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
 
   @Override
   protected void preCloseSteps() throws IOException {
-    try {
-      ((OWOWCache) writeCache).unregisterMBean();
-    } catch (Exception e) {
-      OLogManager.instance().error(this, "MBean for write cache cannot unregistered", e);
-    }
+    if (writeCache != null)
+      try {
+        ((OWOWCache) writeCache).unregisterMBean();
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "MBean for write cache cannot be unregistered", e);
+      }
 
     try {
       if (writeAheadLog != null) {
@@ -228,7 +361,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
       }
     } catch (InterruptedException e) {
       Thread.interrupted();
-      throw new OStorageException("Error on closing of storage '" + name, e);
+      throw OException.wrapException(new OStorageException("Error on closing of storage '" + name), e);
     }
   }
 
@@ -244,8 +377,12 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
       if (dbDir != null && dbDir.exists() && dbDir.isDirectory()) {
         int notDeletedFiles = 0;
 
+        final File[] storageFiles = dbDir.listFiles();
+        if (storageFiles == null)
+          continue;
+
         // TRY TO DELETE ALL THE FILES
-        for (File f : dbDir.listFiles()) {
+        for (File f : storageFiles) {
           // DELETE ONLY THE SUPPORTED FILES
           for (String ext : ALL_FILE_EXTENSIONS)
             if (f.getPath().endsWith(ext)) {
@@ -258,7 +395,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
 
         if (notDeletedFiles == 0) {
           // TRY TO DELETE ALSO THE DIRECTORY IF IT'S EMPTY
-          dbDir.delete();
+          if (!dbDir.delete())
+            OLogManager.instance().error(this, "Cannot delete storage directory with path " + dbDir.getAbsolutePath());
           return;
         }
       } else
@@ -299,6 +437,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
         .floor((((double) OGlobalConfiguration.DISK_WRITE_CACHE_PART.getValueAsInteger()) / 100.0) * diskCacheSize);
 
     final OWOWCache wowCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * ONE_KB,
+        OByteBufferPool.instance(),
         OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_TTL.getValueAsLong() * 1000, writeAheadLog,
         OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL.getValueAsInteger(), writeCacheSize, diskCacheSize, this, true,
         getId());

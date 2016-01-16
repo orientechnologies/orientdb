@@ -16,22 +16,21 @@
 
 package com.orientechnologies.orient.test.internal.index;
 
-import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+
+import java.io.IOException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Steven Thomer
@@ -255,8 +254,8 @@ public class IndexConcurrencyTest {
       // OPEN DB, Create Schema
       ODatabaseDocumentTx db = new ODatabaseDocumentTx(url).open("admin", "admin");
 
-      OClass vertexClass = db.getMetadata().getSchema().createClass("V");
-      OClass edgeClass = db.getMetadata().getSchema().createClass("E");
+      OClass vertexClass = db.getMetadata().getSchema().getClass("V");
+      OClass edgeClass = db.getMetadata().getSchema().getClass("E");
 
       OClass personClass = db.getMetadata().getSchema().createClass("Person", vertexClass);
       personClass.createProperty("name", OType.STRING).createIndex(OClass.INDEX_TYPE.UNIQUE);

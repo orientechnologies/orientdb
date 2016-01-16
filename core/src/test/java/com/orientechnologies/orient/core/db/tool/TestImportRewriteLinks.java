@@ -16,7 +16,7 @@ public class TestImportRewriteLinks {
   @Test
   public void testNestedLinkRewrite() {
     // Fx for remove dirty database in the thread local
-    ODatabaseRecordThreadLocal.INSTANCE.remove();
+    ODatabaseRecordThreadLocal.instance().remove();
     OIndex<OIdentifiable> mapper = Mockito.mock(OIndex.class);
     Mockito.when(mapper.get(new ORecordId(10, 4))).thenReturn(new ORecordId(10, 3));
 
@@ -26,6 +26,7 @@ public class TestImportRewriteLinks {
     ODocument emb1 = new ODocument();
     emb.field("emb1", emb1, OType.EMBEDDED);
     emb1.field("link", new ORecordId(10, 4));
+
 
     ODatabaseImport.rewriteLinksInDocument(doc, mapper);
     Assert.assertEquals(emb1.field("link"), new ORecordId(10, 3));

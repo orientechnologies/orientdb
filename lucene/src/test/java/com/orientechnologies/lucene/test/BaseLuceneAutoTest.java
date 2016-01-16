@@ -13,25 +13,25 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.test;
 
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
+import org.junit.After;
+import org.junit.Before;
 
 /**
- * Created by Enrico Risa on 21/09/15.
+ * Created by Enrico Risa on 02/09/15.
  */
 public abstract class BaseLuceneAutoTest extends BaseLuceneTest {
 
-  @BeforeClass
+  @Before
   public void init() {
     initDB();
   }
 
-  @AfterClass
+  @After
   public void deInit() {
     deInitDB();
   }

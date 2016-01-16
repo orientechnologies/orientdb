@@ -20,11 +20,7 @@
 
 package com.orientechnologies.orient.core.index.sbtree;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.Map;
+import java.util.*;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContainer;
@@ -38,7 +34,7 @@ public class OSBTreeMapEntryIterator<K, V> implements Iterator<Map.Entry<K, V>> 
   private K                           firstKey;
   private Map.Entry<K, V>             currentEntry;
 
-  private final int                   prefetchSize;
+  private final int prefetchSize;
 
   public OSBTreeMapEntryIterator(OTreeInternal<K, V> sbTree) {
     this(sbTree, 8000);
@@ -104,6 +100,9 @@ public class OSBTreeMapEntryIterator<K, V> implements Iterator<Map.Entry<K, V>> 
 
   @Override
   public Map.Entry<K, V> next() {
+    if (!hasNext())
+      throw new NoSuchElementException();
+
     final Map.Entry<K, V> entry = preFetchedValues.removeFirst();
     if (preFetchedValues.isEmpty())
       prefetchData(false);

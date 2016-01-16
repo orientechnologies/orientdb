@@ -83,12 +83,9 @@ public class OServerSideScriptInterpreter extends OServerPluginAbstract {
           }
         });
 
-    OLogManager
-        .instance()
-        .info(
-            this,
-            "Installing Script interpreter. WARN: authenticated clients can execute any kind of code into the server by using the following allowed languages: "
-                + allowedLanguages);
+    OLogManager.instance().warn(this,
+        "Authenticated clients can execute any kind of code into the server by using the following allowed languages: "
+            + allowedLanguages);
   }
 
   @Override

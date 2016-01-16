@@ -165,15 +165,15 @@ public class LocalPaginatedStorageMixCrashRestore {
       addedIds.remove(idToDelete);
       updatedIds.remove(idToDelete);
 
-      ODatabaseRecordThreadLocal.INSTANCE.set(baseDB);
+      ODatabaseRecordThreadLocal.instance().set(baseDB);
       int deleted = baseDB.command(new OCommandSQL("delete from TestClass where id  = " + idToDelete)).execute();
       Assert.assertEquals(deleted, 1);
 
-      ODatabaseRecordThreadLocal.INSTANCE.set(testDB);
+      ODatabaseRecordThreadLocal.instance().set(testDB);
       deleted = testDB.command(new OCommandSQL("delete from TestClass where id  = " + idToDelete)).execute();
       Assert.assertEquals(deleted, 1);
 
-      ODatabaseRecordThreadLocal.INSTANCE.set(baseDB);
+      ODatabaseRecordThreadLocal.instance().set(baseDB);
 
       long ts = System.currentTimeMillis();
 
@@ -314,7 +314,7 @@ public class LocalPaginatedStorageMixCrashRestore {
   }
 
   private void createSchema(ODatabaseDocumentTx dbDocumentTx) {
-    ODatabaseRecordThreadLocal.INSTANCE.set(dbDocumentTx);
+    ODatabaseRecordThreadLocal.instance().set(dbDocumentTx);
 
     OSchema schema = dbDocumentTx.getMetadata().getSchema();
     if (!schema.existsClass("TestClass")) {
@@ -347,15 +347,15 @@ public class LocalPaginatedStorageMixCrashRestore {
   }
 
   private void saveDoc(ODocument document, ODatabaseDocumentTx baseDB, ODatabaseDocumentTx testDB) {
-    ODatabaseRecordThreadLocal.INSTANCE.set(baseDB);
+    ODatabaseRecordThreadLocal.instance().set(baseDB);
 
     ODocument testDoc = new ODocument();
     document.copyTo(testDoc);
     document.save();
 
-    ODatabaseRecordThreadLocal.INSTANCE.set(testDB);
+    ODatabaseRecordThreadLocal.instance().set(testDB);
     testDoc.save();
-    ODatabaseRecordThreadLocal.INSTANCE.set(baseDB);
+    ODatabaseRecordThreadLocal.instance().set(baseDB);
   }
 
   private void compareDocuments(long lastTs) {
@@ -375,12 +375,12 @@ public class LocalPaginatedStorageMixCrashRestore {
       for (OPhysicalPosition physicalPosition : physicalPositions) {
         rid.clusterPosition = physicalPosition.clusterPosition;
 
-        ODatabaseRecordThreadLocal.INSTANCE.set(baseDocumentTx);
+        ODatabaseRecordThreadLocal.instance().set(baseDocumentTx);
         ODocument baseDocument = baseDocumentTx.load(rid);
 
         int id = baseDocument.<Integer> field("id");
         if (addedIds.contains(id)) {
-          ODatabaseRecordThreadLocal.INSTANCE.set(testDocumentTx);
+          ODatabaseRecordThreadLocal.instance().set(testDocumentTx);
           List<ODocument> testDocuments = testDocumentTx.query(new OSQLSynchQuery<ODocument>("select from TestClass where id  = "
               + baseDocument.field("id")));
           if (testDocuments.size() == 0) {
@@ -396,7 +396,7 @@ public class LocalPaginatedStorageMixCrashRestore {
 
           recordsTested++;
         } else if (updatedIds.contains(id)) {
-          ODatabaseRecordThreadLocal.INSTANCE.set(testDocumentTx);
+          ODatabaseRecordThreadLocal.instance().set(testDocumentTx);
           List<ODocument> testDocuments = testDocumentTx.query(new OSQLSynchQuery<ODocument>("select from TestClass where id  = "
               + baseDocument.field("id")));
           if (testDocuments.size() == 0) {
@@ -423,7 +423,7 @@ public class LocalPaginatedStorageMixCrashRestore {
       physicalPositions = baseStorage.higherPhysicalPositions(clusterId, physicalPositions[physicalPositions.length - 1]);
     }
 
-    ODatabaseRecordThreadLocal.INSTANCE.set(testDocumentTx);
+    ODatabaseRecordThreadLocal.instance().set(testDocumentTx);
     System.out.println("Check deleted records");
     for (Map.Entry<Integer, Long> deletedEntry : deletedIds.entrySet()) {
       int deletedId = deletedEntry.getKey();

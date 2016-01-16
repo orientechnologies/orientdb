@@ -15,9 +15,21 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+
+import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
+import com.orientechnologies.orient.core.metadata.security.ORestrictedOperation;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.metadata.security.OUser;
@@ -25,21 +37,12 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
-import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
-import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
 
 @Test(groups = "security")
 public class RestrictedTest extends DocumentDBBaseTest {
   private ODocument adminRecord;
   private ODocument writerRecord;
+  private OUser     readUser;
 
   private OUser     readerUser = null;
   private ORole     readerRole = null;
@@ -111,10 +114,6 @@ public class RestrictedTest extends DocumentDBBaseTest {
       // OK AS EXCEPTION
     } catch (ORecordNotFoundException e) {
       // OK AS EXCEPTION
-    } catch (OResponseProcessingException e) {
-      final Throwable t = e.getCause();
-
-      Assert.assertTrue(t instanceof OSecurityException || t instanceof ORecordNotFoundException);
     }
     database.close();
 
@@ -151,8 +150,6 @@ public class RestrictedTest extends DocumentDBBaseTest {
       // OK AS EXCEPTION
     } catch (ORecordNotFoundException e) {
       // OK AS EXCEPTION
-    } catch (OResponseProcessingException e) {
-      Assert.assertTrue(e.getCause() instanceof OSecurityException || e.getCause() instanceof ORecordNotFoundException);
     }
     database.close();
 
@@ -177,9 +174,9 @@ public class RestrictedTest extends DocumentDBBaseTest {
   @Test(dependsOnMethods = "testReaderCanSeeWriterDocumentAfterPermission")
   public void testWriterRoleCanRemoveReader() throws IOException {
     database.open("writer", "writer");
-    Assert.assertEquals(((Collection<?>) writerRecord.field(OSecurityShared.ALLOW_ALL_FIELD)).size(), 2);
-    database.getMetadata().getSecurity().disallowRole(writerRecord, OSecurityShared.ALLOW_ALL_FIELD, "reader");
-    Assert.assertEquals(((Collection<?>) writerRecord.field(OSecurityShared.ALLOW_ALL_FIELD)).size(), 1);
+    Assert.assertEquals(((Collection<?>) writerRecord.field(ORestrictedOperation.ALLOW_ALL.getFieldName())).size(), 2);
+    database.getMetadata().getSecurity().denyRole(writerRecord, ORestrictedOperation.ALLOW_ALL, "reader");
+    Assert.assertEquals(((Collection<?>) writerRecord.field(ORestrictedOperation.ALLOW_ALL.getFieldName())).size(), 1);
     writerRecord.save();
   }
 
@@ -192,7 +189,7 @@ public class RestrictedTest extends DocumentDBBaseTest {
   @Test(dependsOnMethods = "testReaderCannotSeeWriterDocument")
   public void testWriterAddReaderUserOnlyForRead() throws IOException {
     database.open("writer", "writer");
-    database.getMetadata().getSecurity().allowUser(writerRecord, OSecurityShared.ALLOW_READ_FIELD, "reader");
+    database.getMetadata().getSecurity().allowUser(writerRecord, ORestrictedOperation.ALLOW_READ, "reader");
     writerRecord.save();
   }
 
@@ -206,7 +203,7 @@ public class RestrictedTest extends DocumentDBBaseTest {
   @Test(dependsOnMethods = "testReaderCanSeeWriterDocument")
   public void testWriterRemoveReaderUserOnlyForRead() throws IOException {
     database.open("writer", "writer");
-    database.getMetadata().getSecurity().disallowUser(writerRecord, OSecurityShared.ALLOW_READ_FIELD, "reader");
+    database.getMetadata().getSecurity().denyUser(writerRecord, ORestrictedOperation.ALLOW_READ, "reader");
     writerRecord.save();
   }
 
@@ -227,7 +224,7 @@ public class RestrictedTest extends DocumentDBBaseTest {
   @Test(dependsOnMethods = "testReaderRoleInheritsFromWriterRole")
   public void testWriterRoleCanSeeWriterDocument() throws IOException {
     database.open("writer", "writer");
-    database.getMetadata().getSecurity().allowRole(writerRecord, OSecurityShared.ALLOW_READ_FIELD, "writer");
+    database.getMetadata().getSecurity().allowRole(writerRecord, ORestrictedOperation.ALLOW_READ, "writer");
     writerRecord.save();
   }
 
@@ -255,8 +252,6 @@ public class RestrictedTest extends DocumentDBBaseTest {
       Assert.fail();
     } catch (OSecurityException e) {
       Assert.assertTrue(true);
-    } catch (OResponseProcessingException e) {
-      Assert.assertTrue(e.getCause() instanceof OSecurityException);
     }
 
   }
@@ -266,8 +261,6 @@ public class RestrictedTest extends DocumentDBBaseTest {
     database.open("admin", "admin");
     try {
       database.command(new OCommandSQL("truncate cluster CMSDocument")).execute();
-    } catch (OResponseProcessingException e) {
-      Assert.assertTrue(e.getCause() instanceof OSecurityException);
     } catch (OSecurityException e) {
 
     }

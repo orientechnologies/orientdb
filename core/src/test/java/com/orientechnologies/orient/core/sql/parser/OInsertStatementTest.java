@@ -11,8 +11,7 @@ import static org.testng.Assert.fail;
 public class OInsertStatementTest {
 
   protected SimpleNode checkRightSyntax(String query) {
-    SimpleNode result = checkSyntax(query, true);
-    return checkSyntax(result.toString(), true);
+    return checkSyntax(query, true);
   }
 
   protected SimpleNode checkWrongSyntax(String query) {
@@ -65,10 +64,9 @@ public class OInsertStatementTest {
 
   public void testInsertInsert() {
     checkRightSyntax("insert into foo set bar = (insert into foo set a = 'foo') ");
-//    checkRightSyntax("insert into foo set bar = (select from foo) ");
   }
 
-    public void testInsertEmbeddedDocs() {
+  public void testInsertEmbeddedDocs() {
     checkRightSyntax("INSERT INTO Activity SET user = #14:1, story = #18:2, `like` = { \n"
         + "      count: 0, \n"
         + "      latest: [], \n"
@@ -84,8 +82,7 @@ public class OInsertStatementTest {
         + "    }");
   }
 
-
-
+  
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);
     try {

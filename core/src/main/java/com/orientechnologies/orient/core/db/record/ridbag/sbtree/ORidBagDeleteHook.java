@@ -29,14 +29,13 @@ import com.orientechnologies.orient.core.exception.OFastConcurrentModificationEx
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.version.ORecordVersion;
 
 public class ORidBagDeleteHook extends ODocumentHookAbstract {
-  
+
   public ORidBagDeleteHook(ODatabaseDocument database) {
-   super(database);
+    super(database);
   }
-  
+
   @Override
   public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
     return DISTRIBUTED_EXECUTION_MODE.TARGET_NODE;
@@ -49,15 +48,15 @@ public class ORidBagDeleteHook extends ODocumentHookAbstract {
   }
 
   private void deleteAllRidBags(ODocument document) {
-    final ORecordVersion version = document.getRecordVersion();
+    final int version = document.getVersion();
     if (document.fields() == 0 && document.getIdentity().isPersistent()) {
       // FORCE LOADING OF CLASS+FIELDS TO USE IT AFTER ON onRecordAfterDelete METHOD
       document.reload();
-      if (version.getCounter() > -1 && document.getRecordVersion().compareTo(version) != 0) // check for record version errors
+      if (version > -1 && document.getVersion() != version) // check for record version errors
         if (OFastConcurrentModificationException.enabled())
           throw OFastConcurrentModificationException.instance();
         else
-          throw new OConcurrentModificationException(document.getIdentity(), document.getRecordVersion(), version,
+          throw new OConcurrentModificationException(document.getIdentity(), document.getVersion(), version,
               ORecordOperation.DELETED);
     }
 

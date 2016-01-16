@@ -18,7 +18,7 @@ public class TestAsyncReplMode2ServersOverflow extends BareBoneBase2ServerTest {
   }
 
   protected void dbClient1() {
-//    OGlobalConfiguration.LOG_CONSOLE_LEVEL.setValue("FINEST");
+    // OGlobalConfiguration.LOG_CONSOLE_LEVEL.setValue("FINEST");
     exec("client1");
   }
 

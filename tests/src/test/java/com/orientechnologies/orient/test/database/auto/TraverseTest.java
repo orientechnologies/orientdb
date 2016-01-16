@@ -258,13 +258,13 @@ public class TraverseTest extends DocumentDBBaseTest {
   public void traverseAndFilterByAttributeThatContainsDotInValue() {
     // issue #4952
     List<ODocument> result1 = database.command(
-        new OSQLSynchQuery<ODocument>("select from ( traverse out_married, in[attributeWithDotValue = 'a.b']  from "
-            + tomCruise.getIdentity() + ")")).execute();
+        new OSQLSynchQuery<ODocument>("select from ( traverse out_married, in[attributeWithDotValue = 'a.b']  from " + tomCruise.getIdentity() + ")"))
+        .execute();
     Assert.assertTrue(result1.size() > 0);
     boolean found = false;
-    for (ODocument doc : result1) {
+    for(ODocument doc:result1){
       String name = doc.field("name");
-      if ("Nicole Kidman".equals(name)) {
+      if("Nicole Kidman".equals(name)){
         found = true;
         break;
       }

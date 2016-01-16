@@ -1,24 +1,25 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.serialization.serializer.string;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -26,6 +27,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerHelper;
 
 public class OStringSerializerEmbedded implements OStringSerializer {
@@ -41,7 +43,7 @@ public class OStringSerializerEmbedded implements OStringSerializer {
       return null;
 
     final ODocument instance = new ODocument();
-    instance.fromStream(OBinaryProtocol.string2bytes(iStream));
+    ORecordSerializerSchemaAware2CSV.INSTANCE.fromStream(OBinaryProtocol.string2bytes(iStream), instance, null);
 
     final String className = instance.field(ODocumentSerializable.CLASS_NAME);
     if (className == null)
@@ -67,9 +69,9 @@ public class OStringSerializerEmbedded implements OStringSerializer {
 
         return documentSerializable;
       } catch (InstantiationException e) {
-        throw new OSerializationException("Cannot serialize the object", e);
+        throw OException.wrapException(new OSerializationException("Cannot serialize the object"), e);
       } catch (IllegalAccessException e) {
-        throw new OSerializationException("Cannot serialize the object", e);
+        throw OException.wrapException(new OSerializationException("Cannot serialize the object"), e);
       }
     }
 

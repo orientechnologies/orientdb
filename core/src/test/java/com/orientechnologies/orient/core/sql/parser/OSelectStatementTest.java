@@ -6,6 +6,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 
 import static org.testng.Assert.*;
@@ -15,7 +16,9 @@ public class OSelectStatementTest {
 
   protected SimpleNode checkRightSyntax(String query) {
     SimpleNode result = checkSyntax(query, true);
-    return checkSyntax(result.toString(), true);
+    StringBuilder builder = new StringBuilder();
+    result.toString(null, builder);
+    return checkSyntax(builder.toString(), true);
   }
 
   protected SimpleNode checkWrongSyntax(String query) {
@@ -31,7 +34,9 @@ public class OSelectStatementTest {
       }
       System.out.println(query);
       System.out.println("->");
-      System.out.println(result.toString());
+      StringBuilder builer = new StringBuilder();
+      result.toString(null, builer);
+      System.out.println(builer.toString());
       System.out.println("............");
       return result;
     } catch (Exception e) {
@@ -129,7 +134,7 @@ public class OSelectStatementTest {
     checkWrongSyntax("select * Foo where name = 'foo'");
 
     //issue #5221
-    checkRightSyntax("select $1 let $1 = (select from Foo where name = 'foo')");
+    checkRightSyntax("select from $1");
 
   }
 
@@ -316,8 +321,10 @@ public class OSelectStatementTest {
       OSelectStatement stm = (OSelectStatement) result;
       Map<Object, Object> params = new HashMap<Object, Object>();
       params.put("param1", new HashSet<Object>());
-      ((OSelectStatement) result).replaceParameters(params);
-      assertEquals(stm.toString(), "SELECT FROM bar WHERE name NOT IN []");
+
+      StringBuilder parsed = new StringBuilder();
+      stm.toString(params, parsed);
+      assertEquals(parsed.toString(), "SELECT FROM bar WHERE name NOT IN []");
     } catch (Exception e) {
       fail();
 
@@ -418,7 +425,7 @@ public class OSelectStatementTest {
     checkRightSyntax("insert into test content { \"node_id\": \"MFmqvmht\\/\\/GYsYYWB8=\"}");
   }
 
-  @Test()
+  @Test
   public void testClusterList() {
     checkRightSyntax("select from cluster:[foo,bar]");
   }
@@ -440,7 +447,7 @@ public class OSelectStatementTest {
     checkRightSyntax("select from test order by (something asc),(somethingElse desc)");
   }
 
-  @Test()
+  @Test( enabled = false)
   public void testMultipleLucene() {
     checkRightSyntax("select from Foo where a lucene 'a'");
     checkWrongSyntax("select from Foo where a lucene 'a' and b lucene 'a'");
@@ -590,17 +597,15 @@ public class OSelectStatementTest {
 
   }
 
-
   @Test
-  public void testDefined() {
-    checkRightSyntax("select from foo where bar is defined");
-    checkRightSyntax("select from foo where bar is not defined");
+  public void testFlatten() {
+    OSelectStatement stm = (OSelectStatement)checkRightSyntax("select from ouser where name = 'foo'");
+    List<OAndBlock> flattended = stm.whereClause.flatten();
+    assertTrue(((OBinaryCondition) flattended.get(0).subBlocks.get(0)).left.isBaseIdentifier());
+    assertFalse(((OBinaryCondition) flattended.get(0).subBlocks.get(0)).right.isBaseIdentifier());
+    assertFalse(((OBinaryCondition) flattended.get(0).subBlocks.get(0)).left.isEarlyCalculated());
+    assertTrue(((OBinaryCondition) flattended.get(0).subBlocks.get(0)).right.isEarlyCalculated());
 
-  }
-
-  @Test
-  public void testRecordAttributeAsAlias() {
-    checkRightSyntax("select @rid as @rid from foo ");
   }
 
   @Test
@@ -619,6 +624,14 @@ public class OSelectStatementTest {
   public void testSelectFromClusterNumber(){
     checkRightSyntax("select from cluster:12");
   }
+
+
+  @Test
+  public void testReservedWordsAsNamedParams() {
+    //issue #5493
+    checkRightSyntax("select from V limit :limit");
+  }
+
 
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);

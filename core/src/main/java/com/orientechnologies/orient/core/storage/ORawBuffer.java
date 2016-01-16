@@ -19,30 +19,30 @@
   */
 package com.orientechnologies.orient.core.storage;
 
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.type.OBuffer;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.type.OBuffer;
-import com.orientechnologies.orient.core.version.ORecordVersion;
-import com.orientechnologies.orient.core.version.OVersionFactory;
-
 public class ORawBuffer extends OBuffer {
-  public ORecordVersion version;
-  public byte           recordType;
+  public int  version;
+  public byte recordType;
 
   /**
    * Constructor used by serialization.
    */
   public ORawBuffer() {
-    version = OVersionFactory.instance().createVersion();
+    version = 0;
   }
 
-  public ORawBuffer(final byte[] buffer, final ORecordVersion version, final byte recordType) {
+  @SuppressFBWarnings("EI_EXPOSE_REP2")
+  public ORawBuffer(final byte[] buffer, final int version, final byte recordType) {
     this.buffer = buffer;
-    this.version = version.copy();
+    this.version = version;
     this.recordType = recordType;
   }
 
@@ -53,19 +53,44 @@ public class ORawBuffer extends OBuffer {
    */
   public ORawBuffer(final ORecord iRecord) {
     this.buffer = iRecord.toStream();
-    this.version = iRecord.getRecordVersion().copy();
+    this.version = iRecord.getVersion();
     this.recordType = ORecordInternal.getRecordType(iRecord);
   }
 
   public void readExternal(final ObjectInput iInput) throws IOException, ClassNotFoundException {
     super.readExternal(iInput);
-    version.getSerializer().readFrom(iInput, version);
+    version = iInput.readInt();
     recordType = iInput.readByte();
   }
 
   public void writeExternal(final ObjectOutput iOutput) throws IOException {
     super.writeExternal(iOutput);
-    version.getSerializer().writeTo(iOutput, version);
+    iOutput.write(version);
     iOutput.write(recordType);
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+    if (!super.equals(o))
+      return false;
+
+    ORawBuffer that = (ORawBuffer) o;
+
+    if (recordType != that.recordType)
+      return false;
+    return version == that.version;
+
+  }
+
+  @Override
+  public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + version;
+    result = 31 * result + (int) recordType;
+    return result;
   }
 }

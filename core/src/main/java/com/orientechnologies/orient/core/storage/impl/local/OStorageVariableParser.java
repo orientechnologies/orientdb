@@ -41,6 +41,7 @@ public class OStorageVariableParser implements OVariableParserListener {
 		return iPath.replace(dbPath, VAR_BEGIN + STORAGE_PATH + VAR_END);
 	}
 
+	@Override
 	public String resolve(String variable) {
 		if (variable.equals(STORAGE_PATH))
 			return dbPath;

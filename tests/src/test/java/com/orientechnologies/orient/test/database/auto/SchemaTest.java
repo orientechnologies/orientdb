@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -26,12 +27,12 @@ import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
-import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -186,7 +187,7 @@ public class SchemaTest extends DocumentDBBaseTest {
 
       @Override
       public void run() {
-        ODatabaseRecordThreadLocal.INSTANCE.set(database);
+        ODatabaseRecordThreadLocal.instance().set(database);
         ODocument doc = new ODocument("NewClass");
         database.save(doc);
 
@@ -349,11 +350,7 @@ public class SchemaTest extends DocumentDBBaseTest {
       database.command(new OCommandSQL("create class Antani cluster 212121")).execute();
       Assert.fail();
     } catch (Exception e) {
-      if (e instanceof OResponseProcessingException)
-        e = (Exception) e.getCause();
       Assert.assertTrue(e instanceof OCommandSQLParsingException);
-    } finally {
-
     }
   }
 
@@ -365,11 +362,7 @@ public class SchemaTest extends DocumentDBBaseTest {
       Assert.fail();
 
     } catch (Exception e) {
-      if (e instanceof OResponseProcessingException)
-        e = (Exception) e.getCause();
       Assert.assertTrue(e instanceof OCommandSQLParsingException);
-    } finally {
-
     }
   }
 
@@ -380,11 +373,7 @@ public class SchemaTest extends DocumentDBBaseTest {
       database.command(new OCommandSQL("create class Antani the pen is on the table")).execute();
       Assert.fail();
     } catch (Exception e) {
-      if (e instanceof OResponseProcessingException)
-        e = (Exception) e.getCause();
       Assert.assertTrue(e instanceof OCommandSQLParsingException);
-    } finally {
-
     }
   }
 
@@ -422,9 +411,9 @@ public class SchemaTest extends DocumentDBBaseTest {
 
       database.reload();
 
-      Assert.assertFalse(database.existsCluster("multipleclusters"));
+      Assert.assertTrue(database.existsCluster("multipleclusters"));
 
-      for (int i = 0; i < 3; ++i) {
+      for (int i = 1; i < 3; ++i) {
         Assert.assertTrue(database.existsCluster("multipleclusters_" + i));
       }
 
@@ -433,7 +422,8 @@ public class SchemaTest extends DocumentDBBaseTest {
       }
 
       // CHECK THERE ARE 2 RECORDS IN EACH CLUSTER (ROUND-ROBIN STRATEGY)
-      for (int i = 0; i < 3; ++i) {
+      Assert.assertEquals(database.countClusterElements(database.getClusterIdByName("multipleclusters")), 2);
+      for (int i = 1; i < 3; ++i) {
         Assert.assertEquals(database.countClusterElements(database.getClusterIdByName("multipleclusters_" + i)), 2);
       }
 
@@ -454,7 +444,7 @@ public class SchemaTest extends DocumentDBBaseTest {
 
     } finally {
       // RESTORE DEFAULT
-      database.command(new OCommandSQL("alter database minimumclusters 1")).execute();
+      database.command(new OCommandSQL("alter database minimumclusters 0")).execute();
 
     }
   }
@@ -487,7 +477,7 @@ public class SchemaTest extends DocumentDBBaseTest {
     Assert.assertFalse(changed);
 
     // PUT IT OFFLINE
-    changed = database.command(new OCommandSQL("alter cluster TestOffline status offline")).execute();
+    changed = database.command(new OCommandSQL("alter cluster TestOffline* status offline")).execute();
     Assert.assertTrue(changed);
 
     // NO DATA?
@@ -496,7 +486,7 @@ public class SchemaTest extends DocumentDBBaseTest {
     Assert.assertTrue(result.isEmpty());
 
     // TEST NO EFFECTS
-    changed = database.command(new OCommandSQL("alter cluster TestOffline status offline")).execute();
+    changed = database.command(new OCommandSQL("alter cluster TestOffline* status offline")).execute();
     Assert.assertFalse(changed);
 
     // TEST SAVING OF OFFLINE STATUS
@@ -509,19 +499,29 @@ public class SchemaTest extends DocumentDBBaseTest {
 
     // TEST CREATE -> EXCEPTION
     try {
-      Object res = database.command(
-          new OCommandSQL("insert into TestOffline set name = 'offline', password = 'offline', status = 'ACTIVE'")).execute();
+      Object res = database
+          .command(new OCommandSQL("insert into TestOffline set name = 'offline', password = 'offline', status = 'ACTIVE'"))
+          .execute();
       Assert.assertTrue(false);
-    } catch (OOfflineClusterException e) {
-      Assert.assertTrue(true);
+    } catch (OException e) {
+
+      Throwable cause = e;
+      while (cause.getCause() != null)
+        cause = cause.getCause();
+
+      Assert.assertTrue(cause instanceof OOfflineClusterException);
     }
 
     // TEST UPDATE RECORD -> EXCEPTION
     try {
       record.field("status", "offline").save();
       Assert.assertTrue(false);
-    } catch (OOfflineClusterException e) {
-      Assert.assertTrue(true);
+    } catch (OException e) {
+      Throwable cause = e;
+      while (cause.getCause() != null)
+        cause = cause.getCause();
+
+      Assert.assertTrue(cause instanceof OOfflineClusterException);
     }
 
     // TEST DELETE RECORD -> EXCEPTION
@@ -575,8 +575,6 @@ public class SchemaTest extends DocumentDBBaseTest {
       Assert.fail();
 
     } catch (Exception e) {
-      if (e instanceof OResponseProcessingException)
-        e = (Exception) e.getCause();
       Assert.assertTrue(e instanceof OSchemaException);
     }
   }
@@ -587,20 +585,16 @@ public class SchemaTest extends DocumentDBBaseTest {
       Assert.fail();
 
     } catch (Exception e) {
-      if (e instanceof OResponseProcessingException)
-        e = (Exception) e.getCause();
       Assert.assertTrue(e instanceof OSchemaException);
     }
   }
-
+  
   public void testWrongClassNameWithComma() {
     try {
       database.getMetadata().getSchema().createClass("Anta,ni");
       Assert.fail();
 
     } catch (Exception e) {
-      if (e instanceof OResponseProcessingException)
-        e = (Exception) e.getCause();
       Assert.assertTrue(e instanceof OSchemaException);
     }
   }
@@ -611,8 +605,6 @@ public class SchemaTest extends DocumentDBBaseTest {
       Assert.fail();
 
     } catch (Exception e) {
-      if (e instanceof OResponseProcessingException)
-        e = (Exception) e.getCause();
       Assert.assertTrue(e instanceof OSchemaException);
     }
   }
@@ -639,6 +631,15 @@ public class SchemaTest extends DocumentDBBaseTest {
     }
   }
 
+  @Test
+  public void testDeletionOfDependentClass() {
+    OSchema schema = database.getMetadata().getSchema();
+    OClass oRestricted = schema.getClass(OSecurityShared.RESTRICTED_CLASSNAME);
+    OClass classA = schema.createClass("TestDeletionOfDependentClassA", oRestricted);
+    OClass classB = schema.createClass("TestDeletionOfDependentClassB", classA);
+    schema.dropClass(classB.getName());
+  }
+
   private void swapClusters(ODatabaseDocumentTx databaseDocumentTx, int i) {
     databaseDocumentTx.command(new OCommandSQL("CREATE CLASS TestRenameClusterNew extends TestRenameClusterOriginal")).execute();
 
@@ -660,5 +661,4 @@ public class SchemaTest extends DocumentDBBaseTest {
     ODocument document = result.get(0);
     Assert.assertEquals(document.field("iteration"), i);
   }
-
 }

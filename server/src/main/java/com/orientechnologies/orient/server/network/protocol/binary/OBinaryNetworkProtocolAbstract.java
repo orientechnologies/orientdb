@@ -43,7 +43,6 @@ import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.ONetworkThreadLocalSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
@@ -52,8 +51,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
-import com.orientechnologies.orient.core.version.ORecordVersion;
-import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryServer;
@@ -80,6 +77,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
   protected volatile int         requestType;
   protected int                  clientTxId;
   protected OToken               token;
+  protected byte[]               tokenBytes;
   protected boolean              okSent;
   protected OTokenHandler        tokenHandler;
 
@@ -94,14 +92,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       final OContextConfiguration iConfig) throws IOException {
     server = iServer;
     channel = new OChannelBinaryServer(iSocket, iConfig);
-
-    try {
-      tokenHandler = server.getPlugin(OTokenHandler.TOKEN_HANDLER_NAME);
-      if (tokenHandler != null && !tokenHandler.isEnabled())
-        tokenHandler = null;
-    } catch (ODatabaseException e) {
-      OLogManager.instance().debug(this, "Error on retrieving plugin '%s'", e, OTokenHandler.TOKEN_HANDLER_NAME);
-    }
+    tokenHandler = iServer.getTokenHandler();
   }
 
   @Override
@@ -146,7 +137,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     return "binary";
   }
 
-  public void fillRecord(final ORecordId rid, final byte[] buffer, final ORecordVersion version, final ORecord record,
+  public void fillRecord(final ORecordId rid, final byte[] buffer, final int version, final ORecord record,
       ODatabaseDocumentInternal iDatabase) {
     String dbSerializerName = "";
     if (iDatabase != null)
@@ -155,13 +146,8 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     String name = getRecordSerializerName();
     if (ORecordInternal.getRecordType(record) == ODocument.RECORD_TYPE && !dbSerializerName.equals(name)) {
       ORecordInternal.fill(record, rid, version, null, true);
-      try {
-        ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(name);
-        ONetworkThreadLocalSerializer.setNetworkSerializer(ser);
-        record.fromStream(buffer);
-      } finally {
-        ONetworkThreadLocalSerializer.setNetworkSerializer(null);
-      }
+      ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(name);
+      ser.fromStream(buffer, record, null);
       record.setDirty();
     } else
       ORecordInternal.fill(record, rid, version, buffer, true);
@@ -215,6 +201,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       } catch (Exception e) {
         sendError(clientTxId, e);
         handleConnectionError(channel, e);
+        onAfterRequest();
         sendShutdown();
         return;
       }
@@ -322,10 +309,10 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     } else
       throw new IllegalArgumentException("Cannot create database: storage mode '" + storageType + "' is not supported.");
 
-    return Orient.instance().getDatabaseFactory().createDatabase(dbType, path);
+    return new ODatabaseDocumentTx(path);
   }
 
-  protected int deleteRecord(final ODatabaseDocument iDatabase, final ORID rid, final ORecordVersion version) {
+  protected int deleteRecord(final ODatabaseDocument iDatabase, final ORID rid, final int version) {
     try {
       // TRY TO SEE IF THE RECORD EXISTS
       final ORecord record = rid.getRecord();
@@ -355,7 +342,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     }
   }
 
-  protected int cleanOutRecord(final ODatabaseDocument iDatabase, final ORID rid, final ORecordVersion version) {
+  protected int cleanOutRecord(final ODatabaseDocument iDatabase, final ORID rid, final int version) {
     iDatabase.delete(rid, version);
     return 1;
   }
@@ -363,18 +350,18 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
   protected ORecord createRecord(final ODatabaseDocumentInternal iDatabase, final ORecordId rid, final byte[] buffer,
       final byte recordType) {
     final ORecord record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
-    fillRecord(rid, buffer, OVersionFactory.instance().createVersion(), record, iDatabase);
+    fillRecord(rid, buffer, 0, record, iDatabase);
     iDatabase.save(record);
     return record;
   }
 
-  protected ORecordVersion updateRecord(final ODatabaseDocumentInternal iDatabase, final ORecordId rid, final byte[] buffer,
-      final ORecordVersion version, final byte recordType, boolean updateContent) {
+  protected int updateRecord(final ODatabaseDocumentInternal iDatabase, final ORecordId rid, final byte[] buffer, final int version,
+      final byte recordType, boolean updateContent) {
     final ORecord newRecord = Orient.instance().getRecordFactoryManager().newInstance(recordType);
     fillRecord(rid, buffer, version, newRecord, null);
 
     ORecordInternal.setContentChanged(newRecord, updateContent);
-
+    ORecordInternal.getDirtyManager(newRecord).cleanForSave();
     ORecord currentRecord = null;
     if (newRecord instanceof ODocument) {
       try {
@@ -393,7 +380,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     } else
       currentRecord = newRecord;
 
-    currentRecord.getRecordVersion().copyFrom(version);
+    ORecordInternal.setVersion(currentRecord, version);
 
     iDatabase.save(currentRecord);
 
@@ -402,7 +389,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       // FORCE INDEX MANAGER UPDATE. THIS HAPPENS FOR DIRECT CHANGES FROM REMOTE LIKE IN GRAPH
       iDatabase.getMetadata().getIndexManager().reload();
     }
-    return currentRecord.getRecordVersion();
+    return currentRecord.getVersion();
   }
 
   protected void handleConnectionError(final OChannelBinaryServer channel, final Throwable e) {
@@ -416,37 +403,28 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
   public byte[] getRecordBytes(final ORecord iRecord) {
 
     final byte[] stream;
-    try {
-      String dbSerializerName = null;
-      if (ODatabaseRecordThreadLocal.INSTANCE.getIfDefined() != null)
-        dbSerializerName = ((ODatabaseDocumentInternal) iRecord.getDatabase()).getSerializer().toString();
-      String name = getRecordSerializerName();
-      if (ORecordInternal.getRecordType(iRecord) == ODocument.RECORD_TYPE
-          && (dbSerializerName == null || !dbSerializerName.equals(name))) {
-        ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(dbSerializerName);
-        ONetworkThreadLocalSerializer.setNetworkSerializer(ser);
-        ((ODocument) iRecord).deserializeFields();
-        ser = ORecordSerializerFactory.instance().getFormat(name);
-        ONetworkThreadLocalSerializer.setNetworkSerializer(ser);
-      }
+    String dbSerializerName = null;
+    if (ODatabaseRecordThreadLocal.instance().getIfDefined() != null)
+      dbSerializerName = ((ODatabaseDocumentInternal) iRecord.getDatabase()).getSerializer().toString();
+    String name = getRecordSerializerName();
+    if (ORecordInternal.getRecordType(iRecord) == ODocument.RECORD_TYPE && (dbSerializerName == null || !dbSerializerName
+        .equals(name))) {
+      ((ODocument) iRecord).deserializeFields();
+      ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(name);
+      stream = ser.toStream(iRecord, false);
+    } else
       stream = iRecord.toStream();
-    } finally {
-      ONetworkThreadLocalSerializer.setNetworkSerializer(null);
-    }
+
     return stream;
   }
 
   protected abstract String getRecordSerializerName();
 
   private void writeRecord(final ORecord iRecord) throws IOException {
-    if (iRecord.isDirty())
-      // AVOID ANY RECORD SAVING
-      ORecordInternal.unsetDirty(iRecord);
-
     channel.writeShort((short) 0);
     channel.writeByte(ORecordInternal.getRecordType(iRecord));
     channel.writeRID(iRecord.getIdentity());
-    channel.writeVersion(iRecord.getRecordVersion());
+    channel.writeVersion(iRecord.getVersion());
     try {
       final byte[] stream = getRecordBytes(iRecord);
 
@@ -459,13 +437,13 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       final String message = "Error on unmarshalling record " + iRecord.getIdentity().toString() + " (" + e + ")";
       OLogManager.instance().error(this, message, e);
 
-      throw new OSerializationException(message, e);
+      throw OException.wrapException(new OSerializationException(message), e);
     }
   }
 
   protected int trimCsvSerializedContent(final byte[] stream) {
     int realLength = stream.length;
-    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
     if (db != null && db instanceof ODatabaseDocument) {
       if (ORecordSerializerSchemaAware2CSV.NAME.equals(getRecordSerializerName())) {
         // TRIM TAILING SPACES (DUE TO OVERSIZE)
@@ -485,4 +463,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     return requestType;
   }
 
+  public byte[] getTokenBytes() {
+    return tokenBytes;
+  }
 }

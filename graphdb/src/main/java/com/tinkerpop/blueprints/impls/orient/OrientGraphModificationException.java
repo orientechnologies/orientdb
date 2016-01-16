@@ -14,10 +14,6 @@ public class OrientGraphModificationException extends OException {
     super(exception);
   }
 
-  public OrientGraphModificationException(String message, Throwable cause) {
-    super(message, cause);
-  }
-
   public OrientGraphModificationException(String message) {
     super(message);
   }

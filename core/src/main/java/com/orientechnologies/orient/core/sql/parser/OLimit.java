@@ -10,8 +10,6 @@ public class OLimit extends SimpleNode {
 
   protected OInputParameter inputParam;
 
-  protected Object          inputFinalValue;
-
   public OLimit(int id) {
     super(id);
   }
@@ -25,30 +23,16 @@ public class OLimit extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-  public void replaceParameters(Map<Object, Object> params) {
-    if (inputParam != null) {
-      Object result = inputParam.bindFromInputParams(params);
-      if (inputParam != result) {
-        inputFinalValue = result;
-      }
-    }
-  }
-
-  @Override
-  public String toString() {
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (num == null && inputParam == null) {
-      return "";
+      return;
     }
-    StringBuilder result = new StringBuilder();
-    result.append(" LIMIT ");
+    builder.append(" LIMIT ");
     if (num != null) {
-      result.append(num);
-    } else if (inputFinalValue != null) {
-      result.append(inputFinalValue);
+      num.toString(params, builder);
     } else {
-      result.append(inputParam);
+      inputParam.toString(params, builder);
     }
-    return result.toString();
   }
 }
 /* JavaCC - OriginalChecksum=1063b9489290bb08de6048ba55013171 (do not edit this line) */

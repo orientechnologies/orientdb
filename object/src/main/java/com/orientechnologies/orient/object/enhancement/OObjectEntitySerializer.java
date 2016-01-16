@@ -16,6 +16,7 @@
  */
 package com.orientechnologies.orient.object.enhancement;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.reflection.OReflectionHelper;
 import com.orientechnologies.orient.core.Orient;
@@ -50,8 +51,6 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
-import com.orientechnologies.orient.core.version.ORecordVersion;
-import com.orientechnologies.orient.core.version.OSimpleVersion;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.object.db.OObjectLazyMap;
 import com.orientechnologies.orient.object.metadata.schema.OSchemaProxyObject;
@@ -62,6 +61,7 @@ import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyObject;
 
 import javax.persistence.CascadeType;
+import javax.persistence.FetchType;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
@@ -99,6 +99,7 @@ public class OObjectEntitySerializer {
     public final HashMap<Class<?>, Field>                boundDocumentFields = new HashMap<Class<?>, Field>();
     public final HashMap<Class<?>, List<String>>         transientFields     = new HashMap<Class<?>, List<String>>();
     public final HashMap<Class<?>, List<String>>         cascadeDeleteFields = new HashMap<Class<?>, List<String>>();
+    public final HashMap<Class<?>, List<String>>         fetchLazyFields     = new HashMap<Class<?>, List<String>>();
     public final HashMap<Class<?>, Map<Field, Class<?>>> serializedFields    = new HashMap<Class<?>, Map<Field, Class<?>>>();
     public final HashMap<Class<?>, Field>                fieldIds            = new HashMap<Class<?>, Field>();
     public final HashMap<Class<?>, Field>                fieldVersions       = new HashMap<Class<?>, Field>();
@@ -109,10 +110,7 @@ public class OObjectEntitySerializer {
   }
 
   protected static OObjectEntitySerializedSchema getCurrentSerializedSchema() {
-    if (!ODatabaseRecordThreadLocal.INSTANCE.isDefined())
-      return null;
-
-    OStorage storage = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage();
+    OStorage storage = ODatabaseRecordThreadLocal.instance().get().getStorage();
     OObjectEntitySerializedSchema serializedShchema = storage.getResource(SIMPLE_NAME,
         new Callable<OObjectEntitySerializedSchema>() {
           @Override
@@ -145,9 +143,9 @@ public class OObjectEntitySerializer {
     try {
       return toStream(o, proxiedObject, db);
     } catch (IllegalArgumentException e) {
-      throw new OSerializationException("Error serializing object of class " + o.getClass(), e);
+      throw OException.wrapException(new OSerializationException("Error serializing object of class " + o.getClass()), e);
     } catch (IllegalAccessException e) {
-      throw new OSerializationException("Error serializing object of class " + o.getClass(), e);
+      throw OException.wrapException(new OSerializationException("Error serializing object of class " + o.getClass()), e);
     }
   }
 
@@ -167,13 +165,13 @@ public class OObjectEntitySerializer {
       try {
         handler.attach(o);
       } catch (IllegalArgumentException e) {
-        throw new OSerializationException("Error detaching object of class " + o.getClass(), e);
+        throw OException.wrapException(new OSerializationException("Error detaching object of class " + o.getClass()), e);
       } catch (IllegalAccessException e) {
-        throw new OSerializationException("Error detaching object of class " + o.getClass(), e);
+        throw OException.wrapException(new OSerializationException("Error detaching object of class " + o.getClass()), e);
       } catch (NoSuchMethodException e) {
-        throw new OSerializationException("Error detaching object of class " + o.getClass(), e);
+        throw OException.wrapException(new OSerializationException("Error detaching object of class " + o.getClass()), e);
       } catch (InvocationTargetException e) {
-        throw new OSerializationException("Error detaching object of class " + o.getClass(), e);
+        throw OException.wrapException(new OSerializationException("Error detaching object of class " + o.getClass()), e);
       }
       return o;
     } else
@@ -218,13 +216,13 @@ public class OObjectEntitySerializer {
         }
         handler.detach(o, returnNonProxiedInstance);
       } catch (IllegalArgumentException e) {
-        throw new OSerializationException("Error detaching object of class " + o.getClass(), e);
+        throw OException.wrapException(new OSerializationException("Error detaching object of class " + o.getClass()), e);
       } catch (IllegalAccessException e) {
-        throw new OSerializationException("Error detaching object of class " + o.getClass(), e);
+        throw OException.wrapException(new OSerializationException("Error detaching object of class " + o.getClass()), e);
       } catch (NoSuchMethodException e) {
-        throw new OSerializationException("Error detaching object of class " + o.getClass(), e);
+        throw OException.wrapException(new OSerializationException("Error detaching object of class " + o.getClass()), e);
       } catch (InvocationTargetException e) {
-        throw new OSerializationException("Error detaching object of class " + o.getClass(), e);
+        throw OException.wrapException(new OSerializationException("Error detaching object of class " + o.getClass()), e);
       }
       return o;
     } else if (!returnNonProxiedInstance)
@@ -246,28 +244,31 @@ public class OObjectEntitySerializer {
    *          and @Version fields it could procude data replication
    * @return the object serialized or with detached data
    */
-  public static <T> T detachAll(T o, ODatabaseObject db, boolean returnNonProxiedInstance, Map<Object, Object> alreadyDetached) {
+  public static <T> T detachAll(T o, ODatabaseObject db, boolean returnNonProxiedInstance, Map<Object, Object> alreadyDetached,
+      Map<Object, Object> lazyObjects) {
     if (o instanceof Proxy) {
       OObjectProxyMethodHandler handler = (OObjectProxyMethodHandler) ((ProxyObject) o).getHandler();
       try {
         if (returnNonProxiedInstance) {
           o = getNonProxiedInstance(o);
         }
-        ORID identity = handler.getDoc().getIdentity();
-        if (!alreadyDetached.containsKey(identity)) {
-          alreadyDetached.put(identity, o);
-        } else if (returnNonProxiedInstance) {
-          return (T) alreadyDetached.get(identity);
+        if(!handler.getDoc().isEmbedded()) {
+          ORID identity = handler.getDoc().getIdentity();
+          if (!alreadyDetached.containsKey(identity)) {
+            alreadyDetached.put(identity, o);
+          } else if (returnNonProxiedInstance) {
+            return (T) alreadyDetached.get(identity);
+          }
         }
-        handler.detachAll(o, returnNonProxiedInstance, alreadyDetached);
+        handler.detachAll(o, returnNonProxiedInstance, alreadyDetached, lazyObjects);
       } catch (IllegalArgumentException e) {
-        throw new OSerializationException("Error detaching object of class " + o.getClass(), e);
+        throw OException.wrapException(new OSerializationException("Error detaching object of class " + o.getClass()), e);
       } catch (IllegalAccessException e) {
-        throw new OSerializationException("Error detaching object of class " + o.getClass(), e);
+        throw OException.wrapException(new OSerializationException("Error detaching object of class " + o.getClass()), e);
       } catch (NoSuchMethodException e) {
-        throw new OSerializationException("Error detaching object of class " + o.getClass(), e);
+        throw OException.wrapException(new OSerializationException("Error detaching object of class " + o.getClass()), e);
       } catch (InvocationTargetException e) {
-        throw new OSerializationException("Error detaching object of class " + o.getClass(), e);
+        throw OException.wrapException(new OSerializationException("Error detaching object of class " + o.getClass()), e);
       }
       return o;
     } else if (!returnNonProxiedInstance)
@@ -304,20 +305,16 @@ public class OObjectEntitySerializer {
    *          - the proxied entity object
    * @return The version of associated ODocument
    */
-  public static ORecordVersion getVersion(Proxy proxiedObject) {
-    return getDocument(proxiedObject).getRecordVersion();
+  public static int getVersion(Proxy proxiedObject) {
+    return getDocument(proxiedObject).getVersion();
   }
 
   public static boolean isClassField(Class<?> iClass, String iField) {
-    final OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
-    if (serializedSchema == null)
-      return false;
-
     checkClassRegistration(iClass);
     boolean isClassField = false;
     for (Class<?> currentClass = iClass; currentClass != null && currentClass != Object.class
         && !currentClass.equals(ODocument.class) && !isClassField;) {
-      List<String> allClassFields = serializedSchema.allFields.get(currentClass);
+      List<String> allClassFields = getCurrentSerializedSchema().allFields.get(currentClass);
       isClassField = allClassFields != null && allClassFields.contains(iField);
       currentClass = currentClass.getSuperclass();
     }
@@ -325,15 +322,11 @@ public class OObjectEntitySerializer {
   }
 
   public static boolean isTransientField(Class<?> iClass, String iField) {
-    final OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
-    if (serializedSchema == null)
-      return false;
-
     checkClassRegistration(iClass);
     boolean isTransientField = false;
     for (Class<?> currentClass = iClass; currentClass != null && currentClass != Object.class
         && !currentClass.equals(ODocument.class) && !isTransientField;) {
-      List<String> classCascadeDeleteFields = serializedSchema.transientFields.get(currentClass);
+      List<String> classCascadeDeleteFields = getCurrentSerializedSchema().transientFields.get(currentClass);
       isTransientField = classCascadeDeleteFields != null && classCascadeDeleteFields.contains(iField);
       currentClass = currentClass.getSuperclass();
     }
@@ -341,15 +334,11 @@ public class OObjectEntitySerializer {
   }
 
   public static List<String> getCascadeDeleteFields(Class<?> iClass) {
-    final OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
-    if (serializedSchema == null)
-      return null;
-
     checkClassRegistration(iClass);
     List<String> classCascadeDeleteFields = new ArrayList<String>();
     for (Class<?> currentClass = iClass; currentClass != null && currentClass != Object.class
         && !currentClass.equals(ODocument.class);) {
-      List<String> classDeleteFields = serializedSchema.cascadeDeleteFields.get(currentClass);
+      List<String> classDeleteFields = getCurrentSerializedSchema().cascadeDeleteFields.get(currentClass);
       if (classDeleteFields != null)
         classCascadeDeleteFields.addAll(classDeleteFields);
       currentClass = currentClass.getSuperclass();
@@ -360,12 +349,7 @@ public class OObjectEntitySerializer {
   public static List<String> getCascadeDeleteFields(String iClassName) {
     if (iClassName == null || iClassName.isEmpty())
       return null;
-
-    final OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
-    if (serializedSchema == null)
-      return null;
-
-    for (Class<?> iClass : serializedSchema.classes) {
+    for (Class<?> iClass : getCurrentSerializedSchema().classes) {
       if (iClass.getSimpleName().equals(iClassName))
         return getCascadeDeleteFields(iClass);
     }
@@ -373,10 +357,6 @@ public class OObjectEntitySerializer {
   }
 
   public static boolean isCascadeDeleteField(Class<?> iClass, String iField) {
-    final OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
-    if (serializedSchema == null)
-      return false;
-
     checkClassRegistration(iClass);
     boolean isTransientField = false;
     for (Class<?> currentClass = iClass; currentClass != null && currentClass != Object.class
@@ -388,11 +368,19 @@ public class OObjectEntitySerializer {
     return isTransientField;
   }
 
-  public static boolean isEmbeddedField(Class<?> iClass, String iField) {
-    final OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
-    if (serializedSchema == null)
-      return false;
+  public static boolean isFetchLazyField(Class<?> iClass, String iField) {
+    checkClassRegistration(iClass);
+    boolean isFetchLazyField = false;
+    for (Class<?> currentClass = iClass; currentClass != null && currentClass != Object.class
+        && !currentClass.equals(ODocument.class) && !isFetchLazyField;) {
+      List<String> classFetchLazyFields = getCurrentSerializedSchema().fetchLazyFields.get(currentClass);
+      isFetchLazyField = classFetchLazyFields != null && classFetchLazyFields.contains(iField);
+      currentClass = currentClass.getSuperclass();
+    }
+    return isFetchLazyField;
+  }
 
+  public static boolean isEmbeddedField(Class<?> iClass, String iField) {
     checkClassRegistration(iClass);
     boolean isEmbeddedField = false;
     for (Class<?> currentClass = iClass; currentClass != null && currentClass != Object.class
@@ -405,11 +393,7 @@ public class OObjectEntitySerializer {
   }
 
   protected static void checkClassRegistration(Class<?> iClass) {
-    final OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
-    if (serializedSchema == null)
-      return;
-
-    if (!serializedSchema.classes.contains(iClass) && !(Proxy.class.isAssignableFrom(iClass)))
+    if (!getCurrentSerializedSchema().classes.contains(iClass) && !(Proxy.class.isAssignableFrom(iClass)))
       registerClass(iClass);
   }
 
@@ -422,22 +406,17 @@ public class OObjectEntitySerializer {
    */
   @SuppressWarnings("unchecked")
   public static synchronized void registerClass(final Class<?> iClass) {
-    final OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
-    if (serializedSchema == null)
+    if (!ODatabaseRecordThreadLocal.instance().isDefined() || ODatabaseRecordThreadLocal.instance().get().isClosed())
       return;
-
-    if (ODatabaseRecordThreadLocal.INSTANCE.get().isClosed())
-      return;
-
     if (Proxy.class.isAssignableFrom(iClass) || iClass.isEnum() || OReflectionHelper.isJavaType(iClass) || iClass.isAnonymousClass()
-        || serializedSchema.classes.contains(iClass)) {
+        || getCurrentSerializedSchema().classes.contains(iClass)) {
       return;
     }
 
     boolean reloadSchema = false;
     boolean automaticSchemaGeneration = false;
 
-    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
     final OSchema oSchema = db.getMetadata().getSchema();
     oSchema.reload();
 
@@ -451,6 +430,8 @@ public class OObjectEntitySerializer {
       if (db.getDatabaseOwner() instanceof OObjectDatabaseTx)
         automaticSchemaGeneration = ((OObjectDatabaseTx) db.getDatabaseOwner()).isAutomaticSchemaGeneration();
     }
+
+    OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
 
     for (Class<?> currentClass = iClass; currentClass != Object.class;) {
       if (!serializedSchema.classes.contains(currentClass)) {
@@ -509,6 +490,9 @@ public class OObjectEntitySerializer {
               OneToOne oneToOne = ((OneToOne) ann);
               if (checkCascadeDelete(oneToOne)) {
                 addCascadeDeleteField(currentClass, fieldName);
+              }
+              if (checkFetchLazy(oneToOne)) {
+                addFetchLazyField(currentClass, fieldName);
               }
             }
           }
@@ -672,12 +656,8 @@ public class OObjectEntitySerializer {
     }
   }
 
-  public static void deregisterClass(final Class<?> iClass) {
-    final OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
-    if (serializedSchema == null)
-      return;
-
-    serializedSchema.classes.remove(iClass);
+  public static void deregisterClass(Class<?> iClass) {
+    getCurrentSerializedSchema().classes.remove(iClass);
   }
 
   protected static boolean checkCascadeDelete(final OneToOne oneToOne) {
@@ -702,11 +682,12 @@ public class OObjectEntitySerializer {
     return false;
   }
 
-  protected static void addCascadeDeleteField(final Class<?> currentClass, final String fieldName) {
-    final OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
-    if (serializedSchema == null)
-      return;
+  protected static boolean checkFetchLazy(final OneToOne oneToOne) {
+    return oneToOne.fetch() == FetchType.LAZY;
+  }
 
+  protected static void addCascadeDeleteField(Class<?> currentClass, final String fieldName) {
+    OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
     List<String> classCascadeDeleteFields = serializedSchema.cascadeDeleteFields.get(currentClass);
     if (classCascadeDeleteFields == null)
       classCascadeDeleteFields = new ArrayList<String>();
@@ -714,11 +695,17 @@ public class OObjectEntitySerializer {
     serializedSchema.cascadeDeleteFields.put(currentClass, classCascadeDeleteFields);
   }
 
-  public static boolean isSerializedType(final Field iField) {
-    final OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
-    if (serializedSchema == null)
-      return false;
+  protected static void addFetchLazyField(Class<?> currentClass, final String fieldName) {
+    OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
+    List<String> classFetchLazyFields = serializedSchema.fetchLazyFields.get(currentClass);
+    if (classFetchLazyFields == null)
+      classFetchLazyFields = new ArrayList<String>();
+    classFetchLazyFields.add(fieldName);
+    serializedSchema.fetchLazyFields.put(currentClass, classFetchLazyFields);
+  }
 
+  public static boolean isSerializedType(final Field iField) {
+    OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
     if (!serializedSchema.classes.contains(iField.getDeclaringClass()))
       registerCallbacks(iField.getDeclaringClass());
     Map<Field, Class<?>> serializerFields = serializedSchema.serializedFields.get(iField.getDeclaringClass());
@@ -726,10 +713,7 @@ public class OObjectEntitySerializer {
   }
 
   public static Class<?> getSerializedType(final Field iField) {
-    final OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
-    if (serializedSchema == null)
-      return null;
-
+    OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
     if (!serializedSchema.classes.contains(iField.getDeclaringClass()))
       registerCallbacks(iField.getDeclaringClass());
     return serializedSchema.serializedFields.get(iField.getDeclaringClass()) != null
@@ -834,18 +818,12 @@ public class OObjectEntitySerializer {
   }
 
   public static List<String> getClassFields(final Class<?> iClass) {
-    final OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
-    if (serializedSchema == null)
-      return null;
-
+    OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
     return serializedSchema.allFields.get(iClass);
   }
 
   public static boolean hasBoundedDocumentField(final Class<?> iClass) {
-    final OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
-    if (serializedSchema == null)
-      return false;
-
+    OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
     if (!serializedSchema.classes.contains(iClass)) {
       registerClass(iClass);
     }
@@ -859,27 +837,22 @@ public class OObjectEntitySerializer {
   }
 
   public static Field getBoundedDocumentField(final Class<?> iClass) {
-    final OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
-    if (serializedSchema != null) {
-      if (!serializedSchema.classes.contains(iClass)) {
-        registerClass(iClass);
-      }
-      for (Class<?> currentClass = iClass; currentClass != null && currentClass != Object.class
-          && !currentClass.equals(ODocument.class);) {
-        Field f = serializedSchema.boundDocumentFields.get(currentClass);
-        if (f != null)
-          return f;
-        currentClass = currentClass.getSuperclass();
-      }
+    OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
+    if (!serializedSchema.classes.contains(iClass)) {
+      registerClass(iClass);
+    }
+    for (Class<?> currentClass = iClass; currentClass != null && currentClass != Object.class
+        && !currentClass.equals(ODocument.class);) {
+      Field f = serializedSchema.boundDocumentFields.get(currentClass);
+      if (f != null)
+        return f;
+      currentClass = currentClass.getSuperclass();
     }
     return null;
   }
 
   public static boolean isIdField(final Class<?> iClass, String iFieldName) {
-    final OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
-    if (serializedSchema == null)
-      return false;
-
+    OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
     if (!serializedSchema.classes.contains(iClass)) {
       registerClass(iClass);
     }
@@ -894,10 +867,7 @@ public class OObjectEntitySerializer {
   }
 
   public static boolean isIdField(Field iField) {
-    final OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
-    if (serializedSchema == null)
-      return false;
-
+    OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
     if (!serializedSchema.classes.contains(iField.getDeclaringClass())) {
       registerClass(iField.getDeclaringClass());
     }
@@ -905,10 +875,7 @@ public class OObjectEntitySerializer {
   }
 
   public static Field getIdField(final Class<?> iClass) {
-    final OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
-    if (serializedSchema == null)
-      return null;
-
+    OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
     if (!serializedSchema.classes.contains(iClass)) {
       registerClass(iClass);
     }
@@ -923,10 +890,7 @@ public class OObjectEntitySerializer {
 
   public static void setIdField(final Class<?> iClass, Object iObject, ORID iValue)
       throws IllegalArgumentException, IllegalAccessException {
-    final OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
-    if (serializedSchema == null)
-      return;
-
+    OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
     if (!serializedSchema.classes.contains(iClass)) {
       registerClass(iClass);
     }
@@ -949,10 +913,7 @@ public class OObjectEntitySerializer {
   }
 
   public static boolean isVersionField(final Class<?> iClass, String iFieldName) {
-    final OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
-    if (serializedSchema == null)
-      return false;
-
+    OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
     if (!serializedSchema.classes.contains(iClass)) {
       registerClass(iClass);
     }
@@ -967,10 +928,7 @@ public class OObjectEntitySerializer {
   }
 
   public static Field getVersionField(final Class<?> iClass) {
-    final OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
-    if (serializedSchema == null)
-      return null;
-
+    OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
     if (!serializedSchema.classes.contains(iClass)) {
       registerClass(iClass);
     }
@@ -983,20 +941,16 @@ public class OObjectEntitySerializer {
     return versionField;
   }
 
-  public static void setVersionField(final Class<?> iClass, Object iObject, ORecordVersion iValue)
+  public static void setVersionField(final Class<?> iClass, Object iObject, int iValue)
       throws IllegalArgumentException, IllegalAccessException {
     Field f = getVersionField(iClass);
 
     if (f != null) {
       if (f.getType().equals(String.class))
         setFieldValue(f, iObject, String.valueOf(iValue));
-      else if (f.getType().equals(Long.class)) {
-        if (iValue instanceof OSimpleVersion)
-          setFieldValue(f, iObject, (long) iValue.getCounter());
-        else
-          OLogManager.instance().warn(OObjectEntitySerializer.class,
-              "@Version field can't be declared as Long in distributed mode. Should be one of following: String, Object, ORecordVersion");
-      } else if (f.getType().equals(Object.class) || ORecordVersion.class.isAssignableFrom(f.getType()))
+      else if (f.getType().equals(Long.class))
+        setFieldValue(f, iObject, (long) iValue);
+      else
         setFieldValue(f, iObject, iValue);
     }
   }
@@ -1113,7 +1067,7 @@ public class OObjectEntitySerializer {
   @SuppressWarnings("unchecked")
   public static <T> T getNonProxiedInstance(T iObject) {
     try {
-      return (T) iObject.getClass().getSuperclass().newInstance();
+      return ((Class<T>) iObject.getClass().getSuperclass()).newInstance();
     } catch (InstantiationException ie) {
       OLogManager.instance().error(iObject, "Error creating instance for class " + iObject.getClass().getSuperclass(), ie);
     } catch (IllegalAccessException ie) {
@@ -1123,10 +1077,7 @@ public class OObjectEntitySerializer {
   }
 
   public static void synchronizeSchema() {
-    final OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
-    if (serializedSchema == null)
-      return;
-
+    OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
     for (Class<?> clazz : serializedSchema.classes) {
       registerClass(clazz);
     }
@@ -1143,10 +1094,6 @@ public class OObjectEntitySerializer {
   @SuppressWarnings("unchecked")
   protected static <T> T toStream(final T iPojo, final Proxy iProxiedPojo, ODatabaseObject db)
       throws IllegalArgumentException, IllegalAccessException {
-
-    final OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
-    if (serializedSchema == null)
-      return null;
 
     final ODocument iRecord = getDocument(iProxiedPojo);
     final long timer = Orient.instance().getProfiler().startChrono();
@@ -1196,23 +1143,17 @@ public class OObjectEntitySerializer {
       Object ver = getFieldValue(vField, iPojo);
       if (ver != null) {
         // FOUND
-        final ORecordVersion version = iRecord.getRecordVersion();
-        if (ver instanceof ORecordVersion) {
-          version.copyFrom((ORecordVersion) ver);
-        } else if (ver instanceof Number) {
-          if (version instanceof OSimpleVersion)
-            // TREATS AS CLUSTER POSITION
-            version.setCounter(((Number) ver).intValue());
-          else
-            OLogManager.instance().warn(OObjectEntitySerializer.class,
-                "@Version field can't be declared as Number in distributed mode. Should be one of following: String, Object, ORecordVersion");
-        } else if (ver instanceof String) {
-          version.getSerializer().fromString((String) ver, version);
-        } else if (ver.getClass().equals(Object.class))
-          version.copyFrom((ORecordVersion) ver);
+        int version = iRecord.getVersion();
+        if (ver instanceof Number) {
+          // TREATS AS CLUSTER POSITION
+          version = ((Number) ver).intValue();
+        } else if (ver instanceof String)
+          version = Integer.parseInt((String) ver);
         else
           OLogManager.instance().warn(OObjectSerializerHelper.class,
-              "@Version field has been declared as %s while the supported are: Number, String, Object", ver.getClass());
+              "@Version field has been declared as %s while the supported are: Number, String", ver.getClass());
+
+        ORecordInternal.setVersion(iRecord, version);
       }
     }
 
@@ -1228,6 +1169,7 @@ public class OObjectEntitySerializer {
 
     Class<?> currentClass = pojoClass;
 
+    OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
     while (!currentClass.equals(Object.class) && serializedSchema.classes.contains(pojoClass)) {
       for (Field p : getDeclaredFields(currentClass)) {
         if (Modifier.isStatic(p.getModifiers()) || Modifier.isNative(p.getModifiers()) || Modifier.isTransient(p.getModifiers())
@@ -1302,17 +1244,16 @@ public class OObjectEntitySerializer {
           else
             m.invoke(iPojo);
         } catch (Exception e) {
-          throw new OConfigurationException(
-              "Error on executing user callback '" + m.getName() + "' annotated with '" + iAnnotation.getSimpleName() + "'", e);
+          throw OException.wrapException(
+              new OConfigurationException(
+                  "Error on executing user callback '" + m.getName() + "' annotated with '" + iAnnotation.getSimpleName() + "'"),
+              e);
         }
       }
   }
 
   protected static List<Method> getCallbackMethods(final Class<?> iAnnotation, final Class<?> iClass) {
-    final OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
-    if (serializedSchema == null)
-      return null;
-
+    OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
     if (!serializedSchema.classes.contains(iClass)) {
       registerClass(iClass);
     }
@@ -1333,10 +1274,7 @@ public class OObjectEntitySerializer {
 
   @SuppressWarnings({ "unchecked", "rawtypes" })
   private static void registerCallbacks(final Class<?> iRootClass) {
-    final OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
-    if (serializedSchema == null)
-      return;
-
+    OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
     // FIND KEY METHODS
     for (Method m : iRootClass.getDeclaredMethods()) {
       // SEARCH FOR CALLBACK ANNOTATIONS
@@ -1457,10 +1395,7 @@ public class OObjectEntitySerializer {
   }
 
   private static boolean isEmbeddedObject(Field f) {
-    final OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
-    if (serializedSchema == null)
-      return false;
-
+    OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
     if (!serializedSchema.classes.contains(f.getDeclaringClass()))
       registerClass(f.getDeclaringClass());
     return isEmbeddedField(f.getDeclaringClass(), f.getName());

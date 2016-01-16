@@ -94,15 +94,15 @@ public class OCompositeIndexSQLInsertTest {
 
     List<ODocument> r1 = db.query(new OSQLSynchQuery<Object>(
         "select from CompositeIndexWithRangeAndConditions where id = 1 and tags CONTAINS \"white\""));
+    Assert.assertEquals(r1.size(), 1);
 
     List<ODocument> r2 = db.query(new OSQLSynchQuery<Object>(
         "select from CompositeIndexWithRangeAndConditions where id > 0 and tags CONTAINS \"white\""));
+    Assert.assertEquals(r2.size(), 1);
 
     List<ODocument> r3 = db.query(new OSQLSynchQuery<Object>(
         "select from CompositeIndexWithRangeAndConditions where id > 0 and bar = 1"));
 
-    Assert.assertEquals(r1.size(), 1);
-    Assert.assertEquals(r2.size(), 1);
     Assert.assertEquals(r3.size(), 1);
 
     List<ODocument> r4 = db.query(new OSQLSynchQuery<Object>(

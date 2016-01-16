@@ -16,9 +16,9 @@
  */
 package com.orientechnologies.orient.core.sql.functions.text;
 
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.method.misc.OAbstractSQLMethod;
 
 /**
@@ -48,7 +48,7 @@ public class OSQLMethodAppend extends OAbstractSQLMethod {
     final StringBuilder buffer = new StringBuilder(iThis.toString());
     for (int i = 0; i < iParams.length; ++i) {
       if (iParams[i] != null) {
-        buffer.append(OStringSerializerHelper.getStringContent(iParams[i]));
+        buffer.append(OIOUtils.getStringContent(iParams[i]));
       }
     }
 

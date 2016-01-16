@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.graph.graphml.OGraphMLReader;
 import com.orientechnologies.orient.graph.gremlin.OCommandGremlin;
 import com.orientechnologies.orient.graph.gremlin.OGremlinHelper;
-import com.orientechnologies.orient.graph.migration.OGraphMigration;
 import com.tinkerpop.blueprints.impls.orient.OBonsaiTreeRepair;
 import com.tinkerpop.blueprints.impls.orient.OGraphRepair;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
@@ -163,13 +162,6 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
       OBonsaiTreeRepair repairer = new OBonsaiTreeRepair();
       repairer.repairDatabaseRidbags(currentDatabase, this);
     }
-  }
-
-  @ConsoleCommand(description = "Migrates graph from OMVRBTree to ORidBag")
-  public void upgradeGraph() {
-    OGraphMigration migration = new OGraphMigration(getCurrentDatabase(), this);
-    migration.execute();
-    message("Graph has been upgraded.");
   }
 
   @Override

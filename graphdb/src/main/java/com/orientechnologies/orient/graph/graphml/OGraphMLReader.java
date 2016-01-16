@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.graph.graphml;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImportException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.tinkerpop.blueprints.Edge;
@@ -168,8 +169,8 @@ public class OGraphMLReader {
    * @throws IOException
    *           thrown when the GraphML data is not correctly formatted
    */
-  public OGraphMLReader inputGraph(final Graph inputGraph, final InputStream graphMLInputStream, int bufferSize,
-      String vertexIdKey, String edgeIdKey, String edgeLabelKey) throws IOException {
+  public OGraphMLReader inputGraph(final Graph inputGraph, final InputStream graphMLInputStream, int bufferSize, String vertexIdKey,
+      String edgeIdKey, String edgeLabelKey) throws IOException {
 
     XMLInputFactory inputFactory = XMLInputFactory.newInstance();
 
@@ -335,8 +336,8 @@ public class OGraphMLReader {
             vertexProps = null;
             inVertex = false;
           } else if (elementName.equals(GraphMLTokens.EDGE)) {
-            Edge currentEdge = ((OrientVertex) edgeEndVertices[0]).addEdge(null, (OrientVertex) edgeEndVertices[1], edgeLabel,
-                null, edgeProps);
+            Edge currentEdge = ((OrientVertex) edgeEndVertices[0]).addEdge(null, (OrientVertex) edgeEndVertices[1], edgeLabel, null,
+                edgeProps);
             bufferCounter++;
 
             edgeId = null;
@@ -359,7 +360,7 @@ public class OGraphMLReader {
       graph.commit();
 
     } catch (Exception xse) {
-      throw new ODatabaseImportException(xse);
+      throw OException.wrapException(new ODatabaseImportException("Error on importing GraphML"), xse);
     }
 
     return this;

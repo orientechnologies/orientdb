@@ -19,9 +19,6 @@
  */
 package com.orientechnologies.orient.core.sql.query;
 
-import java.util.*;
-import java.util.Map.Entry;
-
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -37,6 +34,15 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * SQL query implementation.
@@ -62,7 +68,7 @@ public abstract class OSQLQuery<T> extends OQueryAbstract<T> implements OCommand
    */
   @SuppressWarnings("unchecked")
   public List<T> run(final Object... iArgs) {
-    final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.instance().get();
     if (database == null)
       throw new OQueryParsingException("No database configured");
 
@@ -116,8 +122,7 @@ public abstract class OSQLQuery<T> extends OQueryAbstract<T> implements OCommand
 
     buffer.setUtf8(text); // TEXT AS STRING
     buffer.set(limit); // LIMIT AS INTEGER
-    buffer.setUtf8(fetchPlan != null ? fetchPlan : ""); // FETCH PLAN IN FORM OF STRING (to know more goto:
-    // http://code.google.com/p/orient/wiki/FetchingStrategies)
+    buffer.setUtf8(fetchPlan != null ? fetchPlan : "");
 
     buffer.set(serializeQueryParameters(parameters));
 

@@ -32,9 +32,9 @@ import java.util.List;
  * @author Luca Garulli
  */
 public abstract class ETLBaseTest {
-  protected String[]      names    = new String[] { "Jay", "Luca", "Bill", "Steve", "Jill", "Luigi", "Enrico", "Emanuele" };
-  protected String[]      surnames = new String[] { "Miner", "Ferguson", "Cancelli", "Lavori", "Raggio", "Eagles", "Smiles",
-      "Ironcutter"                };
+  protected String[] names    = new String[] { "Jay", "Luca", "Bill", "Steve", "Jill", "Luigi", "Enrico", "Emanuele" };
+  protected String[] surnames = new String[] { "Miner", "Ferguson", "Cancelli", "Lavori", "Raggio", "Eagles", "Smiles",
+      "Ironcutter" };
 
   protected OrientGraph   graph;
   protected OETLProcessor proc;
@@ -44,7 +44,7 @@ public abstract class ETLBaseTest {
     graph = new OrientGraph("memory:ETLBaseTest");
     graph.setUseLightweightEdges(false);
     proc = new OETLProcessor();
-    proc.getFactory().registerLoader(TestLoader.class);
+    proc.getFactory().registerLoader(OETLStubLoader.class);
   }
 
   @After
@@ -53,7 +53,7 @@ public abstract class ETLBaseTest {
   }
 
   protected List<ODocument> getResult() {
-    return ((TestLoader) proc.getLoader()).loadedRecords;
+    return ((OETLStubLoader) proc.getLoader()).loadedRecords;
   }
 
   protected void process(final String cfgJson) {

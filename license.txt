@@ -1,12 +1,13 @@
 -------------------------------------------------------------------------------------
  3RDY PARTY LIBRARIES
 --------------------------------------------------------------------
-3rdy party libraries used by OrientDB, compatible with Apache license:
+3rd party libraries used by OrientDB, compatible with Apache license:
 
 - Javamail: CDDL license (http://www.oracle.com/technetwork/java/faq-135477.html)
 - java persistence 2.0: CDDL license
 - JNA: Apache 2 (https://github.com/twall/jna/blob/master/LICENSE)
 - Hibernate JPA 2.0 API: Eclipse Distribution License 1.0
+- ASM: OW2
 
 References:
 - Apache 2 license (Apache2):
@@ -20,9 +21,9 @@ References:
 
 -------------------------------------------------------------------------------------
  ORIENTDB LICENSE
---------------------------------------------------------------------
+-------------------------------------------------------------------------------------
 
-                   Copyright 1999-2014 (c) Orient Technologies
+                   Copyright 1999-2015 (c) OrientDB LTD
 
 
                                 Apache License
@@ -201,3 +202,4 @@ References:
       of your accepting any such warranty or additional liability.
 
    END OF TERMS AND CONDITIONS
+

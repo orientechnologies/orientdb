@@ -50,7 +50,6 @@ import com.orientechnologies.orient.core.index.OIndexDefinitionMultiValue;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.version.ORecordVersion;
 
 public class OLuceneClassIndexManager extends ODocumentHookAbstract {
 
@@ -152,15 +151,15 @@ public class OLuceneClassIndexManager extends ODocumentHookAbstract {
 
   @Override
   public RESULT onRecordBeforeDelete(final ODocument iDocument) {
-    final ORecordVersion version = iDocument.getRecordVersion(); // Cache the transaction-provided value
+    final int version = iDocument.getVersion(); // Cache the transaction-provided value
     if (iDocument.fields() == 0) {
       // FORCE LOADING OF CLASS+FIELDS TO USE IT AFTER ON onRecordAfterDelete METHOD
       iDocument.reload();
-      if (version.getCounter() > -1 && iDocument.getRecordVersion().compareTo(version) != 0) // check for record version errors
+      if (version > -1 && iDocument.getVersion() != version) // check for record version errors
         if (OFastConcurrentModificationException.enabled())
           throw OFastConcurrentModificationException.instance();
         else
-          throw new OConcurrentModificationException(iDocument.getIdentity(), iDocument.getRecordVersion(), version,
+          throw new OConcurrentModificationException(iDocument.getIdentity(), iDocument.getVersion(), version,
               ORecordOperation.DELETED);
     }
 
@@ -362,7 +361,8 @@ public class OLuceneClassIndexManager extends ODocumentHookAbstract {
     }
   }
 
-  private static boolean processCompositeIndexDelete(final OIndex<?> index, final Set<String> dirtyFields, final ODocument iRecord) {
+  private static boolean processCompositeIndexDelete(final OIndex<?> index, final Set<String> dirtyFields,
+      final ODocument iRecord) {
     final OCompositeIndexDefinition indexDefinition = (OCompositeIndexDefinition) index.getDefinition();
 
     final String multiValueField = indexDefinition.getMultiValueField();
@@ -512,6 +512,6 @@ public class OLuceneClassIndexManager extends ODocumentHookAbstract {
   }
 
   private ODatabaseDocumentInternal getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
+    return ODatabaseRecordThreadLocal.instance().get();
   }
 }

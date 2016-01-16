@@ -22,8 +22,13 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import junit.framework.Assert;
-import org.testng.annotations.BeforeClass;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Created by Enrico Risa on 07/07/15.
@@ -31,15 +36,11 @@ import org.testng.annotations.BeforeClass;
 public class LuceneCreateJavaApi extends BaseLuceneTest {
 
   public LuceneCreateJavaApi() {
-    super();
+
+    //super(false);
   }
 
-  @Override
-  protected String getDatabaseName() {
-    return "JavaApi";
-  }
-
-  @BeforeClass
+  @Before
   public void init() {
     initDB();
     OSchema schema = databaseDocumentTx.getMetadata().getSchema();
@@ -51,18 +52,31 @@ public class LuceneCreateJavaApi extends BaseLuceneTest {
     song.createProperty("description", OType.STRING);
   }
 
+  @After
+  public void deInit() {
+    deInitDB();
+  }
+
+  @Test
   public void testCreateIndex() {
     OSchema schema = databaseDocumentTx.getMetadata().getSchema();
 
     OClass song = schema.getClass("Song");
 
-    OIndex<?> lucene = song.createIndex("Song.title", OClass.INDEX_TYPE.FULLTEXT.toString(), null, null, "LUCENE",
+    ODocument meta = new ODocument().field("analyzer", StandardAnalyzer.class.getName());
+    OIndex<?> lucene = song.createIndex("Song.title", OClass.INDEX_TYPE.FULLTEXT.toString(), null, meta, "LUCENE",
         new String[] { "title" });
 
-    Assert.assertNotNull(lucene);
+    assertThat(lucene).isNotNull();
+
+    assertThat(lucene.getMetadata().containsField("analyzer")).isTrue();
+
+    assertThat(lucene.getMetadata().field("analyzer")).isEqualTo(StandardAnalyzer.class.getName());
+
   }
 
-  public void testCreateIndexComposite() {
+  @Test
+  public void testCreateIndexCompositeWithDefaultAnalyzer() {
     OSchema schema = databaseDocumentTx.getMetadata().getSchema();
 
     OClass song = schema.getClass("Song");
@@ -70,6 +84,12 @@ public class LuceneCreateJavaApi extends BaseLuceneTest {
     OIndex<?> lucene = song.createIndex("Song.author_description", OClass.INDEX_TYPE.FULLTEXT.toString(), null, null, "LUCENE",
         new String[] { "author", "description" });
 
-    Assert.assertNotNull(lucene);
+    assertThat(lucene).isNotNull();
+
+    assertThat(lucene.getMetadata().containsField("analyzer")).isTrue();
+
+    assertThat(lucene.getMetadata().field("analyzer")).isEqualTo(StandardAnalyzer.class.getName());
+
   }
+
 }

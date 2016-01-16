@@ -19,6 +19,8 @@
   */
 package com.orientechnologies.common.listener;
 
+import com.orientechnologies.orient.core.index.OIndex;
+
 /**
  * Listener interface called on task execution.
  * 

@@ -7,5 +7,5 @@
 databases/
 target/
 .idea
-
+src/test/java/com/orientechnologies/lucene/test/local/
 *.iml

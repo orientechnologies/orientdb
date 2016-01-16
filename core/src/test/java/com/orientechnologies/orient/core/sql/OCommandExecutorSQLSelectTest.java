@@ -1,9 +1,29 @@
+/*
+ *
+ *  *  Copyright 2015 Orient Technologies LTD (info(at)orientdb.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -75,7 +95,7 @@ public class OCommandExecutorSQLSelectTest {
     db.command(new OCommandSQL("insert into bar (name, foo) values ('n', 4)")).execute();
     db.command(new OCommandSQL("insert into bar (name, foo) values ('o', 5)")).execute();
 
-    db.command(new OCommandSQL("CREATE class ridsorttest")).execute();
+    db.command(new OCommandSQL("CREATE class ridsorttest clusters 1")).execute();
     db.command(new OCommandSQL("CREATE property ridsorttest.name INTEGER")).execute();
     db.command(new OCommandSQL("CREATE index ridsorttest_name on ridsorttest (name) NOTUNIQUE")).execute();
 
@@ -124,7 +144,7 @@ public class OCommandExecutorSQLSelectTest {
     // /*** from issue #2743
     OSchema schema = db.getMetadata().getSchema();
     if (!schema.existsClass("alphabet")) {
-      schema.createClass("alphabet");
+      schema.createClass("alphabet", 1, null);
     }
 
     ORecordIteratorClass<ODocument> iter = db.browseClass("alphabet");
@@ -150,7 +170,6 @@ public class OCommandExecutorSQLSelectTest {
         .execute();
 
     initExpandSkipLimit(db);
-
     initMassiveOrderSkipLimit(db);
     initDatesSet(db);
 
@@ -196,7 +215,7 @@ public class OCommandExecutorSQLSelectTest {
   }
 
   private void initMassiveOrderSkipLimit(ODatabaseDocumentTx db) {
-    db.getMetadata().getSchema().createClass("MassiveOrderSkipLimit");
+    db.getMetadata().getSchema().createClass("MassiveOrderSkipLimit", 1, null);
     db.declareIntent(new OIntentMassiveInsert());
     String fieldValue = "laskdf lkajsd flaksjdf laksjd flakjsd flkasjd flkajsd flkajsd flkajsd flkajsd flkajsd flkjas;lkj a;ldskjf laksdj asdklasdjf lskdaj fladsd";
     for (int i = 0; i < ORDER_SKIP_LIMIT_ITEMS; i++) {
@@ -215,7 +234,7 @@ public class OCommandExecutorSQLSelectTest {
   }
 
   private void initExpandSkipLimit(ODatabaseDocumentTx db) {
-    db.getMetadata().getSchema().createClass("ExpandSkipLimit");
+    db.command(new OCommandSQL("create class ExpandSkipLimit clusters 1")).execute();
 
     for (int i = 0; i < 5; i++) {
       ODocument doc = new ODocument("ExpandSkipLimit");
@@ -473,6 +492,15 @@ public class OCommandExecutorSQLSelectTest {
   }
 
   @Test
+  public void testLimitWithNamedParam2() {
+    //issue #5493
+    Map<String, Object> params = new HashMap<String, Object>();
+    params.put("limit", 2);
+    List<ODocument> qResult = db.command(new OCommandSQL("select from foo limit :limit")).execute(params);
+    assertEquals(qResult.size(), 2);
+  }
+
+  @Test
   public void testParamsInLetSubquery() {
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("name", "foo");
@@ -489,30 +517,6 @@ public class OCommandExecutorSQLSelectTest {
     List<ODocument> qResult = db.command(new OCommandSQL("select name from TestParams where name = ? and active = ?")).execute(
         "foo", true);
     assertEquals(qResult.size(), 1);
-  }
-
-  @Test
-  public void testOrderByEmbeddedParams() {
-    // issue #4949
-    Map<String, Object> parameters = new HashMap<String, Object>();
-    parameters.put("paramvalue", "count");
-    List<ODocument> qResult = db.command(new OCommandSQL("select from TestParamsEmbedded order by emb[:paramvalue] DESC")).execute(
-        parameters);
-    assertEquals(qResult.size(), 2);
-    Map embedded = qResult.get(0).field("emb");
-    assertEquals(embedded.get("count"), 1);
-  }
-
-  @Test
-  public void testOrderByEmbeddedParams2() {
-    // issue #4949
-    Map<String, Object> parameters = new HashMap<String, Object>();
-    parameters.put("paramvalue", "count");
-    List<ODocument> qResult = db.command(new OCommandSQL("select from TestParamsEmbedded order by emb[:paramvalue] ASC")).execute(
-        parameters);
-    assertEquals(qResult.size(), 2);
-    Map embedded = qResult.get(0).field("emb");
-    assertEquals(embedded.get("count"), 0);
   }
 
   @Test
@@ -561,19 +565,6 @@ public class OCommandExecutorSQLSelectTest {
   @Test
   public void testUnwind() {
     List<ODocument> qResult = db.command(new OCommandSQL("select from unwindtest unwind coll")).execute();
-
-    assertEquals(qResult.size(), 4);
-    for (ODocument doc : qResult) {
-      String name = doc.field("name");
-      String coll = doc.field("coll");
-      assertTrue(coll.startsWith(name));
-      assertFalse(doc.getIdentity().isPersistent());
-    }
-  }
-
-  @Test
-  public void testUnwindOrder() {
-    List<ODocument> qResult = db.command(new OCommandSQL("select from unwindtest order by coll unwind coll")).execute();
 
     assertEquals(qResult.size(), 4);
     for (ODocument doc : qResult) {
@@ -832,39 +823,10 @@ public class OCommandExecutorSQLSelectTest {
     // issue #4985
     OSQLSynchQuery sql = new OSQLSynchQuery(
         "SELECT expand(linked) from ExpandSkipLimit where parent = true order by nnum skip 1 limit 1");
-    List<ODocument> results = db.query(sql);
+    List<OIdentifiable> results = db.query(sql);
     assertEquals(results.size(), 1);
-    ODocument doc = results.get(0);
+    ODocument doc = results.get(0).getRecord();
     assertEquals(doc.field("nnum"), 1);
-  }
-
-  @Test
-  public void testMassiveOrderAscSkipLimit() {
-    long begin = System.currentTimeMillis();
-    int skip = 1000;
-    OSQLSynchQuery sql = new OSQLSynchQuery("SELECT from MassiveOrderSkipLimit order by nnum asc skip " + skip + " limit 5");
-    List<ODocument> results = db.query(sql);
-    assertEquals(results.size(), 5);
-    System.out.println("elapsed: " + (System.currentTimeMillis() - begin));
-    for (int i = 0; i < results.size(); i++) {
-      ODocument doc = results.get(i);
-      assertEquals(doc.field("nnum"), skip + i);
-    }
-  }
-
-  @Test
-  public void testMassiveOrderDescSkipLimit() {
-    long begin = System.currentTimeMillis();
-    int skip = 1000;
-    OSQLSynchQuery sql = new OSQLSynchQuery("SELECT from MassiveOrderSkipLimit order by nnum desc skip " + skip + " limit 5");
-
-    List<ODocument> results = db.query(sql);
-    assertEquals(results.size(), 5);
-    System.out.println("elapsed: " + (System.currentTimeMillis() - begin));
-    for (int i = 0; i < results.size(); i++) {
-      ODocument doc = results.get(i);
-      assertEquals(doc.field("nnum"), ORDER_SKIP_LIMIT_ITEMS - 1 - skip - i);
-    }
   }
 
   @Test
@@ -874,6 +836,55 @@ public class OCommandExecutorSQLSelectTest {
     assertEquals(results.size(), 1);
     ODocument doc = results.get(0);
     assertEquals(doc.field("r"), 10);
+  }
+
+  @Test
+  public void testOrderByEmbeddedParams() {
+    // issue #4949
+    Map<String, Object> parameters = new HashMap<String, Object>();
+    parameters.put("paramvalue", "count");
+    List<ODocument> qResult = db.command(new OCommandSQL("select from TestParamsEmbedded order by emb[:paramvalue] DESC")).execute(
+        parameters);
+    assertEquals(qResult.size(), 2);
+    Map embedded = qResult.get(0).field("emb");
+    assertEquals(embedded.get("count"), 1);
+  }
+
+  @Test
+  public void testOrderByEmbeddedParams2() {
+    // issue #4949
+    Map<String, Object> parameters = new HashMap<String, Object>();
+    parameters.put("paramvalue", "count");
+    List<ODocument> qResult = db.command(new OCommandSQL("select from TestParamsEmbedded order by emb[:paramvalue] ASC")).execute(
+        parameters);
+    assertEquals(qResult.size(), 2);
+    Map embedded = qResult.get(0).field("emb");
+    assertEquals(embedded.get("count"), 0);
+  }
+
+  @Test
+  public void testMassiveOrderAscSkipLimit() {
+    int skip = 1000;
+    OSQLSynchQuery sql = new OSQLSynchQuery("SELECT from MassiveOrderSkipLimit order by nnum asc skip " + skip + " limit 5");
+    List<ODocument> results = db.query(sql);
+    assertEquals(results.size(), 5);
+    for (int i = 0; i < results.size(); i++) {
+      ODocument doc = results.get(i);
+      assertEquals(doc.field("nnum"), skip + i);
+    }
+  }
+
+  @Test
+  public void testMassiveOrderDescSkipLimit() {
+    int skip = 1000;
+    OSQLSynchQuery sql = new OSQLSynchQuery("SELECT from MassiveOrderSkipLimit order by nnum desc skip " + skip + " limit 5");
+
+    List<ODocument> results = db.query(sql);
+    assertEquals(results.size(), 5);
+    for (int i = 0; i < results.size(); i++) {
+      ODocument doc = results.get(i);
+      assertEquals(doc.field("nnum"), ORDER_SKIP_LIMIT_ITEMS - 1 - skip - i);
+    }
   }
 
   @Test
@@ -979,13 +990,14 @@ public class OCommandExecutorSQLSelectTest {
     sql = new OSQLSynchQuery("select distinct(name) from DistinctLimit limit -1");
     results = db.query(sql);
     assertEquals(results.size(), 2);
+
   }
 
   @Test
-  public void testSelectFromClusterNumber() {
+  public void testSelectFromClusterNumber(){
     OClass clazz = db.getMetadata().getSchema().getClass("DistinctLimit");
-    int firstCluster = clazz.getClusterIds()[0];
-    OSQLSynchQuery sql = new OSQLSynchQuery("select from cluster:" + firstCluster + " limit 1");
+    int clusterId = clazz.getClusterIds()[0];
+    OSQLSynchQuery sql = new OSQLSynchQuery("select from cluster:"+clusterId+" limit 1");
     List<ODocument> results = db.query(sql);
     assertEquals(results.size(), 1);
   }

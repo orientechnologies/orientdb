@@ -19,7 +19,14 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -38,15 +45,40 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTran
  * 
  */
 public class OIndexTxAwareMultiValue extends OIndexTxAware<Set<OIdentifiable>> {
+  private static class MapEntry implements Map.Entry<Object, OIdentifiable> {
+    private final Object        key;
+    private final OIdentifiable backendValue;
+
+    public MapEntry(Object key, OIdentifiable backendValue) {
+      this.key = key;
+      this.backendValue = backendValue;
+    }
+
+    @Override
+    public Object getKey() {
+      return key;
+    }
+
+    @Override
+    public OIdentifiable getValue() {
+      return backendValue;
+    }
+
+    @Override
+    public OIdentifiable setValue(OIdentifiable value) {
+      throw new UnsupportedOperationException("setValue");
+    }
+  }
+
   private class PureTxBetweenIndexForwardCursor extends OIndexAbstractCursor {
     private final OTransactionIndexChanges indexChanges;
     private Object                         firstKey;
     private Object                         lastKey;
 
-    private Object                         nextKey;
+    private Object nextKey;
 
-    private Iterator<OIdentifiable>        valuesIterator = new OEmptyIterator<OIdentifiable>();
-    private Object                         key;
+    private Iterator<OIdentifiable> valuesIterator = new OEmptyIterator<OIdentifiable>();
+    private Object key;
 
     public PureTxBetweenIndexForwardCursor(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
         OTransactionIndexChanges indexChanges) {
@@ -120,10 +152,10 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Set<OIdentifiable>> {
     private Object                         firstKey;
     private Object                         lastKey;
 
-    private Object                         nextKey;
+    private Object nextKey;
 
-    private Iterator<OIdentifiable>        valuesIterator = new OEmptyIterator<OIdentifiable>();
-    private Object                         key;
+    private Iterator<OIdentifiable> valuesIterator = new OEmptyIterator<OIdentifiable>();
+    private Object key;
 
     public PureTxBetweenIndexBackwardCursor(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
         OTransactionIndexChanges indexChanges) {
@@ -194,17 +226,18 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Set<OIdentifiable>> {
 
   private class OIndexTxCursor extends OIndexAbstractCursor {
 
-    private final OIndexCursor               backedCursor;
-    private final boolean                    ascOrder;
-    private final OTransactionIndexChanges   indexChanges;
-    private OIndexCursor                     txBetweenIndexCursor;
+    private final OIndexCursor             backedCursor;
+    private final boolean                  ascOrder;
+    private final OTransactionIndexChanges indexChanges;
+    private       OIndexCursor             txBetweenIndexCursor;
 
     private Map.Entry<Object, OIdentifiable> nextTxEntry;
     private Map.Entry<Object, OIdentifiable> nextBackedEntry;
 
-    private boolean                          firstTime;
+    private boolean firstTime;
 
-    public OIndexTxCursor(OIndexCursor txCursor, OIndexCursor backedCursor, boolean ascOrder, OTransactionIndexChanges indexChanges) {
+    public OIndexTxCursor(OIndexCursor txCursor, OIndexCursor backedCursor, boolean ascOrder,
+        OTransactionIndexChanges indexChanges) {
       this.backedCursor = backedCursor;
       this.ascOrder = ascOrder;
       this.indexChanges = indexChanges;
@@ -381,10 +414,10 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Set<OIdentifiable>> {
       Collections.sort(sortedKeys, Collections.reverseOrder(ODefaultComparator.INSTANCE));
 
     final OIndexCursor txCursor = new OIndexAbstractCursor() {
-      private Iterator<Object>        keysIterator   = sortedKeys.iterator();
+      private Iterator<Object> keysIterator = sortedKeys.iterator();
 
       private Iterator<OIdentifiable> valuesIterator = new OEmptyIterator<OIdentifiable>();
-      private Object                  key;
+      private Object key;
 
       @Override
       public Map.Entry<Object, OIdentifiable> nextEntry() {
@@ -466,22 +499,7 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Set<OIdentifiable>> {
   }
 
   private Map.Entry<Object, OIdentifiable> createMapEntry(final Object key, final OIdentifiable backendValue) {
-    return new Map.Entry<Object, OIdentifiable>() {
-      @Override
-      public Object getKey() {
-        return key;
-      }
-
-      @Override
-      public OIdentifiable getValue() {
-        return backendValue;
-      }
-
-      @Override
-      public OIdentifiable setValue(OIdentifiable value) {
-        throw new UnsupportedOperationException("setValue");
-      }
-    };
+    return new MapEntry(key, backendValue);
   }
 
   private Set<OIdentifiable> calculateTxValue(final Object key, OTransactionIndexChanges indexChanges) {

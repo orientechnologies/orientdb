@@ -23,6 +23,7 @@ import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -30,10 +31,12 @@ import com.orientechnologies.orient.core.sql.OCommandExecutorSQLCreateIndex;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 import java.util.Collection;
+import java.util.Locale;
 import java.util.Set;
 
 public class OIndexManagerRemote extends OIndexManagerAbstract {
-  private static final String QUERY_DROP = "drop index %s";
+  private static final String QUERY_DROP       = "drop index %s";
+  private static final long   serialVersionUID = -6570577338095096235L;
 
   public OIndexManagerRemote(final ODatabaseDocument iDatabase) {
     super(iDatabase);
@@ -44,10 +47,9 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
 
     String createIndexDDL;
     if (iIndexDefinition != null)
-      createIndexDDL = iIndexDefinition.toCreateIndexDDL(iName, iType,engine);
+      createIndexDDL = iIndexDefinition.toCreateIndexDDL(iName, iType, engine);
     else
-      createIndexDDL = new OSimpleKeyIndexDefinition().toCreateIndexDDL(iName, iType,engine);
-
+      createIndexDDL = new OSimpleKeyIndexDefinition().toCreateIndexDDL(iName, iType, engine);
 
     if (metadata != null)
       createIndexDDL += " " + OCommandExecutorSQLCreateIndex.KEYWORD_METADATA + " " + metadata.toJSON();
@@ -59,14 +61,16 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
 
       getDatabase().command(new OCommandSQL(createIndexDDL)).execute();
 
-      ORecordInternal.setIdentity(document, new ORecordId(
-          ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().indexMgrRecordId));
+      ORecordInternal.setIdentity(document,
+          new ORecordId(ODatabaseRecordThreadLocal.instance().get().getStorage().getConfiguration().indexMgrRecordId));
 
       if (progressListener != null)
         progressListener.onCompletition(this, true);
 
       reload();
-      return preProcessBeforeReturn(indexes.get(iName.toLowerCase()));
+
+      final Locale locale = getServerLocale();
+      return preProcessBeforeReturn(indexes.get(iName.toLowerCase(locale)));
     } finally {
       releaseExclusiveLock();
     }
@@ -85,7 +89,8 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
       getDatabase().command(new OCommandSQL(text)).execute();
 
       // REMOVE THE INDEX LOCALLY
-      indexes.remove(iIndexName.toLowerCase());
+      final Locale locale = getServerLocale();
+      indexes.remove(iIndexName.toLowerCase(locale));
       reload();
 
       return this;
@@ -118,11 +123,11 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
   }
 
   protected OIndex<?> getRemoteIndexInstance(boolean isMultiValueIndex, String type, String name, String algorithm,
-      Set<String> clustersToIndex, OIndexDefinition indexDefinition, ODocument configuration) {
+      Set<String> clustersToIndex, OIndexDefinition indexDefinition, ORID identity, ODocument configuration) {
     if (isMultiValueIndex)
-      return new OIndexRemoteMultiValue(name, type, algorithm, indexDefinition, configuration, clustersToIndex);
+      return new OIndexRemoteMultiValue(name, type, algorithm, identity, indexDefinition, configuration, clustersToIndex);
 
-    return new OIndexRemoteOneValue(name, type, algorithm, indexDefinition, configuration, clustersToIndex);
+    return new OIndexRemoteOneValue(name, type, algorithm, identity, indexDefinition, configuration, clustersToIndex);
   }
 
   @Override
@@ -142,8 +147,9 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
                 (String) d.field(OIndexInternal.CONFIG_TYPE), d.<String> field(OIndexInternal.ALGORITHM),
                 d.<String> field(OIndexInternal.VALUE_CONTAINER_ALGORITHM));
 
-            addIndexInternal(getRemoteIndexInstance(isMultiValue, newIndexMetadata.getType(), newIndexMetadata.getName(),newIndexMetadata.getAlgorithm(),
-                newIndexMetadata.getClustersToIndex(), newIndexMetadata.getIndexDefinition(), d));
+            addIndexInternal(getRemoteIndexInstance(isMultiValue, newIndexMetadata.getType(), newIndexMetadata.getName(),
+                newIndexMetadata.getAlgorithm(), newIndexMetadata.getClustersToIndex(), newIndexMetadata.getIndexDefinition(),
+                (ORID) d.field(OIndexAbstract.CONFIG_MAP_RID), d));
           } catch (Exception e) {
             OLogManager.instance().error(this, "Error on loading of index by configuration: %s", e, d);
           }

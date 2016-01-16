@@ -2,6 +2,9 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+
 import java.util.Map;
 
 public class OBaseExpression extends OMathExpression {
@@ -34,52 +37,81 @@ public class OBaseExpression extends OMathExpression {
 
   @Override
   public String toString() {
-    StringBuilder result = new StringBuilder();
+    return super.toString();
+  }
+
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (number != null) {
-      result.append(number.toString());
+      number.toString(params, builder);
     } else if (identifier != null) {
-      result.append(identifier.toString());
+      identifier.toString(params, builder);
     } else if (string != null) {
-      result.append(string);
+      builder.append(string);
     } else if (inputParam != null) {
-      if (inputFinalValue == UNSET) {
-        result.append(inputParam.toString());
-      } else if (inputFinalValue == null) {
-        result.append("NULL");
-      } else {
-        if (inputFinalValue instanceof String) {
-          result.append("\"");
-          result.append(OExpression.encode(inputFinalValue.toString()));
-          result.append("\"");
-        } else {
-          result.append(inputFinalValue.toString());
-        }
-      }
+      inputParam.toString(params, builder);
     }
 
     if (modifier != null) {
-      result.append(modifier.toString());
+      modifier.toString(params, builder);
     }
-    return result.toString();
+
   }
 
-  public void replaceParameters(Map<Object, Object> params) {
+  public Object execute(OIdentifiable iCurrentRecord, OCommandContext ctx) {
+    Object result = null;
+    if (number != null) {
+      result = number.getValue();
+    }
     if (identifier != null) {
-      identifier.replaceParameters(params);
+      result = identifier.execute(iCurrentRecord, ctx);
     }
-    if (inputParam != null) {
-      Object result = inputParam.bindFromInputParams(params);
-      if (inputParam != result) {
-        inputFinalValue = result;
-      }
+    if (string != null && string.length() > 1) {
+      result = string.substring(1, string.length() - 1);
     }
     if (modifier != null) {
-      modifier.replaceParameters(params);
+      result = modifier.execute(iCurrentRecord, result, ctx);
     }
+    return result;
   }
 
-  @Override protected boolean supportsBasicCalculation() {
+  @Override
+  protected boolean supportsBasicCalculation() {
     return true;
+  }
+
+  @Override
+  public boolean isIndexedFunctionCall() {
+    if (this.identifier == null) {
+      return false;
+    }
+    return identifier.isIndexedFunctionCall();
+  }
+
+  public long estimateIndexedFunction(OFromClause target, OCommandContext context, OBinaryCompareOperator operator, Object right) {
+    if (this.identifier == null) {
+      return -1;
+    }
+    return identifier.estimateIndexedFunction(target, context, operator, right);
+  }
+
+  public Iterable<OIdentifiable> executeIndexedFunction(OFromClause target, OCommandContext context,
+      OBinaryCompareOperator operator, Object right) {
+    if (this.identifier == null) {
+      return null;
+    }
+    return identifier.executeIndexedFunction(target, context, operator, right);
+  }
+
+  @Override
+  public boolean isBaseIdentifier() {
+    return identifier != null && modifier == null && identifier.isBaseIdentifier();
+  }
+
+  public boolean isEarlyCalculated() {
+    if (number != null || inputParam != null || string != null) {
+      return true;
+    }
+    return false;
   }
 }
 /* JavaCC - OriginalChecksum=71b3e2d1b65c923dc7cfe11f9f449d2b (do not edit this line) */

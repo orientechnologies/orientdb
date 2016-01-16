@@ -25,29 +25,24 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
-import java.io.BufferedReader;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.List;
 
 /**
  * Created by enricorisa on 19/09/14.
  */
-@Test(groups = "embedded")
 public class LuceneSingleFieldEmbeddedTest extends BaseLuceneTest {
 
   public LuceneSingleFieldEmbeddedTest() {
     super();
+
   }
 
-  public LuceneSingleFieldEmbeddedTest(boolean remote) {
-    super();
-  }
 
   @Test
   public void loadAndTest() {
@@ -73,7 +68,7 @@ public class LuceneSingleFieldEmbeddedTest extends BaseLuceneTest {
     Assert.assertEquals(docs.size(), 1);
   }
 
-  @BeforeClass
+  @Before
   public void init() {
     initDB();
     OSchema schema = databaseDocumentTx.getMetadata().getSchema();
@@ -88,30 +83,9 @@ public class LuceneSingleFieldEmbeddedTest extends BaseLuceneTest {
 
   }
 
-  @AfterClass
+  @After
   public void deInit() {
     deInitDB();
   }
 
-  protected String getScriptFromStream(InputStream in) {
-    String script = "";
-    try {
-      BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-      StringBuilder out = new StringBuilder();
-      String line;
-      while ((line = reader.readLine()) != null) {
-        out.append(line + "\n");
-      }
-      script = out.toString();
-      reader.close();
-    } catch (Exception e) {
-
-    }
-    return script;
-  }
-
-  @Override
-  protected String getDatabaseName() {
-    return "singleField";
-  }
 }

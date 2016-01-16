@@ -58,7 +58,7 @@ public class OSQLMethodMultiValue extends OAbstractSQLMethod {
     final List<Object> list = new ArrayList<Object>();
     for (int i = 0; i < iParams.length; ++i) {
       if (OMultiValue.isMultiValue(iParams[i])) {
-        for (Object o : OMultiValue.getMultiValueIterable(iParams[i])) {
+        for (Object o : OMultiValue.getMultiValueIterable(iParams[i], false)) {
           list.add(ODocumentHelper.getFieldValue(iThis, o.toString(), iContext));
         }
       } else {

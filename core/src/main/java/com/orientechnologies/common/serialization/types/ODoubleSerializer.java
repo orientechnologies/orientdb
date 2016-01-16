@@ -20,11 +20,11 @@
 
 package com.orientechnologies.common.serialization.types;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 
+import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 /**
@@ -34,13 +34,13 @@ import java.nio.ByteOrder;
  * @since 17.01.12
  */
 public class ODoubleSerializer implements OBinarySerializer<Double> {
-  public static final byte              ID          = 6;
+  public static final  byte              ID          = 6;
   /**
    * size of double value in bytes
    */
-  public static final int               DOUBLE_SIZE = 8;
-  private static final OBinaryConverter CONVERTER   = OBinaryConverterFactory.getConverter();
-  public static ODoubleSerializer       INSTANCE    = new ODoubleSerializer();
+  public static final  int               DOUBLE_SIZE = 8;
+  private static final OBinaryConverter  CONVERTER   = OBinaryConverterFactory.getConverter();
+  public static final  ODoubleSerializer INSTANCE    = new ODoubleSerializer();
 
   public int getObjectSize(Double object, Object... hints) {
     return DOUBLE_SIZE;
@@ -84,45 +84,6 @@ public class ODoubleSerializer implements OBinarySerializer<Double> {
     return Double.longBitsToDouble(CONVERTER.getLong(stream, startPosition, ByteOrder.nativeOrder()));
   }
 
-  @Override
-  public void serializeInDirectMemoryObject(final Double object, final ODirectMemoryPointer pointer, final long offset,
-      final Object... hints) {
-    pointer.setLong(offset, Double.doubleToLongBits(object));
-  }
-
-  public void serializeInDirectMemory(final double object, final ODirectMemoryPointer pointer, final long offset,
-      final Object... hints) {
-    pointer.setLong(offset, Double.doubleToLongBits(object));
-  }
-
-  @Override
-  public Double deserializeFromDirectMemoryObject(final ODirectMemoryPointer pointer, final long offset) {
-    return Double.longBitsToDouble(pointer.getLong(offset));
-  }
-
-  @Override
-  public Double deserializeFromDirectMemoryObject(OWALChangesTree.PointerWrapper wrapper, long offset) {
-    return Double.longBitsToDouble(wrapper.getLong(offset));
-  }
-
-  public double deserializeFromDirectMemory(final ODirectMemoryPointer pointer, final long offset) {
-    return Double.longBitsToDouble(pointer.getLong(offset));
-  }
-
-  public double deserializeFromDirectMemory(OWALChangesTree.PointerWrapper wrapper, final long offset) {
-    return Double.longBitsToDouble(wrapper.getLong(offset));
-  }
-
-  @Override
-  public int getObjectSizeInDirectMemory(final ODirectMemoryPointer pointer, final long offset) {
-    return DOUBLE_SIZE;
-  }
-
-  @Override
-  public int getObjectSizeInDirectMemory(OWALChangesTree.PointerWrapper wrapper, long offset) {
-    return DOUBLE_SIZE;
-  }
-
   public boolean isFixedLength() {
     return true;
   }
@@ -134,5 +95,42 @@ public class ODoubleSerializer implements OBinarySerializer<Double> {
   @Override
   public Double preprocess(final Double value, final Object... hints) {
     return value;
+  }
+
+  @Override
+  public void serializeInByteBufferObject(Double object, ByteBuffer buffer, Object... hints) {
+    buffer.putLong(Double.doubleToLongBits(object));
+  }
+
+  @Override
+  public Double deserializeFromByteBufferObject(ByteBuffer buffer) {
+    return Double.longBitsToDouble(buffer.getLong());
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
+    return DOUBLE_SIZE;
+  }
+
+  @Override
+  public Double deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+    return Double.longBitsToDouble(walChanges.getLongValue(buffer, offset));
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+    return DOUBLE_SIZE;
+  }
+
+  public double deserializeFromByteBuffer(ByteBuffer buffer) {
+    return Double.longBitsToDouble(buffer.getLong());
+  }
+
+  public double deserializeFromByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+    return Double.longBitsToDouble(walChanges.getLongValue(buffer, offset));
+  }
+
+  public void serializeInByteBuffer(double object, ByteBuffer buffer, Object... hints) {
+    buffer.putLong(Double.doubleToLongBits(object));
   }
 }

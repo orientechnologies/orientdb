@@ -24,9 +24,17 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.StringField;
+import org.apache.lucene.index.IndexableField;
+import org.apache.lucene.index.memory.MemoryIndex;
+import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.queryparser.classic.QueryParser;
+import org.junit.After;
 import org.junit.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
+import org.junit.Before;
 
 import java.util.List;
 
@@ -35,12 +43,7 @@ import java.util.List;
  */
 public class LuceneBooleanIndex extends BaseLuceneTest {
 
-  @Override
-  protected String getDatabaseName() {
-    return "booleanTest";
-  }
-
-  @BeforeClass
+  @Before
   public void init() {
     initDB();
     OSchema schema = databaseDocumentTx.getMetadata().getSchema();
@@ -54,7 +57,7 @@ public class LuceneBooleanIndex extends BaseLuceneTest {
 
   }
 
-  @AfterClass
+  @After
   public void deInit() {
     deInitDB();
   }
@@ -77,4 +80,22 @@ public class LuceneBooleanIndex extends BaseLuceneTest {
     Assert.assertEquals(500, docs.size());
     Assert.assertEquals(true, docs.get(0).field("isDeleted"));
   }
+
+  public void testMemoryIndex() throws ParseException {
+    // TODO To be used in evaluate Record
+    MemoryIndex index = new MemoryIndex();
+
+    Document doc = new Document();
+    doc.add(new StringField("text", "my text", Field.Store.YES));
+    StandardAnalyzer analyzer = new StandardAnalyzer();
+
+    for (IndexableField field : doc.getFields()) {
+      index.addField(field.name(), field.stringValue(), analyzer);
+    }
+
+    QueryParser parser = new QueryParser("text", analyzer);
+    float score = index.search(parser.parse("+text:my"));
+
+  }
+
 }

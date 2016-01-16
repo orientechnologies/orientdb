@@ -19,13 +19,13 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import java.util.*;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-
-import java.util.*;
 
 /**
  * Distributed configuration. It uses an ODocument object to store the configuration. Every changes increment the field "version".
@@ -313,8 +313,8 @@ public class ODistributedConfiguration {
         iClusterNames = DEFAULT_CLUSTER_NAME;
 
       for (String p : iClusterNames) {
-        final String masterServer = getMasterServer(p);
-        if (iLocalNode.equals(masterServer))
+        final String leaderServer = getLeaderServer(p);
+        if (iLocalNode.equals(leaderServer))
           // FOUND: JUST USE THIS
           return p;
       }
@@ -408,25 +408,25 @@ public class ODistributedConfiguration {
   }
 
   /**
-   * Returns the master server for the given cluster excluding the passed node. Master server is the first in server list.
+   * Returns the leader server for the given cluster excluding the passed node. The Leader server is the first in server list.
    *
    * @param iClusterName
    *          Cluster name, or null for *
    */
-  public String getMasterServer(final String iClusterName) {
+  public String getLeaderServer(final String iClusterName) {
     synchronized (configuration) {
-      String master = null;
+      String leader = null;
 
       final List<String> serverList = getClusterConfiguration(iClusterName).field("servers");
       if (serverList != null && !serverList.isEmpty()) {
         // RETURN THE FIRST ONE
-        master = serverList.get(0);
-        if (NEW_NODE_TAG.equals(master) && serverList.size() > 1)
+        leader = serverList.get(0);
+        if (NEW_NODE_TAG.equals(leader) && serverList.size() > 1)
           // DON'T RETURN <NEW_NODE>
-          master = serverList.get(1);
+          leader = serverList.get(1);
       }
 
-      return master;
+      return leader;
     }
   }
 

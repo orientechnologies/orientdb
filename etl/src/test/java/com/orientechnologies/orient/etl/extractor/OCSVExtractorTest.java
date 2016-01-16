@@ -258,6 +258,17 @@ public class OCSVExtractorTest extends ETLBaseTest {
   }
 
   @Test
+  public void testCustomNullValueInCell() {
+    String cfgJson = "{source: { content: { value: 'id,postId,text\n1,?,Hello'} }, extractor : { csv : {nullValue: \"?\"} },  loader : { test: {} } }";
+    process(cfgJson);
+    List<ODocument> res = getResult();
+    ODocument doc = res.get(0);
+    assertEquals(new Integer(1), (Integer) doc.field("id"));
+    assertNull(doc.field("postId"));
+    assertEquals("Hello", (String) doc.field("text"));
+  }
+
+  @Test
   public void testNullValueInCellEmptyString() {
     String cfgJson = "{source: { content: { value: 'id,title,text\n1,\"\",Hello'} }, extractor : { csv: {} },  loader : { test: {} } }";
     process(cfgJson);

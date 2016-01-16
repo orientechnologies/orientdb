@@ -19,12 +19,6 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -34,7 +28,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.sql.OCommandExecutorSQLRetryAbstract;
+import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSetAware;
 import com.orientechnologies.orient.core.sql.OCommandParameters;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
@@ -43,15 +37,20 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * SQL CREATE EDGE command.
  * 
  * @author Luca Garulli
  */
-public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstract implements OCommandDistributedReplicateRequest {
+public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware implements OCommandDistributedReplicateRequest {
   public static final String  NAME          = "CREATE EDGE";
   private static final String KEYWORD_BATCH = "BATCH";
 
@@ -104,9 +103,6 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstr
         } else if (temp.equals(KEYWORD_CONTENT)) {
           parseContent();
 
-        } else if (temp.equals(KEYWORD_RETRY)) {
-          parseRetry();
-
         } else if (temp.equals(KEYWORD_BATCH)) {
           temp = parserNextWord(true);
           if (temp != null)
@@ -154,6 +150,7 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstr
     return OGraphCommandExecutorSQLFactory.runInConfiguredTxMode(new OGraphCommandExecutorSQLFactory.GraphCallBack<List<Object>>() {
       @Override
       public List<Object> call(OrientBaseGraph graph) {
+
         final Set<OIdentifiable> fromIds = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), from, context, iArgs);
         final Set<OIdentifiable> toIds = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), to, context, iArgs);
 
@@ -172,8 +169,6 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstr
               toVertex = graph.getVertex(to);
             }
 
-            final String clsName = clazz.getName();
-
             if (fields != null)
               // EVALUATE FIELDS
               for (final OPair<String, Object> f : fields) {
@@ -182,6 +177,7 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstr
               }
 
             OrientEdge edge = null;
+
             if (content != null) {
               if (fields != null)
                 // MERGE CONTENT WITH FIELDS
@@ -205,7 +201,7 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstr
 
             if (batch > 0 && edges.size() % batch == 0) {
               graph.commit();
-              ((OrientGraph) graph).begin();
+              graph.begin();
             }
           }
         }

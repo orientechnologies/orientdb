@@ -22,28 +22,14 @@ public class OParenthesisExpression extends OMathExpression {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public String toString() {
-    StringBuilder result = new StringBuilder();
-    result.append("(");
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("(");
     if (expression != null) {
-      result.append(expression.toString());
+      expression.toString(params, builder);
     } else if (statement != null) {
-      result.append(statement.toString());
+      statement.toString(params, builder);
     }
-    result.append(")");
-    return result.toString();
-  }
-
-  @Override
-  public void replaceParameters(Map<Object, Object> params) {
-    super.replaceParameters(params);
-    if (expression != null) {
-      expression.replaceParameters(params);
-    }
-    if (statement != null) {
-      statement.replaceParameters(params);
-    }
+    builder.append(")");
   }
 
   @Override
@@ -52,6 +38,12 @@ public class OParenthesisExpression extends OMathExpression {
       return expression.supportsBasicCalculation();
     }
     return true;
+  }
+
+  @Override
+  public boolean isEarlyCalculated() {
+    // TODO implement query execution and early calculation;
+    return expression != null && expression.isEarlyCalculated();
   }
 }
 /* JavaCC - OriginalChecksum=4656e5faf4f54dc3fc45a06d8e375c35 (do not edit this line) */

@@ -19,6 +19,13 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
@@ -36,20 +43,12 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
-import com.orientechnologies.orient.core.version.OSimpleVersion;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
 
 /**
  * Distributed transaction task.
@@ -58,11 +57,11 @@ import java.util.List;
  *
  */
 public class OTxTask extends OAbstractReplicatedTask {
-  private static final long                   serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-  private List<OAbstractRecordReplicatedTask> tasks            = new ArrayList<OAbstractRecordReplicatedTask>();
+  private List<OAbstractRecordReplicatedTask> tasks      = new ArrayList<OAbstractRecordReplicatedTask>();
   private transient OTxTaskResult             result;
-  private transient boolean                   lockRecord       = true;
+  private transient boolean                   lockRecord = true;
 
   public OTxTask() {
   }
@@ -78,7 +77,7 @@ public class OTxTask extends OAbstractReplicatedTask {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
         "committing transaction against db=%s...", database.getName());
 
-    ODatabaseRecordThreadLocal.INSTANCE.set(database);
+    ODatabaseRecordThreadLocal.instance().set(database);
 
     try {
       database.begin();
@@ -93,8 +92,8 @@ public class OTxTask extends OAbstractReplicatedTask {
         for (OAbstractRecordReplicatedTask task : tasks) {
           if (task instanceof OCreateRecordTask) {
             final OCreateRecordTask createRT = (OCreateRecordTask) task;
-            final int clId = createRT.clusterId > -1 ? createRT.clusterId : createRT.getRid().isValid() ? createRT.getRid()
-                .getClusterId() : -1;
+            final int clId = createRT.clusterId > -1 ? createRT.clusterId
+                : createRT.getRid().isValid() ? createRT.getRid().getClusterId() : -1;
             final String clusterName = clId > -1 ? database.getClusterNameById(clId) : null;
             tx.addRecord(createRT.getRecord(), ORecordOperation.CREATED, clusterName);
           } else {
@@ -130,6 +129,13 @@ public class OTxTask extends OAbstractReplicatedTask {
 
         database.commit();
 
+        for (int i = 0; i < result.results.size(); i++) {
+          Object res = result.results.get(i);
+          if (res instanceof OUpdateRecordTask.VersionPlaceholder) {
+            result.results.set(i, ((OUpdateRecordTask.VersionPlaceholder) res).getVersion());
+          }
+        }
+
         // SEND BACK CHANGED VALUE TO UPDATE
         for (int i = 0; i < result.results.size(); ++i) {
           final Object o = result.results.get(i);
@@ -141,8 +147,8 @@ public class OTxTask extends OAbstractReplicatedTask {
             result.results.set(i, new OPlaceholder(t.getRecord()));
           } else if (task instanceof OUpdateRecordTask) {
             // SEND VERSION
-            if (((OSimpleVersion) o).getCounter() < 0) {
-              result.results.set(i, task.getRid().getRecord().reload().getRecordVersion());
+            if (((Integer) o) < 0) {
+              result.results.set(i, task.getRid().getRecord().reload().getVersion());
             } else
               result.results.set(i, o);
           }

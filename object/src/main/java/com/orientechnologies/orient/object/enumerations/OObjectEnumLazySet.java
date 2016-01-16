@@ -154,7 +154,7 @@ public class OObjectEnumLazySet<TYPE extends Enum> extends HashSet<TYPE> impleme
     convertAll();
   }
 
-  public void detachAll(boolean nonProxiedInstance, Map<Object, Object> alreadyDetached) {
+  public void detachAll(boolean nonProxiedInstance, Map<Object, Object> alreadyDetached, Map<Object, Object> lazyObjects) {
     convertAll();
   }
 

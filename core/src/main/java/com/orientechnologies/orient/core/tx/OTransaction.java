@@ -31,36 +31,35 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.version.ORecordVersion;
 
 import java.util.HashMap;
 import java.util.List;
 
 public interface OTransaction {
-  public enum TXTYPE {
+  enum TXTYPE {
     NOTX, OPTIMISTIC, PESSIMISTIC
   }
 
-  public enum TXSTATUS {
+  enum TXSTATUS {
     INVALID, BEGUN, COMMITTING, ROLLBACKING, COMPLETED, ROLLED_BACK
   }
 
-  public enum ISOLATION_LEVEL {
+  enum ISOLATION_LEVEL {
     READ_COMMITTED, REPEATABLE_READ
   }
 
-  public void begin();
+  void begin();
 
-  public void commit();
+  void commit();
 
-  public void commit(boolean force);
+  void commit(boolean force);
 
-  public void rollback();
+  void rollback();
 
   /**
    * Returns the current isolation level.
    */
-  public ISOLATION_LEVEL getIsolationLevel();
+  ISOLATION_LEVEL getIsolationLevel();
 
   /**
    * Changes the isolation level. Default is READ_COMMITTED. When REPEATABLE_READ is set, any record read from the storage is cached
@@ -70,21 +69,21 @@ public interface OTransaction {
    *          Isolation level to set
    * @return Current object to allow call in chain
    */
-  public OTransaction setIsolationLevel(ISOLATION_LEVEL iIsolationLevel);
+  OTransaction setIsolationLevel(ISOLATION_LEVEL iIsolationLevel);
 
-  public void rollback(boolean force, int commitLevelDiff);
+  void rollback(boolean force, int commitLevelDiff);
 
-  public ODatabaseDocument getDatabase();
+  ODatabaseDocument getDatabase();
 
-  public void clearRecordEntries();
+  void clearRecordEntries();
 
   @Deprecated
   ORecord loadRecord(ORID iRid, ORecord iRecord, String iFetchPlan, boolean ignoreCache, boolean loadTombstone,
       final OStorage.LOCKING_STRATEGY iLockingStrategy);
 
   @Deprecated
-  ORecord loadRecord(ORID iRid, ORecord iRecord, String iFetchPlan, boolean ignoreCache, boolean iUpdateCache, boolean loadTombstone,
-                      final OStorage.LOCKING_STRATEGY iLockingStrategy);
+  ORecord loadRecord(ORID iRid, ORecord iRecord, String iFetchPlan, boolean ignoreCache, boolean iUpdateCache,
+      boolean loadTombstone, final OStorage.LOCKING_STRATEGY iLockingStrategy);
 
   ORecord loadRecord(ORID iRid, ORecord iRecord, String iFetchPlan, boolean ignoreCache);
 
@@ -92,11 +91,11 @@ public interface OTransaction {
 
   ORecord reloadRecord(ORID iRid, ORecord iRecord, String iFetchPlan, boolean ignoreCache, boolean force);
 
-  ORecord loadRecordIfVersionIsNotLatest(ORID rid, ORecordVersion recordVersion, String fetchPlan, boolean ignoreCache)
+  ORecord loadRecordIfVersionIsNotLatest(ORID rid, int recordVersion, String fetchPlan, boolean ignoreCache)
       throws ORecordNotFoundException;
 
   ORecord saveRecord(ORecord iRecord, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
-      ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback);
+      ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<Integer> iRecordUpdatedCallback);
 
   void deleteRecord(ORecord iRecord, OPERATION_MODE iMode);
 
@@ -104,6 +103,7 @@ public interface OTransaction {
 
   TXSTATUS getStatus();
 
+  @Deprecated
   Iterable<? extends ORecordOperation> getCurrentRecordEntries();
 
   Iterable<? extends ORecordOperation> getAllRecordEntries();
@@ -123,6 +123,7 @@ public interface OTransaction {
   void addIndexEntry(OIndex<?> delegate, final String iIndexName, final OTransactionIndexChanges.OPERATION iStatus,
       final Object iKey, final OIdentifiable iValue);
 
+  @Deprecated
   void clearIndexEntries();
 
   OTransactionIndexChanges getIndexChanges(String iName);
@@ -135,6 +136,10 @@ public interface OTransaction {
   boolean isActive();
 
   boolean isUsingLog();
+
+  void setCustomData(String iName, Object iValue);
+
+  Object getCustomData(String iName);
 
   /**
    * If you set this flag to false, you are unable to

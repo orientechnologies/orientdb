@@ -22,7 +22,10 @@ package com.orientechnologies.orient.core.metadata.function;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 
 /**
  * Update the in-memory function library.
@@ -31,13 +34,24 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 public class OFunctionTrigger extends ODocumentHookAbstract {
 
+  public static final String CLASSNAME = "OFunction";
+
   public OFunctionTrigger(ODatabaseDocument database) {
     super(database);
-    setIncludeClasses("OFunction");
   }
 
   public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
     return DISTRIBUTED_EXECUTION_MODE.TARGET_NODE;
+  }
+
+  @Override
+  public RESULT onTrigger(TYPE iType, ORecord iRecord) {
+    OImmutableClass clazz = null;
+    if (iRecord instanceof ODocument)
+      clazz = ODocumentInternal.getImmutableSchemaClass((ODocument) iRecord);
+    if (clazz == null || !clazz.isFunction())
+      return RESULT.RECORD_NOT_CHANGED;
+    return super.onTrigger(iType, iRecord);
   }
 
   @Override

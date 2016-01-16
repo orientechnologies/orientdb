@@ -48,22 +48,12 @@
         <handler class="com.orientechnologies.orient.server.handler.OAutomaticBackup">
             <parameters>
                 <parameter name="enabled" value="false"/>
-                <parameter name="delay" value="4h"/>
-                <parameter name="firstTime" value="23:00:00"/>
-                <parameter name="target.directory" value="backup"/>
-                <parameter name="target.fileName" value="${DBNAME}-${DATE:yyyyMMddHHmmss}.zip"/>
-                <parameter name="compressionLevel" value="9"/>
-                <parameter name="bufferSize" value="1048576"/>
-                <!--${DBNAME} AND ${DATE:} VARIABLES ARE SUPPORTED -->
-                <parameter name="db.include" value=""/>
-                <!-- DEFAULT: NO ONE, THAT MEANS ALL DATABASES. USE COMMA TO SEPARATE MULTIPLE DATABASE NAMES -->
-                <parameter name="db.exclude" value=""/>
-                <!-- USE COMMA TO SEPARATE MULTIPLE DATABASE NAMES -->
+                <!-- LOCATION OF JSON CONFIGURATION FILE -->
+                <parameter name="config" value="${ORIENTDB_HOME}/config/automatic-backup.json"/>
             </parameters>
         </handler>
-        <!-- SERVER SIDE SCRIPT INTERPRETER. WARNING! THIS CAN BE A SECURITY HOLE:
-            ENABLE IT ONLY IF CLIENTS ARE TRUCT, TO TURN ON SET THE 'ENABLED' PARAMETER
-            TO 'true' -->
+        <!-- SERVER SIDE SCRIPT INTERPRETER. WARNING, THIS CAN BE A SECURITY HOLE BECAUSE MALICIOUS CODE COULD BE INJECTED.
+            ENABLE IT ONLY IF CLIENTS ARE TRUSTED, TO TURN ON SET THE 'ENABLED' PARAMETER TO 'true' -->
         <handler
                 class="com.orientechnologies.orient.server.handler.OServerSideScriptInterpreter">
             <parameters>
@@ -90,7 +80,6 @@
                 <parameter name="enabled" value="false"/>
             </parameters>
         </handler>
-
 
     </handlers>
     <network>
@@ -124,7 +113,6 @@
         </protocols>
         <listeners>
             <listener protocol="binary" ip-address="0.0.0.0" port-range="2424-2430" socket="default"/>
-            <!-- <listener protocol="binary" ip-address="0.0.0.0" port-range="2434-2440" socket="ssl"/> -->
             <listener protocol="http" ip-address="0.0.0.0" port-range="2480-2490" socket="default">
                 <parameters>
                     <!-- Connection's custom parameters. If not specified the global configuration
@@ -167,10 +155,5 @@
         <!-- PROFILER: configures the profiler as <seconds-for-snapshot>,<archive-snapshot-size>,<summary-size> -->
         <entry name="profiler.enabled" value="true"/>
         <!-- <entry name="profiler.config" value="30,10,10" /> -->
-
-        <!-- LOG: enable/Disable logging. Levels are: finer, fine, finest, info,
-            warning -->
-        <entry name="log.console.level" value="info"/>
-        <entry name="log.file.level" value="fine"/>
     </properties>
 </orient-server>

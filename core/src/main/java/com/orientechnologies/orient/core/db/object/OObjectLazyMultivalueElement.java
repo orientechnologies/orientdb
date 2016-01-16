@@ -26,7 +26,7 @@ public interface OObjectLazyMultivalueElement<T> {
 
   public void detach(boolean nonProxiedInstance);
 
-  public void detachAll(boolean nonProxiedInstance, Map<Object, Object> alreadyDetached);
+  public void detachAll(boolean nonProxiedInstance, Map<Object, Object> alreadyDetached, Map<Object, Object> lazyObjects);
 
   public T getNonOrientInstance();
 

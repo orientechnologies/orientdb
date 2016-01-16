@@ -21,26 +21,25 @@
 package com.orientechnologies.orient.core.storage;
 
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.version.ORecordVersion;
 
 /**
  * @author Andrey Lomakin
  * @since 18.12.12
  */
 public final class ORecordMetadata {
-	private final ORID recordId;
-	private final ORecordVersion recordVersion;
+  private final ORID recordId;
+  private final int  recordVersion;
 
-	public ORecordMetadata(ORID recordId, ORecordVersion recordVersion) {
-		this.recordId = recordId;
-		this.recordVersion = recordVersion;
-	}
+  public ORecordMetadata(ORID recordId, int recordVersion) {
+    this.recordId = recordId;
+    this.recordVersion = recordVersion;
+  }
 
-	public ORID getRecordId() {
-		return recordId;
-	}
+  public ORID getRecordId() {
+    return recordId;
+  }
 
-	public ORecordVersion getRecordVersion() {
-		return recordVersion;
-	}
+  public int getVersion() {
+    return recordVersion;
+  }
 }

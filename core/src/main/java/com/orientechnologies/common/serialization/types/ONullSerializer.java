@@ -20,8 +20,9 @@
 
 package com.orientechnologies.common.serialization.types;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
+
+import java.nio.ByteBuffer;
 
 /**
  * Serializes and deserializes null values.
@@ -31,7 +32,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALCh
 public class ONullSerializer implements OBinarySerializer<Object> {
 
   public static final byte      ID       = 11;
-  public static ONullSerializer INSTANCE = new ONullSerializer();
+  public static final  ONullSerializer INSTANCE = new ONullSerializer();
 
   public int getObjectSize(final Object object, Object... hints) {
     return 0;
@@ -65,30 +66,6 @@ public class ONullSerializer implements OBinarySerializer<Object> {
     return null;
   }
 
-  @Override
-  public void serializeInDirectMemoryObject(Object object, ODirectMemoryPointer pointer, long offset, Object... hints) {
-  }
-
-  @Override
-  public Object deserializeFromDirectMemoryObject(ODirectMemoryPointer pointer, long offset) {
-    return null;
-  }
-
-  @Override
-  public Object deserializeFromDirectMemoryObject(OWALChangesTree.PointerWrapper wrapper, long offset) {
-    return null;
-  }
-
-  @Override
-  public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
-    return 0;
-  }
-
-  @Override
-  public int getObjectSizeInDirectMemory(OWALChangesTree.PointerWrapper wrapper, long offset) {
-    return 0;
-  }
-
   public boolean isFixedLength() {
     return true;
   }
@@ -100,5 +77,29 @@ public class ONullSerializer implements OBinarySerializer<Object> {
   @Override
   public Object preprocess(Object value, Object... hints) {
     return null;
+  }
+
+  @Override
+  public void serializeInByteBufferObject(Object object, ByteBuffer buffer, Object... hints) {
+  }
+
+  @Override
+  public Object deserializeFromByteBufferObject(ByteBuffer buffer) {
+    return null;
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
+    return 0;
+  }
+
+  @Override
+  public Object deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+    return null;
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+    return 0;
   }
 }

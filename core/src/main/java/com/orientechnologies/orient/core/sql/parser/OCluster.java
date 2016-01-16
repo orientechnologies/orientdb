@@ -2,8 +2,10 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import java.util.Map;
+
 public class OCluster extends SimpleNode {
-  protected String  clusterName;
+  protected String clusterName;
   protected Integer clusterNumber;
 
   public OCluster(int id) {
@@ -24,9 +26,12 @@ public class OCluster extends SimpleNode {
     return super.toString(prefix);
   }
 
-  @Override
-  public String toString() {
-    return clusterName != null ? "cluster:" + clusterName : "cluster:" + clusterNumber;
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    if(clusterName!=null) {
+      builder.append("cluster:" + clusterName);
+    }else{
+      builder.append("cluster:" + clusterNumber);
+    }
   }
 }
 /* JavaCC - OriginalChecksum=d27abf009fe7db482fbcaac9d52ba192 (do not edit this line) */

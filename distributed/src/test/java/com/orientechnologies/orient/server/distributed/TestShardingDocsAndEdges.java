@@ -30,7 +30,7 @@ public class TestShardingDocsAndEdges extends AbstractServerClusterTest {
 
   @Override
   protected String getDatabaseName() {
-    return "sharding2";
+    return "TestShardingDocsAndEdges";
   }
 
   @Override
@@ -44,7 +44,7 @@ public class TestShardingDocsAndEdges extends AbstractServerClusterTest {
     db.command(new OCommandSQL("ALTER DATABASE MINIMUMCLUSTERS 2")).execute();
     db.command(new OCommandSQL("create class User extends V")).execute();
     db.command(new OCommandSQL("create property User.name string")).execute();
-    db.command(new OCommandSQL("alter cluster user_0 name user_usa")).execute();
+    db.command(new OCommandSQL("alter cluster user name user_usa")).execute();
     db.command(new OCommandSQL("alter cluster user_1 name user_eur")).execute();
     db.command(new OCommandSQL("create class Follows extends E")).execute();
   }
@@ -111,7 +111,8 @@ public class TestShardingDocsAndEdges extends AbstractServerClusterTest {
     compare(queryResult, new String[] { "mike", "phoebe" });
 
     // LINE A
-    execute(USA, "create edge Follows from (select from User where name = 'mike') to (select from User where name = 'phoebe')");
+    execute(USA,
+        "create edge Follows " + "from (select from User where name = 'mike') " + "to (select from User where name = 'phoebe')");
 
     // ...
   }
@@ -129,7 +130,6 @@ public class TestShardingDocsAndEdges extends AbstractServerClusterTest {
         }
       }
     } finally {
-      db.activateOnCurrentThread();
       db.close();
     }
     return resultSet;

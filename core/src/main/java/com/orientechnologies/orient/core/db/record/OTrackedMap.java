@@ -93,6 +93,8 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
   private void addOwnerToEmbeddedDoc(T e) {
     if (embeddedCollection && e instanceof ODocument && !((ODocument) e).getIdentity().isValid())
       ODocumentInternal.addOwner((ODocument) e, this);
+    if (e instanceof ODocument)
+      ORecordInternal.track(sourceRecord, (ODocument) e);
   }
 
   @Override
@@ -119,7 +121,7 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
       origValues = new HashMap<Object, T>(this);
 
     if (origValues == null) {
-      for (T value : values())
+      for (T value : super.values())
         if (value instanceof ODocument) {
           ODocumentInternal.removeOwner((ODocument) value, this);
         }

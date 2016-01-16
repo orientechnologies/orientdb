@@ -44,7 +44,7 @@ public class TestOrientBulkInsert {
 
     OSchema schema = database.getMetadata().getSchema();
 
-    OClass cBulk = schema.createClass("classBulk", database.addCluster("cluster_bulk"));
+    OClass cBulk = schema.createClass("classBulk", 1, null);
 
     // Declare some fields
     for (int i = 1; i < 10; i++) {

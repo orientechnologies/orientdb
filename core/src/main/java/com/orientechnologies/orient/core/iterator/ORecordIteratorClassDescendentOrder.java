@@ -40,6 +40,7 @@ public class ORecordIteratorClassDescendentOrder<REC extends ORecord> extends OR
     super(iDatabase, iLowLevelDatabase, iClassName, iPolymorphic, iterateThroughTombstones, iLockingStrategy);
 
     currentClusterIdx = clusterIds.length - 1; // START FROM THE LAST CLUSTER
+    updateClusterRange();
   }
 
   @Override

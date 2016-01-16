@@ -19,9 +19,23 @@
  */
 package com.orientechnologies.orient.server.network.protocol.binary;
 
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
+import java.net.SocketException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.UUID;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -30,14 +44,14 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.ONullSerializer;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.client.remote.OCollectionNetworkSerializer;
-import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.cache.OCommandCache;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -48,7 +62,6 @@ import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
-import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OTransactionAbortedException;
 import com.orientechnologies.orient.core.fetch.OFetchContext;
@@ -74,40 +87,30 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
+import com.orientechnologies.orient.core.sql.query.OConcurrentResultSet;
+import com.orientechnologies.orient.core.sql.query.OResultSet;
+import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
-import com.orientechnologies.orient.core.storage.impl.memory.ODirectMemoryStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
-import com.orientechnologies.orient.core.version.ORecordVersion;
-import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryServer;
+import com.orientechnologies.orient.enterprise.channel.binary.OTokenSecurityException;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.OServerInfo;
 import com.orientechnologies.orient.server.ShutdownHelper;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
-import com.orientechnologies.orient.server.security.OSecurityServerUser;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
-
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.net.Socket;
-import java.net.SocketException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.UUID;
 
 public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected OClientConnection connection;
@@ -160,66 +163,13 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected void onBeforeRequest() throws IOException {
     waitNodeIsOnline();
 
-    if (Boolean.FALSE.equals(tokenBased) || requestType == OChannelBinaryProtocol.REQUEST_CONNECT
-        || requestType == OChannelBinaryProtocol.REQUEST_DB_OPEN || (tokenHandler == null)) {
-      connection = server.getClientConnectionManager().getConnection(clientTxId, this);
-      if (clientTxId < 0) {
-        short protocolId = 0;
-
-        if (connection != null)
-          protocolId = connection.data.protocolVersion;
-
-        connection = server.getClientConnectionManager().connect(this);
-
-        if (connection != null)
-          connection.data.protocolVersion = protocolId;
-      }
+    if (Boolean.FALSE.equals(tokenBased)) {
+      solveSimpleSession();
     } else {
-      if (requestType != OChannelBinaryProtocol.REQUEST_CONNECT && requestType != OChannelBinaryProtocol.REQUEST_DB_OPEN) {
-        byte[] tokenBytes = channel.readBytes();
-        try {
-          this.token = tokenHandler.parseBinaryToken(tokenBytes);
-        } catch (Exception e) {
-          throw new OException("error on token parse", e);
-        }
-        if (this.token == null || !this.token.getIsVerified()) {
-          throw new OSecurityException("The token provided is not a valid token, signature doesn't match");
-        }
-
-        if (tokenBased == null)
-          tokenBased = Boolean.TRUE;
-        if (token != null) {
-          if (!tokenHandler.validateBinaryToken(token)) {
-            throw new OSecurityException("The token provided is expired");
-          }
-          connection = new OClientConnection(clientTxId, this);
-          if (tokenHandler != null) {
-            final ONetworkProtocolData data = tokenHandler.getProtocolDataFromToken(token);
-            if (data != null)
-              connection.data = data;
-          }
-          String db = token.getDatabase();
-          String type = token.getDatabaseType();
-          if (db != null && type != null) {
-            final ODatabaseDocumentTx database = new ODatabaseDocumentTx(type + ":" + db);
-            if (connection.data.serverUser) {
-              database.resetInitialization();
-              database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSecurityServerUser.class);
-              database.open(connection.data.serverUsername, null);
-            } else
-              database.open(token);
-            connection.database = database;
-          }
-          if (connection.data.serverUser) {
-            connection.serverUser = server.getUser(connection.data.serverUsername);
-          }
-        }
-      }
+      solveTokenSession();
     }
 
     if (connection != null) {
-      connection.acquire();
-
       if (connection.database != null) {
         connection.database.activateOnCurrentThread();
         connection.data.lastDatabase = connection.database.getName();
@@ -234,7 +184,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       connection.data.commandDetail = "-";
       connection.data.lastCommandReceived = System.currentTimeMillis();
     } else {
-      ODatabaseRecordThreadLocal.INSTANCE.remove();
+      ODatabaseRecordThreadLocal.instance().remove();
       if (requestType != OChannelBinaryProtocol.REQUEST_DB_CLOSE && requestType != OChannelBinaryProtocol.REQUEST_SHUTDOWN) {
         OLogManager.instance().debug(this, "Found unknown session %d, shutdown current connection", clientTxId);
         shutdown();
@@ -245,20 +195,119 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     OServerPluginHelper.invokeHandlerCallbackOnBeforeClientRequest(server, connection, (byte) requestType);
   }
 
+  private void solveTokenSession() throws IOException {
+    if (requestType == OChannelBinaryProtocol.REQUEST_CONNECT || requestType == OChannelBinaryProtocol.REQUEST_DB_OPEN
+        || requestType == OChannelBinaryProtocol.REQUEST_SHUTDOWN) {
+      connection = server.getClientConnectionManager().getConnection(clientTxId, this);
+      if (clientTxId < 0) {
+        short protocolId = 0;
+
+        if (connection != null)
+          protocolId = connection.data.protocolVersion;
+
+        connection = server.getClientConnectionManager().connect(this);
+
+        if (connection != null) {
+          connection.data.protocolVersion = protocolId;
+          connection.data.sessionId = clientTxId;
+        }
+      }
+      this.tokenBytes = null;
+      if (connection != null)
+        connection.acquire();
+    } else {
+      byte[] bytes = channel.readBytes();
+
+      connection = server.getClientConnectionManager().getConnection(clientTxId, this);
+      if (connection != null && requestType != OChannelBinaryProtocol.REQUEST_DB_REOPEN)
+        connection.acquire();
+      if (tokenBytes == null || tokenBytes.length == 0 || !Arrays.equals(bytes, tokenBytes) || connection == null
+          || connection.database == null) {
+        this.tokenBytes = bytes;
+
+        try {
+          if (tokenBytes != null)
+            this.token = tokenHandler.parseBinaryToken(tokenBytes);
+        } catch (Exception e) {
+          throw OException.wrapException(new OSystemException("error on token parse"), e);
+        }
+        if (this.token == null || !this.token.getIsVerified()) {
+          throw new OTokenSecurityException("The token provided is not a valid token, signature does not match");
+        }
+
+        if (tokenBased == null) {
+          tokenBased = Boolean.TRUE;
+        }
+        if (token != null) {
+          if (!tokenHandler.validateBinaryToken(token)) {
+            throw new OTokenSecurityException("The token provided is expired");
+          }
+          if (connection != null && connection.database != null && !connection.database.isClosed()) {
+            connection.database.activateOnCurrentThread();
+            connection.database.close();
+          }
+          if (connection != null)
+            connection.database = null;
+
+          if (requestType == OChannelBinaryProtocol.REQUEST_DB_REOPEN) {
+            server.getClientConnectionManager().disconnect(clientTxId);
+            connection = server.getClientConnectionManager().reConnect(this, tokenBytes, token);
+            connection.acquire();
+          }
+
+          if (connection != null) {
+            if (requestType != OChannelBinaryProtocol.REQUEST_DB_CLOSE && connection.database == null) {
+              final ONetworkProtocolData data = tokenHandler.getProtocolDataFromToken(token);
+              if (data != null)
+                connection.data = data;
+
+              final String db = token.getDatabase();
+              final String type = token.getDatabaseType();
+              if (db != null && type != null) {
+                if (connection.data.serverUser) {
+                  connection.database = (ODatabaseDocumentTx) server.openDatabase(type + ":" + db, token.getUserName(), null,
+                      connection.data, true);
+                } else
+                  connection.database = (ODatabaseDocumentTx) server.openDatabase(type + ":" + db, token);
+              }
+            }
+            if (connection.data.serverUser) {
+              connection.serverUser = server.getUser(connection.data.serverUsername);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  private void solveSimpleSession() throws IOException {
+    connection = server.getClientConnectionManager().getConnection(clientTxId, this);
+    if (clientTxId < 0) {
+      short protocolId = 0;
+
+      if (connection != null)
+        protocolId = connection.data.protocolVersion;
+
+      connection = server.getClientConnectionManager().connect(this);
+
+      if (connection != null) {
+        connection.data.protocolVersion = protocolId;
+        connection.data.sessionId = clientTxId;
+      }
+    }
+    this.tokenBytes = null;
+    if (connection != null)
+      connection.acquire();
+  }
+
   @Override
   protected void onAfterRequest() throws IOException {
     OServerPluginHelper.invokeHandlerCallbackOnAfterClientRequest(server, connection, (byte) requestType);
 
     if (connection != null) {
-      if (!Boolean.TRUE.equals(tokenBased)) {
-        if (connection.database != null)
-          if (!connection.database.isClosed() && connection.database.getLocalCache() != null)
-            connection.database.getLocalCache().clear();
-      } else {
-        if (connection.database != null && !connection.database.isClosed())
-          connection.database.close();
-        connection.database = null;
-      }
+      if (connection.database != null)
+        if (!connection.database.isClosed() && connection.database.getLocalCache() != null)
+          connection.database.getLocalCache().clear();
 
       connection.data.lastCommandExecutionTime = System.currentTimeMillis() - connection.data.lastCommandReceived;
       connection.data.totalCommandExecutionTime += connection.data.lastCommandExecutionTime;
@@ -289,8 +338,16 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         listDatabases();
         break;
 
+      case OChannelBinaryProtocol.REQUEST_SERVER_INFO:
+        serverInfo();
+        break;
+
       case OChannelBinaryProtocol.REQUEST_DB_OPEN:
         openDatabase();
+        break;
+
+      case OChannelBinaryProtocol.REQUEST_DB_REOPEN:
+        reopenDatabase();
         break;
 
       case OChannelBinaryProtocol.REQUEST_DB_RELOAD:
@@ -424,14 +481,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         releaseDatabase();
         break;
 
-      case OChannelBinaryProtocol.REQUEST_DATACLUSTER_FREEZE:
-        freezeCluster();
-        break;
-
-      case OChannelBinaryProtocol.REQUEST_DATACLUSTER_RELEASE:
-        releaseCluster();
-        break;
-
       case OChannelBinaryProtocol.REQUEST_RECORD_CLEAN_OUT:
         cleanOutRecord();
         break;
@@ -455,15 +504,15 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       case OChannelBinaryProtocol.REQUEST_RIDBAG_GET_SIZE:
         ridBagSize();
         break;
-      case OChannelBinaryProtocol.REQUEST_INDEX_GET:
-        indexGet();
+
+      case OChannelBinaryProtocol.REQUEST_INCREMENTAL_BACKUP:
+        incrementalBackup();
         break;
-      case OChannelBinaryProtocol.REQUEST_INDEX_PUT:
-        indexPut();
+
+      case OChannelBinaryProtocol.REQUEST_INCREMENTAL_RESTORE:
+        incrementalRestore();
         break;
-      case OChannelBinaryProtocol.REQUEST_INDEX_REMOVE:
-        indexRemove();
-        break;
+
       default:
         setDataCommandInfo("Command not supported");
         return false;
@@ -481,6 +530,17 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     }
   }
 
+  private void reopenDatabase() throws IOException {
+    // TODO:REASSOCIATE CONNECTION TO CLIENT.
+    beginResponse();
+    try {
+      sendOk(clientTxId);
+      channel.writeInt(connection.id);
+    } finally {
+      endResponse();
+    }
+  }
+
   private void indexPut() throws IOException {
     setDataCommandInfo("Put an entry in an index");
 
@@ -492,7 +552,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     final OIndex<?> index = connection.database.getMetadata().getIndexManager().getIndex(indexName);
 
     if (index == null)
-      throw new OException("index with name '" + indexName + "' was not found");
+      throw new OSystemException("index with name '" + indexName + "' was not found");
 
     key = index.getDefinition().createValue(key);
 
@@ -522,7 +582,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     Object key = new ODocument().fromStream(channel.readBytes()).field("key");
     final OIndex<?> index = connection.database.getMetadata().getIndexManager().getIndex(indexName);
     if (index == null)
-      throw new OException("index with name '" + indexName + "' not found");
+      throw new OSystemException("index with name '" + indexName + "' not found");
 
     key = index.getDefinition().createValue(key);
 
@@ -549,15 +609,15 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     final String indexName = channel.readString();
 
     ODocument document = new ODocument();
-    fillRecord(new ORecordId(), channel.readBytes(), OVersionFactory.instance().createVersion(), document, connection.database);
+    fillRecord(new ORecordId(), channel.readBytes(), 0, document, connection.database);
     Object key = document.field("key");
     final String fetchPlan = channel.readString();
     final OIndex<?> index = connection.database.getMetadata().getIndexManager().getIndex(indexName);
     if (index == null)
-      throw new OException("index with name '" + indexName + "' not found");
+      throw new OSystemException("index with name '" + indexName + "' not found");
 
     key = index.getDefinition().createValue(key);
-    OAbstractCommandResultListener listener = new OSyncCommandResultListener();
+    OAbstractCommandResultListener listener = new OSyncCommandResultListener(null);
 
     if (!isConnectionAlive())
       return;
@@ -571,7 +631,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
       serializeValue(listener, result, true);
 
-      if (connection.data.protocolVersion >= 17 && listener instanceof OSyncCommandResultListener) {
+      if (listener instanceof OSyncCommandResultListener) {
         // SEND FETCHED RECORDS TO LOAD IN CLIENT CACHE
         for (ORecord rec : ((OSyncCommandResultListener) listener).getFetchedRecordsToSend()) {
           channel.writeByte((byte) 2); // CLIENT CACHE RECORD. IT
@@ -593,46 +653,19 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected void checkServerAccess(final String iResource) {
     if (connection.data.protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_26) {
       if (connection.serverUser == null)
-        throw new OSecurityAccessException("Server user not authenticated.");
+        throw new OSecurityAccessException("Server user not authenticated");
 
       if (!server.isAllowed(connection.serverUser.name, iResource))
         throw new OSecurityAccessException("User '" + connection.serverUser.name + "' cannot access to the resource [" + iResource
             + "]. Use another server user or change permission in the file config/orientdb-server-config.xml");
     } else {
       if (!connection.data.serverUser)
-        throw new OSecurityAccessException("Server user not authenticated.");
+        throw new OSecurityAccessException("Server user not authenticated");
 
       if (!server.isAllowed(connection.data.serverUsername, iResource))
         throw new OSecurityAccessException("User '" + connection.data.serverUsername + "' cannot access to the resource ["
             + iResource + "]. Use another server user or change permission in the file config/orientdb-server-config.xml");
     }
-  }
-
-  protected ODatabase<?> openDatabase(final ODatabaseInternal<?> database, final String iUser, final String iPassword) {
-
-    if (database.isClosed())
-      if (database.getStorage() instanceof ODirectMemoryStorage && !database.exists())
-        database.create();
-      else {
-        try {
-          database.open(iUser, iPassword);
-        } catch (OSecurityException e) {
-          // TRY WITH SERVER'S USER
-          try {
-            connection.serverUser = server.serverLogin(iUser, iPassword, "database.passthrough");
-          } catch (OSecurityException ex) {
-            throw e;
-          }
-
-          // SERVER AUTHENTICATED, BYPASS SECURITY
-          database.activateOnCurrentThread();
-          database.resetInitialization();
-          database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSecurityServerUser.class);
-          database.open(iUser, iPassword);
-        }
-      }
-
-    return database;
   }
 
   protected void removeCluster() throws IOException {
@@ -646,9 +679,9 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     final String clusterName = connection.database.getClusterNameById(id);
     if (clusterName == null)
       throw new IllegalArgumentException(
-          "Cluster " + id + " doesn't exist anymore. Refresh the db structure or just reconnect to the database");
+          "Cluster " + id + " does not exist anymore. Refresh the db structure or just reconnect to the database");
 
-    boolean result = connection.database.dropCluster(clusterName, true);
+    boolean result = connection.database.dropCluster(clusterName, false);
 
     beginResponse();
     try {
@@ -673,23 +706,17 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     int clusterId = -1;
 
     final String location;
-    if (connection.data.protocolVersion >= 10 && connection.data.protocolVersion < 24 || type.equalsIgnoreCase("PHYSICAL"))
+    if (connection.data.protocolVersion < 24 || type.equalsIgnoreCase("PHYSICAL"))
       location = channel.readString();
     else
       location = null;
 
     if (connection.data.protocolVersion < 24) {
       final String dataSegmentName;
-      if (connection.data.protocolVersion >= 10)
-        dataSegmentName = channel.readString();
-      else {
-        channel.readInt(); // OLD INIT SIZE, NOT MORE USED
-        dataSegmentName = null;
-      }
+      dataSegmentName = channel.readString();
     }
 
-    if (connection.data.protocolVersion >= 18)
-      clusterId = channel.readShort();
+    clusterId = channel.readShort();
 
     final int num;
     if (clusterId < 0)
@@ -735,8 +762,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       clusterIds[i] = channel.readShort();
 
     boolean countTombstones = false;
-    if (connection.data.protocolVersion >= 13)
-      countTombstones = channel.readByte() > 0;
+    countTombstones = channel.readByte() > 0;
 
     final long count = connection.database.countClusterElements(clusterIds, countTombstones);
 
@@ -774,14 +800,24 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     final String dbURL = channel.readString();
 
     String dbType = ODatabaseDocument.TYPE;
-    if (connection.data.protocolVersion >= 8)
-      // READ DB-TYPE FROM THE CLIENT
+    if (connection.data.protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_32)
+      // READ DB-TYPE FROM THE CLIENT. NOT USED ANYMORE
       dbType = channel.readString();
 
     final String user = channel.readString();
     final String passwd = channel.readString();
+    connection.database = (ODatabaseDocumentTx) server.openDatabase(dbURL, user, passwd, connection.data);
+    byte[] token = null;
 
-    connection.database = (ODatabaseDocumentTx) server.openDatabase(dbType, dbURL, user, passwd, connection.data);
+    if (Boolean.TRUE.equals(tokenBased)) {
+      token = tokenHandler.getSignedBinaryToken(connection.database, connection.database.getUser(), connection.data);
+      // TODO: do not use the parse split getSignedBinaryToken in two methods.
+      try {
+        getServer().getClientConnectionManager().connect(this, connection, token, tokenHandler.parseBinaryToken(token));
+      } catch (Exception e) {
+        throw OException.wrapException(new OSystemException("Cannot connect to the server using provided token"), e);
+      }
+    }
 
     if (connection.database.getStorage() instanceof OStorageProxy && !loadUserFromSchema(user, passwd)) {
       sendErrorOrDropConnection(clientTxId, new OSecurityAccessException(connection.database.getName(),
@@ -794,7 +830,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         channel.writeInt(connection.id);
         if (connection.data.protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_26) {
           if (Boolean.TRUE.equals(tokenBased)) {
-            byte[] token = tokenHandler.getSignedBinaryToken(connection.database, connection.database.getUser(), connection.data);
+
             channel.writeBytes(token);
           } else
             channel.writeBytes(OCommonConst.EMPTY_BYTE_ARRAY);
@@ -823,6 +859,11 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     readConnectionData();
 
     connection.serverUser = server.serverLogin(channel.readString(), channel.readString(), "connect");
+
+    if (connection.serverUser == null)
+      throw new OSecurityAccessException(
+          "Wrong user/password to [connect] to the remote OrientDB Server instance. Get the user/password from the config/orientdb-server-config.xml file");
+
     beginResponse();
     try {
       sendOk(clientTxId);
@@ -843,16 +884,60 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     }
   }
 
+  private void incrementalBackup() throws IOException {
+    setDataCommandInfo("Incremental backup");
+
+    if (!isConnectionAlive())
+      return;
+
+    final String path = channel.readString();
+
+    connection.database.incrementalBackup(path);
+
+    beginResponse();
+    try {
+      sendOk(clientTxId);
+    } finally {
+      endResponse();
+    }
+  }
+
+  private void incrementalRestore() throws IOException {
+    setDataCommandInfo("Incremental backup");
+
+    if (!isConnectionAlive())
+      return;
+
+    final String path = channel.readString();
+
+    connection.database.incrementalBackup(path);
+
+    beginResponse();
+    try {
+      sendOk(clientTxId);
+    } finally {
+      endResponse();
+    }
+  }
+
   protected void sendError(final int iClientTxId, final Throwable t) throws IOException {
     channel.acquireWriteLock();
     try {
 
       channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_ERROR);
       channel.writeInt(iClientTxId);
-      if (Boolean.TRUE.equals(tokenBased) && token != null) {
+      if (tokenBased != null && Boolean.TRUE.equals(tokenBased) && requestType != OChannelBinaryProtocol.REQUEST_CONNECT
+          && (requestType != OChannelBinaryProtocol.REQUEST_DB_OPEN && requestType != OChannelBinaryProtocol.REQUEST_SHUTDOWN
+              || (connection != null && connection.data != null
+                  && connection.data.protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_32))
+          || requestType == OChannelBinaryProtocol.REQUEST_DB_REOPEN) {
         // TODO: Check if the token is expiring and if it is send a new token
-        byte[] renewedToken = tokenHandler.renewIfNeeded(token);
-        channel.writeBytes(renewedToken);
+
+        if (token != null) {
+          byte[] renewedToken = tokenHandler.renewIfNeeded(token);
+          channel.writeBytes(renewedToken);
+        } else
+          channel.writeBytes(new byte[] {});
       }
 
       final Throwable current;
@@ -864,9 +949,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
       sendErrorDetails(current);
 
-      if (connection != null && connection.data.protocolVersion >= 19) {
-        serializeExceptionObject(current);
-      }
+      serializeExceptionObject(current);
 
       channel.flush();
 
@@ -930,7 +1013,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     checkServerAccess("database.copy");
 
-    final ODatabaseDocumentTx db = (ODatabaseDocumentTx) server.openDatabase(ODatabaseDocument.TYPE, dbUrl, dbUser, dbPassword);
+    final ODatabaseDocumentTx db = (ODatabaseDocumentTx) server.openDatabase(dbUrl, dbUser, dbPassword);
 
     beginResponse();
     try {
@@ -1026,11 +1109,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     setDataCommandInfo("Drop database");
     String dbName = channel.readString();
 
-    String storageType;
-    if (connection.data.protocolVersion >= 16)
-      storageType = channel.readString();
-    else
-      storageType = "local";
+    String storageType = null;
+    storageType = channel.readString();
 
     if (storageType == null)
       storageType = "plocal";
@@ -1040,12 +1120,13 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     connection.database = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, storageType);
 
     if (connection.database.exists()) {
-      OLogManager.instance().info(this, "Dropped database '%s'", connection.database.getName());
-
       if (connection.database.isClosed())
-        openDatabase(connection.database, connection.serverUser.name, connection.serverUser.password);
+        server.openDatabaseBypassingSecurity(connection.database, connection.data, connection.serverUser.name);
 
       connection.database.drop();
+
+      OLogManager.instance().info(this, "Dropped database '%s'", connection.database.getName());
+
       connection.close();
     } else {
       throw new OStorageException("Database with name '" + dbName + "' does not exist");
@@ -1062,36 +1143,28 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected void existsDatabase() throws IOException {
     setDataCommandInfo("Exists database");
     final String dbName = channel.readString();
-    final String storageType;
 
-    if (connection.data.protocolVersion >= 16)
-      storageType = channel.readString();
-    else
-      storageType = "local";
+    String storageType = null;
+    storageType = channel.readString();
+
+    if (storageType == null)
+      storageType = "plocal";
 
     checkServerAccess("database.exists");
 
-    if (storageType != null)
-      connection.database = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, storageType);
-    else {
-      // CHECK AGAINST ALL THE ENGINE TYPES, BUT REMOTE
-      for (String engine : Orient.instance().getEngines()) {
-        if (!engine.equalsIgnoreCase(OEngineRemote.NAME)) {
-          connection.database = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, engine);
-          if (connection.database.exists())
-            // FOUND
-            break;
+    boolean result = false;
+    ODatabaseDocumentInternal database;
 
-          // NOT FOUND: ASSURE TO UNREGISTER IT TO AVOID CACHING
-          Orient.instance().unregisterStorage(connection.database.getStorage());
-        }
-      }
-    }
+    database = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, storageType);
+    if (database.exists())
+      result = true;
+    else
+      Orient.instance().unregisterStorage(database.getStorage());
 
     beginResponse();
     try {
       sendOk(clientTxId);
-      channel.writeByte((byte) (connection.database.exists() ? 1 : 0));
+      channel.writeByte((byte) (result ? 1 : 0));
     } finally {
       endResponse();
     }
@@ -1102,9 +1175,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     String dbName = channel.readString();
     String dbType = ODatabaseDocument.TYPE;
-    if (connection.data.protocolVersion >= 8)
-      // READ DB-TYPE FROM THE CLIENT
-      dbType = channel.readString();
+    // READ DB-TYPE FROM THE CLIENT
+    dbType = channel.readString();
     String storageType = channel.readString();
 
     checkServerAccess("database.create");
@@ -1124,11 +1196,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     setDataCommandInfo("Close Database");
 
     if (connection != null) {
-      if (connection.data.protocolVersion > 0 && connection.data.protocolVersion < 9)
-        // OLD CLIENTS WAIT FOR A OK
-        sendOk(clientTxId);
-
-      if (Boolean.FALSE.equals(tokenBased) && server.getClientConnectionManager().disconnect(connection.id))
+      if (server.getClientConnectionManager().disconnect(connection.id) && Boolean.FALSE.equals(tokenBased))
         sendShutdown();
     }
   }
@@ -1153,11 +1221,14 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         }
 
         String value;
-        try {
-          value = cfg.getValueAsString() != null ? cfg.getValueAsString() : "";
-        } catch (Exception e) {
-          value = "";
-        }
+        if (cfg.isHidden())
+          value = "<hidden>";
+        else
+          try {
+            value = cfg.getValueAsString() != null ? cfg.getValueAsString() : "";
+          } catch (Exception e) {
+            value = "";
+          }
 
         channel.writeString(key);
         channel.writeString(value);
@@ -1198,7 +1269,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     final String key = channel.readString();
     final OGlobalConfiguration cfg = OGlobalConfiguration.findByKey(key);
-    String cfgValue = cfg != null ? cfg.getValueAsString() : "";
+    String cfgValue = cfg != null ? cfg.isHidden() ? "<hidden>" : cfg.getValueAsString() : "";
 
     beginResponse();
     try {
@@ -1234,7 +1305,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
             channel.writeRID(entry.getValue().getIdentity());
 
             // IF THE NEW OBJECT HAS VERSION > 0 MEANS THAT HAS BEEN UPDATED IN THE SAME TX. THIS HAPPENS FOR GRAPHS
-            if (entry.getValue().getRecordVersion().getCounter() > 0)
+            if (entry.getValue().getVersion() > 0)
               tx.getUpdatedRecords().put((ORecordId) entry.getValue().getIdentity(), entry.getValue());
           }
 
@@ -1242,7 +1313,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
           channel.writeInt(tx.getUpdatedRecords().size());
           for (Entry<ORecordId, ORecord> entry : tx.getUpdatedRecords().entrySet()) {
             channel.writeRID(entry.getKey());
-            channel.writeVersion(entry.getValue().getRecordVersion());
+            channel.writeVersion(entry.getValue().getVersion());
           }
 
           if (connection.data.protocolVersion >= 20)
@@ -1286,9 +1357,20 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(name);
       ONetworkThreadLocalSerializer.setNetworkSerializer(ser);
     }
-    final OCommandRequestText command = (OCommandRequestText) OStreamSerializerAnyStreamable.INSTANCE
-        .fromStream(channel.readBytes());
+    OCommandRequestText command = (OCommandRequestText) OStreamSerializerAnyStreamable.INSTANCE.fromStream(channel.readBytes());
     ONetworkThreadLocalSerializer.setNetworkSerializer(null);
+
+    final Map<Object, Object> params = command.getParameters();
+
+    if (asynch && command instanceof OSQLSynchQuery) {
+      // CONVERT IT IN ASYNCHRONOUS QUERY
+      final OSQLAsynchQuery asynchQuery = new OSQLAsynchQuery(command.getText());
+      asynchQuery.setFetchPlan(command.getFetchPlan());
+      asynchQuery.setLimit(command.getLimit());
+      asynchQuery.setTimeout(command.getTimeoutTime(), command.getTimeoutStrategy());
+      asynchQuery.setUseCache(((OSQLSynchQuery) command).isUseCache());
+      command = asynchQuery;
+    }
 
     connection.data.commandDetail = command.getText();
 
@@ -1296,17 +1378,55 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     try {
       connection.data.command = command;
       OAbstractCommandResultListener listener = null;
-
       OLiveCommandResultListener liveListener = null;
+
+      OCommandResultListener cmdResultListener = command.getResultListener();
+
       if (live) {
-        liveListener = new OLiveCommandResultListener(this, clientTxId, command.getResultListener());
-        listener = new OSyncCommandResultListener();
+        liveListener = new OLiveCommandResultListener(this, clientTxId, cmdResultListener);
+        listener = new OSyncCommandResultListener(null);
         command.setResultListener(liveListener);
       } else if (asynch) {
-        listener = new OAsyncCommandResultListener(this, clientTxId, command.getResultListener());
+        // IF COMMAND CACHE IS ENABLED, RESULT MUST BE COLLECTED
+        final OCommandCache cmdCache = connection.database.getMetadata().getCommandCache();
+        if (cmdCache.isEnabled())
+          // CREATE E COLLECTOR OF RESULT IN RAM TO CACHE THE RESULT
+          cmdResultListener = new OAbstractCommandResultListener(cmdResultListener) {
+            private OResultSet collector = new OConcurrentResultSet<ORecord>();
+
+            @Override
+            public boolean isEmpty() {
+              return collector != null && collector.isEmpty();
+            }
+
+            @Override
+            public boolean result(final Object iRecord) {
+              if (collector != null) {
+                if (collector.currentSize() > cmdCache.getMaxResultsetSize()) {
+                  // TOO MANY RESULTS: STOP COLLECTING IT BECAUSE THEY WOULD NEVER CACHED
+                  collector = null;
+                } else if (iRecord != null && iRecord instanceof ORecord)
+                  collector.add(iRecord);
+              }
+              return true;
+            }
+
+            @Override
+            public Object getResult() {
+              return collector;
+            }
+
+            @Override
+            public void end() {
+              collector.setCompleted();
+            }
+          };
+
+        listener = new OAsyncCommandResultListener(this, clientTxId, cmdResultListener);
         command.setResultListener(listener);
-      } else
-        listener = new OSyncCommandResultListener();
+      } else {
+        listener = new OSyncCommandResultListener(null);
+      }
 
       final long serverTimeout = OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsLong();
 
@@ -1317,10 +1437,17 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       if (!isConnectionAlive())
         return;
 
+      // REQUEST CAN'T MODIFY THE RESULT, SO IT'S CACHEABLE
+      command.setCacheableResult(true);
+
       // ASSIGNED THE PARSED FETCHPLAN
       listener.setFetchPlan(connection.database.command(command).getFetchPlan());
 
-      final Object result = connection.database.command(command).execute();
+      final Object result;
+      if (params == null)
+        result = connection.database.command(command).execute();
+      else
+        result = connection.database.command(command).execute(params);
 
       // FETCHPLAN HAS TO BE ASSIGNED AGAIN, because it can be changed by SQL statement
       listener.setFetchPlan(command.getFetchPlan());
@@ -1340,7 +1467,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
         serializeValue(listener, result, false);
 
-        if (connection.data.protocolVersion >= 17 && listener instanceof OSyncCommandResultListener) {
+        if (listener instanceof OSyncCommandResultListener) {
           // SEND FETCHED RECORDS TO LOAD IN CLIENT CACHE
           for (ORecord rec : ((OSyncCommandResultListener) listener).getFetchedRecordsToSend()) {
             channel.writeByte((byte) 2); // CLIENT CACHE RECORD. IT
@@ -1383,7 +1510,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       final byte collectionType = result instanceof Set ? (byte) 's' : (byte) 'l';
       channel.writeByte(collectionType);
       channel.writeInt(OMultiValue.getSize(result));
-      for (Object o : OMultiValue.getMultiValueIterable(result)) {
+      for (Object o : OMultiValue.getMultiValueIterable(result, false)) {
         try {
           if (load && o instanceof ORecordId)
             o = ((ORecordId) o).getRecord();
@@ -1451,7 +1578,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       return;
 
     final ORID rid = channel.readRID();
-    final ORecordVersion version = channel.readVersion();
+    final int version = channel.readVersion();
     final byte mode = channel.readByte();
 
     final int result = deleteRecord(connection.database, rid, version);
@@ -1496,7 +1623,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       return;
 
     final ORID rid = channel.readRID();
-    final ORecordVersion version = channel.readVersion();
+    final int version = channel.readVersion();
     final byte mode = channel.readByte();
 
     final int result = cleanOutRecord(connection.database, rid, version);
@@ -1533,11 +1660,11 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     if (connection.data.protocolVersion >= 23)
       updateContent = channel.readBoolean();
     final byte[] buffer = channel.readBytes();
-    final ORecordVersion version = channel.readVersion();
+    final int version = channel.readVersion();
     final byte recordType = channel.readByte();
     final byte mode = channel.readByte();
 
-    final ORecordVersion newVersion = updateRecord(connection.database, rid, buffer, version, recordType, updateContent);
+    final int newVersion = updateRecord(connection.database, rid, buffer, version, recordType, updateContent);
 
     if (mode < 2) {
       beginResponse();
@@ -1559,7 +1686,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     if (!isConnectionAlive())
       return;
 
-    final int dataSegmentId = connection.data.protocolVersion >= 10 && connection.data.protocolVersion < 24 ? channel.readInt() : 0;
+    final int dataSegmentId = connection.data.protocolVersion < 24 ? channel.readInt() : 0;
 
     final ORecordId rid = new ORecordId(channel.readShort(), ORID.CLUSTER_POS_INVALID);
     final byte[] buffer = channel.readBytes();
@@ -1575,8 +1702,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         if (connection.data.protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_25)
           channel.writeShort((short) record.getIdentity().getClusterId());
         channel.writeLong(record.getIdentity().getClusterPosition());
-        if (connection.data.protocolVersion >= 11)
-          channel.writeVersion(record.getRecordVersion());
+        channel.writeVersion(record.getVersion());
 
         if (connection.data.protocolVersion >= 20)
           sendCollectionChanges();
@@ -1597,7 +1723,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       if (metadata != null) {
         sendOk(clientTxId);
         channel.writeRID(metadata.getRecordId());
-        channel.writeVersion(metadata.getRecordVersion());
+        channel.writeVersion(metadata.getVersion());
       } else {
         throw new ODatabaseException(String.format("Record metadata for RID: %s, Not found", rid));
       }
@@ -1615,12 +1741,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     final ORecordId rid = channel.readRID();
     final String fetchPlanString = channel.readString();
     boolean ignoreCache = false;
-    if (connection.data.protocolVersion >= 9)
-      ignoreCache = channel.readByte() == 1;
+    ignoreCache = channel.readByte() == 1;
 
     boolean loadTombstones = false;
-    if (connection.data.protocolVersion >= 13)
-      loadTombstones = channel.readByte() > 0;
+    loadTombstones = channel.readByte() > 0;
 
     if (rid.clusterId == 0 && rid.clusterPosition == 0) {
       // @COMPATIBILITY 0.9.25
@@ -1633,11 +1757,11 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         channel.writeByte((byte) 1);
         if (connection.data.protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_27) {
           channel.writeBytes(connection.database.getStorage().getConfiguration().toStream(connection.data.protocolVersion));
-          channel.writeVersion(OVersionFactory.instance().createVersion());
+          channel.writeVersion(0);
           channel.writeByte(ORecordBytes.RECORD_TYPE);
         } else {
           channel.writeByte(ORecordBytes.RECORD_TYPE);
-          channel.writeVersion(OVersionFactory.instance().createVersion());
+          channel.writeVersion(0);
           channel.writeBytes(connection.database.getStorage().getConfiguration().toStream(connection.data.protocolVersion));
         }
         channel.writeByte((byte) 0); // NO MORE RECORDS
@@ -1659,11 +1783,11 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
           int length = trimCsvSerializedContent(bytes);
           if (connection.data.protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_27) {
             channel.writeBytes(bytes, length);
-            channel.writeVersion(record.getRecordVersion());
+            channel.writeVersion(record.getVersion());
             channel.writeByte(ORecordInternal.getRecordType(record));
           } else {
             channel.writeByte(ORecordInternal.getRecordType(record));
-            channel.writeVersion(record.getRecordVersion());
+            channel.writeVersion(record.getVersion());
             channel.writeBytes(bytes, length);
           }
 
@@ -1711,7 +1835,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       return;
 
     final ORecordId rid = channel.readRID();
-    final ORecordVersion recordVersion = channel.readVersion();
+    final int recordVersion = channel.readVersion();
     final String fetchPlanString = channel.readString();
 
     boolean ignoreCache = channel.readByte() == 1;
@@ -1727,11 +1851,11 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         channel.writeByte((byte) 1);
         if (connection.data.protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_27) {
           channel.writeBytes(connection.database.getStorage().getConfiguration().toStream(connection.data.protocolVersion));
-          channel.writeVersion(OVersionFactory.instance().createVersion());
+          channel.writeVersion(0);
           channel.writeByte(ORecordBytes.RECORD_TYPE);
         } else {
           channel.writeByte(ORecordBytes.RECORD_TYPE);
-          channel.writeVersion(OVersionFactory.instance().createVersion());
+          channel.writeVersion(0);
           channel.writeBytes(connection.database.getStorage().getConfiguration().toStream(connection.data.protocolVersion));
         }
         channel.writeByte((byte) 0); // NO MORE RECORDS
@@ -1752,7 +1876,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
           int length = trimCsvSerializedContent(bytes);
 
           channel.writeByte(ORecordInternal.getRecordType(record));
-          channel.writeVersion(record.getRecordVersion());
+          channel.writeVersion(record.getVersion());
           channel.writeBytes(bytes, length);
 
           if (fetchPlanString.length() > 0) {
@@ -1835,7 +1959,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     }
     if (tokenBased && tokenHandler == null) {
       // this is not the way
-      // throw new OException("The server doesn't support the token based authentication");
+      // throw new OException("The server does not support the token based authentication");
       tokenBased = false;
     }
   }
@@ -1873,12 +1997,11 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     checkServerAccess("database.freeze");
 
-    final String storageType;
+    String storageType = null;
+    storageType = channel.readString();
 
-    if (connection.data.protocolVersion >= 16)
-      storageType = channel.readString();
-    else
-      storageType = "local";
+    if (storageType == null)
+      storageType = "plocal";
 
     connection.database = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, storageType);
 
@@ -1886,7 +2009,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       OLogManager.instance().info(this, "Freezing database '%s'", connection.database.getURL());
 
       if (connection.database.isClosed())
-        openDatabase(connection.database, connection.serverUser.name, connection.serverUser.password);
+        server.openDatabaseBypassingSecurity(connection.database, connection.data, connection.serverUser.name);
 
       connection.database.freeze(true);
     } else {
@@ -1907,19 +2030,19 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     checkServerAccess("database.release");
 
-    final String storageType;
-    if (connection.data.protocolVersion >= 16)
-      storageType = channel.readString();
-    else
-      storageType = "local";
+    String storageType = null;
+    storageType = channel.readString();
+
+    if (storageType == null)
+      storageType = "plocal";
 
     connection.database = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, storageType);
 
     if (connection.database.exists()) {
-      OLogManager.instance().info(this, "Releasing database '%s'", connection.database.getURL());
+      OLogManager.instance().info(this, "Realising database '%s'", connection.database.getURL());
 
       if (connection.database.isClosed())
-        openDatabase(connection.database, connection.serverUser.name, connection.serverUser.password);
+        server.openDatabaseBypassingSecurity(connection.database, connection.data, connection.serverUser.name);
 
       connection.database.release();
     } else {
@@ -1934,79 +2057,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     }
   }
 
-  protected void freezeCluster() throws IOException {
-    setDataCommandInfo("Freeze cluster");
-    final String dbName = channel.readString();
-    final int clusterId = channel.readShort();
-
-    checkServerAccess("database.freeze");
-
-    final String storageType;
-
-    if (connection.data.protocolVersion >= 16)
-      storageType = channel.readString();
-    else
-      storageType = "local";
-
-    connection.database = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, storageType);
-
-    if (connection.database.exists()) {
-      OLogManager.instance().info(this, "Freezing database '%s' cluster %d", connection.database.getURL(), clusterId);
-
-      if (connection.database.isClosed()) {
-        openDatabase(connection.database, connection.serverUser.name, connection.serverUser.password);
-      }
-
-      connection.database.freezeCluster(clusterId);
-    } else {
-      throw new OStorageException("Database with name '" + dbName + "' does not exist");
-    }
-
-    beginResponse();
-    try {
-      sendOk(clientTxId);
-    } finally {
-      endResponse();
-    }
-  }
-
-  protected void releaseCluster() throws IOException {
-    setDataCommandInfo("Release database");
-    final String dbName = channel.readString();
-    final int clusterId = channel.readShort();
-
-    checkServerAccess("database.release");
-
-    final String storageType;
-    if (connection.data.protocolVersion >= 16)
-      storageType = channel.readString();
-    else
-      storageType = "local";
-
-    connection.database = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, storageType);
-
-    if (connection.database.exists()) {
-      OLogManager.instance().info(this, "Realising database '%s' cluster %d", connection.database.getURL(), clusterId);
-
-      if (connection.database.isClosed()) {
-        openDatabase(connection.database, connection.serverUser.name, connection.serverUser.password);
-      }
-
-      connection.database.releaseCluster(clusterId);
-    } else {
-      throw new OStorageException("Database with name '" + dbName + "' does not exist");
-    }
-
-    beginResponse();
-    try {
-      sendOk(clientTxId);
-    } finally {
-      endResponse();
-    }
-  }
-
   @Override
-  protected String getRecordSerializerName() {
+  public String getRecordSerializerName() {
     return connection.data.serializationImpl;
   }
 
@@ -2389,17 +2441,14 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         ++clusterCount;
       }
     }
-    if (connection.data.protocolVersion >= 7)
-      channel.writeShort((short) clusterCount);
-    else
-      channel.writeInt(clusterCount);
+    channel.writeShort((short) clusterCount);
 
     for (OCluster c : clusters) {
       if (c != null) {
         channel.writeString(c.getName());
         channel.writeShort((short) c.getId());
 
-        if (connection.data.protocolVersion >= 12 && connection.data.protocolVersion < 24) {
+        if (connection.data.protocolVersion < 24) {
           channel.writeString("none");
           channel.writeShort((short) -1);
         }
@@ -2419,6 +2468,20 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       sendOk(clientTxId);
       byte[] stream = getRecordBytes(result);
       channel.writeBytes(stream);
+    } finally {
+      endResponse();
+    }
+  }
+
+  private void serverInfo() throws IOException {
+    checkServerAccess("server.info");
+
+    setDataCommandInfo("Server Info");
+
+    beginResponse();
+    try {
+      sendOk(clientTxId);
+      channel.writeString(OServerInfo.getServerInfo(server));
     } finally {
       endResponse();
     }

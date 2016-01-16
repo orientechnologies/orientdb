@@ -156,7 +156,7 @@ public class OServerPluginManager implements OService {
       try {
         plugin.shutdown(false);
       } catch (Throwable t) {
-        OLogManager.instance().error(this, "Error during server plugin %s shutdown.", t, plugin);
+        OLogManager.instance().error(this, "Error during server plugin %s shutdown", t, plugin);
       }
     }
 

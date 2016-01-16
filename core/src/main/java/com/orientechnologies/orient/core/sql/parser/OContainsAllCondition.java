@@ -2,6 +2,7 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 import java.util.ArrayList;
@@ -30,35 +31,21 @@ public class OContainsAllCondition extends OBooleanExpression {
   }
 
   @Override
-  public boolean evaluate(OIdentifiable currentRecord) {
+  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
     return false;// TODO
   }
 
-  @Override
-  public void replaceParameters(Map<Object, Object> params) {
-    left.replaceParameters(params);
-    if (right != null) {
-      right.replaceParameters(params);
-    }
-    if (rightBlock != null) {
-      rightBlock.replaceParameters(params);
-    }
-  }
 
-  @Override
-  public String toString() {
-    StringBuilder result = new StringBuilder();
-    result.append(left.toString());
-    result.append(" CONTAINSALL ");
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    left.toString(params, builder);
+    builder.append(" CONTAINSALL ");
     if (right != null) {
-      result.append(right.toString());
+      right.toString(params, builder);
     } else if (rightBlock != null) {
-      result.append("(");
-      result.append(rightBlock.toString());
-      result.append(")");
+      builder.append("(");
+      rightBlock.toString(params, builder);
+      builder.append(")");
     }
-
-    return result.toString();
   }
 
   public OExpression getLeft() {

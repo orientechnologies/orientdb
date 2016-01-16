@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server.network.protocol.http.command.put;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
@@ -61,7 +62,7 @@ public class OServerCommandPutDocument extends OServerCommandDocumentAbstract {
 
       if (iRequest.ifMatch != null)
         // USE THE IF-MATCH HTTP HEADER AS VERSION
-        doc.getRecordVersion().getSerializer().fromString(iRequest.ifMatch, doc.getRecordVersion());
+        ORecordInternal.setVersion(doc, Integer.parseInt(iRequest.ifMatch));
 
       if (!recordId.isValid())
         recordId = (ORecordId) doc.getIdentity();
@@ -90,7 +91,7 @@ public class OServerCommandPutDocument extends OServerCommandDocumentAbstract {
       if (currentDocument.isDirty()) {
         if (doc.getVersion() > 0)
           // OVERWRITE THE VERSION
-          currentDocument.getRecordVersion().copyFrom(doc.getRecordVersion());
+          ORecordInternal.setVersion(currentDocument, doc.getVersion());
 
         currentDocument.save();
       }

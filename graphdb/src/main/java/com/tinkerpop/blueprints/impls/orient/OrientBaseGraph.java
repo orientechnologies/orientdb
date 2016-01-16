@@ -20,27 +20,12 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Deque;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
-import java.util.logging.Level;
-
-import org.apache.commons.configuration.Configuration;
-
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -55,6 +40,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -84,6 +70,21 @@ import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
 import com.tinkerpop.blueprints.util.wrappers.partition.PartitionVertex;
+import org.apache.commons.configuration.Configuration;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+import java.util.logging.Level;
 
 /**
  * A Blueprints implementation of the graph database OrientDB (http://www.orientechnologies.com)
@@ -136,7 +137,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     this.password = iUserPassword;
 
     database = iDatabase;
-    checkForGraphSchema(database);
 
     makeActive();
     putInInitializationStack();
@@ -375,54 +375,12 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     }
   }
 
-  protected static void checkForGraphSchema(final ODatabaseDocumentTx iDatabase) {
-    final OSchema schema = iDatabase.getMetadata().getSchema();
-
-    final OClass vertexBaseClass = schema.getClass(OrientVertexType.CLASS_NAME);
-    final OClass edgeBaseClass = schema.getClass(OrientEdgeType.CLASS_NAME);
-
-    if (vertexBaseClass == null)
-      // CREATE THE META MODEL USING THE ORIENT SCHEMA
-      schema.createClass(OrientVertexType.CLASS_NAME).setOverSize(2);
-
-    if (edgeBaseClass == null)
-      schema.createClass(OrientEdgeType.CLASS_NAME);
-
-    // @COMPATIBILITY < 1.4.0:
-    boolean warn = false;
-    final String MSG_SUFFIX = ". Probably you are using a database created with a previous version of OrientDB. Export in graphml format and reimport it";
-
-    if (vertexBaseClass != null) {
-      if (!vertexBaseClass.getName().equals(OrientVertexType.CLASS_NAME)) {
-        OLogManager.instance().warn(null, "Found Vertex class %s" + MSG_SUFFIX, vertexBaseClass.getName());
-        warn = true;
-      }
-
-      if (vertexBaseClass.existsProperty(CONNECTION_OUT) || vertexBaseClass.existsProperty(CONNECTION_IN)) {
-        OLogManager.instance().warn(null, "Found property in/out against V");
-        warn = true;
-      }
-    }
-
-    if (edgeBaseClass != null) {
-      if (!warn && !edgeBaseClass.getName().equals(OrientEdgeType.CLASS_NAME)) {
-        OLogManager.instance().warn(null, "Found Edge class %s" + MSG_SUFFIX, edgeBaseClass.getName());
-        warn = true;
-      }
-
-      if (edgeBaseClass.existsProperty(CONNECTION_OUT) || edgeBaseClass.existsProperty(CONNECTION_IN)) {
-        OLogManager.instance().warn(null, "Found property in/out against E");
-        warn = true;
-      }
-    }
-  }
-
   public void makeActive() {
     activeGraph.set(this);
 
-    final ODatabaseDocument tlDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocument tlDb = ODatabaseRecordThreadLocal.instance().getIfDefined();
     if (database != null && tlDb != database)
-      ODatabaseRecordThreadLocal.INSTANCE.set(database);
+      ODatabaseRecordThreadLocal.instance().set(database);
   }
 
   /**
@@ -1162,7 +1120,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    *          Underlying database object
    */
   public OrientBaseGraph reuse(final ODatabaseDocumentTx iDatabase) {
-    ODatabaseRecordThreadLocal.INSTANCE.set(iDatabase);
+    ODatabaseRecordThreadLocal.instance().set(iDatabase);
     this.url = iDatabase.getURL();
     database = iDatabase;
 
@@ -1217,7 +1175,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       throw e;
     } catch (Exception e) {
       OLogManager.instance().error(this, "Error during context close for db " + url, e);
-      throw new OException("Error during context close for db " + url, e);
+      throw OException.wrapException(new ODatabaseException("Error during context close for db " + url), e);
     } finally {
       try {
         if (closeDb)
@@ -1249,6 +1207,13 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    */
   public ODatabaseDocumentTx getRawGraph() {
     return database;
+  }
+
+  /**
+   * begins current transaction (if the graph is transactional)
+   */
+  public void begin() {
+    makeActive();
   }
 
   /**
@@ -1770,8 +1735,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
 
         // ASSURE PENDING TX IF ANY IS COMMITTED
         OLogManager.instance().warn(this,
-            "The command '%s' must be executed outside an active transaction: the transaction will be committed and reopen right after it. To avoid this behavior execute it outside a transaction (db=%s)",
-            msg.toString(), getRawGraph().getName());
+            "Requested command '%s' must be executed outside active transaction: the transaction will be committed and reopen right after it. To avoid this behavior execute it outside a transaction",
+            msg.toString());
       }
       raw.commit();
       committed = true;
@@ -1783,7 +1748,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     } finally {
       if (committed)
         // RESTART TRANSACTION
-        raw.begin();
+        ((OrientTransactionalGraph) this).begin();
     }
   }
 
@@ -1839,11 +1804,11 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     if (getThreadMode() == THREAD_MODE.MANUAL)
       return;
 
-    final ODatabaseDocument tlDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocument tlDb = ODatabaseRecordThreadLocal.instance().getIfDefined();
     if (getThreadMode() == THREAD_MODE.ALWAYS_AUTOSET || tlDb == null) {
       if (database != null && tlDb != database)
         // SET IT
-        ODatabaseRecordThreadLocal.INSTANCE.set(database);
+        ODatabaseRecordThreadLocal.instance().set(database);
     }
   }
 
@@ -1864,7 +1829,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     } else {
       activeGraph.set(null);
       if (updateDb)
-        ODatabaseRecordThreadLocal.INSTANCE.set(null);
+        ODatabaseRecordThreadLocal.instance().set(null);
     }
 
   }
@@ -1877,6 +1842,10 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     for (OStorageEntryConfiguration c : custom) {
       if (c.name.equals("useLightweightEdges"))
         setUseLightweightEdges(Boolean.parseBoolean(c.value));
+      else if (c.name.equals("txRequiredForSQLGraphOperations")) // Since v2.2.0
+        setTxRequiredForSQLGraphOperations(Boolean.parseBoolean(c.value));
+      else if (c.name.equals("maxRetries")) // Since v2.2.0
+        setMaxRetries(Integer.parseInt(c.value));
       else if (c.name.equals("useClassForEdgeLabel"))
         setUseClassForEdgeLabel(Boolean.parseBoolean(c.value));
       else if (c.name.equals("useClassForVertexLabel"))
@@ -1896,6 +1865,9 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     if (pool == null) {
       database = new ODatabaseDocumentTx(url);
 
+      final OStorageRemote.CONNECTION_STRATEGY connMode = settings.getConnectionStrategy();
+      database.setProperty(OStorageRemote.PARAM_CONNECTION_STRATEGY, connMode);
+
       if (database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage)
         ((OAbstractPaginatedStorage) database.getStorage().getUnderlying()).registerRecoverListener(this);
 
@@ -1913,7 +1885,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
 
     makeActive();
     putInInitializationStack();
-    checkForGraphSchema(database);
   }
 
   private List<Index<? extends Element>> loadManualIndexes() {

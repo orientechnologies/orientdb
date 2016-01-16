@@ -2,6 +2,10 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORecordId;
+
 import java.util.Map;
 
 public class OExpression extends SimpleNode {
@@ -22,18 +26,16 @@ public class OExpression extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-  public Object createExecutorFilter() {
-
-    // TODO create an interface for this;
-
+  public Object execute(OIdentifiable iCurrentRecord, OCommandContext ctx) {
     if (value instanceof ORid) {
-      return null;// TODO
+      ORid v = (ORid) value;
+      return new ORecordId(v.cluster.getValue().intValue(), v.position.getValue().longValue());
     } else if (value instanceof OInputParameter) {
-      return null;// TODO
+      return ((OInputParameter) value).bindFromInputParams(ctx.getInputParameters());
     } else if (value instanceof OMathExpression) {
-      return ((OMathExpression) value).createExecutorFilter();
+      return ((OMathExpression) value).execute(iCurrentRecord, ctx);
     } else if (value instanceof OJson) {
-      return null;// TODO
+      return ((OJson) value).toMap(iCurrentRecord, ctx);
     } else if (value instanceof String) {
       return value;
     } else if (value instanceof Number) {
@@ -42,6 +44,32 @@ public class OExpression extends SimpleNode {
 
     return value;
 
+  }
+
+  public boolean isBaseIdentifier(){
+    if(value instanceof OMathExpression) {
+      return ((OMathExpression)value).isBaseIdentifier();
+    }
+
+    return false;
+  }
+
+  public boolean isEarlyCalculated(){
+    if(value instanceof Number) {
+      return true;
+    }
+    if(value instanceof String) {
+      return true;
+    }
+    if(value instanceof OInputParameter) {
+      return true;
+    }
+
+    if(value instanceof OMathExpression) {
+      return ((OMathExpression)value).isEarlyCalculated();
+    }
+
+    return false;
   }
 
   public String getDefaultAlias() {
@@ -61,23 +89,24 @@ public class OExpression extends SimpleNode {
     // return null;// TODO
     // }
 
-    return "" + value;
+    return ("" + value).replaceAll("\\.", "_").replaceAll(" ", "_").replaceAll("\n", "_").replaceAll("\b", "_")
+        .replaceAll("\\[", "_").replaceAll("\\]", "_").replaceAll("\\(", "_").replaceAll("\\)", "_");
 
   }
 
-  @Override
-  public String toString() {
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (value == null) {
-      return "null";
+      builder.append("null");
     } else if (value instanceof SimpleNode) {
-      return value.toString();
+      ((SimpleNode) value).toString(params, builder);
     } else if (value instanceof String) {
       if (Boolean.TRUE.equals(singleQuotes)) {
-        return "'" + encodeSingle((String)value)+ "'";
+        builder.append("'" + value + "'");
+      } else {
+        builder.append("\"" + value + "\"");
       }
-      return "\"" + encode((String)value) + "\"";
     } else {
-      return "" + value;
+      builder.append("" + value);
     }
   }
 
@@ -100,6 +129,20 @@ public class OExpression extends SimpleNode {
     return builder.toString();
   }
 
+  public boolean supportsBasicCalculation() {
+    if (value instanceof OMathExpression) {
+      return ((OMathExpression) value).supportsBasicCalculation();
+    }
+    return true;
+  }
+
+  public boolean isIndexedFunctionCal() {
+    if (value instanceof OMathExpression) {
+      return ((OMathExpression) value).isIndexedFunctionCall();
+    }
+    return false;
+  }
+
   public static String encodeSingle(String s) {
 
     StringBuilder builder = new StringBuilder(s.length());
@@ -120,23 +163,19 @@ public class OExpression extends SimpleNode {
     return builder.toString();
   }
 
-  public void replaceParameters(Map<Object, Object> params) {
-    if (value instanceof OInputParameter) {
-      value = ((OInputParameter) value).bindFromInputParams(params);
-    } else if (value instanceof OBaseExpression) {
-      ((OBaseExpression) value).replaceParameters(params);
-    } else if (value instanceof OParenthesisExpression) {
-      ((OParenthesisExpression) value).replaceParameters(params);
-    } else if (value instanceof OMathExpression) {
-      ((OMathExpression) value).replaceParameters(params);
+  public long estimateIndexedFunction(OFromClause target, OCommandContext context, OBinaryCompareOperator operator, Object right) {
+    if (value instanceof OMathExpression) {
+      return ((OMathExpression) value).estimateIndexedFunction(target, context, operator, right);
     }
+    return -1;
   }
 
-  public boolean supportsBasicCalculation() {
-    if(value instanceof OMathExpression) {
-      return ((OMathExpression)value).supportsBasicCalculation();
+  public Iterable<OIdentifiable> executeIndexedFunction(OFromClause target, OCommandContext context,
+      OBinaryCompareOperator operator, Object right) {
+    if (value instanceof OMathExpression) {
+      return ((OMathExpression) value).executeIndexedFunction(target, context, operator, right);
     }
-    return true;
+    return null;
   }
 }
 /* JavaCC - OriginalChecksum=9c860224b121acdc89522ae97010be01 (do not edit this line) */

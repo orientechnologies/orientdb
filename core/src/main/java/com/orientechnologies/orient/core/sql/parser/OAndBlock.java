@@ -2,7 +2,10 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,25 +23,19 @@ public class OAndBlock extends OBooleanExpression {
   }
 
   @Override
-  public boolean evaluate(OIdentifiable currentRecord) {
+  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
 
     if (getSubBlocks() == null) {
       return true;
     }
 
     for (OBooleanExpression block : subBlocks) {
-      if (!block.evaluate(currentRecord)) {
+      if (!block.evaluate(currentRecord, ctx)) {
         return false;
       }
     }
     return true;
 
-  }
-
-  @Override public void replaceParameters(Map<Object, Object> params) {
-    for(OBooleanExpression sub:subBlocks){
-      sub.replaceParameters(params);
-    }
   }
 
   public List<OBooleanExpression> getSubBlocks() {
@@ -49,29 +46,28 @@ public class OAndBlock extends OBooleanExpression {
     this.subBlocks = subBlocks;
   }
 
-  @Override
-  public String toString() {
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (subBlocks == null || subBlocks.size() == 0) {
-      return "";
+      return;
     }
-    if (subBlocks.size() == 1) {
-      return subBlocks.get(0).toString();
-    }
-    StringBuilder result = new StringBuilder();
+    // if (subBlocks.size() == 1) {
+    // subBlocks.get(0).toString(params, builder);
+    // }
+
     boolean first = true;
     for (OBooleanExpression expr : subBlocks) {
       if (!first) {
-        result.append(" AND ");
+        builder.append(" AND ");
       }
-      result.append(expr.toString());
+      expr.toString(params, builder);
       first = false;
     }
-    return result.toString();
   }
 
-  @Override protected boolean supportsBasicCalculation() {
-    for(OBooleanExpression expr:subBlocks){
-      if(!expr.supportsBasicCalculation()){
+  @Override
+  protected boolean supportsBasicCalculation() {
+    for (OBooleanExpression expr : subBlocks) {
+      if (!expr.supportsBasicCalculation()) {
         return false;
       }
     }
@@ -87,12 +83,64 @@ public class OAndBlock extends OBooleanExpression {
     return result;
   }
 
-  @Override protected List<Object> getExternalCalculationConditions() {
+  @Override
+  protected List<Object> getExternalCalculationConditions() {
     List<Object> result = new ArrayList<Object>();
-    for(OBooleanExpression expr:subBlocks) {
+    for (OBooleanExpression expr : subBlocks) {
       result.addAll(expr.getExternalCalculationConditions());
     }
     return result;
   }
+
+  public List<OBinaryCondition> getIndexedFunctionConditions(OClass iSchemaClass, ODatabaseDocumentInternal database) {
+    if (subBlocks == null) {
+      return null;
+    }
+    List<OBinaryCondition> result = new ArrayList<OBinaryCondition>();
+    for (OBooleanExpression exp : subBlocks) {
+      List<OBinaryCondition> sub = exp.getIndexedFunctionConditions(iSchemaClass, database);
+      if (sub != null && sub.size() > 0) {
+        result.addAll(sub);
+      }
+    }
+    return result.size() == 0 ? null : result;
+  }
+
+  public List<OAndBlock> flatten() {
+    List<OAndBlock> result = new ArrayList<OAndBlock>();
+    boolean first = true;
+    for (OBooleanExpression sub : subBlocks) {
+      List<OAndBlock> subFlattened = sub.flatten();
+      List<OAndBlock> oldResult = result;
+      result = new ArrayList<OAndBlock>();
+      for (OAndBlock subAndItem : subFlattened) {
+        if (first) {
+          result.add(subAndItem);
+        } else {
+          ;
+          for(OAndBlock oldResultItem:oldResult) {
+            OAndBlock block = new OAndBlock(-1);
+            block.subBlocks.addAll(oldResultItem.subBlocks);
+            for (OBooleanExpression resultItem : subAndItem.subBlocks) {
+              block.subBlocks.add(resultItem);
+            }
+            result.add(block);
+          }
+        }
+      }
+      first = false;
+    }
+    return result;
+  }
+
+  protected OAndBlock encapsulateInAndBlock(OBooleanExpression item) {
+    if(item instanceof OAndBlock){
+      return (OAndBlock)item;
+    }
+    OAndBlock result = new OAndBlock(-1);
+    result.subBlocks.add(item);
+    return result;
+  }
+
 }
 /* JavaCC - OriginalChecksum=cf1f66cc86cfc93d357f9fcdfa4a4604 (do not edit this line) */

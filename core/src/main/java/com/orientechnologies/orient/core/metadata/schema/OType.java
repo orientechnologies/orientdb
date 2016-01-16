@@ -51,7 +51,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 /**
  * Generic representation of a type.<br>
@@ -87,7 +86,7 @@ public enum OType {
 
   EMBEDDEDMAP("EmbeddedMap", 12, Map.class, new Class<?>[] { Map.class }),
 
-  LINK("Link", 13, Object.class, new Class<?>[] { OIdentifiable.class, ORID.class }),
+  LINK("Link", 13, OIdentifiable.class, new Class<?>[] { OIdentifiable.class, ORID.class }),
 
   LINKLIST("LinkList", 14, List.class, new Class<?>[] { List.class }),
 
@@ -110,8 +109,8 @@ public enum OType {
   ANY("Any", 23, null, new Class<?>[] {});
 
   // Don't change the order, the type discover get broken if you change the order.
-  protected static final OType[]              TYPES          = new OType[] { EMBEDDEDLIST, EMBEDDEDSET, EMBEDDEDMAP, LINK, CUSTOM,
-      EMBEDDED, STRING, DATETIME                            };
+  protected static final OType[] TYPES = new OType[] { EMBEDDEDLIST, EMBEDDEDSET, EMBEDDEDMAP, LINK, CUSTOM, EMBEDDED, STRING,
+      DATETIME };
 
   protected static final OType[]              TYPES_BY_ID    = new OType[24];
   // Values previosly stored in javaTypes
@@ -147,7 +146,6 @@ public enum OType {
     TYPES_BY_CLASS.put(BigDecimal.class, DECIMAL);
     TYPES_BY_CLASS.put(ORidBag.class, LINKBAG);
     TYPES_BY_CLASS.put(OTrackedSet.class, EMBEDDEDSET);
-    TYPES_BY_CLASS.put(OMVRBTreeRIDSet.class, LINKSET);
     TYPES_BY_CLASS.put(ORecordLazySet.class, LINKSET);
     TYPES_BY_CLASS.put(OTrackedList.class, EMBEDDEDLIST);
     TYPES_BY_CLASS.put(ORecordLazyList.class, LINKLIST);
@@ -164,11 +162,11 @@ public enum OType {
     EMBEDDEDLIST.castable.add(EMBEDDEDSET);
   }
 
-  protected final String                      name;
-  protected final int                         id;
-  protected final Class<?>                    javaDefaultType;
-  protected final Class<?>[]                  allowAssignmentFrom;
-  protected final Set<OType>                  castable;
+  protected final String     name;
+  protected final int        id;
+  protected final Class<?>   javaDefaultType;
+  protected final Class<?>[] allowAssignmentFrom;
+  protected final Set<OType> castable;
 
   private OType(final String iName, final int iId, final Class<?> iJavaDefaultType, final Class<?>[] iAllowAssignmentBy) {
     name = iName;
@@ -287,11 +285,8 @@ public enum OType {
 
     final Class<? extends Object> iType = iObject.getClass();
 
-    if (iType.isPrimitive()
-        || Number.class.isAssignableFrom(iType)
-        || String.class.isAssignableFrom(iType)
-        || Boolean.class.isAssignableFrom(iType)
-        || Date.class.isAssignableFrom(iType)
+    if (iType.isPrimitive() || Number.class.isAssignableFrom(iType) || String.class.isAssignableFrom(iType) || Boolean.class
+        .isAssignableFrom(iType) || Date.class.isAssignableFrom(iType)
         || (iType.isArray() && (iType.equals(byte[].class) || iType.equals(char[].class) || iType.equals(int[].class)
             || iType.equals(long[].class) || iType.equals(double[].class) || iType.equals(float[].class)
             || iType.equals(short[].class) || iType.equals(Integer[].class) || iType.equals(String[].class)
@@ -424,10 +419,10 @@ public enum OType {
           if (OIOUtils.isLong(iValue.toString()))
             return new Date(Long.parseLong(iValue.toString()));
           try {
-            return ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateTimeFormatInstance()
+            return ODatabaseRecordThreadLocal.instance().get().getStorage().getConfiguration().getDateTimeFormatInstance()
                 .parse((String) iValue);
           } catch (ParseException e) {
-            return ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateFormatInstance()
+            return ODatabaseRecordThreadLocal.instance().get().getStorage().getConfiguration().getDateFormatInstance()
                 .parse((String) iValue);
           }
         }
@@ -550,8 +545,8 @@ public enum OType {
 
     }
 
-    throw new IllegalArgumentException("Cannot increment value '" + a + "' (" + a.getClass() + ") with '" + b + "' ("
-        + b.getClass() + ")");
+    throw new IllegalArgumentException(
+        "Cannot increment value '" + a + "' (" + a.getClass() + ") with '" + b + "' (" + b.getClass() + ")");
   }
 
   public static Number[] castComparableNumber(Number context, Number max) {
@@ -712,9 +707,9 @@ public enum OType {
   public boolean isLink() {
     return this == LINK || this == LINKSET || this == LINKLIST || this == LINKMAP || this == LINKBAG;
   }
-  
+
   public boolean isEmbedded() {
-	  return this == EMBEDDED || this == EMBEDDEDLIST || this == EMBEDDEDMAP || this == EMBEDDEDSET;
+    return this == EMBEDDED || this == EMBEDDEDLIST || this == EMBEDDEDMAP || this == EMBEDDEDSET;
   }
 
   public Class<?> getDefaultJavaType() {

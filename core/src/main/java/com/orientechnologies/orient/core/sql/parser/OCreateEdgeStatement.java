@@ -39,125 +39,78 @@ public class OCreateEdgeStatement extends OStatement {
     super(p, id);
   }
 
-  @Override
-  public String toString() {
-    StringBuilder result = new StringBuilder();
-    result.append("CREATE EDGE");
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("CREATE EDGE");
     if (targetClass != null) {
-      result.append(" ");
-      result.append(targetClass.toString());
+      builder.append(" ");
+      targetClass.toString(params, builder);
       if (targetClusterName != null) {
-        result.append(" CLUSTER ");
-        result.append(targetClusterName.toString());
+        builder.append(" CLUSTER ");
+        targetClusterName.toString(params, builder);
       }
     }
-    result.append(" FROM ");
+    builder.append(" FROM ");
     if (leftRid != null) {
-      result.append(leftRid.toString());
+      leftRid.toString(params, builder);
     } else if (leftRids != null) {
-      result.append("[");
+      builder.append("[");
       boolean first = true;
       for (ORid rid : leftRids) {
         if (!first) {
-          result.append(", ");
+          builder.append(", ");
         }
-        result.append(rid.toString());
+        rid.toString(params, builder);
         first = false;
       }
-      result.append("]");
+      builder.append("]");
     } else if (leftStatement != null) {
-      result.append("(");
-      result.append(leftStatement.toString());
-      result.append(")");
+      builder.append("(");
+      leftStatement.toString(params, builder);
+      builder.append(")");
     } else if (leftParam != null) {
-      if (leftParamValue == unset) {
-        result.append(leftParam.toString());
-      } else if (leftParamValue == null) {
-        result.append("NULL");
-      } else if (leftParamValue instanceof String) {
-        result.append("\"" + OExpression.encode("" + leftParamValue) + "\"");
-      } else {
-        result.append(leftParamValue.toString());
-      }
+      leftParam.toString(params, builder);
     } else if (leftIdentifier != null) {
-      result.append(leftIdentifier.toString());
+      leftIdentifier.toString(params, builder);
     }
-    result.append(" TO ");
+    builder.append(" TO ");
     if (rightRid != null) {
-      result.append(rightRid.toString());
+      rightRid.toString(params, builder);
     } else if (rightRids != null) {
-      result.append("[");
+      builder.append("[");
       boolean first = true;
       for (ORid rid : rightRids) {
         if (!first) {
-          result.append(", ");
+          builder.append(", ");
         }
-        result.append(rid.toString());
+        rid.toString(params, builder);
         first = false;
       }
-      result.append("]");
+      builder.append("]");
     } else if (rightStatement != null) {
-      result.append("(");
-      result.append(rightStatement.toString());
-      result.append(")");
+      builder.append("(");
+      rightStatement.toString(params, builder);
+      builder.append(")");
     } else if (rightParam != null) {
-      if (rightParamValue == unset) {
-        result.append(rightParam.toString());
-      } else if (rightParamValue == null) {
-        result.append("NULL");
-      } else if (rightParamValue instanceof String) {
-        result.append("\"" + OExpression.encode("" + rightParamValue) + "\"");
-      } else {
-        result.append(rightParamValue.toString());
-      }
+      rightParam.toString(params, builder);
     } else if (rightIdentifier != null) {
-      result.append(rightIdentifier.toString());
+      rightIdentifier.toString(params, builder);
     }
     if (body != null) {
-      result.append(" ");
-      result.append(body.toString());
+      builder.append(" ");
+      body.toString(params, builder);
     }
     if (retry != null) {
-      result.append(" RETRY ");
-      result.append(retry);
+      builder.append(" RETRY ");
+      builder.append(retry);
     }
     if (wait != null) {
-      result.append(" WAIT ");
-      result.append(wait);
+      builder.append(" WAIT ");
+      builder.append(wait);
     }
     if (batch != null) {
-      result.append(batch.toString());
-    }
-
-    return result.toString();
-  }
-
-  public void replaceParameters(Map<Object, Object> params) {
-    if (leftStatement != null) {
-      leftStatement.replaceParameters(params);
-    }
-    if (leftParam != null) {
-      Object val = leftParam.bindFromInputParams(params);
-      if (val != leftParam) {
-        leftParamValue = val;
-      }
-    }
-
-    if (rightStatement != null) {
-      rightStatement.replaceParameters(params);
-    }
-    if (rightParam != null) {
-      Object val = rightParam.bindFromInputParams(params);
-      if (val != rightParam) {
-        rightParamValue = val;
-      }
-    }
-    if (body != null) {
-      body.replaceParameters(params);
-    }
-    if (batch != null) {
-      batch.replaceParameters(params);
+      batch.toString(params, builder);
     }
   }
+
 }
 /* JavaCC - OriginalChecksum=2d3dc5693940ffa520146f8f7f505128 (do not edit this line) */

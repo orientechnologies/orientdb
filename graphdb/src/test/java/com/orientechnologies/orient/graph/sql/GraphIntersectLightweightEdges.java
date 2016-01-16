@@ -107,7 +107,7 @@ public class GraphIntersectLightweightEdges extends GraphNoTxAbstractTest {
 
   @BeforeClass
   public static void init() {
-    // System.setProperty("orientdb.test.env", "ci");
+    System.setProperty("orientdb.test.env", "ci");
     init(GraphIntersectLightweightEdges.class.getSimpleName());
   }
 }

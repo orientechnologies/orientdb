@@ -18,22 +18,19 @@
 
 package com.orientechnologies.lucene.test;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Created by enricorisa on 03/09/14.
  */
-@Test(groups = "embedded")
 public class GraphEmbeddedTest extends BaseLuceneTest {
 
   private OrientGraph graph;
@@ -42,14 +39,10 @@ public class GraphEmbeddedTest extends BaseLuceneTest {
 
   }
 
-  public GraphEmbeddedTest(boolean remote) {
-    super();
-  }
-
-  @BeforeClass
+  @Before
   public void init() {
     initDB();
-    graph = new OrientGraph((ODatabaseDocumentTx) databaseDocumentTx, false);
+    graph = new OrientGraph(databaseDocumentTx, false);
     OrientVertexType type = graph.createVertexType("City");
     type.createProperty("latitude", OType.DOUBLE);
     type.createProperty("longitude", OType.DOUBLE);
@@ -58,13 +51,13 @@ public class GraphEmbeddedTest extends BaseLuceneTest {
     databaseDocumentTx.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
   }
 
-  @AfterClass
+  @After
   public void deInit() {
     deInitDB();
   }
 
   @Test
-  public void embedded() {
+  public void embeddedTx() {
 
     graph.getRawGraph().begin();
     graph.addVertex("class:City", new Object[] { "name", "London" });
@@ -77,12 +70,9 @@ public class GraphEmbeddedTest extends BaseLuceneTest {
     int size = 0;
     for (Vertex v : vertexes) {
       size++;
+      Assert.assertNotNull(v);
     }
     Assert.assertEquals(size, 1);
   }
 
-  @Override
-  protected String getDatabaseName() {
-    return "graphEmbedded";
-  }
 }

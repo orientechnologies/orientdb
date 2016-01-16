@@ -57,6 +57,9 @@ public class OGremlinConsoleTest {
       try {
         List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from V"));
         Assert.assertFalse(result.isEmpty());
+        result = db.query(new OSQLSynchQuery<ODocument>("select from V where name is null"));
+        Assert.assertEquals(1,result.size());
+
       } finally {
         db.close();
       }
@@ -206,22 +209,26 @@ public class OGremlinConsoleTest {
     final String INPUT_FILE = "src/test/resources/graph-example-fromexport.xml";
     String dbUrl = "memory:testGraphMLImportRenameVAttribute";
 
-    new OGraphMLReader(new OrientGraphNoTx(dbUrl)).defineVertexAttributeStrategy("__type__", new ORenameGraphMLImportStrategy("t"))
-        .inputGraph(INPUT_FILE);
-
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
-    db.open("admin", "admin");
+    final OrientGraphNoTx graph = new OrientGraphNoTx(dbUrl);
     try {
-      List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from Person"));
-      Assert.assertFalse(result.isEmpty());
+      new OGraphMLReader(graph).defineVertexAttributeStrategy("__type__", new ORenameGraphMLImportStrategy("t")).inputGraph(
+          INPUT_FILE);
 
-      for (ODocument d : result) {
-        Assert.assertTrue(d.containsField("t"));
-        Assert.assertFalse(d.containsField("__type__"));
+      ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
+      db.open("admin", "admin");
+      try {
+        List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from Person"));
+        Assert.assertFalse(result.isEmpty());
+
+        for (ODocument d : result) {
+          Assert.assertTrue(d.containsField("t"));
+          Assert.assertFalse(d.containsField("__type__"));
+        }
+      } finally {
+        db.close();
       }
     } finally {
-      db.close();
+      graph.shutdown();
     }
   }
-
 }

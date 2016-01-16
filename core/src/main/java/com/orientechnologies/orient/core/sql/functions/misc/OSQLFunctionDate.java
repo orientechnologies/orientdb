@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.sql.functions.misc;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -68,7 +69,7 @@ public class OSQLFunctionDate extends OSQLFunctionAbstract {
         format = new SimpleDateFormat((String) iParams[1]);
         format.setTimeZone(ODateHelper.getDatabaseTimeZone());
       } else
-        format = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateTimeFormatInstance();
+        format = ODatabaseRecordThreadLocal.instance().get().getStorage().getConfiguration().getDateTimeFormatInstance();
 
       if (iParams.length == 3)
         format.setTimeZone(TimeZone.getTimeZone(iParams[2].toString()));
@@ -77,7 +78,8 @@ public class OSQLFunctionDate extends OSQLFunctionAbstract {
     try {
       return format.parse((String) iParams[0]);
     } catch (ParseException e) {
-      throw new OQueryParsingException("Error on formatting date '" + iParams[0] + "' using the format: " + format.toPattern(), e);
+      throw OException.wrapException(new OQueryParsingException("Error on formatting date '" + iParams[0] + "' using the format: "
+          + format.toPattern()), e);
     }
   }
 

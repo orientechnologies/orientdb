@@ -75,7 +75,7 @@ public class OrientJdbcStatement implements Statement {
   public OrientJdbcStatement(OrientJdbcConnection iConnection, int resultSetType, int resultSetConcurrency, int resultSetHoldability) {
     this.connection = iConnection;
     this.database = iConnection.getDatabase();
-    ODatabaseRecordThreadLocal.INSTANCE.set(database);
+    ODatabaseRecordThreadLocal.instance().set(database);
     documents = emptyList();
     batches = new ArrayList<String>();
     this.resultSetType = resultSetType;

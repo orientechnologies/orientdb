@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.command.script;
 
 import com.orientechnologies.common.concur.resource.OPartitionedObjectPool;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -63,7 +64,7 @@ public class OCommandExecutorFunction extends OCommandExecutorAbstract {
 
     parserText = request.getText();
 
-    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
     final OFunction f = db.getMetadata().getFunctionLibrary().getFunction(parserText);
 
     db.checkSecurity(ORule.ResourceGeneric.FUNCTION, ORole.PERMISSION_READ, f.getName());
@@ -89,7 +90,7 @@ public class OCommandExecutorFunction extends OCommandExecutorAbstract {
             for (Entry<Object, Object> arg : iArgs.entrySet())
               args[i++] = arg.getValue();
           } else {
-        	  args = OCommonConst.EMPTY_OBJECT_ARRAY;
+            args = OCommonConst.EMPTY_OBJECT_ARRAY;
           }
           result = invocableEngine.invokeFunction(parserText, args);
 
@@ -102,9 +103,10 @@ public class OCommandExecutorFunction extends OCommandExecutorAbstract {
         return OCommandExecutorUtility.transformResult(result);
 
       } catch (ScriptException e) {
-        throw new OCommandScriptException("Error on execution of the script", request.getText(), e.getColumnNumber(), e);
+        throw OException.wrapException(
+            new OCommandScriptException("Error on execution of the script", request.getText(), e.getColumnNumber()), e);
       } catch (NoSuchMethodException e) {
-        throw new OCommandScriptException("Error on execution of the script", request.getText(), 0, e);
+        throw OException.wrapException(new OCommandScriptException("Error on execution of the script", request.getText(), 0), e);
       } catch (OCommandScriptException e) {
         // PASS THROUGH
         throw e;

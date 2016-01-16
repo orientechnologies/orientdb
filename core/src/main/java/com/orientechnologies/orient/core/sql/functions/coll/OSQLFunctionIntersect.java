@@ -19,6 +19,13 @@
  */
 package com.orientechnologies.orient.core.sql.functions.coll;
 
+import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.util.OSupportsContains;
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -27,13 +34,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-
-import com.orientechnologies.common.collection.OMultiValue;
-import com.orientechnologies.common.util.OSupportsContains;
-import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
 
 /**
  * This operator can work as aggregate or inline. If only one argument is passed than aggregates, otherwise executes, and returns,
@@ -76,7 +76,7 @@ public class OSQLFunctionIntersect extends OSQLFunctionMultiValueAbstract<Object
     }
 
     // IN-LINE MODE (STATELESS)
-    Iterator iterator = OMultiValue.getMultiValueIterator(value);
+    Iterator iterator = OMultiValue.getMultiValueIterator(value, false);
 
     for (int i = 1; i < iParams.length; ++i) {
       value = iParams[i];
@@ -86,7 +86,7 @@ public class OSQLFunctionIntersect extends OSQLFunctionMultiValueAbstract<Object
 
       if (value != null) {
         value = intersectWith(iterator, value);
-        iterator = OMultiValue.getMultiValueIterator(value);
+        iterator = OMultiValue.getMultiValueIterator(value, false);
       } else {
         return new ArrayList().iterator();
       }

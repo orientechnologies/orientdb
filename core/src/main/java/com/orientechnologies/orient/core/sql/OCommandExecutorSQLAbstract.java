@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext.TIMEOUT_STRATEGY;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
@@ -32,11 +33,8 @@ import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
-import com.orientechnologies.orient.core.sql.parser.OrientSql;
-import com.orientechnologies.orient.core.sql.parser.ParseException;
+import com.orientechnologies.orient.core.sql.parser.OStatementCache;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
@@ -100,6 +98,10 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
 
   protected void throwParsingException(final String iText) {
     throw new OCommandSQLParsingException(iText, parserText, parserGetPreviousPosition());
+  }
+
+  protected void throwParsingException(final String iText, Exception e) {
+    throw OException.wrapException(new OCommandSQLParsingException(iText, parserText, parserGetPreviousPosition()), e);
   }
 
   /**
@@ -188,7 +190,7 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
 
     final OMetadataInternal metadata = (OMetadataInternal) db.getMetadata();
     final OIndex<?> idx = metadata.getIndexManager().getIndex(iIndexName);
-    if (idx != null) {
+    if (idx != null && idx.getDefinition() != null) {
       final String clazz = idx.getDefinition().getClassName();
 
       if (clazz != null) {
@@ -222,22 +224,21 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
     final boolean strict = getDatabase().getStorage().getConfiguration().isStrictSql();
 
     if (strict) {
-      final InputStream is = new ByteArrayInputStream(queryText.getBytes());
-      final OrientSql osql = new OrientSql(is);
       try {
-        final OStatement result = osql.parse();
+        final OStatement result = OStatementCache.get(queryText, getDatabase());
         preParsedStatement = result;
 
         if (iRequest instanceof OCommandRequestAbstract) {
           final Map<Object, Object> params = ((OCommandRequestAbstract) iRequest).getParameters();
-          result.replaceParameters(params);
+          StringBuilder builder = new StringBuilder();
+          result.toString(params, builder);
+          return builder.toString();
         }
-
         return result.toString();
-      } catch (ParseException e) {
-        throwParsingException("Error parsing query: \n" + queryText + "\n" + e.getMessage());
+      } catch (Exception e) {
+        throwParsingException("Error parsing query: \n" + queryText + "\n" + e.getMessage(), e);
       }
-      return "ERROR!";
+
     }
     return queryText;
   }

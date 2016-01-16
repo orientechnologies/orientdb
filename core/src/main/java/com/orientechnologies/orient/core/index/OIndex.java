@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.index;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.OApi;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -36,7 +35,7 @@ import java.util.Set;
  * 
  */
 public interface OIndex<T> extends Comparable<OIndex<T>> {
-  public static final String MERGE_KEYS = "mergeKeys";
+  String MERGE_KEYS = "mergeKeys";
 
   /**
    * Creates the index.
@@ -121,6 +120,11 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
   long getSize();
 
   /**
+   * Counts the entries for the key.
+   */
+  long count(Object iKey);
+
+  /**
    * @return Number of keys in index
    */
   long getKeySize();
@@ -145,8 +149,6 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
    */
   @OApi(enduser = false)
   OIndex<T> delete();
-
-  void deleteWithoutIndexLoad(String indexName);
 
   /**
    * Returns the index name.
@@ -233,8 +235,7 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
    *          Flag which determines whether data iterated by cursor should be in ascending or descending order.
    * @return Cursor which presents subset of index data between passed in keys.
    */
-  public OIndexCursor iterateEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
-      boolean ascOrder);
+  OIndexCursor iterateEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive, boolean ascOrder);
 
   /**
    * Returns cursor which presents subset of data which associated with key which is greater than passed in key.
@@ -247,7 +248,7 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
    *          Flag which determines whether data iterated by cursor should be in ascending or descending order.
    * @return cursor which presents subset of data which associated with key which is greater than passed in key.
    */
-  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder);
+  OIndexCursor iterateEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder);
 
   /**
    * Returns cursor which presents subset of data which associated with key which is less than passed in key.
@@ -260,21 +261,21 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
    *          Flag which determines whether data iterated by cursor should be in ascending or descending order.
    * @return cursor which presents subset of data which associated with key which is less than passed in key.
    */
-  public OIndexCursor iterateEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder);
+  OIndexCursor iterateEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder);
 
-  public OIndexCursor cursor();
+  OIndexCursor cursor();
 
-  public OIndexCursor descCursor();
+  OIndexCursor descCursor();
 
-  public OIndexKeyCursor keyCursor();
+  OIndexKeyCursor keyCursor();
 
   ODocument getMetadata();
 
-  public boolean supportsOrderedIterations();
+  boolean supportsOrderedIterations();
 
-  public boolean isRebuiding();
+  boolean isRebuiding();
 
-  public Object getFirstKey();
+  Object getFirstKey();
 
-  public Object getLastKey();
+  Object getLastKey();
 }

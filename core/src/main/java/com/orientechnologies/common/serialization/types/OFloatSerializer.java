@@ -20,11 +20,11 @@
 
 package com.orientechnologies.common.serialization.types;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 
+import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 /**
@@ -34,13 +34,13 @@ import java.nio.ByteOrder;
  * @since 18.01.12
  */
 public class OFloatSerializer implements OBinarySerializer<Float> {
-  public static final byte              ID         = 7;
+  public static final  byte             ID         = 7;
   /**
    * size of float value in bytes
    */
-  public static final int               FLOAT_SIZE = 4;
+  public static final  int              FLOAT_SIZE = 4;
   private static final OBinaryConverter CONVERTER  = OBinaryConverterFactory.getConverter();
-  public static OFloatSerializer        INSTANCE   = new OFloatSerializer();
+  public static final  OFloatSerializer INSTANCE   = new OFloatSerializer();
 
   public int getObjectSize(Float object, Object... hints) {
     return FLOAT_SIZE;
@@ -76,50 +76,12 @@ public class OFloatSerializer implements OBinarySerializer<Float> {
     return Float.intBitsToFloat(CONVERTER.getInt(stream, startPosition, ByteOrder.nativeOrder()));
   }
 
-  @Override
-  public void serializeInDirectMemoryObject(Float object, ODirectMemoryPointer pointer, long offset, Object... hints) {
-    pointer.setInt(offset, Float.floatToIntBits(object));
-  }
-
-  @Override
-  public Float deserializeFromDirectMemoryObject(ODirectMemoryPointer pointer, long offset) {
-    return Float.intBitsToFloat(pointer.getInt(offset));
-  }
-
-  @Override
-  public Float deserializeFromDirectMemoryObject(OWALChangesTree.PointerWrapper wrapper, long offset) {
-    return Float.intBitsToFloat(wrapper.getInt(offset));
-  }
-
   public void serializeNative(final float object, final byte[] stream, final int startPosition, final Object... hints) {
     CONVERTER.putInt(stream, startPosition, Float.floatToIntBits(object), ByteOrder.nativeOrder());
   }
 
   public float deserializeNative(final byte[] stream, final int startPosition) {
     return Float.intBitsToFloat(CONVERTER.getInt(stream, startPosition, ByteOrder.nativeOrder()));
-  }
-
-  public void serializeInDirectMemory(final float object, final ODirectMemoryPointer pointer, final long offset,
-      final Object... hints) {
-    pointer.setInt(offset, Float.floatToIntBits(object));
-  }
-
-  public float deserializeFromDirectMemory(final ODirectMemoryPointer pointer, final long offset) {
-    return Float.intBitsToFloat(pointer.getInt(offset));
-  }
-
-  public float deserializeFromDirectMemory(OWALChangesTree.PointerWrapper wrapper, final long offset) {
-    return Float.intBitsToFloat(wrapper.getInt(offset));
-  }
-
-  @Override
-  public int getObjectSizeInDirectMemory(final ODirectMemoryPointer pointer, final long offset) {
-    return FLOAT_SIZE;
-  }
-
-  @Override
-  public int getObjectSizeInDirectMemory(OWALChangesTree.PointerWrapper wrapper, long offset) {
-    return FLOAT_SIZE;
   }
 
   public boolean isFixedLength() {
@@ -133,5 +95,30 @@ public class OFloatSerializer implements OBinarySerializer<Float> {
   @Override
   public Float preprocess(final Float value, final Object... hints) {
     return value;
+  }
+
+  @Override
+  public void serializeInByteBufferObject(Float object, ByteBuffer buffer, Object... hints) {
+    buffer.putInt(Float.floatToIntBits(object));
+  }
+
+  @Override
+  public Float deserializeFromByteBufferObject(ByteBuffer buffer) {
+    return Float.intBitsToFloat(buffer.getInt());
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
+    return FLOAT_SIZE;
+  }
+
+  @Override
+  public Float deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+    return Float.intBitsToFloat(walChanges.getIntValue(buffer, offset));
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+    return FLOAT_SIZE;
   }
 }

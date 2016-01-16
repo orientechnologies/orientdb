@@ -55,6 +55,17 @@ public class OPropertyAbstractDelegate implements OProperty {
     delegate.setName(iName);
     return this;
   }
+  
+  @Override
+  public String getDescription() {
+    return delegate.getDescription();
+  }
+  
+  @Override
+  public OProperty setDescription(String iDescription) {
+    delegate.setDescription(iDescription);
+    return this;
+  }
 
   @Override
   public void set(final ATTRIBUTES attribute, final Object iValue) {

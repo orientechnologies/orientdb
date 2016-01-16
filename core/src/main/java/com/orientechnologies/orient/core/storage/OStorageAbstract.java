@@ -19,6 +19,10 @@
  */
 package com.orientechnologies.orient.core.storage;
 
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicLong;
+
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.concur.resource.OSharedContainer;
 import com.orientechnologies.common.concur.resource.OSharedContainerImpl;
@@ -30,18 +34,16 @@ import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.exception.OSecurityException;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicLong;
+import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 
 public abstract class OStorageAbstract implements OStorage, OSharedContainer {
-  public final static ThreadGroup                     storageThreadGroup;
+  public final static ThreadGroup storageThreadGroup;
 
   static {
     ThreadGroup parentThreadGroup = Thread.currentThread().getThreadGroup();
@@ -65,24 +67,21 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
     storageThreadGroup = new ThreadGroup(parentThreadGroup, "OrientDB Storage");
   }
 
-  protected final String                              url;
-  protected final String                              mode;
+  protected final String                          url;
+  protected final String                          mode;
   protected final OSharedResourceAdaptiveExternal dataLock;
   protected final OReadersWriterSpinLock          stateLock;
 
   protected volatile OStorageConfiguration            configuration;
   protected volatile OCurrentStorageComponentsFactory componentsFactory;
   protected String                                    name;
-  protected AtomicLong                                version         = new AtomicLong();
-  protected volatile STATUS                           status          = STATUS.CLOSED;
+  protected AtomicLong                                version = new AtomicLong();
+  protected volatile STATUS                           status  = STATUS.CLOSED;
 
-  private final OSharedContainerImpl                  sharedContainer = new OSharedContainerImpl();
+  private final OSharedContainerImpl sharedContainer = new OSharedContainerImpl();
 
   public OStorageAbstract(final String name, final String iURL, final String mode, final int timeout) {
-    if (OStringSerializerHelper.contains(name, '/'))
-      this.name = name.substring(name.lastIndexOf("/") + 1);
-    else
-      this.name = name;
+    this.name = normalizeName(name);
 
     if (OStringSerializerHelper.contains(name, ','))
       throw new IllegalArgumentException("Invalid character in storage name: " + this.name);
@@ -92,6 +91,13 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
 
     dataLock = new OSharedResourceAdaptiveExternal(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), timeout, true);
     stateLock = new OReadersWriterSpinLock();
+  }
+
+  protected String normalizeName(String name) {
+    if (OStringSerializerHelper.contains(name, '/'))
+      return name.substring(name.lastIndexOf("/") + 1);
+    else
+      return name;
   }
 
   public abstract OCluster getClusterByName(final String iClusterName);
@@ -109,7 +115,7 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
   }
 
   public boolean checkForRecordValidity(final OPhysicalPosition ppos) {
-    return ppos != null && !ppos.recordVersion.isTombstone();
+    return ppos != null && !ORecordVersionHelper.isTombstone(ppos.recordVersion);
   }
 
   public String getName() {
@@ -154,7 +160,6 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
     return dropCluster(getClusterIdByName(iClusterName), iTruncate);
   }
 
-
   public long countRecords() {
     long tot = 0;
 
@@ -177,7 +182,7 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
       } catch (RuntimeException e) {
         throw e;
       } catch (Exception e) {
-        throw new OException("Error on nested call in lock", e);
+        throw OException.wrapException(new OStorageException("Error on nested call in lock"), e);
       } finally {
         if (iExclusiveLock)
           dataLock.releaseExclusiveLock();
@@ -200,14 +205,14 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
 
   public void checkForClusterPermissions(final String iClusterName) {
     // CHECK FOR ORESTRICTED
-    OMetadata metaData = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata();
+    OMetadata metaData = ODatabaseRecordThreadLocal.instance().get().getMetadata();
     if (metaData != null) {
       final Set<OClass> classes = ((OMetadataInternal) metaData).getImmutableSchemaSnapshot().getClassesRelyOnCluster(iClusterName);
       for (OClass c : classes) {
         if (c.isSubClassOf(OSecurityShared.RESTRICTED_CLASSNAME))
-          throw new OSecurityException("Class '" + c.getName()
-              + "' cannot be truncated because has record level security enabled (extends '" + OSecurityShared.RESTRICTED_CLASSNAME
-              + "')");
+          throw new OSecurityException(
+              "Class '" + c.getName() + "' cannot be truncated because has record level security enabled (extends '"
+                  + OSecurityShared.RESTRICTED_CLASSNAME + "')");
       }
     }
   }
@@ -232,4 +237,8 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
     return 0;
   }
 
+  @Override
+  public void shutdown() {
+    close(true, false);
+  }
 }

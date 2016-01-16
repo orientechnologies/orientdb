@@ -6,11 +6,9 @@ import java.util.Map;
 
 public class OSkip extends SimpleNode {
 
-  protected OInteger          num;
+  protected OInteger        num;
 
   protected OInputParameter inputParam;
-
-  protected Object          inputFinalValue;
 
   public OSkip(int id) {
     super(id);
@@ -25,31 +23,18 @@ public class OSkip extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-  public void replaceParameters(Map<Object, Object> params) {
-    if (inputParam != null) {
-      Object result = inputParam.bindFromInputParams(params);
-      if (inputParam != result) {
-        inputFinalValue = result;
-      }
-    }
-  }
 
-  @Override
-  public String toString() {
+
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (num == null && inputParam == null) {
-      return "";
+      return;
     }
-
-    StringBuilder result = new StringBuilder();
-    result.append(" SKIP ");
+    builder.append(" SKIP ");
     if (num != null) {
-      result.append(num);
-    } else if (inputFinalValue != null) {
-      result.append(inputFinalValue);
+      num.toString(params, builder);
     } else {
-      result.append(inputParam);
+      inputParam.toString(params, builder);
     }
-    return result.toString();
   }
 }
 /* JavaCC - OriginalChecksum=8e13ca184705a8fc1b5939ecefe56a60 (do not edit this line) */

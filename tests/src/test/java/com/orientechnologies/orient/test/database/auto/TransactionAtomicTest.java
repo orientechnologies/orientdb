@@ -15,6 +15,13 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.io.IOException;
+
+import org.testng.Assert;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -24,17 +31,10 @@ import com.orientechnologies.orient.core.exception.OConcurrentModificationExcept
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
-import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
-import org.testng.Assert;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
-import java.io.IOException;
 
 @Test(groups = "dictionary")
 public class TransactionAtomicTest extends DocumentDBBaseTest {
@@ -51,22 +51,22 @@ public class TransactionAtomicTest extends DocumentDBBaseTest {
     ODatabaseDocumentTx db2 = new ODatabaseDocumentTx(url);
     db2.open("admin", "admin");
 
-    ORecordFlat record1 = new ORecordFlat();
-    record1.value("This is the first version").save();
+    ODocument record1 = new ODocument();
+    record1.field("value", "This is the first version").save();
 
     // RE-READ THE RECORD
     record1.reload();
 
     db2.activateOnCurrentThread();
-    ORecordFlat record2 = db2.load(record1.getIdentity());
+    ODocument record2 = db2.load(record1.getIdentity());
 
-    record2.value("This is the second version").save();
-    record2.value("This is the third version").save();
+    record2.field("value", "This is the second version").save();
+    record2.field("value", "This is the third version").save();
 
     db1.activateOnCurrentThread();
     record1.reload(null, true);
 
-    Assert.assertEquals(record1.value(), "This is the third version");
+    Assert.assertEquals(record1.field("value"), "This is the third version");
 
     db1.close();
 
@@ -85,12 +85,10 @@ public class TransactionAtomicTest extends DocumentDBBaseTest {
 
     doc.setDirty();
     doc.field("testmvcc", true);
-    doc.getRecordVersion().increment();
+    ORecordInternal.setVersion(doc, doc.getVersion() + 1);
     try {
       doc.save();
       Assert.assertTrue(false);
-    } catch (OResponseProcessingException e) {
-      Assert.assertTrue(e.getCause() instanceof OConcurrentModificationException);
     } catch (OConcurrentModificationException e) {
       Assert.assertTrue(true);
     }
@@ -98,8 +96,8 @@ public class TransactionAtomicTest extends DocumentDBBaseTest {
 
   @Test
   public void testTransactionPreListenerRollback() throws IOException {
-    ORecordFlat record1 = new ORecordFlat(database);
-    record1.value("This is the first version").save();
+    ODocument record1 = new ODocument();
+    record1.field("value", "This is the first version").save();
 
     final ODatabaseListener listener = new ODatabaseListener() {
 
@@ -206,9 +204,6 @@ public class TransactionAtomicTest extends DocumentDBBaseTest {
 
       Assert.assertTrue(false);
 
-    } catch (OResponseProcessingException e) {
-      Assert.assertTrue(e.getCause() instanceof ORecordDuplicatedException);
-      database.rollback();
     } catch (ORecordDuplicatedException e) {
       Assert.assertTrue(true);
       database.rollback();

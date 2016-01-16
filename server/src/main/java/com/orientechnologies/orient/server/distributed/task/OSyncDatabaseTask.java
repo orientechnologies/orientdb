@@ -26,6 +26,8 @@ import com.orientechnologies.orient.core.command.OCommandDistributedReplicateReq
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabaseChunk;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
@@ -42,6 +44,7 @@ import java.io.ObjectOutput;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -50,21 +53,12 @@ import java.util.concurrent.locks.Lock;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OCommandOutputListener {
-  public final static int    CHUNK_MAX_SIZE = 1048576;    // 1MB
+  public final static int    CHUNK_MAX_SIZE = 4194304;    // 4MB
   public static final String DEPLOYDB       = "deploydb.";
 
-  public enum MODE {
-    FULL_REPLACE
-  }
-
-  protected MODE mode = MODE.FULL_REPLACE;
   protected long random;
 
   public OSyncDatabaseTask() {
-  }
-
-  public OSyncDatabaseTask(final MODE iMode) {
-    mode = iMode;
     random = UUID.randomUUID().getLeastSignificantBits();
   }
 
@@ -95,10 +89,11 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
           iManager.setDatabaseStatus(getNodeSource(), databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
           iManager.setDatabaseStatus(iManager.getLocalNodeName(), databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
 
-          ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT, "deploying database %s...",
+          ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT, "deploying database %s...",
               databaseName);
 
           final AtomicLong lastOperationId = new AtomicLong(-1);
+          final AtomicReference<OLogSequenceNumber> endLSN = new AtomicReference<OLogSequenceNumber>();
 
           File backupFile = ((ODistributedStorage) database.getStorage()).getLastValidBackup();
 
@@ -106,8 +101,11 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
             // CREATE A BACKUP OF DATABASE FROM SCRATCH
             backupFile = new File(Orient.getTempPath() + "/backup_" + database.getName() + ".zip");
 
+            final int compressionRate = OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger();
+
             ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-                "creating backup of database '%s' in directory: %s...", databaseName, backupFile.getAbsolutePath());
+                "creating backup of database '%s' (compressionRate=%d) in directory: %s...", databaseName, compressionRate,
+                backupFile.getAbsolutePath());
 
             if (backupFile.exists())
               backupFile.delete();
@@ -131,6 +129,7 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
                     @Override
                     public Object call() throws Exception {
                       lastOperationId.set(database.getStorage().getLastOperationId());
+                      endLSN.set(((OAbstractPaginatedStorage) database.getStorage().getUnderlying()).getLSN());
                       return null;
                     }
                   }, new OCommandOutputListener() {
@@ -178,7 +177,7 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
           }
 
           final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(lastOperationId.get(), backupFile, 0,
-              CHUNK_MAX_SIZE);
+              CHUNK_MAX_SIZE, endLSN.get(), false);
 
           ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
               "- transferring chunk #%d offset=%d size=%s...", 1, 0, OFileUtils.getSizeAsNumber(chunk.buffer.length));
@@ -218,7 +217,7 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
 
   @Override
   public boolean isRequireNodeOnline() {
-    return true;
+    return false;
   }
 
   @Override
@@ -238,13 +237,11 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
 
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
-    out.writeUTF(mode.name());
     out.writeLong(random);
   }
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-    mode = MODE.valueOf(in.readUTF());
     random = in.readLong();
   }
 

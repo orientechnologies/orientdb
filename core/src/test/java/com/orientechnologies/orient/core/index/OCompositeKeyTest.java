@@ -1,10 +1,14 @@
 package com.orientechnologies.orient.core.index;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
-import com.orientechnologies.common.directmemory.ODirectMemoryPointerFactory;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
+import org.testng.Assert;
 import org.testng.annotations.Test;
+
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 import static org.testng.Assert.*;
 
@@ -238,21 +242,54 @@ public class OCompositeKeyTest {
     assertNotSame(compositeKeyOne, compositeKeyTwo);
   }
 
-  public void testDirectMemoryBinarySerializationCompositeKeyNull() {
+  public void testByteBufferBinarySerializationCompositeKeyNull() {
+    final int serializationOffset = 5;
+
     final OCompositeKey compositeKeyOne = new OCompositeKey();
     compositeKeyOne.addKey(1);
     compositeKeyOne.addKey(null);
     compositeKeyOne.addKey(2);
 
-    int len = OCompositeKeySerializer.INSTANCE.getObjectSize(compositeKeyOne);
-    ODirectMemoryPointer directMemoryPointer = ODirectMemoryPointerFactory.instance().createPointer(len);
+    final int len = OCompositeKeySerializer.INSTANCE.getObjectSize(compositeKeyOne);
 
-    OCompositeKeySerializer.INSTANCE.serializeInDirectMemoryObject(compositeKeyOne, directMemoryPointer, 0);
+    final ByteBuffer buffer = ByteBuffer.allocate(len + serializationOffset);
+    buffer.position(serializationOffset);
 
-    final OCompositeKey compositeKeyTwo = OCompositeKeySerializer.INSTANCE.deserializeFromDirectMemoryObject(directMemoryPointer, 0);
+    OCompositeKeySerializer.INSTANCE.serializeInByteBufferObject(compositeKeyOne, buffer);
+
+    final int binarySize = buffer.position() - serializationOffset;
+    Assert.assertEquals(binarySize, len);
+
+    buffer.position(serializationOffset);
+    Assert.assertEquals(OCompositeKeySerializer.INSTANCE.getObjectSizeInByteBuffer(buffer), len);
+
+    buffer.position(serializationOffset);
+    final OCompositeKey compositeKeyTwo = OCompositeKeySerializer.INSTANCE.deserializeFromByteBufferObject(buffer);
 
     assertEquals(compositeKeyOne, compositeKeyTwo);
     assertNotSame(compositeKeyOne, compositeKeyTwo);
-    directMemoryPointer.free();
+
+    Assert.assertEquals(buffer.position() - serializationOffset, len);
+  }
+
+  public void testWALChangesBinarySerializationCompositeKeyNull() {
+    final int serializationOffset = 5;
+
+    final OCompositeKey compositeKey = new OCompositeKey();
+    compositeKey.addKey(1);
+    compositeKey.addKey(null);
+    compositeKey.addKey(2);
+
+    final int len = OCompositeKeySerializer.INSTANCE.getObjectSize(compositeKey);
+    final ByteBuffer buffer = ByteBuffer.allocateDirect(len + serializationOffset).order(ByteOrder.nativeOrder());
+    final byte[] data = new byte[len];
+
+    OCompositeKeySerializer.INSTANCE.serializeNativeObject(compositeKey, data, 0);
+    final OWALChanges walChanges = new OWALChangesTree();
+    walChanges.setBinaryValue(buffer, data, serializationOffset);
+
+    Assert.assertEquals(OCompositeKeySerializer.INSTANCE.getObjectSizeInByteBuffer(buffer, walChanges, serializationOffset), len);
+    Assert.assertEquals(OCompositeKeySerializer.INSTANCE.deserializeFromByteBufferObject(buffer, walChanges, serializationOffset),
+        compositeKey);
   }
 }

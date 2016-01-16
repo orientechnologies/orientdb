@@ -19,18 +19,19 @@
  */
 package com.orientechnologies.orient.core.storage;
 
-import com.orientechnologies.common.concur.lock.OModificationLock;
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.version.ORecordVersion;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.sql.parser.ORid;
 
 import java.io.IOException;
 
 public interface OCluster {
 
   enum ATTRIBUTES {
-    NAME, USE_WAL, RECORD_GROW_FACTOR, RECORD_OVERFLOW_GROW_FACTOR, COMPRESSION, CONFLICTSTRATEGY, STATUS
+    NAME, USE_WAL, RECORD_GROW_FACTOR, RECORD_OVERFLOW_GROW_FACTOR, COMPRESSION, CONFLICTSTRATEGY, STATUS, ENCRYPTION
   }
 
   void configure(OStorage iStorage, int iId, String iClusterName, Object... iParameters) throws IOException;
@@ -47,15 +48,11 @@ public interface OCluster {
 
   void delete() throws IOException;
 
-  OModificationLock getExternalModificationLock();
-
   Object set(ATTRIBUTES iAttribute, Object iValue) throws IOException;
 
-  void convertToTombstone(long iPosition) throws IOException;
+  String encryption();
 
   long getTombstonesCount();
-
-  boolean hasTombstonesSupport();
 
   /**
    * Truncates the cluster content. All the entries will be removed.
@@ -64,15 +61,15 @@ public interface OCluster {
    */
   void truncate() throws IOException;
 
-  OPhysicalPosition createRecord(byte[] content, ORecordVersion recordVersion, byte recordType) throws IOException;
+  OPhysicalPosition createRecord(byte[] content, int recordVersion, byte recordType) throws IOException;
 
   boolean deleteRecord(long clusterPosition) throws IOException;
 
-  void updateRecord(long clusterPosition, byte[] content, ORecordVersion recordVersion, byte recordType) throws IOException;
+  void updateRecord(long clusterPosition, byte[] content, int recordVersion, byte recordType) throws IOException;
 
   ORawBuffer readRecord(long clusterPosition) throws IOException;
 
-  ORawBuffer readRecordIfVersionIsNotLatest(long clusterPosition, ORecordVersion recordVersion) throws IOException,
+  ORawBuffer readRecordIfVersionIsNotLatest(long clusterPosition, int recordVersion) throws IOException,
       ORecordNotFoundException;
 
   boolean exists();
@@ -104,8 +101,6 @@ public interface OCluster {
    * @return
    */
   long getRecordsSize() throws IOException;
-
-  boolean useWal();
 
   float recordGrowFactor();
 

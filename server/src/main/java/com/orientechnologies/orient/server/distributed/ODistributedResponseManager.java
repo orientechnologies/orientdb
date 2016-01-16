@@ -173,7 +173,7 @@ public class ODistributedResponseManager {
 
       completed = getExpectedResponses() == receivedResponses;
 
-      if (receivedResponses >= expectedSynchronousResponses && (!waitForLocalNode || receivedCurrentNode)) {
+      if (receivedResponses >= quorum && (!waitForLocalNode || receivedCurrentNode)) {
         if (completed || isMinimumQuorumReached(false)) {
           // NOTIFY TO THE WAITER THE RESPONSE IS COMPLETE NOW
           notifyWaiters();
@@ -369,6 +369,10 @@ public class ODistributedResponseManager {
 
   public String getDatabaseName() {
     return request.getDatabaseName();
+  }
+
+  public long getSynchTimeout() {
+    return synchTimeout;
   }
 
   public void timeout() {

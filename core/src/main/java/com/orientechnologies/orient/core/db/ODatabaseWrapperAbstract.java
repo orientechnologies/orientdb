@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.core.db;
 
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -50,7 +49,6 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T> 
   public ODatabaseWrapperAbstract(final DB iDatabase) {
     underlying = iDatabase;
     databaseOwner = this;
-    Orient.instance().getDatabaseFactory().register(databaseOwner);
   }
 
   public <THISDB extends ODatabase> THISDB open(final String iUserName, final String iUserPassword) {
@@ -60,7 +58,6 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T> 
 
   public <THISDB extends ODatabase> THISDB open(final OToken iToken) {
     underlying.open(iToken);
-    Orient.instance().getDatabaseFactory().register(databaseOwner);
     return (THISDB) this;
   }
 
@@ -150,7 +147,6 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T> 
 
   public void drop() {
     underlying.drop();
-    Orient.instance().getDatabaseFactory().unregister(databaseOwner);
   }
 
   public STATUS getStatus() {
@@ -254,7 +250,7 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T> 
 
   public boolean dropCluster(final String iClusterName, final boolean iTruncate) {
     getLocalCache().freeCluster(getClusterIdByName(iClusterName));
-    return underlying.dropCluster(iClusterName, true);
+    return underlying.dropCluster(iClusterName, iTruncate);
   }
 
   public boolean dropCluster(final int iClusterId, final boolean iTruncate) {
@@ -351,21 +347,6 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T> 
 
   public void release() {
     underlying.release();
-  }
-
-  @Override
-  public void freezeCluster(int iClusterId, boolean throwException) {
-    underlying.freezeCluster(iClusterId, throwException);
-  }
-
-  @Override
-  public void freezeCluster(int iClusterId) {
-    underlying.freezeCluster(iClusterId);
-  }
-
-  @Override
-  public void releaseCluster(int iClusterId) {
-    underlying.releaseCluster(iClusterId);
   }
 
   protected void checkOpeness() {

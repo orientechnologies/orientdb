@@ -26,7 +26,20 @@ public class OLocalLiveResultListener implements OLiveResultListener, OCommandRe
   }
 
   @Override
+  public Object getResult() {
+    return null;
+  }
+
+  @Override
   public void onLiveResult(int iLiveToken, ORecordOperation iOp) throws OException {
     underlying.onLiveResult(iLiveToken, iOp);
+  }
+
+  @Override public void onError(int iLiveToken) {
+    //TODO
+  }
+
+  @Override public void onUnsubscribe(int iLiveToken) {
+    underlying.onUnsubscribe(iLiveToken);
   }
 }

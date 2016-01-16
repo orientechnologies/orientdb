@@ -1,34 +1,39 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.sql.filter;
 
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.OBinaryField;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodField;
-import com.orientechnologies.orient.core.sql.methods.OSQLMethodRuntime;
+import com.orientechnologies.orient.core.sql.method.OSQLMethodRuntime;
 
 import java.util.Set;
 
@@ -81,12 +86,14 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
     }
   }
 
-  public OSQLFilterItemField(final String iName) {
-    this.name = OStringSerializerHelper.getStringContent(iName);
+  public OSQLFilterItemField(final String iName, final OClass iClass) {
+    this.name = OIOUtils.getStringContent(iName);
+    collate = getCollateForField(iClass, name);
   }
 
-  public OSQLFilterItemField(final OBaseParser iQueryToParse, final String iName) {
+  public OSQLFilterItemField(final OBaseParser iQueryToParse, final String iName, final OClass iClass) {
     super(iQueryToParse, iName);
+    collate = getCollateForField(iClass, iName);
   }
 
   public Object getValue(final OIdentifiable iRecord, final Object iCurrentResult, final OCommandContext iContext) {
@@ -102,14 +109,25 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
     }
 
     // UNMARSHALL THE SINGLE FIELD
-    if (doc.deserializeFields(preLoadedFieldsArray)) {
-      final Object v = doc.rawField(name);
+    if (preLoadedFieldsArray != null && !doc.deserializeFields(preLoadedFieldsArray))
+      return null;
 
-      collate = getCollateForField(doc, name);
+    final Object v = doc.rawField(name);
+    return transformValue(iRecord, iContext, v);
+  }
 
-      return transformValue(iRecord, iContext, v);
-    }
-    return null;
+  public OBinaryField getBinaryField(final OIdentifiable iRecord) {
+    if (iRecord == null)
+      throw new OCommandExecutionException("expression item '" + name + "' cannot be resolved because current record is NULL");
+
+    if (operationsChain != null && operationsChain.size() > 0)
+      // CANNOT USE BINARY FIELDS
+      return null;
+
+    final ORecord rec = iRecord.getRecord();
+
+    return ORecordSerializerBinary.INSTANCE.getCurrentSerializer().deserializeField(new BytesContainer(rec.toStream()).skip(1),
+        rec instanceof ODocument ? ((ODocument) rec).getSchemaClass() : null, name);
   }
 
   public String getRoot() {
@@ -117,7 +135,7 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
   }
 
   public void setRoot(final OBaseParser iQueryToParse, final String iRoot) {
-    this.name = OStringSerializerHelper.getStringContent(iRoot);
+    this.name = OIOUtils.getStringContent(iRoot);
   }
 
   /**

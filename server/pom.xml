@@ -18,7 +18,7 @@
     <parent>
         <groupId>com.orientechnologies</groupId>
         <artifactId>orientdb-parent</artifactId>
-        <version>2.1.8</version>
+        <version>2.2.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>orientdb-server</artifactId>
@@ -36,10 +36,18 @@
         </osgi.import>
         <osgi.export>com.orientechnologies.orient.server.*</osgi.export>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <argLine>-ea -Xmx2048m</argLine>
+        <argLine>-ea -Xmx2048m -XX:MaxDirectMemorySize=512g -Dstorage.diskCache.bufferSize=4096
+            -Dsecurity.userPasswordSaltIterations=10 -Dmemory.directMemory.trackMode=true
+        </argLine>
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-test-commons</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-client</artifactId>
@@ -47,23 +55,15 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-tools</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
             <groupId>javax.mail</groupId>
             <artifactId>mail</artifactId>
-            <version>1.4</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.testng</groupId>
-            <artifactId>testng</artifactId>
-            <version>6.8.8</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-all</artifactId>
-            <version>1.9.5</version>
-            <scope>test</scope>
+            <version>1.4.7</version>
         </dependency>
 
         <dependency>
@@ -79,6 +79,54 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <profiles>
+        <profile>
+            <id>development</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <exclude.test.1>**/AutomaticBackupTest.java</exclude.test.1>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>ci</id>
+            <activation>
+                <property>
+                    <name>orientdb.test.env</name>
+                    <value>ci</value>
+                </property>
+            </activation>
+            <properties>
+                <exclude.test.1>empty.java</exclude.test.1>
+            </properties>
+
+        </profile>
+        <profile>
+            <id>release</id>
+            <activation>
+                <property>
+                    <name>orientdb.test.env</name>
+                    <value>release</value>
+                </property>
+            </activation>
+            <properties>
+                <exclude.test.1>empty.java</exclude.test.1>
+            </properties>
+
+        </profile>
+        <profile>
+            <id>localDeploy</id>
+            <activation>
+                <property>
+                    <name>localDeploy</name>
+                </property>
+            </activation>
+        </profile>
+    </profiles>
+
 
     <build>
         <plugins>
@@ -99,7 +147,12 @@
                 <configuration>
                     <systemPropertyVariables>
                         <buildDirectory>${project.build.directory}</buildDirectory>
+                        <orient.server.testMode>${orient.server.testMode}</orient.server.testMode>
+                        <orient.server.port>${orient.server.port}</orient.server.port>
                     </systemPropertyVariables>
+                    <excludes>
+                        <exclude>${exclude.test.1}</exclude>
+                    </excludes>
                 </configuration>
             </plugin>
         </plugins>

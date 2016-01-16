@@ -19,29 +19,32 @@
  */
 package com.orientechnologies.orient.console;
 
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.Map.Entry;
-
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.console.OConsoleApplication;
 import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.common.util.OSizeable;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.Map.Entry;
+
 public class OTableFormatter {
-  protected final static String       MORE            = "...";
-  protected final static Set<String>  prefixedColumns = new LinkedHashSet<String>(Arrays.asList(new String[] { "#", "@RID",
-      "@CLASS"                                       }));
-  protected final OConsoleApplication out;
-  protected final SimpleDateFormat    DEF_DATEFORMAT  = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
-  protected int                       minColumnSize   = 4;
-  protected int                       maxWidthSize    = 150;
+  protected final static String           MORE                 = "...";
+  protected final static Set<String>      prefixedColumns      = new LinkedHashSet<String>(Arrays.asList(new String[] { "#",
+      "@RID", "@CLASS"                                        }));
+  protected final OConsoleApplication     out;
+  protected final static SimpleDateFormat DEF_DATEFORMAT       = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+  protected int                           maxMultiValueEntries = 10;
+  protected int                           minColumnSize        = 4;
+  protected int                           maxWidthSize         = 150;
 
   public OTableFormatter(final OConsoleApplication iConsole) {
     this.out = iConsole;
@@ -76,8 +79,17 @@ public class OTableFormatter {
     return maxWidthSize;
   }
 
-  public OTableFormatter setMaxWidthSize(int maxWidthSize) {
+  public OTableFormatter setMaxWidthSize(final int maxWidthSize) {
     this.maxWidthSize = maxWidthSize;
+    return this;
+  }
+
+  public int getMaxMultiValueEntries() {
+    return maxMultiValueEntries;
+  }
+
+  public OTableFormatter setMaxMultiValueEntries(final int maxMultiValueEntries) {
+    this.maxMultiValueEntries = maxMultiValueEntries;
     return this;
   }
 
@@ -138,10 +150,43 @@ public class OTableFormatter {
         value = "<binary> (size=" + ((ORecordBytes) rec).toStream().length + " bytes)";
     }
 
+    return getPrettyFieldValue(value, maxMultiValueEntries);
+  }
+
+  public static String getPrettyFieldMultiValue(final Iterator<?> iterator, final int maxMultiValueEntries) {
+    final StringBuilder value = new StringBuilder("[");
+    for (int i = 0; iterator.hasNext(); i++) {
+      if (i >= maxMultiValueEntries) {
+        if (iterator instanceof OSizeable) {
+          value.append("(size=");
+          value.append(((OSizeable) iterator).size());
+          value.append(")");
+        } else
+          value.append("(more)");
+
+        break;
+      }
+
+      if (i > 0)
+        value.append(',');
+
+      value.append(getPrettyFieldValue(iterator.next(), maxMultiValueEntries));
+    }
+
+    value.append("]");
+
+    return value.toString();
+  }
+
+  public static Object getPrettyFieldValue(Object value, final int multiValueMaxEntries) {
     if (value instanceof OMultiCollectionIterator<?>)
-      value = "[" + ((OMultiCollectionIterator<?>) value).size() + "]";
+      value = getPrettyFieldMultiValue(((OMultiCollectionIterator<?>) value).iterator(), multiValueMaxEntries);
+    else if (value instanceof ORidBag)
+      value = getPrettyFieldMultiValue(((ORidBag) value).rawIterator(), multiValueMaxEntries);
+    else if (value instanceof Iterator)
+      value = getPrettyFieldMultiValue((Iterator<?>) value, multiValueMaxEntries);
     else if (value instanceof Collection<?>)
-      value = "[" + ((Collection<?>) value).size() + "]";
+      value = getPrettyFieldMultiValue(((Collection<?>) value).iterator(), multiValueMaxEntries);
     else if (value instanceof ORecord) {
       if (((ORecord) value).getIdentity().equals(ORecordId.EMPTY_RECORD_ID)) {
         value = ((ORecord) value).toString();
@@ -149,7 +194,7 @@ public class OTableFormatter {
         value = ((ORecord) value).getIdentity().toString();
       }
     } else if (value instanceof Date) {
-      final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
       if (db != null)
         value = db.getStorage().getConfiguration().getDateTimeFormatInstance().format((Date) value);
       else {
@@ -210,6 +255,7 @@ public class OTableFormatter {
       columns.put(c, minColumnSize);
 
     boolean tempRids = false;
+    boolean hasClass = false;
 
     int fetched = 0;
     for (OIdentifiable id : resultSet) {
@@ -221,13 +267,18 @@ public class OTableFormatter {
       if (rec instanceof ODocument) {
         ((ODocument) rec).setLazyLoad(false);
         // PARSE ALL THE DOCUMENT'S FIELDS
-        ODocument doc = (ODocument) rec;
+        final ODocument doc = (ODocument) rec;
         for (String fieldName : doc.fieldNames()) {
           columns.put(fieldName, getColumnSize(fetched, doc, fieldName, columns.get(fieldName)));
         }
+
+        if (!hasClass && doc.getClassName() != null)
+          hasClass = true;
+
       } else if (rec instanceof ORecordBytes) {
         // UNIQUE BINARY FIELD
         columns.put("value", maxWidthSize - 15);
+
       }
 
       if (!tempRids && !rec.getIdentity().isPersistent())
@@ -239,6 +290,9 @@ public class OTableFormatter {
 
     if (tempRids)
       columns.remove("@RID");
+
+    if (!hasClass)
+      columns.remove("@CLASS");
 
     // COMPUTE MAXIMUM WIDTH
     int width = 0;
@@ -293,6 +347,8 @@ public class OTableFormatter {
 
     if (tempRids)
       columns.remove("@RID");
+    if (!hasClass)
+      columns.remove("@CLASS");
 
     return columns;
   }

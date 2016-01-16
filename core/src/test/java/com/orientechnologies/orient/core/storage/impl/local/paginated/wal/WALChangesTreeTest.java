@@ -1,10 +1,11 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
-import com.orientechnologies.common.directmemory.ODirectMemoryPointerFactory;
-import com.orientechnologies.common.util.MersenneTwisterFast;
+import com.orientechnologies.common.directmemory.OByteBufferPool;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
+import java.nio.ByteBuffer;
+import java.util.Random;
 
 @Test
 public class WALChangesTreeTest {
@@ -38,11 +39,12 @@ public class WALChangesTreeTest {
 
     tree.add(new byte[] { 10, 20, 30 }, 10);
 
-    ODirectMemoryPointer pointer = ODirectMemoryPointerFactory.instance().createPointer(20);
-    tree.applyChanges(pointer);
+    OByteBufferPool bufferPool = new OByteBufferPool(20);
+    ByteBuffer buffer = bufferPool.acquireDirect(true);
 
-    Assert.assertEquals(pointer.get(10, 3), new byte[] { 10, 20, 30 });
-    pointer.free();
+    tree.applyChanges(buffer);
+
+    Assert.assertEquals(getByteArray(buffer, 10, 3), new byte[] { 10, 20, 30 });
   }
 
   public void testAddOverlappedVersions() {
@@ -65,11 +67,12 @@ public class WALChangesTreeTest {
     tree.add(new byte[] { 35, 30 }, 11);
     tree.add(new byte[] { 10, 20 }, 10);
 
-    final ODirectMemoryPointer pointer = ODirectMemoryPointerFactory.instance().createPointer(20);
-    tree.applyChanges(pointer);
+    OByteBufferPool bufferPool = new OByteBufferPool(20);
+    ByteBuffer buffer = bufferPool.acquireDirect(true);
 
-    Assert.assertEquals(pointer.get(10, 3), new byte[] { 10, 20, 30 });
-    pointer.free();
+    tree.applyChanges(buffer);
+
+    Assert.assertEquals(getByteArray(buffer, 10, 3), new byte[] { 10, 20, 30 });
   }
 
   public void testAddOverlappedVersionsTwo() {
@@ -94,11 +97,12 @@ public class WALChangesTreeTest {
     tree.add(new byte[] { 33, 34, 35, }, 3);
     tree.add(new byte[] { 22, 23, 24, 25, 26 }, 2);
 
-    ODirectMemoryPointer pointer = ODirectMemoryPointerFactory.instance().createPointer(20);
-    tree.applyChanges(pointer);
+    OByteBufferPool bufferPool = new OByteBufferPool(20);
+    ByteBuffer buffer = bufferPool.acquireDirect(true);
 
-    Assert.assertEquals(pointer.get(1, 6), new byte[] { 11, 22, 23, 24, 25, 26 });
-    pointer.free();
+    tree.applyChanges(buffer);
+
+    Assert.assertEquals(getByteArray(buffer, 1, 6), new byte[] { 11, 22, 23, 24, 25, 26 });
   }
 
   public void testInsertCaseThree() {
@@ -134,15 +138,15 @@ public class WALChangesTreeTest {
     tree.add(new byte[] { 15 }, 15);
     tree.add(new byte[] { 2 }, 2);
 
-    ODirectMemoryPointer pointer = ODirectMemoryPointerFactory.instance().createPointer(20);
-    tree.applyChanges(pointer);
+    OByteBufferPool bufferPool = new OByteBufferPool(20);
+    ByteBuffer buffer = bufferPool.acquireDirect(true);
 
-    Assert.assertEquals(pointer.get(10, 1), new byte[] { 10 });
-    Assert.assertEquals(pointer.get(5, 1), new byte[] { 5 });
-    Assert.assertEquals(pointer.get(15, 1), new byte[] { 15 });
-    Assert.assertEquals(pointer.get(2, 1), new byte[] { 2 });
+    tree.applyChanges(buffer);
 
-    pointer.free();
+    Assert.assertEquals(getByteArray(buffer, 10, 1), new byte[] { 10 });
+    Assert.assertEquals(getByteArray(buffer, 5, 1), new byte[] { 5 });
+    Assert.assertEquals(getByteArray(buffer, 15, 1), new byte[] { 15 });
+    Assert.assertEquals(getByteArray(buffer, 2, 1), new byte[] { 2 });
   }
 
   public void testInsertCase4and5() {
@@ -185,16 +189,16 @@ public class WALChangesTreeTest {
     tree.add(new byte[] { 30 }, 30);
     tree.add(new byte[] { 35 }, 35);
 
-    ODirectMemoryPointer pointer = ODirectMemoryPointerFactory.instance().createPointer(80);
-    tree.applyChanges(pointer);
+    OByteBufferPool bufferPool = new OByteBufferPool(80);
+    ByteBuffer buffer = bufferPool.acquireDirect(true);
 
-    Assert.assertEquals(pointer.get(50, 1), new byte[] { 50 });
-    Assert.assertEquals(pointer.get(60, 1), new byte[] { 60 });
-    Assert.assertEquals(pointer.get(40, 1), new byte[] { 40 });
-    Assert.assertEquals(pointer.get(30, 1), new byte[] { 30 });
-    Assert.assertEquals(pointer.get(35, 1), new byte[] { 35 });
+    tree.applyChanges(buffer);
 
-    pointer.free();
+    Assert.assertEquals(getByteArray(buffer, 50, 1), new byte[] { 50 });
+    Assert.assertEquals(getByteArray(buffer, 60, 1), new byte[] { 60 });
+    Assert.assertEquals(getByteArray(buffer, 40, 1), new byte[] { 40 });
+    Assert.assertEquals(getByteArray(buffer, 30, 1), new byte[] { 30 });
+    Assert.assertEquals(getByteArray(buffer, 35, 1), new byte[] { 35 });
   }
 
   public void testInsertRandom() {
@@ -206,7 +210,7 @@ public class WALChangesTreeTest {
     final long ts = System.currentTimeMillis();
     System.out.println("TestInsertRandom seed : " + ts);
 
-    final MersenneTwisterFast rnd = new MersenneTwisterFast(ts);
+    final Random rnd = new Random(ts);
     for (int i = 0; i < 100; i++) {
       final int start = rnd.nextInt(data.length) - 3;
       final int length = rnd.nextInt(3) + 4;
@@ -259,7 +263,7 @@ public class WALChangesTreeTest {
     final long ts = System.currentTimeMillis();
     System.out.println("TestInsertRandomDM seed : " + ts);
 
-    final MersenneTwisterFast rnd = new MersenneTwisterFast(ts);
+    final Random rnd = new Random(ts);
     for (int i = 0; i < 100; i++) {
       final int start = rnd.nextInt(data.length) - 3;
       final int length = rnd.nextInt(3) + 4;
@@ -279,10 +283,20 @@ public class WALChangesTreeTest {
       tree.add(value, cstart);
     }
 
-    ODirectMemoryPointer pointer = ODirectMemoryPointerFactory.instance().createPointer(30);
-    tree.applyChanges(pointer);
-    Assert.assertEquals(pointer.get(0, 30), data);
-    pointer.free();
+    OByteBufferPool bufferPool = new OByteBufferPool(30);
+    ByteBuffer buffer = bufferPool.acquireDirect(true);
+
+    tree.applyChanges(buffer);
+
+    Assert.assertEquals(getByteArray(buffer, 0, 30), data);
+  }
+
+  private byte[] getByteArray(ByteBuffer buffer, int position, int len) {
+    final byte[] result = new byte[len];
+    buffer.position(position);
+    buffer.get(result);
+
+    return result;
   }
 
 }

@@ -21,6 +21,7 @@
 package com.tinkerpop.blueprints.impls.orient;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
@@ -278,7 +279,7 @@ public class OrientGraphNoTx extends OrientBaseGraph {
           edge.remove();
         } catch (Exception ex) {
         }
-        throw new OrientGraphModificationException("Error on addEdge in non tx environment", e);
+        throw OException.wrapException(new OrientGraphModificationException("Error on addEdge in non tx environment"), e);
       }
     }
     return edge;
@@ -369,7 +370,7 @@ public class OrientGraphNoTx extends OrientBaseGraph {
       } catch (Throwable e) {
         // REVERT CHANGES. EDGE.REMOVE() TAKES CARE TO UPDATE ALSO BOTH VERTICES IN CASE
         // TODO
-        throw new OrientGraphModificationException("Error on addEdge in non tx environment", e);
+        throw OException.wrapException(new OrientGraphModificationException("Error on addEdge in non tx environment"), e);
       }
     }
   }
@@ -408,8 +409,10 @@ public class OrientGraphNoTx extends OrientBaseGraph {
       // CANNOT REVERT CHANGES, RETRY
       throw (RuntimeException) lastException;
 
-    throw new OrientGraphModificationException(
-                "Error on removing edges after vertex (" + iVertex.getIdentity() + ") delete in non tx environment",
+    throw OException
+        .wrapException(
+            new OrientGraphModificationException(
+                "Error on removing edges after vertex (" + iVertex.getIdentity() + ") delete in non tx environment"),
             lastException);
   }
 

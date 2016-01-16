@@ -8,6 +8,7 @@
             <class name="com.orientechnologies.orient.test.database.auto.DbListenerTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.ServerTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.DBMethodsTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.DbCopyTest"/>
         </classes>
     </test>
     <test name="Schema">
@@ -24,13 +25,11 @@
     </test>
     <test name="Population">
         <classes>
-            <class name="com.orientechnologies.orient.test.database.auto.CRUDFlatPhysicalTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.ObjectTreeTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.CRUDObjectPhysicalTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.CRUDObjectInheritanceTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.CRUDDocumentPhysicalTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.ComplexTypesTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.CRUDFlatPhysicalTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.CRUDDocumentValidationTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.RecordMetadataTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.ObjectDetachingTest"/>
@@ -97,6 +96,7 @@
         <classes>
             <class name="com.orientechnologies.orient.test.database.auto.WrongQueryTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.FetchPlanComplexNestedLevelsTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.LiveQueryTest"/>
         </classes>
     </test>
     <test name="Graph">
@@ -133,6 +133,8 @@
             <class name="com.orientechnologies.orient.test.database.auto.SQLDeleteTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLCreateVertexTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLDeleteEdgeTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.SequenceTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.SQLBatchTest"/>
         </classes>
     </test>
     <test name="other-commands">

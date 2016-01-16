@@ -40,7 +40,7 @@ public class CompressionTest {
       long startTime = System.currentTimeMillis();
 
       for (int i = 0; i < iterationsCount; i++) {
-        final OCompression compression = OCompressionFactory.INSTANCE.getCompression(name);
+        final OCompression compression = OCompressionFactory.INSTANCE.getCompression(name, null);
 
         final byte[] compressedContent = compression.compress(contents[i]);
 

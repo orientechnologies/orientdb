@@ -159,7 +159,7 @@ public class OObjectEnumLazyMap<TYPE extends Enum> extends HashMap<Object, Objec
     convertAll();
   }
 
-  public void detachAll(boolean nonProxiedInstance, Map<Object, Object> alreadyDetached) {
+  public void detachAll(boolean nonProxiedInstance, Map<Object, Object> alreadyDetached, Map<Object, Object> lazyObjects) {
     convertAll();
   }
 

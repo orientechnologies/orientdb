@@ -53,7 +53,7 @@ public abstract class OCommandExecutorAbstract extends OBaseParser implements OC
   protected OCommandContext     context;
 
   public static ODatabaseDocumentInternal getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
+    return ODatabaseRecordThreadLocal.instance().get();
   }
 
   public OCommandExecutorAbstract init(final OCommandRequestText iRequest) {
@@ -155,6 +155,15 @@ public abstract class OCommandExecutorAbstract extends OBaseParser implements OC
   }
 
   @Override
+  public boolean isLocalExecution() {
+    return false;
+  }
+
+  @Override
+  public boolean isCacheable() {
+    return false;
+  }
+  
   public Object mergeResults(final Map<String, Object> results) throws Exception {
 
     if (results.isEmpty())

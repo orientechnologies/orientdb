@@ -21,7 +21,6 @@
 package com.orientechnologies.common.profiler;
 
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 import java.util.ArrayList;
 import java.util.Collections;

@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -26,6 +27,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.Iterator;
@@ -39,12 +41,14 @@ import java.util.Map;
  */
 @SuppressWarnings("unchecked")
 public class OCommandExecutorSQLOptimizeDatabase extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
-  public static final String KEYWORD_OPTIMIZE = "OPTIMIZE";
-  public static final String KEYWORD_DATABASE = "DATABASE";
-  public static final String KEYWORD_EDGE     = "-LWEDGES";
+  public static final String KEYWORD_OPTIMIZE  = "OPTIMIZE";
+  public static final String KEYWORD_DATABASE  = "DATABASE";
+  public static final String KEYWORD_EDGE      = "-LWEDGES";
+  public static final String KEYWORD_NOVERBOSE = "-NOVERBOSE";
 
-  private boolean            optimizeEdges    = false;
-  private int                batch            = 1000;
+  private boolean            optimizeEdges     = false;
+  private boolean            verbose           = true;
+  private int                batch             = 1000;
 
   public OCommandExecutorSQLOptimizeDatabase parse(final OCommandRequest iRequest) {
     init((OCommandRequestText) iRequest);
@@ -61,10 +65,14 @@ public class OCommandExecutorSQLOptimizeDatabase extends OCommandExecutorSQLAbst
     if (pos == -1 || !word.toString().equals(KEYWORD_DATABASE))
       throw new OCommandSQLParsingException("Keyword " + KEYWORD_DATABASE + " not found. Use " + getSyntax(), parserText, oldPos);
 
-    oldPos = pos;
-    pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (word.toString().equals(KEYWORD_EDGE))
-      optimizeEdges = true;
+    while (!parserIsEnded() && word.length() > 0) {
+      oldPos = pos;
+      pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
+      if (word.toString().equals(KEYWORD_EDGE))
+        optimizeEdges = true;
+      else if (word.toString().equals(KEYWORD_NOVERBOSE))
+        verbose = false;
+    }
 
     return this;
   }
@@ -84,78 +92,104 @@ public class OCommandExecutorSQLOptimizeDatabase extends OCommandExecutorSQLAbst
   private String optimizeEdges() {
     final ODatabaseDocumentInternal db = getDatabase();
 
-    long transformed = 0;
-    if (db.getTransaction().isActive())
-      db.commit();
-
-    db.begin();
-
+    db.declareIntent(new OIntentMassiveInsert());
     try {
+      long transformed = 0;
+      if (db.getTransaction().isActive())
+        db.commit();
 
-      for (ODocument doc : db.browseClass("E")) {
-        if (Thread.currentThread().isInterrupted())
-          break;
+      db.begin();
 
-        if (doc != null) {
-          if (doc.fields() == 2) {
-            final ORID edgeIdentity = doc.getIdentity();
+      try {
 
-            final ODocument outV = doc.field("out");
-            final ODocument inV = doc.field("in");
+        final long totalEdges = db.countClass("E");
+        long browsedEdges = 0;
+        long lastLapBrowsed = 0;
+        long lastLapTime = System.currentTimeMillis();
 
-            // OUTGOING
-            final Object outField = outV.field("out_" + doc.getClassName());
-            if (outField instanceof ORidBag) {
-              final Iterator<OIdentifiable> it = ((ORidBag) outField).iterator();
-              while (it.hasNext()) {
-                OIdentifiable v = it.next();
-                if (edgeIdentity.equals(v)) {
-                  // REPLACE EDGE RID WITH IN-VERTEX RID
-                  it.remove();
-                  ((ORidBag) outField).add(inV.getIdentity());
-                  break;
+        for (ODocument doc : db.browseClass("E")) {
+          if (Thread.currentThread().isInterrupted())
+            break;
+
+          browsedEdges++;
+
+          if (doc != null) {
+            if (doc.fields() == 2) {
+              final ORID edgeIdentity = doc.getIdentity();
+
+              final ODocument outV = doc.field("out");
+              final ODocument inV = doc.field("in");
+
+              // OUTGOING
+              final Object outField = outV.field("out_" + doc.getClassName());
+              if (outField instanceof ORidBag) {
+                final Iterator<OIdentifiable> it = ((ORidBag) outField).iterator();
+                while (it.hasNext()) {
+                  OIdentifiable v = it.next();
+                  if (edgeIdentity.equals(v)) {
+                    // REPLACE EDGE RID WITH IN-VERTEX RID
+                    it.remove();
+                    ((ORidBag) outField).add(inV.getIdentity());
+                    break;
+                  }
                 }
               }
-            }
 
-            outV.save();
+              outV.save();
 
-            // INCOMING
-            final Object inField = inV.field("in_" + doc.getClassName());
-            if (outField instanceof ORidBag) {
-              final Iterator<OIdentifiable> it = ((ORidBag) inField).iterator();
-              while (it.hasNext()) {
-                OIdentifiable v = it.next();
-                if (edgeIdentity.equals(v)) {
-                  // REPLACE EDGE RID WITH IN-VERTEX RID
-                  it.remove();
-                  ((ORidBag) inField).add(outV.getIdentity());
-                  break;
+              // INCOMING
+              final Object inField = inV.field("in_" + doc.getClassName());
+              if (outField instanceof ORidBag) {
+                final Iterator<OIdentifiable> it = ((ORidBag) inField).iterator();
+                while (it.hasNext()) {
+                  OIdentifiable v = it.next();
+                  if (edgeIdentity.equals(v)) {
+                    // REPLACE EDGE RID WITH IN-VERTEX RID
+                    it.remove();
+                    ((ORidBag) inField).add(outV.getIdentity());
+                    break;
+                  }
                 }
               }
-            }
 
-            inV.save();
+              inV.save();
 
-            doc.delete();
+              doc.delete();
 
-            if (++transformed % batch == 0) {
-              db.commit();
-              db.begin();
+              if (++transformed % batch == 0) {
+                db.commit();
+                db.begin();
+              }
+
+              final long now = System.currentTimeMillis();
+
+              if (verbose && (now - lastLapTime > 2000)) {
+                final long elapsed = now - lastLapTime;
+
+                OLogManager.instance().info(this, "Browsed %,d of %,d edges, transformed %,d so far (%,d edges/sec)",
+                    browsedEdges, totalEdges,
+                    transformed,
+                    (((browsedEdges - lastLapBrowsed) * 1000 / elapsed)));
+
+                lastLapTime = System.currentTimeMillis();
+                lastLapBrowsed = browsedEdges;
+              }
             }
           }
         }
-      }
 
-      // LAST COMMIT
-      db.commit();
+        // LAST COMMIT
+        db.commit();
+
+      } finally {
+        if (db.getTransaction().isActive())
+          db.rollback();
+      }
+      return "Transformed " + transformed + " regular edges in lightweight edges";
 
     } finally {
-      if (db.getTransaction().isActive())
-        db.rollback();
+      db.declareIntent(null);
     }
-
-    return "Transformed " + transformed + " regular edges in lightweight edges";
   }
 
   @Override

@@ -45,8 +45,9 @@ public abstract class OCommandRequestAbstract implements OCommandRequestInternal
   protected long             timeoutMs       = OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsLong();
   protected TIMEOUT_STRATEGY timeoutStrategy = TIMEOUT_STRATEGY.EXCEPTION;
   protected Map<Object, Object> parameters;
-  protected String  fetchPlan = null;
-  protected boolean useCache  = true;
+  protected String  fetchPlan       = null;
+  protected boolean useCache        = false;
+  protected boolean cacheableResult = false;
   protected OCommandContext        context;
   protected OAsyncReplicationOk    onAsyncReplicationOk;
   protected OAsyncReplicationError onAsyncReplicationError;
@@ -75,12 +76,15 @@ public abstract class OCommandRequestAbstract implements OCommandRequestInternal
   }
 
   @SuppressWarnings("unchecked")
-  protected Map<Object, Object> convertToParameters(final Object... iArgs) {
+  protected Map<Object, Object> convertToParameters(Object... iArgs) {
     final Map<Object, Object> params;
 
     if (iArgs.length == 1 && iArgs[0] instanceof Map) {
       params = (Map<Object, Object>) iArgs[0];
     } else {
+      if (iArgs.length == 1 && iArgs[0] != null && iArgs[0].getClass().isArray() && iArgs[0] instanceof Object[])
+        iArgs = (Object[]) iArgs[0];
+
       params = new HashMap<Object, Object>(iArgs.length);
       for (int i = 0; i<iArgs.length; ++i) {
         Object par = iArgs[i];
@@ -170,6 +174,16 @@ public abstract class OCommandRequestAbstract implements OCommandRequestInternal
 
   public void setUseCache(boolean useCache) {
     this.useCache = useCache;
+  }
+
+  @Override
+  public boolean isCacheableResult() {
+    return cacheableResult;
+  }
+
+  @Override
+  public void setCacheableResult(final boolean iValue) {
+    cacheableResult = iValue;
   }
 
   @Override

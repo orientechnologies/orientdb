@@ -16,7 +16,7 @@
 
 package com.orientechnologies.lucene;
 
-import com.orientechnologies.lucene.manager.OLuceneIndexManagerAbstract;
+import com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -27,7 +27,6 @@ import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.*;
-import org.apache.lucene.util.Version;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -39,68 +38,63 @@ import java.util.Map;
  */
 public class OLuceneIndexType {
 
-  public static Field createField(String fieldName, Object value, Field.Store store,
-      Field.Index analyzed) {
-    Field field = null;
+  public static Field createField(String fieldName, Object value, Field.Store store, Field.Index analyzed) {
 
     if (value instanceof Number) {
       Number number = (Number) value;
-      if (value instanceof Long) {
-        field = new LongField(fieldName, number.longValue(), store);
-      } else if (value instanceof Float) {
-        field = new FloatField(fieldName, number.floatValue(), store);
-      } else if (value instanceof Double) {
-        field = new DoubleField(fieldName, number.doubleValue(), store);
-      } else {
-        field = new IntField(fieldName, number.intValue(), store);
-      }
+      if (value instanceof Long)
+        return new LongField(fieldName, number.longValue(), store);
+      else if (value instanceof Float)
+        return new FloatField(fieldName, number.floatValue(), store);
+      else if (value instanceof Double)
+        return new DoubleField(fieldName, number.doubleValue(), store);
+
+      return new IntField(fieldName, number.intValue(), store);
+
     } else if (value instanceof Date) {
-      field = new LongField(fieldName, ((Date) value).getTime(), store);
-
-    } else {
-      field = new Field(fieldName, value.toString(), store, analyzed);
-
+      return new LongField(fieldName, ((Date) value).getTime(), store);
     }
-    return field;
+    return new Field(fieldName, value.toString(), store, analyzed);
+
   }
 
   public static Query createExactQuery(OIndexDefinition index, Object key) {
 
     Query query = null;
     if (key instanceof String) {
-      BooleanQuery booleanQ = new BooleanQuery();
+      final BooleanQuery.Builder queryBuilder = new BooleanQuery.Builder();
       if (index.getFields().size() > 0) {
         for (String idx : index.getFields()) {
-          booleanQ.add(new TermQuery(new Term(idx, key.toString())), BooleanClause.Occur.SHOULD);
+          queryBuilder.add(new TermQuery(new Term(idx, key.toString())), BooleanClause.Occur.SHOULD);
         }
       } else {
-        booleanQ.add(new TermQuery(new Term(OLuceneIndexManagerAbstract.KEY, key.toString())), BooleanClause.Occur.SHOULD);
+        queryBuilder.add(new TermQuery(new Term(OLuceneIndexEngineAbstract.KEY, key.toString())), BooleanClause.Occur.SHOULD);
       }
-      query = booleanQ;
+      query = queryBuilder.build();
     } else if (key instanceof OCompositeKey) {
-      BooleanQuery booleanQ = new BooleanQuery();
+      final BooleanQuery.Builder queryBuilder = new BooleanQuery.Builder();
       int i = 0;
       OCompositeKey keys = (OCompositeKey) key;
       for (String idx : index.getFields()) {
         String val = (String) keys.getKeys().get(i);
-        booleanQ.add(new TermQuery(new Term(idx, val)), BooleanClause.Occur.MUST);
+        queryBuilder.add(new TermQuery(new Term(idx, val)), BooleanClause.Occur.MUST);
         i++;
 
       }
-      query = booleanQ;
+      query = queryBuilder.build();
     }
     return query;
   }
 
   public static Query createQueryId(OIdentifiable value) {
-    return new TermQuery(new Term(OLuceneIndexManagerAbstract.RID, value.toString()));
+    return new TermQuery(new Term(OLuceneIndexEngineAbstract.RID, value.getIdentity().toString()));
   }
 
   public static Query createDeleteQuery(OIdentifiable value, List<String> fields, Object key) {
 
-    BooleanQuery booleanQuery = new BooleanQuery();
-
-    booleanQuery.add(new TermQuery(new Term(OLuceneIndexManagerAbstract.RID, value.toString())), BooleanClause.Occur.MUST);
+    final BooleanQuery.Builder queryBuilder = new BooleanQuery.Builder();
+    queryBuilder.add(new TermQuery(new Term(OLuceneIndexEngineAbstract.RID, value.getIdentity().toString())),
+        BooleanClause.Occur.MUST);
 
     Map<String, String> values = new HashMap<String, String>();
     // TODO Implementation of Composite keys with Collection
@@ -110,12 +104,12 @@ public class OLuceneIndexType {
       values.put(fields.iterator().next(), key.toString());
     }
     for (String s : values.keySet()) {
-      booleanQuery.add(new TermQuery(new Term(s + OLuceneIndexManagerAbstract.STORED, values.get(s))), BooleanClause.Occur.MUST);
+      queryBuilder.add(new TermQuery(new Term(s + OLuceneIndexEngineAbstract.STORED, values.get(s))), BooleanClause.Occur.MUST);
     }
-    return booleanQuery;
+    return queryBuilder.build();
   }
 
-  public static Query createFullQuery(OIndexDefinition index, Object key, Analyzer analyzer, Version version) throws ParseException {
+  public static Query createFullQuery(OIndexDefinition index, Object key, Analyzer analyzer) throws ParseException {
 
     String query = "";
     if (key instanceof OCompositeKey) {
@@ -133,15 +127,14 @@ public class OLuceneIndexType {
       query = key.toString();
     }
 
-    return getQueryParser(index, query, analyzer, version);
+    return getQueryParser(index, query, analyzer);
 
   }
 
-  protected static Query getQueryParser(OIndexDefinition index, String key, Analyzer analyzer, Version version)
-      throws ParseException {
+  protected static Query getQueryParser(OIndexDefinition index, String key, Analyzer analyzer) throws ParseException {
     QueryParser queryParser;
     if ((key).startsWith("(")) {
-      queryParser = new QueryParser(version, "", analyzer);
+      queryParser = new QueryParser("", analyzer);
 
     } else {
       String[] fields = null;
@@ -155,7 +148,7 @@ public class OLuceneIndexType {
           fields[i] = "k" + i;
         }
       }
-      queryParser = new MultiFieldQueryParser(version, fields, analyzer);
+      queryParser = new MultiFieldQueryParser(fields, analyzer);
     }
 
     return queryParser.parse(key);

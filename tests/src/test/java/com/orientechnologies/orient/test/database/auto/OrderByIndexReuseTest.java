@@ -35,7 +35,7 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
 
     final OSchema schema = database.getMetadata().getSchema();
 
-    final OClass orderByIndexReuse = schema.createClass("OrderByIndexReuse");
+    final OClass orderByIndexReuse = schema.createClass("OrderByIndexReuse",1,null);
 
     orderByIndexReuse.createProperty("firstProp", OType.INTEGER);
     orderByIndexReuse.createProperty("secondProp", OType.INTEGER);

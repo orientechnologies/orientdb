@@ -26,6 +26,21 @@ public class OPositionalParameter extends OInputParameter {
     return "?";
   }
 
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    Object finalValue = bindFromInputParams(params);
+    if (finalValue == this) {
+      builder.append("?");
+    } else if (finalValue instanceof String) {
+      builder.append("\"");
+      builder.append(OExpression.encode(finalValue.toString()));
+      builder.append("\"");
+    } else if (finalValue instanceof SimpleNode) {
+      ((SimpleNode) finalValue).toString(params, builder);
+    } else {
+      builder.append(finalValue);
+    }
+  }
+
   public Object bindFromInputParams(Map<Object, Object> params) {
     if (params != null) {
       Object value = params.get(paramNumber);

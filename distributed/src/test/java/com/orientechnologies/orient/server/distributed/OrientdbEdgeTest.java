@@ -26,8 +26,8 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.OServerMain;
 import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
@@ -62,11 +62,11 @@ public class OrientdbEdgeTest {
   protected static OrientGraphFactory getGraphFactory() throws Exception {
     Map<String, Object> conf = new HashMap<String, Object>();
 
-    conf.put("storage.url", "remote:localhost/OrientdbEdgeTest");
+    conf.put("storage.url", "remote:localhost/test");
     conf.put("storage.pool-min", 1);
     conf.put("storage.pool-max", 10);
-    conf.put("storage.user", "admin");
-    conf.put("storage.password", "admin");
+    conf.put("storage.user", "root");
+    conf.put("storage.password", "root");
 
     OGlobalConfiguration.CLIENT_CONNECT_POOL_WAIT_TIMEOUT.setValue(15000);
 
@@ -84,7 +84,7 @@ public class OrientdbEdgeTest {
       OFileUtils.deleteRecursively(file);
     file.mkdirs();
 
-    server = OServerMain.create(false);
+    server = new OServer(false);
     server.startup("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" + "<orient-server>\n" + "    <handlers>\n"
         + "        <!-- GRAPH PLUGIN -->\n"
         + "        <handler class=\"com.orientechnologies.orient.graph.handler.OGraphServerHandler\">\n"
@@ -106,7 +106,7 @@ public class OrientdbEdgeTest {
         + "        </protocols>\n" + "        <listeners>\n"
         + "            <listener protocol=\"binary\" ip-address=\"0.0.0.0\" port-range=\"2424-2430\"/>\n" + "        </listeners>\n"
         + "        <cluster>\n" + "        </cluster>\n" + "    </network>\n" + "    <storages>\n" + "    </storages>\n"
-        + "    <users>\n" + "      <user name=\"admin\" password=\"admin\" resources=\"*\"/>\n" + "    </users>\n"
+        + "    <users>\n" + "      <user name=\"root\" password=\"root\" resources=\"*\"/>\n" + "    </users>\n"
         + "    <properties>\n" + "\n" + "        <!-- Uses the Hazelcast's distributed cache as 2nd level cache -->\n"
         + "        <!-- <entry name=\"cache.level2.impl\" value=\"com.orientechnologies.orient.server.hazelcast.OHazelcastCache\" /> -->\n"
         + "\n" + "        <!-- DATABASE POOL: size min/max -->\n" + "        <entry name=\"db.pool.min\" value=\"1\"/>\n"
@@ -122,7 +122,8 @@ public class OrientdbEdgeTest {
         + "        <!-- <entry name=\"profiler.config\" value=\"30,10,10\" />  -->\n" + "\n"
         + "        <!-- LOG: enable/Disable logging. Levels are: finer, fine, finest, info, warning -->\n"
         + "        <entry name=\"log.console.level\" value=\"finest\"/>\n"
-        + "        <entry name=\"log.file.level\" value=\"finest\"/>\n" + "    </properties>\n" + "</orient-server>");
+        + "        <entry name=\"log.file.level\" value=\"finest\"/>\n" + "    </properties>\n"
+        + " <isAfterFirstTime>true</isAfterFirstTime></orient-server>");
 
     server.activate();
   }
@@ -143,31 +144,18 @@ public class OrientdbEdgeTest {
         admin.createDatabase("graph", "plocal");
       }
 
+      OrientGraph t = new OrientGraph(url, (String) conf.get("storage.user"), (String) conf.get("storage.password"));
       try {
-        OrientGraph t = new OrientGraph(url, (String) conf.get("storage.user"), (String) conf.get("storage.password"));
         t.command(new OCommandSQL("alter database custom useLightweightEdges=false")).execute();
         t.commit();
-        t.shutdown();
-      } catch (Throwable ignored) {
-        // blank
-      }
 
-      try {
-        OrientGraph t = new OrientGraph(url, (String) conf.get("storage.user"), (String) conf.get("storage.password"));
         t.command(new OCommandSQL("ALTER CLASS V CLUSTERSELECTION balanced")).execute();
         t.commit();
-        t.shutdown();
-      } catch (Throwable ignored) {
-        // blank
-      }
 
-      try {
-        OrientGraph t = new OrientGraph(url, (String) conf.get("storage.user"), (String) conf.get("storage.password"));
         t.command(new OCommandSQL("ALTER CLASS E CLUSTERSELECTION balanced")).execute();
         t.commit();
+      } finally {
         t.shutdown();
-      } catch (Throwable ignored) {
-        // blank
       }
 
       admin.close();
@@ -180,69 +168,60 @@ public class OrientdbEdgeTest {
   public void testEdges() throws Exception {
     OrientGraphFactory factory = getGraphFactory();
 
+    OrientBaseGraph g = factory.getNoTx();
     try {
-      factory.getNoTx().createEdgeType("some-label");
-    } catch (OSchemaException ex) {
-      if (!ex.getMessage().contains("exists"))
-        throw (ex);
-      factory.getNoTx().command(new OCommandSQL("delete edge some-label")).execute();
-    }
+      try {
+        g.createEdgeType("some-label");
+      } catch (OSchemaException ex) {
+        if (!ex.getMessage().contains("exists"))
+          throw (ex);
+        g.command(new OCommandSQL("delete edge some-label")).execute();
+      }
 
-    try {
-      factory.getNoTx().createVertexType("some-v-label");
-    } catch (OSchemaException ex) {
-      if (!ex.getMessage().contains("exists"))
-        throw (ex);
-      factory.getNoTx().command(new OCommandSQL("delete vertex some-v-label")).execute();
+      try {
+        g.createVertexType("some-v-label");
+      } catch (OSchemaException ex) {
+        if (!ex.getMessage().contains("exists"))
+          throw (ex);
+        g.command(new OCommandSQL("delete vertex some-v-label")).execute();
+      }
+    } finally {
+      g.shutdown();
     }
 
     OrientGraph t = factory.getTx();
+    try {
+      Vertex v1 = t.addVertex("class:some-v-label");
+      Vertex v2 = t.addVertex("class:some-v-label");
+      v1.setProperty("_id", "v1");
+      v2.setProperty("_id", "v2");
 
-    Vertex v1 = t.addVertex("class:some-v-label");
-    Vertex v2 = t.addVertex("class:some-v-label");
-    v1.setProperty("_id", "v1");
-    v2.setProperty("_id", "v2");
+      OrientEdge edge = t.addEdge(null, v1, v2, "some-label");
+      edge.setProperty("some", "thing");
 
-    OrientEdge edge = t.addEdge(null, v1, v2, "some-label");
-    edge.setProperty("some", "thing");
+      t.commit();
+      t.shutdown();
 
-    t.commit();
-    t.shutdown();
+      t = factory.getTx();
 
-    t = factory.getTx();
+      assertEquals(2, t.countVertices("some-v-label"));
+      assertEquals(1, t.countEdges());
+      assertNotNull(t.getVertices("_id", "v1").iterator().next());
+      assertNotNull(t.getVertices("_id", "v2").iterator().next());
+      t.commit();
+      t.shutdown();
 
-    assertEquals(2, t.countVertices("some-v-label"));
-    assertEquals(1, t.countEdges());
-    assertNotNull(t.getVertices("_id", "v1").iterator().next());
-    assertNotNull(t.getVertices("_id", "v2").iterator().next());
-    t.commit();
-    t.shutdown();
+      t = factory.getTx();
 
-    t = factory.getTx();
+      // works
+      assertEquals(1, t.getVertices("_id", "v1").iterator().next().query().labels("some-label").count());
+      // NoSuchElementException
+      assertNotNull(t.getVertices("_id", "v1").iterator().next().query().labels("some-label").edges().iterator().next());
 
-    // works
-    assertEquals(1, t.getVertices("_id", "v1").iterator().next().query().labels("some-label").count());
-    // NoSuchElementException
-    assertNotNull(t.getVertices("_id", "v1").iterator().next().query().labels("some-label").edges().iterator().next());
-
-    t.commit();
-    t.shutdown();
-
-    dropDatabase();
-  }
-
-  private static void dropDatabase() throws IOException {
-    final String url = "remote:localhost/OrientdbEdgeTest";
-
-    final OServerAdmin admin = new OServerAdmin(url);
-
-    admin.connect("admin", "admin");
-
-    if (admin.existsDatabase()) {
-      System.err.println("destroying database " + url);
-      admin.dropDatabase("plocal");
+      t.commit();
+    } finally {
+      t.shutdown();
     }
 
-    admin.close();
   }
 }

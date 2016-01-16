@@ -31,24 +31,24 @@ import java.util.Arrays;
 
 /**
  * Class to parse and write buffers in very fast way.
- * 
+ *
  * @author Luca Garulli
- * 
+ * @deprecated use {@link OByteArrayOutputStream} instead.
  */
+
+@Deprecated
 public class OMemoryStream extends OutputStream {
-  public static final int  DEF_SIZE              = 1024;
+  public static final int DEF_SIZE = 1024;
 
-  private byte[]           buffer;
-  private int              position;
-  private Charset          charset               = Charset.forName("utf8");
+  private byte[] buffer;
+  private int    position;
+  private Charset charset = Charset.forName("utf8");
 
-  private static final int NATIVE_COPY_THRESHOLD = 9;
-  private static long      metricResize          = 0;
+  private static final int  NATIVE_COPY_THRESHOLD = 9;
+  private static       long metricResize          = 0;
 
   static {
-    Orient
-        .instance()
-        .getProfiler()
+    Orient.instance().getProfiler()
         .registerHookValue("system.memory.stream.resize", "Number of resizes of memory stream buffer", METRIC_TYPE.COUNTER,
             new OProfilerHookValue() {
               public Object getValue() {
@@ -74,11 +74,9 @@ public class OMemoryStream extends OutputStream {
 
   /**
    * Move bytes left or right of an offset.
-   * 
-   * @param iFrom
-   *          Starting position
-   * @param iPosition
-   *          Offset to the iFrom value: positive values mean move right, otherwise move left
+   *
+   * @param iFrom     Starting position
+   * @param iPosition Offset to the iFrom value: positive values mean move right, otherwise move left
    */
   public void move(final int iFrom, final int iPosition) {
     if (iPosition == 0)
@@ -108,7 +106,7 @@ public class OMemoryStream extends OutputStream {
 
   /**
    * Returns the used buffer as byte[].
-   * 
+   *
    * @return [result.length = size()]
    */
   public final byte[] toByteArray() {
@@ -179,7 +177,7 @@ public class OMemoryStream extends OutputStream {
 
   /**
    * Append byte[] to the stream.
-   * 
+   *
    * @param iContent
    * @return The begin offset of the appended content
    * @throws IOException
@@ -292,9 +290,8 @@ public class OMemoryStream extends OutputStream {
 
   /**
    * Jumps bytes positioning forward of passed bytes.
-   * 
-   * @param iLength
-   *          Bytes to jump
+   *
+   * @param iLength Bytes to jump
    */
   public void fill(final int iLength) {
     assureSpaceFor(iLength);
@@ -303,11 +300,9 @@ public class OMemoryStream extends OutputStream {
 
   /**
    * Fills the stream from current position writing iLength times the iFiller byte
-   * 
-   * @param iLength
-   *          Bytes to jump
-   * @param iFiller
-   *          Byte to use to fill the space
+   *
+   * @param iLength Bytes to jump
+   * @param iFiller Byte to use to fill the space
    */
   public void fill(final int iLength, final byte iFiller) {
     assureSpaceFor(iLength);
@@ -334,7 +329,6 @@ public class OMemoryStream extends OutputStream {
 
   /**
    * Browse the stream but just return the begin of the byte array. This is used to lazy load the information only when needed.
-   * 
    */
   public int getAsByteArrayOffset() {
     if (position >= buffer.length)

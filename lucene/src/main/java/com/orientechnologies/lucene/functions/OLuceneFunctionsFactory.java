@@ -15,22 +15,25 @@
  */
 package com.orientechnologies.lucene.functions;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionFactory;
-import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionAverage;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-
 public class OLuceneFunctionsFactory implements OSQLFunctionFactory {
 
-  private static final Map<String, Object> FUNCTIONS = new HashMap<String, Object>();
+  public static final Map<String, Object> FUNCTIONS = new HashMap<String, Object>();
 
   static {
-    register(OLuceneNearFunction.NAME, OLuceneNearFunction.class);
+
+  }
+
+  public static void register(final String iName, final Object iImplementation) {
+    FUNCTIONS.put(iName.toLowerCase(), iImplementation);
   }
 
   @Override
@@ -58,14 +61,15 @@ public class OLuceneFunctionsFactory implements OSQLFunctionFactory {
       try {
         return (OSQLFunction) clazz.newInstance();
       } catch (Exception e) {
-        throw new OCommandExecutionException("Error in creation of function " + name
-            + "(). Probably there is not an empty constructor or the constructor generates errors", e);
+        throw OException.wrapException(new OCommandExecutionException("Error in creation of function " + name
+            + "(). Probably there is not an empty constructor or the constructor generates errors"), e);
+
       }
     }
 
   }
 
-  public static void register(final String iName, final Object iImplementation) {
-    FUNCTIONS.put(iName.toLowerCase(), iImplementation);
+  public Map<String, Object> getFunctions() {
+    return FUNCTIONS;
   }
 }

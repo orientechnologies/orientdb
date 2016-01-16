@@ -16,22 +16,6 @@
  */
 package com.orientechnologies.orient.object.enhancement;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import javassist.util.proxy.MethodHandler;
-import javassist.util.proxy.Proxy;
-import javassist.util.proxy.ProxyFactory;
-import javassist.util.proxy.ProxyObject;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
@@ -42,6 +26,21 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.object.serialization.OObjectCustomSerializerList;
 import com.orientechnologies.orient.object.serialization.OObjectCustomSerializerMap;
 import com.orientechnologies.orient.object.serialization.OObjectCustomSerializerSet;
+import javassist.util.proxy.MethodHandler;
+import javassist.util.proxy.Proxy;
+import javassist.util.proxy.ProxyFactory;
+import javassist.util.proxy.ProxyObject;
+
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author luca.molino
@@ -139,7 +138,7 @@ public class OObjectEntityEnhancer {
         }
         if (constructor != null) {
           newEntity = (T) constructor.newInstance(iArgs);
-          initDocument(iClass, newEntity, doc, (ODatabaseObject) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner());
+          initDocument(iClass, newEntity, doc, (ODatabaseObject) ODatabaseRecordThreadLocal.instance().get().getDatabaseOwner());
         } else {
           if (iEnclosingInstance != null)
             newEntity = createInstanceNoParameters(c, iEnclosingInstance);
@@ -155,6 +154,7 @@ public class OObjectEntityEnhancer {
       ((Proxy) newEntity).setHandler(mi);
       if (OObjectEntitySerializer.hasBoundedDocumentField(iClass))
         OObjectEntitySerializer.setFieldValue(OObjectEntitySerializer.getBoundedDocumentField(iClass), newEntity, doc);
+      OObjectEntitySerializer.setVersionField(iClass, newEntity, doc.getVersion());
       return newEntity;
     } catch (InstantiationException ie) {
       OLogManager.instance().error(this, "Error creating proxied instance for class " + iClass.getName(), ie);

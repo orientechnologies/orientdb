@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.command.OCommandContext.TIMEOUT_STRATEG
  * @author Luca Garulli
  */
 public interface OCommandRequest {
-  public <RET> RET execute(Object... iArgs);
+  <RET> RET execute(Object... iArgs);
 
   /**
    * This api is deprecated use sql keyword "LIMIT" instead
@@ -35,8 +35,8 @@ public interface OCommandRequest {
    * Returns the limit of result set. -1 means no limits.
    * 
    */
-  @Deprecated
-  public int getLimit();
+
+  int getLimit();
 
   /**
    * This api is deprecated use sql keyword "LIMIT" instead
@@ -48,7 +48,7 @@ public interface OCommandRequest {
    * @return
    */
   @Deprecated
-  public OCommandRequest setLimit(int iLimit);
+  OCommandRequest setLimit(int iLimit);
 
   /**
    * This api is deprecated use sql keyword "TIMEOUT" instead
@@ -58,7 +58,7 @@ public interface OCommandRequest {
    * @return
    */
   @Deprecated
-  public long getTimeoutTime();
+  long getTimeoutTime();
 
   /**
    * This api is deprecated use sql keyword "TIMEOUT" instead
@@ -68,7 +68,7 @@ public interface OCommandRequest {
    * @return
    */
   @Deprecated
-  public TIMEOUT_STRATEGY getTimeoutStrategy();
+  TIMEOUT_STRATEGY getTimeoutStrategy();
 
   /**
    * This api is deprecated use sql keyword "TIMEOUT" instead
@@ -78,12 +78,12 @@ public interface OCommandRequest {
    * @param timeout
    */
   @Deprecated
-  public void setTimeout(long timeout, TIMEOUT_STRATEGY strategy);
+  void setTimeout(long timeout, TIMEOUT_STRATEGY strategy);
 
   /**
    * Returns true if the command doesn't change the database, otherwise false.
    */
-  public boolean isIdempotent();
+  boolean isIdempotent();
 
   /**
    * This api is deprecated use sql keyword "FETCHPLAN" instead
@@ -93,7 +93,7 @@ public interface OCommandRequest {
    * @return Fetch plan as unique string or null if it was not defined.
    */
   @Deprecated
-  public String getFetchPlan();
+  String getFetchPlan();
 
   /**
    * This api is deprecated use sql keyword "FETCHPLAN" instead
@@ -122,11 +122,11 @@ public interface OCommandRequest {
    * @return
    */
   @Deprecated
-  public <RET extends OCommandRequest> RET setFetchPlan(String iFetchPlan);
+  <RET extends OCommandRequest> RET setFetchPlan(String iFetchPlan);
 
-  public void setUseCache(boolean iUseCache);
+  void setUseCache(boolean iUseCache);
 
-  public OCommandContext getContext();
+  OCommandContext getContext();
 
-  public OCommandRequest setContext(final OCommandContext iContext);
+  OCommandRequest setContext(final OCommandContext iContext);
 }

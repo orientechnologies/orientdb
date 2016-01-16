@@ -17,6 +17,7 @@
 package com.orientechnologies.orient.core.schedule;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
@@ -48,7 +49,7 @@ public class OSchedulerListenerImpl implements OSchedulerListener {
 
   public void removeScheduler(OScheduler scheduler) {
     if (scheduler.isRunning())
-      throw new OException("Cannot delete scheduler " + scheduler.getSchduleName() + " due to it is still running");
+      throw new OSystemException("Cannot delete scheduler " + scheduler.getSchduleName() + " due to it is still running");
     schedulers.remove(scheduler.getSchduleName());
   }
 
@@ -63,7 +64,7 @@ public class OSchedulerListenerImpl implements OSchedulerListener {
   // loaded when open database
   public void load() {
     schedulers.clear();
-    final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocument db = ODatabaseRecordThreadLocal.instance().get();
     if (db.getMetadata().getSchema().existsClass(OScheduler.CLASSNAME)) {
       List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from " + OScheduler.CLASSNAME + " order by name"));
       for (ODocument d : result) {
@@ -78,7 +79,7 @@ public class OSchedulerListenerImpl implements OSchedulerListener {
   }
 
   public void create() {
-    final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocument db = ODatabaseRecordThreadLocal.instance().get();
     if (db.getMetadata().getSchema().existsClass(OScheduler.CLASSNAME))
       return;
     final OClassImpl f = (OClassImpl) db.getMetadata().getSchema().createClass(OScheduler.CLASSNAME);

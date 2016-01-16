@@ -66,7 +66,7 @@ public class ODocumentSerializationPersistentTest {
     final ODocument loadedDoc = (ODocument) in.readObject();
 
     Assert.assertEquals(loadedDoc.getIdentity(), docId);
-    Assert.assertEquals(loadedDoc.getRecordVersion(), doc.getRecordVersion());
+    Assert.assertEquals(loadedDoc.getVersion(), doc.getVersion());
     Assert.assertEquals(loadedDoc.field("name"), "Artem");
     Assert.assertEquals(loadedDoc.field("country"), linkedId);
 
@@ -78,7 +78,7 @@ public class ODocumentSerializationPersistentTest {
 
   @Test
   public void testRidBagInEmbeddedDocument() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(db);
+    ODatabaseRecordThreadLocal.instance().set(db);
     ODocument doc = new ODocument();
     ORidBag rids = new ORidBag();
     rids.add(new ORecordId(2, 3));

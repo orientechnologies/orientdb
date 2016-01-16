@@ -25,13 +25,18 @@ import java.util.Set;
 
 public class OLuceneOperatorFactory implements OQueryOperatorFactory {
 
-  private static final Set<OQueryOperator> OPERATORS;
+  public static final Set<OQueryOperator> OPERATORS;
 
   static {
     final Set<OQueryOperator> operators = new HashSet<OQueryOperator>();
-    operators.add(new OLuceneNearOperator());
-    operators.add(new OLuceneWithinOperator());
+//    operators.add(new OLuceneNearOperator());
+
     operators.add(new OLuceneTextOperator());
+    operators.add(new OLuceneExpTextOperator());
+//    operators.add(new OLuceneSTContainsOperator());
+//    operators.add(new OLuceneSTNearOperator());
+//    operators.add(new OLuceneSTWithinOperator());
+//    operators.add(new OLuceneOverlapOperator());
     OPERATORS = Collections.unmodifiableSet(operators);
   }
 

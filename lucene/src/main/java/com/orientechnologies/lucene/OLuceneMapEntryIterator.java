@@ -17,7 +17,7 @@
 package com.orientechnologies.lucene;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.lucene.manager.OLuceneIndexManagerAbstract;
+import com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import org.apache.lucene.document.Document;
@@ -30,7 +30,7 @@ import java.util.Map;
 public class OLuceneMapEntryIterator<K, V> implements Iterator<Map.Entry<K, V>> {
 
   private final OIndexDefinition definition;
-  private IndexReader            reader;
+  private final IndexReader      reader;
 
   private int                    currentIdx;
 
@@ -56,10 +56,10 @@ public class OLuceneMapEntryIterator<K, V> implements Iterator<Map.Entry<K, V>> 
           val += doc.get(field);
         }
       } else {
-        val = doc.get(OLuceneIndexManagerAbstract.KEY);
+        val = doc.get(OLuceneIndexEngineAbstract.KEY);
       }
       final String finalVal = val;
-      final ORecordId id = new ORecordId(doc.get(OLuceneIndexManagerAbstract.RID));
+      final ORecordId id = new ORecordId(doc.get(OLuceneIndexEngineAbstract.RID));
       currentIdx++;
       return new Map.Entry<K, V>() {
         @Override

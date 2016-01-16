@@ -17,30 +17,64 @@
 package com.orientechnologies.lucene.index;
 
 import com.orientechnologies.lucene.OLuceneIndex;
-import com.orientechnologies.lucene.OLuceneIndexEngine;
+import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
+import com.orientechnologies.orient.core.index.OIndexEngine;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.parser.ParseException;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OIndexEngineCallback;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.Query;
 
 public class OLuceneFullTextIndex extends OLuceneIndexNotUnique implements OLuceneIndex {
 
-  public OLuceneFullTextIndex(String name, String typeId, String algorithm, OLuceneIndexEngine indexEngine,
+  public OLuceneFullTextIndex(String name, String typeId, String algorithm, int version, OAbstractPaginatedStorage storage,
       String valueContainerAlgorithm, ODocument metadata) {
-    super(name, typeId, algorithm, indexEngine, valueContainerAlgorithm, metadata);
-    indexEngine.setIndexMetadata(metadata);
+    super(name, typeId, algorithm, version, storage, valueContainerAlgorithm, metadata);
   }
 
-  public Document buildDocument(Object key) {
-    return getIndexEngine().buildDocument(key, null);
+  public Document buildDocument(final Object key) {
+
+    return storage.callIndexEngine(false, false, indexId, new OIndexEngineCallback<Document>() {
+      @Override
+      public Document callEngine(OIndexEngine engine) {
+        OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
+        return indexEngine.buildDocument(key, null);
+      }
+    });
   }
 
-  public Analyzer analyzer(String name) {
-    return getIndexEngine().analyzer(name);
+  public Query buildQuery(final Object query) throws ParseException {
+
+    return storage.callIndexEngine(false, false, indexId, new OIndexEngineCallback<Query>() {
+      @Override
+      public Query callEngine(OIndexEngine engine) {
+        OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
+        return indexEngine.buildQuery(query);
+      }
+    });
   }
 
-  public Query buildQuery(Object query) throws ParseException {
-    return getIndexEngine().buildQuery(query);
+  public Analyzer queryAnalyzer() {
+
+    return storage.callIndexEngine(false, false, indexId, new OIndexEngineCallback<Analyzer>() {
+      @Override
+      public Analyzer callEngine(OIndexEngine engine) {
+        OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
+        return indexEngine.queryAnalyzer();
+      }
+    });
+  }
+
+  public Analyzer indexAnalyzer() {
+
+    return storage.callIndexEngine(false, false, indexId, new OIndexEngineCallback<Analyzer>() {
+      @Override
+      public Analyzer callEngine(OIndexEngine engine) {
+        OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
+        return indexEngine.indexAnalyzer();
+      }
+    });
   }
 }

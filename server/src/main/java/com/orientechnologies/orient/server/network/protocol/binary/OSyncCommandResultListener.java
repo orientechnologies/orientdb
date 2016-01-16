@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.server.network.protocol.binary;
 
+import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.fetch.remote.ORemoteFetchListener;
 import com.orientechnologies.orient.core.record.ORecord;
 
@@ -36,12 +37,21 @@ public class OSyncCommandResultListener extends OAbstractCommandResultListener {
   private final Set<ORecord> fetchedRecordsToSend = new HashSet<ORecord>();
   private final Set<ORecord> alreadySent          = new HashSet<ORecord>();
 
+  public OSyncCommandResultListener(final OCommandResultListener wrappedResultListener) {
+    super(wrappedResultListener);
+  }
+
   @Override
   public boolean result(final Object iRecord) {
     if (iRecord instanceof ORecord) {
       alreadySent.add((ORecord) iRecord);
       fetchedRecordsToSend.remove(iRecord);
     }
+
+    if (wrappedResultListener != null)
+      // NOTIFY THE WRAPPED LISTENER
+      wrappedResultListener.result(iRecord);
+
     fetchRecord(iRecord, new ORemoteFetchListener() {
       @Override
       protected void sendRecord(ORecord iLinked) {

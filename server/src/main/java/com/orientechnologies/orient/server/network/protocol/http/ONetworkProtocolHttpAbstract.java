@@ -229,7 +229,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
       server.getClientConnectionManager().disconnect(connection.id);
 
       if (OLogManager.instance().isDebugEnabled())
-        OLogManager.instance().debug(this, "Connection shutdowned");
+        OLogManager.instance().debug(this, "Connection closed");
     }
   }
 
@@ -576,7 +576,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
       }
 
       channel.socket.setSoTimeout(socketTimeout);
-      connection.data.lastCommandReceived = Orient.instance().getProfiler().startChrono();
+      connection.data.lastCommandReceived = System.currentTimeMillis();
 
       request = new OHttpRequest(this, channel.inStream, connection.data, configuration);
 

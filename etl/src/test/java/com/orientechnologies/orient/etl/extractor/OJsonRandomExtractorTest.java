@@ -24,7 +24,7 @@ import org.junit.Test;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.ETLBaseTest;
-import com.orientechnologies.orient.etl.RandomExtractor;
+import com.orientechnologies.orient.etl.OETLStubRandomExtractor;
 
 import static org.junit.Assert.assertEquals;
 
@@ -39,7 +39,7 @@ public class OJsonRandomExtractorTest extends ETLBaseTest {
 
   @Ignore
   public void testNonParallel() {
-    proc.getFactory().registerExtractor(RandomExtractor.class);
+    proc.getFactory().registerExtractor(OETLStubRandomExtractor.class);
 
     process("{extractor : { random: {items: " + TOTAL + ", fields: 10} }, "
         + "loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', class: 'Person', useLightweightEdges:false, "
@@ -56,7 +56,7 @@ public class OJsonRandomExtractorTest extends ETLBaseTest {
 
   @Test
   public void testParallel() {
-    proc.getFactory().registerExtractor(RandomExtractor.class);
+    proc.getFactory().registerExtractor(OETLStubRandomExtractor.class);
 
     process("{extractor : { random: {items: " + TOTAL + ", fields: 10, delay: 0} }, "
         + "loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', class: 'Person', useLightweightEdges:false, "

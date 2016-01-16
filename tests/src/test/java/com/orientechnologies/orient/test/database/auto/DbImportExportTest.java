@@ -17,6 +17,7 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.hook.ORecordHook;
@@ -31,15 +32,11 @@ import java.util.ArrayList;
 
 @Test(groups = { "db", "import-export" })
 public class DbImportExportTest extends DocumentDBBaseTest implements OCommandOutputListener {
-  public static final String EXPORT_FILE_PATH                = "target/db.export.gz";
-  public static final String EXPORT_FILE_NO_COMPRESSION_PATH = "target/db.export.json";
-  public static final String EXPORT_NO_COMPRESSED_FILE_PATH  = "target/db.export-no-compressed.gz";
-  public static final String NEW_DB_PATH                     = "target/test-import";
-  public static final String NEW_DB_URL                      = "target/test-import";
-  public static final String NEW_DB_URL_COMPRESSED           = "target/test-import-compressed";
-  public static final String NEW_DB_URL_NO_COMPRESSED        = "target/test-import-no-compressed";
+  public static final String EXPORT_FILE_PATH = "target/db.export.gz";
+  public static final String NEW_DB_PATH      = "target/test-import";
+  public static final String NEW_DB_URL       = "target/test-import";
 
-  private String             testPath;
+  private String testPath;
 
   @Parameters(value = { "url", "testPath" })
   public DbImportExportTest(@Optional String url, String testPath) {
@@ -87,93 +84,18 @@ public class DbImportExportTest extends DocumentDBBaseTest implements OCommandOu
   }
 
   @Test(dependsOnMethods = "testDbImport")
-  public void testDbExportSize() throws IOException {
-    ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
-    database.open("admin", "admin");
+  public void testCompareDatabases() throws IOException {
+    String urlPrefix = getStorageType() + ":";
 
-    ODatabaseExport export = new ODatabaseExport(database, testPath + "/" + EXPORT_FILE_PATH, this)
-        .setOptions("-compressionLevel=9");
-
-    export.exportDatabase();
-    export.close();
-
-    export = new ODatabaseExport(database, testPath + "/" + EXPORT_NO_COMPRESSED_FILE_PATH, this).setOptions("-compressionLevel=0");
-    export.exportDatabase();
-    export.close();
-
-    database.close();
-
-    File file1 = new File(testPath + "/" + EXPORT_FILE_PATH);
-    File file2 = new File(testPath + "/" + EXPORT_NO_COMPRESSED_FILE_PATH);
-
-    long file1Size = file1.length();
-    long file2Size = file2.length();
-
-    Assert.assertEquals(true, file2Size > file1Size);
-
-    // try to import the compressed one with 9
-
-    database = new ODatabaseDocumentTx(getStorageType() + ":" + testPath + "/" + NEW_DB_URL_COMPRESSED);
-    if (database.exists())
-      database.open("admin", "admin").drop();
-    database.create();
-
-    ODatabaseImport dbImport = new ODatabaseImport(database, testPath + "/" + EXPORT_FILE_PATH, this);
-
-    // UNREGISTER ALL THE HOOKS
-    for (ORecordHook hook : new ArrayList<ORecordHook>(database.getHooks().keySet())) {
-      database.unregisterHook(hook);
-    }
-
-    dbImport.setPreserveRids(true);
-    dbImport.setDeleteRIDMapping(false);
-    dbImport.importDatabase();
-    dbImport.close();
-
-    database.close();
-
-  }
-
-  @Test(dependsOnMethods = "testDbImport")
-  public void testDbExportNoCompression() throws IOException {
-    ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
-    database.open("admin", "admin");
-
-    ODatabaseExport export = new ODatabaseExport(database, testPath + "/" + EXPORT_FILE_NO_COMPRESSION_PATH, this)
-        .setOptions("-noCompression");
-
-    export.exportDatabase();
-    export.close();
-
-    database.close();
-
-    // try to import the compressed one with 9
-
-    database = new ODatabaseDocumentTx(getStorageType() + ":" + testPath + "/" + NEW_DB_URL_NO_COMPRESSED);
-    if (database.exists())
-      database.open("admin", "admin").drop();
-    database.create();
-
-    ODatabaseImport dbImport = new ODatabaseImport(database, testPath + "/" + EXPORT_FILE_NO_COMPRESSION_PATH, this);
-
-    // UNREGISTER ALL THE HOOKS
-    for (ORecordHook hook : new ArrayList<ORecordHook>(database.getHooks().keySet())) {
-      database.unregisterHook(hook);
-    }
-
-    dbImport.setPreserveRids(true);
-    dbImport.setDeleteRIDMapping(false);
-    dbImport.importDatabase();
-    dbImport.close();
-
-    database.close();
-
+    final ODatabaseCompare databaseCompare = new ODatabaseCompare(url, urlPrefix + testPath + "/" + DbImportExportTest.NEW_DB_URL,
+        "admin", "admin", this);
+    databaseCompare.setCompareEntriesForAutomaticIndexes(true);
+    databaseCompare.setCompareIndexMetadata(true);
+    Assert.assertTrue(databaseCompare.compare());
   }
 
   @Override
   @Test(enabled = false)
   public void onMessage(final String iText) {
-    // System.out.print(iText);
-    // System.out.flush();
   }
 }

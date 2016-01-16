@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.serialization.serializer;
 
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -233,7 +234,7 @@ public class OJSONWriter {
 
       return buffer.toString();
     } catch (IOException e) {
-      throw new OSerializationException("Error on serializing collection", e);
+      throw OException.wrapException(new OSerializationException("Error on serializing collection"), e);
     }
   }
 
@@ -259,7 +260,7 @@ public class OJSONWriter {
       buffer.append('}');
       return buffer.toString();
     } catch (IOException e) {
-      throw new OSerializationException("Error on serializing map", e);
+      throw OException.wrapException(new OSerializationException("Error on serializing map"), e);
     }
   }
 

@@ -20,17 +20,17 @@
 package com.orientechnologies.orient.server;
 
 /**
-  * Interface to get notified on the server lifecycle.
-  *
-  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
-  *
-  */
- public interface OServerLifecycleListener {
-   public void onBeforeActivate();
+ * Interface to get notified on the server lifecycle.
+ *
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ *
+ */
+public interface OServerLifecycleListener {
+  void onBeforeActivate();
 
-   public void onAfterActivate();
+  void onAfterActivate();
 
-   public void onBeforeDeactivate();
+  void onBeforeDeactivate();
 
-   public void onAfterDeactivate();
- }
+  void onAfterDeactivate();
+}

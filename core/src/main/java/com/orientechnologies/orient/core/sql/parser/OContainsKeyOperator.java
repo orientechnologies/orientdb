@@ -2,8 +2,9 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-public
-class OContainsKeyOperator extends SimpleNode  implements OBinaryCompareOperator{
+import java.util.Map;
+
+public class OContainsKeyOperator extends SimpleNode implements OBinaryCompareOperator {
   public OContainsKeyOperator(int id) {
     super(id);
   }
@@ -12,17 +13,25 @@ class OContainsKeyOperator extends SimpleNode  implements OBinaryCompareOperator
     super(p, id);
   }
 
-
   /** Accept the visitor. **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
 
-  @Override public boolean execute(Object left, Object right) {
+  @Override
+  public boolean execute(Object left, Object right) {
+    if (left == null) {
+      return false;
+    }
+    if (left instanceof Map<?, ?>) {
+      final Map<String, ?> map = (Map<String, ?>) left;
+      return map.containsKey(right);
+    }
     return false;
   }
 
-  @Override public String toString() {
+  @Override
+  public String toString() {
     return "CONTAINSKEY";
   }
 

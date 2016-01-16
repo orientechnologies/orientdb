@@ -85,11 +85,26 @@ public interface OCommandExecutor {
   /**
    * Returns the security operation type use to check about security.
    * 
+   * @see com.orientechnologies.orient.core.metadata.security.ORole PERMISSION_*
    * @return
    */
   int getSecurityOperationType();
 
   boolean involveSchema();
+
+  String getSyntax();
+
+  /**
+   * Returns true if the command must be executed on local node on distributed configuration.
+   */
+  boolean isLocalExecution();
+
+  /**
+   * Returns true if the command results can be cached.
+   */
+  boolean isCacheable();
+
+  long getDistributedTimeout();
 
   Object mergeResults(Map<String, Object> results) throws Exception;
 }

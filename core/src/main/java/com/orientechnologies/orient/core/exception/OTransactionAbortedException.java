@@ -23,8 +23,8 @@ public class OTransactionAbortedException extends OTransactionException {
 
   private static final long serialVersionUID = 2347493191705052402L;
 
-  public OTransactionAbortedException(String message, Throwable cause) {
-    super(message, cause);
+  public OTransactionAbortedException(OTransactionAbortedException exception) {
+    super(exception);
   }
 
   public OTransactionAbortedException(String message) {

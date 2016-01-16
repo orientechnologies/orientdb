@@ -55,24 +55,16 @@ public class OProjectionItem extends SimpleNode {
     this.expression = expression;
   }
 
-  @Override
-  public String toString(String prefix) {
-    StringBuilder builder = new StringBuilder();
 
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (all) {
       builder.append("*");
     } else {
-      builder.append(expression.toString());
+      expression.toString(params, builder);
       if (alias != null && alias.trim().length() > 0) {
         builder.append(" AS " + alias);
       }
     }
-    return builder.toString();
-  }
-
-  @Override
-  public String toString() {
-    return toString("");
   }
 
   public String getDefaultAlias() {
@@ -82,10 +74,6 @@ public class OProjectionItem extends SimpleNode {
     return expression.getDefaultAlias();
   }
 
-  public void replaceParameters(Map<Object, Object> params) {
-    if (expression != null) {
-      expression.replaceParameters(params);
-    }
-  }
+
 }
 /* JavaCC - OriginalChecksum=6d6010734c7434a6f516e2eac308e9ce (do not edit this line) */

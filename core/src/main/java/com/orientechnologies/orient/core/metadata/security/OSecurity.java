@@ -19,12 +19,12 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
+import java.util.List;
+import java.util.Set;
+
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
-import java.util.List;
-import java.util.Set;
 
 /**
  * Manages users and roles.
@@ -49,16 +49,116 @@ public interface OSecurity {
 
   boolean isAllowed(final Set<OIdentifiable> iAllowAll, final Set<OIdentifiable> iAllowOperation);
 
+  /**
+   * Record level security: allows a user to access to a record.
+   * 
+   * @param iDocument
+   *          ODocument instance to give access
+   * @param iOperationType
+   *          Operation type to use based on the permission to allow:
+   *          <ul>
+   *          <li>ALLOW_ALL, to provide full access (RUD)</li>
+   *          <li>ALLOW_READ, to provide read access</li>
+   *          <li>ALLOW_UPDATE, to provide update access</li>
+   *          <li>ALLOW_DELETE, to provide delete access</li>
+   *          </ul>
+   * @param iUserName
+   *          User name to provide the access
+   * @return The OIdentity instance allowed
+   */
+  OIdentifiable allowUser(final ODocument iDocument, final ORestrictedOperation iOperationType, final String iUserName);
+
+  /**
+   * Record level security: allows a role to access to a record.
+   *
+   * @param iDocument
+   *          ODocument instance to give access
+   * @param iOperationType
+   *          Operation type to use based on the permission to allow:
+   *          <ul>
+   *          <li>ALLOW_ALL, to provide full access (RUD)</li>
+   *          <li>ALLOW_READ, to provide read access</li>
+   *          <li>ALLOW_UPDATE, to provide update access</li>
+   *          <li>ALLOW_DELETE, to provide delete access</li>
+   *          </ul>
+   * @param iRoleName
+   *          Role name to provide the access
+   * @return The OIdentity instance allowed
+   */
+  OIdentifiable allowRole(final ODocument iDocument, final ORestrictedOperation iOperationType, final String iRoleName);
+
+  /**
+   * Record level security: deny a user to access to a record.
+   *
+   * @param iDocument
+   *          ODocument instance to give access
+   * @param iOperationType
+   *          Operation type to use based on the permission to deny:
+   *          <ul>
+   *          <li>ALLOW_ALL, to provide full access (RUD)</li>
+   *          <li>ALLOW_READ, to provide read access</li>
+   *          <li>ALLOW_UPDATE, to provide update access</li>
+   *          <li>ALLOW_DELETE, to provide delete access</li>
+   *          </ul>
+   * @param iUserName
+   *          User name to deny the access
+   * @return The OIdentity instance denied
+   */
+  OIdentifiable denyUser(final ODocument iDocument, final ORestrictedOperation iOperationType, final String iUserName);
+
+  /**
+   * Record level security: deny a role to access to a record.
+   *
+   * @param iDocument
+   *          ODocument instance to give access
+   * @param iOperationType
+   *          Operation type to use based on the permission to deny:
+   *          <ul>
+   *          <li>ALLOW_ALL, to provide full access (RUD)</li>
+   *          <li>ALLOW_READ, to provide read access</li>
+   *          <li>ALLOW_UPDATE, to provide update access</li>
+   *          <li>ALLOW_DELETE, to provide delete access</li>
+   *          </ul>
+   * @param iRoleName
+   *          Role name to deny the access
+   * @return The OIdentity instance denied
+   */
+  OIdentifiable denyRole(final ODocument iDocument, final ORestrictedOperation iOperationType, final String iRoleName);
+
+  /**
+   * Uses the version with ENUM instead.
+   */
+  @Deprecated
   OIdentifiable allowUser(final ODocument iDocument, final String iAllowFieldName, final String iUserName);
 
+  /**
+   * Uses the version with ENUM instead.
+   */
+  @Deprecated
   OIdentifiable allowRole(final ODocument iDocument, final String iAllowFieldName, final String iRoleName);
 
+  /**
+   * Uses the version with ENUM instead.
+   */
+  @Deprecated
   OIdentifiable allowIdentity(final ODocument iDocument, final String iAllowFieldName, final OIdentifiable iId);
 
+  /**
+   * Uses the version with ENUM instead.
+   */
+  @Deprecated
   OIdentifiable disallowUser(final ODocument iDocument, final String iAllowFieldName, final String iUserName);
 
+  /**
+   * Uses the version with ENUM instead.
+   */
+  @Deprecated
   OIdentifiable disallowRole(final ODocument iDocument, final String iAllowFieldName, final String iRoleName);
 
+  /**
+   * Uses the version with ENUM instead.
+   */
+  @Deprecated
   OIdentifiable disallowIdentity(final ODocument iDocument, final String iAllowFieldName, final OIdentifiable iId);
 
   OUser authenticate(String iUsername, String iUserPassword);

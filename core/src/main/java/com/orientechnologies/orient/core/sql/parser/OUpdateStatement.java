@@ -8,12 +8,6 @@ import java.util.Map;
 
 public class OUpdateStatement extends OStatement {
   protected OFromClause             target;
-//  protected ORid                    targetRid;
-//  protected List<ORid>              targetRids;
-//  protected OIdentifier             targetClass;
-//  protected OCluster                targetCluster;
-//  protected OIndexIdentifier        targetIndex;
-//  protected OStatement              targetQuery;
 
   protected List<OUpdateOperations> operations   = new ArrayList<OUpdateOperations>();
 
@@ -38,95 +32,52 @@ public class OUpdateStatement extends OStatement {
     super(p, id);
   }
 
-  @Override
-  public String toString() {
-    StringBuilder result = new StringBuilder();
-    result.append("UPDATE ");
-    result.append(target.toString());
-//    if (targetRid != null) {
-//      result.append(targetRid.toString());
-//    }else if (targetRids != null) {
-//      result.append("[");
-//      for(int i=0;i< targetRids.size();i++){
-//        if(i>0){
-//          result.append(", ");
-//        }
-//        result.append(targetRids.get(i));
-//      }
-//      result.append("]");
-//    } else if (targetClass != null) {
-//      result.append(targetClass.toString());
-//    } else if (targetCluster != null) {
-//      result.append(targetCluster.toString());
-//    } else if (targetIndex != null) {
-//      result.append(targetIndex.toString());
-//    } else if (targetQuery != null) {
-//      result.append("(");
-//      result.append(targetQuery.toString());
-//      result.append(")");
-//    }
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    builder.append(getStatementType());
+    if(target!=null){
+      target.toString(params, builder);
+    }
 
     for (OUpdateOperations ops : this.operations) {
-      result.append(" ");
-      result.append(ops.toString());
+      builder.append(" ");
+      ops.toString(params, builder);
     }
 
     if (upsert) {
-      result.append(" UPSERT");
+      builder.append(" UPSERT");
     }
 
     if (returnBefore || returnAfter) {
-      result.append(" RETURN");
+      builder.append(" RETURN");
       if (returnBefore) {
-        result.append(" BEFORE");
+        builder.append(" BEFORE");
       } else {
-        result.append(" AFTER");
+        builder.append(" AFTER");
       }
       if (returnProjection != null) {
-        result.append(" ");
-        result.append(returnProjection.toString());
+        builder.append(" ");
+        returnProjection.toString(params, builder);
       }
     }
     if (whereClause != null) {
-      result.append(" WHERE ");
-      result.append(whereClause.toString());
+      builder.append(" WHERE ");
+      whereClause.toString(params, builder);
     }
 
     if (lockRecord) {
-      result.append(" LOCK RECORD");
+      builder.append(" LOCK RECORD");
     }
     if (limit != null) {
-      result.append(limit);
+      limit.toString(params, builder);
     }
     if (timeout != null) {
-      result.append(timeout);
-    }
-
-    return result.toString();
-  }
-
-  public void replaceParameters(Map<Object, Object> params) {
-//    if (this.targetQuery != null) {
-//      targetQuery.replaceParameters(params);
-//    }
-    if(this.target!=null){
-      this.target.replaceParameters(params);
-    }
-    for (OUpdateOperations ops : operations) {
-      ops.replaceParameters(params);
-    }
-
-    if (returnProjection != null) {
-      returnProjection.replaceParameters(params);
-    }
-
-    if (whereClause != null) {
-      whereClause.replaceParameters(params);
-    }
-
-    if (limit != null) {
-      limit.replaceParameters(params);
+      timeout.toString(params, builder);
     }
   }
+
+  protected String getStatementType() {
+    return "UPDATE ";
+  }
+
 }
 /* JavaCC - OriginalChecksum=093091d7273f1073ad49f2a2bf709a53 (do not edit this line) */

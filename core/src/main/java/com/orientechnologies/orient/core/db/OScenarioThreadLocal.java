@@ -19,10 +19,11 @@
  */
 package com.orientechnologies.orient.core.db;
 
+import java.util.concurrent.Callable;
+
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
-
-import java.util.concurrent.Callable;
+import com.orientechnologies.orient.core.db.OScenarioThreadLocal.RUN_MODE;
 
 /**
  * Thread local to know when the request comes from distributed requester avoiding loops.
@@ -30,7 +31,7 @@ import java.util.concurrent.Callable;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OScenarioThreadLocal extends ThreadLocal<OScenarioThreadLocal.Scenario> {
+public class OScenarioThreadLocal extends ThreadLocal<RUN_MODE> {
   public static volatile OScenarioThreadLocal INSTANCE = new OScenarioThreadLocal();
 
   static {
@@ -48,24 +49,19 @@ public class OScenarioThreadLocal extends ThreadLocal<OScenarioThreadLocal.Scena
     });
   }
 
-  public class Scenario {
-    public RUN_MODE runMode             = RUN_MODE.DEFAULT;
-    public boolean  replicationSyncMode = true;
-  }
-
   public enum RUN_MODE {
     DEFAULT, RUNNING_DISTRIBUTED
   }
 
   public OScenarioThreadLocal() {
-    setRunMode(RUN_MODE.DEFAULT);
+    set(RUN_MODE.DEFAULT);
   }
 
   public static Object executeAsDistributed(final Callable<Object> iCallback) {
-    final RUN_MODE currentDistributedMode = INSTANCE.getRunMode();
-    if (currentDistributedMode != RUN_MODE.RUNNING_DISTRIBUTED)
+    final OScenarioThreadLocal.RUN_MODE currentDistributedMode = OScenarioThreadLocal.INSTANCE.get();
+    if (currentDistributedMode != OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED)
       // ASSURE SCHEMA CHANGES ARE NEVER PROPAGATED ON CLUSTER
-      INSTANCE.setRunMode(OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED);
+      OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED);
 
     try {
       return iCallback.call();
@@ -76,15 +72,15 @@ public class OScenarioThreadLocal extends ThreadLocal<OScenarioThreadLocal.Scena
     } finally {
       if (currentDistributedMode != OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED)
         // RESTORE PREVIOUS MODE
-        OScenarioThreadLocal.INSTANCE.setRunMode(OScenarioThreadLocal.RUN_MODE.DEFAULT);
+        OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.DEFAULT);
     }
   }
 
   public static Object executeAsDefault(final Callable<Object> iCallback) {
-    final RUN_MODE currentDistributedMode = INSTANCE.getRunMode();
-    if (currentDistributedMode == RUN_MODE.RUNNING_DISTRIBUTED)
+    final OScenarioThreadLocal.RUN_MODE currentDistributedMode = OScenarioThreadLocal.INSTANCE.get();
+    if (currentDistributedMode == OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED)
       // ASSURE SCHEMA CHANGES ARE NEVER PROPAGATED ON CLUSTER
-      INSTANCE.setRunMode(RUN_MODE.DEFAULT);
+      OScenarioThreadLocal.INSTANCE.set(RUN_MODE.DEFAULT);
 
     try {
       return iCallback.call();
@@ -93,35 +89,22 @@ public class OScenarioThreadLocal extends ThreadLocal<OScenarioThreadLocal.Scena
     } catch (Exception e) {
       throw new RuntimeException(e);
     } finally {
-      if (currentDistributedMode == RUN_MODE.RUNNING_DISTRIBUTED)
+      if (currentDistributedMode == OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED)
         // RESTORE PREVIOUS MODE
-        INSTANCE.setRunMode(RUN_MODE.RUNNING_DISTRIBUTED);
+        OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED);
     }
   }
 
   @Override
-  public void set(final Scenario value) {
+  public void set(final RUN_MODE value) {
     super.set(value);
   }
 
   @Override
-  protected Scenario initialValue() {
-    return new Scenario();
-  }
-
-  public RUN_MODE getRunMode() {
-    return get().runMode;
-  }
-
-  public void setRunMode(final RUN_MODE iRunMode) {
-    get().runMode = iRunMode;
-  }
-
-  public boolean isReplicationSyncMode() {
-    return get().replicationSyncMode;
-  }
-
-  public void setReplicationSyncMode(final boolean iReplicationSyncMode) {
-    get().replicationSyncMode = iReplicationSyncMode;
+  public RUN_MODE get() {
+    RUN_MODE result = super.get();
+    if (result == null)
+      result = RUN_MODE.DEFAULT;
+    return result;
   }
 }

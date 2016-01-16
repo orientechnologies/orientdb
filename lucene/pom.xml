@@ -23,7 +23,7 @@
     <parent>
         <groupId>com.orientechnologies</groupId>
         <artifactId>orientdb-parent</artifactId>
-        <version>2.1.8</version>
+        <version>2.2.0-SNAPSHOT</version>
         <relativePath>../</relativePath>
     </parent>
 
@@ -32,16 +32,20 @@
     <packaging>jar</packaging>
 
     <properties>
-        <surefire.version>2.17</surefire.version>
-        <jdkVersion>1.6</jdkVersion>
-        <javac.src.version>1.6</javac.src.version>
-        <javac.target.version>1.6</javac.target.version>
+        <surefire.version>2.18.1</surefire.version>
         <orientdb.version>${project.version}</orientdb.version>
-        <lucene.version>4.7.0</lucene.version>
+        <lucene.version>5.4.0</lucene.version>
+        <geotools.version>13.2</geotools.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <argLine>-ea -XX:MaxDirectMemorySize=512g -Xmx2048m -Dstorage.diskCache.bufferSize=4096 -Dindex.flushAfterCreate=false
+            -Dstorage.makeFullCheckpointAfterCreate=false
+            -Dstorage.makeFullCheckpointAfterClusterCreate=false -Dstorage.wal.syncOnPageFlush=false
+            -Dstorage.configuration.syncOnUpdate=false
+        </argLine>
+
     </properties>
 
-    <name>OrientDB Lucene full text and spatial index</name>
+    <name>OrientDB Lucene full text index</name>
     <description>Lucene plugin for OrientDB NoSQL document graph dbms</description>
     <url>http://maven.apache.org</url>
     <inceptionYear>2013</inceptionYear>
@@ -50,13 +54,33 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                    </archive>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>test-jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
 
+                <dependencies>
+                    <dependency>
+                        <groupId>org.apache.maven.surefire</groupId>
+                        <artifactId>surefire-junit4</artifactId>
+                        <version>${surefire.version}</version>
+                    </dependency>
+                </dependencies>
+
                 <configuration>
-                    <argLine>-ea -Xmx2048m -Dindex.flushAfterCreate=false -Dstorage.makeFullCheckpointAfterCreate=false
-                        -Dstorage.makeFullCheckpointAfterClusterCreate=false -Dstorage.wal.syncOnPageFlush=false
-                        -Dstorage.configuration.syncOnUpdate=false
-                    </argLine>
+                    <useFile>false</useFile>
 
                     <groups>embedded</groups>
                     <systemPropertyVariables>
@@ -75,7 +99,7 @@
                     <execution>
                         <id>make-assembly</id>
                         <!-- this is used for inheritance merges -->
-                        <phase>package</phase>
+                        <!--<phase>package</phase>-->
                         <!-- bind to the packaging phase -->
                         <goals>
                             <goal>single</goal>
@@ -147,6 +171,7 @@
             <scope>compile</scope>
         </dependency>
 
+
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-core</artifactId>
@@ -169,7 +194,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-spatial</artifactId>
+            <artifactId>lucene-facet</artifactId>
             <version>${lucene.version}</version>
         </dependency>
         <dependency>
@@ -179,13 +204,25 @@
         </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-facet</artifactId>
-            <version>4.7.0</version>
+            <artifactId>lucene-queries</artifactId>
+            <version>${lucene.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-backward-codecs</artifactId>
+            <version>${lucene.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>net.sf.opencsv</groupId>
             <artifactId>opencsv</artifactId>
             <version>2.3</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.2.4</version>
             <scope>test</scope>
         </dependency>
 

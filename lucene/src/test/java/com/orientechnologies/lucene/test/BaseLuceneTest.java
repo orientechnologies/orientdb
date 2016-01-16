@@ -21,14 +21,11 @@ package com.orientechnologies.lucene.test;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.OOrientListener;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.OServerMain;
-import org.testng.annotations.Test;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -41,34 +38,65 @@ import java.util.concurrent.Executors;
 /**
  * Created by enricorisa on 19/09/14.
  */
-@Test
 public abstract class BaseLuceneTest {
 
-  protected ODatabaseDocumentTx databaseDocumentTx;
-  private   String              url;
-  protected OServer             server;
-  private   boolean             remote;
-  protected ODatabaseDocumentTx serverDatabase;
-  private   Process             process;
-  protected String              buildDirectory;
   private final ExecutorService pool = Executors.newFixedThreadPool(1);
+  protected ODatabaseDocumentTx databaseDocumentTx;
+  protected OServer             server;
+  protected ODatabaseDocumentTx serverDatabase;
+  protected String              buildDirectory;
+  private   String              url;
+  private   boolean             remote;
+  private   Process             process;
 
   public BaseLuceneTest() {
-    //    this(false);
   }
 
-  //  public BaseLuceneTest(boolean remote) {
-  //    this.remote = remote;
-  //
-  //  }
+  public static int killUnixProcess(Process process) throws Exception {
+    int pid = getUnixPID(process);
+    return Runtime.getRuntime().exec("kill " + pid).waitFor();
+  }
 
-  @Test(enabled = false)
+  public static int getUnixPID(Process process) throws Exception {
+    System.out.println(process.getClass().getName());
+    if (process.getClass().getName().equals("java.lang.UNIXProcess")) {
+      Class cl = process.getClass();
+      Field field = cl.getDeclaredField("pid");
+      field.setAccessible(true);
+      Object pidObject = field.get(process);
+      return (Integer) pidObject;
+    } else {
+      throw new IllegalArgumentException("Needs to be a UNIXProcess");
+    }
+  }
+
+  protected static String getStoragePath(final String databaseName, final String storageMode) {
+    final String path;
+    if (storageMode.equals(OEngineLocalPaginated.NAME)) {
+      path = storageMode + ":${" + Orient.ORIENTDB_HOME + "}/databases/" + databaseName;
+    } else if (storageMode.equals(OEngineMemory.NAME)) {
+      path = storageMode + ":" + databaseName;
+    } else {
+      return null;
+    }
+    return path;
+  }
+
   public void initDB() {
     initDB(true);
   }
 
-  @Test(enabled = false)
   public void initDB(boolean drop) {
+    String config = System.getProperty("orientdb.test.env");
+
+    String storageType;
+    if ("ci".equals(config) || "release".equals(config))
+      storageType = OEngineLocalPaginated.NAME;
+    else
+      storageType = System.getProperty("storageType");
+
+    if (storageType == null)
+      storageType = OEngineMemory.NAME;
 
     buildDirectory = System.getProperty("buildDirectory", ".");
     if (buildDirectory == null)
@@ -89,7 +117,12 @@ public abstract class BaseLuceneTest {
     //        e.printStackTrace();
     //      }
     //    } else {
-    url = "plocal:" + buildDirectory + "/databases/" + getDatabaseName();
+
+    if (storageType.equals(OEngineLocalPaginated.NAME))
+      url = OEngineLocalPaginated.NAME + ":" + buildDirectory + "/databases/" + getDatabaseName();
+    else
+      url = OEngineMemory.NAME + ":" + getDatabaseName();
+
     databaseDocumentTx = new ODatabaseDocumentTx(url);
 
     if (databaseDocumentTx.exists()) {
@@ -97,24 +130,39 @@ public abstract class BaseLuceneTest {
       if (drop) {
         // DROP AND RE-CREATE IT
         databaseDocumentTx.drop();
-        databaseDocumentTx = Orient.instance().getDatabaseFactory().createDatabase("graph", url);
+        databaseDocumentTx = new ODatabaseDocumentTx(url);
         databaseDocumentTx.create();
       }
     } else {
       // CREATE IT
-      databaseDocumentTx = Orient.instance().getDatabaseFactory().createDatabase("graph", url);
+      databaseDocumentTx = new ODatabaseDocumentTx(url);
       databaseDocumentTx.create();
     }
-    ODatabaseRecordThreadLocal.INSTANCE.set(databaseDocumentTx);
+    databaseDocumentTx.activateOnCurrentThread();
+    //    }
   }
 
-  protected void startServer(boolean drop) throws IOException, InterruptedException {
+  protected final String getDatabaseName() {
+    return getClass().getSimpleName();
+  }
+
+  protected void startServer(boolean drop, String storageType) throws IOException, InterruptedException {
     String javaExec = System.getProperty("java.home") + "/bin/java";
     System.setProperty("ORIENTDB_HOME", buildDirectory);
 
-    // "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
-    ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-classpath", System.getProperty("java.class.path"),
-        "-DORIENTDB_HOME=" + buildDirectory, RemoteDBRunner.class.getName(), getDatabaseName(), "" + drop);
+    final String testMode = System.getProperty("orient.server.testMode");
+    final String testPort = System.getProperty("orient.server.port");
+
+    final ProcessBuilder processBuilder;
+    if (testMode != null && testPort != null) {
+      processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-classpath", System.getProperty("java.class.path"),
+          "-DORIENTDB_HOME=" + buildDirectory, "-Dorient.server.testMode=" + testMode, "-Dorient.server.port=" + testPort,
+          RemoteDBRunner.class.getName(), getDatabaseName(), "" + drop, storageType);
+
+    } else {
+      processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-classpath", System.getProperty("java.class.path"),
+          "-DORIENTDB_HOME=" + buildDirectory, RemoteDBRunner.class.getName(), getDatabaseName(), "" + drop, storageType);
+    }
 
     process = processBuilder.start();
     BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
@@ -146,55 +194,10 @@ public abstract class BaseLuceneTest {
 
   }
 
-  public static int getUnixPID(Process process) throws Exception {
-    System.out.println(process.getClass().getName());
-    if (process.getClass().getName().equals("java.lang.UNIXProcess")) {
-      Class cl = process.getClass();
-      Field field = cl.getDeclaredField("pid");
-      field.setAccessible(true);
-      Object pidObject = field.get(process);
-      return (Integer) pidObject;
-    } else {
-      throw new IllegalArgumentException("Needs to be a UNIXProcess");
-    }
-  }
-
-  public static int killUnixProcess(Process process) throws Exception {
-    int pid = getUnixPID(process);
-    return Runtime.getRuntime().exec("kill " + pid).waitFor();
-  }
-
-  protected void restart() {
-
-    process.destroy();
-    try {
-      startServer(false);
-    } catch (IOException e) {
-      e.printStackTrace();
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
-
-  }
-
-  protected static String getStoragePath(final String databaseName, final String storageMode) {
-    final String path;
-    if (storageMode.equals(OEngineLocalPaginated.NAME)) {
-      path = storageMode + ":${" + Orient.ORIENTDB_HOME + "}/databases/" + databaseName;
-    } else if (storageMode.equals(OEngineMemory.NAME)) {
-      path = storageMode + ":" + databaseName;
-    } else {
-      return null;
-    }
-    return path;
-  }
-
-  @Test(enabled = false)
   public void deInitDB() {
     //    if (remote) {
     //      process.destroy();
     //    } else {
-    databaseDocumentTx.activateOnCurrentThread();
     databaseDocumentTx.drop();
     //    }
   }
@@ -207,19 +210,15 @@ public abstract class BaseLuceneTest {
     }
   }
 
-  protected String getDatabaseName() {
-    return getClass().getSimpleName();
-  }
-
   public static final class RemoteDBRunner {
     public static void main(String[] args) throws Exception {
 
       if (args.length > 0) {
-        OServer server = OServerMain.create();
+        OServer server = new OServer(false);
         server.startup(ClassLoader.getSystemResourceAsStream("orientdb-server-config.xml"));
         server.activate();
-        final ODatabaseDocumentTx db = Orient.instance().getDatabaseFactory()
-            .createDatabase("graph", getStoragePath(args[0], "plocal"));
+
+        final ODatabaseDocumentTx db = new ODatabaseDocumentTx(getStoragePath(args[0], args[2]));
 
         if (args.length > 1 && args[1].equals("true")) {
           if (db.exists()) {
@@ -231,6 +230,11 @@ public abstract class BaseLuceneTest {
 
         Orient.instance().registerListener(new OOrientListener() {
           @Override
+          public void onShutdown() {
+            db.drop();
+          }
+
+          @Override
           public void onStorageRegistered(OStorage iStorage) {
 
           }
@@ -238,11 +242,6 @@ public abstract class BaseLuceneTest {
           @Override
           public void onStorageUnregistered(OStorage iStorage) {
 
-          }
-
-          @Override
-          public void onShutdown() {
-            db.drop();
           }
         });
         // Don't remove this is needed for the parent process to understand when the server started

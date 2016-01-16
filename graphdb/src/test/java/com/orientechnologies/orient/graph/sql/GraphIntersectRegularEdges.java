@@ -20,17 +20,16 @@
 
 package com.orientechnologies.orient.graph.sql;
 
-import java.util.Set;
-
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.graph.GraphNoTxAbstractTest;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import java.util.Set;
 
 public class GraphIntersectRegularEdges extends GraphNoTxAbstractTest {
   private final int TOT = 1000;
@@ -100,7 +99,7 @@ public class GraphIntersectRegularEdges extends GraphNoTxAbstractTest {
 
   @BeforeClass
   public static void init() {
-    // System.setProperty("orientdb.test.env", "ci");
+    System.setProperty("orientdb.test.env", "ci");
     init(GraphIntersectRegularEdges.class.getSimpleName());
   }
 }

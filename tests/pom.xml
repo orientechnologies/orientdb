@@ -10,14 +10,14 @@
     the specific language governing permissions and ~ limitations under the License. -->
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
         <groupId>com.orientechnologies</groupId>
         <artifactId>orientdb-parent</artifactId>
-        <version>2.1.8</version>
+        <version>2.2.0-SNAPSHOT</version>
         <relativePath>../</relativePath>
     </parent>
 
@@ -72,12 +72,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.testng</groupId>
-            <artifactId>testng</artifactId>
-            <version>6.8.8</version>
-        </dependency>
-
-        <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-core</artifactId>
             <version>${project.version}</version>
@@ -93,12 +87,6 @@
             <scope>test</scope>
         </dependency>
 
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-all</artifactId>
-            <version>1.9.5</version>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 
     <build>
@@ -120,14 +108,21 @@
                     <systemPropertyVariables>
                         <storage.lockTimeout>60000</storage.lockTimeout>
                         <storage.makeFullCheckpointAfterCreate>false</storage.makeFullCheckpointAfterCreate>
-                        <storage.makeFullCheckpointAfterClusterCreate>false</storage.makeFullCheckpointAfterClusterCreate>
+                        <storage.makeFullCheckpointAfterClusterCreate>false
+                        </storage.makeFullCheckpointAfterClusterCreate>
                         <storage.wal.syncOnPageFlush>false</storage.wal.syncOnPageFlush>
                         <storage.configuration.syncOnUpdate>false</storage.configuration.syncOnUpdate>
                         <index.flushAfterCreate>false</index.flushAfterCreate>
-                        <buildDirectory>.</buildDirectory>
+                        <security.userPasswordSaltIterations>10</security.userPasswordSaltIterations>
+                        <buildDirectory>${project.build.directory}</buildDirectory>
                         <url>memory:demo</url>
-                        <testPath>.</testPath>
+                        <testPath>${project.basedir}</testPath>
+                        <orient.server.testMode>${orient.server.testMode}</orient.server.testMode>
+                        <orient.server.port>${orient.server.port}</orient.server.port>
+                        <storage.diskCache.bufferSize>4096</storage.diskCache.bufferSize>
+                        <memory.directMemory.trackMode>true</memory.directMemory.trackMode>
                     </systemPropertyVariables>
+                    <argLine>-Xmx3072m -XX:MaxDirectMemorySize=512g</argLine>
                 </configuration>
                 <executions>
                     <execution>
@@ -143,7 +138,9 @@
                         </goals>
                         <configuration>
                             <suiteXmlFiles>
-                                <suiteXmlFile>src/test/java/com/orientechnologies/orient/test/database/auto/embedded-test-db-from-scratch.xml</suiteXmlFile>
+                                <suiteXmlFile>
+                                    src/test/java/com/orientechnologies/orient/test/database/auto/embedded-test-db-from-scratch.xml
+                                </suiteXmlFile>
                             </suiteXmlFiles>
                         </configuration>
                     </execution>
@@ -154,10 +151,14 @@
                         </goals>
                         <configuration>
                             <systemPropertyVariables>
-                                <orientdb.config.file>target/test-classes/orientdb-server-config.xml</orientdb.config.file>
+                                <orientdb.config.file>target/test-classes/orientdb-server-config.xml
+                                </orientdb.config.file>
+                                <ORIENTDB_HOME>${project.build.directory}/remote-server</ORIENTDB_HOME>
                             </systemPropertyVariables>
                             <suiteXmlFiles>
-                                <suiteXmlFile>src/test/java/com/orientechnologies/orient/test/database/auto/remote-test-db-from-scratch.xml</suiteXmlFile>
+                                <suiteXmlFile>
+                                    src/test/java/com/orientechnologies/orient/test/database/auto/remote-test-db-from-scratch.xml
+                                </suiteXmlFile>
                             </suiteXmlFiles>
                         </configuration>
                     </execution>

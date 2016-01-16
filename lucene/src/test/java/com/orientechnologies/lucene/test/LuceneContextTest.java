@@ -25,41 +25,27 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
-import java.io.BufferedReader;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.List;
 
 /**
  * Created by enricorisa on 08/10/14.
  */
-@Test(groups = "embedded")
 public class LuceneContextTest extends BaseLuceneTest {
 
-  public LuceneContextTest() {
-  }
-
-  public LuceneContextTest(boolean remote) {
-    super();
-  }
-
-  @Override
-  protected String getDatabaseName() {
-    return "LuceneContext";
-  }
-
+  @Test
   public void testContext() {
     InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql");
 
     databaseDocumentTx.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
 
-    List<ODocument> docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
-        "select *,$score from Song where [title] LUCENE \"(title:man)\""));
+    List<ODocument> docs = databaseDocumentTx
+        .query(new OSQLSynchQuery<ODocument>("select *,$score from Song where [title] LUCENE \"(title:man)\""));
 
     Assert.assertEquals(docs.size(), 14);
 
@@ -76,13 +62,12 @@ public class LuceneContextTest extends BaseLuceneTest {
     Assert.assertEquals(docs.size(), 1);
 
     ODocument doc = docs.iterator().next();
-
     Assert.assertEquals(doc.field("$totalHits"), 14);
     Assert.assertEquals(doc.field("$Song_title_totalHits"), 14);
 
   }
 
-  @BeforeClass
+  @Before
   public void init() {
     initDB();
     OSchema schema = databaseDocumentTx.getMetadata().getSchema();
@@ -97,26 +82,9 @@ public class LuceneContextTest extends BaseLuceneTest {
 
   }
 
-  @AfterClass
+  @After
   public void deInit() {
     deInitDB();
-  }
-
-  protected String getScriptFromStream(InputStream in) {
-    String script = "";
-    try {
-      BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-      StringBuilder out = new StringBuilder();
-      String line;
-      while ((line = reader.readLine()) != null) {
-        out.append(line + "\n");
-      }
-      script = out.toString();
-      reader.close();
-    } catch (Exception e) {
-
-    }
-    return script;
   }
 
 }

@@ -10,25 +10,28 @@ public class OJsonItem {
   protected String      leftString;
   protected OExpression right;
 
-  public void replaceParameters(Map<Object, Object> params) {
-    right.replaceParameters(params);
-  }
-
-  @Override
-  public String toString() {
-    StringBuilder result = new StringBuilder();
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (leftIdentifier != null) {
-      result.append("\"");
-      result.append(leftIdentifier.toString());
-      result.append("\"");
+      builder.append("\"");
+      leftIdentifier.toString(params, builder);
+      builder.append("\"");
     }
     if (leftString != null) {
-      result.append("\"");
-      result.append(OExpression.encode(leftString));
-      result.append("\"");
+      builder.append("\"");
+      builder.append(OExpression.encode(leftString));
+      builder.append("\"");
     }
-    result.append(": ");
-    result.append(right.toString());
-    return result.toString();
+    builder.append(": ");
+    right.toString(params, builder);
+  }
+
+  public String getLeftValue() {
+    if (leftString != null) {
+      return leftString;
+    }
+    if (leftIdentifier != null) {
+      leftIdentifier.getValue();
+    }
+    return null;
   }
 }

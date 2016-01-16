@@ -66,7 +66,7 @@ public class OUpdateStatementTest {
     checkRightSyntax("update Foo put a = 'b', 'c'");
   }
 
-  public void testJson(){
+  public void testJson() {
     checkRightSyntax("update Foo merge {'a':'b', 'c':{'d':'e'}} where name = 'foo'");
     checkRightSyntax("update Foo content {'a':'b', 'c':{'d':'e', 'f': ['a', 'b', 4]}} where name = 'foo'");
   }
@@ -93,7 +93,7 @@ public class OUpdateStatementTest {
     checkRightSyntax("update (select from (traverse References from ( select from Node WHERE Email = 'julia@local'  ) ) WHERE @class = 'Node' and $depth <= 1 and Active = true ) set Points = 0 RETURN BEFORE $current.Points");
   }
 
-  public void testUpdateMultipleRids() {
+  public void testTargetMultipleRids() {
     checkRightSyntax("update [#9:0, #9:1] set foo = 'bar'");
   }
 

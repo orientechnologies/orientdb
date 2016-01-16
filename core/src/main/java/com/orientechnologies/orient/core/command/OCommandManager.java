@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.command;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.command.script.OCommandExecutorScript;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
@@ -112,8 +113,8 @@ public class OCommandManager {
       return exec;
 
     } catch (Exception e) {
-      throw new OCommandExecutionException("Cannot create the command executor of class " + executorClass
-          + " for the command request: " + iCommand, e);
+      throw OException.wrapException(new OCommandExecutionException("Cannot create the command executor of class " + executorClass
+          + " for the command request: " + iCommand), e);
     }
   }
 }

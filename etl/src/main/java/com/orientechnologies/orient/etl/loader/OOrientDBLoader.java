@@ -19,6 +19,7 @@
 package com.orientechnologies.orient.etl.loader;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -26,7 +27,10 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
-import com.orientechnologies.orient.core.metadata.schema.*;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLProcessor;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
@@ -61,7 +65,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
   protected long            batchCounter               = 0;
   protected DB_TYPE         dbType                     = DOCUMENT;
   protected boolean         wal                        = true;
-  protected Boolean         txUseLog                   = null;
+  protected boolean         txUseLog                   = false;
 
   protected enum DB_TYPE {
     DOCUMENT, GRAPH
@@ -79,7 +83,6 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
       if (dbType == DOCUMENT) {
         if (input instanceof ODocument) {
           final ODocument doc = (ODocument) input;
-          final ODatabaseDocumentTx documentDatabase = pipeline.getDocumentDatabase();
           final OClass cls;
           if (className != null)
             cls = getOrCreateClass(className, null);
@@ -188,8 +191,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
 
   private void beginTransaction(final ODatabaseDocumentTx db) {
     db.begin();
-    if (txUseLog != null)
-      db.getTransaction().setUsingLog(txUseLog);
+    db.getTransaction().setUsingLog(txUseLog);
   }
 
   @Override
@@ -264,8 +266,8 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
       }
     }
 
-    if (!wal)
-      OGlobalConfiguration.USE_WAL.setValue(wal);
+    //use wal or not
+    OGlobalConfiguration.USE_WAL.setValue(wal);
 
     switch (dbType) {
     case DOCUMENT:
@@ -392,7 +394,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
       }
       pipeline.setDocumentDatabase(documentDatabase);
     } else
-      ODatabaseRecordThreadLocal.INSTANCE.set(documentDatabase);
+      ODatabaseRecordThreadLocal.instance().set(documentDatabase);
 
     if (classes != null) {
       for (ODocument cls : classes) {
@@ -509,8 +511,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
     } else {
       // GRAPH
       final OrientBaseGraph graphDatabase = pipeline.getGraphDatabase();
-      final OSchemaProxy schema = graphDatabase.getRawGraph().getMetadata().getSchema();
-      cls = schema.getClass(iClassName);
+      cls = graphDatabase.getRawGraph().getMetadata().getSchema().getClass(iClassName);
       if (cls == null) {
 
         if (iSuperClass != null) {

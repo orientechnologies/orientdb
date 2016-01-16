@@ -33,7 +33,7 @@
                       name="http"/>
         </protocols>
         <listeners>
-            <listener protocol="http" port-range="2498-2500" ip-address="0.0.0.0">
+            <listener protocol="http" port-range="2499" ip-address="0.0.0.0">
                 <commands>
                     <command
                             implementation="com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetStaticContent"
@@ -62,4 +62,5 @@
         <entry name="log.console.level" value="info"/>
         <entry name="log.file.level" value="fine"/>
     </properties>
+    <isAfterFirstTime>true</isAfterFirstTime>
 </orient-server>

@@ -3,13 +3,14 @@ package com.orientechnologies.orient.test.internal.index;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.common.test.SpeedTestMonoThread;
-import com.orientechnologies.common.util.MersenneTwisterFast;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndexUnique;
 import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+
+import java.util.Random;
 
 /**
  * @author Andrey Lomakin
@@ -19,7 +20,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 public class MVRBTreeInsertionSpeedTest extends SpeedTestMonoThread {
   private ODatabaseDocumentTx databaseDocumentTx;
   private OIndexUnique        index;
-  private MersenneTwisterFast random = new MersenneTwisterFast();
+  private Random random = new Random();
 
   public MVRBTreeInsertionSpeedTest() {
     super(5000000);

@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,10 +47,10 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
   public static final String KEYWORD_CLUSTER  = "CLUSTER";
   public static final String KEYWORD_CLUSTERS = "CLUSTERS";
 
-  private String             className;
-  private List<OClass>       superClasses     = new ArrayList<OClass>();
-  private int[]              clusterIds;
-  private Integer            clusters         = null;
+  private String       className;
+  private List<OClass> superClasses = new ArrayList<OClass>();
+  private int[]        clusterIds;
+  private Integer      clusters     = null;
 
   public OCommandExecutorSQLCreateClass parse(final OCommandRequest iRequest) {
     final ODatabaseDocumentInternal database = getDatabase();
@@ -89,8 +88,9 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
           oldPos = pos;
           pos = nextWord(parserText, parserTextUpperCase, pos, word, false);
           if (pos == -1)
-            throw new OCommandSQLParsingException("Syntax error after EXTENDS for class " + className
-                + ". Expected the super-class name. Use " + getSyntax(), parserText, oldPos);
+            throw new OCommandSQLParsingException(
+                "Syntax error after EXTENDS for class " + className + ". Expected the super-class name. Use " + getSyntax(),
+                parserText, oldPos);
           if (!database.getMetadata().getSchema().existsClass(word.toString()))
             throw new OCommandSQLParsingException("Super-class " + word + " not exists", parserText, oldPos);
           superClass = database.getMetadata().getSchema().getClass(word.toString());
@@ -108,8 +108,9 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
         oldPos = pos;
         pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false, " =><()");
         if (pos == -1)
-          throw new OCommandSQLParsingException("Syntax error after CLUSTER for class " + className
-              + ". Expected the cluster id or name. Use " + getSyntax(), parserText, oldPos);
+          throw new OCommandSQLParsingException(
+              "Syntax error after CLUSTER for class " + className + ". Expected the cluster id or name. Use " + getSyntax(),
+              parserText, oldPos);
 
         final String[] clusterIdsAsStrings = word.toString().split(",");
         if (clusterIdsAsStrings.length > 0) {
@@ -128,7 +129,7 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
             try {
               database.getStorage().getClusterById(clusterIds[i]);
             } catch (Exception e) {
-              throw new OCommandSQLParsingException("Cluster with id " + clusterIds[i] + " does not exists", parserText, oldPos, e);
+              throw new OCommandSQLParsingException("Cluster with id " + clusterIds[i] + " does not exists", parserText, oldPos);
             }
           }
         }
@@ -136,8 +137,9 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
         oldPos = pos;
         pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false, " =><()");
         if (pos == -1)
-          throw new OCommandSQLParsingException("Syntax error after CLUSTERS for class " + className
-              + ". Expected the number of clusters. Use " + getSyntax(), parserText, oldPos);
+          throw new OCommandSQLParsingException(
+              "Syntax error after CLUSTERS for class " + className + ". Expected the number of clusters. Use " + getSyntax(),
+              parserText, oldPos);
 
         clusters = Integer.parseInt(word.toString());
       } else if (k.equals(KEYWORD_ABSTRACT))
@@ -176,10 +178,11 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
     final ODatabaseDocument database = getDatabase();
-    final OClass cls = database.getMetadata().getSchema().createClass(className, clusterIds, superClasses.toArray(new OClass[0]));
 
     if (clusters != null)
-      OClassImpl.addClusters(cls, clusters);
+      database.getMetadata().getSchema().createClass(className, clusters, superClasses.toArray(new OClass[0]));
+    else
+      database.getMetadata().getSchema().createClass(className, clusterIds, superClasses.toArray(new OClass[0]));
 
     return database.getMetadata().getSchema().getClasses().size();
   }

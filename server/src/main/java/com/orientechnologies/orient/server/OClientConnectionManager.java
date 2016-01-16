@@ -40,17 +40,20 @@ import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
+import com.orientechnologies.orient.server.network.protocol.binary.OBinaryNetworkProtocolAbstract;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 
 public class OClientConnectionManager {
-  protected ConcurrentMap<Integer, OClientConnection> connections      = new ConcurrentHashMap<Integer, OClientConnection>();
-  protected AtomicInteger                             connectionSerial = new AtomicInteger(0);
+  protected ConcurrentMap<Integer, OClientConnection>  connections      = new ConcurrentHashMap<Integer, OClientConnection>();
+  protected AtomicInteger                              connectionSerial = new AtomicInteger(0);
+  protected ConcurrentMap<OHashToken, OClientSessions> sessions         = new ConcurrentHashMap<OHashToken, OClientSessions>();
 
   public OClientConnectionManager() {
     final int delay = OGlobalConfiguration.SERVER_CHANNEL_CLEAN_DELAY.getValueAsInteger();
@@ -106,7 +109,7 @@ public class OClientConnectionManager {
 
   /**
    * Create a connection.
-   * 
+   *
    * @param iProtocol
    *          protocol which will be used by connection
    * @return new connection
@@ -119,15 +122,57 @@ public class OClientConnectionManager {
     connection = new OClientConnection(connectionSerial.incrementAndGet(), iProtocol);
 
     connections.put(connection.id, connection);
-
     OLogManager.instance().config(this, "Remote client connected from: " + connection);
 
     return connection;
   }
 
   /**
+   * Create a connection.
+   *
+   * @param iProtocol
+   *          protocol which will be used by connection
+   * @return new connection
+   * @throws IOException
+   */
+  public OClientConnection connect(final ONetworkProtocol iProtocol, final OClientConnection connection, final byte[] tokenBytes,
+      final OToken token) throws IOException {
+
+    OClientSessions session;
+    synchronized (sessions) {
+      session = new OClientSessions(tokenBytes, token);
+      sessions.put(new OHashToken(tokenBytes), session);
+    }
+    session.addConnection(connection);
+    OLogManager.instance().config(this, "Remote client connected from: " + connection);
+
+    return connection;
+  }
+
+  public OClientConnection reConnect(final ONetworkProtocol iProtocol, final byte[] tokenBytes, final OToken token)
+      throws IOException {
+
+    final OClientConnection connection;
+    connection = new OClientConnection(connectionSerial.incrementAndGet(), iProtocol);
+
+    connections.put(connection.id, connection);
+    OHashToken key = new OHashToken(tokenBytes);
+    OClientSessions sess;
+    synchronized (sessions) {
+      sess = sessions.get(key);
+      if (sess == null) {
+        // RECONNECT
+        sess = new OClientSessions(tokenBytes, token);
+        sessions.put(new OHashToken(tokenBytes), sess);
+      }
+    }
+    sess.addConnection(connection);
+    return connection;
+  }
+
+  /**
    * Retrieves the connection by id.
-   * 
+   *
    * @param iChannelId
    *          id of connection
    * @return The connection if any, otherwise null
@@ -143,7 +188,7 @@ public class OClientConnectionManager {
 
   /**
    * Retrieves the connection by address/port.
-   * 
+   *
    * @param iAddress
    *          The address as string in the format address as format <ip>:<port>
    * @return The connection if any, otherwise null
@@ -158,7 +203,7 @@ public class OClientConnectionManager {
 
   /**
    * Disconnects and kill the associated network manager.
-   * 
+   *
    * @param iChannelId
    *          id of connection
    */
@@ -168,7 +213,7 @@ public class OClientConnectionManager {
 
   /**
    * Disconnects and kill the associated network manager.
-   * 
+   *
    * @param connection
    *          connection to kill
    */
@@ -180,7 +225,7 @@ public class OClientConnectionManager {
         // INTERRUPT THE NEWTORK MANAGER TOO
         protocol.interrupt();
       } catch (Exception e) {
-        OLogManager.instance().error(this, "Error during interruption of binary protocol.", e);
+        OLogManager.instance().error(this, "Error during interruption of binary protocol", e);
       }
 
       disconnect(connection);
@@ -196,7 +241,7 @@ public class OClientConnectionManager {
 
   /**
    * Interrupt the associated network manager.
-   * 
+   *
    * @param iChannelId
    *          id of connection
    */
@@ -212,7 +257,7 @@ public class OClientConnectionManager {
 
   /**
    * Disconnects a client connections
-   * 
+   *
    * @param iChannelId
    *          id of connection
    * @return true if was last one, otherwise false
@@ -242,9 +287,27 @@ public class OClientConnectionManager {
     return false;
   }
 
+  private void removeConnectFromSession(OClientConnection connection) {
+    if (connection.getProtocol() instanceof OBinaryNetworkProtocolAbstract) {
+      OBinaryNetworkProtocolAbstract proto = (OBinaryNetworkProtocolAbstract) connection.getProtocol();
+      byte[] tokenBytes = proto.getTokenBytes();
+      OHashToken hashToken = new OHashToken(tokenBytes);
+      synchronized (sessions) {
+        OClientSessions sess = sessions.get(hashToken);
+        if (sess != null) {
+          sess.removeConnection(connection);
+          if (!sess.isActive()) {
+            sessions.remove(hashToken);
+          }
+        }
+      }
+    }
+  }
+
   public void disconnect(final OClientConnection iConnection) {
     OLogManager.instance().debug(this, "Disconnecting connection %s...", iConnection);
 
+    removeConnectFromSession(iConnection);
     iConnection.close();
 
     int totalRemoved = 0;
@@ -395,6 +458,13 @@ public class OClientConnectionManager {
       } catch (Exception e) {
         OLogManager.instance().debug(this, "Error on killing connection to %s client", e, entry.getValue().getRemoteAddress());
       }
+    }
+  }
+
+  public OClientSessions getSession(ONetworkProtocolBinary iNetworkProtocolBinary) {
+    OHashToken key = new OHashToken(iNetworkProtocolBinary.getTokenBytes());
+    synchronized (sessions) {
+      return sessions.get(key);
     }
   }
 }

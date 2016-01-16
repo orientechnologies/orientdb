@@ -26,7 +26,7 @@
                 <parameter value="yyyy-MM-dd HH:mm:ss" name="profile.default.mail.date.format"/>
             </parameters>
         </handler>
-        <!--<handler class="com.orientechnologies.lucene.OLuceneIndexPlugin">-->
+        <!--<handler class="com.orientechnologies.lucene.OLuceneSpatialIndexPlugin">-->
 
         <!--</handler>-->
 
@@ -55,8 +55,8 @@
                       name="http"/>
         </protocols>
         <listeners>
-            <listener protocol="binary" port-range="2424-2430" ip-address="0.0.0.0"/>
-            <listener protocol="http" port-range="2480-2490" ip-address="0.0.0.0">
+            <listener protocol="binary" port-range="2426-2430" ip-address="0.0.0.0"/>
+            <listener protocol="http" port-range="2482-2490" ip-address="0.0.0.0">
                 <commands>
                     <command
                             implementation="com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetStaticContent"
@@ -76,7 +76,6 @@
             </listener>
         </listeners>
     </network>
-    <storages/>
     <users>
         <user resources="*" password="root" name="root"/>
         <user resources="connect,server.listDatabases,server.dblist" password="guest" name="guest"/>

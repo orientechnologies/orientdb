@@ -31,12 +31,11 @@ public class OProjection extends SimpleNode {
   }
 
   @Override
-  public String toString() {
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (items == null) {
-      return "";
+      return;
     }
     boolean first = true;
-    StringBuilder builder = new StringBuilder();
 
     // print * before
     for (OProjectionItem item : items) {
@@ -45,7 +44,7 @@ public class OProjection extends SimpleNode {
           builder.append(", ");
         }
 
-        builder.append(item.toString());
+        item.toString(params, builder);
         first = false;
       }
     }
@@ -57,20 +56,13 @@ public class OProjection extends SimpleNode {
           builder.append(", ");
         }
 
-        builder.append(item.toString());
+        item.toString(params, builder);
         first = false;
       }
     }
-
-    return builder.toString();
   }
 
-  public void replaceParameters(Map<Object, Object> params) {
-    if (items != null) {
-      for (OProjectionItem item : items) {
-        item.replaceParameters(params);
-      }
-    }
-  }
+
+
 }
 /* JavaCC - OriginalChecksum=3a650307b53bae626dc063c4b35e62c3 (do not edit this line) */

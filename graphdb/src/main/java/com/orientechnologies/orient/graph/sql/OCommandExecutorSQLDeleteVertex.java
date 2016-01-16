@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
@@ -122,7 +123,7 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
           try {
             limit = Integer.parseInt(word);
           } catch (Exception e) {
-            throw new OCommandSQLParsingException("Invalid LIMIT: " + word, e);
+            throw OException.wrapException(new OCommandSQLParsingException("Invalid LIMIT: " + word), e);
           }
         } else if (word.equals(KEYWORD_RETURN)) {
           returning = parseReturn();
@@ -204,6 +205,7 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
     } else if (query != null) {
       // TARGET IS A CLASS + OPTIONAL CONDITION
       OGraphCommandExecutorSQLFactory.runInConfiguredTxMode(new OGraphCommandExecutorSQLFactory.GraphCallBack<OrientGraph>() {
+
         @Override
         public OrientGraph call(final OrientBaseGraph iGraph) {
           // TARGET IS A CLASS + OPTIONAL CONDITION
@@ -212,6 +214,7 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
           query.execute(iArgs);
           return null;
         }
+
       });
 
     } else
@@ -254,6 +257,7 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
     }
 
     return true;
+
   }
 
   @Override
@@ -320,6 +324,11 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
       return executor.getInvolvedClusters();
     }
     return result;
+  }
+
+  @Override
+  public Object getResult() {
+    return null;
   }
 
   public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {

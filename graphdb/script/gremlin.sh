@@ -24,6 +24,7 @@ if [ "$JAVA_OPTIONS" = "" ] ; then
     JAVA_OPTIONS="-Xms32m -Xmx512m"
 fi
 
+
 # Launch the application
 if [ "$1" = "-e" ]; then
   k=$2
@@ -31,12 +32,12 @@ if [ "$1" = "-e" ]; then
     i=0 ;
     while [ "$i" -lt $# +1 ]
     do
-      eval a=\$$i
-      k="$k \"$a\""
+        eval a=\$$i
+        k="$k \"$a\""
         i=$(($i+1))
     done
   fi
-  eval "$JAVA" $JAVA_OPTIONS -cp $CP:../plugins/*.jar com.tinkerpop.gremlin.groovy.jsr223.ScriptExecutor $k
+    eval "$JAVA" $JAVA_OPTIONS -cp $CP:../plugins/*.jar com.tinkerpop.gremlin.groovy.jsr223.ScriptExecutor $k
 else
   if [ "$1" = "-v" ]; then
     "$JAVA" -server $JAVA_OPTIONS -cp $CP:../plugins/*.jar com.tinkerpop.gremlin.Version

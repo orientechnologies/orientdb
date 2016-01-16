@@ -22,15 +22,17 @@ package com.orientechnologies.orient.core.query.live;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -42,33 +44,64 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 public class OLiveQueryHook extends ODocumentHookAbstract implements ODatabaseListener {
 
-  protected static Map<ODatabaseDocument, List<ORecordOperation>> pendingOps  = new ConcurrentHashMap<ODatabaseDocument, List<ORecordOperation>>();
+  static class OLiveQueryOps implements OCloseable {
 
-  // protected static Map<OStorage, OLiveQueryQueueThread> queueThreads = new ConcurrentHashMap<OStorage, OLiveQueryQueueThread>();
+    protected Map<ODatabaseDocument, List<ORecordOperation>> pendingOps  = new ConcurrentHashMap<ODatabaseDocument, List<ORecordOperation>>();
+    private OLiveQueryQueueThread                            queueThread = new OLiveQueryQueueThread();
+    private Object                                           threadLock  = new Object();
 
-  static OLiveQueryQueueThread                                    queueThread = new OLiveQueryQueueThread();
-  static Object                                                   threadLock  = new Object();
+    @Override
+    public void close() {
+      queueThread.stopExecution();
+      try {
+        queueThread.join();
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
+      pendingOps.clear();
+    }
+  }
 
   public OLiveQueryHook(ODatabaseDocumentTx db) {
+    super(db);
+    getOpsReference(db);
     db.registerListener(this);
   }
 
-  public static Integer subscribe(Integer token, OLiveQueryListener iListener) {
-    synchronized (threadLock) {
-      if (!queueThread.isAlive()) {
-        // TODO copy old queues!
-        queueThread = new OLiveQueryQueueThread();
-        queueThread.start();
+  private static OLiveQueryOps getOpsReference(ODatabaseInternal db) {
+    return (OLiveQueryOps) db.getStorage().getResource("LiveQueryOps", new Callable<Object>() {
+      @Override
+      public Object call() throws Exception {
+        return new OLiveQueryOps();
+      }
+    });
+  }
+
+  public static Integer subscribe(Integer token, OLiveQueryListener iListener, ODatabaseInternal db) {
+    if(Boolean.FALSE.equals(db.getConfiguration().getValue(OGlobalConfiguration.QUERY_LIVE_SUPPORT))) {
+      OLogManager.instance().warn(db,"Live query support is disabled impossible to subscribe a listener, set '%s' to true for enable the live query support", OGlobalConfiguration.QUERY_LIVE_SUPPORT.getKey());
+      return -1;
+    }
+    OLiveQueryOps ops = getOpsReference(db);
+    synchronized (ops.threadLock) {
+      if (!ops.queueThread.isAlive()) {
+        ops.queueThread = ops.queueThread.clone();
+        ops.queueThread.start();
       }
     }
 
-    return queueThread.subscribe(token, iListener);
+    return ops.queueThread.subscribe(token, iListener);
   }
 
-  public static void unsubscribe(Integer id) {
+  public static void unsubscribe(Integer id, ODatabaseInternal db) {
+    if(Boolean.FALSE.equals(db.getConfiguration().getValue(OGlobalConfiguration.QUERY_LIVE_SUPPORT))) {
+      OLogManager.instance().warn(db, "Live query support is disabled impossible to unsubscribe a listener, set '%s' to true for enable the live query support", OGlobalConfiguration.QUERY_LIVE_SUPPORT.getKey());
+      return;
+    }
     try {
-      synchronized (threadLock) {
-        queueThread.unsubscribe(id);
+      OLiveQueryOps ops = getOpsReference(db);
+      synchronized (ops.threadLock) {
+        ops.queueThread.unsubscribe(id);
       }
     } catch (Exception e) {
       OLogManager.instance().warn(OLiveQueryHook.class, "Error on unsubscribing client");
@@ -82,8 +115,11 @@ public class OLiveQueryHook extends ODocumentHookAbstract implements ODatabaseLi
 
   @Override
   public void onDelete(ODatabase iDatabase) {
-    synchronized (pendingOps) {
-      pendingOps.remove(iDatabase);
+    if(Boolean.FALSE.equals(database.getConfiguration().getValue(OGlobalConfiguration.QUERY_LIVE_SUPPORT)))
+      return ;
+    OLiveQueryOps ops = getOpsReference((ODatabaseInternal) iDatabase);
+    synchronized (ops.pendingOps) {
+      ops.pendingOps.remove(iDatabase);
     }
   }
 
@@ -104,8 +140,11 @@ public class OLiveQueryHook extends ODocumentHookAbstract implements ODatabaseLi
 
   @Override
   public void onAfterTxRollback(ODatabase iDatabase) {
-    synchronized (pendingOps) {
-      pendingOps.remove(iDatabase);
+    if(Boolean.FALSE.equals(database.getConfiguration().getValue(OGlobalConfiguration.QUERY_LIVE_SUPPORT)))
+      return ;
+    OLiveQueryOps ops = getOpsReference((ODatabaseInternal) iDatabase);
+    synchronized (ops.pendingOps) {
+      ops.pendingOps.remove(iDatabase);
     }
   }
 
@@ -116,22 +155,28 @@ public class OLiveQueryHook extends ODocumentHookAbstract implements ODatabaseLi
 
   @Override
   public void onAfterTxCommit(ODatabase iDatabase) {
+    if(Boolean.FALSE.equals(database.getConfiguration().getValue(OGlobalConfiguration.QUERY_LIVE_SUPPORT)))
+      return ;
+    OLiveQueryOps ops = getOpsReference((ODatabaseInternal) iDatabase);
     List<ORecordOperation> list;
-    synchronized (pendingOps) {
-      list = pendingOps.remove(iDatabase);
+    synchronized (ops.pendingOps) {
+      list = ops.pendingOps.remove(iDatabase);
     }
     // TODO sync
     if (list != null) {
       for (ORecordOperation item : list) {
-        queueThread.enqueue(item);
+        ops.queueThread.enqueue(item);
       }
     }
   }
 
   @Override
   public void onClose(ODatabase iDatabase) {
-    synchronized (pendingOps) {
-      pendingOps.remove(iDatabase);
+    if(Boolean.FALSE.equals(database.getConfiguration().getValue(OGlobalConfiguration.QUERY_LIVE_SUPPORT)))
+      return ;
+    OLiveQueryOps ops = getOpsReference((ODatabaseInternal) iDatabase);
+    synchronized (ops.pendingOps) {
+      ops.pendingOps.remove(iDatabase);
     }
   }
 
@@ -162,20 +207,25 @@ public class OLiveQueryHook extends ODocumentHookAbstract implements ODatabaseLi
   }
 
   protected void addOp(ODocument iDocument, byte iType) {
-    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    if(Boolean.FALSE.equals(database.getConfiguration().getValue(OGlobalConfiguration.QUERY_LIVE_SUPPORT)))
+      return ;
+    ODatabaseDocument db = database;
+    OLiveQueryOps ops = getOpsReference((ODatabaseInternal) db);
+    if(!ops.queueThread.hasListeners())
+      return;
     if (db.getTransaction() == null || !db.getTransaction().isActive()) {
 
       // TODO synchronize
       ORecordOperation op = new ORecordOperation(iDocument, iType);
-      queueThread.enqueue(op);
+      ops.queueThread.enqueue(op);
       return;
     }
     ORecordOperation result = new ORecordOperation(iDocument, iType);
-    synchronized (pendingOps) {
-      List<ORecordOperation> list = this.pendingOps.get(db);
+    synchronized (ops.pendingOps) {
+      List<ORecordOperation> list = ops.pendingOps.get(db);
       if (list == null) {
         list = new ArrayList<ORecordOperation>();
-        this.pendingOps.put(db, list);
+        ops.pendingOps.put(db, list);
       }
       list.add(result);
     }

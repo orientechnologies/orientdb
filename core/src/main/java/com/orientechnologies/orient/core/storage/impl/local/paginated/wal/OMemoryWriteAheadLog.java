@@ -21,10 +21,11 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.orient.core.storage.impl.local.OFullCheckpointRequestListener;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationMetadata;
 
+import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Map;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
@@ -37,7 +38,7 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   @Override
-  public OLogSequenceNumber end() throws IOException {
+  public OLogSequenceNumber end() {
     throw new UnsupportedOperationException("Operation not supported for in memory storage.");
   }
 
@@ -52,8 +53,8 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
 
   @Override
   public OLogSequenceNumber logAtomicOperationEndRecord(OOperationUnitId operationUnitId, boolean rollback,
-      OLogSequenceNumber startLsn) throws IOException {
-    return log(new OAtomicUnitEndRecord(operationUnitId, rollback, startLsn));
+      OLogSequenceNumber startLsn, Map<String, OAtomicOperationMetadata<?>> atomicOperationMetadata) throws IOException {
+    return log(new OAtomicUnitEndRecord(operationUnitId, rollback, atomicOperationMetadata));
   }
 
   @Override
@@ -93,7 +94,7 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   @Override
-  public OLogSequenceNumber getFlushedLSN() {
+  public OLogSequenceNumber getFlushedLsn() {
     throw new UnsupportedOperationException("Operation not supported for in memory storage.");
   }
 
@@ -107,5 +108,27 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
 
   @Override
   public void removeFullCheckpointListener(OFullCheckpointRequestListener listener) {
+  }
+
+  @Override
+  public void moveLsnAfter(OLogSequenceNumber lsn) {
+  }
+
+  @Override
+  public void preventCutTill(OLogSequenceNumber lsn) throws IOException {
+  }
+
+  @Override
+  public File[] nonActiveSegments(long fromSegment) {
+    return new File[0];
+  }
+
+  @Override
+  public long activeSegment() {
+    return 0;
+  }
+
+  @Override
+  public void newSegment() throws IOException {
   }
 }

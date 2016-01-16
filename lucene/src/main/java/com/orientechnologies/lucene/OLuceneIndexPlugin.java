@@ -17,20 +17,20 @@
 package com.orientechnologies.lucene;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.lucene.manager.OLuceneIndexManagerAbstract;
-import com.orientechnologies.lucene.operator.OLuceneNearOperator;
-import com.orientechnologies.lucene.operator.OLuceneTextOperator;
-import com.orientechnologies.lucene.operator.OLuceneWithinOperator;
-import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.lucene.functions.OLuceneFunctionsFactory;
+import com.orientechnologies.lucene.operator.OLuceneOperatorFactory;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexes;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
+import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
+import org.apache.lucene.util.Version;
 
 public class OLuceneIndexPlugin extends OServerPluginAbstract implements ODatabaseLifecycleListener {
 
@@ -44,15 +44,35 @@ public class OLuceneIndexPlugin extends OServerPluginAbstract implements ODataba
 
   @Override
   public void startup() {
-    super.startup();
-//    Orient.instance().addDbLifecycleListener(this);
-//
-//    OIndexes.registerFactory(new OLuceneIndexFactory(true));
-//    OSQLEngine.registerOperator(new OLuceneTextOperator());
-//    OSQLEngine.registerOperator(new OLuceneWithinOperator());
-//    OSQLEngine.registerOperator(new OLuceneNearOperator());
-//    OLogManager.instance().info(this, "Lucene index plugin installed and active. Lucene version: %s",
-//        OLuceneIndexManagerAbstract.LUCENE_VERSION);
+    //    super.startup();
+    //    Orient.instance().addDbLifecycleListener(this);
+
+    //    OIndexes.registerFactory(new OLuceneIndexFactory(true));
+
+    //    registerOperators();
+
+    //    registerFunctions();
+
+    //    spatialManager = new OLuceneSpatialManager(OShapeFactory.INSTANCE);
+    OLogManager.instance()
+               .info(this, "Lucene index plugin installed and active. Lucene version: %s", Version.LATEST);
+  }
+
+  protected void registerOperators() {
+
+    for (OQueryOperator operator : OLuceneOperatorFactory.OPERATORS) {
+      OSQLEngine.registerOperator(operator);
+    }
+
+  }
+
+  protected void registerFunctions() {
+
+    for (String s : OLuceneFunctionsFactory.FUNCTIONS.keySet()) {
+      OSQLEngine.getInstance()
+                .registerFunction(s, (OSQLFunction) OLuceneFunctionsFactory.FUNCTIONS.get(s));
+    }
+
   }
 
   @Override
@@ -71,11 +91,13 @@ public class OLuceneIndexPlugin extends OServerPluginAbstract implements ODataba
   }
 
   @Override
-  public void onCreate(final ODatabaseInternal iDatabase) {
+  public void onCreate(ODatabaseInternal iDatabase) {
+
   }
 
   @Override
-  public void onOpen(final ODatabaseInternal iDatabase) {
+  public void onOpen(ODatabaseInternal iDatabase) {
+
   }
 
   @Override
@@ -84,10 +106,14 @@ public class OLuceneIndexPlugin extends OServerPluginAbstract implements ODataba
 
   @Override
   public void onDrop(final ODatabaseInternal iDatabase) {
-    OLogManager.instance().info(this, "Dropping Lucene indexes...");
-    for (OIndex idx : iDatabase.getMetadata().getIndexManager().getIndexes()) {
+    OLogManager.instance()
+               .info(this, "Dropping Lucene indexes...");
+    for (OIndex idx : iDatabase.getMetadata()
+                               .getIndexManager()
+                               .getIndexes()) {
       if (idx.getInternal() instanceof OLuceneIndex) {
-        OLogManager.instance().info(this, "- index '%s'", idx.getName());
+        OLogManager.instance()
+                   .info(this, "- index '%s'", idx.getName());
         idx.delete();
       }
     }
@@ -99,5 +125,9 @@ public class OLuceneIndexPlugin extends OServerPluginAbstract implements ODataba
 
   @Override
   public void onDropClass(final ODatabaseInternal iDatabase, final OClass iClass) {
+  }
+
+  @Override
+  public void onLocalNodeConfigurationRequest(ODocument iConfiguration) {
   }
 }

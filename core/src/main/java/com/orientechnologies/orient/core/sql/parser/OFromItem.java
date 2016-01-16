@@ -2,8 +2,6 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-import com.orientechnologies.common.util.OPatternConst;
-
 import java.util.List;
 import java.util.Map;
 
@@ -36,83 +34,58 @@ public class OFromItem extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public String toString(String prefix) {
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (rids != null && rids.size() > 0) {
       if (rids.size() == 1) {
-        return rids.get(0).toString();
+        rids.get(0).toString(params, builder);
+        return;
       } else {
-        StringBuilder builder = new StringBuilder();
         builder.append("[");
         boolean first = true;
         for (ORid rid : rids) {
           if (!first) {
             builder.append(", ");
           }
-          builder.append(rid.toString());
+          rid.toString(params, builder);
           first = false;
         }
         builder.append("]");
-        return builder.toString();
+        return;
       }
     } else if (cluster != null) {
-      return cluster.toString();
+      cluster.toString(params, builder);
+      return;
       // } else if (className != null) {
       // return className.getValue();
     } else if (clusterList != null) {
-      return clusterList.toString();
+      clusterList.toString(params, builder);
+      return;
     } else if (metadata != null) {
-      return metadata.toString();
+      metadata.toString(params, builder);
+      return;
     } else if (statement != null) {
-      return "(" + statement.toString() + ")";
+      builder.append("(");
+      statement.toString(params, builder);
+      builder.append(")");
+      return;
     } else if (index != null) {
-      return index.toString();
+      index.toString(params, builder);
+      return;
     } else if (inputParam != null) {
-      if (inputFinalValue == UNSET) {
-        return inputParam.toString();
-      } else if (inputFinalValue == null) {
-        return "NULL";
-      } else {
-        if (inputFinalValue instanceof String) {
-          inputFinalValue = OPatternConst.PATTERN_SINGLE_SPACE.matcher(((String) inputFinalValue)).replaceAll("");// avoid SQL
-                                                                                                                  // injection,
-                                                                                                                  // temporary patch
-        }
-        return inputFinalValue.toString();
-      }
+      inputParam.toString(params, builder);
     } else if (identifier != null) {
-      StringBuilder result = new StringBuilder();
-      result.append(identifier.toString());
+
+      identifier.toString(params, builder);
       if (modifier != null) {
-        result.append(modifier.toString());
+        modifier.toString(params, builder);
       }
-      return result.toString();
+      return;
     }
-
-    return super.toString();
   }
 
-  @Override
-  public String toString() {
-    return toString("");
-  }
 
-  public void replaceParameters(Map<Object, Object> params) {
-    if (statement != null) {
-      statement.replaceParameters(params);
-    }
-    if (inputParam != null) {
-      Object result = inputParam.bindFromInputParams(params);
-      if (inputParam != result) {
-        inputFinalValue = result;
-      }
-    }
-    if (identifier != null) {
-      identifier.replaceParameters(params);
-    }
-    if (modifier != null) {
-      modifier.replaceParameters(params);
-    }
+  public OBaseIdentifier getIdentifier() {
+    return identifier;
   }
 }
 /* JavaCC - OriginalChecksum=f64e3b4d2a2627a1b5d04a7dcb95fa94 (do not edit this line) */
