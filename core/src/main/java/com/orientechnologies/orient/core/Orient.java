@@ -83,7 +83,10 @@ public class Orient extends OListenerManger<OOrientListener> {
   private final Set<WeakHashSetValueHolder<OOrientShutdownListener>>                 weakShutdownListeners         = Collections
                                                                                                                        .newSetFromMap(new ConcurrentHashMap<WeakHashSetValueHolder<OOrientShutdownListener>, Boolean>());
 
-  
+  static {
+    instance.startup();
+  }
+
   private String                                                                     os;
   private volatile Timer                                                             timer;
   private volatile ORecordFactoryManager                                             recordFactoryManager          = new ORecordFactoryManager();
@@ -132,34 +135,16 @@ public class Orient extends OListenerManger<OOrientListener> {
     }
   }
 
-  private Orient() {
+  protected Orient() {
     super(true);
 
     threadGroup = new ThreadGroup("OrientDB");
     threadGroup.setDaemon(false);
   }
 
-   public static Orient instance() {
-
-        return OrientHolder.INSTANCE;
-    }
-
-    private static class OrientHolder {
-
-        private static final Orient INSTANCE = new Orient();
-
-        static {
-            initOrient();
-        }
-
-        private static void initOrient() {
-            try {
-                INSTANCE.startup();
-            } catch (Throwable t) {
-                OLogManager.instance().error(INSTANCE, "Can not add Listener to Orient", t);
-            }
-        }
-    }
+  public static Orient instance() {
+    return instance;
+  }
 
   public static String getHomePath() {
     String v = System.getProperty("orient.home");
