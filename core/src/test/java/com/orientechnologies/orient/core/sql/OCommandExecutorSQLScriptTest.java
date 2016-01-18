@@ -263,4 +263,18 @@ public class OCommandExecutorSQLScriptTest {
     iterator.next();
     Assert.assertFalse(iterator.hasNext());
   }
+
+  @Test
+  public void testSemicolonInString() throws Exception {
+    //issue https://github.com/orientechnologies/orientjs/issues/133
+    //testing parsing problem
+    StringBuilder script = new StringBuilder();
+
+    script.append("let $a = select 'foo ; bar' as one\n");
+    script.append("let $b = select 'foo \\\'; bar' as one\n");
+
+    script.append("let $a = select \"foo ; bar\" as one\n");
+    script.append("let $b = select \"foo \\\"; bar\" as one\n");
+    Object qResult = db.command(new OCommandScript("sql", script.toString())).execute();
+  }
 }
