@@ -15,8 +15,6 @@ import java.util.List;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
-import java.util.Collection;
-import java.util.Map;
 
 @Test
 public class OCommandExecutorSQLScriptTest {
@@ -187,5 +185,19 @@ public class OCommandExecutorSQLScriptTest {
 
     Assert.assertNotNull(qResult);
     Assert.assertEquals(qResult, "OK");
+  }
+
+  @Test
+  public void testSemicolonInString() throws Exception {
+    //issue https://github.com/orientechnologies/orientjs/issues/133
+    //testing parsing problem
+    StringBuilder script = new StringBuilder();
+
+    script.append("let $a = select 'foo ; bar' as one\n");
+    script.append("let $b = select 'foo \\\'; bar' as one\n");
+
+    script.append("let $a = select \"foo ; bar\" as one\n");
+    script.append("let $b = select \"foo \\\"; bar\" as one\n");
+    Object qResult = db.command(new OCommandScript("sql", script.toString())).execute();
   }
 }
