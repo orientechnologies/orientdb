@@ -15,21 +15,12 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.lang.reflect.Field;
-import java.util.List;
-
-import org.testng.Assert;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
-import com.orientechnologies.orient.object.iterator.OObjectIteratorCluster;
+import com.orientechnologies.orient.object.iterator.OObjectIteratorClass;
 import com.orientechnologies.orient.test.domain.base.IdObject;
 import com.orientechnologies.orient.test.domain.base.Instrument;
 import com.orientechnologies.orient.test.domain.base.Musician;
@@ -41,6 +32,13 @@ import com.orientechnologies.orient.test.domain.business.Country;
 import com.orientechnologies.orient.test.domain.inheritance.InheritanceTestAbstractClass;
 import com.orientechnologies.orient.test.domain.inheritance.InheritanceTestBaseClass;
 import com.orientechnologies.orient.test.domain.inheritance.InheritanceTestClass;
+import org.testng.Assert;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.lang.reflect.Field;
+import java.util.List;
 
 @Test(groups = { "crud", "object" }, sequential = true)
 public class CRUDObjectInheritanceTest extends ObjectDBBaseTest {
@@ -55,11 +53,11 @@ public class CRUDObjectInheritanceTest extends ObjectDBBaseTest {
 
   @Test
   public void create() {
-		database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.business");
+    database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.business");
 
     database.command(new OCommandSQL("delete from Company")).execute();
 
-    startRecordNumber = database.countClusterElements("Company");
+    startRecordNumber = database.countClass("Company");
 
     Company company;
 
@@ -73,7 +71,7 @@ public class CRUDObjectInheritanceTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "create")
   public void testCreate() {
-    Assert.assertEquals(database.countClusterElements("Company") - startRecordNumber, TOT_RECORDS);
+    Assert.assertEquals(database.countClass("Company") - startRecordNumber, TOT_RECORDS);
   }
 
   @Test(dependsOnMethods = "testCreate")
@@ -112,10 +110,10 @@ public class CRUDObjectInheritanceTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "queryPerSuperType")
   public void deleteFirst() {
-    startRecordNumber = database.countClusterElements("Company");
+    startRecordNumber = database.countClass("Company");
 
     // DELETE ALL THE RECORD IN THE CLUSTER
-    OObjectIteratorCluster<Company> companyClusterIterator = database.browseCluster("Company");
+    OObjectIteratorClass<Company> companyClusterIterator = database.browseClass("Company");
     for (Company obj : companyClusterIterator) {
       if (obj.getId() == 1) {
         database.delete(obj);
@@ -123,7 +121,7 @@ public class CRUDObjectInheritanceTest extends ObjectDBBaseTest {
       }
     }
 
-    Assert.assertEquals(database.countClusterElements("Company"), startRecordNumber - 1);
+    Assert.assertEquals(database.countClass("Company"), startRecordNumber - 1);
   }
 
   @Test(dependsOnMethods = "deleteFirst")
@@ -167,8 +165,8 @@ public class CRUDObjectInheritanceTest extends ObjectDBBaseTest {
     database.save(a);
     database.save(b);
 
-    final List<InheritanceTestBaseClass> result1 = database.query(new OSQLSynchQuery<InheritanceTestBaseClass>(
-        "select from InheritanceTestBaseClass"));
+    final List<InheritanceTestBaseClass> result1 = database
+        .query(new OSQLSynchQuery<InheritanceTestBaseClass>("select from InheritanceTestBaseClass"));
     Assert.assertEquals(2, result1.size());
   }
 

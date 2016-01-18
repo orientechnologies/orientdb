@@ -19,19 +19,20 @@
  */
 package com.orientechnologies.orient.server.security;
 
+import java.util.List;
+import java.util.Set;
+
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OProxedResource;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.security.ORestrictedOperation;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.metadata.security.OSecurityRole;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
-import java.util.List;
-import java.util.Set;
 
 /**
  * Security injected by server. This implementation is still able to change use to a database user.
@@ -47,6 +48,26 @@ public class OSecurityServerUser extends OProxedResource<OSecurity> implements O
   @Override
   public boolean isAllowed(final Set<OIdentifiable> iAllowAll, final Set<OIdentifiable> iAllowOperation) {
     return delegate.isAllowed(iAllowAll, iAllowOperation);
+  }
+
+  @Override
+  public OIdentifiable allowUser(ODocument iDocument, ORestrictedOperation iOperationType, String iUserName) {
+    return delegate.allowUser(iDocument, iOperationType, iUserName);
+  }
+
+  @Override
+  public OIdentifiable allowRole(ODocument iDocument, ORestrictedOperation iOperationType, String iRoleName) {
+    return delegate.allowRole(iDocument, iOperationType, iRoleName);
+  }
+
+  @Override
+  public OIdentifiable denyUser(ODocument iDocument, ORestrictedOperation iOperationType, String iUserName) {
+    return delegate.denyUser(iDocument, iOperationType, iUserName);
+  }
+
+  @Override
+  public OIdentifiable denyRole(ODocument iDocument, ORestrictedOperation iOperationType, String iRoleName) {
+    return delegate.denyRole(iDocument, iOperationType, iRoleName);
   }
 
   public OIdentifiable allowUser(final ODocument iDocument, final String iAllowFieldName, final String iUserName) {

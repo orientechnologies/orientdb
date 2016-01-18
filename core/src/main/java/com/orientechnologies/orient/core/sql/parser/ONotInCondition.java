@@ -2,6 +2,7 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 import java.util.ArrayList;
@@ -35,32 +36,25 @@ public class ONotInCondition extends OBooleanExpression {
   }
 
   @Override
-  public boolean evaluate(OIdentifiable currentRecord) {
+  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
     return false;
   }
 
-  public String toString() {
-    StringBuilder result = new StringBuilder();
-    result.append(left.toString());
-    result.append(" NOT IN ");
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+
+    left.toString(params, builder);
+    builder.append(" NOT IN ");
     if (rightStatement != null) {
-      result.append("(");
-      result.append(rightStatement.toString());
-      result.append(")");
+      builder.append("(");
+      rightStatement.toString(params, builder);
+      builder.append(")");
     } else if (right != null) {
-      result.append(convertToString(right));
+      builder.append(convertToString(right));
     } else if (rightParam != null) {
-      if (inputFinalValue == UNSET) {
-        result.append(rightParam.toString());
-      } else if (inputFinalValue == null) {
-        result.append("NULL");
-      } else {
-        result.append(inputFinalValue.toString());
-      }
+      rightParam.toString(params, builder);
     } else if (rightMathExpression != null) {
-      result.append(rightMathExpression.toString());
+      rightMathExpression.toString(params, builder);
     }
-    return result.toString();
   }
 
   private String convertToString(Object o) {
@@ -70,23 +64,6 @@ public class ONotInCondition extends OBooleanExpression {
     return o.toString();
   }
 
-  @Override
-  public void replaceParameters(Map<Object, Object> params) {
-    left.replaceParameters(params);
-    if (rightStatement != null) {
-      rightStatement.replaceParameters(params);
-    }
-    if (rightParam != null) {
-      Object result = rightParam.bindFromInputParams(params);
-      if (rightParam != result) {
-        inputFinalValue = result;
-      }
-    }
-    if (rightMathExpression != null) {
-      rightMathExpression.replaceParameters(params);
-    }
-
-  }
 
   @Override
   public boolean supportsBasicCalculation() {

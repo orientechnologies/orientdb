@@ -16,10 +16,11 @@
  */
 package com.orientechnologies.orient.core.sql.method.misc;
 
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.util.OPatternConst;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+
 import java.text.Normalizer;
 
 /**
@@ -29,27 +30,27 @@ import java.text.Normalizer;
  */
 public class OSQLMethodNormalize extends OAbstractSQLMethod {
 
-    public static final String NAME = "normalize";
+  public static final String NAME = "normalize";
 
-    public OSQLMethodNormalize() {
-        super(NAME, 0, 2);
+  public OSQLMethodNormalize() {
+    super(NAME, 0, 2);
+  }
+
+  @Override
+  public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
+
+    if (ioResult != null) {
+      final Normalizer.Form form = iParams != null && iParams.length > 0 ? Normalizer.Form.valueOf(OIOUtils
+          .getStringContent(iParams[0].toString())) : Normalizer.Form.NFD;
+
+      String normalized = Normalizer.normalize(ioResult.toString(), form);
+      if (iParams != null && iParams.length > 1) {
+        normalized = normalized.replaceAll(OIOUtils.getStringContent(iParams[0].toString()), "");
+      } else {
+        normalized = OPatternConst.PATTERN_DIACRITICAL_MARKS.matcher(normalized).replaceAll("");
+      }
+      ioResult = normalized;
     }
-
-    @Override
-    public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
-
-        if (ioResult != null) {
-            final Normalizer.Form form = iParams != null && iParams.length > 0 ? Normalizer.Form
-                    .valueOf(OStringSerializerHelper.getStringContent(iParams[0].toString())) : Normalizer.Form.NFD;
-
-            String normalized = Normalizer.normalize(ioResult.toString(), form);
-            if (iParams != null && iParams.length > 1) {
-                normalized = normalized.replaceAll(OStringSerializerHelper.getStringContent(iParams[0].toString()), "");
-            } else {
-                normalized = OPatternConst.PATTERN_DIACRITICAL_MARKS.matcher(normalized).replaceAll("");
-            }
-            ioResult = normalized;
-        }
-        return ioResult;
-    }
+    return ioResult;
+  }
 }

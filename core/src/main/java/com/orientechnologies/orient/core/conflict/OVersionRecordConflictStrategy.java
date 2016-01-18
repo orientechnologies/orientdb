@@ -25,7 +25,8 @@ import com.orientechnologies.orient.core.exception.OConcurrentModificationExcept
 import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.version.ORecordVersion;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Default strategy that checks the record version number: if the current update has a version different than stored one, then a
@@ -38,8 +39,8 @@ public class OVersionRecordConflictStrategy implements ORecordConflictStrategy {
 
   @Override
   public byte[] onUpdate(OStorage storage, final byte iRecordType, final ORecordId rid,
-      final ORecordVersion iRecordVersion, final byte[] iRecordContent, final ORecordVersion iDatabaseVersion) {
-    checkVersions(rid, iRecordVersion, iDatabaseVersion);
+      final int iRecordVersion, final byte[] iRecordContent, final AtomicInteger iDatabaseVersion) {
+    checkVersions(rid, iRecordVersion, iDatabaseVersion.get());
     return null;
   }
 
@@ -48,7 +49,7 @@ public class OVersionRecordConflictStrategy implements ORecordConflictStrategy {
     return NAME;
   }
 
-  protected void checkVersions(final ORecordId rid, final ORecordVersion iRecordVersion, final ORecordVersion iDatabaseVersion) {
+  protected void checkVersions(final ORecordId rid, final int iRecordVersion, final int iDatabaseVersion) {
     if (OFastConcurrentModificationException.enabled())
       throw OFastConcurrentModificationException.instance();
     else

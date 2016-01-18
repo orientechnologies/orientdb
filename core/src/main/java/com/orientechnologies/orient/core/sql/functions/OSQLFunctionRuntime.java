@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.sql.functions;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandExecutorNotFoundException;
@@ -110,7 +111,7 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
             (iCurrentRecord instanceof ODocument ? (ODocument) iCurrentResult : null), iContext);
       else if (configuredParameters[i] instanceof String) {
         if (configuredParameters[i].toString().startsWith("\"") || configuredParameters[i].toString().startsWith("'"))
-          runtimeParameters[i] = OStringSerializerHelper.getStringContent(configuredParameters[i]);
+          runtimeParameters[i] = OIOUtils.getStringContent(configuredParameters[i]);
       }
     }
 

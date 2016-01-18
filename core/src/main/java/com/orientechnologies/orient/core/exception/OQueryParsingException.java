@@ -27,28 +27,7 @@ public class OQueryParsingException extends OCommandSQLParsingException {
   private int               position         = -1;
   private static final long serialVersionUID = -7430575036316163711L;
 
-  public OQueryParsingException(final String iMessage) {
-    super(iMessage);
-  }
-
-  public OQueryParsingException(final String iMessage, final Throwable cause) {
-    super(iMessage, cause);
-  }
-
-  public OQueryParsingException(final String iMessage, final String iText, final int iPosition, final Throwable cause) {
-    super(iMessage, cause);
-    text = iText;
-    position = iPosition;
-  }
-
-  public OQueryParsingException(final String iMessage, final String iText, final int iPosition) {
-    super(iMessage);
-    text = iText;
-    position = iPosition;
-  }
-
-  @Override
-  public String getMessage() {
+  private static String makeMessage(int position, String text, String message) {
     StringBuilder buffer = new StringBuilder();
     if (position > -1) {
       buffer.append("Error on parsing query at position #");
@@ -56,7 +35,7 @@ public class OQueryParsingException extends OCommandSQLParsingException {
       buffer.append(": ");
     }
 
-    buffer.append(super.getMessage());
+    buffer.append(message);
 
     if (text != null) {
       buffer.append("\nQuery: ");
@@ -68,6 +47,24 @@ public class OQueryParsingException extends OCommandSQLParsingException {
       buffer.append("^");
     }
     return buffer.toString();
+  }
+
+  public OQueryParsingException(OQueryParsingException exception) {
+    super(exception);
+
+    this.text = exception.text;
+    this.position = exception.position;
+  }
+
+  public OQueryParsingException(final String iMessage) {
+    super(iMessage);
+  }
+
+  public OQueryParsingException(final String iMessage, final String iText, final int iPosition) {
+    super(makeMessage(iPosition, iText, iMessage));
+
+    text = iText;
+    position = iPosition;
   }
 
   public String getText() {

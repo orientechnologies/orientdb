@@ -92,4 +92,5 @@
         <entry name="log.console.level" value="info"/>
         <entry name="log.file.level" value="fine"/>
     </properties>
+    <isAfterFirstTime>true</isAfterFirstTime>
 </orient-server>

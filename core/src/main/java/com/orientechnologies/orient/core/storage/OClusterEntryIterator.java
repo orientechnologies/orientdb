@@ -23,23 +23,22 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
 
 public class OClusterEntryIterator implements Iterator<OPhysicalPosition> {
-  private final OCluster         cluster;
+  private final OCluster cluster;
 
-  private final long max;
   private final long min;
 
-  private OPhysicalPosition[]    positionsToProcess;
-  private int                    positionsIndex;
+  private OPhysicalPosition[] positionsToProcess;
+  private int positionsIndex;
 
   public OClusterEntryIterator(final OCluster iCluster) {
     cluster = iCluster;
     try {
       min = cluster.getFirstPosition();
-      max = cluster.getLastPosition();
     } catch (IOException ioe) {
       throw new IllegalStateException("Exception during iterator creation", ioe);
     }
@@ -78,7 +77,7 @@ public class OClusterEntryIterator implements Iterator<OPhysicalPosition> {
 
       return result;
     } catch (IOException e) {
-      throw new ODatabaseException("Cannot read next record of cluster.", e);
+      throw OException.wrapException(new ODatabaseException("Cannot read next record of cluster"), e);
     }
   }
 

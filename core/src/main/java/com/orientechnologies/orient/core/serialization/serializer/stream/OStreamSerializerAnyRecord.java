@@ -19,6 +19,7 @@
   */
 package com.orientechnologies.orient.core.serialization.serializer.stream;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -67,7 +68,8 @@ public class OStreamSerializerAnyRecord implements OStreamSerializer {
         }
       }
     } catch (Exception e) {
-      throw new OSerializationException("Error on unmarshalling content. Class " + (cls != null ? cls.getName() : "?"), e);
+      throw OException.wrapException(
+          new OSerializationException("Error on unmarshalling content. Class " + (cls != null ? cls.getName() : "?")), e);
     }
 
     throw new OSerializationException("Cannot unmarshall the record since the serialized object of class "

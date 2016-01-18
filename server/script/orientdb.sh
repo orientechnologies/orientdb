@@ -69,10 +69,11 @@ then
 	if [ $PID -gt 0 ]
 	then
 		echo "OrientDB server daemon is running with PID: $PID"
+		exit 0
 	else
 		echo "OrientDB server daemon is NOT running"
+		exit 3
 	fi
-	exit $PID
 fi
 
 usage

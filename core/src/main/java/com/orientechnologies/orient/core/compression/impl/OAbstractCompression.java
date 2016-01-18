@@ -38,4 +38,9 @@ public abstract class OAbstractCompression implements OCompression {
   public byte[] uncompress(final byte[] content) {
     return uncompress(content, 0, content.length);
   }
+
+  @Override
+  public OCompression configure(final String iOptions) {
+    return this;
+  }
 }

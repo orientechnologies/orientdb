@@ -25,16 +25,12 @@ import java.util.concurrent.ConcurrentMap;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.*;
-import com.orientechnologies.common.serialization.types.legacy.OStringSerializer_1_5_1;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OSimpleKeySerializer;
-import com.orientechnologies.orient.core.serialization.serializer.binary.impl.legacy.OStreamSerializerSBTreeIndexRIDContainer_1_7_9;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerListRID;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerOldRIDContainer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerRID;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerSBTreeIndexRIDContainer;
 
@@ -71,10 +67,7 @@ public class OBinarySerializerFactory {
     factory.registerSerializer(ODoubleSerializer.INSTANCE, OType.DOUBLE);
     factory.registerSerializer(ODateTimeSerializer.INSTANCE, OType.DATETIME);
     factory.registerSerializer(OCharSerializer.INSTANCE, null);
-    if (binaryFormatVersion <= 8)
-      factory.registerSerializer(OStringSerializer_1_5_1.INSTANCE, OType.STRING);
-    else
-      factory.registerSerializer(OStringSerializer.INSTANCE, OType.STRING);
+    factory.registerSerializer(OStringSerializer.INSTANCE, OType.STRING);
 
     factory.registerSerializer(OByteSerializer.INSTANCE, OType.BYTE);
     factory.registerSerializer(ODateSerializer.INSTANCE, OType.DATE);
@@ -84,13 +77,7 @@ public class OBinarySerializerFactory {
     factory.registerSerializer(OBinaryTypeSerializer.INSTANCE, OType.BINARY);
     factory.registerSerializer(ODecimalSerializer.INSTANCE, OType.DECIMAL);
 
-    factory.registerSerializer(OStreamSerializerListRID.INSTANCE, null);
-    factory.registerSerializer(OStreamSerializerOldRIDContainer.INSTANCE, null);
-
-    if (binaryFormatVersion <= 11)
-      factory.registerSerializer(OStreamSerializerSBTreeIndexRIDContainer_1_7_9.INSTANCE, null);
-    else
-      factory.registerSerializer(OStreamSerializerSBTreeIndexRIDContainer.INSTANCE, null);
+    factory.registerSerializer(OStreamSerializerSBTreeIndexRIDContainer.INSTANCE, null);
 
     // STATEFUL SERIALIER
     factory.registerSerializer(OSimpleKeySerializer.ID, OSimpleKeySerializer.class);

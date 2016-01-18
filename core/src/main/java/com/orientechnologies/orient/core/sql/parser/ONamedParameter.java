@@ -7,7 +7,7 @@ import java.util.Map;
 public class ONamedParameter extends OInputParameter {
 
   protected int         paramNumber;
-  protected OIdentifier paramName;
+  protected String      paramName;
 
   public ONamedParameter(int id) {
     super(id);
@@ -24,12 +24,27 @@ public class ONamedParameter extends OInputParameter {
 
   @Override
   public String toString() {
-    return ":" + paramName.toString();
+    return ":" + paramName;
+  }
+
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    Object finalValue = bindFromInputParams(params);
+    if (finalValue == this) {
+      builder.append(":" + paramName);
+    } else if (finalValue instanceof String) {
+      builder.append("\"");
+      builder.append(OExpression.encode(finalValue.toString()));
+      builder.append("\"");
+    } else if (finalValue instanceof SimpleNode) {
+      ((SimpleNode) finalValue).toString(params, builder);
+    } else {
+      builder.append(finalValue);
+    }
   }
 
   public Object bindFromInputParams(Map<Object, Object> params) {
     if (params != null) {
-      String key = paramName.toString();
+      String key = paramName;
       if (params.containsKey(key)) {
         return toParsedTree(params.get(key));
       }

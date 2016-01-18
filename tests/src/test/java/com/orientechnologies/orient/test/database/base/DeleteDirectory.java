@@ -40,7 +40,7 @@ public class DeleteDirectory {
         if (f.isDirectory())
           deleteDirectory(f);
         else if (!f.delete())
-          throw new OConfigurationException("Can't delete the file: " + f);
+          throw new OConfigurationException("Cannot delete the file: " + f);
       }
 
   }

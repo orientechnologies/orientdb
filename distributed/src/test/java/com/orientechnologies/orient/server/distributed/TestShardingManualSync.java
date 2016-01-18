@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.server.distributed;
 
-import junit.framework.Assert;
-
+import org.junit.Assert;
 import org.junit.Test;
 
 import com.orientechnologies.orient.core.sql.OCommandSQL;

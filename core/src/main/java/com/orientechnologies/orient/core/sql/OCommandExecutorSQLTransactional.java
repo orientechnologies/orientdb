@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.sql;
 
 import java.util.Map;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -59,7 +60,7 @@ public class OCommandExecutorSQLTransactional extends OCommandExecutorSQLDelegat
     } catch (Exception e) {
       if (txbegun)
         database.rollback();
-      throw new OCommandExecutionException("Transactional command failed", e);
+      throw OException.wrapException(new OCommandExecutionException("Transactional command failed"), e);
     }
   }
 }

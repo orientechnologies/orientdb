@@ -20,6 +20,14 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
@@ -30,14 +38,6 @@ import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.Index;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * OrientDB Edge implementation of TinkerPop Blueprints standard. Edges can be classic or lightweight. Lightweight edges have no
@@ -561,14 +561,10 @@ public class OrientEdge extends OrientElement implements Edge {
         return false;
       }
 
-      if (getGraph().isAutoScaleEdgeType()) {
-        // SCALE DOWN THE TYPE (SAVES SPACE BUT COULD CAUSE VALIDATION ERRORS)
-        if (coll.size() == 1)
-          iVertex.field(iFieldName, coll.iterator().next());
-        else if (coll.size() == 0)
-          iVertex.removeField(iFieldName);
-      }
-
+      if (coll.size() == 1)
+        iVertex.field(iFieldName, coll.iterator().next());
+      else if (coll.size() == 0)
+        iVertex.removeField(iFieldName);
     } else
       throw new IllegalStateException("Wrong type found in the field '" + iFieldName + "': " + iFieldValue.getClass());
 

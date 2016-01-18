@@ -25,8 +25,4 @@ public class OETLProcessHaltedException extends OException {
   public OETLProcessHaltedException(final String s) {
     super(s);
   }
-
-  public OETLProcessHaltedException(String message, Throwable cause) {
-    super(message, cause);
-  }
 }

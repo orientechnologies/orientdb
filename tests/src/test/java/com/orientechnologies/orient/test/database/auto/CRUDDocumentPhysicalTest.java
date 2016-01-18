@@ -15,22 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import org.testng.Assert;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -46,6 +30,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
@@ -53,17 +38,30 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.version.ORecordVersion;
-import com.orientechnologies.orient.core.version.OVersionFactory;
+import org.testng.Assert;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Test(groups = { "crud", "record-vobject" }, sequential = true)
 public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
   protected static final int TOT_RECORDS         = 100;
   protected static final int TOT_RECORDS_COMPANY = 10;
 
-  protected long             startRecordNumber;
-  String                     base64;
-  private ODocument          record;
+  protected long    startRecordNumber;
+  String            base64;
+  private ODocument record;
 
   @Parameters(value = "url")
   public CRUDDocumentPhysicalTest(@Optional String url) {
@@ -90,7 +88,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     record = database.newInstance();
 
     if (!database.existsCluster("Account"))
-      database.addCluster("Account");
+      database.getMetadata().getSchema().createClass("Account", 1, null);
 
     startRecordNumber = database.countClusterElements("Account");
 
@@ -103,7 +101,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     Assert.assertEquals(database.countClusterElements("Account"), 0);
 
     if (!database.existsCluster("Company"))
-      database.addCluster("Company");
+      database.getMetadata().getSchema().createClass("Company", 1, null);
   }
 
   @Test(dependsOnMethods = "cleanAll")
@@ -278,12 +276,12 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
   public void testUnderscoreField() {
     ODocument vDoc = database.newInstance();
     vDoc.setClassName("Profile");
-    vDoc.field("nick", "MostFamousJack").field("name", "Kiefer").field("surname", "Sutherland")
-        .field("tag_list", new String[] { "actor", "myth" });
+    vDoc.field("nick", "MostFamousJack").field("name", "Kiefer").field("surname", "Sutherland").field("tag_list",
+        new String[] { "actor", "myth" });
     vDoc.save();
 
-    List<ODocument> result = database.command(
-        new OSQLSynchQuery<ODocument>("select from Profile where name = 'Kiefer' and tag_list.size() > 0 ")).execute();
+    List<ODocument> result = database
+        .command(new OSQLSynchQuery<ODocument>("select from Profile where name = 'Kiefer' and tag_list.size() > 0 ")).execute();
 
     Assert.assertEquals(result.size(), 1);
   }
@@ -327,8 +325,8 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     dexter.setDirty();
     dexter.save();
 
-    result = database.command(
-        new OSQLSynchQuery<ODocument>("select from Profile where tag_list contains 'actor' and tag_list contains 'test'"))
+    result = database
+        .command(new OSQLSynchQuery<ODocument>("select from Profile where tag_list contains 'actor' and tag_list contains 'test'"))
         .execute();
     Assert.assertEquals(result.size(), 1);
   }
@@ -797,9 +795,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     doc.field("name", "modified");
     int oldVersion = doc.getVersion();
 
-    ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
-    recordVersion.setCounter(-2);
-    doc.getRecordVersion().copyFrom(recordVersion);
+    ORecordInternal.setVersion(doc, -2);
 
     doc.save();
 

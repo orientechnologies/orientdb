@@ -23,6 +23,9 @@ import java.io.PrintStream;
 import java.util.Date;
 import java.util.Map;
 
+import javax.annotation.CheckReturnValue;
+import javax.annotation.meta.When;
+
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.common.util.OService;
@@ -47,12 +50,16 @@ public interface OProfiler extends OService {
 
   long startChrono();
 
+  @CheckReturnValue(when = When.NEVER)
   long stopChrono(String iName, String iDescription, long iStartTime);
 
+  @CheckReturnValue(when = When.NEVER)
   long stopChrono(String iName, String iDescription, long iStartTime, String iDictionary);
 
+  @CheckReturnValue(when = When.NEVER)
   long stopChrono(String iName, String iDescription, long iStartTime, String iDictionary, String payload);
 
+  @CheckReturnValue(when = When.NEVER)
   long stopChrono(String iName, String iDescription, long iStartTime, String iDictionary, String payload, String user);
 
   String dumpChronos();
@@ -96,4 +103,8 @@ public interface OProfiler extends OService {
   void dump(PrintStream out);
 
   int reportTip(String iMessage);
+
+  void registerListener(OProfilerListener listener);
+
+  void unregisterListener(OProfilerListener listener);
 }

@@ -19,21 +19,25 @@
   */
 package com.orientechnologies.orient.core.sql.operator;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * BETWEEN operator.
@@ -71,7 +75,7 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
       final Object right, OCommandContext iContext) {
     validate(right);
 
-    final Iterator<?> valueIterator = OMultiValue.getMultiValueIterator(right);
+    final Iterator<?> valueIterator = OMultiValue.getMultiValueIterator(right, false);
 
     final Object right1 = OType.convert(valueIterator.next(), left.getClass());
     if (right1 == null)
@@ -170,7 +174,7 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
     validate(iRight);
 
     if (iLeft instanceof OSQLFilterItemField && ODocumentHelper.ATTRIBUTE_RID.equals(((OSQLFilterItemField) iLeft).getRoot())) {
-      final Iterator<?> valueIterator = OMultiValue.getMultiValueIterator(iRight);
+      final Iterator<?> valueIterator = OMultiValue.getMultiValueIterator(iRight, false);
 
       final Object right1 = valueIterator.next();
       if (right1 != null)
@@ -191,7 +195,7 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
     validate(iRight);
 
     if (iLeft instanceof OSQLFilterItemField && ODocumentHelper.ATTRIBUTE_RID.equals(((OSQLFilterItemField) iLeft).getRoot())) {
-      final Iterator<?> valueIterator = OMultiValue.getMultiValueIterator(iRight);
+      final Iterator<?> valueIterator = OMultiValue.getMultiValueIterator(iRight, false);
 
       final Object right1 = valueIterator.next();
 

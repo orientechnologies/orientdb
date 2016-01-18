@@ -19,6 +19,8 @@
   */
 package com.orientechnologies.orient.core.index;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 /**
  * Key that is used in {@link com.orientechnologies.orient.core.index.mvrbtree.OMVRBTree} for partial composite key search.
  * It always lesser than any passed in key.
@@ -26,6 +28,7 @@ package com.orientechnologies.orient.core.index;
  * @author Andrey Lomakin
  * @since 20.03.12
  */
+@SuppressFBWarnings("EQ_COMPARETO_USE_OBJECT_EQUALS")
 public final class OAlwaysLessKey implements Comparable<Comparable<?>> {
 	public int compareTo(Comparable<?> o) {
 		return -1;

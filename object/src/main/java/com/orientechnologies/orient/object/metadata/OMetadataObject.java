@@ -18,13 +18,14 @@ package com.orientechnologies.orient.object.metadata;
 
 import java.io.IOException;
 
+import com.orientechnologies.orient.core.cache.OCommandCache;
 import com.orientechnologies.orient.core.index.OIndexManagerProxy;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibrary;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
+import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibrary;
 import com.orientechnologies.orient.core.schedule.OSchedulerListener;
 import com.orientechnologies.orient.object.metadata.schema.OSchemaProxyObject;
 
@@ -34,7 +35,7 @@ import com.orientechnologies.orient.object.metadata.schema.OSchemaProxyObject;
  */
 public class OMetadataObject implements OMetadataInternal {
 
-  protected OMetadataInternal          underlying;
+  protected OMetadataInternal  underlying;
   protected OSchemaProxyObject schema;
 
   public OMetadataObject(OMetadataInternal iUnderlying) {
@@ -69,7 +70,6 @@ public class OMetadataObject implements OMetadataInternal {
   @Override
   public void create() throws IOException {
     underlying.create();
-
   }
 
   @Override
@@ -77,6 +77,11 @@ public class OMetadataObject implements OMetadataInternal {
     if (schema == null)
       schema = new OSchemaProxyObject(underlying.getSchema());
     return schema;
+  }
+
+  @Override
+  public OCommandCache getCommandCache() {
+    return underlying.getCommandCache();
   }
 
   @Override
@@ -110,6 +115,11 @@ public class OMetadataObject implements OMetadataInternal {
   }
 
   @Override
+  public OSequenceLibrary getSequenceLibrary() {
+    return underlying.getSequenceLibrary();
+  }
+
+    @Override
   public OSchedulerListener getSchedulerListener() {
     return underlying.getSchedulerListener();
   }

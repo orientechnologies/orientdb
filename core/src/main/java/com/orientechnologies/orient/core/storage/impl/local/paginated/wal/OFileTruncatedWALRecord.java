@@ -8,8 +8,8 @@ public class OFileTruncatedWALRecord extends OOperationUnitBodyRecord {
   public OFileTruncatedWALRecord() {
   }
 
-  public OFileTruncatedWALRecord(OOperationUnitId operationUnitId, OLogSequenceNumber startLsn, long fileId) {
-    super(operationUnitId, startLsn);
+  public OFileTruncatedWALRecord(OOperationUnitId operationUnitId, long fileId) {
+    super(operationUnitId);
     this.fileId = fileId;
   }
 

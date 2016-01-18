@@ -44,7 +44,7 @@ public class OSignalHandler implements SignalHandler {
   }
 
   public void handle(Signal signal) {
-    OLogManager.instance().info(this, "Received signal: %s", signal);
+    OLogManager.instance().warn(this, "Received signal: %s", signal);
 
     final String s = signal.toString().trim();
 

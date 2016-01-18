@@ -10,16 +10,10 @@ public class OInsertSetExpression {
   protected OIdentifier left;
   protected OExpression right;
 
-  public void replaceParameters(Map<Object, Object> params) {
-    right.replaceParameters(params);
-  }
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    left.toString(params, builder);
+    builder.append(" = ");
+    right.toString(params, builder);
 
-  @Override
-  public String toString() {
-    StringBuilder result = new StringBuilder();
-    result.append(left.toString());
-    result.append(" = ");
-    result.append(right.toString());
-    return result.toString();
   }
 }

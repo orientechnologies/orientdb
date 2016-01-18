@@ -166,29 +166,31 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 
   @Override
   public boolean add(OIdentifiable e) {
-    if (e != null)
+    if (e != null) {
       if ((ridOnly || contentType == MULTIVALUE_CONTENT_TYPE.ALL_RIDS || OGlobalConfiguration.LAZYSET_WORK_ON_STREAM
           .getValueAsBoolean()) && e.getIdentity().isPersistent() && (e instanceof ODocument && !((ODocument) e).isDirty()))
         // IT'S BETTER TO LEAVE ALL RIDS AND EXTRACT ONLY THIS ONE
         e = e.getIdentity();
       else
         contentType = ORecordMultiValueHelper.updateContentType(contentType, e);
-
+    }
     lazyLoad(true);
     return super.add(e);
   }
 
   @Override
   public void add(int index, OIdentifiable e) {
-    if (e != null)
+    if (e != null) {
+      ORecordInternal.track(sourceRecord, e);
       if ((ridOnly || contentType == MULTIVALUE_CONTENT_TYPE.ALL_RIDS || OGlobalConfiguration.LAZYSET_WORK_ON_STREAM
           .getValueAsBoolean()) && e.getIdentity().isPersistent() && (e instanceof ODocument && !((ODocument) e).isDirty()))
         // IT'S BETTER TO LEAVE ALL RIDS AND EXTRACT ONLY THIS ONE
         e = e.getIdentity();
       else
         contentType = ORecordMultiValueHelper.updateContentType(contentType, e);
-
+    }
     lazyLoad(true);
+
     super.add(index, e);
   }
 
@@ -196,14 +198,16 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
   public OIdentifiable set(int index, OIdentifiable e) {
     lazyLoad(true);
 
-    if (e != null)
-      if ((ridOnly || contentType == MULTIVALUE_CONTENT_TYPE.ALL_RIDS || OGlobalConfiguration.LAZYSET_WORK_ON_STREAM
-          .getValueAsBoolean()) && e.getIdentity().isPersistent() && (e instanceof ODocument && !((ODocument) e).isDirty()))
-        // IT'S BETTER TO LEAVE ALL RIDS AND EXTRACT ONLY THIS ONE
-        e = e.getIdentity();
-      else
-        contentType = ORecordMultiValueHelper.updateContentType(contentType, e);
-
+    if (e != null) {
+      ORecordInternal.track(sourceRecord, e);
+      if (e != null)
+        if ((ridOnly || contentType == MULTIVALUE_CONTENT_TYPE.ALL_RIDS || OGlobalConfiguration.LAZYSET_WORK_ON_STREAM
+            .getValueAsBoolean()) && e.getIdentity().isPersistent() && (e instanceof ODocument && !((ODocument) e).isDirty()))
+          // IT'S BETTER TO LEAVE ALL RIDS AND EXTRACT ONLY THIS ONE
+          e = e.getIdentity();
+        else
+          contentType = ORecordMultiValueHelper.updateContentType(contentType, e);
+    }
     return super.set(index, e);
   }
 
@@ -482,7 +486,12 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 
       marshalling = true;
       try {
-        super.set(iIndex, rid.getRecord());
+        ORecord record = rid.getRecord();
+        if (record != null) {
+          ORecordInternal.unTrack(sourceRecord, rid);
+          ORecordInternal.track(sourceRecord, record);
+        }
+        super.set(iIndex, record);
 
       } catch (ORecordNotFoundException e) {
         // IGNORE THIS

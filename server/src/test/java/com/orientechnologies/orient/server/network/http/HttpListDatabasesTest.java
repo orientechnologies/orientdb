@@ -21,7 +21,7 @@ public class HttpListDatabasesTest extends BaseHttpTest {
   @Test
   public void testListDatabasesGuestUser() throws Exception {
     Assert.assertEquals(setUserName("guest").setUserPassword("guest").get("listDatabases").getResponse().getStatusLine()
-                          .getStatusCode(), 200);
+        .getStatusCode(), 200);
   }
 
   @Override

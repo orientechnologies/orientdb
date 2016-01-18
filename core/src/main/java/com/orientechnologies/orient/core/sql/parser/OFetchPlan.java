@@ -4,6 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class OFetchPlan extends SimpleNode {
 
@@ -22,20 +23,17 @@ public class OFetchPlan extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public String toString() {
-    StringBuilder result = new StringBuilder();
-    result.append("FETCHPLAN ");
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("FETCHPLAN ");
     boolean first = true;
     for (OFetchPlanItem item : items) {
       if (!first) {
-        result.append(" ");
+        builder.append(" ");
       }
 
-      result.append(item.toString());
+      item.toString(params, builder);
       first = false;
     }
-    return result.toString();
   }
 }
 /* JavaCC - OriginalChecksum=b4cd86f2c6e8fc5e9dce8912389a1167 (do not edit this line) */

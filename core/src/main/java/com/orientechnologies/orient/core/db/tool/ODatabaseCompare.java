@@ -19,6 +19,15 @@
  */
 package com.orientechnologies.orient.core.db.tool;
 
+import static com.orientechnologies.orient.core.record.impl.ODocumentHelper.makeDbCall;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -31,7 +40,6 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexKeyCursor;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
-import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -39,32 +47,24 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper.ODbRelatedCall;
-import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
-
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Set;
-
-import static com.orientechnologies.orient.core.record.impl.ODocumentHelper.makeDbCall;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public class ODatabaseCompare extends ODatabaseImpExpAbstract {
-  private OStorage              storage1;
-  private OStorage              storage2;
+  private OStorage storage1;
+  private OStorage storage2;
 
-  private ODatabaseDocumentTx   databaseDocumentTxOne;
-  private ODatabaseDocumentTx   databaseDocumentTxTwo;
+  private ODatabaseDocumentTx databaseDocumentTxOne;
+  private ODatabaseDocumentTx databaseDocumentTxTwo;
 
-  private boolean               compareEntriesForAutomaticIndexes = false;
-  private boolean               autoDetectExportImportMap         = true;
+  private boolean compareEntriesForAutomaticIndexes = false;
+  private boolean autoDetectExportImportMap         = true;
 
-  private OIndex<OIdentifiable> exportImportHashTable             = null;
-  private int                   differences                       = 0;
-  private boolean               compareIndexMetadata              = false;
+  private OIndex<OIdentifiable> exportImportHashTable = null;
+  private int                   differences           = 0;
+  private boolean               compareIndexMetadata  = false;
 
   public ODatabaseCompare(String iDb1URL, String iDb2URL, final OCommandOutputListener iListener) throws IOException {
     super(null, null, iListener);
@@ -100,20 +100,9 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
     excludeClusters.add(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME);
   }
 
-  public void setCompareIndexMetadata(boolean compareIndexMetadata) {
-    this.compareIndexMetadata = compareIndexMetadata;
-  }
-
-  public boolean isCompareEntriesForAutomaticIndexes() {
-    return compareEntriesForAutomaticIndexes;
-  }
-
-  public void setCompareEntriesForAutomaticIndexes(boolean compareEntriesForAutomaticIndexes) {
-    this.compareEntriesForAutomaticIndexes = compareEntriesForAutomaticIndexes;
-  }
-
-  public void setAutoDetectExportImportMap(boolean autoDetectExportImportMap) {
-    this.autoDetectExportImportMap = autoDetectExportImportMap;
+  @Override
+  public void run() {
+    compare();
   }
 
   public boolean compare() {
@@ -132,8 +121,8 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
     try {
       ODocumentHelper.RIDMapper ridMapper = null;
       if (autoDetectExportImportMap) {
-        listener
-            .onMessage("\nAuto discovery of mapping between RIDs of exported and imported records is switched on, try to discover mapping data on disk.");
+        listener.onMessage(
+            "\nAuto discovery of mapping between RIDs of exported and imported records is switched on, try to discover mapping data on disk.");
         exportImportHashTable = (OIndex<OIdentifiable>) databaseDocumentTxTwo.getMetadata().getIndexManager()
             .getIndex(ODatabaseImport.EXPORT_IMPORT_MAP_NAME);
         if (exportImportHashTable != null) {
@@ -163,7 +152,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
       compareRecords(ridMapper);
 
       if (isDocumentDatabases()) {
-        compareSchama();
+        compareSchema();
         compareIndexes(ridMapper);
       }
 
@@ -175,74 +164,76 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
         return false;
       }
     } catch (Exception e) {
-      OLogManager.instance()
-          .error(this, "Error on comparing database '%s' against '%s'", e, storage1.getName(), storage2.getName());
-      throw new ODatabaseExportException("Error on comparing database '" + storage1.getName() + "' against '" + storage2.getName()
-          + "'", e);
+      OLogManager.instance().error(this, "Error on comparing database '%s' against '%s'", e, storage1.getName(),
+          storage2.getName());
+      throw new ODatabaseExportException(
+          "Error on comparing database '" + storage1.getName() + "' against '" + storage2.getName() + "'", e);
     } finally {
       storage1.close();
       storage2.close();
     }
   }
 
-  private void compareSchama() {
-    OSchema schema1 = ((OMetadataInternal) databaseDocumentTxOne.getMetadata()).getImmutableSchemaSnapshot();
-    OSchema schema2 = ((OMetadataInternal) databaseDocumentTxTwo.getMetadata()).getImmutableSchemaSnapshot();
+  private void compareSchema() {
+    OSchema schema1 = databaseDocumentTxOne.getMetadata().getImmutableSchemaSnapshot();
+    OSchema schema2 = databaseDocumentTxTwo.getMetadata().getImmutableSchemaSnapshot();
     boolean ok = true;
     for (OClass clazz : schema1.getClasses()) {
       OClass clazz2 = schema2.getClass(clazz.getName());
+
       if (clazz2 == null) {
         listener.onMessage("\n- ERR: Class definition " + clazz.getName() + " for DB2 is null.");
         continue;
       }
-      if (clazz.getSuperClass() != null) {
-        if (!clazz.getSuperClass().getName().equals(clazz2.getSuperClass().getName())) {
-          listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same superclass in DB2.");
+
+      final List<String> sc1 = clazz.getSuperClassesNames();
+      final List<String> sc2 = clazz2.getSuperClassesNames();
+
+      if (!sc1.isEmpty() || !sc2.isEmpty()) {
+        if (!sc1.containsAll(sc2) || !sc2.containsAll(sc1)) {
+          listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " in DB1 is not equals in superclasses in DB2.");
           ok = false;
         }
       }
       if (!clazz.getClassIndexes().equals(clazz2.getClassIndexes())) {
-        listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same defined indexes in DB2.");
+        listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " in DB1 is not equals in indexes in DB2.");
         ok = false;
       }
       if (!Arrays.equals(clazz.getClusterIds(), clazz2.getClusterIds())) {
-        listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same defined clusters in DB2.");
+        listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " in DB1 is not equals in clusters in DB2.");
         ok = false;
       }
       if (!clazz.getCustomKeys().equals(clazz2.getCustomKeys())) {
-        listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same defined custom keys in DB2.");
-        ok = false;
-      }
-      if ((clazz.getJavaClass() == null && clazz2.getJavaClass() != null)
-          || (clazz.getJavaClass() != null && !clazz.getJavaClass().equals(clazz2.getJavaClass()))) {
-        listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same defined Java class in DB2.");
+        listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " in DB1 is not equals in custom keys in DB2.");
         ok = false;
       }
       if (clazz.getOverSize() != clazz2.getOverSize()) {
-        listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same defined overSize in DB2.");
+        listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " in DB1 is not equals in overSize in DB2.");
         ok = false;
       }
 
       if (clazz.getDefaultClusterId() != clazz2.getDefaultClusterId()) {
-        listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same defined default cluser id in DB2.");
+        listener
+            .onMessage("\n- ERR: Class definition for " + clazz.getName() + " in DB1 is not equals in default cluser id in DB2.");
         ok = false;
       }
 
-      if (clazz.getSize() != clazz2.getSize()) {
-        listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same defined size in DB2.");
-        ok = false;
-      }
+      // if (clazz.getSize() != clazz2.getSize()) {
+      // listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " in DB1 is not equals in size in DB2.");
+      // ok = false;
+      // }
+
       for (OProperty prop : clazz.declaredProperties()) {
         OProperty prop2 = clazz2.getProperty(prop.getName());
         if (prop2 == null) {
-          listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as missed property " + prop.getName()
-              + "in DB2.");
+          listener
+              .onMessage("\n- ERR: Class definition for " + clazz.getName() + " as missed property " + prop.getName() + "in DB2.");
           ok = false;
           continue;
         }
         if (prop.getType() != prop2.getType()) {
-          listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same type for property "
-              + prop.getName() + "in DB2. ");
+          listener.onMessage(
+              "\n- ERR: Class definition for " + clazz.getName() + " as not same type for property " + prop.getName() + "in DB2. ");
           ok = false;
         }
 
@@ -254,15 +245,15 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 
         if (prop.getMin() != null) {
           if (!prop.getMin().equals(prop2.getMin())) {
-            listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same min for property "
-                + prop.getName() + "in DB2.");
+            listener.onMessage(
+                "\n- ERR: Class definition for " + clazz.getName() + " as not same min for property " + prop.getName() + "in DB2.");
             ok = false;
           }
         }
         if (prop.getMax() != null) {
           if (!prop.getMax().equals(prop2.getMax())) {
-            listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same max for property "
-                + prop.getName() + "in DB2.");
+            listener.onMessage(
+                "\n- ERR: Class definition for " + clazz.getName() + " as not same max for property " + prop.getName() + "in DB2.");
             ok = false;
           }
         }
@@ -301,8 +292,8 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
           ok = false;
         }
         if (prop.isReadonly() != prop2.isReadonly()) {
-          listener.onMessage("\n- ERR: Class definition for " + clazz.getName()
-              + " as not same readonly flag setting for property " + prop.getName() + "in DB2.");
+          listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same readonly flag setting for property "
+              + prop.getName() + "in DB2.");
           ok = false;
         }
 
@@ -469,8 +460,8 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
           listener.onMessage("\n- ERR: Metadata for index " + indexOne.getName() + " for DB1 is not null but for DB2 is null.");
           listener.onMessage("\n");
           ++differences;
-        } else if (metadataOne != null && metadataTwo != null
-            && !ODocumentHelper.hasSameContentOf(metadataOne, databaseDocumentTxOne, metadataTwo, databaseDocumentTxTwo, ridMapper)) {
+        } else if (metadataOne != null && metadataTwo != null && !ODocumentHelper.hasSameContentOf(metadataOne,
+            databaseDocumentTxOne, metadataTwo, databaseDocumentTxTwo, ridMapper)) {
           ok = false;
           listener.onMessage("\n- ERR: Metadata for index " + indexOne.getName() + " for DB1 and for DB2 are different.");
           makeDbCall(databaseDocumentTxOne, new ODbRelatedCall<Object>() {
@@ -570,8 +561,8 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
     listener.onMessage("\nChecking the number of clusters...");
 
     if (storage1.getClusterNames().size() != storage1.getClusterNames().size()) {
-      listener.onMessage("ERR: cluster sizes are different: " + storage1.getClusterNames().size() + " <-> "
-          + storage1.getClusterNames().size());
+      listener.onMessage(
+          "ERR: cluster sizes are different: " + storage1.getClusterNames().size() + " <-> " + storage1.getClusterNames().size());
       ++differences;
     }
 
@@ -621,6 +612,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
     return true;
   }
 
+  @SuppressFBWarnings("NP_NULL_ON_SOME_PATH")
   private boolean compareRecords(ODocumentHelper.RIDMapper ridMapper) {
     listener.onMessage("\nStarting deep comparison record by record. This may take a few minutes. Wait please...");
 
@@ -666,137 +658,148 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
       long recordsCounter = 0;
       while (physicalPositions.length > 0) {
         for (OPhysicalPosition physicalPosition : physicalPositions) {
-          recordsCounter++;
+          try {
+            recordsCounter++;
 
-          final long position = physicalPosition.clusterPosition;
-          rid.clusterPosition = position;
+            final long position = physicalPosition.clusterPosition;
+            rid.clusterPosition = position;
 
-          if (isDocumentDatabases() && rid.equals(new ORecordId(storage1.getConfiguration().indexMgrRecordId))
-              && rid.equals(new ORecordId(storage2.getConfiguration().indexMgrRecordId)))
-            continue;
-          if (isDocumentDatabases() && rid.equals(new ORecordId(storage1.getConfiguration().schemaRecordId))
-              && rid.equals(new ORecordId(storage2.getConfiguration().schemaRecordId)))
-            continue;
+            if (isDocumentDatabases() && rid.equals(new ORecordId(storage1.getConfiguration().indexMgrRecordId))
+                && rid.equals(new ORecordId(storage2.getConfiguration().indexMgrRecordId)))
+              continue;
+            if (isDocumentDatabases() && rid.equals(new ORecordId(storage1.getConfiguration().schemaRecordId))
+                && rid.equals(new ORecordId(storage2.getConfiguration().schemaRecordId)))
+              continue;
 
-          final ORawBuffer buffer1 = storage1.readRecord(rid, null, true, null).getResult();
-          final ORawBuffer buffer2;
-          if (ridMapper == null)
-            buffer2 = storage2.readRecord(rid, null, true, null).getResult();
-          else {
-            final ORID newRid = ridMapper.map(rid);
-            if (newRid == null)
-              buffer2 = storage2.readRecord(rid, null, true, null).getResult();
-            else
-              buffer2 = storage2.readRecord(new ORecordId(newRid), null, true, null).getResult();
-          }
-
-          if (buffer1 == null && buffer2 == null)
-            // BOTH RECORD NULL, OK
-            continue;
-          else if (buffer1 == null && buffer2 != null) {
-            // REC1 NULL
-            listener.onMessage("\n- ERR: RID=" + clusterId + ":" + position + " is null in DB1");
-            ++differences;
-          } else if (buffer1 != null && buffer2 == null) {
-            // REC2 NULL
-            listener.onMessage("\n- ERR: RID=" + clusterId + ":" + position + " is null in DB2");
-            ++differences;
-          } else {
-            if (buffer1.recordType != buffer2.recordType) {
-              listener.onMessage("\n- ERR: RID=" + clusterId + ":" + position + " recordType is different: "
-                  + (char) buffer1.recordType + " <-> " + (char) buffer2.recordType);
-              ++differences;
+            if (rid.clusterId == 0 && rid.clusterPosition == 0) {
+              // Skip the compare of raw structure if the storage type are different, due the fact that are different by definition.
+              if (!storage1.getType().equals(storage2.getType()))
+                continue;
             }
 
-            if (buffer1.buffer == null && buffer2.buffer == null) {
-            } else if (buffer1.buffer == null && buffer2.buffer != null) {
-              listener.onMessage("\n- ERR: RID=" + clusterId + ":" + position + " content is different: null <-> "
-                  + buffer2.buffer.length);
-              ++differences;
+            final ORawBuffer buffer1 = storage1.readRecord(rid, null, true, null).getResult();
+            final ORawBuffer buffer2;
+            if (ridMapper == null)
+              buffer2 = storage2.readRecord(rid, null, true, null).getResult();
+            else {
+              final ORID newRid = ridMapper.map(rid);
+              if (newRid == null)
+                buffer2 = storage2.readRecord(rid, null, true, null).getResult();
+              else
+                buffer2 = storage2.readRecord(new ORecordId(newRid), null, true, null).getResult();
+            }
 
-            } else if (buffer1.buffer != null && buffer2.buffer == null) {
-              listener.onMessage("\n- ERR: RID=" + clusterId + ":" + position + " content is different: " + buffer1.buffer.length
-                  + " <-> null");
+            if (buffer1 == null && buffer2 == null)
+              // BOTH RECORD NULL, OK
+              continue;
+            else if (buffer1 == null && buffer2 != null) {
+              // REC1 NULL
+              listener.onMessage("\n- ERR: RID=" + clusterId + ":" + position + " is null in DB1");
               ++differences;
-
+            } else if (buffer1 != null && buffer2 == null) {
+              // REC2 NULL
+              listener.onMessage("\n- ERR: RID=" + clusterId + ":" + position + " is null in DB2");
+              ++differences;
             } else {
-              if (buffer1.recordType == ODocument.RECORD_TYPE) {
-                // DOCUMENT: TRY TO INSTANTIATE AND COMPARE
+              if (buffer1.recordType != buffer2.recordType) {
+                listener.onMessage("\n- ERR: RID=" + clusterId + ":" + position + " recordType is different: "
+                    + (char) buffer1.recordType + " <-> " + (char) buffer2.recordType);
+                ++differences;
+              }
 
-                makeDbCall(databaseDocumentTxOne, new ODocumentHelper.ODbRelatedCall<Object>() {
-                  public Object call() {
-                    doc1.reset();
-                    doc1.fromStream(buffer1.buffer);
-                    return null;
-                  }
-                });
+              if (buffer1.buffer == null && buffer2.buffer == null) {
+              } else if (buffer1.buffer == null && buffer2.buffer != null) {
+                listener.onMessage(
+                    "\n- ERR: RID=" + clusterId + ":" + position + " content is different: null <-> " + buffer2.buffer.length);
+                ++differences;
 
-                makeDbCall(databaseDocumentTxTwo, new ODocumentHelper.ODbRelatedCall<Object>() {
-                  public Object call() {
-                    doc2.reset();
-                    doc2.fromStream(buffer2.buffer);
-                    return null;
-                  }
-                });
+              } else if (buffer1.buffer != null && buffer2.buffer == null) {
+                listener.onMessage(
+                    "\n- ERR: RID=" + clusterId + ":" + position + " content is different: " + buffer1.buffer.length + " <-> null");
+                ++differences;
 
-                if (rid.toString().equals(storage1.getConfiguration().schemaRecordId)
-                    && rid.toString().equals(storage2.getConfiguration().schemaRecordId)) {
-                  makeDbCall(databaseDocumentTxOne, new ODocumentHelper.ODbRelatedCall<java.lang.Object>() {
-                    public Object call() {
-                      convertSchemaDoc(doc1);
-                      return null;
-                    }
-                  });
-
-                  makeDbCall(databaseDocumentTxTwo, new ODocumentHelper.ODbRelatedCall<java.lang.Object>() {
-                    public Object call() {
-                      convertSchemaDoc(doc2);
-                      return null;
-                    }
-                  });
-                }
-
-                if (!ODocumentHelper.hasSameContentOf(doc1, databaseDocumentTxOne, doc2, databaseDocumentTxTwo, ridMapper)) {
-                  listener.onMessage("\n- ERR: RID=" + clusterId + ":" + position + " document content is different");
-                  listener.onMessage("\n--- REC1: " + new String(buffer1.buffer));
-                  listener.onMessage("\n--- REC2: " + new String(buffer2.buffer));
-                  listener.onMessage("\n");
-                  ++differences;
-                }
               } else {
-                if (buffer1.buffer.length != buffer2.buffer.length) {
-                  // CHECK IF THE TRIMMED SIZE IS THE SAME
-                  final String rec1 = new String(buffer1.buffer).trim();
-                  final String rec2 = new String(buffer2.buffer).trim();
+                if (buffer1.recordType == ODocument.RECORD_TYPE) {
+                  // DOCUMENT: TRY TO INSTANTIATE AND COMPARE
 
-                  if (rec1.length() != rec2.length()) {
-                    listener.onMessage("\n- ERR: RID=" + clusterId + ":" + position + " content length is different: "
-                        + buffer1.buffer.length + " <-> " + buffer2.buffer.length);
+                  makeDbCall(databaseDocumentTxOne, new ODocumentHelper.ODbRelatedCall<Object>() {
+                    public Object call() {
+                      doc1.reset();
+                      doc1.fromStream(buffer1.buffer);
+                      return null;
+                    }
+                  });
 
-                    if (buffer1.recordType == ODocument.RECORD_TYPE || buffer1.recordType == ORecordFlat.RECORD_TYPE)
-                      listener.onMessage("\n--- REC1: " + rec1);
-                    if (buffer2.recordType == ODocument.RECORD_TYPE || buffer2.recordType == ORecordFlat.RECORD_TYPE)
-                      listener.onMessage("\n--- REC2: " + rec2);
+                  makeDbCall(databaseDocumentTxTwo, new ODocumentHelper.ODbRelatedCall<Object>() {
+                    public Object call() {
+                      doc2.reset();
+                      doc2.fromStream(buffer2.buffer);
+                      return null;
+                    }
+                  });
+
+                  if (rid.toString().equals(storage1.getConfiguration().schemaRecordId)
+                      && rid.toString().equals(storage2.getConfiguration().schemaRecordId)) {
+                    makeDbCall(databaseDocumentTxOne, new ODocumentHelper.ODbRelatedCall<java.lang.Object>() {
+                      public Object call() {
+                        convertSchemaDoc(doc1);
+                        return null;
+                      }
+                    });
+
+                    makeDbCall(databaseDocumentTxTwo, new ODocumentHelper.ODbRelatedCall<java.lang.Object>() {
+                      public Object call() {
+                        convertSchemaDoc(doc2);
+                        return null;
+                      }
+                    });
+                  }
+
+                  if (!ODocumentHelper.hasSameContentOf(doc1, databaseDocumentTxOne, doc2, databaseDocumentTxTwo, ridMapper)) {
+                    listener.onMessage("\n- ERR: RID=" + clusterId + ":" + position + " document content is different");
+                    listener.onMessage("\n--- REC1: " + new String(buffer1.buffer));
+                    listener.onMessage("\n--- REC2: " + new String(buffer2.buffer));
                     listener.onMessage("\n");
-
                     ++differences;
                   }
                 } else {
-                  // CHECK BYTE PER BYTE
-                  for (int b = 0; b < buffer1.buffer.length; ++b) {
-                    if (buffer1.buffer[b] != buffer2.buffer[b]) {
-                      listener.onMessage("\n- ERR: RID=" + clusterId + ":" + position + " content is different at byte #" + b
-                          + ": " + buffer1.buffer[b] + " <-> " + buffer2.buffer[b]);
-                      listener.onMessage("\n--- REC1: " + new String(buffer1.buffer));
-                      listener.onMessage("\n--- REC2: " + new String(buffer2.buffer));
+                  if (buffer1.buffer.length != buffer2.buffer.length) {
+                    // CHECK IF THE TRIMMED SIZE IS THE SAME
+                    final String rec1 = new String(buffer1.buffer).trim();
+                    final String rec2 = new String(buffer2.buffer).trim();
+
+                    if (rec1.length() != rec2.length()) {
+                      listener.onMessage("\n- ERR: RID=" + clusterId + ":" + position + " content length is different: "
+                          + buffer1.buffer.length + " <-> " + buffer2.buffer.length);
+
+                      if (buffer1.recordType == ODocument.RECORD_TYPE)
+                        listener.onMessage("\n--- REC1: " + rec1);
+                      if (buffer2.recordType == ODocument.RECORD_TYPE)
+                        listener.onMessage("\n--- REC2: " + rec2);
                       listener.onMessage("\n");
+
                       ++differences;
-                      break;
+                    }
+                  } else {
+                    // CHECK BYTE PER BYTE
+                    for (int b = 0; b < buffer1.buffer.length; ++b) {
+                      if (buffer1.buffer[b] != buffer2.buffer[b]) {
+                        listener.onMessage("\n- ERR: RID=" + clusterId + ":" + position + " content is different at byte #" + b
+                            + ": " + buffer1.buffer[b] + " <-> " + buffer2.buffer[b]);
+                        listener.onMessage("\n--- REC1: " + new String(buffer1.buffer));
+                        listener.onMessage("\n--- REC2: " + new String(buffer2.buffer));
+                        listener.onMessage("\n");
+                        ++differences;
+                        break;
+                      }
                     }
                   }
                 }
               }
             }
+          } catch (RuntimeException e) {
+            OLogManager.instance().error(this, "Error during data comparison of records with rid " + rid);
+            throw e;
           }
         }
 
@@ -805,11 +808,27 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
           listener.onMessage("\n" + recordsCounter + " records were processed for cluster " + clusterName + " ...");
       }
 
-      listener.onMessage("\nCluster comparison was finished, " + recordsCounter + " records were processed for cluster "
-          + clusterName + " ...");
+      listener.onMessage(
+          "\nCluster comparison was finished, " + recordsCounter + " records were processed for cluster " + clusterName + " ...");
     }
 
     return true;
+  }
+
+  public void setCompareIndexMetadata(boolean compareIndexMetadata) {
+    this.compareIndexMetadata = compareIndexMetadata;
+  }
+
+  public boolean isCompareEntriesForAutomaticIndexes() {
+    return compareEntriesForAutomaticIndexes;
+  }
+
+  public void setCompareEntriesForAutomaticIndexes(boolean compareEntriesForAutomaticIndexes) {
+    this.compareEntriesForAutomaticIndexes = compareEntriesForAutomaticIndexes;
+  }
+
+  public void setAutoDetectExportImportMap(boolean autoDetectExportImportMap) {
+    this.autoDetectExportImportMap = autoDetectExportImportMap;
   }
 
   private void convertSchemaDoc(final ODocument document) {

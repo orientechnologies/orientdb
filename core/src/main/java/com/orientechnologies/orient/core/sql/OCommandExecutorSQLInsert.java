@@ -48,7 +48,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * SQL INSERT command.
- * 
+ *
  * @author Luca Garulli
  * @author Johann Sorel (Geomatys)
  */
@@ -425,4 +425,8 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
     return QUORUM_TYPE.WRITE;
   }
 
+  @Override
+  public Object getResult() {
+    return null;
+  }
 }

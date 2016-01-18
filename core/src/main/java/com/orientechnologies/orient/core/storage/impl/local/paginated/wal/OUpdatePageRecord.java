@@ -20,32 +20,30 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
-import com.orientechnologies.common.serialization.types.OLongSerializer;
-
 /**
  * @author Andrey Lomakin
  * @since 26.04.13
  */
 public class OUpdatePageRecord extends OAbstractPageWALRecord {
-  private OWALChangesTree changesTree;
+  private OWALChanges changes;
 
   public OUpdatePageRecord() {
   }
 
   public OUpdatePageRecord(final long pageIndex, final long fileId, final OOperationUnitId operationUnitId,
-      final OWALChangesTree changesTree, OLogSequenceNumber startLsn) {
-    super(pageIndex, fileId, operationUnitId, startLsn);
-    this.changesTree = changesTree;
+                           final OWALChanges changes) {
+    super(pageIndex, fileId, operationUnitId);
+    this.changes = changes;
   }
 
-  public OWALChangesTree getChanges() {
-    return changesTree;
+  public OWALChanges getChanges() {
+    return changes;
   }
 
   @Override
   public int serializedSize() {
     int serializedSize = super.serializedSize();
-    serializedSize += changesTree.serializedSize();
+    serializedSize += changes.serializedSize();
 
     return serializedSize;
   }
@@ -53,7 +51,7 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
   @Override
   public int toStream(final byte[] content, int offset) {
     offset = super.toStream(content, offset);
-    offset = changesTree.toStream(offset, content);
+    offset = changes.toStream(offset, content);
 
     return offset;
   }
@@ -62,8 +60,8 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
   public int fromStream(final byte[] content, int offset) {
     offset = super.fromStream(content, offset);
 
-    changesTree = new OWALChangesTree();
-    offset = changesTree.fromStream(offset, content);
+    changes = new OWALChangesTree();
+    offset = changes.fromStream(offset, content);
 
     return offset;
   }

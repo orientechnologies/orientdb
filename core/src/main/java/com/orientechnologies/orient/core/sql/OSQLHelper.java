@@ -80,7 +80,7 @@ public class OSQLHelper {
     }
 
     // PARSE AS FIELD
-    return new OSQLFilterItemField(null, iWord);
+    return new OSQLFilterItemField(null, iWord, iRecord.getSchemaClass());
   }
 
   /**
@@ -100,7 +100,7 @@ public class OSQLHelper {
 
     if (iValue.startsWith("'") && iValue.endsWith("'") || iValue.startsWith("\"") && iValue.endsWith("\""))
       // STRING
-      fieldValue = OStringSerializerHelper.getStringContent(iValue);
+      fieldValue = OIOUtils.getStringContent(iValue);
     else if (iValue.charAt(0) == OStringSerializerHelper.LIST_BEGIN
         && iValue.charAt(iValue.length() - 1) == OStringSerializerHelper.LIST_END) {
       // COLLECTION/ARRAY
@@ -238,7 +238,7 @@ public class OSQLHelper {
       return new OSQLFilterItemVariable(iCommand, iWord);
 
     // PARSE AS FIELD
-    return new OSQLFilterItemField(iCommand, iWord);
+    return new OSQLFilterItemField(iCommand, iWord, null);
   }
 
   public static OSQLFunctionRuntime getFunction(final OBaseParser iCommand, final String iWord) {
@@ -352,14 +352,21 @@ public class OSQLHelper {
                     fieldValue = null;
                 }
               }
+            } else if (immutableClass.isEdgeType() && ("out".equals(fieldName) || "in".equals(fieldName)) &&
+                (fieldValue instanceof List)) {
+              List lst = (List) fieldValue;
+              if (lst.size() == 1) {
+                fieldValue = lst.get(0);
+              }
             }
+
           }
 
           if (OMultiValue.isMultiValue(fieldValue)) {
             final List<Object> tempColl = new ArrayList<Object>(OMultiValue.getSize(fieldValue));
 
             String singleFieldName = null;
-            for (Object o : OMultiValue.getMultiValueIterable(fieldValue)) {
+            for (Object o : OMultiValue.getMultiValueIterable(fieldValue, false)) {
               if (o instanceof OIdentifiable && !((OIdentifiable) o).getIdentity().isPersistent()) {
                 // TEMPORARY / EMBEDDED
                 final ORecord rec = ((OIdentifiable) o).getRecord();

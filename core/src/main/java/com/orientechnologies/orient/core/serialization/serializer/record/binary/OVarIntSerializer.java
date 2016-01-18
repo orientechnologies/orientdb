@@ -44,6 +44,10 @@ public class OVarIntSerializer {
     return (int) readSignedVarLong(bytes);
   }
 
+  public static byte readAsByte(final BytesContainer bytes) {
+    return (byte) readSignedVarLong(bytes);
+  }
+
   /**
    * Encodes a value using the variable-length encoding from <a
    * href="http://code.google.com/apis/protocolbuffers/docs/encoding.html"> Google Protocol Buffers</a>. It uses zig-zag encoding to

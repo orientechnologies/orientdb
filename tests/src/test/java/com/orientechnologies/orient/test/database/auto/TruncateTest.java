@@ -15,6 +15,18 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.testng.Assert;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexCursor;
@@ -24,17 +36,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.testng.Assert;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 @Test
 public class TruncateTest extends DocumentDBBaseTest {
@@ -86,12 +87,6 @@ public class TruncateTest extends DocumentDBBaseTest {
 
   @Test
   public void testTruncateVertexClass() {
-
-    if (!database.getMetadata().getSchema().existsClass("V"))
-      database.getMetadata().getSchema().createClass("V");
-    if (!database.getMetadata().getSchema().existsClass("E"))
-      database.getMetadata().getSchema().createClass("E");
-
     database.command(new OCommandSQL("create class TestTruncateVertexClass extends V")).execute();
     database.command(new OCommandSQL("create vertex TestTruncateVertexClass set name = 'foo'")).execute();
 

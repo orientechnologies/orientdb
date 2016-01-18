@@ -18,7 +18,7 @@ public class TestSchemaImportExport {
     }
   }
 
-  @Test
+  @Test(enabled = false)
   public void testExportImportCustomData() throws IOException {
     ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + TestSchemaImportExport.class.getSimpleName());
     db.create();

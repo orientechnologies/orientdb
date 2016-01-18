@@ -20,12 +20,13 @@
 
 package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.index.OIndexEngineException;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
-import com.orientechnologies.orient.core.index.sbtree.local.OSBTreeException;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
@@ -63,24 +64,25 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
     this.durableNonTxMode = durableNonTxMode;
   }
 
-  public OIndexRIDContainer(String fileName, Set<OIdentifiable> underlying, boolean autoConvert, boolean durableNonTxMode) {
-    this.fileId = resolveFileIdByName(fileName + INDEX_FILE_EXTENSION);
-    this.underlying = underlying;
-    isEmbedded = !(underlying instanceof OIndexRIDContainerSBTree);
-    if (!autoConvert) {
-      assert !isEmbedded;
-      topThreshold = -1;
-      bottomThreshold = -1;
-    }
+  public void setTopThreshold(int topThreshold) {
+    this.topThreshold = topThreshold;
+  }
 
-    this.durableNonTxMode = durableNonTxMode;
+  public void setBottomThreshold(int bottomThreshold) {
+    this.bottomThreshold = bottomThreshold;
   }
 
   private long resolveFileIdByName(String fileName) {
     final OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
         .getUnderlying();
+    final OAtomicOperation atomicOperation;
     try {
-      final OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().startAtomicOperation(fileName, true);
+      atomicOperation = storage.getAtomicOperationsManager().startAtomicOperation(fileName, true);
+    } catch (IOException e) {
+      throw OException.wrapException(new OIndexEngineException("Error creation of sbtree with name " + fileName, fileName), e);
+    }
+
+    try {
       final OReadCache readCache = storage.getReadCache();
       final OWriteCache writeCache = storage.getWriteCache();
 
@@ -104,10 +106,10 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
       try {
         storage.getAtomicOperationsManager().endAtomicOperation(true, e);
       } catch (IOException ioe) {
-        throw new OSBTreeException("Error of rollback of atomic operation", ioe);
+        throw OException.wrapException(new OIndexEngineException("Error of rollback of atomic operation", fileName), ioe);
       }
 
-      throw new OSBTreeException("Error creation of sbtree with name " + fileName, e);
+      throw OException.wrapException(new OIndexEngineException("Error creation of sbtree with name " + fileName, fileName), e);
     }
   }
 
@@ -244,7 +246,7 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
 
   private void convertToSbTree() {
     final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
-    final OIndexRIDContainerSBTree tree = new OIndexRIDContainerSBTree(fileId, durableNonTxMode, (OAbstractPaginatedStorage) db
+    final OIndexRIDContainerSBTree tree = new OIndexRIDContainerSBTree(fileId, (OAbstractPaginatedStorage) db
         .getStorage().getUnderlying());
 
     tree.addAll(underlying);

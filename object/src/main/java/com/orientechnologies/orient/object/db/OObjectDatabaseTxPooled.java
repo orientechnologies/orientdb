@@ -29,10 +29,10 @@ import com.orientechnologies.orient.core.metadata.security.OToken;
 /**
  * Pooled wrapper to the OObjectDatabaseTx class. Allows to being reused across calls. The close() method does not close the
  * database for real but release it to the owner pool. The database born as opened and will leave open until the pool is closed.
- * 
+ *
  * @author Luca Garulli
  * @see ODatabasePoolBase
- * 
+ *
  */
 @SuppressWarnings("unchecked")
 public class OObjectDatabaseTxPooled extends OObjectDatabaseTx implements ODatabasePooled {
@@ -52,9 +52,8 @@ public class OObjectDatabaseTxPooled extends OObjectDatabaseTx implements ODatab
     ownerPool = (OObjectDatabasePool) iOwner;
     if (isClosed())
       open((String) iAdditionalArgs[0], (String) iAdditionalArgs[1]);
-    init();
-    // getMetadata().reload();
     ODatabaseRecordThreadLocal.INSTANCE.set(getUnderlying());
+    init();
 
     try {
       underlying.callOnOpenListeners();

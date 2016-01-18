@@ -15,12 +15,16 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.core.command.OCommandExecutor;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.sql.parser.OMatchStatement;
+import com.orientechnologies.orient.core.sql.parser.OProfileStorageStatement;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 
 /**
  * Default command operator executor factory.
@@ -29,12 +33,12 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
  */
 public class ODefaultCommandExecutorSQLFactory implements OCommandExecutorSQLFactory {
 
-  private static final Map<String, Class<? extends OCommandExecutorSQLAbstract>> COMMANDS;
+  private static final Map<String, Class<? extends OCommandExecutor>> COMMANDS;
 
   static {
 
     // COMMANDS
-    final Map<String, Class<? extends OCommandExecutorSQLAbstract>> commands = new HashMap<String, Class<? extends OCommandExecutorSQLAbstract>>();
+    final Map<String, Class<? extends OCommandExecutor>> commands = new HashMap<String, Class<? extends OCommandExecutor>>();
     commands.put(OCommandExecutorSQLAlterDatabase.KEYWORD_ALTER + " " + OCommandExecutorSQLAlterDatabase.KEYWORD_DATABASE,
         OCommandExecutorSQLAlterDatabase.class);
     commands.put(OCommandExecutorSQLSelect.KEYWORD_SELECT, OCommandExecutorSQLSelect.class);
@@ -80,9 +84,23 @@ public class ODefaultCommandExecutorSQLFactory implements OCommandExecutorSQLFac
         OCommandExecutorSQLTruncateRecord.class);
     commands.put(OCommandExecutorSQLAlterCluster.KEYWORD_ALTER + " " + OCommandExecutorSQLAlterCluster.KEYWORD_CLUSTER,
         OCommandExecutorSQLAlterCluster.class);
+    commands.put(OCommandExecutorSQLCreateSequence.KEYWORD_CREATE + " " + OCommandExecutorSQLCreateSequence.KEYWORD_SEQUENCE,
+        OCommandExecutorSQLCreateSequence.class);
+    commands.put(OCommandExecutorSQLAlterSequence.KEYWORD_ALTER + " " + OCommandExecutorSQLAlterSequence.KEYWORD_SEQUENCE,
+        OCommandExecutorSQLAlterSequence.class);
+    commands.put(OCommandExecutorSQLDropSequence.KEYWORD_DROP + " " + OCommandExecutorSQLDropSequence.KEYWORD_SEQUENCE,
+        OCommandExecutorSQLDropSequence.class);
+    commands.put(OCommandExecutorSQLCreateUser.KEYWORD_CREATE + " " + OCommandExecutorSQLCreateUser.KEYWORD_USER,
+        OCommandExecutorSQLCreateUser.class);
+    commands.put(OCommandExecutorSQLDropUser.KEYWORD_DROP + " " + OCommandExecutorSQLDropUser.KEYWORD_USER,
+        OCommandExecutorSQLDropUser.class);
     commands.put(OCommandExecutorSQLExplain.KEYWORD_EXPLAIN, OCommandExecutorSQLExplain.class);
     commands.put(OCommandExecutorSQLTransactional.KEYWORD_TRANSACTIONAL, OCommandExecutorSQLTransactional.class);
+
+    commands.put(OMatchStatement.KEYWORD_MATCH, OMatchStatement.class);
     commands.put(OCommandExecutorSQLOptimizeDatabase.KEYWORD_OPTIMIZE, OCommandExecutorSQLOptimizeDatabase.class);
+
+    commands.put(OProfileStorageStatement.KEYWORD_PROFILE, OCommandExecutorToOStatementWrapper.class);
 
     COMMANDS = Collections.unmodifiableMap(commands);
   }
@@ -97,8 +115,8 @@ public class ODefaultCommandExecutorSQLFactory implements OCommandExecutorSQLFac
   /**
    * {@inheritDoc}
    */
-  public OCommandExecutorSQLAbstract createCommand(final String name) throws OCommandExecutionException {
-    final Class<? extends OCommandExecutorSQLAbstract> clazz = COMMANDS.get(name);
+  public OCommandExecutor createCommand(final String name) throws OCommandExecutionException {
+    final Class<? extends OCommandExecutor> clazz = COMMANDS.get(name);
 
     if (clazz == null) {
       throw new OCommandExecutionException("Unknowned command name :" + name);
@@ -107,8 +125,8 @@ public class ODefaultCommandExecutorSQLFactory implements OCommandExecutorSQLFac
     try {
       return clazz.newInstance();
     } catch (Exception e) {
-      throw new OCommandExecutionException("Error in creation of command " + name
-          + "(). Probably there is not an empty constructor or the constructor generates errors", e);
+      throw OException.wrapException(new OCommandExecutionException("Error in creation of command " + name
+          + "(). Probably there is not an empty constructor or the constructor generates errors"), e);
     }
   }
 

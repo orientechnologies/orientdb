@@ -15,41 +15,45 @@ import java.io.Reader;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.DEBUG;
 
 /**
  * Created by frank on 10/5/15.
  */
 public class OCSVExtractor extends OAbstractSourceExtractor {
 
-  private static String       NULL_STRING     = "NULL";
-  protected OExtractedItem    next;
-  private Map<String, OType>  columnTypes     = new HashMap<String, OType>();
-  private long                skipFrom        = -1;
-  private long                skipTo          = -1;
-  private Character           stringCharacter = '"';
-  private boolean             unicode         = true;
+  private static String NULL_STRING = "NULL";
+  protected OExtractedItem next;
+  private Map<String, OType> columnTypes     = new HashMap<String, OType>();
+  private long               skipFrom        = -1;
+  private long               skipTo          = -1;
+  private Character          stringCharacter = '"';
+  private boolean            unicode         = true;
   private Iterator<CSVRecord> recordIterator;
   private CSVFormat           csvFormat;
-  private String              nullValue       = NULL_STRING;
-  private String              dateFormat      = "yyyy-MM-dd";
+  private String nullValue  = NULL_STRING;
+  private String dateFormat = "yyyy-MM-dd";
 
   @Override
   public ODocument getConfiguration() {
-    return new ODocument()
-        .fromJSON("{parameters:["
-            + getCommonConfigurationParameters()
-            + ",{separator:{optional:true,description:'Column separator'}},"
-            + "{columnsOnFirstLine:{optional:true,description:'Columns are described in the first line'}},"
-            + "{columns:{optional:true,description:'Columns array containing names, and optionally type after : (e.g.: name:String, age:int'}},"
-            + "{nullValue:{optional:true,description:'Value to consider as NULL_STRING. Default is NULL'}},"
-            + "{dateFormat:{optional:true,description:'Date format used to parde dates. Default is yyyy-MM-dd'}},"
-            + "{quote:{optional:true,description:'String character delimiter. Use \"\" to do not use any delimitator'}},"
-            + "{ignoreEmptyLines:{optional:true,description:'Ignore empty lines',type:'boolean'}},"
-            + "{skipFrom:{optional:true,description:'Line number where start to skip',type:'int'}},"
-            + "{skipTo:{optional:true,description:'Line number where skip ends',type:'int'}}"
-            + "{predefinedFormat:{optional:true,description:'Name of standard csv format (from Apache commons-csv): DEFAULT, EXCEL, MYSQL, RFC4180, TDF',type:'String'}}"
-            + "],input:['String'],output:'ODocument'}");
+    return new ODocument().fromJSON(
+        "{parameters:[" + getCommonConfigurationParameters() + ",{separator:{optional:true,description:'Column separator'}},"
+        + "{columnsOnFirstLine:{optional:true,description:'Columns are described in the first line'}},"
+        + "{columns:{optional:true,description:'Columns array containing names, and optionally type after : (e.g.: name:String, age:int'}},"
+        + "{nullValue:{optional:true,description:'Value to consider as NULL_STRING. Default is NULL'}},"
+        + "{dateFormat:{optional:true,description:'Date format used to parde dates. Default is yyyy-MM-dd'}},"
+        + "{quote:{optional:true,description:'String character delimiter. Use \"\" to do not use any delimitator'}},"
+        + "{ignoreEmptyLines:{optional:true,description:'Ignore empty lines',type:'boolean'}},"
+        + "{skipFrom:{optional:true,description:'Line number where start to skip',type:'int'}},"
+        + "{skipTo:{optional:true,description:'Line number where skip ends',type:'int'}},"
+        + "{predefinedFormat:{optional:true,description:'Name of standard csv format (from Apache commons-csv): DEFAULT, EXCEL, MYSQL, RFC4180, TDF',type:'String'}}"
+        + "],input:['String'],output:'ODocument'}");
   }
 
   @Override
@@ -69,7 +73,7 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
     csvFormat = CSVFormat.newFormat(',').withNullString(NULL_STRING).withEscape('\\').withQuote('"');
 
     if (iConfiguration.containsField("predefinedFormat")) {
-      csvFormat = CSVFormat.valueOf(iConfiguration.<String> field("predefinedFormat").toUpperCase());
+      csvFormat = CSVFormat.valueOf(iConfiguration.<String>field("predefinedFormat").toUpperCase());
     }
 
     if (iConfiguration.containsField("separator")) {
@@ -77,7 +81,7 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
     }
 
     if (iConfiguration.containsField("dateFormat")) {
-      dateFormat = iConfiguration.<String> field("dateFormat");
+      dateFormat = iConfiguration.<String>field("dateFormat");
     }
 
     if (iConfiguration.containsField("ignoreEmptyLines")) {
@@ -86,8 +90,8 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
     }
 
     if (iConfiguration.containsField("columnsOnFirstLine")) {
-      boolean columnsOnFirstLine = (Boolean) iConfiguration.field("columnsOnFirstLine");
-      if (columnsOnFirstLine == true) {
+      Boolean columnsOnFirstLine = (Boolean) iConfiguration.field("columnsOnFirstLine");
+      if (columnsOnFirstLine.equals(Boolean.TRUE)) {
         csvFormat = csvFormat.withHeader();
       }
     } else {
@@ -113,17 +117,18 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
       csvFormat = csvFormat.withHeader(columnNames.toArray(new String[] {}));
 
     }
+
     if (iConfiguration.containsField("skipFrom")) {
       skipFrom = ((Number) iConfiguration.field("skipFrom")).longValue();
-
     }
+
     if (iConfiguration.containsField("skipTo")) {
       skipTo = ((Number) iConfiguration.field("skipTo")).longValue();
     }
 
     if (iConfiguration.containsField("nullValue")) {
-      nullValue = iConfiguration.<String> field("nullValue");
-      csvFormat.withNullString(nullValue);
+      nullValue = iConfiguration.<String>field("nullValue");
+      csvFormat = csvFormat.withNullString(nullValue);
     }
 
     if (iConfiguration.containsField("quote")) {
@@ -189,7 +194,6 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
         final OType fieldType = typeEntry.getValue();
         String fieldValueAsString = recordAsMap.get(fieldName);
         try {
-
           Object fieldValue = OType.convert(fieldValueAsString, fieldType.getDefaultJavaType());
           doc.field(fieldName, fieldValue);
         } catch (Exception e) {
@@ -200,7 +204,7 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
       }
     }
 
-    log(OETLProcessor.LOG_LEVELS.DEBUG, "document=%s", doc);
+    log(DEBUG, "document=%s", doc);
     current++;
     return new OExtractedItem(current, doc);
   }

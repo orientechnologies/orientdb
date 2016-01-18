@@ -26,7 +26,7 @@ package com.orientechnologies.common.types;
  * 
  */
 public class OBinary implements Comparable<OBinary> {
-  private byte[] value;
+  private final byte[] value;
 
   public OBinary(final byte[] buffer) {
     value = buffer;

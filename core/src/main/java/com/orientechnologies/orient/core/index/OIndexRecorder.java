@@ -21,13 +21,20 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
+@SuppressFBWarnings("EQ_COMPARETO_USE_OBJECT_EQUALS")
 public class OIndexRecorder implements OIndex<OIdentifiable>, OIndexInternal<OIdentifiable> {
   private final OIndexInternal<OIdentifiable> delegate;
 
@@ -143,6 +150,11 @@ public class OIndexRecorder implements OIndex<OIdentifiable>, OIndexInternal<OId
   }
 
   @Override
+  public long count(final Object iKey) {
+    return get(iKey) != null ? 1l : 0l;
+  }
+
+  @Override
   public long getKeySize() {
     throw new UnsupportedOperationException("Not allowed operation");
   }
@@ -159,11 +171,6 @@ public class OIndexRecorder implements OIndex<OIdentifiable>, OIndexInternal<OId
 
   @Override
   public OIndex<OIdentifiable> delete() {
-    throw new UnsupportedOperationException("Not allowed operation");
-  }
-
-  @Override
-  public void deleteWithoutIndexLoad(String indexName) {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
@@ -314,24 +321,6 @@ public class OIndexRecorder implements OIndex<OIdentifiable>, OIndexInternal<OId
   }
 
   @Override
-  public void freeze(boolean throwException) {
-    throw new UnsupportedOperationException("Not allowed operation");
-  }
-
-  @Override
-  public void release() {
-    throw new UnsupportedOperationException("Not allowed operation");
-  }
-
-  @Override
-  public void acquireModificationLock() {
-  }
-
-  @Override
-  public void releaseModificationLock() {
-  }
-
-  @Override
   public void lockKeysForUpdateNoTx(Object... key) {
   }
 
@@ -345,6 +334,11 @@ public class OIndexRecorder implements OIndex<OIdentifiable>, OIndexInternal<OId
 
   @Override
   public void releaseKeysForUpdateNoTx(Collection<Object> keys) {
+  }
+
+  @Override
+  public void setType(OType type) {
+    throw new UnsupportedOperationException("Not allowed operation");
   }
 
   @Override

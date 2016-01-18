@@ -2,6 +2,8 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
+
 public class OEqualsCompareOperator extends SimpleNode implements OBinaryCompareOperator {
   boolean doubleEquals = false;
 
@@ -19,10 +21,10 @@ public class OEqualsCompareOperator extends SimpleNode implements OBinaryCompare
   }
 
   @Override
-  public boolean execute(Object left, Object right) {
-    return false;
+  public boolean execute(Object iLeft, Object iRight) {
+    return OQueryOperatorEquals.equals(iLeft, iRight);
   }
-
+  
   @Override public boolean supportsBasicCalculation() {
     return true;
   }

@@ -21,19 +21,19 @@ package com.orientechnologies.orient.core.config;
 
 public interface OStorageClusterConfiguration {
 
-  public enum STATUS {
+  enum STATUS {
     ONLINE, OFFLINE
   }
 
-  public int getId();
+  int getId();
 
-  public String getName();
+  String getName();
 
-  public String getLocation();
+  String getLocation();
 
-  public int getDataSegmentId();
+  int getDataSegmentId();
 
-  public STATUS getStatus();
+  STATUS getStatus();
 
   void setStatus(STATUS iStatus);
 }

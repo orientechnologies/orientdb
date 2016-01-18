@@ -20,10 +20,11 @@
 
 package com.orientechnologies.orient.core.db;
 
-import java.util.concurrent.Callable;
-
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.storage.OStorage;
+
+import java.util.concurrent.Callable;
 
 public interface ODatabaseInternal<T> extends ODatabase<T> {
 
@@ -33,7 +34,12 @@ public interface ODatabaseInternal<T> extends ODatabase<T> {
    * @return The underlying storage implementation
    * @see OStorage
    */
-  public OStorage getStorage();
+  OStorage getStorage();
+
+  /**
+   * Set user for current database instance.
+   */
+  void setUser(OSecurityUser user);
 
   /**
    * Internal only: replace the storage with a new one.
@@ -41,35 +47,35 @@ public interface ODatabaseInternal<T> extends ODatabase<T> {
    * @param iNewStorage
    *          The new storage to use. Usually it's a wrapped instance of the current cluster.
    */
-  public void replaceStorage(OStorage iNewStorage);
+  void replaceStorage(OStorage iNewStorage);
 
-  public <V> V callInLock(Callable<V> iCallable, boolean iExclusiveLock);
+  <V> V callInLock(Callable<V> iCallable, boolean iExclusiveLock);
 
-  public void resetInitialization();
+  void resetInitialization();
 
   /**
    * Returns the database owner. Used in wrapped instances to know the up level ODatabase instance.
    *
    * @return Returns the database owner.
    */
-  public ODatabaseInternal<?> getDatabaseOwner();
+  ODatabaseInternal<?> getDatabaseOwner();
 
   /**
    * Internal. Sets the database owner.
    */
-  public ODatabaseInternal<?> setDatabaseOwner(ODatabaseInternal<?> iOwner);
+  ODatabaseInternal<?> setDatabaseOwner(ODatabaseInternal<?> iOwner);
 
   /**
    * Return the underlying database. Used in wrapper instances to know the down level ODatabase instance.
    *
    * @return The underlying ODatabase implementation.
    */
-  public <DB extends ODatabase> DB getUnderlying();
+  <DB extends ODatabase> DB getUnderlying();
 
   /**
    * Internal method. Don't call it directly unless you're building an internal component.
    */
-  public void setInternal(ATTRIBUTES attribute, Object iValue);
+  void setInternal(ATTRIBUTES attribute, Object iValue);
 
   /**
    * Opens a database using an authentication token received as an argument.
@@ -78,6 +84,6 @@ public interface ODatabaseInternal<T> extends ODatabase<T> {
    *          Authentication token
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
-  public <DB extends ODatabase> DB open(final OToken iToken);
+  <DB extends ODatabase> DB open(final OToken iToken);
 
 }

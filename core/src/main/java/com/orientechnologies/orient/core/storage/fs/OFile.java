@@ -21,18 +21,18 @@ package com.orientechnologies.orient.core.storage.fs;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.channels.FileLock;
 
 /**
  * Interface to represent low-level File access.
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
  */
 public interface OFile {
   /**
    * Opens the file.
-   * 
+   *
    * @return
    * @throws IOException
    */
@@ -40,21 +40,21 @@ public interface OFile {
 
   /**
    * Creates the file.
-   * 
+   *
    * @throws IOException
    */
   void create() throws IOException;
 
   /**
    * Closes the file.
-   * 
+   *
    * @throws IOException
    */
   void close() throws IOException;
 
   /**
    * Deletes the file.
-   * 
+   *
    * @throws IOException
    */
   void delete() throws IOException;
@@ -89,11 +89,9 @@ public interface OFile {
 
   void unlock() throws IOException;
 
-
   /**
    * Shrink the file content (filledUpTo attribute only)
-   * 
-   * 
+   *
    * @param iSize
    * @throws IOException
    */
@@ -120,4 +118,10 @@ public interface OFile {
   void read(long iOffset, byte[] iData, int iLength, int iArrayOffset) throws IOException;
 
   void write(long iOffset, byte[] iData, int iSize, int iArrayOffset) throws IOException;
+
+  void read(long offset, ByteBuffer buffer) throws IOException;
+
+  long read(long offset, ByteBuffer[] buffers) throws IOException;
+
+  void write(long offset, ByteBuffer buffer) throws IOException;
 }

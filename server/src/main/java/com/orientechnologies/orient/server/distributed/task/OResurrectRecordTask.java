@@ -22,8 +22,6 @@ package com.orientechnologies.orient.server.distributed.task;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.version.ORecordVersion;
-import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
@@ -35,72 +33,67 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 /**
-  * Distributed task to fix delete record in conflict on synchronization.
-  *
-  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
-  *
-  */
- public class OResurrectRecordTask extends OAbstractRemoteTask {
-   private static final long serialVersionUID = 1L;
-   private ORecordId         rid;
-   private ORecordVersion    version;
+ * Distributed task to fix delete record in conflict on synchronization.
+ *
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ *
+ */
+public class OResurrectRecordTask extends OAbstractRemoteTask {
+  private static final long serialVersionUID = 1L;
+  private ORecordId         rid;
+  private int               version;
 
-   public OResurrectRecordTask() {
-   }
+  public OResurrectRecordTask() {
+  }
 
-   public OResurrectRecordTask(final ORecordId iRid, final ORecordVersion iVersion) {
-     rid = iRid;
-     version = iVersion;
-   }
+  public OResurrectRecordTask(final ORecordId iRid, final int iVersion) {
+    rid = iRid;
+    version = iVersion;
+  }
 
-   public ORecordId getRid() {
-     return rid;
-   }
+  public ORecordId getRid() {
+    return rid;
+  }
 
-   public ORecordVersion getVersion() {
-     return version;
-   }
+  public int getVersion() {
+    return version;
+  }
 
-   @Override
-   public Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
-       throws Exception {
-     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-         "resurrecting deleted record %s/%s v.%s", database.getName(), rid.toString(), version.toString());
+  @Override
+  public Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
+      throws Exception {
+    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+        "resurrecting deleted record %s/%s v.%d", database.getName(), rid.toString(), version);
 
-     if (((ODistributedStorage) database.getStorage()).resurrectDeletedRecord(rid)) {
-       ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-           "+-> resurrected deleted record");
-       return Boolean.TRUE;
-     }
+    if (((ODistributedStorage) database.getStorage()).resurrectDeletedRecord(rid)) {
+      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+          "+-> resurrected deleted record");
+      return Boolean.TRUE;
+    }
 
-     ODistributedServerLog.error(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-         "+-> error on resurrecting deleted record: the record is already deleted");
-     return Boolean.FALSE;
-   }
+    ODistributedServerLog.error(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+        "+-> error on resurrecting deleted record: the record is already deleted");
+    return Boolean.FALSE;
+  }
 
-   public OCommandDistributedReplicateRequest.QUORUM_TYPE getQuorumType() {
-     return OCommandDistributedReplicateRequest.QUORUM_TYPE.NONE;
-   }
+  public OCommandDistributedReplicateRequest.QUORUM_TYPE getQuorumType() {
+    return OCommandDistributedReplicateRequest.QUORUM_TYPE.NONE;
+  }
 
-   @Override
-   public void writeExternal(final ObjectOutput out) throws IOException {
-     out.writeUTF(rid.toString());
-     if (version == null)
-       version = OVersionFactory.instance().createUntrackedVersion();
-     version.getSerializer().writeTo(out, version);
-   }
+  @Override
+  public void writeExternal(final ObjectOutput out) throws IOException {
+    out.writeUTF(rid.toString());
+    out.writeInt(version);
+  }
 
-   @Override
-   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-     rid = new ORecordId(in.readUTF());
-     final int contentSize = in.readInt();
-     if (version == null)
-       version = OVersionFactory.instance().createUntrackedVersion();
-     version.getSerializer().readFrom(in, version);
-   }
+  @Override
+  public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
+    rid = new ORecordId(in.readUTF());
+    version = in.readInt();
+  }
 
-   @Override
-   public String getName() {
-     return "fix_record_delete";
-   }
- }
+  @Override
+  public String getName() {
+    return "fix_record_delete";
+  }
+}

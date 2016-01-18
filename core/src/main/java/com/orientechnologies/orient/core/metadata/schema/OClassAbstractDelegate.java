@@ -49,11 +49,6 @@ public abstract class OClassAbstractDelegate implements OClass {
   }
 
   @Override
-  public <T> T newInstance() throws InstantiationException, IllegalAccessException {
-    return delegate.newInstance();
-  }
-
-  @Override
   public boolean isAbstract() {
     return delegate.isAbstract();
   }
@@ -183,11 +178,6 @@ public abstract class OClassAbstractDelegate implements OClass {
   @Override
   public boolean existsProperty(final String iPropertyName) {
     return delegate.existsProperty(iPropertyName);
-  }
-
-  @Override
-  public Class<?> getJavaClass() {
-    return delegate.getJavaClass();
   }
 
   @Override
@@ -329,6 +319,17 @@ public abstract class OClassAbstractDelegate implements OClass {
   @Override
   public OClass setShortName(final String shortName) {
     delegate.setShortName(shortName);
+    return this;
+  }
+
+  @Override
+  public String getDescription() {
+    return delegate.getDescription();
+  }
+
+  @Override
+  public OClass setDescription(String iDescription) {
+    delegate.setDescription(iDescription);
     return this;
   }
 

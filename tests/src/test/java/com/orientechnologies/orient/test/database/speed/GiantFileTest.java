@@ -134,7 +134,7 @@ public class GiantFileTest {
         System.out.printf("Create Giant File: 100%%\n");
       }
     } catch (final IOException ex) {
-      throw new Exception("Failed to create giant file.", ex);
+      throw new Exception("Failed to create giant file", ex);
     } finally {
       raf.close();
     }

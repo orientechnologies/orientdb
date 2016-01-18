@@ -15,20 +15,22 @@
  */
 package com.orientechnologies.orient.test.database.speed;
 
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
 
-@Test(enabled = false)
+@Test
 public class LocalCreateBinaryDocumentSpeedTest extends OrientMonoThreadTest {
-  private static final int          PAYLOAD_SIZE = 2000;
+  private static final int PAYLOAD_SIZE = 2000;
   private ODatabaseDocumentInternal database;
   private ORecordBytes              record;
   private byte[]                    payload;
@@ -39,7 +41,7 @@ public class LocalCreateBinaryDocumentSpeedTest extends OrientMonoThreadTest {
   }
 
   public LocalCreateBinaryDocumentSpeedTest() throws InstantiationException, IllegalAccessException {
-    super(50000);
+    super(1);
     payload = new byte[PAYLOAD_SIZE];
     for (int i = 0; i < PAYLOAD_SIZE; ++i) {
       payload[i] = (byte) i;
@@ -47,6 +49,7 @@ public class LocalCreateBinaryDocumentSpeedTest extends OrientMonoThreadTest {
   }
 
   @Override
+  @Test(enabled = false)
   public void init() {
     Orient.instance().getProfiler().startRecording();
 
@@ -60,21 +63,33 @@ public class LocalCreateBinaryDocumentSpeedTest extends OrientMonoThreadTest {
 
     database.declareIntent(new OIntentMassiveInsert());
     database.begin(TXTYPE.NOTX);
+    OStorage storage = database.getStorage();
+
   }
 
   @Override
+  @Test(enabled = false)
   public void cycle() {
+    final OStorage storage = database.getStorage();
+    ((OAbstractPaginatedStorage) storage).startGatheringPerformanceStatisticForCurrentThread();
     record = new ORecordBytes(database, payload);
     record.save();
 
     if (data.getCyclesDone() == data.getCycles() - 1)
       database.commit();
+
+    OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = ((OAbstractPaginatedStorage) storage)
+        .completeGatheringPerformanceStatisticForCurrentThread();
+    System.out.println(sessionStoragePerformanceStatistic.toDocument().toJSON(""));
   }
 
   @Override
+  @Test(enabled = false)
   public void deinit() {
+
     if (database != null)
       database.close();
+
     super.deinit();
   }
 }

@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.Collection;
@@ -92,31 +93,6 @@ public interface OIndexInternal<T> extends OIndex<T> {
   public boolean canBeUsedInEqualityOperators();
 
   public boolean hasRangeQuerySupport();
-
-  /**
-   * Prohibit index modifications. Only index read commands are allowed after this call.
-   * 
-   * @param throwException
-   *          If <code>true</code> {@link com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException}
-   *          exception will be thrown in case of write command will be performed.
-   */
-  public void freeze(boolean throwException);
-
-  /**
-   * Allow any index modifications. Is called after {@link #freeze(boolean)} command.
-   */
-  public void release();
-
-  /**
-   * Is used to indicate that several index changes are going to be seen as single unit from users point of view. This command is
-   * used with conjunction of {@link #freeze(boolean)} command.
-   */
-  public void acquireModificationLock();
-
-  /**
-   * Is used to indicate that several index changes are going to be seen as single unit from users point of view were completed.
-   */
-  public void releaseModificationLock();
 
   /**
    * Applies exclusive lock on keys which prevents read/modification of this keys in following methods:
@@ -211,6 +187,8 @@ public interface OIndexInternal<T> extends OIndex<T> {
   public void commit();
 
   public void postCommit();
+
+  public void setType(OType type);
 
   public final class IndexMetadata {
     private final String           name;

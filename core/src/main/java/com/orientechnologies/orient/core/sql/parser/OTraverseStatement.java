@@ -32,37 +32,35 @@ public class OTraverseStatement extends OStatement {
     super(p, id);
   }
 
-  @Override
-  public String toString() {
-    StringBuilder builder = new StringBuilder();
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("TRAVERSE ");
     boolean first = true;
     for (OTraverseProjectionItem item : projections) {
       if (!first) {
         builder.append(", ");
       }
-      builder.append(item.toString());
+      item.toString(params, builder);
       first = false;
     }
 
     if (target != null) {
       builder.append(" FROM ");
-      builder.append(target.toString());
+      target.toString(params, builder);
     }
 
     if (maxDepth != null) {
       builder.append(" MAXDEPTH ");
-      builder.append(maxDepth.toString());
+      maxDepth.toString(params, builder);
     }
 
     if (whereClause != null) {
       builder.append(" WHILE ");
-      builder.append(whereClause.toString());
+      whereClause.toString(params, builder);
     }
 
     if (limit != null) {
       builder.append(" ");
-      builder.append(limit);
+      limit.toString(params, builder);
     }
 
     if (strategy != null) {
@@ -77,28 +75,7 @@ public class OTraverseStatement extends OStatement {
       }
     }
 
-    return builder.toString();
   }
 
-  @Override
-  public void replaceParameters(Map<Object, Object> params) {
-    if (target != null) {
-      target.replaceParameters(params);
-    }
-
-    if (projections != null) {
-      for (OTraverseProjectionItem item : projections) {
-        item.replaceParameters(params);
-      }
-    }
-
-    if (whereClause != null) {
-      whereClause.replaceParameters(params);
-    }
-
-    if (limit != null) {
-      limit.replaceParameters(params);
-    }
-  }
 }
 /* JavaCC - OriginalChecksum=47399a3a3d5a423768bbdc70ee957464 (do not edit this line) */

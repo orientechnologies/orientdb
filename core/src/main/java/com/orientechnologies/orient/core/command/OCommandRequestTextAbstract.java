@@ -26,8 +26,10 @@ import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
+import com.orientechnologies.orient.core.serialization.serializer.ONetworkThreadLocalSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 
 import java.util.HashMap;
@@ -134,11 +136,16 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
 
     parameters = null;
 
+    ORecordSerializer serializer = ONetworkThreadLocalSerializer.getNetworkSerializer();
+
     final boolean simpleParams = buffer.getAsBoolean();
     if (simpleParams) {
       final byte[] paramBuffer = buffer.getAsByteArray();
       final ODocument param = new ODocument();
-      param.fromStream(paramBuffer);
+      if (serializer != null)
+        serializer.fromStream(paramBuffer, param, null);
+      else
+        param.fromStream(paramBuffer);
 
       Map<Object, Object> params = param.field("params");
       parameters = new HashMap<Object, Object>();
@@ -170,7 +177,10 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
     if (compositeKeyParamsPresent) {
       final byte[] paramBuffer = buffer.getAsByteArray();
       final ODocument param = new ODocument();
-      param.fromStream(paramBuffer);
+      if (serializer != null)
+        serializer.fromStream(paramBuffer, param, null);
+      else
+        param.fromStream(paramBuffer);
 
       final Map<Object, Object> compositeKeyParams = param.field("compositeKeyParams");
 

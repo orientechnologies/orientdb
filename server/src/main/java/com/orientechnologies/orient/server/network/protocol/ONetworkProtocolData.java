@@ -43,11 +43,11 @@ public class ONetworkProtocolData {
   public String              driverName                = null;
   public String              driverVersion             = null;
   public short               protocolVersion           = -1;
+  public int                 sessionId                 = -1;
   public String              clientId                  = null;
   public String              currentUserId             = null;
   public String              serializationImpl         = null;
   public boolean             serverUser                = false;
   public String              serverUsername            = null;
-  public boolean             stateFull                 = false;
   public OCommandRequestText command                   = null;
 }

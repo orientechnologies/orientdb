@@ -19,8 +19,14 @@ package com.orientechnologies.orient.core.schedule;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
+import com.orientechnologies.orient.core.hook.ORecordHook.RESULT;
+import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.schedule.OSchedulerListener.SCHEDULER_STATUS;
 
 /**
@@ -32,7 +38,6 @@ public class OSchedulerTrigger extends ODocumentHookAbstract {
 
   public OSchedulerTrigger(ODatabaseDocument database) {
     super(database);
-    setIncludeClasses(OScheduler.CLASSNAME);
   }
 
   public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
@@ -40,11 +45,21 @@ public class OSchedulerTrigger extends ODocumentHookAbstract {
   }
 
   @Override
+  public RESULT onTrigger(TYPE iType, ORecord iRecord) {
+    OImmutableClass clazz = null;
+    if (iRecord instanceof ODocument)
+      clazz = ODocumentInternal.getImmutableSchemaClass((ODocument) iRecord);
+    if (clazz == null || !clazz.isScheduler())
+      return RESULT.RECORD_NOT_CHANGED;
+    return super.onTrigger(iType, iRecord);
+  }
+
+  @Override
   public RESULT onRecordBeforeCreate(final ODocument iDocument) {
     String name = iDocument.field(OScheduler.PROP_NAME);
     OScheduler scheduler = database.getMetadata().getSchedulerListener().getScheduler(name);
     if (scheduler != null) {
-      throw new OException("Duplicate Scheduler");
+      throw new ODatabaseException("Scheduler with name " + name + " already exists in database");
     }
     boolean start = iDocument.field(OScheduler.PROP_STARTED) == null ? false : ((Boolean) iDocument.field(OScheduler.PROP_STARTED));
     if (start)

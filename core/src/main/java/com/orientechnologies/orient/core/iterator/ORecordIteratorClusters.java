@@ -70,13 +70,19 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
   }
 
   public ORecordIteratorClusters<REC> setRange(final ORID iBegin, final ORID iEnd) {
+    final ORID oldBegin = beginRange;
+    final ORID oldEnd = endRange;
+
     beginRange = iBegin;
     endRange = iEnd;
+
+    if ((oldBegin == null ? iBegin == null : oldBegin.equals(iBegin)) && (oldEnd == null ? iEnd == null : oldEnd.equals(iEnd)))
+      return this;
+
     if (currentRecord != null && outsideOfTheRange(currentRecord.getIdentity())) {
       currentRecord = null;
     }
 
-    updateClusterRange();
     begin();
     return this;
   }
@@ -159,7 +165,7 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
         try {
           currentRecord = readCurrentRecord(record, 0);
         } catch (Exception e) {
-          OLogManager.instance().error(this, "Error during read of record.", e);
+          OLogManager.instance().error(this, "Error during read of record", e);
 
           currentRecord = null;
         }
@@ -293,8 +299,7 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
     currentClusterIdx = 0;
     current.clusterId = clusterIds[currentClusterIdx];
 
-    if (liveUpdated)
-      updateClusterRange();
+    updateClusterRange();
 
     resetCurrentPosition();
     nextPosition();
@@ -322,8 +327,8 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
 
     browsedRecords = 0;
     currentClusterIdx = clusterIds.length - 1;
-    if (liveUpdated)
-      updateClusterRange();
+
+    updateClusterRange();
 
     current.clusterId = clusterIds[currentClusterIdx];
 
@@ -369,6 +374,10 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
 
   public ORID getEndRange() {
     return endRange;
+  }
+
+  public int[] getClusterIds() {
+    return clusterIds;
   }
 
   @Override

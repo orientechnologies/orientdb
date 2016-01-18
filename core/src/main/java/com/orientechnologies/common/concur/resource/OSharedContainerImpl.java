@@ -19,18 +19,12 @@
  */
 package com.orientechnologies.common.concur.resource;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
 
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.exception.OStorageException;
 
 /**
  * Shared container that works with callbacks like closures. If the resource implements the {@link OSharedResource} interface then
@@ -63,7 +57,7 @@ public class OSharedContainerImpl implements OSharedContainer {
       try {
         value = iCallback.call();
       } catch (Exception e) {
-        throw new OException("Error on creation of shared resource", e);
+        throw OException.wrapException(new OStorageException("Error on creation of shared resource"), e);
       }
 
       if (value instanceof OSharedResource)

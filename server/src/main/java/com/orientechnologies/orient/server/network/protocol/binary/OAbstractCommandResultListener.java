@@ -34,13 +34,20 @@ import com.orientechnologies.orient.core.record.ORecord;
  *
  */
 public abstract class OAbstractCommandResultListener implements OCommandResultListener {
+  protected final OCommandResultListener wrappedResultListener;
 
-  private OFetchPlan fetchPlan;
+  private OFetchPlan                     fetchPlan;
+
+  protected OAbstractCommandResultListener(final OCommandResultListener wrappedResultListener) {
+    this.wrappedResultListener = wrappedResultListener;
+  }
 
   public abstract boolean isEmpty();
 
   @Override
   public void end() {
+    if (wrappedResultListener != null)
+      wrappedResultListener.end();
   }
 
   public void setFetchPlan(final String iText) {
@@ -53,5 +60,13 @@ public abstract class OAbstractCommandResultListener implements OCommandResultLi
       final OFetchContext context = new ORemoteFetchContext();
       OFetchHelper.fetch(record, record, fetchPlan, iFetchListener, context, "");
     }
+  }
+
+  @Override
+  public Object getResult() {
+    if (wrappedResultListener != null)
+      return wrappedResultListener.getResult();
+
+    return null;
   }
 }

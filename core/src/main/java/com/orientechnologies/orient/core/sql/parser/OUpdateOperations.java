@@ -40,91 +40,70 @@ public class OUpdateOperations extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public String toString() {
-    StringBuilder result = new StringBuilder();
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     boolean first = true;
     switch (type) {
     case TYPE_SET:
-      result.append("SET ");
+      builder.append("SET ");
       for (OUpdateItem item : this.updateItems) {
         if (!first) {
-          result.append(", ");
+          builder.append(", ");
         }
-        result.append(item);
+        item.toString(params, builder);
         first = false;
       }
       break;
     case TYPE_PUT:
-      result.append("PUT ");
+      builder.append("PUT ");
       for (OUpdatePutItem item : this.updatePutItems) {
         if (!first) {
-          result.append(", ");
+          builder.append(", ");
         }
-        result.append(item);
+        item.toString(params, builder);
         first = false;
       }
       break;
     case TYPE_MERGE:
-      result.append("MERGE ");
-      result.append(json.toString());
+      builder.append("MERGE ");
+      json.toString(params, builder);
       break;
     case TYPE_CONTENT:
-      result.append("CONTENT ");
-      result.append(json.toString());
+      builder.append("CONTENT ");
+      json.toString(params, builder);
       break;
     case TYPE_INCREMENT:
-      result.append("INCREMENT ");
+      builder.append("INCREMENT ");
       for (OUpdateIncrementItem item : this.updateIncrementItems) {
         if (!first) {
-          result.append(", ");
+          builder.append(", ");
         }
-        result.append(item);
+        item.toString(params, builder);
         first = false;
       }
       break;
     case TYPE_ADD:
-      result.append("ADD ");
+      builder.append("ADD ");
       for (OUpdateIncrementItem item : this.updateIncrementItems) {
         if (!first) {
-          result.append(", ");
+          builder.append(", ");
         }
-        result.append(item);
+        item.toString(params, builder);
         first = false;
       }
       break;
     case TYPE_REMOVE:
-      result.append("REMOVE ");
+      builder.append("REMOVE ");
       for (OUpdateRemoveItem item : this.updateRemoveItems) {
         if (!first) {
-          result.append(", ");
+          builder.append(", ");
         }
-        result.append(item);
+        item.toString(params, builder);
         first = false;
       }
       break;
 
     }
-    return result.toString();
   }
 
-  public void replaceParameters(Map<Object, Object> params) {
-    for (OUpdateItem item : updateItems) {
-      item.replaceParameters(params);
-    }
-    for (OUpdatePutItem item : updatePutItems) {
-      item.replaceParameters(params);
-    }
-    for (OUpdateIncrementItem item : updateIncrementItems) {
-      item.replaceParameters(params);
-    }
-    for (OUpdateRemoveItem item : updateRemoveItems) {
-      item.replaceParameters(params);
-    }
-    if (json != null) {
-      json.replaceParameters(params);
-    }
-
-  }
 }
 /* JavaCC - OriginalChecksum=0eca3b3e4e3d96c42db57b7cd89cf755 (do not edit this line) */

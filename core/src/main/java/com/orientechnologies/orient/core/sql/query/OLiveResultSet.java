@@ -13,12 +13,15 @@ import java.util.concurrent.LinkedBlockingQueue;
 /**
  * Created by luigidellaquila on 18/03/15.
  */
-public class OLiveResultSet<T> extends OResultSet<T> {
+public class OLiveResultSet<T> extends OConcurrentResultSet<T> {
 
   final BlockingQueue<T> queue = new LinkedBlockingQueue<T>();
 
-  public OResultSet<T> setCompleted() {
-//    completed = true;
+  public OLiveResultSet() {
+  }
+
+  public OConcurrentResultSet<T> setCompleted() {
+    // completed = true;
     synchronized (waitForNextItem) {
       waitForNextItem.notifyAll();
     }
@@ -28,14 +31,14 @@ public class OLiveResultSet<T> extends OResultSet<T> {
     return this;
   }
 
-  public void complete(){
+  public void complete() {
     completed = true;
-        synchronized (waitForNextItem) {
-          waitForNextItem.notifyAll();
-        }
-        synchronized (waitForCompletion) {
-          waitForCompletion.notifyAll();
-        }
+    synchronized (waitForNextItem) {
+      waitForNextItem.notifyAll();
+    }
+    synchronized (waitForCompletion) {
+      waitForCompletion.notifyAll();
+    }
   }
 
   public T set(int index, T element) {
@@ -181,11 +184,12 @@ public class OLiveResultSet<T> extends OResultSet<T> {
   }
 
   public int getLimit() {
-    return limit;
+    return wrapped.getLimit();
   }
 
-  public void setLimit(final int limit) {
-    this.limit = limit;
+  public OResultSet<T> setLimit(final int limit) {
+    wrapped.setLimit(limit);
+    return null;
   }
 
   @Override
@@ -223,9 +227,8 @@ public class OLiveResultSet<T> extends OResultSet<T> {
     }
   }
 
-  public OResultSet<T> copy() {
-    OResultSet<T> newValue = new OLiveResultSet<T>();
-
+  public OLiveResultSet<T> copy() {
+    OLiveResultSet<T> newValue = new OLiveResultSet<T>();
     return newValue;
   }
 }

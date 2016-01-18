@@ -20,8 +20,9 @@
 
 package com.orientechnologies.common.serialization.types;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
+
+import java.nio.ByteBuffer;
 
 /**
  * Serializer for boolean type .
@@ -33,9 +34,9 @@ public class OBooleanSerializer implements OBinarySerializer<Boolean> {
   /**
    * size of boolean value in bytes
    */
-  public static final int          BOOLEAN_SIZE = 1;
-  public static final byte         ID           = 1;
-  public static OBooleanSerializer INSTANCE     = new OBooleanSerializer();
+  public static final int                BOOLEAN_SIZE = 1;
+  public static final byte               ID           = 1;
+  public static final OBooleanSerializer INSTANCE     = new OBooleanSerializer();
 
   public int getObjectSize(Boolean object, Object... hints) {
     return BOOLEAN_SIZE;
@@ -87,49 +88,6 @@ public class OBooleanSerializer implements OBinarySerializer<Boolean> {
     return deserializeLiteral(stream, startPosition);
   }
 
-  public void serializeInDirectMemory(Boolean object, ODirectMemoryPointer pointer, long offset, Object... hints) {
-    pointer.setByte(offset, object ? (byte) 1 : 0);
-  }
-
-  @Override
-  public void serializeInDirectMemoryObject(final Boolean object, final ODirectMemoryPointer pointer, final long offset,
-      final Object... hints) {
-    pointer.setByte(offset, object.booleanValue() ? (byte) 1 : 0);
-  }
-
-  public void serializeInDirectMemory(final boolean object, final ODirectMemoryPointer pointer, final long offset,
-      final Object... hints) {
-    pointer.setByte(offset, object ? (byte) 1 : 0);
-  }
-
-  @Override
-  public Boolean deserializeFromDirectMemoryObject(final ODirectMemoryPointer pointer, final long offset) {
-    return pointer.getByte(offset) > 0;
-  }
-
-  @Override
-  public Boolean deserializeFromDirectMemoryObject(OWALChangesTree.PointerWrapper wrapper, long offset) {
-    return wrapper.getByte(offset) > 0;
-  }
-
-  public boolean deserializeFromDirectMemory(final ODirectMemoryPointer pointer, final long offset) {
-    return pointer.getByte(offset) > 0;
-  }
-
-  public boolean deserializeFromDirectMemory(OWALChangesTree.PointerWrapper wrapper, long offset) {
-    return wrapper.getByte(offset) > 0;
-  }
-
-  @Override
-  public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
-    return BOOLEAN_SIZE;
-  }
-
-  @Override
-  public int getObjectSizeInDirectMemory(OWALChangesTree.PointerWrapper wrapper, long offset) {
-    return BOOLEAN_SIZE;
-  }
-
   public boolean isFixedLength() {
     return true;
   }
@@ -141,5 +99,30 @@ public class OBooleanSerializer implements OBinarySerializer<Boolean> {
   @Override
   public Boolean preprocess(final Boolean value, final Object... hints) {
     return value;
+  }
+
+  @Override
+  public void serializeInByteBufferObject(Boolean object, ByteBuffer buffer, Object... hints) {
+    buffer.put(object.booleanValue() ? (byte) 1 : (byte) 0);
+  }
+
+  @Override
+  public Boolean deserializeFromByteBufferObject(ByteBuffer buffer) {
+    return buffer.get() > 0;
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
+    return BOOLEAN_SIZE;
+  }
+
+  @Override
+  public Boolean deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+    return walChanges.getByteValue(buffer, offset) > 0;
+  }
+
+  @Override
+  public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+    return BOOLEAN_SIZE;
   }
 }

@@ -2,7 +2,10 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 
 import java.util.List;
 import java.util.Map;
@@ -21,16 +24,15 @@ public class ONotBlock extends OBooleanExpression {
   }
 
   @Override
-  public boolean evaluate(OIdentifiable currentRecord) {
+  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
     if (sub == null) {
       return true;
     }
-    return !sub.evaluate(currentRecord);
-  }
-
-  @Override
-  public void replaceParameters(Map<Object, Object> params) {
-    sub.replaceParameters(params);
+    boolean result = sub.evaluate(currentRecord, ctx);
+    if (negate) {
+      return !result;
+    }
+    return result;
   }
 
   public OBooleanExpression getSub() {
@@ -49,12 +51,11 @@ public class ONotBlock extends OBooleanExpression {
     this.negate = negate;
   }
 
-  @Override
-  public String toString() {
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (negate) {
-      return "NOT " + sub.toString();
+      builder.append("NOT ");
     }
-    return sub.toString();
+    sub.toString(params, builder);
   }
 
   @Override
@@ -72,5 +73,21 @@ public class ONotBlock extends OBooleanExpression {
     return sub.getExternalCalculationConditions();
   }
 
+  public List<OBinaryCondition> getIndexedFunctionConditions(OClass iSchemaClass, ODatabaseDocumentInternal database) {
+    if (sub == null) {
+      return null;
+    }
+    if (negate) {
+      return null;
+    }
+    return sub.getIndexedFunctionConditions(iSchemaClass, database);
+  }
+
+  @Override public List<OAndBlock> flatten() {
+    if(!negate){
+      return sub.flatten();
+    }
+    return super.flatten();
+  }
 }
 /* JavaCC - OriginalChecksum=1926313b3f854235aaa20811c22d583b (do not edit this line) */

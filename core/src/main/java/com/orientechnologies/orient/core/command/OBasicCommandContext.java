@@ -21,11 +21,15 @@ package com.orientechnologies.orient.core.command;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Basic implementation of OCommandContext interface that stores variables in a map. Supports parent/child context to build a tree
@@ -45,10 +49,14 @@ public class OBasicCommandContext implements OCommandContext {
   protected OCommandContext                                                          child;
   protected Map<String, Object>                                                      variables;
 
+  protected Map<Object, Object>                                                      inputParameters;
+
   // MANAGES THE TIMEOUT
   private long                                                                       executionStartedOn;
   private long                                                                       timeoutMs;
   private com.orientechnologies.orient.core.command.OCommandContext.TIMEOUT_STRATEGY timeoutStrategy;
+  protected AtomicLong                                                               resultsProcessed      = new AtomicLong(0);
+  protected Set<Object>                                                              uniqueResult          = new HashSet<Object>();
 
   public OBasicCommandContext() {
   }
@@ -285,9 +293,62 @@ public class OBasicCommandContext implements OCommandContext {
     return true;
   }
 
+  @Override
+  public OCommandContext copy() {
+    final OBasicCommandContext copy = new OBasicCommandContext();
+    copy.init();
+
+    if (variables != null && !variables.isEmpty())
+      copy.variables.putAll(variables);
+
+    copy.recordMetrics = recordMetrics;
+    copy.parent = parent;
+    copy.child = child;
+    return copy;
+  }
+
+  @Override
+  public void merge(final OCommandContext iContext) {
+    // TODO: SOME VALUES NEED TO BE MERGED
+  }
+
   private void init() {
     if (variables == null)
       variables = new HashMap<String, Object>();
   }
 
+  public Map<Object, Object> getInputParameters() {
+    if (inputParameters != null) {
+      return inputParameters;
+    }
+
+    return parent == null ? null : parent.getInputParameters();
+  }
+
+  public void setInputParameters(Map<Object, Object> inputParameters) {
+    this.inputParameters = inputParameters;
+
+  }
+
+  /**
+   * returns the number of results processed. This is intended to be used with LIMIT in SQL statements
+   * 
+   * @return
+   */
+  public AtomicLong getResultsProcessed() {
+    return resultsProcessed;
+  }
+
+  /**
+   * adds an item to the unique result set
+   * @param o the result item to add
+   * @return true if the element is successfully added (it was not present yet), false otherwise (it was already present)
+   */
+  public synchronized boolean addToUniqueResult(Object o) {
+    Object toAdd = o;
+    if(o instanceof ODocument){
+      toAdd = new ODocumentEqualityWrapper((ODocument) o);
+    }
+    return this.uniqueResult.add(toAdd);
+  }
 }

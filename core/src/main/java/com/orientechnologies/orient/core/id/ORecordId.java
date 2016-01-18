@@ -19,6 +19,11 @@
  */
 package com.orientechnologies.orient.core.id;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.List;
+
 import com.orientechnologies.common.util.OPatternConst;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -29,11 +34,6 @@ import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.storage.OStorage;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.List;
 
 public class ORecordId implements ORID {
   public static final ORecordId EMPTY_RECORD_ID        = new ORecordId();
@@ -158,9 +158,7 @@ public class ORecordId implements ORID {
 
   @Override
   public int hashCode() {
-    int result = clusterId;
-    result = 31 * result + (int) (clusterPosition ^ (clusterPosition >>> 32));
-    return result;
+    return 31 * clusterId + 103 * (int) clusterPosition;
   }
 
   public int compareTo(final OIdentifiable iOther) {
@@ -255,8 +253,8 @@ public class ORecordId implements ORID {
     }
 
     if (!OStringSerializerHelper.contains(iRecordId, SEPARATOR))
-      throw new IllegalArgumentException("Argument '" + iRecordId
-          + "' is not a RecordId in form of string. Format must be: <cluster-id>:<cluster-position>");
+      throw new IllegalArgumentException(
+          "Argument '" + iRecordId + "' is not a RecordId in form of string. Format must be: <cluster-id>:<cluster-position>");
 
     final List<String> parts = OStringSerializerHelper.split(iRecordId, SEPARATOR, PREFIX);
 
@@ -279,8 +277,8 @@ public class ORecordId implements ORID {
 
   @Override
   public void lock(final boolean iExclusive) {
-    ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction()
-        .lockRecord(this, iExclusive ? OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK : OStorage.LOCKING_STRATEGY.SHARED_LOCK);
+    ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction().lockRecord(this,
+        iExclusive ? OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK : OStorage.LOCKING_STRATEGY.SHARED_LOCK);
   }
 
   @Override

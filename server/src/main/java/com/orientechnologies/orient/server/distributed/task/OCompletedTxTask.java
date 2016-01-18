@@ -112,7 +112,7 @@ public class OCompletedTxTask extends OAbstractReplicatedTask {
   @Override
   public long getDistributedTimeout() {
     final long to = OGlobalConfiguration.DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT.getValueAsLong();
-    return to + ((to / 2) * locks.size());
+    return to + (100 * locks.size());
   }
 
   @Override

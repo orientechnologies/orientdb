@@ -20,28 +20,32 @@
 
 package com.orientechnologies.orient.core.storage;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Arrays;
 
 /**
  * This class represent CRUD operation result RET is the actual result Stores addition information about command execution process
  * Flag {@code isMoved == true} indicates that operation has been executed on local OrientDB server node, {@code isMoved == false}
  * indicates that operation has been executed on remote OrientDB node. This information will help to maintain local indexes and
  * caches in consistent state
- * 
+ *
  * @author edegtyarenko
  * @since 28.09.12 13:47
  */
 public class OStorageOperationResult<RET> implements Externalizable {
 
-  private RET     result;
-  private byte[]  modifiedRecordContent;
+  private RET result;
+
+  private byte[] modifiedRecordContent;
   private boolean isMoved;
-  
+
   /**
-   * OStorageOperationResult void constructor as required for Exernalizable 
+   * OStorageOperationResult void constructor as required for Exernalizable
    */
   public OStorageOperationResult() {
   }
@@ -50,17 +54,20 @@ public class OStorageOperationResult<RET> implements Externalizable {
     this(result, null, false);
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP2")
   public OStorageOperationResult(final RET result, final boolean moved) {
     this.result = result;
     this.isMoved = moved;
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP")
   public OStorageOperationResult(final RET result, final byte[] content, final boolean moved) {
     this.result = result;
     this.modifiedRecordContent = content;
     this.isMoved = moved;
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP")
   public byte[] getModifiedRecordContent() {
     return modifiedRecordContent;
   }
@@ -92,7 +99,17 @@ public class OStorageOperationResult<RET> implements Externalizable {
     final int modifiedRecordContentLength = in.readInt();
     if (modifiedRecordContentLength > -1) {
       modifiedRecordContent = new byte[modifiedRecordContentLength];
-      in.read(modifiedRecordContent);
+      int bytesRead = 0;
+
+      while (bytesRead < modifiedRecordContentLength) {
+        int rb = in.read(modifiedRecordContent, bytesRead, modifiedRecordContentLength - bytesRead);
+
+        if (rb < 0)
+          break;
+
+        bytesRead += rb;
+      }
+
     }
   }
 }

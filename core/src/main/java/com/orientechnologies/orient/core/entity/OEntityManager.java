@@ -1,23 +1,31 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.entity;
+
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.reflection.OReflectionHelper;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.OUser;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -26,13 +34,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.reflection.OReflectionHelper;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.metadata.security.OUser;
 
 public class OEntityManager {
   private static Map<String, OEntityManager> databaseInstances = new HashMap<String, OEntityManager>();
@@ -70,15 +71,15 @@ public class OEntityManager {
         return createInstance(entityClass);
 
     } catch (Exception e) {
-      throw new OConfigurationException("Error while creating new pojo of class '" + iClassName + "'", e);
+      throw OException.wrapException(new OConfigurationException("Error while creating new pojo of class '" + iClassName + "'"), e);
     }
 
     try {
       // TRY TO INSTANTIATE THE CLASS DIRECTLY BY ITS NAME
       return createInstance(Class.forName(iClassName));
     } catch (Exception e) {
-      throw new OConfigurationException("The class '" + iClassName
-          + "' was not found between the entity classes. Ensure registerEntityClasses(package) has been called first.", e);
+      throw OException.wrapException(new OConfigurationException("The class '" + iClassName
+          + "' was not found between the entity classes. Ensure registerEntityClasses(package) has been called first"), e);
     }
   }
 
@@ -114,7 +115,7 @@ public class OEntityManager {
     try {
       classes = OReflectionHelper.getClassesFor(iPackageName, iClassLoader);
     } catch (ClassNotFoundException e) {
-      throw new OException(e);
+      throw OException.wrapException(new ODatabaseException("Class can not be found in package " + iPackageName), e);
     }
     for (Class<?> c : classes) {
       deregisterEntityClass(c);
@@ -154,7 +155,7 @@ public class OEntityManager {
     try {
       registerEntityClasses(OReflectionHelper.getClassesFor(iClassNames, iClassLoader));
     } catch (ClassNotFoundException e) {
-      throw new OException(e);
+      throw OException.wrapException(new ODatabaseException("Entity class can not be found"), e);
     }
   }
 
@@ -181,7 +182,7 @@ public class OEntityManager {
     try {
       registerEntityClasses(OReflectionHelper.getClassesFor(iPackageName, iClassLoader));
     } catch (ClassNotFoundException e) {
-      throw new OException(e);
+      throw OException.wrapException(new ODatabaseException("Entity class can not be found"), e);
     }
   }
 
@@ -189,7 +190,7 @@ public class OEntityManager {
     for (Class<?> c : classes) {
       if (!classHandler.containsEntityClass(c)) {
         if (c.isAnonymousClass()) {
-          OLogManager.instance().debug(this, "Skip registration of anonymous class '%s'.", c.getName());
+          OLogManager.instance().debug(this, "Skip registration of anonymous class '%s'", c.getName());
           continue;
         }
         classHandler.registerEntityClass(c);
@@ -203,34 +204,30 @@ public class OEntityManager {
     }
   }
 
-
-
-
-
   /**
    * Scans all classes accessible from the context class loader which belong to the given class and all it's attributes - classes.
    *
-   * @param aClass The class to start from
-   * @param recursive Beginning from the class, it will register all classes that are direct or indirect a attribute class
+   * @param aClass
+   *          The class to start from
+   * @param recursive
+   *          Beginning from the class, it will register all classes that are direct or indirect a attribute class
    *
    */
   public synchronized void registerEntityClasses(Class<?> aClass, boolean recursive) {
-    if (recursive){
+    if (recursive) {
       classHandler.registerEntityClass(aClass);
       Field[] declaredFields = aClass.getDeclaredFields();
       for (Field declaredField : declaredFields) {
         Class<?> declaredFieldType = declaredField.getType();
-          if (!classHandler.containsEntityClass(declaredFieldType)) {
-//            classHandler.registerEntityClass(declaredFieldType);
-            registerEntityClasses(declaredFieldType, recursive);
-          }
+        if (!classHandler.containsEntityClass(declaredFieldType)) {
+          // classHandler.registerEntityClass(declaredFieldType);
+          registerEntityClasses(declaredFieldType, recursive);
+        }
       }
-    }else{
+    } else {
       classHandler.registerEntityClass(aClass);
     }
   }
-
-
 
   /**
    * Sets the received handler as default and merges the classes all together.

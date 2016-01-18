@@ -19,6 +19,11 @@ public class DepthFetchPlanTest {
     public int count;
 
     @Override
+    public boolean requireFieldProcessing() {
+      return true;
+    }
+
+    @Override
     protected void sendRecord(ORecord iLinked) {
       count++;
     }
@@ -81,6 +86,5 @@ public class DepthFetchPlanTest {
       database.drop();
     }
   }
-  
 
 }

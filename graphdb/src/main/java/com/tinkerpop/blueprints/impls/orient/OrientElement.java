@@ -20,6 +20,14 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Map;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OPair;
@@ -44,14 +52,6 @@ import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.util.ElementHelper;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
-
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Map;
 
 /**
  * Base Graph Element where OrientVertex and OrientEdge classes extends from. Labels are managed as OrientDB classes.
@@ -275,7 +275,8 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     if (graph != null && fieldValue instanceof OIdentifiable && !(((OIdentifiable) fieldValue).getRecord() instanceof ORecordBytes))
       // CONVERT IT TO VERTEX/EDGE
       return (T) graph.getElement(fieldValue);
-    else if (OMultiValue.isMultiValue(fieldValue) && OMultiValue.getFirstValue(fieldValue) instanceof OIdentifiable) {
+    else if (!(fieldValue instanceof Map) && OMultiValue.isMultiValue(fieldValue)
+        && OMultiValue.getFirstValue(fieldValue) instanceof OIdentifiable) {
       final OIdentifiable firstValue = (OIdentifiable) OMultiValue.getFirstValue(fieldValue);
 
       if (firstValue instanceof ODocument) {
@@ -316,9 +317,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    *          Cluster name or null to use the default "E"
    */
   public void save(final String iClusterName) {
-    checkIfAttached();
-
-    final OrientBaseGraph graph = getGraph();
+    final OrientBaseGraph graph = checkIfAttached();
     graph.setCurrentGraphInThreadLocal();
 
     if (rawElement instanceof ODocument)
@@ -557,16 +556,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     if (classicDetachMode)
       return graph;
 
-    final OrientBaseGraph g = OrientBaseGraph.getActiveGraph();
-
-    if (graph != null && (g == null || !g.getRawGraph().getName().equals(graph.getRawGraph().getName()))) {
-      // INVALID GRAPH INSTANCE IN TL, SET CURRENT ONE
-      OrientBaseGraph.clearInitStack();
-      graph.makeActive();
-      return this.graph;
-    }
-
-    return g;
+    return OrientBaseGraph.getActiveGraph();
   }
 
   /**
@@ -632,7 +622,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     if (className == null)
       return null;
 
-    final OrientBaseGraph graph = getGraph();
+    OrientBaseGraph graph = getGraph();
     if (graph == null)
       return className;
 

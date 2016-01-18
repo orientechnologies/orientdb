@@ -16,9 +16,9 @@
  */
 package com.orientechnologies.orient.core.sql.method.misc;
 
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 /**
  * 
@@ -35,7 +35,7 @@ public class OSQLMethodIndexOf extends OAbstractSQLMethod {
 
   @Override
   public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
-    final String toFind = OStringSerializerHelper.getStringContent(iParams[0].toString());
+    final String toFind = OIOUtils.getStringContent(iParams[0].toString());
     int startIndex = iParams.length > 1 ? Integer.parseInt(iParams[1].toString()) : 0;
 
     return iThis != null ? iThis.toString().indexOf(toFind, startIndex) : null;

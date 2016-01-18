@@ -15,6 +15,7 @@ import com.orientechnologies.orient.server.OServerMain;
 import com.tinkerpop.blueprints.Vertex;
 
 public class OrientGraphMultithreadRemoteTest {
+  private static final String serverPort = System.getProperty("orient.server.port", "3080");
   private static OServer     server;
   private static String      oldOrientDBHome;
 
@@ -36,7 +37,7 @@ public class OrientGraphMultithreadRemoteTest {
     oldOrientDBHome = System.getProperty("ORIENTDB_HOME");
     System.setProperty("ORIENTDB_HOME", serverHome);
 
-    server = OServerMain.create();
+    server = new OServer(false);
     server.startup(OrientGraphMultithreadRemoteTest.class.getResourceAsStream("/embedded-server-config.xml"));
     server.activate();
 
@@ -61,7 +62,7 @@ public class OrientGraphMultithreadRemoteTest {
   @Before
   public void before() {
     OGlobalConfiguration.NETWORK_LOCK_TIMEOUT.setValue(15000);
-    final String url = "remote:localhost:3080/" + OrientGraphMultithreadRemoteTest.class.getSimpleName();
+    final String url = "remote:localhost:" + serverPort + "/" + OrientGraphMultithreadRemoteTest.class.getSimpleName();
 
     try {
       final OServerAdmin serverAdmin = new OServerAdmin(url);

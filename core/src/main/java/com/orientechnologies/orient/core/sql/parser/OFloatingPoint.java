@@ -2,6 +2,8 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import java.util.Map;
+
 public class OFloatingPoint extends ONumber {
 
   protected int    sign        = 1;
@@ -36,12 +38,11 @@ public class OFloatingPoint extends ONumber {
     this.stringValue = stringValue;
   }
 
-  @Override
-  public String toString() {
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (sign == -1) {
-      return "-" + stringValue;
+      builder.append("-");
     }
-    return stringValue;
+    builder.append(stringValue);
   }
 }
 /* JavaCC - OriginalChecksum=46acfb589f666717595e28f1b19611ae (do not edit this line) */

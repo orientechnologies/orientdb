@@ -19,17 +19,6 @@
  */
 package com.orientechnologies.orient.enterprise.channel;
 
-import com.orientechnologies.common.concur.lock.OAdaptiveLock;
-import com.orientechnologies.common.listener.OListenerManger;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
-import com.orientechnologies.common.profiler.OProfiler;
-import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelListener;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -40,6 +29,17 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.Enumeration;
 import java.util.concurrent.atomic.AtomicLong;
+
+import com.orientechnologies.common.concur.lock.OAdaptiveLock;
+import com.orientechnologies.common.listener.OListenerManger;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
+import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelListener;
 
 public abstract class OChannel extends OListenerManger<OChannelListener> {
   private static final OProfiler  PROFILER                     = Orient.instance().getProfiler();

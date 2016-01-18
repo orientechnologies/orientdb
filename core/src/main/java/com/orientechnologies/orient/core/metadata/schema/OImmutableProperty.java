@@ -1,4 +1,31 @@
+/*
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.metadata.schema;
+
+import com.orientechnologies.orient.core.collate.OCollate;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.metadata.schema.validation.ValidationBinaryComparable;
+import com.orientechnologies.orient.core.metadata.schema.validation.ValidationCollectionComparable;
+import com.orientechnologies.orient.core.metadata.schema.validation.ValidationMapComparable;
+import com.orientechnologies.orient.core.metadata.schema.validation.ValidationStringComparable;
 
 import java.util.Calendar;
 import java.util.Collection;
@@ -10,14 +37,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.orientechnologies.orient.core.collate.OCollate;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.metadata.schema.validation.ValidationBinaryComparable;
-import com.orientechnologies.orient.core.metadata.schema.validation.ValidationCollectionComparable;
-import com.orientechnologies.orient.core.metadata.schema.validation.ValidationMapComparable;
-import com.orientechnologies.orient.core.metadata.schema.validation.ValidationStringComparable;
-
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 10/21/14
@@ -26,6 +45,7 @@ public class OImmutableProperty implements OProperty {
   private final String              name;
   private final String              fullName;
   private final OType               type;
+  private final String              description;
 
   // do not make it volatile it is already thread safe.
   private OClass                    linkedClass = null;
@@ -51,6 +71,7 @@ public class OImmutableProperty implements OProperty {
     name = property.getName();
     fullName = property.getFullName();
     type = property.getType();
+    description = property.getDescription();
 
     if (property.getLinkedClass() != null)
       linkedClassName = property.getLinkedClass().getName();
@@ -130,9 +151,20 @@ public class OImmutableProperty implements OProperty {
   public String getFullName() {
     return fullName;
   }
+  
 
   @Override
   public OProperty setName(String iName) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public String getDescription() {
+    return description;
+  }
+  
+  @Override
+  public OProperty setDescription(String iDescription) {
     throw new UnsupportedOperationException();
   }
 
@@ -372,6 +404,8 @@ public class OImmutableProperty implements OProperty {
       return getType();
     case COLLATE:
       return getCollate();
+    case DESCRIPTION:
+      return getDescription();
     }
 
     throw new IllegalArgumentException("Cannot find attribute '" + attribute + "'");

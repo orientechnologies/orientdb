@@ -19,17 +19,16 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.version.ORecordVersion;
-
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 
 /**
  * Base interface for identifiable objects. This abstraction is required to use ORID and ORecord in many points.
@@ -38,8 +37,8 @@ import java.io.ObjectOutput;
  * 
  */
 public class OPlaceholder implements OIdentifiable, Externalizable {
-  private ORecordId      rid;
-  private ORecordVersion recordVersion;
+  private ORecordId rid;
+  private int       recordVersion;
 
   /**
    * Empty constructor used by serialization
@@ -47,14 +46,14 @@ public class OPlaceholder implements OIdentifiable, Externalizable {
   public OPlaceholder() {
   }
 
-  public OPlaceholder(final ORecordId rid, final ORecordVersion version) {
+  public OPlaceholder(final ORecordId rid, final int version) {
     this.rid = rid;
     this.recordVersion = version;
   }
 
   public OPlaceholder(final ORecord iRecord) {
     rid = (ORecordId) iRecord.getIdentity().copy();
-    recordVersion = iRecord.getRecordVersion().copy();
+    recordVersion = iRecord.getVersion();
   }
 
   @Override
@@ -74,12 +73,12 @@ public class OPlaceholder implements OIdentifiable, Externalizable {
 
     final OPlaceholder other = (OPlaceholder) obj;
 
-    return rid.equals(other.rid) && recordVersion.equals(other.recordVersion);
+    return rid.equals(other.rid) && recordVersion == other.recordVersion;
   }
 
   @Override
   public int hashCode() {
-    return rid.hashCode() + recordVersion.hashCode();
+    return rid.hashCode() + recordVersion;
   }
 
   @Override
@@ -92,31 +91,31 @@ public class OPlaceholder implements OIdentifiable, Externalizable {
     return rid.compare(o1, o2);
   }
 
-  public ORecordVersion getRecordVersion() {
+  public int getVersion() {
     return recordVersion;
   }
 
   @Override
   public String toString() {
-    return rid.toString() + " v." + recordVersion.toString();
+    return rid.toString() + " v." + recordVersion;
   }
 
   @Override
   public void writeExternal(ObjectOutput out) throws IOException {
     out.writeObject(rid);
-    out.writeObject(recordVersion);
+    out.writeInt(recordVersion);
   }
 
   @Override
   public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
     rid = (ORecordId) in.readObject();
-    recordVersion = (ORecordVersion) in.readObject();
+    recordVersion = in.readInt();
   }
 
   @Override
   public void lock(final boolean iExclusive) {
-    ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction()
-        .lockRecord(this, iExclusive ? OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK : OStorage.LOCKING_STRATEGY.SHARED_LOCK);
+    ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction().lockRecord(this,
+        iExclusive ? OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK : OStorage.LOCKING_STRATEGY.SHARED_LOCK);
   }
 
   @Override

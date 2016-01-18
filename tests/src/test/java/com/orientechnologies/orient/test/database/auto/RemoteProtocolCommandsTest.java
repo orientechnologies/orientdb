@@ -24,6 +24,7 @@ import static org.testng.AssertJUnit.assertTrue;
  */
 @Test(groups = "db")
 public class RemoteProtocolCommandsTest extends DocumentDBBaseTest {
+  private static final String serverPort = System.getProperty("orient.server.port", "2424");
 
   @Parameters(value = "url")
   public RemoteProtocolCommandsTest(@Optional String url) {
@@ -32,7 +33,8 @@ public class RemoteProtocolCommandsTest extends DocumentDBBaseTest {
 
   @Test
   public void testConnect() throws Exception {
-    final OServerAdmin admin = new OServerAdmin("remote:localhost:2424").connect("root", ODatabaseHelper.getServerRootPassword());
+    final OServerAdmin admin = new OServerAdmin("remote:localhost:" + serverPort).connect("root",
+        ODatabaseHelper.getServerRootPassword());
     admin.close();
   }
 
@@ -62,7 +64,7 @@ public class RemoteProtocolCommandsTest extends DocumentDBBaseTest {
     ODocument doc = new ODocument("RidCreationTestClass");
     doc.field("test", "test");
     ORecordId bad = new ORecordId(-1, -1);
-    OStorageOperationResult<OPhysicalPosition> res = storage.createRecord(bad, doc.toStream(), doc.getRecordVersion(),
+    OStorageOperationResult<OPhysicalPosition> res = storage.createRecord(bad, doc.toStream(), doc.getVersion(),
         ODocument.RECORD_TYPE, OPERATION_MODE.SYNCHRONOUS.ordinal(), null);
 
     // assertTrue(" the cluster is not valid", bad.clusterId >= 0);

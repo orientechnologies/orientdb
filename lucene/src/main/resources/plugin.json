@@ -1,0 +1,8 @@
+{
+	"name" : "lucene-index",
+	"version" : "1.7",
+	"javaClass": "com.orientechnologies.lucene.OLuceneIndexPlugin",
+	"parameters" : {},
+	"description" : "This is the Lucene Index integration",
+	"copyrights" : "Orient Technologies LTD"
+}

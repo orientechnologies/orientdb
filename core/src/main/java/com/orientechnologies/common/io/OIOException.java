@@ -19,17 +19,17 @@
   */
 package com.orientechnologies.common.io;
 
-import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.exception.OSystemException;
 
-public class OIOException extends OException {
+public class OIOException extends OSystemException {
 
-	private static final long	serialVersionUID	= -3003977236203691448L;
+  private static final long serialVersionUID = -3003977236203691448L;
 
-	public OIOException(String string) {
-		super(string);
-	}
+  public OIOException(OIOException exception) {
+    super(exception);
+  }
 
-	public OIOException(String message, Throwable cause) {
-		super(message, cause);
-	}
+  public OIOException(String string) {
+    super(string);
+  }
 }

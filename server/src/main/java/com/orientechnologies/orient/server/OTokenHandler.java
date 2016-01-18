@@ -15,28 +15,29 @@ import com.orientechnologies.orient.server.plugin.OServerPlugin;
  *
  * @author Emrul Islam <emrul@emrul.com> Copyright 2014 Emrul Islam
  */
-public interface OTokenHandler extends OServerPlugin {
+public interface OTokenHandler  {
+  @Deprecated
   public static final String TOKEN_HANDLER_NAME = "OTokenHandler";
 
   // Return null if token is unparseable or fails verification.
   // The returned token should be checked to ensure isVerified == true.
-  public OToken parseWebToken(byte tokenBytes[]) throws InvalidKeyException, NoSuchAlgorithmException, IOException;
+  OToken parseWebToken(byte tokenBytes[]) throws InvalidKeyException, NoSuchAlgorithmException, IOException;
 
-  public OToken parseBinaryToken(byte tokenBytes[]) throws InvalidKeyException, NoSuchAlgorithmException, IOException;
+  OToken parseBinaryToken(byte tokenBytes[]) throws InvalidKeyException, NoSuchAlgorithmException, IOException;
 
-  public boolean validateToken(OToken token, String command, String database);
+  boolean validateToken(OToken token, String command, String database);
 
-  public boolean validateBinaryToken(OToken token);
+  boolean validateBinaryToken(OToken token);
 
-  public ONetworkProtocolData getProtocolDataFromToken(OToken token);
+  ONetworkProtocolData getProtocolDataFromToken(OToken token);
 
   // Return a byte array representing a signed token
-  public byte[] getSignedWebToken(ODatabaseDocumentInternal db, OSecurityUser user);
+  byte[] getSignedWebToken(ODatabaseDocumentInternal db, OSecurityUser user);
 
-  public byte[] getSignedBinaryToken(ODatabaseDocumentInternal db, OSecurityUser user, ONetworkProtocolData data);
+  byte[] getSignedBinaryToken(ODatabaseDocumentInternal db, OSecurityUser user, ONetworkProtocolData data);
 
-  public byte[] renewIfNeeded(OToken token);
+  byte[] renewIfNeeded(OToken token);
 
-  public boolean isEnabled();
+  boolean isEnabled();
 
 }

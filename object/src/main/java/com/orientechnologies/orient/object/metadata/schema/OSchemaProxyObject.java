@@ -16,20 +16,13 @@
  */
 package com.orientechnologies.orient.object.metadata.schema;
 
-import java.lang.reflect.Field;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-
-import javassist.util.proxy.Proxy;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.reflection.OReflectionHelper;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.entity.OEntityManager;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
@@ -42,6 +35,13 @@ import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
+import javassist.util.proxy.Proxy;
+
+import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author luca.molino
@@ -71,11 +71,6 @@ public class OSchemaProxyObject implements OSchema {
   }
 
   @Override
-  public OClass createClass(Class<?> iClass, int iDefaultClusterId) {
-    return underlying.createClass(iClass, iDefaultClusterId);
-  }
-
-  @Override
   public OClass createClass(String iClassName) {
     return underlying.createClass(iClassName);
   }
@@ -84,32 +79,21 @@ public class OSchemaProxyObject implements OSchema {
   public OClass createClass(String iClassName, OClass iSuperClass) {
     return underlying.createClass(iClassName, iSuperClass);
   }
-  
+
   @Override
   public OClass createClass(String iClassName, OClass... superClasses) {
-	return underlying.createClass(iClassName, superClasses);
-  }
-
-  @Override
-  public OClass createClass(String iClassName, int iDefaultClusterId) {
-    return underlying.createClass(iClassName, iDefaultClusterId);
-  }
-
-  @Override
-  public OClass createClass(String iClassName, OClass iSuperClass, int iDefaultClusterId) {
-    return underlying.createClass(iClassName, iSuperClass, iDefaultClusterId);
+    return underlying.createClass(iClassName, superClasses);
   }
 
   @Override
   public OClass createClass(String iClassName, OClass iSuperClass, int[] iClusterIds) {
     return underlying.createClass(iClassName, iSuperClass, iClusterIds);
   }
-  
+
   @Override
-	public OClass createClass(String className, int[] clusterIds,
-			OClass... superClasses) {
-		return underlying.createClass(className, clusterIds, superClasses);
-	}
+  public OClass createClass(String className, int[] clusterIds, OClass... superClasses) {
+    return underlying.createClass(className, clusterIds, superClasses);
+  }
 
   @Override
   public OClass createAbstractClass(Class<?> iClass) {
@@ -125,11 +109,11 @@ public class OSchemaProxyObject implements OSchema {
   public OClass createAbstractClass(String iClassName, OClass iSuperClass) {
     return underlying.createAbstractClass(iClassName, iSuperClass);
   }
-  
+
   @Override
-	public OClass createAbstractClass(String iClassName, OClass... superClasses) {
-		return underlying.createAbstractClass(iClassName, superClasses);
-	}
+  public OClass createAbstractClass(String iClassName, OClass... superClasses) {
+    return underlying.createAbstractClass(iClassName, superClasses);
+  }
 
   @Override
   public void dropClass(String iClassName) {
@@ -165,11 +149,11 @@ public class OSchemaProxyObject implements OSchema {
   public OClass getOrCreateClass(String iClassName, OClass iSuperClass) {
     return underlying.getOrCreateClass(iClassName, iSuperClass);
   }
-  
+
   @Override
-	public OClass getOrCreateClass(String iClassName, OClass... superClasses) {
-	  return underlying.getOrCreateClass(iClassName, superClasses);
-	}
+  public OClass getOrCreateClass(String iClassName, OClass... superClasses) {
+    return underlying.getOrCreateClass(iClassName, superClasses);
+  }
 
   @Override
   public OGlobalProperty getGlobalPropertyById(int id) {
@@ -207,6 +191,11 @@ public class OSchemaProxyObject implements OSchema {
     return underlying.getClassesRelyOnCluster(iClusterName);
   }
 
+  @Override
+  public OClass createClass(String className, int clusters, OClass... superClasses) {
+    return underlying.createClass(className, clusters, superClasses);
+  }
+
   public OSchema getUnderlying() {
     return underlying;
   }
@@ -221,15 +210,6 @@ public class OSchemaProxyObject implements OSchema {
     return underlying.getClusterSelectionFactory();
   }
 
-  @Override
-  public boolean isFullCheckpointOnChange() {
-    return underlying.isFullCheckpointOnChange();
-  }
-
-  @Override
-  public void setFullCheckpointOnChange(boolean fullCheckpointOnChange) {
-    underlying.setFullCheckpointOnChange(fullCheckpointOnChange);
-  }
 
   /**
    * Scans all classes accessible from the context class loader which belong to the given package and subpackages.
@@ -254,7 +234,7 @@ public class OSchemaProxyObject implements OSchema {
     try {
       classes = OReflectionHelper.getClassesFor(iPackageName, iClassLoader);
     } catch (ClassNotFoundException e) {
-      throw new OException(e);
+      throw OException.wrapException(new ODatabaseException("Classes can not be loaded during schema generation"), e);
     }
     for (Class<?> c : classes) {
       generateSchema(c);
@@ -456,7 +436,8 @@ public class OSchemaProxyObject implements OSchema {
     }
   }
 
-  protected static void generateLinkProperty(ODatabaseDocument database, OClass schema, String field, OType t, Class<?> linkedClazz) {
+  protected static void generateLinkProperty(ODatabaseDocument database, OClass schema, String field, OType t,
+      Class<?> linkedClazz) {
     OClass linkedClass = database.getMetadata().getSchema().getClass(linkedClazz);
     if (linkedClass == null) {
       OObjectEntitySerializer.registerClass(linkedClazz);

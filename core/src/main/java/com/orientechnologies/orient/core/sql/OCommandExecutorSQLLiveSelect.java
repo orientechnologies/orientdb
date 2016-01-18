@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -57,17 +58,18 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
 
   public Object execute(final Map<Object, Object> iArgs) {
     try {
+      final ODatabaseDocumentInternal db = getDatabase();
       execInSeparateDatabase(new OCallable() {
         @Override
         public Object call(Object iArgument) {
-          return execDb = ((ODatabaseDocumentTx) getDatabase()).copy();
+          return execDb = ((ODatabaseDocumentTx) db).copy();
         }
       });
 
       synchronized (random) {
         token = random.nextInt();// TODO do something better ;-)!
       }
-      subscribeToLiveQuery(token);
+      subscribeToLiveQuery(token, db);
       bindDefaultContextVariables();
 
       if (iArgs != null)
@@ -94,8 +96,8 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
     }
   }
 
-  private void subscribeToLiveQuery(Integer token) {
-    OLiveQueryHook.subscribe(token, this);
+  private void subscribeToLiveQuery(Integer token, ODatabaseInternal db) {
+    OLiveQueryHook.subscribe(token, this, db);
   }
 
   public void onLiveResult(final ORecordOperation iOp) {
@@ -172,7 +174,7 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
     }
 
     if (this.parsedTarget.getTargetClasses() != null) {
-      for (OClass clazz : parsedTarget.getTargetClasses().keySet()) {
+      for (String clazz : parsedTarget.getTargetClasses().keySet()) {
         if (docClass.isSubClassOf(clazz)) {
           return true;
         }
@@ -199,6 +201,7 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
   }
 
   public void onLiveResultEnd() {
+    ((OLiveResultListener) request.getResultListener()).onUnsubscribe(token);
     execDb.close();
   }
 

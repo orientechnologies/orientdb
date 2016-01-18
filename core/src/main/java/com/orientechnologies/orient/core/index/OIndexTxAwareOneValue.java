@@ -39,6 +39,31 @@ import java.util.*;
  * 
  */
 public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
+  private static class MapEntry implements Map.Entry<Object, OIdentifiable> {
+    private final Object        key;
+    private final OIdentifiable resultValue;
+
+    public MapEntry(Object key, OIdentifiable resultValue) {
+      this.key = key;
+      this.resultValue = resultValue;
+    }
+
+    @Override
+    public Object getKey() {
+      return key;
+    }
+
+    @Override
+    public OIdentifiable getValue() {
+      return resultValue;
+    }
+
+    @Override
+    public OIdentifiable setValue(OIdentifiable value) {
+      throw new UnsupportedOperationException("setValue");
+    }
+  }
+
   private class PureTxBetweenIndexForwardCursor extends OIndexAbstractCursor {
     private final OTransactionIndexChanges indexChanges;
     private Object                         firstKey;
@@ -391,21 +416,6 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
   }
 
   private Map.Entry<Object, OIdentifiable> createMapEntry(final Object key, final OIdentifiable resultValue) {
-    return new Map.Entry<Object, OIdentifiable>() {
-      @Override
-      public Object getKey() {
-        return key;
-      }
-
-      @Override
-      public OIdentifiable getValue() {
-        return resultValue;
-      }
-
-      @Override
-      public OIdentifiable setValue(OIdentifiable value) {
-        throw new UnsupportedOperationException("setValue");
-      }
-    };
+    return new MapEntry(key, resultValue);
   }
 }

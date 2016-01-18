@@ -2,6 +2,7 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 import java.util.ArrayList;
@@ -30,62 +31,46 @@ public class OIndexMatchCondition extends OBooleanExpression {
   }
 
   @Override
-  public boolean evaluate(OIdentifiable currentRecord) {
+  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
     return false;
   }
 
-  @Override
-  public void replaceParameters(Map<Object, Object> params) {
-    if (leftExpressions != null) {
-      for (OExpression x : leftExpressions) {
-        x.replaceParameters(params);
-      }
-    }
-    if (rightExpressions != null) {
-      for (OExpression x : rightExpressions) {
-        x.replaceParameters(params);
-      }
-    }
-  }
 
-  @Override
-  public String toString() {
-    StringBuilder result = new StringBuilder();
-    result.append("KEY ");
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("KEY ");
     if (operator != null) {
-      result.append(operator.toString());
-      result.append(" [");
+      builder.append(operator.toString());
+      builder.append(" [");
       boolean first = true;
       for (OExpression x : leftExpressions) {
         if (!first) {
-          result.append(", ");
+          builder.append(", ");
         }
-        result.append(x.toString());
+        x.toString(params, builder);
         first = false;
       }
-      result.append("]");
+      builder.append("]");
     } else if (Boolean.TRUE.equals(between)) {
-      result.append(" BETWEEN [");
+      builder.append(" BETWEEN [");
       boolean first = true;
       for (OExpression x : leftExpressions) {
         if (!first) {
-          result.append(", ");
+          builder.append(", ");
         }
-        result.append(x.toString());
+        x.toString(params, builder);
         first = false;
       }
-      result.append("] AND [");
+      builder.append("] AND [");
       first = true;
       for (OExpression x : rightExpressions) {
         if (!first) {
-          result.append(", ");
+          builder.append(", ");
         }
-        result.append(x.toString());
+        x.toString(params, builder);
         first = false;
       }
-      result.append("]");
+      builder.append("]");
     }
-    return result.toString();
   }
 
   @Override public boolean supportsBasicCalculation() {

@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- ~ /* ~ * Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com) 
+    ~ * ~ * Licensed under the Apache License, Version 2.0 (the "License"); ~ 
+    * you may not use this file except in compliance with the License. ~ * You 
+    may obtain a copy of the License at ~ * ~ * http://www.apache.org/licenses/LICENSE-2.0 
+    ~ * ~ * Unless required by applicable law or agreed to in writing, software 
+    ~ * distributed under the License is distributed on an "AS IS" BASIS, ~ * 
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+    ~ * See the License for the specific language governing permissions and ~ 
+    * limitations under the License. ~ * ~ * For more information: http://www.orientechnologies.com 
+    ~ */ -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.orientechnologies</groupId>
+        <artifactId>orientdb-parent</artifactId>
+        <version>2.2.0-SNAPSHOT</version>
+        <relativePath>../</relativePath>
+    </parent>
+
+    <artifactId>orientdb-core</artifactId>
+
+    <name>OrientDB Core</name>
+
+    <properties>
+        <executeFindBugs>true</executeFindBugs>
+        <osgi.import>
+            com.orientechnologies.orient.graph.console;resolution:=optional,
+            com.orientechnologies.orient.graph.gremlin;resolution:=optional,
+            com.orientechnologies.orient.graph.handler;resolution:=optional,
+            com.orientechnologies.orient.graph.sql.functions;resolution:=optional,
+            javax.imageio.spi,sun.misc;resolution:=optional,
+            com.orientechnologies.orient.client.remote;resolution:=optional,
+            com.sun.jna;resolution:=optional,
+            org.xerial.snappy;resolution:=optional,
+            *
+        </osgi.import>
+        <osgi.export>com.orientechnologies.orient.core.*,
+            com.orientechnologies.common.*,com.orientechnologies.nio.*
+        </osgi.export>
+        <jna.version>4.0.0</jna.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <argLine>-ea -Xmx3072m -XX:MaxDirectMemorySize=512g
+            -Dstorage.diskCache.bufferSize=4096
+            -Dindex.flushAfterCreate=false
+            -Dstorage.makeFullCheckpointAfterCreate=false
+            -Dstorage.makeFullCheckpointAfterOpen=false
+            -Dstorage.makeFullCheckpointAfterClusterCreate=false
+            -Dstorage.wal.syncOnPageFlush=false
+            -Dstorage.configuration.syncOnUpdate=false
+            -Ddb.makeFullCheckpointOnIndexChange=false
+            -Ddb.makeFullCheckpointOnSchemaChange=false
+            -Dsecurity.userPasswordSaltIterations=10
+            -Dmemory.directMemory.trackMode=true
+        </argLine>
+    </properties>
+
+    <profiles>
+        <profile>
+            <id>development</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <exclude.test.1>**/LocalHashTableIterationTest.java</exclude.test.1>
+                <exclude.test.2>**/OLocalHashTableTest.java</exclude.test.2>
+                <exclude.test.3>**/SBTreeTest.java</exclude.test.3>
+                <exclude.test.4>**/SBTreeTestBigValues.java</exclude.test.4>
+                <exclude.test.5>**/OSBTreeBonsaiLocalTest.java</exclude.test.5>
+                <exclude.test.6>**/LocalPaginatedClusterTest.java</exclude.test.6>
+                <exclude.test.7>**/WOWCacheTest.java</exclude.test.7>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>ci</id>
+            <activation>
+                <property>
+                    <name>orientdb.test.env</name>
+                    <value>ci</value>
+                </property>
+            </activation>
+            <properties>
+                <exclude.test.1>empty.java</exclude.test.1>
+                <exclude.test.2>empty.java</exclude.test.2>
+                <exclude.test.3>empty.java</exclude.test.3>
+                <exclude.test.4>empty.java</exclude.test.4>
+                <exclude.test.5>empty.java</exclude.test.5>
+                <exclude.test.6>empty.java</exclude.test.6>
+                <exclude.test.7>empty.java</exclude.test.7>
+            </properties>
+
+        </profile>
+        <profile>
+            <id>release</id>
+            <activation>
+                <property>
+                    <name>orientdb.test.env</name>
+                    <value>release</value>
+                </property>
+            </activation>
+            <properties>
+                <exclude.test.1>empty.java</exclude.test.1>
+                <exclude.test.2>empty.java</exclude.test.2>
+                <exclude.test.3>empty.java</exclude.test.3>
+                <exclude.test.4>empty.java</exclude.test.4>
+                <exclude.test.5>empty.java</exclude.test.5>
+                <exclude.test.6>empty.java</exclude.test.6>
+                <exclude.test.7>empty.java</exclude.test.7>
+            </properties>
+
+        </profile>
+        <profile>
+            <id>localDeploy</id>
+            <activation>
+                <property>
+                    <name>localDeploy</name>
+                </property>
+            </activation>
+        </profile>
+    </profiles>
+
+    <reporting>
+        <plugins>
+
+        </plugins>
+    </reporting>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>javacc-maven-plugin</artifactId>
+                <version>2.6</version>
+                <executions>
+                    <execution>
+                        <id>jjtree-javacc</id>
+                        <goals>
+                            <goal>jjtree-javacc</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <sourceDirectory>${basedir}/src/main/grammar</sourceDirectory>
+                    <interimDirectory>${basedir}/src/main/java</interimDirectory>
+                    <outputDirectory>${basedir}/src/main/java</outputDirectory>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${surefire.version}</version>
+                <configuration>
+                    <systemPropertyVariables>
+                        <buildDirectory>${project.build.directory}</buildDirectory>
+                    </systemPropertyVariables>
+                    <excludes>
+                        <exclude>${exclude.test.1}</exclude>
+                        <exclude>${exclude.test.2}</exclude>
+                        <exclude>${exclude.test.3}</exclude>
+                        <exclude>${exclude.test.4}</exclude>
+                        <exclude>${exclude.test.5}</exclude>
+                        <exclude>${exclude.test.6}</exclude>
+                        <exclude>${exclude.test.7}</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                    </archive>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>test-jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.xerial.snappy</groupId>
+            <artifactId>snappy-java</artifactId>
+            <version>1.1.0.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.googlecode.concurrentlinkedhashmap</groupId>
+            <artifactId>concurrentlinkedhashmap-lru</artifactId>
+            <version>1.4.1</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.google.code.findbugs</groupId>
+                    <artifactId>jsr305</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-test-commons</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>findbugs</artifactId>
+            <version>3.0.1</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+</project>

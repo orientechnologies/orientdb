@@ -1,9 +1,8 @@
 {
     "autoDeploy": false,
-    "hotAlignment": false,
-    "offlineMsgQueueSize" : 0,
+    "hotAlignment": true,
     "readQuorum": 1,
-    "writeQuorum": 2,
+    "writeQuorum": 1,
     "failureAvailableNodesLessQuorum": false,
     "readYourWrites": true,
     "clusters": {

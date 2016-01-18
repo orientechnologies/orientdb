@@ -30,7 +30,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.util.OBackupable;
-import com.orientechnologies.orient.core.version.ORecordVersion;
 
 import java.util.Collection;
 import java.util.Map;
@@ -52,18 +51,15 @@ public interface OStorage extends OBackupable, OSharedContainer {
   }
 
   enum STATUS {
-    CLOSED, OPEN, CLOSING, @Deprecated
-    OPENING
+    CLOSED, OPEN, CLOSING, @Deprecated OPENING
   }
 
   enum LOCKING_STRATEGY {
     NONE, DEFAULT, SHARED_LOCK, EXCLUSIVE_LOCK,
 
-    @Deprecated
-    KEEP_SHARED_LOCK,
+    @Deprecated KEEP_SHARED_LOCK,
 
-    @Deprecated
-    KEEP_EXCLUSIVE_LOCK
+    @Deprecated KEEP_EXCLUSIVE_LOCK
   }
 
   void open(String iUserName, String iUserPassword, final Map<String, Object> iProperties);
@@ -83,24 +79,23 @@ public interface OStorage extends OBackupable, OSharedContainer {
   boolean isClosed();
 
   // CRUD OPERATIONS
-  OStorageOperationResult<OPhysicalPosition> createRecord(ORecordId iRecordId, byte[] iContent, ORecordVersion iRecordVersion,
+  OStorageOperationResult<OPhysicalPosition> createRecord(ORecordId iRecordId, byte[] iContent, int iRecordVersion,
       byte iRecordType, int iMode, ORecordCallback<Long> iCallback);
 
   OStorageOperationResult<ORawBuffer> readRecord(ORecordId iRid, String iFetchPlan, boolean iIgnoreCache,
       ORecordCallback<ORawBuffer> iCallback);
 
   OStorageOperationResult<ORawBuffer> readRecordIfVersionIsNotLatest(ORecordId rid, String fetchPlan, boolean ignoreCache,
-      ORecordVersion recordVersion) throws ORecordNotFoundException;
+      int recordVersion) throws ORecordNotFoundException;
 
-  OStorageOperationResult<ORecordVersion> updateRecord(ORecordId iRecordId, boolean updateContent, byte[] iContent,
-      ORecordVersion iVersion, byte iRecordType, int iMode, ORecordCallback<ORecordVersion> iCallback);
+  OStorageOperationResult<Integer> updateRecord(ORecordId iRecordId, boolean updateContent, byte[] iContent, int iVersion,
+      byte iRecordType, int iMode, ORecordCallback<Integer> iCallback);
 
-  OStorageOperationResult<Boolean> deleteRecord(ORecordId iRecordId, ORecordVersion iVersion, int iMode,
-      ORecordCallback<Boolean> iCallback);
+  OStorageOperationResult<Boolean> deleteRecord(ORecordId iRecordId, int iVersion, int iMode, ORecordCallback<Boolean> iCallback);
 
   ORecordMetadata getRecordMetadata(final ORID rid);
 
-  boolean cleanOutRecord(ORecordId recordId, ORecordVersion recordVersion, int iMode, ORecordCallback<Boolean> callback);
+  boolean cleanOutRecord(ORecordId recordId, int recordVersion, int iMode, ORecordCallback<Boolean> callback);
 
   // TX OPERATIONS
   void commit(OTransaction iTx, Runnable callback);
@@ -188,7 +183,6 @@ public interface OStorage extends OBackupable, OSharedContainer {
 
   void synch();
 
-
   /**
    * Execute the command request and return the result back.
    */
@@ -237,7 +231,7 @@ public interface OStorage extends OBackupable, OSharedContainer {
 
   boolean isAssigningClusterIds();
 
-  Class<? extends OSBTreeCollectionManager> getCollectionManagerClass();
+  OSBTreeCollectionManager getSBtreeCollectionManager();
 
   OCurrentStorageComponentsFactory getComponentsFactory();
 
@@ -250,4 +244,15 @@ public interface OStorage extends OBackupable, OSharedContainer {
   ORecordConflictStrategy getConflictStrategy();
 
   void setConflictStrategy(ORecordConflictStrategy iResolver);
+
+  void incrementalBackup(String backupDirectory);
+
+  void restoreFromIncrementalBackup(String filePath);
+
+  /**
+   * This method is called in {@link com.orientechnologies.orient.core.Orient#shutdown()} method.
+   * For most of the storages it means that storage will be merely closed, but sometimes additional operations are need to be
+   * taken in account.
+   */
+  void shutdown();
 }

@@ -2,6 +2,8 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import java.util.Map;
+
 public class OMetadataIdentifier extends SimpleNode {
 
   protected String name;
@@ -19,9 +21,9 @@ public class OMetadataIdentifier extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public String toString() {
-    return "metadata:" + name;
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("metadata:");
+    builder.append(name);
   }
 }
 /* JavaCC - OriginalChecksum=85e179b9505270f0596904070fdf0745 (do not edit this line) */

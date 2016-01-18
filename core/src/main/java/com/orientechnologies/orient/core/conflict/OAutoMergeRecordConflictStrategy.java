@@ -20,13 +20,14 @@
 
 package com.orientechnologies.orient.core.conflict;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSaveThreadLocal;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
-import com.orientechnologies.orient.core.version.ORecordVersion;
 
 /**
  * Auto merges new record with the existent. Collections are also merged, item by item.
@@ -37,8 +38,8 @@ public class OAutoMergeRecordConflictStrategy extends OVersionRecordConflictStra
   public static final String NAME = "automerge";
 
   @Override
-  public byte[] onUpdate(OStorage storage, byte iRecordType, final ORecordId rid, final ORecordVersion iRecordVersion,
-      final byte[] iRecordContent, final ORecordVersion iDatabaseVersion) {
+  public byte[] onUpdate(OStorage storage, byte iRecordType, final ORecordId rid, final int iRecordVersion,
+      final byte[] iRecordContent, final AtomicInteger iDatabaseVersion) {
 
     if (iRecordType == ODocument.RECORD_TYPE) {
       // No need lock, is already inside a lock. Use database to read temporary objects too
@@ -51,12 +52,12 @@ public class OAutoMergeRecordConflictStrategy extends OVersionRecordConflictStra
 
       storedRecord.merge(newRecord, true, true);
 
-      iDatabaseVersion.setCounter(Math.max(iDatabaseVersion.getCounter(), iRecordVersion.getCounter()) + 1);
+      iDatabaseVersion.set(Math.max(iDatabaseVersion.get(), iRecordVersion) + 1);
 
       return storedRecord.toStream();
     } else
       // NO DOCUMENT, CANNOT MERGE SO RELY TO THE VERSION CHECK
-      checkVersions(rid, iRecordVersion, iDatabaseVersion);
+      checkVersions(rid, iRecordVersion, iDatabaseVersion.get());
 
     return null;
   }

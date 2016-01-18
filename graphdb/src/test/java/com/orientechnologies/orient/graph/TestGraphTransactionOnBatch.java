@@ -27,8 +27,8 @@ public class TestGraphTransactionOnBatch {
   public void before() {
     db = new ODatabaseDocumentTx("memory:" + TestGraphTransactionOnBatch.class.getSimpleName());
     db.create();
-    V = db.getMetadata().getSchema().createClass("V");
-    E = db.getMetadata().getSchema().createClass("E");
+    V = db.getMetadata().getSchema().getClass("V");
+    E = db.getMetadata().getSchema().getClass("E");
   }
 
   @After

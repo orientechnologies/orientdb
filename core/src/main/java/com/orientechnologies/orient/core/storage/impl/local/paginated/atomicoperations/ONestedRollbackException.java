@@ -28,7 +28,11 @@ import com.orientechnologies.orient.core.exception.OTransactionException;
  */
 public class ONestedRollbackException extends OTransactionException {
 
-  public ONestedRollbackException(String message, Throwable cause) {
-    super(message, cause);
+  public ONestedRollbackException(ONestedRollbackException exception) {
+    super(exception);
+  }
+
+  public ONestedRollbackException(String message) {
+    super(message);
   }
 }

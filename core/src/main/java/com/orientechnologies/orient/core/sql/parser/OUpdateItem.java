@@ -29,37 +29,31 @@ public class OUpdateItem extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-  public void replaceParameters(Map<Object, Object> params) {
-    right.replaceParameters(params);
-  }
 
-  @Override
-  public String toString() {
-    StringBuilder result = new StringBuilder();
-    result.append(left.toString());
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    left.toString(params, builder);
     if (leftModifier != null) {
-      result.append(leftModifier.toString());
+      leftModifier.toString(params, builder);
     }
     switch (operator) {
     case OPERATOR_EQ:
-      result.append(" = ");
+      builder.append(" = ");
       break;
     case OPERATOR_PLUSASSIGN:
-      result.append(" += ");
+      builder.append(" += ");
       break;
     case OPERATOR_MINUSASSIGN:
-      result.append(" -= ");
+      builder.append(" -= ");
       break;
     case OPERATOR_STARASSIGN:
-      result.append(" *= ");
+      builder.append(" *= ");
       break;
     case OPERATOR_SLASHASSIGN:
-      result.append(" /= ");
+      builder.append(" /= ");
       break;
 
     }
-    result.append(right.toString());
-    return result.toString();
+    right.toString(params, builder);
   }
 }
 /* JavaCC - OriginalChecksum=df7444be87bba741316df8df0d653600 (do not edit this line) */

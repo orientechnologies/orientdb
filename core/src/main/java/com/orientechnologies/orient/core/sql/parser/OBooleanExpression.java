@@ -1,6 +1,9 @@
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 
 import java.util.Collections;
 import java.util.List;
@@ -11,15 +14,12 @@ import java.util.Map;
  */
 public abstract class OBooleanExpression extends SimpleNode {
 
-  public static OBooleanExpression TRUE = new OBooleanExpression(0) {
+  public static final OBooleanExpression TRUE = new OBooleanExpression(0) {
     @Override
-    public boolean evaluate(OIdentifiable currentRecord) {
+    public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
       return true;
     }
 
-    @Override public void replaceParameters(Map<Object, Object> params) {
-
-    }
 
     @Override protected boolean supportsBasicCalculation() {
       return true;
@@ -37,17 +37,18 @@ public abstract class OBooleanExpression extends SimpleNode {
     public String toString() {
       return "true";
     }
+
+    public void toString(Map<Object, Object> params, StringBuilder builder) {
+      builder.append("true");
+    }
   };
 
-  public static OBooleanExpression FALSE = new OBooleanExpression(0) {
+  public static final OBooleanExpression FALSE = new OBooleanExpression(0) {
     @Override
-    public boolean evaluate(OIdentifiable currentRecord) {
+    public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
       return false;
     }
 
-    @Override public void replaceParameters(Map<Object, Object> params) {
-
-    }
 
     @Override protected boolean supportsBasicCalculation() {
       return true;
@@ -61,10 +62,13 @@ public abstract class OBooleanExpression extends SimpleNode {
       return Collections.EMPTY_LIST;
     }
 
-
     @Override
     public String toString() {
       return "false";
+    }
+
+    public void toString(Map<Object, Object> params, StringBuilder builder) {
+      builder.append("false");
     }
 
   };
@@ -82,25 +86,43 @@ public abstract class OBooleanExpression extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-  public abstract boolean evaluate(OIdentifiable currentRecord);
+  public abstract boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx);
 
-  public abstract void replaceParameters(Map<Object, Object> params);
 
-  /**
-   *
-   * @return true if this expression can be calculated in plain Java, false otherwise (eg. LUCENE operator)
-   */
-  protected abstract boolean supportsBasicCalculation();
+    /**
+     *
+     * @return true if this expression can be calculated in plain Java, false otherwise (eg. LUCENE operator)
+     */
+    protected abstract boolean supportsBasicCalculation();
 
-  /**
-   *
-   * @return the number of sub-expressions that have to be calculated using an external engine (eg. LUCENE)
-   */
-  protected abstract int getNumberOfExternalCalculations();
+    /**
+     *
+     * @return the number of sub-expressions that have to be calculated using an external engine (eg. LUCENE)
+     */
+    protected abstract int getNumberOfExternalCalculations();
 
-  /**
-   *
-   * @return the sub-expressions that have to be calculated using an external engine (eg. LUCENE)
-   */
-  protected abstract List<Object> getExternalCalculationConditions();
+    /**
+     *
+     * @return the sub-expressions that have to be calculated using an external engine (eg. LUCENE)
+     */
+    protected abstract List<Object> getExternalCalculationConditions();
+
+  public List<OBinaryCondition> getIndexedFunctionConditions(OClass iSchemaClass, ODatabaseDocumentInternal database) {
+    return null;
+  }
+
+  public List<OAndBlock> flatten() {
+
+    return Collections.singletonList(encapsulateInAndBlock(this));
+  }
+
+  protected OAndBlock encapsulateInAndBlock(OBooleanExpression item) {
+    if(item instanceof OAndBlock){
+      return (OAndBlock)item;
+    }
+    OAndBlock result = new OAndBlock(-1);
+    result.subBlocks.add(item);
+    return result;
+  }
+
 }

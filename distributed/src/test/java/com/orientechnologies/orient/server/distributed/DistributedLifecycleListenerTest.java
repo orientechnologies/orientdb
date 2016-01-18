@@ -20,20 +20,26 @@
 
 package com.orientechnologies.orient.server.distributed;
 
-import junit.framework.Assert;
+import com.orientechnologies.common.util.OPair;
+import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Tests the behavior of hooks in distributed configuration.
  */
 public class DistributedLifecycleListenerTest extends AbstractServerClusterTest implements ODistributedLifecycleListener {
-  private final static int SERVERS        = 2;
+  private final static int SERVERS = 2;
 
-  private final AtomicLong beforeNodeJoin = new AtomicLong();
-  private final AtomicLong afterNodeJoin  = new AtomicLong();
-  private final AtomicLong nodeLeft       = new AtomicLong();
+  private final AtomicLong                                               beforeNodeJoin = new AtomicLong();
+  private final AtomicLong                                               afterNodeJoin  = new AtomicLong();
+  private final AtomicLong                                               nodeLeft       = new AtomicLong();
+  private final List<OPair<String, ODistributedServerManager.DB_STATUS>> changeStatus   = Collections
+      .synchronizedList(new ArrayList<OPair<String, ODistributedServerManager.DB_STATUS>>());
 
   @Override
   public boolean onNodeJoining(String iNode) {
@@ -51,12 +57,18 @@ public class DistributedLifecycleListenerTest extends AbstractServerClusterTest 
     nodeLeft.incrementAndGet();
   }
 
+  @Override
+  public void onDatabaseChangeStatus(String iNode, String iDatabaseName, ODistributedServerManager.DB_STATUS iNewStatus) {
+    changeStatus.add(new OPair<String, ODistributedServerManager.DB_STATUS>(iNode + "." + iDatabaseName, iNewStatus));
+  }
+
   public String getDatabaseName() {
     return "distributed-lifecycle";
   }
 
   @Test
   public void test() throws Exception {
+    this.startupNodesInSequence = true;
     init(SERVERS);
     prepare(false);
     execute();
@@ -77,15 +89,23 @@ public class DistributedLifecycleListenerTest extends AbstractServerClusterTest 
     Assert.assertEquals(SERVERS - 1, beforeNodeJoin.get());
     Assert.assertEquals(SERVERS - 1, afterNodeJoin.get());
 
-    for (int attempt = 0; attempt < 30; ++attempt) {
-      if (nodeLeft.get() == SERVERS)
+    for (int attempt = 0; attempt < 50; ++attempt) {
+      if (nodeLeft.get() >= SERVERS - 1)
         break;
       try {
-        Thread.sleep(300);
+        Thread.sleep(500);
       } catch (InterruptedException e) {
         e.printStackTrace();
       }
     }
     Assert.assertEquals(SERVERS - 1, nodeLeft.get());
+
+    Assert.assertEquals(3, changeStatus.size());
+    Assert.assertEquals("europe1." + getDatabaseName(), changeStatus.get(0).getKey());
+    Assert.assertEquals(ODistributedServerManager.DB_STATUS.SYNCHRONIZING, changeStatus.get(0).getValue());
+    Assert.assertEquals("europe0." + getDatabaseName(), changeStatus.get(1).getKey());
+    Assert.assertEquals(ODistributedServerManager.DB_STATUS.SYNCHRONIZING, changeStatus.get(1).getValue());
+    Assert.assertEquals("europe0." + getDatabaseName(), changeStatus.get(2).getKey());
+    Assert.assertEquals(ODistributedServerManager.DB_STATUS.ONLINE, changeStatus.get(2).getValue());
   }
 }

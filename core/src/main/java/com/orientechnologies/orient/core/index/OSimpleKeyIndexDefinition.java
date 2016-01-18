@@ -33,6 +33,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
+  private static final long serialVersionUID = -1264300379465791244L;
   private OType[] keyTypes;
 
   public OSimpleKeyIndexDefinition(int version, final OType... keyTypes) {
@@ -47,7 +48,8 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
   public OSimpleKeyIndexDefinition(OType[] keyTypes2, List<OCollate> collatesList, int version) {
     super();
 
-    this.keyTypes = keyTypes2;
+    this.keyTypes = Arrays.copyOf(keyTypes2, keyTypes2.length);
+
     if (keyTypes.length > 1) {
       OCompositeCollate collate = new OCompositeCollate(this);
       if (collatesList != null) {
@@ -55,8 +57,10 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
           collate.addCollate(oCollate);
         }
       } else {
-        for (OType type : keyTypes) {
-          collate.addCollate(OSQLEngine.getCollate(ODefaultCollate.NAME));
+        final int typesSize = keyTypes.length;
+        final OCollate defCollate = OSQLEngine.getCollate(ODefaultCollate.NAME);
+        for (int i = 0; i < typesSize; i++) {
+          collate.addCollate(defCollate);
         }
       }
       this.collate = collate;
@@ -105,7 +109,7 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
   }
 
   public OType[] getTypes() {
-    return keyTypes;
+    return Arrays.copyOf(keyTypes, keyTypes.length);
   }
 
   @Override
@@ -170,7 +174,7 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
       }
     }
 
-    setNullValuesIgnored(!Boolean.FALSE.equals(document.<Boolean> field("nullValuesIgnored")));
+    setNullValuesIgnored(!Boolean.FALSE.equals(document.<Boolean>field("nullValuesIgnored")));
   }
 
   public Object getDocumentValueToIndex(final ODocument iDocument) {
@@ -205,7 +209,7 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
 
   /**
    * {@inheritDoc}
-   * 
+   *
    * @param indexName
    * @param indexType
    */
