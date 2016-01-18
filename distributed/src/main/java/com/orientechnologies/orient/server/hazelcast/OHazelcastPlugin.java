@@ -447,7 +447,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         throw new ODistributedException("Cannot create a new database with the same name of one available distributed");
 
       final OHazelcastDistributedDatabase distribDatabase = messageService.registerDatabase(iDatabase.getName());
-      distribDatabase.configureDatabase(null).setOnline();
+      distribDatabase.configureDatabase(null, true).setOnline();
       onOpen(iDatabase);
 
     } finally {
@@ -953,7 +953,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       try {
 
         // TRY WITH DELTA
-        return requestDatabaseDelta(distrDatabase, databaseName);
+        // return requestDatabaseDelta(distrDatabase, databaseName);
+        return requestFullDatabase(databaseName, backupDatabase, distrDatabase);
 
       } catch (ODistributedDatabaseDeltaSyncException e) {
         // SWITCH TO FULL
@@ -1310,7 +1311,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
             }
             return null;
           }
-        });
+        }, false);
       } finally {
         lock.unlock();
       }
@@ -1606,7 +1607,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           getConfigurationMap().put(CONFIG_DATABASE_PREFIX + databaseName, cfgDoc);
         }
 
-        final OHazelcastDistributedDatabase db = messageService.registerDatabase(databaseName).configureDatabase(null);
+        final OHazelcastDistributedDatabase db = messageService.registerDatabase(databaseName).configureDatabase(null, true);
 
         final ODatabaseDocumentTx database = (ODatabaseDocumentTx) serverInstance.openDatabase(databaseName, "internal", "internal",
             null, true);

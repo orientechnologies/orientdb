@@ -103,6 +103,7 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
       @Override
       public void run() {
         Thread.currentThread().setName("OrientDB Node Response " + queueName);
+
         while (running) {
           String senderNode = null;
           ODistributedResponse message = null;
@@ -393,12 +394,17 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
     }
   }
 
-  protected void checkForPendingMessages(final IQueue iQueue, final String iQueueName) {
+  protected void checkForPendingMessages(final IQueue iQueue, final String iQueueName, final boolean clearReqQueue) {
     final int queueSize = iQueue.size();
     if (queueSize > 0) {
-      ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, DIRECTION.NONE, "Found %d messages in queue '%s'. Clearing queue now...",
-          queueSize, iQueueName);
-      iQueue.clear();
+      if (clearReqQueue) {
+        ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
+            "Found %d messages in queue '%s', resetting queue...", queueSize, iQueueName);
+        iQueue.clear();
+      } else
+        ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, DIRECTION.NONE, "Found %d messages in queue '%s'",
+            queueSize, iQueueName);
+
     } else
       ODistributedServerLog.info(this, manager.getLocalNodeName(), null, DIRECTION.NONE, "Found no previous messages in queue '%s'",
           iQueueName);

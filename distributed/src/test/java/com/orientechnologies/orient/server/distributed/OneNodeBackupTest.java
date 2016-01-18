@@ -50,7 +50,7 @@ public class OneNodeBackupTest extends AbstractServerClusterTxTest {
 
     try {
       startupNodesInSequence = true;
-      count = 1500;
+      count = 2000;
       maxRetries = 10;
       init(SERVERS);
       prepare(false);
@@ -82,6 +82,9 @@ public class OneNodeBackupTest extends AbstractServerClusterTxTest {
             try {
               final OHazelcastPlugin dInstance = (OHazelcastPlugin) serverInstance.get(i).getServerInstance()
                   .getDistributedManager();
+
+              if( dInstance.getMessageService() == null )
+                break;
 
               final String queueName = OHazelcastDistributedMessageService.getRequestQueueName(dInstance.getLocalNodeName(),
                   getDatabaseName());

@@ -275,7 +275,7 @@ public class ODistributedWorker extends Thread {
         }
 
       } finally {
-        if (database != null) {
+        if (database != null && !database.isClosed()) {
           database.activateOnCurrentThread();
           database.rollback();
           database.getLocalCache().clear();
