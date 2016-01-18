@@ -57,7 +57,9 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
               System.out.println("\nWriter " + database.getURL() + "(thread=" + threadId + ") managed " + (i + 1) + "/" + count
                   + " records so far");
 
-            database.begin();
+            if( useTransactions)
+              database.begin();
+
             try {
               ODocument person = createRecord(database, id);
               updateRecord(database, person);
@@ -69,6 +71,7 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
               updateRecord(database, person);
               checkRecord(database, person);
 
+              if( useTransactions)
               database.commit();
 
               if (delayWriter > 0)

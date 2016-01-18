@@ -4,6 +4,7 @@ import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.sql.parser.OInteger;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -24,7 +25,8 @@ public class OByteBufferPool {
     final BigDecimal allocatedPages = cacheSize.add(new BigDecimal(OGlobalConfiguration.WAL_CACHE_SIZE.getValueAsInteger() + 1)).
         divide(new BigDecimal(pageSize), RoundingMode.CEILING);
 
-    INSTANCE = new OByteBufferPool(pageSize, allocatedPages.longValue());
+    final int memoryChunkSize = OGlobalConfiguration.MEMORY_CHUNK_SIZE.getValueAsInteger();
+    INSTANCE = new OByteBufferPool(pageSize, allocatedPages.longValue(), memoryChunkSize);
   }
 
   private final int        pageSize;
@@ -46,15 +48,19 @@ public class OByteBufferPool {
   }
 
   public OByteBufferPool(int pageSize, long preallocatePages) {
+    this(pageSize, preallocatePages, -1);
+  }
+
+  public OByteBufferPool(int pageSize, long preallocatePages, int maxChunkSize) {
     this.pageSize = pageSize;
     this.zeroPage = ByteBuffer.allocateDirect(pageSize).order(ByteOrder.nativeOrder());
 
     if (preallocatePages > 0) {
-      int pagesPerArea = (Integer.MAX_VALUE / pageSize);
+      int pagesPerArea = (maxChunkSize / pageSize);
       pagesPerArea = closestPowerOfTwo(pagesPerArea);
 
       //we need not the biggest value, it may cause buffer overflow, but biggest after that.
-      while ((long) pagesPerArea * pageSize > Integer.MAX_VALUE) {
+      while ((long) pagesPerArea * pageSize > maxChunkSize) {
         pagesPerArea = pagesPerArea >>> 1;
       }
 
@@ -63,24 +69,24 @@ public class OByteBufferPool {
       final int arraySize = (int) ((preallocatePages + maxPagesPerSingleArea - 1) / maxPagesPerSingleArea);
       preallocatedAreas = new AtomicReferenceArray<BufferHolder>(arraySize);
 
-      final int allocationSize = (int) Math.min(maxPagesPerSingleArea, preallocatePages);
-      final ByteBuffer buffer = ByteBuffer.allocateDirect(allocationSize * pageSize).order(ByteOrder.nativeOrder());
-
-      final BufferHolder holder = new BufferHolder();
-      preallocatedAreas.set(0, holder);
-
-      try {
-        holder.buffer = buffer;
-      } finally {
-        holder.latch.countDown();
-      }
-
       this.preallocatedPages = preallocatePages;
     } else {
       preallocatedAreas = null;
       maxPagesPerSingleArea = -1;
       this.preallocatedPages = -1;
     }
+  }
+
+  public int getSize() {
+    return pool.size();
+  }
+
+  public int getMaxPagesPerChunk() {
+    return maxPagesPerSingleArea;
+  }
+
+  public int getMaxAmountOfChunks() {
+    return preallocatedAreas.length();
   }
 
   /**

@@ -447,7 +447,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         throw new ODistributedException("Cannot create a new database with the same name of one available distributed");
 
       final OHazelcastDistributedDatabase distribDatabase = messageService.registerDatabase(iDatabase.getName());
-      distribDatabase.configureDatabase(null).setOnline();
+      distribDatabase.configureDatabase(null, true).setOnline();
       onOpen(iDatabase);
 
     } finally {
@@ -750,8 +750,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           iEvent.getMember(), eventNodeName);
 
       final ODocument cfg = (ODocument) iEvent.getValue();
+
+      if (!activeNodes.containsKey((String) cfg.field("name")))
+        updateLastClusterChange();
+
       activeNodes.put((String) cfg.field("name"), (Member) iEvent.getMember());
-      updateLastClusterChange();
 
     } else if (key.startsWith(CONFIG_DATABASE_PREFIX)) {
       if (!iEvent.getMember().equals(hazelcastInstance.getCluster().getLocalMember())) {
@@ -950,7 +953,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       try {
 
         // TRY WITH DELTA
-        return requestDatabaseDelta(distrDatabase, databaseName);
+        // return requestDatabaseDelta(distrDatabase, databaseName);
+        return requestFullDatabase(databaseName, backupDatabase, distrDatabase);
 
       } catch (ODistributedDatabaseDeltaSyncException e) {
         // SWITCH TO FULL
@@ -976,6 +980,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
     // GET ALL THE OTHER SERVERS
     final Collection<String> nodes = cfg.getServers(null, nodeName);
+
+    filterAvailableNodes(nodes, databaseName);
 
     ODistributedServerLog.warn(this, nodeName, nodes.toString(), DIRECTION.OUT,
         "requesting delta database sync for '%s' on local server...", databaseName);
@@ -1305,7 +1311,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
             }
             return null;
           }
-        });
+        }, false);
       } finally {
         lock.unlock();
       }
@@ -1579,14 +1585,29 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
         ODistributedConfiguration cfg = getDatabaseConfiguration(databaseName);
 
-        if (!getConfigurationMap().containsKey(CONFIG_DATABASE_PREFIX + databaseName)) {
+        boolean publishCfg = !getConfigurationMap().containsKey(CONFIG_DATABASE_PREFIX + databaseName);
+
+        if (activeNodes.size() == 1 && !cfg.isHotAlignment()) {
+          // REMOVE DEAD NODES
+          final Set<String> cfgServers = cfg.getAllConfiguredServers();
+          for (String cfgServer : cfgServers) {
+            if (!isNodeAvailable(cfgServer, databaseName)) {
+              ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE,
+                  "Removing offline server '%s' for database '%s' in distributed configuration", cfgServer, databaseName);
+              cfg.removeNodeInServerList(cfgServer, true);
+              publishCfg = true;
+            }
+          }
+        }
+
+        if (publishCfg) {
           // PUBLISH CFG FIRST TIME
           ODocument cfgDoc = cfg.serialize();
           ORecordInternal.setRecordSerializer(cfgDoc, ODatabaseDocumentTx.getDefaultSerializer());
           getConfigurationMap().put(CONFIG_DATABASE_PREFIX + databaseName, cfgDoc);
         }
 
-        final OHazelcastDistributedDatabase db = messageService.registerDatabase(databaseName).configureDatabase(null);
+        final OHazelcastDistributedDatabase db = messageService.registerDatabase(databaseName).configureDatabase(null, true);
 
         final ODatabaseDocumentTx database = (ODatabaseDocumentTx) serverInstance.openDatabase(databaseName, "internal", "internal",
             null, true);
@@ -2023,5 +2044,13 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         nodes.add(entry.getKey());
     }
     return nodes;
+  }
+
+  public void filterAvailableNodes(Collection<String> iNodes, final String databaseName) {
+    for (Iterator<String> it = iNodes.iterator(); it.hasNext();) {
+      final String nodeName = it.next();
+      if (!isNodeAvailable(nodeName, databaseName))
+        it.remove();
+    }
   }
 }

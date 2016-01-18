@@ -19,6 +19,18 @@
  */
 package com.orientechnologies.orient.enterprise.channel.binary;
 
+import com.orientechnologies.common.concur.OTimeoutException;
+import com.orientechnologies.common.concur.lock.OLockException;
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.exception.OSystemException;
+import com.orientechnologies.common.io.OIOException;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
+import com.orientechnologies.orient.enterprise.channel.OSocketFactory;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
@@ -34,18 +46,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
-
-import com.orientechnologies.common.concur.OTimeoutException;
-import com.orientechnologies.common.concur.lock.OLockException;
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.exception.OSystemException;
-import com.orientechnologies.common.io.OIOException;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.util.OPair;
-import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
-import com.orientechnologies.orient.enterprise.channel.OSocketFactory;
 
 public class OChannelBinaryAsynchClient extends OChannelBinary {
   protected final int                          socketTimeout;                                               // IN MS
@@ -231,7 +231,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
                 + (socket != null ? socket.getRemoteSocketAddress() : "") + " for the request " + iRequesterId);
           }
 
-          //IN CASE OF TOO MUCH TIME FOR READ A MESSAGE, ASYNC THREAD SHOULD NOT BE INCLUDE IN THIS CHECK
+          // IN CASE OF TOO MUCH TIME FOR READ A MESSAGE, ASYNC THREAD SHOULD NOT BE INCLUDE IN THIS CHECK
           if (unreadResponse > maxUnreadResponses && iRequesterId != Integer.MIN_VALUE) {
             if (debug)
               OLogManager.instance().info(this, "Unread responses %d > %d, consider the buffer as dirty: clean it", unreadResponse,
@@ -255,7 +255,8 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
 
           if (debug) {
             final long now = System.currentTimeMillis();
-            OLogManager.instance().debug(this, "Waked up: slept %dms, checking again from %s for session %d", (now - start), socket.getLocalAddress(), iRequesterId);
+            OLogManager.instance().debug(this, "Waked up: slept %dms, checking again from %s for session %d", (now - start),
+                socket.getLocalAddress(), iRequesterId);
           }
 
           unreadResponse++;
@@ -433,6 +434,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
       throwable = objectInputStream.readObject();
     } catch (ClassNotFoundException e) {
       OLogManager.instance().error(this, "Error during exception deserialization", e);
+      throw new IOException("Error during exception deserialization: " + e.toString());
     }
 
     objectInputStream.close();
@@ -458,7 +460,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     }
 
     if (throwable instanceof Throwable) {
-      throw new OResponseProcessingException("Exception during response processing",(Throwable)throwable);
+      throw new OResponseProcessingException("Exception during response processing", (Throwable) throwable);
     }
     // WRAP IT
     else
