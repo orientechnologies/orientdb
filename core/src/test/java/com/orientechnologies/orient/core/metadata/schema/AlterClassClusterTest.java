@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotEquals;
 import static org.testng.AssertJUnit.assertEquals;
 
 import com.orientechnologies.orient.core.exception.OSchemaException;
@@ -9,6 +11,8 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+
+import java.util.Arrays;
 
 public class AlterClassClusterTest {
 
@@ -54,6 +58,21 @@ public class AlterClassClusterTest {
     clazz.addClusterId(id);
   }
 
+
+  @Test
+  public void testPolimorficClusterAbstractClass() {
+    OClass clazz = db.getMetadata().getSchema().createAbstractClass("Test");
+    int id = db.addCluster("TestOneMore");
+    ((OClassImpl) clazz).addClusterIdInternal(id);
+
+    db.getMetadata().getSchema().reload();
+    clazz = db.getMetadata().getSchema().getClass("Test");
+
+    for(int cur :clazz.getPolymorphicClusterIds()){
+      assertNotEquals(cur,-1,"cluster id -1 not allowed in polimorfic clusters");
+    }
+
+  }
 
 
 }
