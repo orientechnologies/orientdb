@@ -47,5 +47,14 @@ public class AlterClassClusterTest {
 
   }
 
+  @Test(expectedExceptions = OSchemaException.class)
+  public void testAddClusterIdToAbstracClass() {
+    OClass clazz = db.getMetadata().getSchema().createAbstractClass("Test");
+    int id = db.addCluster("TestOneMore");
+    clazz.addClusterId(id);
+  }
+
+
 
 }
+
