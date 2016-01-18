@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- ~ Copyright 2010-2012 Luca Garulli (l.garulli(at)orientechnologies.com) 
+    ~ ~ Licensed under the Apache License, Version 2.0 (the "License"); ~ you 
+    may not use this file except in compliance with the License. ~ You may obtain 
+    a copy of the License at ~ ~ http://www.apache.org/licenses/LICENSE-2.0 ~ 
+    ~ Unless required by applicable law or agreed to in writing, software ~ distributed 
+    under the License is distributed on an "AS IS" BASIS, ~ WITHOUT WARRANTIES 
+    OR CONDITIONS OF ANY KIND, either express or implied. ~ See the License for 
+    the specific language governing permissions and ~ limitations under the License. -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.orientechnologies</groupId>
+        <artifactId>orientdb-parent</artifactId>
+        <version>2.2.0-SNAPSHOT</version>
+        <relativePath>../</relativePath>
+    </parent>
+
+    <artifactId>orientdb-tests</artifactId>
+
+    <name>OrientDB Tests</name>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-client</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-graphdb</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-object</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-tools</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-server</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-test-commons</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-core</artifactId>
+            <version>${project.version}</version>
+            <type>jar</type>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-core</artifactId>
+            <version>${project.version}</version>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+                <inherited>false</inherited>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.17</version>
+                <configuration>
+                    <systemPropertyVariables>
+                        <storage.lockTimeout>60000</storage.lockTimeout>
+                        <storage.makeFullCheckpointAfterCreate>false</storage.makeFullCheckpointAfterCreate>
+                        <storage.makeFullCheckpointAfterClusterCreate>false
+                        </storage.makeFullCheckpointAfterClusterCreate>
+                        <storage.wal.syncOnPageFlush>false</storage.wal.syncOnPageFlush>
+                        <storage.configuration.syncOnUpdate>false</storage.configuration.syncOnUpdate>
+                        <index.flushAfterCreate>false</index.flushAfterCreate>
+                        <security.userPasswordSaltIterations>10</security.userPasswordSaltIterations>
+                        <buildDirectory>${project.build.directory}</buildDirectory>
+                        <url>memory:demo</url>
+                        <testPath>${project.basedir}</testPath>
+                        <orient.server.testMode>${orient.server.testMode}</orient.server.testMode>
+                        <orient.server.port>${orient.server.port}</orient.server.port>
+                        <storage.diskCache.bufferSize>4096</storage.diskCache.bufferSize>
+                        <memory.directMemory.trackMode>true</memory.directMemory.trackMode>
+                    </systemPropertyVariables>
+                    <argLine>-Xmx3072m -XX:MaxDirectMemorySize=512g</argLine>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>default-test</id>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>test-embedded</id>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                        <configuration>
+                            <suiteXmlFiles>
+                                <suiteXmlFile>
+                                    src/test/java/com/orientechnologies/orient/test/database/auto/embedded-test-db-from-scratch.xml
+                                </suiteXmlFile>
+                            </suiteXmlFiles>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>test-remote</id>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                        <configuration>
+                            <systemPropertyVariables>
+                                <orientdb.config.file>target/test-classes/orientdb-server-config.xml
+                                </orientdb.config.file>
+                                <ORIENTDB_HOME>${project.build.directory}/remote-server</ORIENTDB_HOME>
+                            </systemPropertyVariables>
+                            <suiteXmlFiles>
+                                <suiteXmlFile>
+                                    src/test/java/com/orientechnologies/orient/test/database/auto/remote-test-db-from-scratch.xml
+                                </suiteXmlFile>
+                            </suiteXmlFiles>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+        </plugins>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>test-embedded</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>test-remote</id>
+                                <phase>none</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>test-remote</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>test-embedded</id>
+                                <phase>none</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+</project>

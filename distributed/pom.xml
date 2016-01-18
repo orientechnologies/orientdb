@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ /*
+   ~  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+   ~  *
+   ~  *  Licensed under the Apache License, Version 2.0 (the "License");
+   ~  *  you may not use this file except in compliance with the License.
+   ~  *  You may obtain a copy of the License at
+   ~  *
+   ~  *       http://www.apache.org/licenses/LICENSE-2.0
+   ~  *
+   ~  *  Unless required by applicable law or agreed to in writing, software
+   ~  *  distributed under the License is distributed on an "AS IS" BASIS,
+   ~  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   ~  *  See the License for the specific language governing permissions and
+   ~  *  limitations under the License.
+   ~  *
+   ~  * For more information: http://www.orientechnologies.com
+   ~  */
+   -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.orientechnologies</groupId>
+        <artifactId>orientdb-parent</artifactId>
+        <version>2.2.0-SNAPSHOT</version>
+        <relativePath>../</relativePath>
+    </parent>
+
+    <artifactId>orientdb-distributed</artifactId>
+
+    <name>OrientDB Distributed Server</name>
+
+    <properties>
+        <javac.src.version>1.6</javac.src.version>
+        <javac.target.version>1.6</javac.target.version>
+        <jar.manifest.mainclass>com.orientechnologies.orient.server.OServerMain</jar.manifest.mainclass>
+        <osgi.import>com.hazelcast.*;resolution:=optional,*</osgi.import>
+        <osgi.export>com.orientechnologies.orient.server.hazelcast.*</osgi.export>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <argLine>-ea -Xmx2048m -XX:MaxDirectMemorySize=512g -Dstorage.diskCache.bufferSize=4096 -Dindex.flushAfterCreate=false
+            -Dstorage.makeFullCheckpointAfterCreate=false
+            -Dmemory.directMemory.trackMode=true
+            -Dstorage.makeFullCheckpointAfterOpen=false
+            -Dstorage.makeFullCheckpointAfterClusterCreate=false
+            -Dstorage.wal.syncOnPageFlush=false
+            -Dstorage.configuration.syncOnUpdate=false
+            -Ddb.makeFullCheckpointOnIndexChange=false
+            -Ddb.makeFullCheckpointOnSchemaChange=false
+            -Dhazelcast.wait.seconds.before.join=1
+        </argLine>
+    </properties>
+
+    <profiles>
+        <profile>
+            <id>development</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <skipTests>true</skipTests>
+            </properties>
+        </profile>
+        <profile>
+            <id>ci</id>
+            <activation>
+                <property>
+                    <name>orientdb.test.env</name>
+                    <value>ci</value>
+                </property>
+            </activation>
+            <properties>
+                <skipTests>false</skipTests>
+            </properties>
+        </profile>
+        <profile>
+            <id>release</id>
+            <activation>
+                <property>
+                    <name>orientdb.test.env</name>
+                    <value>release</value>
+                </property>
+            </activation>
+            <properties>
+                <skipTests>false</skipTests>
+            </properties>
+        </profile>
+    </profiles>
+
+    <dependencies>
+
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-test-commons</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-server</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-tools</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-graphdb</artifactId>
+            <version>${project.version}</version>
+            <!-- SET SCOPE=RUNTIME TO ENABLE STARTING DISTRIBUTED SERVER IN IDE (IntelliJ)-->
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.hazelcast</groupId>
+            <artifactId>hazelcast</artifactId>
+            <version>3.5.4</version>
+        </dependency>
+        <dependency>
+            <groupId>com.hazelcast</groupId>
+            <artifactId>hazelcast-cloud</artifactId>
+            <version>3.5.4</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>${jar.manifest.mainclass}</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${surefire.version}</version>
+                <configuration>
+
+                    <systemPropertyVariables>
+                        <buildDirectory>${project.build.directory}</buildDirectory>
+                    </systemPropertyVariables>
+                    <skipTests></skipTests>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
