@@ -138,6 +138,7 @@ public interface OrientSqlTreeConstants
   public int JJTTRUNCATECLUSTERSTATEMENT = 132;
   public int JJTTRUNCATERECORDSTATEMENT = 133;
   public int JJTFINDREFERENCESSTATEMENT = 134;
+  public int JJTCREATECLASSSTATEMENT = 135;
 
 
   public String[] jjtNodeName = {
@@ -276,6 +277,7 @@ public interface OrientSqlTreeConstants
     "TruncateClusterStatement",
     "TruncateRecordStatement",
     "FindReferencesStatement",
+    "CreateClassStatement",
   };
 }
-/* JavaCC - OriginalChecksum=81feb6ff8240827c01ad8f5b588f6809 (do not edit this line) */
+/* JavaCC - OriginalChecksum=79480bc8e3475a3e8e5a2129ca9a072c (do not edit this line) */

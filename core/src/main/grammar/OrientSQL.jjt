@@ -238,6 +238,12 @@ TOKEN:
 	|
 	< REFERENCES: ( "r" | "R" ) ( "e" | "E" ) ( "f" | "F" ) ( "e" | "E" ) ( "r" | "R" ) ( "e" | "E" ) ( "n" | "N" ) ( "c" | "C" ) ( "e" | "E" ) ( "s" | "S" ) >
 	|
+	< EXTENDS: ( "e" | "E" ) ( "x" | "X" ) ( "t" | "T" ) ( "e" | "E" ) ( "n" | "N" ) ( "d" | "D" ) ( "s" | "S" ) >
+	|
+	< CLUSTERS: ( "C" | "c" ) ( "L" | "l" ) ( "U" | "u" ) ( "S" | "s" ) ( "T" | "t" ) ( "E" | "e" ) ( "R" | "r" ) ( "S" | "s" ) >
+	|
+	< ABSTRACT: ( "a" | "A" ) ( "b" | "B" ) ( "s" | "S" ) ( "T" | "t" ) ( "R" | "r" ) ( "a" | "A" ) ( "C" | "c" ) ( "T" | "t" ) >
+	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
 	< RECORD_ATTRIBUTE: <RID_ATTR> | <CLASS_ATTR> | <VERSION_ATTR> | <SIZE_ATTR> | <TYPE_ATTR> | <RAW_ATTR> | <RID_ID_ATTR> | <RID_POS_ATTR> | <FIELDS_ATTR> >
@@ -554,6 +560,12 @@ OIdentifier Identifier():
 	|
 	token = <REFERENCES>
 	|
+	token = <EXTENDS>
+	|
+	token = <CLUSTERS>
+	|
+	token = <ABSTRACT>
+	|
     quotedToken = <QUOTED_IDENTIFIER>
 ) {
 
@@ -646,7 +658,7 @@ OStatement Statement():
 		LOOKAHEAD(CreateVertexStatementEmptyNoTarget())
         result = CreateVertexStatementEmptyNoTarget()
         |
-		LOOKAHEAD(2)
+		LOOKAHEAD(CreateEdgeStatement())
         result = CreateEdgeStatement()
         |
         LOOKAHEAD(UpdateEdgeStatement())
@@ -670,6 +682,9 @@ OStatement Statement():
 		|
 		LOOKAHEAD(TruncateRecordStatement())
         result = TruncateRecordStatement()
+        |
+		LOOKAHEAD(CreateClassStatement())
+		result = CreateClassStatement()
 	) [ <SEMICOLON> ]
 	{
 	    return result;
@@ -3375,4 +3390,33 @@ OFindReferencesStatement FindReferencesStatement():
     	<RBRACKET>
     ]
     { return jjtThis; }
+}
+
+OCreateClassStatement CreateClassStatement():
+{
+	OIdentifier lastIdentifier;
+	OInteger lastInteger;
+}
+{
+	<CREATE> <CLASS>
+	(
+		jjtThis.name = Identifier()
+		[
+			<EXTENDS> lastIdentifier = Identifier() { jjtThis.superclasses = new ArrayList<OIdentifier>(); jjtThis.superclasses.add(lastIdentifier); }
+			 (
+			 	<COMMA>
+			 	lastIdentifier = Identifier() { jjtThis.superclasses.add(lastIdentifier); }
+			 )*
+		]
+		[
+			<CLUSTER> lastInteger = Integer() { jjtThis.clusters = new ArrayList<OInteger>(); jjtThis.clusters.add(lastInteger); }
+		 	(
+				<COMMA>
+				lastInteger = Integer() { jjtThis.clusters.add(lastInteger); }
+		 	)*
+		]
+		[ <CLUSTERS> jjtThis.totalClusterNo = Integer() ]
+		[ <ABSTRACT> { jjtThis.abstractClass = true; } ]
+	)
+	{ return jjtThis; }
 }
