@@ -49,7 +49,7 @@ public class AutoRestartStalledNodeTest extends AbstractServerClusterTxTest {
   public void test() throws Exception {
     // SET MAXQUEUE SIZE LOWER TO TEST THE NODE IS RESTARTED AUTOMATICALLY
     final long queueMaxSize = OGlobalConfiguration.DISTRIBUTED_QUEUE_MAXSIZE.getValueAsLong();
-    OGlobalConfiguration.DISTRIBUTED_QUEUE_MAXSIZE.setValue(9);
+    OGlobalConfiguration.DISTRIBUTED_QUEUE_MAXSIZE.setValue(100);
 
     try {
       startupNodesInSequence = true;
@@ -86,6 +86,9 @@ public class AutoRestartStalledNodeTest extends AbstractServerClusterTxTest {
             try {
               final OHazelcastPlugin dInstance = (OHazelcastPlugin) serverInstance.get(i).getServerInstance()
                   .getDistributedManager();
+
+              if (dInstance.getMessageService() == null)
+                break;
 
               final String queueName = OHazelcastDistributedMessageService.getRequestQueueName(dInstance.getLocalNodeName(),
                   getDatabaseName());

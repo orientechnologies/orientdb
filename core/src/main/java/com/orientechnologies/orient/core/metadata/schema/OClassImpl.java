@@ -1066,6 +1066,10 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   public OClass addClusterId(final int clusterId) {
     getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
+    if (isAbstract()) {
+      throw new OSchemaException("Impossible to associate a cluster to an abstract class class");
+    }
+
     acquireSchemaWriteLock();
     try {
 
@@ -1104,6 +1108,10 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   @Override
   public OClass addCluster(final String clusterNameOrId) {
     getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
+
+    if (isAbstract()) {
+      throw new OSchemaException("Impossible to associate a cluster to an abstract class class");
+    }
 
     acquireSchemaWriteLock();
     try {

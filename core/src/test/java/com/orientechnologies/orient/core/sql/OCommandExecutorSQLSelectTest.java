@@ -111,7 +111,7 @@ public class OCommandExecutorSQLSelectTest {
     db.command(new OCommandSQL("insert into unwindtest (name, coll) values ('foo', ['foo1', 'foo2'])")).execute();
     db.command(new OCommandSQL("insert into unwindtest (name, coll) values ('bar', ['bar1', 'bar2'])")).execute();
 
-    db.command(new OCommandSQL("CREATE class edge")).execute();
+    db.command(new OCommandSQL("CREATE class `edge`")).execute();
 
     db.command(new OCommandSQL("CREATE class TestFromInSquare")).execute();
     db.command(new OCommandSQL("insert into TestFromInSquare set tags = {' from ':'foo',' to ':'bar'}")).execute();
