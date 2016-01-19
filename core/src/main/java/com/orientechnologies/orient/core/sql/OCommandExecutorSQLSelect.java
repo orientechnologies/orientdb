@@ -89,6 +89,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+
 /**
  * Executes the SQL SELECT statement. the parse() method compiles the query and builds the meta information needed by the execute().
  * If the query contains the ORDER BY clause, the results are temporary collected internally, then ordered and finally returned all
@@ -2198,8 +2199,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             metricRecorder.recordInvolvedIndexesMetric(index);
 
             OIndexCursor cursor;
-            indexIsUsedInOrderBy = orderByOptimizer.canBeUsedByOrderBy(index, orderedFields)
-                && !(index.getInternal() instanceof OChainedIndexProxy);
+
+            indexIsUsedInOrderBy = orderByOptimizer.canBeUsedByOrderByAfterFilter(index, getEqualsClausesPrefix(searchResult),
+                orderedFields) && !(index.getInternal() instanceof OChainedIndexProxy);
             try {
               boolean ascSortOrder = !indexIsUsedInOrderBy || orderedFields.get(0).getValue().equals(KEYWORD_ASC);
 
@@ -2311,6 +2313,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     }
   }
 
+
   private Iterator<OIdentifiable> tryIndexedFunctions(OClass iSchemaClass) {
     // TODO profiler
     if (this.preParsedStatement == null) {
@@ -2338,12 +2341,24 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (bestCondition == null) {
       return null;
     }
-    Iterable<OIdentifiable> result = bestCondition.executeIndexedFunction(((OSelectStatement) this.preParsedStatement).getTarget(),
-        getContext());
+    Iterable<OIdentifiable> result = bestCondition
+        .executeIndexedFunction(((OSelectStatement) this.preParsedStatement).getTarget(), getContext());
     if (result == null) {
       return null;
     }
     return result.iterator();
+  }
+
+
+  private List<String> getEqualsClausesPrefix(OIndexSearchResult searchResult) {
+    List<String> result = new ArrayList<String>();
+    if (searchResult.lastOperator instanceof OQueryOperatorEquals) {
+      return searchResult.fields();
+    } else {
+      return searchResult.fields().subList(0, searchResult.fields().size() - 1);
+    }
+
+
   }
 
   private boolean canOptimize(List<List<OIndexSearchResult>> conditionHierarchy) {
