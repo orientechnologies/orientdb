@@ -14,13 +14,16 @@
  *
  */
 
-package com.orientechnologies.agent.auditing;
+package com.orientechnologies.agent.hook;
 
 import com.orientechnologies.common.parser.OVariableParser;
 import com.orientechnologies.common.parser.OVariableParserListener;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseListener;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OSchemaException;
@@ -116,11 +119,11 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
     }
   }
 
-  public OAuditingHook(final String iConfiguration, final ODatabaseInternal iDatabase) {
-    this(new ODocument().fromJSON(iConfiguration, "noMap"), iDatabase);
+  public OAuditingHook(final String iConfiguration) {
+    this(new ODocument().fromJSON(iConfiguration, "noMap"));
   }
 
-  public OAuditingHook(final ODocument iConfiguration, final ODatabaseInternal iDatabase) {
+  public OAuditingHook(final ODocument iConfiguration) {
     this.iConfiguration = iConfiguration;
     if (iConfiguration.containsField("auditClassName"))
       auditClassName = iConfiguration.field("auditClassName");
@@ -168,9 +171,6 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
     auditingQueue = new LinkedBlockingQueue<ODocument>();
     auditingThread = new OAuditingLoggingThread(ODatabaseRecordThreadLocal.INSTANCE.get().getURL(),
         ODatabaseRecordThreadLocal.INSTANCE.get().getName(), auditingQueue);
-
-    iDatabase.registerListener(this);
-    iDatabase.registerHook(this);
 
     auditingThread.start();
   }
@@ -259,19 +259,6 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
       } catch (OSchemaException e) {
         // Schema Exists
       }
-    } else {
-      // CHECK FOR CLUSTERS
-      // WHY
-      // for (int clId : cls.getClusterIds()) {
-      // try {
-      // final OCluster cluster = db.getStorage().getClusterById(clId);
-      // if (cluster == null)
-      // db.getStorage().addCluster(auditClassName, true, clId);
-      // } catch (IllegalArgumentException e) {
-      //
-      // db.getStorage().addCluster(auditClassName, true, clId);
-      // }
-      // }
     }
   }
 

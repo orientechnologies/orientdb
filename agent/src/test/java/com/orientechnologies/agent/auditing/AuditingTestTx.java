@@ -18,6 +18,9 @@
 
 package com.orientechnologies.agent.auditing;
 
+import junit.framework.Assert;
+
+import com.orientechnologies.agent.hook.AuditingTest;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -25,7 +28,6 @@ import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
-import junit.framework.Assert;
 
 /**
  * Tests against Auditing.

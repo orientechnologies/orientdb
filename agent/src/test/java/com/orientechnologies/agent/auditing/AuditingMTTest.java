@@ -18,6 +18,7 @@
 
 package com.orientechnologies.agent.auditing;
 
+import com.orientechnologies.agent.hook.OAuditingHook;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
@@ -59,7 +60,7 @@ public class AuditingMTTest extends TestCase {
           graph.getRawGraph().registerHook(
               new OAuditingHook("{classes:{" + "'User':{onCreateEnabled:true, onCreateMessage:'Created new user ${field.name}'},"
                   + "'V':{onCreateEnabled:true, onCreateMessage:'Created vertex of class ${field.@class}'},"
-                  + "'*':{onCreateEnabled:false}}}", graph.getRawGraph()));
+                  + "'*':{onCreateEnabled:false}}}"));
 
           graph.addVertex("class:User", "name", "Jill");
 

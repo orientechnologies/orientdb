@@ -140,6 +140,8 @@ public class AuditingTest extends TestCase {
     assertEquals(0, graph.getRawGraph().countClass("AuditingLog"));
   }
 
+
+  // FAILING due 2.2 minimum cluster policy
   public void testCRUDOperations() {
     graph.getRawGraph().registerHook(
         new OAuditingHook("{classes:{" + "'V':{onCreateEnabled:true, onCreateMessage:'Created vertex of class ${field.@class}',"

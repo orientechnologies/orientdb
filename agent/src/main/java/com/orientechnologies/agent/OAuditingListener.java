@@ -8,11 +8,7 @@ import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -23,9 +19,9 @@ public class OAuditingListener implements ODatabaseLifecycleListener {
 
   private Map<String, OAuditingHook> hooks;
 
-  protected static final String DEFAULT_FILE_AUDITING_DB_CONFIG = "default-auditing-config.json";
-  protected static final String FILE_AUDITING_DB_CONFIG         = "auditing-config.json";
-  private OEnterpriseAgent      enterpriseAgent;
+  protected static final String      DEFAULT_FILE_AUDITING_DB_CONFIG = "default-auditing-config.json";
+  protected static final String      FILE_AUDITING_DB_CONFIG         = "auditing-config.json";
+  private OEnterpriseAgent           enterpriseAgent;
 
   public OAuditingListener(final OEnterpriseAgent iEnterpriseAgent) {
     this.enterpriseAgent = iEnterpriseAgent;
@@ -53,8 +49,8 @@ public class OAuditingListener implements ODatabaseLifecycleListener {
       content = getContent(auditingFileConfig);
 
     } else {
-      final InputStream resourceAsStream = OEnterpriseAgent.class.getClassLoader()
-          .getResourceAsStream(DEFAULT_FILE_AUDITING_DB_CONFIG);
+      final InputStream resourceAsStream = OEnterpriseAgent.class.getClassLoader().getResourceAsStream(
+              DEFAULT_FILE_AUDITING_DB_CONFIG);
       content = getString(resourceAsStream);
       try {
         auditingFileConfig.getParentFile().mkdirs();
@@ -160,6 +156,6 @@ public class OAuditingListener implements ODatabaseLifecycleListener {
   }
 
   public ODocument getConfig(final String iDatabaseName) {
-    return hooks.get(iDatabaseName).getiConfiguration();
+    return hooks.get(iDatabaseName).getConfiguration();
   }
 }
