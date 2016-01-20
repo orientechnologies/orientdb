@@ -37,6 +37,7 @@ public class OAuditingLoggingThread extends Thread {
   private ODatabaseDocumentTx            db;
   private volatile boolean               running        = true;
   private volatile boolean               waitForAllLogs = true;
+  private boolean                        isOpened       = false;
 
   public OAuditingLoggingThread(final String iDatabaseURL, final String iDatabaseName, final BlockingQueue auditingQueue) {
     super(Orient.instance().getThreadGroup(), "OrientDB Auditing Logging Thread - " + iDatabaseName);
@@ -48,8 +49,6 @@ public class OAuditingLoggingThread extends Thread {
 
   @Override
   public void run() {
-    db = new ODatabaseDocumentTx(databaseURL);
-    openDatabase();
 
     while (running || waitForAllLogs) {
       try {
@@ -59,6 +58,11 @@ public class OAuditingLoggingThread extends Thread {
 
         final ODocument log = auditingQueue.take();
 
+        if (!isOpened) {
+          db = new ODatabaseDocumentTx(databaseURL);
+          openDatabase();
+          isOpened = true;
+        }
         db.activateOnCurrentThread();
         db.save(log);
 

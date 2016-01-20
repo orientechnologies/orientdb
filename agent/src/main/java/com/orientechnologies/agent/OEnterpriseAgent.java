@@ -78,7 +78,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
       installPlugins();
 
       auditingListener = new OAuditingListener(this);
-      Orient.instance().addDbLifecycleListener(auditingListener);
 
       Thread installer = new Thread(new Runnable() {
         @Override
@@ -143,7 +142,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
 
   @Override
   public PRIORITY getPriority() {
-    return PRIORITY.REGULAR;
+    return PRIORITY.LAST;
   }
 
   /**
