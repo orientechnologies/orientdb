@@ -186,7 +186,7 @@ final class OLogSegment implements Comparable<OLogSegment> {
   }
 
   public void startFlush() {
-    if (writeAheadLog.getCommitDelay()> 0)
+    if (writeAheadLog.getCommitDelay() > 0)
       commitExecutor.scheduleAtFixedRate(new FlushTask(), writeAheadLog.getCommitDelay(), writeAheadLog.getCommitDelay(), TimeUnit.MILLISECONDS);
   }
 
@@ -283,6 +283,57 @@ final class OLogSegment implements Comparable<OLogSegment> {
 
   public String getPath() {
     return file.getAbsolutePath();
+  }
+
+  public static class OLogRecord {
+    public final byte[] record;
+    public final long   writeFrom;
+    public final long   writeTo;
+
+    public OLogRecord(byte[] record, long writeFrom, long writeTo) {
+      this.record = record;
+      this.writeFrom = writeFrom;
+      this.writeTo = writeTo;
+    }
+  }
+
+  public static OLogRecord generateLogRecord(final long starting, final byte[] record) {
+    long from = starting;
+    long length = record.length;
+    long resultSize;
+    int freePageSpace = OWALPage.PAGE_SIZE - (int) Math.max(starting % OWALPage.PAGE_SIZE, OWALPage.RECORDS_OFFSET);
+    int inPage = OWALPage.calculateRecordSize(freePageSpace);
+    //the record fit in the current page
+    if (inPage >= length) {
+      resultSize = OWALPage.calculateSerializedSize((int) length);
+      if (from % OWALPage.PAGE_SIZE == 0)
+        from += OWALPage.RECORDS_OFFSET;
+      return new OLogRecord(record, from, from + resultSize);
+    } else {
+      if (inPage > 0) {
+        //space left in the current page, take it
+        length -= inPage;
+        resultSize = freePageSpace;
+        if (from % OWALPage.PAGE_SIZE == 0)
+          from += OWALPage.RECORDS_OFFSET;
+      } else {
+        //no space left, start from a new one.
+        from = starting + freePageSpace + OWALPage.RECORDS_OFFSET;
+        resultSize = -OWALPage.RECORDS_OFFSET;
+      }
+
+      //calculate spare page
+      //add all the full pages
+      resultSize += length / OWALPage.calculateRecordSize(OWALPage.MAX_ENTRY_SIZE) * OWALPage.PAGE_SIZE;
+
+      int leftSize = (int) length % OWALPage.calculateRecordSize(OWALPage.MAX_ENTRY_SIZE);
+      if (leftSize > 0) {
+        //add the spare bytes at the last page
+        resultSize += OWALPage.RECORDS_OFFSET + OWALPage.calculateSerializedSize(leftSize);
+      }
+
+      return new OLogRecord(record, from, from + resultSize);
+    }
   }
 
   public OLogSequenceNumber logRecord(byte[] record) throws IOException {
@@ -442,7 +493,7 @@ final class OLogSegment implements Comparable<OLogSegment> {
         pos += entrySize + OWALPage.RECORDS_OFFSET;
         break;
       } else {
-        int chunkSize = OWALPage.calculateRecordSize(OWALPage.PAGE_SIZE - pageOffset);
+        long chunkSize = OWALPage.calculateRecordSize(OWALPage.PAGE_SIZE - pageOffset);
         restOfRecord -= chunkSize;
 
         pos += OWALPage.PAGE_SIZE - pageOffset + OWALPage.RECORDS_OFFSET;
