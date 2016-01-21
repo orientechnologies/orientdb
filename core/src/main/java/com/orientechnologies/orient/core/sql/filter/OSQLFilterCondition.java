@@ -305,7 +305,7 @@ public class OSQLFilterCondition {
       return null;
     }
 
-    final OStorageConfiguration config = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration();
+    final OStorageConfiguration config = ODatabaseRecordThreadLocal.instance().get().getStorage().getConfiguration();
 
     if (value instanceof Long) {
       Calendar calendar = Calendar.getInstance(config.getTimeZone());

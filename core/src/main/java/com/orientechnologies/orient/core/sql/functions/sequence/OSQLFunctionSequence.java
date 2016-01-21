@@ -27,7 +27,7 @@ public class OSQLFunctionSequence extends OSQLFunctionConfigurableAbstract {
     else
       seqName = configuredParameters[0].toString();
 
-    return ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSequenceLibrary().getSequence(seqName);
+    return ODatabaseRecordThreadLocal.instance().get().getMetadata().getSequenceLibrary().getSequence(seqName);
   }
 
   @Override

@@ -27,7 +27,7 @@ public class OTokenHandlerImplTest {
   @BeforeMethod
   public void beforeTest() {
     if (Orient.instance().getEngine("memory") == null) {
-      Orient.instance().startup();
+      Orient.instance();//.startup();
     }
   }
 

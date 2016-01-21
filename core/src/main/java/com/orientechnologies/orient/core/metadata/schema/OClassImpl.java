@@ -2585,7 +2585,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   private ODatabaseDocumentInternal getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
+    return ODatabaseRecordThreadLocal.instance().get();
   }
 
   /**

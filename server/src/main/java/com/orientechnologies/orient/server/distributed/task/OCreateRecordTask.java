@@ -74,7 +74,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
         // PRE-ASSIGN THE CLUSTER ID ON CALLER NODE
         clusterId = clazz.getClusterSelection().getCluster(clazz, (ODocument) record);
       } else {
-        ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+        ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
         clusterId = db.getDefaultClusterId();
       }
     }

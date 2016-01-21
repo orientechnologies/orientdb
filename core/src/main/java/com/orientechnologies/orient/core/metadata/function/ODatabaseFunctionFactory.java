@@ -36,19 +36,19 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionFactory;
 public class ODatabaseFunctionFactory implements OSQLFunctionFactory {
   @Override
   public boolean hasFunction(final String iName) {
-    final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocument db = ODatabaseRecordThreadLocal.instance().get();
     return db.getMetadata().getFunctionLibrary().getFunction(iName) != null;
   }
 
   @Override
   public Set<String> getFunctionNames() {
-    final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocument db = ODatabaseRecordThreadLocal.instance().get();
     return db.getMetadata().getFunctionLibrary().getFunctionNames();
   }
 
   @Override
   public OSQLFunction createFunction(final String name) throws OCommandExecutionException {
-    final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocument db = ODatabaseRecordThreadLocal.instance().get();
     final OFunction f = db.getMetadata().getFunctionLibrary().getFunction(name);
     return new ODatabaseFunction(f);
   }

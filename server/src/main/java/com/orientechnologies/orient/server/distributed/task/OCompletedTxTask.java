@@ -62,7 +62,7 @@ public class OCompletedTxTask extends OAbstractReplicatedTask {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
         "completing transaction against db=%s locks=%s...", database.getName(), locks);
 
-    ODatabaseRecordThreadLocal.INSTANCE.set(database);
+    ODatabaseRecordThreadLocal.instance().set(database);
 
     // UNLOCK ALL LOCKS ACQUIRED IN TX
     final ODistributedDatabase ddb = iManager.getMessageService().getDatabase(database.getName());

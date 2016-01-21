@@ -111,7 +111,7 @@ public class MultipleDBTest extends DocumentDBBaseTest {
             for (int j = 0; j < operations_write; j++) {
               DummyObject dummy = new DummyObject("name" + j);
 
-              Assert.assertEquals(ODatabaseRecordThreadLocal.INSTANCE.get().getURL(), dbUrl);
+              Assert.assertEquals(ODatabaseRecordThreadLocal.instance().get().getURL(), dbUrl);
 
               dummy = tx.save(dummy);
 
@@ -208,7 +208,7 @@ public class MultipleDBTest extends DocumentDBBaseTest {
               ODocument dummy = new ODocument("DummyObject");
               dummy.field("name", "name" + j);
 
-              Assert.assertEquals(ODatabaseRecordThreadLocal.INSTANCE.get().getURL(), dbUrl);
+              Assert.assertEquals(ODatabaseRecordThreadLocal.instance().get().getURL(), dbUrl);
 
               dummy = tx.save(dummy);
 

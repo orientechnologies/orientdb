@@ -389,7 +389,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
     final OHazelcastDistributedRequest req = new OHazelcastDistributedRequest(nodeName, iDatabaseName, iTask, iExecutionMode);
 
-    final ODatabaseDocument currentDatabase = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocument currentDatabase = ODatabaseRecordThreadLocal.instance().getIfDefined();
     if (currentDatabase != null && currentDatabase.getUser() != null)
       // SET CURRENT DATABASE NAME
       req.setUserRID(currentDatabase.getUser().getIdentity().getIdentity());
@@ -440,7 +440,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     } else if (dbUrl.startsWith("remote:"))
       return;
 
-    final ODatabaseDocumentInternal currDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocumentInternal currDb = ODatabaseRecordThreadLocal.instance().getIfDefined();
     try {
 
       if (getConfigurationMap().containsKey(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + iDatabase.getName()))
@@ -452,7 +452,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
     } finally {
       // RESTORE ORIGINAL DATABASE INSTANCE IN TL
-      ODatabaseRecordThreadLocal.INSTANCE.set(currDb);
+      ODatabaseRecordThreadLocal.instance().set(currDb);
     }
   }
 
@@ -476,7 +476,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     } else if (dbUrl.startsWith("remote:"))
       return;
 
-    final ODatabaseDocumentInternal currDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocumentInternal currDb = ODatabaseRecordThreadLocal.instance().getIfDefined();
     try {
       synchronized (cachedDatabaseConfiguration) {
         final ODistributedConfiguration cfg = getDatabaseConfiguration(iDatabase.getName());
@@ -501,7 +501,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       }
     } finally {
       // RESTORE ORIGINAL DATABASE INSTANCE IN TL
-      ODatabaseRecordThreadLocal.INSTANCE.set(currDb);
+      ODatabaseRecordThreadLocal.instance().set(currDb);
     }
   }
 

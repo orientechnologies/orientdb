@@ -52,7 +52,7 @@ public class OObjectDatabaseTxPooled extends OObjectDatabaseTx implements ODatab
     ownerPool = (OObjectDatabasePool) iOwner;
     if (isClosed())
       open((String) iAdditionalArgs[0], (String) iAdditionalArgs[1]);
-    ODatabaseRecordThreadLocal.INSTANCE.set(getUnderlying());
+    ODatabaseRecordThreadLocal.instance().set(getUnderlying());
     init();
 
     try {

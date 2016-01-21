@@ -59,7 +59,7 @@ public class OrientJdbcResultSet implements ResultSet {
       fieldNames = document.fieldNames();
     }
 
-    ODatabaseRecordThreadLocal.INSTANCE.set(iOrientJdbcStatement.database);
+    ODatabaseRecordThreadLocal.instance().set(iOrientJdbcStatement.database);
     if (type == TYPE_FORWARD_ONLY || type == TYPE_SCROLL_INSENSITIVE || type == TYPE_SCROLL_SENSITIVE)
       this.type = type;
     else
@@ -80,7 +80,7 @@ public class OrientJdbcResultSet implements ResultSet {
   }
 
   private void setDatabaseOnThreadLocalInstance() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(statement.database);
+    ODatabaseRecordThreadLocal.instance().set(statement.database);
   }
 
   public void close() throws SQLException {

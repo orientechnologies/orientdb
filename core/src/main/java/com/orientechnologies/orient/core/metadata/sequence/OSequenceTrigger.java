@@ -31,7 +31,7 @@ public class OSequenceTrigger extends ODocumentHookAbstract {
   }
 
   private static ODatabaseDocumentInternal getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
+    return ODatabaseRecordThreadLocal.instance().get();
   }
 
   @Override
@@ -49,7 +49,7 @@ public class OSequenceTrigger extends ODocumentHookAbstract {
   }
 
   private OSequenceLibrary getSequenceLibrary() {
-    final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocument db = ODatabaseRecordThreadLocal.instance().get();
     return db.getMetadata().getSequenceLibrary();
   }
 }

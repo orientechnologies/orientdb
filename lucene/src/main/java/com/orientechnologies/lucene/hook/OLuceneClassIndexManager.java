@@ -512,6 +512,6 @@ public class OLuceneClassIndexManager extends ODocumentHookAbstract {
   }
 
   private ODatabaseDocumentInternal getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
+    return ODatabaseRecordThreadLocal.instance().get();
   }
 }

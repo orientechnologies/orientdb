@@ -72,7 +72,7 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
 
   @Override
   public V get(K key) {
-    final OStorageRemote storage = (OStorageRemote) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying();
+    final OStorageRemote storage = (OStorageRemote) ODatabaseRecordThreadLocal.instance().get().getStorage().getUnderlying();
 
     final byte[] keyStream = new byte[keySerializer.getObjectSize(key)];
     keySerializer.serialize(key, keyStream, 0);
@@ -168,7 +168,7 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
   private List<Map.Entry<K, V>> fetchEntriesMajor(final K key,final boolean inclusive) {
     final byte[] keyStream = new byte[keySerializer.getObjectSize(key)];
     keySerializer.serialize(key, keyStream, 0);
-    final OStorageRemote storage = (OStorageRemote) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying();
+    final OStorageRemote storage = (OStorageRemote) ODatabaseRecordThreadLocal.instance().get().getStorage().getUnderlying();
     return storage.networkOperation(new OStorageRemoteOperation<List<Map.Entry<K, V>>>() {
       @Override
       public List<Map.Entry<K, V>> execute(final OChannelBinaryAsynchClient client) throws IOException {
@@ -215,7 +215,7 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
 
   @Override
   public K firstKey() {
-    final OStorageRemote storage = (OStorageRemote) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying();
+    final OStorageRemote storage = (OStorageRemote) ODatabaseRecordThreadLocal.instance().get().getStorage().getUnderlying();
     return storage.networkOperation(new OStorageRemoteOperation<K>() {
       @Override
       public K execute(final OChannelBinaryAsynchClient client) throws IOException {
@@ -251,7 +251,7 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
 
   @Override
   public int getRealBagSize(final Map<K, OSBTreeRidBag.Change> changes) {
-    final OStorageRemote storage = (OStorageRemote) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying();
+    final OStorageRemote storage = (OStorageRemote) ODatabaseRecordThreadLocal.instance().get().getStorage().getUnderlying();
     return storage.networkOperation(new OStorageRemoteOperation<Integer>() {
       @Override
       public Integer execute(OChannelBinaryAsynchClient client) throws IOException {

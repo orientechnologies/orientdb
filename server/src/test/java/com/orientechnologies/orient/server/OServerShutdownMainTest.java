@@ -69,7 +69,7 @@ public class OServerShutdownMainTest {
     if (prevPassword != null)
       System.setProperty("ORIENTDB_ROOT_PASSWORD", prevPassword);
 
-    Orient.instance().startup();
+    Orient.instance();//.startup();
   }
 
   @Test(enabled = true)

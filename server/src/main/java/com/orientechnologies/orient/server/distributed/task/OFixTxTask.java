@@ -67,7 +67,7 @@ public class OFixTxTask extends OAbstractRemoteTask {
   public Object execute(final OServer iServer, final ODistributedServerManager iManager, final ODatabaseDocumentTx database) throws Exception {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "fixing %d conflicts found during committing transaction against db=%s...", tasks.size(), database.getName());
 
-    ODatabaseRecordThreadLocal.INSTANCE.set(database);
+    ODatabaseRecordThreadLocal.instance().set(database);
     try {
       OScenarioThreadLocal.executeAsDistributed(new Callable<Object>() {
         @Override

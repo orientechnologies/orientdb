@@ -156,7 +156,7 @@ public abstract class OSequence extends ODocumentWrapper {
   }
 
   protected ODatabaseDocumentInternal getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
+    return ODatabaseRecordThreadLocal.instance().get();
   }
 
   public static String getSequenceName(final ODocument iDocument) {

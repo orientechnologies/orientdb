@@ -64,7 +64,7 @@ public class OCommandExecutorFunction extends OCommandExecutorAbstract {
 
     parserText = request.getText();
 
-    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
     final OFunction f = db.getMetadata().getFunctionLibrary().getFunction(parserText);
 
     db.checkSecurity(ORule.ResourceGeneric.FUNCTION, ORole.PERMISSION_READ, f.getName());

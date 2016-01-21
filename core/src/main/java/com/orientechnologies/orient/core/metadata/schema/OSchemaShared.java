@@ -1344,7 +1344,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass
   }
 
   private ODatabaseDocumentInternal getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
+    return ODatabaseRecordThreadLocal.instance().get();
   }
 
   private void ensurePropertiesSize(int size) {

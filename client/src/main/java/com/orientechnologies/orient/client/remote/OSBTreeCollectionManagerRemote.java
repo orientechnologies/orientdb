@@ -83,7 +83,7 @@ public class OSBTreeCollectionManagerRemote extends OSBTreeCollectionManagerAbst
   @Override
   protected OSBTreeBonsaiRemote<OIdentifiable, Integer> createTree(final int clusterId) {
     if (remoteCreationAllowed) {
-      final OStorageRemote storage = (OStorageRemote) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying();
+      final OStorageRemote storage = (OStorageRemote) ODatabaseRecordThreadLocal.instance().get().getStorage().getUnderlying();
       return storage.networkOperation(new OStorageRemoteOperation<OSBTreeBonsaiRemote<OIdentifiable, Integer>>() {
         @Override
         public OSBTreeBonsaiRemote<OIdentifiable, Integer> execute(final OChannelBinaryAsynchClient client) throws IOException {

@@ -319,7 +319,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
     if (rebuildCompleted)
       return false;
 
-    final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.instance().get();
     final OStorage storage = database.getStorage().getUnderlying();
     if (storage instanceof OAbstractPaginatedStorage) {
       OAbstractPaginatedStorage paginatedStorage = (OAbstractPaginatedStorage) storage;
@@ -605,7 +605,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
       newDb.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSecurityNull.class);
       newDb.open("admin", "nopass");
 
-      ODatabaseRecordThreadLocal.INSTANCE.set(newDb);
+      ODatabaseRecordThreadLocal.instance().set(newDb);
     }
   }
 }

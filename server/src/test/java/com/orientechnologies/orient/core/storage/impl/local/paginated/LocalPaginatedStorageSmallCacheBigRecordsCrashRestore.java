@@ -93,15 +93,15 @@ public class LocalPaginatedStorageSmallCacheBigRecordsCrashRestore {
     }
 
     private void saveDoc(ODocument document) {
-      ODatabaseRecordThreadLocal.INSTANCE.set(baseDB);
+      ODatabaseRecordThreadLocal.instance().set(baseDB);
 
       ODocument testDoc = new ODocument();
       document.copyTo(testDoc);
       document.save();
 
-      ODatabaseRecordThreadLocal.INSTANCE.set(testDB);
+      ODatabaseRecordThreadLocal.instance().set(testDB);
       testDoc.save();
-      ODatabaseRecordThreadLocal.INSTANCE.set(baseDB);
+      ODatabaseRecordThreadLocal.instance().set(baseDB);
     }
   }
 
@@ -186,7 +186,7 @@ public class LocalPaginatedStorageSmallCacheBigRecordsCrashRestore {
   }
 
   private void createSchema(ODatabaseDocumentTx dbDocumentTx) {
-    ODatabaseRecordThreadLocal.INSTANCE.set(dbDocumentTx);
+    ODatabaseRecordThreadLocal.instance().set(dbDocumentTx);
 
     OSchema schema = dbDocumentTx.getMetadata().getSchema();
     if (!schema.existsClass("TestClass")) {
@@ -218,10 +218,10 @@ public class LocalPaginatedStorageSmallCacheBigRecordsCrashRestore {
       for (OPhysicalPosition physicalPosition : physicalPositions) {
         rid.clusterPosition = physicalPosition.clusterPosition;
 
-        ODatabaseRecordThreadLocal.INSTANCE.set(baseDocumentTx);
+        ODatabaseRecordThreadLocal.instance().set(baseDocumentTx);
         ODocument baseDocument = baseDocumentTx.load(rid);
 
-        ODatabaseRecordThreadLocal.INSTANCE.set(testDocumentTx);
+        ODatabaseRecordThreadLocal.instance().set(testDocumentTx);
         List<ODocument> testDocuments = testDocumentTx.query(new OSQLSynchQuery<ODocument>("select from TestClass where id  = "
             + baseDocument.field("id")));
         if (testDocuments.size() == 0) {

@@ -60,7 +60,7 @@ public class OServerTest {
     if (prevPassword != null)
       System.setProperty("ORIENTDB_ROOT_PASSWORD", prevPassword);
 
-    Orient.instance().startup();
+    Orient.instance();//.startup();
   }
 
   @Test

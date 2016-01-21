@@ -146,7 +146,7 @@ public class IndexCrashRestoreMultiValueAddDelete {
   }
 
   private void compareIndexes() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(baseDocumentTx);
+    ODatabaseRecordThreadLocal.instance().set(baseDocumentTx);
     OIndexCursor cursor = baseDocumentTx.getMetadata().getIndexManager().getIndex("mi").cursor();
 
     long lastTs = 0;
@@ -156,7 +156,7 @@ public class IndexCrashRestoreMultiValueAddDelete {
 
     Map.Entry<Object, OIdentifiable> entry = cursor.nextEntry();
     while (entry != null) {
-      ODatabaseRecordThreadLocal.INSTANCE.set(baseDocumentTx);
+      ODatabaseRecordThreadLocal.instance().set(baseDocumentTx);
       Integer key = (Integer) entry.getKey();
 
       OIdentifiable identifiable = entry.getValue();
@@ -168,7 +168,7 @@ public class IndexCrashRestoreMultiValueAddDelete {
 
       entry = cursor.nextEntry();
 
-      ODatabaseRecordThreadLocal.INSTANCE.set(testDocumentTx);
+      ODatabaseRecordThreadLocal.instance().set(testDocumentTx);
       OIndex testIndex = testDocumentTx.getMetadata().getIndexManager().getIndex("mi");
 
       Set<OIdentifiable> result = (Set<OIdentifiable>) testIndex.get(key);
@@ -192,14 +192,14 @@ public class IndexCrashRestoreMultiValueAddDelete {
 
     }
 
-    ODatabaseRecordThreadLocal.INSTANCE.set(baseDocumentTx);
+    ODatabaseRecordThreadLocal.instance().set(baseDocumentTx);
     System.out.println("Restored entries : " + restoredRecords + " out of : "
         + baseDocumentTx.getMetadata().getIndexManager().getIndex("mi").getSize());
     System.out.println("Lost records max interval : " + (minLostTs == Long.MAX_VALUE ? 0 : lastTs - minLostTs));
   }
 
   private void createSchema(ODatabaseDocumentTx dbDocumentTx) {
-    ODatabaseRecordThreadLocal.INSTANCE.set(dbDocumentTx);
+    ODatabaseRecordThreadLocal.instance().set(dbDocumentTx);
     dbDocumentTx.command(new OCommandSQL("create index mi notunique integer")).execute();
     dbDocumentTx.getMetadata().getIndexManager().reload();
   }
@@ -223,7 +223,7 @@ public class IndexCrashRestoreMultiValueAddDelete {
           long id = idGen.getAndIncrement();
           long ts = System.currentTimeMillis();
 
-          ODatabaseRecordThreadLocal.INSTANCE.set(baseDB);
+          ODatabaseRecordThreadLocal.instance().set(baseDB);
           ODocument doc = new ODocument();
           doc.field("ts", ts);
           doc.save();
@@ -231,8 +231,8 @@ public class IndexCrashRestoreMultiValueAddDelete {
           baseDB.command(new OCommandSQL("insert into index:mi (key, rid) values (" + id + ", " + doc.getIdentity() + ")"))
               .execute();
 
-          ODatabaseRecordThreadLocal.INSTANCE.set(testDB);
-          ODatabaseRecordThreadLocal.INSTANCE.set(testDB);
+          ODatabaseRecordThreadLocal.instance().set(testDB);
+          ODatabaseRecordThreadLocal.instance().set(testDB);
           for (int i = 0; i < 15; i++) {
             testDB.command(new OCommandSQL("insert into index:mi (key, rid) values (" + id + ", #0:" + i + ")")).execute();
           }

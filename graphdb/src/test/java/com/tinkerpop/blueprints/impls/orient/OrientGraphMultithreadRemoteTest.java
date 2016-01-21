@@ -56,7 +56,7 @@ public class OrientGraphMultithreadRemoteTest {
     final File file = new File(serverHome);
     deleteDirectory(file);
 
-    Orient.instance().startup();
+    Orient.instance();//.startup();
   }
 
   @Before
