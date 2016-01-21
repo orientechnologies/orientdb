@@ -83,10 +83,8 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   private final Condition segmentCreationComplete = syncObject.newCondition();
 
   private final Set<OOperationUnitId>                               activeOperations        = new HashSet<OOperationUnitId>();
-  private final List<WeakReference<OLowDiskSpaceListener>>          lowDiskSpaceListeners   = Collections
-      .synchronizedList(new ArrayList<WeakReference<OLowDiskSpaceListener>>());
-  private final List<WeakReference<OFullCheckpointRequestListener>> fullCheckpointListeners = Collections
-      .synchronizedList(new ArrayList<WeakReference<OFullCheckpointRequestListener>>());
+  private final List<WeakReference<OLowDiskSpaceListener>>          lowDiskSpaceListeners   = Collections.synchronizedList(new ArrayList<WeakReference<OLowDiskSpaceListener>>());
+  private final List<WeakReference<OFullCheckpointRequestListener>> fullCheckpointListeners = Collections.synchronizedList(new ArrayList<WeakReference<OFullCheckpointRequestListener>>());
 
   private static class FilenameFilter implements java.io.FilenameFilter {
     private final OLocalPaginatedStorage storage;
@@ -102,9 +100,8 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   public ODiskWriteAheadLog(OLocalPaginatedStorage storage) throws IOException {
-    this(OGlobalConfiguration.WAL_CACHE_SIZE.getValueAsInteger(), OGlobalConfiguration.WAL_COMMIT_TIMEOUT.getValueAsInteger(),
-        OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE.getValueAsInteger() * ONE_KB * ONE_KB,
-        OGlobalConfiguration.WAL_LOCATION.getValueAsString(), storage);
+    this(OGlobalConfiguration.WAL_CACHE_SIZE.getValueAsInteger(), OGlobalConfiguration.WAL_COMMIT_TIMEOUT.getValueAsInteger(), OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE.getValueAsInteger() * ONE_KB * ONE_KB,
+      OGlobalConfiguration.WAL_LOCATION.getValueAsString(), storage);
   }
 
   public void addLowDiskSpaceListener(OLowDiskSpaceListener listener) {
@@ -143,8 +140,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       fullCheckpointListeners.remove(ref);
   }
 
-  public ODiskWriteAheadLog(int maxPagesCacheSize, int commitDelay, long maxSegmentSize, final String walPath,
-      final OLocalPaginatedStorage storage) throws IOException {
+  public ODiskWriteAheadLog(int maxPagesCacheSize, int commitDelay, long maxSegmentSize, final String walPath, final OLocalPaginatedStorage storage) throws IOException {
     this.maxPagesCacheSize = maxPagesCacheSize;
     this.commitDelay = commitDelay;
     this.maxSegmentSize = maxSegmentSize;
@@ -156,8 +152,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       File[] walFiles = this.walLocation.listFiles(new FilenameFilter(storage));
 
       if (walFiles == null)
-        throw new IllegalStateException(
-            "Location passed in WAL does not exist, or IO error was happened. DB cannot work in durable mode in such case");
+        throw new IllegalStateException("Location passed in WAL does not exist, or IO error was happened. DB cannot work in durable mode in such case");
 
       if (walFiles.length == 0) {
         OLogSegment logSegment = new OLogSegment(this, new File(this.walLocation, getSegmentName(0)), maxPagesCacheSize);
@@ -305,11 +300,13 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
 
   @Override
   public OLogSequenceNumber logAtomicOperationStartRecord(boolean isRollbackSupported, OOperationUnitId unitId) throws IOException {
+    OAtomicUnitStartRecord record = new OAtomicUnitStartRecord(isRollbackSupported, unitId);
+    byte[] content = OWALRecordsFactory.INSTANCE.toStream(record);
     syncObject.lock();
     try {
       checkForClose();
 
-      final OLogSequenceNumber lsn = log(new OAtomicUnitStartRecord(isRollbackSupported, unitId));
+      final OLogSequenceNumber lsn = internalLog(record,content);
       activeOperations.add(unitId);
       return lsn;
     } finally {
@@ -318,13 +315,15 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   @Override
-  public OLogSequenceNumber logAtomicOperationEndRecord(OOperationUnitId operationUnitId, boolean rollback,
-      OLogSequenceNumber startLsn, Map<String, OAtomicOperationMetadata<?>> atomicOperationMetadata) throws IOException {
+  public OLogSequenceNumber logAtomicOperationEndRecord(OOperationUnitId operationUnitId, boolean rollback, OLogSequenceNumber startLsn, Map<String, OAtomicOperationMetadata<?>> atomicOperationMetadata)
+    throws IOException {
+    OAtomicUnitEndRecord record = new OAtomicUnitEndRecord(operationUnitId, rollback, atomicOperationMetadata);
+    byte[] content = OWALRecordsFactory.INSTANCE.toStream(record);
     syncObject.lock();
     try {
       checkForClose();
 
-      final OLogSequenceNumber lsn = log(new OAtomicUnitEndRecord(operationUnitId, rollback, atomicOperationMetadata));
+      final OLogSequenceNumber lsn = internalLog(record,content);
       activeOperations.remove(operationUnitId);
 
       return lsn;
@@ -334,12 +333,23 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   public OLogSequenceNumber log(OWALRecord record) throws IOException {
+    return internalLog(record, OWALRecordsFactory.INSTANCE.toStream(record));
+  }
+
+  /**
+   * it log a record getting the serialized content as paramenter.
+   *
+   * @param record
+   * @param recordContent
+   * @return
+   * @throws IOException
+   */
+  public OLogSequenceNumber internalLog(OWALRecord record, byte [] recordContent) throws IOException {
     syncObject.lock();
     try {
       checkForClose();
 
-      if (segmentCreationFlag && record instanceof OOperationUnitRecord && !activeOperations
-          .contains(((OOperationUnitRecord) record).getOperationUnitId())) {
+      if (segmentCreationFlag && record instanceof OOperationUnitRecord && !activeOperations.contains(((OOperationUnitRecord) record).getOperationUnitId())) {
         while (segmentCreationFlag) {
           try {
             segmentCreationComplete.await();
@@ -350,12 +360,11 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
         }
       }
 
-      final byte[] serializedForm = OWALRecordsFactory.INSTANCE.toStream(record);
 
       OLogSegment last = logSegments.get(logSegments.size() - 1);
       long lastSize = last.filledUpTo();
 
-      final OLogSequenceNumber lsn = last.logRecord(serializedForm);
+      final OLogSequenceNumber lsn = last.logRecord(recordContent);
       record.setLsn(lsn);
 
       if (record.isUpdateMasterRecord()) {
@@ -377,8 +386,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       if (last.filledUpTo() >= maxSegmentSize) {
         segmentCreationFlag = true;
 
-        if (record instanceof OAtomicUnitEndRecord && activeOperations.size() == 1 || (!(record instanceof OOperationUnitRecord)
-            && activeOperations.isEmpty())) {
+        if (record instanceof OAtomicUnitEndRecord && activeOperations.size() == 1 || (!(record instanceof OOperationUnitRecord) && activeOperations.isEmpty())) {
           last.stopFlush(true);
 
           last = new OLogSegment(this, new File(walLocation, getSegmentName(last.getOrder() + 1)), maxPagesCacheSize);
@@ -772,8 +780,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       crc32.update(serializedLSN);
 
       if (firstCRC != ((int) crc32.getValue())) {
-        OLogManager.instance()
-            .error(this, "Cannot restore %d WAL master record for storage %s crc check is failed", index, storageName);
+        OLogManager.instance().error(this, "Cannot restore %d WAL master record for storage %s crc check is failed", index, storageName);
         return null;
       }
 
@@ -797,8 +804,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
 
     OIntegerSerializer.INSTANCE.serializeLiteral((int) crc32.getValue(), record, 0);
     OLongSerializer.INSTANCE.serializeLiteral(masterRecord.getSegment(), record, OIntegerSerializer.INT_SIZE);
-    OLongSerializer.INSTANCE
-        .serializeLiteral(masterRecord.getPosition(), record, OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE);
+    OLongSerializer.INSTANCE.serializeLiteral(masterRecord.getPosition(), record, OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE);
     masterRecordLSNHolder.write(record);
   }
 
@@ -828,7 +834,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     this.flushedLsn = flushedLsn;
   }
 
-  public void checkFreeSpace(){
+  public void checkFreeSpace() {
     final long freeSpace = walLocation.getFreeSpace();
     if (freeSpace < freeSpaceLimit) {
       for (WeakReference<OLowDiskSpaceListener> listenerWeakReference : lowDiskSpaceListeners) {

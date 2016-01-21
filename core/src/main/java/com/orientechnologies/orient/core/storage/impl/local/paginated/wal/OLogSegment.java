@@ -38,8 +38,9 @@ final class OLogSegment implements Comparable<OLogSegment> {
   private final File               file;
   private final long               order;
   private final int                maxPagesCacheSize;
-  protected final Lock                     cacheLock      = new ReentrantLock();
-  private         List<OLogRecord>         logCache       = new ArrayList<OLogRecord>();
+  protected final  Lock             cacheLock = new ReentrantLock();
+  private volatile List<OLogRecord> logCache  = new ArrayList<OLogRecord>();
+
   private final   ScheduledExecutorService commitExecutor = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
     @Override
     public Thread newThread(Runnable r) {
