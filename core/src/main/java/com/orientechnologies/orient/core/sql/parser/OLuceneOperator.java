@@ -27,7 +27,7 @@ public class OLuceneOperator extends SimpleNode implements OBinaryCompareOperato
   }
 
   @Override public boolean supportsBasicCalculation() {
-    return false;
+    return true;
   }
 
 
