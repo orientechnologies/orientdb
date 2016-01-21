@@ -843,4 +843,5 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   public int getCommitDelay() {
     return commitDelay;
   }
+
 }
