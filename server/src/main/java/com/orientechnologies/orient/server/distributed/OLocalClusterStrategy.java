@@ -76,7 +76,7 @@ public class OLocalClusterStrategy implements OClusterSelectionStrategy {
     if (cls.isAbstract())
       throw new IllegalArgumentException("Cannot create a new instance of abstract class");
 
-    final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocument db = ODatabaseRecordThreadLocal.instance().get();
 
     final int[] clusterIds = cls.getClusterIds();
     final List<String> clusterNames = new ArrayList<String>(clusterIds.length);

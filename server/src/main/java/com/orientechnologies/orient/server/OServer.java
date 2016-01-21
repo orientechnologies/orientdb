@@ -129,7 +129,7 @@ public class OServer {
 
     System.setProperty("com.sun.management.jmxremote", "true");
 
-    Orient.instance().startup();
+    Orient.instance();//.startup();
 
     if (OGlobalConfiguration.PROFILER_ENABLED.getValueAsBoolean() && !Orient.instance().getProfiler().isRecording())
       Orient.instance().getProfiler().startRecording();
@@ -229,7 +229,7 @@ public class OServer {
     if (System.getProperty(OServerConfiguration.PROPERTY_CONFIG_FILE) != null)
       config = System.getProperty(OServerConfiguration.PROPERTY_CONFIG_FILE);
 
-    Orient.instance().startup();
+    Orient.instance();//.startup();
 
     startup(new File(OSystemVariableResolver.resolveSystemVariables(config)));
 

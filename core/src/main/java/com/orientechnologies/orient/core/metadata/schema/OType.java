@@ -419,10 +419,10 @@ public enum OType {
           if (OIOUtils.isLong(iValue.toString()))
             return new Date(Long.parseLong(iValue.toString()));
           try {
-            return ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateTimeFormatInstance()
+            return ODatabaseRecordThreadLocal.instance().get().getStorage().getConfiguration().getDateTimeFormatInstance()
                 .parse((String) iValue);
           } catch (ParseException e) {
-            return ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateFormatInstance()
+            return ODatabaseRecordThreadLocal.instance().get().getStorage().getConfiguration().getDateFormatInstance()
                 .parse((String) iValue);
           }
         }

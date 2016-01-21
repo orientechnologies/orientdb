@@ -151,7 +151,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
 
   @Override
   public boolean afterExecute(final OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
-    ODatabaseRecordThreadLocal.INSTANCE.remove();
+    ODatabaseRecordThreadLocal.instance().remove();
     return true;
   }
 
@@ -215,7 +215,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
 
   protected ODatabaseDocumentTx getProfiledDatabaseInstanceToken(final OHttpRequest iRequest) throws InterruptedException {
     // after authentication, if current login user is different compare with current DB user, reset DB user to login user
-    ODatabaseDocumentInternal localDatabase = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    ODatabaseDocumentInternal localDatabase = ODatabaseRecordThreadLocal.instance().getIfDefined();
     if (localDatabase == null) {
       localDatabase = (ODatabaseDocumentTx) server.openDatabase(iRequest.databaseName, iRequest.bearerToken);
     } else {
@@ -240,7 +240,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
       throw new OSecurityAccessException(iRequest.databaseName, "No session active");
 
     // after authentication, if current login user is different compare with current DB user, reset DB user to login user
-    ODatabaseDocumentInternal localDatabase = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    ODatabaseDocumentInternal localDatabase = ODatabaseRecordThreadLocal.instance().getIfDefined();
 
     if (localDatabase == null) {
       localDatabase = (ODatabaseDocumentTx) server.openDatabase(iRequest.databaseName, session.getUserName(),

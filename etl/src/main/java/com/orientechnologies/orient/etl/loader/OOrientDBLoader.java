@@ -394,7 +394,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
       }
       pipeline.setDocumentDatabase(documentDatabase);
     } else
-      ODatabaseRecordThreadLocal.INSTANCE.set(documentDatabase);
+      ODatabaseRecordThreadLocal.instance().set(documentDatabase);
 
     if (classes != null) {
       for (ODocument cls : classes) {

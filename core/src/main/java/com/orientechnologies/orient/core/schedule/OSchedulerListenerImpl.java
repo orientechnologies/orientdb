@@ -64,7 +64,7 @@ public class OSchedulerListenerImpl implements OSchedulerListener {
   // loaded when open database
   public void load() {
     schedulers.clear();
-    final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocument db = ODatabaseRecordThreadLocal.instance().get();
     if (db.getMetadata().getSchema().existsClass(OScheduler.CLASSNAME)) {
       List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from " + OScheduler.CLASSNAME + " order by name"));
       for (ODocument d : result) {
@@ -79,7 +79,7 @@ public class OSchedulerListenerImpl implements OSchedulerListener {
   }
 
   public void create() {
-    final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocument db = ODatabaseRecordThreadLocal.instance().get();
     if (db.getMetadata().getSchema().existsClass(OScheduler.CLASSNAME))
       return;
     final OClassImpl f = (OClassImpl) db.getMetadata().getSchema().createClass(OScheduler.CLASSNAME);

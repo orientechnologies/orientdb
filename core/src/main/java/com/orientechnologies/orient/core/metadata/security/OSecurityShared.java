@@ -196,7 +196,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
       // NO AUTHORIZATION: CAN'T ACCESS
       return false;
 
-    final OSecurityUser currentUser = ODatabaseRecordThreadLocal.INSTANCE.get().getUser();
+    final OSecurityUser currentUser = ODatabaseRecordThreadLocal.instance().get().getUser();
     if (currentUser != null) {
       // CHECK IF CURRENT USER IS ENLISTED
       if (!iAllowAll.contains(currentUser.getIdentity())) {
@@ -577,7 +577,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
   }
 
   public void createClassTrigger() {
-    final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocument db = ODatabaseRecordThreadLocal.instance().get();
     OClass classTrigger = db.getMetadata().getSchema().getClass(OClassTrigger.CLASSNAME);
     if (classTrigger == null)
       classTrigger = db.getMetadata().getSchema().createAbstractClass(OClassTrigger.CLASSNAME);
@@ -620,6 +620,6 @@ public class OSecurityShared implements OSecurity, OCloseable {
   }
 
   private ODatabaseDocumentInternal getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
+    return ODatabaseRecordThreadLocal.instance().get();
   }
 }

@@ -291,7 +291,7 @@ public class OGremlinHelper {
   }
 
   public static ODatabaseDocumentTx getGraphDatabase(final ODatabaseDocumentInternal iCurrentDatabase) {
-    ODatabaseDocumentInternal currentDb = ODatabaseRecordThreadLocal.INSTANCE.get();
+    ODatabaseDocumentInternal currentDb = ODatabaseRecordThreadLocal.instance().get();
     if (currentDb == null && iCurrentDatabase != null)
       // GET FROM THE RECORD
       currentDb = iCurrentDatabase;

@@ -173,7 +173,7 @@ public class OLuceneFullTextExpIndexEngine implements OLuceneIndexEngine, OOrien
   }
 
   protected ODatabaseDocumentInternal getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
+    return ODatabaseRecordThreadLocal.instance().get();
   }
 
   @Override

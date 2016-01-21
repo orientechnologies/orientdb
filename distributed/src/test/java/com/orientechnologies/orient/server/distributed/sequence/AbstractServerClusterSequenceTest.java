@@ -74,10 +74,10 @@ public abstract class AbstractServerClusterSequenceTest extends AbstractServerCl
     Assert.assertEquals(seq1.getSequenceType(), seq2.getSequenceType());
     Assert.assertEquals(seq1.getSequenceType(), SEQUENCE_TYPE.CACHED);
 
-    ODatabaseRecordThreadLocal.INSTANCE.set(dbs[0]);
+    ODatabaseRecordThreadLocal.instance().set(dbs[0]);
     long v1 = seq1.next();
 
-    ODatabaseRecordThreadLocal.INSTANCE.set(dbs[1]);
+    ODatabaseRecordThreadLocal.instance().set(dbs[1]);
     long v2 = seq2.next();
 
     Assert.assertEquals((long) CACHE_SIZE, v2 - v1);
@@ -91,21 +91,21 @@ public abstract class AbstractServerClusterSequenceTest extends AbstractServerCl
     seq1.createSequence(sequenceName, SEQUENCE_TYPE.ORDERED, null);
     Assert.assertEquals(SEQUENCE_TYPE.ORDERED, seq1.getSequence(sequenceName).getSequenceType());
 
-    ODatabaseRecordThreadLocal.INSTANCE.set(dbs[0]);
+    ODatabaseRecordThreadLocal.instance().set(dbs[0]);
     Assert.assertEquals(0L, seq1.getSequence(sequenceName).current());
 
-    ODatabaseRecordThreadLocal.INSTANCE.set(dbs[1]);
+    ODatabaseRecordThreadLocal.instance().set(dbs[1]);
     Assert.assertEquals(0L, seq2.getSequence(sequenceName).current());
     Assert.assertEquals(1L, seq2.getSequence(sequenceName).next());
 
-    ODatabaseRecordThreadLocal.INSTANCE.set(dbs[0]);
+    ODatabaseRecordThreadLocal.instance().set(dbs[0]);
     Assert.assertEquals(2L, seq1.getSequence(sequenceName).next());
     Assert.assertEquals(3L, seq1.getSequence(sequenceName).next());
 
-    ODatabaseRecordThreadLocal.INSTANCE.set(dbs[1]);
+    ODatabaseRecordThreadLocal.instance().set(dbs[1]);
     Assert.assertEquals(0L, seq2.getSequence(sequenceName).reset());
 
-    ODatabaseRecordThreadLocal.INSTANCE.set(dbs[0]);
+    ODatabaseRecordThreadLocal.instance().set(dbs[0]);
     Assert.assertEquals(0L, seq1.getSequence(sequenceName).current());
 
     if (RUN_PARALLEL_SYNC_TEST) {
@@ -125,7 +125,7 @@ public abstract class AbstractServerClusterSequenceTest extends AbstractServerCl
         @Override
         public List<Long> call() throws Exception {
           final ODatabaseDocumentTx db = dbs[id];
-          ODatabaseRecordThreadLocal.INSTANCE.set(db);
+          ODatabaseRecordThreadLocal.instance().set(db);
 
           List<Long> res = new ArrayList<Long>(SEQ_RUN_COUNT);
 

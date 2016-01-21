@@ -66,7 +66,7 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
     OExecutionThreadLocal.INSTANCE.get().onAsyncReplicationOk = onAsyncReplicationOk;
     OExecutionThreadLocal.INSTANCE.get().onAsyncReplicationError = onAsyncReplicationError;
 
-    return (RET) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().command(this);
+    return (RET) ODatabaseRecordThreadLocal.instance().get().getStorage().command(this);
   }
 
   public String getText() {

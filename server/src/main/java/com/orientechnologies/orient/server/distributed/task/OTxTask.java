@@ -77,7 +77,7 @@ public class OTxTask extends OAbstractReplicatedTask {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
         "committing transaction against db=%s...", database.getName());
 
-    ODatabaseRecordThreadLocal.INSTANCE.set(database);
+    ODatabaseRecordThreadLocal.instance().set(database);
 
     try {
       database.begin();

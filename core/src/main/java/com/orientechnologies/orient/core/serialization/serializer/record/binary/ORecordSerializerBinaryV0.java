@@ -180,7 +180,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
     final byte[] field = iFieldName.getBytes();
 
-    final OMetadataInternal metadata = (OMetadataInternal) ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata();
+    final OMetadataInternal metadata = (OMetadataInternal) ODatabaseRecordThreadLocal.instance().get().getMetadata();
     final OImmutableSchema _schema = metadata.getImmutableSchemaSnapshot();
 
     while (true) {
@@ -305,7 +305,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
     final List<String> result = new ArrayList<String>();
 
-    final OMetadataInternal metadata = (OMetadataInternal) ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata();
+    final OMetadataInternal metadata = (OMetadataInternal) ODatabaseRecordThreadLocal.instance().get().getMetadata();
     final OImmutableSchema _schema = metadata.getImmutableSchemaSnapshot();
 
     String fieldName;
@@ -863,7 +863,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       if (real != null)
         link = real;
     }
-    assert link.getIdentity().isValid() || (ODatabaseRecordThreadLocal.INSTANCE.get()
+    assert link.getIdentity().isValid() || (ODatabaseRecordThreadLocal.instance().get()
         .getStorage() instanceof OStorageProxy) : "Impossible to serialize invalid link " + link.getIdentity();
     final int pos = OVarIntSerializer.write(bytes, link.getIdentity().getClusterId());
     OVarIntSerializer.write(bytes, link.getIdentity().getClusterPosition());

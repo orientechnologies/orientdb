@@ -110,7 +110,7 @@ public class TestNetworkSerializerIndipendency {
     server.shutdown();
     File iDirectory = new File(SERVER_DIRECTORY);
     deleteDirectory(iDirectory);
-    Orient.instance().startup();
+    Orient.instance();//.startup();
   }
 
   private void deleteDirectory(File iDirectory) {

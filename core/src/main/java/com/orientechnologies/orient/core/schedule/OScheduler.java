@@ -69,7 +69,7 @@ public class OScheduler extends ODocumentWrapper implements Runnable {
   }
 
   protected void bindDb() {
-    this.db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    this.db = ODatabaseRecordThreadLocal.instance().get();
   }
 
   @Override
@@ -147,7 +147,7 @@ public class OScheduler extends ODocumentWrapper implements Runnable {
     final Date date = new Date(System.currentTimeMillis());
     OLogManager.instance().warn(this, "execute : " + this.toString() + " at " + sdf.format(date));
     if (db != null)
-      ODatabaseRecordThreadLocal.INSTANCE.set(db);
+      ODatabaseRecordThreadLocal.instance().set(db);
 
     this.document.field(PROP_STATUS, SCHEDULER_STATUS.RUNNING);
     this.document.field(PROP_STARTTIME, System.currentTimeMillis());

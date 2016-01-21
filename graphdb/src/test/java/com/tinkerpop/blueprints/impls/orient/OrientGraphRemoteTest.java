@@ -58,7 +58,7 @@ public abstract class OrientGraphRemoteTest extends OrientGraphTest {
     final File file = new File(serverHome);
     deleteDirectory(file);
 
-    Orient.instance().startup();
+    Orient.instance();//.startup();
   }
 
   public Graph generateGraph(final String graphDirectoryName) {

@@ -96,7 +96,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
                         int version, OAbstractPaginatedStorage storage) {
     acquireExclusiveLock();
     try {
-      databaseName = ODatabaseRecordThreadLocal.INSTANCE.get().getName();
+      databaseName = ODatabaseRecordThreadLocal.instance().get().getName();
 
       this.version = version;
       this.name = name;
@@ -878,7 +878,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
   }
 
   protected ODatabaseDocumentInternal getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
+    return ODatabaseRecordThreadLocal.instance().get();
   }
 
   protected void checkForRebuild() {
