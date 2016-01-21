@@ -29,17 +29,16 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  * This lock is intended to be used inside of storage to request lock on any data modifications. Writes can be prohibited from one
  * thread, but then allowed from other thread.
- * 
- * 
+ *
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 15.06.12
  */
 public class OModificationLock {
-  private final AtomicInteger                 vetos          = new AtomicInteger();
-  private volatile boolean                    throwException = false;
+  private final    AtomicInteger vetos          = new AtomicInteger();
+  private volatile boolean       throwException = false;
 
-  private final ConcurrentLinkedQueue<Thread> waiters        = new ConcurrentLinkedQueue<Thread>();
-  private final OReadersWriterSpinLock        lock           = new OReadersWriterSpinLock();
+  private final ConcurrentLinkedQueue<Thread> waiters = new ConcurrentLinkedQueue<Thread>();
+  private final OReadersWriterSpinLock        lock    = new OReadersWriterSpinLock();
 
   /**
    * Tells the lock that thread is going to perform data modifications in storage. This method allows to perform several data
@@ -88,10 +87,9 @@ public class OModificationLock {
   /**
    * After this method finished it's execution, all threads that are going to perform data modifications in storage should wait till
    * {@link #allowModifications()} method will be called. This method will wait till all ongoing modifications will be finished.
-   * 
-   * @param throwException
-   *          If <code>true</code> {@link OModificationOperationProhibitedException} exception will be thrown on
-   *          {@link #requestModificationLock()} call.
+   *
+   * @param throwException If <code>true</code> {@link OModificationOperationProhibitedException} exception will be thrown on
+   *                       {@link #requestModificationLock()} call.
    */
 
   public void prohibitModifications(boolean throwException) {
@@ -109,10 +107,20 @@ public class OModificationLock {
    * will be allowed to continue their execution.
    */
   public void allowModifications() {
-    final int currentVetos = vetos.decrementAndGet();
-    if (currentVetos < 0)
-      throw new IllegalStateException("Bad state of modification lock. "
-          + "Modifications were prohibited less times than they will be allowed.");
+    int currentVetos = vetos.get();
+
+    if (currentVetos <= 0)
+      throw new IllegalStateException(
+          "Bad state of modification lock. Modifications were prohibited less times than they will be allowed.");
+
+    while (!vetos.compareAndSet(currentVetos, currentVetos - 1)) {
+      currentVetos = vetos.get();
+
+      if (currentVetos <= 0)
+        throw new IllegalStateException(
+            "Bad state of modification lock. " + "Modifications were prohibited less times than they will be allowed.");
+
+    }
 
     for (Thread thread : waiters)
       LockSupport.unpark(thread);
