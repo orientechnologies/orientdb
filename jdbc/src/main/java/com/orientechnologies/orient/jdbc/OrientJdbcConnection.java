@@ -315,13 +315,16 @@ public class OrientJdbcConnection implements Connection {
   /**
    * No schema is supported.
    */
+  @Override
   public String getSchema() throws SQLException {
     return null;
   }
 
+  @Override
   public void setSchema(String arg0) throws SQLException {
   }
 
+  @Override
   public void setNetworkTimeout(Executor arg0, int arg1) throws SQLException {
     OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT.setValue(arg1);
   }
