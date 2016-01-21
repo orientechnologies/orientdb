@@ -953,8 +953,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       try {
 
         // TRY WITH DELTA
-        // return requestDatabaseDelta(distrDatabase, databaseName);
-        return requestFullDatabase(databaseName, backupDatabase, distrDatabase);
+        return requestDatabaseDelta(distrDatabase, databaseName);
 
       } catch (ODistributedDatabaseDeltaSyncException e) {
         // SWITCH TO FULL
@@ -1017,7 +1016,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       final Map<String, Object> results = (Map<String, Object>) sendRequest(databaseName, null, targetNodes, deployTask,
           EXECUTION_MODE.RESPONSE);
 
-      ODistributedServerLog.info(this, nodeName, entry.getKey(), DIRECTION.IN, "Receiving delta delta sync for '%s'...",
+      ODistributedServerLog.info(this, nodeName, entry.getKey(), DIRECTION.IN, "Receiving delta sync for '%s'...",
           databaseName);
 
       ODistributedServerLog.debug(this, nodeName, selectedNodes.toString(), DIRECTION.OUT, "Database delta sync returned: %s",
