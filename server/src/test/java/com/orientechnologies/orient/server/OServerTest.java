@@ -14,6 +14,8 @@ import org.testng.annotations.Test;
 import java.util.ArrayList;
 import java.util.logging.Level;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * Created by frank on 21/01/2016.
  */
@@ -61,11 +63,18 @@ public class OServerTest {
     Orient.instance().startup();
   }
 
-  @Test(expectedExceptions = OException.class)
-  public void shouldShutdownOnPlguinStartupException() throws Exception {
+  @Test
+  public void shouldShutdownOnPlguinStartupException() {
 
-    server = new OServer(false);
-    server.startup(conf);
-    server.activate();
+    try {
+      server = new OServer(true);
+      server.startup(conf);
+      server.activate();
+    } catch (Exception e) {
+      assertThat(e).isInstanceOf(OException.class);
+    }
+
+    assertThat(server.isActive()).isFalse();
   }
+
 }
