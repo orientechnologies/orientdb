@@ -177,7 +177,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       if (!configurationMap.containsKey(CONFIG_NODE_PREFIX + nodeId)) {
         // NODE NOT REGISTERED, FORCING SHUTTING DOWN
         ODistributedServerLog.error(this, localNodeName, null, DIRECTION.NONE, "Error on registering local node on cluster");
-        System.exit(1);
+        throw  new ODistributedStartupException("Error on registering local node on cluster");
       }
 
       messageService = new OHazelcastDistributedMessageService(this);
@@ -191,7 +191,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
     } catch (Exception e) {
       ODistributedServerLog.error(this, localNodeName, null, DIRECTION.NONE, "Error on starting distributed plugin", e);
-      System.exit(1);
+      throw new ODistributedStartupException("Error on starting distributed plugin",e);
     }
   }
 
