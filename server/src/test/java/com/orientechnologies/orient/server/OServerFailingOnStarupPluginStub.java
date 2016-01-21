@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.server;
 
-import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
 /**
@@ -10,7 +10,7 @@ public class OServerFailingOnStarupPluginStub extends OServerPluginAbstract {
 
   @Override
   public void startup() {
-    throw new OException("this plugin is fucked up on startup");
+    throw new ODistributedException("this plugin is fucked up on startup");
   }
 
   @Override
