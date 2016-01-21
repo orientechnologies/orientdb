@@ -27,7 +27,7 @@ public class OWithinOperator extends SimpleNode implements OBinaryCompareOperato
   }
 
   @Override public boolean supportsBasicCalculation() {
-    return false;
+    return true;
   }
 
 
