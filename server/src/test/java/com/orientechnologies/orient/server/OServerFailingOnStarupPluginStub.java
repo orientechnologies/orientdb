@@ -10,7 +10,7 @@ public class OServerFailingOnStarupPluginStub extends OServerPluginAbstract {
 
   @Override
   public void startup() {
-    throw new ODistributedException("this plugin is fucked up on startup");
+    throw new ODistributedException("this plugin is not starting correctly");
   }
 
   @Override
