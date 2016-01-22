@@ -144,6 +144,11 @@ final class OLogSegment implements Comparable<OLogSegment> {
         flushPage(pageContent);
       }
     }
+    if (OGlobalConfiguration.WAL_SYNC_ON_PAGE_FLUSH.getValueAsBoolean()) {
+      synchronized (rndFile) {
+        rndFile.getFD().sync();
+      }
+    }
     this.writeAheadLog.setFlushedLsn(lsn);
 
   }
@@ -176,6 +181,7 @@ final class OLogSegment implements Comparable<OLogSegment> {
     OIntegerSerializer.INSTANCE.serializeNative((int) crc32.getValue(), content, 0);
 
     rndFile.write(content);
+
   }
 
 
