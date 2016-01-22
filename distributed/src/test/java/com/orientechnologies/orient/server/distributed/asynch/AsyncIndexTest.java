@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.server.distributed.asynch;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.sql.OCommandSQL;

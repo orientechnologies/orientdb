@@ -31,7 +31,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import java.util.Date;
 import java.util.UUID;
