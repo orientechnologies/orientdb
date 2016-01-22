@@ -304,7 +304,7 @@ public class OConsoleDatabaseAppTest {
   public void testDeclareIntent() {
     ConsoleTest c = new ConsoleTest();
     try {
-      c.console().createDatabase("memory:OConsoleDatabaseAppTestDeclareIntent", null, null, null, null, null);
+      c.console().createDatabase("memory:OConsoleDatabaseAppTestDeclareIntent", null, null, null, null);
       c.resetOutput();
       try {
         c.console().declareIntent("foobar");
