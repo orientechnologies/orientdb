@@ -989,14 +989,21 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   protected void backupCurrentDatabase(final String iDatabaseName) {
     Orient.instance().unregisterStorageByName(iDatabaseName);
 
-    final String backupDirectory = OGlobalConfiguration.DISTRIBUTED_BACKUP_DIRECTORY.getValueAsString();
-    if (backupDirectory == null || OIOUtils.getStringContent(backupDirectory).trim().isEmpty())
+    final String providedBackupDirectoryPath = OGlobalConfiguration.DISTRIBUTED_BACKUP_DIRECTORY.getValueAsString();
+    if (providedBackupDirectoryPath == null || OIOUtils.getStringContent(providedBackupDirectoryPath).trim().isEmpty())
       // SKIP BACKUP
       return;
 
+    File providedPathFile = new File(providedBackupDirectoryPath);
+
     // MOVE DIRECTORY TO ../backup/databases/<db-name>
-    final File backupFullPath = new File(serverInstance.getDatabaseDirectory() + backupDirectory + "/" + iDatabaseName);
-    final File backupParentPath = new File(serverInstance.getDatabaseDirectory() + backupDirectory);
+    final File backupParentPath;
+    if(providedPathFile.isAbsolute()){
+      backupParentPath = new File(providedBackupDirectoryPath);
+    }else {
+      backupParentPath = new File(serverInstance.getDatabaseDirectory() + providedBackupDirectoryPath);
+    }
+    final File backupFullPath = new File(backupParentPath, iDatabaseName);
 
     if (!backupParentPath.exists())
       // CREATE THE DIRECTORY STRUCTURE
