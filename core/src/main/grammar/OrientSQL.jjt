@@ -218,7 +218,11 @@ TOKEN:
 	|
 	< CLASS: ( "c" | "C" ) ( "l" | "L" ) ( "a" | "A" ) ( "s" | "S" ) ( "s" | "S" ) >
 	|
+	< SUPERCLASS: ( "s" | "S" ) ( "u" | "U" ) ( "p" | "P" ) ( "e" | "E" ) ( "r" | "R" ) ( "c" | "C" ) ( "l" | "L" ) ( "a" | "A" ) ( "s" | "S" ) ( "s" | "S" ) >
+	|
 	< CLASSES: ( "c" | "C" ) ( "l" | "L" ) ( "a" | "A" ) ( "s" | "S" ) ( "s" | "S" ) ( "e" | "E" ) ( "s" | "S" ) >
+	|
+	< SUPERCLASSES: ( "s" | "S" ) ( "u" | "U" ) ( "p" | "P" ) ( "e" | "E" ) ( "r" | "R" ) ( "c" | "C" ) ( "l" | "L" ) ( "a" | "A" ) ( "s" | "S" ) ( "s" | "S" ) ( "e" | "E" ) ( "s" | "S" )>
     |
 	< EXCEPTION: ( "e" | "E" ) ( "x" | "X" ) ( "c" | "C" ) ( "e" | "E" ) ( "p" | "P" ) ( "t" | "T" ) ( "i" | "I" ) ( "o" | "O" ) ( "n" | "N" ) >
 	|
@@ -243,6 +247,28 @@ TOKEN:
 	< CLUSTERS: ( "C" | "c" ) ( "L" | "l" ) ( "U" | "u" ) ( "S" | "s" ) ( "T" | "t" ) ( "E" | "e" ) ( "R" | "r" ) ( "S" | "s" ) >
 	|
 	< ABSTRACT: ( "a" | "A" ) ( "b" | "B" ) ( "s" | "S" ) ( "T" | "t" ) ( "R" | "r" ) ( "a" | "A" ) ( "C" | "c" ) ( "T" | "t" ) >
+	|
+	< ALTER: ( "a" | "A" ) ( "l" | "L" ) ( "t" | "T" ) ( "e" | "E" ) ( "r" | "R" ) >
+	|
+	< NAME: ("n" | "N") ( "a" | "A" ) ( "m" | "M" ) ( "e" | "E" ) >
+	|
+	< SHORTNAME: ( "s" | "S" ) ( "h" | "H" ) ( "o" | "O" ) ( "r" | "R" ) ( "t" | "T" ) ("n" | "N") ( "a" | "A" ) ( "m" | "M" ) ( "e" | "E" ) >
+	|
+	< OVERSIZE:  ( "o" | "O" ) ( "v" | "V" ) ( "e" | "E" ) ( "r" | "R" ) ( "s" | "S" ) ( "i" | "I" ) ("z" | "Z") ( "e" | "E" ) >
+	|
+	< STRICTMODE: ( "s" | "S" ) ( "t" | "T" ) ( "r" | "R" ) ( "i" | "I" ) ( "C" | "c" ) ( "T" | "t" ) ( "m" | "M" ) ( "o" | "O" ) ( "d" | "D" ) ( "e" | "E" ) >
+	|
+	< ADDCLUSTER: ( "a" | "A" ) ( "d" | "D" ) ( "d" | "D" ) ( "C" | "c" ) ( "L" | "l" ) ( "U" | "u" ) ( "S" | "s" ) ( "T" | "t" ) ( "E" | "e" ) ( "R" | "r" ) >
+	|
+	< REMOVECLUSTER: ( "r" | "R" ) ( "e" | "E" ) ( "m" | "M" ) ( "o" | "O" ) ( "v" | "V" ) ( "e" | "E" ) ( "C" | "c" ) ( "L" | "l" ) ( "U" | "u" ) ( "S" | "s" ) ( "T" | "t" ) ( "E" | "e" ) ( "R" | "r" ) >
+	|
+	< CUSTOM: ( "c" | "C" ) ( "u" | "U" ) ( "s" | "S" ) ( "t" | "T" ) ( "o" | "O" ) ( "m" | "M" ) >
+	|
+	< CLUSTERSELECTION: ( "C" | "c" ) ( "L" | "l" ) ( "U" | "u" ) ( "S" | "s" ) ( "T" | "t" ) ( "E" | "e" ) ( "R" | "r" ) ( "s" | "S" ) ( "e" | "E" ) ( "l" | "L" ) ( "e" | "E" ) ( "c" | "C" ) ( "t" | "T" ) ( "i" | "I" ) ( "o" | "O" ) ( "n" | "N" ) >
+	|
+	< DESCRIPTION: ( "d" | "D" ) ( "E" | "e" )  ( "s" | "S" ) ( "c" | "C" ) ( "r" | "R" ) ( "i" | "I" ) ( "p" | "P" ) ( "t" | "T" ) ( "i" | "I" ) ( "o" | "O" ) ( "n" | "N" ) >
+	|
+	< ENCRYPTION: ( "E" | "e" ) ( "n" | "N" ) ( "c" | "C" ) ( "r" | "R" ) ( "y" | "Y" ) ( "p" | "P" ) ( "t" | "T" ) ( "i" | "I" ) ( "o" | "O" ) ( "n" | "N" ) >
 	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
@@ -566,6 +592,32 @@ OIdentifier Identifier():
 	|
 	token = <ABSTRACT>
 	|
+	token = <ALTER>
+	|
+	token = <NAME>
+	|
+	token = <SHORTNAME>
+	|
+	token = <SUPERCLASS>
+	|
+	token = <SUPERCLASSES>
+	|
+	token = <OVERSIZE>
+	|
+	token = <STRICTMODE>
+	|
+	token = <ADDCLUSTER>
+	|
+	token = <REMOVECLUSTER>
+	|
+	token = <CUSTOM>
+	|
+	token = <CLUSTERSELECTION>
+	|
+	token = <DESCRIPTION>
+	|
+	token = <ENCRYPTION>
+	|
     quotedToken = <QUOTED_IDENTIFIER>
 ) {
 
@@ -685,6 +737,9 @@ OStatement Statement():
         |
 		LOOKAHEAD(CreateClassStatement())
 		result = CreateClassStatement()
+		|
+		LOOKAHEAD(AlterClassStatement())
+		result = AlterClassStatement()
 	) [ <SEMICOLON> ]
 	{
 	    return result;
@@ -3418,5 +3473,152 @@ OCreateClassStatement CreateClassStatement():
 		[ <CLUSTERS> jjtThis.totalClusterNo = Integer() ]
 		[ <ABSTRACT> { jjtThis.abstractClass = true; } ]
 	)
+	{ return jjtThis; }
+}
+
+OAlterClassStatement AlterClassStatement():
+{
+	OIdentifier lastIdentifier;
+	OInteger lastInteger;
+}
+{
+	<ALTER> <CLASS>
+	jjtThis.name = Identifier()
+	(
+
+		(
+			<NAME> { jjtThis.property = com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES.NAME; }
+			jjtThis.identifierValue = Identifier()
+		)
+		|
+		(
+			<SHORTNAME> { jjtThis.property = com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES.SHORTNAME; }
+			(
+				jjtThis.identifierValue = Identifier()
+				|
+            	<NULL>
+            )
+		)
+		|
+		(
+			<SUPERCLASS> { jjtThis.property = com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES.SUPERCLASS; }
+			[
+				(
+					<PLUS> {jjtThis.add = true;}
+				)
+				|
+				(
+					<MINUS> {jjtThis.remove = true;}
+				)
+			]
+			(
+				jjtThis.identifierValue = Identifier()
+				|
+				<NULL> { jjtThis.identifierValue = null; }
+			)
+		)
+		|
+		(
+			<SUPERCLASSES> {
+				jjtThis.property = com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES.SUPERCLASSES;
+				jjtThis.identifierListValue = new ArrayList<OIdentifier>();
+			}
+			(
+				(
+					lastIdentifier = Identifier() { jjtThis.identifierListValue.add(lastIdentifier); }
+					(
+						<COMMA>
+						lastIdentifier = Identifier() { jjtThis.identifierListValue.add(lastIdentifier); }
+					)*
+				)
+				|
+				<NULL> { jjtThis.identifierListValue = null; }
+			)
+		)
+		|
+		(
+			<OVERSIZE> { jjtThis.property = com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES.OVERSIZE; }
+			jjtThis.numberValue = Number()
+		)
+		|
+		(
+			<STRICTMODE> { jjtThis.property = com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES.STRICTMODE; }
+			(
+				(
+					<TRUE> { jjtThis.booleanValue = true; }
+				)
+				|
+				(
+					<FALSE> { jjtThis.booleanValue = false; }
+				)
+			)
+		)
+		|
+		(
+			<ADDCLUSTER> { jjtThis.property = com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES.ADDCLUSTER; }
+			(
+				jjtThis.identifierValue = Identifier()
+				|
+				jjtThis.numberValue = Integer()
+			)
+		)
+		|
+		(
+			<REMOVECLUSTER> { jjtThis.property = com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES.REMOVECLUSTER; }
+			(
+				jjtThis.identifierValue = Identifier()
+				|
+				jjtThis.numberValue = Integer()
+			)
+		)
+		|
+		(
+			<CUSTOM> { jjtThis.property = com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES.CUSTOM; }
+			jjtThis.customKey = Identifier()
+			<EQ>
+			jjtThis.customValue = Expression()
+		)
+		|
+		(
+			<ABSTRACT> { jjtThis.property = com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES.ABSTRACT; }
+			(
+				(
+					<TRUE> { jjtThis.booleanValue = true; }
+				)
+				|
+				(
+					<FALSE> { jjtThis.booleanValue = false; }
+				)
+			)
+		)
+		|
+		(
+			<CLUSTERSELECTION> { jjtThis.property = com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES.CLUSTERSELECTION; }
+			(
+				jjtThis.identifierValue = Identifier()
+				|
+				"round-robin" { jjtThis.customString = "round-robin"; }
+			)
+		)
+		|
+		(
+			<DESCRIPTION> { jjtThis.property = com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES.DESCRIPTION; }
+			(
+				jjtThis.identifierValue = Identifier()
+				|
+            	<NULL>
+            )
+		)
+		|
+		(
+			<ENCRYPTION> { jjtThis.property = com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES.ENCRYPTION; }
+			(
+				jjtThis.identifierValue = Identifier()
+				|
+				<NULL>
+			)
+		)
+	)
+	[ <UNSAFE> { jjtThis.unsafe = true; } ]
 	{ return jjtThis; }
 }
