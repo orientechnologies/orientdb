@@ -10,7 +10,7 @@
     the specific language governing permissions and ~ limitations under the License. -->
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
@@ -72,12 +72,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.testng</groupId>
-            <artifactId>testng</artifactId>
-            <version>6.8.8</version>
-        </dependency>
-
-        <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-core</artifactId>
             <version>${project.version}</version>
@@ -93,12 +87,6 @@
             <scope>test</scope>
         </dependency>
 
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-all</artifactId>
-            <version>1.9.5</version>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 
     <build>
@@ -143,7 +131,9 @@
                         </goals>
                         <configuration>
                             <suiteXmlFiles>
-                                <suiteXmlFile>src/test/java/com/orientechnologies/orient/test/database/auto/embedded-test-db-from-scratch.xml</suiteXmlFile>
+                                <suiteXmlFile>
+                                    src/test/java/com/orientechnologies/orient/test/database/auto/embedded-test-db-from-scratch.xml
+                                </suiteXmlFile>
                             </suiteXmlFiles>
                         </configuration>
                     </execution>
@@ -157,7 +147,9 @@
                                 <orientdb.config.file>target/test-classes/orientdb-server-config.xml</orientdb.config.file>
                             </systemPropertyVariables>
                             <suiteXmlFiles>
-                                <suiteXmlFile>src/test/java/com/orientechnologies/orient/test/database/auto/remote-test-db-from-scratch.xml</suiteXmlFile>
+                                <suiteXmlFile>
+                                    src/test/java/com/orientechnologies/orient/test/database/auto/remote-test-db-from-scratch.xml
+                                </suiteXmlFile>
                             </suiteXmlFiles>
                         </configuration>
                     </execution>

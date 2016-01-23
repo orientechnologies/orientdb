@@ -50,10 +50,9 @@
         </dependency>
 
         <dependency>
-            <groupId>org.testng</groupId>
-            <artifactId>testng</artifactId>
-            <version>6.8.8</version>
-            <scope>test</scope>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-test-commons</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>

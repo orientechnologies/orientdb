@@ -12,7 +12,7 @@
     ~ */ -->
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
@@ -58,6 +58,12 @@
     <dependencies>
         <dependency>
             <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-test-commons</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-server</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -76,12 +82,7 @@
             <version>${project.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.11</version>
-            <scope>test</scope>
-        </dependency>
+
         <dependency>
 
             <groupId>commons-collections</groupId>
@@ -95,7 +96,8 @@
             <exclusions>
                 <exclusion>
                     <groupId>commons-collections</groupId>
-                    <artifactId>commons-collections</artifactId>                </exclusion>
+                    <artifactId>commons-collections</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
@@ -137,12 +139,13 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>${surefire.version}</version>
-                <configuration>
-                    <systemPropertyVariables>
-                        <buildDirectory>${project.build.directory}</buildDirectory>
-                    </systemPropertyVariables>
-                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.apache.maven.surefire</groupId>
+                        <artifactId>surefire-junit47</artifactId>
+                        <version>${surefire.version}</version>
+                    </dependency>
+                </dependencies>
             </plugin>
         </plugins>
     </build>

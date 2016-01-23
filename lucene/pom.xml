@@ -32,13 +32,17 @@
     <packaging>jar</packaging>
 
     <properties>
-        <surefire.version>2.17</surefire.version>
         <jdkVersion>1.6</jdkVersion>
         <javac.src.version>1.6</javac.src.version>
         <javac.target.version>1.6</javac.target.version>
         <orientdb.version>${project.version}</orientdb.version>
         <lucene.version>4.7.0</lucene.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <argLine>-ea -Xmx2048m -Dindex.flushAfterCreate=false -Dstorage.makeFullCheckpointAfterCreate=false
+            -Dstorage.makeFullCheckpointAfterClusterCreate=false -Dstorage.wal.syncOnPageFlush=false
+            -Dstorage.configuration.syncOnUpdate=false
+        </argLine>
+
     </properties>
 
     <name>OrientDB Lucene full text and spatial index</name>
@@ -51,18 +55,16 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-
                 <configuration>
-                    <argLine>-ea -Xmx2048m -Dindex.flushAfterCreate=false -Dstorage.makeFullCheckpointAfterCreate=false
-                        -Dstorage.makeFullCheckpointAfterClusterCreate=false -Dstorage.wal.syncOnPageFlush=false
-                        -Dstorage.configuration.syncOnUpdate=false
-                    </argLine>
-
                     <groups>embedded</groups>
-                    <systemPropertyVariables>
-                        <buildDirectory>${project.build.directory}</buildDirectory>
-                    </systemPropertyVariables>
                 </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.apache.maven.surefire</groupId>
+                        <artifactId>surefire-testng</artifactId>
+                        <version>${surefire.version}</version>
+                    </dependency>
+                </dependencies>
             </plugin>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
