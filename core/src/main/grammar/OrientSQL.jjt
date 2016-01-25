@@ -270,6 +270,8 @@ TOKEN:
 	|
 	< ENCRYPTION: ( "E" | "e" ) ( "n" | "N" ) ( "c" | "C" ) ( "r" | "R" ) ( "y" | "Y" ) ( "p" | "P" ) ( "t" | "T" ) ( "i" | "I" ) ( "o" | "O" ) ( "n" | "N" ) >
 	|
+	< DROP: ( "d" | "D" ) ( "r" | "R" ) ( "o" | "O" ) ( "p" | "P" ) >
+	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
 	< RECORD_ATTRIBUTE: <RID_ATTR> | <CLASS_ATTR> | <VERSION_ATTR> | <SIZE_ATTR> | <TYPE_ATTR> | <RAW_ATTR> | <RID_ID_ATTR> | <RID_POS_ATTR> | <FIELDS_ATTR> >
@@ -618,6 +620,8 @@ OIdentifier Identifier():
 	|
 	token = <ENCRYPTION>
 	|
+	token = <DROP>
+	|
     quotedToken = <QUOTED_IDENTIFIER>
 ) {
 
@@ -740,6 +744,9 @@ OStatement Statement():
 		|
 		LOOKAHEAD(AlterClassStatement())
 		result = AlterClassStatement()
+		|
+		LOOKAHEAD(DropClassStatement())
+		result = DropClassStatement()
 	) [ <SEMICOLON> ]
 	{
 	    return result;
@@ -3619,6 +3626,16 @@ OAlterClassStatement AlterClassStatement():
 			)
 		)
 	)
+	[ <UNSAFE> { jjtThis.unsafe = true; } ]
+	{ return jjtThis; }
+}
+
+
+ODropClassStatement DropClassStatement():
+{}
+{
+	<DROP> <CLASS>
+	jjtThis.name = Identifier()
 	[ <UNSAFE> { jjtThis.unsafe = true; } ]
 	{ return jjtThis; }
 }

@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.sql.parser.ODropClassStatement;
 
 import java.util.Map;
 
@@ -46,7 +47,29 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract im
   private boolean            unsafe;
 
   public OCommandExecutorSQLDropClass parse(final OCommandRequest iRequest) {
-    init((OCommandRequestText) iRequest);
+    final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
+
+    String queryText = textRequest.getText();
+    String originalQuery = queryText;
+    try {
+      queryText = preParse(queryText, iRequest);
+      textRequest.setText(queryText);
+      final boolean strict = getDatabase().getStorage().getConfiguration().isStrictSql();
+      if(strict){
+        this.className = ((ODropClassStatement)this.preParsedStatement).name.getValue();
+        this.unsafe = ((ODropClassStatement)this.preParsedStatement).unsafe;
+      }else {
+        oldParsing((OCommandRequestText) iRequest);
+      }
+    } finally {
+      textRequest.setText(originalQuery);
+    }
+
+    return this;
+  }
+
+  private void oldParsing(OCommandRequestText iRequest) {
+    init(iRequest);
 
     final StringBuilder word = new StringBuilder();
 
@@ -72,8 +95,6 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract im
     if (pos > -1 && KEYWORD_UNSAFE.equalsIgnoreCase(word.toString())) {
       unsafe = true;
     }
-
-    return this;
   }
 
   @Override
