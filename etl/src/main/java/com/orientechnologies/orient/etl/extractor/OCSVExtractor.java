@@ -24,6 +24,7 @@ import java.util.Map;
 import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.DEBUG;
 
 /**
+ * An extractor based on Apache Commons CSV
  * Created by frank on 10/5/15.
  */
 public class OCSVExtractor extends OAbstractSourceExtractor {
@@ -43,7 +44,9 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
   @Override
   public ODocument getConfiguration() {
     return new ODocument().fromJSON(
-        "{parameters:[" + getCommonConfigurationParameters() + ",{separator:{optional:true,description:'Column separator'}},"
+        "{parameters:["
+        + getCommonConfigurationParameters()
+        + ",{separator:{optional:true,description:'Column separator'}},"
         + "{columnsOnFirstLine:{optional:true,description:'Columns are described in the first line'}},"
         + "{columns:{optional:true,description:'Columns array containing names, and optionally type after : (e.g.: name:String, age:int'}},"
         + "{nullValue:{optional:true,description:'Value to consider as NULL_STRING. Default is NULL'}},"
@@ -209,11 +212,6 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
     return new OExtractedItem(current, doc);
   }
 
-  @Override
-  public OExtractedItem next() {
-    return next;
-  }
-
   private Object determineTheType(String fieldStringValue) {
     Object fieldValue;
     if ((fieldValue = transformToDate(fieldStringValue)) == null)// try maybe Date type
@@ -271,6 +269,11 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
    **/
   protected boolean isFinite(Float f) {
     return Math.abs(f) <= FloatConsts.MAX_VALUE;
+  }
+
+  @Override
+  public OExtractedItem next() {
+    return next;
   }
 
 }
