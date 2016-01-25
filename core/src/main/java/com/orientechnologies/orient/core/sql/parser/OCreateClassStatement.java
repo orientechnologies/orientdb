@@ -56,7 +56,7 @@ public class OCreateClassStatement extends OStatement {
       boolean first = true;
       for (OInteger cluster : clusters) {
         if (!first) {
-          builder.append(", ");
+          builder.append(",");
         }
         cluster.toString(params, builder);
         first = false;
