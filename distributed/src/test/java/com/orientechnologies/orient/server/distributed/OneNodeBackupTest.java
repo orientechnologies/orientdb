@@ -85,9 +85,12 @@ public class OneNodeBackupTest extends AbstractServerClusterTxTest {
 
               final String queueName = OHazelcastDistributedMessageService.getRequestQueueName(dInstance.getLocalNodeName(),
                   getDatabaseName());
-              final IQueue<Object> queue = dInstance.getMessageService().getQueue(queueName);
 
-              System.out.println("Queue " + queueName + " size = " + queue.size());
+              final OHazelcastDistributedMessageService msgService = dInstance.getMessageService();
+              if (msgService != null) {
+                final IQueue<Object> queue = msgService.getQueue(queueName);
+                System.out.println("Queue " + queueName + " size = " + queue.size());
+              }
             } catch (Exception e) {
             }
           }
