@@ -374,6 +374,10 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
       return OType.LINK;
     else if (iCharType == 'n')
       return OType.LINKSET;
+    else if (iCharType == 'x')
+      return OType.LINK;
+    else if (iCharType == 'u')
+      return OType.CUSTOM;
 
     return OType.STRING;
   }
