@@ -19,6 +19,22 @@
  */
 package com.orientechnologies.orient.client.remote;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
+
+import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.DirContext;
+import javax.naming.directory.InitialDirContext;
+
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
@@ -75,21 +91,6 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
-
-import javax.naming.NamingException;
-import javax.naming.directory.Attribute;
-import javax.naming.directory.Attributes;
-import javax.naming.directory.DirContext;
-import javax.naming.directory.InitialDirContext;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.FutureTask;
 
 /**
  * This object is bound to each remote ODatabase instances.
@@ -2316,34 +2317,41 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     // @COMPATIBILITY 1.0rc8
     final int tot = network.getSrvProtocolVersion() >= 7 ? network.readShort() : network.readInt();
 
-    clusters = new OCluster[tot];
-    clusterMap.clear();
+    stateLock.acquireWriteLock();
+    try {
 
-    for (int i = 0; i < tot; ++i) {
-      final OClusterRemote cluster = new OClusterRemote();
-      String clusterName = network.readString();
-      final int clusterId = network.readShort();
-      if (clusterName != null) {
-        clusterName = clusterName.toLowerCase();
+      clusters = new OCluster[tot];
+      clusterMap.clear();
 
-        if (network.getSrvProtocolVersion() < 24)
-          network.readString();
+      for (int i = 0; i < tot; ++i) {
+        final OClusterRemote cluster = new OClusterRemote();
+        String clusterName = network.readString();
+        final int clusterId = network.readShort();
+        if (clusterName != null) {
+          clusterName = clusterName.toLowerCase();
 
-        final int dataSegmentId = network.getSrvProtocolVersion() >= 12 && network.getSrvProtocolVersion() < 24
-            ? (int) network.readShort() : 0;
+          if (network.getSrvProtocolVersion() < 24)
+            network.readString();
 
-        cluster.configure(this, clusterId, clusterName);
+          final int dataSegmentId = network.getSrvProtocolVersion() >= 12 && network.getSrvProtocolVersion() < 24
+              ? (int) network.readShort() : 0;
 
-        if (clusterId >= clusters.length)
-          clusters = Arrays.copyOf(clusters, clusterId + 1);
-        clusters[clusterId] = cluster;
-        clusterMap.put(clusterName, cluster);
+          cluster.configure(this, clusterId, clusterName);
+
+          if (clusterId >= clusters.length)
+            clusters = Arrays.copyOf(clusters, clusterId + 1);
+          clusters[clusterId] = cluster;
+          clusterMap.put(clusterName, cluster);
+        }
       }
-    }
 
-    final OCluster defaultCluster = clusterMap.get(CLUSTER_DEFAULT_NAME);
-    if (defaultCluster != null)
-      defaultClusterId = clusterMap.get(CLUSTER_DEFAULT_NAME).getId();
+      final OCluster defaultCluster = clusterMap.get(CLUSTER_DEFAULT_NAME);
+      if (defaultCluster != null)
+        defaultClusterId = clusterMap.get(CLUSTER_DEFAULT_NAME).getId();
+
+    } finally {
+      stateLock.releaseWriteLock();
+    }
   }
 
   private boolean deleteRecord(byte command, final ORecordId iRid, final int iVersion, int iMode,
