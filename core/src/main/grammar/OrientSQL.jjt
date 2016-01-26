@@ -272,6 +272,8 @@ TOKEN:
 	|
 	< DROP: ( "d" | "D" ) ( "r" | "R" ) ( "o" | "O" ) ( "p" | "P" ) >
 	|
+	< PROPERTY: ( "p" | "P" ) ( "r" | "R" ) ( "o" | "O" ) ( "p" | "P" ) ( "e" | "E" ) ( "r" | "R" ) ( "t" | "T" ) ( "y" | "Y" ) >
+	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
 	< RECORD_ATTRIBUTE: <RID_ATTR> | <CLASS_ATTR> | <VERSION_ATTR> | <SIZE_ATTR> | <TYPE_ATTR> | <RAW_ATTR> | <RID_ID_ATTR> | <RID_POS_ATTR> | <FIELDS_ATTR> >
@@ -622,6 +624,8 @@ OIdentifier Identifier():
 	|
 	token = <DROP>
 	|
+	token = <PROPERTY>
+	|
     quotedToken = <QUOTED_IDENTIFIER>
 ) {
 
@@ -747,6 +751,9 @@ OStatement Statement():
 		|
 		LOOKAHEAD(DropClassStatement())
 		result = DropClassStatement()
+		|
+		LOOKAHEAD(CreatePropertyStatement())
+		result = CreatePropertyStatement()
 	) [ <SEMICOLON> ]
 	{
 	    return result;
@@ -3637,5 +3644,22 @@ ODropClassStatement DropClassStatement():
 	<DROP> <CLASS>
 	jjtThis.name = Identifier()
 	[ <UNSAFE> { jjtThis.unsafe = true; } ]
+	{ return jjtThis; }
+}
+
+OCreatePropertyStatement CreatePropertyStatement():
+{}
+{
+	<CREATE> <PROPERTY>
+	(
+		jjtThis.className = Identifier()
+		<DOT>
+		jjtThis.propertyName = Identifier()
+		jjtThis.propertyType = Identifier()
+		[
+			jjtThis.linkedType = Identifier()
+		]
+		[ <UNSAFE> { jjtThis.unsafe = true; } ]
+	)
 	{ return jjtThis; }
 }

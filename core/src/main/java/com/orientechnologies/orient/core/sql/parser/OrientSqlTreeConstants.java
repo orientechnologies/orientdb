@@ -141,6 +141,7 @@ public interface OrientSqlTreeConstants
   public int JJTCREATECLASSSTATEMENT = 135;
   public int JJTALTERCLASSSTATEMENT = 136;
   public int JJTDROPCLASSSTATEMENT = 137;
+  public int JJTCREATEPROPERTYSTATEMENT = 138;
 
 
   public String[] jjtNodeName = {
@@ -282,6 +283,7 @@ public interface OrientSqlTreeConstants
     "CreateClassStatement",
     "AlterClassStatement",
     "DropClassStatement",
+    "CreatePropertyStatement",
   };
 }
-/* JavaCC - OriginalChecksum=1614350b3bf2b0fb5881b7dabeab71ce (do not edit this line) */
+/* JavaCC - OriginalChecksum=ab9d69d51a97a723a3d1e94a290eb627 (do not edit this line) */

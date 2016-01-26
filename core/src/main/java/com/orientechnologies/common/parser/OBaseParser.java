@@ -94,7 +94,7 @@ public abstract class OBaseParser {
     for (int i = iBeginIndex; i < iText.length(); ++i) {
       c = iText.charAt(i);
 
-      if (c == '\'' || c == '"') {
+      if (c == '\'' || c == '"' || c == '`') {
         if (stringBeginChar != ' ') {
           // CLOSE THE STRING?
           if (stringBeginChar == c) {
