@@ -314,6 +314,13 @@ public class ODocumentTest {
   }
 
 
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void testFailNestedSetNull() {
+    ODocument doc = new ODocument();
+    doc.field("test.nested", "value");
+  }
+
+
 
 
 }

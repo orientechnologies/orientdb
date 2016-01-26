@@ -1059,7 +1059,8 @@ public class ODocument extends ORecordAbstract
           }
           return this;
         }
-      }
+      } else
+        throw new IllegalArgumentException("Property '" + iFieldName.substring(0, lastSep)+ "' is null, is possible to set a value with dotted notation only on not null property");
       return null;
     }
 
