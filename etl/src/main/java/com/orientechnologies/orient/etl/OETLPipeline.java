@@ -118,11 +118,10 @@ public class OETLPipeline {
           if (current == null) {
             if (logLevel == DEBUG) {
               OLogManager.instance().warn(this, "Transformer [%s] returned null, skip rest of pipeline execution", t);
-            }
             break;
           }
         }
-
+        }
         if (current != null)
           // LOAD
           loader.load(current, context);

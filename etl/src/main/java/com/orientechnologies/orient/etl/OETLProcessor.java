@@ -56,6 +56,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class OETLProcessor {
   protected final OETLComponentFactory factory = new OETLComponentFactory();
+  protected final OETLProcessorStats   stats   = new OETLProcessorStats();
   protected List<OBlock>       beginBlocks;
   protected List<OBlock>       endBlocks;
   protected OSource            source;
@@ -65,7 +66,6 @@ public class OETLProcessor {
   protected OCommandContext    context;
   protected long               startTime;
   protected long               elapsed;
-  protected OETLProcessorStats stats = new OETLProcessorStats();
   protected TimerTask dumpTask;
   protected LOG_LEVELS logLevel    = LOG_LEVELS.INFO;
   protected boolean    haltOnError = true;
@@ -345,9 +345,14 @@ public class OETLProcessor {
   }
 
   protected void execute() {
+    begin();
+    runExtractorAndPipeline();
+    end();
+  }
+
+  private void runExtractorAndPipeline() {
     ExecutorService executor = Executors.newCachedThreadPool();
     try {
-      begin();
 
       out(LOG_LEVELS.INFO, "Started execution with %d worker threads", workers);
 
@@ -362,7 +367,6 @@ public class OETLProcessor {
       for (int i = 0; i < workers; i++) {
 
         final OETLPipeline pipeline = new OETLPipeline(this, transformers, loader, logLevel, maxRetries, haltOnError);
-        pipeline.begin();
 
         OETLPipelineWorker task = new OETLPipelineWorker(extractionFinished, queue, pipeline);
         tasks.add(executor.submit(task));
@@ -379,7 +383,6 @@ public class OETLProcessor {
       out(LOG_LEVELS.DEBUG, "all items extracted");
 
       executor.shutdown();
-      end();
 
     } catch (OETLProcessHaltedException e) {
       out(LOG_LEVELS.ERROR, "ETL process halted: %s", e);
@@ -580,6 +583,8 @@ public class OETLProcessor {
 
     @Override
     public Boolean call() throws Exception {
+
+      pipeline.begin();
 
       pipeline.getDocumentDatabase();
 
