@@ -74,7 +74,7 @@ ORIENTDB_SETTINGS="-Dprofiler.enabled=true"
 JAVA_OPTS_SCRIPT="-Djna.nosys=true -XX:+HeapDumpOnOutOfMemoryError -Djava.awt.headless=true -Dfile.encoding=UTF8 -Drhino.opt.level=9"
 
 # ORIENTDB MAXIMUM HEAP. USE SYNTAX -Xmx<memory>, WHERE <memory> HAS THE TOTAL MEMORY AND SIZE UNIT. EXAMPLE: -Xmx512m
-MAXHEAP=-Xmx512m
+MAXHEAP=${MAXHEAP=-Xmx512m}
 # ORIENTDB MAXIMUM DISKCACHE IN MB, EXAMPLE, ENTER -Dstorage.diskCache.bufferSize=8192 FOR 8GB
 MAXDISKCACHE=""
 
