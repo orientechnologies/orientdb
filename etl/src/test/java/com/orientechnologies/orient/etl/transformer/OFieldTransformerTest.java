@@ -19,7 +19,7 @@
 package com.orientechnologies.orient.etl.transformer;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.etl.ETLBaseTest;
+import com.orientechnologies.orient.etl.OETLBaseTest;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -29,7 +29,7 @@ import static org.junit.Assert.assertEquals;
  *
  * @author Luca Garulli
  */
-public class OFieldTransformerTest extends ETLBaseTest {
+public class OFieldTransformerTest extends OETLBaseTest {
 
   @Test
   public void testValue() {
@@ -67,7 +67,7 @@ public class OFieldTransformerTest extends ETLBaseTest {
 
   @Test
   public void testSave() {
-    process("{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { csv: {} }, transformers: [{field:{fieldName:'@class', value:'Test'}}, {field:{ fieldName:'test', value: 33, save: true}}], loader: { orientdb: { dbURL: 'memory:ETLBaseTest' } } }");
+    process("{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { csv: {} }, transformers: [{field:{fieldName:'@class', value:'Test'}}, {field:{ fieldName:'test', value: 33, save: true}}], loader: { orientdb: { dbURL: 'memory:OETLBaseTest' } } }");
     assertEquals(1, graph.countVertices("Test"));
   }
 }

@@ -28,27 +28,24 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * ETL Mock loader to check the result in tests.
+ * ETL Stub loader to check the result in tests.
  * 
  * @author Luca Garulli on 27/11/14.
  */
-public class TestLoader extends OAbstractLoader {
+public class OETLStubLoader extends OAbstractLoader {
   public final List<ODocument> loadedRecords = new ArrayList<ODocument>();
 
-  public TestLoader() {
+  public OETLStubLoader() {
   }
 
   @Override
   public void load(Object input, OCommandContext context) {
     synchronized (loadedRecords) {
       loadedRecords.add((ODocument) input);
+      progress.incrementAndGet();
     }
   }
 
-  @Override
-  public long getProgress() {
-    return loadedRecords.size();
-  }
 
   @Override
   public String getUnit() {

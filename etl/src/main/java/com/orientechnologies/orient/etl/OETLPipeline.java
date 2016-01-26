@@ -23,57 +23,58 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS;
 import com.orientechnologies.orient.etl.loader.OLoader;
 import com.orientechnologies.orient.etl.transformer.OTransformer;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 
 import java.util.List;
 
+import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.DEBUG;
+import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.ERROR;
+import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.INFO;
+
 /**
- * ETL processor class.
- * 
+ * ETL pipeline: sequence of OTransformer and a OLoader.
+ *
  * @author Luca Garulli (l.garulli-at-orientechnologies.com)
  */
 public class OETLPipeline {
-  protected final OETLProcessor            processor;
-  protected final List<OTransformer>       transformers;
-  protected final OLoader                  loader;
-  protected final OCommandContext          context;
-  protected final OETLProcessor.LOG_LEVELS logLevel;
-  protected final int                      maxRetries;
-  protected boolean                        haltOnError = true;
-  protected ODatabaseDocumentTx            db;
-  protected OrientBaseGraph                graph;
+  protected final OETLProcessor       processor;
+  protected final List<OTransformer>  transformers;
+  protected final OLoader             loader;
+  protected final OCommandContext     context;
+  protected final LOG_LEVELS          logLevel;
+  protected final int                 maxRetries;
+  protected       boolean             haltOnError;
+  protected       ODatabaseDocumentTx db;
+  protected       OrientBaseGraph     graph;
 
-  public OETLPipeline(final OETLProcessor iProcessor, final List<OTransformer> iTransformers, final OLoader iLoader,
-      final OETLProcessor.LOG_LEVELS iLogLevel, final int iMaxRetries, final boolean iHaltOnError) {
-    logLevel = iLogLevel;
-    haltOnError = iHaltOnError;
-    processor = iProcessor;
+  public OETLPipeline(final OETLProcessor processor,
+                      final List<OTransformer> transformers,
+                      final OLoader loader,
+                      final LOG_LEVELS logLevel,
+                      final int maxRetries,
+                      final boolean haltOnError) {
+    this.processor = processor;
+    this.transformers = transformers;
+    this.loader = loader;
+    this.logLevel = logLevel;
+    this.maxRetries = maxRetries;
+    this.haltOnError = haltOnError;
+
     context = new OBasicCommandContext();
 
-    transformers = iTransformers;
-    loader = iLoader;
-
-    for (OTransformer t : transformers)
+    for (OTransformer t : this.transformers)
       t.setPipeline(this);
-    loader.setPipeline(this);
+    this.loader.setPipeline(this);
 
-    maxRetries = iMaxRetries;
   }
 
-  public void begin() {
+  public synchronized void begin() {
     loader.begin();
     for (OTransformer t : transformers)
       t.begin();
-  }
-
-  public OLoader getLoader() {
-    return loader;
-  }
-
-  public List<OTransformer> getTransformers() {
-    return transformers;
   }
 
   public ODatabaseDocumentTx getDocumentDatabase() {
@@ -114,12 +115,12 @@ public class OETLPipeline {
         for (OTransformer t : transformers) {
           current = t.transform(current);
           if (current == null) {
-            if (logLevel == OETLProcessor.LOG_LEVELS.DEBUG)
+            if (logLevel == DEBUG) {
               OLogManager.instance().warn(this, "Transformer [%s] returned null, skip rest of pipeline execution", t);
-            break;
+              break;
+            }
           }
         }
-
         if (current != null)
           // LOAD
           loader.load(current, context);
@@ -128,28 +129,28 @@ public class OETLPipeline {
       } catch (ONeedRetryException e) {
         loader.rollback();
         retry++;
-        processor.out(OETLProcessor.LOG_LEVELS.INFO, "Error in pipeline execution, retry = %d/%d (exception=%s)", retry,
-            maxRetries, e);
+        processor.out(INFO, "Error in pipeline execution, retry = %d/%d (exception=%s)", retry, maxRetries, e);
       } catch (OETLProcessHaltedException e) {
-        processor.out(OETLProcessor.LOG_LEVELS.ERROR, "Pipeline execution halted");
+        processor.out(ERROR, "Pipeline execution halted");
         processor.getStats().incrementErrors();
 
         loader.rollback();
         throw e;
 
       } catch (Exception e) {
-        processor.out(OETLProcessor.LOG_LEVELS.ERROR, "Error in Pipeline execution: %s", e);
+        processor.out(ERROR, "Error in Pipeline execution: %s", e);
+        e.printStackTrace();
         processor.getStats().incrementErrors();
 
         if (!haltOnError)
           return null;
 
-        // e.printStackTrace();
         loader.rollback();
         throw new OETLProcessHaltedException("Halt", e);
 
       }
-    } while (retry < maxRetries);
+    } while (retry < maxRetries)
+        ;
 
     return this;
   }

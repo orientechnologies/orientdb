@@ -27,16 +27,22 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
+import com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS;
 
 /**
  * ETL abstract component.
  */
 public abstract class OAbstractETLComponent implements OETLComponent {
-  protected OETLProcessor            processor;
-  protected OCommandContext     context;
-  protected OETLProcessor.LOG_LEVELS logLevel;
-  protected String                   output = null;
-  protected String                   ifExpression;
+  protected OETLProcessor   processor;
+  protected OCommandContext context;
+  protected LOG_LEVELS      logLevel;
+  protected String          output;
+  protected String          ifExpression;
+
+  @Override
+  public ODocument getConfiguration() {
+    return new ODocument().fromJSON("{parameters:[" + getCommonConfigurationParameters() + "]");
+  }
 
   @Override
   public void configure(final OETLProcessor iProcessor, final ODocument iConfiguration, final OCommandContext iContext) {
@@ -46,12 +52,12 @@ public abstract class OAbstractETLComponent implements OETLComponent {
     ifExpression = iConfiguration.field("if");
 
     if (iConfiguration.containsField("log"))
-      logLevel = OETLProcessor.LOG_LEVELS.valueOf(iConfiguration.field("log").toString().toUpperCase());
+      logLevel = LOG_LEVELS.valueOf(iConfiguration.field("log").toString().toUpperCase());
     else
       logLevel = iProcessor.getLogLevel();
 
     if (iConfiguration.containsField("output"))
-      output = (String) iConfiguration.field("output");
+      output = iConfiguration.field("output");
   }
 
   @Override
@@ -62,9 +68,11 @@ public abstract class OAbstractETLComponent implements OETLComponent {
   public void end() {
   }
 
-  @Override
-  public ODocument getConfiguration() {
-    return new ODocument().fromJSON("{parameters:[" + getCommonConfigurationParameters() + "]");
+  protected String getCommonConfigurationParameters() {
+    return "{log:{optional:true,description:'Can be any of [NONE, ERROR, INFO, DEBUG]. Default is INFO'}},"
+           + "{if:{optional:true,description:'Conditional expression. If true, the block is executed, otherwise is skipped'}},"
+           + "{output:{optional:true,description:'Variable name to store the transformer output. If null, the output will be passed to the pipeline as input for the next component.'}}";
+
   }
 
   @Override
@@ -77,12 +85,12 @@ public abstract class OAbstractETLComponent implements OETLComponent {
     if (ifFilter != null) {
       final ODocument doc = input instanceof OIdentifiable ? (ODocument) ((OIdentifiable) input).getRecord() : null;
 
-      log(OETLProcessor.LOG_LEVELS.DEBUG, "Evaluating conditional expression if=%s...", ifFilter);
+      log(LOG_LEVELS.DEBUG, "Evaluating conditional expression if=%s...", ifFilter);
 
       final Object result = ifFilter.evaluate(doc, null, context);
       if (!(result instanceof Boolean))
         throw new OConfigurationException("'if' expression in Transformer " + getName() + " returned '" + result
-            + "' instead of boolean");
+                                          + "' instead of boolean");
 
       return !(Boolean) result;
     }
@@ -95,11 +103,15 @@ public abstract class OAbstractETLComponent implements OETLComponent {
     return null;
   }
 
-  protected String getCommonConfigurationParameters() {
-    return "{log:{optional:true,description:'Can be any of [NONE, ERROR, INFO, DEBUG]. Default is INFO'}},"
-        + "{if:{optional:true,description:'Conditional expression. If true, the block is executed, otherwise is skipped'}},"
-        + "{output:{optional:true,description:'Variable name to store the transformer output. If null, the output will be passed to the pipeline as input for the next component.'}}";
+  protected void log(final LOG_LEVELS iLevel, String iText, final Object... iArgs) {
+    if (logLevel.ordinal() >= iLevel.ordinal()) {
+      final Long extractedNum = context != null ? (Long) context.getVariable("extractedNum") : null;
+      if (extractedNum != null)
+        System.out.println("[" + extractedNum + ":" + getName() + "] " + iLevel + " " + String.format(iText, iArgs));
+      else
+        System.out.println("[" + getName() + "] " + iLevel + " " + String.format(iText, iArgs));
 
+    }
   }
 
   protected String stringArray2Json(final Object[] iObject) {
@@ -130,7 +142,7 @@ public abstract class OAbstractETLComponent implements OETLComponent {
         value = context.getVariable(iContent.toString());
       else
         value = OVariableParser.resolveVariables((String) iContent, OSystemVariableResolver.VAR_BEGIN,
-            OSystemVariableResolver.VAR_END, new OVariableParserListener() {
+                                                 OSystemVariableResolver.VAR_END, new OVariableParserListener() {
               @Override
               public Object resolve(final String iVariable) {
                 return context.getVariable(iVariable);
@@ -149,15 +161,5 @@ public abstract class OAbstractETLComponent implements OETLComponent {
 
       });
     return value;
-  }
-
-  protected void log(final OETLProcessor.LOG_LEVELS iLevel, String iText, final Object... iArgs) {
-    if (logLevel.ordinal() >= iLevel.ordinal()) {
-      final Long extractedNum = (Long) context.getVariable("extractedNum");
-      if (extractedNum != null)
-        System.out.println("[" + extractedNum + ":" + getName() + "] " + iLevel + " " + String.format(iText, iArgs));
-      else
-        System.out.println("[" + getName() + "] " + iLevel + " " + String.format(iText, iArgs));
-    }
   }
 }

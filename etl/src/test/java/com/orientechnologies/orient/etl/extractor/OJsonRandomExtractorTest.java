@@ -23,8 +23,8 @@ import org.junit.Test;
 
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.etl.ETLBaseTest;
-import com.orientechnologies.orient.etl.RandomExtractor;
+import com.orientechnologies.orient.etl.OETLBaseTest;
+import com.orientechnologies.orient.etl.OETLStubRandomExtractor;
 
 import static org.junit.Assert.assertEquals;
 
@@ -33,16 +33,16 @@ import static org.junit.Assert.assertEquals;
  *
  * @author Luca Garulli
  */
-public class OJsonRandomExtractorTest extends ETLBaseTest {
+public class OJsonRandomExtractorTest extends OETLBaseTest {
 
   private final static int TOTAL = 1000000;
 
   @Ignore
   public void testNonParallel() {
-    proc.getFactory().registerExtractor(RandomExtractor.class);
+    proc.getFactory().registerExtractor(OETLStubRandomExtractor.class);
 
     process("{extractor : { random: {items: " + TOTAL + ", fields: 10} }, "
-        + "loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', class: 'Person', useLightweightEdges:false, "
+        + "loader: { orientdb: { dbURL: 'memory:OETLBaseTest', dbType:'graph', class: 'Person', useLightweightEdges:false, "
         + "classes: [{name: 'Person', extends: 'V'}] } } }");
 
     assertEquals(TOTAL, graph.countVertices("Person"));
@@ -56,10 +56,10 @@ public class OJsonRandomExtractorTest extends ETLBaseTest {
 
   @Test
   public void testParallel() {
-    proc.getFactory().registerExtractor(RandomExtractor.class);
+    proc.getFactory().registerExtractor(OETLStubRandomExtractor.class);
 
     process("{extractor : { random: {items: " + TOTAL + ", fields: 10, delay: 0} }, "
-        + "loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', class: 'Person', useLightweightEdges:false, "
+        + "loader: { orientdb: { dbURL: 'plocal:./target/OETLBaseTest', dbType:'graph', class: 'Person', useLightweightEdges:false, "
         + "classes: [{name: 'Person', extends: 'V', clusters: 8 }] } } }",  new OBasicCommandContext()
         .setVariable("parallel", Boolean.TRUE).setVariable("dumpEveryMs", 1000));
 
