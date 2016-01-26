@@ -81,6 +81,9 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
         throw new OCommandSQLParsingException("Expected <class>", parserText, oldPos);
 
       className = word.toString();
+      if(className.startsWith("`") && className.endsWith("`") && className.length()>1){
+        className = className.substring(1, className.length()-1);
+      }
 
       oldPos = pos;
       pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
@@ -97,6 +100,9 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
       }
 
       value = parserText.substring(pos + 1).trim();
+      if(value.startsWith("`") && value.endsWith("`") && value.length()>1){
+        value = value.substring(1, value.length()-1);
+      }
 
       if (parserTextUpperCase.endsWith("UNSAFE")) {
         unsafe = true;
