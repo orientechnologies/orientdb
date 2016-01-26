@@ -1925,11 +1925,13 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       currentDatabase.declareIntent(new OIntentMassiveInsert());
     else if (iIntentName.equalsIgnoreCase("massiveread"))
       currentDatabase.declareIntent(new OIntentMassiveRead());
+    else if (iIntentName.equalsIgnoreCase("null"))
+      currentDatabase.declareIntent(null);
     else
-      throw new IllegalArgumentException("Intent '" + iIntentName
-          + "' not supported. Available ones are: massiveinsert, massiveread");
+      throw new IllegalArgumentException(
+          "Intent '" + iIntentName + "' not supported. Available ones are: massiveinsert, massiveread, null");
 
-    message("\nIntent '" + iIntentName + "' setted successfully");
+    message("\nIntent '" + iIntentName + "' set successfully");
   }
 
   @ConsoleCommand(description = "Execute a command against the profiler")

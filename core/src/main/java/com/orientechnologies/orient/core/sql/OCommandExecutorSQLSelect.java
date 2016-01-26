@@ -43,7 +43,17 @@ import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OCompositeIndexCursor;
+import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
+import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.OIndexCursorCollectionValue;
+import com.orientechnologies.orient.core.index.OIndexCursorSingleValue;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexDefinitionMultiValue;
+import com.orientechnologies.orient.core.index.OIndexEngineException;
+import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.iterator.OIdentifiableIterator;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -57,19 +67,41 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.sql.filter.*;
+import com.orientechnologies.orient.core.sql.filter.OFilterOptimizer;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionDistinct;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCount;
-import com.orientechnologies.orient.core.sql.operator.*;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorAnd;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorBetween;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorIn;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajor;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajorEquals;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinor;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinorEquals;
 import com.orientechnologies.orient.core.sql.parser.OOrderBy;
 import com.orientechnologies.orient.core.sql.parser.OOrderByItem;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -565,7 +597,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       parallelLock.lock();
 
     try {
-      if ((orderedFields.isEmpty() || fullySortedByIndex || isRidOnlySort()) && skip > 0 && this.unwindFields == null && this.expandTarget == null) {
+      if ((orderedFields.isEmpty() || fullySortedByIndex || isRidOnlySort()) && skip > 0 && this.unwindFields == null
+          && this.expandTarget == null) {
         lastRecord = null;
         skip--;
         return true;
@@ -606,7 +639,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         // APPLY PROJECTIONS IN LINE
         iRecord = ORuntimeResult.getProjectionResult(getTemporaryRIDCounter(), projections, context, iRecord);
         if (iRecord == null) {
-          resultCount--;//record discarded
+          resultCount--;// record discarded
           return true;
         }
 
@@ -1876,8 +1909,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             metricRecorder.recordInvolvedIndexesMetric(index);
 
             OIndexCursor cursor;
-            indexIsUsedInOrderBy = orderByOptimizer.canBeUsedByOrderBy(index, orderedFields)
-                && !(index.getInternal() instanceof OChainedIndexProxy);
+
+            indexIsUsedInOrderBy = orderByOptimizer.canBeUsedByOrderByAfterFilter(index, getEqualsClausesPrefix(searchResult),
+                orderedFields) && !(index.getInternal() instanceof OChainedIndexProxy);
             try {
               boolean ascSortOrder = !indexIsUsedInOrderBy || orderedFields.get(0).getValue().equals(KEYWORD_ASC);
 
@@ -1947,6 +1981,16 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         revertProfiler(context, wastedIndexUsage.index, wastedIndexUsage.keyParams, wastedIndexUsage.indexDefinition);
       }
     }
+  }
+
+  private List<String> getEqualsClausesPrefix(OIndexSearchResult searchResult) {
+    List<String> result = new ArrayList<String>();
+    if (searchResult.lastOperator instanceof OQueryOperatorEquals) {
+      return searchResult.fields();
+    } else {
+      return searchResult.fields().subList(0, searchResult.fields().size() - 1);
+    }
+
   }
 
   private boolean canOptimize(List<List<OIndexSearchResult>> conditionHierarchy) {
@@ -2148,11 +2192,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     final long startExpand = System.currentTimeMillis();
     try {
 
-//      if(expandTarget!=null && tempResult==null){
-//        tempResult = new ArrayList<OIdentifiable>();
-//      }
+      // if(expandTarget!=null && tempResult==null){
+      // tempResult = new ArrayList<OIdentifiable>();
+      // }
       if (tempResult == null) {
-          tempResult = new ArrayList<OIdentifiable>();
+        tempResult = new ArrayList<OIdentifiable>();
         if (expandTarget instanceof OSQLFilterItemVariable) {
           Object r = ((OSQLFilterItemVariable) expandTarget).getValue(null, null, context);
           if (r != null) {
@@ -2179,7 +2223,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           }
         }
       } else {
-        if(tempResult==null){
+        if (tempResult == null) {
           tempResult = new ArrayList<OIdentifiable>();
         }
         final OMultiCollectionIterator<OIdentifiable> finalResult = new OMultiCollectionIterator<OIdentifiable>();
@@ -2233,11 +2277,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
   private boolean hasFieldItemParams(OSQLFunctionRuntime expandTarget) {
     Object[] params = expandTarget.getConfiguredParameters();
-    if(params==null){
+    if (params == null) {
       return false;
     }
-    for(Object o:params){
-      if(o instanceof OSQLFilterItemField){
+    for (Object o : params) {
+      if (o instanceof OSQLFilterItemField) {
         return true;
       }
     }
