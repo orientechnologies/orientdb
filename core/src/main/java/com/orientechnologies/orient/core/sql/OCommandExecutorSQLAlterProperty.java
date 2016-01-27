@@ -54,8 +54,9 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstrac
     String queryText = textRequest.getText();
     String originalQuery = queryText;
     try {
-      queryText = preParse(queryText, iRequest);
-      textRequest.setText(queryText);
+      //TODO disabled for now, because the API of setXXX has to be refactored
+//      queryText = preParse(queryText, iRequest);
+//      textRequest.setText(queryText);
 
       init((OCommandRequestText) iRequest);
 
