@@ -97,26 +97,41 @@ public class OStreamSerializerRID implements OStreamSerializer, OBinarySerialize
     return value;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void serializeInByteBufferObject(OIdentifiable object, ByteBuffer buffer, Object... hints) {
     OLinkSerializer.INSTANCE.serializeInByteBufferObject(object, buffer);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public OIdentifiable deserializeFromByteBufferObject(ByteBuffer buffer) {
     return OLinkSerializer.INSTANCE.deserializeFromByteBufferObject(buffer);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
     return OLinkSerializer.INSTANCE.getObjectSizeInByteBuffer(buffer);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public OIdentifiable deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return OLinkSerializer.INSTANCE.deserializeFromByteBufferObject(buffer, walChanges, offset);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return OLinkSerializer.INSTANCE.getObjectSizeInByteBuffer(buffer, walChanges, offset);

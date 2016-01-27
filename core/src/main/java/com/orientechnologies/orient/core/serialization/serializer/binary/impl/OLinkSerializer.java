@@ -104,6 +104,9 @@ public class OLinkSerializer implements OBinarySerializer<OIdentifiable> {
       return value.getIdentity();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void serializeInByteBufferObject(OIdentifiable object, ByteBuffer buffer, Object... hints) {
     final ORID r = object.getIdentity();
@@ -115,6 +118,9 @@ public class OLinkSerializer implements OBinarySerializer<OIdentifiable> {
     buffer.put(stream);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public OIdentifiable deserializeFromByteBufferObject(ByteBuffer buffer) {
     final int clusterId = buffer.getShort();
@@ -127,11 +133,17 @@ public class OLinkSerializer implements OBinarySerializer<OIdentifiable> {
     return new ORecordId(clusterId, clusterPosition);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
     return RID_SIZE;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public OIdentifiable deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     final int clusterId = walChanges.getShortValue(buffer, offset);
@@ -146,6 +158,9 @@ public class OLinkSerializer implements OBinarySerializer<OIdentifiable> {
     return new ORecordId(clusterId, clusterPosition);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return RID_SIZE;

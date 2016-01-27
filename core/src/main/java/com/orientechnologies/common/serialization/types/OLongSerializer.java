@@ -115,26 +115,41 @@ public class OLongSerializer implements OBinarySerializer<Long> {
     return value;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void serializeInByteBufferObject(Long object, ByteBuffer buffer, Object... hints) {
     buffer.putLong(object);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Long deserializeFromByteBufferObject(ByteBuffer buffer) {
     return buffer.getLong();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
     return LONG_SIZE;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Long deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return walChanges.getLongValue(buffer, offset);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return LONG_SIZE;
