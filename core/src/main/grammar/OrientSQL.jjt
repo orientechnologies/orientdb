@@ -754,6 +754,10 @@ OStatement Statement():
 		|
 		LOOKAHEAD(CreatePropertyStatement())
 		result = CreatePropertyStatement()
+		|
+		LOOKAHEAD(AlterPropertyStatement())
+		result = AlterPropertyStatement()
+
 	) [ <SEMICOLON> ]
 	{
 	    return result;
@@ -3660,6 +3664,32 @@ OCreatePropertyStatement CreatePropertyStatement():
 			jjtThis.linkedType = Identifier()
 		]
 		[ <UNSAFE> { jjtThis.unsafe = true; } ]
+	)
+	{ return jjtThis; }
+}
+
+OAlterPropertyStatement AlterPropertyStatement():
+{}
+{
+	<ALTER> <PROPERTY>
+	(
+		jjtThis.className = Identifier()
+		<DOT>
+		jjtThis.propertyName = Identifier()
+		(
+		    LOOKAHEAD(3)
+		    (
+		        <CUSTOM>
+		        jjtThis.customPropertyName = Identifier()
+		        <EQ>
+		        jjtThis.customPropertyValue = Expression()
+		    )
+            |
+		    (
+                jjtThis.settingName = Identifier()
+		        jjtThis.settingValue = Expression()
+		    )
+		)
 	)
 	{ return jjtThis; }
 }
