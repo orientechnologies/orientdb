@@ -109,26 +109,41 @@ public class OIntegerSerializer implements OBinarySerializer<Integer> {
     return value;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void serializeInByteBufferObject(Integer object, ByteBuffer buffer, Object... hints) {
     buffer.putInt(object);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Integer deserializeFromByteBufferObject(ByteBuffer buffer) {
     return buffer.getInt();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
     return INT_SIZE;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Integer deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return walChanges.getIntValue(buffer, offset);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return INT_SIZE;

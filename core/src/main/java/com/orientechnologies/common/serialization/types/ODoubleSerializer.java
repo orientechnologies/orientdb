@@ -97,40 +97,43 @@ public class ODoubleSerializer implements OBinarySerializer<Double> {
     return value;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void serializeInByteBufferObject(Double object, ByteBuffer buffer, Object... hints) {
     buffer.putLong(Double.doubleToLongBits(object));
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Double deserializeFromByteBufferObject(ByteBuffer buffer) {
     return Double.longBitsToDouble(buffer.getLong());
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
     return DOUBLE_SIZE;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Double deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return Double.longBitsToDouble(walChanges.getLongValue(buffer, offset));
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return DOUBLE_SIZE;
-  }
-
-  public double deserializeFromByteBuffer(ByteBuffer buffer) {
-    return Double.longBitsToDouble(buffer.getLong());
-  }
-
-  public double deserializeFromByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
-    return Double.longBitsToDouble(walChanges.getLongValue(buffer, offset));
-  }
-
-  public void serializeInByteBuffer(double object, ByteBuffer buffer, Object... hints) {
-    buffer.putLong(Double.doubleToLongBits(object));
   }
 }

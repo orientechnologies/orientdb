@@ -128,6 +128,9 @@ public class OStringSerializer implements OBinarySerializer<String> {
     return value;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void serializeInByteBufferObject(String object, ByteBuffer buffer, Object... hints) {
     int length = object.length();
@@ -150,6 +153,9 @@ public class OStringSerializer implements OBinarySerializer<String> {
     buffer.put(binaryData);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String deserializeFromByteBufferObject(ByteBuffer buffer) {
     int len = buffer.getInt();
@@ -164,11 +170,17 @@ public class OStringSerializer implements OBinarySerializer<String> {
     return new String(chars);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
     return buffer.getInt() * 2 + OIntegerSerializer.INT_SIZE;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     int len = walChanges.getIntValue(buffer, offset);
@@ -184,6 +196,9 @@ public class OStringSerializer implements OBinarySerializer<String> {
     return new String(chars);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return walChanges.getIntValue(buffer, offset) * 2 + OIntegerSerializer.INT_SIZE;

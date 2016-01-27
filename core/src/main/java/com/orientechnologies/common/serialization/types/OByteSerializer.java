@@ -101,26 +101,41 @@ public class OByteSerializer implements OBinarySerializer<Byte> {
     return value;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void serializeInByteBufferObject(Byte object, ByteBuffer buffer, Object... hints) {
     buffer.put(object);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Byte deserializeFromByteBufferObject(ByteBuffer buffer) {
     return buffer.get();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
     return BYTE_SIZE;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Byte deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return walChanges.getByteValue(buffer, offset);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return BYTE_SIZE;

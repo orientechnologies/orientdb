@@ -106,26 +106,41 @@ public class OShortSerializer implements OBinarySerializer<Short> {
     return value;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void serializeInByteBufferObject(Short object, ByteBuffer buffer, Object... hints) {
     buffer.putShort(object);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Short deserializeFromByteBufferObject(ByteBuffer buffer) {
     return buffer.getShort();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
     return SHORT_SIZE;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Short deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return walChanges.getShortValue(buffer, offset);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return SHORT_SIZE;
