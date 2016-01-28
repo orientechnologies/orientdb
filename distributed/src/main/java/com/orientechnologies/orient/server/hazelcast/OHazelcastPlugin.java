@@ -434,8 +434,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         if (cfg == null)
           return;
 
-        if (!(iDatabase.getStorage() instanceof ODistributedStorage
-            || ((ODistributedStorage) iDatabase.getStorage()).getDistributedManager().isOffline())) {
+        if (!(iDatabase.getStorage() instanceof ODistributedStorage)
+            || ((ODistributedStorage) iDatabase.getStorage()).getDistributedManager().isOffline()) {
 
           ODistributedStorage storage = storages.get(iDatabase.getURL());
           if (storage == null) {
