@@ -124,7 +124,7 @@ public class OAtomicUnitEndRecord extends OOperationUnitBodyRecord {
       }
 
       atomicOperationMetadataMap.put(recordOperationMetadata.getKey(), recordOperationMetadata);
-    } else
+    } else if (metadataId > 0)
       throw new IllegalStateException("Invalid metadata entry id " + metadataId);
 
     return offset;

@@ -37,5 +37,18 @@ public class OAtomicUnitEndRecordTest {
 
     Assert.assertEquals(recordOperationMetadataD.getValue(), recordOperationMetadata.getValue());
   }
+
+  public void recordNoMetadataSerializationTest() throws IOException {
+    OAtomicUnitEndRecord atomicUnitEndRecord = new OAtomicUnitEndRecord(OOperationUnitId.generateId(), false, null);
+    int arraySize = atomicUnitEndRecord.serializedSize() + 1;
+    byte[] content = new byte[arraySize];
+
+    final int endOffset = atomicUnitEndRecord.toStream(content, 1);
+    Assert.assertEquals(endOffset, content.length);
+
+    OAtomicUnitEndRecord atomicUnitEndRecordD = new OAtomicUnitEndRecord();
+    final int dEndOffset = atomicUnitEndRecordD.fromStream(content, 1);
+    Assert.assertEquals(dEndOffset, content.length);
+  }
 }
 
