@@ -834,7 +834,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
           // ASSIGN OTHER CLUSTER IDS
           for (int i : OStringSerializerHelper.splitIntArray(classClusterIds)) {
-            if (i != -1 && !cls.hasClusterId(i))
+            if (i != -1 && cls.hasClusterId(i))
               cls.addClusterId(i);
           }
         }
