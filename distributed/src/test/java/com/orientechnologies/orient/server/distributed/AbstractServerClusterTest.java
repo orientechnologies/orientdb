@@ -15,6 +15,14 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.Callable;
+
+import org.junit.Assert;
+
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.instance.GroupProperties;
 import com.orientechnologies.common.log.OLogManager;
@@ -24,23 +32,17 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-import org.junit.Assert;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 
 /**
  * Test class that creates and executes distributed operations against a cluster of servers created in the same JVM.
  */
 public abstract class AbstractServerClusterTest {
-  protected int     delayServerStartup     = 0;
-  protected int     delayServerAlign       = 0;
-  protected String  rootDirectory          = "target/servers/";
-  protected boolean startupNodesInSequence = true;
+  protected int             delayServerStartup     = 0;
+  protected int             delayServerAlign       = 0;
+  protected boolean         startupNodesInSequence = true;
+  protected String          rootDirectory          = "target/servers/";
 
-  protected List<ServerRun> serverInstance = new ArrayList<ServerRun>();
+  protected List<ServerRun> serverInstance         = new ArrayList<ServerRun>();
 
   protected AbstractServerClusterTest() {
     OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.setValue(true);
@@ -271,6 +273,21 @@ public abstract class AbstractServerClusterTest {
 
   protected String getDistributedServerConfiguration(final ServerRun server) {
     return "orientdb-dserver-config-" + server.getServerId() + ".xml";
+  }
+
+  protected void executeWhen(Callable<Boolean> condition, Callable action) throws Exception {
+    while (true) {
+      if (condition.call()) {
+        action.call();
+        break;
+      }
+
+      try {
+        Thread.sleep(200);
+      } catch (InterruptedException e) {
+        // IGNORE IT
+      }
+    }
   }
 
 }

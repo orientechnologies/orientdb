@@ -29,7 +29,7 @@ import java.util.concurrent.Callable;
  * Test distributed TX
  */
 public abstract class AbstractServerClusterTxTest extends AbstractServerClusterInsertTest {
-  private final OPartitionedDatabasePoolFactory poolFactory = new OPartitionedDatabasePoolFactory();
+  protected final OPartitionedDatabasePoolFactory poolFactory = new OPartitionedDatabasePoolFactory();
 
   protected AbstractServerClusterTxTest() {
     useTransactions = true;
