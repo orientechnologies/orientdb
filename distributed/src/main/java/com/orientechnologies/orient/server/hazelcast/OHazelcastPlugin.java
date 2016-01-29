@@ -19,6 +19,22 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.Serializable;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+
 import com.hazelcast.config.FileSystemXmlConfig;
 import com.hazelcast.config.QueueConfig;
 import com.hazelcast.core.*;
@@ -34,7 +50,6 @@ import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -72,22 +87,6 @@ import com.orientechnologies.orient.server.distributed.task.OSyncDatabaseDeltaTa
 import com.orientechnologies.orient.server.distributed.task.OSyncDatabaseTask;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 
-import java.io.DataInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.Serializable;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
-
 /**
  * Hazelcast implementation for clustering.
  *
@@ -96,7 +95,7 @@ import java.util.concurrent.locks.Lock;
 public class OHazelcastPlugin extends ODistributedAbstractPlugin
     implements MembershipListener, EntryListener<String, Object>, OCommandOutputListener {
 
-  public static final String CONFIG_DATABASE_PREFIX = "database.";
+  public static final String                    CONFIG_DATABASE_PREFIX = "database.";
 
   protected static final String                 NODE_NAME_ENV          = "ORIENTDB_NODE_NAME";
   protected static final String                 CONFIG_NODE_PREFIX     = "node.";
@@ -109,13 +108,13 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   protected long                                timeOffset             = 0;
   protected Date                                startedOn              = new Date();
 
-  protected volatile NODE_STATUS status = NODE_STATUS.OFFLINE;
+  protected volatile NODE_STATUS                status                 = NODE_STATUS.OFFLINE;
 
-  protected String membershipListenerRegistration;
+  protected String                              membershipListenerRegistration;
 
   protected volatile HazelcastInstance          hazelcastInstance;
   protected long                                lastClusterChangeOn;
-  protected List<ODistributedLifecycleListener> listeners = new ArrayList<ODistributedLifecycleListener>();
+  protected List<ODistributedLifecycleListener> listeners              = new ArrayList<ODistributedLifecycleListener>();
 
   public OHazelcastPlugin() {
   }
@@ -482,11 +481,12 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         if (cfg == null)
           return;
 
-        if (iDatabase instanceof ODatabase<?> && (!(iDatabase.getStorage() instanceof ODistributedStorage)
-            || ((ODistributedStorage) iDatabase.getStorage()).getDistributedManager().isOffline())) {
+        if (!(iDatabase.getStorage() instanceof ODistributedStorage)
+            || ((ODistributedStorage) iDatabase.getStorage()).getDistributedManager().isOffline()) {
+
           ODistributedStorage storage = storages.get(iDatabase.getURL());
           if (storage == null) {
-            storage = new ODistributedStorage(serverInstance, (OAbstractPaginatedStorage) iDatabase.getStorage());
+            storage = new ODistributedStorage(serverInstance, (OAbstractPaginatedStorage) iDatabase.getStorage().getUnderlying());
             final ODistributedStorage oldStorage = storages.putIfAbsent(iDatabase.getURL(), storage);
             if (oldStorage != null)
               storage = oldStorage;
