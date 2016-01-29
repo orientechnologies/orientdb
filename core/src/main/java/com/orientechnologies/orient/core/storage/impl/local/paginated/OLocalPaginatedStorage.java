@@ -29,6 +29,7 @@ import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.compression.impl.OZIPCompressionUtil;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerShared;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
@@ -208,6 +209,16 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
     OZIPCompressionUtil.uncompressDirectory(in, getStoragePath(), iListener);
 
     open(null, null, null);
+  }
+
+  @Override
+  public OStorageConfiguration getConfiguration() {
+    stateLock.acquireReadLock();
+    try {
+      return super.getConfiguration();
+    } finally {
+      stateLock.releaseReadLock();
+    }
   }
 
   @Override
