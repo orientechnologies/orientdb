@@ -44,7 +44,6 @@ import java.io.ObjectOutput;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.zip.GZIPOutputStream;
 
 /**
  * Ask for synchronization of delta of chanegs on database from a remote node.
@@ -125,7 +124,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
       backupFile.createNewFile();
 
       final FileOutputStream fileOutputStream = new FileOutputStream(backupFile);
-      final GZIPOutputStream gzipOutputStream = new GZIPOutputStream(fileOutputStream);
+//      final GZIPOutputStream gzipOutputStream = new GZIPOutputStream(fileOutputStream);
 
       final File completedFile = new File(backupFile.getAbsolutePath() + ".completed");
       if (completedFile.exists())
@@ -138,6 +137,8 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
       final AtomicReference<OLogSequenceNumber> endLSN = new AtomicReference<OLogSequenceNumber>();
       final AtomicReference<ODistributedDatabaseDeltaSyncException> exception = new AtomicReference<ODistributedDatabaseDeltaSyncException>();
 
+      lastOperationId.set(database.getStorage().getLastOperationId());
+
       new Thread(new Runnable() {
         @Override
         public void run() {
@@ -145,13 +146,11 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
 
           try {
 
-            endLSN.set(((OAbstractPaginatedStorage) storage).recordsChangedAfterLSN(startLSN, gzipOutputStream));
+            endLSN.set(((OAbstractPaginatedStorage) storage).recordsChangedAfterLSN(startLSN, fileOutputStream));
 
             if (endLSN.get() == null)
               // DELTA NOT AVAILABLE, TRY WITH FULL BACKUP
               exception.set(new ODistributedDatabaseDeltaSyncException(startLSN));
-
-            lastOperationId.set(database.getStorage().getLastOperationId());
 
             ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
                 "delta backup of database '%s' completed. range=%s-=%s...", databaseName, startLSN, endLSN);
@@ -162,10 +161,10 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
                 .wrapException(new ODistributedDatabaseDeltaSyncException(startLSN), e));
 
           } finally {
-            try {
-              gzipOutputStream.close();
-            } catch (IOException e) {
-            }
+//            try {
+//              gzipOutputStream.close();
+//            } catch (IOException e) {
+//            }
 
             try {
               fileOutputStream.close();
@@ -190,7 +189,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
         throw exception.get();
 
       final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(lastOperationId.get(), backupFile, 0, CHUNK_MAX_SIZE,
-          endLSN.get(), true);
+          endLSN.get(), false);
 
       ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
           "- transferring chunk #%d offset=%d size=%s...", 1, 0, OFileUtils.getSizeAsNumber(chunk.buffer.length));

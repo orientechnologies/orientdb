@@ -19,14 +19,16 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+
 import java.io.Externalizable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import java.util.zip.GZIPInputStream;
 
 public class ODistributedDatabaseChunk implements Externalizable {
   public long               lastOperationId;
@@ -34,25 +36,25 @@ public class ODistributedDatabaseChunk implements Externalizable {
   public long               offset;
   public byte[]             buffer;
   public OLogSequenceNumber lsn;
-  public boolean            compressed;
+  public boolean            gzipCompressed;
   public boolean            last;
 
   public ODistributedDatabaseChunk() {
   }
 
   public ODistributedDatabaseChunk(final long iLastOperationId, final File iFile, final long iOffset, final int iMaxSize,
-      final OLogSequenceNumber iLSN, final boolean compressed) throws IOException {
+      final OLogSequenceNumber iLSN, final boolean gzipCompressed) throws IOException {
     lastOperationId = iLastOperationId;
     filePath = iFile.getAbsolutePath();
     offset = iOffset;
     lsn = iLSN;
-    this.compressed = compressed;
+    this.gzipCompressed = gzipCompressed;
 
     long fileSize = iFile.length();
 
     final File completedFile = new File(iFile.getAbsolutePath() + ".completed");
 
-    // WHILE UNTIL THE CHUCK IS AVAILABLE
+    // WHILE UNTIL THE CHUNK IS AVAILABLE
     for (int retry = 0; fileSize <= iOffset; ++retry) {
       if (fileSize == 0 || iOffset > fileSize)
         try {
@@ -69,11 +71,10 @@ public class ODistributedDatabaseChunk implements Externalizable {
         break;
     }
 
-    final FileInputStream in = new FileInputStream(iFile);
-
     final int toRead = (int) Math.min(iMaxSize, fileSize - offset);
     buffer = new byte[toRead];
 
+    final InputStream in = gzipCompressed ? new GZIPInputStream(new FileInputStream(iFile)) : new FileInputStream(iFile);
     try {
       in.skip(offset);
       in.read(buffer);
@@ -113,7 +114,7 @@ public class ODistributedDatabaseChunk implements Externalizable {
     out.writeBoolean(lsn != null);
     if (lsn != null)
       lsn.writeExternal(out);
-    out.writeBoolean(compressed);
+    out.writeBoolean(gzipCompressed);
     out.writeBoolean(last);
   }
 
@@ -127,7 +128,7 @@ public class ODistributedDatabaseChunk implements Externalizable {
     in.readFully(buffer);
     final boolean lsnNotNull = in.readBoolean();
     lsn = lsnNotNull ? new OLogSequenceNumber(in) : null;
-    compressed = in.readBoolean();
+    gzipCompressed = in.readBoolean();
     last = in.readBoolean();
   }
 }

@@ -87,7 +87,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
-import java.util.zip.GZIPInputStream;
 
 /**
  * Hazelcast implementation for clustering.
@@ -184,7 +183,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       if (!configurationMap.containsKey(CONFIG_NODE_PREFIX + nodeId)) {
         // NODE NOT REGISTERED, FORCING SHUTTING DOWN
         ODistributedServerLog.error(this, localNodeName, null, DIRECTION.NONE, "Error on registering local node on cluster");
-        throw  new ODistributedStartupException("Error on registering local node on cluster");
+        throw new ODistributedStartupException("Error on registering local node on cluster");
       }
 
       messageService = new OHazelcastDistributedMessageService(this);
@@ -209,7 +208,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
     } catch (Exception e) {
       ODistributedServerLog.error(this, localNodeName, null, DIRECTION.NONE, "Error on starting distributed plugin", e);
-      throw OException.wrapException(new ODistributedStartupException("Error on starting distributed plugin"),e);
+      throw OException.wrapException(new ODistributedStartupException("Error on starting distributed plugin"), e);
     }
   }
 
@@ -1016,8 +1015,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       final Map<String, Object> results = (Map<String, Object>) sendRequest(databaseName, null, targetNodes, deployTask,
           EXECUTION_MODE.RESPONSE);
 
-      ODistributedServerLog.info(this, nodeName, entry.getKey(), DIRECTION.IN, "Receiving delta sync for '%s'...",
-          databaseName);
+      ODistributedServerLog.info(this, nodeName, entry.getKey(), DIRECTION.IN, "Receiving delta sync for '%s'...", databaseName);
 
       ODistributedServerLog.debug(this, nodeName, selectedNodes.toString(), DIRECTION.OUT, "Database delta sync returned: %s",
           results);
@@ -1224,7 +1222,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
               long fileSize = writeDatabaseChunk(1, chunk, fOut);
               for (int chunkNum = 2; !chunk.last; chunkNum++) {
                 final Object result = sendRequest(databaseName, null, Collections.singleton(iNode),
-                    new OCopyDatabaseChunkTask(chunk.filePath, chunkNum, chunk.offset + chunk.buffer.length),
+                    new OCopyDatabaseChunkTask(chunk.filePath, chunkNum, chunk.offset + chunk.buffer.length, false),
                     EXECUTION_MODE.RESPONSE);
 
                 if (result instanceof Boolean)
@@ -1759,10 +1757,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
           long total = 0;
 
-          final GZIPInputStream gzipInput = new GZIPInputStream(in);
+          // final GZIPInputStream gzipInput = new GZIPInputStream(in);
           try {
 
-            final DataInputStream input = new DataInputStream(gzipInput);
+            final DataInputStream input = new DataInputStream(in);
             try {
 
               final long records = input.readLong();
@@ -1792,21 +1790,31 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
                   OLogManager.instance().info(this,
                       "DELTA <- other rid=" + rid + " type=" + recordType + " size=" + recordSize + " v=" + recordVersion);
 
-                  final int forcedVersion = ORecordVersionHelper.setRollbackMode(recordVersion);
+                  ORecord newRecord = Orient.instance().getRecordFactoryManager().newInstance((byte) recordType);
 
-                  final ORecord record;
-                  if (recordVersion == 1) {
+                  final ORecord loadedRecord = rid.getRecord();
+                  if (loadedRecord == null) {
                     // CREATE
-                    record = Orient.instance().getRecordFactoryManager().newInstance((byte) recordType);
-
-                    ORecordInternal.fill(record, rid, forcedVersion, recordContent, true);
+                    ORecordInternal.fill(newRecord, new ORecordId(rid.getClusterId(), -1), 0, recordContent, true);
                   } else {
                     // UPDATE
-                    record = rid.getRecord();
-                    ORecordInternal.fill(record, rid, forcedVersion, recordContent, true);
+                    ORecordInternal.fill(newRecord, rid, ORecordVersionHelper.setRollbackMode(recordVersion), recordContent, true);
+
+                    if (loadedRecord instanceof ODocument) {
+                      // APPLY CHANGES FIELD BY FIELD TO MARK DIRTY FIELDS FOR INDEXES/HOOKS
+                      ODocument loadedDocument = (ODocument) loadedRecord;
+                      loadedDocument.merge((ODocument) newRecord, false, false).getVersion();
+                      loadedDocument.setDirty();
+                      newRecord = loadedDocument;
+                    }
                   }
 
-                  record.save();
+                  newRecord.save();
+
+                  if (!newRecord.getIdentity().equals(rid))
+                    throw new ODistributedDatabaseDeltaSyncException(
+                        "Error on synchronization of records, rids are different: saved " + newRecord.getIdentity()
+                            + ", but it should be " + rid);
                 }
               }
 
@@ -1822,7 +1830,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
             throw OException.wrapException(
                 new ODistributedException("Error on installing database delta '" + db.getName() + "' on local server"), e);
           } finally {
-            gzipInput.close();
+            // gzipInput.close();
           }
 
           ODistributedServerLog.info(this, nodeName, null, DIRECTION.IN, "Installed database delta for '%s', %d total records",

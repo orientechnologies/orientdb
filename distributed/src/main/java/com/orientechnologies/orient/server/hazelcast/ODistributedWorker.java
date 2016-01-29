@@ -179,7 +179,7 @@ public class ODistributedWorker extends Thread {
       if (req != null) {
         if (req.getId() >= distributed.waitForMessageId.get()) {
           // ARRIVED, RESET IT
-          ODistributedServerLog.debug(this, manager.getLocalNodeName(), req.getSenderNodeName(), DIRECTION.IN,
+          ODistributedServerLog.info(this, manager.getLocalNodeName(), req.getSenderNodeName(), DIRECTION.IN,
               "reached waited request %d on request=%s sourceNode=%s", distributed.waitForMessageId.get(), req,
               req.getSenderNodeName());
 
@@ -187,7 +187,7 @@ public class ODistributedWorker extends Thread {
           break;
         } else {
           // SKIP IT
-          ODistributedServerLog.debug(this, manager.getLocalNodeName(), req.getSenderNodeName(), DIRECTION.IN,
+          ODistributedServerLog.info(this, manager.getLocalNodeName(), req.getSenderNodeName(), DIRECTION.IN,
               "discarded request %d because waiting for %d request=%s sourceNode=%s", req.getId(),
               distributed.waitForMessageId.get(), req, req.getSenderNodeName());
 

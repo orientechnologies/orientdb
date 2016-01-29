@@ -29,7 +29,10 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordOpe
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationMetadata;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Andrey Lomakin
@@ -124,8 +127,7 @@ public class OAtomicUnitEndRecord extends OOperationUnitBodyRecord {
       }
 
       atomicOperationMetadataMap.put(recordOperationMetadata.getKey(), recordOperationMetadata);
-    } else
-      throw new IllegalStateException("Invalid metadata entry id " + metadataId);
+    }
 
     return offset;
   }

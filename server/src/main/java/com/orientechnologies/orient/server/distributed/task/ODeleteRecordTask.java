@@ -36,6 +36,8 @@ import com.orientechnologies.orient.server.distributed.ODistributedStorage;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Distributed delete record task used for synchronization.
@@ -100,9 +102,12 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
   }
 
   @Override
-  public OResurrectRecordTask getFixTask(final ODistributedRequest iRequest, OAbstractRemoteTask iOriginalTask,
+  public List<OAbstractRemoteTask> getFixTask(final ODistributedRequest iRequest,final  OAbstractRemoteTask iOriginalTask,
       final Object iBadResponse, final Object iGoodResponse) {
-    return new OResurrectRecordTask(rid, version);
+    final List<OAbstractRemoteTask> fixTasks = new ArrayList<OAbstractRemoteTask>(1);
+    fixTasks.add(new OResurrectRecordTask(rid, version));
+    return fixTasks;
+
   }
 
   @Override

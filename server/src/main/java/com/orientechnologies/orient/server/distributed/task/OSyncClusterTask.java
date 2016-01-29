@@ -74,7 +74,7 @@ public class OSyncClusterTask extends OAbstractReplicatedTask {
   public Object execute(final OServer iServer, final ODistributedServerManager iManager, final ODatabaseDocumentTx database)
       throws Exception {
 
-    if (!getNodeSource().equals(iManager.getLocalNodeName())) {
+    if (getNodeSource() == null || !getNodeSource().equals(iManager.getLocalNodeName())) {
       if (database == null)
         throw new ODistributedException("Database instance is null");
 
@@ -167,7 +167,7 @@ public class OSyncClusterTask extends OAbstractReplicatedTask {
             final long fileSize = backupFile.length();
 
             ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-                "sending the compressed cluster '%s.%s' over the NETWORK to node '%s', size=%s...", databaseName, clusterName,
+                "Sending the compressed cluster '%s.%s' over the NETWORK to node '%s', size=%s...", databaseName, clusterName,
                 getNodeSource(), OFileUtils.getSizeAsString(fileSize));
 
             final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(0, backupFile, 0, CHUNK_MAX_SIZE,

@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -44,9 +45,9 @@ import java.util.concurrent.Callable;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class OFixTxTask extends OAbstractRemoteTask {
-  private static final long                      serialVersionUID = 1L;
-  private              List<OAbstractRemoteTask> tasks            = new ArrayList<OAbstractRemoteTask>();
-  private Set<ORID> locks;
+  private static final long         serialVersionUID = 1L;
+  private List<OAbstractRemoteTask> tasks            = new ArrayList<OAbstractRemoteTask>();
+  private Set<ORID>                 locks;
 
   public OFixTxTask() {
   }
@@ -63,9 +64,15 @@ public class OFixTxTask extends OAbstractRemoteTask {
     tasks.add(iTask);
   }
 
+  public void addAll(final Collection<OAbstractRemoteTask> iTasks) {
+    tasks.addAll(iTasks);
+  }
+
   @Override
-  public Object execute(final OServer iServer, final ODistributedServerManager iManager, final ODatabaseDocumentTx database) throws Exception {
-    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "fixing %d conflicts found during committing transaction against db=%s...", tasks.size(), database.getName());
+  public Object execute(final OServer iServer, final ODistributedServerManager iManager, final ODatabaseDocumentTx database)
+      throws Exception {
+    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+        "fixing %d conflicts found during committing transaction against db=%s...", tasks.size(), database.getName());
 
     ODatabaseRecordThreadLocal.INSTANCE.set(database);
     try {
@@ -88,8 +95,9 @@ public class OFixTxTask extends OAbstractRemoteTask {
     } finally {
       // UNLOCK ALL RIDS IN ANY CASE
       final ODistributedDatabase ddb = iManager.getMessageService().getDatabase(database.getName());
-      for (ORID r : locks)
-        ddb.unlockRecord(r);
+      if (locks != null)
+        for (ORID r : locks)
+          ddb.unlockRecord(r);
     }
 
     return Boolean.TRUE;
@@ -116,11 +124,11 @@ public class OFixTxTask extends OAbstractRemoteTask {
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
     // TASKS
     final int size = in.readInt();
-    for (int i = 0; i<size; ++i)
-      tasks.add((OAbstractRecordReplicatedTask) in.readObject());
+    for (int i = 0; i < size; ++i)
+      tasks.add((OAbstractRemoteTask) in.readObject());
     // LOCKS
     final int lockSize = in.readInt();
-    for (int i = 0; i<lockSize; ++i)
+    for (int i = 0; i < lockSize; ++i)
       locks.add((ORID) in.readObject());
   }
 
