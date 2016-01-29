@@ -77,6 +77,8 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
   protected List<ODistributedWorker>                  workers                    = new ArrayList<ODistributedWorker>();
   protected AtomicLong                                waitForMessageId           = new AtomicLong(-1);
   protected ConcurrentHashMap<ORID, String>           lockManager                = new ConcurrentHashMap<ORID, String>();
+  protected ConcurrentHashMap<String, Integer>        queueSizes                 = new ConcurrentHashMap<String, Integer>();
+  protected ConcurrentHashMap<String, Integer>        queueWarningCounter        = new ConcurrentHashMap<String, Integer>();
 
   public OHazelcastDistributedDatabase(final OHazelcastPlugin manager, final OHazelcastDistributedMessageService msgService,
       final String iDatabaseName) {
@@ -160,28 +162,59 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
           final IQueue queue = entry.getValue();
 
           if (queue != null) {
-            if (queueMaxSize > 0 && queue.size() > queueMaxSize) {
+            int nodeQueueSize = queue.size();
+
+            if (queueMaxSize > 0 && nodeQueueSize > queueMaxSize) {
+              final int nodeQueuePrevSize = queueSizes.getOrDefault(node, 0);
+              final int nodeQueueWarnings = queueWarningCounter.getOrDefault(node, 0);
+
               final ODistributedServerManager.DB_STATUS nodeStatus = manager.getDatabaseStatus(node, databaseName);
               if (nodeStatus == ODistributedServerManager.DB_STATUS.SYNCHRONIZING
                   || nodeStatus == ODistributedServerManager.DB_STATUS.BACKUP) {
 
-                // BACKUP OR SYNCHRONIZING: SEND THE MESSAGE AS WELL
+                // BACKUP, SYNCHRONIZING: SEND THE MESSAGE AS WELL
                 queue.offer(iRequest, timeout, TimeUnit.MILLISECONDS);
+
+                queueWarningCounter.remove(node);
+
+              } else if (nodeQueueSize < nodeQueuePrevSize || nodeQueueWarnings < 10) {
+
+                // THE QUEUE IS NOT INCREASING IN SIZE OR IS UNDER THE WARNING THRESHOLD: SEND THE MESSAGE AS WELL
+                queue.offer(iRequest, timeout, TimeUnit.MILLISECONDS);
+
+                if (System.currentTimeMillis() - manager.getLastClusterChangeOn() > 10000) {
+                  queueWarningCounter.put(node, nodeQueueWarnings + 1);
+                  ODistributedServerLog.debug(this, getLocalNodeName(), node, DIRECTION.OUT,
+                      "queue '%s' has too many messages (%d), checking if the node is in stall (warnings=%d)", queue.getName(),
+                      nodeQueueSize, nodeQueueWarnings);
+                } else {
+                  queueWarningCounter.remove(node);
+                  ODistributedServerLog.debug(this, getLocalNodeName(), node, DIRECTION.OUT,
+                      "queue '%s' has too many messages (%d), but the cluster shape is changed recently (%d secs)", queue.getName(),
+                      nodeQueueSize, ((System.currentTimeMillis() - manager.getLastClusterChangeOn()) / 1000));
+                }
 
               } else {
                 // NODE SEEMS IN STALL FOR UNKNOWN REASON
-                ODistributedServerLog.warn(this, getLocalNodeName(), iNodes.toString(), DIRECTION.OUT,
-                    "queue has too many messages (%d), treating the node as in stall: trying to restart it...", queue.size());
+                ODistributedServerLog.warn(this, getLocalNodeName(), node, DIRECTION.OUT,
+                    "queue '%s' has too many messages (%d), treating the node as in stall: trying to restart it...",
+                    queue.getName(), nodeQueueSize);
 
                 // CLEAR THE QUEUE TO AVOID AN OOM IN THE CLUSTER
                 queue.clear();
+                queueWarningCounter.remove(node);
+                nodeQueueSize = 0;
 
                 manager.disconnectNode(entry.getKey());
               }
             } else {
               // SEND THE MESSAGE
               queue.offer(iRequest, timeout, TimeUnit.MILLISECONDS);
+              queueWarningCounter.remove(node);
             }
+
+            // SAVE LAST QUEUE SIZE VALUE
+            queueSizes.put(node, nodeQueueSize);
           }
         }
 
@@ -206,15 +239,12 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
   protected int getAvailableNodes(final ODistributedRequest iRequest, final Collection<String> iNodes, final String databaseName,
       OPair<String, IQueue>[] reqQueues) {
 
-    final boolean requiredNodeOnline = iRequest.getTask().isRequireNodeOnline();
-
     int availableNodes;
     // CHECK THE ONLINE NODES
     availableNodes = 0;
     int i = 0;
     for (String node : iNodes) {
-      final boolean include = requiredNodeOnline ? manager.isNodeOnline(node, databaseName)
-          : manager.isNodeAvailable(node, databaseName);
+      final boolean include = manager.isNodeAvailable(node, databaseName);
 
       if (include && reqQueues[i].getValue() != null)
         availableNodes++;
@@ -381,7 +411,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
     final String clusterName = clusterNames == null || clusterNames.isEmpty() ? null : clusterNames.iterator().next();
 
-    int quorum = 0;
+    int quorum = 1;
 
     final OCommandDistributedReplicateRequest.QUORUM_TYPE quorumType = iRequest.getTask().getQuorumType();
 

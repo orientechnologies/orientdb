@@ -315,13 +315,16 @@ public class ODistributedWorker extends Thread {
       } finally {
         if (database != null) {
           database.activateOnCurrentThread();
-          database.rollback();
-          database.getLocalCache().clear();
-          database.setUser(origin);
+          if (!database.isClosed()) {
+            database.rollback();
+            database.getLocalCache().clear();
+            database.setUser(origin);
+          }
         }
       }
 
-      sendResponseBack(iRequest, task, responsePayload);
+      if (running)
+        sendResponseBack(iRequest, task, responsePayload);
 
     } finally {
       OScenarioThreadLocal.INSTANCE.setRunMode(OScenarioThreadLocal.RUN_MODE.DEFAULT);

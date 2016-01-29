@@ -173,11 +173,9 @@ public class ODistributedResponseManager {
 
       completed = getExpectedResponses() == receivedResponses;
 
-      if (receivedResponses >= quorum && (!waitForLocalNode || receivedCurrentNode)) {
-        if (completed || isMinimumQuorumReached(false)) {
-          // NOTIFY TO THE WAITER THE RESPONSE IS COMPLETE NOW
-          notifyWaiters();
-        }
+      if (completed || isMinimumQuorumReached(false)) {
+        // NOTIFY TO THE WAITER THE RESPONSE IS COMPLETE NOW
+        notifyWaiters();
       }
       return completed;
     }
@@ -246,14 +244,14 @@ public class ODistributedResponseManager {
     try {
 
       long currentTimeout = synchTimeout;
-      while (currentTimeout > 0
-          && ((waitForLocalNode && !receivedCurrentNode) || receivedResponses < expectedSynchronousResponses)) {
+      while (currentTimeout > 0 && !isMinimumQuorumReached(false) && receivedResponses < expectedSynchronousResponses) {
+
         // WAIT FOR THE RESPONSES
         synchronousResponsesArrived.await(currentTimeout, TimeUnit.MILLISECONDS);
 
-        if ((!waitForLocalNode || receivedCurrentNode) && (receivedResponses >= expectedSynchronousResponses))
+        if (isMinimumQuorumReached(false) || receivedResponses >= expectedSynchronousResponses)
           // OK
-          break;
+          return true;
 
         if (Thread.currentThread().isInterrupted()) {
           // INTERRUPTED
@@ -315,7 +313,7 @@ public class ODistributedResponseManager {
         }
       }
 
-      return receivedResponses >= expectedSynchronousResponses;
+      return isMinimumQuorumReached(false) || receivedResponses >= expectedSynchronousResponses;
 
     } finally {
       synchronousResponsesLock.unlock();
@@ -466,8 +464,6 @@ public class ODistributedResponseManager {
 
   protected boolean isMinimumQuorumReached(final boolean iCheckAvailableNodes) {
     if (isWaitForLocalNode() && !isReceivedCurrentNode()) {
-      ODistributedServerLog.warn(this, dManager.getLocalNodeName(), dManager.getLocalNodeName(), DIRECTION.IN,
-          "no response received from local node about request %s", request);
       return false;
     }
 
@@ -576,6 +572,7 @@ public class ODistributedResponseManager {
   }
 
   protected void undoRequest() {
+    // DETERMINE IF ANY CREATE FAILED TO RESTORE RIDS
     for (ODistributedResponse r : getReceivedResponses()) {
       final OAbstractRemoteTask task = request.getTask();
       if (task instanceof OAbstractReplicatedTask) {

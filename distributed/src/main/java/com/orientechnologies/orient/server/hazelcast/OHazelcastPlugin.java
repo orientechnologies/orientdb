@@ -1693,6 +1693,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     final OHazelcastDistributedResponse response = new OHazelcastDistributedResponse(-1, nodeName, iNode, new ORestartNodeTask());
 
     try {
+      queue.clear();
       if (!queue.offer(response, OGlobalConfiguration.DISTRIBUTED_QUEUE_TIMEOUT.getValueAsLong(), TimeUnit.MILLISECONDS))
         throw new ODistributedException("Timeout on dispatching restart node request to node '" + iNode + "'");
     } catch (InterruptedException e) {

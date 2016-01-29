@@ -166,9 +166,12 @@ public class OServer {
 
   public void restart() throws ClassNotFoundException, InvocationTargetException, InstantiationException, NoSuchMethodException,
       IllegalAccessException {
-    shutdown();
-    startup(configuration);
-    activate();
+    try {
+      shutdown();
+    } finally {
+      startup(configuration);
+      activate();
+    }
   }
 
   /**
@@ -229,22 +232,19 @@ public class OServer {
 
     startup(new File(OSystemVariableResolver.resolveSystemVariables(config)));
 
-    Orient
-        .instance()
-        .getProfiler()
-        .registerHookValue("system.databases", "List of databases configured in Server", METRIC_TYPE.TEXT,
-            new OProfilerHookValue() {
-              @Override
-              public Object getValue() {
-                final StringBuilder dbs = new StringBuilder(64);
-                for (String dbName : getAvailableStorageNames().keySet()) {
-                  if (dbs.length() > 0)
-                    dbs.append(',');
-                  dbs.append(dbName);
-                }
-                return dbs.toString();
-              }
-            });
+    Orient.instance().getProfiler().registerHookValue("system.databases", "List of databases configured in Server",
+        METRIC_TYPE.TEXT, new OProfilerHookValue() {
+          @Override
+          public Object getValue() {
+            final StringBuilder dbs = new StringBuilder(64);
+            for (String dbName : getAvailableStorageNames().keySet()) {
+              if (dbs.length() > 0)
+                dbs.append(',');
+              dbs.append(dbName);
+            }
+            return dbs.toString();
+          }
+        });
 
     return this;
   }
@@ -255,15 +255,14 @@ public class OServer {
     return startup(loadConfigurationFromFile(iConfigurationFile));
   }
 
-  public OServer startup(final String iConfiguration) throws InstantiationException, IllegalAccessException,
-      ClassNotFoundException, IllegalArgumentException, SecurityException, InvocationTargetException, NoSuchMethodException,
-      IOException {
+  public OServer startup(final String iConfiguration) throws InstantiationException, IllegalAccessException, ClassNotFoundException,
+      IllegalArgumentException, SecurityException, InvocationTargetException, NoSuchMethodException, IOException {
     return startup(new ByteArrayInputStream(iConfiguration.getBytes()));
   }
 
-  public OServer startup(final InputStream iInputStream) throws InstantiationException, IllegalAccessException,
-      ClassNotFoundException, IllegalArgumentException, SecurityException, InvocationTargetException, NoSuchMethodException,
-      IOException {
+  public OServer startup(final InputStream iInputStream)
+      throws InstantiationException, IllegalAccessException, ClassNotFoundException, IllegalArgumentException, SecurityException,
+      InvocationTargetException, NoSuchMethodException, IOException {
     if (iInputStream == null)
       throw new OConfigurationException("Configuration file is null");
 
@@ -274,8 +273,8 @@ public class OServer {
     return startup(configuration);
   }
 
-  public OServer startup(final OServerConfiguration iConfiguration) throws IllegalArgumentException, SecurityException,
-      InvocationTargetException, NoSuchMethodException {
+  public OServer startup(final OServerConfiguration iConfiguration)
+      throws IllegalArgumentException, SecurityException, InvocationTargetException, NoSuchMethodException {
     OLogManager.instance().info(this, "OrientDB Server v" + OConstants.getVersion() + " is starting up...");
 
     Orient.instance();
@@ -465,8 +464,8 @@ public class OServer {
       if (new File(OIOUtils.getPathFromDatabaseName(dbPath) + "/default.pcl").exists())
         dbURL = "plocal:" + dbPath;
       else
-        throw new OConfigurationException("Database '" + name + "' is not configured on server (home=" + getDatabaseDirectory()
-            + ")");
+        throw new OConfigurationException(
+            "Database '" + name + "' is not configured on server (home=" + getDatabaseDirectory() + ")");
     }
 
     return dbURL;
