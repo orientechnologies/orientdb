@@ -20,12 +20,17 @@
 package com.orientechnologies.orient.enterprise.channel.binary;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.exception.OSystemException;
 
-public class ONetworkProtocolException extends OException {
+public class ONetworkProtocolException extends OSystemException {
 
 	private static final long	serialVersionUID	= -2655748565531836968L;
 
-	public ONetworkProtocolException(String string) {
+  public ONetworkProtocolException(ONetworkProtocolException exception) {
+    super(exception);
+  }
+
+  public ONetworkProtocolException(String string) {
 		super(string);
 	}
 }

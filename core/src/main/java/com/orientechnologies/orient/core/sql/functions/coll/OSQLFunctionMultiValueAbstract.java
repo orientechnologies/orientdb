@@ -23,9 +23,9 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionConfigurableA
 
 /**
  * Abstract class for multi-value based function implementations.
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
+ *
  */
 public abstract class OSQLFunctionMultiValueAbstract<T> extends OSQLFunctionConfigurableAbstract {
 

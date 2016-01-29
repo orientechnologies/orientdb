@@ -19,16 +19,16 @@
  */
 package com.orientechnologies.orient.core.record;
 
-import java.io.Serializable;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
-import com.orientechnologies.orient.core.version.ORecordVersion;
+
+import java.io.Serializable;
 
 /**
  * Generic record representation. The object can be reused across multiple calls to the database by using the {@link #reset()}
@@ -81,21 +81,12 @@ public interface ORecord extends ORecordElement, OIdentifiable, Serializable, OS
   /**
    * Returns the current version number of the record. When the record is created has version = 0. At every change the storage
    * increment the version number. Version number is used by Optimistic transactions to check if the record is changed in the
-   * meanwhile of the transaction. In distributed environment you should prefer {@link #getRecordVersion()} instead of this method.
+   * meanwhile of the transaction.
    * 
    * @see OTransactionOptimistic
    * @return The version number. 0 if it's a brand new record.
    */
   int getVersion();
-
-  /**
-   * The same as {@link #getVersion()} but returns {@link ORecordVersion} interface that can contain additional information about
-   * current version. In distributed environment you should prefer this method instead of {@link #getVersion()}.
-   * 
-   * @return version of record
-   * @see ORecordVersion
-   */
-  ORecordVersion getRecordVersion();
 
   /**
    * Returns the database where the record belongs.

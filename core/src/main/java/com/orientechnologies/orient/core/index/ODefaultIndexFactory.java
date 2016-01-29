@@ -15,11 +15,6 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.engine.ORemoteIndexEngine;
@@ -28,6 +23,11 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Default OrientDB index factory for indexes based on MVRBTree.<br>
@@ -130,7 +130,7 @@ public class ODefaultIndexFactory implements OIndexFactory {
   }
 
   @Override
-  public OIndexEngine createIndexEngine(String name, Boolean durableInNonTxMode, OStorage storage, int version,
+  public OIndexEngine createIndexEngine(String algorithm,String name, Boolean durableInNonTxMode, OStorage storage, int version,
       Map<String, String> engineProperties) {
 
     final OIndexEngine indexEngine;

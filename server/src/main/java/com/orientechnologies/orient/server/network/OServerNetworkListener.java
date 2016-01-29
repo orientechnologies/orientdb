@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.network;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -32,7 +33,6 @@ import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
-import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
 
 import java.io.IOException;
@@ -63,8 +63,8 @@ public class OServerNetworkListener extends Thread {
   public OServerNetworkListener(final OServer iServer, final OServerSocketFactory iSocketFactory, final String iHostName,
       final String iHostPortRange, final String iProtocolName, final Class<? extends ONetworkProtocol> iProtocol,
       final OServerParameterConfiguration[] iParameters, final OServerCommandConfiguration[] iCommands) {
-    super(Orient.instance().getThreadGroup(), "OrientDB " + iProtocol.getSimpleName() + " listen at " + iHostName + ":"
-        + iHostPortRange);
+    super(Orient.instance().getThreadGroup(),
+        "OrientDB " + iProtocol.getSimpleName() + " listen at " + iHostName + ":" + iHostPortRange);
     server = iServer;
 
     socketFactory = iSocketFactory == null ? OServerSocketFactory.getDefault() : iSocketFactory;
@@ -74,7 +74,10 @@ public class OServerNetworkListener extends Thread {
     try {
       protocolVersion = iProtocol.newInstance().getVersion();
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Error on reading protocol version for %s", e, ONetworkProtocolException.class, iProtocol);
+      final String message = "Error on reading protocol version for " + iProtocol;
+      OLogManager.instance().error(this, message, e);
+
+      throw OException.wrapException(new ONetworkProtocolException(message), e);
     }
 
     listen(iHostName, iHostPortRange, iProtocolName, iProtocol);
@@ -124,14 +127,14 @@ public class OServerNetworkListener extends Thread {
   @SuppressWarnings("unchecked")
   public static OServerCommand createCommand(final OServer server, final OServerCommandConfiguration iCommand) {
     try {
-      final Constructor<OServerCommand> c = (Constructor<OServerCommand>) Class.forName(iCommand.implementation).getConstructor(
-          OServerCommandConfiguration.class);
+      final Constructor<OServerCommand> c = (Constructor<OServerCommand>) Class.forName(iCommand.implementation)
+          .getConstructor(OServerCommandConfiguration.class);
       final OServerCommand cmd = c.newInstance(new Object[] { iCommand });
       cmd.configure(server);
       return cmd;
     } catch (Exception e) {
-      throw new IllegalArgumentException("Cannot create custom command invoking the constructor: " + iCommand.implementation + "("
-          + iCommand + ")", e);
+      throw new IllegalArgumentException(
+          "Cannot create custom command invoking the constructor: " + iCommand.implementation + "(" + iCommand + ")", e);
     }
   }
 
@@ -193,12 +196,9 @@ public class OServerNetworkListener extends Thread {
           if (server.getDistributedManager() != null) {
             final ODistributedServerManager.NODE_STATUS nodeStatus = server.getDistributedManager().getNodeStatus();
             if (nodeStatus != ODistributedServerManager.NODE_STATUS.ONLINE) {
-              OLogManager
-                  .instance()
-                  .warn(
-                      this,
-                      "Distributed server is not yet ONLINE (status=%s), reject incoming connection from %s. If you are trying to shutdown the server, please kill the process",
-                      nodeStatus, socket.getRemoteSocketAddress());
+              OLogManager.instance().warn(this,
+                  "Distributed server is not yet ONLINE (status=%s), reject incoming connection from %s. If you are trying to shutdown the server, please kill the process",
+                  nodeStatus, socket.getRemoteSocketAddress());
               socket.close();
 
               // PAUSE CURRENT THREAD TO SLOW DOWN ANY POSSIBLE ATTACK
@@ -305,39 +305,19 @@ public class OServerNetworkListener extends Thread {
   private void listen(final String iHostName, final String iHostPortRange, final String iProtocolName,
       Class<? extends ONetworkProtocol> protocolClass) {
 
-    int[] ports = null;
-    if (protocolClass.equals(ONetworkProtocolBinary.class)) {
-      String serverTestMode = System.getProperty("orient.server.testMode", "false");
-      if (serverTestMode.equals("true")) {
-        String serverTestPort = System.getProperty("orient.server.port");
-        if (serverTestPort != null) {
-          try {
-            int serverPort = Integer.parseInt(serverTestPort);
-            ports = new int[] { serverPort };
-          } catch (NumberFormatException e) {
-            ports = null;
-          }
-        }
-      }
-    }
-
-    if (ports == null)
-      ports = getPorts(iHostPortRange);
-
-    for (int port : ports) {
+    for (int port : getPorts(iHostPortRange)) {
       inboundAddr = new InetSocketAddress(iHostName, port);
       try {
         serverSocket = socketFactory.createServerSocket(port, 0, InetAddress.getByName(iHostName));
 
         if (serverSocket.isBound()) {
-          OLogManager.instance().info(
-              this,
-              "Listening " + iProtocolName + " connections on " + inboundAddr.getAddress().getHostAddress() + ":"
-                  + inboundAddr.getPort() + " (protocol v." + protocolVersion + ", socket=" + socketFactory.getName() + ")");
+          OLogManager.instance().info(this,
+              "Listening $ANSI{green " + iProtocolName + "} connections on $ANSI{green " + inboundAddr.getAddress().getHostAddress() + ":"
+                  + inboundAddr.getPort() + "} (protocol v." + protocolVersion + ", socket=" + socketFactory.getName() + ")");
           return;
         }
       } catch (BindException be) {
-        OLogManager.instance().info(this, "Port %s:%d busy, trying the next available...", iHostName, port);
+        OLogManager.instance().warn(this, "Port %s:%d busy, trying the next available...", iHostName, port);
       } catch (SocketException se) {
         OLogManager.instance().error(this, "Unable to create socket", se);
         ShutdownHelper.shutdown(1);

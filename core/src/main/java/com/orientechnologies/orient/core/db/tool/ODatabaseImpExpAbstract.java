@@ -19,14 +19,11 @@
  */
 package com.orientechnologies.orient.core.db.tool;
 
-import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
-import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -38,7 +35,7 @@ import java.util.Set;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public abstract class ODatabaseImpExpAbstract {
+public abstract class ODatabaseImpExpAbstract extends ODatabaseTool {
   protected final static String       DEFAULT_EXT               = ".json";
   protected ODatabaseDocumentInternal database;
   protected String                    fileName;
@@ -78,25 +75,6 @@ public abstract class ODatabaseImpExpAbstract {
     excludeClusters = new LinkedHashSet<String>();
     excludeClusters.add(OMetadataDefault.CLUSTER_INDEX_NAME);
     excludeClusters.add(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME);
-  }
-
-  public ODatabaseImpExpAbstract setOptions(final String iOptions) {
-    if (iOptions != null) {
-      final List<String> options = OStringSerializerHelper.smartSplit(iOptions, ' ');
-      for (String o : options) {
-        final int sep = o.indexOf('=');
-        if (sep == -1) {
-          parseSetting(o, Collections.EMPTY_LIST);
-        } else {
-          final String option = o.substring(0, sep);
-          final String value = OIOUtils.getStringContent(o.substring(sep + 1));
-          final List<String> items = OStringSerializerHelper.smartSplit(value, ' ');
-          parseSetting(option, items);
-        }
-
-      }
-    }
-    return this;
   }
 
   public Set<String> getIncludeClusters() {

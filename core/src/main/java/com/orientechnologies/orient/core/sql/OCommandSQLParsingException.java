@@ -19,40 +19,20 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.core.exception.OCoreException;
 
-public class OCommandSQLParsingException extends OException {
+public class OCommandSQLParsingException extends OCoreException {
 
   private String            text;
   private int               position;
   private static final long serialVersionUID = -7430575036316163711L;
 
-  public OCommandSQLParsingException(String iMessage) {
-    super(iMessage, null);
-  }
-
-  public OCommandSQLParsingException(String iMessage, String iText, int iPosition, Throwable cause) {
-    super(iMessage, cause);
-    text = iText;
-    position = iPosition;
-  }
-
-  public OCommandSQLParsingException(final String iMessage, final Throwable cause) {
-    super(iMessage, cause);
-  }
-
-  public OCommandSQLParsingException(String iMessage, String iText, int iPosition) {
-    super(iMessage);
-    text = iText;
-    position = iPosition;
-  }
-
-  @Override
-  public String getMessage() {
+  private static String makeMessage(int position, String text, String message) {
     StringBuilder buffer = new StringBuilder();
     buffer.append("Error on parsing command at position #");
     buffer.append(position);
-    buffer.append(": " + super.getMessage());
+    buffer.append(": ").append(message);
+
     if (text != null) {
       buffer.append("\nCommand: ");
       buffer.append(text);
@@ -63,5 +43,23 @@ public class OCommandSQLParsingException extends OException {
       buffer.append("^");
     }
     return buffer.toString();
+  }
+
+  public OCommandSQLParsingException(OCommandSQLParsingException exception) {
+    super(exception);
+
+    this.text = exception.text;
+    this.position = exception.position;
+  }
+
+  public OCommandSQLParsingException(String iMessage) {
+    super(iMessage);
+  }
+
+  public OCommandSQLParsingException(String iMessage, String iText, int iPosition) {
+    super(makeMessage(iPosition, iText, iMessage));
+
+    text = iText;
+    position = iPosition;
   }
 }

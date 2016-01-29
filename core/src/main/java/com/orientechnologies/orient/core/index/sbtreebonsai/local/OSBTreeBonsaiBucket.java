@@ -20,21 +20,21 @@
 
 package com.orientechnologies.orient.core.index.sbtreebonsai.local;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.exception.OSBTreeBonsaiLocalException;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
-import com.orientechnologies.orient.core.index.sbtree.local.OSBTreeException;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Andrey Lomakin
@@ -63,6 +63,8 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
   private final OBinarySerializer<V>  valueSerializer;
 
   private final Comparator<? super K> comparator               = ODefaultComparator.INSTANCE;
+
+  private final OSBTreeBonsaiLocal<K, V> tree;
 
   public static final class SBTreeEntry<K, V> implements Map.Entry<K, V>, Comparable<SBTreeEntry<K, V>> {
     public final OBonsaiBucketPointer   leftChild;
@@ -135,8 +137,8 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
   }
 
   public OSBTreeBonsaiBucket(OCacheEntry cacheEntry, int pageOffset, boolean isLeaf, OBinarySerializer<K> keySerializer,
-      OBinarySerializer<V> valueSerializer, OWALChangesTree changesTree) throws IOException {
-    super(cacheEntry, changesTree);
+      OBinarySerializer<V> valueSerializer, OWALChanges changes, OSBTreeBonsaiLocal<K, V> tree) throws IOException {
+    super(cacheEntry, changes);
 
     this.offset = pageOffset;
     this.isLeaf = isLeaf;
@@ -154,16 +156,18 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
 
     setByteValue(offset + KEY_SERIALIZER_OFFSET, keySerializer.getId());
     setByteValue(offset + VALUE_SERIALIZER_OFFSET, valueSerializer.getId());
+    this.tree = tree;
   }
 
   public OSBTreeBonsaiBucket(OCacheEntry cacheEntry, int pageOffset, OBinarySerializer<K> keySerializer,
-      OBinarySerializer<V> valueSerializer, OWALChangesTree changesTree) {
-    super(cacheEntry, changesTree);
+      OBinarySerializer<V> valueSerializer, OWALChanges changes, OSBTreeBonsaiLocal<K, V> tree) {
+    super(cacheEntry, changes);
 
     this.offset = pageOffset;
     this.isLeaf = getByteValue(offset + IS_LEAF_OFFSET) > 0;
     this.keySerializer = keySerializer;
     this.valueSerializer = valueSerializer;
+    this.tree = tree;
   }
 
   public byte getKeySerializerId() {
@@ -332,10 +336,10 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
       if (size > 1)
         return false;
       else
-        throw new OSBTreeException("Entry size ('key + value') is more than is more than allowed "
+        throw new OSBTreeBonsaiLocalException("Entry size ('key + value') is more than is more than allowed "
             + (freePointer - 2 * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET)
             + " bytes, either increase page size using '" + OGlobalConfiguration.SBTREEBONSAI_BUCKET_SIZE.getKey()
-            + "' parameter, or decrease 'key + value' size.");
+            + "' parameter, or decrease 'key + value' size.", tree);
     }
 
     if (index <= size - 1) {
@@ -437,7 +441,7 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
 
   private void checkEntreeSize(int entreeSize) {
     if (entreeSize > MAX_ENTREE_SIZE)
-      throw new OSBTreeException("Serialized key-value pair size bigger than allowed " + entreeSize + " vs " + MAX_ENTREE_SIZE
-          + ".");
+      throw new OSBTreeBonsaiLocalException("Serialized key-value pair size bigger than allowed " + entreeSize + " vs "
+          + MAX_ENTREE_SIZE + ".", tree);
   }
 }

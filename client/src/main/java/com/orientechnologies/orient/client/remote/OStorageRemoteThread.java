@@ -19,6 +19,16 @@
  */
 package com.orientechnologies.orient.client.remote;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -30,22 +40,17 @@ import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.ORecordMetadata;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.tx.OTransaction;
-import com.orientechnologies.orient.core.version.ORecordVersion;
-import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEventListener;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Wrapper of OStorageRemote that maintains the sessionId. It's bound to the ODatabase and allow to use the shared OStorageRemote.
@@ -173,7 +178,8 @@ public class OStorageRemoteThread implements OStorageProxy {
   public OStorageProxy copy() {
     try {
       OStorageRemoteThread a = new OStorageRemoteThread(delegate);
-      delegate.openRemoteDatabase();
+      a.pushSession();
+      delegate.reopenRemoteDatabase();
       a.popSession();
       return a;
     } catch (IOException e) {
@@ -264,11 +270,11 @@ public class OStorageRemoteThread implements OStorageProxy {
     throw new UnsupportedOperationException("restore");
   }
 
-  public OStorageOperationResult<OPhysicalPosition> createRecord(final ORecordId iRid, final byte[] iContent,
-      ORecordVersion iRecordVersion, final byte iRecordType, final int iMode, ORecordCallback<Long> iCallback) {
+  public OStorageOperationResult<OPhysicalPosition> createRecord(final ORecordId iRid, final byte[] iContent, int iRecordVersion,
+      final byte iRecordType, final int iMode, ORecordCallback<Long> iCallback) {
     pushSession();
     try {
-      return delegate.createRecord(iRid, iContent, OVersionFactory.instance().createVersion(), iRecordType, iMode, iCallback);
+      return delegate.createRecord(iRid, iContent, 0, iRecordType, iMode, iCallback);
     } finally {
       popSession();
     }
@@ -286,7 +292,7 @@ public class OStorageRemoteThread implements OStorageProxy {
 
   @Override
   public OStorageOperationResult<ORawBuffer> readRecordIfVersionIsNotLatest(ORecordId rid, String fetchPlan, boolean ignoreCache,
-      ORecordVersion recordVersion) throws ORecordNotFoundException {
+      int recordVersion) throws ORecordNotFoundException {
     pushSession();
     try {
       return delegate.readRecordIfVersionIsNotLatest(rid, fetchPlan, ignoreCache, recordVersion);
@@ -295,8 +301,8 @@ public class OStorageRemoteThread implements OStorageProxy {
     }
   }
 
-  public OStorageOperationResult<ORecordVersion> updateRecord(final ORecordId iRid, boolean updateContent, final byte[] iContent,
-      final ORecordVersion iVersion, final byte iRecordType, final int iMode, ORecordCallback<ORecordVersion> iCallback) {
+  public OStorageOperationResult<Integer> updateRecord(final ORecordId iRid, boolean updateContent, final byte[] iContent,
+      final int iVersion, final byte iRecordType, final int iMode, ORecordCallback<Integer> iCallback) {
     pushSession();
     try {
       return delegate.updateRecord(iRid, updateContent, iContent, iVersion, iRecordType, iMode, iCallback);
@@ -305,7 +311,7 @@ public class OStorageRemoteThread implements OStorageProxy {
     }
   }
 
-  public OStorageOperationResult<Boolean> deleteRecord(final ORecordId iRid, final ORecordVersion iVersion, final int iMode,
+  public OStorageOperationResult<Boolean> deleteRecord(final ORecordId iRid, final int iVersion, final int iMode,
       ORecordCallback<Boolean> iCallback) {
     pushSession();
     try {
@@ -351,7 +357,7 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   @Override
-  public boolean cleanOutRecord(ORecordId recordId, ORecordVersion recordVersion, int iMode, ORecordCallback<Boolean> callback) {
+  public boolean cleanOutRecord(ORecordId recordId, int recordVersion, int iMode, ORecordCallback<Boolean> callback) {
     pushSession();
     try {
       return delegate.cleanOutRecord(recordId, recordVersion, iMode, callback);
@@ -632,7 +638,7 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   public boolean isClosed() {
-    return (sessionId < 0 ) || delegate.isClosed();
+    return (sessionId < 0) || delegate.isClosed();
   }
 
   public boolean checkForRecordValidity(final OPhysicalPosition ppos) {
@@ -701,18 +707,6 @@ public class OStorageRemoteThread implements OStorageProxy {
     return delegate.callInLock(iCallable, iExclusiveLock);
   }
 
-  public ORemoteServerEventListener getRemoteServerEventListener() {
-    return delegate.getAsynchEventListener();
-  }
-
-  public void setRemoteServerEventListener(final ORemoteServerEventListener iListener) {
-    delegate.setAsynchEventListener(iListener);
-  }
-
-  public void removeRemoteServerEventListener() {
-    delegate.removeRemoteServerEventListener();
-  }
-
   @Override
   public void checkForClusterPermissions(final String iClusterName) {
     delegate.checkForClusterPermissions(iClusterName);
@@ -733,6 +727,11 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   @Override
+  public void shutdown() {
+    close(true, false);
+  }
+
+  @Override
   public boolean equals(final Object iOther) {
     if (iOther instanceof OStorageRemoteThread)
       return iOther == this;
@@ -741,10 +740,6 @@ public class OStorageRemoteThread implements OStorageProxy {
       return iOther == delegate;
 
     return false;
-  }
-
-  protected void handleException(final OChannelBinaryAsynchClient iNetwork, final String iMessage, final Exception iException) {
-    delegate.handleException(iNetwork, iMessage, iException);
   }
 
   protected void pushSession() {

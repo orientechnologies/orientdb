@@ -19,26 +19,28 @@
   */
 package com.orientechnologies.orient.core.command;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OExecutionThreadLocal;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
+import com.orientechnologies.orient.core.serialization.serializer.ONetworkThreadLocalSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Text based Command Request abstract class.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 @SuppressWarnings("serial")
 public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstract implements OCommandRequestText {
@@ -60,6 +62,10 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
   @SuppressWarnings("unchecked")
   public <RET> RET execute(final Object... iArgs) {
     setParameters(iArgs);
+
+    OExecutionThreadLocal.INSTANCE.get().onAsyncReplicationOk = onAsyncReplicationOk;
+    OExecutionThreadLocal.INSTANCE.get().onAsyncReplicationError = onAsyncReplicationError;
+
     return (RET) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().command(this);
   }
 
@@ -72,7 +78,7 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
     return this;
   }
 
-  public OSerializableStream fromStream(byte[] iStream) throws OSerializationException {
+  public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
     final OMemoryStream buffer = new OMemoryStream(iStream);
     fromStream(buffer);
     return this;
@@ -130,11 +136,16 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
 
     parameters = null;
 
+    ORecordSerializer serializer = ONetworkThreadLocalSerializer.getNetworkSerializer();
+
     final boolean simpleParams = buffer.getAsBoolean();
     if (simpleParams) {
       final byte[] paramBuffer = buffer.getAsByteArray();
       final ODocument param = new ODocument();
-      param.fromStream(paramBuffer);
+      if (serializer != null)
+        serializer.fromStream(paramBuffer, param, null);
+      else
+        param.fromStream(paramBuffer);
 
       Map<Object, Object> params = param.field("params");
       parameters = new HashMap<Object, Object>();
@@ -166,7 +177,10 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
     if (compositeKeyParamsPresent) {
       final byte[] paramBuffer = buffer.getAsByteArray();
       final ODocument param = new ODocument();
-      param.fromStream(paramBuffer);
+      if (serializer != null)
+        serializer.fromStream(paramBuffer, param, null);
+      else
+        param.fromStream(paramBuffer);
 
       final Map<Object, Object> compositeKeyParams = param.field("compositeKeyParams");
 
@@ -182,8 +196,7 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
             parameters.put(p.getKey(), compositeKey);
 
         } else {
-          final Object value = OCompositeKeySerializer.INSTANCE.deserialize(OStringSerializerHelper.getBinaryContent(p.getValue()),
-              0);
+          final Object value = OCompositeKeySerializer.INSTANCE.deserialize(OStringSerializerHelper.getBinaryContent(p.getValue()), 0);
 
           if (p.getKey() instanceof String && Character.isDigit(((String) p.getKey()).charAt(0)))
             parameters.put(Integer.parseInt((String) p.getKey()), value);

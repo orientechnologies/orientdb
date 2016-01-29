@@ -27,8 +27,8 @@ import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
@@ -37,30 +37,23 @@ import javax.management.ObjectName;
 import java.io.File;
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class OAbstractProfiler extends OSharedResourceAbstract implements OProfiler, OOrientStartupListener,
     OProfilerMXBean {
 
-  protected final Map<String, OProfilerHookValue>          hooks         = new ConcurrentHashMap<String, OProfilerHookValue>();
-  protected final ConcurrentHashMap<String, String>        dictionary    = new ConcurrentHashMap<String, String>();
-  protected final ConcurrentHashMap<String, METRIC_TYPE>   types         = new ConcurrentHashMap<String, METRIC_TYPE>();
-  protected final ConcurrentHashMap<String, AtomicInteger> tips          = new ConcurrentHashMap<String, AtomicInteger>();
-  protected final ConcurrentHashMap<String, Long>          tipsTimestamp = new ConcurrentHashMap<String, Long>();
-  protected long                                           recordingFrom = -1;
-  protected TimerTask                                      autoDumpTask;
+  protected final Map<String, OProfilerHookValue>        hooks         = new ConcurrentHashMap<String, OProfilerHookValue>();
+  protected final ConcurrentHashMap<String, String>      dictionary    = new ConcurrentHashMap<String, String>();
+  protected final ConcurrentHashMap<String, METRIC_TYPE> types         = new ConcurrentHashMap<String, METRIC_TYPE>();
+  protected long                                         recordingFrom = -1;
+  protected TimerTask                                    autoDumpTask;
+  protected List<OProfilerListener>                      listeners     = new ArrayList<OProfilerListener>();
 
   public interface OProfilerHookValue {
-    public Object getValue();
+    Object getValue();
   }
 
   private static final class MemoryChecker extends TimerTask {
@@ -102,7 +95,6 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
                     "-> Open server.sh (or server.bat on Windows) and change the following variables: 1) MAXHEAP=-Xmx%dM 2) MAXDISKCACHE=%d",
                     suggestedMaxHeap / OFileUtils.MEGABYTE, suggestedDiskCache);
           }
-
         }
       }
     }
@@ -119,6 +111,10 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
 
     Orient.instance().registerWeakOrientStartupListener(this);
   }
+
+  protected abstract void setTip(String iMessage, AtomicInteger counter);
+
+  protected abstract AtomicInteger getTip(String iMessage);
 
   public static String dumpEnvironment() {
     final StringBuilder buffer = new StringBuilder();
@@ -179,16 +175,16 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
   }
 
   public int reportTip(final String iMessage) {
-    final AtomicInteger counter = tips.get(iMessage);
+    AtomicInteger counter = getTip(iMessage);
     if (counter == null) {
       // DUMP THE MESSAGE ONLY THE FIRST TIME
       OLogManager.instance().info(this, "[TIP] " + iMessage);
 
-      tips.put(iMessage, new AtomicInteger(1));
-      tipsTimestamp.put(iMessage, System.currentTimeMillis());
-      return 1;
+      counter = new AtomicInteger(0);
     }
-    tipsTimestamp.put(iMessage, System.currentTimeMillis());
+
+    setTip(iMessage, counter);
+
     return counter.incrementAndGet();
   }
 
@@ -381,33 +377,6 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
     return null;
   }
 
-  public String dumpTips() {
-    if (recordingFrom < 0)
-      return "Tips: <no recording>";
-
-    final StringBuilder buffer = new StringBuilder();
-
-    if (tips.size() == 0)
-      return "";
-
-    buffer.append("TIPS:");
-
-    buffer.append(String.format("\n%100s +------------+", ""));
-    buffer.append(String.format("\n%100s | Value      |", "Name"));
-    buffer.append(String.format("\n%100s +------------+", ""));
-
-    final List<String> names = new ArrayList<String>(tips.keySet());
-    Collections.sort(names);
-
-    for (String n : names) {
-      final AtomicInteger v = tips.get(n);
-      buffer.append(String.format("\n%-100s | %10d |", n, v.intValue()));
-    }
-
-    buffer.append(String.format("\n%100s +------------+", ""));
-    return buffer.toString();
-  }
-
   protected void installMemoryChecker() {
     Orient.instance().scheduleTask(new MemoryChecker(), 120000, 120000);
   }
@@ -418,5 +387,15 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
   protected void updateMetadata(final String iName, final String iDescription, final METRIC_TYPE iType) {
     if (iDescription != null && dictionary.putIfAbsent(iName, iDescription) == null)
       types.put(iName, iType);
+  }
+
+  @Override
+  public void registerListener(OProfilerListener listener) {
+    listeners.add(listener);
+  }
+
+  @Override
+  public void unregisterListener(OProfilerListener listener) {
+    listeners.remove(listener);
   }
 }

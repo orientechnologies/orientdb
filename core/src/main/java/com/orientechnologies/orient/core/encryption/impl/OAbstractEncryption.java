@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.encryption.impl;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.exception.OInvalidStorageEncryptionKeyException;
 
@@ -23,7 +24,7 @@ public abstract class OAbstractEncryption implements OEncryption {
    * @return
    * @throws Throwable
    */
-  public abstract byte[] encryptOrDecrypt(int mode, byte[] input, int offset, int length) throws Throwable;
+  public abstract byte[] encryptOrDecrypt(int mode, byte[] input, int offset, int length) throws Exception;
 
   @Override
   public byte[] encrypt(final byte[] content) {
@@ -39,8 +40,8 @@ public abstract class OAbstractEncryption implements OEncryption {
   public byte[] encrypt(final byte[] content, final int offset, final int length) {
     try {
       return encryptOrDecrypt(Cipher.ENCRYPT_MODE, content, offset, length);
-    } catch (Throwable e) {
-      throw new OInvalidStorageEncryptionKeyException("Cannot encrypt content", e);
+    } catch (Exception e) {
+      throw OException.wrapException(new OInvalidStorageEncryptionKeyException("Cannot encrypt content"), e);
     }
   };
 
@@ -48,8 +49,8 @@ public abstract class OAbstractEncryption implements OEncryption {
   public byte[] decrypt(final byte[] content, final int offset, final int length) {
     try {
       return encryptOrDecrypt(Cipher.DECRYPT_MODE, content, offset, length);
-    } catch (Throwable e) {
-      throw new OInvalidStorageEncryptionKeyException("Cannot decrypt content", e);
+    } catch (Exception e) {
+      throw OException.wrapException(new OInvalidStorageEncryptionKeyException("Cannot decrypt content"), e);
     }
   };
 }

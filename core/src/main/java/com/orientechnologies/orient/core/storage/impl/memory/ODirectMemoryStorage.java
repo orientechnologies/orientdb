@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageMemoryConfiguration;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OMemoryWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 
@@ -98,7 +99,8 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
-  protected void finalizeIncrementalBackup(ZipOutputStream zipOutputStream, long startSegment) throws IOException {
+  protected OLogSequenceNumber copyWALToIncrementalBackup(ZipOutputStream zipOutputStream, long startSegment) throws IOException {
+    return null;
   }
 
   @Override
@@ -118,5 +120,10 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
   @Override
   protected OWriteAheadLog createWalFromIBUFiles(File directory) throws IOException {
     return null;
+  }
+
+  @Override
+  public void shutdown() {
+    delete();
   }
 }

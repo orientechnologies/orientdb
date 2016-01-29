@@ -1,13 +1,14 @@
 package com.orientechnologies.orient.core.metadata.sequence;
 
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.orient.core.annotation.OExposedMethod;
+import com.orientechnologies.common.util.OApi;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OSequenceException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
@@ -19,22 +20,22 @@ import java.util.concurrent.Callable;
  * @since 3/2/2015
  */
 public abstract class OSequence extends ODocumentWrapper {
-  public static final long DEFAULT_START = 0;
-  public static final int DEFAULT_INCREMENT = 1;
-  public static final int DEFAULT_CACHE = 20;
+  public static final long    DEFAULT_START     = 0;
+  public static final int     DEFAULT_INCREMENT = 1;
+  public static final int     DEFAULT_CACHE     = 20;
 
-  protected static final int RETRY_COUNT = 100;
-  public static final String CLASS_NAME = "OSequence";
+  protected static final int  RETRY_COUNT       = 100;
+  public static final String  CLASS_NAME        = "OSequence";
 
-  private static final String FIELD_START = "start";
-  private static final String FIELD_INCREMENT = "incr";
-  private static final String FIELD_VALUE = "value";
+  private static final String FIELD_START       = "start";
+  private static final String FIELD_INCREMENT   = "incr";
+  private static final String FIELD_VALUE       = "value";
 
-  private static final String FIELD_NAME = "name";
-  private static final String FIELD_TYPE = "type";
+  private static final String FIELD_NAME        = "name";
+  private static final String FIELD_TYPE        = "type";
 
   public static class CreateParams {
-    public Long start;
+    public Long    start;
     public Integer increment;
     public Integer cacheSize;
 
@@ -53,7 +54,8 @@ public abstract class OSequence extends ODocumentWrapper {
       return this;
     }
 
-    public CreateParams() { }
+    public CreateParams() {
+    }
 
     public CreateParams setDefaults() {
       this.start = this.start != null ? this.start : DEFAULT_START;
@@ -65,8 +67,7 @@ public abstract class OSequence extends ODocumentWrapper {
   }
 
   public enum SEQUENCE_TYPE {
-    CACHED,
-    ORDERED,;
+    CACHED, ORDERED, ;
   }
 
   protected OSequence() {
@@ -167,13 +168,13 @@ public abstract class OSequence extends ODocumentWrapper {
     return SEQUENCE_TYPE.valueOf(sequenceTypeStr);
   }
 
-  public static void initClass(OClass sequenceClass) {
-    sequenceClass.createProperty(OSequence.FIELD_START, OType.LONG);
-    sequenceClass.createProperty(OSequence.FIELD_INCREMENT, OType.INTEGER);
-    sequenceClass.createProperty(OSequence.FIELD_VALUE, OType.LONG);
+  public static void initClass(OClassImpl sequenceClass) {
+    sequenceClass.createProperty(OSequence.FIELD_START, OType.LONG, (OType) null, false);
+    sequenceClass.createProperty(OSequence.FIELD_INCREMENT, OType.INTEGER, (OType) null, false);
+    sequenceClass.createProperty(OSequence.FIELD_VALUE, OType.LONG, (OType) null, false);
 
-    sequenceClass.createProperty(OSequence.FIELD_NAME, OType.STRING);
-    sequenceClass.createProperty(OSequence.FIELD_TYPE, OType.STRING);
+    sequenceClass.createProperty(OSequence.FIELD_NAME, OType.STRING, (OType) null, false);
+    sequenceClass.createProperty(OSequence.FIELD_TYPE, OType.STRING, (OType) null, false);
   }
 
   protected void reloadSequence() {
@@ -208,42 +209,41 @@ public abstract class OSequence extends ODocumentWrapper {
           --retry;
           reloadSequence();
         } else {
-          throw new OSequenceException(e);
+          throw OException.wrapException(new OSequenceException("Error in transaction processing of sequence method"), e);
         }
       } catch (OException ex) {
         --retry;
         reloadSequence();
       } catch (Exception e) {
-        throw new OSequenceException(e);
+        throw OException.wrapException(new OSequenceException("Error in transaction processing of sequence method"), e);
       }
     }
     try {
       return callInTx(callable);
     } catch (Exception e) {
       if (e.getCause() instanceof OConcurrentModificationException) {
-        throw ((OConcurrentModificationException)e.getCause());
+        throw ((OConcurrentModificationException) e.getCause());
       }
-      throw new OSequenceException(e);
+      throw OException.wrapException(new OSequenceException("Error in transaction processing of sequence method"), e);
     }
   }
 
   /*
    * Forwards the sequence by one, and returns the new value.
    */
-  @OExposedMethod
+  @OApi
   public abstract long next();
 
   /*
-   * Returns the current sequence value.
-   * If next() was never called, returns null
+   * Returns the current sequence value. If next() was never called, returns null
    */
-  @OExposedMethod
+  @OApi
   public abstract long current();
 
   /*
    * Resets the sequence value to it's initialized value.
    */
-  @OExposedMethod
+  @OApi
   public abstract long reset();
 
   /*

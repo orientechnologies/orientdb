@@ -117,5 +117,16 @@ public class OOrBlock extends OBooleanExpression {
     return result.size() == 0 ? null : result;
   }
 
+  public List<OAndBlock> flatten() {
+    List<OAndBlock> result = new ArrayList<OAndBlock>();
+    for(OBooleanExpression sub:subBlocks){
+      List<OAndBlock> childFlattened = sub.flatten();
+      for(OAndBlock child:childFlattened){
+        result.add(child);
+      }
+    }
+    return result;
+  }
+
 }
 /* JavaCC - OriginalChecksum=98d3077303a598705894dbb7bd4e1573 (do not edit this line) */

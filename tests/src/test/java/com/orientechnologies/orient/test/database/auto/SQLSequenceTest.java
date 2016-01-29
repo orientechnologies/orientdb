@@ -1,22 +1,24 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import com.orientechnologies.orient.core.exception.OSequenceException;
-import com.orientechnologies.orient.core.metadata.sequence.OSequence;
-import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibrary;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.orient.core.exception.OSequenceException;
+import com.orientechnologies.orient.core.metadata.sequence.OSequence;
+import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibrary;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
+
 /**
  * @author Matan Shukry (matanshukry@gmail.com)
  * @since 3/5/2015
  */
-@Test(groups="SqlSequence")
+@Test(groups = "SqlSequence")
 public class SQLSequenceTest extends DocumentDBBaseTest {
-  private static final int CACHE_SIZE = 40;
-  private static final long FIRST_START = OSequence.DEFAULT_START;
+  private static final int  CACHE_SIZE   = 40;
+  private static final long FIRST_START  = OSequence.DEFAULT_START;
   private static final long SECOND_START = 31;
 
   @Parameters(value = "url")
@@ -33,17 +35,16 @@ public class SQLSequenceTest extends DocumentDBBaseTest {
   private void testSequence(String sequenceName, OSequence.SEQUENCE_TYPE sequenceType) {
     OSequenceLibrary sequenceLibrary = database.getMetadata().getSequenceLibrary();
 
-    database.command(new OCommandSQL("CREATE SEQUENCE " + sequenceName + " TYPE " + sequenceType));
+    database.command(new OCommandSQL("CREATE SEQUENCE " + sequenceName + " TYPE " + sequenceType)).execute();
 
     OSequenceException err = null;
     try {
-      database.command(new OCommandSQL("CREATE SEQUENCE " + sequenceName + " TYPE " + sequenceType));
+      database.command(new OCommandSQL("CREATE SEQUENCE " + sequenceName + " TYPE " + sequenceType)).execute();
     } catch (OSequenceException se) {
       err = se;
     }
     Assert.assertTrue(err == null || err.getMessage().toLowerCase().contains("already exists"),
-            "Creating a second " + sequenceType.toString() +
-                    " sequences with same name doesn't throw an exception");
+        "Creating a second " + sequenceType.toString() + " sequences with same name doesn't throw an exception");
 
     // Doing it twice to check everything works after reset
     for (int i = 0; i < 2; ++i) {
@@ -59,20 +60,21 @@ public class SQLSequenceTest extends DocumentDBBaseTest {
   }
 
   private long sequenceReset(String sequenceName) {
-    return sequenceSql(sequenceName, "reset");
+    return sequenceSql(sequenceName, "reset()");
   }
 
   private long sequenceNext(String sequenceName) {
-    return sequenceSql(sequenceName, "next");
+    return sequenceSql(sequenceName, "next()");
   }
 
   private long sequenceCurrent(String sequenceName) {
-    return sequenceSql(sequenceName, "current");
+    return sequenceSql(sequenceName, "current()");
   }
 
   private long sequenceSql(String sequenceName, String cmd) {
-    Object ret = database.command(new OCommandSQL("SELECT #" + sequenceName + "." + cmd)).execute();
-    return 0;
+    Iterable<ODocument> ret = database.command(new OCommandSQL("SELECT sequence('" + sequenceName + "')." + cmd + " as value"))
+        .execute();
+    return (Long) ret.iterator().next().field("value");
   }
 
   @Test
@@ -88,7 +90,7 @@ public class SQLSequenceTest extends DocumentDBBaseTest {
       err = se;
     }
     Assert.assertTrue(err == null || err.getMessage().toLowerCase().contains("already exists"),
-            "Creating two ordered sequences with same name doesn't throw an exception");
+        "Creating two ordered sequences with same name doesn't throw an exception");
 
     OSequence seqSame = sequenceManager.getSequence("seqOrdered");
     Assert.assertEquals(seqSame, seq);

@@ -16,6 +16,7 @@
  */
 package com.orientechnologies.orient.core.fetch.json;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
@@ -63,7 +64,7 @@ public class OJSONFetchContext implements OFetchContext {
         jsonWriter.writeAttribute(settings.indentLevel > -1 ? settings.indentLevel : 1, true,
             ORecordSerializerJSON.ATTRIBUTE_FIELD_TYPES, buffer.toString());
       } catch (IOException e) {
-        throw new OFetchException("Error writing field types", e);
+        throw OException.wrapException(new OFetchException("Error writing field types"), e);
       }
   }
 
@@ -87,61 +88,61 @@ public class OJSONFetchContext implements OFetchContext {
       final Iterable<?> iterable) {
     try {
       manageTypes(iFieldName, iterable);
-      jsonWriter.beginCollection(settings.indentLevel, true, iFieldName);
+      jsonWriter.beginCollection(++settings.indentLevel, true, iFieldName);
       collectionStack.add(iRootRecord);
-      settings.indentLevel++;
     } catch (IOException e) {
-      throw new OFetchException("Error writing collection field " + iFieldName + " of record " + iRootRecord.getIdentity(), e);
+      throw OException.wrapException(
+          new OFetchException("Error writing collection field " + iFieldName + " of record " + iRootRecord.getIdentity()), e);
     }
   }
 
   public void onAfterCollection(final ODocument iRootRecord, final String iFieldName, final Object iUserObject) {
     try {
-      settings.indentLevel--;
-      jsonWriter.endCollection(settings.indentLevel, true);
+      jsonWriter.endCollection(settings.indentLevel--, true);
       collectionStack.pop();
     } catch (IOException e) {
-      throw new OFetchException("Error writing collection field " + iFieldName + " of record " + iRootRecord.getIdentity(), e);
+      throw OException.wrapException(
+          new OFetchException("Error writing collection field " + iFieldName + " of record " + iRootRecord.getIdentity()), e);
     }
   }
 
   public void onBeforeMap(final ODocument iRootRecord, final String iFieldName, final Object iUserObject) {
-    settings.indentLevel++;
     try {
-      jsonWriter.beginObject(settings.indentLevel, true, iFieldName);
+      jsonWriter.beginObject(++settings.indentLevel, true, iFieldName);
       if (!(iUserObject instanceof ODocument)) {
         collectionStack.add(new ODocument()); // <-- sorry for this... fixes #2845 but this mess should be rewritten...
       }
     } catch (IOException e) {
-      throw new OFetchException("Error writing map field " + iFieldName + " of record " + iRootRecord.getIdentity(), e);
+      throw OException.wrapException(
+          new OFetchException("Error writing map field " + iFieldName + " of record " + iRootRecord.getIdentity()), e);
     }
   }
 
   public void onAfterMap(final ODocument iRootRecord, final String iFieldName, final Object iUserObject) {
     try {
-      jsonWriter.endObject(settings.indentLevel, true);
+      jsonWriter.endObject(--settings.indentLevel, true);
       if (!(iUserObject instanceof ODocument)) {
         collectionStack.pop();
       }
     } catch (IOException e) {
-      throw new OFetchException("Error writing map field " + iFieldName + " of record " + iRootRecord.getIdentity(), e);
+      throw OException.wrapException(
+          new OFetchException("Error writing map field " + iFieldName + " of record " + iRootRecord.getIdentity()), e);
     }
-    settings.indentLevel--;
   }
 
   public void onBeforeDocument(final ODocument iRootRecord, final ODocument iDocument, final String iFieldName,
       final Object iUserObject) {
-    settings.indentLevel++;
     try {
       final String fieldName;
       if (!collectionStack.isEmpty() && collectionStack.peek().equals(iRootRecord))
         fieldName = null;
       else
         fieldName = iFieldName;
-      jsonWriter.beginObject(settings.indentLevel, false, fieldName);
+      jsonWriter.beginObject(++settings.indentLevel, true, fieldName);
       writeSignature(jsonWriter, iDocument);
     } catch (IOException e) {
-      throw new OFetchException("Error writing link field " + iFieldName + " of record " + iRootRecord.getIdentity(), e);
+      throw OException.wrapException(
+          new OFetchException("Error writing link field " + iFieldName + " of record " + iRootRecord.getIdentity()), e);
     }
   }
 
@@ -150,7 +151,8 @@ public class OJSONFetchContext implements OFetchContext {
     try {
       jsonWriter.endObject(settings.indentLevel--, true);
     } catch (IOException e) {
-      throw new OFetchException("Error writing link field " + iFieldName + " of record " + iRootRecord.getIdentity(), e);
+      throw OException.wrapException(
+          new OFetchException("Error writing link field " + iFieldName + " of record " + iRootRecord.getIdentity()), e);
     }
   }
 
@@ -184,20 +186,20 @@ public class OJSONFetchContext implements OFetchContext {
     boolean firstAttribute = true;
 
     if (settings.includeType) {
-      json.writeAttribute(firstAttribute ? settings.indentLevel : 1, firstAttribute, ODocumentHelper.ATTRIBUTE_TYPE, ""
-          + (char) ORecordInternal.getRecordType(record));
+      json.writeAttribute(firstAttribute ? settings.indentLevel : 1, firstAttribute, ODocumentHelper.ATTRIBUTE_TYPE,
+          "" + (char) ORecordInternal.getRecordType(record));
       if (settings.attribSameRow)
         firstAttribute = false;
     }
     if (settings.includeId && record.getIdentity() != null && record.getIdentity().isValid()) {
-      json.writeAttribute(!firstAttribute ? settings.indentLevel : 1, firstAttribute, ODocumentHelper.ATTRIBUTE_RID, record
-          .getIdentity().toString());
+      json.writeAttribute(!firstAttribute ? settings.indentLevel : 1, firstAttribute, ODocumentHelper.ATTRIBUTE_RID,
+          record.getIdentity().toString());
       if (settings.attribSameRow)
         firstAttribute = false;
     }
     if (settings.includeVer) {
-      json.writeAttribute(firstAttribute ? settings.indentLevel : 1, firstAttribute, ODocumentHelper.ATTRIBUTE_VERSION, record
-          .getRecordVersion().getCounter());
+      json.writeAttribute(firstAttribute ? settings.indentLevel : 1, firstAttribute, ODocumentHelper.ATTRIBUTE_VERSION,
+          record.getVersion());
       if (settings.attribSameRow)
         firstAttribute = false;
     }
@@ -243,6 +245,8 @@ public class OJSONFetchContext implements OFetchContext {
           appendType(typesStack.peek(), iFieldName, 'z');
         else if (t == OType.LINKMAP)
           appendType(typesStack.peek(), iFieldName, 'm');
+        else if (t == OType.CUSTOM)
+          appendType(typesStack.peek(), iFieldName, 'u');
       }
     }
   }

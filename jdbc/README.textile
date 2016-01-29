@@ -1,0 +1,77 @@
+*OrientDB  JDBC Driver*
+
+OrientDB (http://code.google.com/p/orient/) is a NoSql DBMS that support a subset of SQL ad query languge.
+This project is an effort to develop a JDBC driver for OrientDB
+
+*Include in your projects*
+
+Orient-jdbc are deployed on sonatype's maven repository. At the moment only snapshots are available, so 
+<pre>
+
+	<dependency>
+		<groupId>com.orientechnologies</groupId>
+		<artifactId>orientdb-jdbc</artifactId>
+		<version>1.0-SNAPSHOT</version>
+	</dependency>
+
+</pre>
+
+*How to build*
+
+Orient-jdbc uses maven, so do a 
+
+<pre>mvn install</pre>
+
+
+*How to build a jar-with-dependencies*
+
+Do a 
+
+<pre>mvn assembly:assembly</pre>
+
+to obtain a jar with dependency included under target directory.
+
+Just copy orientdb-jdbc-1.0-SNAPSHOT-all.jar to your classpath.
+
+It is very usefull to include under applications such as DBVisualizer.
+
+*How can be used in my code?*
+
+The driver is registerd to the Java sql DriverManager and can be used to work with all the OrientDB database types: memory, local or remote.
+The driver's class is com.orientechnologies.orient.jdbc.OrientJdbcDriver.
+
+Use your knowledge of JDBC API to work against OrientDB.
+
+First get a connection
+
+<pre>
+Properties info = new Properties();
+info.put("user", "admin");
+info.put("password", "admin");
+
+Connection conn = (OrientJdbcConnection) DriverManager.getConnection("jdbc:orient:remote:localhost/test", info);
+</pre>
+
+Then execute a Statement and get the ResultSet
+
+<pre>
+Statement stmt = conn.createStatement();
+
+ResultSet rs = stmt.executeQuery("SELECT stringKey, intKey, text, length, date FROM Item");
+
+rs.next();
+
+rs.getInt("@version");
+rs.getString("@class");
+rs.getString("@rid");
+
+rs.getString("stringKey");
+rs.getInt("intKey");
+
+rs.close();
+stmt.close();
+
+</pre>
+
+The driver retrieve Orient metadata (@rid,@class and @version) only on direct queries. 
+Take a look at tests code to see more detailed examples.

@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
@@ -31,11 +32,11 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public class OLiveQueryQueueThread extends Thread {
 
-  private final BlockingQueue<ORecordOperation>  queue;
-  private final Map<Integer, OLiveQueryListener> subscribers;
+  private final BlockingQueue<ORecordOperation>            queue;
+  private final ConcurrentMap<Integer, OLiveQueryListener> subscribers;
   private boolean                                stopped = false;
 
-  private OLiveQueryQueueThread(BlockingQueue<ORecordOperation> queue, Map<Integer, OLiveQueryListener> subscribers) {
+  private OLiveQueryQueueThread(BlockingQueue<ORecordOperation> queue, ConcurrentMap<Integer, OLiveQueryListener> subscribers) {
     this.queue = queue;
     this.subscribers = subscribers;
   }
@@ -84,6 +85,13 @@ public class OLiveQueryQueueThread extends Thread {
   }
 
   public void unsubscribe(Integer id) {
-    subscribers.remove(id);
+    OLiveQueryListener res = subscribers.remove(id);
+    if(res != null){
+      res.onLiveResultEnd();
+    }
+  }
+
+  public boolean hasListeners(){
+    return !subscribers.isEmpty();
   }
 }

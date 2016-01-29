@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetwork;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 
@@ -48,6 +49,7 @@ public class ORecordSerializerFactory {
     register(ORecordSerializerJSON.NAME, ORecordSerializerJSON.INSTANCE);
     register(ORecordSerializerRaw.NAME, defaultRecordFormat);
     register(ORecordSerializerBinary.NAME, ORecordSerializerBinary.INSTANCE);
+    register(ORecordSerializerNetwork.NAME, ORecordSerializerNetwork.INSTANCE);
   }
 
   /**

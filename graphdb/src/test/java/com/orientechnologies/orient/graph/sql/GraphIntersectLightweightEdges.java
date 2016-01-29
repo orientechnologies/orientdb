@@ -29,7 +29,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.Set;
+import java.util.Collection;
 
 public class GraphIntersectLightweightEdges extends GraphNoTxAbstractTest {
   private final int TOT = 1000;
@@ -85,7 +85,7 @@ public class GraphIntersectLightweightEdges extends GraphNoTxAbstractTest {
 
     OLogManager.instance().info(this, "Intersecting...");
 
-    final Iterable<OrientVertex> result = graph.command(new OCommandSQL("select intersect( out() ) from [?,?]")).execute(
+    Iterable<OrientVertex> result = graph.command(new OCommandSQL("select intersect( out() ) from [?,?]")).execute(
         root1.getIdentity(), root2.getIdentity());
 
     OLogManager.instance().info(this, "Intersecting done");
@@ -93,9 +93,16 @@ public class GraphIntersectLightweightEdges extends GraphNoTxAbstractTest {
     Assert.assertTrue(result.iterator().hasNext());
     OrientVertex o = result.iterator().next();
 
-    final Set set = o.getRecord().field("intersect");
+    final Collection set = o.getRecord().field("intersect");
 
     Assert.assertEquals(set.iterator().next(), common);
+
+    result = graph.command(
+        new OCommandSQL(
+            "select expand($c) let $a=(select from V limit 20), $b=(select from V skip 10 limit 10), $c=intersect( $a, $b )"))
+        .execute();
+
+    Assert.assertTrue(result.iterator().hasNext());
   }
 
   @BeforeClass

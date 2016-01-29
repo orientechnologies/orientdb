@@ -16,12 +16,14 @@
 
 package com.orientechnologies.common.serialization.types;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
-import com.orientechnologies.common.directmemory.ODirectMemoryPointerFactory;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Random;
 
 /**
@@ -32,8 +34,8 @@ import java.util.Random;
 public class CharSerializerTest {
   private static final int       FIELD_SIZE = 2;
   private static final Character OBJECT     = (char) (new Random()).nextInt();
-  private OCharSerializer        charSerializer;
-  byte[]                         stream     = new byte[FIELD_SIZE];
+  private OCharSerializer charSerializer;
+  byte[] stream = new byte[FIELD_SIZE];
 
   @BeforeClass
   public void beforeClass() {
@@ -56,12 +58,43 @@ public class CharSerializerTest {
 
   public void testNativeDirectMemoryCompatibility() {
     charSerializer.serializeNative(OBJECT, stream, 0);
-    ODirectMemoryPointer pointer = ODirectMemoryPointerFactory.instance().createPointer(stream);
-    try {
-      Assert.assertEquals(charSerializer.deserializeFromDirectMemoryObject(pointer, 0), OBJECT);
-    } finally {
-      pointer.free();
-    }
 
+    ByteBuffer buffer = ByteBuffer.allocateDirect(stream.length).order(ByteOrder.nativeOrder());
+    buffer.position(0);
+    buffer.put(stream);
+    buffer.position(0);
+
+    Assert.assertEquals(charSerializer.deserializeFromByteBufferObject(buffer), OBJECT);
+  }
+
+  public void testSerializeInByteBuffer() {
+    final int serializationOffset = 5;
+
+    final ByteBuffer buffer = ByteBuffer.allocate(FIELD_SIZE + serializationOffset);
+    buffer.position(serializationOffset);
+    charSerializer.serializeInByteBufferObject(OBJECT, buffer);
+
+    final int binarySize = buffer.position() - serializationOffset;
+    Assert.assertEquals(binarySize, FIELD_SIZE);
+
+    buffer.position(serializationOffset);
+    Assert.assertEquals(charSerializer.getObjectSizeInByteBuffer(buffer), FIELD_SIZE);
+
+    buffer.position(serializationOffset);
+    Assert.assertEquals(charSerializer.deserializeFromByteBufferObject(buffer), OBJECT);
+  }
+
+  public void testSerializeInWALChanges() {
+    final int serializationOffset = 5;
+    final ByteBuffer buffer = ByteBuffer.allocateDirect(FIELD_SIZE + serializationOffset).order(ByteOrder.nativeOrder());
+
+    final byte[] data = new byte[FIELD_SIZE];
+    charSerializer.serializeNative(OBJECT, data, 0);
+
+    OWALChanges walChanges = new OWALChangesTree();
+    walChanges.setBinaryValue(buffer, data, serializationOffset);
+
+    Assert.assertEquals(charSerializer.getObjectSizeInByteBuffer(buffer, walChanges, serializationOffset), FIELD_SIZE);
+    Assert.assertEquals(charSerializer.deserializeFromByteBufferObject(buffer, walChanges, serializationOffset), OBJECT);
   }
 }

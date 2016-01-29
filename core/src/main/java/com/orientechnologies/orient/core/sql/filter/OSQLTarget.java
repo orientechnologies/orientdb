@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandManager;
@@ -75,11 +76,13 @@ public class OSQLTarget extends OBaseParser {
     } catch (OQueryParsingException e) {
       if (e.getText() == null)
         // QUERY EXCEPTION BUT WITHOUT TEXT: NEST IT
-        throw new OQueryParsingException("Error on parsing query", parserText, parserGetCurrentPosition(), e);
+        throw OException.wrapException(
+            new OQueryParsingException("Error on parsing query", parserText, parserGetCurrentPosition()), e);
 
       throw e;
-    } catch (Throwable t) {
-      throw new OQueryParsingException("Error on parsing query", parserText, parserGetCurrentPosition(), t);
+    } catch (Exception e) {
+      throw OException.wrapException(new OQueryParsingException("Error on parsing query", parserText, parserGetCurrentPosition()),
+          e);
     }
   }
 
@@ -180,7 +183,10 @@ public class OSQLTarget extends OBaseParser {
           .getExecutor(subCommand);
       executor.setProgressListener(subCommand.getProgressListener());
       executor.parse(subCommand);
-      context.setChild(executor.getContext());
+      OCommandContext childContext = executor.getContext();
+      if(childContext!=null) {
+        childContext.setParent(context);
+      }
 
       if (!(executor instanceof Iterable<?>))
         throw new OCommandSQLParsingException("Sub-query cannot be iterated because doesn't implement the Iterable interface: "

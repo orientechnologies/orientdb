@@ -17,9 +17,11 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.hook.ORecordHook;
+import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
@@ -34,16 +36,15 @@ public class DbImportExportTest extends DocumentDBBaseTest implements OCommandOu
   public static final String NEW_DB_PATH      = "target/test-import";
   public static final String NEW_DB_URL       = "target/test-import";
 
+  private String testPath;
 
-  private String             testPath;
+  @Parameters(value = { "url", "testPath" })
+  public DbImportExportTest(@Optional String url, String testPath) {
+    super(url);
+    this.testPath = testPath;
+  }
 
-	@Parameters(value = { "url", "testPath" })
-	public DbImportExportTest(@Optional String url, String testPath) {
-		super(url);
-		this.testPath = testPath;
-	}
-
-	@Test
+  @Test
   public void testDbExport() throws IOException {
     ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
     database.open("admin", "admin");
@@ -82,10 +83,19 @@ public class DbImportExportTest extends DocumentDBBaseTest implements OCommandOu
     database.close();
   }
 
+  @Test(dependsOnMethods = "testDbImport")
+  public void testCompareDatabases() throws IOException {
+    String urlPrefix = getStorageType() + ":";
+
+    final ODatabaseCompare databaseCompare = new ODatabaseCompare(url, urlPrefix + testPath + "/" + DbImportExportTest.NEW_DB_URL,
+        "admin", "admin", this);
+    databaseCompare.setCompareEntriesForAutomaticIndexes(true);
+    databaseCompare.setCompareIndexMetadata(true);
+    Assert.assertTrue(databaseCompare.compare());
+  }
+
   @Override
   @Test(enabled = false)
   public void onMessage(final String iText) {
-//    System.out.print(iText);
-//    System.out.flush();
   }
 }

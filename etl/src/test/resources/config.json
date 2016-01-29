@@ -1,0 +1,42 @@
+{
+  "extractor": {
+    "csv": {
+      "separator": ";",
+      "columnsOnFirstLine": false,
+      "columns": [
+        "id",
+        "beginDate",
+        "aams",
+        "wow",
+        "serial",
+        "dontknow",
+        "endDate"
+      ]
+    }
+  },
+
+  "transformers": [
+    {
+      "field": {
+        "fieldName": "dontknow",
+        "expression": "dontknow.trim()"
+      }
+    },
+    {
+      "field": {
+        "fieldName": "time",
+        "expression": "sysdate()"
+      }
+    },
+    {
+      "skip": {
+        "expression": "dontknow is null"
+      }
+    }
+  ],
+  "loader": {
+    "orientdb_doc": {
+      "class": "Client"
+    }
+  }
+}

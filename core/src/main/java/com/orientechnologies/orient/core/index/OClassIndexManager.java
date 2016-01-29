@@ -20,22 +20,7 @@
 
 package com.orientechnologies.orient.core.index;
 
-import static com.orientechnologies.orient.core.hook.ORecordHook.TYPE.BEFORE_CREATE;
-import static com.orientechnologies.orient.core.hook.ORecordHook.TYPE.BEFORE_UPDATE;
-
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OOrientShutdownListener;
 import com.orientechnologies.orient.core.OOrientStartupListener;
@@ -56,7 +41,11 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
-import com.orientechnologies.orient.core.version.ORecordVersion;
+
+import java.util.*;
+
+import static com.orientechnologies.orient.core.hook.ORecordHook.TYPE.BEFORE_CREATE;
+import static com.orientechnologies.orient.core.hook.ORecordHook.TYPE.BEFORE_UPDATE;
 
 /**
  * Handles indexing when records change.
@@ -227,7 +216,8 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
     }
   }
 
-  private static boolean processCompositeIndexDelete(final OIndex<?> index, final Set<String> dirtyFields, final ODocument iRecord) {
+  private static boolean processCompositeIndexDelete(final OIndex<?> index, final Set<String> dirtyFields,
+      final ODocument iRecord) {
     final OCompositeIndexDefinition indexDefinition = (OCompositeIndexDefinition) index.getDefinition();
 
     final String multiValueField = indexDefinition.getMultiValueField();
@@ -359,7 +349,7 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
     for (final OIndex<?> index : indexes) {
 
       if (index.getInternal() instanceof OIndexUnique) {
-        final OIndexRecorder indexRecorder = new OIndexRecorder((OIndexInternal<OIdentifiable>)index.getInternal());
+        final OIndexRecorder indexRecorder = new OIndexRecorder((OIndexInternal<OIdentifiable>) index.getInternal());
         processIndexUpdate(record, dirtyFields, indexRecorder);
 
         indexKeysMap.put(index, indexRecorder.getAffectedKeys());
@@ -387,7 +377,7 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
       try {
         return (ODocument) iRecord.load();
       } catch (final ORecordNotFoundException e) {
-        throw new OIndexException("Error during loading of record with id : " + iRecord.getIdentity(), e);
+        throw OException.wrapException(new OIndexException("Error during loading of record with id : " + iRecord.getIdentity()), e);
       }
     }
     return iRecord;
@@ -470,15 +460,15 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
 
   @Override
   public RESULT onRecordBeforeDelete(final ODocument iDocument) {
-    final ORecordVersion version = iDocument.getRecordVersion(); // Cache the transaction-provided value
+    final int version = iDocument.getVersion(); // Cache the transaction-provided value
     if (iDocument.fields() == 0 && iDocument.getIdentity().isPersistent()) {
       // FORCE LOADING OF CLASS+FIELDS TO USE IT AFTER ON onRecordAfterDelete METHOD
       iDocument.reload();
-      if (version.getCounter() > -1 && iDocument.getRecordVersion().compareTo(version) != 0) // check for record version errors
+      if (version > -1 && iDocument.getVersion() != version) // check for record version errors
         if (OFastConcurrentModificationException.enabled())
           throw OFastConcurrentModificationException.instance();
         else
-          throw new OConcurrentModificationException(iDocument.getIdentity(), iDocument.getRecordVersion(), version,
+          throw new OConcurrentModificationException(iDocument.getIdentity(), iDocument.getVersion(), version,
               ORecordOperation.DELETED);
     }
 

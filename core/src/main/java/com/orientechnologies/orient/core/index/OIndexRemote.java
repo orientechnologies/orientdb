@@ -436,7 +436,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
       private final Iterator<ODocument> documentIterator = result.iterator();
 
       @Override
-      public Map.Entry<Object, OIdentifiable> next(int prefetchSize) {
+      public Object next(int prefetchSize) {
         if (!documentIterator.hasNext())
           return null;
 

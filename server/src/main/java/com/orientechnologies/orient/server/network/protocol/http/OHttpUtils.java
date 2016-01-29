@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.exception.OSystemException;
 
 /**
  * Contains HTTP utilities static methods and constants.
@@ -117,7 +118,7 @@ public class OHttpUtils {
           try {
             params.put(parts[0], URLDecoder.decode(parts[1], "UTF-8"));
           } catch (UnsupportedEncodingException e) {
-            throw new OException(e);
+            throw OException.wrapException(new OSystemException("Can not parse HTTP parameters"), e);
           }
       }
       return params;

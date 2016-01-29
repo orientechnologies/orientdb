@@ -21,7 +21,6 @@ package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OCollections;
@@ -32,6 +31,7 @@ import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
@@ -44,7 +44,15 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorFactory;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 import static com.orientechnologies.common.util.OClassLoaderHelper.lookupProviderWithOrientClassLoader;
 
@@ -258,17 +266,17 @@ public class OSQLEngine {
     if (iCurrent == null)
       return null;
 
-    if( !OCommandExecutorAbstract.checkInterruption(iContext) )
+    if (!OCommandExecutorAbstract.checkInterruption(iContext))
       return null;
 
     if (OMultiValue.isMultiValue(iCurrent) || iCurrent instanceof Iterator) {
       final OMultiCollectionIterator<Object> result = new OMultiCollectionIterator<Object>();
-      for (Object o : OMultiValue.getMultiValueIterable(iCurrent)) {
+      for (Object o : OMultiValue.getMultiValueIterable(iCurrent, false)) {
         if (iContext != null && !iContext.checkTimeout())
           return null;
 
         if (OMultiValue.isMultiValue(o) || o instanceof Iterator) {
-          for (Object inner : OMultiValue.getMultiValueIterable(o)) {
+          for (Object inner : OMultiValue.getMultiValueIterable(o, false)) {
             result.add(iCallable.call((OIdentifiable) inner));
           }
         } else
@@ -368,7 +376,7 @@ public class OSQLEngine {
       }
     } while (added);
     if (!operators.isEmpty()) {
-      throw new OException("Unvalid sorting. " + OCollections.toString(pairs));
+      throw new ODatabaseException("Invalid sorting. " + OCollections.toString(pairs));
     }
     SORTED_OPERATORS = sorted.toArray(new OQueryOperator[sorted.size()]);
     return SORTED_OPERATORS;
@@ -405,7 +413,6 @@ public class OSQLEngine {
     iName = iName.toLowerCase(Locale.ENGLISH);
     ODynamicSQLElementFactory.FUNCTIONS.remove(iName);
   }
-
 
   public OCommandExecutor getCommand(String candidate) {
     candidate = candidate.trim();

@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.config;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 
 import java.io.File;
@@ -171,7 +172,7 @@ public class OServerConfigurationManager {
         try {
           configuration = configurationLoader.load();
         } catch (IOException e) {
-          throw new OConfigurationException("Cannot load server configuration", e);
+          throw OException.wrapException(new OConfigurationException("Cannot load server configuration"), e);
         }
       }
   }

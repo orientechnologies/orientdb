@@ -105,4 +105,6 @@ public interface OCommandExecutor {
   boolean isCacheable();
 
   long getDistributedTimeout();
+
+  Object mergeResults(Map<String, Object> results) throws Exception;
 }

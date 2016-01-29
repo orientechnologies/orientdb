@@ -29,6 +29,7 @@
         <groupId>com.orientechnologies</groupId>
         <artifactId>orientdb-parent</artifactId>
         <version>2.2.0-SNAPSHOT</version>
+        <relativePath>../</relativePath>
     </parent>
 
     <artifactId>orientdb-distributed</artifactId>
@@ -42,8 +43,9 @@
         <osgi.import>com.hazelcast.*;resolution:=optional,*</osgi.import>
         <osgi.export>com.orientechnologies.orient.server.hazelcast.*</osgi.export>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <argLine>-ea -Xmx2048m -Dindex.flushAfterCreate=false
+        <argLine>-ea -Xmx2048m -XX:MaxDirectMemorySize=512g -Dstorage.diskCache.bufferSize=4096 -Dindex.flushAfterCreate=false
             -Dstorage.makeFullCheckpointAfterCreate=false
+            -Dmemory.directMemory.trackMode=true
             -Dstorage.makeFullCheckpointAfterOpen=false
             -Dstorage.makeFullCheckpointAfterClusterCreate=false
             -Dstorage.wal.syncOnPageFlush=false
@@ -91,6 +93,13 @@
     </profiles>
 
     <dependencies>
+
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-test-commons</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-server</artifactId>
@@ -108,18 +117,17 @@
             <artifactId>orientdb-graphdb</artifactId>
             <version>${project.version}</version>
             <!-- SET SCOPE=RUNTIME TO ENABLE STARTING DISTRIBUTED SERVER IN IDE (IntelliJ)-->
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.10</version>
-            <scope>test</scope>
+            <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>com.hazelcast</groupId>
-            <artifactId>hazelcast-all</artifactId>
-            <version>3.5.1</version>
+            <artifactId>hazelcast</artifactId>
+            <version>3.5.4</version>
+        </dependency>
+        <dependency>
+            <groupId>com.hazelcast</groupId>
+            <artifactId>hazelcast-cloud</artifactId>
+            <version>3.5.4</version>
         </dependency>
     </dependencies>
 

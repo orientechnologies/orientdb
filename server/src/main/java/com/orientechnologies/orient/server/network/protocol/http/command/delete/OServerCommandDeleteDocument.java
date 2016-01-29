@@ -22,6 +22,7 @@ package com.orientechnologies.orient.server.network.protocol.http.command.delete
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
@@ -60,10 +61,10 @@ public class OServerCommandDeleteDocument extends OServerCommandDocumentAbstract
       else {
         if (iRequest.ifMatch != null)
           // USE THE IF-MATCH HTTP HEADER AS VERSION
-          doc.getRecordVersion().getSerializer().fromString(iRequest.ifMatch, doc.getRecordVersion());
+          ORecordInternal.setVersion(doc, Integer.parseInt(iRequest.ifMatch));
         else
           // IGNORE THE VERSION
-          doc.getRecordVersion().disable();
+          ORecordInternal.setVersion(doc, -1);
       }
 
       final OClass cls = doc.getSchemaClass();
@@ -71,9 +72,10 @@ public class OServerCommandDeleteDocument extends OServerCommandDocumentAbstract
         if (cls.isSubClassOf("V"))
           // DELETE IT AS VERTEX
           db.command(new OCommandSQL("DELETE VERTEX " + recordId)).execute();
-        else if (cls.isSubClassOf("E"))
-          // DELETE IT AS EDGE
-          db.command(new OCommandSQL("DELETE EDGE " + recordId)).execute();
+        else
+          if (cls.isSubClassOf("E"))
+            // DELETE IT AS EDGE
+            db.command(new OCommandSQL("DELETE EDGE " + recordId)).execute();
         else
           doc.delete();
       } else

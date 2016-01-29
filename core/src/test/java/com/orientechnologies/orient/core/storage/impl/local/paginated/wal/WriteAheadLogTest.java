@@ -321,7 +321,7 @@ public class WriteAheadLogTest {
 
     writeAheadLog.close();
 
-    long seed = System.currentTimeMillis();
+    long seed = 1452266995596L;//System.currentTimeMillis();
     System.out.println("seed of testWriteMultipleRecordsWithDifferentSizeAfterCloseOne " + seed);
     Random random = new Random(seed);
     writeAheadLog = createWAL();
@@ -336,9 +336,13 @@ public class WriteAheadLogTest {
       writtenRecords.add(walRecord);
 
       writtenSize += contentSize;
+
+      assertLogContent(writeAheadLog, writtenRecords);
     }
 
     Assert.assertEquals(writeAheadLog.end(), end);
+    assertLogContent(writeAheadLog, writtenRecords);
+
     assertLogContent(writeAheadLog, writtenRecords);
 
     writeAheadLog.close();
@@ -765,14 +769,14 @@ public class WriteAheadLogTest {
     OWALRecord walRecord;
 
     while (writtenContent <= 4 * OWALPage.PAGE_SIZE) {
-      int contentSize = random.nextInt(OWALPage.PAGE_SIZE - 1) + 1;
+      int contentSize = random.nextInt(OWALPage.PAGE_SIZE - 1) + 8;
       walRecord = new TestRecord(contentSize, false);
       writeAheadLog.log(walRecord);
 
       writtenContent += contentSize;
     }
 
-    int contentSize = random.nextInt(OWALPage.PAGE_SIZE - 1) + 1;
+    int contentSize = random.nextInt(OWALPage.PAGE_SIZE - 1) + 8;
     walRecord = new TestRecord(contentSize, false);
     OLogSequenceNumber end = writeAheadLog.log(walRecord);
 

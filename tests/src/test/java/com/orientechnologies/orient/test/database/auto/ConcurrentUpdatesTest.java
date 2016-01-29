@@ -97,10 +97,6 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
               counter.incrementAndGet();
               totalRetries.addAndGet(retries);
               break;
-            } catch (OResponseProcessingException e) {
-              Assert.assertTrue(e.getCause() instanceof ONeedRetryException);
-
-              Thread.sleep(retries * 10);
             } catch (ONeedRetryException e) {
               Thread.sleep(retries * 10);
             }
@@ -159,13 +155,6 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
 
               break;
 
-            } catch (OResponseProcessingException e) {
-              if (e.getCause() instanceof ONeedRetryException) {
-                Assert.assertTrue(e.getCause() instanceof ONeedRetryException);
-              } else {
-                e.printStackTrace();
-                Assert.assertTrue(false);
-              }
             } catch (ONeedRetryException e) {
             }
           }

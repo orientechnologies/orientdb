@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -33,7 +34,9 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -50,10 +53,10 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
   public static final String KEYWORD_ALTER   = "ALTER";
   public static final String KEYWORD_CLUSTER = "CLUSTER";
 
-  protected String           clusterName;
-  protected int              clusterId       = -1;
-  protected ATTRIBUTES       attribute;
-  protected String           value;
+  protected String     clusterName;
+  protected int        clusterId = -1;
+  protected ATTRIBUTES attribute;
+  protected String     value;
 
   public OCommandExecutorSQLAlterCluster parse(final OCommandRequest iRequest) {
     final ODatabaseDocument database = getDatabase();
@@ -95,14 +98,14 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
       attribute = OCluster.ATTRIBUTES.valueOf(attributeAsString.toUpperCase(Locale.ENGLISH));
     } catch (IllegalArgumentException e) {
       throw new OCommandSQLParsingException("Unknown class attribute '" + attributeAsString + "'. Supported attributes are: "
-          + Arrays.toString(OCluster.ATTRIBUTES.values()), parserText, oldPos, e);
+          + Arrays.toString(OCluster.ATTRIBUTES.values()), parserText, oldPos);
     }
 
     value = parserText.substring(pos + 1).trim();
 
     if (value.length() == 0)
-      throw new OCommandSQLParsingException("Missing property value to change for attribute '" + attribute + "'. Use "
-          + getSyntax(), parserText, oldPos);
+      throw new OCommandSQLParsingException(
+          "Missing property value to change for attribute '" + attribute + "'. Use " + getSyntax(), parserText, oldPos);
 
     if (value.equalsIgnoreCase("null"))
       value = null;
@@ -117,34 +120,33 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
     if (attribute == null)
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
-    final OCluster cluster = getCluster();
+    final List<OCluster> clusters = getClusters();
 
-    if (cluster == null)
+    if (clusters.isEmpty())
       throw new OCommandExecutionException("Cluster '" + clusterName + "' not found");
 
-    if (clusterId > -1 && clusterName.equals(String.valueOf(clusterId))) {
-      clusterName = cluster.getName();
-    } else {
-      clusterId = cluster.getId();
-    }
+    Object result = null;
 
-    Object result;
-    try {
-      if (attribute == ATTRIBUTES.STATUS && OStorageClusterConfiguration.STATUS.OFFLINE.toString().equalsIgnoreCase(value))
-        // REMOVE CACHE OF COMMAND RESULTS IF ACTIVE
-        getDatabase().getMetadata().getCommandCache().invalidateResultsOfCluster(clusterName);
+    for (OCluster cluster : getClusters()) {
+      if (clusterId > -1 && clusterName.equals(String.valueOf(clusterId))) {
+        clusterName = cluster.getName();
+      } else {
+        clusterId = cluster.getId();
+      }
 
-      if (attribute == ATTRIBUTES.NAME)
-        // REMOVE CACHE OF COMMAND RESULTS IF ACTIVE
-        getDatabase().getMetadata().getCommandCache().invalidateResultsOfCluster(clusterName);
+      try {
+        if (attribute == ATTRIBUTES.STATUS && OStorageClusterConfiguration.STATUS.OFFLINE.toString().equalsIgnoreCase(value))
+          // REMOVE CACHE OF COMMAND RESULTS IF ACTIVE
+          getDatabase().getMetadata().getCommandCache().invalidateResultsOfCluster(clusterName);
 
-      result = cluster.set(attribute, value);
+        if (attribute == ATTRIBUTES.NAME)
+          // REMOVE CACHE OF COMMAND RESULTS IF ACTIVE
+          getDatabase().getMetadata().getCommandCache().invalidateResultsOfCluster(clusterName);
 
-      final OStorage storage = getDatabase().getStorage();
-      if (storage instanceof OLocalPaginatedStorage)
-        storage.synch();
-    } catch (IOException ioe) {
-      throw new OCommandExecutionException("Error altering cluster '" + clusterName + "'", ioe);
+        result = cluster.set(attribute, value);
+      } catch (IOException ioe) {
+        throw OException.wrapException(new OCommandExecutionException("Error altering cluster '" + clusterName + "'"), ioe);
+      }
     }
 
     return result;
@@ -155,13 +157,26 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
     return OGlobalConfiguration.DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT.getValueAsLong();
   }
 
-  protected OCluster getCluster() {
+  protected List<OCluster> getClusters() {
     final ODatabaseDocumentInternal database = getDatabase();
-    if (clusterId > -1) {
-      return database.getStorage().getClusterById(clusterId);
+
+    final List<OCluster> result = new ArrayList<OCluster>();
+
+    if (clusterName.endsWith("*")) {
+      final String toMatch = clusterName.substring(0, clusterName.length() - 1).toLowerCase();
+      for (String cl : database.getStorage().getClusterNames()) {
+        if (cl.startsWith(toMatch))
+          result.add(database.getStorage().getClusterByName(cl));
+      }
     } else {
-      return database.getStorage().getClusterById(database.getStorage().getClusterIdByName(clusterName));
+      if (clusterId > -1) {
+        result.add(database.getStorage().getClusterById(clusterId));
+      } else {
+        result.add(database.getStorage().getClusterById(database.getStorage().getClusterIdByName(clusterName)));
+      }
     }
+
+    return result;
   }
 
   public String getSyntax() {

@@ -64,6 +64,34 @@ SKIP :
 | "\t"
 | "\n"
 | "\r"
+| "\f"
+}
+
+/* COMMENTS */
+
+MORE :
+{
+  <"/**" ~["/"]> { input_stream.backup(1); } : IN_FORMAL_COMMENT
+|
+  "/*" : IN_MULTI_LINE_COMMENT
+}
+
+<IN_FORMAL_COMMENT>
+SPECIAL_TOKEN :
+{
+  <FORMAL_COMMENT: "*/" > : DEFAULT
+}
+
+<IN_MULTI_LINE_COMMENT>
+SPECIAL_TOKEN :
+{
+  <MULTI_LINE_COMMENT: "*/" > : DEFAULT
+}
+
+<IN_FORMAL_COMMENT,IN_MULTI_LINE_COMMENT>
+MORE :
+{
+  < ~[] >
 }
 
 
@@ -190,9 +218,61 @@ TOKEN:
 	|
 	< CLASS: ( "c" | "C" ) ( "l" | "L" ) ( "a" | "A" ) ( "s" | "S" ) ( "s" | "S" ) >
 	|
+	< SUPERCLASS: ( "s" | "S" ) ( "u" | "U" ) ( "p" | "P" ) ( "e" | "E" ) ( "r" | "R" ) ( "c" | "C" ) ( "l" | "L" ) ( "a" | "A" ) ( "s" | "S" ) ( "s" | "S" ) >
+	|
 	< CLASSES: ( "c" | "C" ) ( "l" | "L" ) ( "a" | "A" ) ( "s" | "S" ) ( "s" | "S" ) ( "e" | "E" ) ( "s" | "S" ) >
+	|
+	< SUPERCLASSES: ( "s" | "S" ) ( "u" | "U" ) ( "p" | "P" ) ( "e" | "E" ) ( "r" | "R" ) ( "c" | "C" ) ( "l" | "L" ) ( "a" | "A" ) ( "s" | "S" ) ( "s" | "S" ) ( "e" | "E" ) ( "s" | "S" )>
     |
 	< EXCEPTION: ( "e" | "E" ) ( "x" | "X" ) ( "c" | "C" ) ( "e" | "E" ) ( "p" | "P" ) ( "t" | "T" ) ( "i" | "I" ) ( "o" | "O" ) ( "n" | "N" ) >
+	|
+	< PROFILE: ( "p" | "P" ) ( "r" | "R" ) ( "o" | "O" ) ( "f" | "F" ) ( "i" | "I" ) ( "l" | "L" ) ( "e" | "E" ) >
+	|
+	< STORAGE: ( "s" | "S" ) ( "t" | "T" ) ( "o" | "O" ) ( "r" | "R" ) ( "a" | "A" ) ( "g" | "G" ) ( "e" | "E" ) >
+	|
+	< ON: ( "o" | "O" ) ( "n" | "N" ) >
+	|
+	< OFF: ( "o" | "O" ) ( "f" | "F" ) ( "f" | "F" ) >
+	|
+	< TRUNCATE: ( "t" | "T" ) ( "r" | "R" ) ( "u" | "U" ) ( "n" | "N" ) ( "c" | "C" ) ( "a" | "A" ) ( "t" | "T" ) ( "e" | "E" ) >
+	|
+	< POLYMORPHIC: ( "p" | "P" ) ( "o" | "O" ) ( "l" | "L" ) ( "y" | "Y" ) ( "m" | "M" ) ( "o" | "O" ) ( "r" | "R" ) ( "p" | "P" ) ( "h" | "H" ) ( "i" | "I" ) ( "c" | "C" ) >
+	|
+	< FIND: ( "f" | "F" ) ( "i" | "I" ) ( "n" | "N" ) ( "d" | "D" ) >
+	|
+	< REFERENCES: ( "r" | "R" ) ( "e" | "E" ) ( "f" | "F" ) ( "e" | "E" ) ( "r" | "R" ) ( "e" | "E" ) ( "n" | "N" ) ( "c" | "C" ) ( "e" | "E" ) ( "s" | "S" ) >
+	|
+	< EXTENDS: ( "e" | "E" ) ( "x" | "X" ) ( "t" | "T" ) ( "e" | "E" ) ( "n" | "N" ) ( "d" | "D" ) ( "s" | "S" ) >
+	|
+	< CLUSTERS: ( "C" | "c" ) ( "L" | "l" ) ( "U" | "u" ) ( "S" | "s" ) ( "T" | "t" ) ( "E" | "e" ) ( "R" | "r" ) ( "S" | "s" ) >
+	|
+	< ABSTRACT: ( "a" | "A" ) ( "b" | "B" ) ( "s" | "S" ) ( "T" | "t" ) ( "R" | "r" ) ( "a" | "A" ) ( "C" | "c" ) ( "T" | "t" ) >
+	|
+	< ALTER: ( "a" | "A" ) ( "l" | "L" ) ( "t" | "T" ) ( "e" | "E" ) ( "r" | "R" ) >
+	|
+	< NAME: ("n" | "N") ( "a" | "A" ) ( "m" | "M" ) ( "e" | "E" ) >
+	|
+	< SHORTNAME: ( "s" | "S" ) ( "h" | "H" ) ( "o" | "O" ) ( "r" | "R" ) ( "t" | "T" ) ("n" | "N") ( "a" | "A" ) ( "m" | "M" ) ( "e" | "E" ) >
+	|
+	< OVERSIZE:  ( "o" | "O" ) ( "v" | "V" ) ( "e" | "E" ) ( "r" | "R" ) ( "s" | "S" ) ( "i" | "I" ) ("z" | "Z") ( "e" | "E" ) >
+	|
+	< STRICTMODE: ( "s" | "S" ) ( "t" | "T" ) ( "r" | "R" ) ( "i" | "I" ) ( "C" | "c" ) ( "T" | "t" ) ( "m" | "M" ) ( "o" | "O" ) ( "d" | "D" ) ( "e" | "E" ) >
+	|
+	< ADDCLUSTER: ( "a" | "A" ) ( "d" | "D" ) ( "d" | "D" ) ( "C" | "c" ) ( "L" | "l" ) ( "U" | "u" ) ( "S" | "s" ) ( "T" | "t" ) ( "E" | "e" ) ( "R" | "r" ) >
+	|
+	< REMOVECLUSTER: ( "r" | "R" ) ( "e" | "E" ) ( "m" | "M" ) ( "o" | "O" ) ( "v" | "V" ) ( "e" | "E" ) ( "C" | "c" ) ( "L" | "l" ) ( "U" | "u" ) ( "S" | "s" ) ( "T" | "t" ) ( "E" | "e" ) ( "R" | "r" ) >
+	|
+	< CUSTOM: ( "c" | "C" ) ( "u" | "U" ) ( "s" | "S" ) ( "t" | "T" ) ( "o" | "O" ) ( "m" | "M" ) >
+	|
+	< CLUSTERSELECTION: ( "C" | "c" ) ( "L" | "l" ) ( "U" | "u" ) ( "S" | "s" ) ( "T" | "t" ) ( "E" | "e" ) ( "R" | "r" ) ( "s" | "S" ) ( "e" | "E" ) ( "l" | "L" ) ( "e" | "E" ) ( "c" | "C" ) ( "t" | "T" ) ( "i" | "I" ) ( "o" | "O" ) ( "n" | "N" ) >
+	|
+	< DESCRIPTION: ( "d" | "D" ) ( "E" | "e" )  ( "s" | "S" ) ( "c" | "C" ) ( "r" | "R" ) ( "i" | "I" ) ( "p" | "P" ) ( "t" | "T" ) ( "i" | "I" ) ( "o" | "O" ) ( "n" | "N" ) >
+	|
+	< ENCRYPTION: ( "E" | "e" ) ( "n" | "N" ) ( "c" | "C" ) ( "r" | "R" ) ( "y" | "Y" ) ( "p" | "P" ) ( "t" | "T" ) ( "i" | "I" ) ( "o" | "O" ) ( "n" | "N" ) >
+	|
+	< DROP: ( "d" | "D" ) ( "r" | "R" ) ( "o" | "O" ) ( "p" | "P" ) >
+	|
+	< PROPERTY: ( "p" | "P" ) ( "r" | "R" ) ( "o" | "O" ) ( "p" | "P" ) ( "e" | "E" ) ( "r" | "R" ) ( "t" | "T" ) ( "y" | "Y" ) >
 	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
@@ -389,7 +469,7 @@ TOKEN :
 
 TOKEN :
 {
-  < IDENTIFIER: ( (<DOLLAR>)? <LETTER> (<PART_LETTER>)* ) >
+  < IDENTIFIER: ( ((<DOLLAR>) | <LETTER>) (<PART_LETTER>)* ) >
 |
   < QUOTED_IDENTIFIER: ( "`" (~["`"]) (~["`"])*  "`") >
 |
@@ -402,6 +482,8 @@ TOKEN :
   < INDEXVALUESDESC_IDENTIFIER: ( "I" | "i") ( "N" | "n") ( "D" | "d") ( "E" | "e") ( "X" | "x") ( "V" | "v") ( "A" | "a") ( "L" | "l") ( "U" | "u") ( "E" | "e") ( "S" | "s") ( "D" | "d") ( "E" | "e") ( "S" | "s") ( "C" | "c") ":" <IDENTIFIER> ( ( <DOT> | <MINUS> ) <IDENTIFIER> )*  >
 |
   < CLUSTER_IDENTIFIER: <CLUSTER> <COLON> <IDENTIFIER>  >
+|
+  < CLUSTER_NUMBER_IDENTIFIER: <CLUSTER> <COLON> <INTEGER_LITERAL>  >
 |
   < METADATA_IDENTIFIER: "metadata:" <IDENTIFIER>  >
 |
@@ -494,159 +576,57 @@ OIdentifier Identifier():
     |
     token = <EXCEPTION>
     |
+    token = <PROFILE>
+    |
+    token = <STORAGE>
+    |
+    token = <ON>
+    |
+    token = <OFF>
+    |
+    token = <TRUNCATE>
+    |
+    token = <FIND>
+	|
+	token = <REFERENCES>
+	|
+	token = <EXTENDS>
+	|
+	token = <CLUSTERS>
+	|
+	token = <ABSTRACT>
+	|
+	token = <ALTER>
+	|
+	token = <NAME>
+	|
+	token = <SHORTNAME>
+	|
+	token = <SUPERCLASS>
+	|
+	token = <SUPERCLASSES>
+	|
+	token = <OVERSIZE>
+	|
+	token = <STRICTMODE>
+	|
+	token = <ADDCLUSTER>
+	|
+	token = <REMOVECLUSTER>
+	|
+	token = <CUSTOM>
+	|
+	token = <CLUSTERSELECTION>
+	|
+	token = <DESCRIPTION>
+	|
+	token = <ENCRYPTION>
+	|
+	token = <DROP>
+	|
+	token = <PROPERTY>
+	|
     quotedToken = <QUOTED_IDENTIFIER>
-    /*
-    (
-    //TODO REPLACE THIS WITH <QUOTED_IDENTIFIER>
-        <BACKTICK>
-        (
-            token = <IDENTIFIER>
-            |
-            token = <SELECT>
-            |
-            token = <TRAVERSE>
-            |
-            token = <INSERT>
-            |
-            token = <CREATE>
-            |
-            token = <DELETE>
-            |
-            token = <VERTEX>
-            |
-            token = <EDGE>
-            |
-            token = <UPDATE>
-            |
-            token = <UPSERT>
-            |
-            token = <FROM>
-            |
-            token = <TO>
-            |
-            token = <WHERE>
-            |
-            token = <WHILE>
-            |
-            token = <INTO>
-            |
-            token = <VALUES>
-            |
-            token = <SET>
-            |
-            token = <ADD>
-            |
-            token = <PUT>
-            |
-            token = <MERGE>
-            |
-            token = <CONTENT>
-            |
-            token = <REMOVE>
-            |
-            token = <INCREMENT>
-            |
-            token = <AND>
-            |
-            token = <OR>
-            |
-            token = <NULL>
-            |
-            token = <DEFINED>
-            |
-            token = <ORDER>
-            |
-            token = <GROUP>
-            |
-            token = <BY>
-            |
-            token = <LIMIT>
-            |
-            token = <SKIP2>
-            |
-            token = <OFFSET>
-            |
-            token = <TIMEOUT>
-            |
-            token = <ASC>
-            |
-            token = <AS>
-            |
-            token = <DESC>
-            |
-            token = <FETCHPLAN>
-            |
-            token = <RETURN>
-            |
-            token = <BEFORE>
-            |
-            token = <AFTER>
-            |
-            token = <LOCK>
-            |
-            token = <RECORD>
-            |
-            token = <WAIT>
-            |
-            token = <RETRY>
-            |
-            token = <LET>
-            |
-            token = <NOCACHE>
-            |
-            token = <UNSAFE>
-            |
-            token = <PARALLEL>
-            |
-            token = <STRATEGY>
-            |
-            token = <DEPTH_FIRST>
-            |
-            token = <BREADTH_FIRST>
-            |
-            token = <LUCENE>
-            |
-            token = <NEAR>
-            |
-            token = <WITHIN>
-            |
-            token = <UNWIND>
-            |
-            token = <MAXDEPTH>
-            |
-            token = <NOT>
-            |
-            token = <IN>
-            |
-            token = <LIKE>
-            |
-            token = <IS>
-            |
-            token = <BETWEEN>
-            |
-            token = <CONTAINS>
-            |
-            token = <CONTAINSALL>
-            |
-            token = <CONTAINSKEY>
-            |
-            token = <CONTAINSVALUE>
-            |
-            token = <CONTAINSTEXT>
-            |
-            token = <MATCHES>
-            |
-            token = <KEY>
-            |
-            token = <INSTANCEOF>
-            |
-            token = <CLUSTER>
-            |
-            token = <EXCEPTION>
-        )
-        <BACKTICK>
-    )
-    */
 ) {
 
     if(token!=null){
@@ -738,12 +718,45 @@ OStatement Statement():
 		LOOKAHEAD(CreateVertexStatementEmptyNoTarget())
         result = CreateVertexStatementEmptyNoTarget()
         |
-		LOOKAHEAD(2)
+		LOOKAHEAD(CreateEdgeStatement())
         result = CreateEdgeStatement()
         |
+        LOOKAHEAD(UpdateEdgeStatement())
+        result = UpdateEdgeStatement()
+        |
+        LOOKAHEAD(UpdateStatement())
 		result = UpdateStatement()
 		|
 		result = MatchStatement()
+		|
+		result = ProfileStorageStatement()
+		|
+		LOOKAHEAD(TruncateClassStatement())
+		result = TruncateClassStatement()
+		|
+		LOOKAHEAD(TruncateClusterStatement())
+        result = TruncateClusterStatement()
+		|
+		LOOKAHEAD(FindReferencesStatement())
+		result = FindReferencesStatement()
+		|
+		LOOKAHEAD(TruncateRecordStatement())
+        result = TruncateRecordStatement()
+        |
+		LOOKAHEAD(CreateClassStatement())
+		result = CreateClassStatement()
+		|
+		LOOKAHEAD(AlterClassStatement())
+		result = AlterClassStatement()
+		|
+		LOOKAHEAD(DropClassStatement())
+		result = DropClassStatement()
+		|
+		LOOKAHEAD(CreatePropertyStatement())
+		result = CreatePropertyStatement()
+		|
+		LOOKAHEAD(AlterPropertyStatement())
+		result = AlterPropertyStatement()
 
 	) [ <SEMICOLON> ]
 	{
@@ -773,7 +786,14 @@ OSelectWithoutTargetStatement SelectWithoutTargetStatement():
     	<SELECT>
         jjtThis.projection = Projection()
     	[ jjtThis.letClause = LetClause() ]
-    	[ jjtThis.unwind = Unwind() ]
+    	[ jjtThis.unwind = Unwind() ] 
+    	(
+			[
+				jjtThis.skip = Skip() [ jjtThis.limit = Limit() ]
+				|
+				jjtThis.limit = Limit() [ jjtThis.skip = Skip() ]
+			]
+		)
     	[ jjtThis.fetchPlan = FetchPlan() ]
     	[ jjtThis.timeout = Timeout() ]
         [ <LOCK>  <RECORD> {jjtThis.lockRecord = true;} ]
@@ -1180,26 +1200,38 @@ ODeleteEdgeStatement DeleteEdgeWhereStatement():
      {return jjtThis;}
 }
 
+OUpdateEdgeStatement UpdateEdgeStatement():
+{ OUpdateOperations lastOperations;
+ ORid lastRid;}
+{
+  (
+	<UPDATE>
+	<EDGE>
+	jjtThis.target = FromClause()
+	( lastOperations = UpdateOperations() { jjtThis.operations.add(lastOperations); } )+
+	[ <UPSERT> { jjtThis.upsert = true; } ]
+	[
+		<RETURN>
+		( <BEFORE> { jjtThis.returnBefore = true; } | <AFTER> { jjtThis.returnAfter = true; } )
+		[
+			jjtThis.returnProjection = Projection()
+		]
+	]
+	[ <WHERE> jjtThis.whereClause = WhereClause() ]
+	[ <LOCK> <RECORD> { jjtThis.lockRecord = true; } ]
+	[ jjtThis.limit = Limit() ]
+	[ jjtThis.timeout = Timeout() ]
+  )
+  {return jjtThis;}
+}
+
 OUpdateStatement UpdateStatement():
-{ OUpdateOperations lastOperations; }
+{ OUpdateOperations lastOperations;
+ ORid lastRid;}
 {
     (
     	<UPDATE>
-    	(
-    	    jjtThis.targetRid = Rid()
-    	    |
-    		jjtThis.targetClass = Identifier()
-    		|
-    		jjtThis.targetCluster = Cluster()
-    		|
-    		jjtThis.targetIndex = IndexIdentifier()
-    		|
-    		(
-    		    <LPAREN>
-    		    jjtThis.targetQuery = QueryStatement()
-    		    <RPAREN>
-    		)
-    	)
+    	jjtThis.target = FromClause()
     	( lastOperations = UpdateOperations() { jjtThis.operations.add(lastOperations); } )+
     	[ <UPSERT> { jjtThis.upsert = true; } ]
     	[
@@ -1613,10 +1645,20 @@ OPositionalParameter PositionalParameter():
 }
 
 ONamedParameter NamedParameter():
-{}
+{
+OIdentifier identifierParam;
+Token token;
+}
 {
     (
-	    <COLON> jjtThis.paramName = Identifier()
+	    <COLON>
+	    (
+	    	identifierParam = Identifier() { jjtThis.paramName = identifierParam.toString(); }
+	    	|
+	    	token = <SKIP2> {jjtThis.paramName = token.image;}
+	    	|
+            token = <LIMIT> {jjtThis.paramName = token.image;}
+	    )
 	)
 	{
 	 jjtThis.paramNumber = inputParamCount;
@@ -2088,6 +2130,8 @@ OFromItem FromItem():
     	            jjtThis.statement = TraverseStatement()
     	            |
                     jjtThis.statement = MatchStatement()
+					|
+					jjtThis.statement = FindReferencesStatement()
     	) <RPAREN>
     	|
     	jjtThis.inputParam = InputParameter()
@@ -2108,6 +2152,9 @@ OCluster Cluster():
 {
     (
 	    cName = <CLUSTER_IDENTIFIER> {jjtThis.clusterName = cName.image.split(":")[1];}
+		|
+	    cName = <CLUSTER_NUMBER_IDENTIFIER> {jjtThis.clusterNumber = Integer.parseInt(cName.image.split(":")[1]);}
+
 	)
     { return jjtThis; }
 }
@@ -2445,7 +2492,13 @@ OBooleanExpression InstanceofCondition():
 }
 {
     (
-        jjtThis.left = Expression() <INSTANCEOF> ( jjtThis.right = Identifier() | token = <STRING_LITERAL> { jjtThis.rightString = token.image; } )
+        jjtThis.left = Expression() <INSTANCEOF> (
+		   jjtThis.right = Identifier()
+		   |
+		   token = <STRING_LITERAL> { jjtThis.rightString = token.image; }
+		   |
+		   token = <CHARACTER_LITERAL> { jjtThis.rightString = token.image; }
+		)
     )
     {return jjtThis;}
 }
@@ -2631,6 +2684,8 @@ OBooleanExpression MatchesCondition():
     	    ( token = <STRING_LITERAL> {jjtThis.right = token.image;} )
     	    |
     	    ( token = <CHARACTER_LITERAL> {jjtThis.right = token.image;} )
+    	    |
+            ( jjtThis.rightParam = InputParameter() )
     	)
     )
 
@@ -2989,11 +3044,22 @@ OMatchExpression MatchExpression():
         jjtThis.origin = MatchFilter()
         (
             (
-                LOOKAHEAD(2)
+                LOOKAHEAD(3)
                 nextItem = MatchPathItem()
                 |
-                LOOKAHEAD(2)
+                LOOKAHEAD(3)
+                nextItem = MultiMatchPathItemArrows()
+                |
+                LOOKAHEAD(3)
                 nextItem = MultiMatchPathItem()
+                |
+                LOOKAHEAD(OutPathItem())
+                nextItem = OutPathItem()
+                |
+                nextItem = InPathItem()
+                |
+                LOOKAHEAD(BothPathItem())
+                nextItem = BothPathItem()
             )
             { jjtThis.items.add(nextItem); }
         )*
@@ -3025,8 +3091,11 @@ OMatchPathItem MultiMatchPathItem():
     (
         <DOT>
         <LPAREN>
-        nextItem = MatchPathItemFirst() { jjtThis.items.add(nextItem); }
         (
+            nextItem = MatchPathItemFirst() { jjtThis.items.add(nextItem); }
+        )
+        (
+            LOOKAHEAD(MatchPathItem())
             nextItem = MatchPathItem() { jjtThis.items.add(nextItem); }
         )*
         <RPAREN>
@@ -3034,6 +3103,36 @@ OMatchPathItem MultiMatchPathItem():
     ){ return jjtThis; }
 }
 
+OMatchPathItem MultiMatchPathItemArrows():
+{
+    OMatchPathItem prevItem = null;
+    OMatchPathItem nextItem = null;
+}
+{
+    (
+        <DOT>
+        <LPAREN>
+        (
+            (
+                LOOKAHEAD( OutPathItemOpt() )
+                nextItem = OutPathItemOpt()  { jjtThis.items.add(nextItem); }
+                |
+                LOOKAHEAD( InPathItemOpt() )
+                nextItem = InPathItemOpt()  { jjtThis.items.add(nextItem); }
+                |
+                LOOKAHEAD( BothPathItemOpt() )
+                nextItem = BothPathItemOpt()  { jjtThis.items.add(nextItem); }
+            ){
+                if(prevItem !=null && prevItem.filter == null){
+                    throw new OQueryParsingException("MATCH sub-pattern with no square brackets");
+                }
+                prevItem = nextItem;
+            }
+        )+
+        <RPAREN>
+        [ jjtThis.filter = MatchFilter() ]
+    ){ return jjtThis; }
+}
 
 OMatchFilter MatchFilter():
 { OMatchFilterItem lastItem = null; }
@@ -3088,4 +3187,509 @@ OMatchFilterItem MatchFilterItem():
         )
     )
     { return jjtThis; }
+}
+
+OMatchPathItem OutPathItem():
+{ OIdentifier edgeName = null; }
+{
+
+        (
+            (
+                <MINUS>
+                [edgeName = Identifier()]
+                <MINUS>
+            )
+            |
+            <DECR>
+        )
+        <GT>
+        jjtThis.filter = MatchFilter()
+
+    {
+     if(edgeName==null){
+        edgeName = new OIdentifier(-1);
+        edgeName.value = "E";
+     }
+     jjtThis.method = new OMethodCall(-1);
+     jjtThis.method.methodName = new OIdentifier(-1);
+     jjtThis.method.methodName.value = "out";
+     OExpression exp = new OExpression(-1);
+     exp.value = edgeName.value;
+     jjtThis.method.params.add(exp);
+     return jjtThis;
+    }
+}
+
+OMatchPathItem InPathItem():
+{ OIdentifier edgeName = null; }
+{
+
+        <LT>
+        (
+            (
+                <MINUS>
+                [edgeName = Identifier()]
+                <MINUS>
+            )
+            |
+            <DECR>
+        )
+        jjtThis.filter = MatchFilter()
+
+    {
+     if(edgeName==null){
+        edgeName = new OIdentifier(-1);
+        edgeName.value = "E";
+     }
+     jjtThis.method = new OMethodCall(-1);
+     jjtThis.method.methodName = new OIdentifier(-1);
+     jjtThis.method.methodName.value = "in";
+     OExpression exp = new OExpression(-1);
+     exp.value = edgeName.value;
+     jjtThis.method.params.add(exp);
+     return jjtThis;
+    }
+}
+
+OMatchPathItem BothPathItem():
+{ OIdentifier edgeName = null; }
+{
+
+        (
+            (
+                <MINUS>
+                [edgeName = Identifier()]
+                <MINUS>
+            )
+            |
+            <DECR>
+        )
+        jjtThis.filter = MatchFilter()
+
+    {
+     if(edgeName==null){
+        edgeName = new OIdentifier(-1);
+        edgeName.value = "E";
+     }
+     jjtThis.method = new OMethodCall(-1);
+     jjtThis.method.methodName = new OIdentifier(-1);
+     jjtThis.method.methodName.value = "both";
+     OExpression exp = new OExpression(-1);
+     exp.value = edgeName.value;
+     jjtThis.method.params.add(exp);
+     return jjtThis;
+    }
+}
+
+
+OMatchPathItem OutPathItemOpt():
+{ OIdentifier edgeName = null; }
+{
+
+        (
+            (
+                <MINUS>
+                [edgeName = Identifier()]
+                <MINUS>
+            )
+            |
+            <DECR>
+        )
+        <GT>
+        [jjtThis.filter = MatchFilter()]
+
+    {
+     if(edgeName==null){
+        edgeName = new OIdentifier(-1);
+        edgeName.value = "E";
+     }
+     jjtThis.method = new OMethodCall(-1);
+     jjtThis.method.methodName = new OIdentifier(-1);
+     jjtThis.method.methodName.value = "out";
+     OExpression exp = new OExpression(-1);
+     exp.value = edgeName.value;
+     jjtThis.method.params.add(exp);
+     return jjtThis;
+    }
+}
+
+OMatchPathItem InPathItemOpt():
+{ OIdentifier edgeName = null; }
+{
+
+        <LT>
+        (
+            (
+                <MINUS>
+                [edgeName = Identifier()]
+                <MINUS>
+            )
+            |
+            <DECR>
+        )
+        [jjtThis.filter = MatchFilter()]
+
+    {
+     if(edgeName==null){
+        edgeName = new OIdentifier(-1);
+        edgeName.value = "E";
+     }
+     jjtThis.method = new OMethodCall(-1);
+     jjtThis.method.methodName = new OIdentifier(-1);
+     jjtThis.method.methodName.value = "in";
+     OExpression exp = new OExpression(-1);
+     exp.value = edgeName.value;
+     jjtThis.method.params.add(exp);
+     return jjtThis;
+    }
+}
+
+OMatchPathItem BothPathItemOpt():
+{ OIdentifier edgeName = null; }
+{
+
+        (
+            (
+                <MINUS>
+                [edgeName = Identifier()]
+                <MINUS>
+            )
+            |
+            <DECR>
+        )
+        [jjtThis.filter = MatchFilter()]
+
+    {
+     if(edgeName==null){
+        edgeName = new OIdentifier(-1);
+        edgeName.value = "E";
+     }
+     jjtThis.method = new OMethodCall(-1);
+     jjtThis.method.methodName = new OIdentifier(-1);
+     jjtThis.method.methodName.value = "both";
+     OExpression exp = new OExpression(-1);
+     exp.value = edgeName.value;
+     jjtThis.method.params.add(exp);
+     return jjtThis;
+    }
+}
+
+OProfileStorageStatement ProfileStorageStatement():
+{}
+{
+	<PROFILE> <STORAGE>
+	(
+		<ON> {jjtThis.on = true;}
+		|
+		<OFF> {jjtThis.on = false;}
+	)
+	{return jjtThis;}
+}
+
+OTruncateClassStatement TruncateClassStatement():
+{}
+{
+	<TRUNCATE> <CLASS>
+	jjtThis.className = Identifier()
+	[ <POLYMORPHIC> {jjtThis.polymorphic = true;} ]
+	[ <UNSAFE> {jjtThis.unsafe = true;} ]
+	{ return jjtThis; }
+}
+
+OTruncateClusterStatement TruncateClusterStatement():
+{}
+{
+	<TRUNCATE> <CLUSTER>
+	(
+		jjtThis.clusterName = Identifier()
+		|
+		jjtThis.clusterNumber = Integer()
+	)
+	[ <UNSAFE> {jjtThis.unsafe = true;} ]
+	{ return jjtThis; }
+}
+
+OTruncateRecordStatement TruncateRecordStatement():
+{ ORid lastRecord; }
+{
+	<TRUNCATE> <RECORD>
+	(
+		jjtThis.record = Rid()
+		|
+		(
+			<LBRACKET> { jjtThis.records = new ArrayList<ORid>(); }
+			[
+				lastRecord = Rid() { jjtThis.records.add(lastRecord); }
+				(
+					<COMMA>
+					lastRecord = Rid() { jjtThis.records.add(lastRecord); }
+				)*
+			]
+			<RBRACKET>
+		)
+	)
+	{ return jjtThis; }
+}
+
+
+OFindReferencesStatement FindReferencesStatement():
+{ SimpleNode lastTarget; }
+{
+    <FIND> <REFERENCES>
+    (
+        jjtThis.rid = Rid()
+        |
+        (
+            <LPAREN>
+            jjtThis.subQuery = Statement()
+            <RPAREN>
+        )
+    )
+    [
+    	<LBRACKET> { jjtThis.targets = new ArrayList<SimpleNode>(); }
+    	(
+    		lastTarget = Identifier()
+    		|
+    		lastTarget = IndexIdentifier()
+    	){ jjtThis.targets.add(lastTarget); }
+    	(
+    		<COMMA>
+    		(
+				lastTarget = Identifier()
+				|
+				lastTarget = Cluster()
+			){ jjtThis.targets.add(lastTarget); }
+    	)*
+    	<RBRACKET>
+    ]
+    { return jjtThis; }
+}
+
+OCreateClassStatement CreateClassStatement():
+{
+	OIdentifier lastIdentifier;
+	OInteger lastInteger;
+}
+{
+	<CREATE> <CLASS>
+	(
+		jjtThis.name = Identifier()
+		[
+			<EXTENDS> lastIdentifier = Identifier() { jjtThis.superclasses = new ArrayList<OIdentifier>(); jjtThis.superclasses.add(lastIdentifier); }
+			 (
+			 	<COMMA>
+			 	lastIdentifier = Identifier() { jjtThis.superclasses.add(lastIdentifier); }
+			 )*
+		]
+		[
+			<CLUSTER> lastInteger = Integer() { jjtThis.clusters = new ArrayList<OInteger>(); jjtThis.clusters.add(lastInteger); }
+		 	(
+				<COMMA>
+				lastInteger = Integer() { jjtThis.clusters.add(lastInteger); }
+		 	)*
+		]
+		[ <CLUSTERS> jjtThis.totalClusterNo = Integer() ]
+		[ <ABSTRACT> { jjtThis.abstractClass = true; } ]
+	)
+	{ return jjtThis; }
+}
+
+OAlterClassStatement AlterClassStatement():
+{
+	OIdentifier lastIdentifier;
+	OInteger lastInteger;
+}
+{
+	<ALTER> <CLASS>
+	jjtThis.name = Identifier()
+	(
+
+		(
+			<NAME> { jjtThis.property = com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES.NAME; }
+			jjtThis.identifierValue = Identifier()
+		)
+		|
+		(
+			<SHORTNAME> { jjtThis.property = com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES.SHORTNAME; }
+			(
+				jjtThis.identifierValue = Identifier()
+				|
+            	<NULL>
+            )
+		)
+		|
+		(
+			<SUPERCLASS> { jjtThis.property = com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES.SUPERCLASS; }
+			[
+				(
+					<PLUS> {jjtThis.add = true;}
+				)
+				|
+				(
+					<MINUS> {jjtThis.remove = true;}
+				)
+			]
+			(
+				jjtThis.identifierValue = Identifier()
+				|
+				<NULL> { jjtThis.identifierValue = null; }
+			)
+		)
+		|
+		(
+			<SUPERCLASSES> {
+				jjtThis.property = com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES.SUPERCLASSES;
+				jjtThis.identifierListValue = new ArrayList<OIdentifier>();
+			}
+			(
+				(
+					lastIdentifier = Identifier() { jjtThis.identifierListValue.add(lastIdentifier); }
+					(
+						<COMMA>
+						lastIdentifier = Identifier() { jjtThis.identifierListValue.add(lastIdentifier); }
+					)*
+				)
+				|
+				<NULL> { jjtThis.identifierListValue = null; }
+			)
+		)
+		|
+		(
+			<OVERSIZE> { jjtThis.property = com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES.OVERSIZE; }
+			jjtThis.numberValue = Number()
+		)
+		|
+		(
+			<STRICTMODE> { jjtThis.property = com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES.STRICTMODE; }
+			(
+				(
+					<TRUE> { jjtThis.booleanValue = true; }
+				)
+				|
+				(
+					<FALSE> { jjtThis.booleanValue = false; }
+				)
+			)
+		)
+		|
+		(
+			<ADDCLUSTER> { jjtThis.property = com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES.ADDCLUSTER; }
+			(
+				jjtThis.identifierValue = Identifier()
+				|
+				jjtThis.numberValue = Integer()
+			)
+		)
+		|
+		(
+			<REMOVECLUSTER> { jjtThis.property = com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES.REMOVECLUSTER; }
+			(
+				jjtThis.identifierValue = Identifier()
+				|
+				jjtThis.numberValue = Integer()
+			)
+		)
+		|
+		(
+			<CUSTOM> { jjtThis.property = com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES.CUSTOM; }
+			jjtThis.customKey = Identifier()
+			<EQ>
+			jjtThis.customValue = Expression()
+		)
+		|
+		(
+			<ABSTRACT> { jjtThis.property = com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES.ABSTRACT; }
+			(
+				(
+					<TRUE> { jjtThis.booleanValue = true; }
+				)
+				|
+				(
+					<FALSE> { jjtThis.booleanValue = false; }
+				)
+			)
+		)
+		|
+		(
+			<CLUSTERSELECTION> { jjtThis.property = com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES.CLUSTERSELECTION; }
+			(
+				jjtThis.identifierValue = Identifier()
+				|
+				"round-robin" { jjtThis.customString = "round-robin"; }
+			)
+		)
+		|
+		(
+			<DESCRIPTION> { jjtThis.property = com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES.DESCRIPTION; }
+			(
+				jjtThis.identifierValue = Identifier()
+				|
+            	<NULL>
+            )
+		)
+		|
+		(
+			<ENCRYPTION> { jjtThis.property = com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES.ENCRYPTION; }
+			(
+				jjtThis.identifierValue = Identifier()
+				|
+				<NULL>
+			)
+		)
+	)
+	[ <UNSAFE> { jjtThis.unsafe = true; } ]
+	{ return jjtThis; }
+}
+
+
+ODropClassStatement DropClassStatement():
+{}
+{
+	<DROP> <CLASS>
+	jjtThis.name = Identifier()
+	[ <UNSAFE> { jjtThis.unsafe = true; } ]
+	{ return jjtThis; }
+}
+
+OCreatePropertyStatement CreatePropertyStatement():
+{}
+{
+	<CREATE> <PROPERTY>
+	(
+		jjtThis.className = Identifier()
+		<DOT>
+		jjtThis.propertyName = Identifier()
+		jjtThis.propertyType = Identifier()
+		[
+			jjtThis.linkedType = Identifier()
+		]
+		[ <UNSAFE> { jjtThis.unsafe = true; } ]
+	)
+	{ return jjtThis; }
+}
+
+OAlterPropertyStatement AlterPropertyStatement():
+{}
+{
+	<ALTER> <PROPERTY>
+	(
+		jjtThis.className = Identifier()
+		<DOT>
+		jjtThis.propertyName = Identifier()
+		(
+		    LOOKAHEAD(3)
+		    (
+		        <CUSTOM>
+		        jjtThis.customPropertyName = Identifier()
+		        <EQ>
+		        jjtThis.customPropertyValue = Expression()
+		    )
+            |
+		    (
+                jjtThis.settingName = Identifier()
+		        jjtThis.settingValue = Expression()
+		    )
+		)
+	)
+	{ return jjtThis; }
 }

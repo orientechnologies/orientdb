@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.server.OServer;
@@ -62,7 +63,7 @@ public abstract class OServerCommandAbstract implements OServerCommand {
         parts.set(i, URLDecoder.decode(parts.get(i), "UTF-8"));
       }
     } catch (UnsupportedEncodingException e) {
-      throw new OHttpRequestException(e);
+      throw OException.wrapException(new OHttpRequestException("URL is encoded using format different from UTF-8"), e);
     }
     if (parts.size() < iArgumentCount)
       throw new OHttpRequestException(iSyntax);

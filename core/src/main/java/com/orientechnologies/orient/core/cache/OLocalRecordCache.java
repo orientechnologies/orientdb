@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 
 /**
  * Local cache. it's one to one with record database instances. It is needed to avoid cases when several instances of the same
@@ -61,7 +62,7 @@ public class OLocalRecordCache extends OAbstractRecordCache {
    */
   public void updateRecord(final ORecord record) {
     if (record.getIdentity().getClusterId() != excludedCluster && record.getIdentity().isValid() && !record.isDirty()
-        && !record.getRecordVersion().isTombstone()) {
+        && !ORecordVersionHelper.isTombstone(record.getVersion())) {
       if (underlying.get(record.getIdentity()) != record)
         underlying.put(record);
     }
@@ -81,8 +82,8 @@ public class OLocalRecordCache extends OAbstractRecordCache {
     if (record != null)
       Orient.instance().getProfiler().updateCounter(CACHE_HIT, "Record found in Level1 Cache", 1L, "db.*.cache.level1.cache.found");
     else
-      Orient.instance().getProfiler()
-          .updateCounter(CACHE_MISS, "Record not found in Level1 Cache", 1L, "db.*.cache.level1.cache.notFound");
+      Orient.instance().getProfiler().updateCounter(CACHE_MISS, "Record not found in Level1 Cache", 1L,
+          "db.*.cache.level1.cache.notFound");
 
     return record;
   }

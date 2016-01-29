@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql.method;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.functions.coll.OSQLMethodMultiValue;
 import com.orientechnologies.orient.core.sql.functions.conversion.OSQLMethodAsDate;
@@ -32,6 +33,9 @@ import com.orientechnologies.orient.core.sql.functions.text.OSQLMethodRight;
 import com.orientechnologies.orient.core.sql.functions.text.OSQLMethodSubString;
 import com.orientechnologies.orient.core.sql.functions.text.OSQLMethodToJSON;
 import com.orientechnologies.orient.core.sql.method.misc.*;
+import com.orientechnologies.orient.core.sql.method.sequence.OSQLMethodCurrent;
+import com.orientechnologies.orient.core.sql.method.sequence.OSQLMethodNext;
+import com.orientechnologies.orient.core.sql.method.sequence.OSQLMethodReset;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -82,6 +86,7 @@ public class ODefaultSQLMethodFactory implements OSQLMethodFactory {
     register(OSQLMethodReplace.NAME, new OSQLMethodReplace());
     register(OSQLMethodRight.NAME, new OSQLMethodRight());
     register(OSQLMethodSize.NAME, new OSQLMethodSize());
+    register(OSQLMethodSplit.NAME, new OSQLMethodSplit());
     register(OSQLMethodToLowerCase.NAME, new OSQLMethodToLowerCase());
     register(OSQLMethodToUpperCase.NAME, new OSQLMethodToUpperCase());
     register(OSQLMethodTrim.NAME, new OSQLMethodTrim());
@@ -90,6 +95,10 @@ public class ODefaultSQLMethodFactory implements OSQLMethodFactory {
     register(OSQLMethodToJSON.NAME, new OSQLMethodToJSON());
     register(OSQLMethodValues.NAME, new OSQLMethodValues());
     register(OSQLMethodEach.NAME, new OSQLMethodEach());
+    // SEQUENCE
+    register(OSQLMethodCurrent.NAME, new OSQLMethodCurrent());
+    register(OSQLMethodNext.NAME, new OSQLMethodNext());
+    register(OSQLMethodReset.NAME, new OSQLMethodReset());
   }
 
   public void register(final String iName, final Object iImplementation) {
@@ -115,7 +124,7 @@ public class ODefaultSQLMethodFactory implements OSQLMethodFactory {
       try {
         method = (OSQLMethod) ((Class<?>) m).newInstance();
       } catch (Exception e) {
-        throw new OCommandExecutionException("Cannot create SQL method: " + m, e);
+        throw OException.wrapException(new OCommandExecutionException("Cannot create SQL method: " + m), e);
       }
     else
       method = (OSQLMethod) m;

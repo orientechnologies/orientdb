@@ -255,6 +255,7 @@ public class OTableFormatter {
       columns.put(c, minColumnSize);
 
     boolean tempRids = false;
+    boolean hasClass = false;
 
     int fetched = 0;
     for (OIdentifiable id : resultSet) {
@@ -266,13 +267,18 @@ public class OTableFormatter {
       if (rec instanceof ODocument) {
         ((ODocument) rec).setLazyLoad(false);
         // PARSE ALL THE DOCUMENT'S FIELDS
-        ODocument doc = (ODocument) rec;
+        final ODocument doc = (ODocument) rec;
         for (String fieldName : doc.fieldNames()) {
           columns.put(fieldName, getColumnSize(fetched, doc, fieldName, columns.get(fieldName)));
         }
+
+        if (!hasClass && doc.getClassName() != null)
+          hasClass = true;
+
       } else if (rec instanceof ORecordBytes) {
         // UNIQUE BINARY FIELD
         columns.put("value", maxWidthSize - 15);
+
       }
 
       if (!tempRids && !rec.getIdentity().isPersistent())
@@ -284,6 +290,9 @@ public class OTableFormatter {
 
     if (tempRids)
       columns.remove("@RID");
+
+    if (!hasClass)
+      columns.remove("@CLASS");
 
     // COMPUTE MAXIMUM WIDTH
     int width = 0;
@@ -338,6 +347,8 @@ public class OTableFormatter {
 
     if (tempRids)
       columns.remove("@RID");
+    if (!hasClass)
+      columns.remove("@CLASS");
 
     return columns;
   }

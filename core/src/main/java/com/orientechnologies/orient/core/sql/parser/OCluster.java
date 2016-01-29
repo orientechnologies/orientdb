@@ -6,6 +6,7 @@ import java.util.Map;
 
 public class OCluster extends SimpleNode {
   protected String clusterName;
+  protected Integer clusterNumber;
 
   public OCluster(int id) {
     super(id);
@@ -26,7 +27,11 @@ public class OCluster extends SimpleNode {
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
-    builder.append("cluster:" + clusterName);
+    if(clusterName!=null) {
+      builder.append("cluster:" + clusterName);
+    }else{
+      builder.append("cluster:" + clusterNumber);
+    }
   }
 }
 /* JavaCC - OriginalChecksum=d27abf009fe7db482fbcaac9d52ba192 (do not edit this line) */

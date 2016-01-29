@@ -20,11 +20,11 @@
 
 package com.orientechnologies.common.serialization.types;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 
+import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 /**
@@ -34,13 +34,13 @@ import java.nio.ByteOrder;
  * @since 18.01.12
  */
 public class OLongSerializer implements OBinarySerializer<Long> {
-  public static final byte              ID        = 10;
+  public static final  byte             ID        = 10;
   /**
    * size of long value in bytes
    */
-  public static final int               LONG_SIZE = 8;
+  public static final  int              LONG_SIZE = 8;
   private static final OBinaryConverter CONVERTER = OBinaryConverterFactory.getConverter();
-  public static OLongSerializer         INSTANCE  = new OLongSerializer();
+  public static final  OLongSerializer  INSTANCE  = new OLongSerializer();
 
   public int getObjectSize(final Long object, final Object... hints) {
     return LONG_SIZE;
@@ -68,7 +68,8 @@ public class OLongSerializer implements OBinarySerializer<Long> {
   public long deserializeLiteral(final byte[] stream, final int startPosition) {
     return ((0xff & stream[startPosition + 7]) | (0xff & stream[startPosition + 6]) << 8 | (0xff & stream[startPosition + 5]) << 16
         | (long) (0xff & stream[startPosition + 4]) << 24 | (long) (0xff & stream[startPosition + 3]) << 32
-        | (long) (0xff & stream[startPosition + 2]) << 40 | (long) (0xff & stream[startPosition + 1]) << 48 | (long) (0xff & stream[startPosition]) << 56);
+        | (long) (0xff & stream[startPosition + 2]) << 40 | (long) (0xff & stream[startPosition + 1]) << 48
+        | (long) (0xff & stream[startPosition]) << 56);
   }
 
   public int getObjectSize(final byte[] stream, final int startPosition) {
@@ -93,51 +94,12 @@ public class OLongSerializer implements OBinarySerializer<Long> {
     return CONVERTER.getLong(stream, startPosition, ByteOrder.nativeOrder());
   }
 
-  @Override
-  public void serializeInDirectMemoryObject(final Long object, final ODirectMemoryPointer pointer, final long offset,
-      final Object... hints) {
-    pointer.setLong(offset, object);
-  }
-
-  @Override
-  public Long deserializeFromDirectMemoryObject(final ODirectMemoryPointer pointer, final long offset) {
-    return pointer.getLong(offset);
-  }
-
-  @Override
-  public Long deserializeFromDirectMemoryObject(OWALChangesTree.PointerWrapper wrapper, long offset) {
-    return wrapper.getLong(offset);
-  }
-
   public void serializeNative(final long object, final byte[] stream, final int startPosition, final Object... hints) {
     CONVERTER.putLong(stream, startPosition, object, ByteOrder.nativeOrder());
   }
 
   public long deserializeNative(final byte[] stream, final int startPosition) {
     return CONVERTER.getLong(stream, startPosition, ByteOrder.nativeOrder());
-  }
-
-  public void serializeInDirectMemory(final long object, final ODirectMemoryPointer pointer, final long offset,
-      final Object... hints) {
-    pointer.setLong(offset, object);
-  }
-
-  public long deserializeFromDirectMemory(final ODirectMemoryPointer pointer, final long offset) {
-    return pointer.getLong(offset);
-  }
-
-  public long deserializeFromDirectMemory(final OWALChangesTree.PointerWrapper wrapper, final long offset) {
-    return wrapper.getLong(offset);
-  }
-
-  @Override
-  public int getObjectSizeInDirectMemory(final ODirectMemoryPointer pointer, final long offset) {
-    return LONG_SIZE;
-  }
-
-  @Override
-  public int getObjectSizeInDirectMemory(OWALChangesTree.PointerWrapper wrapper, long offset) {
-    return LONG_SIZE;
   }
 
   public boolean isFixedLength() {
@@ -151,5 +113,45 @@ public class OLongSerializer implements OBinarySerializer<Long> {
   @Override
   public Long preprocess(final Long value, final Object... hints) {
     return value;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void serializeInByteBufferObject(Long object, ByteBuffer buffer, Object... hints) {
+    buffer.putLong(object);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public Long deserializeFromByteBufferObject(ByteBuffer buffer) {
+    return buffer.getLong();
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
+    return LONG_SIZE;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public Long deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+    return walChanges.getLongValue(buffer, offset);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+    return LONG_SIZE;
   }
 }

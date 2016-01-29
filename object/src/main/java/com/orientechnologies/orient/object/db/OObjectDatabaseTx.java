@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.object.db;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.Orient;
@@ -52,7 +53,6 @@ import com.orientechnologies.orient.core.serialization.serializer.record.OSerial
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransactionNoTx;
-import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.object.dictionary.ODictionaryWrapper;
 import com.orientechnologies.orient.object.enhancement.OObjectEntityEnhancer;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
@@ -80,7 +80,7 @@ import java.util.Map;
  * @author Luca Molino
  */
 @SuppressWarnings("unchecked")
-public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements ODatabaseObject, ODatabaseInternal<Object> {
+public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object>implements ODatabaseObject, ODatabaseInternal<Object> {
 
   public static final String    TYPE = "object";
   protected ODictionary<Object> dictionary;
@@ -173,9 +173,11 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
             + " cannot be serialized because is not part of registered entities. To fix this error register this class");
       }
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Error on creating object of class " + iClassName, e, ODatabaseException.class);
+      final String message = "Error on creating object of class " + iClassName;
+      OLogManager.instance().error(this, message, e);
+
+      throw OException.wrapException(new ODatabaseException(message), e);
     }
-    return null;
   }
 
   /**
@@ -199,9 +201,11 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
             + " cannot be serialized because is not part of registered entities. To fix this error register this class");
       }
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Error on creating object of class " + iClassName, e, ODatabaseException.class);
+      final String message = "Error on creating object of class " + iClassName;
+      OLogManager.instance().error(this, message, e);
+
+      throw OException.wrapException(new ODatabaseException(message), e);
     }
-    return null;
   }
 
   public <RET> OObjectIteratorClass<RET> browseClass(final Class<RET> iClusterClass) {
@@ -410,7 +414,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
    * If a multi value (array, collection or map of objects) is passed, then each single object is stored separately.
    */
   public <RET> RET save(final Object iContent, OPERATION_MODE iMode, boolean iForceCreate,
-      final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
+      final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<Integer> iRecordUpdatedCallback) {
     return (RET) save(iContent, null, iMode, false, iRecordCreatedCallback, iRecordUpdatedCallback);
   }
 
@@ -441,7 +445,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
    * @see ODocument#validate()
    */
   public <RET> RET save(final Object iPojo, final String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
-      final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
+      final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<Integer> iRecordUpdatedCallback) {
     checkOpeness();
     if (iPojo == null)
       return (RET) iPojo;
@@ -527,7 +531,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   }
 
   @Override
-  public ODatabaseObject delete(final ORID iRID, final ORecordVersion iVersion) {
+  public ODatabaseObject delete(final ORID iRID, final int iVersion) {
     deleteRecord(iRID, iVersion, false);
     return this;
   }
@@ -538,7 +542,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   }
 
   @Override
-  public ODatabase<Object> cleanOutRecord(ORID iRID, ORecordVersion iVersion) {
+  public ODatabase<Object> cleanOutRecord(final ORID iRID, final int iVersion) {
     deleteRecord(iRID, iVersion, true);
     return this;
   }
@@ -613,9 +617,9 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
     if (!underlying.getTransaction().isActive()) {
       // COPY ALL TX ENTRIES
       final List<ORecordOperation> newEntries;
-      if (getTransaction().getCurrentRecordEntries() != null) {
+      if (getTransaction().getAllRecordEntries() != null) {
         newEntries = new ArrayList<ORecordOperation>();
-        for (ORecordOperation entry : getTransaction().getCurrentRecordEntries())
+        for (ORecordOperation entry : getTransaction().getAllRecordEntries())
           if (entry.type == ORecordOperation.CREATED)
             newEntries.add(entry);
       } else
@@ -636,16 +640,16 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 
   /**
    * Returns the version number of the object. Version starts from 0 assigned on creation.
-   * 
+   *
    * @param iPojo
    *          User object
    */
   @Override
-  public ORecordVersion getVersion(final Object iPojo) {
+  public int getVersion(final Object iPojo) {
     checkOpeness();
     final ODocument record = getRecordByUserObject(iPojo, false);
     if (record != null)
-      return record.getRecordVersion();
+      return record.getVersion();
 
     return OObjectSerializerHelper.getObjectVersion(iPojo);
   }
@@ -864,7 +868,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
     handler.getOrphans().clear();
   }
 
-  private boolean deleteRecord(ORID iRID, ORecordVersion iVersion, boolean prohibitTombstones) {
+  private boolean deleteRecord(ORID iRID, final int iVersion, boolean prohibitTombstones) {
     checkOpeness();
 
     if (iRID == null)

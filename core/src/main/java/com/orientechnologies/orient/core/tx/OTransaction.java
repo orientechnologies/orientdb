@@ -31,7 +31,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.version.ORecordVersion;
 
 import java.util.HashMap;
 import java.util.List;
@@ -92,11 +91,11 @@ public interface OTransaction {
 
   ORecord reloadRecord(ORID iRid, ORecord iRecord, String iFetchPlan, boolean ignoreCache, boolean force);
 
-  ORecord loadRecordIfVersionIsNotLatest(ORID rid, ORecordVersion recordVersion, String fetchPlan, boolean ignoreCache)
+  ORecord loadRecordIfVersionIsNotLatest(ORID rid, int recordVersion, String fetchPlan, boolean ignoreCache)
       throws ORecordNotFoundException;
 
   ORecord saveRecord(ORecord iRecord, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
-      ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback);
+      ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<Integer> iRecordUpdatedCallback);
 
   void deleteRecord(ORecord iRecord, OPERATION_MODE iMode);
 
@@ -104,6 +103,7 @@ public interface OTransaction {
 
   TXSTATUS getStatus();
 
+  @Deprecated
   Iterable<? extends ORecordOperation> getCurrentRecordEntries();
 
   Iterable<? extends ORecordOperation> getAllRecordEntries();
@@ -123,6 +123,7 @@ public interface OTransaction {
   void addIndexEntry(OIndex<?> delegate, final String iIndexName, final OTransactionIndexChanges.OPERATION iStatus,
       final Object iKey, final OIdentifiable iValue);
 
+  @Deprecated
   void clearIndexEntries();
 
   OTransactionIndexChanges getIndexChanges(String iName);
@@ -179,4 +180,9 @@ public interface OTransaction {
   int getEntryCount();
 
   boolean hasRecordCreation();
+
+  /**
+   * Restores a partially committed transaction to the tial
+   */
+  void restore();
 }

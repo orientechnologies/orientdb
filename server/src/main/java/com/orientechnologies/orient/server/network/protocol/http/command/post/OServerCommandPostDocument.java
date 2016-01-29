@@ -20,50 +20,51 @@
 package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
- import com.orientechnologies.orient.core.id.ORID;
- import com.orientechnologies.orient.core.id.ORecordId;
- import com.orientechnologies.orient.core.record.impl.ODocument;
- import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
- import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
- import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
- import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandDocumentAbstract;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
+import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandDocumentAbstract;
 
 public class OServerCommandPostDocument extends OServerCommandDocumentAbstract {
-   private static final String[] NAMES = { "POST|document/*" };
+  private static final String[] NAMES = { "POST|document/*" };
 
-   @Override
-   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-     checkSyntax(iRequest.url, 2, "Syntax error: document/<database>");
+  @Override
+  public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
+    checkSyntax(iRequest.url, 2, "Syntax error: document/<database>");
 
-     iRequest.data.commandInfo = "Create document";
+    iRequest.data.commandInfo = "Create document";
 
-     ODatabaseDocumentTx db = null;
+    ODatabaseDocumentTx db = null;
 
-     ODocument doc;
+    ODocument doc;
 
-     try {
-       db = getProfiledDatabaseInstance(iRequest);
+    try {
+      db = getProfiledDatabaseInstance(iRequest);
 
-       doc = new ODocument().fromJSON(iRequest.content);
-       doc.getRecordVersion().reset();
+      doc = new ODocument().fromJSON(iRequest.content);
+      ORecordInternal.setVersion(doc, 0);
 
-       // ASSURE TO MAKE THE RECORD ID INVALID
-       ((ORecordId) doc.getIdentity()).clusterPosition = ORID.CLUSTER_POS_INVALID;
+      // ASSURE TO MAKE THE RECORD ID INVALID
+      ((ORecordId) doc.getIdentity()).clusterPosition = ORID.CLUSTER_POS_INVALID;
 
-       doc.save();
+      doc.save();
 
-       iResponse.send(OHttpUtils.STATUS_CREATED_CODE, OHttpUtils.STATUS_CREATED_DESCRIPTION, OHttpUtils.CONTENT_JSON,
-           doc.toJSON(), OHttpUtils.HEADER_ETAG + doc.getVersion());
+      iResponse.send(OHttpUtils.STATUS_CREATED_CODE, OHttpUtils.STATUS_CREATED_DESCRIPTION, OHttpUtils.CONTENT_JSON, doc.toJSON(),
+          OHttpUtils.HEADER_ETAG + doc.getVersion());
 
-     } finally {
-       if (db != null)
-         db.close();
-     }
-     return false;
-   }
+    } finally {
+      if (db != null)
+        db.close();
+    }
+    return false;
+  }
 
-   @Override
-   public String[] getNames() {
-     return NAMES;
-   }
- }
+  @Override
+  public String[] getNames() {
+    return NAMES;
+  }
+}

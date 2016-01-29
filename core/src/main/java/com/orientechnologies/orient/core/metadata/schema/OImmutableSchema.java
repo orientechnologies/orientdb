@@ -1,4 +1,33 @@
+/*
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.metadata.schema;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -11,15 +40,13 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 
-import java.util.*;
-
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 10/21/14
  */
 public class OImmutableSchema implements OSchema {
-  private final Map<Integer, OClass>     clustersToClasses;
-  private final Map<String, OClass>      classes;
+  private final Map<Integer, OClass> clustersToClasses;
+  private final Map<String, OClass>  classes;
 
   public final int                       version;
   private final ORID                     identity;
@@ -72,11 +99,6 @@ public class OImmutableSchema implements OSchema {
   }
 
   @Override
-  public OClass createClass(Class<?> iClass, int iDefaultClusterId) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public OClass createClass(String iClassName) {
     throw new UnsupportedOperationException();
   }
@@ -92,17 +114,12 @@ public class OImmutableSchema implements OSchema {
   }
 
   @Override
-  public OClass createClass(String iClassName, int iDefaultClusterId) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public OClass createClass(String iClassName, OClass iSuperClass, int iDefaultClusterId) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public OClass createClass(String iClassName, OClass iSuperClass, int[] iClusterIds) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public OClass createClass(String className, int clusters, OClass... superClasses) {
     throw new UnsupportedOperationException();
   }
 
@@ -250,15 +267,6 @@ public class OImmutableSchema implements OSchema {
   @Override
   public OClusterSelectionFactory getClusterSelectionFactory() {
     return clusterSelectionFactory;
-  }
-
-  @Override
-  public boolean isFullCheckpointOnChange() {
-    return false;
-  }
-
-  @Override
-  public void setFullCheckpointOnChange(boolean fullCheckpointOnChange) {
   }
 
   private ODatabaseDocumentInternal getDatabase() {

@@ -25,7 +25,7 @@ package com.orientechnologies.orient.core.config;
  * @since 09.07.13
  */
 public class OStoragePaginatedClusterConfiguration implements OStorageClusterConfiguration {
-  public static float                    DEFAULT_GROW_FACTOR      = (float) 1.2;
+  public static final float              DEFAULT_GROW_FACTOR      = (float) 1.2;
   public float                           recordOverflowGrowFactor = DEFAULT_GROW_FACTOR;
   public float                           recordGrowFactor         = DEFAULT_GROW_FACTOR;
   public String                          compression;

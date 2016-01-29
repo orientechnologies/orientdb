@@ -26,9 +26,14 @@ import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.OBinaryField;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodField;
-import com.orientechnologies.orient.core.sql.methods.OSQLMethodRuntime;
+import com.orientechnologies.orient.core.sql.method.OSQLMethodRuntime;
 
 import java.util.Set;
 
@@ -81,12 +86,14 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
     }
   }
 
-  public OSQLFilterItemField(final String iName) {
+  public OSQLFilterItemField(final String iName, final OClass iClass) {
     this.name = OIOUtils.getStringContent(iName);
+    collate = getCollateForField(iClass, name);
   }
 
-  public OSQLFilterItemField(final OBaseParser iQueryToParse, final String iName) {
+  public OSQLFilterItemField(final OBaseParser iQueryToParse, final String iName, final OClass iClass) {
     super(iQueryToParse, iName);
+    collate = getCollateForField(iClass, iName);
   }
 
   public Object getValue(final OIdentifiable iRecord, final Object iCurrentResult, final OCommandContext iContext) {
@@ -102,14 +109,25 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
     }
 
     // UNMARSHALL THE SINGLE FIELD
-    if (doc.deserializeFields(preLoadedFieldsArray)) {
-      final Object v = doc.rawField(name);
+    if (preLoadedFieldsArray != null && !doc.deserializeFields(preLoadedFieldsArray))
+      return null;
 
-      collate = getCollateForField(doc, name);
+    final Object v = doc.rawField(name);
+    return transformValue(iRecord, iContext, v);
+  }
 
-      return transformValue(iRecord, iContext, v);
-    }
-    return null;
+  public OBinaryField getBinaryField(final OIdentifiable iRecord) {
+    if (iRecord == null)
+      throw new OCommandExecutionException("expression item '" + name + "' cannot be resolved because current record is NULL");
+
+    if (operationsChain != null && operationsChain.size() > 0)
+      // CANNOT USE BINARY FIELDS
+      return null;
+
+    final ORecord rec = iRecord.getRecord();
+
+    return ORecordSerializerBinary.INSTANCE.getCurrentSerializer().deserializeField(new BytesContainer(rec.toStream()).skip(1),
+        rec instanceof ODocument ? ((ODocument) rec).getSchemaClass() : null, name);
   }
 
   public String getRoot() {

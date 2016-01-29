@@ -16,8 +16,7 @@
  */
 package com.orientechnologies.orient.core.fetch.json;
 
-import java.io.IOException;
-
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OFetchException;
@@ -25,6 +24,8 @@ import com.orientechnologies.orient.core.fetch.OFetchContext;
 import com.orientechnologies.orient.core.fetch.OFetchListener;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
+
+import java.io.IOException;
 
 /**
  * @author luca.molino
@@ -35,14 +36,15 @@ public class OJSONFetchListener implements OFetchListener {
   public boolean requireFieldProcessing() {
     return true;
   }
-  
+
   public void processStandardField(final ODocument iRecord, final Object iFieldValue, final String iFieldName,
       final OFetchContext iContext, final Object iusObject, final String iFormat) {
     try {
-      ((OJSONFetchContext) iContext).getJsonWriter().writeAttribute(((OJSONFetchContext) iContext).getIndentLevel(), true,
+      ((OJSONFetchContext) iContext).getJsonWriter().writeAttribute(((OJSONFetchContext) iContext).getIndentLevel()+1, true,
           iFieldName, iFieldValue);
     } catch (IOException e) {
-      throw new OFetchException("Error processing field '" + iFieldValue + " of record " + iRecord.getIdentity(), e);
+      throw OException.wrapException(
+          new OFetchException("Error processing field '" + iFieldValue + " of record " + iRecord.getIdentity()), e);
     }
   }
 
@@ -70,8 +72,9 @@ public class OJSONFetchListener implements OFetchListener {
     try {
       ((OJSONFetchContext) iContext).writeLinkedAttribute(iLinked, iFieldName);
     } catch (IOException e) {
-      throw new OFetchException("Error writing linked field " + iFieldName + " (record:" + iLinked.getIdentity() + ") of record "
-          + iRootRecord.getIdentity(), e);
+      throw OException.wrapException(
+          new OFetchException("Error writing linked field " + iFieldName + " (record:" + iLinked.getIdentity() + ") of record "
+              + iRootRecord.getIdentity()), e);
     }
   }
 
@@ -84,8 +87,9 @@ public class OJSONFetchListener implements OFetchListener {
         ((OJSONFetchContext) iContext).writeLinkedAttribute(iLinked, iFieldName);
       }
     } catch (IOException e) {
-      throw new OFetchException("Error writing linked field " + iFieldName + " (record:" + iLinked.getIdentity() + ") of record "
-          + iRootRecord.getIdentity(), e);
+      throw OException.wrapException(
+          new OFetchException("Error writing linked field " + iFieldName + " (record:" + iLinked.getIdentity() + ") of record "
+              + iRootRecord.getIdentity()), e);
     }
   }
 

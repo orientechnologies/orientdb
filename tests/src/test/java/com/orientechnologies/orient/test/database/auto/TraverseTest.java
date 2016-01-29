@@ -29,7 +29,9 @@ import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Test
 @SuppressWarnings("unused")
@@ -269,6 +271,41 @@ public class TraverseTest extends DocumentDBBaseTest {
     }
     Assert.assertTrue(found);
 
+  }
+
+  @Test
+  public void traverseAndFilterWithNamedParam() {
+    // issue #5225
+    Map<String, Object> params = new HashMap<String, Object>();
+    params.put("param1", "a.b");
+    List<ODocument> result1 = database.command(
+        new OSQLSynchQuery<ODocument>("select from (traverse out_married, in[attributeWithDotValue = :param1]  from "
+            + tomCruise.getIdentity() + ")")).execute(params);
+    Assert.assertTrue(result1.size() > 0);
+    boolean found = false;
+    for (ODocument doc : result1) {
+      String name = doc.field("name");
+      if ("Nicole Kidman".equals(name)) {
+        found = true;
+        break;
+      }
+    }
+    Assert.assertTrue(found);
+
+  }
+
+  @Test
+  public void traverseAndCheckDepthInSelect() {
+    List<ODocument> result1 = database.command(
+        new OSQLSynchQuery<ODocument>("select *, $depth as d from ( traverse out_married  from " + tomCruise.getIdentity()
+            + " while $depth < 2)")).execute();
+    Assert.assertEquals(result1.size(), 2);
+    boolean found = false;
+    Integer i = 0;
+    for (ODocument doc : result1) {
+      Integer depth = doc.field("d");
+      Assert.assertEquals(depth, i++);
+    }
   }
 
 }

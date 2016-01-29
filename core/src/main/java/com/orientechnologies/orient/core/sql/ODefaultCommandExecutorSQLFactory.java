@@ -15,14 +15,16 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.core.command.OCommandExecutor;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.sql.parser.OMatchStatement;
+import com.orientechnologies.orient.core.sql.parser.OProfileStorageStatement;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-
-import com.orientechnologies.orient.core.command.OCommandExecutor;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.sql.parser.OMatchStatement;
 
 /**
  * Default command operator executor factory.
@@ -98,6 +100,8 @@ public class ODefaultCommandExecutorSQLFactory implements OCommandExecutorSQLFac
     commands.put(OMatchStatement.KEYWORD_MATCH, OMatchStatement.class);
     commands.put(OCommandExecutorSQLOptimizeDatabase.KEYWORD_OPTIMIZE, OCommandExecutorSQLOptimizeDatabase.class);
 
+    commands.put(OProfileStorageStatement.KEYWORD_PROFILE, OCommandExecutorToOStatementWrapper.class);
+
     COMMANDS = Collections.unmodifiableMap(commands);
   }
 
@@ -121,8 +125,8 @@ public class ODefaultCommandExecutorSQLFactory implements OCommandExecutorSQLFac
     try {
       return clazz.newInstance();
     } catch (Exception e) {
-      throw new OCommandExecutionException("Error in creation of command " + name
-          + "(). Probably there is not an empty constructor or the constructor generates errors", e);
+      throw OException.wrapException(new OCommandExecutionException("Error in creation of command " + name
+          + "(). Probably there is not an empty constructor or the constructor generates errors"), e);
     }
   }
 

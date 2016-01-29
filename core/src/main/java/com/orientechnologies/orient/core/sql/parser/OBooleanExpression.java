@@ -14,7 +14,7 @@ import java.util.Map;
  */
 public abstract class OBooleanExpression extends SimpleNode {
 
-  public static OBooleanExpression TRUE = new OBooleanExpression(0) {
+  public static final OBooleanExpression TRUE = new OBooleanExpression(0) {
     @Override
     public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
       return true;
@@ -43,7 +43,7 @@ public abstract class OBooleanExpression extends SimpleNode {
     }
   };
 
-  public static OBooleanExpression FALSE = new OBooleanExpression(0) {
+  public static final OBooleanExpression FALSE = new OBooleanExpression(0) {
     @Override
     public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
       return false;
@@ -109,6 +109,20 @@ public abstract class OBooleanExpression extends SimpleNode {
 
   public List<OBinaryCondition> getIndexedFunctionConditions(OClass iSchemaClass, ODatabaseDocumentInternal database) {
     return null;
+  }
+
+  public List<OAndBlock> flatten() {
+
+    return Collections.singletonList(encapsulateInAndBlock(this));
+  }
+
+  protected OAndBlock encapsulateInAndBlock(OBooleanExpression item) {
+    if(item instanceof OAndBlock){
+      return (OAndBlock)item;
+    }
+    OAndBlock result = new OAndBlock(-1);
+    result.subBlocks.add(item);
+    return result;
   }
 
 }

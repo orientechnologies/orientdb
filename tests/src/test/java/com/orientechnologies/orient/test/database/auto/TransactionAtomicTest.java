@@ -31,10 +31,10 @@ import com.orientechnologies.orient.core.exception.OConcurrentModificationExcept
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
-import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 
 @Test(groups = "dictionary")
 public class TransactionAtomicTest extends DocumentDBBaseTest {
@@ -85,12 +85,10 @@ public class TransactionAtomicTest extends DocumentDBBaseTest {
 
     doc.setDirty();
     doc.field("testmvcc", true);
-    doc.getRecordVersion().increment();
+    ORecordInternal.setVersion(doc, doc.getVersion() + 1);
     try {
       doc.save();
       Assert.assertTrue(false);
-    } catch (OResponseProcessingException e) {
-      Assert.assertTrue(e.getCause() instanceof OConcurrentModificationException);
     } catch (OConcurrentModificationException e) {
       Assert.assertTrue(true);
     }
@@ -206,9 +204,6 @@ public class TransactionAtomicTest extends DocumentDBBaseTest {
 
       Assert.assertTrue(false);
 
-    } catch (OResponseProcessingException e) {
-      Assert.assertTrue(e.getCause() instanceof ORecordDuplicatedException);
-      database.rollback();
     } catch (ORecordDuplicatedException e) {
       Assert.assertTrue(true);
       database.rollback();

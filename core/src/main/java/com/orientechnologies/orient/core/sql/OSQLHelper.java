@@ -43,14 +43,6 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
-import com.orientechnologies.orient.core.sql.sequence.OSQLSequenceItem;
-
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -88,7 +80,7 @@ public class OSQLHelper {
     }
 
     // PARSE AS FIELD
-    return new OSQLFilterItemField(null, iWord);
+    return new OSQLFilterItemField(null, iWord, iRecord.getSchemaClass());
   }
 
   /**
@@ -134,7 +126,12 @@ public class OSQLHelper {
         if (parts == null || parts.size() != 2)
           throw new OCommandSQLParsingException("Map found but entries are not defined as <key>:<value>");
 
-        map.put(parseValue(parts.get(0), iContext), parseValue(parts.get(1), iContext));
+        Object key = OStringSerializerHelper.decode(parseValue(parts.get(0), iContext).toString());
+        Object value = parseValue(parts.get(1), iContext);
+        if(value instanceof String){
+          value = OStringSerializerHelper.decode(value.toString());
+        }
+        map.put(key, value);
       }
 
       if (map.containsKey(ODocumentHelper.ATTRIBUTE_TYPE))
@@ -240,12 +237,8 @@ public class OSQLHelper {
       // CONTEXT VARIABLE
       return new OSQLFilterItemVariable(iCommand, iWord);
 
-    if (iWord.startsWith(OSQLSequenceItem.PREFIX)) {
-      return new OSQLSequenceItem(iCommand, iWord);
-    }
-
     // PARSE AS FIELD
-    return new OSQLFilterItemField(iCommand, iWord);
+    return new OSQLFilterItemField(iCommand, iWord, null);
   }
 
   public static OSQLFunctionRuntime getFunction(final OBaseParser iCommand, final String iWord) {
@@ -359,14 +352,21 @@ public class OSQLHelper {
                     fieldValue = null;
                 }
               }
+            } else if (immutableClass.isEdgeType() && ("out".equals(fieldName) || "in".equals(fieldName)) &&
+                (fieldValue instanceof List)) {
+              List lst = (List) fieldValue;
+              if (lst.size() == 1) {
+                fieldValue = lst.get(0);
+              }
             }
+
           }
 
           if (OMultiValue.isMultiValue(fieldValue)) {
             final List<Object> tempColl = new ArrayList<Object>(OMultiValue.getSize(fieldValue));
 
             String singleFieldName = null;
-            for (Object o : OMultiValue.getMultiValueIterable(fieldValue)) {
+            for (Object o : OMultiValue.getMultiValueIterable(fieldValue, false)) {
               if (o instanceof OIdentifiable && !((OIdentifiable) o).getIdentity().isPersistent()) {
                 // TEMPORARY / EMBEDDED
                 final ORecord rec = ((OIdentifiable) o).getRecord();

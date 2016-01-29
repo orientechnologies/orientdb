@@ -75,7 +75,8 @@ import com.orientechnologies.common.util.OCommonConst;
  * other bad input characters. You should now get an IOException if you try decoding something that has bad characters in it.</li>
  * <li>v2.3.6 - Fixed bug when breaking lines and the final byte of the encoded string ended in the last column; the buffer was not
  * properly shrunk and contained an extra (null) byte that made it into the string.</li>
- * <li>v2.3.5 - Fixed bug in {@link #encodeFromFile} where estimated buffer size was wrong for files of size 31, 34, and 37 bytes.</li>
+ * <li>v2.3.5 - Fixed bug in {@link #encodeFromFile} where estimated buffer size was wrong for files of size 31, 34, and 37 bytes.
+ * </li>
  * <li>v2.3.4 - Fixed bug when working with gzipped streams whereby flushing the Base64.OutputStream closed the Base64 encoding (by
  * padding with equals signs) too soon. Also added an option to suppress the automatic decoding of gzipped streams. Also added
  * experimental support for specifying a class loader when using the
@@ -94,8 +95,8 @@ import com.orientechnologies.common.util.OCommonConst;
  * coding was cleaned up including throwing exceptions where necessary instead of returning null values or something similar. Here
  * are some changes that may affect you:
  * <ul>
- * <li><em>Does not break lines, by default.</em> This is to keep in compliance with <a
- * href="http://www.faqs.org/rfcs/rfc3548.html">RFC3548</a>.</li>
+ * <li><em>Does not break lines, by default.</em> This is to keep in compliance with
+ * <a href="http://www.faqs.org/rfcs/rfc3548.html">RFC3548</a>.</li>
  * <li><em>Throws exceptions instead of returning null values.</em> Because some operations (especially those that may permit the
  * GZIP option) use IO streams, there is a possiblity of an java.io.IOException being thrown. After some discussion and thought,
  * I've changed the behavior of the methods to throw java.io.IOExceptions rather than return null if ever there's an error. I think
@@ -157,61 +158,61 @@ public class OBase64Utils {
   /* ******** P U B L I C F I E L D S ******** */
 
   /** No options specified. Value is zero. */
-  public final static int     NO_OPTIONS          = 0;
+  public final static int NO_OPTIONS = 0;
 
   /** Specify encoding in first bit. Value is one. */
-  public final static int     ENCODE              = 1;
+  public final static int ENCODE = 1;
 
   /** Specify decoding in first bit. Value is zero. */
-  public final static int     DECODE              = 0;
+  public final static int DECODE = 0;
 
   /** Specify that data should be gzip-compressed in second bit. Value is two. */
-  public final static int     GZIP                = 2;
+  public final static int GZIP = 2;
 
   /** Specify that gzipped data should <em>not</em> be automatically gunzipped. */
-  public final static int     DONT_GUNZIP         = 4;
+  public final static int DONT_GUNZIP = 4;
 
   /** Do break lines when encoding. Value is 8. */
-  public final static int     DO_BREAK_LINES      = 8;
+  public final static int DO_BREAK_LINES = 8;
 
   /**
-   * Encode using Base64-like encoding that is URL- and Filename-safe as described in Section 4 of RFC3548: <a
-   * href="http://www.faqs.org/rfcs/rfc3548.html">http://www.faqs.org/rfcs/rfc3548.html</a>. It is important to note that data
+   * Encode using Base64-like encoding that is URL- and Filename-safe as described in Section 4 of RFC3548:
+   * <a href="http://www.faqs.org/rfcs/rfc3548.html">http://www.faqs.org/rfcs/rfc3548.html</a>. It is important to note that data
    * encoded this way is <em>not</em> officially valid Base64, or at the very least should not be called Base64 without also
    * specifying that is was encoded using the URL- and Filename-safe dialect.
    */
-  public final static int     URL_SAFE            = 16;
+  public final static int URL_SAFE = 16;
 
   /**
-   * Encode using the special "ordered" dialect of Base64 described here: <a
-   * href="http://www.faqs.org/qa/rfcc-1940.html">http://www.faqs.org/qa/rfcc-1940.html</a>.
+   * Encode using the special "ordered" dialect of Base64 described here:
+   * <a href="http://www.faqs.org/qa/rfcc-1940.html">http://www.faqs.org/qa/rfcc-1940.html</a>.
    */
-  public final static int     ORDERED             = 32;
+  public final static int ORDERED = 32;
 
   /* ******** P R I V A T E F I E L D S ******** */
 
   /** Maximum line length (76) of Base64 output. */
-  private final static int    MAX_LINE_LENGTH     = 76;
+  private final static int MAX_LINE_LENGTH = 76;
 
   /** The equals sign (=) as a byte. */
-  private final static byte   EQUALS_SIGN         = (byte) '=';
+  private final static byte EQUALS_SIGN = (byte) '=';
 
   /** The new line character (\n) as a byte. */
-  private final static byte   NEW_LINE            = (byte) '\n';
+  private final static byte NEW_LINE = (byte) '\n';
 
   /** Preferred encoding. */
-  private final static String PREFERRED_ENCODING  = "US-ASCII";
+  private final static String PREFERRED_ENCODING = "US-ASCII";
 
-  private final static byte   WHITE_SPACE_ENC     = -5;                                                // Indicates white space in
-                                                                                                        // encoding
-  private final static byte   EQUALS_SIGN_ENC     = -1;                                                // Indicates equals sign in
-                                                                                                        // encoding
+  private final static byte WHITE_SPACE_ENC = -5; // Indicates white space in
+                                                  // encoding
+  private final static byte EQUALS_SIGN_ENC = -1; // Indicates equals sign in
+                                                  // encoding
 
   /* ******** S T A N D A R D B A S E 6 4 A L P H A B E T ******** */
 
   /** The 64 valid Base64 values. */
   /* Host platform me be something funny like EBCDIC, so we hardcode these values. */
-  private final static byte[] _STANDARD_ALPHABET  = { (byte) 'A', (byte) 'B', (byte) 'C', (byte) 'D', (byte) 'E', (byte) 'F',
+  private final static byte[] _STANDARD_ALPHABET = { (byte) 'A', (byte) 'B', (byte) 'C', (byte) 'D', (byte) 'E', (byte) 'F',
       (byte) 'G', (byte) 'H', (byte) 'I', (byte) 'J', (byte) 'K', (byte) 'L', (byte) 'M', (byte) 'N', (byte) 'O', (byte) 'P',
       (byte) 'Q', (byte) 'R', (byte) 'S', (byte) 'T', (byte) 'U', (byte) 'V', (byte) 'W', (byte) 'X', (byte) 'Y', (byte) 'Z',
       (byte) 'a', (byte) 'b', (byte) 'c', (byte) 'd', (byte) 'e', (byte) 'f', (byte) 'g', (byte) 'h', (byte) 'i', (byte) 'j',
@@ -253,16 +254,16 @@ public class OBase64Utils {
       -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, // Decimal 218 - 230
       -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, // Decimal 231 - 243
       -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9 // Decimal 244 - 255
-                                                  };
+  };
 
   /* ******** U R L S A F E B A S E 6 4 A L P H A B E T ******** */
 
   /**
-   * Used in the URL- and Filename-safe dialect described in Section 4 of RFC3548: <a
-   * href="http://www.faqs.org/rfcs/rfc3548.html">http://www.faqs.org/rfcs/rfc3548.html</a>. Notice that the last two bytes become
-   * "hyphen" and "underscore" instead of "plus" and "slash."
+   * Used in the URL- and Filename-safe dialect described in Section 4 of RFC3548:
+   * <a href="http://www.faqs.org/rfcs/rfc3548.html">http://www.faqs.org/rfcs/rfc3548.html</a>. Notice that the last two bytes
+   * become "hyphen" and "underscore" instead of "plus" and "slash."
    */
-  private final static byte[] _URL_SAFE_ALPHABET  = { (byte) 'A', (byte) 'B', (byte) 'C', (byte) 'D', (byte) 'E', (byte) 'F',
+  private final static byte[] _URL_SAFE_ALPHABET = { (byte) 'A', (byte) 'B', (byte) 'C', (byte) 'D', (byte) 'E', (byte) 'F',
       (byte) 'G', (byte) 'H', (byte) 'I', (byte) 'J', (byte) 'K', (byte) 'L', (byte) 'M', (byte) 'N', (byte) 'O', (byte) 'P',
       (byte) 'Q', (byte) 'R', (byte) 'S', (byte) 'T', (byte) 'U', (byte) 'V', (byte) 'W', (byte) 'X', (byte) 'Y', (byte) 'Z',
       (byte) 'a', (byte) 'b', (byte) 'c', (byte) 'd', (byte) 'e', (byte) 'f', (byte) 'g', (byte) 'h', (byte) 'i', (byte) 'j',
@@ -308,15 +309,15 @@ public class OBase64Utils {
       -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, // Decimal 218 - 230
       -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, // Decimal 231 - 243
       -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9 // Decimal 244 - 255
-                                                  };
+  };
 
   /* ******** O R D E R E D B A S E 6 4 A L P H A B E T ******** */
 
   /**
-   * I don't get the point of this technique, but someone requested it, and it is described here: <a
-   * href="http://www.faqs.org/qa/rfcc-1940.html">http://www.faqs.org/qa/rfcc-1940.html</a>.
+   * I don't get the point of this technique, but someone requested it, and it is described here:
+   * <a href="http://www.faqs.org/qa/rfcc-1940.html">http://www.faqs.org/qa/rfcc-1940.html</a>.
    */
-  private final static byte[] _ORDERED_ALPHABET   = { (byte) '-', (byte) '0', (byte) '1', (byte) '2', (byte) '3', (byte) '4',
+  private final static byte[] _ORDERED_ALPHABET = { (byte) '-', (byte) '0', (byte) '1', (byte) '2', (byte) '3', (byte) '4',
       (byte) '5', (byte) '6', (byte) '7', (byte) '8', (byte) '9', (byte) 'A', (byte) 'B', (byte) 'C', (byte) 'D', (byte) 'E',
       (byte) 'F', (byte) 'G', (byte) 'H', (byte) 'I', (byte) 'J', (byte) 'K', (byte) 'L', (byte) 'M', (byte) 'N', (byte) 'O',
       (byte) 'P', (byte) 'Q', (byte) 'R', (byte) 'S', (byte) 'T', (byte) 'U', (byte) 'V', (byte) 'W', (byte) 'X', (byte) 'Y',
@@ -327,7 +328,7 @@ public class OBase64Utils {
   /**
    * Used in decoding the "ordered" dialect of Base64.
    */
-  private final static byte[] _ORDERED_DECODABET  = { -9, -9, -9, -9, -9, -9, -9, -9, -9, // Decimal 0 - 8
+  private final static byte[] _ORDERED_DECODABET = { -9, -9, -9, -9, -9, -9, -9, -9, -9, // Decimal 0 - 8
       -5, -5, // Whitespace: Tab and Linefeed
       -9, -9, // Decimal 11 - 12
       -5, // Whitespace: Carriage Return
@@ -362,7 +363,7 @@ public class OBase64Utils {
       -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, // Decimal 218 - 230
       -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, // Decimal 231 - 243
       -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9 // Decimal 244 - 255
-                                                  };
+  };
 
   /* ******** D E T E R M I N E W H I C H A L H A B E T ******** */
 
@@ -375,15 +376,15 @@ public class OBase64Utils {
    */
   public static class InputStream extends java.io.FilterInputStream {
 
-    private boolean encode;      // Encoding or decoding
-    private int     position;    // Current position in the buffer
-    private byte[]  buffer;      // Small buffer holding converted data
+    private boolean encode;       // Encoding or decoding
+    private int     position;     // Current position in the buffer
+    private byte[]  buffer;       // Small buffer holding converted data
     private int     bufferLength; // Length of buffer (3 or 4)
-    private int     numSigBytes; // Number of meaningful bytes in the buffer
+    private int     numSigBytes;  // Number of meaningful bytes in the buffer
     private int     lineLength;
-    private boolean breakLines;  // Break lines at less than 80 characters
-    private int     options;     // Record options used to create the stream.
-    private byte[]  decodabet;   // Local copies to avoid extra method calls
+    private boolean breakLines;   // Break lines at less than 80 characters
+    private int     options;      // Record options used to create the stream.
+    private byte[]  decodabet;    // Local copies to avoid extra method calls
 
     /**
      * Constructs a {@link OBase64Utils.InputStream} in DECODE mode.
@@ -1032,19 +1033,23 @@ public class OBase64Utils {
     } // end catch
     finally {
       try {
-        oos.close();
+        if (oos != null)
+          oos.close();
       } catch (Exception e) {
       }
       try {
-        gzos.close();
+        if (gzos != null)
+          gzos.close();
       } catch (Exception e) {
       }
       try {
-        b64os.close();
+        if (b64os != null)
+          b64os.close();
       } catch (Exception e) {
       }
       try {
-        baos.close();
+        if (baos != null)
+          baos.close();
       } catch (Exception e) {
       }
     } // end finally
@@ -1227,7 +1232,8 @@ public class OBase64Utils {
    *           if source array, offset, or length are invalid
    * @since 2.0
    */
-  public static String encodeBytes(final byte[] source, final int off, final int len, final int options) throws java.io.IOException {
+  public static String encodeBytes(final byte[] source, final int off, final int len, final int options)
+      throws java.io.IOException {
     final byte[] encoded = encodeBytesToBytes(source, off, len, options);
 
     // Return value according to relevant encoding.
@@ -1303,8 +1309,8 @@ public class OBase64Utils {
     } // end if: len < 0
 
     if (off + len > source.length) {
-      throw new IllegalArgumentException(String.format("Cannot have offset of %d and length of %d with array of length %d", off,
-          len, source.length));
+      throw new IllegalArgumentException(
+          String.format("Cannot have offset of %d and length of %d with array of length %d", off, len, source.length));
     } // end if: off < 0
 
     // Compress?
@@ -1439,8 +1445,8 @@ public class OBase64Utils {
       throw new NullPointerException("Destination array was null.");
     } // end if
     if (srcOffset < 0 || srcOffset + 3 >= source.length) {
-      throw new IllegalArgumentException(String.format(
-          "Source array with length %d cannot have offset of %d and still process four bytes", source.length, srcOffset));
+      throw new IllegalArgumentException(String
+          .format("Source array with length %d cannot have offset of %d and still process four bytes", source.length, srcOffset));
     } // end if
     if (destOffset < 0 || destOffset + 2 >= destination.length) {
       throw new IllegalArgumentException(String.format(
@@ -1537,15 +1543,15 @@ public class OBase64Utils {
       throw new NullPointerException("Cannot decode null source array.");
     } // end if
     if (off < 0 || off + len > source.length) {
-      throw new IllegalArgumentException(String.format(
-          "Source array with length %d cannot have offset of %d and process %d bytes", source.length, off, len));
+      throw new IllegalArgumentException(
+          String.format("Source array with length %d cannot have offset of %d and process %d bytes", source.length, off, len));
     } // end if
 
     if (len == 0) {
       return OCommonConst.EMPTY_BYTE_ARRAY;
     } else if (len < 4) {
-      throw new IllegalArgumentException("Base64-encoded string must have at least four characters, but length specified was "
-          + len);
+      throw new IllegalArgumentException(
+          "Base64-encoded string must have at least four characters, but length specified was " + len);
     } // end if
 
     byte[] DECODABET = getDecodabet(options);
@@ -1721,8 +1727,8 @@ public class OBase64Utils {
    *           if the decoded object is of a class that cannot be found by the JVM
    * @since 2.3.4
    */
-  public static Object decodeToObject(String encodedObject, int options, final ClassLoader loader) throws java.io.IOException,
-      java.lang.ClassNotFoundException {
+  public static Object decodeToObject(String encodedObject, int options, final ClassLoader loader)
+      throws java.io.IOException, java.lang.ClassNotFoundException {
 
     // Decode and gunzip if necessary
     byte[] objBytes = decode(encodedObject, options);

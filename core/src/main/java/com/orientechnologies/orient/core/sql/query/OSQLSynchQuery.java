@@ -103,6 +103,11 @@ public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> impleme
     return result;
   }
 
+  @Override
+  public boolean isIdempotent() {
+    return true;
+  }
+
   public Object getResult() {
     return result;
   }

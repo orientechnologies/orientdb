@@ -28,7 +28,7 @@ public class ODatabaseCreateDropClusterTest {
     ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + ODatabaseCreateDropClusterTest.class.getName());
     db.create();
     try {
-      OClass test = db.getMetadata().getSchema().createClass("test");
+      OClass test = db.getMetadata().getSchema().createClass("test", 1, null);
       test.addCluster("aTest");
       Assert.assertNotEquals(db.getClusterIdByName("aTest"), -1);
       Assert.assertEquals(test.getClusterIds().length, 2);

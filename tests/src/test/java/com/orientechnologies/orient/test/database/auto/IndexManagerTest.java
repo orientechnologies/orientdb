@@ -62,13 +62,11 @@ public class IndexManagerTest extends DocumentDBBaseTest {
           null, null, null);
       fail();
     } catch (Exception e) {
-      if (e instanceof OResponseProcessingException)
-        e = (Exception) e.getCause();
+      Throwable cause = e;
+      while (cause.getCause() != null)
+        cause = cause.getCause();
 
-      if (e.getCause() != null)
-        e = (Exception) e.getCause();
-
-      assertTrue(e instanceof IllegalArgumentException);
+      assertTrue(cause instanceof IllegalArgumentException);
     }
   }
 

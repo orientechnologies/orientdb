@@ -57,7 +57,7 @@ public class OTraverseRecordProcess extends OTraverseAbstractProcess<OIdentifiab
     if (command.getPredicate() != null) {
       final Object conditionResult = command.getPredicate().evaluate(target, null, command.getContext());
       if (conditionResult != Boolean.TRUE)
-        return pop();
+        return drop();
     }
 
     // UPDATE ALL TRAVERSED RECORD TO AVOID RECURSION
@@ -146,7 +146,7 @@ public class OTraverseRecordProcess extends OTraverseAbstractProcess<OIdentifiab
           if (fieldValue instanceof ORecordLazyMultiValue)
             coll = ((ORecordLazyMultiValue) fieldValue).rawIterator();
           else
-            coll = OMultiValue.getMultiValueIterator(fieldValue);
+            coll = OMultiValue.getMultiValueIterator(fieldValue, false);
 
           subProcess = new OTraverseMultiValueProcess(command, (Iterator<Object>) coll, getPath().appendField(field.toString()));
         } else if (fieldValue instanceof OIdentifiable && ((OIdentifiable) fieldValue).getRecord() instanceof ODocument) {

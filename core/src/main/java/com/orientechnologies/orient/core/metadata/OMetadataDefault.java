@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.metadata;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
@@ -221,7 +222,8 @@ public class OMetadataDefault implements OMetadataInternal {
         security = securityClass.getDeclaredConstructor(OSecurity.class, ODatabaseDocumentInternal.class).newInstance(wrapped,
             database);
       } catch (Exception e) {
-        throw new OSecurityException("Cannot install custom security implementation (" + securityClass + ")", e);
+        throw OException.wrapException(new OSecurityException("Cannot install custom security implementation (" + securityClass
+            + ")"), e);
       }
 
     functionLibrary = new OFunctionLibraryProxy(database.getStorage().getResource(OFunctionLibrary.class.getSimpleName(),

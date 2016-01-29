@@ -1,14 +1,11 @@
 package com.orientechnologies.orient.core.encryption.impl;
 
 import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
-import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -90,8 +87,8 @@ public class OAESEncryptionTest extends AbstractEncryptionTest {
         db.open("admin", "admin");
         storage = ((ODatabaseDocumentInternal) db).getStorage();
         Assert.fail();
-      } catch (Exception e) {
-        Assert.assertTrue(e.getCause() instanceof OSecurityException || e.getCause().getCause() instanceof OSecurityException);
+      } catch (OSecurityException e) {
+        Assert.assertTrue(true);
       } finally {
         db.activateOnCurrentThread();
         db.close();
@@ -103,8 +100,8 @@ public class OAESEncryptionTest extends AbstractEncryptionTest {
         db.open("admin", "admin");
         storage = ((ODatabaseDocumentInternal) db).getStorage();
         Assert.fail();
-      } catch (OStorageException e) {
-        Assert.assertTrue(e.getCause() instanceof OSecurityException || e.getCause().getCause() instanceof OSecurityException);
+      } catch (OSecurityException e) {
+        Assert.assertTrue(true);
       } finally {
         db.activateOnCurrentThread();
         db.close();
@@ -137,7 +134,7 @@ public class OAESEncryptionTest extends AbstractEncryptionTest {
     db.create();
     try {
       db.command(new OCommandSQL("create class TestEncryption")).execute();
-      db.command(new OCommandSQL("alter cluster TestEncryption encryption aes")).execute();
+      db.command(new OCommandSQL("alter class TestEncryption encryption aes")).execute();
       db.command(new OCommandSQL("insert into TestEncryption set name = 'Jay'")).execute();
 
       List result = db.query(new OSQLSynchQuery<ODocument>("select from TestEncryption"));
@@ -170,8 +167,8 @@ public class OAESEncryptionTest extends AbstractEncryptionTest {
         Assert.assertFalse(result.isEmpty());
 
         Assert.fail();
-      } catch (ODatabaseException e) {
-        Assert.assertTrue(e.getCause() instanceof OSecurityException);
+      } catch (OSecurityException e) {
+        Assert.assertTrue(true);
       } finally {
         db.close();
         storage.close(true, false);
@@ -183,8 +180,8 @@ public class OAESEncryptionTest extends AbstractEncryptionTest {
         storage = ((ODatabaseDocumentInternal) db).getStorage();
         db.query(new OSQLSynchQuery<ODocument>("select from TestEncryption"));
         Assert.fail();
-      } catch (OStorageException e) {
-        Assert.assertTrue(e.getCause() instanceof OSecurityException);
+      } catch (OSecurityException e) {
+        Assert.assertTrue(true);
       } finally {
         db.close();
         storage.close(true, false);

@@ -38,7 +38,7 @@ import java.util.Map.Entry;
  *          Value
  * @see OTriple
  */
-public class OPair<K extends Comparable<K>, V> implements Entry<K, V>, Comparable<OPair<K, V>>, Serializable {
+public class OPair<K extends Comparable, V> implements Entry<K, V>, Comparable<OPair<K, V>>, Serializable {
   public K key;
   public V value;
 

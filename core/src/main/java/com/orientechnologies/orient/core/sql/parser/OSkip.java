@@ -10,8 +10,6 @@ public class OSkip extends SimpleNode {
 
   protected OInputParameter inputParam;
 
-  protected Object          inputFinalValue;
-
   public OSkip(int id) {
     super(id);
   }

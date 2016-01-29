@@ -41,7 +41,7 @@ public interface ODistributedServerManager {
   };
 
   enum DB_STATUS {
-    OFFLINE, SYNCHRONIZING, ONLINE
+    OFFLINE, SYNCHRONIZING, ONLINE, BACKUP
   };
 
   boolean isEnabled();
@@ -68,7 +68,15 @@ public interface ODistributedServerManager {
 
   void updateLastClusterChange();
 
+  /**
+   * Available means not OFFLINE, so ONLINE or SYNCHRONIZING.
+   */
   boolean isNodeAvailable(String iNodeName, String databaseName);
+
+  /**
+   * Returns true if the node status is ONLINE.
+   */
+  boolean isNodeOnline(String iNodeName, String databaseName);
 
   boolean isOffline();
 
@@ -107,4 +115,6 @@ public interface ODistributedServerManager {
       OAbstractRemoteTask iTask, EXECUTION_MODE iExecutionMode);
 
   ODocument getStats();
+
+  Throwable convertException(Throwable original);
 }

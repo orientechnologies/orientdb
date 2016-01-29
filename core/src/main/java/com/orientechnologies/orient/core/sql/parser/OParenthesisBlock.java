@@ -51,5 +51,9 @@ public class OParenthesisBlock extends OBooleanExpression {
   protected List<Object> getExternalCalculationConditions() {
     return subElement.getExternalCalculationConditions();
   }
+
+  @Override public List<OAndBlock> flatten() {
+    return subElement.flatten();
+  }
 }
 /* JavaCC - OriginalChecksum=9a16b6cf7d051382acb94c45067631a9 (do not edit this line) */

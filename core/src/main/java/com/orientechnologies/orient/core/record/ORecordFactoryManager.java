@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.record;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -94,7 +95,7 @@ public class ORecordFactoryManager {
 
   public void declareRecordType(byte iByte, String iName, Class<? extends ORecord> iClass, final ORecordFactory iFactory) {
     if (recordTypes[iByte] != null)
-      throw new OException("Record type byte '" + iByte + "' already in use : " + recordTypes[iByte].getName());
+      throw new OSystemException("Record type byte '" + iByte + "' already in use : " + recordTypes[iByte].getName());
     recordTypeNames[iByte] = iName;
     recordTypes[iByte] = iClass;
     recordFactories[iByte] = iFactory;

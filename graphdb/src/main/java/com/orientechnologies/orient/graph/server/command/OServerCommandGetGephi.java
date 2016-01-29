@@ -19,6 +19,13 @@
  */
 package com.orientechnologies.orient.graph.server.command;
 
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
@@ -37,13 +44,6 @@ import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientElement;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstract {
   private static final String[] NAMES = { "GET|gephi/*" };
 
@@ -55,9 +55,7 @@ public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstrac
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    String[] urlParts = checkSyntax(
-        iRequest.url,
-        4,
+    String[] urlParts = checkSyntax(iRequest.url, 4,
         "Syntax error: gephi/<database>/<language>/<query-text>[/<limit>][/<fetchPlan>].<br>Limit is optional and is setted to 20 by default. Set expressely to 0 to have no limits.");
 
     final String language = urlParts[2];
@@ -93,7 +91,7 @@ public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstrac
 
     } finally {
       if (graph != null && shutdownFlag.getValue())
-        graph.shutdown();
+        graph.shutdown(false, false);
 
       if (db != null)
         db.close();

@@ -40,7 +40,7 @@ public abstract class OrientGraphRemoteTest extends OrientGraphTest {
     oldOrientDBHome = System.getProperty("ORIENTDB_HOME");
     System.setProperty("ORIENTDB_HOME", serverHome);
 
-    server = OServerMain.create();
+    server = new OServer(false);
     server.startup(OrientGraphRemoteTest.class.getResourceAsStream("/embedded-server-config.xml"));
     server.activate();
   }
@@ -94,6 +94,7 @@ public abstract class OrientGraphRemoteTest extends OrientGraphTest {
 
     graph = factory.getTx();
     graph.setWarnOnForceClosingTx(false);
+    graph.setStandardExceptions(true);
 
     currentGraphs.put(url, graph);
 

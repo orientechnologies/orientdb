@@ -163,9 +163,6 @@ public class ORecordLazyMap extends OTrackedMap<OIdentifiable> implements ORecor
     final Object value = super.get(iKey);
     if (value != null)
       if (value instanceof ORecord && !((ORecord) value).getIdentity().isNew()) {
-        if (((ORecord) value).isDirty())
-          ODatabaseRecordThreadLocal.INSTANCE.get().save((ORecord) value);
-
         marshalling = true;
         try {
           // OVERWRITE

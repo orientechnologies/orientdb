@@ -35,7 +35,7 @@ public class OExpression extends SimpleNode {
     } else if (value instanceof OMathExpression) {
       return ((OMathExpression) value).execute(iCurrentRecord, ctx);
     } else if (value instanceof OJson) {
-      return null;// TODO
+      return ((OJson) value).toMap(iCurrentRecord, ctx);
     } else if (value instanceof String) {
       return value;
     } else if (value instanceof Number) {
@@ -44,6 +44,32 @@ public class OExpression extends SimpleNode {
 
     return value;
 
+  }
+
+  public boolean isBaseIdentifier(){
+    if(value instanceof OMathExpression) {
+      return ((OMathExpression)value).isBaseIdentifier();
+    }
+
+    return false;
+  }
+
+  public boolean isEarlyCalculated(){
+    if(value instanceof Number) {
+      return true;
+    }
+    if(value instanceof String) {
+      return true;
+    }
+    if(value instanceof OInputParameter) {
+      return true;
+    }
+
+    if(value instanceof OMathExpression) {
+      return ((OMathExpression)value).isEarlyCalculated();
+    }
+
+    return false;
   }
 
   public String getDefaultAlias() {
@@ -85,7 +111,22 @@ public class OExpression extends SimpleNode {
   }
 
   public static String encode(String s) {
-    return s.replaceAll("\"", "\\\\\"");
+    StringBuilder builder = new StringBuilder(s.length());
+    for(char c:s.toCharArray()){
+      if(c=='\n'){
+        builder.append("\\n");
+        continue;
+      }
+      if(c=='\t'){
+        builder.append("\\t");
+        continue;
+      }
+      if(c=='\\' || c == '"'){
+        builder.append("\\");
+      }
+      builder.append(c);
+    }
+    return builder.toString();
   }
 
   public boolean supportsBasicCalculation() {
@@ -100,6 +141,26 @@ public class OExpression extends SimpleNode {
       return ((OMathExpression) value).isIndexedFunctionCall();
     }
     return false;
+  }
+
+  public static String encodeSingle(String s) {
+
+    StringBuilder builder = new StringBuilder(s.length());
+    for(char c:s.toCharArray()){
+      if(c=='\n'){
+        builder.append("\\n");
+        continue;
+      }
+      if(c=='\t'){
+        builder.append("\\t");
+        continue;
+      }
+      if(c=='\\' || c == '\''){
+        builder.append("\\");
+      }
+      builder.append(c);
+    }
+    return builder.toString();
   }
 
   public long estimateIndexedFunction(OFromClause target, OCommandContext context, OBinaryCompareOperator operator, Object right) {

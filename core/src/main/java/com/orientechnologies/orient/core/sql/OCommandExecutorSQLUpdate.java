@@ -67,6 +67,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
   private static final String                   KEYWORD_INCREMENT = "INCREMENT";
   private static final String                   KEYWORD_MERGE     = "MERGE";
   private static final String                   KEYWORD_UPSERT    = "UPSERT";
+  private static final String                   KEYWORD_EDGE      = "EDGE";
   private static final Object                   EMPTY_VALUE       = new Object();
   private List<OPair<String, Object>>           setEntries        = new ArrayList<OPair<String, Object>>();
   private List<OPair<String, Object>>           addEntries        = new ArrayList<OPair<String, Object>>();
@@ -86,6 +87,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
   private OClass                                clazz             = null;
   private DISTRIBUTED_EXECUTION_MODE            distributedMode;
 
+  private boolean                               updateEdge        = false;
+
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLUpdate parse(final OCommandRequest iRequest) {
     final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
@@ -94,6 +97,9 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
     String originalQuery = queryText;
     try {
       queryText = preParse(queryText, iRequest);
+      if (isUpdateEdge()) {
+        queryText = queryText.replaceFirst("EDGE ", "");//work-around to use UPDATE syntax without having to
+      }
       textRequest.setText(queryText);
 
       final ODatabaseDocument database = getDatabase();
@@ -113,8 +119,13 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
       parserRequiredKeyword(KEYWORD_UPDATE);
 
       subjectName = parserRequiredWord(false, "Invalid target", " =><,\r\n");
-      if (subjectName == null)
+      if (subjectName == null) {
         throwSyntaxErrorException("Invalid subject name. Expected cluster, class, index or sub-query");
+      }
+      if(subjectName.equalsIgnoreCase("EDGE")){
+        updateEdge = true;
+        subjectName = parserRequiredWord(false, "Invalid target", " =><,\r\n");
+      }
 
       clazz = extractClassFromTarget(subjectName);
 
@@ -123,10 +134,10 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
       if (parserIsEnded()
           || (!word.equals(KEYWORD_SET) && !word.equals(KEYWORD_ADD) && !word.equals(KEYWORD_PUT) && !word.equals(KEYWORD_REMOVE)
               && !word.equals(KEYWORD_INCREMENT) && !word.equals(KEYWORD_CONTENT) && !word.equals(KEYWORD_MERGE)
-              && !word.equals(KEYWORD_LOCK) && !word.equals(KEYWORD_RETURN) && !word.equals(KEYWORD_UPSERT)))
+              && !word.equals(KEYWORD_LOCK) && !word.equals(KEYWORD_RETURN) && !word.equals(KEYWORD_UPSERT) && !word.equals(KEYWORD_EDGE)))
         throwSyntaxErrorException("Expected keyword " + KEYWORD_SET + "," + KEYWORD_ADD + "," + KEYWORD_CONTENT + ","
             + KEYWORD_MERGE + "," + KEYWORD_PUT + "," + KEYWORD_REMOVE + "," + KEYWORD_INCREMENT + "," + KEYWORD_LOCK + " or "
-            + KEYWORD_RETURN + " or " + KEYWORD_UPSERT);
+            + KEYWORD_RETURN + " or " + KEYWORD_UPSERT+ " or " + KEYWORD_EDGE);
 
       while ((!parserIsEnded() && !parserGetLastWord().equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE))
           || parserGetLastWord().equals(KEYWORD_UPSERT)) {
@@ -190,11 +201,17 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
 
       if (upsertMode && !additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE))
         throwSyntaxErrorException("Upsert only works with WHERE keyword");
+      if (upsertMode && updateEdge)
+        throwSyntaxErrorException("Upsert is not supported with UPDATE EDGE");
     } finally {
       textRequest.setText(originalQuery);
     }
 
     return this;
+  }
+
+  private boolean isUpdateEdge() {
+    return updateEdge;
   }
 
   public Object execute(final Map<Object, Object> iArgs) {
@@ -263,6 +280,9 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
   public boolean result(final Object iRecord) {
     final ODocument record = ((OIdentifiable) iRecord).getRecord();
 
+    if (isUpdateEdge() && !isRecordInstanceOf(iRecord, "E")) {
+      throw new OCommandExecutionException("Using UPDATE EDGE on a record that is not an instance of E");
+    }
     if (compiledFilter != null) {
       // ADDITIONAL FILTERING
       if (!(Boolean) compiledFilter.evaluate(record, null, context))
@@ -282,6 +302,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
     updated |= handleRemoveEntries(record);
 
     if (updated) {
+      handleUpdateEdge(record);
       record.setDirty();
       record.save();
       returnHandler.afterUpdate(record);
@@ -290,6 +311,83 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
 
     return true;
   }
+
+  /**
+   * checks if an object is an OIdentifiable and an instance of a particular (schema) class
+   * @param iRecord The record object
+   * @param orientClass The schema class
+   * @return
+   */
+  private boolean isRecordInstanceOf(Object iRecord, String orientClass) {
+    if (iRecord == null) {
+      return false;
+    }
+    if (!(iRecord instanceof OIdentifiable)) {
+      return false;
+    }
+    ODocument record = ((OIdentifiable) iRecord).getRecord();
+    if (iRecord == null) {
+      return false;
+    }
+    return (record.getSchemaClass().isSubClassOf(orientClass));
+  }
+
+
+  /**
+   * handles vertex consistency after an UPDATE EDGE
+   * @param record the edge record
+   */
+  private void handleUpdateEdge(ODocument record) {
+    if(!updateEdge){
+      return;
+    }
+    Object currentOut = record.field("out");
+    Object currentIn = record.field("in");
+
+    Object prevOut = record.getOriginalValue("out");
+    Object prevIn = record.getOriginalValue("in");
+
+    validateOutInForEdge(record, currentOut, currentIn);
+
+    changeVertexEdgePointer(record, (OIdentifiable)prevIn, (OIdentifiable)currentIn, "in");
+    changeVertexEdgePointer(record, (OIdentifiable)prevOut, (OIdentifiable)currentOut, "out");
+  }
+
+  /**
+   * updates old and new vertices connected to an edge after out/in update on the edge itself
+   * @param edge the edge
+   * @param prevVertex the previously connected vertex
+   * @param currentVertex the currently connected vertex
+   * @param direction the direction ("out" or "in")
+   */
+  private void changeVertexEdgePointer(ODocument edge, OIdentifiable prevVertex, OIdentifiable currentVertex, String direction){
+    if (prevVertex != null && !prevVertex.equals(currentVertex)) {
+      String vertexFieldName = direction+"_" + edge.getClassName();
+      ODocument prevOutDoc = ((OIdentifiable) prevVertex).getRecord();
+      ORidBag prevBag = prevOutDoc.field(vertexFieldName);
+      if(prevBag!=null) {
+        prevBag.remove(edge);
+      }
+
+      ODocument currentVertexDoc = ((OIdentifiable) currentVertex).getRecord();
+      ORidBag currentBag = currentVertexDoc.field(vertexFieldName);
+      if(currentBag == null){
+        currentBag = new ORidBag();
+        currentVertexDoc.field(vertexFieldName, currentBag);
+      }
+      currentBag.add(edge);
+    }
+  }
+
+  private void validateOutInForEdge(ODocument record, Object currentOut, Object currentIn) {
+    if(!isRecordInstanceOf(currentOut, "V")){
+      throw new OCommandExecutionException("Error updating edge: 'out' is not a vertex - " + currentOut + "");
+    }
+    if(!isRecordInstanceOf(currentIn, "V")){
+      throw new OCommandExecutionException("Error updating edge: 'in' is not a vertex - " + currentIn + "");
+    }
+  }
+
 
   @Override
   public String getSyntax() {

@@ -1,0 +1,21 @@
+{
+  "source": { "file": { "path": "/temp/datasets/posts.csv" } },
+  "extractor": { "row": {} },
+  "transformers": [
+    { "csv": {} },
+    { "vertex": { "class": "Post" } }
+  ],
+  "loader": {
+    "orientdb": {
+       "dbURL": "plocal:/temp/databases/blog",
+       "dbType": "graph",
+       "classes": [
+         {"name": "Post", "extends": "V"},
+         {"name": "Comment", "extends": "V"},
+         {"name": "HasComments", "extends": "E"}
+       ], "indexes": [
+         {"class":"Post", "fields":["id:integer"], "type":"UNIQUE" }
+       ]
+    }
+  }
+}

@@ -75,5 +75,5 @@ public interface OIndexCursor extends Iterator<OIdentifiable> {
    * @param prefetchSize
    *          Number of records to prefetch. -1 = no prefetch
    */
-  public void setPrefetchSize(int prefetchSize);
+  void setPrefetchSize(int prefetchSize);
 }

@@ -20,64 +20,64 @@
 package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
- import com.orientechnologies.orient.core.id.ORecordId;
- import com.orientechnologies.orient.core.record.ORecord;
- import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
- import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
- import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
- import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
+import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
 public class OServerCommandGetDocument extends OServerCommandAuthenticatedDbAbstract {
-   private static final String[] NAMES = { "GET|document/*", "HEAD|document/*" };
+  private static final String[] NAMES = { "GET|document/*", "HEAD|document/*" };
 
-   @Override
-   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-     ODatabaseDocumentTx db = null;
+  @Override
+  public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
+    ODatabaseDocumentTx db = null;
 
-     final String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: document/<database>/<record-id>[/fetchPlan]");
+    final String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: document/<database>/<record-id>[/fetchPlan]");
 
-     final String fetchPlan = urlParts.length > 3 ? urlParts[3] : null;
+    final String fetchPlan = urlParts.length > 3 ? urlParts[3] : null;
 
-     iRequest.data.commandInfo = "Load document";
+    iRequest.data.commandInfo = "Load document";
 
-     final ORecord rec;
+    final ORecord rec;
 
-     final int parametersPos = urlParts[2].indexOf('?');
-     final String rid = parametersPos > -1 ? urlParts[2].substring(0, parametersPos) : urlParts[2];
+    final int parametersPos = urlParts[2].indexOf('?');
+    final String rid = parametersPos > -1 ? urlParts[2].substring(0, parametersPos) : urlParts[2];
 
-     try {
-       db = getProfiledDatabaseInstance(iRequest);
+    try {
+      db = getProfiledDatabaseInstance(iRequest);
 
-       rec = db.load(new ORecordId(rid), fetchPlan);
-       if (rec == null)
-         iResponse.send(OHttpUtils.STATUS_NOTFOUND_CODE, "Not Found", OHttpUtils.CONTENT_JSON, "Record with id '" + urlParts[2]
-             + "' was not found.", null);
-       else if (iRequest.httpMethod.equals("HEAD"))
-         // JUST SEND HTTP CODE 200
-         iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, null, null,
-             OHttpUtils.HEADER_ETAG + rec.getVersion());
-       else {
-         final String ifNoneMatch = iRequest.getHeader("If-None-Match");
-         if (ifNoneMatch != null && rec.getRecordVersion().toString().equals(ifNoneMatch)) {
-           // SAME CONTENT, DON'T SEND BACK RECORD
-           iResponse.send(OHttpUtils.STATUS_OK_NOMODIFIED_CODE, OHttpUtils.STATUS_OK_NOMODIFIED_DESCRIPTION, null, null,
-               OHttpUtils.HEADER_ETAG + rec.getVersion());
-         }
+      rec = db.load(new ORecordId(rid), fetchPlan);
+      if (rec == null)
+        iResponse.send(OHttpUtils.STATUS_NOTFOUND_CODE, "Not Found", OHttpUtils.CONTENT_JSON,
+            "Record with id '" + urlParts[2] + "' was not found.", null);
+      else if (iRequest.httpMethod.equals("HEAD"))
+        // JUST SEND HTTP CODE 200
+        iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, null, null,
+            OHttpUtils.HEADER_ETAG + rec.getVersion());
+      else {
+        final String ifNoneMatch = iRequest.getHeader("If-None-Match");
+        if (ifNoneMatch != null && Integer.toString(rec.getVersion()).equals(ifNoneMatch)) {
+          // SAME CONTENT, DON'T SEND BACK RECORD
+          iResponse.send(OHttpUtils.STATUS_OK_NOMODIFIED_CODE, OHttpUtils.STATUS_OK_NOMODIFIED_DESCRIPTION, null, null,
+              OHttpUtils.HEADER_ETAG + rec.getVersion());
+        }
 
-         // SEND THE DOCUMENT BACK
-         iResponse.writeRecord(rec, fetchPlan, null);
-       }
+        // SEND THE DOCUMENT BACK
+        iResponse.writeRecord(rec, fetchPlan, null);
+      }
 
-     } finally {
-       if (db != null)
-         db.close();
-     }
+    } finally {
+      if (db != null)
+        db.close();
+    }
 
-     return false;
-   }
+    return false;
+  }
 
-   @Override
-   public String[] getNames() {
-     return NAMES;
-   }
- }
+  @Override
+  public String[] getNames() {
+    return NAMES;
+  }
+}

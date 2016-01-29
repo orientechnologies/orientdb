@@ -37,6 +37,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ONonTxOperationPerformedWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.statistic.OStoragePerformanceStatistic;
 
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.InstanceNotFoundException;
@@ -65,24 +66,23 @@ import java.util.concurrent.locks.LockSupport;
  * @since 12/3/13
  */
 public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
-  public static final String                                              MBEAN_NAME             = "com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations:type=OAtomicOperationsMangerMXBean";
+  public static final String MBEAN_NAME = "com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations:type=OAtomicOperationsMangerMXBean";
 
-  private volatile boolean                                                trackAtomicOperations  = OGlobalConfiguration.TX_TRACK_ATOMIC_OPERATIONS
-                                                                                                     .getValueAsBoolean();
+  private volatile boolean trackAtomicOperations = OGlobalConfiguration.TX_TRACK_ATOMIC_OPERATIONS.getValueAsBoolean();
 
-  private final AtomicBoolean                                             mbeanIsRegistered      = new AtomicBoolean();
+  private final AtomicBoolean mbeanIsRegistered = new AtomicBoolean();
 
-  private final ODistributedCounter                                       atomicOperationsCount  = new ODistributedCounter();
+  private final ODistributedCounter atomicOperationsCount = new ODistributedCounter();
 
-  private final AtomicInteger                                             freezeRequests         = new AtomicInteger();
+  private final AtomicInteger freezeRequests = new AtomicInteger();
 
-  private final ConcurrentMap<Long, FreezeParameters>                     freezeParametersIdMap  = new ConcurrentHashMap<Long, FreezeParameters>();
-  private final AtomicLong                                                freezeIdGen            = new AtomicLong();
+  private final ConcurrentMap<Long, FreezeParameters> freezeParametersIdMap = new ConcurrentHashMap<Long, FreezeParameters>();
+  private final AtomicLong                            freezeIdGen           = new AtomicLong();
 
-  private final AtomicReference<WaitingListNode>                          waitingHead            = new AtomicReference<WaitingListNode>();
-  private final AtomicReference<WaitingListNode>                          waitingTail            = new AtomicReference<WaitingListNode>();
+  private final AtomicReference<WaitingListNode> waitingHead = new AtomicReference<WaitingListNode>();
+  private final AtomicReference<WaitingListNode> waitingTail = new AtomicReference<WaitingListNode>();
 
-  private static volatile ThreadLocal<OAtomicOperation>                   currentOperation       = new ThreadLocal<OAtomicOperation>();
+  private static volatile ThreadLocal<OAtomicOperation> currentOperation = new ThreadLocal<OAtomicOperation>();
 
   static {
     Orient.instance().registerListener(new OOrientListenerAbstract() {
@@ -99,12 +99,12 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     });
   }
 
-  private final OAbstractPaginatedStorage                                 storage;
-  private final OWriteAheadLog                                            writeAheadLog;
-  private final OLockManager<String>                                      lockManager            = new OLockManager<String>(true,
-                                                                                                     -1);
-  private final OReadCache                                                readCache;
-  private final OWriteCache                                               writeCache;
+  private final OAbstractPaginatedStorage    storage;
+  private final OStoragePerformanceStatistic storagePerformanceStatistic;
+  private final OWriteAheadLog               writeAheadLog;
+  private final OLockManager<String> lockManager = new OLockManager<String>(true, -1);
+  private final OReadCache  readCache;
+  private final OWriteCache writeCache;
 
   private final Map<OOperationUnitId, OPair<String, StackTraceElement[]>> activeAtomicOperations = new ConcurrentHashMap<OOperationUnitId, OPair<String, StackTraceElement[]>>();
 
@@ -113,16 +113,42 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     this.writeAheadLog = storage.getWALInstance();
     this.readCache = storage.getReadCache();
     this.writeCache = storage.getWriteCache();
+    this.storagePerformanceStatistic = storage.getStoragePerformanceStatistic();
   }
 
-  public OAtomicOperation startAtomicOperation(ODurableComponent durableComponent, boolean rollbackOnlyMode) throws IOException {
+  /**
+   * @see #startAtomicOperation(String, boolean)
+   */
+  public OAtomicOperation startAtomicOperation(ODurableComponent durableComponent, boolean trackNonTxOperations)
+      throws IOException {
     if (durableComponent != null)
-      return startAtomicOperation(durableComponent.getFullName(), rollbackOnlyMode);
+      return startAtomicOperation(durableComponent.getFullName(), trackNonTxOperations);
 
-    return startAtomicOperation((String) null, rollbackOnlyMode);
+    return startAtomicOperation((String) null, trackNonTxOperations);
   }
 
-  public OAtomicOperation startAtomicOperation(String fullName, boolean rollbackOnlyMode) throws IOException {
+  /**
+   * Starts atomic operation inside of current thread.
+   * If atomic operation has been already started , current atomic operation instance will be returned.
+   * All durable components have to call this method at the beginning of any data modification operation.
+   * <p>
+   * In current implementation of atomic operation, each component which is participated in atomic operation is hold under exclusive
+   * lock till atomic operation will not be completed (committed or rollbacked).
+   * <p>
+   * If other thread is going to read data from component it has to acquire read lock inside of atomic operation manager {@link #acquireReadLock(ODurableComponent)}
+   * , otherwise data consistency will be compromised.
+   * <p>
+   * Atomic operation may be delayed if start of atomic operations is prohibited by call of {@link #freezeAtomicOperations(Class, String)}
+   * method. If mentioned above method is called then execution of current method will be stopped till call of {@link #releaseAtomicOperations(long)}
+   * method or exception will be thrown. Concrete behaviour depends on real values of parameters of {@link #freezeAtomicOperations(Class, String)} method.
+   *
+   * @param trackNonTxOperations If this flag set to <code>true</code> then special record {@link ONonTxOperationPerformedWALRecord} will be added to
+   *                             WAL in case of atomic operation is started outside of active storage transaction. During storage restore procedure
+   *                             this record is monitored and if given record is present then rebuild of all indexes is performed.
+   * @param fullName             Name of component which is going participate in atomic operation.
+   * @return Instance of active atomic operation.
+   */
+  public OAtomicOperation startAtomicOperation(String fullName, boolean trackNonTxOperations) throws IOException {
     if (writeAheadLog == null)
       return null;
 
@@ -131,7 +157,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       operation.incrementCounter();
 
       if (fullName != null)
-        acquireExclusiveLockTillOperationComplete(fullName);
+        acquireExclusiveLockTillOperationComplete(operation, fullName);
 
       return operation;
     }
@@ -159,14 +185,9 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     assert freezeRequests.get() >= 0;
 
     final OOperationUnitId unitId = OOperationUnitId.generateId();
-    final OLogSequenceNumber lsn;
+    final OLogSequenceNumber lsn = writeAheadLog.logAtomicOperationStartRecord(true, unitId);
 
-    if (!rollbackOnlyMode)
-      lsn = writeAheadLog.logAtomicOperationStartRecord(true, unitId);
-    else
-      lsn = null;
-
-    operation = new OAtomicOperation(lsn, unitId, readCache, writeCache, storage.getId(), rollbackOnlyMode);
+    operation = new OAtomicOperation(lsn, unitId, readCache, writeCache, storagePerformanceStatistic, storage.getId());
     currentOperation.set(operation);
 
     if (trackAtomicOperations) {
@@ -174,11 +195,11 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       activeAtomicOperations.put(unitId, new OPair<String, StackTraceElement[]>(thread.getName(), thread.getStackTrace()));
     }
 
-    if (storage.getStorageTransaction() == null)
+    if (trackNonTxOperations && storage.getStorageTransaction() == null)
       writeAheadLog.log(new ONonTxOperationPerformedWALRecord());
 
     if (fullName != null)
-      acquireExclusiveLockTillOperationComplete(fullName);
+      acquireExclusiveLockTillOperationComplete(operation, fullName);
 
     return operation;
   }
@@ -275,34 +296,24 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
             final Constructor<? extends OException> mConstructor = freezeParameters.exceptionClass.getConstructor(String.class);
             throw mConstructor.newInstance(freezeParameters.message);
           } catch (InstantiationException ie) {
-            OLogManager.instance().error(
-                this,
-                "Can not create instance of exception " + freezeParameters.exceptionClass
-                    + " with message will try empty constructor instead", ie);
+            OLogManager.instance().error(this, "Can not create instance of exception " + freezeParameters.exceptionClass
+                + " with message will try empty constructor instead", ie);
             throwFreezeExceptionWithoutMessage(freezeParameters);
           } catch (IllegalAccessException iae) {
-            OLogManager.instance().error(
-                this,
-                "Can not create instance of exception " + freezeParameters.exceptionClass
-                    + " with message will try empty constructor instead", iae);
+            OLogManager.instance().error(this, "Can not create instance of exception " + freezeParameters.exceptionClass
+                + " with message will try empty constructor instead", iae);
             throwFreezeExceptionWithoutMessage(freezeParameters);
           } catch (NoSuchMethodException nsme) {
-            OLogManager.instance().error(
-                this,
-                "Can not create instance of exception " + freezeParameters.exceptionClass
-                    + " with message will try empty constructor instead", nsme);
+            OLogManager.instance().error(this, "Can not create instance of exception " + freezeParameters.exceptionClass
+                + " with message will try empty constructor instead", nsme);
             throwFreezeExceptionWithoutMessage(freezeParameters);
           } catch (SecurityException se) {
-            OLogManager.instance().error(
-                this,
-                "Can not create instance of exception " + freezeParameters.exceptionClass
-                    + " with message will try empty constructor instead", se);
+            OLogManager.instance().error(this, "Can not create instance of exception " + freezeParameters.exceptionClass
+                + " with message will try empty constructor instead", se);
             throwFreezeExceptionWithoutMessage(freezeParameters);
           } catch (InvocationTargetException ite) {
-            OLogManager.instance().error(
-                this,
-                "Can not create instance of exception " + freezeParameters.exceptionClass
-                    + " with message will try empty constructor instead", ite);
+            OLogManager.instance().error(this, "Can not create instance of exception " + freezeParameters.exceptionClass
+                + " with message will try empty constructor instead", ite);
             throwFreezeExceptionWithoutMessage(freezeParameters);
           }
         else {
@@ -317,15 +328,11 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     try {
       throw freezeParameters.exceptionClass.newInstance();
     } catch (InstantiationException ie) {
-      OLogManager.instance().error(
-          this,
-          "Can not create instance of exception " + freezeParameters.exceptionClass
-              + " will park thread instead of throwing of exception", ie);
+      OLogManager.instance().error(this, "Can not create instance of exception " + freezeParameters.exceptionClass
+          + " will park thread instead of throwing of exception", ie);
     } catch (IllegalAccessException iae) {
-      OLogManager.instance().error(
-          this,
-          "Can not create instance of exception " + freezeParameters.exceptionClass
-              + " will park thread instead of throwing of exception", iae);
+      OLogManager.instance().error(this, "Can not create instance of exception " + freezeParameters.exceptionClass
+          + " will park thread instead of throwing of exception", iae);
     }
   }
 
@@ -355,7 +362,8 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
 
       atomicOperationsCount.decrement();
 
-      throw new ONestedRollbackException(writer.toString(), exception);
+      final ONestedRollbackException nre = new ONestedRollbackException(writer.toString());
+      throw OException.wrapException(nre, exception);
     }
 
     final int counter = operation.decrementCounter();
@@ -365,8 +373,8 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       if (!operation.isRollback())
         operation.commitChanges(writeAheadLog);
 
-      if (!operation.isRollbackOnlyMode())
-        writeAheadLog.logAtomicOperationEndRecord(operation.getOperationUnitId(), rollback, operation.getStartLSN());
+      writeAheadLog
+          .logAtomicOperationEndRecord(operation.getOperationUnitId(), rollback, operation.getStartLSN(), operation.getMetadata());
 
       currentOperation.set(null);
 
@@ -383,11 +391,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     return operation;
   }
 
-  private void acquireExclusiveLockTillOperationComplete(String fullName) {
-    final OAtomicOperation operation = currentOperation.get();
-    if (operation == null)
-      return;
-
+  private void acquireExclusiveLockTillOperationComplete(OAtomicOperation operation, String fullName) {
     if (operation.containsInLockedObjects(fullName))
       return;
 
@@ -424,13 +428,13 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
           server.registerMBean(this, mbeanName);
 
       } catch (MalformedObjectNameException e) {
-        throw new OStorageException("Error during registration of atomic manager MBean", e);
+        throw OException.wrapException(new OStorageException("Error during registration of atomic manager MBean"), e);
       } catch (InstanceAlreadyExistsException e) {
-        throw new OStorageException("Error during registration of atomic manager MBean", e);
+        throw OException.wrapException(new OStorageException("Error during registration of atomic manager MBean"), e);
       } catch (MBeanRegistrationException e) {
-        throw new OStorageException("Error during registration of atomic manager MBean", e);
+        throw OException.wrapException(new OStorageException("Error during registration of atomic manager MBean"), e);
       } catch (NotCompliantMBeanException e) {
-        throw new OStorageException("Error during registration of atomic manager MBean", e);
+        throw OException.wrapException(new OStorageException("Error during registration of atomic manager MBean"), e);
       }
     }
   }
@@ -446,11 +450,11 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
         final ObjectName mbeanName = new ObjectName(getMBeanName());
         server.unregisterMBean(mbeanName);
       } catch (MalformedObjectNameException e) {
-        throw new OStorageException("Error during unregistration of atomic manager MBean", e);
+        throw OException.wrapException(new OStorageException("Error during unregistration of atomic manager MBean"), e);
       } catch (InstanceNotFoundException e) {
-        throw new OStorageException("Error during unregistration of atomic manager MBean", e);
+        throw OException.wrapException(new OStorageException("Error during unregistration of atomic manager MBean"), e);
       } catch (MBeanRegistrationException e) {
-        throw new OStorageException("Error during unregistration of atomic manager MBean", e);
+        throw OException.wrapException(new OStorageException("Error during unregistration of atomic manager MBean"), e);
       }
     }
   }
@@ -502,7 +506,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   }
 
   private static final class WaitingListNode {
-    private final Thread             item;
+    private final    Thread          item;
     private volatile WaitingListNode next;
 
     public WaitingListNode(Thread item) {

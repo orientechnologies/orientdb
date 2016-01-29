@@ -1,8 +1,11 @@
 sudo: false
 language: java
-install: travis_wait mvn install
+cache:
+  directories:
+  - $HOME/.m2
+install: mvn clean install -Dmaven.test.failure.ignore=true
 branches:
   only:
   - develop
 jdk:
-- oraclejdk8
+  - oraclejdk8

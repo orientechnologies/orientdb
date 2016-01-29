@@ -63,8 +63,15 @@ public class OSQLMethodField extends OAbstractSQLMethod {
       } else if (ioResult instanceof Collection<?> || ioResult instanceof OMultiCollectionIterator<?>
           || ioResult.getClass().isArray()) {
         final List<Object> result = new ArrayList<Object>(OMultiValue.getSize(ioResult));
-        for (Object o : OMultiValue.getMultiValueIterable(ioResult)) {
-          result.add(ODocumentHelper.getFieldValue(o, paramAsString));
+        for (Object o : OMultiValue.getMultiValueIterable(ioResult, false)) {
+          Object newlyAdded = ODocumentHelper.getFieldValue(o, paramAsString);
+          if (OMultiValue.isMultiValue(newlyAdded)) {
+            for (Object item : OMultiValue.getMultiValueIterable(newlyAdded)) {
+              result.add(item);
+            }
+          } else {
+            result.add(newlyAdded);
+          }
         }
         return result;
       }

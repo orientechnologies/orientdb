@@ -41,6 +41,10 @@ public class ODatabaseHelper {
     createDatabase(database, url, "server", type);
   }
 
+  public static void openDatabase(ODatabase database) {
+    database.open("admin", "admin");
+  }
+
   public static void createDatabase(ODatabase database, final String url, String directory, String type) throws IOException {
     if (url.startsWith(OEngineRemote.NAME)) {
       new OServerAdmin(url).connect("root", getServerRootPassword(directory)).createDatabase("document", type).close();
@@ -71,7 +75,7 @@ public class ODatabaseHelper {
         database.close();
       } else {
         if (database.isClosed())
-          database.open("admin", "admin");
+          openDatabase(database);
         else
           database.activateOnCurrentThread();
         database.drop();

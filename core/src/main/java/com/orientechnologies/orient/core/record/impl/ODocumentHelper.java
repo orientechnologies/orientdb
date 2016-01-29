@@ -19,7 +19,15 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
+import java.lang.reflect.Array;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.Map.Entry;
+
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.Orient;
@@ -42,18 +50,10 @@ import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.method.OSQLMethod;
-import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
-
-import java.lang.reflect.Array;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.Map.Entry;
 
 /**
  * Helper class to manage documents.
- * 
+ *
  * @author Luca Garulli
  */
 public class ODocumentHelper {
@@ -98,7 +98,7 @@ public class ODocumentHelper {
       } else if (iValue instanceof ORecord) {
         return (RET) ((ORecord) iValue).getIdentity();
       }
-    } else if (ORecord.class.isAssignableFrom(iFieldType)) {
+    } else if (OIdentifiable.class.isAssignableFrom(iFieldType)) {
       if (iValue instanceof ORID || iValue instanceof ORecord) {
         return (RET) iValue;
       } else if (iValue instanceof String) {
@@ -132,7 +132,7 @@ public class ODocumentHelper {
           return (RET) newValue;
         } else if (OMultiValue.isMultiValue(iValue)) {
           // GENERIC MULTI VALUE
-          for (Object s : OMultiValue.getMultiValueIterable(iValue)) {
+          for (Object s : OMultiValue.getMultiValueIterable(iValue, false)) {
             ((Collection<Object>) newValue).add(s);
           }
           return (RET) newValue;
@@ -183,8 +183,8 @@ public class ODocumentHelper {
       else
         iValue = iValue.toString();
       if (!(iValue instanceof String) && !iFieldType.isAssignableFrom(iValue.getClass()))
-        throw new IllegalArgumentException("Property '" + iFieldName + "' of type '" + iFieldType
-            + "' cannot accept value of type: " + iValue.getClass());
+        throw new IllegalArgumentException(
+            "Property '" + iFieldName + "' of type '" + iFieldType + "' cannot accept value of type: " + iValue.getClass());
     } else if (Date.class.isAssignableFrom(iFieldType)) {
       if (iValue instanceof String && ODatabaseRecordThreadLocal.INSTANCE.isDefined()) {
         final OStorageConfiguration config = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration();
@@ -203,7 +203,8 @@ public class ODocumentHelper {
         } catch (ParseException pe) {
           final String dateFormat = ((String) iValue).length() > config.dateFormat.length() ? config.dateTimeFormat
               : config.dateFormat;
-          throw new OQueryParsingException("Error on conversion of date '" + iValue + "' using the format: " + dateFormat, pe);
+          throw OException.wrapException(
+              new OQueryParsingException("Error on conversion of date '" + iValue + "' using the format: " + dateFormat), pe);
         }
       }
     }
@@ -259,7 +260,7 @@ public class ODocumentHelper {
             value = getMapEntry((Map<String, ?>) value, fieldName);
           else if (OMultiValue.isMultiValue(value)) {
             final HashSet<Object> temp = new HashSet<Object>();
-            for (Object o : OMultiValue.getMultiValueIterable(value)) {
+            for (Object o : OMultiValue.getMultiValueIterable(value, false)) {
               if (o instanceof OIdentifiable) {
                 Object r = getFieldValue(o, iFieldName);
                 if (r != null)
@@ -289,8 +290,8 @@ public class ODocumentHelper {
           value = ((OCommandContext) value).getVariables();
 
         if (value instanceof OIdentifiable) {
-          final ORecord record = currentRecord != null && currentRecord instanceof OIdentifiable ? ((OIdentifiable) currentRecord)
-              .getRecord() : null;
+          final ORecord record = currentRecord != null && currentRecord instanceof OIdentifiable
+              ? ((OIdentifiable) currentRecord).getRecord() : null;
 
           final Object index = getIndexPart(iContext, indexPart);
           final String indexAsString = index != null ? index.toString() : null;
@@ -343,8 +344,8 @@ public class ODocumentHelper {
             if (conditionFieldValue != null && fieldValue != null)
               conditionFieldValue = OType.convert(conditionFieldValue, fieldValue.getClass());
 
-            if (fieldValue == null && !conditionFieldValue.equals("null") || fieldValue != null
-                && !fieldValue.equals(conditionFieldValue))
+            if (fieldValue == null && !conditionFieldValue.equals("null")
+                || fieldValue != null && !fieldValue.equals(conditionFieldValue))
               value = null;
           }
         } else if (value instanceof Map<?, ?>) {
@@ -375,8 +376,8 @@ public class ODocumentHelper {
 
             final List<String> fieldNames = new ArrayList<String>(map.keySet());
             final int rangeFrom = from != null && !from.isEmpty() ? Integer.parseInt(from) : 0;
-            final int rangeTo = to != null && !to.isEmpty() ? Math.min(Integer.parseInt(to), fieldNames.size() - 1) : fieldNames
-                .size() - 1;
+            final int rangeTo = to != null && !to.isEmpty() ? Math.min(Integer.parseInt(to), fieldNames.size() - 1)
+                : fieldNames.size() - 1;
 
             final Object[] values = new Object[rangeTo - rangeFrom + 1];
 
@@ -398,8 +399,8 @@ public class ODocumentHelper {
             if (conditionFieldValue != null && fieldValue != null)
               conditionFieldValue = OType.convert(conditionFieldValue, fieldValue.getClass());
 
-            if (fieldValue == null && !conditionFieldValue.equals("null") || fieldValue != null
-                && !fieldValue.equals(conditionFieldValue))
+            if (fieldValue == null && !conditionFieldValue.equals("null")
+                || fieldValue != null && !fieldValue.equals(conditionFieldValue))
               value = null;
           }
 
@@ -466,12 +467,13 @@ public class ODocumentHelper {
             if (values.isEmpty())
               // RETURNS NULL
               value = values;
-            else if (values.size() == 1)
-              // RETURNS THE SINGLE ODOCUMENT
-              value = values.iterator().next();
             else
-              // RETURNS THE FILTERED COLLECTION
-              value = values;
+              if (values.size() == 1)
+                // RETURNS THE SINGLE ODOCUMENT
+                value = values.iterator().next();
+            else
+                // RETURNS THE FILTERED COLLECTION
+                value = values;
           }
         }
       } else {
@@ -517,7 +519,7 @@ public class ODocumentHelper {
             value = getMapEntry((Map<String, ?>) value, fieldName);
           else if (OMultiValue.isMultiValue(value)) {
             final Set<Object> values = new HashSet<Object>();
-            for (Object v : OMultiValue.getMultiValueIterable(value)) {
+            for (Object v : OMultiValue.getMultiValueIterable(value, false)) {
               final Object item;
 
               if (v instanceof OIdentifiable)
@@ -599,7 +601,7 @@ public class ODocumentHelper {
 
   /**
    * Retrieves the value crossing the map with the dotted notation
-   * 
+   *
    * @param iKey
    *          Field(s) to retrieve. If are multiple fields, then the dot must be used as separator
    * @return
@@ -648,7 +650,7 @@ public class ODocumentHelper {
       else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_RID_POS))
         return iCurrent.getIdentity().getClusterPosition();
       else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_VERSION))
-        return iCurrent.getRecord().getRecordVersion().getCounter();
+        return iCurrent.getRecord().getVersion();
       else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_CLASS))
         return ((ODocument) iCurrent.getRecord()).getClassName();
       else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_TYPE))
@@ -751,8 +753,7 @@ public class ODocumentHelper {
         if (args.size() == 1)
           result = currentValue.toString().indexOf(OIOUtils.getStringContent(args.get(0)));
         else
-          result = currentValue.toString().indexOf(OIOUtils.getStringContent(args.get(0)),
-              Integer.parseInt(args.get(1)));
+          result = currentValue.toString().indexOf(OIOUtils.getStringContent(args.get(0)), Integer.parseInt(args.get(1)));
       else if (function.startsWith("SUBSTRING("))
         if (args.size() == 1)
           result = currentValue.toString().substring(Integer.parseInt(args.get(0)));
@@ -815,9 +816,6 @@ public class ODocumentHelper {
         return new ArrayList<Object>((List<Object>) fieldValue);
 
         // SETS
-      } else if (fieldValue instanceof OMVRBTreeRIDSet) {
-        return ((OMVRBTreeRIDSet) fieldValue).copy(iCloned);
-
       } else if (fieldValue instanceof ORecordLazySet) {
         final ORecordLazySet newList = new ORecordLazySet(iCloned);
         newList.addAll((ORecordLazySet) fieldValue);
@@ -865,8 +863,19 @@ public class ODocumentHelper {
       final ODocument current = (ODocument) iCurrent;
       if (iOther instanceof ORID) {
         if (!current.isDirty()) {
-          if (!current.getIdentity().equals(iOther))
+          ORID id;
+          if (ridMapper != null) {
+            ORID mappedId = ridMapper.map(current.getIdentity());
+            if (mappedId != null)
+              id = mappedId;
+            else
+              id = current.getIdentity();
+          } else
+            id = current.getIdentity();
+
+          if (!id.equals(iOther)) {
             return false;
+          }
         } else {
           final ODocument otherDoc = iOtherDb.load((ORID) iOther);
           if (!ODocumentHelper.hasSameContentOf(current, iMyDb, otherDoc, iOtherDb, ridMapper))
@@ -874,7 +883,7 @@ public class ODocumentHelper {
         }
       } else if (!ODocumentHelper.hasSameContentOf(current, iMyDb, (ODocument) iOther, iOtherDb, ridMapper))
         return false;
-    } else if (!compareScalarValues(iCurrent, iOther, ridMapper))
+    } else if (!compareScalarValues(iCurrent, iMyDb, iOther, iOtherDb, ridMapper))
       return false;
     return true;
   }
@@ -897,7 +906,7 @@ public class ODocumentHelper {
   /**
    * Makes a deep comparison field by field to check if the passed ODocument instance is identical in the content to the current
    * one. Instead equals() just checks if the RID are the same.
-   * 
+   *
    * @param iOther
    *          ODocument instance
    * @return true if the two document are identical, otherwise false
@@ -909,7 +918,7 @@ public class ODocumentHelper {
     if (iOther == null)
       return false;
 
-    if (iCheckAlsoIdentity && !iCurrent.equals(iOther) && iCurrent.getIdentity().isValid())
+    if (iCheckAlsoIdentity && iCurrent.getIdentity().isValid() && !iCurrent.getIdentity().equals(iOther.getIdentity()))
       return false;
 
     if (iMyDb != null)
@@ -987,7 +996,7 @@ public class ODocumentHelper {
           if (!hasSameContentOf((ODocument) myFieldValue, iMyDb, (ODocument) otherFieldValue, iOtherDb, ridMapper))
             return false;
         } else {
-          if (!compareScalarValues(myFieldValue, otherFieldValue, ridMapper))
+          if (!compareScalarValues(myFieldValue, iMyDb, otherFieldValue, iOtherDb, ridMapper))
             return false;
         }
     }
@@ -1072,7 +1081,7 @@ public class ODocumentHelper {
             }
           });
 
-          if (!compareScalarValues(myValue, otherValue, ridMapper))
+          if (!compareScalarValues(myValue, iMyDb, otherValue, iOtherDb, ridMapper))
             return false;
         }
       }
@@ -1329,15 +1338,16 @@ public class ODocumentHelper {
     }
   }
 
-  private static boolean compareScalarValues(Object myValue, Object otherValue, RIDMapper ridMapper) {
+  private static boolean compareScalarValues(Object myValue, ODatabaseDocumentInternal iMyDb, Object otherValue,
+      ODatabaseDocumentInternal iOtherDb, RIDMapper ridMapper) {
     if (myValue == null && otherValue != null || myValue != null && otherValue == null)
       return false;
 
     if (myValue == null)
       return true;
 
-    if (myValue.getClass().isArray() && !otherValue.getClass().isArray() || !myValue.getClass().isArray()
-        && otherValue.getClass().isArray())
+    if (myValue.getClass().isArray() && !otherValue.getClass().isArray()
+        || !myValue.getClass().isArray() && otherValue.getClass().isArray())
       return false;
 
     if (myValue.getClass().isArray() && otherValue.getClass().isArray()) {
@@ -1350,7 +1360,12 @@ public class ODocumentHelper {
       for (int i = 0; i < myArraySize; i++) {
         final Object first = Array.get(myValue, i);
         final Object second = Array.get(otherValue, i);
-        if (first == null && second != null || (first != null && !first.equals(second)))
+        if (first == null && second != null)
+          return false;
+        if (first instanceof ODocument && second instanceof ODocument)
+          return hasSameContentOf((ODocument) first, iMyDb, (ODocument) second, iOtherDb, ridMapper);
+
+        if (first != null && !first.equals(second))
           return false;
       }
 
@@ -1398,7 +1413,7 @@ public class ODocumentHelper {
           deleteCrossRefs(iRid, (ODocument) fieldValue);
         } else if (OMultiValue.isMultiValue(fieldValue)) {
           // MULTI-VALUE (COLLECTION, ARRAY OR MAP), CHECK THE CONTENT
-          for (final Iterator<?> it = OMultiValue.getMultiValueIterator(fieldValue); it.hasNext();) {
+          for (final Iterator<?> it = OMultiValue.getMultiValueIterator(fieldValue, false); it.hasNext();) {
             final Object item = it.next();
 
             if (fieldValue.equals(iRid)) {

@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.index;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.OApi;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -121,6 +120,11 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
   long getSize();
 
   /**
+   * Counts the entries for the key.
+   */
+  long count(Object iKey);
+
+  /**
    * @return Number of keys in index
    */
   long getKeySize();
@@ -145,7 +149,6 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
    */
   @OApi(enduser = false)
   OIndex<T> delete();
-
 
   /**
    * Returns the index name.

@@ -28,9 +28,5 @@ import com.orientechnologies.orient.core.id.ORecordId;
  * 
  */
 public interface ORecordCallback<T> {
-  public enum OPERATION {
-    CREATE, READ, UPDATE, DELETE
-  }
-
-  public void call(ORecordId iRID, T iParameter);
+  void call(ORecordId iRID, T iParameter);
 }

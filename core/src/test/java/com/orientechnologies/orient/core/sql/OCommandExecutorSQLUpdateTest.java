@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -345,4 +346,46 @@ public class OCommandExecutorSQLUpdateTest {
     
     db.close();
   }
+
+  @Test
+  public void testQuotesInJson() throws Exception {
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLUpdateTestQuotesInJson");
+    db.create();
+
+    db.command(new OCommandSQL("CREATE class testquotesinjson")).execute();
+    db.command(new OCommandSQL("UPDATE testquotesinjson SET value = {\"f12\":'test\\\\'} UPSERT WHERE key = \"test\"")).execute();
+//    db.command(new OCommandSQL("update V set value.f12 = 'asdf\\\\' WHERE key = \"test\"")).execute();
+
+
+
+    ODocument queried = (ODocument) db.query(new OSQLSynchQuery<Object>("SELECT FROM testquotesinjson")).get(0);
+    assertEquals(queried.field("value.f12"), "test\\");
+
+    db.close();
+  }
+
+  @Test
+  public void testDottedTargetInScript() throws Exception {
+    //#issue #5397
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLUpdateTestDottedTargetInScript");
+    db.create();
+
+    db.command(new OCommandSQL("create class A")).execute();
+    db.command(new OCommandSQL("create class B")).execute();
+    db.command(new OCommandSQL("insert into A set name = 'foo'")).execute();
+    db.command(new OCommandSQL("insert into B set name = 'bar', a = (select from A)")).execute();
+
+
+    StringBuilder script = new StringBuilder();
+    script.append("let $a = select from B;\n");
+    script.append("update $a.a set name = 'baz';\n");
+    db.command(new OCommandScript(script.toString())).execute();
+
+    List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from A"));
+    assertNotNull(result);
+    assertEquals(result.size(), 1);
+    assertEquals(result.get(0).field("name"), "baz");
+    db.close();
+  }
+  
 }

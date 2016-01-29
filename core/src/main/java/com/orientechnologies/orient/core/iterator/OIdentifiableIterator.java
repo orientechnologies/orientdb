@@ -19,6 +19,10 @@
  */
 package com.orientechnologies.orient.core.iterator;
 
+import java.util.Iterator;
+import java.util.List;
+import java.util.NoSuchElementException;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -35,10 +39,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
-
-import java.util.Iterator;
-import java.util.List;
-import java.util.NoSuchElementException;
+import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 
 /**
  * Iterator class to browse forward and backward the records of a cluster. Once browsed in a direction, the iterator cannot change
@@ -76,7 +77,8 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
   @Deprecated
   /**
    * @deprecated usage of this constructor may lead to deadlocks.
-   */public OIdentifiableIterator(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase,
+   */
+  public OIdentifiableIterator(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase,
       final boolean iterateThroughTombstones, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     database = iDatabase;
     lowLevelDatabase = iLowLevelDatabase;
@@ -409,7 +411,7 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
       else
         do {
           currentEntryPosition--;
-        } while (currentEntryPosition >= 0 && positionsToProcess[currentEntryPosition].recordVersion.isTombstone());
+        } while (currentEntryPosition >= 0 && ORecordVersionHelper.isTombstone(positionsToProcess[currentEntryPosition].recordVersion));
   }
 
   private void incrementEntreePosition() {
@@ -420,6 +422,6 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
         do {
           currentEntryPosition++;
         } while (currentEntryPosition < positionsToProcess.length
-            && positionsToProcess[currentEntryPosition].recordVersion.isTombstone());
+            && ORecordVersionHelper.isTombstone(positionsToProcess[currentEntryPosition].recordVersion));
   }
 }

@@ -338,5 +338,21 @@ public class OMathExpression extends SimpleNode {
     }
     return this.childExpressions.get(0).executeIndexedFunction(target, context, operator, right);
   }
+
+  public boolean isBaseIdentifier() {
+    if (childExpressions.size() == 1) {
+      return childExpressions.get(0).isBaseIdentifier();
+    }
+    return false;
+  }
+
+  public boolean isEarlyCalculated() {
+    for (OMathExpression exp : childExpressions) {
+      if (!exp.isEarlyCalculated()) {
+        return false;
+      }
+    }
+    return true;
+  }
 }
 /* JavaCC - OriginalChecksum=c255bea24e12493e1005ba2a4d1dbb9d (do not edit this line) */

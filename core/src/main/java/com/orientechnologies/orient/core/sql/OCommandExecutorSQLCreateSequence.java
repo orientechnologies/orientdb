@@ -1,8 +1,5 @@
 package com.orientechnologies.orient.core.sql;
 
-import java.util.Arrays;
-import java.util.Map;
-
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -12,6 +9,9 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence.SEQUENCE_TYPE;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceHelper;
+
+import java.util.Arrays;
+import java.util.Map;
 
 /**
  * @author Matan Shukry (matanshukry@gmail.com)
@@ -39,7 +39,7 @@ public class OCommandExecutorSQLCreateSequence extends OCommandExecutorSQLAbstra
     parserRequiredKeyword(KEYWORD_CREATE);
     parserRequiredKeyword(KEYWORD_SEQUENCE);
     this.sequenceName = parserRequiredWord(false, "Expected <sequence name>");
-    this.params = new OSequence.CreateParams();
+    this.params = new OSequence.CreateParams().setDefaults();
 
     String temp;
     while ((temp = parseOptionalWord(true)) != null) {
@@ -52,7 +52,7 @@ public class OCommandExecutorSQLCreateSequence extends OCommandExecutorSQLAbstra
         try {
           this.sequenceType = OSequenceHelper.getSequenceTyeFromString(typeAsString);
         } catch (IllegalArgumentException e) {
-          throw new OCommandSQLParsingException("Unknown sequence's type '" + typeAsString + "'. Supported attributes are: "
+          throw new OCommandSQLParsingException("Unknown sequence type '" + typeAsString + "'. Supported attributes are: "
               + Arrays.toString(SEQUENCE_TYPE.values()));
         }
       } else if (temp.equals(KEYWORD_START)) {

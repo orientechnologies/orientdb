@@ -15,15 +15,16 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.io.File;
-import java.io.IOException;
-
 import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
+
+import java.io.File;
+import java.io.IOException;
 
 /**
  * Running server instance.
@@ -75,6 +76,10 @@ public class ServerRun {
   }
 
   protected OrientBaseGraph createDatabase(final String iName) {
+    return createDatabase(iName, null);
+  }
+
+  protected OrientBaseGraph createDatabase(final String iName, final OCallable<Object, OrientGraphFactory> iCfgCallback) {
     String dbPath = getDatabasePath(iName);
 
     new File(dbPath).mkdirs();
@@ -85,6 +90,9 @@ public class ServerRun {
       new ODatabaseDocumentTx("plocal:" + dbPath).open("admin", "admin").drop();
       OFileUtils.deleteRecursively(new File(dbPath));
     }
+
+    if (iCfgCallback != null)
+      iCfgCallback.call(factory);
 
     System.out.println("Creating database '" + iName + "' under: " + dbPath + "...");
     return factory.getNoTx();

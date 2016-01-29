@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.db.ODatabase.STATUS;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -260,7 +261,7 @@ public class OClassTrigger extends ODocumentHookAbstract {
       try {
         result = (String) method.invoke(clz.newInstance(), iDocument);
       } catch (Exception ex) {
-        throw new OException("Failed to invoke method " + method.getName(), ex);
+        throw OException.wrapException(new ODatabaseException("Failed to invoke method " + method.getName()), ex);
       }
       if (result == null) {
         return RESULT.RECORD_NOT_CHANGED;
@@ -303,9 +304,10 @@ public class OClassTrigger extends ODocumentHookAbstract {
           result = (String) invocableEngine.invokeFunction(func.getName(), EMPTY);
         }
       } catch (ScriptException e) {
-        throw new OCommandScriptException("Error on execution of the script", func.getName(), e.getColumnNumber(), e);
+        throw OException.wrapException(
+            new OCommandScriptException("Error on execution of the script", func.getName(), e.getColumnNumber()), e);
       } catch (NoSuchMethodException e) {
-        throw new OCommandScriptException("Error on execution of the script", func.getName(), 0, e);
+        throw OException.wrapException(new OCommandScriptException("Error on execution of the script", func.getName(), 0), e);
       } catch (OCommandScriptException e) {
         // PASS THROUGH
         throw e;

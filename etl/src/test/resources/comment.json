@@ -1,0 +1,67 @@
+{
+  "config": {
+    "log": "INFO",
+    "fileDirectory": "./src/test/resources/",
+    "fileName": "comments.csv"
+  },
+  "begin": [
+    {
+      "let": {
+        "name": "$filePath",
+        "expression": "$fileDirectory.append($fileName)"
+      }
+    }
+  ],
+  "source": {
+    "file": {
+      "path": "$filePath"
+    }
+  },
+  "extractor": {
+    "csv": {}
+  },
+  "transformers": [
+    {
+      "vertex": {
+        "class": "Comment"
+      }
+    },
+    {
+      "edge": {
+        "class": "HasComments",
+        "joinFieldName": "postId",
+        "lookup": "Post.id"
+      }
+    }
+  ],
+  "loader": {
+    "orientdb": {
+      "dbURL": "plocal:./target/databases/blog",
+      "dbType": "graph",
+      "classes": [
+        {
+          "name": "Post",
+          "extends": "V"
+        },
+        {
+          "name": "Comment",
+          "extends": "V"
+        },
+        {
+          "name": "HasComments",
+          "extends": "E"
+        }
+      ],
+      "indexes": [
+        {
+          "class": "Post",
+          "fields": [
+            "id:integer"
+          ],
+          "type": "UNIQUE"
+        }
+      ]
+    }
+  }
+}
+

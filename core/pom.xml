@@ -45,7 +45,8 @@
         </osgi.export>
         <jna.version>4.0.0</jna.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <argLine>-ea -Xmx3072m
+        <argLine>-ea -Xmx3072m -XX:MaxDirectMemorySize=512g
+            -Dstorage.diskCache.bufferSize=4096
             -Dindex.flushAfterCreate=false
             -Dstorage.makeFullCheckpointAfterCreate=false
             -Dstorage.makeFullCheckpointAfterOpen=false
@@ -55,6 +56,7 @@
             -Ddb.makeFullCheckpointOnIndexChange=false
             -Ddb.makeFullCheckpointOnSchemaChange=false
             -Dsecurity.userPasswordSaltIterations=10
+            -Dmemory.directMemory.trackMode=true
         </argLine>
     </properties>
 
@@ -71,35 +73,8 @@
                 <exclude.test.4>**/SBTreeTestBigValues.java</exclude.test.4>
                 <exclude.test.5>**/OSBTreeBonsaiLocalTest.java</exclude.test.5>
                 <exclude.test.6>**/LocalPaginatedClusterTest.java</exclude.test.6>
+                <exclude.test.7>**/WOWCacheTest.java</exclude.test.7>
             </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>findbugs-maven-plugin</artifactId>
-                        <version>3.0.1</version>
-                        <configuration>
-                            <effort>Max</effort>
-                            <threshold>Low</threshold>
-                            <xmlOutput>true</xmlOutput>
-                            <findbugsXmlOutput>true</findbugsXmlOutput>
-                            <includeFilterFile>findbugs_filter.xml</includeFilterFile>
-                        </configuration>
-                        <executions>
-                            <!--
-                                Ensures that FindBugs inspects source code when project is compiled.
-                            -->
-                            <execution>
-                                <id>analyze-compile</id>
-                                <phase>compile</phase>
-                                <goals>
-                                    <goal>check</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
         </profile>
 
         <profile>
@@ -117,35 +92,9 @@
                 <exclude.test.4>empty.java</exclude.test.4>
                 <exclude.test.5>empty.java</exclude.test.5>
                 <exclude.test.6>empty.java</exclude.test.6>
+                <exclude.test.7>empty.java</exclude.test.7>
             </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>findbugs-maven-plugin</artifactId>
-                        <version>3.0.1</version>
-                        <configuration>
-                            <effort>Max</effort>
-                            <threshold>Low</threshold>
-                            <xmlOutput>true</xmlOutput>
-                            <findbugsXmlOutput>true</findbugsXmlOutput>
-                            <includeFilterFile>findbugs_filter.xml</includeFilterFile>
-                        </configuration>
-                        <executions>
-                            <!--
-                                Ensures that FindBugs inspects source code when project is compiled.
-                            -->
-                            <execution>
-                                <id>analyze-compile</id>
-                                <phase>compile</phase>
-                                <goals>
-                                    <goal>check</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
+
         </profile>
         <profile>
             <id>release</id>
@@ -162,35 +111,9 @@
                 <exclude.test.4>empty.java</exclude.test.4>
                 <exclude.test.5>empty.java</exclude.test.5>
                 <exclude.test.6>empty.java</exclude.test.6>
+                <exclude.test.7>empty.java</exclude.test.7>
             </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>findbugs-maven-plugin</artifactId>
-                        <version>3.0.1</version>
-                        <configuration>
-                            <effort>Max</effort>
-                            <threshold>Low</threshold>
-                            <xmlOutput>true</xmlOutput>
-                            <findbugsXmlOutput>true</findbugsXmlOutput>
-                            <includeFilterFile>findbugs_filter.xml</includeFilterFile>
-                        </configuration>
-                        <executions>
-                            <!--
-                                Ensures that FindBugs inspects source code when project is compiled.
-                            -->
-                            <execution>
-                                <id>analyze-compile</id>
-                                <phase>compile</phase>
-                                <goals>
-                                    <goal>check</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
+
         </profile>
         <profile>
             <id>localDeploy</id>
@@ -243,6 +166,7 @@
                         <exclude>${exclude.test.4}</exclude>
                         <exclude>${exclude.test.5}</exclude>
                         <exclude>${exclude.test.6}</exclude>
+                        <exclude>${exclude.test.7}</exclude>
                     </excludes>
                 </configuration>
             </plugin>
@@ -282,19 +206,6 @@
                 </exclusion>
             </exclusions>
         </dependency>
-
-        <dependency>
-            <groupId>net.java.dev.jna</groupId>
-            <artifactId>jna</artifactId>
-            <version>${jna.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>net.java.dev.jna</groupId>
-            <artifactId>jna-platform</artifactId>
-            <version>${jna.version}</version>
-        </dependency>
-
 
         <dependency>
             <groupId>com.orientechnologies</groupId>

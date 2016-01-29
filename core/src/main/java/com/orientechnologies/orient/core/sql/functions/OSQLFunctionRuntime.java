@@ -158,7 +158,7 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
     for (int i = 0; i < iParameters.length; ++i) {
       this.configuredParameters[i] = iParameters[i];
 
-      if (i > 0 || iEvaluate)
+      if (iEvaluate)
         if (iParameters[i] != null) {
           if (iParameters[i] instanceof String && !iParameters[i].toString().startsWith("[")) {
             final Object v = OSQLHelper.parseValue(null, null, iParameters[i].toString(), null);

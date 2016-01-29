@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core;
 
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -66,6 +67,7 @@ public class TestExceptionNotOpen {
       ODatabaseDocument db = new ODatabaseDocumentTx("remote:127.0.0.1:00");
       Assert.fail();
     } catch (ODatabaseException e) {
+      Assert.assertNull(ODatabaseRecordThreadLocal.INSTANCE.getIfDefined());
     }
   }
 

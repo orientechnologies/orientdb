@@ -1,0 +1,27 @@
+{
+  "config": {
+    "verbose": true
+  },
+  "extractor": {
+    "jdbc": {
+      "driver": "com.mysql.jdbc.Driver",
+      "url": "jdbc:mysql://localhost/test",
+      "userName": "root",
+      "userPassword": "",
+      "query": "select * from Client"
+    }
+  },
+  "transformers": [
+    {
+      "vertex": {
+        "class": "Client"
+      }
+    }
+  ],
+  "loader": {
+    "orientdb": {
+      "dbURL": "plocal:/temp/databases/jdbctest",
+      "dbAutoCreate": true
+    }
+  }
+}

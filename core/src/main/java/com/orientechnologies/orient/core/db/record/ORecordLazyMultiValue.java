@@ -24,7 +24,7 @@ import com.orientechnologies.common.util.OSizeable;
 import java.util.Iterator;
 
 public interface ORecordLazyMultiValue extends OAutoConvertToRecord, ODetachable, OSizeable {
-  public Iterator<OIdentifiable> rawIterator();
+  Iterator<OIdentifiable> rawIterator();
 
   /**
    * Browse all the set to convert all the items into records.
@@ -32,12 +32,12 @@ public interface ORecordLazyMultiValue extends OAutoConvertToRecord, ODetachable
    * It converts only items that already loaded into memory from storage. To convert records that will be fetched from disk later
    * use {@link #setAutoConvertToRecord(boolean)}
    */
-  public void convertLinks2Records();
+  void convertLinks2Records();
 
   /**
    * Browse all the set to convert all the items into links.
    * 
    * @return
    */
-  public boolean convertRecords2Links();
+  boolean convertRecords2Links();
 }

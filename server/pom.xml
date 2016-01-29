@@ -36,8 +36,8 @@
         </osgi.import>
         <osgi.export>com.orientechnologies.orient.server.*</osgi.export>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-	<argLine>-ea -Xmx2048m
-            -Dsecurity.userPasswordSaltIterations=10
+        <argLine>-ea -Xmx2048m -XX:MaxDirectMemorySize=512g -Dstorage.diskCache.bufferSize=4096
+            -Dsecurity.userPasswordSaltIterations=10 -Dmemory.directMemory.trackMode=true
         </argLine>
     </properties>
 
@@ -63,7 +63,7 @@
         <dependency>
             <groupId>javax.mail</groupId>
             <artifactId>mail</artifactId>
-            <version>1.4</version>
+            <version>1.4.7</version>
         </dependency>
 
         <dependency>
@@ -79,6 +79,54 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <profiles>
+        <profile>
+            <id>development</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <exclude.test.1>**/AutomaticBackupTest.java</exclude.test.1>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>ci</id>
+            <activation>
+                <property>
+                    <name>orientdb.test.env</name>
+                    <value>ci</value>
+                </property>
+            </activation>
+            <properties>
+                <exclude.test.1>empty.java</exclude.test.1>
+            </properties>
+
+        </profile>
+        <profile>
+            <id>release</id>
+            <activation>
+                <property>
+                    <name>orientdb.test.env</name>
+                    <value>release</value>
+                </property>
+            </activation>
+            <properties>
+                <exclude.test.1>empty.java</exclude.test.1>
+            </properties>
+
+        </profile>
+        <profile>
+            <id>localDeploy</id>
+            <activation>
+                <property>
+                    <name>localDeploy</name>
+                </property>
+            </activation>
+        </profile>
+    </profiles>
+
 
     <build>
         <plugins>
@@ -102,6 +150,9 @@
                         <orient.server.testMode>${orient.server.testMode}</orient.server.testMode>
                         <orient.server.port>${orient.server.port}</orient.server.port>
                     </systemPropertyVariables>
+                    <excludes>
+                        <exclude>${exclude.test.1}</exclude>
+                    </excludes>
                 </configuration>
             </plugin>
         </plugins>

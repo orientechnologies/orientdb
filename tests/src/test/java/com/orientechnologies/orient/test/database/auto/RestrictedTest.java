@@ -114,10 +114,6 @@ public class RestrictedTest extends DocumentDBBaseTest {
       // OK AS EXCEPTION
     } catch (ORecordNotFoundException e) {
       // OK AS EXCEPTION
-    } catch (OResponseProcessingException e) {
-      final Throwable t = e.getCause();
-
-      Assert.assertTrue(t instanceof OSecurityException || t instanceof ORecordNotFoundException);
     }
     database.close();
 
@@ -154,8 +150,6 @@ public class RestrictedTest extends DocumentDBBaseTest {
       // OK AS EXCEPTION
     } catch (ORecordNotFoundException e) {
       // OK AS EXCEPTION
-    } catch (OResponseProcessingException e) {
-      Assert.assertTrue(e.getCause() instanceof OSecurityException || e.getCause() instanceof ORecordNotFoundException);
     }
     database.close();
 
@@ -258,8 +252,6 @@ public class RestrictedTest extends DocumentDBBaseTest {
       Assert.fail();
     } catch (OSecurityException e) {
       Assert.assertTrue(true);
-    } catch (OResponseProcessingException e) {
-      Assert.assertTrue(e.getCause() instanceof OSecurityException);
     }
 
   }
@@ -269,8 +261,6 @@ public class RestrictedTest extends DocumentDBBaseTest {
     database.open("admin", "admin");
     try {
       database.command(new OCommandSQL("truncate cluster CMSDocument")).execute();
-    } catch (OResponseProcessingException e) {
-      Assert.assertTrue(e.getCause() instanceof OSecurityException);
     } catch (OSecurityException e) {
 
     }

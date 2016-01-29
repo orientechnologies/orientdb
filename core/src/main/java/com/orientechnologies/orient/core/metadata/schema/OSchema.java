@@ -19,13 +19,13 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionFactory;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 public interface OSchema {
 
@@ -33,17 +33,11 @@ public interface OSchema {
 
   OClass createClass(Class<?> iClass);
 
-  OClass createClass(Class<?> iClass, int iDefaultClusterId);
-
   OClass createClass(String iClassName);
 
   OClass createClass(String iClassName, OClass iSuperClass);
 
   OClass createClass(String iClassName, OClass... superClasses);
-
-  OClass createClass(String iClassName, int iDefaultClusterId);
-
-  OClass createClass(String iClassName, OClass iSuperClass, int iDefaultClusterId);
 
   OClass createClass(String iClassName, OClass iSuperClass, int[] iClusterIds);
 
@@ -110,6 +104,8 @@ public interface OSchema {
    */
   Set<OClass> getClassesRelyOnCluster(String iClusterName);
 
+  OClass createClass(String className, int clusters, OClass... superClasses);
+
   OClass getClassByClusterId(int clusterId);
 
   OGlobalProperty getGlobalPropertyById(int id);
@@ -121,14 +117,4 @@ public interface OSchema {
   OClusterSelectionFactory getClusterSelectionFactory();
 
   OImmutableSchema makeSnapshot();
-
-  /**
-   * IMPORTANT! Only for internal usage.
-   */
-  boolean isFullCheckpointOnChange();
-
-  /**
-   * IMPORTANT! Only for internal usage.
-   */
-  void setFullCheckpointOnChange(boolean fullCheckpointOnChange);
 }

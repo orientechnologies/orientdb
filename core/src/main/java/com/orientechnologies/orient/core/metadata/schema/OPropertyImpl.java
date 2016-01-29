@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.orientechnologies.common.comparator.OCaseInsentiveComparator;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCollections;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
@@ -355,6 +356,8 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   public OPropertyImpl setLinkedClass(final OClass linkedClass) {
     getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
+    checkSupportLinkedClass(getType());
+
     acquireSchemaWriteLock();
     try {
       final ODatabaseDocumentInternal database = getDatabase();
@@ -388,17 +391,18 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     try {
       checkEmbedded();
 
-      OType type = globalRef.getType();
-      if (type == OType.LINK || type == OType.LINKSET || type == OType.LINKLIST || type == OType.LINKMAP || type == OType.EMBEDDED
-          || type == OType.EMBEDDEDSET || type == OType.EMBEDDEDLIST || type == OType.EMBEDDEDMAP)
-        this.linkedClass = iLinkedClass;
-      else
-        throw new OSchemaException("Linked class is not supported for type: " + type);
+      this.linkedClass = iLinkedClass;
 
     } finally {
       releaseSchemaWriteLock();
     }
 
+  }
+
+  protected static void checkSupportLinkedClass(OType type) {
+    if (type != OType.LINK && type != OType.LINKSET && type != OType.LINKLIST && type != OType.LINKMAP && type != OType.EMBEDDED
+        && type != OType.EMBEDDEDSET && type != OType.EMBEDDEDLIST && type != OType.EMBEDDEDMAP)
+      throw new OSchemaException("Linked class is not supported for type: " + type);
   }
 
   public OType getLinkedType() {
@@ -412,6 +416,8 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 
   public OProperty setLinkedType(final OType linkedType) {
     getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
+
+    checkLinkTypeSupport(getType());
 
     acquireSchemaWriteLock();
     try {
@@ -444,16 +450,17 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     acquireSchemaWriteLock();
     try {
       checkEmbedded();
-      OType type = globalRef.getType();
-      if (type == OType.EMBEDDEDSET || type == OType.EMBEDDEDLIST || type == OType.EMBEDDEDMAP)
-        this.linkedType = iLinkedType;
-      else
-        throw new OSchemaException("Linked type is not supported for type: " + type);
+      this.linkedType = iLinkedType;
 
     } finally {
       releaseSchemaWriteLock();
     }
 
+  }
+
+  protected static void checkLinkTypeSupport(OType type) {
+    if (type != OType.EMBEDDEDSET && type != OType.EMBEDDEDLIST && type != OType.EMBEDDEDMAP)
+      throw new OSchemaException("Linked type is not supported for type: " + type);
   }
 
   public boolean isNotNull() {
@@ -959,7 +966,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 
     return this;
   }
-  
+
   @Override
   public String getDescription() {
     acquireSchemaReadLock();
@@ -969,7 +976,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
       releaseSchemaReadLock();
     }
   }
-  
+
   @Override
   public OPropertyImpl setDescription(final String iDescription) {
     getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
@@ -1269,7 +1276,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
       releaseSchemaWriteLock();
     }
   }
-  
+
   private void setDescriptionInternal(final String iDescription) {
     getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
@@ -1390,13 +1397,15 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
         try {
           getDatabase().getStorage().getConfiguration().getDateFormatInstance().parse(iDateAsString);
         } catch (ParseException e) {
-          throw new OSchemaException("Invalid date format while formatting date '" + iDateAsString + "'", e);
+          throw OException.wrapException(new OSchemaException("Invalid date format while formatting date '" + iDateAsString + "'"),
+              e);
         }
       } else if (globalRef.getType() == OType.DATETIME) {
         try {
           getDatabase().getStorage().getConfiguration().getDateTimeFormatInstance().parse(iDateAsString);
         } catch (ParseException e) {
-          throw new OSchemaException("Invalid datetime format while formatting date '" + iDateAsString + "'", e);
+          throw OException.wrapException(new OSchemaException("Invalid datetime format while formatting date '" + iDateAsString
+              + "'"), e);
         }
       }
   }

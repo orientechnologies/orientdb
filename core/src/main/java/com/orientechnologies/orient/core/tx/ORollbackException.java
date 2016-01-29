@@ -27,7 +27,9 @@ import com.orientechnologies.orient.core.exception.OTransactionException;
  * @since 3/11/14
  */
 public class ORollbackException extends OTransactionException {
-  public ORollbackException() {
+
+  public ORollbackException(ORollbackException exception) {
+    super(exception);
   }
 
   public ORollbackException(String message) {

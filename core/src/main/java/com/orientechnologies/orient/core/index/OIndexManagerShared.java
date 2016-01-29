@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OMultiKey;
@@ -33,7 +32,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.hashindex.local.OHashIndexFactory;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -61,7 +59,7 @@ import java.util.Set;
  */
 @SuppressFBWarnings("EQ_DOESNT_OVERRIDE_EQUALS")
 public class OIndexManagerShared extends OIndexManagerAbstract {
-  private static final long           serialVersionUID      = 1L;
+  private static final long serialVersionUID = 1L;
 
   protected volatile transient Thread recreateIndexesThread = null;
   private volatile boolean            rebuildCompleted      = false;
@@ -190,9 +188,6 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
       releaseExclusiveLock();
     }
 
-    if (OGlobalConfiguration.INDEX_FLUSH_AFTER_CREATE.getValueAsBoolean())
-      storage.synch();
-
     return preProcessBeforeReturn(index);
   }
 
@@ -240,10 +235,6 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
     } finally {
       releaseExclusiveLock();
     }
-
-    final OStorage storage = getDatabase().getStorage();
-    if (OGlobalConfiguration.INDEX_FLUSH_AFTER_CREATE.getValueAsBoolean())
-      storage.synch();
 
     return this;
   }
@@ -355,8 +346,8 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
         while (indexConfigurationIterator.hasNext()) {
           final ODocument d = indexConfigurationIterator.next();
           try {
-            final int indexVersion = d.field(OIndexInternal.INDEX_VERSION) == null ? 1 : (Integer) d
-                .field(OIndexInternal.INDEX_VERSION);
+            final int indexVersion = d.field(OIndexInternal.INDEX_VERSION) == null ? 1
+                : (Integer) d.field(OIndexInternal.INDEX_VERSION);
 
             OIndexInternal.IndexMetadata newIndexMetadata = OIndexAbstract.loadMetadataInternal(d,
                 (String) d.field(OIndexInternal.CONFIG_TYPE), (String) d.field(OIndexInternal.ALGORITHM),
@@ -368,27 +359,19 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 
             final String normalizedName = newIndexMetadata.getName().toLowerCase(locale);
 
-            OIndex<?> oldIndex = oldIndexes.get(normalizedName);
+            OIndex<?> oldIndex = oldIndexes.remove(normalizedName);
             if (oldIndex != null) {
               OIndexInternal.IndexMetadata oldIndexMetadata = oldIndex.getInternal().loadMetadata(oldIndex.getConfiguration());
-              if (oldIndexMetadata.equals(newIndexMetadata)) {
-                addIndexInternal(oldIndex.getInternal());
-                oldIndexes.remove(normalizedName);
-              } else if (newIndexMetadata.getIndexDefinition() == null) {
-                // index is manual and index definition was just detected
-                addIndexInternal(oldIndex.getInternal());
-                oldIndexes.remove(normalizedName);
-              } else {
+
+              if (!(oldIndexMetadata.equals(newIndexMetadata) || newIndexMetadata.getIndexDefinition() == null)) {
                 oldIndex.delete();
+              }
 
-                if (index.loadFromConfiguration(d)) {
-                  addIndexInternal(index);
-                } else {
-                  indexConfigurationIterator.remove();
-                  configUpdated = true;
-                }
-
-                oldIndex.remove(normalizedName);
+              if (index.loadFromConfiguration(d)) {
+                addIndexInternal(index);
+              } else {
+                indexConfigurationIterator.remove();
+                configUpdated = true;
               }
             } else {
               if (index.loadFromConfiguration(d)) {
@@ -510,10 +493,6 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 
       save();
 
-      final OStorage storage = newDb.getStorage();
-      if (OGlobalConfiguration.INDEX_FLUSH_AFTER_CREATE.getValueAsBoolean())
-        storage.synch();
-
       rebuildCompleted = true;
 
       OLogManager.instance().info(this, "%d indexes were restored successfully, %d errors", ok, errors);
@@ -521,6 +500,25 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 
     private void recreateIndex(ODocument idx) {
       final OIndexInternal<?> index = createIndex(idx);
+
+      try {
+        index.delete();
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "Error on removing index '%s' on rebuilding. Trying removing index files (Cause: %s)",
+            index.getName(), e);
+
+        // TRY DELETING ALL THE FILES RELATIVE TO THE INDEX
+        for (Iterator<OIndexFactory> it = OIndexes.getAllFactories(); it.hasNext();) {
+          try {
+            final OIndexFactory indexFactory = it.next();
+            final OIndexEngine engine = indexFactory.createIndexEngine(null, index.getName(), false, getDatabase().getStorage(), 0,
+                null);
+
+            engine.deleteWithoutLoad(index.getName());
+          } catch (Exception e2) {
+          }
+        }
+      }
 
       OIndexInternal.IndexMetadata indexMetadata = index.loadMetadata(idx);
       OIndexDefinition indexDefinition = indexMetadata.getIndexDefinition();
@@ -557,10 +555,8 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
         OLogManager.instance().info(this, "Rebuild of '%s index was successfully finished", indexName);
       } else {
         errors++;
-        OLogManager.instance().error(
-            this,
-            "Information about index was restored incorrectly, following data were loaded : "
-                + "index name '%s', index definition '%s', clusters %s, type %s", indexName, indexDefinition, clusters, type);
+        OLogManager.instance().error(this, "Information about index was restored incorrectly, following data were loaded : "
+            + "index name '%s', index definition '%s', clusters %s, type %s", indexName, indexDefinition, clusters, type);
       }
     }
 
@@ -588,7 +584,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
       ODocument metadata = idx.field(OIndexInternal.METADATA);
       if (indexType == null) {
         OLogManager.instance().error(this, "Index type is null, will process other record");
-        throw new OException("Index type is null, will process other record. Index configuration: " + idx.toString());
+        throw new OIndexException("Index type is null, will process other record. Index configuration: " + idx.toString());
       }
 
       return OIndexes.createIndex(newDb, indexName, indexType, algorithm, valueContainerAlgorithm, metadata, -1);

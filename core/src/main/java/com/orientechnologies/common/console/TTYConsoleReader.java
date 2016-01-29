@@ -20,7 +20,7 @@
 
 package com.orientechnologies.common.console;
 
-import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.common.log.OLogManager;
 
 import java.io.*;
@@ -35,27 +35,27 @@ import java.util.Set;
  */
 public class TTYConsoleReader implements OConsoleReader {
 
-  private static final String   HISTORY_FILE_NAME   = ".orientdb_history";
-  public static int             END_CHAR            = 70;
-  public static int             BEGIN_CHAR          = 72;
-  public static int             DEL_CHAR            = 126;
-  public static int             DOWN_CHAR           = 66;
-  public static int             UP_CHAR             = 65;
-  public static int             RIGHT_CHAR          = 67;
-  public static int             LEFT_CHAR           = 68;
-  public static int             HORIZONTAL_TAB_CHAR = 9;
-  public static int             VERTICAL_TAB_CHAR   = 11;
-  public static int             BACKSPACE_CHAR      = 127;
-  public static int             NEW_LINE_CHAR       = 10;
-  public static int             UNIT_SEPARATOR_CHAR = 31;
-  private static int            MAX_HISTORY_ENTRIES = 50;
-  protected int                 currentPos          = 0;
+  private final static String HISTORY_FILE_NAME   = ".orientdb_history";
+  public final static int     END_CHAR            = 70;
+  public final static int     BEGIN_CHAR          = 72;
+  public final static int     DEL_CHAR            = 126;
+  public final static int     DOWN_CHAR           = 66;
+  public final static int     UP_CHAR             = 65;
+  public final static int     RIGHT_CHAR          = 67;
+  public final static int     LEFT_CHAR           = 68;
+  public final static int     HORIZONTAL_TAB_CHAR = 9;
+  public final static int     VERTICAL_TAB_CHAR   = 11;
+  public final static int     BACKSPACE_CHAR      = 127;
+  public final static int     NEW_LINE_CHAR       = 10;
+  public final static int     UNIT_SEPARATOR_CHAR = 31;
+  private final static int    MAX_HISTORY_ENTRIES = 50;
+  protected int               currentPos          = 0;
 
-  protected List<String>        history             = new ArrayList<String>();
+  protected final List<String> history = new ArrayList<String>();
 
-  protected String              historyBuffer;
+  protected String historyBuffer;
 
-  protected Reader              inStream;
+  protected Reader inStream;
 
   protected PrintStream         outStream;
   protected OConsoleApplication console;
@@ -84,7 +84,7 @@ public class TTYConsoleReader implements OConsoleReader {
     }
 
     if (inStream == null)
-      throw new OException("Cannot access to the input stream. Check permissions of running process");
+      throw new OSystemException("Cannot access to the input stream. Check permissions of running process");
   }
 
   public String readPassword() throws IOException {

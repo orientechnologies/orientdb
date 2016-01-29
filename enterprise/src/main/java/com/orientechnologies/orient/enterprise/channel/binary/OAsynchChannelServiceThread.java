@@ -47,7 +47,7 @@ public class OAsynchChannelServiceThread extends OSoftThread {
   @Override
   protected void execute() throws Exception {
     try {
-      network.beginResponse(sessionId, 0, tokenBased);
+      network.beginResponse(sessionId, 0, false);
       Object obj = null;
       final byte request = network.readByte();
       switch (request) {

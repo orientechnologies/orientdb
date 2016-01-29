@@ -19,17 +19,17 @@
  */
 package com.orientechnologies.orient.server.tx;
 
-import java.io.IOException;
-import java.util.*;
-import java.util.Map.Entry;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.exception.*;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.exception.OSerializationException;
+import com.orientechnologies.orient.core.exception.OTransactionAbortedException;
+import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OCompositeKey;
@@ -37,17 +37,26 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
-import com.orientechnologies.orient.core.version.ORecordVersion;
-import com.orientechnologies.orient.core.version.OSimpleVersion;
-import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 public class OTransactionOptimisticProxy extends OTransactionOptimistic {
   private final Map<ORID, ORecordOperation> tempEntries    = new LinkedHashMap<ORID, ORecordOperation>();
@@ -76,6 +85,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 
     try {
       setUsingLog(channel.readByte() == 1);
+      Map<ORecord, byte[]> lazyDeserialize = new IdentityHashMap<ORecord, byte[]>();
 
       byte lastTxStatus;
       for (lastTxStatus = channel.readByte(); lastTxStatus == 1; lastTxStatus = channel.readByte()) {
@@ -89,17 +99,21 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 
         switch (recordStatus) {
         case ORecordOperation.CREATED:
-          oNetworkProtocolBinary.fillRecord(rid, channel.readBytes(), OVersionFactory.instance().createVersion(), entry.getRecord(),
-              database);
+          byte[] content = channel.readBytes();
+          ORecordInternal.fill(entry.getRecord(), rid, 0, null, true);
+          // oNetworkProtocolBinary.fillRecord(rid, content, 0, entry.getRecord(), database);
+          lazyDeserialize.put(entry.getRecord(), content);
 
           // SAVE THE RECORD TO RETRIEVE THEM FOR THE NEW RID TO SEND BACK TO THE REQUESTER
           createdRecords.put(rid.copy(), entry.getRecord());
           break;
 
         case ORecordOperation.UPDATED:
-          ORecordVersion version = channel.readVersion();
+          int version = channel.readVersion();
           byte[] bytes = channel.readBytes();
-          oNetworkProtocolBinary.fillRecord(rid, bytes, version, entry.getRecord(), database);
+          ORecordInternal.fill(entry.getRecord(), rid, version, null, true);
+          // oNetworkProtocolBinary.fillRecord(rid, bytes, version, entry.getRecord(), database);
+          lazyDeserialize.put(entry.getRecord(), bytes);
           if (protocolVersion >= 23)
             ORecordInternal.setContentChanged(entry.getRecord(), channel.readBoolean());
           break;
@@ -107,12 +121,11 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
         case ORecordOperation.DELETED:
           // LOAD RECORD TO BE SURE IT HASN'T BEEN DELETED BEFORE + PROVIDE CONTENT FOR ANY HOOK
           final ORecord rec = rid.getRecord();
-          ORecordVersion deleteVersion = channel.readVersion();
+          int deleteVersion = channel.readVersion();
           if (rec == null)
-            toThrow = new OConcurrentModificationException(rid.getIdentity(), new OSimpleVersion(-1), deleteVersion,
-                ORecordOperation.DELETED);
+            toThrow = new OConcurrentModificationException(rid.getIdentity(), -1, deleteVersion, ORecordOperation.DELETED);
 
-          ORecordInternal.setVersion(rec, deleteVersion.getCounter());
+          ORecordInternal.setVersion(rec, deleteVersion);
           entry.setRecord(rec);
           break;
 
@@ -124,13 +137,34 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
         tempEntries.put(entry.getRecord().getIdentity(), entry);
       }
 
+      String dbSerializerName = "";
+      if (database != null)
+        dbSerializerName = database.getSerializer().toString();
+
+      String name = oNetworkProtocolBinary.getRecordSerializerName();
+      for (Map.Entry<ORecord, byte[]> entry : lazyDeserialize.entrySet()) {
+        ORecord record = entry.getKey();
+        final boolean contentChanged = ORecordInternal.isContentChanged(record);
+
+        if (ORecordInternal.getRecordType(record) == ODocument.RECORD_TYPE && !dbSerializerName.equals(name)) {
+          ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(name);
+          ser.fromStream(entry.getValue(), record, null);
+          record.setDirty();
+          ORecordInternal.setContentChanged(record, contentChanged);
+
+        } else {
+          record.fromStream(entry.getValue());
+          record.setDirty();
+          ORecordInternal.setContentChanged(record, contentChanged);
+        }
+      }
+
       if (toThrow != null)
         throw toThrow;
 
       if (lastTxStatus == -1)
         // ABORT TX
         throw new OTransactionAbortedException("Transaction aborted by the client");
-
 
       final ODocument remoteIndexEntries = new ODocument(channel.readBytes());
       fillIndexOperations(remoteIndexEntries);
@@ -140,8 +174,9 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 
         if (entry.getValue().type == ORecordOperation.UPDATED) {
           // SPECIAL CASE FOR UPDATE: WE NEED TO LOAD THE RECORD AND APPLY CHANGES TO GET WORKING HOOKS (LIKE INDEXES)
-
           final ORecord record = entry.getValue().record.getRecord();
+          final boolean contentChanged = ORecordInternal.isContentChanged(record);
+
           final ORecord loadedRecord = record.getIdentity().copy().getRecord();
           if (loadedRecord == null)
             throw new ORecordNotFoundException(record.getIdentity().toString());
@@ -149,14 +184,15 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
           if (ORecordInternal.getRecordType(loadedRecord) == ODocument.RECORD_TYPE
               && ORecordInternal.getRecordType(loadedRecord) == ORecordInternal.getRecordType(record)) {
             ((ODocument) loadedRecord).merge((ODocument) record, false, false);
-            ((ODocument) loadedRecord).setDirty();
 
-            loadedRecord.getRecordVersion().copyFrom(record.getRecordVersion());
+            loadedRecord.setDirty();
+            ORecordInternal.setContentChanged(loadedRecord, contentChanged);
+
+            ORecordInternal.setVersion(loadedRecord, record.getVersion());
             entry.getValue().record = loadedRecord;
 
             // SAVE THE RECORD TO RETRIEVE THEM FOR THE NEW VERSIONS TO SEND BACK TO THE REQUESTER
             updatedRecords.put((ORecordId) entry.getKey(), entry.getValue().getRecord());
-
           }
         }
 
@@ -172,7 +208,8 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 
     } catch (IOException e) {
       rollback();
-      throw new OSerializationException("Cannot read transaction record from the network. Transaction aborted", e);
+      throw OException
+          .wrapException(new OSerializationException("Cannot read transaction record from the network. Transaction aborted"), e);
     }
   }
 
@@ -242,7 +279,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
           } else
             key = null;
         } catch (IOException ioe) {
-          throw new OTransactionException("Error during index changes deserialization. ", ioe);
+          throw OException.wrapException(new OTransactionException("Error during index changes deserialization. "), ioe);
         }
 
         for (final ODocument op : operations) {

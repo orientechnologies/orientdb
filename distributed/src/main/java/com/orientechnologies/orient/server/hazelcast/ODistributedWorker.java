@@ -20,9 +20,10 @@
 package com.orientechnologies.orient.server.hazelcast;
 
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
-import com.hazelcast.core.IMap;
 import com.hazelcast.core.IQueue;
 import com.hazelcast.spi.exception.DistributedObjectDestroyedException;
+import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
@@ -65,58 +66,33 @@ public class ODistributedWorker extends Thread {
   protected final String                              databaseName;
   protected final IQueue                              requestQueue;
   protected Queue<ODistributedRequest>                localQueue          = new ArrayBlockingQueue<ODistributedRequest>(
-                                                                              LOCAL_QUEUE_MAXSIZE);
+      LOCAL_QUEUE_MAXSIZE);
   protected volatile ODatabaseDocumentTx              database;
   protected volatile OUser                            lastUser;
-  protected boolean                                   restoringMessages;
   protected volatile boolean                          running             = true;
 
   public ODistributedWorker(final OHazelcastDistributedDatabase iDistributed, final IQueue iRequestQueue,
-      final String iDatabaseName, final int i, final boolean iRestoringMessages) {
+      final String iDatabaseName, final int i) {
     setName("OrientDB DistributedWorker node=" + iDistributed.getLocalNodeName() + " db=" + iDatabaseName + " id=" + i);
     distributed = iDistributed;
     requestQueue = iRequestQueue;
     databaseName = iDatabaseName;
     manager = distributed.manager;
     msgService = distributed.msgService;
-    restoringMessages = iRestoringMessages;
   }
 
   @Override
   public void run() {
-    final int queuedMsg = requestQueue.size();
-
-    long lastMessageId = -1;
-
     for (long processedMessages = 0; running; processedMessages++) {
-      if (restoringMessages && processedMessages >= queuedMsg) {
-        // END OF RESTORING MESSAGES, SET IT ONLINE
-        ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
-            "executed all pending tasks in queue (%d), set restoringMessages=false and database '%s' as online. Last req=%d",
-            queuedMsg, databaseName, lastMessageId);
-
-        restoringMessages = false;
-      }
-
       String senderNode = null;
       ODistributedRequest message = null;
       try {
         message = readRequest();
 
         if (message != null) {
-          lastMessageId = message.getId();
-          // DECIDE TO USE THE HZ MAP ONLY IF THE COMMAND IS NOT IDEMPOTENT (ALL BUT READ-RECORD/SQL SELECT/SQL TRAVERSE
-          // final boolean saveAsPending = !message.getTask().isIdempotent();
-          // if (saveAsPending)
-          // SAVE THE MESSAGE IN TO THE UNDO MAP IN CASE OF FAILURE
-          // lastPendingMessagesMap.put(databaseName, message);
-
+          message.getId();
           senderNode = message.getSenderNodeName();
           onMessage(message);
-
-          // if (saveAsPending)
-          // OK: REMOVE THE UNDO BUFFER
-          // lastPendingMessagesMap.remove(databaseName);
         }
 
       } catch (InterruptedException e) {
@@ -256,33 +232,50 @@ public class ODistributedWorker extends Thread {
             "received request: %s", iRequest);
 
       // EXECUTE IT LOCALLY
-      final Serializable responsePayload;
+      Serializable responsePayload;
       OSecurityUser origin = null;
       try {
-        if (task.isRequiredOpenDatabase())
-          initDatabaseInstance();
+        // EXECUTE THE TASK
+        for (int retry = 1;; ++retry) {
+          if (task.isRequiredOpenDatabase())
+            initDatabaseInstance();
 
-        database.activateOnCurrentThread();
+          database.activateOnCurrentThread();
 
-        task.setNodeSource(iRequest.getSenderNodeName());
+          task.setNodeSource(iRequest.getSenderNodeName());
 
-        // keep original user in database, check the username passed in request and set new user in DB, after document saved, reset
-        // to original user
-        if (database != null) {
-          origin = database.getUser();
-          try {
-            if (lastUser == null || !(lastUser.getIdentity()).equals(iRequest.getUserRID()))
-              lastUser = database.getMetadata().getSecurity().getUser(iRequest.getUserRID());
-            database.setUser(lastUser);// set to new user
-          } catch (Throwable ex) {
-            OLogManager.instance().error(this, "failed to convert to OUser " + ex.getMessage());
+          // keep original user in database, check the username passed in request and set new user in DB, after document saved,
+          // reset
+          // to original user
+          if (database != null) {
+            origin = database.getUser();
+            try {
+              if (lastUser == null || !(lastUser.getIdentity()).equals(iRequest.getUserRID()))
+                lastUser = database.getMetadata().getSecurity().getUser(iRequest.getUserRID());
+              database.setUser(lastUser);// set to new user
+            } catch (Throwable ex) {
+              OLogManager.instance().error(this, "Failed on user switching " + ex.getMessage());
+            }
           }
+
+          responsePayload = manager.executeOnLocalNode(iRequest, database);
+
+          if (responsePayload instanceof OModificationOperationProhibitedException) {
+            OLogManager.instance().info(this,
+                "Database is locked on current node (backup is running?) retrying to execute the operation (retry=%d)", retry);
+            // RETRY
+            try {
+              Thread.sleep(1000);
+            } catch (InterruptedException e) {
+            }
+          } else
+            // OPERATION EXECUTED (OK OR ERROR), NO RETRY NEEDED
+            break;
+
         }
 
-        responsePayload = manager.executeOnLocalNode(iRequest, database);
-
       } finally {
-        if (database != null) {
+        if (database != null && !database.isClosed()) {
           database.activateOnCurrentThread();
           database.rollback();
           database.getLocalCache().clear();
@@ -312,47 +305,18 @@ public class ODistributedWorker extends Thread {
     return manager.getLocalNodeName();
   }
 
-  protected IMap<String, Object> restoreMessagesBeforeFailure(final boolean iRestoreMessages) {
-    final IMap<String, Object> lastPendingRequestMap = manager.getHazelcastInstance().getMap(getPendingRequestMapName());
-    if (iRestoreMessages) {
-      // RESTORE LAST UNDO MESSAGE
-      final ODistributedRequest lastPendingRequest = (ODistributedRequest) lastPendingRequestMap.remove(databaseName);
-      if (lastPendingRequest != null) {
-        // RESTORE LAST REQUEST
-        ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE,
-            "restore last replication message before the crash for database '%s': %s...", databaseName, lastPendingRequest);
-
-        try {
-          initDatabaseInstance();
-
-          final boolean executeLastPendingRequest = checkIfOperationHasBeenExecuted(lastPendingRequest,
-              lastPendingRequest.getTask());
-
-          if (executeLastPendingRequest)
-            onMessage(lastPendingRequest);
-
-        } catch (Throwable t) {
-          ODistributedServerLog.error(this, getLocalNodeName(), null, DIRECTION.NONE,
-              "error on executing restored message for database %s", t, databaseName);
-        }
-      }
-    }
-
-    return lastPendingRequestMap;
-  }
-
   /**
    * Checks if last pending operation must be re-executed or not. In some circustamces the exception
-   * OHotAlignmentNotPossibleExeption is raised because it's not possible to recover the database state.
+   * OHotAlignmentNotPossibleException is raised because it's not possible to recover the database state.
    *
-   * @throws OHotAlignmentNotPossibleExeption
+   * @throws OHotAlignmentNotPossibleException
    */
   protected void hotAlignmentError(final ODistributedRequest iLastPendingRequest, final String iMessage, final Object... iParams)
-      throws OHotAlignmentNotPossibleExeption {
+      throws OHotAlignmentNotPossibleException {
     final String msg = String.format(iMessage, iParams);
 
     ODistributedServerLog.warn(this, getLocalNodeName(), iLastPendingRequest.getSenderNodeName(), DIRECTION.IN, "- " + msg);
-    throw new OHotAlignmentNotPossibleExeption(msg);
+    throw new OHotAlignmentNotPossibleException(msg);
   }
 
   protected boolean checkIfOperationHasBeenExecuted(final ODistributedRequest lastPendingRequest, final OAbstractRemoteTask task) {
@@ -369,7 +333,7 @@ public class ODistributedWorker extends Thread {
             "- cannot update deleted record %s, database could be not aligned", ((OUpdateRecordTask) task).getRid());
       else
         // EXECUTE ONLY IF VERSIONS DIFFER
-        executeLastPendingRequest = !rec.getRecordVersion().equals(((OUpdateRecordTask) task).getVersion());
+        executeLastPendingRequest = rec.getVersion() != ((OUpdateRecordTask) task).getVersion();
     } else if (task instanceof OCreateRecordTask) {
       // EXECUTE ONLY IF THE RECORD HASN'T BEEN CREATED YET
       executeLastPendingRequest = ((OCreateRecordTask) task).getRid().getRecord() == null;
@@ -413,14 +377,15 @@ public class ODistributedWorker extends Thread {
 
     try {
       // GET THE SENDER'S RESPONSE QUEUE
-      final IQueue queue = msgService.getQueue(OHazelcastDistributedMessageService.getResponseQueueName(iRequest
-          .getSenderNodeName()));
+      final IQueue queue = msgService
+          .getQueue(OHazelcastDistributedMessageService.getResponseQueueName(iRequest.getSenderNodeName()));
 
       if (!queue.offer(response, OGlobalConfiguration.DISTRIBUTED_QUEUE_TIMEOUT.getValueAsLong(), TimeUnit.MILLISECONDS))
         throw new ODistributedException("Timeout on dispatching response to the thread queue " + iRequest.getSenderNodeName());
 
     } catch (Exception e) {
-      throw new ODistributedException("Cannot dispatch response to the thread queue " + iRequest.getSenderNodeName(), e);
+      throw OException.wrapException(
+          new ODistributedException("Cannot dispatch response to the thread queue " + iRequest.getSenderNodeName()), e);
     }
   }
 }

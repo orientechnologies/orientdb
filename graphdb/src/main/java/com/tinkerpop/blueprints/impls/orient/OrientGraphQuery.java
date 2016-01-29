@@ -21,20 +21,12 @@
 package com.tinkerpop.blueprints.impls.orient;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.tinkerpop.blueprints.Contains;
-import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.Element;
-import com.tinkerpop.blueprints.Graph;
-import com.tinkerpop.blueprints.Query;
-import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.*;
 import com.tinkerpop.blueprints.util.DefaultGraphQuery;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Set;
+import java.util.*;
 
 /**
  * OrientDB implementation for Graph query.
@@ -79,14 +71,19 @@ public class OrientGraphQuery extends DefaultGraphQuery {
   public class OrientGraphQueryIterable<T extends Element> extends DefaultGraphQueryIterable<T> {
     public OrientGraphQueryIterable(final boolean forVertex, final String[] labels) {
       super(forVertex);
+
       if (labels != null && labels.length > 0)
         // TREAT CLASS AS LABEL
+
         has("_class", Contains.IN, Arrays.asList(labels));
     }
 
     protected Set<String> getIndexedKeys(final Class<? extends Element> elementClass) {
       return ((OrientBaseGraph) graph).getIndexedKeys(elementClass, true);
     }
+
+
+
   }
 
   protected OrientGraphQuery(final Graph iGraph) {
@@ -154,11 +151,12 @@ public class OrientGraphQuery extends DefaultGraphQuery {
     if (limit == 0)
       return Collections.emptyList();
 
-    if (((OrientBaseGraph) graph).getRawGraph().getTransaction().isActive() || hasCustomPredicate())
+    if (((OrientBaseGraph) graph).getRawGraph().getTransaction().isActive() || hasCustomPredicate()) {
       // INSIDE TRANSACTION QUERY DOESN'T SEE IN MEMORY CHANGES, UNTIL
       // SUPPORTED USED THE BASIC IMPL
-      return new OrientGraphQueryIterable<Vertex>(true, labels);
-
+      String[] classes = allSubClassesLabels();
+      return new OrientGraphQueryIterable<Vertex>(true, classes);
+    }
     final StringBuilder text = new StringBuilder(512);
 
     // GO DIRECTLY AGAINST E CLASS AND SUB-CLASSES
@@ -171,7 +169,8 @@ public class OrientGraphQuery extends DefaultGraphQuery {
         text.append(OrientBaseGraph.encodeClassName(labels[0]));
       else {
         // MULTIPLE CLASSES NOT SUPPORTED DIRECTLY: CREATE A SUB-QUERY
-        return new OrientGraphQueryIterable<Vertex>(true, labels);
+        String[] classes = allSubClassesLabels();
+        return new OrientGraphQueryIterable<Vertex>(true, classes);
       }
     } else
       text.append(OrientVertexType.CLASS_NAME);
@@ -201,6 +200,26 @@ public class OrientGraphQuery extends DefaultGraphQuery {
       query.setFetchPlan(fetchPlan);
 
     return new OrientElementIterable<Vertex>(((OrientBaseGraph) graph), ((OrientBaseGraph) graph).getRawGraph().query(query));
+  }
+
+  private String[] allSubClassesLabels() {
+
+    String[] classes = null;
+
+    if (labels != null && labels.length > 0) {
+      List<String> tmpClasses = new ArrayList<String>();
+      for (String label : labels) {
+        OrientVertexType vertexType = ((OrientBaseGraph) graph).getVertexType(label);
+        tmpClasses.add(vertexType.getName());
+        Collection<OClass> allSubclasses = vertexType.getAllSubclasses();
+        for (OClass klass : allSubclasses) {
+          tmpClasses.add(klass.getName());
+        }
+      }
+      classes = tmpClasses.toArray(new String[tmpClasses.size()]);
+    }
+
+    return classes;
   }
 
   /**

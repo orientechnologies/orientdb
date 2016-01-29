@@ -19,7 +19,7 @@
  */
 package com.orientechnologies.common.concur;
 
-import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.core.exception.OCoreException;
 
 /**
  * Abstract base exception to extend for all the exception that report to the user it has been thrown but re-executing it could
@@ -28,14 +28,14 @@ import com.orientechnologies.common.exception.OException;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public abstract class ONeedRetryException extends OException {
+public abstract class ONeedRetryException extends OCoreException {
   private static final long serialVersionUID = 1L;
 
-  public ONeedRetryException() {
-    super();
+  protected ONeedRetryException(ONeedRetryException exception) {
+    super(exception);
   }
 
-  public ONeedRetryException(String message) {
+  protected ONeedRetryException(String message) {
     super(message);
   }
 }

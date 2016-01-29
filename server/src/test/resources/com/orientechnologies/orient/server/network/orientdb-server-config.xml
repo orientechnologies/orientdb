@@ -9,11 +9,17 @@
         </handler>
         <handler class="com.orientechnologies.orient.server.handler.OAutomaticBackup">
             <parameters>
+                <!-- CAN BE: FULL_BACKUP, INCREMENTAL_BACKUP, EXPORT -->
+                <parameter name="mode" value="FULL_BACKUP"/>
+                <!-- OPTION FOR EXPORT -->
+                <parameter name="exportOptions" value=""/>
                 <parameter value="false" name="enabled"/>
                 <parameter value="4h" name="delay"/>
                 <parameter value="backup" name="target.directory"/>
                 <parameter value="${DBNAME}-${DATE:yyyyMMddHHmmss}.zip" name="target.fileName"/>
+                <!-- DEFAULT: NO ONE, THAT MEANS ALL DATABASES. USE COMMA TO SEPARATE MULTIPLE DATABASE NAMES -->
                 <parameter value="" name="db.include"/>
+                <!-- DEFAULT: NO ONE, THAT MEANS ALL DATABASES. USE COMMA TO SEPARATE MULTIPLE DATABASE NAMES -->
                 <parameter value="" name="db.exclude"/>
             </parameters>
         </handler>

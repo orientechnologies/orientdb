@@ -20,36 +20,48 @@
 
 package com.orientechnologies.common.exception;
 
-public class OException extends RuntimeException {
+public abstract class OException extends RuntimeException {
 
   private static final long serialVersionUID = 3882447822497861424L;
 
-  public OException() {
+  public static OException wrapException(final OException exception, final Throwable cause) {
+    if (cause instanceof OHighLevelException)
+      return (OException) cause;
+
+    exception.initCause(cause);
+    return exception;
   }
 
   public OException(final String message) {
     super(message);
   }
 
-  public OException(final Throwable cause) {
+  /**
+   * This constructor is needed to restore and reproduce exception on client side in case of remote storage exception handling.
+   * Please create "copy constructor" for each exception which has current one as a parent.
+   */
+  public OException(final OException exception) {
+    super(exception.getMessage(), exception.getCause());
+  }
+
+  /**
+   * Passing of root exceptions directly is prohibited use {@link #wrapException(OException, Throwable)} instead.
+   */
+  private OException(final Throwable cause) {
     super(cause);
   }
 
-  public OException(final String message, final Throwable cause) {
+  /**
+   * Passing of root exceptions directly is prohibited use {@link #wrapException(OException, Throwable)} instead.
+   */
+  private OException(final String message, final Throwable cause) {
     super(message, cause);
   }
 
-  @Override
-  public boolean equals(final Object obj) {
-    if (obj == null || !obj.getClass().equals(getClass()))
-      return false;
+  public static Throwable getFirstCause(Throwable iRootException) {
+    while (iRootException.getCause() != null)
+      iRootException = iRootException.getCause();
 
-    final String myMsg = getMessage();
-    final String otherMsg = ((OException) obj).getMessage();
-    if (myMsg == null || otherMsg == null)
-      // UNKNOWN
-      return false;
-
-    return myMsg.equals(otherMsg);
+    return iRootException;
   }
 }

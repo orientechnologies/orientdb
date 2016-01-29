@@ -102,5 +102,16 @@ public class OBaseExpression extends OMathExpression {
     return identifier.executeIndexedFunction(target, context, operator, right);
   }
 
+  @Override
+  public boolean isBaseIdentifier() {
+    return identifier != null && modifier == null && identifier.isBaseIdentifier();
+  }
+
+  public boolean isEarlyCalculated() {
+    if (number != null || inputParam != null || string != null) {
+      return true;
+    }
+    return false;
+  }
 }
 /* JavaCC - OriginalChecksum=71b3e2d1b65c923dc7cfe11f9f449d2b (do not edit this line) */

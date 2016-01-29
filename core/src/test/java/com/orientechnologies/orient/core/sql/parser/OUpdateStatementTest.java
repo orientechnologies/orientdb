@@ -11,7 +11,8 @@ import static org.testng.Assert.fail;
 public class OUpdateStatementTest {
 
   protected SimpleNode checkRightSyntax(String query) {
-    return checkSyntax(query, true);
+    SimpleNode result = checkSyntax(query, true);
+    return checkSyntax(result.toString(), true);
   }
 
   protected SimpleNode checkWrongSyntax(String query) {
@@ -83,9 +84,22 @@ public class OUpdateStatementTest {
     checkRightSyntax("update  Foo set a -= 2");
   }
 
+  public void testQuotedJson() {
+    checkRightSyntax("UPDATE V SET key = \"test\", value = {\"f12\":\"test\\\\\"} UPSERT WHERE key = \"test\"");
+  }
+
   public void testTargetQuery() {
     //issue #4415
     checkRightSyntax("update (select from (traverse References from ( select from Node WHERE Email = 'julia@local'  ) ) WHERE @class = 'Node' and $depth <= 1 and Active = true ) set Points = 0 RETURN BEFORE $current.Points");
+  }
+
+  public void testTargetMultipleRids() {
+    checkRightSyntax("update [#9:0, #9:1] set foo = 'bar'");
+  }
+
+  public void testDottedTarget() {
+    //issue #5397
+    checkRightSyntax("update $publishedVersionEdge.row set isPublished = false");
   }
 
   private void printTree(String s) {

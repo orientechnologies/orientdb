@@ -19,16 +19,13 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
-import javax.swing.text.StyledEditorKit;
+import java.util.Map;
+import java.util.Set;
 
 public interface OIndexFactory {
 
@@ -64,6 +61,6 @@ public interface OIndexFactory {
   OIndexInternal<?> createIndex(String name, ODatabaseDocumentInternal database, String indexType, String algorithm,
       String valueContainerAlgorithm, ODocument metadata, int version) throws OConfigurationException;
 
-  OIndexEngine createIndexEngine(String name, Boolean durableInNonTxMode, OStorage storage, int version,
+  OIndexEngine createIndexEngine(String algorithm,String name, Boolean durableInNonTxMode, OStorage storage, int version,
       Map<String, String> engineProperties);
 }

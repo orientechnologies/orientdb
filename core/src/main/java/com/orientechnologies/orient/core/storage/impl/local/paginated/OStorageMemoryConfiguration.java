@@ -20,12 +20,13 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
+import java.io.IOException;
+import java.util.Map;
+
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.storage.OStorage;
-
-import java.io.IOException;
-import java.util.Map;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
@@ -34,7 +35,7 @@ import java.util.Map;
 public class OStorageMemoryConfiguration extends OStorageConfiguration {
   private static final long serialVersionUID = 7001342008735208586L;
 
-  private byte[]            serializedContent;
+  private byte[] serializedContent;
 
   public OStorageMemoryConfiguration(OStorage iStorage) {
     super(iStorage);
@@ -57,7 +58,8 @@ public class OStorageMemoryConfiguration extends OStorageConfiguration {
     try {
       fromStream(serializedContent);
     } catch (Exception e) {
-      throw new OSerializationException("Cannot load database's configuration. The database seems to be corrupted", e);
+      throw OException
+          .wrapException(new OSerializationException("Cannot load database configuration. The database seems corrupted"), e);
     }
     return this;
   }
@@ -75,7 +77,7 @@ public class OStorageMemoryConfiguration extends OStorageConfiguration {
     try {
       serializedContent = toStream();
     } catch (Exception e) {
-      throw new OSerializationException("Error on update storage configuration", e);
+      throw OException.wrapException(new OSerializationException("Error on update storage configuration"), e);
     }
   }
 

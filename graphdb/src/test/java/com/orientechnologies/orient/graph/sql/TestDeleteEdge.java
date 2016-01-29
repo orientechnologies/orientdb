@@ -1,9 +1,13 @@
 package com.orientechnologies.orient.graph.sql;
 
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
+import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -14,9 +18,23 @@ import static junit.framework.TestCase.assertTrue;
 
 public class TestDeleteEdge {
 
+  private OrientGraph    graph;
+  private OrientEdgeType edgeType;
+
+  @Before
+  public void before() {
+    graph = new OrientGraph("memory:" + TestDeleteEdge.class.getSimpleName(), "admin", "admin");
+    graph.createVertexType("TestVertex");
+    edgeType = graph.createEdgeType("TestEdge");
+  }
+
+  @After
+  public void after() {
+    graph.drop();
+  }
+
   @Test
-  public void t() {
-    final OrientGraph graph = new OrientGraph("memory:" + TestDeleteEdge.class.getSimpleName(), "admin", "admin");
+  public void testDeleteEdge() {
 
     for (int i = 0; i < 10; i++) {
       OrientVertex v1 = graph.addVertex("class:TestVertex");
@@ -38,12 +56,36 @@ public class TestDeleteEdge {
 
       graph.command(new OCommandSQL("delete edge TestEdge where based_on = '0001'")).execute();
 
-      Iterable<OrientVertex> edges = graph.command(new OCommandSQL("select count(*) from TestEdge where based_on = '0001'"))
-          .execute();
+      Iterable<OrientVertex> edges = graph.command(new OCommandSQL("select count(*) from TestEdge where based_on = '0001'")).execute();
       assertTrue(edges.iterator().hasNext());
       assertEquals(edges.iterator().next().getProperty("count"), 0l);
     }
 
-    graph.shutdown();
   }
+
+
+  @Test
+  public void testDeleteEdgeValidation() {
+
+    OrientVertex v1 = graph.addVertex("class:TestVertex");
+    OrientVertex v2 = graph.addVertex("class:TestVertex");
+
+    Map<String, Object> p1 = new HashMap<String, Object>();
+    p1.put("based_on", "0001");
+    OrientEdge e1 = v1.addEdge(null, v2, "TestEdge", null, p1);
+    e1.save();
+
+    graph.commit();
+    graph.getRawGraph().commit();
+    edgeType.createProperty("mand", OType.STRING).setMandatory(true);
+    graph.getRawGraph().begin();
+
+    graph.command(new OCommandSQL("delete edge TestEdge where based_on = '0001'")).execute();
+
+    Iterable<OrientVertex> edges = graph.command(new OCommandSQL("select count(*) from TestEdge where based_on = '0001'")).execute();
+    assertTrue(edges.iterator().hasNext());
+    assertEquals(edges.iterator().next().getProperty("count"), 0l);
+
+  }
+
 }

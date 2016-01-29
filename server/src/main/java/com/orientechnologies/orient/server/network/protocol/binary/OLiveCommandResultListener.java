@@ -20,14 +20,6 @@
 
 package com.orientechnologies.orient.server.network.protocol.binary;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
@@ -40,12 +32,18 @@ import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
-import com.orientechnologies.orient.core.version.ORecordVersion;
-import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryServer;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OClientSessions;
+
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Asynchronous command result manager. As soon as a record is returned by the command is sent over the wire.
@@ -116,10 +114,11 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
           ByteArrayOutputStream content = new ByteArrayOutputStream();
 
           DataOutputStream out = new DataOutputStream(content);
+          out.writeByte('r');
           out.writeByte(iOp.type);
           out.writeInt(iToken);
           out.writeByte(ORecordInternal.getRecordType(iOp.getRecord()));
-          writeVersion(out, iOp.getRecord().getRecordVersion());
+          writeVersion(out, iOp.getRecord().getVersion());
           writeRID(out, (ORecordId) iOp.getRecord().getIdentity());
           writeBytes(out, protocol.getRecordBytes(iOp.getRecord()));
 
@@ -158,12 +157,46 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
 
   @Override
   public void onUnsubscribe(int iLiveToken) {
+    boolean sendFail = true;
+    do {
+      OChannelBinaryServer channel = protocol.channel;
+      try {
+        channel.acquireWriteLock();
+        try {
 
+          ByteArrayOutputStream content = new ByteArrayOutputStream();
+
+          DataOutputStream out = new DataOutputStream(content);
+          out.writeByte('u');
+          out.writeInt(iLiveToken);
+          channel.writeByte(OChannelBinaryProtocol.PUSH_DATA);
+          channel.writeInt(Integer.MIN_VALUE);
+          channel.writeByte(OChannelBinaryProtocol.REQUEST_PUSH_LIVE_QUERY);
+          channel.writeBytes(content.toByteArray());
+          channel.flush();
+
+        } finally {
+          channel.releaseWriteLock();
+        }
+        sendFail = false;
+      } catch (IOException e) {
+        List<OClientConnection> connections = session.getConnections();
+        if (connections.isEmpty()) {
+          break;
+        }
+        protocol = (ONetworkProtocolBinary) connections.get(0).getProtocol();
+      } catch (Exception e) {
+        OLogManager.instance().warn(this, "Cannot push cluster configuration to the client %s", e,
+          protocol.connection.getRemoteAddress());
+        protocol.getServer().getClientConnectionManager().disconnect(protocol.connection);
+        break;
+      }
+
+    } while (sendFail);
   }
 
-  private void writeVersion(DataOutputStream out, ORecordVersion v) throws IOException {
-    final ORecordVersion version = OVersionFactory.instance().createVersion();
-    out.writeInt(version.getCounter());
+  private void writeVersion(DataOutputStream out, int v) throws IOException {
+    out.writeInt(v);
   }
 
   private void writeRID(DataOutputStream out, ORecordId record) throws IOException {
