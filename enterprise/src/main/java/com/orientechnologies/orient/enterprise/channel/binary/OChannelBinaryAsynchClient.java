@@ -23,11 +23,11 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OSystemException;
+import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
 import com.orientechnologies.orient.enterprise.channel.OSocketFactory;
 
@@ -135,8 +135,8 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
         c = excClass.getConstructor(String.class);
 
     } catch (Exception e) {
-      // UNABLE TO REPRODUCE THE SAME SERVER-SIZE EXCEPTION: THROW A STORAGE EXCEPTION
-      rootException = OException.wrapException(new OStorageException(iMessage), iPrevious);
+      // UNABLE TO REPRODUCE THE SAME SERVER-SIZE EXCEPTION: THROW AN IO EXCEPTION
+      rootException = OException.wrapException(new OIOException(iMessage), iPrevious);
     }
 
     if (c != null)
@@ -231,7 +231,8 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
                 + (socket != null ? socket.getRemoteSocketAddress() : "") + " for the request " + iRequesterId);
           }
 
-          if (unreadResponse > maxUnreadResponses) {
+          // IN CASE OF TOO MUCH TIME FOR READ A MESSAGE, ASYNC THREAD SHOULD NOT BE INCLUDE IN THIS CHECK
+          if (unreadResponse > maxUnreadResponses && iRequesterId != Integer.MIN_VALUE) {
             if (debug)
               OLogManager.instance().info(this, "Unread responses %d > %d, consider the buffer as dirty: clean it", unreadResponse,
                   maxUnreadResponses);
@@ -249,16 +250,16 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
 
           final long start = System.currentTimeMillis();
 
-          // WAIT 1 SECOND AND RETRY
-          readCondition.await(1, TimeUnit.SECONDS);
-          final long now = System.currentTimeMillis();
+          // WAIT MAX 30 SECOND AND RETRY, THIS IS UNBLOCKED BY ANOTHER THREAD IN CASE THE RESPONSE FOR THIS IS ARRIVED
+          readCondition.await(30, TimeUnit.SECONDS);
 
-          if (debug)
+          if (debug) {
+            final long now = System.currentTimeMillis();
             OLogManager.instance().debug(this, "Waked up: slept %dms, checking again from %s for session %d", (now - start),
                 socket.getLocalAddress(), iRequesterId);
+          }
 
-          if (now - start >= 1000)
-            unreadResponse++;
+          unreadResponse++;
 
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
@@ -433,6 +434,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
       throwable = objectInputStream.readObject();
     } catch (ClassNotFoundException e) {
       OLogManager.instance().error(this, "Error during exception deserialization", e);
+      throw new IOException("Error during exception deserialization: " + e.toString());
     }
 
     objectInputStream.close();
@@ -458,10 +460,9 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     }
 
     if (throwable instanceof Throwable) {
-      throw new OResponseProcessingException("Exception during response processing");
+      throw new OResponseProcessingException("Exception during response processing", (Throwable) throwable);
     }
     // WRAP IT
-
     else
       OLogManager.instance().error(this,
           "Error during exception serialization, serialized exception is not Throwable, exception type is "

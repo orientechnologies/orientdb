@@ -19,15 +19,15 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.stream;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 public class OStreamSerializerRID implements OStreamSerializer, OBinarySerializer<OIdentifiable> {
   public static final String               NAME     = "p";
@@ -84,31 +84,6 @@ public class OStreamSerializerRID implements OStreamSerializer, OBinarySerialize
     return OLinkSerializer.INSTANCE.deserializeNativeObject(stream, startPosition);
   }
 
-  @Override
-  public void serializeInDirectMemoryObject(OIdentifiable object, ODirectMemoryPointer pointer, long offset, Object... hints) {
-    OLinkSerializer.INSTANCE.serializeInDirectMemoryObject(object, pointer, offset);
-  }
-
-  @Override
-  public OIdentifiable deserializeFromDirectMemoryObject(ODirectMemoryPointer pointer, long offset) {
-    return OLinkSerializer.INSTANCE.deserializeFromDirectMemoryObject(pointer, offset);
-  }
-
-  @Override
-  public OIdentifiable deserializeFromDirectMemoryObject(OWALChangesTree.PointerWrapper wrapper, long offset) {
-    return OLinkSerializer.INSTANCE.deserializeFromDirectMemoryObject(wrapper, offset);
-  }
-
-  @Override
-  public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
-    return OLinkSerializer.INSTANCE.getObjectSizeInDirectMemory(pointer, offset);
-  }
-
-  @Override
-  public int getObjectSizeInDirectMemory(OWALChangesTree.PointerWrapper wrapper, long offset) {
-    return OLinkSerializer.INSTANCE.getObjectSizeInDirectMemory(wrapper, offset);
-  }
-
   public boolean isFixedLength() {
     return true;
   }
@@ -120,5 +95,45 @@ public class OStreamSerializerRID implements OStreamSerializer, OBinarySerialize
   @Override
   public OIdentifiable preprocess(OIdentifiable value, Object... hints) {
     return value;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void serializeInByteBufferObject(OIdentifiable object, ByteBuffer buffer, Object... hints) {
+    OLinkSerializer.INSTANCE.serializeInByteBufferObject(object, buffer);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public OIdentifiable deserializeFromByteBufferObject(ByteBuffer buffer) {
+    return OLinkSerializer.INSTANCE.deserializeFromByteBufferObject(buffer);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
+    return OLinkSerializer.INSTANCE.getObjectSizeInByteBuffer(buffer);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public OIdentifiable deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+    return OLinkSerializer.INSTANCE.deserializeFromByteBufferObject(buffer, walChanges, offset);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+    return OLinkSerializer.INSTANCE.getObjectSizeInByteBuffer(buffer, walChanges, offset);
   }
 }

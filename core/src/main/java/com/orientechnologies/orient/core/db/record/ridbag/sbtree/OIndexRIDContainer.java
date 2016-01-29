@@ -64,17 +64,12 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
     this.durableNonTxMode = durableNonTxMode;
   }
 
-  public OIndexRIDContainer(String fileName, Set<OIdentifiable> underlying, boolean autoConvert, boolean durableNonTxMode) {
-    this.fileId = resolveFileIdByName(fileName + INDEX_FILE_EXTENSION);
-    this.underlying = underlying;
-    isEmbedded = !(underlying instanceof OIndexRIDContainerSBTree);
-    if (!autoConvert) {
-      assert !isEmbedded;
-      topThreshold = -1;
-      bottomThreshold = -1;
-    }
+  public void setTopThreshold(int topThreshold) {
+    this.topThreshold = topThreshold;
+  }
 
-    this.durableNonTxMode = durableNonTxMode;
+  public void setBottomThreshold(int bottomThreshold) {
+    this.bottomThreshold = bottomThreshold;
   }
 
   private long resolveFileIdByName(String fileName) {
@@ -82,7 +77,7 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
         .getUnderlying();
     final OAtomicOperation atomicOperation;
     try {
-      atomicOperation = storage.getAtomicOperationsManager().startAtomicOperation(fileName);
+      atomicOperation = storage.getAtomicOperationsManager().startAtomicOperation(fileName, true);
     } catch (IOException e) {
       throw OException.wrapException(new OIndexEngineException("Error creation of sbtree with name " + fileName, fileName), e);
     }

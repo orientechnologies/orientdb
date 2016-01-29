@@ -56,12 +56,11 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
   /**
    * USE THIS AS RESPONSE TO REPORT A DELETED RECORD IN TX
    */
-  public static final ORecord                                 DELETED_RECORD        = new ORecordBytes();
-  protected Map<ORID, ORecord>                                temp2persistent       = new HashMap<ORID, ORecord>();
-  protected Map<ORID, ORecordOperation>                       allEntries            = new HashMap<ORID, ORecordOperation>();
-  protected Map<ORID, ORecordOperation>                       recordEntries         = new LinkedHashMap<ORID, ORecordOperation>();
-  protected Map<String, OTransactionIndexChanges>             indexEntries          = new LinkedHashMap<String, OTransactionIndexChanges>();
-  protected Map<ORID, List<OTransactionRecordIndexOperation>> recordIndexOperations = new HashMap<ORID, List<OTransactionRecordIndexOperation>>();
+  public static final ORecord                                           DELETED_RECORD        = new ORecordBytes();
+  protected           Map<ORID, ORID>                                   updatedRids           = new HashMap<ORID, ORID>();
+  protected           Map<ORID, ORecordOperation>                       allEntries            = new LinkedHashMap<ORID, ORecordOperation>();
+  protected           Map<String, OTransactionIndexChanges>             indexEntries          = new LinkedHashMap<String, OTransactionIndexChanges>();
+  protected           Map<ORID, List<OTransactionRecordIndexOperation>> recordIndexOperations = new HashMap<ORID, List<OTransactionRecordIndexOperation>>();
   protected int                                               id;
   protected int                                               newObjectCounter      = -2;
   protected Map<String, Object>                               userData              = new HashMap<String, Object>();
@@ -93,7 +92,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 
   @Override
   public boolean hasRecordCreation() {
-    for (ORecordOperation op : recordEntries.values()) {
+    for (ORecordOperation op : allEntries.values()) {
       if (op.type == ORecordOperation.CREATED)
         return true;
     }
@@ -127,9 +126,8 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
     }
 
     changedDocuments.clear();
-    temp2persistent.clear();
+    updatedRids.clear();
     allEntries.clear();
-    recordEntries.clear();
     indexEntries.clear();
     recordIndexOperations.clear();
     newObjectCounter = -2;
@@ -145,28 +143,18 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
   }
 
   public void clearRecordEntries() {
-    for (Entry<ORID, ORecordOperation> entry : recordEntries.entrySet()) {
-      final ORID key = entry.getKey();
-
-      // ID NEW CREATE A COPY OF RID TO AVOID IT CHANGES IDENTITY+HASHCODE AND IT'S UNREACHEABLE THEREAFTER
-      allEntries.put(key.isNew() ? key.copy() : key, entry.getValue());
-    }
-
-    recordEntries.clear();
   }
 
   public void restore() {
-    recordEntries.putAll(allEntries);
-    allEntries.clear();
   }
 
   @Override
   public int getEntryCount() {
-    return recordEntries.size();
+    return allEntries.size();
   }
 
   public Collection<ORecordOperation> getCurrentRecordEntries() {
-    return recordEntries.values();
+    return allEntries.values();
   }
 
   public Collection<ORecordOperation> getAllRecordEntries() {
@@ -178,19 +166,11 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
     if (e != null)
       return e;
 
-    if (rid.isTemporary()) {
-      final ORecord record = temp2persistent.get(rid);
-      if (record != null && !record.getIdentity().equals(rid))
-        rid = record.getIdentity();
+    if (!updatedRids.isEmpty()) {
+      ORID r = updatedRids.get(rid);
+      if (r != null)
+        return allEntries.get(r);
     }
-
-    e = recordEntries.get(rid);
-    if (e != null)
-      return e;
-
-    e = allEntries.get(rid);
-    if (e != null)
-      return e;
 
     return null;
   }
@@ -213,13 +193,13 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 
     if (iClass == null)
       // RETURN ALL THE RECORDS
-      for (ORecordOperation entry : recordEntries.values()) {
+      for (ORecordOperation entry : allEntries.values()) {
         if (entry.type == ORecordOperation.CREATED)
           result.add(entry);
       }
     else {
       // FILTER RECORDS BY CLASSNAME
-      for (ORecordOperation entry : recordEntries.values()) {
+      for (ORecordOperation entry : allEntries.values()) {
         if (entry.type == ORecordOperation.CREATED)
           if (entry.getRecord() != null && entry.getRecord() instanceof ODocument) {
             if (iPolymorphic) {
@@ -242,13 +222,13 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 
     if (iIds == null)
       // RETURN ALL THE RECORDS
-      for (ORecordOperation entry : recordEntries.values()) {
+      for (ORecordOperation entry : allEntries.values()) {
         if (entry.type == ORecordOperation.CREATED)
           result.add(entry);
       }
     else
       // FILTER RECORDS BY ID
-      for (ORecordOperation entry : recordEntries.values()) {
+      for (ORecordOperation entry : allEntries.values()) {
         for (int id : iIds) {
           if (entry.getRecord() != null && entry.getRecord().getIdentity().getClusterId() == id
               && entry.type == ORecordOperation.CREATED) {
@@ -363,11 +343,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 
     final ORecordOperation rec = getRecordEntry(oldRid);
     if (rec != null) {
-      if (allEntries.remove(oldRid) != null)
-        allEntries.put(newRid, rec);
-
-      if (recordEntries.remove(oldRid) != null)
-        recordEntries.put(newRid, rec);
+      updatedRids.put(newRid, oldRid.copy());
 
       if (!rec.getRecord().getIdentity().equals(newRid)) {
         ORecordInternal.onBeforeIdentityChanged(rec.getRecord());
@@ -442,7 +418,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
         changeDoc.field("o", e.operation.ordinal());
 
         if (e.value instanceof ORecord && e.value.getIdentity().isNew()) {
-          final ORecord saved = temp2persistent.get(e.value.getIdentity());
+          final ORecord saved = getRecord(e.value.getIdentity());
           if (saved != null)
             e.value = saved;
           else

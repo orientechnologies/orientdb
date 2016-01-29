@@ -20,6 +20,14 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Map;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OPair;
@@ -44,14 +52,6 @@ import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.util.ElementHelper;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
-
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Map;
 
 /**
  * Base Graph Element where OrientVertex and OrientEdge classes extends from. Labels are managed as OrientDB classes.
@@ -96,8 +96,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    * Removes the Element from the Graph. In case the element is a Vertex, all the incoming and outgoing edges are automatically
    * removed too.
    */
-  @Override
-  public void remove() {
+  void removeRecord() {
     checkIfAttached();
 
     final OrientBaseGraph graph = getGraph();
@@ -105,14 +104,13 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     graph.autoStartTransaction();
 
     if (checkDeletedInTx())
-      throw new IllegalStateException("The elements " + getIdentity() + " has already been deleted");
+      graph.throwRecordNotFoundException("The graph element with id '" + getIdentity() + "' not found");
 
     try {
       getRecord().load();
     } catch (ORecordNotFoundException e) {
-      throw new IllegalStateException("The elements " + getIdentity() + " has already been deleted", e);
+      graph.throwRecordNotFoundException(e.getMessage());
     }
-
     getRecord().delete();
   }
 
@@ -161,7 +159,8 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    */
   public <T extends OrientElement> T setProperties(final Object... fields) {
     if (checkDeletedInTx())
-      throw new IllegalStateException("The vertex " + getIdentity() + " has been deleted");
+      graph.throwRecordNotFoundException("The graph element " + getIdentity() + " has been deleted");
+
     setPropertiesInternal(fields);
     save();
     return (T) this;
@@ -192,7 +191,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
   @Override
   public void setProperty(final String key, final Object value) {
     if (checkDeletedInTx())
-      throw new IllegalStateException("The vertex " + getIdentity() + " has been deleted");
+      graph.throwRecordNotFoundException("The graph element " + getIdentity() + " has been deleted");
 
     validateProperty(this, key, value);
     final OrientBaseGraph graph = getGraph();
@@ -217,7 +216,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    */
   public void setProperty(final String key, final Object value, final OType iType) {
     if (checkDeletedInTx())
-      throw new IllegalStateException("The vertex " + getIdentity() + " has been deleted");
+      graph.throwRecordNotFoundException("The graph element " + getIdentity() + " has been deleted");
 
     validateProperty(this, key, value);
 
@@ -318,9 +317,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    *          Cluster name or null to use the default "E"
    */
   public void save(final String iClusterName) {
-    checkIfAttached();
-
-    final OrientBaseGraph graph = getGraph();
+    final OrientBaseGraph graph = checkIfAttached();
     graph.setCurrentGraphInThreadLocal();
 
     if (rawElement instanceof ODocument)
@@ -379,8 +376,8 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    */
   @Override
   public void lock(final boolean iExclusive) {
-    ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction()
-        .lockRecord(this, iExclusive ? OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK : OStorage.LOCKING_STRATEGY.SHARED_LOCK);
+    ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction().lockRecord(this,
+        iExclusive ? OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK : OStorage.LOCKING_STRATEGY.SHARED_LOCK);
   }
 
   /**
@@ -634,16 +631,15 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     if (!schema.existsClass(className)) {
       // CREATE A NEW CLASS AT THE FLY
       try {
-        graph
-            .executeOutsideTx(new OCallable<OClass, OrientBaseGraph>() {
+        graph.executeOutsideTx(new OCallable<OClass, OrientBaseGraph>() {
 
-              @Override
-              public OClass call(final OrientBaseGraph g) {
-                return schema.createClass(className, schema.getClass(getBaseClassName()));
+          @Override
+          public OClass call(final OrientBaseGraph g) {
+            return schema.createClass(className, schema.getClass(getBaseClassName()));
 
-              }
-            }, "Committing the active transaction to create the new type '", className, "' as subclass of '", getBaseClassName(),
-                "'. The transaction will be reopen right after that. To avoid this behavior create the classes outside the transaction");
+          }
+        }, "Committing the active transaction to create the new type '", className, "' as subclass of '", getBaseClassName(),
+            "'. The transaction will be reopen right after that. To avoid this behavior create the classes outside the transaction");
 
       } catch (OSchemaException e) {
         if (!schema.existsClass(className))

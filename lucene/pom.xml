@@ -34,12 +34,18 @@
     <properties>
         <surefire.version>2.18.1</surefire.version>
         <orientdb.version>${project.version}</orientdb.version>
-        <lucene.version>5.3.1</lucene.version>
+        <lucene.version>5.4.0</lucene.version>
         <geotools.version>13.2</geotools.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <argLine>-ea -XX:MaxDirectMemorySize=512g -Xmx2048m -Dstorage.diskCache.bufferSize=4096 -Dindex.flushAfterCreate=false
+            -Dstorage.makeFullCheckpointAfterCreate=false
+            -Dstorage.makeFullCheckpointAfterClusterCreate=false -Dstorage.wal.syncOnPageFlush=false
+            -Dstorage.configuration.syncOnUpdate=false
+        </argLine>
+
     </properties>
 
-    <name>OrientDB Lucene full text and spatial index</name>
+    <name>OrientDB Lucene full text index</name>
     <description>Lucene plugin for OrientDB NoSQL document graph dbms</description>
     <url>http://maven.apache.org</url>
     <inceptionYear>2013</inceptionYear>
@@ -48,15 +54,33 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                    </archive>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>test-jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
+
+                <dependencies>
+                    <dependency>
+                        <groupId>org.apache.maven.surefire</groupId>
+                        <artifactId>surefire-junit4</artifactId>
+                        <version>${surefire.version}</version>
+                    </dependency>
+                </dependencies>
 
                 <configuration>
                     <useFile>false</useFile>
-                    <argLine>-ea -Xmx2048m -Dstorage.diskCache.bufferSize=4096 -Dindex.flushAfterCreate=false
-                        -Dstorage.makeFullCheckpointAfterCreate=false
-                        -Dstorage.makeFullCheckpointAfterClusterCreate=false -Dstorage.wal.syncOnPageFlush=false
-                        -Dstorage.configuration.syncOnUpdate=false
-                    </argLine>
 
                     <groups>embedded</groups>
                     <systemPropertyVariables>
@@ -75,7 +99,7 @@
                     <execution>
                         <id>make-assembly</id>
                         <!-- this is used for inheritance merges -->
-                        <phase>package</phase>
+                        <!--<phase>package</phase>-->
                         <!-- bind to the packaging phase -->
                         <goals>
                             <goal>single</goal>
@@ -170,11 +194,6 @@
         </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-spatial</artifactId>
-            <version>${lucene.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-facet</artifactId>
             <version>${lucene.version}</version>
         </dependency>
@@ -183,7 +202,11 @@
             <artifactId>lucene-memory</artifactId>
             <version>${lucene.version}</version>
         </dependency>
-
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-queries</artifactId>
+            <version>${lucene.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-backward-codecs</artifactId>
@@ -195,24 +218,6 @@
             <artifactId>opencsv</artifactId>
             <version>2.3</version>
             <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>com.vividsolutions</groupId>
-            <artifactId>jts</artifactId>
-            <version>1.13</version>
-            <optional>true</optional>
-        </dependency>
-
-        <dependency>
-            <groupId>org.geotools</groupId>
-            <artifactId>gt-main</artifactId>
-            <version>${geotools.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.geotools</groupId>
-            <artifactId>gt-api</artifactId>
-            <version>${geotools.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.code.gson</groupId>

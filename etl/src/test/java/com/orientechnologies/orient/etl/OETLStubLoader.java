@@ -42,13 +42,10 @@ public class OETLStubLoader extends OAbstractLoader {
   public void load(Object input, OCommandContext context) {
     synchronized (loadedRecords) {
       loadedRecords.add((ODocument) input);
+      progress.incrementAndGet();
     }
   }
 
-  @Override
-  public long getProgress() {
-    return loadedRecords.size();
-  }
 
   @Override
   public String getUnit() {

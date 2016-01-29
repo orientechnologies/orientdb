@@ -50,8 +50,6 @@ import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.method.OSQLMethod;
-import com.orientechnologies.orient.core.sql.parser.ORid;
-import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 /**
  * Helper class to manage documents.
@@ -818,9 +816,6 @@ public class ODocumentHelper {
         return new ArrayList<Object>((List<Object>) fieldValue);
 
         // SETS
-      } else if (fieldValue instanceof OMVRBTreeRIDSet) {
-        return ((OMVRBTreeRIDSet) fieldValue).copy(iCloned);
-
       } else if (fieldValue instanceof ORecordLazySet) {
         final ORecordLazySet newList = new ORecordLazySet(iCloned);
         newList.addAll((ORecordLazySet) fieldValue);

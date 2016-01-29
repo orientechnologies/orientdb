@@ -57,7 +57,7 @@ public class OQueryBuilderImpl implements OQueryBuilder {
       throws ParseException {
     QueryParser queryParser;
     if ((key).startsWith("(")) {
-      queryParser = new QueryParser( "", analyzer);
+      queryParser = new QueryParser("", analyzer);
 
     } else {
       String[] fields = null;

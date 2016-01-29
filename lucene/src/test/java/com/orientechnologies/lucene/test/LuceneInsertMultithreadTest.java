@@ -28,8 +28,8 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.util.Collection;
 
@@ -37,13 +37,11 @@ import java.util.Collection;
  * Created by enricorisa on 28/06/14.
  */
 
-@Test(groups = "embedded") public class LuceneInsertMultithreadTest {
+public class LuceneInsertMultithreadTest {
 
   private final static int THREADS  = 10;
   private final static int RTHREADS = 1;
   private final static int CYCLE    = 100;
-  private ODatabaseDocument databaseDocumentTx;
-
   private static String url;
 
   static {
@@ -66,69 +64,7 @@ import java.util.Collection;
 
   }
 
-  @Test(enabled = false)
-  public static class LuceneInsertThread implements Runnable {
-
-    private ODatabaseDocumentTx db;
-    private int cycle     = 0;
-    private int commitBuf = 500;
-
-    public LuceneInsertThread(int cycle) {
-      this.cycle = cycle;
-    }
-
-    @Override
-    @Test(enabled = false)
-    public void run() {
-
-      db = new ODatabaseDocumentTx(url);
-      db.open("admin", "admin");
-      db.declareIntent(new OIntentMassiveInsert());
-      db.begin();
-      for (int i = 0; i < cycle; i++) {
-        ODocument doc = new ODocument("City");
-
-        doc.field("name", "Rome");
-
-        db.save(doc);
-        if (i % commitBuf == 0) {
-          db.commit();
-          db.begin();
-        }
-
-      }
-
-      db.close();
-    }
-  }
-
-  @Test(enabled = false)
-  public class LuceneReadThread implements Runnable {
-    private final int               cycle;
-    private       ODatabaseDocument databaseDocumentTx;
-
-    public LuceneReadThread(int cycle) {
-      this.cycle = cycle;
-    }
-
-
-    @Override
-    @Test(enabled = false)
-    public void run() {
-
-      databaseDocumentTx = new ODatabaseDocumentTx(url);
-      databaseDocumentTx.open("admin", "admin");
-      OSchema schema = databaseDocumentTx.getMetadata().getSchema();
-      OIndex idx = schema.getClass("City").getClassIndex("City.name");
-
-      for (int i = 0; i < cycle; i++) {
-
-        Collection<?> coll = (Collection<?>) idx.get("Rome");
-
-      }
-
-    }
-  }
+  private ODatabaseDocument databaseDocumentTx;
 
   public LuceneInsertMultithreadTest() {
     super();
@@ -171,5 +107,64 @@ import java.util.Collection;
 
     Assert.assertEquals(idx.getSize(), THREADS * CYCLE);
     databaseDocumentTx.drop();
+  }
+
+  public static class LuceneInsertThread implements Runnable {
+
+    private ODatabaseDocumentTx db;
+    private int cycle     = 0;
+    private int commitBuf = 500;
+
+    public LuceneInsertThread(int cycle) {
+      this.cycle = cycle;
+    }
+
+    @Override
+    public void run() {
+
+      db = new ODatabaseDocumentTx(url);
+      db.open("admin", "admin");
+      db.declareIntent(new OIntentMassiveInsert());
+      db.begin();
+      for (int i = 0; i < cycle; i++) {
+        ODocument doc = new ODocument("City");
+
+        doc.field("name", "Rome");
+
+        db.save(doc);
+        if (i % commitBuf == 0) {
+          db.commit();
+          db.begin();
+        }
+
+      }
+
+      db.close();
+    }
+  }
+
+  public class LuceneReadThread implements Runnable {
+    private final int               cycle;
+    private       ODatabaseDocument databaseDocumentTx;
+
+    public LuceneReadThread(int cycle) {
+      this.cycle = cycle;
+    }
+
+    @Override
+    public void run() {
+
+      databaseDocumentTx = new ODatabaseDocumentTx(url);
+      databaseDocumentTx.open("admin", "admin");
+      OSchema schema = databaseDocumentTx.getMetadata().getSchema();
+      OIndex idx = schema.getClass("City").getClassIndex("City.name");
+
+      for (int i = 0; i < cycle; i++) {
+
+        Collection<?> coll = (Collection<?>) idx.get("Rome");
+
+      }
+
+    }
   }
 }

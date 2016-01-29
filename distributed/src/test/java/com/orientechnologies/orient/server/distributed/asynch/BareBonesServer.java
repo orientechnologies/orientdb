@@ -22,8 +22,10 @@ public class BareBonesServer {
     graph.executeOutsideTx(new OCallable<Object, OrientBaseGraph>() {
       @Override
       public Object call(OrientBaseGraph g) {
-        g.createEdgeType("edgetype");
-        g.createVertexType("vertextype");
+        if (g.getEdgeType("edgetype") == null)
+          g.createEdgeType("edgetype");
+        if (g.getVertexType("vertextype") == null)
+          g.createVertexType("vertextype");
         return null;
       }
     });
@@ -35,7 +37,7 @@ public class BareBonesServer {
   public void start(String configFileDir, String configFileName) {
     OLogManager.instance().info(this, "starting the database based on: " + configFileName);
     try {
-      server = OServerMain.create();
+      server = new OServer(false);
       server.startup(new File(configFileDir, configFileName));
       server.activate();
       if (server.getPluginByClass(OHazelcastPlugin.class) != null)

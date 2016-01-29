@@ -88,15 +88,14 @@ public class OLuceneFacetManager {
   }
 
   private Directory getTaxDirectory(ODatabaseDocumentInternal database) throws IOException {
-    Directory dir = null;
     final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
     if (storageLocalAbstract instanceof OLocalPaginatedStorage) {
       String pathname = getIndexFacetPath((OLocalPaginatedStorage) storageLocalAbstract);
-      dir = NIOFSDirectory.open(new File(pathname).toPath());
-    } else {
-      dir = new RAMDirectory();
+      return NIOFSDirectory.open(new File(pathname).toPath());
     }
-    return dir;
+
+    return new RAMDirectory();
+
   }
 
   protected String getIndexFacetPath(OLocalPaginatedStorage storageLocalAbstract) {

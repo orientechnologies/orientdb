@@ -19,16 +19,6 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.text.ParseException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
@@ -67,6 +57,18 @@ import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.util.ODateHelper;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.StringWriter;
+import java.text.ParseException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 @SuppressWarnings("serial")
 public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
@@ -104,7 +106,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         includeId = true;
         includeClazz = true;
         attribSameRow = true;
-        indentLevel = 1;
+        indentLevel = 0;
         fetchPlan = "";
         keepTypes = true;
         alwaysFetchEmbeddedDocuments = true;
@@ -115,7 +117,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         includeClazz = false;
         attribSameRow = false;
         alwaysFetchEmbeddedDocuments = false;
-        indentLevel = 1;
+        indentLevel = 0;
         keepTypes = false;
 
         if (iFormat != null && !iFormat.isEmpty()) {
@@ -327,14 +329,14 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
   @Override
   public StringBuilder toString(final ORecord iRecord, final StringBuilder iOutput, final String iFormat,
-      final OUserObject2RecordHandler iObjHandler, final Map<ODocument, Boolean> iMarshalledRecords, boolean iOnlyDelta,
-      boolean autoDetectCollectionType) {
+      final OUserObject2RecordHandler iObjHandler, boolean iOnlyDelta, boolean autoDetectCollectionType) {
     try {
       final StringWriter buffer = new StringWriter(INITIAL_SIZE);
       final OJSONWriter json = new OJSONWriter(buffer, iFormat);
       final FormatSettings settings = new FormatSettings(iFormat);
 
       json.beginObject();
+
       OJSONFetchContext context = new OJSONFetchContext(json, settings);
       context.writeSignature(json, iRecord);
 
@@ -346,18 +348,18 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
         // STRINGABLE
         final ORecordStringable record = (ORecordStringable) iRecord;
-        json.writeAttribute(settings.indentLevel + 1, true, "value", record.value());
+        json.writeAttribute(settings.indentLevel, true, "value", record.value());
 
       } else if (iRecord instanceof ORecordBytes) {
         // BYTES
         final ORecordBytes record = (ORecordBytes) iRecord;
-        json.writeAttribute(settings.indentLevel + 1, true, "value", OBase64Utils.encodeBytes(record.toStream()));
+        json.writeAttribute(settings.indentLevel, true, "value", OBase64Utils.encodeBytes(record.toStream()));
       } else
 
         throw new OSerializationException(
             "Error on marshalling record of type '" + iRecord.getClass() + "' to JSON. The record type cannot be exported to JSON");
 
-      json.endObject(0, true);
+      json.endObject(settings.indentLevel, true);
 
       iOutput.append(buffer);
       return iOutput;
@@ -540,6 +542,17 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         }
       case BINARY:
         return OStringSerializerHelper.fieldTypeFromStream(iRecord, iType, iFieldValueAsString);
+      case CUSTOM: {
+        try {
+          ByteArrayInputStream bais = new ByteArrayInputStream(OBase64Utils.decode(iFieldValueAsString));
+          ObjectInputStream input = new ObjectInputStream(bais);
+          return input.readObject();
+        } catch (IOException e) {
+          throw OException.wrapException(new OSerializationException("Error on custom field deserialization"), e);
+        } catch (ClassNotFoundException e) {
+          throw OException.wrapException(new OSerializationException("Error on custom field deserialization"), e);
+        }
+      }
       default:
         return OStringSerializerHelper.fieldTypeFromStream(iRecord, iType, iFieldValue);
       }

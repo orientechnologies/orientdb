@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.sql;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OLiveQuery;
 import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
@@ -64,7 +63,6 @@ public class OLiveQueryTest {
     }
   }
 
-  @Test(enabled = false)
   public void testLiveInsert() throws InterruptedException {
 
     ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OLiveQueryTest");
@@ -86,13 +84,15 @@ public class OLiveQueryTest {
       db.command(new OCommandSQL("insert into test set name = 'foo', surname = 'baz'")).execute();
       db.command(new OCommandSQL("insert into test2 set name = 'foo'")).execute();
 
+      latch.await(1, TimeUnit.MINUTES);
+
       db.command(new OCommandSQL("live unsubscribe " + token)).execute();
 
       db.command(new OCommandSQL("insert into test set name = 'foo', surname = 'bax'")).execute();
       db.command(new OCommandSQL("insert into test2 set name = 'foo'"));
       db.command(new OCommandSQL("insert into test set name = 'foo', surname = 'baz'")).execute();
 
-      latch.await(1, TimeUnit.MINUTES);
+
       Assert.assertEquals(listener.ops.size(), 2);
       for (ORecordOperation doc : listener.ops) {
         Assert.assertEquals(doc.type, ORecordOperation.CREATED);

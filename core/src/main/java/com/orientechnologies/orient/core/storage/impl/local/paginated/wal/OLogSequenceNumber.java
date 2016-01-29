@@ -15,7 +15,13 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 /**
+ * Immutable number representing the position in WAL file (LSN).
+ * 
  * @author Andrey Lomakin
  * @since 29.04.13
  */
@@ -23,9 +29,14 @@ public class OLogSequenceNumber implements Comparable<OLogSequenceNumber> {
   private final long segment;
   private final long position;
 
-  public OLogSequenceNumber(long segment, long position) {
+  public OLogSequenceNumber(final long segment, final long position) {
     this.segment = segment;
     this.position = position;
+  }
+
+  public OLogSequenceNumber(final ObjectInput in) throws IOException, ClassNotFoundException {
+    this.segment = in.readLong();
+    this.position = in.readLong();
   }
 
   public long getSegment() {
@@ -37,13 +48,13 @@ public class OLogSequenceNumber implements Comparable<OLogSequenceNumber> {
   }
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(final Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
       return false;
 
-    OLogSequenceNumber that = (OLogSequenceNumber) o;
+    final OLogSequenceNumber that = (OLogSequenceNumber) o;
 
     if (position != that.position)
       return false;
@@ -61,7 +72,7 @@ public class OLogSequenceNumber implements Comparable<OLogSequenceNumber> {
   }
 
   @Override
-  public int compareTo(OLogSequenceNumber otherNumber) {
+  public int compareTo(final OLogSequenceNumber otherNumber) {
     if (segment > otherNumber.segment)
       return 1;
     if (segment < otherNumber.segment)
@@ -75,8 +86,13 @@ public class OLogSequenceNumber implements Comparable<OLogSequenceNumber> {
     return 0;
   }
 
+  public void writeExternal(final ObjectOutput out) throws IOException {
+    out.writeLong(segment);
+    out.writeLong(position);
+  }
+
   @Override
   public String toString() {
-    return "OLogSequenceNumber{" + "segment=" + segment + ", position=" + position + '}';
+    return "OLogSequenceNumber{segment=" + segment + ", position=" + position + '}';
   }
 }

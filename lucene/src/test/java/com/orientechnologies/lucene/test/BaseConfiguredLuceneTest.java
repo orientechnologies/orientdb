@@ -18,8 +18,8 @@
 
 package com.orientechnologies.lucene.test;
 
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
+import org.junit.After;
+import org.junit.Before;
 
 /**
  * Created by Enrico Risa on 18/08/15.
@@ -31,15 +31,15 @@ public abstract class BaseConfiguredLuceneTest extends BaseLuceneTest {
   }
 
   public BaseConfiguredLuceneTest(boolean remote) {
-//    super(remote);
+    //    super(remote);
   }
 
-  @BeforeClass
+  @Before
   public void init() {
     initDB();
   }
 
-  @AfterClass
+  @After
   public void deInit() {
     deInitDB();
   }

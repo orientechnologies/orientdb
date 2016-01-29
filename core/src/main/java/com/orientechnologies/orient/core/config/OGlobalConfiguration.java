@@ -26,14 +26,16 @@ import com.orientechnologies.common.util.OApi;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.ORecordCacheWeakRefs;
+import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
-import com.orientechnologies.orient.core.storage.cache.local.O2QCache;
+import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
 
 import java.io.File;
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
+import java.lang.management.PlatformManagedObject;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Map;
@@ -65,6 +67,9 @@ public enum OGlobalConfiguration {
   // MEMORY
       MEMORY_USE_UNSAFE("memory.useUnsafe", "Indicates whether Unsafe will be used, if it is present.", Boolean.class, true),
 
+  MEMORY_CHUNK_SIZE("memory.chunk.size", "Size of single memory chunk (in bytes) which will be preallocated by OrientDB",
+      Integer.class, Integer.MAX_VALUE),
+
   DIRECT_MEMORY_SAFE_MODE("memory.directMemory.safeMode",
       "Indicates whether to perform a range check before each direct memory update. It is true by default, "
           + "but usually it can be safely set to false. It should only be to true after dramatic changes have been made in the storage structures.",
@@ -85,7 +90,25 @@ public enum OGlobalConfiguration {
       "Minimal amount of time (in seconds), since the last System.gc(), when called after tree optimization.", Long.class, 600),
 
   // STORAGE
-      DISK_CACHE_SIZE("storage.diskCache.bufferSize", "Size of disk buffer in megabytes.", Integer.class, 4 * 1024),
+      DISK_CACHE_PINNED_PAGES("storage.diskCache.pinnedPages",
+          "Maximum amount of pinned pages which may be contained in cache,"
+              + " if this percent is reached next pages will be left in unpinned state. You can not set value more than 50",
+          Integer.class, 20, false),
+
+  DISK_CACHE_SIZE("storage.diskCache.bufferSize",
+      "Size of disk buffer in megabytes, disk size may be changed at runtime, "
+          + "but if does not enough to contain all pinned pages exception will be thrown.",
+      Integer.class, 4 * 1024, new OConfigurationChangeCallback() {
+        @Override
+        public void change(Object currentValue, Object newValue) {
+          final OEngineLocalPaginated engineLocalPaginated = (OEngineLocalPaginated) Orient.instance()
+              .getEngine(OEngineLocalPaginated.NAME);
+
+          if (engineLocalPaginated != null) {
+            engineLocalPaginated.changeCacheSize(((Integer) (newValue)) * 1024L * 1024L);
+          }
+        }
+      }),
 
   DISK_WRITE_CACHE_PART("storage.diskCache.writeCachePart", "Percentage of disk cache, which is used as write cache", Integer.class,
       15),
@@ -129,7 +152,7 @@ public enum OGlobalConfiguration {
       null, false, true),
 
   STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CREATE("storage.makeFullCheckpointAfterCreate",
-      "Indicates whether a full checkpoint should be performed, if storage was created.", Boolean.class, true),
+      "Indicates whether a full checkpoint should be performed, if storage was created.", Boolean.class, false),
 
   STORAGE_MAKE_FULL_CHECKPOINT_AFTER_OPEN("storage.makeFullCheckpointAfterOpen",
       "Indicates whether a full checkpoint should be performed, if storage was opened. It is needed so fuzzy checkpoints can work properly.",
@@ -137,6 +160,10 @@ public enum OGlobalConfiguration {
 
   STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CLUSTER_CREATE("storage.makeFullCheckpointAfterClusterCreate",
       "Indicates whether a full checkpoint should be performed, if storage was opened", Boolean.class, true),
+
+  STORAGE_TRACK_CHANGED_RECORDS_IN_WAL("storage.trackChangedRecordsInWAL",
+      "If this flag is set metadata which contains rids of changed records is added at the end of each atomic operation",
+      Boolean.class, false),
 
   USE_WAL("storage.useWAL", "Whether WAL should be used in paginated storage.", Boolean.class, true),
 
@@ -166,7 +193,7 @@ public enum OGlobalConfiguration {
   WAL_RESTORE_BATCH_SIZE("storage.wal.restore.batchSize",
       "Amount of WAL records, which are read at once in a single batch during a restore procedure.", Integer.class, 1000),
 
-  WAL_READ_CACHE_SIZE("storage.wal.readCacheSize", "Size of WAL read cache in amount of pages.", Integer.class, 1000),
+  @Deprecated WAL_READ_CACHE_SIZE("storage.wal.readCacheSize", "Size of WAL read cache in amount of pages.", Integer.class, 1000),
 
   WAL_FUZZY_CHECKPOINT_SHUTDOWN_TIMEOUT("storage.wal.fuzzyCheckpointShutdownWait",
       "The amount of time the DB should wait until it shuts down (in seconds).", Integer.class, 60 * 10),
@@ -434,11 +461,17 @@ public enum OGlobalConfiguration {
     }
   }),
 
+  // LOG
+  LOG_SUPPORTS_ANSI("log.console.ansi",
+      "ANSI Console support. 'auto' means automatic check if it is supported, 'true' to force using ANSI, 'false' to avoid using ANSI",
+      String.class, "auto"),
+
   // CACHE
-  CACHE_LOCAL_IMPL("cache.local.impl", "Local Record cache implementation.", String.class, ORecordCacheWeakRefs.class.getName()),
+      CACHE_LOCAL_IMPL("cache.local.impl", "Local Record cache implementation.", String.class,
+          ORecordCacheWeakRefs.class.getName()),
 
   // COMMAND
-  COMMAND_TIMEOUT("command.timeout", "Default timeout for commands (in ms).", Long.class, 0, true),
+          COMMAND_TIMEOUT("command.timeout", "Default timeout for commands (in ms).", Long.class, 0, true),
 
   COMMAND_CACHE_ENABLED("command.cache.enabled", "Enable command cache.", Boolean.class, false),
 
@@ -477,10 +510,18 @@ public enum OGlobalConfiguration {
   QUERY_LIMIT_THRESHOLD_TIP("query.limitThresholdTip",
       "If the total number of returned records exceeds this value, then a warning is given. (Use 0 to disable)", Long.class, 10000),
 
-  QUERY_LIVE_SUPPORT("query.live.support",
-                             "Enable/Disable the support of live query. (Use false to disable)", Boolean.class, true),
+  QUERY_LIVE_SUPPORT("query.live.support", "Enable/Disable the support of live query. (Use false to disable)", Boolean.class, true),
 
   STATEMENT_CACHE_SIZE("statement.cacheSize", "Number of parsed SQL statements kept in cache.", Integer.class, 100),
+
+  // GRAPH
+  SQL_GRAPH_CONSISTENCY_MODE("sql.graphConsistencyMode",
+      "Consistency mode for graphs. It can be 'tx' (default), 'notx_sync_repair' and 'notx_async_repair'. "
+          + "'tx' uses transactions to maintain consistency. Instead both 'notx_sync_repair' and 'notx_async_repair' do not use transactions, "
+          + "and the consistency, in case of JVM crash, is guaranteed by a database repair operation that run at startup. "
+          + "With 'notx_sync_repair' the repair is synchronous, so the database comes online after the repair is ended, while "
+          + "with 'notx_async_repair' the repair is a background process",
+      String.class, "tx"),
 
   /**
    * Maximum size of pool of network channels between client and server. A channel is a TCP/IP connection.
@@ -570,7 +611,7 @@ public enum OGlobalConfiguration {
    */
   @OApi(maturity = OApi.MATURITY.NEW) DISTRIBUTED_QUEUE_MAXSIZE("distributed.queueMaxSize",
       "Maximum queue size to mark a node as stalled. If the numer of messages in queue are more than this values, the node is restarted with a remote command (0 = no maximum, which means up to 2^31-1 entries).",
-      Integer.class, 100),
+      Integer.class, 10000),
 
   /**
    * @Since 2.1.3
@@ -593,10 +634,10 @@ public enum OGlobalConfiguration {
       "Delay (in ms) between attempts on executing a distributed transaction, which had failed because of locked records. (0=no delay)",
       Integer.class, 100, true),
 
-  DB_MAKE_FULL_CHECKPOINT_ON_INDEX_CHANGE("db.makeFullCheckpointOnIndexChange",
+  @Deprecated DB_MAKE_FULL_CHECKPOINT_ON_INDEX_CHANGE("db.makeFullCheckpointOnIndexChange",
       "When index metadata is changed, a full checkpoint is performed.", Boolean.class, true, true),
 
-  DB_MAKE_FULL_CHECKPOINT_ON_SCHEMA_CHANGE("db.makeFullCheckpointOnSchemaChange",
+  @Deprecated DB_MAKE_FULL_CHECKPOINT_ON_SCHEMA_CHANGE("db.makeFullCheckpointOnSchemaChange",
       "When index schema is changed, a full checkpoint is performed.", Boolean.class, true, true),
 
   DB_DOCUMENT_SERIALIZER("db.document.serializer", "The default record serializer used by the document database.", String.class,
@@ -680,11 +721,11 @@ public enum OGlobalConfiguration {
   private final String key;
   private final Object defValue;
   private final Class<?> type;
-  private Object value = null;
-  private String description;
-  private OConfigurationChangeCallback changeCallback = null;
-  private Boolean canChangeAtRuntime;
-  private boolean hidden = false;
+  private volatile Object value = null;
+  private final String description;
+  private final OConfigurationChangeCallback changeCallback;
+  private final Boolean canChangeAtRuntime;
+  private final boolean hidden;
 
   // AT STARTUP AUTO-CONFIG
   static {
@@ -694,7 +735,12 @@ public enum OGlobalConfiguration {
 
   OGlobalConfiguration(final String iKey, final String iDescription, final Class<?> iType, final Object iDefValue,
       final OConfigurationChangeCallback iChangeAction) {
-    this(iKey, iDescription, iType, iDefValue, true);
+    key = iKey;
+    description = iDescription;
+    defValue = iDefValue;
+    type = iType;
+    canChangeAtRuntime = true;
+    hidden = false;
     changeCallback = iChangeAction;
   }
 
@@ -715,6 +761,7 @@ public enum OGlobalConfiguration {
     type = iType;
     canChangeAtRuntime = iCanChange;
     hidden = iHidden;
+    changeCallback = null;
   }
 
   public static void dumpConfiguration(final PrintStream out) {
@@ -785,6 +832,7 @@ public enum OGlobalConfiguration {
 
   private static void autoConfig() {
     final long freeSpaceInMB = new File(".").getFreeSpace() / 1024 / 1024;
+    checkVMDirectMemoryOptions();
 
     if (System.getProperty(DISK_CACHE_SIZE.key) == null)
       autoConfigDiskCacheSize(freeSpaceInMB);
@@ -798,6 +846,39 @@ public enum OGlobalConfiguration {
         if (jvmMaxMemory > 512 * OFileUtils.MEGABYTE)
           // INCREASE WAL RESTORE BATCH SIZE TO 10K INSTEAD OF DEFAULT 1K
           WAL_RESTORE_BATCH_SIZE.setValue(10000);
+    }
+  }
+
+  private static void checkVMDirectMemoryOptions() {
+    final OperatingSystemMXBean mxBean = ManagementFactory.getOperatingSystemMXBean();
+    try {
+      final Method memorySize = mxBean.getClass().getDeclaredMethod("getTotalPhysicalMemorySize");
+      memorySize.setAccessible(true);
+
+      final long osMemory = (Long) memorySize.invoke(mxBean);
+
+      final Class<? extends PlatformManagedObject> hotSpotDiagnosticMXBeanClass = (Class<? extends PlatformManagedObject>) OGlobalConfiguration.class
+          .getClassLoader().loadClass("com.sun.management.HotSpotDiagnosticMXBean");
+      final Class<?> vmOptionClass = OGlobalConfiguration.class.getClassLoader().loadClass("com.sun.management.VMOption");
+
+      final PlatformManagedObject hotSpotDiagnosticMXBean = ManagementFactory.getPlatformMXBean(hotSpotDiagnosticMXBeanClass);
+
+      final Method getVMOption = hotSpotDiagnosticMXBeanClass.getMethod("getVMOption", String.class);
+
+      final Object vmOption = getVMOption.invoke(hotSpotDiagnosticMXBean, "MaxDirectMemorySize");
+      final Method getValue = vmOptionClass.getMethod("getValue");
+
+      final String value = (String) getValue.invoke(vmOption);
+      if ("0".equals(value)) {
+        OLogManager.instance().warn(null,
+            "MaxDirectMemorySize option is not set. It may cause %s. Please set the option"
+                + " -XX:MaxDirectMemorySize=%dm when you start the JVM",
+            OutOfMemoryError.class.getSimpleName(), osMemory / (1024 * 1024));
+      }
+    } catch (NoSuchMethodException e) {
+    } catch (InvocationTargetException e) {
+    } catch (IllegalAccessException e) {
+    } catch (ClassNotFoundException e) {
     }
   }
 

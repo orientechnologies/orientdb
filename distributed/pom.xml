@@ -43,8 +43,9 @@
         <osgi.import>com.hazelcast.*;resolution:=optional,*</osgi.import>
         <osgi.export>com.orientechnologies.orient.server.hazelcast.*</osgi.export>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <argLine>-ea -Xmx2048m -Dstorage.diskCache.bufferSize=4096 -Dindex.flushAfterCreate=false
+        <argLine>-ea -Xmx2048m -XX:MaxDirectMemorySize=512g -Dstorage.diskCache.bufferSize=4096 -Dindex.flushAfterCreate=false
             -Dstorage.makeFullCheckpointAfterCreate=false
+            -Dmemory.directMemory.trackMode=true
             -Dstorage.makeFullCheckpointAfterOpen=false
             -Dstorage.makeFullCheckpointAfterClusterCreate=false
             -Dstorage.wal.syncOnPageFlush=false
@@ -116,17 +117,17 @@
             <artifactId>orientdb-graphdb</artifactId>
             <version>${project.version}</version>
             <!-- SET SCOPE=RUNTIME TO ENABLE STARTING DISTRIBUTED SERVER IN IDE (IntelliJ)-->
-            <scope>test</scope>
+            <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>com.hazelcast</groupId>
             <artifactId>hazelcast</artifactId>
-            <version>3.5.3</version>
+            <version>3.5.4</version>
         </dependency>
         <dependency>
             <groupId>com.hazelcast</groupId>
             <artifactId>hazelcast-cloud</artifactId>
-            <version>3.5.3</version>
+            <version>3.5.4</version>
         </dependency>
     </dependencies>
 

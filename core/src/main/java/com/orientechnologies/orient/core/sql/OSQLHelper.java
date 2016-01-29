@@ -319,6 +319,7 @@ public class OSQLHelper {
 
     return bindParameters(iDocument, fields, iArguments, iContext);
   }
+
   private static Object resolveParameterValue(final String fieldName, Object fieldValue,
                                               final ODocument iDocument, final OCommandParameters iArguments,
                                               final OCommandContext iContext) {
@@ -397,7 +398,6 @@ public class OSQLHelper {
       final String fieldName = field.getKey();
       Object fieldValue = field.getValue();
       fieldValue = resolveParameterValue(fieldName, fieldValue, iDocument, iArguments, iContext);
-
       iDocument.field(fieldName, fieldValue);
     }
     return iDocument;

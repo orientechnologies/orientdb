@@ -7,11 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 public class OUpdateStatement extends OStatement {
-  protected ORid                    targetRid;
-  protected OIdentifier             targetClass;
-  protected OCluster                targetCluster;
-  protected OIndexIdentifier        targetIndex;
-  protected OStatement              targetQuery;
+  protected OFromClause             target;
 
   protected List<OUpdateOperations> operations   = new ArrayList<OUpdateOperations>();
 
@@ -37,19 +33,9 @@ public class OUpdateStatement extends OStatement {
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
-    builder.append("UPDATE ");
-    if (targetRid != null) {
-      targetRid.toString(params, builder);
-    } else if (targetClass != null) {
-      targetClass.toString(params, builder);
-    } else if (targetCluster != null) {
-      targetCluster.toString(params, builder);
-    } else if (targetIndex != null) {
-      targetIndex.toString(params, builder);
-    } else if (targetQuery != null) {
-      builder.append("(");
-      targetQuery.toString(params, builder);
-      builder.append(")");
+    builder.append(getStatementType());
+    if(target!=null){
+      target.toString(params, builder);
     }
 
     for (OUpdateOperations ops : this.operations) {
@@ -89,6 +75,9 @@ public class OUpdateStatement extends OStatement {
     }
   }
 
+  protected String getStatementType() {
+    return "UPDATE ";
+  }
 
 }
 /* JavaCC - OriginalChecksum=093091d7273f1073ad49f2a2bf709a53 (do not edit this line) */

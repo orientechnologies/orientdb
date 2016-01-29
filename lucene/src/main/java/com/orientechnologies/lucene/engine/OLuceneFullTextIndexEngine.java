@@ -30,9 +30,12 @@ import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.OIndexEngineException;
+import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.index.OIndexKeyCursor;
 import com.orientechnologies.orient.core.sql.parser.ParseException;
-import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.index.IndexWriter;
@@ -43,7 +46,12 @@ import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.store.Directory;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
@@ -60,8 +68,7 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   @Override
   public IndexWriter createIndexWriter(Directory directory) throws IOException {
 
-    Analyzer analyzer = getAnalyzer(metadata);
-    IndexWriterConfig iwc = new IndexWriterConfig(analyzer);
+    IndexWriterConfig iwc = new IndexWriterConfig(indexAnalyzer());
     iwc.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
 
     facetManager = new OLuceneFacetManager(this, metadata);
@@ -73,8 +80,7 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
   @Override
   public IndexWriter openIndexWriter(Directory directory) throws IOException {
-    Analyzer analyzer = getAnalyzer(metadata);
-    IndexWriterConfig iwc = new IndexWriterConfig(analyzer);
+    IndexWriterConfig iwc = new IndexWriterConfig(indexAnalyzer());
     iwc.setOpenMode(IndexWriterConfig.OpenMode.APPEND);
 
     // TODO: use writer config params to tune writer behaviour
@@ -106,9 +112,8 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
   @Override
   public Object getInTx(Object key, OLuceneTxChanges changes) {
-    Query q = null;
     try {
-      q = queryBuilder.query(index, key, mgrWriter.getIndexWriter().getAnalyzer());
+      Query q = queryBuilder.query(index, key, queryAnalyzer());
       OCommandContext context = null;
       if (key instanceof OFullTextCompositeKey) {
         context = ((OFullTextCompositeKey) key).getContext();
@@ -125,7 +130,7 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
     for (OIdentifiable oIdentifiable : container) {
       Document doc = new Document();
       doc.add(OLuceneIndexType
-                  .createField(RID, oIdentifiable.getIdentity().toString(), Field.Store.YES, Field.Index.NOT_ANALYZED_NO_NORMS));
+          .createField(RID, oIdentifiable.getIdentity().toString(), Field.Store.YES, Field.Index.NOT_ANALYZED_NO_NORMS));
       int i = 0;
       if (index.isAutomatic()) {
         putInAutomaticIndex(key, doc, i);
@@ -214,7 +219,7 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
   @Override
   public void onRecordAddedToResultSet(QueryContext queryContext, OContextualRecordId recordId, Document ret,
-                                       final ScoreDoc score) {
+      final ScoreDoc score) {
     recordId.setContext(new HashMap<String, Object>() {
       {
         put("score", score.score);
@@ -234,13 +239,13 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
   @Override
   public OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
-                                            boolean ascSortOrder, ValuesTransformer transformer) {
+      boolean ascSortOrder, ValuesTransformer transformer) {
     return new LuceneIndexCursor((LuceneResultSet) get(rangeFrom), rangeFrom);
   }
 
   @Override
   public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
-                                          ValuesTransformer transformer) {
+      ValuesTransformer transformer) {
     return null;
   }
 

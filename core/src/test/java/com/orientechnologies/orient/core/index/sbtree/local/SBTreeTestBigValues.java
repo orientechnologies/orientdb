@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.index.sbtree.local;
 
 import com.orientechnologies.common.serialization.types.OBinaryTypeSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.common.util.MersenneTwisterFast;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.testng.Assert;
@@ -13,6 +12,7 @@ import org.testng.annotations.Test;
 
 import java.util.Iterator;
 import java.util.NavigableSet;
+import java.util.Random;
 import java.util.TreeSet;
 
 /**
@@ -21,12 +21,12 @@ import java.util.TreeSet;
  */
 @Test
 public class SBTreeTestBigValues {
-  private static final int           KEYS_COUNT = 60000;
+  private static final int KEYS_COUNT = 60000;
 
-  private ODatabaseDocumentTx        databaseDocumentTx;
+  private ODatabaseDocumentTx databaseDocumentTx;
 
   protected OSBTree<Integer, byte[]> sbTree;
-  private String                     buildDirectory;
+  private   String                   buildDirectory;
 
   @BeforeClass
   public void beforeClass() {
@@ -93,7 +93,7 @@ public class SBTreeTestBigValues {
 
     System.out.println("testKeyPutRandomUniform seed : " + seed);
 
-    final MersenneTwisterFast random = new MersenneTwisterFast(seed);
+    final Random random = new Random(seed);
 
     while (keys.size() < KEYS_COUNT) {
       int key = random.nextInt(Integer.MAX_VALUE);
@@ -122,7 +122,7 @@ public class SBTreeTestBigValues {
 
     System.out.println("testKeyPutRandomGaussian seed : " + seed);
 
-    MersenneTwisterFast random = new MersenneTwisterFast(seed);
+    Random random = new Random(seed);
 
     while (keys.size() < KEYS_COUNT) {
       int key = (int) (random.nextGaussian() * Integer.MAX_VALUE / 2 + Integer.MAX_VALUE);
@@ -221,7 +221,7 @@ public class SBTreeTestBigValues {
     long seed = System.currentTimeMillis();
 
     System.out.println("testKeyDeleteRandomGaussian seed : " + seed);
-    MersenneTwisterFast random = new MersenneTwisterFast(seed);
+    Random random = new Random(seed);
 
     while (keys.size() < KEYS_COUNT) {
       int key = (int) (random.nextGaussian() * Integer.MAX_VALUE / 2 + Integer.MAX_VALUE);

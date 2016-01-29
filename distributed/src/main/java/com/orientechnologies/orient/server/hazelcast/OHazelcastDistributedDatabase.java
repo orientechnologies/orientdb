@@ -19,6 +19,20 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
+
 import com.hazelcast.core.IQueue;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.util.OPair;
@@ -36,6 +50,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedResponseManag
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.ODistributedSyncConfiguration;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.OCreateRecordTask;
 import com.orientechnologies.orient.server.distributed.task.ODeleteRecordTask;
@@ -45,40 +60,28 @@ import com.orientechnologies.orient.server.distributed.task.OSQLCommandTask;
 import com.orientechnologies.orient.server.distributed.task.OTxTask;
 import com.orientechnologies.orient.server.distributed.task.OUpdateRecordTask;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.Lock;
-
 /**
  * Hazelcast implementation of distributed peer. There is one instance per database. Each node creates own instance to talk with
  * each others.
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- *
  */
 public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
-  public static final String                          NODE_QUEUE_PREFIX          = "orientdb.node.";
-  public static final String                          NODE_QUEUE_PENDING_POSTFIX = ".pending";
-  private static final String                         NODE_LOCK_PREFIX           = "orientdb.reqlock.";
+  public static final String                          NODE_QUEUE_PREFIX              = "orientdb.node.";
+  public static final String                          NODE_QUEUE_PENDING_POSTFIX     = ".pending";
+  private static final String                         NODE_LOCK_PREFIX               = "orientdb.reqlock.";
+  private static final String                         DISTRIBUTED_SYNC_JSON_FILENAME = "/distributed-sync.json";
   protected final OHazelcastPlugin                    manager;
   protected final OHazelcastDistributedMessageService msgService;
   protected final String                              databaseName;
   protected final Lock                                requestLock;
-  protected final int                                 numWorkers                 = 8;
-  protected volatile boolean                          restoringMessages          = false;
-  protected AtomicBoolean                             status                     = new AtomicBoolean(false);
-  protected List<ODistributedWorker>                  workers                    = new ArrayList<ODistributedWorker>();
-  protected AtomicLong                                waitForMessageId           = new AtomicLong(-1);
-  protected ConcurrentHashMap<ORID, String>           lockManager                = new ConcurrentHashMap<ORID, String>();
+  protected final int                                 numWorkers                     = 8;
+  protected final AtomicBoolean                       status                         = new AtomicBoolean(false);
+  protected final List<ODistributedWorker>            workers                        = new ArrayList<ODistributedWorker>();
+  protected final AtomicLong                          waitForMessageId               = new AtomicLong(-1);
+  protected final ConcurrentHashMap<ORID, String>     lockManager                    = new ConcurrentHashMap<ORID, String>();
+  protected ODistributedSyncConfiguration             syncConfiguration;
 
   public OHazelcastDistributedDatabase(final OHazelcastPlugin manager, final OHazelcastDistributedMessageService msgService,
       final String iDatabaseName) {
@@ -92,8 +95,6 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
     // CREATE 2 QUEUES FOR GENERIC REQUESTS + INSERT ONLY
     msgService.getQueue(OHazelcastDistributedMessageService.getRequestQueueName(getLocalNodeName(), databaseName));
-    msgService.getQueue(OHazelcastDistributedMessageService.getRequestQueueName(getLocalNodeName(),
-        databaseName + OCreateRecordTask.SUFFIX_QUEUE_NAME));
   }
 
   @Override
@@ -116,29 +117,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
     iRequest.setSenderNodeName(getLocalNodeName());
 
-    int onlineNodes;
-    if (iRequest.getTask().isRequireNodeOnline()) {
-      // CHECK THE ONLINE NODES
-      onlineNodes = 0;
-      int i = 0;
-      for (String node : iNodes) {
-        if (reqQueues[i].getValue() != null && manager.isNodeOnline(node, databaseName))
-          onlineNodes++;
-        else {
-          if (ODistributedServerLog.isDebugEnabled())
-            ODistributedServerLog.debug(this, getLocalNodeName(), node, DIRECTION.OUT,
-                "skip expected response from node '%s' for request %s because it's not online (queue=%s)", node, iRequest,
-                reqQueues[i].getValue() != null);
-        }
-        ++i;
-      }
-    } else {
-      // EXPECT ANSWER FROM ALL NODES WITH A QUEUE
-      onlineNodes = 0;
-      for (OPair<String, IQueue> q : reqQueues)
-        if (q.getValue() != null)
-          onlineNodes++;
-    }
+    final int onlineNodes = getAvailableNodes(iRequest, iNodes, databaseName, reqQueues);
 
     final int quorum = calculateQuorum(iRequest, iClusterNames, cfg, onlineNodes, iExecutionMode);
 
@@ -180,16 +159,28 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
         msgService.registerRequest(iRequest.getId(), currentResponseMgr);
 
         for (OPair<String, IQueue> entry : reqQueues) {
+          final String node = entry.getKey();
           final IQueue queue = entry.getValue();
 
           if (queue != null) {
             if (queueMaxSize > 0 && queue.size() > queueMaxSize) {
-              ODistributedServerLog.warn(this, getLocalNodeName(), iNodes.toString(), DIRECTION.OUT,
-                  "queue has too many messages (%d), treating the node as in stall: trying to restart it...", queue.size());
-              queue.clear();
+              final ODistributedServerManager.DB_STATUS nodeStatus = manager.getDatabaseStatus(node, databaseName);
+              if (nodeStatus == ODistributedServerManager.DB_STATUS.SYNCHRONIZING
+                  || nodeStatus == ODistributedServerManager.DB_STATUS.BACKUP) {
 
-              manager.disconnectNode(entry.getKey());
+                // BACKUP OR SYNCHRONIZING: SEND THE MESSAGE AS WELL
+                queue.offer(iRequest, timeout, TimeUnit.MILLISECONDS);
 
+              } else {
+                // NODE SEEMS IN STALL FOR UNKNOWN REASON
+                ODistributedServerLog.warn(this, getLocalNodeName(), iNodes.toString(), DIRECTION.OUT,
+                    "queue has too many messages (%d), treating the node as in stall: trying to restart it...", queue.size());
+
+                // CLEAR THE QUEUE TO AVOID AN OOM IN THE CLUSTER
+                queue.clear();
+
+                manager.disconnectNode(entry.getKey());
+              }
             } else {
               // SEND THE MESSAGE
               queue.offer(iRequest, timeout, TimeUnit.MILLISECONDS);
@@ -216,18 +207,41 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     }
   }
 
-  public boolean isRestoringMessages() {
-    return restoringMessages;
+  protected int getAvailableNodes(final ODistributedRequest iRequest, final Collection<String> iNodes, final String databaseName,
+      OPair<String, IQueue>[] reqQueues) {
+
+    // final boolean requiredNodeOnline = iRequest.getTask().isRequireNodeOnline();
+
+    int availableNodes;
+    // CHECK THE ONLINE NODES
+    availableNodes = 0;
+    int i = 0;
+    for (String node : iNodes) {
+      // final boolean include = requiredNodeOnline ? manager.isNodeOnline(node, databaseName)
+      // : manager.isNodeAvailable(node, databaseName);
+
+      final boolean include = manager.isNodeAvailable(node, databaseName);
+
+      if (include && reqQueues[i].getValue() != null)
+        availableNodes++;
+      else {
+        if (ODistributedServerLog.isDebugEnabled())
+          ODistributedServerLog.debug(this, getLocalNodeName(), node, DIRECTION.OUT,
+              "skip expected response from node '%s' for request %s because it's not online (queue=%s)", node, iRequest,
+              reqQueues[i].getValue() != null);
+      }
+      ++i;
+    }
+
+    return availableNodes;
   }
 
-  public OHazelcastDistributedDatabase configureDatabase(final boolean iRestoreMessages, final boolean iUnqueuePendingMessages,
-      Callable<Void> iCallback) {
+  public OHazelcastDistributedDatabase configureDatabase(final Callable<Void> iCallback, final boolean clearReqQueue) {
     // CREATE A QUEUE PER DATABASE REQUESTS
     final String queueName = OHazelcastDistributedMessageService.getRequestQueueName(getLocalNodeName(), databaseName);
     final IQueue requestQueue = msgService.getQueue(queueName);
 
-    final ODistributedWorker listenerThread = unqueuePendingMessages(iRestoreMessages, iUnqueuePendingMessages, queueName,
-        requestQueue);
+    final ODistributedWorker listenerThread = unqueuePendingMessages(queueName, requestQueue, clearReqQueue);
 
     workers.add(listenerThread);
 
@@ -258,6 +272,13 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
   public boolean lockRecord(final ORID iRecord, final String iNodeName) {
     final boolean locked = lockManager.putIfAbsent(iRecord, iNodeName) == null;
 
+    // if (!locked) {
+    // final String lockingNode = lockManager.get(iRecord);
+    // if (iNodeName.equals(lockingNode))
+    // // SAME NODE, ALREADY LOCKED
+    // return true;
+    // }
+    //
     if (ODistributedServerLog.isDebugEnabled())
       if (locked)
         ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
@@ -277,6 +298,20 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     if (ODistributedServerLog.isDebugEnabled())
       ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
           "Distributed transaction: unlocked record %s in database '%s'", iRecord, databaseName);
+  }
+
+  public ODistributedSyncConfiguration getSyncConfiguration() {
+    if (syncConfiguration == null) {
+      final String path = manager.getServerInstance().getDatabaseDirectory() + databaseName + DISTRIBUTED_SYNC_JSON_FILENAME;
+      final File cfgFile = new File(path);
+      try {
+        syncConfiguration = new ODistributedSyncConfiguration(cfgFile);
+      } catch (IOException e) {
+        throw new ODistributedException("Cannot open database sync configuration file: " + cfgFile);
+      }
+    }
+
+    return syncConfiguration;
   }
 
   @Override
@@ -310,18 +345,15 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       workers.get(i).shutdown();
   }
 
-  protected ODistributedWorker unqueuePendingMessages(boolean iRestoreMessages, boolean iUnqueuePendingMessages, String queueName,
-      IQueue requestQueue) {
+  protected ODistributedWorker unqueuePendingMessages(final String queueName, final IQueue requestQueue,
+      final boolean clearReqQueue) {
     if (ODistributedServerLog.isDebugEnabled())
       ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE, "listening for incoming requests on queue: %s",
           queueName);
 
-    // UNDO PREVIOUS MESSAGE IF ANY
-    restoreMessagesBeforeFailure(iRestoreMessages);
+    msgService.checkForPendingMessages(requestQueue, queueName, clearReqQueue);
 
-    restoringMessages = msgService.checkForPendingMessages(requestQueue, queueName, iUnqueuePendingMessages);
-
-    final ODistributedWorker listenerThread = new ODistributedWorker(this, requestQueue, databaseName, 0, restoringMessages);
+    final ODistributedWorker listenerThread = new ODistributedWorker(this, requestQueue, databaseName, 0);
     listenerThread.initDatabaseInstance();
 
     listenerThread.start();
@@ -367,7 +399,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
     final String clusterName = clusterNames == null || clusterNames.isEmpty() ? null : clusterNames.iterator().next();
 
-    int quorum = 0;
+    int quorum = 1;
 
     final OCommandDistributedReplicateRequest.QUORUM_TYPE quorumType = iRequest.getTask().getQuorumType();
 
@@ -411,10 +443,14 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
     // WAIT FOR THE MINIMUM SYNCHRONOUS RESPONSES (QUORUM)
     if (!currentResponseMgr.waitForSynchronousResponses()) {
-      ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.IN,
-          "timeout (%dms) on waiting for synchronous responses from nodes=%s responsesSoFar=%s request=%s",
-          System.currentTimeMillis() - beginTime, currentResponseMgr.getExpectedNodes(), currentResponseMgr.getRespondingNodes(),
-          iRequest);
+      final long elapsed = System.currentTimeMillis() - beginTime;
+
+      if (elapsed > currentResponseMgr.getSynchTimeout()) {
+
+        ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.IN,
+            "timeout (%dms) on waiting for synchronous responses from nodes=%s responsesSoFar=%s request=%s", elapsed,
+            currentResponseMgr.getExpectedNodes(), currentResponseMgr.getRespondingNodes(), iRequest);
+      }
     }
 
     return currentResponseMgr.getFinalResponse();
@@ -449,11 +485,6 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
   protected String getLocalNodeName() {
     return manager.getLocalNodeName();
-  }
-
-  protected void restoreMessagesBeforeFailure(final boolean iRestoreMessages) {
-    for (int i = 0; i < workers.size(); ++i)
-      workers.get(i).restoreMessagesBeforeFailure(iRestoreMessages);
   }
 
   /**
@@ -495,7 +526,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       for (String c : cfg.getClusterNames()) {
         if (c.endsWith(suffix2Search)) {
           // FOUND: ASSIGN TO LOCAL NODE
-          final String currentMaster = cfg.getMasterServer(c);
+          final String currentMaster = cfg.getLeaderServer(c);
 
           if (!getLocalNodeName().equals(currentMaster)) {
             ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE,
@@ -528,8 +559,6 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
               "removing node '%s' in partitions: db=%s %s", iNode, databaseName, foundPartition);
 
           msgService.removeQueue(OHazelcastDistributedMessageService.getRequestQueueName(iNode, databaseName));
-          msgService.removeQueue(
-              OHazelcastDistributedMessageService.getRequestQueueName(iNode, databaseName + OCreateRecordTask.SUFFIX_QUEUE_NAME));
         }
 
         // CHANGED: RE-DEPLOY IT

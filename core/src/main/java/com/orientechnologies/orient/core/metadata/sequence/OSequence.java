@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.exception.OConcurrentModificationExcept
 import com.orientechnologies.orient.core.exception.OSequenceException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
@@ -167,13 +168,13 @@ public abstract class OSequence extends ODocumentWrapper {
     return SEQUENCE_TYPE.valueOf(sequenceTypeStr);
   }
 
-  public static void initClass(OClass sequenceClass) {
-    sequenceClass.createProperty(OSequence.FIELD_START, OType.LONG);
-    sequenceClass.createProperty(OSequence.FIELD_INCREMENT, OType.INTEGER);
-    sequenceClass.createProperty(OSequence.FIELD_VALUE, OType.LONG);
+  public static void initClass(OClassImpl sequenceClass) {
+    sequenceClass.createProperty(OSequence.FIELD_START, OType.LONG, (OType) null, false);
+    sequenceClass.createProperty(OSequence.FIELD_INCREMENT, OType.INTEGER, (OType) null, false);
+    sequenceClass.createProperty(OSequence.FIELD_VALUE, OType.LONG, (OType) null, false);
 
-    sequenceClass.createProperty(OSequence.FIELD_NAME, OType.STRING);
-    sequenceClass.createProperty(OSequence.FIELD_TYPE, OType.STRING);
+    sequenceClass.createProperty(OSequence.FIELD_NAME, OType.STRING, (OType) null, false);
+    sequenceClass.createProperty(OSequence.FIELD_TYPE, OType.STRING, (OType) null, false);
   }
 
   protected void reloadSequence() {

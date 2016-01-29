@@ -19,21 +19,6 @@
  */
 package com.orientechnologies.orient.core.config;
 
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.conflict.ORecordConflictStrategyFactory;
-import com.orientechnologies.orient.core.exception.OSerializationException;
-import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.id.OImmutableRecordId;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.metadata.schema.clusterselection.ORoundRobinClusterSelectionStrategy;
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-import com.orientechnologies.orient.core.serialization.OSerializableStream;
-import com.orientechnologies.orient.core.sql.parser.OStatement;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
-
 import java.io.IOException;
 import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
@@ -48,6 +33,21 @@ import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.conflict.ORecordConflictStrategyFactory;
+import com.orientechnologies.orient.core.exception.OSerializationException;
+import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.id.OImmutableRecordId;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.schema.clusterselection.ORoundRobinClusterSelectionStrategy;
+import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+import com.orientechnologies.orient.core.serialization.OSerializableStream;
+import com.orientechnologies.orient.core.sql.parser.OStatement;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
 /**
  * Versions:
@@ -65,9 +65,8 @@ import java.util.concurrent.ConcurrentMap;
  * <li>14 = no changes, but version was incremented</li>
  * <li>15 = introduced encryption and encryptionKey</li>
  * </ul>
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
  */
 @SuppressWarnings("serial")
 public class OStorageConfiguration implements OSerializableStream {
@@ -78,7 +77,7 @@ public class OStorageConfiguration implements OSerializableStream {
   public static final String DEFAULT_DATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
   private String                                          charset;
-  public static final int                                 CURRENT_VERSION               = 16;
+  public static final int                                 CURRENT_VERSION               = 17;
   public static final int                                 CURRENT_BINARY_FORMAT_VERSION = 12;
   private volatile List<OStorageEntryConfiguration>       properties;
   protected final transient OStorage                      storage;
@@ -107,6 +106,7 @@ public class OStorageConfiguration implements OSerializableStream {
   private volatile Map<String, Object>                    loadProperties;
   private volatile ConcurrentMap<String, IndexEngineData> indexEngines;
   private volatile transient boolean                      validation                    = true;
+  private volatile boolean                                txRequiredForSQLGraphOperations;
 
   public OStorageConfiguration(final OStorage iStorage) {
     storage = iStorage;
@@ -146,10 +146,13 @@ public class OStorageConfiguration implements OSerializableStream {
     recordSerializer = null;
     recordSerializerVersion = 0;
     strictSQL = false;
+    txRequiredForSQLGraphOperations = true;
     indexEngines = new ConcurrentHashMap<String, IndexEngineData>();
     validation = OGlobalConfiguration.DB_VALIDATION.getValueAsBoolean();
 
     binaryFormatVersion = CURRENT_BINARY_FORMAT_VERSION;
+
+    txRequiredForSQLGraphOperations = OGlobalConfiguration.SQL_GRAPH_CONSISTENCY_MODE.getValueAsString().equalsIgnoreCase("tx");
   }
 
   public String getConflictStrategy() {
@@ -168,10 +171,10 @@ public class OStorageConfiguration implements OSerializableStream {
    * This method load the record information by the internal cluster segment. It's for compatibility with older database than
    * 0.9.25.
    *
-   * @compatibility 0.9.25
+   * @param iProperties
    * @return
    * @throws OSerializationException
-   * @param iProperties
+   * @compatibility 0.9.25
    */
   public OStorageConfiguration load(final Map<String, Object> iProperties) throws OSerializationException {
     initConfiguration();
@@ -195,7 +198,7 @@ public class OStorageConfiguration implements OSerializableStream {
     final byte[] record = storage.readRecord(CONFIG_RID, null, false, null).getResult().buffer;
 
     if (record == null)
-      throw new OStorageException("Cannot load database configuration. The database seems to be corrupted");
+      throw new OStorageException("Cannot load database configuration. The database seems corrupted");
 
     fromStream(record);
 
@@ -270,7 +273,7 @@ public class OStorageConfiguration implements OSerializableStream {
     if (version > 0)
       indexMgrRecordId = read(values[index++]);
     else
-      // @COMPATIBILTY
+      // @COMPATIBILITY
       indexMgrRecordId = null;
 
     localeLanguage = read(values[index++]);
@@ -278,7 +281,7 @@ public class OStorageConfiguration implements OSerializableStream {
     dateFormat = read(values[index++]);
     dateTimeFormat = read(values[index++]);
 
-    // @COMPATIBILTY 1.2.0
+    // @COMPATIBILITY 1.2.0
     if (version >= 4) {
       timeZone = TimeZone.getTimeZone(read(values[index++]));
       charset = read(values[index++]);
@@ -290,7 +293,7 @@ public class OStorageConfiguration implements OSerializableStream {
     else
       conflictStrategy = conflictStrategyFactory.getDefaultStrategy();
 
-    // @COMPATIBILTY
+    // @COMPATIBILITY
     if (version > 1)
       index = phySegmentFromStream(values, index, fileTemplate);
 
@@ -432,6 +435,12 @@ public class OStorageConfiguration implements OSerializableStream {
       for (int i = 0; i < enginesSize; i++) {
         final String name = read(values[index++]);
         final String algorithm = read(values[index++]);
+        final String indexType;
+
+        if (version > 16)
+          indexType = read(values[index++]);
+        else
+          indexType = "";
 
         final byte valueSerializerId = Byte.parseByte(read(values[index++]));
         final byte keySerializerId = Byte.parseByte(read(values[index++]));
@@ -470,13 +479,12 @@ public class OStorageConfiguration implements OSerializableStream {
           }
         }
 
-        final IndexEngineData indexEngineData = new IndexEngineData(name, algorithm, durableInNonTxMode, version, valueSerializerId,
-            keySerializerId, isAutomatic, types, nullValuesSupport, keySize, engineProperties);
+        final IndexEngineData indexEngineData = new IndexEngineData(name, algorithm, indexType, durableInNonTxMode, version,
+            valueSerializerId, keySerializerId, isAutomatic, types, nullValuesSupport, keySize, engineProperties);
 
         indexEngines.put(name.toLowerCase(getLocaleInstance()), indexEngineData);
       }
     }
-
   }
 
   public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
@@ -490,7 +498,7 @@ public class OStorageConfiguration implements OSerializableStream {
 
   /**
    * Added version used for managed Network Versioning.
-   * 
+   *
    * @param iNetworkVersion
    * @return
    * @throws OSerializationException
@@ -582,6 +590,7 @@ public class OStorageConfiguration implements OSerializableStream {
     for (IndexEngineData engineData : indexEngines.values()) {
       write(buffer, engineData.name);
       write(buffer, engineData.algorithm);
+      write(buffer, engineData.indexType == null ? "" : engineData.indexType);
 
       write(buffer, engineData.valueSerializerId);
       write(buffer, engineData.keySerializedId);
@@ -655,15 +664,11 @@ public class OStorageConfiguration implements OSerializableStream {
   }
 
   public void addIndexEngine(String name, IndexEngineData engineData) {
-    if (indexEngines.containsKey(name))
-      throw new IllegalArgumentException(
-          "Index engine with name " + engineData.name + " already contained in database configuration");
-
     final IndexEngineData oldEngine = indexEngines.putIfAbsent(name, engineData);
 
     if (oldEngine != null)
-      throw new IllegalArgumentException(
-          "Index engine with name " + engineData.name + " already contained in database configuration");
+      OLogManager.instance().warn(this,
+          "Index engine with name '" + engineData.name + "' already contained in database configuration");
 
     update();
   }
@@ -766,6 +771,10 @@ public class OStorageConfiguration implements OSerializableStream {
     return strictSQL;
   }
 
+  public boolean isTxRequiredForSQLGraphOperations() {
+    return txRequiredForSQLGraphOperations;
+  }
+
   public List<OStorageEntryConfiguration> getProperties() {
     return Collections.unmodifiableList(properties);
   }
@@ -773,7 +782,15 @@ public class OStorageConfiguration implements OSerializableStream {
   public void setProperty(final String iName, final String iValue) {
     if (OStatement.CUSTOM_STRICT_SQL.equalsIgnoreCase(iName))
       // SET STRICT SQL VARIABLE
-      strictSQL = "true".equalsIgnoreCase("" + iValue);
+      strictSQL = "true".equalsIgnoreCase(iValue);
+
+    if ("txRequiredForSQLGraphOperations".equalsIgnoreCase(iName))
+      // SET TX SQL GRAPH OPERATIONS
+      txRequiredForSQLGraphOperations = "true".equalsIgnoreCase(iValue);
+
+    if ("txRequiredForSQLGraphOperations".equalsIgnoreCase(iName))
+      // SET TX SQL GRAPH OPERATIONS
+      txRequiredForSQLGraphOperations = "true".equalsIgnoreCase(iValue);
 
     for (Iterator<OStorageEntryConfiguration> it = properties.iterator(); it.hasNext();) {
       final OStorageEntryConfiguration e = it.next();
@@ -918,6 +935,7 @@ public class OStorageConfiguration implements OSerializableStream {
   public static final class IndexEngineData {
     private final String              name;
     private final String              algorithm;
+    private final String              indexType;
     private final Boolean             durableInNonTxMode;
     private final int                 version;
     private final byte                valueSerializerId;
@@ -928,11 +946,12 @@ public class OStorageConfiguration implements OSerializableStream {
     private final int                 keySize;
     private final Map<String, String> engineProperties;
 
-    public IndexEngineData(final String name, final String algorithm, final Boolean durableInNonTxMode, final int version,
-        final byte valueSerializerId, final byte keySerializedId, final boolean isAutomatic, final OType[] keyTypes,
-        final boolean nullValuesSupport, final int keySize, final Map<String, String> engineProperties) {
+    public IndexEngineData(final String name, final String algorithm, String indexType, final Boolean durableInNonTxMode,
+        final int version, final byte valueSerializerId, final byte keySerializedId, final boolean isAutomatic,
+        final OType[] keyTypes, final boolean nullValuesSupport, final int keySize, final Map<String, String> engineProperties) {
       this.name = name;
       this.algorithm = algorithm;
+      this.indexType = indexType;
       this.durableInNonTxMode = durableInNonTxMode;
       this.version = version;
       this.valueSerializerId = valueSerializerId;
@@ -992,6 +1011,10 @@ public class OStorageConfiguration implements OSerializableStream {
         return null;
 
       return Collections.unmodifiableMap(engineProperties);
+    }
+
+    public String getIndexType() {
+      return indexType;
     }
   }
 }

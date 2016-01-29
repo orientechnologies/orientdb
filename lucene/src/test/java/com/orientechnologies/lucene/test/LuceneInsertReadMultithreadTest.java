@@ -28,16 +28,15 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Created by enricorisa on 28/06/14.
  */
 
-@Test(groups = "embedded")
 public class LuceneInsertReadMultithreadTest extends BaseLuceneTest {
 
   private final static int THREADS  = 10;
@@ -50,7 +49,51 @@ public class LuceneInsertReadMultithreadTest extends BaseLuceneTest {
     super();
   }
 
-  @Test(enabled = false)
+  @Before
+  public void init() {
+    initDB(true);
+
+    url = databaseDocumentTx.getURL();
+    OSchema schema = databaseDocumentTx.getMetadata().getSchema();
+    OClass oClass = schema.createClass("City");
+
+    oClass.createProperty("name", OType.STRING);
+    databaseDocumentTx.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
+  }
+
+  @After
+  public void deInit() {
+    deInitDB();
+  }
+
+  @Test
+  public void testConcurrentInsertWithIndex() throws Exception {
+
+    databaseDocumentTx.getMetadata().reload();
+    OSchema schema = databaseDocumentTx.getMetadata().getSchema();
+
+    Thread[] threads = new Thread[THREADS + RTHREADS];
+    for (int i = 0; i < THREADS; ++i)
+      threads[i] = new Thread(new LuceneInsertThread(CYCLE), "ConcurrentWriteTest" + i);
+
+    for (int i = THREADS; i < THREADS + RTHREADS; ++i)
+      threads[i] = new Thread(new LuceneReadThread(CYCLE), "ConcurrentReadTest" + i);
+
+    for (int i = 0; i < THREADS + RTHREADS; ++i)
+      threads[i].start();
+
+    System.out.println("Started LuceneInsertReadMultithreadTest test, waiting for " + threads.length + " threads to complete...");
+
+    for (int i = 0; i < THREADS + RTHREADS; ++i)
+      threads[i].join();
+
+    System.out.println("LuceneInsertReadMultithreadTest all threads completed");
+
+    OIndex idx = schema.getClass("City").getClassIndex("City.name");
+
+    Assert.assertEquals(idx.getSize(), THREADS * CYCLE);
+  }
+
   public class LuceneInsertThread implements Runnable {
 
     private ODatabaseDocumentTx db;
@@ -108,50 +151,5 @@ public class LuceneInsertReadMultithreadTest extends BaseLuceneTest {
       }
 
     }
-  }
-
-  @BeforeClass
-  public void init() {
-    initDB(true);
-
-    url = databaseDocumentTx.getURL();
-    OSchema schema = databaseDocumentTx.getMetadata().getSchema();
-    OClass oClass = schema.createClass("City");
-
-    oClass.createProperty("name", OType.STRING);
-    databaseDocumentTx.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
-  }
-
-  @AfterClass
-  public void deInit() {
-    deInitDB();
-  }
-
-  @Test
-  public void testConcurrentInsertWithIndex() throws Exception {
-
-    databaseDocumentTx.getMetadata().reload();
-    OSchema schema = databaseDocumentTx.getMetadata().getSchema();
-
-    Thread[] threads = new Thread[THREADS + RTHREADS];
-    for (int i = 0; i < THREADS; ++i)
-      threads[i] = new Thread(new LuceneInsertThread(CYCLE), "ConcurrentWriteTest" + i);
-
-    for (int i = THREADS; i < THREADS + RTHREADS; ++i)
-      threads[i] = new Thread(new LuceneReadThread(CYCLE), "ConcurrentReadTest" + i);
-
-    for (int i = 0; i < THREADS + RTHREADS; ++i)
-      threads[i].start();
-
-    System.out.println("Started LuceneInsertReadMultithreadTest test, waiting for " + threads.length + " threads to complete...");
-
-    for (int i = 0; i < THREADS + RTHREADS; ++i)
-      threads[i].join();
-
-    System.out.println("LuceneInsertReadMultithreadTest all threads completed");
-
-    OIndex idx = schema.getClass("City").getClassIndex("City.name");
-
-    Assert.assertEquals(idx.getSize(), THREADS * CYCLE);
   }
 }

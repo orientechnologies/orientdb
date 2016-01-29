@@ -19,34 +19,26 @@
 package com.orientechnologies.lucene.test;
 
 import com.orientechnologies.orient.core.index.OIndexEngineException;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import org.testng.annotations.Test;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Created by enricorisa on 02/10/14.
  */
 
-@Test(groups = "embedded")
 public class LuceneQueryErrorTest extends BaseLuceneTest {
 
   public LuceneQueryErrorTest() {
   }
 
-  public LuceneQueryErrorTest(boolean remote) {
-
-    //super(remote);
-  }
-
-
-  @BeforeClass
+  @Before
   public void init() {
     initDB();
     OSchema schema = databaseDocumentTx.getMetadata().getSchema();
@@ -60,12 +52,12 @@ public class LuceneQueryErrorTest extends BaseLuceneTest {
 
   }
 
-  @AfterClass
+  @After
   public void deInit() {
     deInitDB();
   }
 
-  @Test(expectedExceptions = OIndexEngineException.class)
+  @Test(expected = OIndexEngineException.class)
   public void testQueryError() {
 
     String query = "select * from Song where [title] LUCENE \"\" ";

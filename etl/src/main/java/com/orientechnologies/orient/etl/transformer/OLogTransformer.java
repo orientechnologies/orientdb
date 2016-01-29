@@ -22,22 +22,12 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLProcessor;
 
-import java.io.PrintStream;
-
 /**
  * ETL Transformer that logs the input.
  */
 public class OLogTransformer extends OAbstractTransformer {
-  private final PrintStream out     = System.out;
-  private String  prefix  = "";
-  private String  postfix = "";
-
-  @Override
-  public ODocument getConfiguration() {
-    return new ODocument().fromJSON("{parameters:[" + getCommonConfigurationParameters() + ","
-        + "{prefix:{optional:true,description:'Custom prefix to prepend to the message'}},"
-        + "{postfix:{optional:true,description:'Custom postfix to append to the message'}}" + "]}");
-  }
+  private String prefix  = "";
+  private String postfix = "";
 
   @Override
   public void configure(OETLProcessor iProcessor, final ODocument iConfiguration, OCommandContext iContext) {
@@ -46,6 +36,13 @@ public class OLogTransformer extends OAbstractTransformer {
       prefix = iConfiguration.field("prefix");
     if (iConfiguration.containsField("postfix"))
       postfix = iConfiguration.field("postfix");
+  }
+
+  @Override
+  public ODocument getConfiguration() {
+    return new ODocument().fromJSON("{parameters:[" + getCommonConfigurationParameters() + ","
+                                    + "{prefix:{optional:true,description:'Custom prefix to prepend to the message'}},"
+                                    + "{postfix:{optional:true,description:'Custom postfix to append to the message'}}" + "]}");
   }
 
   @Override
@@ -66,7 +63,7 @@ public class OLogTransformer extends OAbstractTransformer {
     if (postfix != null && !postfix.isEmpty())
       buffer.append(resolve(postfix));
 
-      log(OETLProcessor.LOG_LEVELS.INFO, buffer.toString());
+    log(OETLProcessor.LOG_LEVELS.INFO, buffer.toString());
 
     return input;
   }

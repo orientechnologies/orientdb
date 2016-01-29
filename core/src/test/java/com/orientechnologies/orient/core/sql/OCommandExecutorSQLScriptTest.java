@@ -1,17 +1,17 @@
 package com.orientechnologies.orient.core.sql;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-
+import com.orientechnologies.orient.core.command.script.OCommandScript;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.command.script.OCommandScript;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 @Test
 public class OCommandExecutorSQLScriptTest {
@@ -80,12 +80,15 @@ public class OCommandExecutorSQLScriptTest {
     script = new StringBuilder();
     script.append("let $a = select from V limit 2\n");
     script.append("return $a.toJSON()\n");
-    List<String> result = db.command(new OCommandScript("sql", script.toString())).execute();
+    String result = db.command(new OCommandScript("sql", script.toString())).execute();
 
     Assert.assertNotNull(result);
-    for (String d : result) {
-      new ODocument().fromJSON(d);
-    }
+    result = result.trim();
+    Assert.assertTrue(result.startsWith("["));
+    Assert.assertTrue(result.endsWith("]"));
+
+    new ODocument().fromJSON(result.substring(1, result.length() - 1));
+
   }
 
   @Test
@@ -147,5 +150,131 @@ public class OCommandExecutorSQLScriptTest {
     List<ODocument> qResult = db.command(new OCommandScript("sql", script.toString())).execute();
 
     Assert.assertEquals(qResult.get(0).field("weight"), 4l);
+  }
+
+  @Test
+  public void testIf1() throws Exception {
+    StringBuilder script = new StringBuilder();
+
+    script.append("let $a = select 1 as one\n");
+    script.append("if($a[0].one = 1){\n");
+    script.append(" return 'OK'\n");
+    script.append("}\n");
+    script.append("return 'FAIL'\n");
+    Object qResult = db.command(new OCommandScript("sql", script.toString())).execute();
+
+    Assert.assertNotNull(qResult);
+    Assert.assertEquals(qResult, "OK");
+  }
+
+  @Test
+  public void testIf2() throws Exception {
+    StringBuilder script = new StringBuilder();
+
+    script.append("let $a = select 1 as one\n");
+    script.append("if    ($a[0].one = 1)   { \n");
+    script.append(" return 'OK'\n");
+    script.append("     }      \n");
+    script.append("return 'FAIL'\n");
+    Object qResult = db.command(new OCommandScript("sql", script.toString())).execute();
+
+    Assert.assertNotNull(qResult);
+    Assert.assertEquals(qResult, "OK");
+  }
+
+  @Test
+  public void testNestedIf2() throws Exception {
+    StringBuilder script = new StringBuilder();
+
+    script.append("let $a = select 1 as one\n");
+    script.append("if($a[0].one = 1){\n");
+    script.append("    if($a[0].one = 'zz'){\n");
+    script.append("      return 'FAIL'\n");
+    script.append("    }\n");
+    script.append("  return 'OK'\n");
+    script.append("}\n");
+    script.append("return 'FAIL'\n");
+    Object qResult = db.command(new OCommandScript("sql", script.toString())).execute();
+
+    Assert.assertNotNull(qResult);
+    Assert.assertEquals(qResult, "OK");
+  }
+
+  @Test
+  public void testNestedIf3() throws Exception {
+    StringBuilder script = new StringBuilder();
+
+    script.append("let $a = select 1 as one\n");
+    script.append("if($a[0].one = 'zz'){\n");
+    script.append("    if($a[0].one = 1){\n");
+    script.append("      return 'FAIL'\n");
+    script.append("    }\n");
+    script.append("  return 'FAIL'\n");
+    script.append("}\n");
+    script.append("return 'OK'\n");
+    Object qResult = db.command(new OCommandScript("sql", script.toString())).execute();
+
+    Assert.assertNotNull(qResult);
+    Assert.assertEquals(qResult, "OK");
+  }
+
+  @Test
+  public void testIfRealQuery() throws Exception {
+    StringBuilder script = new StringBuilder();
+
+    script.append("let $a = select from foo\n");
+    script.append("if($a is not null and $a.size() = 3){\n");
+    script.append("  return $a\n");
+    script.append("}\n");
+    script.append("return 'FAIL'\n");
+    Object qResult = db.command(new OCommandScript("sql", script.toString())).execute();
+
+    Assert.assertNotNull(qResult);
+    Assert.assertEquals(((List) qResult).size(), 3);
+  }
+
+  @Test
+  public void testIfMultipleStatements() throws Exception {
+    StringBuilder script = new StringBuilder();
+
+    script.append("let $a = select 1 as one\n");
+    script.append("if($a[0].one = 1){\n");
+    script.append("  let $b = select 'OK' as ok\n");
+    script.append("  return $b[0].ok\n");
+    script.append("}\n");
+    script.append("return 'FAIL'\n");
+    Object qResult = db.command(new OCommandScript("sql", script.toString())).execute();
+
+    Assert.assertNotNull(qResult);
+    Assert.assertEquals(qResult, "OK");
+  }
+
+  @Test
+  public void testScriptSubContext() throws Exception {
+    StringBuilder script = new StringBuilder();
+
+    script.append("let $a = select from foo limit 1\n");
+    script.append("select from (traverse doesnotexist from $a)\n");
+    Iterable qResult = db.command(new OCommandScript("sql", script.toString())).execute();
+
+    Assert.assertNotNull(qResult);
+    Iterator iterator = qResult.iterator();
+    Assert.assertTrue(iterator.hasNext());
+    iterator.next();
+    Assert.assertFalse(iterator.hasNext());
+  }
+
+  @Test
+  public void testSemicolonInString() throws Exception {
+    //issue https://github.com/orientechnologies/orientjs/issues/133
+    //testing parsing problem
+    StringBuilder script = new StringBuilder();
+
+    script.append("let $a = select 'foo ; bar' as one\n");
+    script.append("let $b = select 'foo \\\'; bar' as one\n");
+
+    script.append("let $a = select \"foo ; bar\" as one\n");
+    script.append("let $b = select \"foo \\\"; bar\" as one\n");
+    Object qResult = db.command(new OCommandScript("sql", script.toString())).execute();
   }
 }

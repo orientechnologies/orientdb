@@ -42,10 +42,10 @@ import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.NIOFSDirectory;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -55,12 +55,11 @@ import java.util.List;
 /**
  * Created by enricorisa on 08/10/14.
  */
-@Test(groups = "embedded")
 public class LuceneVsLuceneTest extends BaseLuceneTest {
 
   private IndexWriter indexWriter;
 
-  @BeforeClass
+  @Before
   public void init() {
     initDB();
     OSchema schema = databaseDocumentTx.getMetadata().getSchema();
@@ -129,7 +128,7 @@ public class LuceneVsLuceneTest extends BaseLuceneTest {
 
   }
 
-  @AfterClass
+  @After
   public void deInit() {
     deInitDB();
     OFileUtils.deleteRecursively(getPath());

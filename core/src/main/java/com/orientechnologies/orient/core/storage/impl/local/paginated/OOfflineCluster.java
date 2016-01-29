@@ -15,6 +15,9 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
+import java.io.IOException;
+
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
@@ -26,8 +29,6 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-
-import java.io.IOException;
 
 /**
  * Represents an offline cluster, created with the "alter cluster X status offline" command. To restore the original cluster assure
@@ -89,7 +90,8 @@ public class OOfflineCluster implements OCluster {
       if (stringValue == null)
         throw new IllegalStateException("Value of attribute is null.");
 
-      return storageLocal.setClusterStatus(id, OStorageClusterConfiguration.STATUS.valueOf(stringValue.toUpperCase(storageLocal.getConfiguration().getLocaleInstance())));
+      return storageLocal.setClusterStatus(id, OStorageClusterConfiguration.STATUS
+          .valueOf(stringValue.toUpperCase(storageLocal.getConfiguration().getLocaleInstance())));
     }
     default:
       throw new IllegalArgumentException(
@@ -129,13 +131,17 @@ public class OOfflineCluster implements OCluster {
 
   @Override
   public ORawBuffer readRecord(long clusterPosition) throws IOException {
-    throw new OOfflineClusterException("Cannot read a record from the offline cluster '" + name + "'");
+    throw OException.wrapException(
+        new ORecordNotFoundException("Record with rid #" + id + ":" + clusterPosition + " was not found in database"),
+        new OOfflineClusterException("Cannot read a record from the offline cluster '" + name + "'"));
   }
 
   @Override
   public ORawBuffer readRecordIfVersionIsNotLatest(long clusterPosition, int recordVersion)
       throws IOException, ORecordNotFoundException {
-    throw new OOfflineClusterException("Cannot read a record from the offline cluster '" + name + "'");
+    throw OException.wrapException(
+        new ORecordNotFoundException("Record with rid #" + id + ":" + clusterPosition + " was not found in database"),
+        new OOfflineClusterException("Cannot read a record from the offline cluster '" + name + "'"));
   }
 
   @Override

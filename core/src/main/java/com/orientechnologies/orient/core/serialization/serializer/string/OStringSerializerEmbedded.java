@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerHelper;
 
 public class OStringSerializerEmbedded implements OStringSerializer {
@@ -42,7 +43,7 @@ public class OStringSerializerEmbedded implements OStringSerializer {
       return null;
 
     final ODocument instance = new ODocument();
-    instance.fromStream(OBinaryProtocol.string2bytes(iStream));
+    ORecordSerializerSchemaAware2CSV.INSTANCE.fromStream(OBinaryProtocol.string2bytes(iStream), instance, null);
 
     final String className = instance.field(ODocumentSerializable.CLASS_NAME);
     if (className == null)

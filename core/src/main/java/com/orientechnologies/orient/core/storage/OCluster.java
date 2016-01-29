@@ -19,9 +19,12 @@
  */
 package com.orientechnologies.orient.core.storage;
 
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.sql.parser.ORid;
 
 import java.io.IOException;
 

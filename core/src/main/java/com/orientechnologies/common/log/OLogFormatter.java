@@ -29,14 +29,20 @@ import java.util.logging.Formatter;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
+/**
+ * Basic Log formatter.
+ *
+ * @author Luca Garulli
+ */
+
 public class OLogFormatter extends Formatter {
 
-  private static final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");
+  protected static final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");
 
   /**
    * The end-of-line character for this platform.
    */
-  private static final String     EOL        = System.getProperty("line.separator");
+  protected static final String EOL = System.getProperty("line.separator");
 
   @Override
   public String format(final LogRecord record) {
@@ -65,11 +71,11 @@ public class OLogFormatter extends Formatter {
     return buffer.toString();
   }
 
-  private String customFormatMessage(final LogRecord iRecord) {
-    Level iLevel = iRecord.getLevel();
-    String iMessage = iRecord.getMessage();
-    Object[] iAdditionalArgs = iRecord.getParameters();
-    String iRequester = getSourceClassSimpleName(iRecord.getLoggerName());
+  protected String customFormatMessage(final LogRecord iRecord) {
+    final Level level = iRecord.getLevel();
+    final String message = OAnsiCode.format(iRecord.getMessage(), false);
+    final Object[] additionalArgs = iRecord.getParameters();
+    final String requester = getSourceClassSimpleName(iRecord.getLoggerName());
 
     final StringBuilder buffer = new StringBuilder(512);
     buffer.append(EOL);
@@ -77,28 +83,28 @@ public class OLogFormatter extends Formatter {
       buffer.append(dateFormat.format(new Date()));
     }
 
-    buffer.append(String.format(" %-5.5s ", iLevel.getName()));
+    buffer.append(String.format(" %-5.5s ", level.getName()));
 
     // FORMAT THE MESSAGE
     try {
-      if (iAdditionalArgs != null)
-        buffer.append(String.format(iMessage, iAdditionalArgs));
+      if (additionalArgs != null)
+        buffer.append(String.format(message, additionalArgs));
       else
-        buffer.append(iMessage);
+        buffer.append(message);
     } catch (Exception e) {
-      buffer.append(iMessage);
+      buffer.append(message);
     }
 
-    if (iRequester != null) {
+    if (requester != null) {
       buffer.append(" [");
-      buffer.append(iRequester);
+      buffer.append(requester);
       buffer.append(']');
     }
 
-    return buffer.toString();
+    return OAnsiCode.format(buffer.toString(), false);
   }
 
-  private String getSourceClassSimpleName(final String iSourceClassName) {
+  protected String getSourceClassSimpleName(final String iSourceClassName) {
     return iSourceClassName.substring(iSourceClassName.lastIndexOf(".") + 1);
   }
 }

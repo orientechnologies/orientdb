@@ -16,12 +16,6 @@
  */
 package com.orientechnologies.orient.core.fetch.json;
 
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.util.Date;
-import java.util.Set;
-import java.util.Stack;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
@@ -36,6 +30,12 @@ import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON.FormatSettings;
+
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.Date;
+import java.util.Set;
+import java.util.Stack;
 
 /**
  * @author luca.molino
@@ -88,9 +88,8 @@ public class OJSONFetchContext implements OFetchContext {
       final Iterable<?> iterable) {
     try {
       manageTypes(iFieldName, iterable);
-      jsonWriter.beginCollection(settings.indentLevel, true, iFieldName);
+      jsonWriter.beginCollection(++settings.indentLevel, true, iFieldName);
       collectionStack.add(iRootRecord);
-      settings.indentLevel++;
     } catch (IOException e) {
       throw OException.wrapException(
           new OFetchException("Error writing collection field " + iFieldName + " of record " + iRootRecord.getIdentity()), e);
@@ -99,8 +98,7 @@ public class OJSONFetchContext implements OFetchContext {
 
   public void onAfterCollection(final ODocument iRootRecord, final String iFieldName, final Object iUserObject) {
     try {
-      settings.indentLevel--;
-      jsonWriter.endCollection(settings.indentLevel, true);
+      jsonWriter.endCollection(settings.indentLevel--, true);
       collectionStack.pop();
     } catch (IOException e) {
       throw OException.wrapException(
@@ -109,9 +107,8 @@ public class OJSONFetchContext implements OFetchContext {
   }
 
   public void onBeforeMap(final ODocument iRootRecord, final String iFieldName, final Object iUserObject) {
-    settings.indentLevel++;
     try {
-      jsonWriter.beginObject(settings.indentLevel, true, iFieldName);
+      jsonWriter.beginObject(++settings.indentLevel, true, iFieldName);
       if (!(iUserObject instanceof ODocument)) {
         collectionStack.add(new ODocument()); // <-- sorry for this... fixes #2845 but this mess should be rewritten...
       }
@@ -123,7 +120,7 @@ public class OJSONFetchContext implements OFetchContext {
 
   public void onAfterMap(final ODocument iRootRecord, final String iFieldName, final Object iUserObject) {
     try {
-      jsonWriter.endObject(settings.indentLevel, true);
+      jsonWriter.endObject(--settings.indentLevel, true);
       if (!(iUserObject instanceof ODocument)) {
         collectionStack.pop();
       }
@@ -131,19 +128,17 @@ public class OJSONFetchContext implements OFetchContext {
       throw OException.wrapException(
           new OFetchException("Error writing map field " + iFieldName + " of record " + iRootRecord.getIdentity()), e);
     }
-    settings.indentLevel--;
   }
 
   public void onBeforeDocument(final ODocument iRootRecord, final ODocument iDocument, final String iFieldName,
       final Object iUserObject) {
-    settings.indentLevel++;
     try {
       final String fieldName;
       if (!collectionStack.isEmpty() && collectionStack.peek().equals(iRootRecord))
         fieldName = null;
       else
         fieldName = iFieldName;
-      jsonWriter.beginObject(settings.indentLevel, false, fieldName);
+      jsonWriter.beginObject(++settings.indentLevel, true, fieldName);
       writeSignature(jsonWriter, iDocument);
     } catch (IOException e) {
       throw OException.wrapException(
@@ -250,6 +245,8 @@ public class OJSONFetchContext implements OFetchContext {
           appendType(typesStack.peek(), iFieldName, 'z');
         else if (t == OType.LINKMAP)
           appendType(typesStack.peek(), iFieldName, 'm');
+        else if (t == OType.CUSTOM)
+          appendType(typesStack.peek(), iFieldName, 'u');
       }
     }
   }

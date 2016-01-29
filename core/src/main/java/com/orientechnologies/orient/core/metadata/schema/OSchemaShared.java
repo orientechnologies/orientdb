@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
+import com.orientechnologies.orient.core.exception.OSchemaNotCreatedException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -70,15 +71,14 @@ import java.util.concurrent.Callable;
  * Shared schema class. It's shared by all the database instances that point to the same storage.
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- *
  */
 @SuppressWarnings("unchecked")
 public class OSchemaShared extends ODocumentWrapperNoClass
     implements OSchema, OCloseable, OOrientStartupListener, OOrientShutdownListener {
-  public static final int   CURRENT_VERSION_NUMBER = 4;
-  public static final int   VERSION_NUMBER_V4      = 4;
+  public static final  int  CURRENT_VERSION_NUMBER = 4;
+  public static final  int  VERSION_NUMBER_V4      = 4;
   // this is needed for guarantee the compatibility to 2.0-M1 and 2.0-M2 no changed associated with it
-  public static final int   VERSION_NUMBER_V5      = 5;
+  public static final  int  VERSION_NUMBER_V5      = 5;
   private static final long serialVersionUID       = 1L;
 
   private final boolean clustersCanNotBeSharedAmongClasses;
@@ -90,12 +90,11 @@ public class OSchemaShared extends ODocumentWrapperNoClass
 
   private final OClusterSelectionFactory clusterSelectionFactory = new OClusterSelectionFactory();
 
-  private volatile ThreadLocal<OModifiableInteger> modificationCounter    = new OModificationsCounter();
-  private final List<OGlobalProperty>              properties             = new ArrayList<OGlobalProperty>();
-  private final Map<String, OGlobalProperty>       propertiesByNameType   = new HashMap<String, OGlobalProperty>();
-  private volatile int                             version                = 0;
-  private volatile boolean                         fullCheckpointOnChange = false;
-  private volatile OImmutableSchema                snapshot;
+  private volatile ThreadLocal<OModifiableInteger> modificationCounter  = new OModificationsCounter();
+  private final    List<OGlobalProperty>           properties           = new ArrayList<OGlobalProperty>();
+  private final    Map<String, OGlobalProperty>    propertiesByNameType = new HashMap<String, OGlobalProperty>();
+  private volatile int                             version              = 0;
+  private volatile OImmutableSchema snapshot;
 
   private static Set<String> internalClasses = new HashSet<String>();
 
@@ -145,7 +144,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass
 
     for (int i = 0; i < nameSize; ++i) {
       final char c = iName.charAt(i);
-      if (c == ':' || c == ',' || c == ';' || c == ' ' || c == '%' || c == '@' || c == '=' || c == '.' || c == '#')
+      if (c == ':' || c == ',' || c == ';' || c == ' ' || c == '@' || c == '=' || c == '.' || c == '#')
         // INVALID CHARACTER
         return c;
     }
@@ -172,14 +171,6 @@ public class OSchemaShared extends ODocumentWrapperNoClass
     }
 
     return null;
-  }
-
-  public boolean isFullCheckpointOnChange() {
-    return fullCheckpointOnChange;
-  }
-
-  public void setFullCheckpointOnChange(boolean fullCheckpointOnChange) {
-    this.fullCheckpointOnChange = fullCheckpointOnChange;
   }
 
   @Override
@@ -725,16 +716,20 @@ public class OSchemaShared extends ODocumentWrapperNoClass
       classes.putAll(newClasses);
 
       // REBUILD THE INHERITANCE TREE
-      List<String> superClassNames;
+      Collection<String> superClassNames;
       String legacySuperClassName;
       List<OClass> superClasses;
       OClass superClass;
 
       for (ODocument c : storedClasses) {
+
         superClassNames = c.field("superClasses");
         legacySuperClassName = c.field("superClass");
         if (superClassNames == null)
           superClassNames = new ArrayList<String>();
+        else
+          superClassNames = new HashSet<String>(superClassNames);
+
         if (legacySuperClassName != null && !superClassNames.contains(legacySuperClassName))
           superClassNames.add(legacySuperClassName);
 
@@ -833,9 +828,12 @@ public class OSchemaShared extends ODocumentWrapperNoClass
 
   @Override
   public OSchemaShared load() {
+
     rwSpinLock.acquireWriteLock();
     try {
-      getDatabase();
+      if (!new ORecordId(getDatabase().getStorage().getConfiguration().schemaRecordId).isValid())
+        throw new OSchemaNotCreatedException("Schema is not created and can not be loaded");
+
       ((ORecordId) document.getIdentity()).fromString(getDatabase().getStorage().getConfiguration().schemaRecordId);
       reload("*:-1 index:0");
 
@@ -962,11 +960,11 @@ public class OSchemaShared extends ODocumentWrapperNoClass
         checkClustersAreAbsent(clusterIds);
 
       cmd = new StringBuilder("create class ");
-      // if (getDatabase().getStorage().getConfiguration().isStrictSql())
-      // cmd.append('`');
+      if (getDatabase().getStorage().getConfiguration().isStrictSql())
+        cmd.append('`');
       cmd.append(className);
-      // if (getDatabase().getStorage().getConfiguration().isStrictSql())
-      // cmd.append('`');
+      if (getDatabase().getStorage().getConfiguration().isStrictSql())
+        cmd.append('`');
 
       List<OClass> superClassesList = new ArrayList<OClass>();
       if (superClasses != null && superClasses.length > 0) {
@@ -1019,7 +1017,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass
       result = classes.get(className.toLowerCase());
 
       // WAKE UP DB LIFECYCLE LISTENER
-      for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
+      for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext(); )
         it.next().onCreateClass(getDatabase(), result);
 
     } finally {
@@ -1097,7 +1095,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass
       result = classes.get(className.toLowerCase());
 
       // WAKE UP DB LIFECYCLE LISTENER
-      for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
+      for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext(); )
         it.next().onCreateClass(getDatabase(), result);
 
     } catch (ClusterIdsAreEmptyException e) {
@@ -1146,7 +1144,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass
       final String key = className.toLowerCase();
 
       if (classes.containsKey(key))
-        throw new OSchemaException("Class " + className + " already exists in current database");
+        throw new OSchemaException("Class '" + className + "' already exists in current database");
 
       OClassImpl cls = new OClassImpl(this, className, clusterIds);
 
@@ -1197,17 +1195,21 @@ public class OSchemaShared extends ODocumentWrapperNoClass
       } else {
         // DETERMINE THE BEST NUMBER BASED ON AVAILABLE CORES
         final int cpus = Runtime.getRuntime().availableProcessors();
-        minimumClusters = cpus > 16 ? 16 : cpus;
+        minimumClusters = cpus > 64 ? 64 : cpus;
       }
     }
 
     clusterIds = new int[minimumClusters];
+    int firstDynamicCluster = 0;
     clusterIds[0] = database.getClusterIdByName(className);
-    if (clusterIds[0] == -1)
+    if (clusterIds[0] == -1) {
+      // JUST KEEP THE CLASS NAME. THIS IS FOR LEGACY REASONS
       clusterIds[0] = database.addCluster(className);
+      firstDynamicCluster = 1;
+    }
 
-    if (minimumClusters > 1) {
-      for (int i = 1; i < minimumClusters; ++i) {
+    if (minimumClusters > firstDynamicCluster) {
+      for (int i = firstDynamicCluster; i < minimumClusters; ++i) {
         clusterIds[i] = database.getClusterIdByName(className + "_" + i);
         if (clusterIds[i] == -1)
           clusterIds[i] = database.addCluster(className + "_" + i);
@@ -1285,8 +1287,6 @@ public class OSchemaShared extends ODocumentWrapperNoClass
         try {
           toStream();
           document.save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
-          if (fullCheckpointOnChange)
-            getDatabase().getStorage().synch();
         } catch (OConcurrentModificationException e) {
           reload(null, true);
           throw e;

@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.index.sbtree.local;
 
+import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
@@ -11,7 +12,7 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OL
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
-import com.orientechnologies.orient.core.storage.cache.local.O2QCache;
+import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
@@ -28,6 +29,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ONonTx
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.statistic.OStoragePerformanceStatistic;
 import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -56,28 +58,28 @@ public class SBTreeWAL extends SBTreeTest {
     OGlobalConfiguration.FILE_LOCK.setValue(false);
   }
 
-  private String                          buildDirectory;
+  private String buildDirectory;
 
-  private String                          actualStorageDir;
-  private String                          expectedStorageDir;
+  private String actualStorageDir;
+  private String expectedStorageDir;
 
-  private ODiskWriteAheadLog              writeAheadLog;
+  private ODiskWriteAheadLog writeAheadLog;
 
-  private OReadCache                      actualReadCache;
-  private OWriteCache                     actualWriteCache;
+  private OReadCache  actualReadCache;
+  private OWriteCache actualWriteCache;
 
-  private OReadCache                      expectedReadCache;
-  private OWriteCache                     expectedWriteCache;
+  private OReadCache  expectedReadCache;
+  private OWriteCache expectedWriteCache;
 
-  private OLocalPaginatedStorage          actualStorage;
+  private OLocalPaginatedStorage actualStorage;
 
   private OSBTree<Integer, OIdentifiable> expectedSBTree;
 
-  private OLocalPaginatedStorage          expectedStorage;
-  private OStorageConfiguration           expectedStorageConfiguration;
-  private OStorageConfiguration           actualStorageConfiguration;
+  private OLocalPaginatedStorage expectedStorage;
+  private OStorageConfiguration  expectedStorageConfiguration;
+  private OStorageConfiguration  actualStorageConfiguration;
 
-  private OAtomicOperationsManager        actualAtomicOperationsManager;
+  private OAtomicOperationsManager actualAtomicOperationsManager;
 
   @BeforeClass
   @Override
@@ -152,10 +154,12 @@ public class SBTreeWAL extends SBTreeTest {
     when(actualStorage.getWALInstance()).thenReturn(writeAheadLog);
     actualAtomicOperationsManager = new OAtomicOperationsManager(actualStorage);
 
-    actualWriteCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000,
+    actualWriteCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024,
+        new OByteBufferPool(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024), 1000000,
         writeAheadLog, 100, 1648L * 1024 * 1024, 2 * 1648L * 1024 * 1024, actualStorage, true, 10);
 
-    actualReadCache = new O2QCache(1648L * 1024 * 1024, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, true);
+    actualReadCache = new O2QCache(1648L * 1024 * 1024, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, true,
+        20);
 
     when(actualStorage.getStorageTransaction()).thenReturn(null);
     when(actualStorage.getReadCache()).thenReturn(actualReadCache);
@@ -190,10 +194,11 @@ public class SBTreeWAL extends SBTreeTest {
     when(expectedStorage.getVariableParser()).thenReturn(variableParser);
     when(expectedStorage.getComponentsFactory()).thenReturn(new OCurrentStorageComponentsFactory(expectedStorageConfiguration));
 
-    expectedWriteCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000,
+    expectedWriteCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024,
+        new OByteBufferPool(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024), 1000000,
         writeAheadLog, 100, 1648L * 1024 * 1024, 400L * 1024 * 1024 * 1024 + 1648L * 1024 * 1024, expectedStorage, true, 20);
     expectedReadCache = new O2QCache(400L * 1024 * 1024 * 1024,
-        OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, false);
+        OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, false, 20);
 
     OAtomicOperationsManager atomicOperationsManager = new OAtomicOperationsManager(expectedStorage);
 
@@ -334,6 +339,9 @@ public class SBTreeWAL extends SBTreeTest {
   }
 
   private void restoreDataFromWAL() throws IOException {
+    OStoragePerformanceStatistic storagePerformanceStatistic = new OStoragePerformanceStatistic(
+        OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, "test", 1);
+
     ODiskWriteAheadLog log = new ODiskWriteAheadLog(4, -1, 10 * 1024L * OWALPage.PAGE_SIZE, null, actualStorage);
     OLogSequenceNumber lsn = log.begin();
 
@@ -363,10 +371,11 @@ public class SBTreeWAL extends SBTreeTest {
           if (!expectedWriteCache.isOpen(fileId))
             expectedReadCache.openFile(fileId, expectedWriteCache);
 
-          OCacheEntry cacheEntry = expectedReadCache.load(fileId, pageIndex, true, expectedWriteCache, 0);
+          OCacheEntry cacheEntry = expectedReadCache
+              .load(fileId, pageIndex, true, expectedWriteCache, 0, storagePerformanceStatistic);
           if (cacheEntry == null) {
             do {
-              cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache);
+              cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache, storagePerformanceStatistic);
             } while (cacheEntry.getPageIndex() != pageIndex);
           }
 
@@ -379,7 +388,7 @@ public class SBTreeWAL extends SBTreeTest {
             cacheEntry.markDirty();
           } finally {
             cacheEntry.releaseExclusiveLock();
-            expectedReadCache.release(cacheEntry, expectedWriteCache);
+            expectedReadCache.release(cacheEntry, expectedWriteCache, storagePerformanceStatistic);
           }
         }
         atomicUnit.clear();

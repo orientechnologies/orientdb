@@ -106,8 +106,9 @@
         <import.package>*</import.package>
         <export.package>com.orientechnologies.orient.object.*</export.package>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <argLine>-ea -Xmx2048m
+        <argLine>-ea -Xmx2048m -XX:MaxDirectMemorySize=512g
             -Dstorage.diskCache.bufferSize=4096
+            -Dmemory.directMemory.trackMode=true
             -Dstorage.makeFullCheckpointAfterCreate=false
             -Dstorage.makeFullCheckpointAfterOpen=false
             -Dstorage.makeFullCheckpointAfterClusterCreate=false

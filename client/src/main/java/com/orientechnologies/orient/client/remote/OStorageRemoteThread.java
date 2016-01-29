@@ -727,6 +727,11 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   @Override
+  public void shutdown() {
+    close(true, false);
+  }
+
+  @Override
   public boolean equals(final Object iOther) {
     if (iOther instanceof OStorageRemoteThread)
       return iOther == this;
@@ -735,10 +740,6 @@ public class OStorageRemoteThread implements OStorageProxy {
       return iOther == delegate;
 
     return false;
-  }
-
-  protected void handleException(final OChannelBinaryAsynchClient iNetwork, final String iMessage, final Exception iException) {
-    delegate.handleException(iNetwork, iMessage, iException);
   }
 
   protected void pushSession() {

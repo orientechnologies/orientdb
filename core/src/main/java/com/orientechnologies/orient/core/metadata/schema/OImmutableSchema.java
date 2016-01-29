@@ -269,15 +269,6 @@ public class OImmutableSchema implements OSchema {
     return clusterSelectionFactory;
   }
 
-  @Override
-  public boolean isFullCheckpointOnChange() {
-    return false;
-  }
-
-  @Override
-  public void setFullCheckpointOnChange(boolean fullCheckpointOnChange) {
-  }
-
   private ODatabaseDocumentInternal getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }

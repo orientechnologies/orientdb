@@ -103,6 +103,7 @@ public interface OTransaction {
 
   TXSTATUS getStatus();
 
+  @Deprecated
   Iterable<? extends ORecordOperation> getCurrentRecordEntries();
 
   Iterable<? extends ORecordOperation> getAllRecordEntries();
@@ -122,6 +123,7 @@ public interface OTransaction {
   void addIndexEntry(OIndex<?> delegate, final String iIndexName, final OTransactionIndexChanges.OPERATION iStatus,
       final Object iKey, final OIdentifiable iValue);
 
+  @Deprecated
   void clearIndexEntries();
 
   OTransactionIndexChanges getIndexChanges(String iName);
@@ -178,4 +180,9 @@ public interface OTransaction {
   int getEntryCount();
 
   boolean hasRecordCreation();
+
+  /**
+   * Restores a partially committed transaction to the tial
+   */
+  void restore();
 }

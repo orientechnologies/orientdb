@@ -19,6 +19,11 @@
  */
 package com.orientechnologies.orient.core.tx;
 
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -37,11 +42,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
-
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
 
 /**
  * No operation transaction.
@@ -68,6 +68,10 @@ public class OTransactionNoTx extends OTransactionAbstract {
   @Override
   public boolean hasRecordCreation() {
     return false;
+  }
+
+  @Override
+  public void restore() {
   }
 
   @Override
@@ -115,28 +119,23 @@ public class OTransactionNoTx extends OTransactionAbstract {
     if (rid.isNew())
       return null;
 
-    try {
-      final ODatabaseDocumentTx.RecordReader recordReader;
-      if (force) {
-        recordReader = new ODatabaseDocumentTx.SimpleRecordReader();
-      } else {
-        recordReader = new ODatabaseDocumentTx.LatestVersionRecordReader();
-      }
+    final ODatabaseDocumentTx.RecordReader recordReader;
+    if (force) {
+      recordReader = new ODatabaseDocumentTx.SimpleRecordReader();
+    } else {
+      recordReader = new ODatabaseDocumentTx.LatestVersionRecordReader();
+    }
 
-      final ORecord loadedRecord = database.executeReadRecord((ORecordId) rid, record, -1, fetchPlan, ignoreCache, !ignoreCache,
-          false, OStorage.LOCKING_STRATEGY.NONE, recordReader);
+    final ORecord loadedRecord = database.executeReadRecord((ORecordId) rid, record, -1, fetchPlan, ignoreCache, !ignoreCache,
+        false, OStorage.LOCKING_STRATEGY.NONE, recordReader);
 
-      if (force) {
-        return loadedRecord;
-      } else {
-        if (loadedRecord == null)
-          return record;
+    if (force) {
+      return loadedRecord;
+    } else {
+      if (loadedRecord == null)
+        return record;
 
-        return loadedRecord;
-      }
-
-    } catch (ORecordNotFoundException e) {
-      return null;
+      return loadedRecord;
     }
   }
 

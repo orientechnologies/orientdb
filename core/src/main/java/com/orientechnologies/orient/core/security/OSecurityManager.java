@@ -37,20 +37,23 @@ import java.util.Collections;
 import java.util.Map;
 
 public class OSecurityManager {
-  public static final String            HASH_ALGORITHM          = "SHA-256";
-  public static final String            HASH_ALGORITHM_PREFIX   = "{" + HASH_ALGORITHM + "}";
+  public static final String HASH_ALGORITHM        = "SHA-256";
+  public static final String HASH_ALGORITHM_PREFIX = "{" + HASH_ALGORITHM + "}";
 
-  public static final String            PBKDF2_ALGORITHM        = "PBKDF2WithHmacSHA1";
-  public static final String            PBKDF2_ALGORITHM_PREFIX = "{" + PBKDF2_ALGORITHM + "}";
+  public static final String PBKDF2_ALGORITHM        = "PBKDF2WithHmacSHA1";
+  public static final String PBKDF2_ALGORITHM_PREFIX = "{" + PBKDF2_ALGORITHM + "}";
 
-  public static final int               SALT_SIZE               = 24;
-  public static final int               HASH_SIZE               = 24;
+  public static final String PBKDF2_SHA256_ALGORITHM        = "PBKDF2WithHmacSHA256";
+  public static final String PBKDF2_SHA256_ALGORITHM_PREFIX = "{" + PBKDF2_SHA256_ALGORITHM + "}";
 
-  private static final OSecurityManager instance                = new OSecurityManager();
+  public static final int SALT_SIZE = 24;
+  public static final int HASH_SIZE = 24;
 
-  private MessageDigest                 md;
+  private static final OSecurityManager instance = new OSecurityManager();
 
-  private static Map<String, byte[]>    SALT_CACHE              = null;
+  private MessageDigest md;
+
+  private static Map<String, byte[]> SALT_CACHE = null;
 
   static {
     final int cacheSize = OGlobalConfiguration.SECURITY_USER_PASSWORD_SALT_CACHE_SIZE.getValueAsInteger();
@@ -67,8 +70,8 @@ public class OSecurityManager {
     }
   }
 
-  public static String createHash(final String iInput, String iAlgorithm) throws NoSuchAlgorithmException,
-      UnsupportedEncodingException {
+  public static String createHash(final String iInput, String iAlgorithm)
+      throws NoSuchAlgorithmException, UnsupportedEncodingException {
     if (iAlgorithm == null)
       iAlgorithm = HASH_ALGORITHM;
 
@@ -96,10 +99,17 @@ public class OSecurityManager {
 
     } else if (iHash.startsWith(PBKDF2_ALGORITHM_PREFIX)) {
       final String s = iHash.substring(PBKDF2_ALGORITHM_PREFIX.length());
-      return checkPasswordWithSalt(iPassword, s);
+      return checkPasswordWithSalt(iPassword, s, PBKDF2_ALGORITHM);
+
+    } else if (iHash.startsWith(PBKDF2_SHA256_ALGORITHM_PREFIX)) {
+      final String s = iHash.substring(PBKDF2_SHA256_ALGORITHM_PREFIX.length());
+      return checkPasswordWithSalt(iPassword, s, PBKDF2_SHA256_ALGORITHM);
     }
 
-    return iPassword.equals(iHash);
+    // Do not compare raw strings against each other, to avoid timing attacks.
+    // Instead, hash them both with a cryptographic hash function and
+    // compare their hashes with a constant-time comparison method.
+    return MessageDigest.isEqual(digestSHA256(iPassword), digestSHA256(iHash));
   }
 
   public String createSHA256(final String iInput) {
@@ -134,7 +144,11 @@ public class OSecurityManager {
     if (HASH_ALGORITHM.equalsIgnoreCase(iAlgorithm)) {
       transformed = createSHA256(iInput);
     } else if (PBKDF2_ALGORITHM.equalsIgnoreCase(iAlgorithm)) {
-      transformed = createHashWithSalt(iInput, OGlobalConfiguration.SECURITY_USER_PASSWORD_SALT_ITERATIONS.getValueAsInteger());
+      transformed = createHashWithSalt(iInput, OGlobalConfiguration.SECURITY_USER_PASSWORD_SALT_ITERATIONS.getValueAsInteger(),
+          iAlgorithm);
+    } else if (PBKDF2_SHA256_ALGORITHM.equalsIgnoreCase(iAlgorithm)) {
+      transformed = createHashWithSalt(iInput, OGlobalConfiguration.SECURITY_USER_PASSWORD_SALT_ITERATIONS.getValueAsInteger(),
+          iAlgorithm);
     } else
       throw new IllegalArgumentException("Algorithm '" + iAlgorithm + "' is not supported");
 
@@ -158,21 +172,26 @@ public class OSecurityManager {
   }
 
   public String createHashWithSalt(final String iPassword) {
-    return createHashWithSalt(iPassword, OGlobalConfiguration.SECURITY_USER_PASSWORD_SALT_ITERATIONS.getValueAsInteger());
+    return createHashWithSalt(iPassword, OGlobalConfiguration.SECURITY_USER_PASSWORD_SALT_ITERATIONS.getValueAsInteger(),
+        PBKDF2_SHA256_ALGORITHM);
   }
 
-  public String createHashWithSalt(final String iPassword, final int iIterations) {
+  public String createHashWithSalt(final String iPassword, final int iIterations, final String algorithm) {
     final SecureRandom random = new SecureRandom();
     final byte[] salt = new byte[SALT_SIZE];
     random.nextBytes(salt);
 
     // Hash the password
-    final byte[] hash = getPbkdf2(iPassword, salt, iIterations, HASH_SIZE);
+    final byte[] hash = getPbkdf2(iPassword, salt, iIterations, HASH_SIZE, algorithm);
 
     return byteArrayToHexStr(hash) + ":" + byteArrayToHexStr(salt) + ":" + iIterations;
   }
 
   public boolean checkPasswordWithSalt(final String iPassword, final String iHash) {
+    return checkPasswordWithSalt(iPassword, iHash, OSecurityManager.PBKDF2_SHA256_ALGORITHM);
+  }
+
+  public boolean checkPasswordWithSalt(final String iPassword, final String iHash, final String algorithm) {
     // SPLIT PARTS
     final String[] params = iHash.split(":");
     if (params.length != 3)
@@ -182,11 +201,12 @@ public class OSecurityManager {
     final byte[] salt = hexToByteArray(params[1]);
     final int iterations = Integer.parseInt(params[2]);
 
-    final byte[] testHash = getPbkdf2(iPassword, salt, iterations, hash.length);
-    return compareHash(hash, testHash);
+    final byte[] testHash = getPbkdf2(iPassword, salt, iterations, hash.length, algorithm);
+    return MessageDigest.isEqual(hash, testHash);
   }
 
-  private byte[] getPbkdf2(final String iPassword, final byte[] salt, final int iterations, final int bytes) {
+  private byte[] getPbkdf2(final String iPassword, final byte[] salt, final int iterations, final int bytes,
+      final String algorithm) {
     String cacheKey = null;
 
     final String hashedPassword = createSHA256(iPassword + new String(salt));
@@ -202,7 +222,7 @@ public class OSecurityManager {
     final PBEKeySpec spec = new PBEKeySpec(iPassword.toCharArray(), salt, iterations, bytes * 8);
     final SecretKeyFactory skf;
     try {
-      skf = SecretKeyFactory.getInstance(PBKDF2_ALGORITHM);
+      skf = SecretKeyFactory.getInstance(algorithm);
       final byte[] encoded = skf.generateSecret(spec).getEncoded();
 
       if (SALT_CACHE != null) {
@@ -216,14 +236,7 @@ public class OSecurityManager {
     }
   }
 
-  private static boolean compareHash(final byte[] iFirst, final byte[] iSecond) {
-    int diff = iFirst.length ^ iSecond.length;
-    for (int i = 0; i < iFirst.length && i < iSecond.length; i++)
-      diff |= iFirst[i] ^ iSecond[i];
-    return diff == 0;
-  }
-
-  private static String byteArrayToHexStr(final byte[] data) {
+  public static String byteArrayToHexStr(final byte[] data) {
     if (data == null)
       return null;
 

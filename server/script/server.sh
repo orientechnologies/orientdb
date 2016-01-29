@@ -72,7 +72,7 @@ export JAVA
 LOG_FILE=$ORIENTDB_HOME/config/orientdb-server-log.properties
 WWW_PATH=$ORIENTDB_HOME/www
 ORIENTDB_SETTINGS="-Dprofiler.enabled=true"
-JAVA_OPTS_SCRIPT="-Djna.nosys=true -XX:+HeapDumpOnOutOfMemoryError -Djava.awt.headless=true -Dfile.encoding=UTF8 -Drhino.opt.level=9"
+JAVA_OPTS_SCRIPT="-Djna.nosys=true -XX:+HeapDumpOnOutOfMemoryError -XX:MaxDirectMemorySize=512g -Djava.awt.headless=true -Dfile.encoding=UTF8 -Drhino.opt.level=9"
 ORIENTDB_PID=$ORIENTDB_HOME/bin/orient.pid
 
 if [ -f "$ORIENTDB_PID" ]; then
@@ -91,4 +91,10 @@ MAXDISKCACHE=""
 
 echo $$ > $ORIENTDB_PID
 
-exec "$JAVA" $JAVA_OPTS $MAXHEAP $JAVA_OPTS_SCRIPT $ORIENTDB_SETTINGS $MAXDISKCACHE -Djava.util.logging.config.file="$LOG_FILE" -Dorientdb.config.file="$CONFIG_FILE" -Dorientdb.www.path="$WWW_PATH" -Dorientdb.build.number="@BUILD@" -cp "$ORIENTDB_HOME/lib/orientdb-server-@VERSION@.jar:$ORIENTDB_HOME/lib/*" $* com.orientechnologies.orient.server.OServerMain
+exec "$JAVA" $JAVA_OPTS $MAXHEAP $JAVA_OPTS_SCRIPT $ORIENTDB_SETTINGS $MAXDISKCACHE \
+    -Djava.util.logging.config.file="$LOG_FILE" \
+    -Dorientdb.config.file="$CONFIG_FILE" \
+    -Dorientdb.www.path="$WWW_PATH" \
+    -Dorientdb.build.number="@BUILD@" \
+    -cp "$ORIENTDB_HOME/lib/orientdb-server-@VERSION@.jar:$ORIENTDB_HOME/lib/*" \
+    $* com.orientechnologies.orient.server.OServerMain

@@ -31,7 +31,6 @@ import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODirtyManager;
-import com.orientechnologies.orient.core.serialization.serializer.ONetworkThreadLocalSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -40,6 +39,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineCl
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
@@ -127,11 +127,7 @@ public abstract class ORecordAbstract implements ORecord {
     _dirty = false;
     _contentChanged = false;
     _dirtyManager = null;
-    if (ONetworkThreadLocalSerializer.getNetworkSerializer() != null) {
-      ONetworkThreadLocalSerializer.getNetworkSerializer().fromStream(iRecordBuffer, this, null);
-      _source = null;
-    } else
-      _source = iRecordBuffer;
+    _source = iRecordBuffer;
     _size = iRecordBuffer != null ? iRecordBuffer.length : 0;
     _status = ORecordElement.STATUS.LOADED;
 
@@ -192,6 +188,14 @@ public abstract class ORecordAbstract implements ORecord {
 
   public String toJSON(final String iFormat) {
     return ORecordSerializerJSON.INSTANCE.toString(this, new StringBuilder(1024), iFormat == null ? "" : iFormat).toString();
+  }
+
+  public void toJSON(final String iFormat, final OutputStream stream) throws IOException {
+    stream.write(toJSON(iFormat).toString().getBytes());
+  }
+
+  public void toJSON(final OutputStream stream) throws IOException {
+    stream.write(toJSON().toString().getBytes());
   }
 
   @Override
@@ -261,9 +265,10 @@ public abstract class ORecordAbstract implements ORecord {
       getDatabase().reload(this, fetchPlan, ignoreCache, force);
 
       return this;
+
     } catch (OOfflineClusterException e) {
       throw e;
-    } catch (OException e) {
+    } catch (ORecordNotFoundException e) {
       throw e;
     } catch (Exception e) {
       throw OException.wrapException(new ORecordNotFoundException("The record with id '" + getIdentity() + "' not found"), e);

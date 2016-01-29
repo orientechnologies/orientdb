@@ -18,6 +18,7 @@ package com.orientechnologies.lucene.engine;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.lucene.analyzer.OLucenePerFieldAnalyzerWrapper;
@@ -28,6 +29,7 @@ import com.orientechnologies.orient.core.OOrientListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndexCursor;
@@ -159,6 +161,21 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
     OLogManager.instance().info(this, "REOPEN DONE");
   }
 
+  public void commit() {
+    try {
+      OLogManager.instance().info(this, "committing");
+      final IndexWriter indexWriter = mgrWriter.getIndexWriter();
+      indexWriter.forceMergeDeletes();
+      indexWriter.commit();
+    } catch (IOException e) {
+      OLogManager.instance().error(this, "Error on committing Lucene index", e);
+    }
+  }
+
+  private String getIndexPath(OLocalPaginatedStorage storageLocalAbstract) {
+    return getIndexPath(storageLocalAbstract, "databaseIndex");
+  }
+
   public IndexWriter createIndexWriter(Directory directory) throws IOException {
 
     IndexWriterConfig iwc = new IndexWriterConfig(indexAnalyzer);
@@ -169,7 +186,18 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
 
     OLogManager.instance().debug(this, "Creating Lucene index in '%s'...", directory);
 
-    return new IndexWriter(directory, iwc);
+    IndexWriter writer = new IndexWriter(directory, iwc);
+
+    return writer;
+  }
+
+  public void flush() {
+    commit();
+
+  }
+
+  private String getIndexPath(OLocalPaginatedStorage storageLocalAbstract, String indexName) {
+    return storageLocalAbstract.getStoragePath() + File.separator + OLUCENE_BASE_DIR + File.separator + indexName;
   }
 
   public void initIndex(OLuceneClassIndexContext indexContext) {
@@ -221,17 +249,6 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
     return new StandardAnalyzer();
   }
 
-  public void commit() {
-    try {
-      OLogManager.instance().info(this, "committing");
-      final IndexWriter indexWriter = mgrWriter.getIndexWriter();
-      indexWriter.forceMergeDeletes();
-      indexWriter.commit();
-    } catch (IOException e) {
-      OLogManager.instance().error(this, "Error on committing Lucene index", e);
-    }
-  }
-
   public boolean remove(Object key, OIdentifiable value) {
     return false;
   }
@@ -268,11 +285,6 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
 
   }
 
-  public void flush() {
-    commit();
-
-  }
-
   public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
       OBinarySerializer keySerializer, int keySize) {
 
@@ -285,27 +297,18 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
 
   }
 
-  public void deleteWithoutLoad(String indexName) {
-    OLogManager.instance().info(this, "DELETing withoutLoAD ::: " + indexName);
+  public void delete(final ODatabaseInternal database) {
+    OLogManager.instance().info(this, "DELETING STORAGE:: ");
 
-  }
+    close();
 
-  public void load(String indexName, OBinarySerializer valueSerializer, boolean isAutomatic, OBinarySerializer keySerializer,
-      OType[] keyTypes, boolean nullPointerSupport, int keySize) {
+    final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
+    if (storageLocalAbstract instanceof OLocalPaginatedStorage) {
+      String pathname = getIndexPath((OLocalPaginatedStorage) storageLocalAbstract);
 
-    OLogManager.instance().info(this, "LOAD:: " + indexName);
-  }
+      OFileUtils.deleteRecursively(new File(pathname));
 
-  public boolean contains(Object key) {
-    return false;
-  }
-
-  public boolean remove(Object key) {
-    return false;
-  }
-
-  public void clear(String indexName) {
-    OLogManager.instance().info(this, "clear index:: " + indexName);
+    }
   }
 
   public void close() {
@@ -333,11 +336,33 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
       searcherManager.close();
 
     if (mgrWriter != null) {
-
       mgrWriter.getIndexWriter().forceMergeDeletes();
       mgrWriter.getIndexWriter().commit();
       mgrWriter.getIndexWriter().close();
     }
+  }
+
+  public void deleteWithoutLoad(String indexName) {
+    OLogManager.instance().info(this, "DELETing withoutLoAD ::: " + indexName);
+
+  }
+
+  public void load(String indexName, OBinarySerializer valueSerializer, boolean isAutomatic, OBinarySerializer keySerializer,
+      OType[] keyTypes, boolean nullPointerSupport, int keySize) {
+
+    OLogManager.instance().info(this, "LOAD:: " + indexName);
+  }
+
+  public boolean contains(Object key) {
+    return false;
+  }
+
+  public boolean remove(Object key) {
+    return false;
+  }
+
+  public void clear(String indexName) {
+    OLogManager.instance().info(this, "clear index:: " + indexName);
   }
 
   public void addDocument(Document doc) {
@@ -424,18 +449,6 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
   @Override
   public void onStorageUnregistered(OStorage storage) {
 
-  }
-
-  private String getIndexPath(OLocalPaginatedStorage storageLocalAbstract, String indexName) {
-    return storageLocalAbstract.getStoragePath() + File.separator + OLUCENE_BASE_DIR + File.separator + indexName;
-  }
-
-  private String getIndexPath(OLocalPaginatedStorage storageLocalAbstract) {
-    return getIndexPath(storageLocalAbstract, "databaseIndex");
-  }
-
-  protected String getIndexBasePath(OLocalPaginatedStorage storageLocalAbstract) {
-    return storageLocalAbstract.getStoragePath() + File.separator + OLUCENE_BASE_DIR;
   }
 
 }

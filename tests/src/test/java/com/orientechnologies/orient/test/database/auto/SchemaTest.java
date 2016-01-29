@@ -20,6 +20,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
@@ -511,7 +512,7 @@ public class SchemaTest extends DocumentDBBaseTest {
       Assert.assertTrue(cause instanceof OOfflineClusterException);
     }
 
-    // TEST UDPATE RECORD -> EXCEPTION
+    // TEST UPDATE RECORD -> EXCEPTION
     try {
       record.field("status", "offline").save();
       Assert.assertTrue(false);
@@ -535,8 +536,8 @@ public class SchemaTest extends DocumentDBBaseTest {
     try {
       record.reload(null, true);
       Assert.assertTrue(false);
-    } catch (OOfflineClusterException e) {
-      Assert.assertTrue(true);
+    } catch (ORecordNotFoundException e) {
+      Assert.assertTrue(e.getCause() instanceof OOfflineClusterException);
     }
 
     // RESTORE IT ONLINE
@@ -570,9 +571,9 @@ public class SchemaTest extends DocumentDBBaseTest {
 
   public void testWrongClassNameWithAt() {
     try {
-      database.command(new OCommandSQL("create class Ant@ni")).execute();
+      database.command(new OCommandSQL("create class `Ant@ni`")).execute();
       Assert.fail();
-
+      //why...? it can be allowed now with backtick quoting...
     } catch (Exception e) {
       Assert.assertTrue(e instanceof OSchemaException);
     }
@@ -587,17 +588,7 @@ public class SchemaTest extends DocumentDBBaseTest {
       Assert.assertTrue(e instanceof OSchemaException);
     }
   }
-
-  public void testWrongClassNameWithPercent() {
-    try {
-      database.command(new OCommandSQL("create class Ant%ni")).execute();
-      Assert.fail();
-
-    } catch (Exception e) {
-      Assert.assertTrue(e instanceof OSchemaException);
-    }
-  }
-
+  
   public void testWrongClassNameWithComma() {
     try {
       database.getMetadata().getSchema().createClass("Anta,ni");
@@ -610,9 +601,9 @@ public class SchemaTest extends DocumentDBBaseTest {
 
   public void testWrongClassNameWithColon() {
     try {
-      database.command(new OCommandSQL("create class Ant:ni")).execute();
+      database.command(new OCommandSQL("create class `Ant:ni`")).execute();
       Assert.fail();
-
+      //why...? it can be allowed now with backtick quoting...
     } catch (Exception e) {
       Assert.assertTrue(e instanceof OSchemaException);
     }

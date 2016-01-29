@@ -15,35 +15,37 @@ import static org.testng.Assert.assertNotNull;
 
 @Test
 public class OSQLFunctionConcatTest {
-	
-	@Test
-	public void testConcat()
-	{
-		ODatabaseDocument db = new ODatabaseDocumentTx("memory:testConCat");
-	    try {
-	    	db.create();
-	    	OClass concat = db.getMetadata().getSchema().createClass("ConCat");
-	    	concat.createProperty("name", OType.STRING);
-	    	
-	    	ODocument doc;
-	    	for(char ch='a'; ch<='c'; ch++)
-	    	{
-	    		doc = new ODocument(concat);
-	    		doc.field("name", ""+ch);
-	    		db.save(doc);
-	    	}
-	    	List<ODocument> results =  db.query(new OSQLSynchQuery<ODocument>("select concat(name) from ConCat order by name"));
-	    	assertNotNull(results);
-	    	assertEquals(results.size(), 1);
-	    	assertEquals(results.get(0).field("concat"), "abc");
-	    	
-	    	results =  db.query(new OSQLSynchQuery<ODocument>("select concat(name, ', ') from ConCat order by name"));
-	    	assertNotNull(results);
-	    	assertEquals(results.size(), 1);
-	    	assertEquals(results.get(0).field("concat"), "a, b, c");
-	    }
-	    finally {
-	    	db.drop();
-	    }
-	}
+
+  @Test
+  public void testConcat() {
+    ODatabaseDocument db = new ODatabaseDocumentTx("memory:testConCat");
+    try {
+      db.create();
+      OClass concat = db.getMetadata().getSchema().createClass("ConCat");
+      concat.createProperty("name", OType.STRING);
+
+      ODocument doc;
+      doc = new ODocument(concat);
+      doc.field("name", "a");
+      db.save(doc);
+      doc = new ODocument(concat);
+      doc.field("name", "b");
+      db.save(doc);
+      doc = new ODocument(concat);
+      doc.field("name", "c");
+      db.save(doc);
+
+      List<ODocument> results = db.query(new OSQLSynchQuery<ODocument>("select concat(name) from ConCat order by name"));
+      assertNotNull(results);
+      assertEquals(results.size(), 1);
+      assertEquals(results.get(0).field("concat"), "abc");
+
+      results = db.query(new OSQLSynchQuery<ODocument>("select concat(name, ', ') from ConCat order by name"));
+      assertNotNull(results);
+      assertEquals(results.size(), 1);
+      assertEquals(results.get(0).field("concat"), "a, b, c");
+    } finally {
+      db.drop();
+    }
+  }
 }

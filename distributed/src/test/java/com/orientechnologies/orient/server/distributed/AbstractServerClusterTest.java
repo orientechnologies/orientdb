@@ -20,6 +20,7 @@ import com.hazelcast.instance.GroupProperties;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
@@ -34,13 +35,15 @@ import java.util.List;
  * Test class that creates and executes distributed operations against a cluster of servers created in the same JVM.
  */
 public abstract class AbstractServerClusterTest {
-  protected int    delayServerStartup = 0;
-  protected int    delayServerAlign   = 0;
-  protected String rootDirectory      = "target/servers/";
+  protected int     delayServerStartup     = 0;
+  protected int     delayServerAlign       = 0;
+  protected String  rootDirectory          = "target/servers/";
+  protected boolean startupNodesInSequence = true;
 
   protected List<ServerRun> serverInstance = new ArrayList<ServerRun>();
 
   protected AbstractServerClusterTest() {
+    OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.setValue(true);
   }
 
   @SuppressWarnings("unchecked")
@@ -95,20 +98,37 @@ public abstract class AbstractServerClusterTest {
 
     try {
 
-      for (final ServerRun server : serverInstance) {
-        banner("STARTING SERVER -> " + server.getServerId() + "...");
+      if (startupNodesInSequence) {
+        for (final ServerRun server : serverInstance) {
+          banner("STARTING SERVER -> " + server.getServerId() + "...");
 
-        server.startServer(getDistributedServerConfiguration(server));
+          server.startServer(getDistributedServerConfiguration(server));
 
-        onServerStarting(server);
+          if (delayServerStartup > 0)
+            try {
+              Thread.sleep(delayServerStartup * serverInstance.size());
+            } catch (InterruptedException e) {
+            }
 
-        if (delayServerStartup > 0)
-          try {
-            Thread.sleep(delayServerStartup * serverInstance.size());
-          } catch (InterruptedException e) {
-          }
-
-        onServerStarted(server);
+          onServerStarted(server);
+        }
+      } else {
+        for (final ServerRun server : serverInstance) {
+          final Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+              banner("STARTING SERVER -> " + server.getServerId() + "...");
+              try {
+                onServerStarting(server);
+                server.startServer(getDistributedServerConfiguration(server));
+                onServerStarted(server);
+              } catch (Exception e) {
+                e.printStackTrace();
+              }
+            }
+          });
+          thread.start();
+        }
       }
 
       if (delayServerAlign > 0)
@@ -132,7 +152,11 @@ public abstract class AbstractServerClusterTest {
       } finally {
         onAfterExecution();
       }
-
+    } catch (Exception e) {
+      System.out.println("ERROR: ");
+      e.printStackTrace();
+      OLogManager.instance().flush();
+      throw e;
     } finally {
       banner("Test finished");
 
@@ -151,6 +175,7 @@ public abstract class AbstractServerClusterTest {
       banner("Clean server directories...");
       deleteServers();
     }
+
   }
 
   protected void banner(final String iMessage) {
