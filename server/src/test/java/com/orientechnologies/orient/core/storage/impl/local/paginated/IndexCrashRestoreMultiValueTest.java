@@ -15,6 +15,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -41,6 +42,7 @@ public class IndexCrashRestoreMultiValueTest {
 
   @BeforeClass
   public void beforeClass() throws Exception {
+    OLogManager.instance().installCustomFormatter();
     OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(1000000);
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(3);
     OGlobalConfiguration.FILE_LOCK.setValue(false);
@@ -96,20 +98,19 @@ public class IndexCrashRestoreMultiValueTest {
 
   @Test(enabled = false)
   public void testEntriesAddition() throws Exception {
-
     createSchema(baseDocumentTx);
     createSchema(testDocumentTx);
 
     System.out.println("Start data propagation");
 
     List<Future> futures = new ArrayList<Future>();
-    for (int i = 0; i < 1; i++) {
+    for (int i = 0; i < 4; i++) {
       System.out.println("--> " + i);
       futures.add(executorService.submit(new DataPropagationTask(baseDocumentTx, testDocumentTx)));
     }
 
     System.out.println("Wait for 300 second");
-    TimeUnit.SECONDS.sleep(5);
+    TimeUnit.SECONDS.sleep(60);
 
     System.out.println("Wait for process to destroy");
     process.destroyForcibly();
@@ -121,19 +122,19 @@ public class IndexCrashRestoreMultiValueTest {
       try {
         future.get();
         System.out.println("Cancelling future");
-        // future.cancel(true);
       } catch (Exception e) {
-
-        System.out.println("_________________________");
-        // e.printStackTrace();
         future.cancel(true);
       }
     }
 
+    System.out.println("All loaders done");
+
+    System.out.println("Open remote crashed DB in plocal to recover");
     testDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDir.getAbsolutePath() + "/testIndexCrashRestoreMultivalue");
     testDocumentTx.open("admin", "admin");
     testDocumentTx.close();
 
+    System.out.println("Reopen cleaned db");
     testDocumentTx.open("admin", "admin");
 
     System.out.println("Start data comparison.");
@@ -194,7 +195,7 @@ public class IndexCrashRestoreMultiValueTest {
 
     // I think we should check that we lost data in interval not more than 2 seconds, we write that we guarantee that we not lose
     // data in interval more than 1 second , but we can not exactly measure when data were added we add 1 more second in assert
-    //[1/29/16, 9:46 AM] Andrey Lomakin (a.lomakin@orientdb.com): that is minLostTs value
+    // [1/29/16, 9:46 AM] Andrey Lomakin (a.lomakin@orientdb.com): that is minLostTs value
 
   }
 
