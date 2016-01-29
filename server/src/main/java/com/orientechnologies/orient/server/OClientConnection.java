@@ -136,17 +136,19 @@ public class OClientConnection {
     if(tokenFromNetwork == null || tokenFromNetwork.length == 0){
      //TODO: already authenticated on this connection.
     } else {
+      // Active This Optimization but it need a periodic check on session
+      /*
       if(tokenBytes != null && tokenBytes.length > 0){
         if(tokenBytes.equals(tokenFromNetwork))
           //SAME SESSION AND TOKEN DO NOTHING
           return;
-      }
+      } */
       OToken token = null;
       try {
         if (tokenFromNetwork != null)
           token = handler.parseBinaryToken(tokenFromNetwork);
       } catch (Exception e) {
-        throw OException.wrapException(new OSystemException("error on token parse"), e);
+        throw OException.wrapException(new OSystemException("Error on token parse"), e);
       }
       if (token == null || !token.getIsVerified()) {
         throw new OTokenSecurityException("The token provided is not a valid token, signature does not match");

@@ -240,27 +240,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       }
       if (requestType != OChannelBinaryProtocol.REQUEST_DB_REOPEN)
         connection.acquire();
+
       if (!Arrays.equals(bytes, connection.tokenBytes) || connection.database == null) {
 
-        OToken token = null;
-        try {
-          if (bytes!= null)
-            token = server.getTokenHandler().parseBinaryToken(bytes);
-        } catch (Exception e) {
-          throw OException.wrapException(new OSystemException("error on token parse"), e);
-        }
-        if (token == null || !token.getIsVerified()) {
-          throw new OTokenSecurityException("The token provided is not a valid token, signature does not match");
-        }
-        if (connection.tokenBased == null) {
-          connection.tokenBased = Boolean.TRUE;
-        }
-        if (!server.getTokenHandler().validateBinaryToken(token)) {
-          throw new OTokenSecurityException("The token provided is expired");
-        }
-        connection.tokenBytes = bytes;
-        connection.token = token;
-
+        connection.validateSession(bytes,server.getTokenHandler());
         if (connection.database != null && !connection.database.isClosed()) {
           connection.database.activateOnCurrentThread();
           connection.database.close();
@@ -269,26 +252,23 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
         if (requestType == OChannelBinaryProtocol.REQUEST_DB_REOPEN) {
           server.getClientConnectionManager().disconnect(clientTxId);
-          connection = server.getClientConnectionManager().reConnect(this, connection.tokenBytes, token);
-          connection.tokenBased = true;
-          connection.tokenBytes = bytes;
-          connection.token = token;
+          connection = server.getClientConnectionManager().reConnect(this, connection.tokenBytes, connection.token);
           connection.acquire();
         }
 
         if (requestType != OChannelBinaryProtocol.REQUEST_DB_CLOSE && connection.database == null) {
-          final ONetworkProtocolData data = server.getTokenHandler().getProtocolDataFromToken(token);
+          final ONetworkProtocolData data = server.getTokenHandler().getProtocolDataFromToken(connection.token);
           if (data != null)
             connection.data = data;
 
-          final String db = token.getDatabase();
-          final String type = token.getDatabaseType();
+          final String db = connection.token.getDatabase();
+          final String type = connection.token.getDatabaseType();
           if (db != null && type != null) {
             if (connection.data.serverUser) {
-              connection.database = (ODatabaseDocumentTx) server.openDatabase(type + ":" + db, token.getUserName(), null,
+              connection.database = (ODatabaseDocumentTx) server.openDatabase(type + ":" + db, connection.token.getUserName(), null,
                   connection.data, true);
             } else
-              connection.database = (ODatabaseDocumentTx) server.openDatabase(type + ":" + db, token);
+              connection.database = (ODatabaseDocumentTx) server.openDatabase(type + ":" + db, connection.token);
           }
         }
         if (connection.data.serverUser) {
