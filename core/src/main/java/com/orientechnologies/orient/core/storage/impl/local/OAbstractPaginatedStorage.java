@@ -433,6 +433,16 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   @Override
+  public boolean isClosed() {
+    stateLock.acquireReadLock();
+    try {
+      return super.isClosed();
+    } finally {
+      stateLock.releaseReadLock();
+    }
+  }
+
+  @Override
   public void onShutdown() {
     transaction = null;
   }

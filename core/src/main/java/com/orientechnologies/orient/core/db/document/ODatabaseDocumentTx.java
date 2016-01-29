@@ -359,13 +359,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         }
       }
 
-      try {
-        storage.create(properties);
-      } catch (OStorageExistsException ex) {
-        status = STATUS.CLOSED;
-        storage = null;
-        throw ex;
-      }
+      storage.create(properties);
 
       status = STATUS.OPEN;
 
