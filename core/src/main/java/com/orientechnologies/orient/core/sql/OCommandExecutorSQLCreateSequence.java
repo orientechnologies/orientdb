@@ -67,6 +67,10 @@ public class OCommandExecutorSQLCreateSequence extends OCommandExecutorSQLAbstra
       }
     }
 
+    if (this.sequenceType == null) {
+      this.sequenceType = OSequenceHelper.DEFAULT_SEQUENCE_TYPE;
+    }
+
     return this;
   }
 

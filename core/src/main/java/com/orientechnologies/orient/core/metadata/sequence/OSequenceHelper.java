@@ -8,6 +8,8 @@ import com.orientechnologies.orient.core.metadata.sequence.OSequence.SEQUENCE_TY
  * @since 3/1/2015
  */
 public class OSequenceHelper {
+  public static final SEQUENCE_TYPE DEFAULT_SEQUENCE_TYPE = SEQUENCE_TYPE.CACHED;
+
   public static OSequence createSequence(SEQUENCE_TYPE sequenceType, OSequence.CreateParams params, ODocument document) {
     switch (sequenceType) {
       case ORDERED:
