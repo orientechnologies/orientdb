@@ -2,6 +2,11 @@ package com.orientechnologies.orient.server;
 
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
+
+import java.io.IOException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -20,9 +25,13 @@ public class OClientConnectionManagerTest {
   @Mock
   private OToken token;
 
+  @Mock
+  private OTokenHandler handler;
+
   @Before
-  public void before() {
+  public void before() throws NoSuchAlgorithmException, InvalidKeyException, IOException {
     MockitoAnnotations.initMocks(this);
+    Mockito.when(handler.parseBinaryToken(Mockito.any(byte[].class))).thenReturn(token);
   }
 
   @Test
@@ -41,9 +50,10 @@ public class OClientConnectionManagerTest {
   @Test
   public void testTokenConnectDisconnect() throws IOException {
     byte[] atoken = new byte[] {};
+
     OClientConnectionManager manager = new OClientConnectionManager();
     OClientConnection ret = manager.connect(protocol);
-    manager.connect(protocol, ret, atoken, token);
+    manager.connect(protocol, ret, atoken, handler);
     assertNotNull(ret);
     OClientSessions sess = manager.getSession(ret);
     assertNotNull(sess);
