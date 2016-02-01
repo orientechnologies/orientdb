@@ -19,22 +19,6 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
-import java.io.DataInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.Serializable;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
-
 import com.hazelcast.config.FileSystemXmlConfig;
 import com.hazelcast.config.QueueConfig;
 import com.hazelcast.core.*;
@@ -86,6 +70,22 @@ import com.orientechnologies.orient.server.distributed.task.ORestartNodeTask;
 import com.orientechnologies.orient.server.distributed.task.OSyncDatabaseDeltaTask;
 import com.orientechnologies.orient.server.distributed.task.OSyncDatabaseTask;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
+
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.Serializable;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Hazelcast implementation for clustering.
@@ -1742,7 +1742,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
    * <li>Length of binary presentation of record, only if record is not deleted - 4 bytes</li>
    * <li>Binary presentation of the record, only if record is not deleted - length of content is provided in above entity</li>
    * </ol>
-   * 
+   *
    * @param in
    */
   private void importDelta(final ODatabaseDocumentTx db, final FileInputStream in) throws IOException {
@@ -1789,30 +1789,35 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
                   final byte[] recordContent = new byte[recordSize];
                   input.read(recordContent);
 
-                  ORecord newRecord = Orient.instance().getRecordFactoryManager().newInstance((byte) recordType);
+                  ORecord newRecord = null;
 
                   if (loadedRecord == null) {
                     // CREATE
-                    OLogManager.instance().info(this,
-                        "DELTA <- creating rid=" + rid + " type=" + recordType + " size=" + recordSize + " v=" + recordVersion);
+                    OLogManager.instance().info(this, "DELTA <- creating rid=%s type=%d size=%d v=%d", rid, recordType, recordSize,
+                        recordVersion);
 
-                    ORecordInternal.fill(newRecord, new ORecordId(rid.getClusterId(), -1), recordVersion - 1, recordContent, true);
+                    do {
+                      newRecord = Orient.instance().getRecordFactoryManager().newInstance((byte) recordType);
 
-                    final long[] range = db.getStorage().getClusterDataRange(clusterId);
-                    for (long p = range[1]; p < clusterPos - 1; ++p) {
-                      // CREATE EMPTY RECORDS
-                      final ORecordId tempRid = new ORecordId(clusterId, p);
-                      db.getStorage().createRecord(tempRid, new byte[] {}, 1, ODocument.RECORD_TYPE, 0, null);
-                      db.getStorage().deleteRecord(tempRid, -1, 0, null);
+                      ORecordInternal.fill(newRecord, new ORecordId(rid.getClusterId(), -1), recordVersion - 1, recordContent,
+                          true);
 
-                      OLogManager.instance().info(this, "DELTA <- creating hole rid=" + tempRid);
-                    }
+                      newRecord.save();
+
+                      if (newRecord.getIdentity().getClusterPosition() < clusterPos) {
+                        // DELETE THE RECORD TO CREATE A HOLE
+                        OLogManager.instance().info(this, "DELTA <- creating hole rid=%s", newRecord.getIdentity());
+                        newRecord.delete();
+                      }
+
+                    } while (newRecord.getIdentity().getClusterPosition() < clusterPos);
 
                   } else {
                     // UPDATE
-                    OLogManager.instance().info(this,
-                        "DELTA <- updating rid=" + rid + " type=" + recordType + " size=" + recordSize + " v=" + recordVersion);
+                    OLogManager.instance().info(this, "DELTA <- updating rid=%s type=%d size=%d v=%d", rid, recordType, recordSize,
+                        recordVersion);
 
+                    newRecord = Orient.instance().getRecordFactoryManager().newInstance((byte) recordType);
                     ORecordInternal.fill(newRecord, rid, ORecordVersionHelper.setRollbackMode(recordVersion), recordContent, true);
 
                     if (loadedRecord instanceof ODocument) {
@@ -1822,9 +1827,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
                       loadedDocument.setDirty();
                       newRecord = loadedDocument;
                     }
-                  }
 
-                  newRecord.save();
+                    // SAVE THE UPDATE RECORD
+                    newRecord.save();
+                  }
 
                   if (!newRecord.getIdentity().equals(rid))
                     throw new ODistributedDatabaseDeltaSyncException(
