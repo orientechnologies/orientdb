@@ -274,6 +274,8 @@ TOKEN:
 	|
 	< PROPERTY: ( "p" | "P" ) ( "r" | "R" ) ( "o" | "O" ) ( "p" | "P" ) ( "e" | "E" ) ( "r" | "R" ) ( "t" | "T" ) ( "y" | "Y" ) >
 	|
+	< FORCE: ( "f" | "F" ) ( "o" | "O" ) ( "r" | "R" ) ( "c" | "C" ) ( "e" | "E" ) >
+	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
 	< RECORD_ATTRIBUTE: <RID_ATTR> | <CLASS_ATTR> | <VERSION_ATTR> | <SIZE_ATTR> | <TYPE_ATTR> | <RAW_ATTR> | <RID_ID_ATTR> | <RID_POS_ATTR> | <FIELDS_ATTR> >
@@ -626,6 +628,8 @@ OIdentifier Identifier():
 	|
 	token = <PROPERTY>
 	|
+	token = <FORCE>
+	|
     quotedToken = <QUOTED_IDENTIFIER>
 ) {
 
@@ -757,7 +761,9 @@ OStatement Statement():
 		|
 		LOOKAHEAD(AlterPropertyStatement())
 		result = AlterPropertyStatement()
-
+		|
+        LOOKAHEAD(DropPropertyStatement())
+        result = DropPropertyStatement()
 	) [ <SEMICOLON> ]
 	{
 	    return result;
@@ -3691,5 +3697,16 @@ OAlterPropertyStatement AlterPropertyStatement():
 		    )
 		)
 	)
+	{ return jjtThis; }
+}
+
+ODropPropertyStatement DropPropertyStatement():
+{}
+{
+	<DROP> <PROPERTY>
+	jjtThis.className = Identifier()
+	<DOT>
+	jjtThis.propertyName = Identifier()
+	[ <FORCE> { jjtThis.force = true; }]
 	{ return jjtThis; }
 }
