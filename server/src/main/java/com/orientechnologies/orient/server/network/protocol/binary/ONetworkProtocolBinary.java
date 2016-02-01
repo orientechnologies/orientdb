@@ -238,19 +238,11 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       if(connection == null) {
         throw new OTokenSecurityException("missing session and token");
       }
-      if (requestType != OChannelBinaryProtocol.REQUEST_DB_REOPEN)
+      if (requestType != OChannelBinaryProtocol.REQUEST_DB_REOPEN) {
         connection.acquire();
-
-      connection.validateSession(bytes, server.getTokenHandler());
-
-      //This should happen only on fail on specific connection.
-      if (connection.database != null && !connection.database.isClosed()) {
-        connection.database.activateOnCurrentThread();
-        connection.database.close();
-      }
-      connection.database = null;
-
-      if (requestType == OChannelBinaryProtocol.REQUEST_DB_REOPEN) {
+        connection.validateSession(bytes, server.getTokenHandler());
+      } else {
+        connection.validateSession(bytes, server.getTokenHandler());
         server.getClientConnectionManager().disconnect(clientTxId);
         connection = server.getClientConnectionManager().reConnect(this, connection.tokenBytes, connection.token);
         connection.acquire();

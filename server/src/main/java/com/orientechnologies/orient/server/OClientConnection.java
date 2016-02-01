@@ -32,6 +32,7 @@ import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.Arrays;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -151,18 +152,29 @@ public class OClientConnection {
         throw OException.wrapException(new OSystemException("Error on token parse"), e);
       }
       if (token == null || !token.getIsVerified()) {
+        cleanSession();
         throw new OTokenSecurityException("The token provided is not a valid token, signature does not match");
       }
       if (!handler.validateBinaryToken(token)) {
+        cleanSession();
         throw new OTokenSecurityException("The token provided is expired");
       }
-
       if (tokenBased == null) {
         tokenBased = Boolean.TRUE;
       }
+      if (!Arrays.equals(this.tokenBytes, tokenFromNetwork))
+        cleanSession();
       this.tokenBytes = tokenFromNetwork;
       this.token = token;
     }
+  }
+
+  public void cleanSession(){
+    if (database != null && !database.isClosed()) {
+      database.activateOnCurrentThread();
+      database.close();
+    }
+    database = null;
   }
 
 
