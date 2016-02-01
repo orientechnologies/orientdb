@@ -37,6 +37,7 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OHookReplacedRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -351,8 +352,8 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 
     for (final OIndex<?> index : indexes) {
 
-      if (index instanceof OIndexUnique) {
-        final OIndexRecorder indexRecorder = new OIndexRecorder((OIndexUnique) index);
+      if (index.getInternal() instanceof OIndexUnique) {
+        final OIndexRecorder indexRecorder = new OIndexRecorder((OIndexUnique) index.getInternal());
         processIndexUpdate(record, dirtyFields, indexRecorder);
 
         indexKeysMap.put(index, indexRecorder.getAffectedKeys());
@@ -443,7 +444,14 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 
       if (!dirtyFields.isEmpty()) {
         for (final OIndex<?> index : indexes) {
-          processIndexUpdate(iDocument, dirtyFields, index);
+          try {
+            processIndexUpdate(iDocument, dirtyFields, index);
+          } catch (ORecordDuplicatedException ex) {
+            iDocument.undo();
+            iDocument.setDirty();
+            database.save(iDocument);
+            throw ex;
+          }
         }
       }
     }
