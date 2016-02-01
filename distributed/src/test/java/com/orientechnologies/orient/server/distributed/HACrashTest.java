@@ -22,7 +22,7 @@ import org.junit.Test;
 import java.util.concurrent.Callable;
 
 /**
- * Distributed TX test against "remote" protocol. It starts 3 servers and during a stress test, kill last server. The test checks
+ * Distributed non TX test against "remote" protocol. It starts 3 servers and during a stress test, kill last server. The test checks
  * all the clients can auto-reconnect to the next available server.
  */
 public class HACrashTest extends AbstractServerClusterTxTest {
