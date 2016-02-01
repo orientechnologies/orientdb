@@ -376,8 +376,10 @@ public class OETLProcessor {
       Future<Boolean> extractorFuture = executor.submit(new OETLExtractorWorker(queue, counter, extractionFinished));
 
       Boolean extracted = extractorFuture.get();
+
       for (Future<Boolean> future : tasks) {
-        out(LOG_LEVELS.DEBUG, "Pipeline worker done without errors:: " + future.get());
+        Boolean result = future.get(1, TimeUnit.MINUTES);
+        out(LOG_LEVELS.DEBUG, "Pipeline worker done without errors:: " + result);
       }
 
       out(LOG_LEVELS.DEBUG, "all items extracted");
