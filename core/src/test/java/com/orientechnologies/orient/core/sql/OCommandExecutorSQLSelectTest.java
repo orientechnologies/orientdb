@@ -111,6 +111,9 @@ public class OCommandExecutorSQLSelectTest {
     db.command(new OCommandSQL("insert into unwindtest (name, coll) values ('foo', ['foo1', 'foo2'])")).execute();
     db.command(new OCommandSQL("insert into unwindtest (name, coll) values ('bar', ['bar1', 'bar2'])")).execute();
 
+    db.command(new OCommandSQL("CREATE class unwindtest2")).execute();
+    db.command(new OCommandSQL("insert into unwindtest2 (name, coll) values ('foo', [])")).execute();
+
     db.command(new OCommandSQL("CREATE class `edge`")).execute();
 
     db.command(new OCommandSQL("CREATE class TestFromInSquare")).execute();
@@ -565,6 +568,32 @@ public class OCommandExecutorSQLSelectTest {
   @Test
   public void testUnwind() {
     List<ODocument> qResult = db.command(new OCommandSQL("select from unwindtest unwind coll")).execute();
+
+    assertEquals(qResult.size(), 4);
+    for (ODocument doc : qResult) {
+      String name = doc.field("name");
+      String coll = doc.field("coll");
+      assertTrue(coll.startsWith(name));
+      assertFalse(doc.getIdentity().isPersistent());
+    }
+  }
+
+  @Test
+  public void testUnwind2() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select from unwindtest2 unwind coll")).execute();
+
+    assertEquals(qResult.size(), 1);
+    for (ODocument doc : qResult) {
+      String name = doc.field("name");
+      Object coll = doc.field("coll");
+      assertNull(coll);
+      assertFalse(doc.getIdentity().isPersistent());
+    }
+  }
+
+  @Test
+  public void testUnwindOrder() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select from unwindtest order by coll unwind coll")).execute();
 
     assertEquals(qResult.size(), 4);
     for (ODocument doc : qResult) {

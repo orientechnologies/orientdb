@@ -559,7 +559,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     if (localLockingStrategy != null
         && !(localLockingStrategy == LOCKING_STRATEGY.DEFAULT || localLockingStrategy == LOCKING_STRATEGY.NONE
-            || localLockingStrategy == LOCKING_STRATEGY.EXCLUSIVE_LOCK || localLockingStrategy == LOCKING_STRATEGY.SHARED_LOCK))
+        || localLockingStrategy == LOCKING_STRATEGY.EXCLUSIVE_LOCK || localLockingStrategy == LOCKING_STRATEGY.SHARED_LOCK))
       throw new IllegalStateException("Unsupported locking strategy " + localLockingStrategy);
 
     final ORecord record;
@@ -630,9 +630,13 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   /**
    * Handles the record in result.
    *
+<<<<<<< HEAD
    * @param iRecord
    *          Record to handle
    * @param iContext
+=======
+   * @param iRecord Record to handle
+>>>>>>> ca99ec7... Fix UNWIND of empty collection
    * @return false if limit has been reached, otherwise true
    */
   @Override
@@ -811,13 +815,21 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       Object fieldValue = doc.field(firstField);
       if (fieldValue == null || !(fieldValue instanceof Iterable) || fieldValue instanceof ODocument) {
         result.addAll(unwind(doc, nextFields, iContext));
-
       } else {
-        for (Object o : (Iterable) fieldValue) {
-          final ODocument unwindedDoc = new ODocument();
+        Iterator iterator = ((Iterable) fieldValue).iterator();
+        if (!iterator.hasNext()) {
+          ODocument unwindedDoc = new ODocument();
           doc.copyTo(unwindedDoc);
-          unwindedDoc.field(firstField, o);
+          unwindedDoc.field(firstField, (Object)null);
           result.addAll(unwind(unwindedDoc, nextFields, iContext));
+        } else {
+          do {
+            Object o = iterator.next();
+            ODocument unwindedDoc = new ODocument();
+            doc.copyTo(unwindedDoc);
+            unwindedDoc.field(firstField, o);
+            result.addAll(unwind(unwindedDoc, nextFields, iContext));
+          } while (iterator.hasNext());
         }
       }
     }
@@ -2328,8 +2340,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   /**
    * Use index to order documents by provided fields.
    *
-   * @param iSchemaClass
-   *          where search for indexes for optimization.
+   * @param iSchemaClass where search for indexes for optimization.
    * @return true if execution was optimized
    */
   private boolean optimizeSort(OClass iSchemaClass) {
