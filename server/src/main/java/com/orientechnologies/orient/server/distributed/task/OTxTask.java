@@ -58,11 +58,11 @@ import java.util.List;
  *
  */
 public class OTxTask extends OAbstractReplicatedTask {
-  private static final long serialVersionUID = 1L;
+  private static final long                   serialVersionUID = 1L;
 
-  private List<OAbstractRecordReplicatedTask> tasks      = new ArrayList<OAbstractRecordReplicatedTask>();
+  private List<OAbstractRecordReplicatedTask> tasks            = new ArrayList<OAbstractRecordReplicatedTask>();
   private transient OTxTaskResult             result;
-  private transient boolean                   lockRecord = true;
+  private transient boolean                   lockRecord       = true;
 
   public OTxTask() {
   }
@@ -189,8 +189,8 @@ public class OTxTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public List<OAbstractRemoteTask> getFixTask(final ODistributedRequest iRequest, OAbstractRemoteTask iOriginalTask,
-      final Object iBadResponse, final Object iGoodResponse) {
+  public List<OAbstractRemoteTask> getFixTask(final ODistributedRequest iRequest, OAbstractRemoteTask iOriginalTask, final Object iBadResponse, final Object iGoodResponse, String executorNodeName,
+                                                 ODistributedServerManager dManager) {
     if (!(iBadResponse instanceof OTxTaskResult)) {
       // TODO: MANAGE ERROR ON LOCAL NODE
       ODistributedServerLog.debug(this, getNodeSource(), null, DIRECTION.NONE,
@@ -216,7 +216,7 @@ public class OTxTask extends OAbstractReplicatedTask {
       final Object badResult = ((OTxTaskResult) iBadResponse).results.get(i);
       final Object goodResult = ((OTxTaskResult) iGoodResponse).results.get(i);
 
-      final List<OAbstractRemoteTask> tasks = t.getFixTask(iRequest, t, badResult, goodResult);
+      final List<OAbstractRemoteTask> tasks = t.getFixTask(iRequest, t, badResult, goodResult, executorNodeName, dManager);
       if (tasks != null)
         fixTask.addAll(tasks);
     }

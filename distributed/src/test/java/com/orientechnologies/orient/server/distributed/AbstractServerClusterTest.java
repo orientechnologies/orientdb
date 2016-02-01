@@ -15,23 +15,27 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.concurrent.Callable;
-
-import org.junit.Assert;
-
 import com.hazelcast.core.Hazelcast;
+import com.hazelcast.core.IQueue;
 import com.hazelcast.instance.GroupProperties;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.server.hazelcast.OHazelcastDistributedMessageService;
+import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
+import org.junit.Assert;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.Callable;
 
 /**
  * Test class that creates and executes distributed operations against a cluster of servers created in the same JVM.
@@ -290,4 +294,29 @@ public abstract class AbstractServerClusterTest {
     }
   }
 
+  protected void startQueueMonitorTask() {
+    new Timer(true).schedule(new TimerTask() {
+      @Override
+      public void run() {
+        // DUMP QUEUE SIZES
+        System.out.println("---------------------------------------------------------------------");
+        for (int i = 0; i < serverInstance.size(); ++i) {
+          try {
+            final OHazelcastPlugin dInstance = (OHazelcastPlugin) serverInstance.get(i).getServerInstance().getDistributedManager();
+
+            final String queueName = OHazelcastDistributedMessageService.getRequestQueueName(dInstance.getLocalNodeName(),
+                getDatabaseName());
+
+            final OHazelcastDistributedMessageService msgService = dInstance.getMessageService();
+            if (msgService != null) {
+              final IQueue<Object> queue = msgService.getQueue(queueName);
+              System.out.println("Queue " + queueName + " size = " + queue.size());
+            }
+          } catch (Exception e) {
+          }
+        }
+        System.out.println("---------------------------------------------------------------------");
+      }
+    }, 1000, 1000);
+  }
 }

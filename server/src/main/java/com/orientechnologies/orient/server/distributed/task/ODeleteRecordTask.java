@@ -102,8 +102,8 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
   }
 
   @Override
-  public List<OAbstractRemoteTask> getFixTask(final ODistributedRequest iRequest,final  OAbstractRemoteTask iOriginalTask,
-      final Object iBadResponse, final Object iGoodResponse) {
+  public List<OAbstractRemoteTask> getFixTask(final ODistributedRequest iRequest, final OAbstractRemoteTask iOriginalTask, final Object iBadResponse, final Object iGoodResponse,
+                                                 String executorNodeName, ODistributedServerManager dManager) {
     final List<OAbstractRemoteTask> fixTasks = new ArrayList<OAbstractRemoteTask>(1);
     fixTasks.add(new OResurrectRecordTask(rid, version));
     return fixTasks;

@@ -81,7 +81,8 @@ public class OCompletedTxTask extends OAbstractReplicatedTask {
 
   @Override
   public List<OAbstractRemoteTask> getFixTask(final ODistributedRequest iRequest, OAbstractRemoteTask iOriginalTask, final Object iBadResponse,
-      final Object iGoodResponse) {
+                                                 final Object iGoodResponse, String executorNodeName,
+                                                 ODistributedServerManager dManager) {
     return null;
   }
 

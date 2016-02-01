@@ -682,13 +682,12 @@ public class ODistributedResponseManager {
         // CONFLICT GROUP: FIX THEM ONE BY ONE
         for (ODistributedResponse r : responseGroup) {
           final List<OAbstractRemoteTask> fixTasks = ((OAbstractReplicatedTask) request.getTask()).getFixTask(request,
-              request.getTask(), r.getPayload(), goodResponse.getPayload());
+              request.getTask(), r.getPayload(), goodResponse.getPayload(), r.getExecutorNodeName(), dManager);
 
           if (fixTasks != null) {
             for (OAbstractRemoteTask fixTask : fixTasks) {
-              ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
-                  "sending fix message (%s) for response (%s) on request (%s) in server %s to be: %s", fixTask, r, request,
-                  r.getExecutorNodeName(), goodResponse);
+              ODistributedServerLog.warn(this, dManager.getLocalNodeName(), r.getExecutorNodeName(), DIRECTION.NONE,
+                  "sending fix message (%s) for response (%s) on request (%s) to be: %s", fixTask, r, request, goodResponse);
 
               dManager.sendRequest(request.getDatabaseName(), null, Collections.singleton(r.getExecutorNodeName()), fixTask,
                   ODistributedRequest.EXECUTION_MODE.NO_RESPONSE);

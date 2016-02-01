@@ -146,8 +146,8 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
   }
 
   @Override
-  public List<OAbstractRemoteTask> getFixTask(final ODistributedRequest iRequest, OAbstractRemoteTask iOriginalTask,
-      final Object iBadResponse, final Object iGoodResponse) {
+  public List<OAbstractRemoteTask> getFixTask(final ODistributedRequest iRequest, OAbstractRemoteTask iOriginalTask, final Object iBadResponse, final Object iGoodResponse,
+                                                 String executorNodeName, ODistributedServerManager dManager) {
     final int versionCopy = ORecordVersionHelper.setRollbackMode(previousVersion);
 
     final List<OAbstractRemoteTask> fixTasks = new ArrayList<OAbstractRemoteTask>(1);

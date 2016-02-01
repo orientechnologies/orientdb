@@ -97,6 +97,8 @@ public class OHazelcastDistributedResponse implements ODistributedResponse, Exte
     out.writeLong(requestId);
     out.writeUTF(executorNodeName);
     out.writeUTF(senderNodeName);
+//    if (payload != null && !(payload instanceof Boolean))
+//      OLogManager.instance().info(this, "PAYLOAD: " + (payload != null ? (payload.getClass().getName() + "/" + payload) : null));
     out.writeObject(payload);
   }
 

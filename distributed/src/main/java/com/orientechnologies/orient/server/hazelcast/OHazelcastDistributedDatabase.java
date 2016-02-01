@@ -19,20 +19,6 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.Lock;
-
 import com.hazelcast.core.IQueue;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.util.OPair;
@@ -60,6 +46,20 @@ import com.orientechnologies.orient.server.distributed.task.OSQLCommandTask;
 import com.orientechnologies.orient.server.distributed.task.OTxTask;
 import com.orientechnologies.orient.server.distributed.task.OUpdateRecordTask;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
+
 /**
  * Hazelcast implementation of distributed peer. There is one instance per database. Each node creates own instance to talk with
  * each others.
@@ -76,12 +76,15 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
   protected final OHazelcastDistributedMessageService msgService;
   protected final String                              databaseName;
   protected final Lock                                requestLock;
-  protected final int                                 numWorkers                     = 8;
-  protected final AtomicBoolean                       status                         = new AtomicBoolean(false);
-  protected final List<ODistributedWorker>            workers                        = new ArrayList<ODistributedWorker>();
-  protected final AtomicLong                          waitForMessageId               = new AtomicLong(-1);
-  protected final ConcurrentHashMap<ORID, String>     lockManager                    = new ConcurrentHashMap<ORID, String>();
   protected ODistributedSyncConfiguration             syncConfiguration;
+  protected final int                                 numWorkers                     = 8;
+  protected volatile boolean                          restoringMessages              = false;
+  protected AtomicBoolean                             status                         = new AtomicBoolean(false);
+  protected List<ODistributedWorker>                  workers                        = new ArrayList<ODistributedWorker>();
+  protected AtomicLong                                waitForMessageId               = new AtomicLong(-1);
+  protected ConcurrentHashMap<ORID, String>           lockManager                    = new ConcurrentHashMap<ORID, String>();
+  protected ConcurrentHashMap<String, Integer>        queueSizes                     = new ConcurrentHashMap<String, Integer>();
+  protected ConcurrentHashMap<String, Integer>        queueWarningCounter            = new ConcurrentHashMap<String, Integer>();
 
   public OHazelcastDistributedDatabase(final OHazelcastPlugin manager, final OHazelcastDistributedMessageService msgService,
       final String iDatabaseName) {
@@ -163,28 +166,59 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
           final IQueue queue = entry.getValue();
 
           if (queue != null) {
-            if (queueMaxSize > 0 && queue.size() > queueMaxSize) {
+            int nodeQueueSize = queue.size();
+
+            if (queueMaxSize > 0 && nodeQueueSize > queueMaxSize) {
+              final int nodeQueuePrevSize = queueSizes.getOrDefault(node, 0);
+              final int nodeQueueWarnings = queueWarningCounter.getOrDefault(node, 0);
+
               final ODistributedServerManager.DB_STATUS nodeStatus = manager.getDatabaseStatus(node, databaseName);
               if (nodeStatus == ODistributedServerManager.DB_STATUS.SYNCHRONIZING
                   || nodeStatus == ODistributedServerManager.DB_STATUS.BACKUP) {
 
-                // BACKUP OR SYNCHRONIZING: SEND THE MESSAGE AS WELL
+                // BACKUP, SYNCHRONIZING: SEND THE MESSAGE AS WELL
                 queue.offer(iRequest, timeout, TimeUnit.MILLISECONDS);
+
+                queueWarningCounter.remove(node);
+
+              } else if (nodeQueueSize < nodeQueuePrevSize || nodeQueueWarnings < 10) {
+
+                // THE QUEUE IS NOT INCREASING IN SIZE OR IS UNDER THE WARNING THRESHOLD: SEND THE MESSAGE AS WELL
+                queue.offer(iRequest, timeout, TimeUnit.MILLISECONDS);
+
+                if (System.currentTimeMillis() - manager.getLastClusterChangeOn() > 10000) {
+                  queueWarningCounter.put(node, nodeQueueWarnings + 1);
+                  ODistributedServerLog.debug(this, getLocalNodeName(), node, DIRECTION.OUT,
+                      "queue '%s' has too many messages (%d), checking if the node is in stall (warnings=%d)", queue.getName(),
+                      nodeQueueSize, nodeQueueWarnings);
+                } else {
+                  queueWarningCounter.remove(node);
+                  ODistributedServerLog.debug(this, getLocalNodeName(), node, DIRECTION.OUT,
+                      "queue '%s' has too many messages (%d), but the cluster shape is changed recently (%d secs)", queue.getName(),
+                      nodeQueueSize, ((System.currentTimeMillis() - manager.getLastClusterChangeOn()) / 1000));
+                }
 
               } else {
                 // NODE SEEMS IN STALL FOR UNKNOWN REASON
-                ODistributedServerLog.warn(this, getLocalNodeName(), iNodes.toString(), DIRECTION.OUT,
-                    "queue has too many messages (%d), treating the node as in stall: trying to restart it...", queue.size());
+                ODistributedServerLog.warn(this, getLocalNodeName(), node, DIRECTION.OUT,
+                    "queue '%s' has too many messages (%d), treating the node as in stall: trying to restart it...",
+                    queue.getName(), nodeQueueSize);
 
                 // CLEAR THE QUEUE TO AVOID AN OOM IN THE CLUSTER
                 queue.clear();
+                queueWarningCounter.remove(node);
+                nodeQueueSize = 0;
 
                 manager.disconnectNode(entry.getKey());
               }
             } else {
               // SEND THE MESSAGE
               queue.offer(iRequest, timeout, TimeUnit.MILLISECONDS);
+              queueWarningCounter.remove(node);
             }
+
+            // SAVE LAST QUEUE SIZE VALUE
+            queueSizes.put(node, nodeQueueSize);
           }
         }
 

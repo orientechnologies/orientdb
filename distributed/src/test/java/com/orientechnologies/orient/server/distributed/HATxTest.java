@@ -15,19 +15,21 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 /**
- * Distributed TX test against "plocal" protocol + shutdown and restart of a node.
+ * Distributed TX test by using transactions against "plocal" protocol + shutdown and restart of a node.
  */
-public class HATest extends AbstractServerClusterTxTest {
+public class HATxTest extends AbstractServerClusterTxTest {
   final static int SERVERS = 3;
 
+  @Ignore
   @Test
   public void test() throws Exception {
-    useTransactions = false;
+    useTransactions = true;
     init(SERVERS);
     prepare(false);
     execute();

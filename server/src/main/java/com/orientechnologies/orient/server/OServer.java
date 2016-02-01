@@ -170,9 +170,12 @@ public class OServer {
 
   public void restart() throws ClassNotFoundException, InvocationTargetException, InstantiationException, NoSuchMethodException,
       IllegalAccessException {
-    shutdown();
-    startup(serverCfg.getConfiguration());
-    activate();
+    try {
+      shutdown();
+    } finally {
+      startup(serverCfg.getConfiguration());
+      activate();
+    }
   }
 
   /**

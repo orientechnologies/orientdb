@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.server.distributed.task;
 
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
 import java.util.Collections;
 import java.util.List;
@@ -34,7 +35,7 @@ public abstract class OAbstractReplicatedTask extends OAbstractRemoteTask {
   private static final long serialVersionUID = 1L;
 
   public List<OAbstractRemoteTask> getFixTask(ODistributedRequest iRequest, OAbstractRemoteTask iOriginalTask, Object iBadResponse,
-      Object iGoodResponse) {
+      Object iGoodResponse, String executorNodeName, ODistributedServerManager dManager) {
     return Collections.EMPTY_LIST;
   }
 

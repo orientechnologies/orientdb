@@ -281,7 +281,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
     final ODocument cluster = new ODocument();
 
-    cluster.field("localName", instance.getName());
+    cluster.field("localName", getName());
     cluster.field("localId", instance.getCluster().getLocalMember().getUuid());
 
     // INSERT MEMBERS
@@ -1091,7 +1091,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     ODistributedServerLog.warn(this, nodeName, selectedNodes.toString(), DIRECTION.OUT,
         "requesting deploy of database '%s' on local server...", databaseName);
 
-    // final OAbstractReplicatedTask deployTask = new OSyncDatabaseDeltaTask(lastLSN);
     final OAbstractReplicatedTask deployTask = new OSyncDatabaseTask();
 
     final Map<String, Object> results = (Map<String, Object>) sendRequest(databaseName, null, selectedNodes, deployTask,
@@ -1774,11 +1773,14 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
                 total++;
 
-                if (deleted) {
-                  OLogManager.instance().info(this, "DELTA <- deleted " + rid);
+                final ORecord loadedRecord = rid.getRecord();
 
-                  // DELETE
-                  db.delete(rid);
+                if (deleted) {
+                  OLogManager.instance().info(this, "DELTA <- deleting " + rid);
+
+                  if (loadedRecord != null)
+                    // DELETE IT
+                    db.delete(rid);
 
                 } else {
                   final int recordVersion = input.readInt();
@@ -1787,17 +1789,30 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
                   final byte[] recordContent = new byte[recordSize];
                   input.read(recordContent);
 
-                  OLogManager.instance().info(this,
-                      "DELTA <- other rid=" + rid + " type=" + recordType + " size=" + recordSize + " v=" + recordVersion);
-
                   ORecord newRecord = Orient.instance().getRecordFactoryManager().newInstance((byte) recordType);
 
-                  final ORecord loadedRecord = rid.getRecord();
                   if (loadedRecord == null) {
                     // CREATE
-                    ORecordInternal.fill(newRecord, new ORecordId(rid.getClusterId(), -1), 0, recordContent, true);
+                    OLogManager.instance().info(this,
+                        "DELTA <- creating rid=" + rid + " type=" + recordType + " size=" + recordSize + " v=" + recordVersion);
+
+                    ORecordInternal.fill(newRecord, new ORecordId(rid.getClusterId(), -1), recordVersion - 1, recordContent, true);
+
+                    final long[] range = db.getStorage().getClusterDataRange(clusterId);
+                    for (long p = range[1]; p < clusterPos - 1; ++p) {
+                      // CREATE EMPTY RECORDS
+                      final ORecordId tempRid = new ORecordId(clusterId, p);
+                      db.getStorage().createRecord(tempRid, new byte[] {}, 1, ODocument.RECORD_TYPE, 0, null);
+                      db.getStorage().deleteRecord(tempRid, -1, 0, null);
+
+                      OLogManager.instance().info(this, "DELTA <- creating hole rid=" + tempRid);
+                    }
+
                   } else {
                     // UPDATE
+                    OLogManager.instance().info(this,
+                        "DELTA <- updating rid=" + rid + " type=" + recordType + " size=" + recordSize + " v=" + recordVersion);
+
                     ORecordInternal.fill(newRecord, rid, ORecordVersionHelper.setRollbackMode(recordVersion), recordContent, true);
 
                     if (loadedRecord instanceof ODocument) {
@@ -2024,6 +2039,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     final OHazelcastDistributedResponse response = new OHazelcastDistributedResponse(-1, nodeName, iNode, new ORestartNodeTask());
 
     try {
+      queue.clear();
       if (!queue.offer(response, OGlobalConfiguration.DISTRIBUTED_QUEUE_TIMEOUT.getValueAsLong(), TimeUnit.MILLISECONDS))
         throw new ODistributedException("Timeout on dispatching restart node request to node '" + iNode + "'");
     } catch (InterruptedException e) {

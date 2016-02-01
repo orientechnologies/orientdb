@@ -25,7 +25,7 @@ import java.util.concurrent.Callable;
  * Distributed TX test against "remote" protocol. It starts 3 servers and during a stress test, kill last server. The test checks
  * all the clients can auto-reconnect to the next available server.
  */
-public class HACrashTest extends AbstractServerClusterTxTest {
+public class HATxCrashTest extends AbstractServerClusterTxTest {
   final static int SERVERS       = 3;
   volatile boolean inserting     = true;
   volatile int     serverStarted = 0;
@@ -36,7 +36,7 @@ public class HACrashTest extends AbstractServerClusterTxTest {
     startupNodesInSequence = true;
     count = 500;
     maxRetries = 10;
-    useTransactions = false;
+    useTransactions = true;
     init(SERVERS);
     prepare(false);
     execute();
