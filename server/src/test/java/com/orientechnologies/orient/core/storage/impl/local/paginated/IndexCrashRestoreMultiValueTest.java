@@ -72,11 +72,11 @@ public class IndexCrashRestoreMultiValueTest {
 
   @AfterClass
   public void afterClass() {
-    // ODatabaseRecordThreadLocal.INSTANCE.set(testDocumentTx);
-    // testDocumentTx.drop();
-    //
-    // ODatabaseRecordThreadLocal.INSTANCE.set(baseDocumentTx);
-    // baseDocumentTx.drop();
+    ODatabaseRecordThreadLocal.INSTANCE.set(testDocumentTx);
+    testDocumentTx.drop();
+
+    ODatabaseRecordThreadLocal.INSTANCE.set(baseDocumentTx);
+    baseDocumentTx.drop();
 
     OFileUtils.deleteRecursively(buildDir);
     Assert.assertFalse(buildDir.exists());
