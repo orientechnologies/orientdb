@@ -29,6 +29,7 @@ import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.compression.impl.OZIPCompressionUtil;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerShared;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
@@ -86,8 +87,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
   private final OStorageVariableParser     variableParser;
   private final OPaginatedStorageDirtyFlag dirtyFlag;
 
-  private final String    storagePath;
-  private ExecutorService checkpointExecutor;
+  private final String          storagePath;
+  private       ExecutorService checkpointExecutor;
 
   public OLocalPaginatedStorage(final String name, final String filePath, final String mode, final int id, OReadCache readCache)
       throws IOException {
@@ -119,12 +120,17 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
 
   @Override
   public void create(final Map<String, Object> iProperties) {
-    final File storageFolder = new File(storagePath);
-    if (!storageFolder.exists())
-      if (!storageFolder.mkdirs())
-        throw new OStorageException("Cannot create folders in storage with path " + storagePath);
+    stateLock.acquireWriteLock();
+    try {
+      final File storageFolder = new File(storagePath);
+      if (!storageFolder.exists())
+        if (!storageFolder.mkdirs())
+          throw new OStorageException("Cannot create folders in storage with path " + storagePath);
 
-    super.create(iProperties);
+      super.create(iProperties);
+    } finally {
+      stateLock.releaseWriteLock();
+    }
   }
 
   @Override
@@ -180,8 +186,9 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
 
       final OutputStream bo = bufferSize > 0 ? new BufferedOutputStream(out, bufferSize) : out;
       try {
-        return OZIPCompressionUtil.compressDirectory(new File(getStoragePath()).getAbsolutePath(), bo, new String[] { ".wal" },
-            iOutput, compressionLevel);
+        return OZIPCompressionUtil
+            .compressDirectory(new File(getStoragePath()).getAbsolutePath(), bo, new String[] { ".wal" }, iOutput,
+                compressionLevel);
       } finally {
         if (bufferSize > 0) {
           bo.flush();
@@ -202,6 +209,16 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
     OZIPCompressionUtil.uncompressDirectory(in, getStoragePath(), iListener);
 
     open(null, null, null);
+  }
+
+  @Override
+  public OStorageConfiguration getConfiguration() {
+    stateLock.acquireReadLock();
+    try {
+      return super.getConfiguration();
+    } finally {
+      stateLock.releaseReadLock();
+    }
   }
 
   @Override
@@ -355,8 +372,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
     try {
       if (writeAheadLog != null) {
         checkpointExecutor.shutdown();
-        if (!checkpointExecutor.awaitTermination(OGlobalConfiguration.WAL_FULL_CHECKPOINT_SHUTDOWN_TIMEOUT.getValueAsInteger(),
-            TimeUnit.SECONDS))
+        if (!checkpointExecutor
+            .awaitTermination(OGlobalConfiguration.WAL_FULL_CHECKPOINT_SHUTDOWN_TIMEOUT.getValueAsInteger(), TimeUnit.SECONDS))
           throw new OStorageException("Cannot terminate full checkpoint task");
       }
     } catch (InterruptedException e) {
@@ -437,8 +454,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
         .floor((((double) OGlobalConfiguration.DISK_WRITE_CACHE_PART.getValueAsInteger()) / 100.0) * diskCacheSize);
 
     final OWOWCache wowCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * ONE_KB,
-        OByteBufferPool.instance(),
-        OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_TTL.getValueAsLong() * 1000, writeAheadLog,
+        OByteBufferPool.instance(), OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_TTL.getValueAsLong() * 1000, writeAheadLog,
         OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL.getValueAsInteger(), writeCacheSize, diskCacheSize, this, true,
         getId());
     wowCache.addLowDiskSpaceListener(this);

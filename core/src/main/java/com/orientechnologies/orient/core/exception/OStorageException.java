@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.core.exception;
 
-import com.orientechnologies.common.exception.OException;
-
 public class OStorageException extends OCoreException {
 
   private static final long serialVersionUID = -2655748565531836968L;

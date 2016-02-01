@@ -53,14 +53,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerShared;
-import com.orientechnologies.orient.core.exception.OBackupInProgressException;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
-import com.orientechnologies.orient.core.exception.OLowDiskSpaceException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndexCursor;
@@ -341,10 +334,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     try {
 
       if (status != STATUS.CLOSED)
-        throw new OStorageException("Cannot create new storage '" + getURL() + "' because it is not closed");
+        throw new OStorageExistsException("Cannot create new storage '" + getURL() + "' because it is not closed");
 
       if (exists())
-        throw new OStorageException("Cannot create new storage '" + getURL() + "' because it already exists");
+        throw new OStorageExistsException("Cannot create new storage '" + getURL() + "' because it already exists");
 
       if (!configuration.getContextConfiguration().getContextKeys()
           .contains(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getKey())) {
@@ -431,6 +424,16 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       throw OException.wrapException(new OStorageException("Error on creation of storage '" + name + "'"), e);
     } finally {
       stateLock.releaseWriteLock();
+    }
+  }
+
+  @Override
+  public boolean isClosed() {
+    stateLock.acquireReadLock();
+    try {
+      return super.isClosed();
+    } finally {
+      stateLock.releaseReadLock();
     }
   }
 
@@ -819,7 +822,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
               dataOutputStream.writeLong(rid.getClusterPosition());
               dataOutputStream.write(1);
 
-              OLogManager.instance().debug(this, "Exporting deleted record %s", rid);
+              OLogManager.instance().info(this, "Exporting deleted record %s", rid);
 
               // delete to avoid duplication
               ridIterator.remove();
@@ -843,7 +846,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
             dataOutputStream.writeInt(rawBuffer.buffer.length);
             dataOutputStream.write(rawBuffer.buffer);
 
-            OLogManager.instance().info(this, "Exporting modified record rid=%s type=%d size=%d v=%d - buffer size=%d", rid,
+            OLogManager.instance().debug(this, "Exporting modified record rid=%s type=%d size=%d v=%d - buffer size=%d", rid,
                 rawBuffer.recordType, rawBuffer.buffer.length, rawBuffer.version, dataOutputStream.size());
 
           }

@@ -258,7 +258,7 @@ public class OStoragePerformanceStatisticTest {
     long counter = 0;
 
     while (notZeroSpeedCount < 1000) {
-      if (counter % 1000 == 0 && System.currentTimeMillis() - msStart > 10000)
+      if (counter % 1000 == 0 && System.currentTimeMillis() - msStart > 1200000)
         break;
 
       speedData = getDataFunction.getData(storagePerformanceStatistic);
@@ -365,7 +365,7 @@ public class OStoragePerformanceStatisticTest {
     long counter = 0;
 
     while (notZeroSpeedCount < 1000) {
-      if (counter % 1000 == 0 && System.currentTimeMillis() - msStart > 120000)
+      if (counter % 1000 == 0 && System.currentTimeMillis() - msStart > 1200000)
         break;
 
       speedData = getDataFunction.getData(mxBean);

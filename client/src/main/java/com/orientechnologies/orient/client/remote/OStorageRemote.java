@@ -158,7 +158,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       OChannelBinaryAsynchClient network = null;
       try {
         network = getAvailableNetwork(getNextAvailableServerURL(false));
-
+      } catch (IOException exception) {
+        throw OException.wrapException(new OStorageException(errorMessage), exception);
+      }
+      try {
         // In case i do not have a token or i'm switching between server i've to execute a open operation.
         if (!network.getServerURL().equals(getServerURL()) || tokens.get(network.getServerURL()) == null && getSessionId() > 0) {
           // TODO: Remove this workaround in favor of a proper per server authentication.
@@ -1739,8 +1742,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     String currentURL = getCurrentServerURL();
     do {
       do {
+        network = getAvailableNetwork(currentURL);
         try {
-          network = getAvailableNetwork(currentURL);
           final byte[] curToken = tokens.get(network.getServerURL());
           if (curToken == null || curToken.length == 0) {
             openRemoteDatabase(network);
@@ -1904,6 +1907,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         OChannelBinaryAsynchClient network = null;
         try {
           network = getAvailableNetwork(currentURL);
+        } catch (IOException exception) {
+          throw OException.wrapException(new OStorageException("Cannot create a connection to remote server address(es): " + serverURLs), exception);
+        }
+        try {
           openRemoteDatabase(network);
           return currentURL;
         } catch (OIOException e) {
@@ -2185,7 +2192,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           parseServerURLs();
           if (cause instanceof IOException)
             throw (IOException) cause;
-          throw OException.wrapException(new OIOException("Cannot open a connection to remote server: " + iCurrentURL), cause);
+          throw OException.wrapException(new OStorageException("Cannot open a connection to remote server: " + iCurrentURL), cause);
         }
       } else if (!network.isConnected()) {
         // DISCONNECTED NETWORK, GET ANOTHER ONE
