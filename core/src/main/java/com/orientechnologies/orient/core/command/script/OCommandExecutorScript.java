@@ -532,7 +532,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
     try {
       Thread.sleep(Integer.parseInt(sleepTimeInMs));
     } catch (InterruptedException e) {
-      OLogManager.instance().error(this, "Sleep was interrupted", e);
+      OLogManager.instance().debug(this, "Sleep was interrupted in SQL batch");
     }
   }
 
