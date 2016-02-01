@@ -630,13 +630,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   /**
    * Handles the record in result.
    *
-<<<<<<< HEAD
    * @param iRecord
    *          Record to handle
    * @param iContext
-=======
-   * @param iRecord Record to handle
->>>>>>> ca99ec7... Fix UNWIND of empty collection
    * @return false if limit has been reached, otherwise true
    */
   @Override
