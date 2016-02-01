@@ -18,6 +18,12 @@
 
 package com.orientechnologies.orient.etl.loader;
 
+import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.DEBUG;
+import static com.orientechnologies.orient.etl.loader.OOrientDBLoader.DB_TYPE.DOCUMENT;
+
+import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
+
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -35,11 +41,6 @@ import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientElement;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-
-import java.util.List;
-
-import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.DEBUG;
-import static com.orientechnologies.orient.etl.loader.OOrientDBLoader.DB_TYPE.DOCUMENT;
 
 /**
  * ETL Loader that saves record into OrientDB database.
@@ -60,7 +61,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
   protected boolean standardElementConstraints = true;
   protected boolean tx                         = false;
   protected int     batchCommit                = 0;
-  protected long    batchCounter               = 0;
+  protected AtomicLong      batchCounter               = new AtomicLong(0);
   protected DB_TYPE dbType                     = DOCUMENT;
   protected boolean wal                        = true;
   protected boolean txUseLog                   = false;
@@ -74,6 +75,63 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
       return;
 
     if (dbAutoCreateProperties) {
+      autoCreateProperties(input);
+    }
+
+    if (tx && dbType == DOCUMENT) {
+      final ODatabaseDocumentTx documentDatabase = pipeline.getDocumentDatabase();
+      if (!documentDatabase.getTransaction().isActive()) {
+        // BEGIN THE TRANSACTION FIRST
+        beginTransaction(documentDatabase);
+      }
+    }
+
+    if (input instanceof OrientVertex) {
+      // VERTEX
+      final OrientVertex v = (OrientVertex) input;
+
+      if (clusterName != null)
+        // SAVE INTO THE CUSTOM CLUSTER
+        v.save(clusterName);
+      else
+        // SAVE INTO THE DEFAULT CLUSTER
+        v.save();
+
+    } else if (input instanceof ODocument) {
+      // DOCUMENT
+      final ODocument doc = (ODocument) input;
+
+      if (className != null)
+        doc.setClassName(className);
+
+      if (clusterName != null)
+        // SAVE INTO THE CUSTOM CLUSTER
+        doc.save(clusterName);
+      else
+        // SAVE INTO THE DEFAULT CLUSTER
+        doc.save();
+    }
+
+    progress.incrementAndGet();
+
+    // DO BATCH COMMIT
+    if (batchCommit > 0 && batchCounter.get() > batchCommit) {
+      if (dbType == DOCUMENT) {
+        final ODatabaseDocumentTx documentDatabase = pipeline.getDocumentDatabase();
+        log(DEBUG, "committing batch");
+        documentDatabase.commit();
+        beginTransaction(documentDatabase);
+      } else {
+        log(DEBUG, "committing batch");
+        pipeline.getGraphDatabase().commit();
+      }
+      batchCounter.set(0);
+    } else {
+      batchCounter.incrementAndGet();
+    }
+  }
+
+  private void autoCreateProperties(Object input) {
       if (dbType == DOCUMENT) {
         if (input instanceof ODocument) {
           final ODocument doc = (ODocument) input;
@@ -129,59 +187,6 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
         }
       }
     }
-
-    if (tx && dbType == DOCUMENT) {
-      final ODatabaseDocumentTx documentDatabase = pipeline.getDocumentDatabase();
-      if (!documentDatabase.getTransaction().isActive()) {
-        // BEGIN THE TRANSACTION FIRST
-        beginTransaction(documentDatabase);
-      }
-    }
-
-    if (input instanceof OrientVertex) {
-      // VERTEX
-      final OrientVertex v = (OrientVertex) input;
-
-      if (clusterName != null)
-        // SAVE INTO THE CUSTOM CLUSTER
-        v.save(clusterName);
-      else
-        // SAVE INTO THE DEFAULT CLUSTER
-        v.save();
-
-    } else if (input instanceof ODocument) {
-      // DOCUMENT
-      final ODocument doc = (ODocument) input;
-
-      if (className != null)
-        doc.setClassName(className);
-
-      if (clusterName != null)
-        // SAVE INTO THE CUSTOM CLUSTER
-        doc.save(clusterName);
-      else
-        // SAVE INTO THE DEFAULT CLUSTER
-        doc.save();
-    }
-
-    progress.incrementAndGet();
-
-    if (batchCommit > 0) {
-      if (batchCounter > batchCommit) {
-        if (dbType == DOCUMENT) {
-          final ODatabaseDocumentTx documentDatabase = pipeline.getDocumentDatabase();
-          log(DEBUG, "committing batch");
-          documentDatabase.commit();
-          beginTransaction(documentDatabase);
-        } else {
-          log(DEBUG, "committing batch");
-          pipeline.getGraphDatabase().commit();
-        }
-        batchCounter = 0;
-      } else
-        batchCounter++;
-    }
-  }
 
   @Override
   public String getUnit() {

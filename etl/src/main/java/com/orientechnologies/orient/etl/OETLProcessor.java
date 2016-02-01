@@ -387,9 +387,9 @@ public class OETLProcessor {
 
     } catch (OETLProcessHaltedException e) {
       out(LOG_LEVELS.ERROR, "ETL process halted: %s", e);
+      executor.shutdownNow();
     } catch (Exception e) {
-      //      throw new RuntimeException(e);
-    } finally {
+      out(LOG_LEVELS.ERROR, "ETL process has problem: %s", e);
       executor.shutdownNow();
     }
   }
@@ -589,7 +589,7 @@ public class OETLProcessor {
 
       pipeline.getDocumentDatabase();
 
-      while (!extractionFinished.get() || !queue.isEmpty()) {
+      while (!queue.isEmpty() || !extractionFinished.get()) {
         try {
 
           final OExtractedItem content = queue.poll();

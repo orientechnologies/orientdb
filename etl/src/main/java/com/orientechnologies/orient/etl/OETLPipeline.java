@@ -18,6 +18,10 @@
 
 package com.orientechnologies.orient.etl;
 
+import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.*;
+
+import java.util.List;
+
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
@@ -28,34 +32,24 @@ import com.orientechnologies.orient.etl.loader.OLoader;
 import com.orientechnologies.orient.etl.transformer.OTransformer;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 
-import java.util.List;
-
-import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.DEBUG;
-import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.ERROR;
-import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.INFO;
-
 /**
  * ETL pipeline: sequence of OTransformer and a OLoader.
  *
  * @author Luca Garulli (l.garulli-at-orientechnologies.com)
  */
 public class OETLPipeline {
-  protected final OETLProcessor       processor;
-  protected final List<OTransformer>  transformers;
-  protected final OLoader             loader;
-  protected final OCommandContext     context;
-  protected final LOG_LEVELS          logLevel;
-  protected final int                 maxRetries;
-  protected       boolean             haltOnError;
-  protected       ODatabaseDocumentTx db;
-  protected       OrientBaseGraph     graph;
+  protected final OETLProcessor      processor;
+  protected final List<OTransformer> transformers;
+  protected final OLoader            loader;
+  protected final OCommandContext    context;
+  protected final LOG_LEVELS         logLevel;
+  protected final int                maxRetries;
+  protected boolean                  haltOnError;
+  protected ODatabaseDocumentTx      db;
+  protected OrientBaseGraph          graph;
 
-  public OETLPipeline(final OETLProcessor processor,
-                      final List<OTransformer> transformers,
-                      final OLoader loader,
-                      final LOG_LEVELS logLevel,
-                      final int maxRetries,
-                      final boolean haltOnError) {
+  public OETLPipeline(final OETLProcessor processor, final List<OTransformer> transformers, final OLoader loader,
+      final LOG_LEVELS logLevel, final int maxRetries, final boolean haltOnError) {
     this.processor = processor;
     this.transformers = transformers;
     this.loader = loader;
@@ -139,11 +133,11 @@ public class OETLPipeline {
 
       } catch (Exception e) {
         processor.out(ERROR, "Error in Pipeline execution: %s", e);
-        e.printStackTrace();
         processor.getStats().incrementErrors();
 
-        if (!haltOnError)
+        if (!haltOnError) {
           return null;
+        }
 
         loader.rollback();
         throw new OETLProcessHaltedException("Halt", e);
