@@ -179,6 +179,15 @@ public class OCommandExecutorSQLSelectTest {
     initMatchesWithRegex(db);
     initDistinctLimit(db);
     initLinkListSequence(db);
+    initMaxLongNumber(db);
+  }
+
+  private void initMaxLongNumber(ODatabaseDocumentTx db) {
+    db.command(new OCommandSQL("CREATE class MaxLongNumberTest")).execute();
+    db.command(new OCommandSQL("insert into MaxLongNumberTest set last = 1")).execute();
+    db.command(new OCommandSQL("insert into MaxLongNumberTest set last = null")).execute();
+    db.command(new OCommandSQL("insert into MaxLongNumberTest set last = 958769876987698")).execute();
+    db.command(new OCommandSQL("insert into MaxLongNumberTest set foo = 'bar'")).execute();
   }
 
   private void initLinkListSequence(ODatabaseDocumentTx db) {
@@ -1063,6 +1072,18 @@ public class OCommandExecutorSQLSelectTest {
       assertTrue(value.equals("1.1.1") ||value.equals("1.1.2"));
     }
   }
+  @Test
+  public void testMaxLongNumber() {
+    //issue #5664
+    OSQLSynchQuery sql = new OSQLSynchQuery("select from MaxLongNumberTest WHERE last < 10 OR last is null");
+    List<ODocument> results = db.query(sql);
+    assertEquals(results.size(), 3);
+    db.command(new OCommandSQL("update MaxLongNumberTest set last = max(91,ifnull(last,0))")).execute();
+    sql = new OSQLSynchQuery("select from MaxLongNumberTest WHERE last < 10 OR last is null");
+    results = db.query(sql);
+    assertEquals(results.size(), 0);
+  }
+
 
   private long indexUsages(ODatabaseDocumentTx db) {
     final long oldIndexUsage;
