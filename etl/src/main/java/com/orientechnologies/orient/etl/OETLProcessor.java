@@ -40,12 +40,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.TimerTask;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -378,7 +373,8 @@ public class OETLProcessor {
       Boolean extracted = extractorFuture.get();
 
       for (Future<Boolean> future : tasks) {
-        out(LOG_LEVELS.DEBUG, "Pipeline worker done without errors:: " + future.get());
+        Boolean result = future.get(1, TimeUnit.MINUTES);
+        out(LOG_LEVELS.DEBUG, "Pipeline worker done without errors:: " + result);
       }
 
       out(LOG_LEVELS.DEBUG, "all items extracted");
