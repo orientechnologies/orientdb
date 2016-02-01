@@ -359,7 +359,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (parsedTarget != null) {
       final ODatabaseDocument db = getDatabase();
 
-      if (parsedTarget.getTargetQuery() != null && parsedTarget.getTargetRecords() instanceof OCommandExecutorSQLResultsetDelegate) {
+      if (parsedTarget.getTargetQuery() != null && parsedTarget
+          .getTargetRecords() instanceof OCommandExecutorSQLResultsetDelegate) {
         // SUB-QUERY: EXECUTE IT LOCALLY
         // SUB QUERY, PROPAGATE THE CALL
         final Set<String> clIds = ((OCommandExecutorSQLResultsetDelegate) parsedTarget.getTargetRecords()).getInvolvedClusters();
@@ -530,7 +531,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     if (localLockingStrategy != null
         && !(localLockingStrategy == LOCKING_STRATEGY.DEFAULT || localLockingStrategy == LOCKING_STRATEGY.NONE
-            || localLockingStrategy == LOCKING_STRATEGY.EXCLUSIVE_LOCK || localLockingStrategy == LOCKING_STRATEGY.SHARED_LOCK))
+        || localLockingStrategy == LOCKING_STRATEGY.EXCLUSIVE_LOCK || localLockingStrategy == LOCKING_STRATEGY.SHARED_LOCK))
       throw new IllegalStateException("Unsupported locking strategy " + localLockingStrategy);
 
     final ORecord record;
@@ -587,8 +588,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   /**
    * Handles the record in result.
    *
-   * @param iRecord
-   *          Record to handle
+   * @param iRecord Record to handle
    * @return false if limit has been reached, otherwise true
    */
   protected boolean handleResult(final OIdentifiable iRecord) {
@@ -611,7 +611,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       }
 
       return !((orderedFields.isEmpty() || fullySortedByIndex || isRidOnlySort()) && !isAnyFunctionAggregates()
-          && (groupByFields == null || groupByFields.isEmpty()) && fetchLimit > -1 && resultCount >= fetchLimit && expandTarget == null);
+          && (groupByFields == null || groupByFields.isEmpty()) && fetchLimit > -1 && resultCount >= fetchLimit
+          && expandTarget == null);
     } finally {
       if (parallel)
         // UNLOCK PARALLEL EXECUTION
@@ -762,11 +763,20 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       if (fieldValue == null || !(fieldValue instanceof Iterable) || fieldValue instanceof ODocument) {
         result.addAll(unwind(doc, nextFields));
       } else {
-        for (Object o : (Iterable) fieldValue) {
+        Iterator iterator = ((Iterable) fieldValue).iterator();
+        if (!iterator.hasNext()) {
           ODocument unwindedDoc = new ODocument();
           doc.copyTo(unwindedDoc);
-          unwindedDoc.field(firstField, o);
+          unwindedDoc.field(firstField, (Object)null);
           result.addAll(unwind(unwindedDoc, nextFields));
+        } else {
+          do {
+            Object o = iterator.next();
+            ODocument unwindedDoc = new ODocument();
+            doc.copyTo(unwindedDoc);
+            unwindedDoc.field(firstField, o);
+            result.addAll(unwind(unwindedDoc, nextFields));
+          } while (iterator.hasNext());
         }
       }
     }
@@ -911,7 +921,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     if (!searchForIndexes(cls) && !searchForSubclassIndexes(cls)) {
       // CHECK FOR INVERSE ORDER
-      final boolean browsingOrderAsc = !(orderedFields.size() == 1 && orderedFields.get(0).getKey().equalsIgnoreCase("@rid") && orderedFields
+      final boolean browsingOrderAsc = !(orderedFields.size() == 1 && orderedFields.get(0).getKey().equalsIgnoreCase("@rid")
+          && orderedFields
           .get(0).getValue().equalsIgnoreCase("DESC"));
       super.searchInClasses(browsingOrderAsc);
     }
@@ -2008,8 +2019,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   /**
    * Use index to order documents by provided fields.
    *
-   * @param iSchemaClass
-   *          where search for indexes for optimization.
+   * @param iSchemaClass where search for indexes for optimization.
    * @return true if execution was optimized
    */
   private boolean optimizeSort(OClass iSchemaClass) {
@@ -2463,8 +2473,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     final OSQLFunctionRuntime f = (OSQLFunctionRuntime) projection;
     return f.getRoot().equals(OSQLFunctionCount.NAME)
-        && ((f.configuredParameters == null || f.configuredParameters.length == 0) || (f.configuredParameters.length == 1 && f.configuredParameters[0]
-            .equals("*")));
+        && ((f.configuredParameters == null || f.configuredParameters.length == 0) || (f.configuredParameters.length == 1
+        && f.configuredParameters[0]
+        .equals("*")));
   }
 
   private boolean isIndexKeySizeQuery() {
@@ -2482,7 +2493,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       return false;
     }
 
-    if (!(f.configuredParameters != null && f.configuredParameters.length == 1 && f.configuredParameters[0] instanceof OSQLFunctionRuntime)) {
+    if (!(f.configuredParameters != null && f.configuredParameters.length == 1
+        && f.configuredParameters[0] instanceof OSQLFunctionRuntime)) {
       return false;
     }
 
@@ -2491,7 +2503,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       return false;
     }
 
-    if (!(fConfigured.configuredParameters != null && fConfigured.configuredParameters.length == 1 && fConfigured.configuredParameters[0] instanceof OSQLFilterItemField)) {
+    if (!(fConfigured.configuredParameters != null && fConfigured.configuredParameters.length == 1
+        && fConfigured.configuredParameters[0] instanceof OSQLFilterItemField)) {
       return false;
     }
 
