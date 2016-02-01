@@ -29,6 +29,8 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * ETL abstract component.
  */

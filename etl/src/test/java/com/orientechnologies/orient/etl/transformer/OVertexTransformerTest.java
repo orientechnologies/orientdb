@@ -62,7 +62,7 @@ public class OVertexTransformerTest extends OETLBaseTest {
 //  @Test(expected = ORecordDuplicatedException.class)
   @Test
   public void testErrorOnDuplicateVertex() {
-    process("{source: { content: { value: 'name,\nGregor\nGregor\nHans' } }, extractor : { csv: {} },"
+    process("{ config: { 'log': 'DEBUG' },  source: { content: { value: 'name,\nGregor\nGregor\nHans' } }, extractor : { csv: {} },"
             + " transformers: [ {vertex: {class:'Person', skipDuplicates:false}},"
             + "], loader: { orientdb: { dbURL: 'memory:OETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
 

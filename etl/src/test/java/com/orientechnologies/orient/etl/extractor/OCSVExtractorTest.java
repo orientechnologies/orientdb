@@ -118,7 +118,7 @@ public class OCSVExtractorTest extends OETLBaseTest {
   }
 
   @Test
-  public void testFloatWithinQuotes() {
+  public void testFloatWithinQuotesAndDotAsDecimalSeparator() {
     String cfgJson = "{source: { content: { value: 'firstNumber\n\"10.78\"'}  }, extractor : { csv: {} }, loader: { test: {} } }";
     process(cfgJson);
     List<ODocument> res = getResult();
