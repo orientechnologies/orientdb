@@ -29,7 +29,8 @@ This document contains the last changes of OrientDB Community Edition.
 ---------------------------------------------------------------------------------------------------
 VERSION 2.0.18 - (February, 2 2016)
 
-This is a hotfix release, only some code cleanup
+This is a hotfix release, with a total of 1 issue resolved:
+- Core (1): https://github.com/orientechnologies/orientdb/issues?q=milestone%3A2.0.18+is%3Aclosed
 
 ---------------------------------------------------------------------------------------------------
 VERSION 2.0.17 - (December, 10 2015)
