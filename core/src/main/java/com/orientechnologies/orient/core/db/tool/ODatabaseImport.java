@@ -968,6 +968,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     boolean readonly = false;
     boolean notNull = false;
     String collate = null;
+    String defaultValue = null;
 
     Map<String, String> customFields = null;
 
@@ -994,6 +995,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         linkedType = OType.valueOf(value);
       else if (attrib.equals("\"collate\""))
         collate = value;
+      else if (attrib.equals("\"default-value\""))
+        defaultValue = value;
       else if (attrib.equals("\"customFields\""))
         customFields = importCustomFields();
     }
@@ -1017,6 +1020,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       prop.setLinkedType(linkedType);
     if (collate != null)
       prop.setCollate(value);
+    if (defaultValue != null)
+      prop.setDefaultValue(defaultValue);
     if (customFields != null) {
       for (Map.Entry<String, String> entry : customFields.entrySet()) {
         prop.setCustom(entry.getKey(), entry.getValue());
