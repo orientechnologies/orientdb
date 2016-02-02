@@ -18,21 +18,24 @@
 
 package com.orientechnologies.orient.etl.transformer;
 
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.etl.OETLBaseTest;
-import org.junit.Test;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.*;
 
 import java.util.Date;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.*;
+import org.junit.Test;
+
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.etl.OETLBaseTest;
 
 /**
  * Tests ETL CSV Transformer.
  *
  * @author Luca Garulli
+ * @deprecated
  */
+@Deprecated
 public class OCSVTransformerTest extends OETLBaseTest {
 
   @Test
@@ -44,7 +47,8 @@ public class OCSVTransformerTest extends OETLBaseTest {
 
   @Test
   public void testOneObject() {
-    process("{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { row: {} }, transformers: [{ csv: {} }], loader: { test: {} } }");
+    process(
+        "{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { row: {} }, transformers: [{ csv: {} }], loader: { test: {} } }");
     assertEquals(1, getResult().size());
     ODocument doc = getResult().get(0);
     assertEquals(2, doc.fields());
@@ -287,6 +291,7 @@ public class OCSVTransformerTest extends OETLBaseTest {
     String cfgJson = "{source: { content: { value: 'id,text,num\r\n1,my test text,1'} }, extractor : { row : {} }, transformers : [{ csv : {} }], loader : { test: {} } }";
     process(cfgJson);
     List<ODocument> res = getResult();
+    assertThat(res).hasSize(1);
     ODocument doc = res.get(0);
 
     assertThat(doc.<Integer> field("id")).isEqualTo(1);
@@ -322,6 +327,7 @@ public class OCSVTransformerTest extends OETLBaseTest {
     String cfgJson = "{source: { content: { value: 'id ,text ,num \r\n1,\"my test\r\n text\",1\r\n'} }, extractor : { row : {} }, transformers : [{ csv : {} }], loader : { test: {} } }";
     process(cfgJson);
     List<ODocument> res = getResult();
+    assertThat(res).hasSize(1);
     ODocument doc = res.get(0);
     assertThat((Integer) doc.field("id ")).isEqualTo(1);
     assertThat((String) doc.field("text ")).isEqualTo("my test\r\n text");
