@@ -291,6 +291,7 @@ public class OCSVTransformerTest extends OETLBaseTest {
     String cfgJson = "{source: { content: { value: 'id,text,num\r\n1,my test text,1'} }, extractor : { row : {} }, transformers : [{ csv : {} }], loader : { test: {} } }";
     process(cfgJson);
     List<ODocument> res = getResult();
+    assertThat(res).hasSize(1);
     ODocument doc = res.get(0);
 
     assertThat(doc.<Integer> field("id")).isEqualTo(1);
