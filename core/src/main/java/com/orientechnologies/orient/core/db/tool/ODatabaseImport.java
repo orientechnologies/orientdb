@@ -999,6 +999,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         linkedType = OType.valueOf(value);
       else if (attrib.equals("\"collate\""))
         collate = value;
+      else if (attrib.equals("\"default-value\""))
+        collate = value;
       else if (attrib.equals("\"customFields\""))
         customFields = importCustomFields();
     }
