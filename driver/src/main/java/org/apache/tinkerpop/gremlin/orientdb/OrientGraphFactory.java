@@ -67,9 +67,9 @@ public final class OrientGraphFactory {
         final OrientGraph g;
         final Configuration config = getConfiguration(create, open, transactional);
         if (pool != null) {
-            g = new OrientGraph(pool, config);
+            g = new OrientGraph(pool, config, user, password);
         } else {
-            g = new OrientGraph(getDatabase(create, open), config);
+            g = new OrientGraph(getDatabase(create, open), config, user, password);
         }
         initGraph(g);
         return g;
