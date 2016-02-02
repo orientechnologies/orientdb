@@ -76,10 +76,12 @@ public final class OrientGraph implements Graph {
     public static String CONFIG_POOL_SIZE = "orient-max-poolsize";
     public static String CONFIG_LABEL_AS_CLASSNAME = "orient-label-as-classname";
 
-    protected final ODatabaseDocumentTx database;
+    protected ODatabaseDocumentTx database;
     protected final Features features;
     protected final Configuration configuration;
     protected final OPartitionedDatabasePool pool;
+    protected final String user;
+    protected final String password;
 
     public static OrientGraph open(final Configuration config) {
         OrientGraphFactory factory = new OrientGraphFactory(config);
@@ -89,8 +91,10 @@ public final class OrientGraph implements Graph {
         return factory.getNoTx();
     }
 
-    public OrientGraph(final ODatabaseDocumentTx database, final Configuration configuration) {
+    public OrientGraph(final ODatabaseDocumentTx database, final Configuration configuration, final String user, final String password) {
         this.pool = null;
+        this.user = user;
+        this.password = password;
         this.database = database;
         this.configuration = configuration;
         if (configuration.getBoolean(CONFIG_TRANSACTIONAL, false)) {
@@ -100,9 +104,11 @@ public final class OrientGraph implements Graph {
         }
     }
 
-    public OrientGraph(final OPartitionedDatabasePool pool, final Configuration configuration) {
+    public OrientGraph(final OPartitionedDatabasePool pool, final Configuration configuration, final String user, final String password) {
         this.pool = pool;
         this.database = pool.acquire();
+        this.user = user;
+        this.password = password;
         makeActive();
         this.configuration = configuration;
         if (configuration.getBoolean(CONFIG_TRANSACTIONAL, false)) {
@@ -120,12 +126,25 @@ public final class OrientGraph implements Graph {
         return database;
     }
 
-    public void makeActive() {
+    private void makeActiveDb() {
         final ODatabaseDocument tlDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
         if (database != null && tlDb != database) {
             database.activateOnCurrentThread();
             ODatabaseRecordThreadLocal.INSTANCE.set(database);
         }
+    }
+
+    public void makeActive() {
+        makeActiveDb();
+
+        try {
+            this.database.getMetadata().getSchema().reload();
+        } catch (Exception _) {
+            this.database = new ODatabaseDocumentTx(this.database.getURL(), this.database.isKeepStorageOpen());
+            this.database.open(user, password);
+            makeActiveDb();
+        }
+
     }
 
     @Override
