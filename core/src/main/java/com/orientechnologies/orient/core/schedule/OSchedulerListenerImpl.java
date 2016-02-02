@@ -82,14 +82,14 @@ public class OSchedulerListenerImpl implements OSchedulerListener {
     final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
     if (db.getMetadata().getSchema().existsClass(OScheduler.CLASSNAME))
       return;
-    final OClassImpl f = (OClassImpl) db.getMetadata().getSchema().createClass(OScheduler.CLASSNAME);
-    f.createProperty(OScheduler.PROP_NAME, OType.STRING, (OType) null, false).setMandatory(true).setNotNull(true);
-    f.createProperty(OScheduler.PROP_RULE, OType.STRING, (OType) null, false).setMandatory(true).setNotNull(true);
-    f.createProperty(OScheduler.PROP_ARGUMENTS, OType.EMBEDDEDMAP, (OType) null, false);
-    f.createProperty(OScheduler.PROP_STATUS, OType.STRING, (OType) null, false);
-    f.createProperty(OScheduler.PROP_FUNC, OType.LINK, db.getMetadata().getSchema().getClass(OFunction.CLASS_NAME), false)
+    final OClass f = db.getMetadata().getSchema().createClass(OScheduler.CLASSNAME);
+    f.createProperty(OScheduler.PROP_NAME, OType.STRING, (OType) null, true).setMandatory(true).setNotNull(true);
+    f.createProperty(OScheduler.PROP_RULE, OType.STRING, (OType) null, true).setMandatory(true).setNotNull(true);
+    f.createProperty(OScheduler.PROP_ARGUMENTS, OType.EMBEDDEDMAP, (OType) null, true);
+    f.createProperty(OScheduler.PROP_STATUS, OType.STRING, (OType) null, true);
+    f.createProperty(OScheduler.PROP_FUNC, OType.LINK, db.getMetadata().getSchema().getClass(OFunction.CLASS_NAME), true)
         .setMandatory(true).setNotNull(true);
-    f.createProperty(OScheduler.PROP_STARTTIME, OType.DATETIME, (OType) null, false);
-    f.createProperty(OScheduler.PROP_STARTED, OType.BOOLEAN, (OType) null, false);
+    f.createProperty(OScheduler.PROP_STARTTIME, OType.DATETIME, (OType) null, true);
+    f.createProperty(OScheduler.PROP_STARTED, OType.BOOLEAN, (OType) null, true);
   }
 }

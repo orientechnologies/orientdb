@@ -97,11 +97,11 @@ public class OFunctionLibraryImpl implements OFunctionLibrary {
     if (db.getMetadata().getSchema().existsClass("OFunction"))
       return;
 
-    final OClassImpl f = (OClassImpl) db.getMetadata().getSchema().createClass("OFunction");
-    f.createProperty("name", OType.STRING, (OType) null, false);
-    f.createProperty("code", OType.STRING, (OType) null, false);
-    f.createProperty("language", OType.STRING, (OType) null, false);
-    f.createProperty("idempotent", OType.BOOLEAN, (OType) null, false);
-    f.createProperty("parameters", OType.EMBEDDEDLIST, OType.STRING, false);
+    final OClass f = db.getMetadata().getSchema().createClass("OFunction");
+    f.createProperty("name", OType.STRING, (OType) null, true);
+    f.createProperty("code", OType.STRING, (OType) null, true);
+    f.createProperty("language", OType.STRING, (OType) null, true);
+    f.createProperty("idempotent", OType.BOOLEAN, (OType) null, true);
+    f.createProperty("parameters", OType.EMBEDDEDLIST, OType.STRING, true);
   }
 }
