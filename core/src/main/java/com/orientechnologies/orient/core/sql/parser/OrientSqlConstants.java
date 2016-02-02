@@ -375,7 +375,7 @@ public interface OrientSqlConstants {
   /** RegularExpression Id. */
   int QUOTED_IDENTIFIER = 190;
   /** RegularExpression Id. */
-  int INDEX_IDENTIFIER = 191;
+  int INDEX_COLON = 191;
   /** RegularExpression Id. */
   int INDEXVALUES_IDENTIFIER = 192;
   /** RegularExpression Id. */
@@ -593,7 +593,7 @@ public interface OrientSqlConstants {
     "<CLUSTER>",
     "<IDENTIFIER>",
     "<QUOTED_IDENTIFIER>",
-    "<INDEX_IDENTIFIER>",
+    "<INDEX_COLON>",
     "<INDEXVALUES_IDENTIFIER>",
     "<INDEXVALUESASC_IDENTIFIER>",
     "<INDEXVALUESDESC_IDENTIFIER>",
@@ -603,6 +603,7 @@ public interface OrientSqlConstants {
     "<LETTER>",
     "<PART_LETTER>",
     "\"#\"",
+    "\"__@recordmap@___\"",
     "\"round-robin\"",
   };
 

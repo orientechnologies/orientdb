@@ -11,7 +11,8 @@ public class OIndexIdentifier extends SimpleNode {
   }
 
   protected Type   type;
-  protected String indexName;
+  protected String indexNameString;
+  protected OIndexName indexName;
 
   public OIndexIdentifier(int id) {
     super(id);
@@ -42,7 +43,11 @@ public class OIndexIdentifier extends SimpleNode {
       break;
     }
     builder.append(":");
-    builder.append(indexName);
+    if(indexNameString!=null) {
+      builder.append(indexNameString);
+    }else{
+      indexName.toString(params, builder);
+    }
   }
 }
 /* JavaCC - OriginalChecksum=025f134fd4b27b84210738cdb6dd027c (do not edit this line) */

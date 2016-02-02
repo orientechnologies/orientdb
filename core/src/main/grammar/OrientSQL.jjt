@@ -475,13 +475,13 @@ TOKEN :
 |
   < QUOTED_IDENTIFIER: ( "`" (~["`"]) (~["`"])*  "`") >
 |
-  < INDEX_IDENTIFIER: ( "I" | "i") ( "N" | "n") ( "D" | "d") ( "E" | "e") ( "X" | "x") ":" ( "__@recordmap@___" )? <IDENTIFIER> ( ( <DOT> | <MINUS> ) <IDENTIFIER> )*  >
+  < INDEX_COLON: ( "I" | "i") ( "N" | "n") ( "D" | "d") ( "E" | "e") ( "X" | "x") ":" >
 |
-  < INDEXVALUES_IDENTIFIER: ( "I" | "i") ( "N" | "n") ( "D" | "d") ( "E" | "e") ( "X" | "x") ( "V" | "v") ( "A" | "a") ( "L" | "l") ( "U" | "u") ( "E" | "e") ( "S" | "s") ":" <IDENTIFIER> ( ( <DOT> | <MINUS> ) <IDENTIFIER> )*  >
+  < INDEXVALUES_IDENTIFIER: ( "I" | "i") ( "N" | "n") ( "D" | "d") ( "E" | "e") ( "X" | "x") ( "V" | "v") ( "A" | "a") ( "L" | "l") ( "U" | "u") ( "E" | "e") ( "S" | "s") ":" ( "__@recordmap@___" )? <IDENTIFIER> ( ( <DOT> | <MINUS> ) <IDENTIFIER> )* >
 |
-  < INDEXVALUESASC_IDENTIFIER:( "I" | "i") ( "N" | "n") ( "D" | "d") ( "E" | "e") ( "X" | "x") ( "V" | "v") ( "A" | "a") ( "L" | "l") ( "U" | "u") ( "E" | "e") ( "S" | "s") ( "A" | "a") ( "S" | "s") ( "C" | "c") ":" <IDENTIFIER> ( ( <DOT> | <MINUS> ) <IDENTIFIER> )*  >
+  < INDEXVALUESASC_IDENTIFIER:( "I" | "i") ( "N" | "n") ( "D" | "d") ( "E" | "e") ( "X" | "x") ( "V" | "v") ( "A" | "a") ( "L" | "l") ( "U" | "u") ( "E" | "e") ( "S" | "s") ( "A" | "a") ( "S" | "s") ( "C" | "c") ":" ( "__@recordmap@___" )? <IDENTIFIER> ( ( <DOT> | <MINUS> ) <IDENTIFIER> )* >
 |
-  < INDEXVALUESDESC_IDENTIFIER: ( "I" | "i") ( "N" | "n") ( "D" | "d") ( "E" | "e") ( "X" | "x") ( "V" | "v") ( "A" | "a") ( "L" | "l") ( "U" | "u") ( "E" | "e") ( "S" | "s") ( "D" | "d") ( "E" | "e") ( "S" | "s") ( "C" | "c") ":" <IDENTIFIER> ( ( <DOT> | <MINUS> ) <IDENTIFIER> )*  >
+  < INDEXVALUESDESC_IDENTIFIER: ( "I" | "i") ( "N" | "n") ( "D" | "d") ( "E" | "e") ( "X" | "x") ( "V" | "v") ( "A" | "a") ( "L" | "l") ( "U" | "u") ( "E" | "e") ( "S" | "s") ( "D" | "d") ( "E" | "e") ( "S" | "s") ( "C" | "c") ":" ( "__@recordmap@___" )? <IDENTIFIER> ( ( <DOT> | <MINUS> ) <IDENTIFIER> )* >
 |
   < CLUSTER_IDENTIFIER: <CLUSTER> <COLON> <IDENTIFIER>  >
 |
@@ -1384,11 +1384,13 @@ OInsertStatement InsertStatement():
 	<INSERT>
 	<INTO>
 	(
+	    LOOKAHEAD(IndexIdentifier())
+    	jjtThis.targetIndex = IndexIdentifier()
+    	|
 	    jjtThis.targetClass = Identifier() [<CLUSTER> jjtThis.targetClusterName = Identifier()]
 	    |
 	    jjtThis.targetCluster = Cluster()
-	    |
-	    jjtThis.targetIndex = IndexIdentifier()
+
 	)
     [ LOOKAHEAD(InsertBody()) jjtThis.insertBody = InsertBody() ]
     [ <RETURN> jjtThis.returnStatement = Projection() ]
@@ -2122,12 +2124,11 @@ OFromItem FromItem():
     	|
     	jjtThis.clusterList = ClusterList()
     	|
+    	LOOKAHEAD(IndexIdentifier())
     	jjtThis.index = IndexIdentifier()
     	|
         jjtThis.metadata = MetadataIdentifier()
     	|
-    	/*jjtThis.className = Identifier()
-    	|*/
     	<LPAREN> (
     	            LOOKAHEAD(SelectStatement()) jjtThis.statement = SelectStatement()
     	            |
@@ -2188,24 +2189,58 @@ OMetadataIdentifier MetadataIdentifier():
     { return jjtThis; }
 }
 
+OIndexName IndexName():
+{
+    StringBuilder builder = new StringBuilder();
+    Token token;
+    OIdentifier lastIdentifier;
+}
+{
+    (
+      ( "__@recordmap@___" { builder.append("__@recordmap@___"); } )?
+
+      lastIdentifier = Identifier() { builder.append(lastIdentifier.getValue()); }
+      (
+        (
+            <DOT> { builder.append("."); }
+            |
+            <MINUS> { builder.append("-"); }
+        )
+        lastIdentifier = Identifier() { builder.append(lastIdentifier.getValue()); }
+      )*
+    )
+    {
+        jjtThis.value = builder.toString();
+        return jjtThis;
+    }
+}
+
+
 OIndexIdentifier IndexIdentifier():
 {
     Token token;
 }
 {
     (
-    	token = <INDEX_IDENTIFIER> { jjtThis.type = OIndexIdentifier.Type.INDEX; }
-    	|
-    	token = <INDEXVALUES_IDENTIFIER> { jjtThis.type = OIndexIdentifier.Type.VALUES; }
-    	|
-    	token = <INDEXVALUESASC_IDENTIFIER> { jjtThis.type = OIndexIdentifier.Type.VALUESASC; }
-    	|
-    	token = <INDEXVALUESDESC_IDENTIFIER> { jjtThis.type = OIndexIdentifier.Type.VALUESDESC; }
+        (
+            <INDEX_COLON>
+            jjtThis.indexName = IndexName() { jjtThis.type = OIndexIdentifier.Type.INDEX; }
+        )
+        |
+        (
+            (
+                token = <INDEXVALUES_IDENTIFIER> { jjtThis.type = OIndexIdentifier.Type.VALUES; }
+                |
+                token = <INDEXVALUESASC_IDENTIFIER> { jjtThis.type = OIndexIdentifier.Type.VALUESASC; }
+                |
+                token = <INDEXVALUESDESC_IDENTIFIER> { jjtThis.type = OIndexIdentifier.Type.VALUESDESC; }
+            )
+            {
+                jjtThis.indexNameString = token.image.split(":")[1];
+            }
+        )
     )
-    {
-        jjtThis.indexName = token.image.split(":")[1];
-        return jjtThis;
-    }
+    { return jjtThis; }
 }
 
 OWhereClause WhereClause():
@@ -3454,9 +3489,10 @@ OFindReferencesStatement FindReferencesStatement():
     [
     	<LBRACKET> { jjtThis.targets = new ArrayList<SimpleNode>(); }
     	(
-    		lastTarget = Identifier()
-    		|
+    	    LOOKAHEAD(IndexIdentifier())
     		lastTarget = IndexIdentifier()
+            |
+    		lastTarget = Identifier()
     	){ jjtThis.targets.add(lastTarget); }
     	(
     		<COMMA>
