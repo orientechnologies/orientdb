@@ -1878,6 +1878,15 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     return currentDatabase;
   }
 
+  /**
+   * Pass an existent database instance to be used as current.
+   */
+  public OConsoleDatabaseApp setCurrentDatabase(final ODatabaseDocumentTx iCurrentDatabase) {
+    currentDatabase = iCurrentDatabase;
+    currentDatabaseName = iCurrentDatabase.getName();
+    return this;
+  }
+
   /** Should be used only by console commands */
   public String getCurrentDatabaseName() {
     return currentDatabaseName;
