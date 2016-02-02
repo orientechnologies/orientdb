@@ -1400,35 +1400,6 @@ public class ODocumentHelper {
     return value instanceof Float || value instanceof Double;
   }
 
-  public static void deleteCrossRefs(final ORID iRid, final ODocument iContent) {
-    for (String fieldName : iContent.fieldNames()) {
-      final Object fieldValue = iContent.field(fieldName);
-      if (fieldValue != null) {
-        if (fieldValue.equals(iRid)) {
-          // REMOVE THE LINK
-          iContent.field(fieldName, (ORID) null);
-          iContent.save();
-        } else if (fieldValue instanceof ODocument && ((ODocument) fieldValue).isEmbedded()) {
-          // EMBEDDED DOCUMENT: GO RECURSIVELY
-          deleteCrossRefs(iRid, (ODocument) fieldValue);
-        } else if (OMultiValue.isMultiValue(fieldValue)) {
-          // MULTI-VALUE (COLLECTION, ARRAY OR MAP), CHECK THE CONTENT
-          for (final Iterator<?> it = OMultiValue.getMultiValueIterator(fieldValue, false); it.hasNext();) {
-            final Object item = it.next();
-
-            if (fieldValue.equals(iRid)) {
-              // DELETE ITEM
-              it.remove();
-            } else if (item instanceof ODocument && ((ODocument) item).isEmbedded()) {
-              // EMBEDDED DOCUMENT: GO RECURSIVELY
-              deleteCrossRefs(iRid, (ODocument) item);
-            }
-          }
-        }
-      }
-    }
-  }
-
   public static <T> T makeDbCall(final ODatabaseDocumentInternal databaseRecord, final ODbRelatedCall<T> function) {
     databaseRecord.activateOnCurrentThread();
     return function.call();

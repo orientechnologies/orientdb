@@ -395,10 +395,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <systemPropertyVariables>
-                        <!-- SET THIS TO AVOID ASKING FOR PASSWORD DURING 
-                            TESTS -->
-                        <propertyName>ORIENTDB_ROOT_PASSWORD</propertyName>
-                        <propertyName>ORIENTDB_NODE_NAME</propertyName>
+			<security.userPasswordSaltIterations>1</security.userPasswordSaltIterations>
                     </systemPropertyVariables>
                 </configuration>
             </plugin>

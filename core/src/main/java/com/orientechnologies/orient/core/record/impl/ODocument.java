@@ -2312,18 +2312,6 @@ public class ODocument extends ORecordAbstract
     }
   }
 
-  @Override
-  protected ODocument flatCopy() {
-    if (isDirty())
-      throw new IllegalStateException("Cannot execute a flat copy of a dirty record");
-
-    final ODocument cloned = new ODocument();
-
-    cloned.setOrdered(_ordered);
-    cloned.fill(_recordId, _recordVersion, _source, false);
-    return cloned;
-  }
-
   protected byte[] toStream(final boolean iOnlyDelta) {
     STATUS prev = _status;
     _status = STATUS.MARSHALLING;
