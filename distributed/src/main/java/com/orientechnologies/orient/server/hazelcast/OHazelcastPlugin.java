@@ -282,6 +282,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     nodeCfg.field("id", getLocalNodeId());
     nodeCfg.field("name", getLocalNodeName());
     nodeCfg.field("startedOn", startedOn);
+    nodeCfg.field("status", getNodeStatus());
 
     List<Map<String, Object>> listeners = new ArrayList<Map<String, Object>>();
     nodeCfg.field("listeners", listeners, OType.EMBEDDEDLIST);
