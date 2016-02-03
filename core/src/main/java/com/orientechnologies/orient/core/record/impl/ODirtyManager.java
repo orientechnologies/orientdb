@@ -194,4 +194,8 @@ public class ODirtyManager {
     }
   }
 
+  public void clear() {
+    cleanForSave();
+    getReal().references =null;
+  }
 }
