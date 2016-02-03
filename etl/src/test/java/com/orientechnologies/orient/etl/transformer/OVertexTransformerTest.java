@@ -17,7 +17,9 @@
  */
 package com.orientechnologies.orient.etl.transformer;
 
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.etl.OETLBaseTest;
+import com.orientechnologies.orient.etl.OETLProcessHaltedException;
 import com.tinkerpop.blueprints.Parameter;
 import com.tinkerpop.blueprints.Vertex;
 import org.junit.Before;
@@ -59,8 +61,8 @@ public class OVertexTransformerTest extends OETLBaseTest {
     assertEquals(2, graph.countVertices("V"));
   }
 
-//  @Test(expected = ORecordDuplicatedException.class)
-  @Test
+  @Test(expected = OETLProcessHaltedException.class)
+//  @Test
   public void testErrorOnDuplicateVertex() {
     process("{source: { content: { value: 'name,\nGregor\nGregor\nHans' } }, extractor : { csv: {} },"
         + " transformers: [ {vertex: {class:'Person', skipDuplicates:false}},"
