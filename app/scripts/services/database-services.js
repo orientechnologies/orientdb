@@ -68,9 +68,8 @@ database.factory('Database', function (DatabaseApi, localStorageService) {
       'SHORT': 's',
       'LINKSET': 'e',
       'EMBEDDEDLIST': 'e',
-      'EMBEDDEDMAP': 'e',
-      'EMBEDDEDSET': 'e',
-      'EMBEDDED': 'e'
+      'EMBEDDEDSET': 'e'
+
     },
     getMetadata: function () {
       /*if (current.metadata == null) {
