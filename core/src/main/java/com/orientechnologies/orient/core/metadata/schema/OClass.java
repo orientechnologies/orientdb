@@ -32,9 +32,8 @@ import java.util.Set;
 
 /**
  * Schema class
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
  */
 public interface OClass extends Comparable<OClass> {
   enum ATTRIBUTES {
@@ -42,8 +41,7 @@ public interface OClass extends Comparable<OClass> {
   }
 
   enum INDEX_TYPE {
-    UNIQUE(true), NOTUNIQUE(true), FULLTEXT(true), DICTIONARY(false), PROXY(true), UNIQUE_HASH_INDEX(true), NOTUNIQUE_HASH_INDEX(
-        true), FULLTEXT_HASH_INDEX(true), DICTIONARY_HASH_INDEX(false), SPATIAL(true), FULLTEXTEXP(true);
+    UNIQUE(true), NOTUNIQUE(true), FULLTEXT(true), DICTIONARY(false), PROXY(true), UNIQUE_HASH_INDEX(true), NOTUNIQUE_HASH_INDEX(true), FULLTEXT_HASH_INDEX(true), DICTIONARY_HASH_INDEX(false), SPATIAL(true), FULLTEXTEXP(true);
 
     private boolean automaticIndexable;
 
@@ -106,7 +104,29 @@ public interface OClass extends Comparable<OClass> {
 
   OProperty createProperty(String iPropertyName, OType iType, OClass iLinkedClass);
 
+  /**
+   * Create a property in the class with the specified options.
+   *
+   * @param iPropertyName the name of the property.
+   * @param iType         the type of the property.
+   * @param iLinkedClass  in case of property of type LINK,LINKLIST,LINKSET,LINKMAP,EMBEDDED,EMBEDDEDLIST,EMBEDDEDSET,EMBEDDEDMAP can be specified  a linked class in  all the other cases should be null
+   * @param iUnsafe       if true avoid to check the persistent data for compatibility, should be used only if all persistent data is compatible with the property
+   * @return the created property.
+   */
+  OProperty createProperty(String iPropertyName, OType iType, OClass iLinkedClass, boolean iUnsafe);
+
   OProperty createProperty(String iPropertyName, OType iType, OType iLinkedType);
+
+  /**
+   * Create a property in the class with the specified options.
+   *
+   * @param iPropertyName the name of the property.
+   * @param iType         the type of the property.
+   * @param iLinkedType   in case of property of type EMBEDDEDLIST,EMBEDDEDSET,EMBEDDEDMAP can be specified  a linked type in all the other cases should be null
+   * @param iUnsafe       if true avoid to check the persistent data for compatibility, should be used only if all persistent data is compatible with the property
+   * @return the created property.
+   */
+  OProperty createProperty(String iPropertyName, OType iType, OType iLinkedType, boolean iUnsafe);
 
   void dropProperty(String iPropertyName);
 
@@ -141,13 +161,11 @@ public interface OClass extends Comparable<OClass> {
   Collection<OClass> getAllBaseClasses();
 
   /**
-   *
    * @return all the subclasses (one level hierarchy only)
    */
   Collection<OClass> getSubclasses();
 
   /**
-   *
    * @return all the subclass hierarchy
    */
   Collection<OClass> getAllSubclasses();
@@ -164,7 +182,7 @@ public interface OClass extends Comparable<OClass> {
   /**
    * Returns the oversize factor. Oversize is used to extend the record size by a factor to avoid defragmentation upon updates. 0 or
    * 1.0 means no oversize.
-   * 
+   *
    * @return Oversize factor
    * @see #setOverSize(float)
    */
@@ -173,7 +191,7 @@ public interface OClass extends Comparable<OClass> {
   /**
    * Sets the oversize factor. Oversize is used to extend the record size by a factor to avoid defragmentation upon updates. 0 or
    * 1.0 means no oversize. Default is 0.
-   * 
+   *
    * @return Oversize factor
    * @see #getOverSize()
    */
@@ -191,14 +209,14 @@ public interface OClass extends Comparable<OClass> {
 
   /**
    * Truncates all the clusters the class uses.
-   * 
+   *
    * @throws IOException
    */
   void truncate() throws IOException;
 
   /**
    * Tells if the current instance extends the passed schema class (iClass).
-   * 
+   *
    * @param iClassName
    * @return true if the current instance extends the passed schema class (iClass).
    * @see #isSuperClassOf(OClass)
@@ -207,7 +225,7 @@ public interface OClass extends Comparable<OClass> {
 
   /**
    * Returns true if the current instance extends the passed schema class (iClass).
-   * 
+   *
    * @param iClass
    * @return true if the current instance extends the passed schema class (iClass).
    * @see #isSuperClassOf(OClass)
@@ -216,7 +234,7 @@ public interface OClass extends Comparable<OClass> {
 
   /**
    * Returns true if the passed schema class (iClass) extends the current instance.
-   * 
+   *
    * @param iClass
    * @return Returns true if the passed schema class extends the current instance.
    * @see #isSubClassOf(OClass)
@@ -234,14 +252,10 @@ public interface OClass extends Comparable<OClass> {
   /**
    * Creates database index that is based on passed in field names. Given index will be added into class instance and associated
    * with database index.
-   * 
-   * @param fields
-   *          Field names from which index will be created.
-   * @param iName
-   *          Database index name
-   * @param iType
-   *          Index type.
-   * 
+   *
+   * @param fields Field names from which index will be created.
+   * @param iName  Database index name
+   * @param iType  Index type.
    * @return Class index registered inside of given class ans associated with database index.
    */
   OIndex<?> createIndex(String iName, INDEX_TYPE iType, String... fields);
@@ -249,129 +263,83 @@ public interface OClass extends Comparable<OClass> {
   /**
    * Creates database index that is based on passed in field names. Given index will be added into class instance and associated
    * with database index.
-   * 
-   * @param fields
-   *          Field names from which index will be created.
-   * @param iName
-   *          Database index name
-   * @param iType
-   *          Index type.
-   * 
+   *
+   * @param fields Field names from which index will be created.
+   * @param iName  Database index name
+   * @param iType  Index type.
    * @return Class index registered inside of given class ans associated with database index.
    */
   OIndex<?> createIndex(String iName, String iType, String... fields);
 
   /**
    * Creates database index that is based on passed in field names. Given index will be added into class instance.
-   * 
-   * @param fields
-   *          Field names from which index will be created.
-   * @param iName
-   *          Database index name.
-   * @param iType
-   *          Index type.
-   * @param iProgressListener
-   *          Progress listener.
-   * 
+   *
+   * @param fields            Field names from which index will be created.
+   * @param iName             Database index name.
+   * @param iType             Index type.
+   * @param iProgressListener Progress listener.
    * @return Class index registered inside of given class ans associated with database index.
    */
   OIndex<?> createIndex(String iName, INDEX_TYPE iType, OProgressListener iProgressListener, String... fields);
 
   /**
    * Creates database index that is based on passed in field names. Given index will be added into class instance.
-   * 
-   * 
-   * @param iName
-   *          Database index name.
-   * @param iType
-   *          Index type.
-   * @param iProgressListener
-   *          Progress listener.
-   * 
-   * @param metadata
-   *          Additional parameters which will be added in index configuration document as "metadata" field.
-   * 
-   * @param algorithm
-   *          Algorithm to use for indexing.
-   * 
-   * @param fields
-   *          Field names from which index will be created. @return Class index registered inside of given class ans associated with
-   *          database index.
+   *
+   * @param iName             Database index name.
+   * @param iType             Index type.
+   * @param iProgressListener Progress listener.
+   * @param metadata          Additional parameters which will be added in index configuration document as "metadata" field.
+   * @param algorithm         Algorithm to use for indexing.
+   * @param fields            Field names from which index will be created. @return Class index registered inside of given class ans associated with
+   *                          database index.
    */
-  OIndex<?> createIndex(String iName, String iType, OProgressListener iProgressListener, ODocument metadata, String algorithm,
-      String... fields);
+  OIndex<?> createIndex(String iName, String iType, OProgressListener iProgressListener, ODocument metadata, String algorithm, String... fields);
 
   /**
    * Creates database index that is based on passed in field names. Given index will be added into class instance.
-   * 
-   * 
-   * @param iName
-   *          Database index name.
-   * @param iType
-   *          Index type.
-   * @param iProgressListener
-   *          Progress listener.
-   * 
-   * @param metadata
-   *          Additional parameters which will be added in index configuration document as "metadata" field.
-   * 
-   * @param fields
-   *          Field names from which index will be created. @return Class index registered inside of given class ans associated with
-   *          database index.
+   *
+   * @param iName             Database index name.
+   * @param iType             Index type.
+   * @param iProgressListener Progress listener.
+   * @param metadata          Additional parameters which will be added in index configuration document as "metadata" field.
+   * @param fields            Field names from which index will be created. @return Class index registered inside of given class ans associated with
+   *                          database index.
    */
   OIndex<?> createIndex(String iName, String iType, OProgressListener iProgressListener, ODocument metadata, String... fields);
 
   /**
    * Returns list of indexes that contain passed in fields names as their first keys. Order of fields does not matter.
-   * 
+   * <p>
    * All indexes sorted by their count of parameters in ascending order. If there are indexes for the given set of fields in super
    * class they will be taken into account.
-   * 
-   * 
-   * 
-   * @param fields
-   *          Field names.
-   * 
+   *
+   * @param fields Field names.
    * @return list of indexes that contain passed in fields names as their first keys.
-   * 
    * @see com.orientechnologies.orient.core.index.OIndexDefinition#getParamCount()
    */
   Set<OIndex<?>> getInvolvedIndexes(Collection<String> fields);
 
   /**
-   * 
-   * 
-   * @param fields
-   *          Field names.
+   * @param fields Field names.
    * @return <code>true</code> if given fields are contained as first key fields in class indexes.
-   * 
    * @see #getInvolvedIndexes(java.util.Collection)
    */
   Set<OIndex<?>> getInvolvedIndexes(String... fields);
 
   /**
    * Returns list of indexes that contain passed in fields names as their first keys. Order of fields does not matter.
-   * 
+   * <p>
    * Indexes that related only to the given class will be returned.
-   * 
-   * 
-   * 
-   * @param fields
-   *          Field names.
-   * 
+   *
+   * @param fields Field names.
    * @return list of indexes that contain passed in fields names as their first keys.
-   * 
    * @see com.orientechnologies.orient.core.index.OIndexDefinition#getParamCount()
    */
   Set<OIndex<?>> getClassInvolvedIndexes(Collection<String> fields);
 
   /**
-   * 
-   * 
-   * @param fields
-   *          Field names.
+   * @param fields Field names.
    * @return list of indexes that contain passed in fields names as their first keys.
-   * 
    * @see #getClassInvolvedIndexes(java.util.Collection)
    */
   Set<OIndex<?>> getClassInvolvedIndexes(String... fields);
@@ -379,17 +347,14 @@ public interface OClass extends Comparable<OClass> {
   /**
    * Indicates whether given fields are contained as first key fields in class indexes. Order of fields does not matter. If there
    * are indexes for the given set of fields in super class they will be taken into account.
-   * 
-   * @param fields
-   *          Field names.
-   * 
+   *
+   * @param fields Field names.
    * @return <code>true</code> if given fields are contained as first key fields in class indexes.
    */
   boolean areIndexed(Collection<String> fields);
 
   /**
-   * @param fields
-   *          Field names.
+   * @param fields Field names.
    * @return <code>true</code> if given fields are contained as first key fields in class indexes.
    * @see #areIndexed(java.util.Collection)
    */
@@ -397,9 +362,8 @@ public interface OClass extends Comparable<OClass> {
 
   /**
    * Returns index instance by database index name.
-   * 
-   * @param iName
-   *          Database index name.
+   *
+   * @param iName Database index name.
    * @return Index instance.
    */
   OIndex<?> getClassIndex(String iName);
