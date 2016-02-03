@@ -411,6 +411,8 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
         break;
       }
 
+      pipeline.setDocumentDatabase(documentDatabase);
+      
       if (classes != null) {
         for (ODocument cls : classes) {
           schemaClass = getOrCreateClass((String) cls.field("name"), (String) cls.field("extends"));
