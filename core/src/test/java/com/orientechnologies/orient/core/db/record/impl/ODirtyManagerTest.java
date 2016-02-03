@@ -31,7 +31,7 @@ public class ODirtyManagerTest {
     ODocument doc = new ODocument();
     doc.field("test", "ddd");
     ODirtyManager manager = ORecordInternal.getDirtyManager(doc);
-    assertEquals(1, manager.getNewRecord().size());
+    assertEquals(1, manager.getNewRecords().size());
   }
 
   @Test
@@ -42,7 +42,7 @@ public class ODirtyManagerTest {
     ODocument doc2 = new ODocument();
     doc1.field("test2", doc2);
     ODirtyManager manager = ORecordInternal.getDirtyManager(doc);
-    assertEquals(2, manager.getNewRecord().size());
+    assertEquals(2, manager.getNewRecords().size());
     assertEquals(1, manager.getPointed(doc).size());
     assertEquals(doc2, manager.getPointed(doc).get(0));
   }
@@ -54,7 +54,7 @@ public class ODirtyManagerTest {
     ODocument doc2 = new ODocument();
     doc.field("test1", doc2);
     ODirtyManager manager = ORecordInternal.getDirtyManager(doc);
-    assertEquals(2, manager.getNewRecord().size());
+    assertEquals(2, manager.getNewRecords().size());
     assertEquals(1, manager.getPointed(doc).size());
     assertEquals(doc2, manager.getPointed(doc).get(0));
   }
@@ -67,7 +67,7 @@ public class ODirtyManagerTest {
     doc.field("test1", doc2);
     doc.removeField("test1");
     ODirtyManager manager = ORecordInternal.getDirtyManager(doc);
-    assertEquals(2, manager.getNewRecord().size());
+    assertEquals(2, manager.getNewRecords().size());
     assertEquals(0, manager.getPointed(doc).size());
   }
 
@@ -79,7 +79,7 @@ public class ODirtyManagerTest {
     doc.field("test1", doc2);
     doc.field("test1", (Object) null);
     ODirtyManager manager = ORecordInternal.getDirtyManager(doc);
-    assertEquals(2, manager.getNewRecord().size());
+    assertEquals(2, manager.getNewRecords().size());
     assertEquals(0, manager.getPointed(doc).size());
   }
 
@@ -90,7 +90,7 @@ public class ODirtyManagerTest {
     ODocument doc1 = new ODocument();
     doc.field("test1", doc1);
     ODirtyManager manager = ORecordInternal.getDirtyManager(doc1);
-    assertEquals(2, manager.getNewRecord().size());
+    assertEquals(2, manager.getNewRecords().size());
     assertEquals(1, manager.getPointed(doc).size());
     assertEquals(doc1, manager.getPointed(doc).get(0));
   }
@@ -111,7 +111,7 @@ public class ODirtyManagerTest {
 
     ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);
     ODirtyManager manager = ORecordInternal.getDirtyManager(doc);
-    assertEquals(3, manager.getNewRecord().size());
+    assertEquals(3, manager.getNewRecords().size());
     assertEquals(2, manager.getPointed(doc).size());
     assertTrue(manager.getPointed(doc).contains(doc1));
     assertTrue(manager.getPointed(doc).contains(doc2));
@@ -135,7 +135,7 @@ public class ODirtyManagerTest {
 
     ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);
     ODirtyManager manager = ORecordInternal.getDirtyManager(doc);
-    assertEquals(1, manager.getNewRecord().size());
+    assertEquals(1, manager.getNewRecords().size());
     assertEquals(null, manager.getPointed(doc));
   }
 
@@ -155,7 +155,7 @@ public class ODirtyManagerTest {
     ODirtyManager manager = ORecordInternal.getDirtyManager(doc1);
     ODirtyManager manager2 = ORecordInternal.getDirtyManager(doc2);
     assertTrue(manager2.isSame(manager));
-    assertEquals(3, manager.getNewRecord().size());
+    assertEquals(3, manager.getNewRecords().size());
   }
 
   @Test
@@ -168,7 +168,7 @@ public class ODirtyManagerTest {
     doc.field("list", map);
     ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);
     ODirtyManager manager = ORecordInternal.getDirtyManager(doc1);
-    assertEquals(2, manager.getNewRecord().size());
+    assertEquals(2, manager.getNewRecords().size());
     assertEquals(1, manager.getPointed(doc).size());
     assertTrue(manager.getPointed(doc).contains(doc1));
   }
@@ -187,7 +187,7 @@ public class ODirtyManagerTest {
 
     ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);
     ODirtyManager manager = ORecordInternal.getDirtyManager(doc);
-    assertEquals(1, manager.getNewRecord().size());
+    assertEquals(1, manager.getNewRecords().size());
   }
 
   @Test
@@ -207,7 +207,7 @@ public class ODirtyManagerTest {
 
     ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);
     ODirtyManager manager = ORecordInternal.getDirtyManager(doc);
-    assertEquals(1, manager.getNewRecord().size());
+    assertEquals(1, manager.getNewRecords().size());
   }
 
   @Test
@@ -220,7 +220,7 @@ public class ODirtyManagerTest {
     doc.field("bag", bag);
     ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);
     ODirtyManager manager = ORecordInternal.getDirtyManager(doc1);
-    assertEquals(2, manager.getNewRecord().size());
+    assertEquals(2, manager.getNewRecords().size());
   }
 
   @Test
@@ -240,7 +240,7 @@ public class ODirtyManagerTest {
     ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);
     ODirtyManager manager = ORecordInternal.getDirtyManager(doc);
 
-    assertEquals(2, manager.getNewRecord().size());
+    assertEquals(2, manager.getNewRecords().size());
     assertEquals(1, manager.getPointed(doc).size());
     assertTrue(manager.getPointed(doc).contains(link));
   }
@@ -263,7 +263,7 @@ public class ODirtyManagerTest {
     ODirtyManager manager = ORecordInternal.getDirtyManager(doc);
     ODirtyManager managerNested = ORecordInternal.getDirtyManager(embeddedInSet);
     assertTrue(manager.isSame(managerNested));
-    assertEquals(2, manager.getNewRecord().size());
+    assertEquals(2, manager.getNewRecords().size());
     assertEquals(1, manager.getPointed(doc).size());
     assertTrue(manager.getPointed(doc).contains(link));
   }
@@ -282,7 +282,7 @@ public class ODirtyManagerTest {
     doc.field("set", set, OType.EMBEDDEDSET);
     ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);
     ODirtyManager manager = ORecordInternal.getDirtyManager(doc);
-    assertEquals(2, manager.getNewRecord().size());
+    assertEquals(2, manager.getNewRecords().size());
     assertEquals(1, manager.getPointed(doc).size());
     assertTrue(manager.getPointed(doc).contains(link));
   }
@@ -303,7 +303,7 @@ public class ODirtyManagerTest {
     doc.field("set", set, OType.EMBEDDEDSET);
     ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);
     ODirtyManager manager = ORecordInternal.getDirtyManager(doc);
-    assertEquals(2, manager.getNewRecord().size());
+    assertEquals(2, manager.getNewRecords().size());
     assertEquals(1, manager.getPointed(doc).size());
     assertTrue(manager.getPointed(doc).contains(link));
   }
@@ -322,7 +322,7 @@ public class ODirtyManagerTest {
     doc.field("set", map, OType.EMBEDDEDMAP);
     ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);
     ODirtyManager manager = ORecordInternal.getDirtyManager(doc);
-    assertEquals(2, manager.getNewRecord().size());
+    assertEquals(2, manager.getNewRecords().size());
     assertEquals(1, manager.getPointed(doc).size());
     assertTrue(manager.getPointed(doc).contains(link));
   }
@@ -337,7 +337,7 @@ public class ODirtyManagerTest {
     doc.field("set", set);
     ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);
     ODirtyManager manager = ORecordInternal.getDirtyManager(doc);
-    assertEquals(2, manager.getNewRecord().size());
+    assertEquals(2, manager.getNewRecords().size());
     assertEquals(1, manager.getPointed(doc).size());
     assertTrue(manager.getPointed(doc).contains(link));
   }
@@ -351,7 +351,7 @@ public class ODirtyManagerTest {
     set.add(link);
     doc.field("set", set, OType.LINKSET);
     ODirtyManager manager = ORecordInternal.getDirtyManager(doc);
-    assertEquals(2, manager.getNewRecord().size());
+    assertEquals(2, manager.getNewRecords().size());
     assertEquals(1, manager.getPointed(doc).size());
     assertTrue(manager.getPointed(doc).contains(link));
   }
@@ -367,7 +367,7 @@ public class ODirtyManagerTest {
     doc.removeField("set");
     
     ODirtyManager manager = ORecordInternal.getDirtyManager(doc);
-    assertEquals(2, manager.getNewRecord().size());
+    assertEquals(2, manager.getNewRecords().size());
     assertEquals(0, manager.getPointed(doc).size());
     assertTrue(manager.getPointed(doc).contains(link));
   }
@@ -385,7 +385,7 @@ public class ODirtyManagerTest {
 
     ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);
     ODirtyManager manager = ORecordInternal.getDirtyManager(doc);
-    assertEquals(4, manager.getNewRecord().size());
+    assertEquals(4, manager.getNewRecords().size());
     assertEquals(3, manager.getPointed(doc).size());
     assertTrue(manager.getPointed(doc).contains(link));
   }
@@ -400,7 +400,7 @@ public class ODirtyManagerTest {
     doc.field("map", map, OType.LINKMAP);
     ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);
     ODirtyManager manager = ORecordInternal.getDirtyManager(doc);
-    assertEquals(2, manager.getNewRecord().size());
+    assertEquals(2, manager.getNewRecords().size());
     assertEquals(1, manager.getPointed(doc).size());
     assertTrue(manager.getPointed(doc).contains(link));
   }
@@ -422,7 +422,7 @@ public class ODirtyManagerTest {
 
     ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);
     ODirtyManager manager = ORecordInternal.getDirtyManager(doc);
-    assertEquals(2, manager.getNewRecord().size());
+    assertEquals(2, manager.getNewRecords().size());
     assertEquals(1, manager.getPointed(doc).size());
     // TODO: double check this, it's an overhead
     assertEquals(1, manager.getPointed(embeddedMapDoc).size());

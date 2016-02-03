@@ -38,7 +38,7 @@ public class ODirtyManagerRidbagTest {
       doc.field("bag", bag);
       ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);
       ODirtyManager manager = ORecordInternal.getDirtyManager(doc1);
-      assertEquals(2, manager.getNewRecord().size());
+      assertEquals(2, manager.getNewRecords().size());
     } finally {
       OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(value);
     }

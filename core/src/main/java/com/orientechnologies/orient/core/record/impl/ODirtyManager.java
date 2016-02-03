@@ -17,15 +17,15 @@ public class ODirtyManager {
 
   private ODirtyManager                       overrider;
   private Map<ODocument, List<OIdentifiable>> references;
-  private Set<ORecord>                        newRecord;
+  private Set<ORecord>                        newRecords;
   private Set<ORecord>                        updateRecords;
 
   public void setDirty(ORecord record) {
     ODirtyManager real = getReal();
     if (record.getIdentity().isNew()) {
-      if (real.newRecord == null)
-        real.newRecord = Collections.newSetFromMap(new IdentityHashMap<ORecord, Boolean>());
-      real.newRecord.add(record);
+      if (real.newRecords == null)
+        real.newRecords = Collections.newSetFromMap(new IdentityHashMap<ORecord, Boolean>());
+      real.newRecords.add(record);
     } else {
       if (real.updateRecords == null)
         real.updateRecords = Collections.newSetFromMap(new IdentityHashMap<ORecord, Boolean>());
@@ -43,8 +43,8 @@ public class ODirtyManager {
     return real;
   }
 
-  public Set<ORecord> getNewRecord() {
-    return getReal().newRecord;
+  public Set<ORecord> getNewRecords() {
+    return getReal().newRecords;
   }
 
   public Set<ORecord> getUpdateRecords() {
@@ -65,10 +65,10 @@ public class ODirtyManager {
   public void merge(ODirtyManager toMerge) {
     if (isSame(toMerge))
       return;
-    if (toMerge.getNewRecord() != null) {
-      if (newRecord == null)
-        newRecord = Collections.newSetFromMap(new IdentityHashMap<ORecord, Boolean>());
-      this.newRecord.addAll(toMerge.getNewRecord());
+    if (toMerge.getNewRecords() != null) {
+      if (newRecords == null)
+        newRecords = Collections.newSetFromMap(new IdentityHashMap<ORecord, Boolean>());
+      this.newRecords.addAll(toMerge.getNewRecords());
     }
     if (toMerge.getUpdateRecords() != null) {
       if (updateRecords == null)
@@ -161,14 +161,14 @@ public class ODirtyManager {
     if (real == oDirtyManager)
       return;
     real.overrider = oDirtyManager;
-    real.newRecord = null;
+    real.newRecords = null;
     real.updateRecords = null;
     real.references = null;
   }
 
-  public void cleanForSave() {
+  public void clearForSave() {
     ODirtyManager real = getReal();
-    real.newRecord = null;
+    real.newRecords = null;
     real.updateRecords = null;
   }
 
@@ -181,8 +181,8 @@ public class ODirtyManager {
 
   public void removeNew(ORecord record) {
     ODirtyManager real = getReal();
-    if (real.newRecord != null)
-      real.newRecord.remove(record);
+    if (real.newRecords != null)
+      real.newRecords.remove(record);
   }
 
   public void removePointed(ORecord record) {
@@ -195,7 +195,7 @@ public class ODirtyManager {
   }
 
   public void clear() {
-    cleanForSave();
-    getReal().references =null;
+    clearForSave();
+    getReal().references = null;
   }
 }
