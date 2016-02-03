@@ -128,6 +128,8 @@ TOKEN:
 	|
 	< INTO: ( "i" | "I" ) ( "n" | "N" ) ( "t" | "T" ) ( "o" | "O" ) >
 	|
+	< VALUE: ( "v" | "V" ) ( "a" | "A" ) ( "l" | "L" ) ( "u" | "U" ) ( "e" | "E" ) >
+	|
 	< VALUES: ( "v" | "V" ) ( "a" | "A" ) ( "l" | "L" ) ( "u" | "U" ) ( "e" | "E" ) ( "s" | "S" )>
 	|
 	< SET: ( "s" | "S" ) ( "e" | "E" ) ( "t" | "T" ) >
@@ -275,6 +277,14 @@ TOKEN:
 	< PROPERTY: ( "p" | "P" ) ( "r" | "R" ) ( "o" | "O" ) ( "p" | "P" ) ( "e" | "E" ) ( "r" | "R" ) ( "t" | "T" ) ( "y" | "Y" ) >
 	|
 	< FORCE: ( "f" | "F" ) ( "o" | "O" ) ( "r" | "R" ) ( "c" | "C" ) ( "e" | "E" ) >
+	|
+	< METADATA: ( "m" | "M" ) ( "e" | "E" ) ( "t" | "T" ) ( "a" | "A" ) ( "d" | "D" ) ( "a" | "A" ) ( "t" | "T" ) ( "a" | "A" )   >
+	|
+    < INDEX: ( "I" | "i") ( "N" | "n") ( "D" | "d") ( "E" | "e") ( "X" | "x")  >
+    |
+    < COLLATE: ( "c" | "C") ( "o" | "O") ( "l" | "L") ( "l" | "L") ( "a" | "A") ( "t" | "T") ( "E" | "e")  >
+    |
+    < ENGINE: ( "E" | "e")  ( "N" | "n") ( "G" | "g") ( "I" | "i") ( "N" | "n")( "E" | "e") >
 	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
@@ -475,7 +485,7 @@ TOKEN :
 |
   < QUOTED_IDENTIFIER: ( "`" (~["`"]) (~["`"])*  "`") >
 |
-  < INDEX_COLON: ( "I" | "i") ( "N" | "n") ( "D" | "d") ( "E" | "e") ( "X" | "x") ":" >
+  < INDEX_COLON: <INDEX> ":" >
 |
   < INDEXVALUES_IDENTIFIER: ( "I" | "i") ( "N" | "n") ( "D" | "d") ( "E" | "e") ( "X" | "x") ( "V" | "v") ( "A" | "a") ( "L" | "l") ( "U" | "u") ( "E" | "e") ( "S" | "s") ":" ( "__@recordmap@___" )? <IDENTIFIER> ( ( <DOT> | <MINUS> ) <IDENTIFIER> )* >
 |
@@ -558,6 +568,8 @@ OIdentifier Identifier():
     |
     token = <GROUP>
     |
+    token = <VALUE>
+    |
     token = <VALUES>
     |
     token = <RECORD>
@@ -629,6 +641,14 @@ OIdentifier Identifier():
 	token = <PROPERTY>
 	|
 	token = <FORCE>
+	|
+	token = <METADATA>
+	|
+	token = <COLLATE>
+	|
+	token = <INDEX>
+	|
+	token = <ENGINE>
 	|
     quotedToken = <QUOTED_IDENTIFIER>
 ) {
@@ -764,6 +784,9 @@ OStatement Statement():
 		|
         LOOKAHEAD(DropPropertyStatement())
         result = DropPropertyStatement()
+        |
+        LOOKAHEAD(CreateIndexStatement())
+        result = CreateIndexStatement()
 	) [ <SEMICOLON> ]
 	{
 	    return result;
@@ -3744,5 +3767,124 @@ ODropPropertyStatement DropPropertyStatement():
 	<DOT>
 	jjtThis.propertyName = Identifier()
 	[ <FORCE> { jjtThis.force = true; }]
+	{ return jjtThis; }
+}
+
+OCreateIndexStatement CreateIndexStatement():
+{
+    OCreateIndexStatement.Property lastProperty;
+    OIdentifier lastIdentifier;
+    ORecordAttribute lastRecordAttr;
+}
+{
+	<CREATE> <INDEX>
+
+	jjtThis.name = IndexName()
+    (
+        LOOKAHEAD(3)
+        (
+            <ON>
+            jjtThis.className = Identifier()
+            <LPAREN>
+            (
+                lastIdentifier = Identifier() {
+                    lastProperty = new OCreateIndexStatement.Property();
+                    lastProperty.name = lastIdentifier;
+                    jjtThis.propertyList.add(lastProperty);
+                }
+                |
+                lastRecordAttr = RecordAttribute() {
+                    lastProperty = new OCreateIndexStatement.Property();
+                    lastProperty.recordAttribute = lastRecordAttr;
+                    jjtThis.propertyList.add(lastProperty);
+                }
+            )
+            [
+                <BY>
+                (
+                    <KEY> { lastProperty.byKey = true; }
+                    |
+                    <VALUE> { lastProperty.byValue = true; }
+                )
+            ]
+            [
+                <COLLATE>
+                lastProperty.collate = Identifier()
+            ]
+            (
+                <COMMA>
+                (
+                    lastIdentifier = Identifier() {
+                        lastProperty = new OCreateIndexStatement.Property();
+                        lastProperty.name = lastIdentifier;
+                        jjtThis.propertyList.add(lastProperty);
+                    }
+                    |
+                    lastRecordAttr = RecordAttribute() {
+                        lastProperty = new OCreateIndexStatement.Property();
+                        lastProperty.recordAttribute = lastRecordAttr;
+                        jjtThis.propertyList.add(lastProperty);
+                    }
+                )
+                [
+                    <BY>
+                    (
+                        <KEY> { lastProperty.byKey = true; }
+                        |
+                        <VALUE> { lastProperty.byValue = true; }
+                    )
+                ]
+                [
+                    <COLLATE>
+                    lastProperty.collate = Identifier()
+                ]
+            )*
+            <RPAREN>
+
+
+            jjtThis.type = Identifier()
+        )
+        |
+        jjtThis.type = Identifier()
+    )
+
+    (
+        LOOKAHEAD(2)
+        (
+            <ENGINE> jjtThis.engine = Identifier()
+            [
+                LOOKAHEAD(2)
+                (
+                   <METADATA> jjtThis.metadata = Json()
+                )
+                |
+                (
+                    lastIdentifier = Identifier() {jjtThis.keyTypes.add(lastIdentifier);}
+                    (
+                        <COMMA> lastIdentifier = Identifier() {jjtThis.keyTypes.add(lastIdentifier);}
+                    )*
+                    [ <METADATA> jjtThis.metadata = Json() ]
+                )
+            ]
+        )
+        |
+        (
+            [
+                LOOKAHEAD(2)
+                (
+                   <METADATA> jjtThis.metadata = Json()
+                )
+                |
+                (
+                    lastIdentifier = Identifier() {jjtThis.keyTypes.add(lastIdentifier);}
+                    (
+                        <COMMA> lastIdentifier = Identifier() {jjtThis.keyTypes.add(lastIdentifier);}
+                    )*
+                    [ <METADATA> jjtThis.metadata = Json() ]
+                )
+            ]
+        )
+    )
+
 	{ return jjtThis; }
 }
