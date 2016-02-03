@@ -18,7 +18,17 @@
 
 package com.orientechnologies.orient.etl;
 
-import com.orientechnologies.common.exception.OException;
+import java.io.File;
+import java.io.IOException;
+import java.io.Reader;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.TimerTask;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
@@ -34,58 +44,51 @@ import com.orientechnologies.orient.etl.transformer.OTransformer;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.TimerTask;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-
 /**
  * ETL processor class.
  *
  * @author Luca Garulli (l.garulli-at-orientechnologies.com)
  */
 public class OETLProcessor {
-  protected final OETLComponentFactory factory = new OETLComponentFactory();
-  protected final OETLProcessorStats   stats   = new OETLProcessorStats();
-  protected List<OBlock>       beginBlocks;
-  protected List<OBlock>       endBlocks;
-  protected OSource            source;
-  protected OExtractor         extractor;
-  protected OLoader            loader;
-  protected List<OTransformer> transformers;
-  protected OCommandContext    context;
-  protected long               startTime;
-  protected long               elapsed;
-  protected TimerTask          dumpTask;
-  protected LOG_LEVELS logLevel    = LOG_LEVELS.INFO;
-  protected boolean    haltOnError = true;
-  protected int        maxRetries  = 10;
-  protected int        workers     = 1;
-  private   boolean    parallel    = false;
+  protected final OETLComponentFactory factory     = new OETLComponentFactory();
+  protected List<OBlock>               beginBlocks;
+  protected List<OBlock>               endBlocks;
+  protected OSource                    source;
+  protected OExtractor                 extractor;
+  protected OLoader                    loader;
+  protected List<OTransformer>         transformers;
+  protected OCommandContext            context;
+  protected long                       startTime;
+  protected long                       elapsed;
+  protected OETLProcessorStats         stats       = new OETLProcessorStats();
+  protected TimerTask                  dumpTask;
+  protected LOG_LEVELS                 logLevel    = LOG_LEVELS.INFO;
+  protected boolean                    haltOnError = true;
+  protected boolean                    parallel    = false;
+  protected int                        maxRetries  = 10;
+  private Thread[]                     threads;
 
   /**
    * Creates an ETL processor by setting all the components on construction.
    *
-   * @param iBeginBlocks  List of Blocks to execute at the beginning of processing
-   * @param iSource       Source component
-   * @param iExtractor    Extractor component
-   * @param iTransformers List of Transformers
-   * @param iLoader       Loader component
-   * @param iEndBlocks    List of Blocks to execute at the end of processing
-   * @param iContext      Execution Context
+   * @param iBeginBlocks
+   *          List of Blocks to execute at the beginning of processing
+   * @param iSource
+   *          Source component
+   * @param iExtractor
+   *          Extractor component
+   * @param iTransformers
+   *          List of Transformers
+   * @param iLoader
+   *          Loader component
+   * @param iEndBlocks
+   *          List of Blocks to execute at the end of processing
+   * @param iContext
+   *          Execution Context
    */
-  public OETLProcessor(final List<OBlock> iBeginBlocks,
-                       final OSource iSource,
-                       final OExtractor iExtractor,
-                       final List<OTransformer> iTransformers,
-                       final OLoader iLoader,
-                       final List<OBlock> iEndBlocks,
-                       final OCommandContext iContext) {
+  public OETLProcessor(final List<OBlock> iBeginBlocks, final OSource iSource, final OExtractor iExtractor,
+      final List<OTransformer> iTransformers, final OLoader iLoader, final List<OBlock> iEndBlocks,
+      final OCommandContext iContext) {
     beginBlocks = iBeginBlocks;
     source = iSource;
     extractor = iExtractor;
@@ -94,28 +97,6 @@ public class OETLProcessor {
     endBlocks = iEndBlocks;
     context = iContext;
     init();
-  }
-
-  protected void init() {
-    final String cfgLog = (String) context.getVariable("log");
-    if (cfgLog != null)
-      logLevel = LOG_LEVELS.valueOf(cfgLog.toUpperCase());
-
-    final Boolean cfgHaltOnError = (Boolean) context.getVariable("haltOnError");
-    if (cfgHaltOnError != null)
-      haltOnError = cfgHaltOnError;
-
-    final Object parallelSetting = context.getVariable("parallel");
-    if (parallelSetting != null)
-      parallel = (Boolean) parallelSetting;
-
-    if (parallel) {
-      final int cores = Runtime.getRuntime().availableProcessors();
-
-      if (cores >= 2)
-        workers = cores - 1;
-    }
-
   }
 
   public OETLProcessor() {
@@ -135,7 +116,7 @@ public class OETLProcessor {
     processor.execute();
   }
 
-  public static OETLProcessor parseConfigAndParameters(String[] args) {
+  protected static OETLProcessor parseConfigAndParameters(String[] args) {
     final OCommandContext context = createDefaultContext();
 
     ODocument configuration = new ODocument().fromJSON("{}");
@@ -158,7 +139,7 @@ public class OETLProcessor {
       }
     }
 
-    // override with args passed by command line
+    // override with args passes by command line
     for (final String arg : args) {
       if (arg.charAt(0) == '-') {
         final String[] parts = arg.substring(1).split("=");
@@ -176,30 +157,33 @@ public class OETLProcessor {
   }
 
   public OETLProcessor parse(final ODocument cfg, final OCommandContext iContext) {
-    return parse(cfg.<Collection<ODocument>>field("begin"),
-                 cfg.<ODocument>field("source"),
-                 cfg.<ODocument>field("extractor"),
-                 cfg.<Collection<ODocument>>field("transformers"),
-                 cfg.<ODocument>field("loader"),
-                 cfg.<Collection<ODocument>>field("end"), iContext);
+    return parse((Collection<ODocument>) cfg.field("begin"), (ODocument) cfg.field("source"), (ODocument) cfg.field("extractor"),
+        (Collection<ODocument>) cfg.field("transformers"), (ODocument) cfg.field("loader"),
+        (Collection<ODocument>) cfg.field("end"), iContext);
   }
 
   /**
    * Creates an ETL processor by setting the configuration of each component.
    *
-   * @param iBeginBlocks  List of Block configurations to execute at the beginning of processing
-   * @param iSource       Source component configuration
-   * @param iExtractor    Extractor component configuration
-   * @param iTransformers List of Transformer configurations
-   * @param iLoader       Loader component configuration
-   * @param iEndBlocks    List of Block configurations to execute at the end of processing
-   * @param iContext      Execution Context
+   * @param iBeginBlocks
+   *          List of Block configurations to execute at the beginning of processing
+   * @param iSource
+   *          Source component configuration
+   * @param iExtractor
+   *          Extractor component configuration
+   * @param iTransformers
+   *          List of Transformer configurations
+   * @param iLoader
+   *          Loader component configuration
+   * @param iEndBlocks
+   *          List of Block configurations to execute at the end of processing
+   * @param iContext
+   *          Execution Context
    * @return Current OETProcessor instance
    **/
   public OETLProcessor parse(final Collection<ODocument> iBeginBlocks, final ODocument iSource, final ODocument iExtractor,
-                             final Collection<ODocument> iTransformers, final ODocument iLoader,
-                             final Collection<ODocument> iEndBlocks,
-                             final OCommandContext iContext) {
+      final Collection<ODocument> iTransformers, final ODocument iLoader, final Collection<ODocument> iEndBlocks,
+      final OCommandContext iContext) {
     if (iExtractor == null)
       throw new IllegalArgumentException("No Extractor configured");
 
@@ -207,20 +191,66 @@ public class OETLProcessor {
     init();
 
     try {
-      configureBeginBlocks(iBeginBlocks, iContext);
+      String name;
 
-      configureSource(iSource, iContext);
+      // BEGIN BLOCKS
+      beginBlocks = new ArrayList<OBlock>();
+      if (iBeginBlocks != null) {
+        for (ODocument block : iBeginBlocks) {
+          name = block.fieldNames()[0];
+          final OBlock b = factory.getBlock(name);
+          beginBlocks.add(b);
+          configureComponent(b, (ODocument) block.field(name), iContext);
+          b.execute();
+        }
+      }
 
-      configureExtractors(iExtractor, iContext);
+      if (iSource != null) {
+        // SOURCE
+        name = iSource.fieldNames()[0];
+        source = factory.getSource(name);
+        configureComponent(source, (ODocument) iSource.field(name), iContext);
+      } else {
+        source = factory.getSource("input");
+      }
 
-      configureLoader(iLoader, iContext);
+      // EXTRACTOR
+      name = iExtractor.fieldNames()[0];
+      extractor = factory.getExtractor(name);
+      configureComponent(extractor, (ODocument) iExtractor.field(name), iContext);
 
-      configureTransformers(iTransformers, iContext);
+      if (iLoader != null) {
+        // LOADER
+        name = iLoader.fieldNames()[0];
+        loader = factory.getLoader(name);
+        configureComponent(loader, (ODocument) iLoader.field(name), iContext);
+      } else {
+        loader = factory.getLoader("output");
+      }
 
-      configureEndBlocks(iEndBlocks, iContext);
+      // TRANSFORMERS
+      transformers = new ArrayList<OTransformer>();
+      if (iTransformers != null) {
+        for (ODocument t : iTransformers) {
+          name = t.fieldNames()[0];
+          final OTransformer tr = factory.getTransformer(name);
+          transformers.add(tr);
+          configureComponent(tr, (ODocument) t.field(name), iContext);
+        }
+      }
 
-      //isn't working right now
-      //      analyzeFlow();
+      // END BLOCKS
+      endBlocks = new ArrayList<OBlock>();
+      if (iEndBlocks != null) {
+        for (ODocument block : iEndBlocks) {
+          name = block.fieldNames()[0];
+          final OBlock b = factory.getBlock(name);
+          endBlocks.add(b);
+          configureComponent(b, (ODocument) block.field(name), iContext);
+        }
+      }
+
+      // analyzeFlow();
 
     } catch (Exception e) {
       throw new OConfigurationException("Error on creating ETL processor", e);
@@ -228,82 +258,16 @@ public class OETLProcessor {
     return this;
   }
 
-  private void configureEndBlocks(Collection<ODocument> iEndBlocks, OCommandContext iContext)
-      throws IllegalAccessException, InstantiationException {
-    endBlocks = new ArrayList<OBlock>();
-    if (iEndBlocks != null) {
-      for (ODocument block : iEndBlocks) {
-        final String name = block.fieldNames()[0];
-        final OBlock b = factory.getBlock(name);
-        endBlocks.add(b);
-        configureComponent(b, block.<ODocument>field(name), iContext);
-      }
-    }
-  }
-
-  private void configureTransformers(Collection<ODocument> iTransformers, OCommandContext iContext)
-      throws IllegalAccessException, InstantiationException {
-    transformers = new ArrayList<OTransformer>();
-    if (iTransformers != null) {
-      for (ODocument t : iTransformers) {
-        String name = t.fieldNames()[0];
-        final OTransformer tr = factory.getTransformer(name);
-        transformers.add(tr);
-        configureComponent(tr, t.<ODocument>field(name), iContext);
-      }
-    }
-  }
-
-  private void configureLoader(ODocument iLoader, OCommandContext iContext) throws IllegalAccessException, InstantiationException {
-    String name;
-    if (iLoader != null) {
-      // LOADER
-      name = iLoader.fieldNames()[0];
-      loader = factory.getLoader(name);
-      configureComponent(loader, (ODocument) iLoader.field(name), iContext);
-    } else {
-      loader = factory.getLoader("output");
-    }
-  }
-
-  private void configureExtractors(ODocument iExtractor, OCommandContext iContext)
-      throws IllegalAccessException, InstantiationException {
-    String name;// EXTRACTOR
-    name = iExtractor.fieldNames()[0];
-    extractor = factory.getExtractor(name);
-    configureComponent(extractor, (ODocument) iExtractor.field(name), iContext);
-  }
-
-  private void configureSource(ODocument iSource, OCommandContext iContext) throws IllegalAccessException, InstantiationException {
-    String name;
-    if (iSource != null) {
-      // SOURCE
-      name = iSource.fieldNames()[0];
-      source = factory.getSource(name);
-      configureComponent(source, (ODocument) iSource.field(name), iContext);
-    } else {
-      source = factory.getSource("input");
-    }
-  }
-
-  private void configureBeginBlocks(Collection<ODocument> iBeginBlocks, OCommandContext iContext)
-      throws IllegalAccessException, InstantiationException {
-    String name;// BEGIN BLOCKS
-    beginBlocks = new ArrayList<OBlock>();
-    if (iBeginBlocks != null) {
-      for (ODocument block : iBeginBlocks) {
-        name = block.fieldNames()[0];
-        final OBlock b = factory.getBlock(name);
-        beginBlocks.add(b);
-        configureComponent(b, (ODocument) block.field(name), iContext);
-        //Execution is necessary to resolve let blocks and provide resolved variables to other components
-        b.execute();
-      }
-    }
-  }
-
   public OETLComponentFactory getFactory() {
     return factory;
+  }
+
+  public OETLProcessor execute() {
+    if (parallel)
+      executeParallel();
+    else
+      executeSequentially();
+    return this;
   }
 
   public void out(final LOG_LEVELS iLogLevel, final String iText, final Object... iArgs) {
@@ -317,10 +281,6 @@ public class OETLProcessor {
 
   public OExtractor getExtractor() {
     return extractor;
-  }
-
-  public OSource getSource() {
-    return source;
   }
 
   public OLoader getLoader() {
@@ -339,54 +299,90 @@ public class OETLProcessor {
     return context;
   }
 
-  protected void execute() {
-    begin();
-    runExtractorAndPipeline();
-    end();
+  public boolean isParallel() {
+    return threads != null;
   }
 
-  private void runExtractorAndPipeline() {
-    ExecutorService executor = Executors.newCachedThreadPool();
-
+  protected void executeParallel() {
     try {
+      begin();
 
-      out(LOG_LEVELS.INFO, "Started execution with %d worker threads", workers);
+      out(LOG_LEVELS.INFO, "Started parallel execution with %d threads", threads.length);
 
-      extractor.extract(source.read());
+      if (source != null) {
+        final Reader reader = source.read();
 
-      final BlockingQueue<OExtractedItem> queue = new LinkedBlockingQueue<OExtractedItem>(workers * 500);
+        if (reader != null)
+          extractor.extract(reader);
+      }
+
+      final LinkedBlockingQueue<OExtractedItem> queue = new LinkedBlockingQueue<OExtractedItem>(threads.length * 500) {
+        @Override
+        public boolean offer(OExtractedItem e) {
+          // turn offer() and add() into a blocking calls (unless interrupted)
+          try {
+            put(e);
+            return true;
+          } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+          }
+          return false;
+        }
+      };
 
       final AtomicLong counter = new AtomicLong();
       final AtomicBoolean extractionFinished = new AtomicBoolean(false);
+      final OETLProcessor processor = this;
 
-      List<Future<Boolean>> tasks = new ArrayList<Future<Boolean>>();
-      for (int i = 0; i < workers; i++) {
+      for (int i = 0; i < threads.length; ++i) {
+        threads[i] = new Thread(new Runnable() {
+          @Override
+          public void run() {
+            final OETLPipeline pipeline = new OETLPipeline(processor, transformers, loader, logLevel, maxRetries, haltOnError);
+            pipeline.begin();
 
-        final OETLPipeline pipeline = new OETLPipeline(this, transformers, loader, logLevel, maxRetries, haltOnError);
+            while (!extractionFinished.get() || counter.get() > 0) {
+              try {
+                final OExtractedItem content = queue.take();
+                try {
+                  pipeline.execute(content);
+                } finally {
+                  counter.decrementAndGet();
+                }
+              } catch (InterruptedException e) {
+              }
+            }
+          }
+        }, "OrientDB ETL pipeline-" + i);
 
-        OETLPipelineWorker task = new OETLPipelineWorker(extractionFinished, queue, pipeline);
-        tasks.add(executor.submit(task));
+        threads[i].setDaemon(true);
+        threads[i].start();
       }
 
-      Future<Boolean> extractorFuture = executor.submit(new OETLExtractorWorker(queue, counter, extractionFinished));
+      while (extractor.hasNext()) {
+        // EXTRACTOR
+        final OExtractedItem current = extractor.next();
 
-      Boolean extracted = extractorFuture.get();
-
-      for (Future<Boolean> future : tasks) {
-        Boolean result = future.get(1, TimeUnit.MINUTES);
-        out(LOG_LEVELS.DEBUG, "Pipeline worker done without errors:: " + result);
+        // TRANSFORM + LOAD
+        queue.offer(current);
+        counter.incrementAndGet();
       }
 
-      out(LOG_LEVELS.DEBUG, "all items extracted");
+      extractionFinished.set(true);
 
-      executor.shutdown();
+      while (counter.get() > 0) {
+        out(LOG_LEVELS.INFO, "Waiting for the pipeline to finish, remaining " + counter.get() + " entries to process");
+        try {
+          // WAIT A BIT AND RETRY
+          Thread.sleep(500);
+        } catch (InterruptedException e) {
+        }
+      }
+
+      end();
 
     } catch (OETLProcessHaltedException e) {
       out(LOG_LEVELS.ERROR, "ETL process halted: %s", e);
-      executor.shutdownNow();
-    } catch (Exception e) {
-      out(LOG_LEVELS.ERROR, "ETL process has problem: %s", e);
-      executor.shutdownNow();
     }
   }
 
@@ -447,8 +443,60 @@ public class OETLProcessor {
     dumpProgress();
   }
 
+  protected void executeSequentially() {
+    try {
+      begin();
+
+      if (source != null) {
+        final Reader reader = source.read();
+
+        if (reader != null)
+          extractor.extract(reader);
+      }
+
+      final OETLPipeline pipeline = new OETLPipeline(this, transformers, loader, logLevel, maxRetries, haltOnError);
+      pipeline.begin();
+
+      while (extractor.hasNext()) {
+        // EXTRACTOR
+        final OExtractedItem current = extractor.next();
+
+        // TRANSFORM + LOAD
+        pipeline.execute(current);
+      }
+
+      end();
+
+    } catch (OETLProcessHaltedException e) {
+      out(LOG_LEVELS.ERROR, "ETL process halted: %s", e);
+      throw e;
+    }
+  }
+
   protected void configureComponent(final OETLComponent iComponent, final ODocument iCfg, final OCommandContext iContext) {
     iComponent.configure(this, iCfg, iContext);
+  }
+
+  protected Class getClassByName(final OETLComponent iComponent, final String iClassName) {
+    final Class inClass;
+    if (iClassName.equals("ODocument"))
+      inClass = ODocument.class;
+    else if (iClassName.equals("String"))
+      inClass = String.class;
+    else if (iClassName.equals("Object"))
+      inClass = Object.class;
+    else if (iClassName.equals("OrientVertex"))
+      inClass = OrientVertex.class;
+    else if (iClassName.equals("OrientEdge"))
+      inClass = OrientEdge.class;
+    else
+      try {
+        inClass = Class.forName(iClassName);
+      } catch (ClassNotFoundException e) {
+        throw new OConfigurationException(
+            "Class '" + iClassName + "' declared as 'input' of ETL Component '" + iComponent.getName() + "' was not found.");
+      }
+    return inClass;
   }
 
   protected void dumpProgress() {
@@ -529,76 +577,41 @@ public class OETLProcessor {
 
     } catch (Exception e) {
 
-      throw new OConfigurationException(
-          "Error on checking compatibility between components '" + iLastComponent.getName() + "' and '" + iCurrentComponent
-              .getName() + "'", e);
+      throw new OConfigurationException("Error on checking compatibility between components '" + iLastComponent.getName()
+          + "' and '" + iCurrentComponent.getName() + "'", e);
     }
 
     throw new OConfigurationException("Component '" + iCurrentComponent.getName() + "' expects one of the following inputs " + ins
-                                      + " but the 'output' for component '" + iLastComponent.getName() + "' is: " + out);
+        + " but the 'output' for component '" + iLastComponent.getName() + "' is: " + out);
 
   }
 
-  protected Class getClassByName(final OETLComponent iComponent, final String iClassName) {
-    final Class inClass;
-    if (iClassName.equals("ODocument"))
-      inClass = ODocument.class;
-    else if (iClassName.equals("String"))
-      inClass = String.class;
-    else if (iClassName.equals("Object"))
-      inClass = Object.class;
-    else if (iClassName.equals("OrientVertex"))
-      inClass = OrientVertex.class;
-    else if (iClassName.equals("OrientEdge"))
-      inClass = OrientEdge.class;
-    else
-      try {
-        inClass = Class.forName(iClassName);
-      } catch (ClassNotFoundException e) {
-        throw new OConfigurationException(
-            "Class '" + iClassName + "' declared as 'input' of ETL Component '" + iComponent.getName() + "' was not found.");
+  protected void init() {
+    final String cfgLog = (String) context.getVariable("log");
+    if (cfgLog != null)
+      logLevel = LOG_LEVELS.valueOf(cfgLog.toUpperCase());
+
+    final Boolean cfgHaltOnError = (Boolean) context.getVariable("haltOnError");
+    if (cfgHaltOnError != null)
+      haltOnError = cfgHaltOnError;
+
+    final Object parallelSetting = context.getVariable("parallel");
+    if (parallelSetting != null)
+      parallel = (Boolean) parallelSetting;
+
+    if (parallel) {
+      int cores = Runtime.getRuntime().availableProcessors();
+      if (cores > 2)
+        cores = cores - 1;
+      threads = new Thread[cores];
+      for (int i = 0; i < cores; ++i) {
+        threads[i] = new Thread("OrientDB ETL Pipeline-" + i);
       }
-    return inClass;
+    }
   }
 
   public enum LOG_LEVELS {
     NONE, ERROR, INFO, DEBUG
-  }
-
-  private static class OETLPipelineWorker implements Callable<Boolean> {
-
-    private final AtomicBoolean                 extractionFinished;
-    private final BlockingQueue<OExtractedItem> queue;
-    private final OETLPipeline                  pipeline;
-
-    public OETLPipelineWorker(AtomicBoolean extractionFinished, BlockingQueue<OExtractedItem> queue, OETLPipeline pipeline) {
-      this.extractionFinished = extractionFinished;
-      this.queue = queue;
-      this.pipeline = pipeline;
-
-    }
-
-    @Override
-    public Boolean call() throws Exception {
-
-      pipeline.begin();
-
-      pipeline.getDocumentDatabase();
-
-      while (!queue.isEmpty() || !extractionFinished.get()) {
-        try {
-
-          final OExtractedItem content = queue.poll();
-          if (content != null)
-            pipeline.execute(content);
-
-        } catch (OException e) {
-
-          throw e;
-        }
-      }
-      return Boolean.TRUE;
-    }
   }
 
   public class OETLProcessorStats {
@@ -614,34 +627,6 @@ public class OETLProcessor {
 
     public long incrementErrors() {
       return errors.incrementAndGet();
-    }
-  }
-
-  private class OETLExtractorWorker implements Callable<Boolean> {
-    private final BlockingQueue<OExtractedItem> queue;
-    private final AtomicLong                    counter;
-    private final AtomicBoolean                 extractionFinished;
-
-    public OETLExtractorWorker(BlockingQueue<OExtractedItem> queue, AtomicLong counter, AtomicBoolean extractionFinished) {
-      this.queue = queue;
-      this.counter = counter;
-      this.extractionFinished = extractionFinished;
-    }
-
-    @Override
-    public Boolean call() throws Exception {
-      out(LOG_LEVELS.DEBUG, "Start extracting");
-      while (extractor.hasNext()) {
-        // EXTRACTOR
-        final OExtractedItem current = extractor.next();
-
-        // TRANSFORM + LOAD
-        queue.put(current);
-        counter.incrementAndGet();
-      }
-
-      extractionFinished.set(true);
-      return Boolean.TRUE;
     }
   }
 }

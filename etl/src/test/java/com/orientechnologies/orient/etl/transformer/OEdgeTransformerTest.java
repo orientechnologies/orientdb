@@ -18,22 +18,22 @@
 
 package com.orientechnologies.orient.etl.transformer;
 
+import static org.junit.Assert.*;
+
+import java.util.Iterator;
+import java.util.Set;
+
+import org.junit.Test;
+
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.etl.OETLBaseTest;
+import com.orientechnologies.orient.etl.OETLProcessHaltedException;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
-import org.junit.Test;
-
-import java.util.Iterator;
-import java.util.Set;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Tests ETL Field Transformer.
@@ -86,11 +86,12 @@ public class OEdgeTransformerTest extends OETLBaseTest {
 
   @Test
   public void testEdgeWithProperties() {
-    process("{source: { content: { value: 'id,name,surname,friendSince,friendId,friendName,friendSurname\n0,Jay,Miner,1996,1,Luca,Garulli' } }, extractor : { csv: {} },"
-        + " transformers: [ {vertex: {class:'V1'}}, "
-        + "{edge:{unresolvedLinkAction:'CREATE',class:'Friend',joinFieldName:'friendId',lookup:'V2.fid',targetVertexFields:{name:'${input.friendName}',surname:'${input.friendSurname}'},edgeFields:{since:'${input.friendSince}'}}},"
-        + "{field:{fieldNames:['friendSince','friendId','friendName','friendSurname'],operation:'remove'}}"
-        + "], loader: { orientdb: { dbURL: 'memory:OETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
+    process(
+        "{source: { content: { value: 'id,name,surname,friendSince,friendId,friendName,friendSurname\n0,Jay,Miner,1996,1,Luca,Garulli' } }, extractor : { csv: {} },"
+            + " transformers: [ {vertex: {class:'V1'}}, "
+            + "{edge:{unresolvedLinkAction:'CREATE',class:'Friend',joinFieldName:'friendId',lookup:'V2.fid',targetVertexFields:{name:'${input.friendName}',surname:'${input.friendSurname}'},edgeFields:{since:'${input.friendSince}'}}},"
+            + "{field:{fieldNames:['friendSince','friendId','friendName','friendSurname'],operation:'remove'}}"
+            + "], loader: { orientdb: { dbURL: 'memory:OETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
 
     assertEquals(1, graph.countVertices("V1"));
     assertEquals(2, graph.countVertices("V2"));
@@ -130,8 +131,8 @@ public class OEdgeTransformerTest extends OETLBaseTest {
     assertEquals(v0.getProperty("id"), 0);
   }
 
-//  @Test(expected = ORecordDuplicatedException.class)
-  @Test
+  @Test(expected = OETLProcessHaltedException.class)
+  // @Test
   public void testErrorOnDuplicateVertex() {
     process("{source: { content: { value: 'name,surname,friend\nJay,Miner,Luca\nJay,Miner,Luca' } }, extractor : { csv: {} },"
         + " transformers: [{merge: {joinFieldName:'name',lookup:'V1.name'}}, {vertex: {class:'V1'}}, {edge:{class:'Friend',joinFieldName:'friend',lookup:'V2.name'}},"

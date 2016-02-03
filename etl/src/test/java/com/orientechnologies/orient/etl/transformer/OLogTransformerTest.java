@@ -42,8 +42,8 @@ public class OLogTransformerTest extends OETLBaseTest {
         List<ODocument> res = getResult();
         ODocument doc = res.get(0);
     String[] stringList = output.toString().split(System.getProperty("line.separator"));
-    assertEquals("[1:log] INFO -> {id:1,text:Hello}", stringList[2]);
-    assertEquals("[2:log] INFO -> {id:2,text:Bye}", stringList[3]);
+    assertEquals("[1:log] INFO -> {id:1,text:Hello}", stringList[1]);
+    assertEquals("[2:log] INFO -> {id:2,text:Bye}", stringList[2]);
     }
 
     @Test
@@ -55,8 +55,8 @@ public class OLogTransformerTest extends OETLBaseTest {
         ODocument doc = res.get(0);
     String[] stringList = output.toString().split(System.getProperty("line.separator"));
 
-    assertEquals("[1:log] INFO {id:1,text:Hello}-> ", stringList[2]);
-    assertEquals("[2:log] INFO {id:2,text:Bye}-> ", stringList[3]);
+    assertEquals("[1:log] INFO {id:1,text:Hello}-> ", stringList[1]);
+    assertEquals("[2:log] INFO {id:2,text:Bye}-> ", stringList[2]);
     }
 
     private ByteArrayOutputStream getByteArrayOutputStream() {

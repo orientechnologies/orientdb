@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
+import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -52,19 +53,19 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
   protected List<ODocument> indexes;
   protected OClass          schemaClass;
   protected String          dbURL;
-  protected String  dbUser                     = "admin";
-  protected String  dbPassword                 = "admin";
-  protected boolean dbAutoCreate               = true;
-  protected boolean dbAutoDropIfExists         = false;
-  protected boolean dbAutoCreateProperties     = false;
-  protected boolean useLightweightEdges        = false;
-  protected boolean standardElementConstraints = true;
-  protected boolean tx                         = false;
-  protected int     batchCommit                = 0;
+  protected String          dbUser                     = "admin";
+  protected String          dbPassword                 = "admin";
+  protected boolean         dbAutoCreate               = true;
+  protected boolean         dbAutoDropIfExists         = false;
+  protected boolean         dbAutoCreateProperties     = false;
+  protected boolean         useLightweightEdges        = false;
+  protected boolean         standardElementConstraints = true;
+  protected boolean         tx                         = false;
+  protected int             batchCommit                = 0;
   protected AtomicLong      batchCounter               = new AtomicLong(0);
-  protected DB_TYPE dbType                     = DOCUMENT;
-  protected boolean wal                        = true;
-  protected boolean txUseLog                   = false;
+  protected DB_TYPE         dbType                     = DOCUMENT;
+  protected boolean         wal                        = true;
+  protected boolean         txUseLog                   = false;
 
   public OOrientDBLoader() {
   }
@@ -132,61 +133,61 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
   }
 
   private void autoCreateProperties(Object input) {
-      if (dbType == DOCUMENT) {
-        if (input instanceof ODocument) {
-          final ODocument doc = (ODocument) input;
-          final OClass cls;
-          if (className != null)
-            cls = getOrCreateClass(className, null);
-          else
-            cls = doc.getSchemaClass();
+    if (dbType == DOCUMENT) {
+      if (input instanceof ODocument) {
+        final ODocument doc = (ODocument) input;
+        final OClass cls;
+        if (className != null)
+          cls = getOrCreateClass(className, null);
+        else
+          cls = doc.getSchemaClass();
 
-          for (String f : doc.fieldNames()) {
-            final String newName = transformFieldName(f);
-            final String fName = newName != null ? newName : f;
+        for (String f : doc.fieldNames()) {
+          final String newName = transformFieldName(f);
+          final String fName = newName != null ? newName : f;
 
-            OProperty p = cls.getProperty(fName);
-            if (p == null) {
-              final Object fValue = doc.field(f);
-              createProperty(cls, fName, fValue);
-              if (newName != null) {
-                // REPLACE IT
-                doc.removeField(f);
-                doc.field(newName, fValue);
-              }
+          OProperty p = cls.getProperty(fName);
+          if (p == null) {
+            final Object fValue = doc.field(f);
+            createProperty(cls, fName, fValue);
+            if (newName != null) {
+              // REPLACE IT
+              doc.removeField(f);
+              doc.field(newName, fValue);
             }
           }
         }
-      } else if (dbType == DB_TYPE.GRAPH) {
-        if (input instanceof OrientElement) {
-          final OrientElement element = (OrientElement) input;
+      }
+    } else if (dbType == DB_TYPE.GRAPH) {
+      if (input instanceof OrientElement) {
+        final OrientElement element = (OrientElement) input;
 
-          final OClass cls;
-          final String clsName = className != null ? className : (element instanceof OrientVertex ? element.getLabel() : element
-              .getLabel());
-          if (clsName != null)
-            cls = getOrCreateClass(clsName, element.getBaseClassName());
-          else
-            throw new IllegalArgumentException("No class defined on graph element: " + input);
+        final OClass cls;
+        final String clsName = className != null ? className
+            : (element instanceof OrientVertex ? element.getLabel() : element.getLabel());
+        if (clsName != null)
+          cls = getOrCreateClass(clsName, element.getBaseClassName());
+        else
+          throw new IllegalArgumentException("No class defined on graph element: " + input);
 
-          for (String f : element.getPropertyKeys()) {
-            final String newName = transformFieldName(f);
-            final String fName = newName != null ? newName : f;
+        for (String f : element.getPropertyKeys()) {
+          final String newName = transformFieldName(f);
+          final String fName = newName != null ? newName : f;
 
-            OProperty p = cls.getProperty(fName);
-            if (p == null) {
-              final Object fValue = element.getProperty(f);
-              createProperty(cls, fName, fValue);
-              if (newName != null) {
-                // REPLACE IT
-                element.removeProperty(f);
-                element.setProperty(newName, fValue);
-              }
+          OProperty p = cls.getProperty(fName);
+          if (p == null) {
+            final Object fValue = element.getProperty(f);
+            createProperty(cls, fName, fValue);
+            if (newName != null) {
+              // REPLACE IT
+              element.removeProperty(f);
+              element.setProperty(newName, fValue);
             }
           }
         }
       }
     }
+  }
 
   @Override
   public String getUnit() {
@@ -228,11 +229,12 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
     } else {
       // GRAPH
       final OrientBaseGraph graphDatabase = pipeline.getGraphDatabase();
-      cls = graphDatabase.getRawGraph().getMetadata().getSchema().getClass(iClassName);
+      OMetadataDefault metadata = pipeline.getDocumentDatabase().getMetadata();
+      cls = metadata.getSchema().getClass(iClassName);
       if (cls == null) {
 
         if (iSuperClass != null) {
-          final OClass superClass = graphDatabase.getRawGraph().getMetadata().getSchema().getClass(iSuperClass);
+          final OClass superClass = metadata.getSchema().getClass(iSuperClass);
           if (superClass == null)
             throw new OLoaderException("Cannot find super class '" + iSuperClass + "'");
 
@@ -282,28 +284,24 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
 
   @Override
   public ODocument getConfiguration() {
-    return new ODocument()
-        .fromJSON("{parameters:["
-                  + "{dbUrl:{optional:false,description:'Database URL'}},"
-                  + "{dbUser:{optional:true,description:'Database user, default is admin'}},"
-                  + "{dbPassword:{optional:true,description:'Database password, default is admin'}},"
-                  + "{dbType:{optional:true,description:'Database type, default is document',values:"
-                  + stringArray2Json(DB_TYPE.values())
-                  + "}},"
-                  + "{class:{optional:true,description:'Record class name'}},"
-                  + "{tx:{optional:true,description:'Transaction mode: true executes in transaction, false for atomic operations'}},"
-                  + "{dbAutoCreate:{optional:true,description:'Auto create the database if not exists. Default is true'}},"
-                  + "{dbAutoCreateProperties:{optional:true,description:'Auto create properties in schema'}},"
-                  + "{dbAutoDropIfExists:{optional:true,description:'Auto drop the database if already exists. Default is false.'}},"
-                  + "{batchCommit:{optional:true,description:'Auto commit every X items. This speed up creation of edges.'}},"
-                  + "{wal:{optional:true,description:'Use the WAL (Write Ahead Log)'}},"
-                  + "{useLightweightEdges:{optional:true,description:'Enable/Disable LightweightEdges in Graphs. Default is false'}},"
-                  + "{standardElementConstraints:{optional:true,description:'Enable/Disable Standard Blueprints constraints on names. Default is true'}},"
-                  + "{cluster:{optional:true,description:'Cluster name where to store the new record'}},"
-                  + "{settings:{optional:true,description:'OrientDB settings as a map'}},"
-                  + "{classes:{optional:true,description:'Classes used. It assure the classes exist or in case create them'}},"
-                  + "{indexes:{optional:true,description:'Indexes used. It assure the indexes exist or in case create them'}}],"
-                  + "input:['OrientVertex','ODocument']}");
+    return new ODocument().fromJSON("{parameters:[" + "{dbUrl:{optional:false,description:'Database URL'}},"
+        + "{dbUser:{optional:true,description:'Database user, default is admin'}},"
+        + "{dbPassword:{optional:true,description:'Database password, default is admin'}},"
+        + "{dbType:{optional:true,description:'Database type, default is document',values:" + stringArray2Json(DB_TYPE.values())
+        + "}}," + "{class:{optional:true,description:'Record class name'}},"
+        + "{tx:{optional:true,description:'Transaction mode: true executes in transaction, false for atomic operations'}},"
+        + "{dbAutoCreate:{optional:true,description:'Auto create the database if not exists. Default is true'}},"
+        + "{dbAutoCreateProperties:{optional:true,description:'Auto create properties in schema'}},"
+        + "{dbAutoDropIfExists:{optional:true,description:'Auto drop the database if already exists. Default is false.'}},"
+        + "{batchCommit:{optional:true,description:'Auto commit every X items. This speed up creation of edges.'}},"
+        + "{wal:{optional:true,description:'Use the WAL (Write Ahead Log)'}},"
+        + "{useLightweightEdges:{optional:true,description:'Enable/Disable LightweightEdges in Graphs. Default is false'}},"
+        + "{standardElementConstraints:{optional:true,description:'Enable/Disable Standard Blueprints constraints on names. Default is true'}},"
+        + "{cluster:{optional:true,description:'Cluster name where to store the new record'}},"
+        + "{settings:{optional:true,description:'OrientDB settings as a map'}},"
+        + "{classes:{optional:true,description:'Classes used. It assure the classes exist or in case create them'}},"
+        + "{indexes:{optional:true,description:'Indexes used. It assure the indexes exist or in case create them'}}],"
+        + "input:['OrientVertex','ODocument']}");
   }
 
   @Override
@@ -319,23 +317,23 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
     if (iConfiguration.containsField("dbType"))
       dbType = DB_TYPE.valueOf(iConfiguration.field("dbType").toString().toUpperCase());
     if (iConfiguration.containsField("tx"))
-      tx = iConfiguration.<Boolean>field("tx");
+      tx = iConfiguration.<Boolean> field("tx");
     if (iConfiguration.containsField("wal"))
-      wal = iConfiguration.<Boolean>field("wal");
+      wal = iConfiguration.<Boolean> field("wal");
     if (iConfiguration.containsField("txUseLog"))
-      txUseLog = iConfiguration.<Boolean>field("txUseLog");
+      txUseLog = iConfiguration.<Boolean> field("txUseLog");
     if (iConfiguration.containsField("batchCommit"))
-      batchCommit = iConfiguration.<Integer>field("batchCommit");
+      batchCommit = iConfiguration.<Integer> field("batchCommit");
     if (iConfiguration.containsField("dbAutoCreate"))
-      dbAutoCreate = iConfiguration.<Boolean>field("dbAutoCreate");
+      dbAutoCreate = iConfiguration.<Boolean> field("dbAutoCreate");
     if (iConfiguration.containsField("dbAutoDropIfExists"))
-      dbAutoDropIfExists = iConfiguration.<Boolean>field("dbAutoDropIfExists");
+      dbAutoDropIfExists = iConfiguration.<Boolean> field("dbAutoDropIfExists");
     if (iConfiguration.containsField("dbAutoCreateProperties"))
-      dbAutoCreateProperties = iConfiguration.<Boolean>field("dbAutoCreateProperties");
+      dbAutoCreateProperties = iConfiguration.<Boolean> field("dbAutoCreateProperties");
     if (iConfiguration.containsField("useLightweightEdges"))
-      useLightweightEdges = iConfiguration.<Boolean>field("useLightweightEdges");
+      useLightweightEdges = iConfiguration.<Boolean> field("useLightweightEdges");
     if (iConfiguration.containsField("standardElementConstraints"))
-      standardElementConstraints = iConfiguration.<Boolean>field("standardElementConstraints");
+      standardElementConstraints = iConfiguration.<Boolean> field("standardElementConstraints");
 
     clusterName = iConfiguration.field("cluster");
     className = iConfiguration.field("class");
@@ -352,7 +350,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
       }
     }
 
-    //use wal or not
+    // use wal or not
     OGlobalConfiguration.USE_WAL.setValue(wal);
 
     switch (dbType) {
@@ -389,7 +387,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
   }
 
   @Override
-  public void begin() {
+  public synchronized void begin() {
 
     synchronized (this) {
       ODatabaseDocumentTx documentDatabase = null;
@@ -413,6 +411,10 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
         break;
       }
 
+      pipeline.setDocumentDatabase(documentDatabase);
+
+      pipeline.getDocumentDatabase().getMetadata();
+        
       if (classes != null) {
         for (ODocument cls : classes) {
           schemaClass = getOrCreateClass((String) cls.field("name"), (String) cls.field("extends"));
@@ -474,8 +476,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
               final OType type = OType.valueOf(fieldType);
 
               cls.createProperty(fieldNameParts[0], type);
-              log(DEBUG, "- OrientDBLoader: created property '%s.%s' of type: %s", idxClass,
-                  fieldNameParts[0], fieldNameParts[1]);
+              log(DEBUG, "- OrientDBLoader: created property '%s.%s' of type: %s", idxClass, fieldNameParts[0], fieldNameParts[1]);
             }
 
             fields[f] = fieldNameParts[0];
@@ -497,8 +498,8 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
             continue;
 
           index = cls.createIndex(idxName, idxType, null, metadata, fields);
-          log(DEBUG, "- OrientDocumentLoader: created index '%s' type '%s' against Class '%s', fields %s",
-              idxName, idxType, idxClass, idxFields);
+          log(DEBUG, "- OrientDocumentLoader: created index '%s' type '%s' against Class '%s', fields %s", idxName, idxType,
+              idxClass, idxFields);
         }
       }
       documentDatabase.declareIntent(new OIntentMassiveInsert());

@@ -18,6 +18,8 @@
 
 package com.orientechnologies.orient.etl.extractor;
 
+import static org.junit.Assert.assertEquals;
+
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -25,8 +27,6 @@ import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLBaseTest;
 import com.orientechnologies.orient.etl.OETLStubRandomExtractor;
-
-import static org.junit.Assert.assertEquals;
 
 /**
  * Tests ETL JSON Extractor.
@@ -58,10 +58,11 @@ public class OJsonRandomExtractorTest extends OETLBaseTest {
   public void testParallel() {
     proc.getFactory().registerExtractor(OETLStubRandomExtractor.class);
 
-    process("{extractor : { random: {items: " + TOTAL + ", fields: 10, delay: 0} }, "
-        + "loader: { orientdb: { dbURL: 'plocal:./target/OETLBaseTest', dbType:'graph', class: 'Person', useLightweightEdges:false, "
-        + "classes: [{name: 'Person', extends: 'V', clusters: 8 }] } } }",  new OBasicCommandContext()
-        .setVariable("parallel", Boolean.TRUE).setVariable("dumpEveryMs", 1000));
+    process(
+        "{extractor : { random: {items: " + TOTAL + ", fields: 10, delay: 0} }, "
+            + "loader: { orientdb: { dbURL: 'plocal:./target/OETLBaseTest', dbType:'graph', class: 'Person', useLightweightEdges:false, "
+            + "classes: [{name: 'Person', extends: 'V', clusters: 8 }] } } }",
+        new OBasicCommandContext().setVariable("parallel", Boolean.TRUE).setVariable("dumpEveryMs", 1000));
 
     assertEquals(TOTAL, graph.countVertices("Person"));
 
