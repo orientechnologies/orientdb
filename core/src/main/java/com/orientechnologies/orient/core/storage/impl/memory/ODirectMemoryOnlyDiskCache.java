@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OStoragePerformanceStatistic;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
@@ -70,6 +71,14 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   public ODirectMemoryOnlyDiskCache(int pageSize, int id) {
     this.pageSize = pageSize;
     this.id = id;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public File getRootDirectory() {
+    return null;
   }
 
   @Override
@@ -344,9 +353,19 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
     delete();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void closeStorage(OWriteCache writeCache) throws IOException {
     close();
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void loadCacheState(OWriteCache writeCache) {
   }
 
   @Override

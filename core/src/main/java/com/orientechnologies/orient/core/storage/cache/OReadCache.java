@@ -94,5 +94,17 @@ public interface OReadCache {
 
   void deleteStorage(OWriteCache writeCache) throws IOException;
 
+  /**
+   * Closes all files inside of write cache and flushes all associated data.
+   *
+   * @param writeCache Write cache to close.
+   */
   void closeStorage(OWriteCache writeCache) throws IOException;
+
+  /**
+   * Load state of cache from file system if possible.
+   *
+   * @param writeCache Write cache is used to load pages back into cache if needed.
+   */
+  void loadCacheState(OWriteCache writeCache);
 }

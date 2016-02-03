@@ -24,6 +24,7 @@ import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.Future;
@@ -99,4 +100,11 @@ public interface OWriteCache {
   int pageSize();
 
   boolean fileIdsAreEqual(long firsId, long secondId);
+
+  /**
+   * Directory which contains all files managed by write cache.
+   *
+   * @return Directory which contains all files managed by write cache or <code>null</code> in case of in memory database.
+   */
+  File getRootDirectory();
 }
