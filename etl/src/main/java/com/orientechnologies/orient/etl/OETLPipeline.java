@@ -66,6 +66,7 @@ public class OETLPipeline {
   }
 
   public synchronized void begin() {
+    loader.setPipeline(this);
     loader.begin();
     for (OTransformer t : transformers)
       t.begin();

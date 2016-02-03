@@ -335,10 +335,17 @@ public class OETLProcessor {
       final OETLProcessor processor = this;
 
       for (int i = 0; i < threads.length; ++i) {
+
         threads[i] = new Thread(new Runnable() {
+          final OETLPipeline pipeline;
+
+          {
+
+            pipeline = new OETLPipeline(processor, transformers, loader, logLevel, maxRetries, haltOnError);
+          }
+
           @Override
           public void run() {
-            final OETLPipeline pipeline = new OETLPipeline(processor, transformers, loader, logLevel, maxRetries, haltOnError);
             pipeline.begin();
 
             while (!extractionFinished.get() || counter.get() > 0) {
