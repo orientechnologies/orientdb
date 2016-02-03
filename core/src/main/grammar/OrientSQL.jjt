@@ -285,6 +285,8 @@ TOKEN:
     < COLLATE: ( "c" | "C") ( "o" | "O") ( "l" | "L") ( "l" | "L") ( "a" | "A") ( "t" | "T") ( "E" | "e")  >
     |
     < ENGINE: ( "E" | "e")  ( "N" | "n") ( "G" | "g") ( "I" | "i") ( "N" | "n")( "E" | "e") >
+    |
+    < REBUILD: ( "R" | "r") ( "E" | "e")  ( "B" | "b") ( "U" | "u") ( "I" | "i") ( "L" | "l") ( "D" | "d") >
 	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
@@ -650,6 +652,8 @@ OIdentifier Identifier():
 	|
 	token = <ENGINE>
 	|
+	token = <REBUILD>
+	|
     quotedToken = <QUOTED_IDENTIFIER>
 ) {
 
@@ -787,6 +791,8 @@ OStatement Statement():
         |
         LOOKAHEAD(CreateIndexStatement())
         result = CreateIndexStatement()
+        |
+        result = RebuildIndexStatement()
 	) [ <SEMICOLON> ]
 	{
 	    return result;
@@ -3886,5 +3892,19 @@ OCreateIndexStatement CreateIndexStatement():
         )
     )
 
+	{ return jjtThis; }
+}
+
+ORebuildIndexStatement RebuildIndexStatement():
+{}
+{
+    (
+        <REBUILD> <INDEX>
+        (
+            jjtThis.name = IndexName()
+            |
+            <STAR> { jjtThis.all = true; }
+        )
+	)
 	{ return jjtThis; }
 }
