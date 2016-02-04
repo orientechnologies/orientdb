@@ -77,6 +77,8 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
   protected List<ODistributedWorker>                  workers                    = new ArrayList<ODistributedWorker>();
   protected AtomicLong                                waitForMessageId           = new AtomicLong(-1);
   protected ConcurrentHashMap<ORID, String>           lockManager                = new ConcurrentHashMap<ORID, String>();
+  protected ConcurrentHashMap<String, Integer>        queueSizes                 = new ConcurrentHashMap<String, Integer>();
+  protected ConcurrentHashMap<String, Integer>        queueWarningCounter        = new ConcurrentHashMap<String, Integer>();
 
   public OHazelcastDistributedDatabase(final OHazelcastPlugin manager, final OHazelcastDistributedMessageService msgService,
       final String iDatabaseName) {
@@ -156,20 +158,70 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
         msgService.registerRequest(iRequest.getId(), currentResponseMgr);
 
         for (OPair<String, IQueue> entry : reqQueues) {
+          final String node = entry.getKey();
           final IQueue queue = entry.getValue();
 
           if (queue != null) {
-            if (queueMaxSize > 0 && queue.size() > queueMaxSize) {
-              ODistributedServerLog.warn(this, getLocalNodeName(), iNodes.toString(), DIRECTION.OUT,
-                  "queue has too many messages (%d), treating the node as in stall: trying to restart it...", queue.size());
-              queue.clear();
+            int nodeQueueSize = queue.size();
 
-              manager.disconnectNode(entry.getKey());
+            if (queueMaxSize > 0 && nodeQueueSize > queueMaxSize) {
 
+              Integer nodeQueuePrevSize = queueSizes.get(node);
+              if (nodeQueuePrevSize == null) {
+                nodeQueuePrevSize = 0;
+              }
+              Integer nodeQueueWarnings = queueWarningCounter.get(node);
+              if (nodeQueueWarnings == null) {
+                nodeQueueWarnings = 0;
+              }
+
+              final ODistributedServerManager.DB_STATUS nodeStatus = manager.getDatabaseStatus(node, databaseName);
+              if (nodeStatus == ODistributedServerManager.DB_STATUS.SYNCHRONIZING
+                  || nodeStatus == ODistributedServerManager.DB_STATUS.BACKUP) {
+
+                // BACKUP, SYNCHRONIZING: SEND THE MESSAGE AS WELL
+                queue.offer(iRequest, timeout, TimeUnit.MILLISECONDS);
+
+                queueWarningCounter.remove(node);
+
+              } else if (nodeQueueSize < nodeQueuePrevSize || nodeQueueWarnings < 10) {
+
+                // THE QUEUE IS NOT INCREASING IN SIZE OR IS UNDER THE WARNING THRESHOLD: SEND THE MESSAGE AS WELL
+                queue.offer(iRequest, timeout, TimeUnit.MILLISECONDS);
+
+                if (System.currentTimeMillis() - manager.getLastClusterChangeOn() > 10000) {
+                  queueWarningCounter.put(node, nodeQueueWarnings + 1);
+                  ODistributedServerLog.debug(this, getLocalNodeName(), node, DIRECTION.OUT,
+                      "queue '%s' has too many messages (%d), checking if the node is in stall (warnings=%d)", queue.getName(),
+                      nodeQueueSize, nodeQueueWarnings);
+                } else {
+                  queueWarningCounter.remove(node);
+                  ODistributedServerLog.debug(this, getLocalNodeName(), node, DIRECTION.OUT,
+                      "queue '%s' has too many messages (%d), but the cluster shape is changed recently (%d secs)", queue.getName(),
+                      nodeQueueSize, ((System.currentTimeMillis() - manager.getLastClusterChangeOn()) / 1000));
+                }
+
+              } else {
+                // NODE SEEMS IN STALL FOR UNKNOWN REASON
+                ODistributedServerLog.warn(this, getLocalNodeName(), node, DIRECTION.OUT,
+                    "queue '%s' has too many messages (%d), treating the node as in stall: trying to restart it...",
+                    queue.getName(), nodeQueueSize);
+
+                // CLEAR THE QUEUE TO AVOID AN OOM IN THE CLUSTER
+                queue.clear();
+                queueWarningCounter.remove(node);
+                nodeQueueSize = 0;
+
+                manager.disconnectNode(entry.getKey());
+              }
             } else {
               // SEND THE MESSAGE
               queue.offer(iRequest, timeout, TimeUnit.MILLISECONDS);
+              queueWarningCounter.remove(node);
             }
+
+            // SAVE LAST QUEUE SIZE VALUE
+            queueSizes.put(node, nodeQueueSize);
           }
         }
 
@@ -193,29 +245,25 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
   protected int getAvailableNodes(final ODistributedRequest iRequest, final Collection<String> iNodes, final String databaseName,
       OPair<String, IQueue>[] reqQueues) {
+
     int availableNodes;
-    if (iRequest.getTask().isRequireNodeOnline()) {
-      // CHECK THE ONLINE NODES
-      availableNodes = 0;
-      int i = 0;
-      for (String node : iNodes) {
-        if (reqQueues[i].getValue() != null && manager.isNodeAvailable(node, databaseName))
-          availableNodes++;
-        else {
-          if (ODistributedServerLog.isDebugEnabled())
-            ODistributedServerLog.debug(this, getLocalNodeName(), node, DIRECTION.OUT,
-                "skip expected response from node '%s' for request %s because it's not online (queue=%s)", node, iRequest,
-                reqQueues[i].getValue() != null);
-        }
-        ++i;
+    // CHECK THE ONLINE NODES
+    availableNodes = 0;
+    int i = 0;
+    for (String node : iNodes) {
+      final boolean include = manager.isNodeAvailable(node, databaseName);
+
+      if (include && reqQueues[i].getValue() != null)
+        availableNodes++;
+      else {
+        if (ODistributedServerLog.isDebugEnabled())
+          ODistributedServerLog.debug(this, getLocalNodeName(), node, DIRECTION.OUT,
+              "skip expected response from node '%s' for request %s because it's not online (queue=%s)", node, iRequest,
+              reqQueues[i].getValue() != null);
       }
-    } else {
-      // EXPECT ANSWER FROM ALL NODES WITH A QUEUE
-      availableNodes = 0;
-      for (OPair<String, IQueue> q : reqQueues)
-        if (q.getValue() != null)
-          availableNodes++;
+      ++i;
     }
+
     return availableNodes;
   }
 
@@ -370,7 +418,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
     final String clusterName = clusterNames == null || clusterNames.isEmpty() ? null : clusterNames.iterator().next();
 
-    int quorum = 0;
+    int quorum = 1;
 
     final OCommandDistributedReplicateRequest.QUORUM_TYPE quorumType = iRequest.getTask().getQuorumType();
 
@@ -414,10 +462,14 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
     // WAIT FOR THE MINIMUM SYNCHRONOUS RESPONSES (QUORUM)
     if (!currentResponseMgr.waitForSynchronousResponses()) {
-      ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.IN,
-          "timeout (%dms) on waiting for synchronous responses from nodes=%s responsesSoFar=%s request=%s",
-          System.currentTimeMillis() - beginTime, currentResponseMgr.getExpectedNodes(), currentResponseMgr.getRespondingNodes(),
-          iRequest);
+      final long elapsed = System.currentTimeMillis() - beginTime;
+
+      if (elapsed > currentResponseMgr.getSynchTimeout()) {
+
+        ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.IN,
+            "timeout (%dms) on waiting for synchronous responses from nodes=%s responsesSoFar=%s request=%s", elapsed,
+            currentResponseMgr.getExpectedNodes(), currentResponseMgr.getRespondingNodes(), iRequest);
+      }
     }
 
     return currentResponseMgr.getFinalResponse();

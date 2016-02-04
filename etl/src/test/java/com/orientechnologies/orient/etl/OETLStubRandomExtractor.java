@@ -28,12 +28,11 @@ import java.io.Reader;
 import java.util.Random;
 
 /**
- * ETL Mock loader to check the result in tests.
+ * ETL stub  OAbstractExtractor to check the result in tests.
  * 
  * @author Luca Garulli on 27/11/14.
  */
-public class RandomExtractor extends OAbstractExtractor {
-  private long current = 0;
+public class OETLStubRandomExtractor extends OAbstractExtractor {
   private int  fields;
   private long items;
   private int  delay   = 0;

@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.junit.Test;
 

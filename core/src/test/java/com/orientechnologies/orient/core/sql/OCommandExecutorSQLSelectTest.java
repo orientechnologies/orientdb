@@ -91,6 +91,9 @@ public class OCommandExecutorSQLSelectTest {
     db.command(new OCommandSQL("insert into unwindtest (name, coll) values ('foo', ['foo1', 'foo2'])")).execute();
     db.command(new OCommandSQL("insert into unwindtest (name, coll) values ('bar', ['bar1', 'bar2'])")).execute();
 
+    db.command(new OCommandSQL("CREATE class unwindtest2")).execute();
+    db.command(new OCommandSQL("insert into unwindtest2 (name, coll) values ('foo', [])")).execute();
+
     db.command(new OCommandSQL("CREATE class edge")).execute();
 
     db.command(new OCommandSQL("CREATE class TestFromInSquare")).execute();
@@ -157,6 +160,15 @@ public class OCommandExecutorSQLSelectTest {
     initMatchesWithRegex(db);
     initDistinctLimit(db);
     initLinkListSequence(db);
+    initMaxLongNumber(db);
+  }
+
+  private void initMaxLongNumber(ODatabaseDocumentTx db) {
+    db.command(new OCommandSQL("CREATE class MaxLongNumberTest")).execute();
+    db.command(new OCommandSQL("insert into MaxLongNumberTest set last = 1")).execute();
+    db.command(new OCommandSQL("insert into MaxLongNumberTest set last = null")).execute();
+    db.command(new OCommandSQL("insert into MaxLongNumberTest set last = 958769876987698")).execute();
+    db.command(new OCommandSQL("insert into MaxLongNumberTest set foo = 'bar'")).execute();
   }
 
   private void initLinkListSequence(ODatabaseDocumentTx db) {
@@ -576,6 +588,19 @@ public class OCommandExecutorSQLSelectTest {
       String name = doc.field("name");
       String coll = doc.field("coll");
       assertTrue(coll.startsWith(name));
+      assertFalse(doc.getIdentity().isPersistent());
+    }
+  }
+
+  @Test
+  public void testUnwind2() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select from unwindtest2 unwind coll")).execute();
+
+    assertEquals(qResult.size(), 1);
+    for (ODocument doc : qResult) {
+      String name = doc.field("name");
+      Object coll = doc.field("coll");
+      assertNull(coll);
       assertFalse(doc.getIdentity().isPersistent());
     }
   }
@@ -1031,6 +1056,18 @@ public class OCommandExecutorSQLSelectTest {
       assertTrue(value.equals("1.1.1") ||value.equals("1.1.2"));
     }
   }
+  @Test
+  public void testMaxLongNumber() {
+    //issue #5664
+    OSQLSynchQuery sql = new OSQLSynchQuery("select from MaxLongNumberTest WHERE last < 10 OR last is null");
+    List<ODocument> results = db.query(sql);
+    assertEquals(results.size(), 3);
+    db.command(new OCommandSQL("update MaxLongNumberTest set last = max(91,ifnull(last,0))")).execute();
+    sql = new OSQLSynchQuery("select from MaxLongNumberTest WHERE last < 10 OR last is null");
+    results = db.query(sql);
+    assertEquals(results.size(), 0);
+  }
+
 
   private long indexUsages(ODatabaseDocumentTx db) {
     final long oldIndexUsage;

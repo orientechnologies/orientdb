@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import org.junit.Assert;
@@ -24,78 +26,139 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Starts 3 servers, backup on node3, check other nodes can work in the meanwhile and node3 is realigned once backup is finished.
+ * Starts 3 servers, backup on node3, check other nodes can work in the meanwhile and node3 is realigned once backup is finished. No
+ * automatic restart must be executed.
  */
 public class OneNodeBackupTest extends AbstractServerClusterTxTest {
-  final static int SERVERS          = 3;
-  protected Timer  timer            = new Timer(true);
-  volatile boolean inserting        = true;
-  volatile int     serverStarted    = 0;
-  volatile boolean backupInProgress = false;
+  final static int    SERVERS          = 3;
+  volatile boolean    inserting        = true;
+  volatile int        serverStarted    = 0;
+  volatile boolean    backupInProgress = false;
+  final AtomicInteger nodeLefts        = new AtomicInteger();
 
   @Test
   public void test() throws Exception {
-    startupNodesInSequence = true;
-    count = 1500;
-    maxRetries = 10;
-    init(SERVERS);
-    prepare(false);
+    // SET MAXQUEUE SIZE LOWER TO TEST THE NODE IS NOT RESTARTED AUTOMATICALLY
+    final long queueMaxSize = OGlobalConfiguration.DISTRIBUTED_QUEUE_MAXSIZE.getValueAsLong();
+    OGlobalConfiguration.DISTRIBUTED_QUEUE_MAXSIZE.setValue(1000);
 
-    // EXECUTE TESTS ONLY ON FIRST 2 NODES LEAVING NODE3 AD BACKUP ONLY REPLICA
-    executeTestsOnServers = new ArrayList<ServerRun>();
-    for (int i = 0; i < serverInstance.size() - 1; ++i) {
-      executeTestsOnServers.add(serverInstance.get(i));
+    try {
+      startupNodesInSequence = true;
+      count = 1500;
+      maxRetries = 10;
+      init(SERVERS);
+      prepare(false);
+
+      // EXECUTE TESTS ONLY ON FIRST 2 NODES LEAVING NODE3 AS BACKUP ONLY REPLICA
+      executeTestsOnServers = new ArrayList<ServerRun>();
+      for (int i = 0; i < serverInstance.size() - 1; ++i) {
+        executeTestsOnServers.add(serverInstance.get(i));
+      }
+
+      execute();
+
+    } finally {
+      OGlobalConfiguration.DISTRIBUTED_QUEUE_MAXSIZE.setValue(queueMaxSize);
     }
-
-    execute();
   }
 
   @Override
   protected void onServerStarted(ServerRun server) {
     super.onServerStarted(server);
 
-    if (serverStarted++ == (SERVERS - 1)) {
+    if (serverStarted == 0) {
+      // INSTALL ON FIRST SERVER ONLY THE SERVER MONITOR TO CHECK IF HAS BEEN RESTARTED
+      server.server.getDistributedManager().registerLifecycleListener(new ODistributedLifecycleListener() {
+        @Override
+        public boolean onNodeJoining(String iNode) {
+          return true;
+        }
 
-      // BACKUP LAST SERVER IN 3 SECONDS
-      timer.schedule(new TimerTask() {
+        @Override
+        public void onNodeJoined(String iNode) {
+        }
+
+        @Override
+        public void onNodeLeft(String iNode) {
+          nodeLefts.incrementAndGet();
+        }
+      });
+    }
+
+    if (serverStarted++ == (SERVERS - 1)) {
+      startQueueMonitorTask();
+
+      // BACKUP LAST SERVER, RUN ASYNCHRONOUSLY
+      new Thread(new Runnable() {
         @Override
         public void run() {
-          Assert.assertTrue("Insert was too fast", inserting);
-
-          banner("STARTING BACKUP SERVER " + (SERVERS - 1));
-
-          OrientGraphFactory factory = new OrientGraphFactory(
-              "plocal:target/server" + (SERVERS - 1) + "/databases/" + getDatabaseName());
-          OrientGraphNoTx g = factory.getNoTx();
-
-          backupInProgress = true;
           try {
-            final File file = File.createTempFile("orientdb_test_backup", ".zip");
-            if (file.exists())
-              Assert.assertTrue(file.delete());
-
-            g.getRawGraph().backup(new FileOutputStream(file), null, new Callable<Object>() {
+            // CRASH LAST SERVER try {
+            executeWhen(new Callable<Boolean>() {
+              // CONDITION
+              @Override
+              public Boolean call() throws Exception {
+                final ODatabaseDocumentTx database = poolFactory.get(getDatabaseURL(serverInstance.get(0)), "admin", "admin")
+                    .acquire();
+                try {
+                  return database.countClass("Person") > (count * SERVERS) * 1 / 3;
+                } finally {
+                  database.close();
+                }
+              }
+            }, // ACTION
+                new Callable() {
               @Override
               public Object call() throws Exception {
-                // SIMULATE LONG BACKUP
-                Thread.sleep(10000);
+                Assert.assertTrue("Insert was too fast", inserting);
+
+                banner("STARTING BACKUP SERVER " + (SERVERS - 1));
+
+                OrientGraphFactory factory = new OrientGraphFactory(
+                    "plocal:target/server" + (SERVERS - 1) + "/databases/" + getDatabaseName());
+                OrientGraphNoTx g = factory.getNoTx();
+
+                backupInProgress = true;
+                File file = null;
+                try {
+                  file = File.createTempFile("orientdb_test_backup", ".zip");
+                  if (file.exists())
+                    Assert.assertTrue(file.delete());
+
+                  g.getRawGraph().backup(new FileOutputStream(file), null, new Callable<Object>() {
+                    @Override
+                    public Object call() throws Exception {
+
+                      // SIMULATE LONG BACKUP
+                      Thread.sleep(10000);
+
+                      return null;
+                    }
+                  }, null, 9, 1000000);
+
+                } catch (IOException e) {
+                  e.printStackTrace();
+                } finally {
+                  banner("COMPLETED BACKUP SERVER " + (SERVERS - 1));
+                  backupInProgress = false;
+
+                  if (file != null)
+                    file.delete();
+                }
                 return null;
               }
-            }, null, 9, 1000000);
+            });
 
-          } catch (IOException e) {
+          } catch (Exception e) {
             e.printStackTrace();
-          } finally {
-            banner("COMPLETED BACKUP SERVER " + (SERVERS - 1));
-            backupInProgress = false;
+            Assert.fail("Error on execution flow");
           }
         }
-      }, 5000);
+      }).start();
     }
   }
 
@@ -103,6 +166,7 @@ public class OneNodeBackupTest extends AbstractServerClusterTxTest {
   protected void onAfterExecution() throws Exception {
     inserting = false;
     Assert.assertFalse(backupInProgress);
+    Assert.assertEquals("Found some nodes has been restarted", 0, nodeLefts.get());
   }
 
   protected String getDatabaseURL(final ServerRun server) {

@@ -218,7 +218,7 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
 
   @Override
   public boolean isRequireNodeOnline() {
-    return true;
+    return false;
   }
 
   @Override

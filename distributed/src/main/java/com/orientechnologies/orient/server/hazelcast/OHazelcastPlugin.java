@@ -33,7 +33,6 @@ import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -87,7 +86,7 @@ import java.util.concurrent.locks.Lock;
 public class OHazelcastPlugin extends ODistributedAbstractPlugin
     implements MembershipListener, EntryListener<String, Object>, OCommandOutputListener {
 
-  public static final String CONFIG_DATABASE_PREFIX = "database.";
+  public static final String                    CONFIG_DATABASE_PREFIX = "database.";
 
   protected static final String                 NODE_NAME_ENV          = "ORIENTDB_NODE_NAME";
   protected static final String                 CONFIG_NODE_PREFIX     = "node.";
@@ -100,13 +99,13 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   protected long                                timeOffset             = 0;
   protected Date                                startedOn              = new Date();
 
-  protected volatile NODE_STATUS status = NODE_STATUS.OFFLINE;
+  protected volatile NODE_STATUS                status                 = NODE_STATUS.OFFLINE;
 
-  protected String membershipListenerRegistration;
+  protected String                              membershipListenerRegistration;
 
   protected volatile HazelcastInstance          hazelcastInstance;
   protected long                                lastClusterChangeOn;
-  protected List<ODistributedLifecycleListener> listeners = new ArrayList<ODistributedLifecycleListener>();
+  protected List<ODistributedLifecycleListener> listeners              = new ArrayList<ODistributedLifecycleListener>();
 
   public OHazelcastPlugin() {
   }
@@ -177,7 +176,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       if (!configurationMap.containsKey(CONFIG_NODE_PREFIX + nodeId)) {
         // NODE NOT REGISTERED, FORCING SHUTTING DOWN
         ODistributedServerLog.error(this, localNodeName, null, DIRECTION.NONE, "Error on registering local node on cluster");
-        System.exit(1);
+        throw new ODistributedStartupException("Error on registering local node on cluster");
       }
 
       messageService = new OHazelcastDistributedMessageService(this);
@@ -191,7 +190,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
     } catch (Exception e) {
       ODistributedServerLog.error(this, localNodeName, null, DIRECTION.NONE, "Error on starting distributed plugin", e);
-      System.exit(1);
+      throw new ODistributedStartupException("Error on starting distributed plugin", e);
     }
   }
 
@@ -283,6 +282,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     nodeCfg.field("id", getLocalNodeId());
     nodeCfg.field("name", getLocalNodeName());
     nodeCfg.field("startedOn", startedOn);
+    nodeCfg.field("status", getNodeStatus());
 
     List<Map<String, Object>> listeners = new ArrayList<Map<String, Object>>();
     nodeCfg.field("listeners", listeners, OType.EMBEDDEDLIST);
@@ -435,11 +435,13 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         if (cfg == null)
           return;
 
-        if (iDatabase instanceof ODatabase<?> && (!(iDatabase.getStorage() instanceof ODistributedStorage)
-            || ((ODistributedStorage) iDatabase.getStorage()).getDistributedManager().isOffline())) {
+        if (!(iDatabase.getStorage() instanceof ODistributedStorage)
+            || ((ODistributedStorage) iDatabase.getStorage()).getDistributedManager().isOffline()) {
+
           ODistributedStorage storage = storages.get(iDatabase.getURL());
           if (storage == null) {
-            storage = new ODistributedStorage(serverInstance, (OAbstractPaginatedStorage) iDatabase.getStorage());
+            storage = new ODistributedStorage(serverInstance, (OAbstractPaginatedStorage) iDatabase.getStorage().getUnderlying());
+
             final ODistributedStorage oldStorage = storages.putIfAbsent(iDatabase.getURL(), storage);
             if (oldStorage != null)
               storage = oldStorage;
@@ -989,14 +991,21 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   protected void backupCurrentDatabase(final String iDatabaseName) {
     Orient.instance().unregisterStorageByName(iDatabaseName);
 
-    final String backupDirectory = OGlobalConfiguration.DISTRIBUTED_BACKUP_DIRECTORY.getValueAsString();
-    if (backupDirectory == null || OIOUtils.getStringContent(backupDirectory).trim().isEmpty())
+    final String providedBackupDirectoryPath = OGlobalConfiguration.DISTRIBUTED_BACKUP_DIRECTORY.getValueAsString();
+    if (providedBackupDirectoryPath == null || OIOUtils.getStringContent(providedBackupDirectoryPath).trim().isEmpty())
       // SKIP BACKUP
       return;
 
+    File providedPathFile = new File(providedBackupDirectoryPath);
+
     // MOVE DIRECTORY TO ../backup/databases/<db-name>
-    final File backupFullPath = new File(serverInstance.getDatabaseDirectory() + backupDirectory + "/" + iDatabaseName);
-    final File backupParentPath = new File(serverInstance.getDatabaseDirectory() + backupDirectory);
+    final File backupParentPath;
+    if (providedPathFile.isAbsolute()) {
+      backupParentPath = new File(providedBackupDirectoryPath);
+    } else {
+      backupParentPath = new File(serverInstance.getDatabaseDirectory() + providedBackupDirectoryPath);
+    }
+    final File backupFullPath = new File(backupParentPath, iDatabaseName);
 
     if (!backupParentPath.exists())
       // CREATE THE DIRECTORY STRUCTURE
@@ -1685,6 +1694,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     final OHazelcastDistributedResponse response = new OHazelcastDistributedResponse(-1, nodeName, iNode, new ORestartNodeTask());
 
     try {
+      queue.clear();
       if (!queue.offer(response, OGlobalConfiguration.DISTRIBUTED_QUEUE_TIMEOUT.getValueAsLong(), TimeUnit.MILLISECONDS))
         throw new ODistributedException("Timeout on dispatching restart node request to node '" + iNode + "'");
     } catch (InterruptedException e) {

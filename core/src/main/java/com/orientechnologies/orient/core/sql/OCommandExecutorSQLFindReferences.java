@@ -48,39 +48,51 @@ public class OCommandExecutorSQLFindReferences extends OCommandExecutorSQLEarlyR
   private StringBuilder      subQuery;
 
   public OCommandExecutorSQLFindReferences parse(final OCommandRequest iRequest) {
-    init((OCommandRequestText) iRequest);
+    final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
+    String queryText = textRequest.getText();
+    String originalQuery = queryText;
+    try {
+      // System.out.println("NEW PARSER FROM: " + queryText);
+      queryText = preParse(queryText, iRequest);
+      // System.out.println("NEW PARSER   TO: " + queryText);
+      textRequest.setText(queryText);
 
-    parserRequiredKeyword(KEYWORD_FIND);
-    parserRequiredKeyword(KEYWORD_REFERENCES);
-    final String target = parserRequiredWord(true, "Expected <target>", " =><,\r\n");
+      init((OCommandRequestText) iRequest);
 
-    if (target.charAt(0) == '(') {
-      subQuery = new StringBuilder();
-      parserSetCurrentPosition(OStringSerializerHelper.getEmbedded(parserText, parserGetPreviousPosition(), -1, subQuery));
-    } else {
-      try {
-        final ORecordId rid = new ORecordId(target);
-        if (!rid.isValid())
-          throwParsingException("Record ID " + target + " is not valid");
-        recordIds.add(rid);
+      parserRequiredKeyword(KEYWORD_FIND);
+      parserRequiredKeyword(KEYWORD_REFERENCES);
+      final String target = parserRequiredWord(true, "Expected <target>", " =><,\r\n");
 
-      } catch (IllegalArgumentException iae) {
-        throw new OCommandSQLParsingException("Error reading record Id", parserText, parserGetPreviousPosition(), iae);
+      if (target.charAt(0) == '(') {
+        subQuery = new StringBuilder();
+        parserSetCurrentPosition(OStringSerializerHelper.getEmbedded(parserText, parserGetPreviousPosition(), -1, subQuery));
+      } else {
+        try {
+          final ORecordId rid = new ORecordId(target);
+          if (!rid.isValid())
+            throwParsingException("Record ID " + target + " is not valid");
+          recordIds.add(rid);
+
+        } catch (IllegalArgumentException iae) {
+          throw new OCommandSQLParsingException("Error reading record Id", parserText, parserGetPreviousPosition(), iae);
+        }
       }
-    }
 
-    parserSkipWhiteSpaces();
-    classList = parserOptionalWord(true);
-    if (classList != null) {
-      classList = parserTextUpperCase.substring(parserGetPreviousPosition());
+      parserSkipWhiteSpaces();
+      classList = parserOptionalWord(true);
+      if (classList != null) {
+        classList = parserTextUpperCase.substring(parserGetPreviousPosition());
 
-      if (!classList.startsWith("[") || !classList.endsWith("]")) {
-        throwParsingException("Class list must be contained in []");
+        if (!classList.startsWith("[") || !classList.endsWith("]")) {
+          throwParsingException("Class list must be contained in []");
+        }
+        // GET THE CLUSTER LIST TO SEARCH, IF NULL WILL SEARCH ENTIRE DATABASE
+        classList = classList.substring(1, classList.length() - 1);
       }
-      // GET THE CLUSTER LIST TO SEARCH, IF NULL WILL SEARCH ENTIRE DATABASE
-      classList = classList.substring(1, classList.length() - 1);
-    }
 
+    }finally{
+      textRequest.setText(originalQuery);
+    }
     return this;
   }
 

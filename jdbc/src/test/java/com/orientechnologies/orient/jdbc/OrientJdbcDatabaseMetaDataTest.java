@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.jdbc;
 
 import com.orientechnologies.orient.core.OConstants;
+import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
@@ -141,6 +143,17 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
       tableCount++;
     }
     return tableCount;
+  }
+
+  @Test
+  public void shouldFillSchemaAndCatalogWithDatabaseName() throws SQLException {
+    ResultSet rs = this.metaData.getTables(null, null, null, null);
+
+    while (rs.next()) {
+      assertThat(rs.getString("TABLE_SCHEM"),equalTo("test"));
+      assertThat(rs.getString("TABLE_CAT"), equalTo("test"));
+    }
+
   }
 
   @Test

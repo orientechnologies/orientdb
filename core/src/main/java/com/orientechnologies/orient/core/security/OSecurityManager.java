@@ -19,28 +19,29 @@
   */
 package com.orientechnologies.orient.core.security;
 
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.exception.OSecurityAccessException;
-import com.orientechnologies.orient.core.exception.OSecurityException;
-
-import javax.crypto.Cipher;
-import javax.crypto.KeyGenerator;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
 import java.io.UnsupportedEncodingException;
 import java.security.Key;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.exception.OSecurityException;
+
 public class OSecurityManager {
 
-  public static final String            ALGORITHM        = "SHA-256";
-  public static final String            ALGORITHM_PREFIX = "{" + ALGORITHM + "}";
+  public static final String ALGORITHM        = "SHA-256";
+  public static final String ALGORITHM_PREFIX = "{" + ALGORITHM + "}";
 
-  private static final OSecurityManager instance         = new OSecurityManager();
+  private static final OSecurityManager instance = new OSecurityManager();
 
-  private MessageDigest                 md;
+  private MessageDigest md;
 
   public OSecurityManager() {
     try {
@@ -50,8 +51,8 @@ public class OSecurityManager {
     }
   }
 
-  public static String digest2String(final String iInput, String iAlgorithm) throws NoSuchAlgorithmException,
-      UnsupportedEncodingException {
+  public static String digest2String(final String iInput, String iAlgorithm)
+      throws NoSuchAlgorithmException, UnsupportedEncodingException {
     if (iAlgorithm == null)
       iAlgorithm = ALGORITHM;
 
@@ -64,7 +65,7 @@ public class OSecurityManager {
     return instance;
   }
 
-  private static String byteArrayToHexStr(final byte[] data) {
+  public static String byteArrayToHexStr(final byte[] data) {
     if (data == null)
       return null;
 
@@ -172,4 +173,23 @@ public class OSecurityManager {
       throw new OSecurityException("Error on decrypting data", e);
     }
   }
+
+  public String createSHA256(final String iInput) {
+    return byteArrayToHexStr(digestSHA256(iInput));
+  }
+
+  public synchronized byte[] digestSHA256(final String iInput) {
+    if (iInput == null)
+      return null;
+
+    try {
+      return md.digest(iInput.getBytes("UTF-8"));
+    } catch (UnsupportedEncodingException e) {
+      final String message = "The requested encoding is not supported: cannot execute security checks";
+      OLogManager.instance().error(this, message, e);
+
+      throw new OConfigurationException(message, e);
+    }
+  }
+
 }

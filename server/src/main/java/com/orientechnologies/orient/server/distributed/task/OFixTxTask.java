@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
@@ -84,6 +85,7 @@ public class OFixTxTask extends OAbstractRemoteTask {
       });
 
     } catch (Exception e) {
+      OLogManager.instance().error(this, "Exception during attempt to fix inconsistency between nodes", e);
       return Boolean.FALSE;
     } finally {
       // UNLOCK ALL RIDS IN ANY CASE

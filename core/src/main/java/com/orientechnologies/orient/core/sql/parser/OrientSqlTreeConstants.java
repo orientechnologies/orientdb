@@ -116,6 +116,7 @@ public interface OrientSqlTreeConstants
   public int JJTFETCHPLANITEM = 110;
   public int JJTTRAVERSEPROJECTIONITEM = 111;
   public int JJTJSON = 112;
+  public int JJTFINDREFERENCESSTATEMENT = 113;
 
 
   public String[] jjtNodeName = {
@@ -232,6 +233,7 @@ public interface OrientSqlTreeConstants
     "FetchPlanItem",
     "TraverseProjectionItem",
     "Json",
+    "FindReferencesStatement",
   };
 }
-/* JavaCC - OriginalChecksum=8d5df2276c1234b1f53a53eb66db5771 (do not edit this line) */
+/* JavaCC - OriginalChecksum=6ae37143d416d8efb3f3e35f8842cf2b (do not edit this line) */

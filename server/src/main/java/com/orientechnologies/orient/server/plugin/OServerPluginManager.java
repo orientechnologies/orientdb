@@ -68,6 +68,7 @@ public class OServerPluginManager implements OService {
     server = iServer;
   }
 
+  @Override
   public void startup() {
     boolean hotReload = true;
     boolean dynamic = true;

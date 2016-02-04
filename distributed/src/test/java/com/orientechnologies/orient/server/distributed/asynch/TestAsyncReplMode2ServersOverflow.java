@@ -3,7 +3,7 @@ package com.orientechnologies.orient.server.distributed.asynch;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import java.util.concurrent.CountDownLatch;
 

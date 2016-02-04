@@ -40,6 +40,7 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpSessionMan
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 
 import java.io.IOException;
+import java.net.URLDecoder;
 import java.util.List;
 
 /**
@@ -71,7 +72,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
     if (urlParts.length < 2)
       throw new OHttpRequestException("Syntax error in URL. Expected is: <command>/<database>[/...]");
 
-    iRequest.databaseName = urlParts[1];
+    iRequest.databaseName = URLDecoder.decode(urlParts[1],"UTF-8");
     if (iRequest.bearerTokenRaw != null) {
       // Bearer authentication
       try {

@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.etl.extractor;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.etl.ETLBaseTest;
+import com.orientechnologies.orient.etl.OETLBaseTest;
 import com.orientechnologies.orient.etl.transformer.OCSVTransformer;
 import org.junit.Test;
 
@@ -14,7 +14,7 @@ import static org.junit.Assert.*;
 /**
  * Created by frank on 10/5/15.
  */
-public class OCSVExtractorTest extends ETLBaseTest {
+public class OCSVExtractorTest extends OETLBaseTest {
 
   @Test
   public void testOneObject() {

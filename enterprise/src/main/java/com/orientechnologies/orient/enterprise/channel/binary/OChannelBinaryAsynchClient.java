@@ -234,7 +234,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
                 + (socket != null ? socket.getRemoteSocketAddress() : "") + " for the request " + iRequesterId);
           }
 
-          //IN CASE OF TOO MUCH TIME FOR READ A MESSAGE, ASYNC THREAD SHOULD NOT BE INCLUDE IN THIS CHECK
+          // IN CASE OF TOO MUCH TIME FOR READ A MESSAGE, ASYNC THREAD SHOULD NOT BE INCLUDE IN THIS CHECK
           if (unreadResponse > maxUnreadResponses && iRequesterId != Integer.MIN_VALUE) {
             if (debug)
               OLogManager.instance().info(this, "Unread responses %d > %d, consider the buffer as dirty: clean it", unreadResponse,
@@ -258,7 +258,8 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
 
           if (debug) {
             final long now = System.currentTimeMillis();
-            OLogManager.instance().debug(this, "Waked up: slept %dms, checking again from %s for session %d", (now - start), socket.getLocalAddress(), iRequesterId);
+            OLogManager.instance().debug(this, "Waked up: slept %dms, checking again from %s for session %d", (now - start),
+                socket.getLocalAddress(), iRequesterId);
           }
 
           unreadResponse++;
@@ -432,7 +433,8 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     try {
       throwable = objectInputStream.readObject();
     } catch (ClassNotFoundException e) {
-      OLogManager.instance().error(this, "Error during exception serialization.", e);
+      OLogManager.instance().error(this, "Error during exception deserialization", e);
+      throw new IOException("Error during exception deserialization: " + e.toString());
     }
 
     objectInputStream.close();
