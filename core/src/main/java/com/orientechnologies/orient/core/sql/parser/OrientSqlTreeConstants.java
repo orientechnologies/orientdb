@@ -147,6 +147,7 @@ public interface OrientSqlTreeConstants
   public int JJTDROPPROPERTYSTATEMENT = 141;
   public int JJTCREATEINDEXSTATEMENT = 142;
   public int JJTREBUILDINDEXSTATEMENT = 143;
+  public int JJTDROPINDEXSTATEMENT = 144;
 
 
   public String[] jjtNodeName = {
@@ -294,6 +295,7 @@ public interface OrientSqlTreeConstants
     "DropPropertyStatement",
     "CreateIndexStatement",
     "RebuildIndexStatement",
+    "DropIndexStatement",
   };
 }
-/* JavaCC - OriginalChecksum=002bf108a8757b5f51c29d67f0d185c3 (do not edit this line) */
+/* JavaCC - OriginalChecksum=f655d7def13102eefa92a6c5a262371d (do not edit this line) */

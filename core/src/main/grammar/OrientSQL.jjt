@@ -793,6 +793,9 @@ OStatement Statement():
         result = CreateIndexStatement()
         |
         result = RebuildIndexStatement()
+        |
+        LOOKAHEAD(2)
+        result = DropIndexStatement()
 	) [ <SEMICOLON> ]
 	{
 	    return result;
@@ -3900,6 +3903,20 @@ ORebuildIndexStatement RebuildIndexStatement():
 {
     (
         <REBUILD> <INDEX>
+        (
+            jjtThis.name = IndexName()
+            |
+            <STAR> { jjtThis.all = true; }
+        )
+	)
+	{ return jjtThis; }
+}
+
+ODropIndexStatement DropIndexStatement():
+{}
+{
+    (
+        <DROP> <INDEX>
         (
             jjtThis.name = IndexName()
             |
