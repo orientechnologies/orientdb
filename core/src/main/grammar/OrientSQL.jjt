@@ -287,6 +287,8 @@ TOKEN:
     < ENGINE: ( "E" | "e")  ( "N" | "n") ( "G" | "g") ( "I" | "i") ( "N" | "n")( "E" | "e") >
     |
     < REBUILD: ( "R" | "r") ( "E" | "e")  ( "B" | "b") ( "U" | "u") ( "I" | "i") ( "L" | "l") ( "D" | "d") >
+    |
+    < ID: ( "I" | "i") ( "D" | "d") >
 	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
@@ -654,6 +656,8 @@ OIdentifier Identifier():
 	|
 	token = <REBUILD>
 	|
+	token = <ID>
+	|
     quotedToken = <QUOTED_IDENTIFIER>
 ) {
 
@@ -796,6 +800,10 @@ OStatement Statement():
         |
         LOOKAHEAD(2)
         result = DropIndexStatement()
+        |
+        LOOKAHEAD(CreateClusterStatement())
+        result = CreateClusterStatement()
+
 	) [ <SEMICOLON> ]
 	{
 	    return result;
@@ -3925,3 +3933,16 @@ ODropIndexStatement DropIndexStatement():
 	)
 	{ return jjtThis; }
 }
+
+
+OCreateClusterStatement CreateClusterStatement():
+{}
+{
+	<CREATE> <CLUSTER>
+	(
+		jjtThis.name = Identifier()
+	)
+	[ <ID> jjtThis.id = Integer() ]
+	{ return jjtThis; }
+}
+
