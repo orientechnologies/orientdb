@@ -151,6 +151,7 @@ public interface OrientSqlTreeConstants
   public int JJTCREATECLUSTERSTATEMENT = 145;
   public int JJTALTERCLUSTERSTATEMENT = 146;
   public int JJTDROPCLUSTERSTATEMENT = 147;
+  public int JJTALTERDATABASESTATEMENT = 148;
 
 
   public String[] jjtNodeName = {
@@ -302,6 +303,7 @@ public interface OrientSqlTreeConstants
     "CreateClusterStatement",
     "AlterClusterStatement",
     "DropClusterStatement",
+    "AlterDatabaseStatement",
   };
 }
-/* JavaCC - OriginalChecksum=7875c6e15e749b141c12b965fa5ad795 (do not edit this line) */
+/* JavaCC - OriginalChecksum=3e9603efcb59cab7681eda34b0433c42 (do not edit this line) */

@@ -289,6 +289,8 @@ TOKEN:
     < REBUILD: ( "R" | "r") ( "E" | "e")  ( "B" | "b") ( "U" | "u") ( "I" | "i") ( "L" | "l") ( "D" | "d") >
     |
     < ID: ( "I" | "i") ( "D" | "d") >
+    |
+    < DATABASE: ( "D" | "d") ( "A" | "a")  ( "T" | "t") ( "A" | "a") ( "B" | "b") ( "A" | "a") ( "S" | "s") ( "E" | "e") >
 	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
@@ -658,6 +660,8 @@ OIdentifier Identifier():
 	|
 	token = <ID>
 	|
+	token = <DATABASE>
+	|
     quotedToken = <QUOTED_IDENTIFIER>
 ) {
 
@@ -809,6 +813,9 @@ OStatement Statement():
         |
         LOOKAHEAD(2)
         result = DropClusterStatement()
+        |
+        LOOKAHEAD(2)
+        result = AlterDatabaseStatement()
 	) [ <SEMICOLON> ]
 	{
 	    return result;
@@ -3973,5 +3980,26 @@ ODropClusterStatement DropClusterStatement():
 		|
 		jjtThis.id = Integer()
 	)
+	{ return jjtThis; }
+}
+
+OAlterDatabaseStatement AlterDatabaseStatement():
+{}
+{
+	<ALTER> <DATABASE>
+    (
+        LOOKAHEAD(3)
+        (
+            <CUSTOM>
+            jjtThis.customPropertyName = Identifier()
+            <EQ>
+            jjtThis.customPropertyValue = Expression()
+        )
+        |
+        (
+            jjtThis.settingName = Identifier()
+            jjtThis.settingValue = Expression()
+        )
+    )
 	{ return jjtThis; }
 }
