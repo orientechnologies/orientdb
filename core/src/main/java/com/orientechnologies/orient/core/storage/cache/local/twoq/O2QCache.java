@@ -774,6 +774,9 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
       try {
         final OCacheEntry cacheEntry;
         if (loadPages) {
+          if (!writeCache.isOpen(fileId))
+            writeCache.openFile(fileId);
+
           final OCachePointer[] pointers = writeCache.load(fileId, pageIndex, 1, false, cacheHit);
           if (pointers.length == 0)
             continue;
@@ -819,7 +822,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
 
       final Set<Long> filesToStore = new HashSet<Long>();
 
-      for (long fileId : filesToStore) {
+      for (long fileId : files) {
         filesToStore.add(fileId);
       }
 
