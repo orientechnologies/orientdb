@@ -149,6 +149,7 @@ public interface OrientSqlTreeConstants
   public int JJTREBUILDINDEXSTATEMENT = 143;
   public int JJTDROPINDEXSTATEMENT = 144;
   public int JJTCREATECLUSTERSTATEMENT = 145;
+  public int JJTALTERCLUSTERSTATEMENT = 146;
 
 
   public String[] jjtNodeName = {
@@ -298,6 +299,7 @@ public interface OrientSqlTreeConstants
     "RebuildIndexStatement",
     "DropIndexStatement",
     "CreateClusterStatement",
+    "AlterClusterStatement",
   };
 }
-/* JavaCC - OriginalChecksum=2d94a49f2833efb7120415c6fd527a26 (do not edit this line) */
+/* JavaCC - OriginalChecksum=be65cb708f410228bc5bc57513b55793 (do not edit this line) */
