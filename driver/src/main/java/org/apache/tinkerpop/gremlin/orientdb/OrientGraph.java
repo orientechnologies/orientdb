@@ -147,6 +147,7 @@ public final class OrientGraph implements Graph {
             this.connectionFailed = false;
 
             try {
+<<<<<<< f0962e2ad5c1e31bb40f730d517939f6a35ed74d
                 if (this.poolSupplier != null) {
                     this.pool = this.poolSupplier.get();
                     this.database = this.pool.acquire();
@@ -155,6 +156,11 @@ public final class OrientGraph implements Graph {
                     replaceDb.open(user, password);
                     this.database = replaceDb;
                 }
+=======
+                ODatabaseDocumentTx replaceDb = new ODatabaseDocumentTx(this.database.getURL(), this.database.isKeepStorageOpen());
+                replaceDb.open(user, password);
+                this.database = replaceDb;
+>>>>>>> fix OrientGraph reconection logic to pass OrientGraphIndexTest.vertexUniqueConstraint test
                 makeActiveDb();
             } catch (OException e) {
                 OLogManager.instance().info(this, "Recreation of connection resulted in exception", e);
