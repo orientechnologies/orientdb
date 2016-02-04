@@ -49,7 +49,7 @@ public class OStreamSerializerAnyRecord implements OStreamSerializer {
       // NULL VALUE
       return null;
 
-    final String stream = OBinaryProtocol.bytes2string(iStream);
+    final String stream = new String(iStream,"UTF-8");
 
     Class<?> cls = null;
 
@@ -86,7 +86,7 @@ public class OStreamSerializerAnyRecord implements OStreamSerializer {
     final StringBuilder buffer = OStreamSerializerHelper.writeRecordType(iObject.getClass(), new StringBuilder(1024));
     buffer.append(((ORecord) iObject).getIdentity().toString());
 
-    return OBinaryProtocol.string2bytes(buffer.toString());
+    return buffer.toString().getBytes("UTF-8");
   }
 
   public String getName() {

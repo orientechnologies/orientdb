@@ -162,7 +162,7 @@ public class OCompositeKeySerializer implements OBinarySerializer<OCompositeKey>
     final int keysSize = inputStream.getAsInteger();
     for (int i = 0; i < keysSize; i++) {
       final byte[] keyBytes = inputStream.getAsByteArray();
-      final String keyString = OBinaryProtocol.bytes2string(keyBytes);
+      final String keyString = new String(keyBytes,"UTF-8");
       final int typeSeparatorPos = keyString.indexOf(',');
       final OType type = OType.valueOf(keyString.substring(0, typeSeparatorPos));
       compositeKey.addKey(ORecordSerializerStringAbstract.simpleValueFromStream(keyString.substring(typeSeparatorPos + 1), type));
