@@ -806,6 +806,9 @@ OStatement Statement():
         |
         LOOKAHEAD(AlterClusterStatement())
         result = AlterClusterStatement()
+        |
+        LOOKAHEAD(2)
+        result = DropClusterStatement()
 	) [ <SEMICOLON> ]
 	{
 	    return result;
@@ -3958,5 +3961,17 @@ OAlterClusterStatement AlterClusterStatement():
 	[ <STAR> { jjtThis.starred = true; }]
 	jjtThis.attributeName = Identifier()
 	jjtThis.attributeValue = Expression()
+	{ return jjtThis; }
+}
+
+ODropClusterStatement DropClusterStatement():
+{}
+{
+	<DROP> <CLUSTER>
+	(
+		jjtThis.name = Identifier()
+		|
+		jjtThis.id = Integer()
+	)
 	{ return jjtThis; }
 }
