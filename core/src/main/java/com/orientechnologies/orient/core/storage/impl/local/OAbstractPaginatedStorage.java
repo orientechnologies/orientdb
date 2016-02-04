@@ -734,12 +734,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   /**
-   * This method finds all the records which were updated starting from current LSN and write result in provided output stream. In
-   * output stream will be included all records which were updated/deleted/created since passed in LSN till the current moment.
+   * This method finds all the records which were updated starting from (but not including)current LSN and write result in
+   * provided output stream. In output stream will be included all records which were
+   * updated/deleted/created since passed in LSN till the current moment.
    * <p>
    * Deleted records are written in output stream first, then created/updated records. All records are sorted by record id.
    * <p>
+   * Data format:
    * <ol>
+   * <li>Amount of records (single entry) - 8 bytes</li>
    * <li>Record's cluster id - 4 bytes</li>
    * <li>Record's cluster position - 8 bytes</li>
    * <li>Delete flag, 1 if record is deleted - 1 byte</li>
@@ -759,7 +762,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     if (!OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.getValueAsBoolean())
       throw new IllegalStateException(
           "Can not find records which were changed starting from provided LSN because tracking of rids of changed records in WAL is switched off, "
-              + "to switch it on please set property " + OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.getValue()
+              + "to switch it on please set property " + OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.getKey()
               + " to the true value, please note that only records"
               + " which are stored after this property was set will be retrieved");
 
@@ -772,14 +775,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       // we iterate till the last record is contained in wal at the moment when we call this method
       final OLogSequenceNumber endLsn = writeAheadLog.end();
 
-      if (endLsn == null) {
+      if (endLsn == null || lsn.compareTo(endLsn) >= 0) {
         return null;
       }
 
       // container of rids of changed records
       final SortedSet<ORID> sortedRids = new TreeSet<ORID>();
 
-      final OLogSequenceNumber startLsn = lsn;
+      final OLogSequenceNumber startLsn = writeAheadLog.next(lsn);
 
       writeAheadLog.preventCutTill(startLsn);
       try {
@@ -792,7 +795,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         OLogSequenceNumber currentLsn = startLsn;
 
         // all information about changed records is contained in atomic operation metadata
-        while (currentLsn != null && endLsn.compareTo(currentLsn) > 0) {
+        while (currentLsn != null && endLsn.compareTo(currentLsn) >= 0) {
           walRecord = writeAheadLog.read(currentLsn);
 
           if (walRecord instanceof OAtomicUnitEndRecord) {
@@ -832,7 +835,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               dataOutputStream.writeLong(rid.getClusterPosition());
               dataOutputStream.write(1);
 
-              OLogManager.instance().info(this, "Exporting deleted record %s", rid);
+              OLogManager.instance().debug(this, "Exporting deleted record %s", rid);
 
               // delete to avoid duplication
               ridIterator.remove();

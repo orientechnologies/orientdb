@@ -163,9 +163,9 @@ public class OTransactionNoTx extends OTransactionAbstract {
 
       ORecord toRet = null;
       ODirtyManager dirtyManager = ORecordInternal.getDirtyManager(iRecord);
-      Set<ORecord> newRecord = dirtyManager.getNewRecord();
+      Set<ORecord> newRecord = dirtyManager.getNewRecords();
       Set<ORecord> updatedRecord = dirtyManager.getUpdateRecords();
-      dirtyManager.cleanForSave();
+      dirtyManager.clearForSave();
       if (newRecord != null) {
         for (ORecord rec : newRecord) {
           if (rec.getIdentity().isNew() && rec instanceof ODocument) {

@@ -19,9 +19,6 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command;
 
-import java.io.IOException;
-import java.util.List;
-
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -37,6 +34,10 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.server.OTokenHandler;
 import com.orientechnologies.orient.server.network.protocol.http.*;
+
+import java.io.IOException;
+import java.net.URLDecoder;
+import java.util.List;
 
 /**
  * Database based authenticated command. Authenticates against the database taken as second parameter of the URL. The URL must be in
@@ -66,7 +67,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
     if (urlParts.length < 2)
       throw new OHttpRequestException("Syntax error in URL. Expected is: <command>/<database>[/...]");
 
-    iRequest.databaseName = urlParts[1];
+    iRequest.databaseName = URLDecoder.decode(urlParts[1],"UTF-8");
     if (iRequest.bearerTokenRaw != null) {
       // Bearer authentication
       try {
