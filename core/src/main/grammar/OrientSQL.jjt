@@ -803,7 +803,12 @@ OStatement Statement():
         |
         LOOKAHEAD(CreateClusterStatement())
         result = CreateClusterStatement()
-
+        |
+        LOOKAHEAD(AlterClusterStatement())
+        result = AlterClusterStatement()
+        |
+        LOOKAHEAD(2)
+        result = DropClusterStatement()
 	) [ <SEMICOLON> ]
 	{
 	    return result;
@@ -3946,3 +3951,27 @@ OCreateClusterStatement CreateClusterStatement():
 	{ return jjtThis; }
 }
 
+OAlterClusterStatement AlterClusterStatement():
+{}
+{
+	<ALTER> <CLUSTER>
+	(
+		jjtThis.name = Identifier()
+	)
+	[ <STAR> { jjtThis.starred = true; }]
+	jjtThis.attributeName = Identifier()
+	jjtThis.attributeValue = Expression()
+	{ return jjtThis; }
+}
+
+ODropClusterStatement DropClusterStatement():
+{}
+{
+	<DROP> <CLUSTER>
+	(
+		jjtThis.name = Identifier()
+		|
+		jjtThis.id = Integer()
+	)
+	{ return jjtThis; }
+}
