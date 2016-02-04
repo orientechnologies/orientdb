@@ -742,9 +742,9 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
           cacheState.close();
         }
       }
-    } catch (IOException ioe) {
+    } catch (Exception e) {
       OLogManager.instance()
-          .error(this, "Can not restore state of cache for storage placed under %s", writeCache.getRootDirectory(), ioe);
+          .error(this, "Can not restore state of cache for storage placed under %s", writeCache.getRootDirectory(), e);
     } finally {
       cacheLock.releaseReadLock();
     }
@@ -848,9 +848,9 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
       } finally {
         cacheState.close();
       }
-    } catch (IOException ioe) {
+    } catch (Exception e) {
       OLogManager.instance()
-          .error(this, "Can not store state of cache for storage placed under %s", writeCache.getRootDirectory(), ioe);
+          .error(this, "Can not store state of cache for storage placed under %s", writeCache.getRootDirectory(), e);
     }
   }
 
