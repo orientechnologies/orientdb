@@ -12,6 +12,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <gremlin.version>3.1.0-incubating</gremlin.version>
+        <orientdb.version>2.1.10</orientdb.version>
     </properties>
 
     <developers>
@@ -53,7 +54,7 @@
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-client</artifactId>
-            <version>2.1.8</version>
+            <version>${orientdb.version}</version>
         </dependency>
         <!-- TESTING -->
         <dependency>
