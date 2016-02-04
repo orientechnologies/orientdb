@@ -291,6 +291,8 @@ TOKEN:
     < ID: ( "I" | "i") ( "D" | "d") >
     |
     < DATABASE: ( "D" | "d") ( "A" | "a")  ( "T" | "t") ( "A" | "a") ( "B" | "b") ( "A" | "a") ( "S" | "s") ( "E" | "e") >
+    |
+    < OPTIMIZE: ( "O" | "o") ( "P" | "p")  ( "T" | "t") ( "I" | "i") ( "M" | "m") ( "I" | "i") ( "Z" | "z") ( "E" | "e") >
 	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
@@ -662,6 +664,8 @@ OIdentifier Identifier():
 	|
 	token = <DATABASE>
 	|
+	token = <OPTIMIZE>
+	|
     quotedToken = <QUOTED_IDENTIFIER>
 ) {
 
@@ -816,6 +820,8 @@ OStatement Statement():
         |
         LOOKAHEAD(2)
         result = AlterDatabaseStatement()
+        |
+        result = OptimizeDatabaseStatement()
 	) [ <SEMICOLON> ]
 	{
 	    return result;
@@ -4002,4 +4008,25 @@ OAlterDatabaseStatement AlterDatabaseStatement():
         )
     )
 	{ return jjtThis; }
+}
+
+OCommandLineOption CommandLineOption():
+{}
+{
+    (
+        <MINUS> jjtThis.name = Identifier()
+    )
+    {return jjtThis;}
+}
+
+OOptimizeDatabaseStatement OptimizeDatabaseStatement():
+{ OCommandLineOption lastOption; }
+{
+    (
+        <OPTIMIZE> <DATABASE>
+        (
+            lastOption = CommandLineOption() { jjtThis.options.add(lastOption); }
+        )*
+    )
+    {return jjtThis;}
 }
