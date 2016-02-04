@@ -30,38 +30,48 @@ import java.util.Map;
 
 /**
  * SQL REMOVE INDEX command: Remove an index
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
  */
 @SuppressWarnings("unchecked")
 public class OCommandExecutorSQLDropIndex extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
   public static final String KEYWORD_DROP  = "DROP";
   public static final String KEYWORD_INDEX = "INDEX";
 
-  private String             name;
+  private String name;
 
   public OCommandExecutorSQLDropIndex parse(final OCommandRequest iRequest) {
-    init((OCommandRequestText) iRequest);
+    final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
 
-    final StringBuilder word = new StringBuilder();
+    String queryText = textRequest.getText();
+    String originalQuery = queryText;
+    try {
+      queryText = preParse(queryText, iRequest);
+      textRequest.setText(queryText);
 
-    int oldPos = 0;
-    int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_DROP))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_DROP + " not found. Use " + getSyntax(), parserText, oldPos);
+      init((OCommandRequestText) iRequest);
 
-    oldPos = pos;
-    pos = nextWord(parserText, parserTextUpperCase, pos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_INDEX))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_INDEX + " not found. Use " + getSyntax(), parserText, oldPos);
+      final StringBuilder word = new StringBuilder();
 
-    oldPos = pos;
-    pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false);
-    if (pos == -1)
-      throw new OCommandSQLParsingException("Expected index name. Use " + getSyntax(), parserText, oldPos);
+      int oldPos = 0;
+      int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
+      if (pos == -1 || !word.toString().equals(KEYWORD_DROP))
+        throw new OCommandSQLParsingException("Keyword " + KEYWORD_DROP + " not found. Use " + getSyntax(), parserText, oldPos);
 
-    name = word.toString();
+      oldPos = pos;
+      pos = nextWord(parserText, parserTextUpperCase, pos, word, true);
+      if (pos == -1 || !word.toString().equals(KEYWORD_INDEX))
+        throw new OCommandSQLParsingException("Keyword " + KEYWORD_INDEX + " not found. Use " + getSyntax(), parserText, oldPos);
+
+      oldPos = pos;
+      pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false);
+      if (pos == -1)
+        throw new OCommandSQLParsingException("Expected index name. Use " + getSyntax(), parserText, oldPos);
+
+      name = word.toString();
+    } finally {
+      textRequest.setText(originalQuery);
+    }
 
     return this;
   }

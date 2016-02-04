@@ -12,6 +12,7 @@ public abstract class OParserTestAbstract {
     StringBuilder builder = new StringBuilder();
     result.toString(null, builder);
     return checkSyntax(builder.toString(), true);
+//    return checkSyntax(query, true);
   }
 
   protected SimpleNode checkWrongSyntax(String query) {

@@ -68,82 +68,87 @@ public interface OrientSqlTreeConstants
   public int JJTCLUSTER = 62;
   public int JJTCLUSTERLIST = 63;
   public int JJTMETADATAIDENTIFIER = 64;
-  public int JJTINDEXIDENTIFIER = 65;
-  public int JJTWHERECLAUSE = 66;
-  public int JJTORBLOCK = 67;
-  public int JJTANDBLOCK = 68;
-  public int JJTNOTBLOCK = 69;
-  public int JJTPARENTHESISBLOCK = 70;
-  public int JJTCONDITIONBLOCK = 71;
-  public int JJTCOMPAREOPERATOR = 72;
-  public int JJTLTOPERATOR = 73;
-  public int JJTGTOPERATOR = 74;
-  public int JJTNEOPERATOR = 75;
-  public int JJTNEQOPERATOR = 76;
-  public int JJTGEOPERATOR = 77;
-  public int JJTLEOPERATOR = 78;
-  public int JJTLIKEOPERATOR = 79;
-  public int JJTLUCENEOPERATOR = 80;
-  public int JJTNEAROPERATOR = 81;
-  public int JJTWITHINOPERATOR = 82;
-  public int JJTSCANDOPERATOR = 83;
-  public int JJTCONTAINSKEYOPERATOR = 84;
-  public int JJTCONTAINSVALUEOPERATOR = 85;
-  public int JJTEQUALSCOMPAREOPERATOR = 86;
-  public int JJTBINARYCONDITION = 87;
-  public int JJTCONTAINSVALUECONDITION = 88;
-  public int JJTINSTANCEOFCONDITION = 89;
-  public int JJTINDEXMATCHCONDITION = 90;
-  public int JJTBETWEENCONDITION = 91;
-  public int JJTISNULLCONDITION = 92;
-  public int JJTISNOTNULLCONDITION = 93;
-  public int JJTISDEFINEDCONDITION = 94;
-  public int JJTISNOTDEFINEDCONDITION = 95;
-  public int JJTCONTAINSCONDITION = 96;
-  public int JJTINOPERATOR = 97;
-  public int JJTINCONDITION = 98;
-  public int JJTNOTINCONDITION = 99;
-  public int JJTCONTAINSALLCONDITION = 100;
-  public int JJTCONTAINSTEXTCONDITION = 101;
-  public int JJTMATCHESCONDITION = 102;
-  public int JJTORDERBY = 103;
-  public int JJTGROUPBY = 104;
-  public int JJTUNWIND = 105;
-  public int JJTLIMIT = 106;
-  public int JJTSKIP = 107;
-  public int JJTBATCH = 108;
-  public int JJTTIMEOUT = 109;
-  public int JJTWAIT = 110;
-  public int JJTRETRY = 111;
-  public int JJTCOLLECTION = 112;
-  public int JJTFETCHPLAN = 113;
-  public int JJTFETCHPLANITEM = 114;
-  public int JJTTRAVERSEPROJECTIONITEM = 115;
-  public int JJTJSON = 116;
-  public int JJTMATCHEXPRESSION = 117;
-  public int JJTMATCHPATHITEM = 118;
-  public int JJTMATCHPATHITEMFIRST = 119;
-  public int JJTMULTIMATCHPATHITEM = 120;
-  public int JJTMULTIMATCHPATHITEMARROWS = 121;
-  public int JJTMATCHFILTER = 122;
-  public int JJTMATCHFILTERITEM = 123;
-  public int JJTOUTPATHITEM = 124;
-  public int JJTINPATHITEM = 125;
-  public int JJTBOTHPATHITEM = 126;
-  public int JJTOUTPATHITEMOPT = 127;
-  public int JJTINPATHITEMOPT = 128;
-  public int JJTBOTHPATHITEMOPT = 129;
-  public int JJTPROFILESTORAGESTATEMENT = 130;
-  public int JJTTRUNCATECLASSSTATEMENT = 131;
-  public int JJTTRUNCATECLUSTERSTATEMENT = 132;
-  public int JJTTRUNCATERECORDSTATEMENT = 133;
-  public int JJTFINDREFERENCESSTATEMENT = 134;
-  public int JJTCREATECLASSSTATEMENT = 135;
-  public int JJTALTERCLASSSTATEMENT = 136;
-  public int JJTDROPCLASSSTATEMENT = 137;
-  public int JJTCREATEPROPERTYSTATEMENT = 138;
-  public int JJTALTERPROPERTYSTATEMENT = 139;
-  public int JJTDROPPROPERTYSTATEMENT = 140;
+  public int JJTINDEXNAME = 65;
+  public int JJTINDEXIDENTIFIER = 66;
+  public int JJTWHERECLAUSE = 67;
+  public int JJTORBLOCK = 68;
+  public int JJTANDBLOCK = 69;
+  public int JJTNOTBLOCK = 70;
+  public int JJTPARENTHESISBLOCK = 71;
+  public int JJTCONDITIONBLOCK = 72;
+  public int JJTCOMPAREOPERATOR = 73;
+  public int JJTLTOPERATOR = 74;
+  public int JJTGTOPERATOR = 75;
+  public int JJTNEOPERATOR = 76;
+  public int JJTNEQOPERATOR = 77;
+  public int JJTGEOPERATOR = 78;
+  public int JJTLEOPERATOR = 79;
+  public int JJTLIKEOPERATOR = 80;
+  public int JJTLUCENEOPERATOR = 81;
+  public int JJTNEAROPERATOR = 82;
+  public int JJTWITHINOPERATOR = 83;
+  public int JJTSCANDOPERATOR = 84;
+  public int JJTCONTAINSKEYOPERATOR = 85;
+  public int JJTCONTAINSVALUEOPERATOR = 86;
+  public int JJTEQUALSCOMPAREOPERATOR = 87;
+  public int JJTBINARYCONDITION = 88;
+  public int JJTCONTAINSVALUECONDITION = 89;
+  public int JJTINSTANCEOFCONDITION = 90;
+  public int JJTINDEXMATCHCONDITION = 91;
+  public int JJTBETWEENCONDITION = 92;
+  public int JJTISNULLCONDITION = 93;
+  public int JJTISNOTNULLCONDITION = 94;
+  public int JJTISDEFINEDCONDITION = 95;
+  public int JJTISNOTDEFINEDCONDITION = 96;
+  public int JJTCONTAINSCONDITION = 97;
+  public int JJTINOPERATOR = 98;
+  public int JJTINCONDITION = 99;
+  public int JJTNOTINCONDITION = 100;
+  public int JJTCONTAINSALLCONDITION = 101;
+  public int JJTCONTAINSTEXTCONDITION = 102;
+  public int JJTMATCHESCONDITION = 103;
+  public int JJTORDERBY = 104;
+  public int JJTGROUPBY = 105;
+  public int JJTUNWIND = 106;
+  public int JJTLIMIT = 107;
+  public int JJTSKIP = 108;
+  public int JJTBATCH = 109;
+  public int JJTTIMEOUT = 110;
+  public int JJTWAIT = 111;
+  public int JJTRETRY = 112;
+  public int JJTCOLLECTION = 113;
+  public int JJTFETCHPLAN = 114;
+  public int JJTFETCHPLANITEM = 115;
+  public int JJTTRAVERSEPROJECTIONITEM = 116;
+  public int JJTJSON = 117;
+  public int JJTMATCHEXPRESSION = 118;
+  public int JJTMATCHPATHITEM = 119;
+  public int JJTMATCHPATHITEMFIRST = 120;
+  public int JJTMULTIMATCHPATHITEM = 121;
+  public int JJTMULTIMATCHPATHITEMARROWS = 122;
+  public int JJTMATCHFILTER = 123;
+  public int JJTMATCHFILTERITEM = 124;
+  public int JJTOUTPATHITEM = 125;
+  public int JJTINPATHITEM = 126;
+  public int JJTBOTHPATHITEM = 127;
+  public int JJTOUTPATHITEMOPT = 128;
+  public int JJTINPATHITEMOPT = 129;
+  public int JJTBOTHPATHITEMOPT = 130;
+  public int JJTPROFILESTORAGESTATEMENT = 131;
+  public int JJTTRUNCATECLASSSTATEMENT = 132;
+  public int JJTTRUNCATECLUSTERSTATEMENT = 133;
+  public int JJTTRUNCATERECORDSTATEMENT = 134;
+  public int JJTFINDREFERENCESSTATEMENT = 135;
+  public int JJTCREATECLASSSTATEMENT = 136;
+  public int JJTALTERCLASSSTATEMENT = 137;
+  public int JJTDROPCLASSSTATEMENT = 138;
+  public int JJTCREATEPROPERTYSTATEMENT = 139;
+  public int JJTALTERPROPERTYSTATEMENT = 140;
+  public int JJTDROPPROPERTYSTATEMENT = 141;
+  public int JJTCREATEINDEXSTATEMENT = 142;
+  public int JJTREBUILDINDEXSTATEMENT = 143;
+  public int JJTDROPINDEXSTATEMENT = 144;
+  public int JJTCREATECLUSTERSTATEMENT = 145;
 
 
   public String[] jjtNodeName = {
@@ -212,6 +217,7 @@ public interface OrientSqlTreeConstants
     "Cluster",
     "ClusterList",
     "MetadataIdentifier",
+    "IndexName",
     "IndexIdentifier",
     "WhereClause",
     "OrBlock",
@@ -288,6 +294,10 @@ public interface OrientSqlTreeConstants
     "CreatePropertyStatement",
     "AlterPropertyStatement",
     "DropPropertyStatement",
+    "CreateIndexStatement",
+    "RebuildIndexStatement",
+    "DropIndexStatement",
+    "CreateClusterStatement",
   };
 }
-/* JavaCC - OriginalChecksum=660e0030c9f1ff216f473acecf42b62c (do not edit this line) */
+/* JavaCC - OriginalChecksum=2d94a49f2833efb7120415c6fd527a26 (do not edit this line) */
