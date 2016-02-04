@@ -145,9 +145,12 @@ public final class OrientGraph implements Graph {
         makeActiveDb();
 
         if (this.connectionFailed) {
+            this.connectionFailed = false;
+
             try {
-                this.database = new ODatabaseDocumentTx(this.database.getURL(), this.database.isKeepStorageOpen());
-                this.database.open(user, password);
+                ODatabaseDocumentTx replaceDb = new ODatabaseDocumentTx(this.database.getURL(), this.database.isKeepStorageOpen());
+                replaceDb.open(user, password);
+                this.database = replaceDb;
                 makeActiveDb();
             } catch (OException e) {
                 OLogManager.instance().info(this, "Recreation of connection resulted in exception", e);
