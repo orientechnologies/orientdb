@@ -3,19 +3,17 @@ package com.orientechnologies.orient.server.distributed;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.memory.ODirectMemoryStorage;
-
-import org.mockito.Mockito;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.server.OServer;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mockito;
 
 /**
  * @author Artem Orobets (enisher-at-gmail.com)
  */
 public class ODistributedStorageTest {
 
-  @BeforeMethod
+  @Before
   public void before() {
     if (!Orient.instance().isActive())
       Orient.instance().startup();
@@ -41,7 +39,7 @@ public class ODistributedStorageTest {
     Mockito.verify(storage).freeze(false);
   }
 
-  @Test(expectedExceptions = { UnsupportedOperationException.class })
+  @Test(expected = UnsupportedOperationException.class)
   public void testUnsupportedFreeze() {
     ODistributedStorage ds = new ODistributedStorage(Mockito.mock(OServer.class), Mockito.mock(ODirectMemoryStorage.class));
 
@@ -58,7 +56,7 @@ public class ODistributedStorageTest {
     Mockito.verify(storage).release();
   }
 
-  @Test(expectedExceptions = { UnsupportedOperationException.class })
+  @Test(expected = UnsupportedOperationException.class)
   public void testUnsupportedRelease() {
     ODistributedStorage ds = new ODistributedStorage(Mockito.mock(OServer.class), Mockito.mock(ODirectMemoryStorage.class));
 

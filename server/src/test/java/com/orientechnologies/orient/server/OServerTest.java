@@ -7,9 +7,9 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.logging.Level;
@@ -27,7 +27,7 @@ public class OServerTest {
   private OServer              server;
   private OServerConfiguration conf;
 
-  @BeforeMethod
+  @Before
   public void setUp() throws Exception {
     OLogManager.instance().setConsoleLevel(Level.OFF.getName());
     prevPassword = System.setProperty("ORIENTDB_ROOT_PASSWORD", "rootPassword");
@@ -47,7 +47,7 @@ public class OServerTest {
 
   }
 
-  @AfterMethod
+  @After
   public void tearDown() throws Exception {
     if (server.isActive())
       server.shutdown();
