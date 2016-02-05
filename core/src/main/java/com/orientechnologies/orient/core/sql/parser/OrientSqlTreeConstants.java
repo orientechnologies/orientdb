@@ -156,6 +156,10 @@ public interface OrientSqlTreeConstants
   public int JJTOPTIMIZEDATABASESTATEMENT = 150;
   public int JJTCREATELINKSTATEMENT = 151;
   public int JJTEXPLAINSTATEMENT = 152;
+  public int JJTPERMISSION = 153;
+  public int JJTRESOURCEPATHITEM = 154;
+  public int JJTGRANTSTATEMENT = 155;
+  public int JJTREVOKESTATEMENT = 156;
 
 
   public String[] jjtNodeName = {
@@ -312,6 +316,10 @@ public interface OrientSqlTreeConstants
     "OptimizeDatabaseStatement",
     "CreateLinkStatement",
     "ExplainStatement",
+    "Permission",
+    "ResourcePathItem",
+    "GrantStatement",
+    "RevokeStatement",
   };
 }
-/* JavaCC - OriginalChecksum=d8c968c5c3ce29149351be15ce4c552e (do not edit this line) */
+/* JavaCC - OriginalChecksum=aad701a8ee26b3fee660ad1d480ef135 (do not edit this line) */
