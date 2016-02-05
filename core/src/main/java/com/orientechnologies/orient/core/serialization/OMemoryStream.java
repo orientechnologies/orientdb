@@ -19,13 +19,16 @@
  */
 package com.orientechnologies.orient.core.serialization;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
 import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.exception.OSerializationException;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 
@@ -212,7 +215,11 @@ public class OMemoryStream extends OutputStream {
   }
 
   public final int setCustom(final String iContent) {
-    return set(OBinaryProtocol.string2bytes(iContent));
+    try {
+      return set(iContent.getBytes("UTF-8"));
+    } catch (UnsupportedEncodingException e) {
+      throw OException.wrapException(new OSerializationException("error encoding string"),e);
+    }
   }
 
   public final int setUtf8(final String iContent) {
@@ -402,13 +409,6 @@ public class OMemoryStream extends OutputStream {
     String str = new String(buffer, position, size, charset);
     position += size;
     return str;
-  }
-
-  public String getAsStringCustom() {
-    final int size = getVariableSize();
-    if (size < 0)
-      return null;
-    return OBinaryProtocol.bytes2string(this, size);
   }
 
   public boolean getAsBoolean() {

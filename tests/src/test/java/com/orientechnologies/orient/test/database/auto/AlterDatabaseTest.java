@@ -34,7 +34,7 @@ public class AlterDatabaseTest extends DocumentDBBaseTest {
   }
 
   public void alterDateFormatOk() throws IOException {
-    database.command(new OCommandSQL("alter database dateformat yyyy-MM-dd;")).execute();
-    database.command(new OCommandSQL("alter database dateformat yyyy-MM-dd")).execute();
+    database.command(new OCommandSQL("alter database dateformat 'yyyy-MM-dd';")).execute();
+    database.command(new OCommandSQL("alter database dateformat 'yyyy-MM-dd'")).execute();
   }
 }

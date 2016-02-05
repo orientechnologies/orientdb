@@ -620,6 +620,7 @@ public class ReadWriteDiskCacheTest {
     Assert.assertEquals(a1out.size(), 2); // page 2 - 3 (removed from a1in because of size limit)
     Assert.assertEquals(a1in.size(), 3); // pages 4 - 6
 
+    readBuffer.storeCacheState(writeBuffer);
     readBuffer.closeStorage(writeBuffer);
 
     final File stateFile = new File(storagePath, O2QCache.CACHE_STATE_FILE);

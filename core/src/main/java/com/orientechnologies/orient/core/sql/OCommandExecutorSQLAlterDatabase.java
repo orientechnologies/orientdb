@@ -35,55 +35,65 @@ import java.util.Map;
 
 /**
  * SQL ALTER DATABASE command: Changes an attribute of the current database.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 @SuppressWarnings("unchecked")
 public class OCommandExecutorSQLAlterDatabase extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
-  public static final String   KEYWORD_ALTER    = "ALTER";
-  public static final String   KEYWORD_DATABASE = "DATABASE";
+  public static final String KEYWORD_ALTER    = "ALTER";
+  public static final String KEYWORD_DATABASE = "DATABASE";
 
   private ODatabase.ATTRIBUTES attribute;
   private String               value;
 
   public OCommandExecutorSQLAlterDatabase parse(final OCommandRequest iRequest) {
-    init((OCommandRequestText) iRequest);
+    final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
 
-    StringBuilder word = new StringBuilder();
-
-    int oldPos = 0;
-    int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_ALTER))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_ALTER + " not found. Use " + getSyntax(), parserText, oldPos);
-
-    oldPos = pos;
-    pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_DATABASE))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_DATABASE + " not found. Use " + getSyntax(), parserText, oldPos);
-
-    oldPos = pos;
-    pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1)
-      throw new OCommandSQLParsingException("Missed the database's attribute to change. Use " + getSyntax(), parserText, oldPos);
-
-    final String attributeAsString = word.toString();
-
+    String queryText = textRequest.getText();
+    String originalQuery = queryText;
     try {
-      attribute = ODatabase.ATTRIBUTES.valueOf(attributeAsString.toUpperCase(Locale.ENGLISH));
-    } catch (IllegalArgumentException e) {
-      throw new OCommandSQLParsingException("Unknown database's attribute '" + attributeAsString + "'. Supported attributes are: "
-          + Arrays.toString(ODatabase.ATTRIBUTES.values()), parserText, oldPos);
+      queryText = preParse(queryText, iRequest);
+      textRequest.setText(queryText);
+
+      init((OCommandRequestText) iRequest);
+
+      StringBuilder word = new StringBuilder();
+
+      int oldPos = 0;
+      int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
+      if (pos == -1 || !word.toString().equals(KEYWORD_ALTER))
+        throw new OCommandSQLParsingException("Keyword " + KEYWORD_ALTER + " not found. Use " + getSyntax(), parserText, oldPos);
+
+      oldPos = pos;
+      pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
+      if (pos == -1 || !word.toString().equals(KEYWORD_DATABASE))
+        throw new OCommandSQLParsingException("Keyword " + KEYWORD_DATABASE + " not found. Use " + getSyntax(), parserText, oldPos);
+
+      oldPos = pos;
+      pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
+      if (pos == -1)
+        throw new OCommandSQLParsingException("Missed the database's attribute to change. Use " + getSyntax(), parserText, oldPos);
+
+      final String attributeAsString = word.toString();
+
+      try {
+        attribute = ODatabase.ATTRIBUTES.valueOf(attributeAsString.toUpperCase(Locale.ENGLISH));
+      } catch (IllegalArgumentException e) {
+        throw new OCommandSQLParsingException("Unknown database's attribute '" + attributeAsString + "'. Supported attributes are: "
+            + Arrays.toString(ODatabase.ATTRIBUTES.values()), parserText, oldPos);
+      }
+
+      value = parserText.substring(pos + 1).trim();
+
+      if (value.length() == 0)
+        throw new OCommandSQLParsingException("Missed the database's value to change for attribute '" + attribute + "'. Use "
+            + getSyntax(), parserText, oldPos);
+
+      if (value.equalsIgnoreCase("null"))
+        value = null;
+    } finally {
+      textRequest.setText(originalQuery);
     }
-
-    value = parserText.substring(pos + 1).trim();
-
-    if (value.length() == 0)
-      throw new OCommandSQLParsingException("Missed the database's value to change for attribute '" + attribute + "'. Use "
-          + getSyntax(), parserText, oldPos);
-
-    if (value.equalsIgnoreCase("null"))
-      value = null;
 
     return this;
   }

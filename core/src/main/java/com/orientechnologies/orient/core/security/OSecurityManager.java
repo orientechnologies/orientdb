@@ -173,7 +173,7 @@ public class OSecurityManager {
 
   public String createHashWithSalt(final String iPassword) {
     return createHashWithSalt(iPassword, OGlobalConfiguration.SECURITY_USER_PASSWORD_SALT_ITERATIONS.getValueAsInteger(),
-        PBKDF2_SHA256_ALGORITHM);
+        OGlobalConfiguration.SECURITY_USER_PASSWORD_DEFAULT_ALGORITHM.getValueAsString());
   }
 
   public String createHashWithSalt(final String iPassword, final int iIterations, final String algorithm) {
@@ -188,7 +188,7 @@ public class OSecurityManager {
   }
 
   public boolean checkPasswordWithSalt(final String iPassword, final String iHash) {
-    return checkPasswordWithSalt(iPassword, iHash, OSecurityManager.PBKDF2_SHA256_ALGORITHM);
+    return checkPasswordWithSalt(iPassword, iHash, OGlobalConfiguration.SECURITY_USER_PASSWORD_DEFAULT_ALGORITHM.getValueAsString());
   }
 
   public boolean checkPasswordWithSalt(final String iPassword, final String iHash, final String algorithm) {

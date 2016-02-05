@@ -107,4 +107,24 @@ public interface OWriteCache {
    * @return Directory which contains all files managed by write cache or <code>null</code> in case of in memory database.
    */
   File getRootDirectory();
+
+  /**
+   * Returns internal file id which is unique and always the same for given file
+   * in contrary to external id which changes over close/open cycle of cache.
+   *
+   * @param fileId External file id.
+   * @return Internal file id.
+   */
+  int internalFileId(long fileId);
+
+  /**
+   * Converts unique internal file id to external one.
+   * External id is combination of internal id and write cache id, which changes every time when cache is closed and opened again.
+   *
+   * @param fileId Internal file id.
+   * @return External file id.
+   * @see #internalFileId(long)
+   * @see #getId()
+   */
+  long externalFileId(int fileId);
 }

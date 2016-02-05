@@ -772,7 +772,7 @@ public class OServer {
     }
 
     // HASH THE PASSWORD
-    iPassword = OSecurityManager.instance().createHash(iPassword, OSecurityManager.PBKDF2_SHA256_ALGORITHM, true);
+    iPassword = OSecurityManager.instance().createHash(iPassword, getContextConfiguration().getValueAsString(OGlobalConfiguration.SECURITY_USER_PASSWORD_DEFAULT_ALGORITHM), true);
 
     serverCfg.setUser(iName, iPassword, iPermissions);
     serverCfg.saveConfiguration();

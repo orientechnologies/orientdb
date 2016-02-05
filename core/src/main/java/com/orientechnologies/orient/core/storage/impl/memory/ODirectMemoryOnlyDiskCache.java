@@ -108,6 +108,16 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
+  public int internalFileId(long fileId) {
+    return extractFileId(fileId);
+  }
+
+  @Override
+  public long externalFileId(int fileId) {
+    return composeFileId(id, fileId);
+  }
+
+  @Override
   public long bookFileId(String fileName) {
     metadataLock.lock();
     try {
@@ -366,6 +376,13 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
    */
   @Override
   public void loadCacheState(OWriteCache writeCache) {
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void storeCacheState(OWriteCache writeCache) {
   }
 
   @Override

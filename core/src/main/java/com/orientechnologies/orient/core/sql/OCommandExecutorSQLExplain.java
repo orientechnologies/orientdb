@@ -28,7 +28,7 @@ import java.util.Map;
 
 /**
  * Explains the execution of a command returning profiling information.
- * 
+ *
  * @author Luca Garulli
  */
 public class OCommandExecutorSQLExplain extends OCommandExecutorSQLDelegate {
@@ -37,8 +37,19 @@ public class OCommandExecutorSQLExplain extends OCommandExecutorSQLDelegate {
   @SuppressWarnings("unchecked")
   @Override
   public OCommandExecutorSQLExplain parse(OCommandRequest iCommand) {
-    final String cmd = ((OCommandRequestText) iCommand).getText();
-    super.parse(new OCommandSQL(cmd.substring(KEYWORD_EXPLAIN.length())));
+    final OCommandRequestText textRequest = (OCommandRequestText) iCommand;
+
+    String queryText = textRequest.getText();
+    String originalQuery = queryText;
+    try {
+      queryText = preParse(queryText, iCommand);
+      textRequest.setText(queryText);
+
+      final String cmd = ((OCommandRequestText) iCommand).getText();
+      super.parse(new OCommandSQL(cmd.substring(KEYWORD_EXPLAIN.length())));
+    } finally {
+      textRequest.setText(originalQuery);
+    }
     return this;
   }
 
