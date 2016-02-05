@@ -4185,7 +4185,7 @@ ORevokeStatement RevokeStatement():
             <DOT>
             lastItem = ResourcePathItem() { jjtThis.resourceChain.add(lastItem); }
         )*
-        <TO>
+        <FROM>
         jjtThis.actor = Identifier()
     )
     { return jjtThis; }

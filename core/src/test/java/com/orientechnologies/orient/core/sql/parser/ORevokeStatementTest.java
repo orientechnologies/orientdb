@@ -7,14 +7,14 @@ public class ORevokeStatementTest extends OParserTestAbstract {
 
   @Test
   public void testPlain() {
-    checkRightSyntax("revoke UPDATE on database.class.Person to admin");
-    checkRightSyntax("REVOKE CREATE on database.cluster.Person to admin");
-    checkRightSyntax("revoke UPDATE on database.class.* to admin");
-    checkRightSyntax("revoke DELETE on database.class.* to admin");
-    checkRightSyntax("revoke NONE on database.class.* to admin");
-    checkRightSyntax("revoke ALL on database.class.* to admin");
+    checkRightSyntax("revoke UPDATE on database.class.Person from admin");
+    checkRightSyntax("REVOKE CREATE on database.cluster.Person FROM admin");
+    checkRightSyntax("revoke UPDATE on database.class.* from admin");
+    checkRightSyntax("revoke DELETE on database.class.* from admin");
+    checkRightSyntax("revoke NONE on database.class.* from admin");
+    checkRightSyntax("revoke ALL on database.class.* from admin");
 
-    checkWrongSyntax("revoke Foo on database.class.Person to admin");
+    checkWrongSyntax("revoke Foo on database.class.Person from admin");
   }
 
 }

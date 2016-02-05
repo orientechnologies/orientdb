@@ -36,7 +36,7 @@ class ORevokeStatement extends OStatement {
       res.toString(params, builder);
       first = false;
     }
-    builder.append(" TO ");
+    builder.append(" FROM ");
     actor.toString(params, builder);
   }
 }

@@ -15303,7 +15303,7 @@ Token token;
         lastItem = ResourcePathItem();
                                             jjtn000.resourceChain.add(lastItem);
       }
-      jj_consume_token(TO);
+      jj_consume_token(FROM);
       jjtn000.actor = Identifier();
       jjtree.closeNodeScope(jjtn000, true);
       jjtc000 = false;
@@ -17990,7 +17990,7 @@ Token token;
       xsp = jj_scanpos;
       if (jj_3R_783()) { jj_scanpos = xsp; break; }
     }
-    if (jj_scan_token(TO)) return true;
+    if (jj_scan_token(FROM)) return true;
     if (jj_3R_96()) return true;
     return false;
   }
