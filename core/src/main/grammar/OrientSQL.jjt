@@ -299,6 +299,8 @@ TOKEN:
     < TYPE: ( "T" | "t") ( "Y" | "y")  ( "P" | "p") ( "E" | "e") >
     |
     < INVERSE: ( "I" | "i") ( "N" | "n")  ( "V" | "v") ( "E" | "e") ( "R" | "r")  ( "S" | "s") ( "E" | "e") >
+    |
+    < EXPLAIN: ( "E" | "e") ( "X" | "x")  ( "P" | "p") ( "L" | "l") ( "A" | "a")  ( "I" | "i") ( "N" | "n") >
 	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
@@ -678,6 +680,8 @@ OIdentifier Identifier():
     |
     token = <INVERSE>
     |
+    token = <EXPLAIN>
+    |
     quotedToken = <QUOTED_IDENTIFIER>
 ) {
 
@@ -744,100 +748,105 @@ OStatement Statement():
     OStatement result = null;
 }
 {
-	(
-	    result = QueryStatement()
+    (
+        (
+            result = QueryStatement()
+            |
+            LOOKAHEAD(2)
+            result = DeleteStatement()
+            |
+            LOOKAHEAD(2)
+            result = DeleteVertexStatement()
+            |
+            LOOKAHEAD(2)
+            result = DeleteEdgeStatement()
+            |
+            result = InsertStatement()
+            |
+            LOOKAHEAD(CreateVertexStatementNoTarget())
+            result = CreateVertexStatementNoTarget()
+            |
+            LOOKAHEAD(CreateVertexStatement())
+            result = CreateVertexStatement()
+            |
+            LOOKAHEAD(CreateVertexStatementEmpty())
+            result = CreateVertexStatementEmpty()
+            |
+            LOOKAHEAD(CreateVertexStatementEmptyNoTarget())
+            result = CreateVertexStatementEmptyNoTarget()
+            |
+            LOOKAHEAD(CreateEdgeStatement())
+            result = CreateEdgeStatement()
+            |
+            LOOKAHEAD(UpdateEdgeStatement())
+            result = UpdateEdgeStatement()
+            |
+            LOOKAHEAD(UpdateStatement())
+            result = UpdateStatement()
+            |
+            result = MatchStatement()
+            |
+            result = ProfileStorageStatement()
+            |
+            LOOKAHEAD(TruncateClassStatement())
+            result = TruncateClassStatement()
+            |
+            LOOKAHEAD(TruncateClusterStatement())
+            result = TruncateClusterStatement()
+            |
+            LOOKAHEAD(FindReferencesStatement())
+            result = FindReferencesStatement()
+            |
+            LOOKAHEAD(TruncateRecordStatement())
+            result = TruncateRecordStatement()
+            |
+            LOOKAHEAD(CreateClassStatement())
+            result = CreateClassStatement()
+            |
+            LOOKAHEAD(AlterClassStatement())
+            result = AlterClassStatement()
+            |
+            LOOKAHEAD(DropClassStatement())
+            result = DropClassStatement()
+            |
+            LOOKAHEAD(CreatePropertyStatement())
+            result = CreatePropertyStatement()
+            |
+            LOOKAHEAD(AlterPropertyStatement())
+            result = AlterPropertyStatement()
+            |
+            LOOKAHEAD(DropPropertyStatement())
+            result = DropPropertyStatement()
+            |
+            LOOKAHEAD(CreateIndexStatement())
+            result = CreateIndexStatement()
+            |
+            result = RebuildIndexStatement()
+            |
+            LOOKAHEAD(2)
+            result = DropIndexStatement()
+            |
+            LOOKAHEAD(CreateClusterStatement())
+            result = CreateClusterStatement()
+            |
+            LOOKAHEAD(AlterClusterStatement())
+            result = AlterClusterStatement()
+            |
+            LOOKAHEAD(2)
+            result = DropClusterStatement()
+            |
+            LOOKAHEAD(2)
+            result = AlterDatabaseStatement()
+            |
+            result = OptimizeDatabaseStatement()
+            |
+            LOOKAHEAD(2)
+            result = CreateLinkStatement()
+
+        ) [ <SEMICOLON> ]
         |
-        LOOKAHEAD(2)
-		result = DeleteStatement()
-		|
-		LOOKAHEAD(2)
-		result = DeleteVertexStatement()
-		|
-		LOOKAHEAD(2)
-        result = DeleteEdgeStatement()
-		|
-		result = InsertStatement()
-		|
-		LOOKAHEAD(CreateVertexStatementNoTarget())
-		result = CreateVertexStatementNoTarget()
-		|
-		LOOKAHEAD(CreateVertexStatement())
-        result = CreateVertexStatement()
-        |
-		LOOKAHEAD(CreateVertexStatementEmpty())
-        result = CreateVertexStatementEmpty()
-        |
-		LOOKAHEAD(CreateVertexStatementEmptyNoTarget())
-        result = CreateVertexStatementEmptyNoTarget()
-        |
-		LOOKAHEAD(CreateEdgeStatement())
-        result = CreateEdgeStatement()
-        |
-        LOOKAHEAD(UpdateEdgeStatement())
-        result = UpdateEdgeStatement()
-        |
-        LOOKAHEAD(UpdateStatement())
-		result = UpdateStatement()
-		|
-		result = MatchStatement()
-		|
-		result = ProfileStorageStatement()
-		|
-		LOOKAHEAD(TruncateClassStatement())
-		result = TruncateClassStatement()
-		|
-		LOOKAHEAD(TruncateClusterStatement())
-        result = TruncateClusterStatement()
-		|
-		LOOKAHEAD(FindReferencesStatement())
-		result = FindReferencesStatement()
-		|
-		LOOKAHEAD(TruncateRecordStatement())
-        result = TruncateRecordStatement()
-        |
-		LOOKAHEAD(CreateClassStatement())
-		result = CreateClassStatement()
-		|
-		LOOKAHEAD(AlterClassStatement())
-		result = AlterClassStatement()
-		|
-		LOOKAHEAD(DropClassStatement())
-		result = DropClassStatement()
-		|
-		LOOKAHEAD(CreatePropertyStatement())
-		result = CreatePropertyStatement()
-		|
-		LOOKAHEAD(AlterPropertyStatement())
-		result = AlterPropertyStatement()
-		|
-        LOOKAHEAD(DropPropertyStatement())
-        result = DropPropertyStatement()
-        |
-        LOOKAHEAD(CreateIndexStatement())
-        result = CreateIndexStatement()
-        |
-        result = RebuildIndexStatement()
-        |
-        LOOKAHEAD(2)
-        result = DropIndexStatement()
-        |
-        LOOKAHEAD(CreateClusterStatement())
-        result = CreateClusterStatement()
-        |
-        LOOKAHEAD(AlterClusterStatement())
-        result = AlterClusterStatement()
-        |
-        LOOKAHEAD(2)
-        result = DropClusterStatement()
-        |
-        LOOKAHEAD(2)
-        result = AlterDatabaseStatement()
-        |
-        result = OptimizeDatabaseStatement()
-        |
-        LOOKAHEAD(2)
-        result = CreateLinkStatement()
-	) [ <SEMICOLON> ]
+        result = ExplainStatement()
+    )
 	{
 	    return result;
 	}
@@ -4073,4 +4082,14 @@ OCreateLinkStatement CreateLinkStatement():
         [ <INVERSE> { jjtThis.inverse = true; } ]
     )
     {return jjtThis;}
+}
+
+OExplainStatement ExplainStatement():
+{}
+{
+    (
+        <EXPLAIN>
+        jjtThis.statement = Statement()
+    )
+    { return jjtThis; }
 }
