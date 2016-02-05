@@ -20,6 +20,9 @@
 
 package com.orientechnologies.orient.core.engine.local;
 
+import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 
 import com.orientechnologies.common.exception.OException;
@@ -28,6 +31,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.engine.OEngineAbstract;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
@@ -38,7 +42,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
 public class OEngineLocalPaginated extends OEngineAbstract {
   public static final String NAME = "plocal";
 
-  private final O2QCache     readCache;
+  private final O2QCache readCache;
 
   public OEngineLocalPaginated() {
     readCache = new O2QCache(calculateReadCacheMaxMemory(OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024),
@@ -65,12 +69,23 @@ public class OEngineLocalPaginated extends OEngineAbstract {
 
   public OStorage createStorage(final String dbName, final Map<String, String> configuration) {
     try {
-      // GET THE STORAGE
-      return new OLocalPaginatedStorage(dbName, dbName, getMode(configuration), generateStorageId(), readCache);
+      try {
+        final Class<? extends OLocalPaginatedStorage> enterpriseVersion = (Class<? extends OLocalPaginatedStorage>) Class
+            .forName("com.orientechnologies.orient.core.storage.impl.local.paginated.OEnterpriseLocalPaginatedStorage");
+        final Constructor<? extends OLocalPaginatedStorage> constructor = enterpriseVersion
+            .getConstructor(String.class, String.class, String.class, Integer.TYPE, OReadCache.class);
+        return constructor.newInstance(dbName, dbName, getMode(configuration), generateStorageId(), readCache);
+      } catch (ClassNotFoundException cne) {
+      } catch (NoSuchMethodException nme) {
+      } catch (IllegalAccessException iae) {
+      } catch (InvocationTargetException ite) {
+      } catch (InstantiationException ie) {
+      }
 
+      return new OLocalPaginatedStorage(dbName, dbName, getMode(configuration), generateStorageId(), readCache);
     } catch (Exception e) {
-      final String message = "Error on opening database: " + dbName + ". Current location is: "
-          + new java.io.File(".").getAbsolutePath();
+      final String message =
+          "Error on opening database: " + dbName + ". Current location is: " + new java.io.File(".").getAbsolutePath();
       OLogManager.instance().error(this, message, e);
 
       throw OException.wrapException(new ODatabaseException(message), e);

@@ -19,7 +19,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
-import test.v6.B;
 
 import java.io.*;
 import java.nio.channels.Channels;
@@ -27,7 +26,7 @@ import java.nio.channels.FileChannel;
 import java.util.Random;
 
 @Test
-public class LocalPaginatedStorageIncrementalBackup {
+public class LocalPaginatedStorageIncrementalSync {
   private ODatabaseDocumentTx originalDB;
   private ODatabaseDocumentTx syncDB;
 
@@ -87,7 +86,7 @@ public class LocalPaginatedStorageIncrementalBackup {
     System.out.println("Updated " + updated);
     System.out.println("Deleted " + deleted);
 
-    final File changesFile = new File(buildDirectory, LocalPaginatedStorageIncrementalBackup.class.getSimpleName() + ".dt");
+    final File changesFile = new File(buildDirectory, LocalPaginatedStorageIncrementalSync.class.getSimpleName() + ".dt");
 
     if (changesFile.exists()) {
       Assert.assertTrue(changesFile.delete());
@@ -272,13 +271,13 @@ public class LocalPaginatedStorageIncrementalBackup {
 
   private void createSyncDB(String buildDirectory) {
     syncDB = new ODatabaseDocumentTx(
-        "plocal:" + buildDirectory + "/" + LocalPaginatedStorageIncrementalBackup.class.getSimpleName() + "Sync");
+        "plocal:" + buildDirectory + "/" + LocalPaginatedStorageIncrementalSync.class.getSimpleName() + "Sync");
     createAndInitDatabase(syncDB);
   }
 
   private void createOriginalDB(String buildDirectory) {
     originalDB = new ODatabaseDocumentTx(
-        "plocal:" + buildDirectory + "/" + LocalPaginatedStorageIncrementalBackup.class.getSimpleName() + "Original");
+        "plocal:" + buildDirectory + "/" + LocalPaginatedStorageIncrementalSync.class.getSimpleName() + "Original");
     createAndInitDatabase(originalDB);
   }
 
