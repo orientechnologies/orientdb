@@ -154,6 +154,7 @@ public interface OrientSqlTreeConstants
   public int JJTALTERDATABASESTATEMENT = 148;
   public int JJTCOMMANDLINEOPTION = 149;
   public int JJTOPTIMIZEDATABASESTATEMENT = 150;
+  public int JJTCREATELINKSTATEMENT = 151;
 
 
   public String[] jjtNodeName = {
@@ -308,6 +309,7 @@ public interface OrientSqlTreeConstants
     "AlterDatabaseStatement",
     "CommandLineOption",
     "OptimizeDatabaseStatement",
+    "CreateLinkStatement",
   };
 }
-/* JavaCC - OriginalChecksum=e4a865687c14f04936b4497964e1ef01 (do not edit this line) */
+/* JavaCC - OriginalChecksum=5b0bae204d15519a0104e5673698902d (do not edit this line) */

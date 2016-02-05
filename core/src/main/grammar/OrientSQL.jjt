@@ -293,6 +293,12 @@ TOKEN:
     < DATABASE: ( "D" | "d") ( "A" | "a")  ( "T" | "t") ( "A" | "a") ( "B" | "b") ( "A" | "a") ( "S" | "s") ( "E" | "e") >
     |
     < OPTIMIZE: ( "O" | "o") ( "P" | "p")  ( "T" | "t") ( "I" | "i") ( "M" | "m") ( "I" | "i") ( "Z" | "z") ( "E" | "e") >
+    |
+    < LINK: ( "L" | "l") ( "I" | "i")  ( "N" | "n") ( "K" | "k") >
+    |
+    < TYPE: ( "T" | "t") ( "Y" | "y")  ( "P" | "p") ( "E" | "e") >
+    |
+    < INVERSE: ( "I" | "i") ( "N" | "n")  ( "V" | "v") ( "E" | "e") ( "R" | "r")  ( "S" | "s") ( "E" | "e") >
 	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
@@ -666,6 +672,12 @@ OIdentifier Identifier():
 	|
 	token = <OPTIMIZE>
 	|
+	token = <LINK>
+	|
+	token = <TYPE>
+    |
+    token = <INVERSE>
+    |
     quotedToken = <QUOTED_IDENTIFIER>
 ) {
 
@@ -822,6 +834,9 @@ OStatement Statement():
         result = AlterDatabaseStatement()
         |
         result = OptimizeDatabaseStatement()
+        |
+        LOOKAHEAD(2)
+        result = CreateLinkStatement()
 	) [ <SEMICOLON> ]
 	{
 	    return result;
@@ -4027,6 +4042,35 @@ OOptimizeDatabaseStatement OptimizeDatabaseStatement():
         (
             lastOption = CommandLineOption() { jjtThis.options.add(lastOption); }
         )*
+    )
+    {return jjtThis;}
+}
+
+OCreateLinkStatement CreateLinkStatement():
+{  }
+{
+    (
+        <CREATE> <LINK>
+        jjtThis.name = Identifier()
+        <TYPE>
+        jjtThis.type = Identifier()
+        <FROM>
+        jjtThis.sourceClass = Identifier()
+        <DOT>
+        (
+            jjtThis.sourceField = Identifier()
+            |
+            jjtThis.sourceRecordAttr = RecordAttribute()
+        )
+        <TO>
+        jjtThis.destClass = Identifier()
+        <DOT>
+        (
+            jjtThis.destField = Identifier()
+            |
+            jjtThis.destRecordAttr = RecordAttribute()
+        )
+        [ <INVERSE> { jjtThis.inverse = true; } ]
     )
     {return jjtThis;}
 }
