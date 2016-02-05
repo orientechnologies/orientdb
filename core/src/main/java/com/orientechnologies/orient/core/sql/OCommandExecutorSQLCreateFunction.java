@@ -34,48 +34,60 @@ import java.util.Map;
 
 /**
  * SQL CREATE FUNCTION command.
- * 
+ *
  * @author Luca Garulli
  * @author Claudio Tesoriero
  */
 public class OCommandExecutorSQLCreateFunction extends OCommandExecutorSQLAbstract {
-  public static final String NAME       = "CREATE FUNCTION";
-  private String             name;
-  private String             code;
-  private String             language;
-  private boolean            idempotent = false;
-  private List<String>       parameters = null;
+  public static final String NAME = "CREATE FUNCTION";
+  private String name;
+  private String code;
+  private String language;
+  private boolean      idempotent = false;
+  private List<String> parameters = null;
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLCreateFunction parse(final OCommandRequest iRequest) {
-    init((OCommandRequestText) iRequest);
+    final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
 
-    parserRequiredKeyword("CREATE");
-    parserRequiredKeyword("FUNCTION");
+    String queryText = textRequest.getText();
+    String originalQuery = queryText;
+    try {
+      queryText = preParse(queryText, iRequest);
+      textRequest.setText(queryText);
 
-    name = parserNextWord(false);
-    code = OIOUtils.getStringContent(parserNextWord(false));
+      init((OCommandRequestText) iRequest);
 
-    String temp = parseOptionalWord(true);
-    while (temp != null) {
-      if (temp.equals("IDEMPOTENT")) {
-        parserNextWord(false);
-        idempotent = Boolean.parseBoolean(parserGetLastWord());
-      } else if (temp.equals("LANGUAGE")) {
-        parserNextWord(false);
-        language = parserGetLastWord();
-      } else if (temp.equals("PARAMETERS")) {
-        parserNextWord(false);
-        parameters = new ArrayList<String>();
-        OStringSerializerHelper.getCollection(parserGetLastWord(), 0, parameters);
-        if (parameters.size() == 0)
-          throw new OCommandExecutionException("Syntax Error. Missing function parameter(s): " + getSyntax());
+      parserRequiredKeyword("CREATE");
+      parserRequiredKeyword("FUNCTION");
+
+      name = parserNextWord(false);
+      code = OIOUtils.getStringContent(parserNextWord(false));
+
+      String temp = parseOptionalWord(true);
+      while (temp != null) {
+        if (temp.equals("IDEMPOTENT")) {
+          parserNextWord(false);
+          idempotent = Boolean.parseBoolean(parserGetLastWord());
+        } else if (temp.equals("LANGUAGE")) {
+          parserNextWord(false);
+          language = parserGetLastWord();
+        } else if (temp.equals("PARAMETERS")) {
+          parserNextWord(false);
+          parameters = new ArrayList<String>();
+          OStringSerializerHelper.getCollection(parserGetLastWord(), 0, parameters);
+          if (parameters.size() == 0)
+            throw new OCommandExecutionException("Syntax Error. Missing function parameter(s): " + getSyntax());
+        }
+
+        temp = parserOptionalWord(true);
+        if (parserIsEnded())
+          break;
       }
-
-      temp = parserOptionalWord(true);
-      if (parserIsEnded())
-        break;
+    } finally {
+      textRequest.setText(originalQuery);
     }
+
     return this;
   }
 

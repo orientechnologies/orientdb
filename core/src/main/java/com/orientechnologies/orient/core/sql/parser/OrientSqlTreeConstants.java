@@ -160,6 +160,7 @@ public interface OrientSqlTreeConstants
   public int JJTRESOURCEPATHITEM = 154;
   public int JJTGRANTSTATEMENT = 155;
   public int JJTREVOKESTATEMENT = 156;
+  public int JJTCREATEFUNCTIONSTATEMENT = 157;
 
 
   public String[] jjtNodeName = {
@@ -320,6 +321,7 @@ public interface OrientSqlTreeConstants
     "ResourcePathItem",
     "GrantStatement",
     "RevokeStatement",
+    "CreateFunctionStatement",
   };
 }
-/* JavaCC - OriginalChecksum=aad701a8ee26b3fee660ad1d480ef135 (do not edit this line) */
+/* JavaCC - OriginalChecksum=4a3864cb50b24bf5e038066d2640050c (do not edit this line) */
