@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.common.util.OCommonConst;
@@ -65,6 +66,7 @@ import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -2136,8 +2138,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
               if (record.recordType == ODocument.RECORD_TYPE) {
                 final ORecordSerializerSchemaAware2CSV serializer = (ORecordSerializerSchemaAware2CSV) ORecordSerializerFactory
                     .instance().getFormat(ORecordSerializerSchemaAware2CSV.NAME);
-
-                if (serializer.getClassName(OBinaryProtocol.bytes2string(record.buffer)).equalsIgnoreCase(name)) {
+                String persName = new String(record.buffer,"UTF-8");
+                if (serializer.getClassName(persName).equalsIgnoreCase(name)) {
                   final ODocument document = new ODocument();
                   document.setLazyLoad(false);
                   document.fromStream(record.buffer);
@@ -2157,6 +2159,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       }
 
       renameCluster(oldName, this.name);
+    } catch (UnsupportedEncodingException e) {
+      throw OException.wrapException(new OSchemaException("Error reading schema"), e);
     } finally {
       releaseSchemaWriteLock();
     }

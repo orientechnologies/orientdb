@@ -33,10 +33,10 @@ public class OStreamSerializerString implements OStreamSerializer {
 	}
 
 	public Object fromStream(final byte[] iStream) throws IOException {
-		return OBinaryProtocol.bytes2string(iStream);
+		return new String(iStream,"UTF-8");
 	}
 
 	public byte[] toStream(final Object iObject) throws IOException {
-		return OBinaryProtocol.string2bytes((String) iObject);
+		return ((String) iObject).getBytes("UTF-8");
 	}
 }
