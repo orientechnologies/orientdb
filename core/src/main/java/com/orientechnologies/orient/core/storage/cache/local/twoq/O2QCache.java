@@ -78,9 +78,14 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
   private static final int MAX_CACHE_OVERFLOW = Runtime.getRuntime().availableProcessors() * 8;
 
   /**
-   * File which contains stored state of disk cache after store close.
+   * File which contains stored state of disk cache after storage close.
    */
   public static final String CACHE_STATE_FILE = "cache.stt";
+
+  /**
+   * Extension for file which contains stored state of disk cache after storage close.
+   */
+  public static final String CACHE_STATISTIC_FILE_EXTENSION = ".stt";
 
   private final LRUList am;
   private final LRUList a1out;
@@ -693,9 +698,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
 
     cacheLock.acquireWriteLock();
     try {
-
       final long[] filesToClear = writeCache.close();
-      storeCacheState(writeCache, filesToClear);
 
       for (long fileId : filesToClear)
         clearFile(fileId);
@@ -708,6 +711,8 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
   /**
    * Loads state of 2Q cache queues stored during storage close {@link #closeStorage(OWriteCache)} back into memory if flag
    * {@link OGlobalConfiguration#STORAGE_KEEP_DISK_CACHE_STATE} is set to <code>true</code>.
+   * <p>
+   * If maximum size of cache was decreased cache state will not be restored.
    *
    * @param writeCache Write cache is used to load pages back into cache if needed.
    * @see #closeStorage(OWriteCache)
@@ -730,6 +735,16 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
           final BufferedInputStream bufferedInputStream = new BufferedInputStream(stream);
           final DataInputStream dataInputStream = new DataInputStream(bufferedInputStream);
           try {
+            final long maxCacheSize = dataInputStream.readLong();
+            final long currentMaxCacheSize = memoryDataContainer.get().maxSize;
+
+            if (maxCacheSize > currentMaxCacheSize) {
+              OLogManager.instance().error(this,
+                  "Previous maximum cache size was %d current maximum cache size is %d. Cache state for storage %s will not be restored.",
+                  maxCacheSize, currentMaxCacheSize, rootDirectory);
+              return;
+            }
+
             restoreQueue(writeCache, am, dataInputStream, true);
             restoreQueue(writeCache, a1in, dataInputStream, true);
 
@@ -754,7 +769,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
    * Following format is used to store queue state:
    * <p>
    * <ol>
-   * <li>File id or -1 if end of queue is reached (long)</li>
+   * <li>File id or -1 if end of queue is reached (int)</li>
    * <li>Page index (long), is absent if end of the queue is reached</li>
    * </ol>
    *
@@ -768,10 +783,12 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
     //used only for statistics, and there is passed merely as stub
     final OModifiableBoolean cacheHit = new OModifiableBoolean();
 
-    long fileId = dataInputStream.readLong();
-    while (fileId >= 0) {
+    int internalFileId = dataInputStream.readInt();
+    while (internalFileId >= 0) {
       final long pageIndex = dataInputStream.readLong();
       try {
+        final long fileId = writeCache.externalFileId(internalFileId);
+
         final OCacheEntry cacheEntry;
         if (loadPages) {
           if (!writeCache.isOpen(fileId))
@@ -787,29 +804,44 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
           cacheEntry = new OCacheEntry(fileId, pageIndex, null, false);
         }
 
+        Set<Long> pages = filePages.get(fileId);
+        if (pages == null) {
+          pages = new HashSet<Long>();
+
+          Set<Long> op = filePages.putIfAbsent(fileId, pages);
+          if (op != null) {
+            pages = op;
+          }
+        }
+
         queue.putToMRU(cacheEntry);
+        pages.add(cacheEntry.getPageIndex());
       } finally {
-        fileId = dataInputStream.readLong();
+        internalFileId = dataInputStream.readInt();
       }
     }
   }
 
   /**
+   * Stores state of queues of 2Q cache inside of {@link #CACHE_STATE_FILE} file if flag
+   * {@link OGlobalConfiguration#STORAGE_KEEP_DISK_CACHE_STATE} is set to <code>true</code>.
+   * <p>
    * Following format is used to store queue state:
    * <p>
    * <ol>
-   * <li>File id or -1 if end of queue is reached (long)</li>
+   * <li>Max cache size, single item (long)</li>
+   * <li>File id or -1 if end of queue is reached (int)</li>
    * <li>Page index (long), is absent if end of the queue is reached</li>
    * </ol>
    *
    * @param writeCache Write cache which manages files cache state of which is going to be stored.
-   * @param files      Ids of files state of which is going to be stored.
    */
-  private void storeCacheState(OWriteCache writeCache, long[] files) {
+  public void storeCacheState(OWriteCache writeCache) {
     if (!OGlobalConfiguration.STORAGE_KEEP_DISK_CACHE_STATE.getValueAsBoolean()) {
       return;
     }
 
+    cacheLock.acquireWriteLock();
     try {
       final File rootDirectory = writeCache.getRootDirectory();
       final File stateFile = new File(rootDirectory, CACHE_STATE_FILE);
@@ -820,11 +852,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
         }
       }
 
-      final Set<Long> filesToStore = new HashSet<Long>();
-
-      for (long fileId : files) {
-        filesToStore.add(fileId);
-      }
+      final Set<Long> filesToStore = new HashSet<Long>(writeCache.files().values());
 
       final RandomAccessFile cacheState = new RandomAccessFile(stateFile, "rw");
       try {
@@ -834,14 +862,16 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
         final DataOutputStream dataOutputStream = new DataOutputStream(bufferedOutputStream);
 
         try {
-          storeQueueState(filesToStore, dataOutputStream, am);
-          dataOutputStream.writeLong(-1);
+          dataOutputStream.writeLong(memoryDataContainer.get().maxSize);
 
-          storeQueueState(filesToStore, dataOutputStream, a1in);
-          dataOutputStream.writeLong(-1);
+          storeQueueState(writeCache, filesToStore, dataOutputStream, am);
+          dataOutputStream.writeInt(-1);
 
-          storeQueueState(filesToStore, dataOutputStream, a1out);
-          dataOutputStream.writeLong(-1);
+          storeQueueState(writeCache, filesToStore, dataOutputStream, a1in);
+          dataOutputStream.writeInt(-1);
+
+          storeQueueState(writeCache, filesToStore, dataOutputStream, a1out);
+          dataOutputStream.writeInt(-1);
         } finally {
           dataOutputStream.close();
         }
@@ -851,6 +881,8 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
     } catch (IOException ioe) {
       OLogManager.instance()
           .error(this, "Can not store state of cache for storage placed under %s", writeCache.getRootDirectory(), ioe);
+    } finally {
+      cacheLock.releaseWriteLock();
     }
   }
 
@@ -865,23 +897,27 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
    * Following format is used to store queue state:
    * <p>
    * <ol>
-   * <li>File id or -1 if end of queue is reached (long)</li>
+   * <li>File id or -1 if end of queue is reached (int)</li>
    * <li>Page index (long), is absent if end of the queue is reached</li>
    * </ol>
    *
+   * @param writeCache       Write cache is used to convert external file ids to internal ones.
    * @param filesToStore     List of files state of which should be stored.
-   * @param dataOutputStream
-   * @param queue
-   * @throws IOException
+   * @param dataOutputStream Output stream for state file
+   * @param queue            Queue state of which should be stored
    */
-  private static void storeQueueState(Set<Long> filesToStore, DataOutputStream dataOutputStream, LRUList queue) throws IOException {
+  private static void storeQueueState(OWriteCache writeCache, Set<Long> filesToStore, DataOutputStream dataOutputStream,
+      LRUList queue) throws IOException {
     final Iterator<OCacheEntry> queueIterator = queue.reverseIterator();
 
     while (queueIterator.hasNext()) {
       final OCacheEntry cacheEntry = queueIterator.next();
 
-      if (filesToStore.contains(cacheEntry.getFileId())) {
-        dataOutputStream.writeLong(cacheEntry.getFileId());
+      final long fileId = cacheEntry.getFileId();
+      if (filesToStore.contains(fileId)) {
+        final int internalId = writeCache.internalFileId(fileId);
+        dataOutputStream.writeInt(internalId);
+
         dataOutputStream.writeLong(cacheEntry.getPageIndex());
       }
     }
@@ -894,6 +930,15 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
       final long[] filesToClear = writeCache.delete();
       for (long fileId : filesToClear)
         clearFile(fileId);
+
+      final File rootDirectory = writeCache.getRootDirectory();
+      final File stateFile = new File(rootDirectory, CACHE_STATE_FILE);
+      if (stateFile.exists()) {
+        if (!stateFile.delete()) {
+          OLogManager.instance().error(this, "Cache state file %s can not be deleted", stateFile);
+        }
+      }
+
     } finally {
       cacheLock.releaseWriteLock();
     }

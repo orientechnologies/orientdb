@@ -3886,6 +3886,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       status = STATUS.CLOSING;
 
+      readCache.storeCacheState(writeCache);
+
       if (!onDelete)
         makeFullCheckpoint();
 

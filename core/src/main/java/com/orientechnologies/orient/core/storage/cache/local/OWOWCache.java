@@ -399,6 +399,16 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     }
   }
 
+  @Override
+  public int internalFileId(long fileId) {
+    return extractFileId(fileId);
+  }
+
+  @Override
+  public long externalFileId(int fileId) {
+    return composeFileId(id, fileId);
+  }
+
   public void openFile(String fileName, long fileId) throws IOException {
     filesLock.acquireWriteLock();
     try {
