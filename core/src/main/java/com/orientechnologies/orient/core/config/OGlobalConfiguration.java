@@ -360,6 +360,9 @@ public enum OGlobalConfiguration {
   SECURITY_USER_PASSWORD_SALT_CACHE_SIZE("security.userPasswordSaltCacheSize",
       "Cache size of hashed salt passwords. The cache works as LRU. Use 0 to disable the cache.", Integer.class, 500),
 
+  SECURITY_USER_PASSWORD_DEFAULT_ALGORITHM("security.userPasswordDefaultAlgorithm",
+      "Default encryption algorithm used for passwords hashing.", String.class, "PBKDF2WithHmacSHA256"),
+
   // NETWORK
   NETWORK_MAX_CONCURRENT_SESSIONS("network.maxConcurrentSessions", "Maximum number of concurrent sessions.", Integer.class, 1000,
       true),
