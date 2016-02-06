@@ -858,7 +858,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
       try {
         final FileChannel channel = cacheState.getChannel();
         final OutputStream channelStream = Channels.newOutputStream(channel);
-        final BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(channelStream);
+        final BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(channelStream, 64 * 1024);
         final DataOutputStream dataOutputStream = new DataOutputStream(bufferedOutputStream);
 
         try {
