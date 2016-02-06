@@ -732,7 +732,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
           final FileChannel channel = cacheState.getChannel();
 
           final InputStream stream = Channels.newInputStream(channel);
-          final BufferedInputStream bufferedInputStream = new BufferedInputStream(stream);
+          final BufferedInputStream bufferedInputStream = new BufferedInputStream(stream, 64 * 1024);
           final DataInputStream dataInputStream = new DataInputStream(bufferedInputStream);
           try {
             final long maxCacheSize = dataInputStream.readLong();
@@ -881,6 +881,8 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
     } catch (Exception e) {
       OLogManager.instance()
           .error(this, "Can not store state of cache for storage placed under %s", writeCache.getRootDirectory(), e);
+    } finally {
+      cacheLock.releaseWriteLock();
     }
   }
 
