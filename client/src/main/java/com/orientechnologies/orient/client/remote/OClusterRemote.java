@@ -86,7 +86,12 @@ public class OClusterRemote implements OCluster {
   }
 
   @Override
-  public OPhysicalPosition createRecord(byte[] content, int recordVersion, byte recordType) throws IOException {
+  public OPhysicalPosition allocatePosition(byte recordType) throws IOException {
+    throw new UnsupportedOperationException("allocatePosition");
+  }
+
+  @Override
+  public OPhysicalPosition createRecord(byte[] content, int recordVersion, byte recordType, OPhysicalPosition allocatedPosition) throws IOException {
     throw new UnsupportedOperationException("createRecord");
   }
 

@@ -413,7 +413,27 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     }
   }
 
-  public OPhysicalPosition createRecord(byte[] content, final int recordVersion, final byte recordType) throws IOException {
+  @Override
+  public OPhysicalPosition allocatePosition(byte recordType) throws IOException {
+    try {
+      OAtomicOperation atomicOperation = startAtomicOperation(true);
+      acquireExclusiveLock();
+      try {
+        OPhysicalPosition physicalPosition = createPhysicalPosition(recordType, clusterPositionMap.allocate(), -1);
+        endAtomicOperation(false, null);
+        return physicalPosition;
+      } catch (Exception e) {
+        endAtomicOperation(true, e);
+        throw OException.wrapException(new OPaginatedClusterException("Error during record creation", this), e);
+      } finally {
+        releaseExclusiveLock();
+      }
+    } finally {
+      completeOperation();
+    }
+  }
+
+  public OPhysicalPosition createRecord(byte[] content, final int recordVersion, final byte recordType, OPhysicalPosition allocatedPosition) throws IOException {
     startOperation();
     try {
       content = compression.compress(content);
@@ -447,7 +467,12 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
             updateClusterState(1, addEntryResult.recordsSizeDiff, atomicOperation);
 
-            final long clusterPosition = clusterPositionMap.add(addEntryResult.pageIndex, addEntryResult.pagePosition);
+            final long clusterPosition;
+            if (allocatedPosition != null) {
+              clusterPositionMap.update(allocatedPosition.clusterPosition, new OClusterPositionMapBucket.PositionEntry(addEntryResult.pageIndex, addEntryResult.pagePosition));
+              clusterPosition = allocatedPosition.clusterPosition;
+            } else
+              clusterPosition = clusterPositionMap.add(addEntryResult.pageIndex, addEntryResult.pagePosition);
 
             addAtomicOperationMetadata(new ORecordId(id, clusterPosition), atomicOperation);
 
@@ -530,8 +555,13 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
             } while (from < to);
 
             updateClusterState(1, recordsSizeDiff, atomicOperation);
-
-            long clusterPosition = clusterPositionMap.add(firstPageIndex, firstPagePosition);
+            final long clusterPosition;
+            if (allocatedPosition != null) {
+              clusterPositionMap.update(allocatedPosition.clusterPosition,
+                  new OClusterPositionMapBucket.PositionEntry(firstPageIndex, firstPagePosition));
+              clusterPosition = allocatedPosition.clusterPosition;
+            } else
+              clusterPosition = clusterPositionMap.add(firstPageIndex, firstPagePosition);
 
             addAtomicOperationMetadata(new ORecordId(id, clusterPosition), atomicOperation);
             endAtomicOperation(false, null);
