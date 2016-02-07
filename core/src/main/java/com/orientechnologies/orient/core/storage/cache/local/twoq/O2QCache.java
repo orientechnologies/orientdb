@@ -881,6 +881,8 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
     } catch (Exception e) {
       OLogManager.instance()
           .error(this, "Can not store state of cache for storage placed under %s", writeCache.getRootDirectory(), e);
+    } finally {
+      cacheLock.releaseWriteLock();
     }
   }
 
