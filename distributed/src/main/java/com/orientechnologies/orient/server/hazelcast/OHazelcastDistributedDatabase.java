@@ -169,8 +169,15 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
             int nodeQueueSize = queue.size();
 
             if (queueMaxSize > 0 && nodeQueueSize > queueMaxSize) {
-              final int nodeQueuePrevSize = queueSizes.getOrDefault(node, 0);
-              final int nodeQueueWarnings = queueWarningCounter.getOrDefault(node, 0);
+
+              Integer nodeQueuePrevSize = queueSizes.get(node);
+              if (nodeQueuePrevSize == null) {
+                nodeQueuePrevSize = 0;
+              }
+              Integer nodeQueueWarnings = queueWarningCounter.get(node);
+              if (nodeQueueWarnings == null) {
+                nodeQueueWarnings = 0;
+              }
 
               final ODistributedServerManager.DB_STATUS nodeStatus = manager.getDatabaseStatus(node, databaseName);
               if (nodeStatus == ODistributedServerManager.DB_STATUS.SYNCHRONIZING

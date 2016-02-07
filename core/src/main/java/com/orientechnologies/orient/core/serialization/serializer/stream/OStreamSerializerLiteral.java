@@ -35,7 +35,7 @@ public class OStreamSerializerLiteral implements OStreamSerializer {
 	}
 
 	public Object fromStream(final byte[] iStream) throws IOException {
-		return ORecordSerializerStringAbstract.getTypeValue(OBinaryProtocol.bytes2string(iStream));
+		return ORecordSerializerStringAbstract.getTypeValue(new String(iStream,"UTF-8"));
 	}
 
 	public byte[] toStream(final Object iObject) throws IOException {
@@ -44,6 +44,6 @@ public class OStreamSerializerLiteral implements OStreamSerializer {
 
 		final StringBuilder buffer = new StringBuilder();
 		ORecordSerializerStringAbstract.fieldTypeToString(buffer, OType.getTypeByClass(iObject.getClass()), iObject);
-		return OBinaryProtocol.string2bytes(buffer.toString());
+		return buffer.toString().getBytes("UTF-8");
 	}
 }

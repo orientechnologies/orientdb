@@ -1106,6 +1106,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         }
       });
 
+      //After commit force the clean of dirty managers due to possible copy and miss clean.
+      for (ORecordOperation ent : iTx.getAllRecordEntries()) {
+        ORecordInternal.getDirtyManager(ent.getRecord()).clear();
+      }
+
       nodes.remove(localNodeName);
       if (!nodes.isEmpty()) {
         if (executionModeSynch)

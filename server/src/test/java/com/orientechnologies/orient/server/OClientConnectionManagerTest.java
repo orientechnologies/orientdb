@@ -1,17 +1,16 @@
 package com.orientechnologies.orient.server;
 
-import static org.testng.AssertJUnit.*;
-
-import java.io.IOException;
-
+import com.orientechnologies.orient.core.metadata.security.OToken;
+import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
+import org.junit.Before;
+import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.metadata.security.OToken;
-import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
+import java.io.IOException;
+
+import static org.junit.Assert.*;
 
 public class OClientConnectionManagerTest {
 
@@ -21,7 +20,7 @@ public class OClientConnectionManagerTest {
   @Mock
   private OToken token;
 
-  @BeforeMethod
+  @Before
   public void before() {
     MockitoAnnotations.initMocks(this);
   }

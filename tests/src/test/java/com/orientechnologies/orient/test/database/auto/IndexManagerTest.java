@@ -11,8 +11,11 @@ import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
-import org.testng.annotations.*;
+import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -66,7 +69,7 @@ public class IndexManagerTest extends DocumentDBBaseTest {
       while (cause.getCause() != null)
         cause = cause.getCause();
 
-      assertTrue(cause instanceof IllegalArgumentException);
+      assertTrue((cause instanceof IllegalArgumentException) || (cause instanceof OCommandSQLParsingException));
     }
   }
 
@@ -583,7 +586,7 @@ public class IndexManagerTest extends DocumentDBBaseTest {
     final OIndexManager indexManager = database.getMetadata().getIndexManager();
 
     indexManager.createIndex("twoclassproperty", OClass.INDEX_TYPE.UNIQUE.toString(), new OPropertyIndexDefinition(
-        "indexManagerTestClassTwo", "fOne", OType.INTEGER),
+            "indexManagerTestClassTwo", "fOne", OType.INTEGER),
         new int[] { database.getClusterIdByName("indexManagerTestClassTwo") }, null, null);
 
     assertFalse(indexManager.getClassIndexes("indexManagerTestClassTwo").isEmpty());

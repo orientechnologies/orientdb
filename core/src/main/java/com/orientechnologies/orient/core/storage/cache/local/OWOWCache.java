@@ -207,6 +207,16 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     }
   }
 
+  /**
+   * Directory which contains all files managed by write cache.
+   *
+   * @return Directory which contains all files managed by write cache or <code>null</code> in case of in memory database.
+   */
+  @Override
+  public File getRootDirectory() {
+    return new File(storagePath);
+  }
+
   public void startFuzzyCheckpoints() {
     if (writeAheadLog != null) {
       final long fuzzyCheckPointInterval = OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.getValueAsInteger();
@@ -387,6 +397,16 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     } finally {
       filesLock.releaseWriteLock();
     }
+  }
+
+  @Override
+  public int internalFileId(long fileId) {
+    return extractFileId(fileId);
+  }
+
+  @Override
+  public long externalFileId(int fileId) {
+    return composeFileId(id, fileId);
   }
 
   public void openFile(String fileName, long fileId) throws IOException {

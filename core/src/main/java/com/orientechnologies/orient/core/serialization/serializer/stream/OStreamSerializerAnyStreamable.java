@@ -61,7 +61,8 @@ public class OStreamSerializerAnyStreamable implements OStreamSerializer {
       throw new OSerializationException(message);
     }
 
-    final String className = OBinaryProtocol.bytes2string(iStream, 4, classNameSize);
+
+    final String className = new String(iStream,4,classNameSize,"UTF-8");
 
     try {
       final OSerializableStream stream;
@@ -109,9 +110,12 @@ public class OStreamSerializerAnyStreamable implements OStreamSerializer {
       className = SQL_COMMAND_CLASS_ASBYTES;
     else if (iObject instanceof OCommandScript)
       className = SCRIPT_COMMAND_CLASS_ASBYTES;
-    else
-      className = OBinaryProtocol.string2bytes(iObject.getClass().getName());
-
+    else {
+      if(iObject == null)
+        className = null;
+      else
+        className = iObject.getClass().getName().getBytes("UTF-8");
+    }
     // SERIALIZE THE OBJECT CONTENT
     byte[] objectContent = stream.toStream();
 
