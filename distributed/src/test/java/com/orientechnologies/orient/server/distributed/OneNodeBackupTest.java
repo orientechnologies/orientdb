@@ -91,6 +91,7 @@ public class OneNodeBackupTest extends AbstractServerClusterTxTest {
 
     if (serverStarted++ == (SERVERS - 1)) {
       startQueueMonitorTask();
+      startCountMonitorTask("Person");
 
       // BACKUP LAST SERVER, RUN ASYNCHRONOUSLY
       new Thread(new Runnable() {
@@ -133,8 +134,10 @@ public class OneNodeBackupTest extends AbstractServerClusterTxTest {
                     @Override
                     public Object call() throws Exception {
 
-                      // SIMULATE LONG BACKUP
-                      Thread.sleep(10000);
+                      // SIMULATE LONG BACKUP UP TO 2/3 OF RECORDS
+                      while (totalVertices.get() < (count * SERVERS) * 2 / 3) {
+                        Thread.sleep(1000);
+                      }
 
                       return null;
                     }
@@ -145,6 +148,8 @@ public class OneNodeBackupTest extends AbstractServerClusterTxTest {
                 } finally {
                   banner("COMPLETED BACKUP SERVER " + (SERVERS - 1));
                   backupInProgress = false;
+
+                  g.shutdown();
 
                   if (file != null)
                     file.delete();
