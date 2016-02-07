@@ -58,11 +58,11 @@ import java.util.List;
  *
  */
 public class OTxTask extends OAbstractReplicatedTask {
-  private static final long serialVersionUID = 1L;
+  private static final long                   serialVersionUID = 1L;
 
-  private List<OAbstractRecordReplicatedTask> tasks      = new ArrayList<OAbstractRecordReplicatedTask>();
+  private List<OAbstractRecordReplicatedTask> tasks            = new ArrayList<OAbstractRecordReplicatedTask>();
   private transient OTxTaskResult             result;
-  private transient boolean                   lockRecord = true;
+  private transient boolean                   lockRecord       = true;
 
   public OTxTask() {
   }
@@ -151,6 +151,14 @@ public class OTxTask extends OAbstractReplicatedTask {
         // EXCEPTION: ASSURE ALL LOCKS ARE FREED
         for (ORID r : result.locks)
           ddb.unlockRecord(r);
+
+        for (OAbstractRecordReplicatedTask task : tasks) {
+          if (task instanceof OCreateRecordTask) {
+            final OCreateRecordTask createRT = (OCreateRecordTask) task;
+            createRT.resetRecord();
+          }
+        }
+
         // RETHROW IT
         throw t;
       }
