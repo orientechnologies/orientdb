@@ -417,13 +417,22 @@ public class ODistributedConfiguration {
     synchronized (configuration) {
       String master = null;
 
-      final List<String> serverList = getClusterConfiguration(iClusterName).field("servers");
-      if (serverList != null && !serverList.isEmpty()) {
-        // RETURN THE FIRST ONE
-        master = serverList.get(0);
-        if (NEW_NODE_TAG.equals(master) && serverList.size() > 1)
-          // DON'T RETURN <NEW_NODE>
-          master = serverList.get(1);
+      final ODocument clusters = configuration.field("clusters");
+      if (clusters == null)
+        throw new OConfigurationException("Cannot find 'clusters' in distributed database configuration");
+
+      // GET THE CLUSTER CFG
+      final ODocument cfg = clusters.field(iClusterName);
+
+      if (cfg != null) {
+        final List<String> serverList = cfg.field("servers");
+        if (serverList != null && !serverList.isEmpty()) {
+          // RETURN THE FIRST ONE
+          master = serverList.get(0);
+          if (NEW_NODE_TAG.equals(master) && serverList.size() > 1)
+            // DON'T RETURN <NEW_NODE>
+            master = serverList.get(1);
+        }
       }
 
       return master;
