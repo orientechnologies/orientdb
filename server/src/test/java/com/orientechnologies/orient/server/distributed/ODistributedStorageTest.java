@@ -22,7 +22,9 @@ public class ODistributedStorageTest {
   @Test
   public void testSupportedFreezeTrue() {
     OLocalPaginatedStorage storage = Mockito.mock(OLocalPaginatedStorage.class);
-    ODistributedStorage ds = new ODistributedStorage(Mockito.mock(OServer.class), storage);
+    OServer mockServer = Mockito.mock(OServer.class);
+    Mockito.when(mockServer.getDistributedManager()).thenReturn(Mockito.mock(ODistributedServerManager.class));
+    ODistributedStorage ds = new ODistributedStorage(mockServer, storage);
 
     ds.freeze(true);
 
@@ -32,7 +34,9 @@ public class ODistributedStorageTest {
   @Test
   public void testSupportedFreezeFalse() {
     OLocalPaginatedStorage storage = Mockito.mock(OLocalPaginatedStorage.class);
-    ODistributedStorage ds = new ODistributedStorage(Mockito.mock(OServer.class), storage);
+    OServer mockServer = Mockito.mock(OServer.class);
+    Mockito.when(mockServer.getDistributedManager()).thenReturn(Mockito.mock(ODistributedServerManager.class));
+    ODistributedStorage ds = new ODistributedStorage(mockServer, storage);
 
     ds.freeze(false);
 
@@ -41,7 +45,11 @@ public class ODistributedStorageTest {
 
   @Test(expected = UnsupportedOperationException.class)
   public void testUnsupportedFreeze() {
-    ODistributedStorage ds = new ODistributedStorage(Mockito.mock(OServer.class), Mockito.mock(ODirectMemoryStorage.class));
+    ODirectMemoryStorage storage = Mockito.mock(ODirectMemoryStorage.class);
+    OServer mockServer = Mockito.mock(OServer.class);
+    Mockito.when(mockServer.getDistributedManager()).thenReturn(Mockito.mock(ODistributedServerManager.class));
+    ODistributedStorage ds = new ODistributedStorage(mockServer, storage);
+
 
     ds.freeze(false);
   }
@@ -49,7 +57,9 @@ public class ODistributedStorageTest {
   @Test
   public void testSupportedRelease() {
     OLocalPaginatedStorage storage = Mockito.mock(OLocalPaginatedStorage.class);
-    ODistributedStorage ds = new ODistributedStorage(Mockito.mock(OServer.class), storage);
+    OServer mockServer = Mockito.mock(OServer.class);
+    Mockito.when(mockServer.getDistributedManager()).thenReturn(Mockito.mock(ODistributedServerManager.class));
+    ODistributedStorage ds = new ODistributedStorage(mockServer, storage);
 
     ds.release();
 
@@ -58,7 +68,10 @@ public class ODistributedStorageTest {
 
   @Test(expected = UnsupportedOperationException.class)
   public void testUnsupportedRelease() {
-    ODistributedStorage ds = new ODistributedStorage(Mockito.mock(OServer.class), Mockito.mock(ODirectMemoryStorage.class));
+    ODirectMemoryStorage storage = Mockito.mock(ODirectMemoryStorage.class);
+    OServer mockServer = Mockito.mock(OServer.class);
+    Mockito.when(mockServer.getDistributedManager()).thenReturn(Mockito.mock(ODistributedServerManager.class));
+    ODistributedStorage ds = new ODistributedStorage(mockServer, storage);
 
     ds.release();
   }
