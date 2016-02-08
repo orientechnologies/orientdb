@@ -1,7 +1,6 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -10,8 +9,6 @@ import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -35,7 +32,6 @@ import org.apache.tinkerpop.gremlin.structure.io.Io;
 import org.apache.tinkerpop.gremlin.structure.io.Io.Builder;
 import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
 import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
-
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -84,7 +80,8 @@ public final class OrientGraph implements Graph {
     protected ODatabaseDocumentTx database;
     protected final Features features;
     protected final Configuration configuration;
-    protected final OPartitionedDatabasePool pool;
+    protected final Supplier<OPartitionedDatabasePool> poolSupplier;
+    protected OPartitionedDatabasePool pool;
     protected final String user;
     protected final String password;
 
@@ -98,6 +95,7 @@ public final class OrientGraph implements Graph {
 
     public OrientGraph(final ODatabaseDocumentTx database, final Configuration configuration, final String user, final String password) {
         this.pool = null;
+        this.poolSupplier = null;
         this.user = user;
         this.password = password;
         this.database = database;
@@ -110,11 +108,12 @@ public final class OrientGraph implements Graph {
         }
     }
 
-    public OrientGraph(final OPartitionedDatabasePool pool, final Configuration configuration, final String user, final String password) {
+    public OrientGraph(final OPartitionedDatabasePool pool, final Configuration configuration, final Supplier<OPartitionedDatabasePool> poolSupplier) {
         this.pool = pool;
+        this.poolSupplier = poolSupplier;
         this.database = pool.acquire();
-        this.user = user;
-        this.password = password;
+        this.user = "";
+        this.password = "";
         this.connectionFailed = false;
         makeActive();
         this.configuration = configuration;
@@ -145,9 +144,17 @@ public final class OrientGraph implements Graph {
         makeActiveDb();
 
         if (this.connectionFailed) {
+            this.connectionFailed = false;
+
             try {
-                this.database = new ODatabaseDocumentTx(this.database.getURL(), this.database.isKeepStorageOpen());
-                this.database.open(user, password);
+                if (this.poolSupplier != null) {
+                    this.pool = this.poolSupplier.get();
+                    this.database = this.pool.acquire();
+                } else {
+                    ODatabaseDocumentTx replaceDb = new ODatabaseDocumentTx(this.database.getURL(), this.database.isKeepStorageOpen());
+                    replaceDb.open(user, password);
+                    this.database = replaceDb;
+                }
                 makeActiveDb();
             } catch (OException e) {
                 OLogManager.instance().info(this, "Recreation of connection resulted in exception", e);
