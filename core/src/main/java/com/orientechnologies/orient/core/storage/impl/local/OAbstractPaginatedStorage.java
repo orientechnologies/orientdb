@@ -914,7 +914,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     if (transaction.get() != null) {
       final long timer = Orient.instance().getProfiler().startChrono();
       try {
-        return doCreateRecord(rid, content, recordVersion, recordType, callback, cluster, ppos, -1);
+        return doCreateRecord(rid, content, recordVersion, recordType, callback, cluster, ppos, null);
       } finally {
         Orient.instance().getProfiler()
             .stopChrono(PROFILER_CREATE_RECORD, "Create a record in database", timer, "db.*.createRecord");
@@ -928,7 +928,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         checkOpeness();
 
-        return doCreateRecord(rid, content, recordVersion, recordType, callback, cluster, ppos, -1);
+        return doCreateRecord(rid, content, recordVersion, recordType, callback, cluster, ppos, null);
       } finally {
         dataLock.releaseSharedLock();
       }
@@ -1308,11 +1308,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                 ((ODocument) record).validate();
             }
           }
-//          List<OPhysicalPosition> positions = new ArrayList<OPhysicalPosition>();
+          Map<ORecordOperation, OPhysicalPosition> positions = new IdentityHashMap<ORecordOperation, OPhysicalPosition>();
           for (ORecordOperation txEntry : entries) {
             ORecord rec = txEntry.getRecord();
-            if (rec.isDirty()) {
-              ORecordId rid = (ORecordId) rec.getIdentity();
+            if (txEntry.type == ORecordOperation.CREATED && rec.getIdentity().isNew() && rec.isDirty() ) {
+              ORecordId rid = (ORecordId) rec.getIdentity().copy();
               ORecordId oldRID = rid.copy();
               int clusterId = rid.clusterId;
               if (rid.clusterId == ORID.CLUSTER_ID_INVALID && rec instanceof ODocument
@@ -1325,18 +1325,17 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
               final OCluster cluster = getClusterById(clusterId);
               OPhysicalPosition ppos = cluster.allocatePosition(ORecordInternal.getRecordType(rec));
-//              positions.add(ppos);
+              positions.put(txEntry,ppos);
+              rid.clusterId = clusterId;
               rid.clusterPosition = ppos.clusterPosition;
               clientTx.updateIdentityAfterCommit(oldRID, rid);
             }
           }
-//          int i =0;
           for (ORecordOperation txEntry : entries) {
             if (txEntry.getRecord().isDirty()) {
               if (txEntry.type == ORecordOperation.CREATED) {
-//                OPhysicalPosition ppos = positions.get(i);
-                commitEntry(clientTx, txEntry);
-//                i++;
+                OPhysicalPosition ppos = positions.get(txEntry);
+                commitEntry(clientTx, txEntry, ppos);
               }
             }
           }
@@ -1344,7 +1343,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           for (ORecordOperation txEntry : entries) {
             if (txEntry.type != ORecordOperation.CREATED)
               // COMMIT ALL THE SINGLE ENTRIES ONE BY ONE
-              commitEntry(clientTx, txEntry);
+              commitEntry(clientTx, txEntry, null);
           }
 
           if (callback != null)
@@ -2162,13 +2161,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           }
         } else {
           ORecordOperation toCommit = tx.getRecordEntry(next.getIdentity());
-          commitEntry(tx, toCommit);
+          commitEntry(tx, toCommit, null);
           next = path.pollFirst();
         }
 
       } else {
         ORecordOperation toCommit = tx.getRecordEntry(next.getIdentity());
-        commitEntry(tx, toCommit);
+        commitEntry(tx, toCommit, null);
         next = path.pollFirst();
       }
     } while (next != null);
@@ -2976,7 +2975,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   private OStorageOperationResult<OPhysicalPosition> doCreateRecord(ORecordId rid, byte[] content, int recordVersion,
-      byte recordType, ORecordCallback<Long> callback, OCluster cluster, OPhysicalPosition ppos, long allocatedPos) {
+      byte recordType, ORecordCallback<Long> callback, OCluster cluster, OPhysicalPosition ppos, OPhysicalPosition allocated) {
     if (content == null)
       throw new IllegalArgumentException("Record is null");
 
@@ -2989,10 +2988,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       makeStorageDirty();
       atomicOperationsManager.startAtomicOperation((String) null, true);
       try {
-        OPhysicalPosition pos = null;
-        if (allocatedPos >= 0)
-          pos = new OPhysicalPosition(allocatedPos, -1);
-        ppos = cluster.createRecord(content, recordVersion, recordType, pos);
+        ppos = cluster.createRecord(content, recordVersion, recordType, allocated);
         rid.clusterPosition = ppos.clusterPosition;
 
         final ORecordSerializationContext context = ORecordSerializationContext.getContext();
@@ -3504,14 +3500,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     final OPhysicalPosition ppos;
 
     final byte recordType = ORecordInternal.getRecordType(rec);
-    ppos = doCreateRecord(rid, stream, rec.getVersion(), recordType, null, cluster, new OPhysicalPosition(recordType), -1).getResult();
+    ppos = doCreateRecord(rid, stream, rec.getVersion(), recordType, null, cluster, new OPhysicalPosition(recordType), null).getResult();
 
     rid.clusterPosition = ppos.clusterPosition;
     ORecordInternal.setVersion(rec, ppos.recordVersion);
     clientTx.updateIdentityAfterCommit(oldRID, rid);
   }
 
-  private void commitEntry(final OTransaction clientTx, final ORecordOperation txEntry) throws IOException {
+  private void commitEntry(final OTransaction clientTx, final ORecordOperation txEntry, OPhysicalPosition allocated) throws IOException {
 
     final ORecord rec = txEntry.getRecord();
     if (txEntry.type != ORecordOperation.DELETED && !rec.isDirty())
@@ -3562,14 +3558,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           break;
         }
 
-        if (rid.isNew()) {
+        if (allocated != null) {
           rid = rid.copy();
           rid.clusterId = cluster.getId();
           final OPhysicalPosition ppos;
 
           final byte recordType = ORecordInternal.getRecordType(rec);
-          ppos = doCreateRecord(rid, stream, rec.getVersion(), recordType, null, cluster, new OPhysicalPosition(recordType),
-              rid.getClusterPosition())
+          ppos = doCreateRecord(rid, stream, rec.getVersion(), recordType, null, cluster, new OPhysicalPosition(recordType), allocated)
               .getResult();
 
           rid.clusterPosition = ppos.clusterPosition;
