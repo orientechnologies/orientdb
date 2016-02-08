@@ -1311,8 +1311,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.DEFAULT) {
 
-        final StringBuilder cmd = new StringBuilder("create cluster ");
+        final StringBuilder cmd = new StringBuilder("create cluster `");
         cmd.append(iClusterName);
+        cmd.append("`");
 
         // EXECUTE THIS OUTSIDE LOCK TO AVOID DEADLOCKS
         OCommandSQL commandSQL = new OCommandSQL(cmd.toString());
