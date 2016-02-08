@@ -19,26 +19,14 @@
  */
 package com.orientechnologies.common.console;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintStream;
+import java.io.*;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.ServiceLoader;
-import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -80,9 +68,8 @@ public class OConsoleApplication {
     for (int i = 0; i < m.getParameterAnnotations().length; i++) {
       for (int j = 0; j < m.getParameterAnnotations()[i].length; j++) {
         if (m.getParameterAnnotations()[i][j] instanceof com.orientechnologies.common.console.annotation.ConsoleParameter) {
-          buffer
-              .append(" <"
-                  + ((com.orientechnologies.common.console.annotation.ConsoleParameter) m.getParameterAnnotations()[i][j]).name()
+          buffer.append(
+              " <" + ((com.orientechnologies.common.console.annotation.ConsoleParameter) m.getParameterAnnotations()[i][j]).name()
                   + ">");
         }
       }
@@ -253,8 +240,8 @@ public class OConsoleApplication {
           final RESULT status = execute(commandLine);
           commandLine = null;
 
-          if (status == RESULT.EXIT || (status == RESULT.ERROR && !Boolean.parseBoolean(properties.get("ignoreErrors")))
-              && iBatchMode)
+          if (status == RESULT.EXIT
+              || (status == RESULT.ERROR && !Boolean.parseBoolean(properties.get("ignoreErrors"))) && iBatchMode)
             return false;
         }
       }
@@ -269,8 +256,8 @@ public class OConsoleApplication {
           }
 
           final RESULT status = execute(commandBuffer.toString());
-          if (status == RESULT.EXIT || (status == RESULT.ERROR && !Boolean.parseBoolean(properties.get("ignoreErrors")))
-              && iBatchMode)
+          if (status == RESULT.EXIT
+              || (status == RESULT.ERROR && !Boolean.parseBoolean(properties.get("ignoreErrors"))) && iBatchMode)
             return false;
         }
       }
