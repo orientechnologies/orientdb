@@ -20,20 +20,16 @@
 
 package com.orientechnologies.orient.core.engine.local;
 
-import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.util.Map;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.engine.OEngineAbstract;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+
+import java.util.Map;
 
 /**
  * @author Andrey Lomakin
@@ -69,18 +65,6 @@ public class OEngineLocalPaginated extends OEngineAbstract {
 
   public OStorage createStorage(final String dbName, final Map<String, String> configuration) {
     try {
-      try {
-        final Class<? extends OLocalPaginatedStorage> enterpriseVersion = (Class<? extends OLocalPaginatedStorage>) Class
-            .forName("com.orientechnologies.orient.core.storage.impl.local.paginated.OEnterpriseLocalPaginatedStorage");
-        final Constructor<? extends OLocalPaginatedStorage> constructor = enterpriseVersion
-            .getConstructor(String.class, String.class, String.class, Integer.TYPE, OReadCache.class);
-        return constructor.newInstance(dbName, dbName, getMode(configuration), generateStorageId(), readCache);
-      } catch (ClassNotFoundException cne) {
-      } catch (NoSuchMethodException nme) {
-      } catch (IllegalAccessException iae) {
-      } catch (InvocationTargetException ite) {
-      } catch (InstantiationException ie) {
-      }
 
       return new OLocalPaginatedStorage(dbName, dbName, getMode(configuration), generateStorageId(), readCache);
     } catch (Exception e) {
@@ -98,6 +82,10 @@ public class OEngineLocalPaginated extends OEngineAbstract {
 
   public boolean isShared() {
     return true;
+  }
+
+  public O2QCache getReadCache() {
+    return readCache;
   }
 
   @Override
