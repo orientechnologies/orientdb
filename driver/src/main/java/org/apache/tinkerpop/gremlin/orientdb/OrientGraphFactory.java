@@ -67,7 +67,11 @@ public final class OrientGraphFactory {
         final OrientGraph g;
         final Configuration config = getConfiguration(create, open, transactional);
         if (pool != null) {
+<<<<<<< HEAD
             g = new OrientGraph(pool, config, this::PoolRecreate);
+=======
+            g = new OrientGraph(pool, config, user, password);
+>>>>>>> fd77e98fe2bbc0315a7fd852f6657b14c402f5ec
         } else {
             g = new OrientGraph(getDatabase(create, open), config, user, password);
         }
