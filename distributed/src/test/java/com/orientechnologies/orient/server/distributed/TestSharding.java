@@ -11,13 +11,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientEdge;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
+import com.tinkerpop.blueprints.impls.orient.*;
 
 public class TestSharding extends AbstractServerClusterTest {
 
@@ -101,12 +95,8 @@ public class TestSharding extends AbstractServerClusterTest {
 
           final int clId = vertices[i].getIdentity().getClusterId();
 
-          if (i == 0)
-            Assert.assertEquals("Error on assigning cluster client", clId, graph.getRawGraph().getClusterIdByName("client-Type"));
-          else {
-            final int clusterId = graph.getRawGraph().getClusterIdByName("client-type_" + nodeName);
-            Assert.assertEquals("Error on assigning cluster client_" + nodeName, clId, clusterId);
-          }
+          final int clusterId = graph.getRawGraph().getClusterIdByName("client-type_" + nodeName);
+          Assert.assertEquals("Error on assigning cluster client_" + nodeName, clId, clusterId);
 
           vertices[i].setProperty("name-property", "shard_" + i);
 
@@ -194,8 +184,7 @@ public class TestSharding extends AbstractServerClusterTest {
             final String nodeName = serverInstance.get(i).getServerInstance().getDistributedManager().getLocalNodeName();
 
             String clusterName = "client-Type";
-            if (i > 0)
-              clusterName += "_" + nodeName;
+            clusterName += "_" + nodeName;
 
             String query = "select from `cluster:" + clusterName + "`";
 
