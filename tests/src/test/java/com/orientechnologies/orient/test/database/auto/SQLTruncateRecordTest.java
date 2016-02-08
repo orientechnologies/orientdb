@@ -35,7 +35,8 @@ public class SQLTruncateRecordTest extends DocumentDBBaseTest {
 
   @Test
   public void truncateRecord() {
-		database.command(new OCommandSQL("create class Profile")).execute();
+    if (!database.getMetadata().getSchema().existsClass("Person"))
+      database.command(new OCommandSQL("create class Profile")).execute();
 
     database.command(new OCommandSQL("insert into Profile (sex, salary) values ('female', 2100)")).execute();
 
@@ -54,6 +55,9 @@ public class SQLTruncateRecordTest extends DocumentDBBaseTest {
 
   @Test
   public void truncateNonExistingRecord() {
+    if (!database.getMetadata().getSchema().existsClass("Person"))
+      database.command(new OCommandSQL("create class Profile")).execute();
+
     final Number records = (Number) database
         .command(new OCommandSQL("truncate record [ #" + database.getClusterIdByName("Profile") + ":99999999 ]")).execute();
 
