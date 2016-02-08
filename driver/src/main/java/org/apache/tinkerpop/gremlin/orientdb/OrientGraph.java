@@ -83,12 +83,8 @@ public final class OrientGraph implements Graph {
     protected ODatabaseDocumentTx database;
     protected final Features features;
     protected final Configuration configuration;
-<<<<<<< HEAD
     protected final Supplier<OPartitionedDatabasePool> poolSupplier;
     protected OPartitionedDatabasePool pool;
-=======
-    protected final OPartitionedDatabasePool pool;
->>>>>>> fd77e98fe2bbc0315a7fd852f6657b14c402f5ec
     protected final String user;
     protected final String password;
 
@@ -102,10 +98,7 @@ public final class OrientGraph implements Graph {
 
     public OrientGraph(final ODatabaseDocumentTx database, final Configuration configuration, final String user, final String password) {
         this.pool = null;
-<<<<<<< HEAD
         this.poolSupplier = null;
-=======
->>>>>>> fd77e98fe2bbc0315a7fd852f6657b14c402f5ec
         this.user = user;
         this.password = password;
         this.database = database;
@@ -118,21 +111,12 @@ public final class OrientGraph implements Graph {
         }
     }
 
-<<<<<<< HEAD
     public OrientGraph(final OPartitionedDatabasePool pool, final Configuration configuration, final Supplier<OPartitionedDatabasePool> poolSupplier) {
-=======
-    public OrientGraph(final OPartitionedDatabasePool pool, final Configuration configuration, final String user, final String password) {
->>>>>>> fd77e98fe2bbc0315a7fd852f6657b14c402f5ec
         this.pool = pool;
         this.poolSupplier = poolSupplier;
         this.database = pool.acquire();
-<<<<<<< HEAD
         this.user = "";
         this.password = "";
-=======
-        this.user = user;
-        this.password = password;
->>>>>>> fd77e98fe2bbc0315a7fd852f6657b14c402f5ec
         this.connectionFailed = false;
         makeActive();
         this.configuration = configuration;
@@ -166,8 +150,6 @@ public final class OrientGraph implements Graph {
             this.connectionFailed = false;
 
             try {
-<<<<<<< HEAD
-<<<<<<< f0962e2ad5c1e31bb40f730d517939f6a35ed74d
                 if (this.poolSupplier != null) {
                     this.pool = this.poolSupplier.get();
                     this.database = this.pool.acquire();
@@ -176,16 +158,6 @@ public final class OrientGraph implements Graph {
                     replaceDb.open(user, password);
                     this.database = replaceDb;
                 }
-=======
-                ODatabaseDocumentTx replaceDb = new ODatabaseDocumentTx(this.database.getURL(), this.database.isKeepStorageOpen());
-                replaceDb.open(user, password);
-                this.database = replaceDb;
->>>>>>> fix OrientGraph reconection logic to pass OrientGraphIndexTest.vertexUniqueConstraint test
-=======
-                ODatabaseDocumentTx replaceDb = new ODatabaseDocumentTx(this.database.getURL(), this.database.isKeepStorageOpen());
-                replaceDb.open(user, password);
-                this.database = replaceDb;
->>>>>>> fd77e98fe2bbc0315a7fd852f6657b14c402f5ec
                 makeActiveDb();
             } catch (OException e) {
                 OLogManager.instance().info(this, "Recreation of connection resulted in exception", e);
