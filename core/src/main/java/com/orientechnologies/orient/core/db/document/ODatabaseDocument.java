@@ -217,6 +217,8 @@ public interface ODatabaseDocument extends ODatabase<ORecord>, ODatabaseSchemaAw
   /**
    * Enables or disables the record validation.
    *
+   * Since 2.2 this setting is persistent.
+   *
    * @param iEnabled
    *          True to enable, false to disable
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.

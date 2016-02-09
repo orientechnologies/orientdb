@@ -792,6 +792,10 @@ public class OStorageConfiguration implements OSerializableStream {
       // SET TX SQL GRAPH OPERATIONS
       txRequiredForSQLGraphOperations = "true".equalsIgnoreCase(iValue);
 
+    if ("validation".equalsIgnoreCase(iName))
+      validation = "true".equalsIgnoreCase(iValue);
+
+
     for (Iterator<OStorageEntryConfiguration> it = properties.iterator(); it.hasNext();) {
       final OStorageEntryConfiguration e = it.next();
       if (e.name.equalsIgnoreCase(iName)) {
@@ -842,7 +846,7 @@ public class OStorageConfiguration implements OSerializableStream {
   }
 
   public void setValidation(final boolean validation) {
-    this.validation = validation;
+    setProperty("validation", validation ? "true" : "false");
   }
 
   protected void bindPropertiesToContext(final Map<String, Object> iProperties) {

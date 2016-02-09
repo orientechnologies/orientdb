@@ -499,7 +499,7 @@ public class OConsoleApplication {
 
   protected void syntaxError(String iCommand, Method m) {
     error(
-        "\n!Wrong syntax. If you're runnin in batch mode make sure all commands are delimited by semicolon (;) or a linefeed (\\n). Expected: \n\r\n\r%s",
+        "\n!Wrong syntax. If you're running in batch mode make sure all commands are delimited by semicolon (;) or a linefeed (\\n). Expected: \n\r\n\r%s",
         formatCommandSpecs(iCommand, m));
   }
 
