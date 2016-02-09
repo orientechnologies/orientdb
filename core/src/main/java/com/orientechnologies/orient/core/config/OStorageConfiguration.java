@@ -79,7 +79,7 @@ public class OStorageConfiguration implements OSerializableStream {
   private String                                          charset;
   public static final int                                 CURRENT_VERSION               = 17;
   public static final int                                 CURRENT_BINARY_FORMAT_VERSION = 12;
-  private volatile List<OStorageEntryConfiguration>       properties;
+  private final List<OStorageEntryConfiguration>          properties = new ArrayList<OStorageEntryConfiguration>();
   protected final transient OStorage                      storage;
   private volatile OContextConfiguration                  configuration;
   public volatile int                                     version;
@@ -103,7 +103,6 @@ public class OStorageConfiguration implements OSerializableStream {
   private volatile String                                 recordSerializer;
   private volatile int                                    recordSerializerVersion;
   private volatile boolean                                strictSQL;
-  private volatile Map<String, Object>                    loadProperties;
   private volatile ConcurrentMap<String, IndexEngineData> indexEngines;
   private volatile transient boolean                      validation                    = true;
   private volatile boolean                                txRequiredForSQLGraphOperations;
@@ -124,7 +123,9 @@ public class OStorageConfiguration implements OSerializableStream {
     fileTemplate = new OStorageSegmentConfiguration();
 
     charset = DEFAULT_CHARSET;
-    properties = Collections.synchronizedList(new ArrayList<OStorageEntryConfiguration>());
+    synchronized (properties) {
+      properties.clear();
+    }
 
     version = -1;
     name = null;
@@ -202,16 +203,7 @@ public class OStorageConfiguration implements OSerializableStream {
 
     fromStream(record);
 
-    this.loadProperties = new HashMap<String, Object>(iProperties);
-
     return this;
-  }
-
-  public Map<String, Object> getLoadProperties() {
-    if (loadProperties == null)
-      return Collections.emptyMap();
-
-    return Collections.unmodifiableMap(loadProperties);
   }
 
   public void update() throws OSerializationException {
@@ -564,9 +556,11 @@ public class OStorageConfiguration implements OSerializableStream {
       write(buffer, false);
       write(buffer, false);
     }
-    write(buffer, properties.size());
-    for (OStorageEntryConfiguration e : properties)
-      entryToStream(buffer, e);
+    synchronized (properties) {
+      write(buffer, properties.size());
+      for (OStorageEntryConfiguration e : properties)
+        entryToStream(buffer, e);
+    }
 
     write(buffer, binaryFormatVersion);
     write(buffer, clusterSelection);
@@ -795,50 +789,59 @@ public class OStorageConfiguration implements OSerializableStream {
     if ("validation".equalsIgnoreCase(iName))
       validation = "true".equalsIgnoreCase(iValue);
 
-
-    for (Iterator<OStorageEntryConfiguration> it = properties.iterator(); it.hasNext();) {
-      final OStorageEntryConfiguration e = it.next();
-      if (e.name.equalsIgnoreCase(iName)) {
-        // FOUND: OVERWRITE IT
-        e.value = iValue;
-        return;
+    synchronized (properties) {
+      for (Iterator<OStorageEntryConfiguration> it = properties.iterator(); it.hasNext(); ) {
+        final OStorageEntryConfiguration e = it.next();
+        if (e.name.equalsIgnoreCase(iName)) {
+          // FOUND: OVERWRITE IT
+          e.value = iValue;
+          return;
+        }
       }
-    }
 
-    // NOT FOUND: CREATE IT
-    properties.add(new OStorageEntryConfiguration(iName, iValue));
+      // NOT FOUND: CREATE IT
+      properties.add(new OStorageEntryConfiguration(iName, iValue));
+    }
   }
 
   public String getProperty(final String iName) {
-    for (Iterator<OStorageEntryConfiguration> it = properties.iterator(); it.hasNext();) {
-      final OStorageEntryConfiguration e = it.next();
-      if (e.name.equalsIgnoreCase(iName))
-        return e.value;
+    synchronized (properties) {
+      for (Iterator<OStorageEntryConfiguration> it = properties.iterator(); it.hasNext(); ) {
+        final OStorageEntryConfiguration e = it.next();
+        if (e.name.equalsIgnoreCase(iName))
+          return e.value;
+      }
+      return null;
     }
-    return null;
   }
 
   public boolean existsProperty(final String iName) {
-    for (Iterator<OStorageEntryConfiguration> it = properties.iterator(); it.hasNext();) {
-      final OStorageEntryConfiguration e = it.next();
-      if (e.name.equalsIgnoreCase(iName))
-        return true;
+    synchronized (properties) {
+      for (Iterator<OStorageEntryConfiguration> it = properties.iterator(); it.hasNext(); ) {
+        final OStorageEntryConfiguration e = it.next();
+        if (e.name.equalsIgnoreCase(iName))
+          return true;
+      }
+      return false;
     }
-    return false;
   }
 
   public void removeProperty(final String iName) {
-    for (Iterator<OStorageEntryConfiguration> it = properties.iterator(); it.hasNext();) {
-      final OStorageEntryConfiguration e = it.next();
-      if (e.name.equalsIgnoreCase(iName)) {
-        it.remove();
-        break;
+    synchronized (properties) {
+      for (Iterator<OStorageEntryConfiguration> it = properties.iterator(); it.hasNext(); ) {
+        final OStorageEntryConfiguration e = it.next();
+        if (e.name.equalsIgnoreCase(iName)) {
+          it.remove();
+          break;
+        }
       }
     }
   }
 
   public void clearProperties() {
-    properties.clear();
+    synchronized (properties) {
+      properties.clear();
+    }
   }
 
   public boolean isValidationEnabled() {
