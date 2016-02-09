@@ -459,7 +459,23 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 
         final Collection<ODocument> idxs = getConfiguration();
 
-        recreateIndexes(idxs);
+        final OStorage storage = newDb.getStorage().getUnderlying();
+
+        if (storage instanceof OAbstractPaginatedStorage) {
+          final OAbstractPaginatedStorage abstractPaginatedStorage = (OAbstractPaginatedStorage) storage;
+          abstractPaginatedStorage.getAtomicOperationsManager().switchOnUnsafeMode();
+        }
+        
+        try {
+          recreateIndexes(idxs);
+        } finally {
+          if (storage instanceof OAbstractPaginatedStorage) {
+            final OAbstractPaginatedStorage abstractPaginatedStorage = (OAbstractPaginatedStorage) storage;
+            abstractPaginatedStorage.getAtomicOperationsManager().switchOffUnsafeMode();
+            abstractPaginatedStorage.synch();
+          }
+        }
+
       } catch (Exception e) {
         OLogManager.instance().error(this, "Error when attempt to restore indexes after crash was performed", e);
       }

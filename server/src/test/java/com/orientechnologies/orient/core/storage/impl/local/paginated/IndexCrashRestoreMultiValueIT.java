@@ -119,10 +119,10 @@ public class IndexCrashRestoreMultiValueIT {
     }
 
     System.out.println("Wait for 300 second");
-    TimeUnit.SECONDS.sleep(10);
+    TimeUnit.SECONDS.sleep(300);
 
     System.out.println("Wait for process to destroy");
-    serverProcess.destroy();
+    serverProcess.destroyForcibly();
 
     serverProcess.waitFor();
     System.out.println("Process was destroyed");

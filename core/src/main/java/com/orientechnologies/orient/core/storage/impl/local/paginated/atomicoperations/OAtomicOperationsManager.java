@@ -24,11 +24,13 @@ import com.orientechnologies.common.concur.lock.ODistributedCounter;
 import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -83,6 +85,19 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   private final AtomicReference<WaitingListNode> waitingTail = new AtomicReference<WaitingListNode>();
 
   private static volatile ThreadLocal<OAtomicOperation> currentOperation = new ThreadLocal<OAtomicOperation>();
+
+  /**
+   * Flag which indicates whether we work in unsafe mode for current thread.
+   * Unsafe mode means that all operations in this thread may violate violate ACID properties but system performance will be faster.
+   * <p>
+   * To start unsafe mode call {@link #switchOnUnsafeMode()}, to stop unsafe mode call {@link #switchOffUnsafeMode()}.
+   */
+  private static final ThreadLocal<Boolean> unsafeMode = new ThreadLocal<Boolean>() {
+    @Override
+    protected Boolean initialValue() {
+      return false;
+    }
+  };
 
   static {
     Orient.instance().registerListener(new OOrientListenerAbstract() {
@@ -149,7 +164,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
    * @return Instance of active atomic operation.
    */
   public OAtomicOperation startAtomicOperation(String fullName, boolean trackNonTxOperations) throws IOException {
-    if (writeAheadLog == null)
+    if (unsafeMode.get() || writeAheadLog == null)
       return null;
 
     OAtomicOperation operation = currentOperation.get();
@@ -202,6 +217,24 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       acquireExclusiveLockTillOperationComplete(operation, fullName);
 
     return operation;
+  }
+
+  /**
+   * Switch off unsafe mode. During this mode it is not guaranteed that operations will support
+   * ACID properties but system performance will be faster.
+   *
+   * To switch off unsafe mode call {@link #switchOffUnsafeMode()}
+   */
+  public void switchOnUnsafeMode() {
+    unsafeMode.set(true);
+  }
+
+  /**
+   * Switch off unsafe mode. It is highly recommended to call {@link OStorage#synch()}  after calling of this method.
+   * Otherwise there is risk that database may be in broken state after crash/restore cycle if this method will not be called.
+   */
+  public void switchOffUnsafeMode() {
+    unsafeMode.set(false);
   }
 
   private void addThreadInWaitingList(Thread thread) {
@@ -341,7 +374,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   }
 
   public OAtomicOperation endAtomicOperation(boolean rollback, Exception exception) throws IOException {
-    if (writeAheadLog == null)
+    if (unsafeMode.get() || writeAheadLog == null)
       return null;
 
     final OAtomicOperation operation = currentOperation.get();
@@ -400,7 +433,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   }
 
   public void acquireReadLock(ODurableComponent durableComponent) {
-    if (writeAheadLog == null)
+    if (unsafeMode.get() || writeAheadLog == null)
       return;
 
     assert durableComponent.getName() != null;
@@ -410,7 +443,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   }
 
   public void releaseReadLock(ODurableComponent durableComponent) {
-    if (writeAheadLog == null)
+    if (unsafeMode.get() || writeAheadLog == null)
       return;
 
     assert durableComponent.getName() != null;
