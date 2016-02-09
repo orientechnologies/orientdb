@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.sql;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.annotations.Test;
@@ -292,6 +293,50 @@ public class OCommandExecutorSQLUpdateTest {
     queried.reload();
     assertEquals(queried.field("map.nestedCount"), 20);
 
+    db.close();
+  }
+  
+  @Test
+  public void testRemoveWithDotNotationField() throws Exception {
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLUpdateTestRemoveWithDotNotationField");
+    db.create();
+
+    db.command(new OCommandSQL("CREATE CLASS test")).execute();
+
+    final ODocument test = new ODocument("test");
+    
+    Map<String, Object> childMap = new HashMap<String, Object>();
+    childMap.put("k1", "v1");
+    childMap.put("k2", "v2");
+  
+    Map<String, Object> dataMap = new HashMap<String, Object>();
+    dataMap.put("child", childMap);
+    
+    test.field("data", dataMap, OType.EMBEDDEDMAP);
+
+    db.save(test);
+
+    ODocument queried = (ODocument) db.query(new OSQLSynchQuery<Object>("SELECT FROM test")).get(0);
+    Map<String, Object> child = queried.field("data.child", OType.EMBEDDEDMAP);
+    assertEquals(child.size(), 2);
+    assertEquals("v1", queried.eval("data.child.k1"));
+    assertEquals("v2", queried.eval("data.child.k2"));
+    
+    db.command(new OCommandSQL("UPDATE test SET data.child.k3 = \"v3\"")).execute();
+    queried.reload();
+    child = queried.field("data.child", OType.EMBEDDEDMAP);
+    assertEquals(child.size(), 3);
+    assertEquals("v1", queried.eval("data.child.k1"));
+    assertEquals("v2", queried.eval("data.child.k2"));
+    assertEquals("v3", queried.eval("data.child.k3"));
+    
+    db.command(new OCommandSQL("UPDATE test REMOVE data.child = \"k1\"")).execute();
+    queried.reload();
+    child = queried.field("data.child", OType.EMBEDDEDMAP);
+    assertEquals(child.size(), 2);
+    assertEquals("v2", queried.eval("data.child.k2"));
+    assertEquals("v3", queried.eval("data.child.k3"));    
+    
     db.close();
   }
   
