@@ -67,6 +67,8 @@ public class OETLProcessor {
   protected int                        maxRetries  = 10;
   protected int                        workers     = 1;
   private boolean                      parallel    = false;
+  private ExecutorService executor;
+  private LinkedBlockingQueue<OExtractedItem> queue;
 
   /**
    * Creates an ETL processor by setting all the components on construction.
@@ -352,29 +354,28 @@ public class OETLProcessor {
   }
 
   private void runExtractorAndPipeline() {
-    ExecutorService executor = Executors.newCachedThreadPool();
+    executor = Executors.newCachedThreadPool();
     try {
 
       out(LOG_LEVELS.INFO, "Started execution with %d worker threads", workers);
 
       extractor.extract(source.read());
 
-      final BlockingQueue<OExtractedItem> queue = new LinkedBlockingQueue<OExtractedItem>(workers * 500);
+      queue = new LinkedBlockingQueue<OExtractedItem>(workers * 500);
 
       final AtomicLong counter = new AtomicLong();
-      final AtomicBoolean extractionFinished = new AtomicBoolean(false);
 
       List<Future<Boolean>> tasks = new ArrayList<Future<Boolean>>();
       for (int i = 0; i < workers; i++) {
 
         final OETLPipeline pipeline = new OETLPipeline(this, transformers, loader, logLevel, maxRetries, haltOnError);
 
-        OETLPipelineWorker task = new OETLPipelineWorker(extractionFinished, queue, pipeline);
+        OETLPipelineWorker task = new OETLPipelineWorker(queue, pipeline);
         tasks.add(executor.submit(task));
       }
 
-      Future<Boolean> extractorFuture = executor.submit(new OETLExtractorWorker(queue, counter, extractionFinished));
 
+      Future<Boolean> extractorFuture = executor.submit(new OETLExtractorWorker(queue, counter));
       Boolean extracted = extractorFuture.get();
 
       for (Future<Boolean> future : tasks) {
@@ -385,7 +386,6 @@ public class OETLProcessor {
       out(LOG_LEVELS.DEBUG, "all items extracted");
 
       executor.shutdown();
-
     } catch (OETLProcessHaltedException e) {
       out(LOG_LEVELS.ERROR, "ETL process halted: %s", e);
       executor.shutdownNow();
@@ -571,15 +571,12 @@ public class OETLProcessor {
 
   private static final class OETLPipelineWorker implements Callable<Boolean> {
 
-    private final AtomicBoolean                 extractionFinished;
     private final BlockingQueue<OExtractedItem> queue;
     private final OETLPipeline                  pipeline;
 
-    public OETLPipelineWorker(AtomicBoolean extractionFinished, BlockingQueue<OExtractedItem> queue, OETLPipeline pipeline) {
-      this.extractionFinished = extractionFinished;
+    public OETLPipelineWorker(BlockingQueue<OExtractedItem> queue, OETLPipeline pipeline) {
       this.queue = queue;
       this.pipeline = pipeline;
-
     }
 
     @Override
@@ -588,19 +585,12 @@ public class OETLProcessor {
       pipeline.begin();
 
       pipeline.getDocumentDatabase();
-
-      while (!queue.isEmpty() || !extractionFinished.get()) {
-        try {
-
-          final OExtractedItem content = queue.poll();
-          if (content != null)
-            pipeline.execute(content);
-
-        } catch (OException e) {
-
-          throw e;
-        }
+      OExtractedItem content;
+      while (!(content = queue.take()).finished) {
+          pipeline.execute(content);
       }
+      //RE-ADD END FLAG FOR OTHER THREADS
+      queue.put(content);
       return Boolean.TRUE;
     }
   }
@@ -624,12 +614,10 @@ public class OETLProcessor {
   private class OETLExtractorWorker implements Callable<Boolean> {
     private final BlockingQueue<OExtractedItem> queue;
     private final AtomicLong                    counter;
-    private final AtomicBoolean                 extractionFinished;
 
-    public OETLExtractorWorker(BlockingQueue<OExtractedItem> queue, AtomicLong counter, AtomicBoolean extractionFinished) {
+    public OETLExtractorWorker(BlockingQueue<OExtractedItem> queue, AtomicLong counter) {
       this.queue = queue;
       this.counter = counter;
-      this.extractionFinished = extractionFinished;
     }
 
     @Override
@@ -643,8 +631,7 @@ public class OETLProcessor {
         queue.put(current);
         counter.incrementAndGet();
       }
-
-      extractionFinished.set(true);
+      queue.put(new OExtractedItem(true));
       return Boolean.TRUE;
     }
   }
