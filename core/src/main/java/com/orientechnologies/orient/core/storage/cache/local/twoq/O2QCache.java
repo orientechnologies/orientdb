@@ -26,6 +26,7 @@ import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.types.OModifiableBoolean;
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedException;
 import com.orientechnologies.orient.core.exception.OReadCacheException;
@@ -780,6 +781,29 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
    */
   private void restoreQueue(OWriteCache writeCache, LRUList queue, DataInputStream dataInputStream, boolean loadPages)
       throws IOException {
+    if (loadPages) {
+      restoreQueueWithPageLoad(writeCache, queue, dataInputStream);
+    } else {
+      restoreQueueWithoutPageLoad(writeCache, queue, dataInputStream);
+    }
+  }
+
+  /**
+   * Restores queues state if it is NOT needed to load cache page from disk to cache.
+   * <p>
+   * Following format is used to store queue state:
+   * <p>
+   * <ol>
+   * <li>File id or -1 if end of queue is reached (int)</li>
+   * <li>Page index (long), is absent if end of the queue is reached</li>
+   * </ol>
+   *
+   * @param dataInputStream Stream of file which contains state of the cache.
+   * @param queue           Queue, state of which should be restored.
+   * @param writeCache      Write cache is used to load data from disk if needed.
+   */
+  private void restoreQueueWithoutPageLoad(OWriteCache writeCache, LRUList queue, DataInputStream dataInputStream)
+      throws IOException {
     //used only for statistics, and there is passed merely as stub
     final OModifiableBoolean cacheHit = new OModifiableBoolean();
 
@@ -788,21 +812,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
       final long pageIndex = dataInputStream.readLong();
       try {
         final long fileId = writeCache.externalFileId(internalFileId);
-
-        final OCacheEntry cacheEntry;
-        if (loadPages) {
-          if (!writeCache.isOpen(fileId))
-            writeCache.openFile(fileId);
-
-          final OCachePointer[] pointers = writeCache.load(fileId, pageIndex, 1, false, cacheHit);
-          if (pointers.length == 0)
-            continue;
-
-          final OCachePointer cachePointer = pointers[0];
-          cacheEntry = new OCacheEntry(fileId, pageIndex, cachePointer, false);
-        } else {
-          cacheEntry = new OCacheEntry(fileId, pageIndex, null, false);
-        }
+        final OCacheEntry cacheEntry = new OCacheEntry(fileId, pageIndex, null, false);
 
         Set<Long> pages = filePages.get(fileId);
         if (pages == null) {
@@ -819,6 +829,83 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
       } finally {
         internalFileId = dataInputStream.readInt();
       }
+    }
+  }
+
+  /**
+   * Restores queues state if it is needed to load cache page from disk to cache.
+   * <p>
+   * Following format is used to store queue state:
+   * <p>
+   * <ol>
+   * <li>File id or -1 if end of queue is reached (int)</li>
+   * <li>Page index (long), is absent if end of the queue is reached</li>
+   * </ol>
+   *
+   * @param dataInputStream Stream of file which contains state of the cache.
+   * @param queue           Queue, state of which should be restored.
+   * @param writeCache      Write cache is used to load data from disk if needed.
+   */
+  private void restoreQueueWithPageLoad(OWriteCache writeCache, LRUList queue, DataInputStream dataInputStream) throws IOException {
+    //used only for statistics, and there is passed merely as stub
+    final OModifiableBoolean cacheHit = new OModifiableBoolean();
+
+    //first step, we will create two tree maps to sort data by position in file and load them with maximum speed and
+    //then to put data into the queue to restore position of entries in LRU list.
+
+    final TreeMap<PageKey, OPair<Long, OCacheEntry>> filePositionMap = new TreeMap<PageKey, OPair<Long, OCacheEntry>>();
+    final TreeMap<Long, OCacheEntry> queuePositionMap = new TreeMap<Long, OCacheEntry>();
+
+    long position = 0;
+    int internalFileId = dataInputStream.readInt();
+    while (internalFileId >= 0) {
+      final long pageIndex = dataInputStream.readLong();
+      try {
+        final long fileId = writeCache.externalFileId(internalFileId);
+        final OCacheEntry entry = new OCacheEntry(fileId, pageIndex, null, false);
+        filePositionMap.put(new PageKey(fileId, pageIndex), new OPair<Long, OCacheEntry>(position, entry));
+        queuePositionMap.put(position, entry);
+
+        position++;
+      } finally {
+        internalFileId = dataInputStream.readInt();
+      }
+    }
+
+    //second step: load pages sorted by position in file
+    for (final Map.Entry<PageKey, OPair<Long, OCacheEntry>> entry : filePositionMap.entrySet()) {
+      final PageKey pageKey = entry.getKey();
+      final OPair<Long, OCacheEntry> pair = entry.getValue();
+
+      if (!writeCache.isOpen(pageKey.fileId))
+        writeCache.openFile(pageKey.fileId);
+
+      final OCachePointer[] pointers = writeCache.load(pageKey.fileId, pageKey.pageIndex, 1, false, cacheHit);
+
+      if (pointers.length == 0) {
+        queuePositionMap.remove(pair.key);
+        continue;
+      }
+
+      final OCacheEntry cacheEntry = pair.value;
+      cacheEntry.setCachePointer(pointers[0]);
+    }
+
+    //third step: add pages according to their order in LRU queue
+    for (final OCacheEntry cacheEntry : queuePositionMap.values()) {
+      final long fileId = cacheEntry.getFileId();
+      Set<Long> pages = filePages.get(fileId);
+      if (pages == null) {
+        pages = new HashSet<Long>();
+
+        Set<Long> op = filePages.putIfAbsent(fileId, pages);
+        if (op != null) {
+          pages = op;
+        }
+      }
+
+      queue.putToMRU(cacheEntry);
+      pages.add(cacheEntry.getPageIndex());
     }
   }
 
@@ -1490,7 +1577,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
     }
   }
 
-  private static final class PageKey {
+  private static final class PageKey implements Comparable<PageKey> {
     private final long fileId;
     private final long pageIndex;
 
@@ -1514,6 +1601,21 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
         return false;
 
       return true;
+    }
+
+    @Override
+    public int compareTo(PageKey other) {
+      if (fileId > other.fileId)
+        return 1;
+      if (fileId < other.fileId)
+        return -1;
+
+      if (pageIndex > other.pageIndex)
+        return 1;
+      if (pageIndex < other.pageIndex)
+        return -1;
+
+      return 0;
     }
 
     @Override
