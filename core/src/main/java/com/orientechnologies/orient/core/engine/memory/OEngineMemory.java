@@ -52,4 +52,8 @@ public class OEngineMemory extends OEngineAbstract {
   public boolean isShared() {
     return true;
   }
+
+  @Override
+  public void startup() {
+  }
 }

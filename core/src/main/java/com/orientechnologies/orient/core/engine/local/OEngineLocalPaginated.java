@@ -38,9 +38,13 @@ import java.util.Map;
 public class OEngineLocalPaginated extends OEngineAbstract {
   public static final String NAME = "plocal";
 
-  private final O2QCache readCache;
+  private volatile O2QCache readCache;
 
   public OEngineLocalPaginated() {
+  }
+
+  @Override
+  public void startup() {
     readCache = new O2QCache(calculateReadCacheMaxMemory(OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024),
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, true,
         OGlobalConfiguration.DISK_CACHE_PINNED_PAGES.getValueAsInteger());

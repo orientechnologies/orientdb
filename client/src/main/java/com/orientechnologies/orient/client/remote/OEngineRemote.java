@@ -31,17 +31,15 @@ import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
  * Remote engine implementation.
- * 
+ *
  * @author Luca Garulli
  */
 public class OEngineRemote extends OEngineAbstract {
-  public static final String                         NAME           = "remote";
+  public static final    String                      NAME           = "remote";
   protected static final Map<String, OStorageRemote> sharedStorages = new HashMap<String, OStorageRemote>();
-  protected final ORemoteConnectionManager           connectionManager;
+  protected volatile ORemoteConnectionManager connectionManager;
 
   public OEngineRemote() {
-    connectionManager = new ORemoteConnectionManager(OGlobalConfiguration.CLIENT_CHANNEL_MAX_POOL.getValueAsInteger(),
-        OGlobalConfiguration.NETWORK_LOCK_TIMEOUT.getValueAsLong());
   }
 
   public OStorage createStorage(final String iURL, final Map<String, String> iConfiguration) {
@@ -64,6 +62,12 @@ public class OEngineRemote extends OEngineAbstract {
 
   @Override
   public void removeStorage(final OStorage iStorage) {
+  }
+
+  @Override
+  public void startup() {
+    connectionManager = new ORemoteConnectionManager(OGlobalConfiguration.CLIENT_CHANNEL_MAX_POOL.getValueAsInteger(),
+        OGlobalConfiguration.NETWORK_LOCK_TIMEOUT.getValueAsLong());
   }
 
   @Override
