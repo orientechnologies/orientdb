@@ -403,6 +403,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   }
 
   public ODatabaseImport importDatabase() {
+    boolean preValidation = database.isValidationEnabled();
     try {
       listener.onMessage("\nStarted import of database '" + database.getURL() + "' from " + fileName + "...");
 
@@ -475,6 +476,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
       throw new ODatabaseExportException("Error on importing database '" + database.getName() + "' from file: " + fileName, e);
     } finally {
+      database.setValidationEnabled(preValidation);
       close();
     }
 

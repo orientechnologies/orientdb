@@ -1034,14 +1034,14 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    * {@inheritDoc}
    */
   public boolean isValidationEnabled() {
-    return !getStatus().equals(STATUS.IMPORTING) && storage.getConfiguration().isValidationEnabled();
+    return (Boolean) get(ATTRIBUTES.VALIDATION);
   }
 
   /**
    * {@inheritDoc}
    */
   public <DB extends ODatabaseDocument> DB setValidationEnabled(final boolean iEnabled) {
-    storage.getConfiguration().setValidation(iEnabled);
+    set(ATTRIBUTES.VALIDATION, iEnabled);
     return (DB) this;
   }
 
@@ -1327,7 +1327,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       return storage.getConfiguration().getConflictStrategy();
 
     case VALIDATION:
-      return isValidationEnabled();
+      return storage.getConfiguration().isValidationEnabled();
     }
 
     return null;
@@ -1448,7 +1448,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       break;
 
     case VALIDATION:
-      setValidationEnabled(Boolean.parseBoolean(stringValue));
+      storage.getConfiguration().setValidation(Boolean.parseBoolean(stringValue));
+      storage.getConfiguration().update();
       break;
 
     default:
