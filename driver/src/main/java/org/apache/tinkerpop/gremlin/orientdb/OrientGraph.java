@@ -316,9 +316,7 @@ public final class OrientGraph implements Graph {
         try {
             database.getRecordMetadata(id);
         } catch (IllegalArgumentException e) {
-            // bummer, the API force me to break the chain =((
-            // https://github.com/apache/incubator-tinkerpop/commit/34ec9e7f60f15b5dbfa684a8e96668d9bbcb6752#commitcomment-14235497
-            throw Graph.Exceptions.elementNotFound(Edge.class, id);
+            throw Graph.Exceptions.elementNotFound(Edge.class, id, e);
         }
         return id;
     }
