@@ -67,7 +67,7 @@ public final class OrientGraphFactory {
         final OrientGraph g;
         final Configuration config = getConfiguration(create, open, transactional);
         if (pool != null) {
-            g = new OrientGraph(pool, config, this::PoolRecreate);
+            g = new OrientGraph(pool, config, this::recreatePool);
         } else {
             g = new OrientGraph(getDatabase(create, open), config, user, password);
         }
@@ -156,7 +156,7 @@ public final class OrientGraphFactory {
     /**
      * Recreates the pool using setupPool, while closing the old one.
      */
-    private OPartitionedDatabasePool PoolRecreate() {
+    public OPartitionedDatabasePool recreatePool() {
         int maxSize = 1;
         if (pool != null)
             maxSize = pool.getMaxSize();

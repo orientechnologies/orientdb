@@ -17,6 +17,7 @@ import static org.junit.Assert.assertTrue;
 import java.util.Iterator;
 import java.util.Map;
 
+import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import org.apache.tinkerpop.gremlin.structure.Direction;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Graph;
@@ -151,6 +152,20 @@ public class OrientGraphTest {
     @Test
     public void testPooledTransactionalGraph() throws Exception {
         Graph graph = graphFactory().setupPool(5).getTx();
+        performBasicTests(graph);
+        graph.close();
+    }
+
+    @Test
+    public void testRecreatePool() throws Exception {
+        OrientGraphFactory localGraphFactory = graphFactory().setupPool(5);
+        OPartitionedDatabasePool oldPool = localGraphFactory.pool();
+        localGraphFactory.recreatePool();
+        OPartitionedDatabasePool newPool = localGraphFactory.pool();
+
+        Assert.assertNotEquals(oldPool, newPool);
+
+        Graph graph = localGraphFactory.getTx();
         performBasicTests(graph);
         graph.close();
     }
