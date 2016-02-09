@@ -35,7 +35,8 @@ import java.util.*;
  */
 public class ODistributedConfiguration {
   public static final String       NEW_NODE_TAG         = "<NEW_NODE>";
-  private static final Set<String> DEFAULT_CLUSTER_NAME = Collections.singleton("*");
+  public static final String       ALL_WILDCARD         = "*";
+  private static final Set<String> DEFAULT_CLUSTER_NAME = Collections.singleton(ALL_WILDCARD);
   private ODocument                configuration;
 
   public enum ROLES {
@@ -319,7 +320,12 @@ public class ODistributedConfiguration {
           return p;
       }
 
-      // NO MASTER FOUND: RETURN THE FIRST CLUSTER NAME
+      final String masterServer = getMasterServer(ALL_WILDCARD);
+      if (iLocalNode.equals(masterServer))
+        // DEFAULT IS OK: RETURN THE FIRST CLUSTER NAME
+        return iClusterNames.iterator().next();
+
+      // NO MASTER FOUND
       return null;
     }
   }
@@ -471,7 +477,7 @@ public class ODistributedConfiguration {
         // DEFAULT: MASTER
         return ROLES.MASTER;
 
-      final String role = servers.field("*");
+      final String role = servers.field(ALL_WILDCARD);
       if (role == null)
         // DEFAULT: MASTER
         return ROLES.MASTER;
@@ -493,7 +499,7 @@ public class ODistributedConfiguration {
       String role = servers.field(iServerName);
       if (role == null) {
         // DEFAULT: MASTER
-        role = servers.field("*");
+        role = servers.field(ALL_WILDCARD);
         if (role == null)
           // DEFAULT: MASTER
           return ROLES.MASTER;
@@ -520,12 +526,12 @@ public class ODistributedConfiguration {
         throw new OConfigurationException("Cannot find 'clusters' in distributed database configuration");
 
       if (iClusterName == null)
-        iClusterName = "*";
+        iClusterName = ALL_WILDCARD;
 
       final ODocument cfg;
       if (!clusters.containsField(iClusterName))
         // NO CLUSTER IN CFG: GET THE DEFAULT ONE
-        cfg = clusters.field("*");
+        cfg = clusters.field(ALL_WILDCARD);
       else
         // GET THE CLUSTER CFG
         cfg = clusters.field(iClusterName);
@@ -687,9 +693,9 @@ public class ODistributedConfiguration {
   }
 
   protected List<String> initClusterServers(final ODocument cluster) {
-    final ODocument any = getClusterConfiguration("*");
+    final ODocument any = getClusterConfiguration(ALL_WILDCARD);
 
-    // COPY THE SERVER LIST FROM "*"
+    // COPY THE SERVER LIST FROM ALL_WILDCARD
     final List<String> anyServers = any.field("servers");
     final List<String> servers = new ArrayList<String>(anyServers);
     cluster.field("servers", servers);
