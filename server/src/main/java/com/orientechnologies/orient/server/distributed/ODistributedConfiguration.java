@@ -35,7 +35,8 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
  */
 public class ODistributedConfiguration {
   public static final String       NEW_NODE_TAG         = "<NEW_NODE>";
-  private static final Set<String> DEFAULT_CLUSTER_NAME = Collections.singleton("*");
+  public static final String       ALL_WILDCARD         = "*";
+  private static final Set<String> DEFAULT_CLUSTER_NAME = Collections.singleton(ALL_WILDCARD);
   private ODocument                configuration;
 
   public enum ROLES {
@@ -312,14 +313,30 @@ public class ODistributedConfiguration {
       if (iClusterNames == null || iClusterNames.isEmpty())
         iClusterNames = DEFAULT_CLUSTER_NAME;
 
+      final List<String> candidates = new ArrayList<String>(5);
+
       for (String p : iClusterNames) {
-        final String leaderServer = getLeaderServer(p);
-        if (iLocalNode.equals(leaderServer))
-          // FOUND: JUST USE THIS
-          return p;
+        final String masterServer = getLeaderServer(p);
+        if (iLocalNode.equals(masterServer)) {
+          if (p.endsWith(iLocalNode.toLowerCase()))
+            // BEST CANDIDATE: NODE SUFFIX
+            return p;
+
+          // COLLECT AS CANDIDATE
+          candidates.add(p);
+        }
       }
 
-      // NO MASTER FOUND: RETURN THE FIRST CLUSTER NAME
+      if (!candidates.isEmpty())
+        // RETURN THE FIRST ONE
+        return candidates.get(0);
+
+      final String masterServer = getLeaderServer(ALL_WILDCARD);
+      if (iLocalNode.equals(masterServer))
+        // DEFAULT IS OK: RETURN THE FIRST CLUSTER NAME
+        return iClusterNames.iterator().next();
+
+      // NO MASTER FOUND
       return null;
     }
   }

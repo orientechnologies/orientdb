@@ -19,6 +19,15 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
+import java.io.*;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+
 import com.hazelcast.config.FileSystemXmlConfig;
 import com.hazelcast.config.QueueConfig;
 import com.hazelcast.core.*;
@@ -62,30 +71,8 @@ import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.sql.OCommandExecutorSQLSyncCluster;
-import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
-import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
-import com.orientechnologies.orient.server.distributed.task.OCopyDatabaseChunkTask;
-import com.orientechnologies.orient.server.distributed.task.ODistributedDatabaseDeltaSyncException;
-import com.orientechnologies.orient.server.distributed.task.ORestartNodeTask;
-import com.orientechnologies.orient.server.distributed.task.OSyncDatabaseDeltaTask;
-import com.orientechnologies.orient.server.distributed.task.OSyncDatabaseTask;
+import com.orientechnologies.orient.server.distributed.task.*;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
-
-import java.io.DataInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.Serializable;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
 
 /**
  * Hazelcast implementation for clustering.
@@ -1467,6 +1454,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     final OSchema schema = ((ODatabaseInternal<?>) iDatabase).getDatabaseOwner().getMetadata().getSchema();
 
     boolean distribCfgDirty = false;
+    for (Object cl : iDatabase.getClusterNames())
+      if (assignLocalClusters(iDatabase, cfg, (String) cl))
+        distribCfgDirty = true;
+
     for (final OClass c : schema.getClasses())
       if (installLocalClusterPerClass(iDatabase, cfg, c))
         distribCfgDirty = true;
@@ -1923,6 +1914,22 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       } catch (InterruptedException e) {
       }
     }
+  }
+
+  private synchronized boolean assignLocalClusters(final ODatabaseInternal iDatabase, final ODistributedConfiguration cfg,
+      final String iClusterName) {
+    if (iClusterName.endsWith("_" + nodeName)) {
+      final String bestCluster = cfg.getLeaderServer(iClusterName);
+      if (bestCluster == null) {
+        // ASSIGN IT TO THE LOCAL NODE
+        ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE,
+            "change mastership of cluster '%s' (id=%d) to local node '%s'", iClusterName,
+            iDatabase.getClusterIdByName(iClusterName), nodeName);
+        cfg.setMasterServer(iClusterName, nodeName);
+        return true;
+      }
+    }
+    return false;
   }
 
   private synchronized boolean installLocalClusterPerClass(final ODatabaseInternal iDatabase, final ODistributedConfiguration cfg,
