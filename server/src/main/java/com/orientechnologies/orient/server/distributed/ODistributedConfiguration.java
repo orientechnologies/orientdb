@@ -313,12 +313,23 @@ public class ODistributedConfiguration {
       if (iClusterNames == null || iClusterNames.isEmpty())
         iClusterNames = DEFAULT_CLUSTER_NAME;
 
+      final List<String> candidates = new ArrayList<String>(5);
+
       for (String p : iClusterNames) {
         final String masterServer = getMasterServer(p);
-        if (iLocalNode.equals(masterServer))
-          // FOUND: JUST USE THIS
-          return p;
+        if (iLocalNode.equals(masterServer)) {
+          if (p.endsWith(iLocalNode.toLowerCase()))
+            // BEST CANDIDATE: NODE SUFFIX
+            return p;
+
+          // COLLECT AS CANDIDATE
+          candidates.add(p);
+        }
       }
+
+      if (!candidates.isEmpty())
+        // RETURN THE FIRST ONE
+        return candidates.get(0);
 
       final String masterServer = getMasterServer(ALL_WILDCARD);
       if (iLocalNode.equals(masterServer))
