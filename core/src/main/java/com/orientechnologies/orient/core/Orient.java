@@ -76,7 +76,9 @@ public class Orient extends OListenerManger<OOrientListener> {
   private final Set<WeakHashSetValueHolder<OOrientShutdownListener>> weakShutdownListeners         = Collections
       .newSetFromMap(new ConcurrentHashMap<WeakHashSetValueHolder<OOrientShutdownListener>, Boolean>());
 
-  private final PriorityQueue<OShutdownHandler> shutdownHandlers = new PriorityQueue<OShutdownHandler>(
+
+
+  private final PriorityQueue<OShutdownHandler> shutdownHandlers = new PriorityQueue<OShutdownHandler>(11,
       new Comparator<OShutdownHandler>() {
         @Override
         public int compare(OShutdownHandler handlerOne, OShutdownHandler handlerTwo) {
