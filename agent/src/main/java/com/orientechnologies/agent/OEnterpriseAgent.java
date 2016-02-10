@@ -29,6 +29,7 @@ import com.orientechnologies.common.profiler.OProfilerStub;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
+import com.orientechnologies.orient.core.engine.OEngine;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -202,6 +203,9 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
   public void onLocalNodeConfigurationRequest(ODocument iConfiguration) {
 
     OProfiler profiler = Orient.instance().getProfiler();
+
+    OEngine plocal = Orient.instance().getEngine("plocal");
+
 
     if (profiler instanceof OEnterpriseProfiler) {
       iConfiguration.field("cpu", ((OEnterpriseProfiler) profiler).cpuUsage());
