@@ -23,10 +23,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -103,7 +100,8 @@ public class LocalPaginatedStorageCreateCrashRestoreIT {
       futures.add(executorService.submit(new DataPropagationTask(baseDocumentTx, testDocumentTx)));
     }
 
-    Thread.sleep(3000);
+    System.out.println("Wait for 5 minutes");
+    TimeUnit.MINUTES.sleep(5);
 
     long lastTs = System.currentTimeMillis();
 

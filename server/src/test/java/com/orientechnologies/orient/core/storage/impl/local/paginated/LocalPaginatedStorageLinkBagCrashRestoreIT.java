@@ -86,7 +86,7 @@ public class LocalPaginatedStorageLinkBagCrashRestoreIT {
 
     List<Future<Void>> futures = new ArrayList<Future<Void>>();
     futures.add(executorService.submit(new DocumentAdder()));
-    Thread.sleep(1000);
+    TimeUnit.SECONDS.sleep(1);
 
     for (int i = 0; i < 5; i++)
       futures.add(executorService.submit(new RidAdder()));
@@ -94,7 +94,8 @@ public class LocalPaginatedStorageLinkBagCrashRestoreIT {
     for (int i = 0; i < 5; i++)
       futures.add(executorService.submit(new RidDeleter()));
 
-    Thread.sleep(3000);
+    System.out.println("Wait for 5 minutes");
+    TimeUnit.MINUTES.sleep(5);
     long lastTs = System.currentTimeMillis();
 
     ODatabaseDocumentTx test_db = poolFactory.get(URL_TEST, "admin", "admin").acquire();

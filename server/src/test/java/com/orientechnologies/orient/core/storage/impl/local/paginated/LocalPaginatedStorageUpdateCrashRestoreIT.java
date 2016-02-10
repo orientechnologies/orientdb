@@ -23,10 +23,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -113,7 +110,8 @@ public class LocalPaginatedStorageUpdateCrashRestoreIT {
       futures.add(executorService.submit(new DataUpdateTask(baseDocumentTx, testDocumentTx)));
     }
 
-    Thread.sleep(30000);
+    System.out.println("Wait for 5 minutes");
+    TimeUnit.MINUTES.sleep(5);
 
     long lastTs = System.currentTimeMillis();
     System.out.println("Wait for process to destroy");
