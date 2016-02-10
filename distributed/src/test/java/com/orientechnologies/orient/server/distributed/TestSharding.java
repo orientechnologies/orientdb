@@ -58,7 +58,6 @@ public class TestSharding extends AbstractServerClusterTest {
   protected void executeTest() throws Exception {
     try {
       OrientGraphFactory localFactory = new OrientGraphFactory("plocal:target/server0/databases/" + getDatabaseName());
-      OrientGraphNoTx graphNoTx = localFactory.getNoTx();
 
       final OrientVertex product;
       final OrientVertex fishing;
