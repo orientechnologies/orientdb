@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.server.distributed;
 
-import junit.framework.Assert;
-
+import org.junit.Assert;
 import org.junit.Test;
 
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -59,7 +58,6 @@ public class TestSharding extends AbstractServerClusterTest {
   protected void executeTest() throws Exception {
     try {
       OrientGraphFactory localFactory = new OrientGraphFactory("plocal:target/server0/databases/" + getDatabaseName());
-      OrientGraphNoTx graphNoTx = localFactory.getNoTx();
 
       final OrientVertex product;
       final OrientVertex fishing;

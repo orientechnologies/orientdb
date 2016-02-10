@@ -19,15 +19,6 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
-import java.io.*;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
-
 import com.hazelcast.config.FileSystemXmlConfig;
 import com.hazelcast.config.QueueConfig;
 import com.hazelcast.core.*;
@@ -73,6 +64,15 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIR
 import com.orientechnologies.orient.server.distributed.sql.OCommandExecutorSQLSyncCluster;
 import com.orientechnologies.orient.server.distributed.task.*;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
+
+import java.io.*;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Hazelcast implementation for clustering.
@@ -1722,7 +1722,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
   /**
    * Deleted records are written in output stream first, then created/updated records. All records are sorted by record id.
-   *
+   * <p>
    * Each record in output stream is written using following format:
    * <ol>
    * <li>Record's cluster id - 4 bytes</li>
@@ -1745,7 +1745,16 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         public Object call() throws Exception {
           db.activateOnCurrentThread();
 
-          long total = 0;
+          long totalRecords = 0;
+          long totalCreated = 0;
+          long totalUpdated = 0;
+          long totalDeleted = 0;
+          long totalHoles = 0;
+
+          ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE,
+              "Started import of delta for database '" + db.getName() + "'");
+
+          long lastLap = System.currentTimeMillis();
 
           // final GZIPInputStream gzipInput = new GZIPInputStream(in);
           try {
@@ -1762,16 +1771,18 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
                 final ORecordId rid = new ORecordId(clusterId, clusterPos);
 
-                total++;
+                totalRecords++;
 
                 final ORecord loadedRecord = rid.getRecord();
 
                 if (deleted) {
-                  OLogManager.instance().info(this, "DELTA <- deleting " + rid);
+                  ODistributedServerLog.debug(this, nodeName, null, DIRECTION.NONE, "DELTA <- deleting " + rid);
 
                   if (loadedRecord != null)
                     // DELETE IT
                     db.delete(rid);
+
+                  totalDeleted++;
 
                 } else {
                   final int recordVersion = input.readInt();
@@ -1784,8 +1795,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
                   if (loadedRecord == null) {
                     // CREATE
-                    OLogManager.instance().info(this, "DELTA <- creating rid=%s type=%d size=%d v=%d", rid, recordType, recordSize,
-                        recordVersion);
+                    ODistributedServerLog.debug(this, nodeName, null, DIRECTION.NONE,
+                        "DELTA <- creating rid=%s type=%d size=%d v=%d", rid, recordType, recordSize, recordVersion);
 
                     do {
                       newRecord = Orient.instance().getRecordFactoryManager().newInstance((byte) recordType);
@@ -1797,16 +1808,20 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
                       if (newRecord.getIdentity().getClusterPosition() < clusterPos) {
                         // DELETE THE RECORD TO CREATE A HOLE
-                        OLogManager.instance().info(this, "DELTA <- creating hole rid=%s", newRecord.getIdentity());
+                        ODistributedServerLog.debug(this, nodeName, null, DIRECTION.NONE, "DELTA <- creating hole rid=%s",
+                            newRecord.getIdentity());
                         newRecord.delete();
+                        totalHoles++;
                       }
 
                     } while (newRecord.getIdentity().getClusterPosition() < clusterPos);
 
+                    totalCreated++;
+
                   } else {
                     // UPDATE
-                    OLogManager.instance().info(this, "DELTA <- updating rid=%s type=%d size=%d v=%d", rid, recordType, recordSize,
-                        recordVersion);
+                    ODistributedServerLog.debug(this, nodeName, null, DIRECTION.NONE,
+                        "DELTA <- updating rid=%s type=%d size=%d v=%d", rid, recordType, recordSize, recordVersion);
 
                     newRecord = Orient.instance().getRecordFactoryManager().newInstance((byte) recordType);
                     ORecordInternal.fill(newRecord, rid, ORecordVersionHelper.setRollbackMode(recordVersion), recordContent, true);
@@ -1821,12 +1836,23 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
                     // SAVE THE UPDATE RECORD
                     newRecord.save();
+
+                    totalUpdated++;
                   }
 
                   if (!newRecord.getIdentity().equals(rid))
                     throw new ODistributedDatabaseDeltaSyncException(
                         "Error on synchronization of records, rids are different: saved " + newRecord.getIdentity()
                             + ", but it should be " + rid);
+                }
+
+                final long now = System.currentTimeMillis();
+                if (now - lastLap > 1000) {
+                  // DUMP STATS EVERY SECOND
+                  ODistributedServerLog.info(this, nodeName, null, DIRECTION.IN,
+                      "- %d total entries: %d created, %d updated, %d deleted, %d holes...",
+                      db.getName(), totalRecords, totalCreated, totalUpdated, totalDeleted, totalHoles);
+                  lastLap = now;
                 }
               }
 
@@ -1845,8 +1871,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
             // gzipInput.close();
           }
 
-          ODistributedServerLog.info(this, nodeName, null, DIRECTION.IN, "Installed database delta for '%s', %d total records",
-              db.getName(), total);
+          ODistributedServerLog.info(this, nodeName, null, DIRECTION.IN,
+              "Installed database delta for '%s'. %d total entries: %d created, %d updated, %d deleted, %d holes", db.getName(),
+              totalRecords, totalCreated, totalUpdated, totalDeleted, totalHoles);
 
           return null;
         }
