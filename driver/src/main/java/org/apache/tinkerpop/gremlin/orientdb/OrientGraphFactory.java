@@ -16,7 +16,7 @@ public final class OrientGraphFactory {
     protected final String user;
     protected final String password;
     protected Configuration configuration;
-    protected volatile OPartitionedDatabasePool pool;
+    protected volatile OPartitionedReCreatableDatabasePool pool;
     protected boolean labelAsClassName;
 
     public OrientGraphFactory(String url) {
@@ -67,7 +67,7 @@ public final class OrientGraphFactory {
         final OrientGraph g;
         final Configuration config = getConfiguration(create, open, transactional);
         if (pool != null) {
-            g = new OrientGraph(pool, config, this::recreatePool);
+            g = new OrientGraph(pool, config);
         } else {
             g = new OrientGraph(getDatabase(create, open), config, user, password);
         }
@@ -149,24 +149,11 @@ public final class OrientGraphFactory {
      * instance of database connection each time.
      */
     public OrientGraphFactory setupPool(final int max) {
-        pool = new OPartitionedDatabasePool(url, user, password, max).setAutoCreate(true);
+        pool = new OPartitionedReCreatableDatabasePool(url, user, password, max, true);
         return this;
     }
 
-    /**
-     * Recreates the pool using setupPool, while closing the old one.
-     */
-    public OPartitionedDatabasePool recreatePool() {
-        int maxSize = 1;
-        if (pool != null)
-            maxSize = pool.getMaxSize();
-
-        close();
-        setupPool(maxSize);
-        return pool;
-    }
-
-    public OPartitionedDatabasePool pool() {
+    public OPartitionedReCreatableDatabasePool pool() {
         return pool;
     }
 

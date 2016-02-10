@@ -157,20 +157,6 @@ public class OrientGraphTest {
     }
 
     @Test
-    public void testRecreatePool() throws Exception {
-        OrientGraphFactory localGraphFactory = graphFactory().setupPool(5);
-        OPartitionedDatabasePool oldPool = localGraphFactory.pool();
-        localGraphFactory.recreatePool();
-        OPartitionedDatabasePool newPool = localGraphFactory.pool();
-
-        Assert.assertNotEquals(oldPool, newPool);
-
-        Graph graph = localGraphFactory.getTx();
-        performBasicTests(graph);
-        graph.close();
-    }
-
-    @Test
     public void testUnprefixedLabelGraph() throws Exception {
         Graph graph = graphFactory().setLabelAsClassName(true).getNoTx();
         assertEquals(true, graph.configuration().getBoolean(OrientGraph.CONFIG_LABEL_AS_CLASSNAME));

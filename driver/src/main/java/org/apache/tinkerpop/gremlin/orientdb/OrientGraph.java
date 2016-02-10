@@ -83,8 +83,7 @@ public final class OrientGraph implements Graph {
     protected ODatabaseDocumentTx database;
     protected final Features features;
     protected final Configuration configuration;
-    protected final Supplier<OPartitionedDatabasePool> poolSupplier;
-    protected OPartitionedDatabasePool pool;
+    protected final OPartitionedReCreatableDatabasePool pool;
     protected final String user;
     protected final String password;
 
@@ -98,7 +97,6 @@ public final class OrientGraph implements Graph {
 
     public OrientGraph(final ODatabaseDocumentTx database, final Configuration configuration, final String user, final String password) {
         this.pool = null;
-        this.poolSupplier = null;
         this.user = user;
         this.password = password;
         this.database = database;
@@ -111,9 +109,8 @@ public final class OrientGraph implements Graph {
         }
     }
 
-    public OrientGraph(final OPartitionedDatabasePool pool, final Configuration configuration, final Supplier<OPartitionedDatabasePool> poolSupplier) {
+    public OrientGraph(final OPartitionedReCreatableDatabasePool pool, final Configuration configuration) {
         this.pool = pool;
-        this.poolSupplier = poolSupplier;
         this.database = pool.acquire();
         this.user = "";
         this.password = "";
@@ -150,8 +147,8 @@ public final class OrientGraph implements Graph {
             this.connectionFailed = false;
 
             try {
-                if (this.poolSupplier != null) {
-                    this.pool = this.poolSupplier.get();
+                if (this.pool != null) {
+                    this.pool.reCreatePool();
                     this.database = this.pool.acquire();
                 } else {
                     ODatabaseDocumentTx replaceDb = new ODatabaseDocumentTx(this.database.getURL(), this.database.isKeepStorageOpen());
