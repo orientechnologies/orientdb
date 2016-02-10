@@ -88,10 +88,20 @@ public class OSecurityManager {
     return MessageDigest.isEqual(digest(iInput1), iInput2);
   }
 
-  public boolean check(final String iInput1, final String iInput2) {
-    final String s = iInput2.startsWith(ALGORITHM_PREFIX) ? iInput2.substring(ALGORITHM_PREFIX.length()) : iInput2;
+  public boolean check(String iInput1, String iInput2) {
+    if (iInput2.startsWith(ALGORITHM_PREFIX)) {
+      // iInput2 is a representation of the expected hash of iInput1
 
-    return digest2String(iInput1, false).equals(s);
+      // create the equivalent string representation of the hashed input 1
+      iInput1 = digest2String(iInput1);
+
+      // strip the algorithm prefix, getting the expected hash
+      iInput2 = iInput2.substring(ALGORITHM_PREFIX.length());
+
+      // fall through to the code that just checks two strings against each other
+    }
+
+    return MessageDigest.isEqual(digest(iInput1), digest(iInput2));
   }
 
   public String digest2String(final String iInput) {
@@ -100,7 +110,7 @@ public class OSecurityManager {
 
   /**
    * Hashes the input string.
-   * 
+   *
    * @param iInput
    *          String to hash
    * @param iIncludeAlgorithm

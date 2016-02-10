@@ -516,7 +516,7 @@ public class OServer {
 
   /**
    * Authenticate a server user.
-   * 
+   *
    * @param iUserName
    *          Username to authenticate
    * @param iPassword
@@ -526,7 +526,17 @@ public class OServer {
   public boolean authenticate(final String iUserName, final String iPassword, final String iResourceToCheck) {
     final OServerUserConfiguration user = getUser(iUserName);
 
-    if (user != null && user.password.equals(iPassword)) {
+    if (user == null) {
+      return false;
+    }
+
+    // Avoid timing attacks:
+    // instead of comparing raw strings, hash the strings and compare their digests
+    // with a constant-time comparison function.
+    final byte[] providedDigest = OSecurityManager.instance().digestSHA256(iPassword);
+    final byte[] expectedDigest = OSecurityManager.instance().digestSHA256(user.password);
+
+    if (OSecurityManager.instance().check(providedDigest, expectedDigest)) {
       if (user.resources.equals("*"))
         // ACCESS TO ALL
         return true;
