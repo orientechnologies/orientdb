@@ -362,7 +362,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     do {
       Set<ORecord> newRecord = dirtyManager.getNewRecords();
       Set<ORecord> updatedRecord = dirtyManager.getUpdateRecords();
-      dirtyManager.clearForSave();
+      dirtyManager.clear();
       if (newRecord != null) {
         for (ORecord rec : newRecord) {
           if (rec instanceof ODocument)

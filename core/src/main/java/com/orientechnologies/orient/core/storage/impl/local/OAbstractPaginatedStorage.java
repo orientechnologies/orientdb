@@ -1311,7 +1311,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           Map<ORecordOperation, OPhysicalPosition> positions = new IdentityHashMap<ORecordOperation, OPhysicalPosition>();
           for (ORecordOperation txEntry : entries) {
             ORecord rec = txEntry.getRecord();
-            if (txEntry.type == ORecordOperation.CREATED && rec.getIdentity().isNew() && rec.isDirty() ) {
+            if (rec.getIdentity().isNew() && rec.isDirty() ) {
               ORecordId rid = (ORecordId) rec.getIdentity().copy();
               ORecordId oldRID = rid.copy();
               int clusterId = rid.clusterId;
@@ -1326,24 +1326,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               final OCluster cluster = getClusterById(clusterId);
               OPhysicalPosition ppos = cluster.allocatePosition(ORecordInternal.getRecordType(rec));
               positions.put(txEntry,ppos);
-              rid.clusterId = clusterId;
+              rid.clusterId = cluster.getId();;
               rid.clusterPosition = ppos.clusterPosition;
               clientTx.updateIdentityAfterCommit(oldRID, rid);
             }
           }
-          for (ORecordOperation txEntry : entries) {
-            if (txEntry.getRecord().isDirty()) {
-              if (txEntry.type == ORecordOperation.CREATED) {
-                OPhysicalPosition ppos = positions.get(txEntry);
-                commitEntry(clientTx, txEntry, ppos);
-              }
-            }
-          }
 
           for (ORecordOperation txEntry : entries) {
-            if (txEntry.type != ORecordOperation.CREATED)
-              // COMMIT ALL THE SINGLE ENTRIES ONE BY ONE
-              commitEntry(clientTx, txEntry, null);
+              commitEntry(clientTx, txEntry, positions.get(txEntry));
           }
 
           if (callback != null)
@@ -2123,55 +2113,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   }
 
-  public void saveNew(ORecordOperation txEntry, OTransaction tx) throws IOException {
-    LinkedList<ODocument> path = new LinkedList<ODocument>();
-    ORecord next = txEntry.getRecord();
-    ODirtyManager manager = ORecordInternal.getDirtyManager(next);
-    do {
-      if (next instanceof ODocument) {
-        ORecord nextToInspect = null;
-        List<OIdentifiable> toSave = manager.getPointed(next);
-        if (toSave == null) {
-          toSave = ORecordInternal.getDirtyManager(next).getPointed(next);
-        }
-        if (toSave != null) {
-          for (OIdentifiable oIdentifiable : toSave) {
-            if (oIdentifiable.getIdentity().isNew()) {
-              if (oIdentifiable instanceof ORecord) {
-                nextToInspect = (ORecord) oIdentifiable;
-                break;
-              } else {
-                nextToInspect = tx.getRecord(oIdentifiable.getIdentity());
-                if (nextToInspect.getIdentity().isNew())
-                  break;
-                else
-                  nextToInspect = null;
-              }
-
-            }
-          }
-        }
-        if (nextToInspect != null) {
-          if (path.contains(nextToInspect)) {
-            ORecordOperation toCommit = tx.getRecordEntry(nextToInspect.getIdentity());
-            commitEmptyEntry(tx, toCommit);
-          } else {
-            path.push((ODocument) next);
-            next = nextToInspect;
-          }
-        } else {
-          ORecordOperation toCommit = tx.getRecordEntry(next.getIdentity());
-          commitEntry(tx, toCommit, null);
-          next = path.pollFirst();
-        }
-
-      } else {
-        ORecordOperation toCommit = tx.getRecordEntry(next.getIdentity());
-        commitEntry(tx, toCommit, null);
-        next = path.pollFirst();
-      }
-    } while (next != null);
-  }
 
   public void rollback(final OTransaction clientTx) {
     checkOpeness();
@@ -3469,44 +3410,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return null;
   }
 
-  private void commitEmptyEntry(final OTransaction clientTx, final ORecordOperation txEntry) {
-    final ORecord rec = txEntry.getRecord();
-
-    ORecordId rid = (ORecordId) rec.getIdentity();
-
-    int clusterId = rid.clusterId;
-    if (rid.clusterId == ORID.CLUSTER_ID_INVALID && rec instanceof ODocument
-        && ODocumentInternal.getImmutableSchemaClass(((ODocument) rec)) != null) {
-      // TRY TO FIX CLUSTER ID TO THE DEFAULT CLUSTER ID DEFINED IN SCHEMA CLASS
-
-      final OClass schemaClass = ODocumentInternal.getImmutableSchemaClass(((ODocument) rec));
-      clusterId = schemaClass.getClusterForNewInstance((ODocument) rec);
-    }
-
-    final OCluster cluster = getClusterById(clusterId);
-
-    if (cluster.getName().equals(OMetadataDefault.CLUSTER_INDEX_NAME) || cluster.getName()
-        .equals(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME))
-      // AVOID TO COMMIT INDEX STUFF
-      return;
-
-    final ORecordId oldRID = rid.copy();
-
-    ORecordSerializer binary = ((ODatabaseDocumentInternal) clientTx.getDatabase()).getSerializer();
-    final byte[] stream = binary.writeClassOnly(rec);
-
-    rid = rid.copy();
-    rid.clusterId = cluster.getId();
-    final OPhysicalPosition ppos;
-
-    final byte recordType = ORecordInternal.getRecordType(rec);
-    ppos = doCreateRecord(rid, stream, rec.getVersion(), recordType, null, cluster, new OPhysicalPosition(recordType), null).getResult();
-
-    rid.clusterPosition = ppos.clusterPosition;
-    ORecordInternal.setVersion(rec, ppos.recordVersion);
-    clientTx.updateIdentityAfterCommit(oldRID, rid);
-  }
-
   private void commitEntry(final OTransaction clientTx, final ORecordOperation txEntry, OPhysicalPosition allocated) throws IOException {
 
     final ORecord rec = txEntry.getRecord();
@@ -3521,16 +3424,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     ORecordSerializationContext.pushContext();
     try {
-      int clusterId = rid.clusterId;
-      if (rid.clusterId == ORID.CLUSTER_ID_INVALID && rec instanceof ODocument
-          && ODocumentInternal.getImmutableSchemaClass(((ODocument) rec)) != null) {
-        // TRY TO FIX CLUSTER ID TO THE DEFAULT CLUSTER ID DEFINED IN SCHEMA CLASS
-
-        final OClass schemaClass = ODocumentInternal.getImmutableSchemaClass(((ODocument) rec));
-        clusterId = schemaClass.getClusterForNewInstance((ODocument) rec);
-      }
-
-      final OCluster cluster = getClusterById(clusterId);
+      final OCluster cluster = getClusterById(rid.clusterId);
 
       if (cluster.getName().equals(OMetadataDefault.CLUSTER_INDEX_NAME) || cluster.getName()
           .equals(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME))
@@ -3545,31 +3439,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         break;
 
       case ORecordOperation.CREATED: {
-        // CHECK 2 TIMES TO ASSURE THAT IT'S A CREATE OR AN UPDATE BASED ON RECURSIVE TO-STREAM METHOD
-        final ORecordId oldRID;
-        if (rid.isNew()) {
-          oldRID = rid.copy();
-        } else
-          oldRID = rid;
-
         final byte[] stream = rec.toStream();
-        if (stream == null) {
-          OLogManager.instance().warn(this, "Null serialization on committing new record %s in transaction", rid);
-          break;
-        }
-
         if (allocated != null) {
-          rid = rid.copy();
-          rid.clusterId = cluster.getId();
           final OPhysicalPosition ppos;
-
           final byte recordType = ORecordInternal.getRecordType(rec);
           ppos = doCreateRecord(rid, stream, rec.getVersion(), recordType, null, cluster, new OPhysicalPosition(recordType), allocated)
               .getResult();
 
-          rid.clusterPosition = ppos.clusterPosition;
           ORecordInternal.setVersion(rec, ppos.recordVersion);
-          clientTx.updateIdentityAfterCommit(oldRID, rid);
         } else {
           // USE -2 AS VESION TO AVOID INCREMENTING THE VERSION
           ORecordInternal.setVersion(rec,
@@ -3581,10 +3458,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       case ORecordOperation.UPDATED: {
         final byte[] stream = rec.toStream();
-        if (stream == null) {
-          OLogManager.instance().warn(this, "Null serialization on committing updated record %s in transaction", rid);
-          break;
-        }
 
         OStorageOperationResult<Integer> updateRes = doUpdateRecord(rid, ORecordInternal.isContentChanged(rec), stream,
             rec.getVersion(), ORecordInternal.getRecordType(rec), null, cluster);
