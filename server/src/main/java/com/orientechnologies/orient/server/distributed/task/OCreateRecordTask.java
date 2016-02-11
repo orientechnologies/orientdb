@@ -93,6 +93,10 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
     return record;
   }
 
+  public void resetRecord() {
+    record = null;
+  }
+
   @Override
   void setLockRecord(boolean lockRecord) {
   }

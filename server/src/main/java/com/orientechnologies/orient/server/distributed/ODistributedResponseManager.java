@@ -686,7 +686,7 @@ public class ODistributedResponseManager {
 
           if (fixTasks != null) {
             for (OAbstractRemoteTask fixTask : fixTasks) {
-              ODistributedServerLog.warn(this, dManager.getLocalNodeName(), r.getExecutorNodeName(), DIRECTION.NONE,
+              ODistributedServerLog.warn(this, dManager.getLocalNodeName(), r.getExecutorNodeName(), DIRECTION.OUT,
                   "sending fix message (%s) for response (%s) on request (%s) to be: %s", fixTask, r, request, goodResponse);
 
               dManager.sendRequest(request.getDatabaseName(), null, Collections.singleton(r.getExecutorNodeName()), fixTask,

@@ -253,16 +253,22 @@ public class ODistributedWorker extends Thread {
           responsePayload = manager.executeOnLocalNode(iRequest, database);
 
           if (responsePayload instanceof OModificationOperationProhibitedException) {
-            OLogManager.instance().info(this,
-                "Database is locked on current node (backup is running?) retrying to execute the operation (retry=%d)", retry);
             // RETRY
             try {
+              ODistributedServerLog.info(this, manager.getLocalNodeName(), iRequest.getSenderNodeName(), DIRECTION.OUT,
+                  "Database is frozen, waiting and retrying. Request %s (retry=%d)", iRequest, retry);
+
               Thread.sleep(1000);
             } catch (InterruptedException e) {
             }
-          } else
+          } else {
             // OPERATION EXECUTED (OK OR ERROR), NO RETRY NEEDED
+            if (retry > 1)
+              ODistributedServerLog.info(this, manager.getLocalNodeName(), iRequest.getSenderNodeName(), DIRECTION.OUT,
+                  "Request %s succeed after retry=%d", iRequest, retry);
+
             break;
+          }
 
         }
 
