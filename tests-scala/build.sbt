@@ -2,7 +2,7 @@ name := "orientdb-tp3-test"
 organization := "com.michaelpollmeier"
 version := "1.0.0-SNAPSHOT"
 scalaVersion := "2.11.7"
-val orientDBVersion = "2.1.6"
+val orientDBVersion = "2.1.10"
 
 fork := true // if OrientDb version > 2.1-RC5
 
@@ -17,7 +17,7 @@ libraryDependencies ++= Seq(
   "com.orientechnologies" % "orientdb-graphdb" % orientDBVersion,
   "com.orientechnologies" % "orientdb-client" % orientDBVersion,
   "com.michaelpollmeier" %% "gremlin-scala" % "3.1.0-incubating",
-  "com.michaelpollmeier" % "orientdb-gremlin" % "3.1.0-incubating.1-SNAPSHOT"
+  "com.michaelpollmeier" % "orientdb-gremlin" % "3.1.1-incubating.0-SNAPSHOT"
 )
 
 testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oD")
