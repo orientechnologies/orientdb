@@ -44,12 +44,12 @@ import static org.testng.Assert.*;
 
 @Test
 public class OCommandExecutorSQLSelectTest {
-  private static String DB_STORAGE             = "memory";
-  private static String DB_NAME                = "OCommandExecutorSQLSelectTest";
+  private static String DB_STORAGE = "memory";
+  private static String DB_NAME    = "OCommandExecutorSQLSelectTest";
 
-  private int           ORDER_SKIP_LIMIT_ITEMS = 100 * 1000;
+  private int ORDER_SKIP_LIMIT_ITEMS = 100 * 1000;
 
-  ODatabaseDocumentTx   db;
+  ODatabaseDocumentTx db;
 
   @BeforeClass
   public void beforeClass() throws Exception {
