@@ -69,7 +69,7 @@ public class OServerPluginManager implements OService {
   }
 
   public void startup() {
-    boolean hotReload = true;
+    boolean hotReload = false;
     boolean dynamic = true;
     boolean loadAtStartup = true;
     directory = OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}", ".") + "/plugins/";
@@ -256,11 +256,9 @@ public class OServerPluginManager implements OService {
   }
 
   @SuppressWarnings("unchecked")
-  protected OServerPlugin startPluginClass(final URLClassLoader pluginClassLoader, final String iClassName,
-      final OServerParameterConfiguration[] params) throws Exception {
+  protected OServerPlugin startPluginClass(final String iClassName, final OServerParameterConfiguration[] params) throws Exception {
 
-    final Class<? extends OServerPlugin> classToLoad = (Class<? extends OServerPlugin>) Class.forName(iClassName, true,
-        pluginClassLoader);
+    final Class<? extends OServerPlugin> classToLoad = (Class<? extends OServerPlugin>) Class.forName(iClassName);
     final OServerPlugin instance = classToLoad.newInstance();
 
     // CONFIG()
@@ -316,8 +314,8 @@ public class OServerPluginManager implements OService {
       if (r == null) {
         OLogManager.instance().error(this, "Plugin definition file ('plugin.json') is not found for dynamic plugin '%s'",
             pluginName);
-        throw new IllegalArgumentException(String.format(
-            "Plugin definition file ('plugin.json') is not found for dynamic plugin '%s'", pluginName));
+        throw new IllegalArgumentException(
+            String.format("Plugin definition file ('plugin.json') is not found for dynamic plugin '%s'", pluginName));
       }
 
       final InputStream pluginConfigFile = r.openStream();
@@ -325,8 +323,8 @@ public class OServerPluginManager implements OService {
       try {
         if (pluginConfigFile == null || pluginConfigFile.available() == 0) {
           OLogManager.instance().error(this, "Error on loading 'plugin.json' file for dynamic plugin '%s'", pluginName);
-          throw new IllegalArgumentException(String.format("Error on loading 'plugin.json' file for dynamic plugin '%s'",
-              pluginName));
+          throw new IllegalArgumentException(
+              String.format("Error on loading 'plugin.json' file for dynamic plugin '%s'", pluginName));
         }
 
         final ODocument properties = new ODocument().fromJSON(pluginConfigFile);
@@ -349,7 +347,7 @@ public class OServerPluginManager implements OService {
           }
           final OServerParameterConfiguration[] pluginParams = params.toArray(new OServerParameterConfiguration[params.size()]);
 
-          pluginInstance = startPluginClass(pluginClassLoader, pluginClass, pluginParams);
+          pluginInstance = startPluginClass(pluginClass, pluginParams);
         } else {
           pluginInstance = null;
           parameters = null;
