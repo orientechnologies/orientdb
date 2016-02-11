@@ -5,15 +5,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.Random;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OStoragePerformanceStatistic;
@@ -282,6 +274,41 @@ public class LocalPaginatedClusterTest {
       Assert.assertEquals(rawBuffer.recordType, 2);
     }
   }
+
+  public void testAllocatePositionMap() throws IOException {
+
+    OPhysicalPosition position = paginatedCluster.allocatePosition((byte) 'd');
+    Assert.assertTrue(position.clusterPosition >= 0);
+    ORawBuffer rec = paginatedCluster.readRecord(position.clusterPosition);
+    Assert.assertNull(rec);
+    paginatedCluster.createRecord(new byte[20], 1, (byte) 'd', position);
+    rec = paginatedCluster.readRecord(position.clusterPosition);
+    Assert.assertNotNull(rec);
+  }
+
+
+  public void testManyAllocatePositionMap() throws IOException {
+    final int records = 10000;
+
+    List<OPhysicalPosition> positions = new ArrayList<OPhysicalPosition>();
+    for (int i = 0; i < records; i++) {
+      OPhysicalPosition position = paginatedCluster.allocatePosition((byte) 'd');
+      Assert.assertTrue(position.clusterPosition >= 0);
+      ORawBuffer rec = paginatedCluster.readRecord(position.clusterPosition);
+      Assert.assertNull(rec);
+      positions.add(position);
+    }
+
+    for(int i = 0 ; i < records; i++) {
+      OPhysicalPosition position = positions.get(i);
+      paginatedCluster.createRecord(new byte[20], 1, (byte) 'd', position);
+      ORawBuffer rec = paginatedCluster.readRecord(position.clusterPosition);
+      Assert.assertNotNull(rec);
+    }
+  }
+
+
+
 
   public void testRemoveHalfSmallRecords() throws IOException {
     final int records = 10000;

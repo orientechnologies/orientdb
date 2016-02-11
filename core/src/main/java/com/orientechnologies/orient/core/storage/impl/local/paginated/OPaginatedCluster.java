@@ -416,15 +416,9 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   @Override
   public OPhysicalPosition allocatePosition(byte recordType) throws IOException {
     try {
-      OAtomicOperation atomicOperation = startAtomicOperation(true);
       acquireExclusiveLock();
       try {
-        OPhysicalPosition physicalPosition = createPhysicalPosition(recordType, clusterPositionMap.allocate(), -1);
-        endAtomicOperation(false, null);
-        return physicalPosition;
-      } catch (Exception e) {
-        endAtomicOperation(true, e);
-        throw OException.wrapException(new OPaginatedClusterException("Error during record creation", this), e);
+        return createPhysicalPosition(recordType, clusterPositionMap.allocate(), -1);
       } finally {
         releaseExclusiveLock();
       }
