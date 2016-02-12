@@ -84,7 +84,7 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
     OSequence seq = getSequence(iName);
 
     seq.getDocument().delete();
-    sequences.remove(iName);
+    sequences.remove(iName.toUpperCase());
   }
 
   @Override

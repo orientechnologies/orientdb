@@ -230,6 +230,19 @@ public class ODocument extends ORecordAbstract
   protected static void validateField(ODocument iRecord, OImmutableProperty p) throws OValidationException {
     final Object fieldValue;
     ODocumentEntry entry = iRecord._fields.get(p.getName());
+
+    String autoGenerateSequenceName = p.getAutoGenerate();
+    if (autoGenerateSequenceName != null) {
+      OSequence sequence = iRecord.getDatabase().getMetadata().getSequenceLibrary().getSequence(autoGenerateSequenceName);
+      long nextValue = sequence.next();
+      iRecord.field(p.getName(), nextValue);
+
+      // reload entry
+      if (entry == null) {
+        entry = iRecord._fields.get(p.getName());
+      }
+    }
+
     if (entry != null && entry.exist()) {
       // AVOID CONVERSIONS: FASTER!
       fieldValue = entry.value;
@@ -2596,19 +2609,11 @@ public class ODocument extends ORecordAbstract
           field(prop.getName(), entry.value, prop.getType());
         }
       } else {
-        String sequenceName = prop.getAutoGenerate();
-        if (sequenceName != null && prop.getType().isIntegral()) {
-          OSequence sequence = this.getDatabase().getMetadata().getSequenceLibrary().getSequence(sequenceName);
-          long nextValue = sequence.next();
-          Object fieldValue = OType.convert(nextValue, prop.getType().getDefaultJavaType());
+        String defValue = prop.getDefaultValue();
+        if (defValue != null && defValue.length() > 0 && !containsField(prop.getName())) {
+          Object curFieldValue = OSQLHelper.parseDefaultValue(this, defValue);
+          Object fieldValue = ODocumentHelper.convertField(this, prop.getName(), prop.getType(), null, curFieldValue);
           rawField(prop.getName(), fieldValue, prop.getType());
-        } else {
-          String defValue = prop.getDefaultValue();
-          if (defValue != null && defValue.length() > 0 && !containsField(prop.getName())) {
-            Object curFieldValue = OSQLHelper.parseDefaultValue(this, defValue);
-            Object fieldValue = ODocumentHelper.convertField(this, prop.getName(), prop.getType(), null, curFieldValue);
-            rawField(prop.getName(), fieldValue, prop.getType());
-          }
         }
       }
     }
