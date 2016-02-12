@@ -163,13 +163,15 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
       int k = 0;
       for (Object o : keys) {
-        doc.add(OLuceneIndexType.createField("k" + k, val, Field.Store.NO, Field.Index.ANALYZED));
+        doc.add(OLuceneIndexType.createField("k" + k, o, Field.Store.NO, Field.Index.ANALYZED));
+        k++;
       }
     } else if (key instanceof Collection) {
       Collection<Object> keys = (Collection<Object>) key;
       int k = 0;
       for (Object o : keys) {
         doc.add(OLuceneIndexType.createField("k" + k, o, Field.Store.NO, Field.Index.ANALYZED));
+        k++;
       }
     } else {
       val = key;
