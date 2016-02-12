@@ -296,7 +296,7 @@ public class OMetadataDefault implements OMetadataInternal {
   }
 
   @Override
-  public OSequenceLibrary getSequenceLibrary() {
+  public OSequenceLibraryProxy getSequenceLibrary() {
     return sequenceLibrary;
   }
 

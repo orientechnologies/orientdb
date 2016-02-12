@@ -699,6 +699,10 @@ public enum OType {
     return iValue.toString();
   }
 
+  public boolean isIntegral() {
+    return this == SHORT || this == INTEGER || this == LONG;
+  }
+
   public boolean isMultiValue() {
     return this == EMBEDDEDLIST || this == EMBEDDEDMAP || this == EMBEDDEDSET || this == LINKLIST || this == LINKMAP
         || this == LINKSET || this == LINKBAG;

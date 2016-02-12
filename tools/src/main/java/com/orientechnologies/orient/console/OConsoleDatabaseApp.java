@@ -1415,23 +1415,24 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     if (cls.properties().size() > 0) {
       message("\n\nPROPERTIES");
       message(
-          "\n-------------------------------+-------------+-------------------------------+-----------+----------+----------+-----------+-----------+----------+");
+          "\n-------------------------------+-------------+-------------------------------+-----------+----------+----------+-----------+-----------+--------------+----------+");
       message(
-          "\n NAME                          | TYPE        | LINKED TYPE/CLASS             | MANDATORY | READONLY | NOT NULL |    MIN    |    MAX    | COLLATE  |");
+          "\n NAME                          | TYPE        | LINKED TYPE/CLASS             | MANDATORY | READONLY | NOT NULL |    MIN    |    MAX    | AUTOGENERATE | COLLATE  |");
       message(
-          "\n-------------------------------+-------------+-------------------------------+-----------+----------+----------+-----------+-----------+----------+");
+          "\n-------------------------------+-------------+-------------------------------+-----------+----------+----------+-----------+-----------+--------------+----------+");
 
       for (final OProperty p : cls.properties()) {
         try {
-          message("\n %-30s| %-12s| %-30s| %-10s| %-9s| %-9s| %-10s| %-10s| %-9s|", p.getName(), p.getType(),
+          message("\n %-30s| %-12s| %-30s| %-10s| %-9s| %-9s| %-10s| %-10s| %-13s| %-9s|", p.getName(), p.getType(),
               p.getLinkedClass() != null ? p.getLinkedClass() : p.getLinkedType(), p.isMandatory(), p.isReadonly(), p.isNotNull(),
               p.getMin() != null ? p.getMin() : "", p.getMax() != null ? p.getMax() : "",
+              p.getAutoGenerate() != null ? p.getAutoGenerate() : "",
               p.getCollate() != null ? p.getCollate().getName() : "");
         } catch (Exception ignored) {
         }
       }
       message(
-          "\n-------------------------------+-------------+-------------------------------+-----------+----------+----------+-----------+-----------+----------+");
+          "\n-------------------------------+-------------+-------------------------------+-----------+----------+----------+-----------+-----------+--------------+----------+");
     }
 
     final Set<OIndex<?>> indexes = cls.getClassIndexes();
@@ -1505,6 +1506,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     message("\nNot null.............: " + prop.isNotNull());
     message("\nRead only............: " + prop.isReadonly());
     message("\nDefault value........: " + prop.getDefaultValue());
+    message("\nAuto generate........: " + prop.getAutoGenerate());
     message("\nMinimum value........: " + prop.getMin());
     message("\nMaximum value........: " + prop.getMax());
     message("\nREGEXP...............: " + prop.getRegexp());
@@ -2523,6 +2525,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   protected void updateDatabaseInfo() {
     currentDatabase.getStorage().reload();
     currentDatabase.getMetadata().getSchema().reload();
+    currentDatabase.getMetadata().getSequenceLibrary().reload();
     currentDatabase.getMetadata().getIndexManager().reload();
   }
 

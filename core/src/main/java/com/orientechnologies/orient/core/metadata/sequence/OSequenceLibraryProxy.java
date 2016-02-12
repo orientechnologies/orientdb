@@ -36,6 +36,10 @@ public class OSequenceLibraryProxy extends OProxedResource<OSequenceLibrary> imp
         return delegate.createSequence(iName, sequenceType, params);
     }
 
+    public void reload() {
+        delegate.load();
+    }
+
     @Override
     public void dropSequence(String iName) {
         delegate.dropSequence(iName);

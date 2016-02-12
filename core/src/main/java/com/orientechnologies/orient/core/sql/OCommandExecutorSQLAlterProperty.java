@@ -100,7 +100,7 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstrac
             + Arrays.toString(OProperty.ATTRIBUTES.values()), parserText, oldPos);
       }
 
-      value = parserText.substring(pos + 1).trim();
+      value = (parserText.length() > pos) ? parserText.substring(pos + 1).trim() : "";
 
       if (value.length() == 0)
         throw new OCommandSQLParsingException("Missing property value to change for attribute '" + attribute + "'. Use "

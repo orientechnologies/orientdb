@@ -53,6 +53,7 @@ import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OIdentity;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
+import com.orientechnologies.orient.core.metadata.sequence.OSequence;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -2613,11 +2614,19 @@ public class ODocument extends ORecordAbstract
           field(prop.getName(), entry.value, prop.getType());
         }
       } else {
-        String defValue = prop.getDefaultValue();
-        if (defValue != null && defValue.length() > 0 && !containsField(prop.getName())) {
-          Object curFieldValue = OSQLHelper.parseDefaultValue(this, defValue);
-          Object fieldValue = ODocumentHelper.convertField(this, prop.getName(), prop.getType(), null, curFieldValue);
+        String sequenceName = prop.getAutoGenerate();
+        if (sequenceName != null && prop.getType().isIntegral()) {
+          OSequence sequence = this.getDatabase().getMetadata().getSequenceLibrary().getSequence(sequenceName);
+          long nextValue = sequence.next();
+          Object fieldValue = OType.convert(nextValue, prop.getType().getDefaultJavaType());
           rawField(prop.getName(), fieldValue, prop.getType());
+        } else {
+          String defValue = prop.getDefaultValue();
+          if (defValue != null && defValue.length() > 0 && !containsField(prop.getName())) {
+            Object curFieldValue = OSQLHelper.parseDefaultValue(this, defValue);
+            Object fieldValue = ODocumentHelper.convertField(this, prop.getName(), prop.getType(), null, curFieldValue);
+            rawField(prop.getName(), fieldValue, prop.getType());
+          }
         }
       }
     }

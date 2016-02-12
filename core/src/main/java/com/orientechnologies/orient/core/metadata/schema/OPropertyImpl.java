@@ -51,6 +51,8 @@ import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.index.OPropertyIndexDefinition;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
+import com.orientechnologies.orient.core.metadata.sequence.OSequence;
+import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibrary;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
@@ -82,6 +84,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   private String              min;
   private String              max;
   private String              defaultValue;
+  private String              autoGenerate;
   private String              regexp;
   private boolean             readonly;
   private Map<String, String> customFields;
@@ -690,6 +693,48 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     return this;
   }
 
+  @Override
+  public String getAutoGenerate() {
+    acquireSchemaReadLock();
+    try {
+      return autoGenerate;
+    } finally {
+      releaseSchemaReadLock();
+    }
+  }
+
+  @Override
+  public OProperty setAutoGenerate(String autoGenerate) {
+    autoGenerate = autoGenerate != null ? autoGenerate.toLowerCase() : null;
+    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
+
+    acquireSchemaWriteLock();
+    try {
+      final ODatabaseDocumentInternal database = getDatabase();
+      final OStorage storage = database.getStorage();
+
+      if (storage instanceof OStorageProxy) {
+        final String cmd = String.format("alter property %s autoGenerate %s", getFullName(), autoGenerate);
+        database.command(new OCommandSQL(cmd)).execute();
+      } else if (isDistributedCommand()) {
+        final String cmd = String.format("alter property %s autoGenerate %s", getFullName(), autoGenerate);
+        final OCommandSQL commandSQL = new OCommandSQL(cmd);
+
+        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
+
+        database.command(commandSQL).execute();
+
+        setAutoGenerateInternal(autoGenerate);
+      } else {
+        setAutoGenerateInternal(autoGenerate);
+      }
+    } finally {
+      releaseSchemaWriteLock();
+    }
+
+    return this;
+  }
+
   public String getRegexp() {
     acquireSchemaReadLock();
     try {
@@ -840,6 +885,8 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
       return getMax();
     case DEFAULT:
       return getDefaultValue();
+    case AUTOGENERATE:
+      return getAutoGenerate();
     case NAME:
       return getName();
     case NOTNULL:
@@ -884,6 +931,9 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
       break;
     case DEFAULT:
       setDefaultValue(stringValue);
+      break;
+    case AUTOGENERATE:
+      setAutoGenerate(stringValue);
       break;
     case NAME:
       setName(stringValue);
@@ -1083,6 +1133,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     readonly = document.containsField("readonly") ? (Boolean) document.field("readonly") : false;
     notNull = document.containsField("notNull") ? (Boolean) document.field("notNull") : false;
     defaultValue = (String) (document.containsField("defaultValue") ? document.field("defaultValue") : null);
+    autoGenerate = document.containsField("autoGenerate") ? (String)document.field("autoGenerate") : null;
     if (document.containsField("collate"))
       collate = OSQLEngine.getCollate((String) document.field("collate"));
 
@@ -1126,6 +1177,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
       document.field("readonly", readonly);
       document.field("notNull", notNull);
       document.field("defaultValue", defaultValue);
+      document.field("autoGenerate", autoGenerate);
 
       document.field("min", min);
       document.field("max", max);
@@ -1234,6 +1286,43 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 
       checkForDateFormat(min);
       this.min = min;
+    } finally {
+      releaseSchemaWriteLock();
+    }
+  }
+
+  private void setAutoGenerateInternal(String autoGenerate) {
+    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
+
+    acquireSchemaWriteLock();
+    try {
+      checkEmbedded();
+
+      OSequenceLibrary sequenceLibrary = this.getDatabase().getMetadata().getSequenceLibrary();
+      OSequence sequence;
+      if ("true".equals(autoGenerate)) {
+        String seqNamePattern = "seq_" + this.getOwnerClass().getName();
+        String seqName = seqNamePattern;
+        int idx = 1;
+        while (sequenceLibrary.getSequence(seqName) != null) {
+          seqName = seqNamePattern + String.format("%02d", idx);
+          ++idx;
+        }
+        sequence = sequenceLibrary.createSequence(seqName, OSequence.SEQUENCE_TYPE.CACHED,
+          (new OSequence.CreateParams()).setDefaults()
+        );
+      } else if (autoGenerate == null) {
+        sequence = null;
+      } else {
+        // get sequence
+        sequence = sequenceLibrary.getSequence(autoGenerate);
+        if (sequence == null) {
+          throw new IllegalArgumentException("Invalid auto generate value, missing sequence with name '" +
+            autoGenerate + "'");
+        }
+      }
+
+      this.autoGenerate = sequence != null ? sequence.getName() : null;
     } finally {
       releaseSchemaWriteLock();
     }

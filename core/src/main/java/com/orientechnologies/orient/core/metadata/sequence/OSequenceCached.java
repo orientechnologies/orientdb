@@ -49,11 +49,12 @@ public class OSequenceCached extends OSequence {
       @Override
       public Long call() throws Exception {
         int increment = getIncrement();
-        if (cacheStart + increment >= cacheEnd) {
+        long nextValue = cacheStart + increment;
+        if (nextValue >= cacheEnd) {
           allocateCache(getCacheSize());
         }
 
-        ++cacheStart;
+        cacheStart = nextValue;
         return cacheStart;
       }
     });

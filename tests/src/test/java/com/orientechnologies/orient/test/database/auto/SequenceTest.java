@@ -58,6 +58,11 @@ public class SequenceTest extends DocumentDBBaseTest {
       Assert.assertEquals(seq.current(), 4L);
       Assert.assertEquals(seq.reset(), 0L);
     }
+
+    // test the next CACHE_SIZE * 2 documents
+    for (int j = 0; j < CACHE_SIZE*2; ++j) {
+      Assert.assertEquals(seq.next(), j + 1);
+    }
   }
 
   @Test

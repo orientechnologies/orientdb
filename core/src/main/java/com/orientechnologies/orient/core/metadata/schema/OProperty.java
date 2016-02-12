@@ -34,7 +34,7 @@ import java.util.Set;
 public interface OProperty extends Comparable<OProperty> {
 
   public static enum ATTRIBUTES {
-    LINKEDTYPE, LINKEDCLASS, MIN, MAX, MANDATORY, NAME, NOTNULL, REGEXP, TYPE, CUSTOM, READONLY, COLLATE, DEFAULT, DESCRIPTION
+    LINKEDTYPE, LINKEDCLASS, MIN, MAX, MANDATORY, NAME, NOTNULL, REGEXP, TYPE, CUSTOM, READONLY, COLLATE, DEFAULT, DESCRIPTION, AUTOGENERATE
   }
 
   public String getName();
@@ -141,6 +141,20 @@ public interface OProperty extends Comparable<OProperty> {
    * @return this property
    */
   public OProperty setDefaultValue(String defaultValue);
+
+  /**
+   * @see OProperty#getAutoGenerate()
+   * @param autoGenerate sequence name. Can be null
+   * @return this property
+   */
+  public OProperty setAutoGenerate(String autoGenerate);
+
+  /**
+   * Auto generate value; Sequence name
+   *
+   * @return sequence name (String), can be null
+   */
+  public String getAutoGenerate();
 
   /**
    * Creates an index on this property. Indexes speed up queries but slow down insert and update operations. For massive inserts we

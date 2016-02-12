@@ -9,7 +9,6 @@ import java.util.Set;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -26,7 +25,6 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
  */
 public class DefaultValuesTrivialTest {
   private static final int                      DOCUMENT_COUNT = 50;
-  private final OPartitionedDatabasePoolFactory poolFactory    = new OPartitionedDatabasePoolFactory();
 
   @Test
   public void test() throws Exception {

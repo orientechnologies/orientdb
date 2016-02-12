@@ -165,6 +165,17 @@ public class OPropertyAbstractDelegate implements OProperty {
   }
 
   @Override
+  public String getAutoGenerate() {
+    return delegate.getAutoGenerate();
+  }
+
+  @Override
+  public OProperty setAutoGenerate(String autoGenerate) {
+    delegate.setAutoGenerate(autoGenerate);
+    return this;
+  }
+
+  @Override
   public OIndex<?> createIndex(final OClass.INDEX_TYPE iType) {
     return delegate.createIndex(iType);
   }
