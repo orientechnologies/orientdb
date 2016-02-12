@@ -6,6 +6,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinaryV0;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -27,6 +29,37 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 public class DefaultValuesTrivialTest {
   private static final int                      DOCUMENT_COUNT = 50;
   private final OPartitionedDatabasePoolFactory poolFactory    = new OPartitionedDatabasePoolFactory();
+
+  @Test
+  public void testDeserialization() throws Exception {
+    final ODatabaseDocumentTx database = new ODatabaseDocumentTx("memory:defaultValues");
+    try {
+      database.create();
+
+      OSchema schema = database.getMetadata().getSchema();
+      OClass classPerson = schema.createClass("Person");
+
+      classPerson.createProperty("name", OType.STRING).setDefaultValue("Joe");
+      classPerson.createProperty("name2", OType.STRING).setDefaultValue("joey");
+
+      ODocument doc = new ODocument(classPerson);
+      doc.field("name", "Not Joe!");
+      doc.save();
+
+      ORecordSerializerBinaryV0 ser = new ORecordSerializerBinaryV0();
+      BytesContainer bytes = new BytesContainer();
+      ser.serialize(doc, bytes, false);
+
+      bytes.offset = 0;
+      ODocument doc2 = new ODocument();
+      ser.deserialize(doc2, bytes);
+
+      Assert.assertEquals((String)doc2.field("name2"), "joey");
+      Assert.assertEquals((String)doc2.field("name"), "Not Joe!");
+    } finally {
+      database.drop();
+    }
+  }
 
   @Test
   public void test() throws Exception {
@@ -120,6 +153,7 @@ public class DefaultValuesTrivialTest {
       
       {
 	      ODocument doc = new ODocument(classA);
+        doc.save();
 	      assertEquals("default name", doc.field("name"));
 	      assertNotNull(doc.field("date"));
 	      assertEquals(true, doc.field("active"));
@@ -127,10 +161,12 @@ public class DefaultValuesTrivialTest {
       
       {
 	      ODocument doc = new ODocument();
+        doc.save();
 	      assertNull(doc.field("name"));
 	      assertNull(doc.field("date"));
 	      assertNull(doc.field("active"));
 	      doc.setClassName(classA.getName());
+        doc.save();
 	      assertEquals("default name", doc.field("name"));
 	      assertNotNull(doc.field("date"));
 	      assertEquals(true, doc.field("active"));
@@ -138,10 +174,12 @@ public class DefaultValuesTrivialTest {
       
       {
 	      ODocument doc = new ODocument();
+        doc.save();
 	      assertNull(doc.field("name"));
 	      assertNull(doc.field("date"));
 	      assertNull(doc.field("active"));
 	      doc.setClassNameIfExists(classA.getName());
+        doc.save();
 	      assertEquals("default name", doc.field("name"));
 	      assertNotNull(doc.field("date"));
 	      assertEquals(true, doc.field("active"));

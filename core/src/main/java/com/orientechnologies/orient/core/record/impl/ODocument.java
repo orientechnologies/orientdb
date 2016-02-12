@@ -229,6 +229,16 @@ public class ODocument extends ORecordAbstract
   protected static void validateField(ODocument iRecord, OImmutableProperty p) throws OValidationException {
     final Object fieldValue;
     ODocumentEntry entry = iRecord._fields.get(p.getName());
+    if (entry == null || !entry.exist()) {
+      final String defaultValue = p.getDefaultValue();
+      if (defaultValue != null && defaultValue.length() > 0) {
+        Object defValueParsed = OSQLHelper.parseDefaultValue(iRecord, defaultValue);
+        iRecord.field(p.getName(), defValueParsed);
+        if (entry == null) {
+          entry = iRecord._fields.get(p.getName());
+        }
+      }
+    }
     if (entry != null && entry.exist()) {
       // AVOID CONVERSIONS: FASTER!
       fieldValue = entry.value;
@@ -2593,13 +2603,6 @@ public class ODocument extends ORecordAbstract
       if (entry != null && entry.exist()) {
         if (entry.type == null || entry.type != prop.getType()) {
           field(prop.getName(), entry.value, prop.getType());
-        }
-      } else {
-        String defValue = prop.getDefaultValue();
-        if (defValue != null && defValue.length() > 0 && !containsField(prop.getName())) {
-          Object curFieldValue = OSQLHelper.parseDefaultValue(this, defValue);
-          Object fieldValue = ODocumentHelper.convertField(this, prop.getName(), prop.getType(), null, curFieldValue);
-          rawField(prop.getName(), fieldValue, prop.getType());
         }
       }
     }
