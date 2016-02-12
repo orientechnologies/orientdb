@@ -167,9 +167,7 @@ public final class OrientGraph implements Graph {
             T result = toExecute.get();
             this.connectionFailed = false;
             return result;
-        } catch (Exception e) {
-            // we need to consume Exception to catch also exceptions of unexpected type
-            // https://github.com/orientechnologies/orientdb/issues/5678
+        } catch (OException e) {
             this.connectionFailed = true;
             OLogManager.instance().info(this, "Error during db request", e);
             throw e;
