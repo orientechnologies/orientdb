@@ -96,5 +96,5 @@ exec "$JAVA" $JAVA_OPTS $MAXHEAP $JAVA_OPTS_SCRIPT $ORIENTDB_SETTINGS $MAXDISKCA
     -Dorientdb.config.file="$CONFIG_FILE" \
     -Dorientdb.www.path="$WWW_PATH" \
     -Dorientdb.build.number="@BUILD@" \
-    -cp "$ORIENTDB_HOME/lib/orientdb-server-@VERSION@.jar:$ORIENTDB_HOME/lib/*" \
+    -cp "$ORIENTDB_HOME/lib/orientdb-server-@VERSION@.jar:$ORIENTDB_HOME/lib/*:$ORIENTDB_HOME/plugins/*" \
     $* com.orientechnologies.orient.server.OServerMain

@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.common.util.OCommonConst;
@@ -65,6 +66,7 @@ import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -821,31 +823,31 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   public OProperty createProperty(final String iPropertyName, final OType iType) {
-    return addProperty(iPropertyName, iType, null, null, true);
+    return addProperty(iPropertyName, iType, null, null, false);
   }
 
   public OProperty createProperty(final String iPropertyName, final OType iType, final OClass iLinkedClass) {
     if (iLinkedClass == null)
       throw new OSchemaException("Missing linked class");
 
-    return addProperty(iPropertyName, iType, null, iLinkedClass, true);
+    return addProperty(iPropertyName, iType, null, iLinkedClass, false);
   }
 
   public OProperty createProperty(final String iPropertyName, final OType iType, final OClass iLinkedClass,
-      boolean iChackExistingData) {
+      final boolean unsafe) {
     if (iLinkedClass == null)
       throw new OSchemaException("Missing linked class");
 
-    return addProperty(iPropertyName, iType, null, iLinkedClass, iChackExistingData);
+    return addProperty(iPropertyName, iType, null, iLinkedClass, unsafe);
   }
 
   public OProperty createProperty(final String iPropertyName, final OType iType, final OType iLinkedType) {
-    return addProperty(iPropertyName, iType, iLinkedType, null, true);
+    return addProperty(iPropertyName, iType, iLinkedType, null, false);
   }
 
   public OProperty createProperty(final String iPropertyName, final OType iType, final OType iLinkedType,
-      boolean iChackExistingData) {
-    return addProperty(iPropertyName, iType, iLinkedType, null, iChackExistingData);
+      final boolean unsafe) {
+    return addProperty(iPropertyName, iType, iLinkedType, null, unsafe);
   }
 
   @Override
@@ -1706,7 +1708,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   public OPropertyImpl addPropertyInternal(final String name, final OType type, final OType linkedType, final OClass linkedClass,
-      final boolean iCheckExistentRecords) {
+      final boolean unsafe) {
     if (name == null || name.length() == 0)
       throw new OSchemaException("Found property name null");
 
@@ -1714,7 +1716,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     if (wrongCharacter != null)
       throw new OSchemaException("Invalid property name '" + name + "'. Character '" + wrongCharacter + "' cannot be used");
 
-    if (iCheckExistentRecords)
+    if (!unsafe)
       checkPersistentPropertyType(getDatabase(), name, type);
 
     final String lowerName = name.toLowerCase();
@@ -1749,7 +1751,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       releaseSchemaWriteLock();
     }
 
-    if (prop != null && iCheckExistentRecords)
+    if (prop != null && !unsafe)
       fireDatabaseMigration(getDatabase(), name, type);
 
     return prop;
@@ -2136,8 +2138,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
               if (record.recordType == ODocument.RECORD_TYPE) {
                 final ORecordSerializerSchemaAware2CSV serializer = (ORecordSerializerSchemaAware2CSV) ORecordSerializerFactory
                     .instance().getFormat(ORecordSerializerSchemaAware2CSV.NAME);
-
-                if (serializer.getClassName(OBinaryProtocol.bytes2string(record.buffer)).equalsIgnoreCase(name)) {
+                String persName = new String(record.buffer,"UTF-8");
+                if (serializer.getClassName(persName).equalsIgnoreCase(name)) {
                   final ODocument document = new ODocument();
                   document.setLazyLoad(false);
                   document.fromStream(record.buffer);
@@ -2157,6 +2159,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       }
 
       renameCluster(oldName, this.name);
+    } catch (UnsupportedEncodingException e) {
+      throw OException.wrapException(new OSchemaException("Error reading schema"), e);
     } finally {
       releaseSchemaWriteLock();
     }
@@ -2388,7 +2392,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   private OProperty addProperty(final String propertyName, final OType type, final OType linkedType, final OClass linkedClass,
-      boolean iCheckExistentRecords) {
+      final boolean unsafe) {
     if (type == null)
       throw new OSchemaException("Property type not defined.");
 
@@ -2446,7 +2450,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
           cmd.append('`');
       }
 
-      if (!iCheckExistentRecords)
+      if (unsafe)
         cmd.append(" unsafe ");
 
       final OStorage storage = database.getStorage();
@@ -2462,9 +2466,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
         database.command(commandSQL).execute();
 
-        property = addPropertyInternal(propertyName, type, linkedType, linkedClass, iCheckExistentRecords);
+        property = addPropertyInternal(propertyName, type, linkedType, linkedClass, unsafe);
       } else
-        property = addPropertyInternal(propertyName, type, linkedType, linkedClass, iCheckExistentRecords);
+        property = addPropertyInternal(propertyName, type, linkedType, linkedClass, unsafe);
 
     } finally {
       releaseSchemaWriteLock();

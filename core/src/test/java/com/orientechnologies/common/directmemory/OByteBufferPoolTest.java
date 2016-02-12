@@ -8,8 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 
-@Test
-public class OByteBufferPoolTest {
+@Test public class OByteBufferPoolTest {
   public void testAcquireReleaseSinglePage() {
     OByteBufferPool pool = new OByteBufferPool(12);
     Assert.assertEquals(pool.getSize(), 0);
@@ -91,18 +90,13 @@ public class OByteBufferPoolTest {
 
               for (int i = 0; i < 2000; i++) {
                 buffers.add(pool.acquireDirect(false));
-                assertBufferOperations(pool);
               }
 
               for (int i = 0; i < 2000; i++) {
                 final ByteBuffer buffer = buffers.get(i);
-
-                buffer.position(8);
-                buffer.put((byte) 42);
-
-                pool.release(buffers.get(i));
-                assertBufferOperations(pool);
+                pool.release(buffer);
               }
+
             }
           } catch (Exception e) {
             e.printStackTrace();
@@ -111,39 +105,15 @@ public class OByteBufferPoolTest {
 
           return null;
         }
-
-        private void assertBufferOperations(OByteBufferPool pool) {
-          ByteBuffer buffer = pool.acquireDirect(true);
-          Assert.assertEquals(buffer.position(), 0);
-
-          buffer.position(8);
-          buffer.put((byte) 42);
-
-          pool.release(buffer);
-
-          buffer = pool.acquireDirect(false);
-          Assert.assertEquals(buffer.position(), 0);
-          Assert.assertEquals(buffer.get(8), 42);
-
-          pool.release(buffer);
-
-          buffer = pool.acquireDirect(true);
-          Assert.assertEquals(buffer.position(), 0);
-          Assert.assertEquals(buffer.get(8), 0);
-
-          buffer.position(8);
-          buffer.put((byte) 42);
-
-          pool.release(buffer);
-        }
       }));
-
-      latch.countDown();
-
-      for (Future<Void> future : futures) {
-        future.get();
-      }
     }
+
+    latch.countDown();
+
+    for (Future<Void> future : futures) {
+      future.get();
+    }
+
   }
 
   private void assertBufferOperations(OByteBufferPool pool, int initialSize) {

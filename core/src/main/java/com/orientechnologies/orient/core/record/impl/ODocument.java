@@ -32,12 +32,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.OQueryParsingException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.exception.OSchemaException;
-import com.orientechnologies.orient.core.exception.OValidationException;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.OEmptyMapEntryIterator;
@@ -69,12 +64,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 
-import java.io.ByteArrayOutputStream;
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+import java.io.*;
 import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.Map.Entry;
@@ -712,7 +702,11 @@ public class ODocument extends ORecordAbstract
   public void fromString(final String iValue) {
     _dirty = true;
     _contentChanged = true;
-    _source = OBinaryProtocol.string2bytes(iValue);
+    try {
+      _source = iValue.getBytes("UTF-8");
+    } catch (UnsupportedEncodingException e) {
+      throw OException.wrapException(new OSerializationException("Error reading content from string"), e);
+    }
 
     removeAllCollectionChangeListeners();
 
@@ -2311,18 +2305,6 @@ public class ODocument extends ORecordAbstract
         }
       }
     }
-  }
-
-  @Override
-  protected ODocument flatCopy() {
-    if (isDirty())
-      throw new IllegalStateException("Cannot execute a flat copy of a dirty record");
-
-    final ODocument cloned = new ODocument();
-
-    cloned.setOrdered(_ordered);
-    cloned.fill(_recordId, _recordVersion, _source, false);
-    return cloned;
   }
 
   protected byte[] toStream(final boolean iOnlyDelta) {

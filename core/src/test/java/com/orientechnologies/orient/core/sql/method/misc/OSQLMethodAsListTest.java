@@ -4,6 +4,8 @@ import static org.testng.Assert.assertEquals;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -48,7 +50,7 @@ public class OSQLMethodAsListTest {
   public void testCollection() {
     // The expected behavior is to return a list with all of the elements
     // of the collection in it.
-    HashSet<Object> aCollection = new HashSet<Object>();
+    Set<Object> aCollection = new LinkedHashSet<Object>();
     aCollection.add(1);
     aCollection.add("2");
     Object result = function.execute(null, null, null, aCollection, null);

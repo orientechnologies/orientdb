@@ -57,7 +57,7 @@ public class OAtomicOperation {
   private OWriteCache                  writeCache;
   private OStoragePerformanceStatistic storagePerformanceStatistic;
 
-  private final Map<String, OAtomicOperationMetadata<?>> metadata = new HashMap<String, OAtomicOperationMetadata<?>>();
+  private final Map<String, OAtomicOperationMetadata<?>> metadata = new LinkedHashMap<String, OAtomicOperationMetadata<?>>();
 
   public OAtomicOperation(OLogSequenceNumber startLSN, OOperationUnitId operationUnitId, OReadCache readCache,
       OWriteCache writeCache, OStoragePerformanceStatistic storagePerformanceStatistic, int storageId) {
@@ -497,7 +497,7 @@ public class OAtomicOperation {
   }
 
   private static class FilePageChanges {
-    private OWALChanges        changes = new OWALChangesTree();
+    private OWALChanges        changes = new OWALPageChangesPortion();
     private OLogSequenceNumber lsn     = null;
     private boolean            isNew   = false;
     private boolean            pinPage = false;

@@ -35,21 +35,29 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 @Test
 public class OCommandExecutorSQLSelectTest {
-  private static String DB_STORAGE             = "memory";
-  private static String DB_NAME                = "OCommandExecutorSQLSelectTest";
+  private static String DB_STORAGE = "memory";
+  private static String DB_NAME    = "OCommandExecutorSQLSelectTest";
 
-  private int           ORDER_SKIP_LIMIT_ITEMS = 100 * 1000;
+  private int ORDER_SKIP_LIMIT_ITEMS = 100 * 1000;
 
-  ODatabaseDocumentTx   db;
+  ODatabaseDocumentTx db;
 
   @BeforeClass
   public void beforeClass() throws Exception {
@@ -110,6 +118,9 @@ public class OCommandExecutorSQLSelectTest {
     db.command(new OCommandSQL("CREATE class unwindtest")).execute();
     db.command(new OCommandSQL("insert into unwindtest (name, coll) values ('foo', ['foo1', 'foo2'])")).execute();
     db.command(new OCommandSQL("insert into unwindtest (name, coll) values ('bar', ['bar1', 'bar2'])")).execute();
+
+    db.command(new OCommandSQL("CREATE class unwindtest2")).execute();
+    db.command(new OCommandSQL("insert into unwindtest2 (name, coll) values ('foo', [])")).execute();
 
     db.command(new OCommandSQL("CREATE class `edge`")).execute();
 
@@ -176,6 +187,31 @@ public class OCommandExecutorSQLSelectTest {
     initMatchesWithRegex(db);
     initDistinctLimit(db);
     initLinkListSequence(db);
+    initMaxLongNumber(db);
+    initFilterAndOrderByTest(db);
+  }
+
+  private void initFilterAndOrderByTest(ODatabaseDocumentTx db) {
+    db.command(new OCommandSQL("CREATE CLASS FilterAndOrderByTest")).execute();
+    db.command(new OCommandSQL("CREATE PROPERTY FilterAndOrderByTest.dc DATETIME")).execute();
+    db.command(new OCommandSQL("CREATE PROPERTY FilterAndOrderByTest.active BOOLEAN")).execute();
+    db.command(new OCommandSQL("CREATE INDEX FilterAndOrderByTest.active ON FilterAndOrderByTest (active) NOTUNIQUE")).execute();
+
+    db.command(new OCommandSQL("insert into FilterAndOrderByTest SET dc = '2010-01-05 12:00:00:000', active = true")).execute();
+    db.command(new OCommandSQL("insert into FilterAndOrderByTest SET dc = '2010-05-05 14:00:00:000', active = false")).execute();
+    db.command(new OCommandSQL("insert into FilterAndOrderByTest SET dc = '2009-05-05 16:00:00:000', active = true")).execute();
+    db.command(new OCommandSQL("insert into FilterAndOrderByTest SET dc = '2008-05-05 12:00:00:000', active = false")).execute();
+    db.command(new OCommandSQL("insert into FilterAndOrderByTest SET dc = '2014-05-05 14:00:00:000', active = false")).execute();
+    db.command(new OCommandSQL("insert into FilterAndOrderByTest SET dc = '2016-01-05 14:00:00:000', active = true")).execute();
+
+  }
+
+  private void initMaxLongNumber(ODatabaseDocumentTx db) {
+    db.command(new OCommandSQL("CREATE class MaxLongNumberTest")).execute();
+    db.command(new OCommandSQL("insert into MaxLongNumberTest set last = 1")).execute();
+    db.command(new OCommandSQL("insert into MaxLongNumberTest set last = null")).execute();
+    db.command(new OCommandSQL("insert into MaxLongNumberTest set last = 958769876987698")).execute();
+    db.command(new OCommandSQL("insert into MaxLongNumberTest set foo = 'bar'")).execute();
   }
 
   private void initLinkListSequence(ODatabaseDocumentTx db) {
@@ -185,11 +221,19 @@ public class OCommandExecutorSQLSelectTest {
     db.command(new OCommandSQL("insert into LinkListSequence set name = '1.1.2'")).execute();
     db.command(new OCommandSQL("insert into LinkListSequence set name = '1.2.1'")).execute();
     db.command(new OCommandSQL("insert into LinkListSequence set name = '1.2.2'")).execute();
-    db.command(new OCommandSQL("insert into LinkListSequence set name = '1.1', children = (select from LinkListSequence where name like '1.1.%')")).execute();
-    db.command(new OCommandSQL("insert into LinkListSequence set name = '1.2', children = (select from LinkListSequence where name like '1.2.%')")).execute();
-    db.command(new OCommandSQL("insert into LinkListSequence set name = '1', children = (select from LinkListSequence where name in ['1.1', '1.2'])")).execute();
+    db.command(new OCommandSQL(
+        "insert into LinkListSequence set name = '1.1', children = (select from LinkListSequence where name like '1.1.%')"))
+        .execute();
+    db.command(new OCommandSQL(
+        "insert into LinkListSequence set name = '1.2', children = (select from LinkListSequence where name like '1.2.%')"))
+        .execute();
+    db.command(new OCommandSQL(
+        "insert into LinkListSequence set name = '1', children = (select from LinkListSequence where name in ['1.1', '1.2'])"))
+        .execute();
     db.command(new OCommandSQL("insert into LinkListSequence set name = '2'")).execute();
-    db.command(new OCommandSQL("insert into LinkListSequence set name = 'root', children = (select from LinkListSequence where name in ['1', '1'])")).execute();
+    db.command(new OCommandSQL(
+        "insert into LinkListSequence set name = 'root', children = (select from LinkListSequence where name in ['1', '1'])"))
+        .execute();
 
   }
 
@@ -576,6 +620,32 @@ public class OCommandExecutorSQLSelectTest {
   }
 
   @Test
+  public void testUnwind2() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select from unwindtest2 unwind coll")).execute();
+
+    assertEquals(qResult.size(), 1);
+    for (ODocument doc : qResult) {
+      String name = doc.field("name");
+      Object coll = doc.field("coll");
+      assertNull(coll);
+      assertFalse(doc.getIdentity().isPersistent());
+    }
+  }
+
+  @Test
+  public void testUnwindOrder() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select from unwindtest order by coll unwind coll")).execute();
+
+    assertEquals(qResult.size(), 4);
+    for (ODocument doc : qResult) {
+      String name = doc.field("name");
+      String coll = doc.field("coll");
+      assertTrue(coll.startsWith(name));
+      assertFalse(doc.getIdentity().isPersistent());
+    }
+  }
+
+  @Test
   public void testUnwindSkip() {
     List<ODocument> qResult = db.command(new OCommandSQL("select from unwindtest unwind coll skip 1")).execute();
 
@@ -911,7 +981,7 @@ public class OCommandExecutorSQLSelectTest {
   }
 
   @Test
-  public void testParamWithMatches(){
+  public void testParamWithMatches() {
     //issue #5229
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("param1", "adm.*");
@@ -921,7 +991,7 @@ public class OCommandExecutorSQLSelectTest {
   }
 
   @Test
-  public void testParamWithMatchesQuoteRegex(){
+  public void testParamWithMatchesQuoteRegex() {
     //issue #5229
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("param1", ".*admin[name].*");//will not work
@@ -934,32 +1004,34 @@ public class OCommandExecutorSQLSelectTest {
   }
 
   @Test
-  public void testMatchesWithQuotes(){
+  public void testMatchesWithQuotes() {
     //issue #5229
-    String pattern = Pattern.quote("adm")+".*";
+    String pattern = Pattern.quote("adm") + ".*";
     OSQLSynchQuery sql = new OSQLSynchQuery("SELECT FROM matchesstuff WHERE (name matches ?)");
     List<ODocument> results = db.query(sql, pattern);
     assertEquals(results.size(), 1);
   }
 
   @Test
-  public void testMatchesWithQuotes2(){
+  public void testMatchesWithQuotes2() {
     //issue #5229
-    OSQLSynchQuery sql = new OSQLSynchQuery("SELECT FROM matchesstuff WHERE (name matches '\\\\Qadm\\\\E.*' and not ( name matches '(.*)foo(.*)' ) )");
+    OSQLSynchQuery sql = new OSQLSynchQuery(
+        "SELECT FROM matchesstuff WHERE (name matches '\\\\Qadm\\\\E.*' and not ( name matches '(.*)foo(.*)' ) )");
     List<ODocument> results = db.query(sql);
     assertEquals(results.size(), 1);
   }
 
   @Test
-  public void testMatchesWithQuotes3(){
+  public void testMatchesWithQuotes3() {
     //issue #5229
-    OSQLSynchQuery sql = new OSQLSynchQuery("SELECT FROM matchesstuff WHERE (name matches '\\\\Qadm\\\\E.*' and  ( name matches '\\\\Qadmin\\\\E.*' ) )");
+    OSQLSynchQuery sql = new OSQLSynchQuery(
+        "SELECT FROM matchesstuff WHERE (name matches '\\\\Qadm\\\\E.*' and  ( name matches '\\\\Qadmin\\\\E.*' ) )");
     List<ODocument> results = db.query(sql);
     assertEquals(results.size(), 1);
   }
 
   @Test
-  public void testParamWithMatchesAndNot(){
+  public void testParamWithMatchesAndNot() {
     //issue #5229
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("param1", "adm.*");
@@ -968,13 +1040,13 @@ public class OCommandExecutorSQLSelectTest {
     List<ODocument> results = db.query(sql, params);
     assertEquals(results.size(), 1);
 
-    params.put("param1",  Pattern.quote("adm") + ".*");
+    params.put("param1", Pattern.quote("adm") + ".*");
     results = db.query(sql, params);
     assertEquals(results.size(), 1);
   }
 
   @Test
-  public void testDistinctLimit(){
+  public void testDistinctLimit() {
     OSQLSynchQuery sql = new OSQLSynchQuery("select distinct(name) from DistinctLimit limit 1");
     List<ODocument> results = db.query(sql);
     assertEquals(results.size(), 1);
@@ -1007,7 +1079,7 @@ public class OCommandExecutorSQLSelectTest {
     OSQLSynchQuery sql = new OSQLSynchQuery("select expand(children.children.children) from LinkListSequence where name = 'root'");
     List<ODocument> results = db.query(sql);
     assertEquals(results.size(), 4);
-    for(ODocument result:results){
+    for (ODocument result : results) {
       String value = result.field("name");
       assertEquals(value.length(), 5);
     }
@@ -1015,10 +1087,11 @@ public class OCommandExecutorSQLSelectTest {
 
   @Test
   public void testLinkListSequence2() {
-    OSQLSynchQuery sql = new OSQLSynchQuery("select expand(children[0].children.children) from LinkListSequence where name = 'root'");
+    OSQLSynchQuery sql = new OSQLSynchQuery(
+        "select expand(children[0].children.children) from LinkListSequence where name = 'root'");
     List<ODocument> results = db.query(sql);
     assertEquals(results.size(), 4);
-    for(ODocument result:results){
+    for (ODocument result : results) {
       String value = result.field("name");
       assertEquals(value.length(), 5);
     }
@@ -1026,15 +1099,50 @@ public class OCommandExecutorSQLSelectTest {
 
   @Test
   public void testLinkListSequence3() {
-    OSQLSynchQuery sql = new OSQLSynchQuery("select expand(children[0].children[0].children) from LinkListSequence where name = 'root'");
+    OSQLSynchQuery sql = new OSQLSynchQuery(
+        "select expand(children[0].children[0].children) from LinkListSequence where name = 'root'");
     List<ODocument> results = db.query(sql);
     assertEquals(results.size(), 2);
-    for(ODocument result:results){
+    for (ODocument result : results) {
       String value = result.field("name");
-      assertTrue(value.equals("1.1.1") ||value.equals("1.1.2"));
+      assertTrue(value.equals("1.1.1") || value.equals("1.1.2"));
     }
   }
 
+  @Test
+  public void testMaxLongNumber() {
+    //issue #5664
+    OSQLSynchQuery sql = new OSQLSynchQuery("select from MaxLongNumberTest WHERE last < 10 OR last is null");
+    List<ODocument> results = db.query(sql);
+    assertEquals(results.size(), 3);
+    db.command(new OCommandSQL("update MaxLongNumberTest set last = max(91,ifnull(last,0))")).execute();
+    sql = new OSQLSynchQuery("select from MaxLongNumberTest WHERE last < 10 OR last is null");
+    results = db.query(sql);
+    assertEquals(results.size(), 0);
+  }
+
+  public void testFilterAndOrderBy(){
+    //issue http://www.prjhub.com/#/issues/6199
+
+    OSQLSynchQuery sql = new OSQLSynchQuery("SELECT FROM FilterAndOrderByTest WHERE active = true ORDER BY dc DESC");
+    List<ODocument> results = db.query(sql);
+    assertEquals(results.size(), 3);
+
+    Calendar cal = new GregorianCalendar();
+
+    Date date = results.get(0).field("dc");
+    cal.setTime(date);
+    assertEquals(cal.get(Calendar.YEAR), 2016);
+
+    date = results.get(1).field("dc");
+    cal.setTime(date);
+    assertEquals(cal.get(Calendar.YEAR), 2010);
+
+    date = results.get(2).field("dc");
+    cal.setTime(date);
+    assertEquals(cal.get(Calendar.YEAR), 2009);
+
+  }
   private long indexUsages(ODatabaseDocumentTx db) {
     final long oldIndexUsage;
     try {

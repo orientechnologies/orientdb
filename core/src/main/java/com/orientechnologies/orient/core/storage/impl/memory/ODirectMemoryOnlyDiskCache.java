@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OStoragePerformanceStatistic;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
@@ -72,6 +73,14 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
     this.id = id;
   }
 
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public File getRootDirectory() {
+    return null;
+  }
+
   @Override
   public long addFile(String fileName, OWriteCache writeCache) {
     metadataLock.lock();
@@ -96,6 +105,16 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
     } finally {
       metadataLock.unlock();
     }
+  }
+
+  @Override
+  public int internalFileId(long fileId) {
+    return extractFileId(fileId);
+  }
+
+  @Override
+  public long externalFileId(int fileId) {
+    return composeFileId(id, fileId);
   }
 
   @Override
@@ -344,9 +363,26 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
     delete();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void closeStorage(OWriteCache writeCache) throws IOException {
     close();
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void loadCacheState(OWriteCache writeCache) {
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void storeCacheState(OWriteCache writeCache) {
   }
 
   @Override

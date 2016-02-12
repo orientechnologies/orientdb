@@ -254,7 +254,7 @@ public class OByteBufferPool {
               if (arrayIndex < preallocatedAreas.length() - 1) {
                 allocationSize = maxPagesPerSingleArea * pageSize;
               } else {
-                final long pagesLeft = preallocatedPages - arrayIndex * pageSize;
+                final long pagesLeft = preallocatedPages - arrayIndex * maxPagesPerSingleArea;
                 allocationSize = (int) (pagesLeft * pageSize);
               }
 

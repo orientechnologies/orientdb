@@ -66,6 +66,8 @@ public interface ODistributedServerManager {
 
   ODistributedMessageService getMessageService();
 
+  void updateCachedDatabaseConfiguration(String iDatabaseName, ODocument cfg, boolean iSaveToDisk, boolean iDeployToCluster);
+
   void updateLastClusterChange();
 
   /**

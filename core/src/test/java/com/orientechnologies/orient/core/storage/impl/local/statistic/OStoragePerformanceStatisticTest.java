@@ -11,8 +11,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
-@Test
-public class OStoragePerformanceStatisticTest {
+@Test public class OStoragePerformanceStatisticTest {
   public void testReadSpeedFromCache() throws Exception {
     final AssertDataFunction assertDataFunction = new AssertDataFunction() {
       @Override
@@ -263,8 +262,16 @@ public class OStoragePerformanceStatisticTest {
 
       speedData = getDataFunction.getData(storagePerformanceStatistic);
 
-      //background thread did not run.
-      if (speedData[0] == -1) {
+      //check if background thread did not run
+      boolean allDataAreMeasured = true;
+      for (long data : speedData) {
+        if (data == -1) {
+          allDataAreMeasured = false;
+          break;
+        }
+      }
+
+      if (!allDataAreMeasured) {
         Thread.yield();
       } else {
         notZeroSpeedCount++;
@@ -370,8 +377,16 @@ public class OStoragePerformanceStatisticTest {
 
       speedData = getDataFunction.getData(mxBean);
 
-      //background thread did not run.
-      if (speedData[0] == -1) {
+      //check if background thread did not run.
+      boolean allDataAreMeasured = true;
+      for (long data : speedData) {
+        if (data == -1) {
+          allDataAreMeasured = false;
+          break;
+        }
+      }
+
+      if (!allDataAreMeasured) {
         Thread.yield();
       } else {
         notZeroSpeedCount++;

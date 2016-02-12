@@ -111,14 +111,6 @@ public class ORecordInternal {
     ((ORecordAbstract) record).onAfterIdentityChanged(record);
   }
 
-  /**
-   * Internal only. Executes a flat copy of the record.
-   */
-  public <RET extends ORecord> RET flatCopy(final ORecord record) {
-    final ORecordAbstract rec = (ORecordAbstract) record;
-    return rec.flatCopy();
-  }
-
   public static void setRecordSerializer(final ORecord record, final ORecordSerializer serializer) {
     ((ORecordAbstract) record)._recordFormat = serializer;
   }

@@ -24,11 +24,19 @@ package com.orientechnologies.orient.etl;
  * Immutable Object representing extracted item.
  */
 public class OExtractedItem {
-  public final long   num;
-  public final Object payload;
+  public final long    num;
+  public final Object  payload;
+  public final boolean finished;
 
   public OExtractedItem(final long iCurrent, final Object iPayload) {
     num = iCurrent;
     payload = iPayload;
+    finished = false;
+  }
+
+  public OExtractedItem(boolean iFinished) {
+    num = 0;
+    payload = null;
+    finished = iFinished;
   }
 }

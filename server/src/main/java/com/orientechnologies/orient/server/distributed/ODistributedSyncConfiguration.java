@@ -79,6 +79,11 @@ public class ODistributedSyncConfiguration {
     embedded.field("segment", iLSN.getSegment(), OType.LONG);
     embedded.field("position", iLSN.getPosition(), OType.LONG);
 
+    if (!file.exists()) {
+      file.getParentFile().mkdirs();
+      file.createNewFile();
+    }
+
     final OutputStream os = new FileOutputStream(file, false);
     try {
 

@@ -38,21 +38,21 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public class ConcurrentLRUList implements LRUList {
 
-  private static boolean                              assertionsEnabled;
+  private static boolean assertionsEnabled;
 
   static {
     assert assertionsEnabled = true;
   }
 
-  private final ConcurrentHashMap<CacheKey, LRUEntry> cache           = new ConcurrentHashMap<CacheKey, LRUEntry>();
-  private final ListNode                              headReference   = new ListNode(null, true);
-  private final AtomicReference<ListNode>             tailReference   = new AtomicReference<ListNode>(headReference);
+  private final ConcurrentHashMap<CacheKey, LRUEntry> cache         = new ConcurrentHashMap<CacheKey, LRUEntry>();
+  private final ListNode                              headReference = new ListNode(null, true);
+  private final AtomicReference<ListNode>             tailReference = new AtomicReference<ListNode>(headReference);
 
-  private final ConcurrentLinkedQueue<ListNode>       trash           = new ConcurrentLinkedQueue<ListNode>();
+  private final ConcurrentLinkedQueue<ListNode> trash = new ConcurrentLinkedQueue<ListNode>();
 
-  private final int                                   minTrashSize    = Runtime.getRuntime().availableProcessors() * 4;
-  private final AtomicBoolean                         purgeInProgress = new AtomicBoolean();
-  private final AtomicInteger                         trashSize       = new AtomicInteger();
+  private final int           minTrashSize    = Runtime.getRuntime().availableProcessors() * 4;
+  private final AtomicBoolean purgeInProgress = new AtomicBoolean();
+  private final AtomicInteger trashSize       = new AtomicInteger();
 
   public ConcurrentLRUList() {
   }
@@ -307,6 +307,14 @@ public class ConcurrentLRUList implements LRUList {
     return new OCacheEntryIterator(tailReference.get());
   }
 
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public Iterator<OCacheEntry> reverseIterator() {
+    return new OReverseCacheEntryIterator(headReference);
+  }
+
   private static class OCacheEntryIterator implements Iterator<OCacheEntry> {
 
     private ListNode current;
@@ -329,9 +337,50 @@ public class ConcurrentLRUList implements LRUList {
 
       final OCacheEntry entry = current.entry.entry;
 
-      do
+      do {
         current = current.previous.get();
-      while (current != null && current.entry == null);
+      } while (current != null && current.entry == null);
+
+      return entry;
+    }
+
+    @Override
+    public void remove() {
+      throw new UnsupportedOperationException();
+    }
+  }
+
+  /**
+   * Iterates from head to tail of LRU queue.
+   */
+  private static class OReverseCacheEntryIterator implements Iterator<OCacheEntry> {
+    private ListNode current;
+
+    public OReverseCacheEntryIterator(ListNode start) {
+      current = start;
+      //because we purge nodes into background and because
+      //head node is dummy we skip entries with empty entries
+      while (current != null && current.entry == null)
+        current = current.next.get();
+    }
+
+    @Override
+    public boolean hasNext() {
+      return current != null && current.entry != null;
+    }
+
+    @Override
+    public OCacheEntry next() {
+      if (!hasNext())
+        throw new NoSuchElementException();
+
+      final OCacheEntry entry = current.entry.entry;
+      //because we purge nodes into background and because
+      //head node is dummy we skip entries with empty entries
+
+      do {
+        current = current.next.get();
+      } while (current != null && current.entry == null);
 
       return entry;
     }
@@ -377,12 +426,12 @@ public class ConcurrentLRUList implements LRUList {
   }
 
   private static class LRUEntry {
-    private final AtomicReference<ListNode> listNode   = new AtomicReference<ListNode>();
-    private final CacheKey                  key;
-    private volatile OCacheEntry            entry;
+    private final AtomicReference<ListNode> listNode = new AtomicReference<ListNode>();
+    private final    CacheKey    key;
+    private volatile OCacheEntry entry;
 
-    private boolean                         removed    = false;
-    private final ReadWriteLock             removeLock = new ReentrantReadWriteLock();
+    private       boolean       removed    = false;
+    private final ReadWriteLock removeLock = new ReentrantReadWriteLock();
 
     private LRUEntry(CacheKey key, OCacheEntry entry) {
       this.key = key;
@@ -391,11 +440,11 @@ public class ConcurrentLRUList implements LRUList {
   }
 
   private static class ListNode {
-    private volatile LRUEntry               entry;
+    private volatile LRUEntry entry;
     private final AtomicReference<ListNode> next     = new AtomicReference<ListNode>();
     private final AtomicReference<ListNode> previous = new AtomicReference<ListNode>();
 
-    private final boolean                   isDummy;
+    private final boolean isDummy;
 
     private ListNode(LRUEntry key, boolean isDummy) {
       this.entry = key;

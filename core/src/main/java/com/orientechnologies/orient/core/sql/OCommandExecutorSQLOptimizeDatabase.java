@@ -35,43 +35,53 @@ import java.util.Map;
 
 /**
  * SQL ALTER DATABASE command: Changes an attribute of the current database.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLOptimizeDatabase extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
+public class OCommandExecutorSQLOptimizeDatabase extends OCommandExecutorSQLAbstract
+    implements OCommandDistributedReplicateRequest {
   public static final String KEYWORD_OPTIMIZE  = "OPTIMIZE";
   public static final String KEYWORD_DATABASE  = "DATABASE";
   public static final String KEYWORD_EDGE      = "-LWEDGES";
   public static final String KEYWORD_NOVERBOSE = "-NOVERBOSE";
 
-  private boolean            optimizeEdges     = false;
-  private boolean            verbose           = true;
-  private int                batch             = 1000;
+  private boolean optimizeEdges = false;
+  private boolean verbose       = true;
+  private int     batch         = 1000;
 
   public OCommandExecutorSQLOptimizeDatabase parse(final OCommandRequest iRequest) {
-    init((OCommandRequestText) iRequest);
+    final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
 
-    StringBuilder word = new StringBuilder();
+    String queryText = textRequest.getText();
+    String originalQuery = queryText;
+    try {
+      queryText = preParse(queryText, iRequest);
+      textRequest.setText(queryText);
+      init((OCommandRequestText) iRequest);
 
-    int oldPos = 0;
-    int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_OPTIMIZE))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_OPTIMIZE + " not found. Use " + getSyntax(), parserText, oldPos);
+      StringBuilder word = new StringBuilder();
 
-    oldPos = pos;
-    pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_DATABASE))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_DATABASE + " not found. Use " + getSyntax(), parserText, oldPos);
+      int oldPos = 0;
+      int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
+      if (pos == -1 || !word.toString().equals(KEYWORD_OPTIMIZE))
+        throw new OCommandSQLParsingException("Keyword " + KEYWORD_OPTIMIZE + " not found. Use " + getSyntax(), parserText, oldPos);
 
-    while (!parserIsEnded() && word.length() > 0) {
       oldPos = pos;
       pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-      if (word.toString().equals(KEYWORD_EDGE))
-        optimizeEdges = true;
-      else if (word.toString().equals(KEYWORD_NOVERBOSE))
-        verbose = false;
+      if (pos == -1 || !word.toString().equals(KEYWORD_DATABASE))
+        throw new OCommandSQLParsingException("Keyword " + KEYWORD_DATABASE + " not found. Use " + getSyntax(), parserText, oldPos);
+
+      while (!parserIsEnded() && word.length() > 0) {
+        oldPos = pos;
+        pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
+        if (word.toString().equals(KEYWORD_EDGE))
+          optimizeEdges = true;
+        else if (word.toString().equals(KEYWORD_NOVERBOSE))
+          verbose = false;
+      }
+    } finally {
+      textRequest.setText(originalQuery);
     }
 
     return this;

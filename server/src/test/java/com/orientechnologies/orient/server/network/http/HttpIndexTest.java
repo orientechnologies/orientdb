@@ -2,22 +2,25 @@ package com.orientechnologies.orient.server.network.http;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.apache.http.util.EntityUtils;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.io.IOException;
 
 /**
  * Test HTTP "index" command.
- * 
+ *
  * @author Luca Garulli (l.garulli--at-orientechnologies.com)
  */
-@Test
 public class HttpIndexTest extends BaseHttpDatabaseTest {
+
+  @Test
   public void create() throws IOException {
     put("index/" + getDatabaseName() + "/ManualIndex/luca").payload("{name:'Harry', surname:'Potter',age:18}", CONTENT.JSON).exec();
     Assert.assertEquals(getResponse().getStatusLine().getStatusCode(), 201);
   }
+
+  @Test
 
   public void retrieve() throws IOException {
     get("index/" + getDatabaseName() + "/ManualIndex/jay").exec();
@@ -35,10 +38,14 @@ public class HttpIndexTest extends BaseHttpDatabaseTest {
     Assert.assertEquals(jay.getVersion(), 1);
   }
 
+  @Test
+
   public void retrieveNonExistent() throws IOException {
     get("index/" + getDatabaseName() + "/ManualIndex/NonExistent").exec();
     Assert.assertEquals(getResponse().getStatusLine().getStatusCode(), 404);
   }
+
+  @Test
 
   public void updateKey() throws IOException {
     put("index/" + getDatabaseName() + "/ManualIndex/Harry2").payload("{name:'Harry', surname:'Potter',age:18}", CONTENT.JSON)
@@ -63,6 +70,8 @@ public class HttpIndexTest extends BaseHttpDatabaseTest {
     Assert.assertEquals(jay.field("age"), 182);
     Assert.assertEquals(jay.getVersion(), 1);
   }
+
+  @Test
 
   public void updateValue() throws IOException {
     put("index/" + getDatabaseName() + "/ManualIndex/Harry2").payload("{name:'Harry', surname:'Potter',age:18}", CONTENT.JSON)
@@ -99,6 +108,8 @@ public class HttpIndexTest extends BaseHttpDatabaseTest {
     Assert.assertEquals(harry.getVersion(), 2);
   }
 
+  @Test
+
   public void updateValueMVCCError() throws IOException {
     put("index/" + getDatabaseName() + "/ManualIndex/Harry2").payload("{name:'Harry', surname:'Potter',age:18}", CONTENT.JSON)
         .exec();
@@ -114,8 +125,8 @@ public class HttpIndexTest extends BaseHttpDatabaseTest {
 
     ODocument harry = new ODocument().fromJSON(response);
 
-    put("index/" + getDatabaseName() + "/ManualIndex/Harry2").payload(
-        "{name:'Harry3', surname:'Potter3',age:183,@rid:'" + harry.getIdentity() + "'}", CONTENT.JSON).exec();
+    put("index/" + getDatabaseName() + "/ManualIndex/Harry2")
+        .payload("{name:'Harry3', surname:'Potter3',age:183,@rid:'" + harry.getIdentity() + "'}", CONTENT.JSON).exec();
     Assert.assertEquals(getResponse().getStatusLine().getStatusCode(), 409);
   }
 

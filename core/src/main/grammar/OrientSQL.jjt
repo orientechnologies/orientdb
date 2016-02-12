@@ -128,6 +128,8 @@ TOKEN:
 	|
 	< INTO: ( "i" | "I" ) ( "n" | "N" ) ( "t" | "T" ) ( "o" | "O" ) >
 	|
+	< VALUE: ( "v" | "V" ) ( "a" | "A" ) ( "l" | "L" ) ( "u" | "U" ) ( "e" | "E" ) >
+	|
 	< VALUES: ( "v" | "V" ) ( "a" | "A" ) ( "l" | "L" ) ( "u" | "U" ) ( "e" | "E" ) ( "s" | "S" )>
 	|
 	< SET: ( "s" | "S" ) ( "e" | "E" ) ( "t" | "T" ) >
@@ -273,6 +275,50 @@ TOKEN:
 	< DROP: ( "d" | "D" ) ( "r" | "R" ) ( "o" | "O" ) ( "p" | "P" ) >
 	|
 	< PROPERTY: ( "p" | "P" ) ( "r" | "R" ) ( "o" | "O" ) ( "p" | "P" ) ( "e" | "E" ) ( "r" | "R" ) ( "t" | "T" ) ( "y" | "Y" ) >
+	|
+	< FORCE: ( "f" | "F" ) ( "o" | "O" ) ( "r" | "R" ) ( "c" | "C" ) ( "e" | "E" ) >
+	|
+	< METADATA: ( "m" | "M" ) ( "e" | "E" ) ( "t" | "T" ) ( "a" | "A" ) ( "d" | "D" ) ( "a" | "A" ) ( "t" | "T" ) ( "a" | "A" )   >
+	|
+    < INDEX: ( "I" | "i") ( "N" | "n") ( "D" | "d") ( "E" | "e") ( "X" | "x")  >
+    |
+    < COLLATE: ( "c" | "C") ( "o" | "O") ( "l" | "L") ( "l" | "L") ( "a" | "A") ( "t" | "T") ( "E" | "e")  >
+    |
+    < ENGINE: ( "E" | "e")  ( "N" | "n") ( "G" | "g") ( "I" | "i") ( "N" | "n")( "E" | "e") >
+    |
+    < REBUILD: ( "R" | "r") ( "E" | "e")  ( "B" | "b") ( "U" | "u") ( "I" | "i") ( "L" | "l") ( "D" | "d") >
+    |
+    < ID: ( "I" | "i") ( "D" | "d") >
+    |
+    < DATABASE: ( "D" | "d") ( "A" | "a")  ( "T" | "t") ( "A" | "a") ( "B" | "b") ( "A" | "a") ( "S" | "s") ( "E" | "e") >
+    |
+    < OPTIMIZE: ( "O" | "o") ( "P" | "p")  ( "T" | "t") ( "I" | "i") ( "M" | "m") ( "I" | "i") ( "Z" | "z") ( "E" | "e") >
+    |
+    < LINK: ( "L" | "l") ( "I" | "i")  ( "N" | "n") ( "K" | "k") >
+    |
+    < TYPE: ( "T" | "t") ( "Y" | "y")  ( "P" | "p") ( "E" | "e") >
+    |
+    < INVERSE: ( "I" | "i") ( "N" | "n")  ( "V" | "v") ( "E" | "e") ( "R" | "r")  ( "S" | "s") ( "E" | "e") >
+    |
+    < EXPLAIN: ( "E" | "e") ( "X" | "x")  ( "P" | "p") ( "L" | "l") ( "A" | "a")  ( "I" | "i") ( "N" | "n") >
+    |
+    < GRANT: ( "G" | "g") ( "R" | "r")  ( "A" | "a") ( "N" | "n") ( "T" | "t") >
+    |
+    < REVOKE: ( "R" | "r") ( "E" | "e")  ( "V" | "v") ( "O" | "o") ( "K" | "k")  ( "E" | "e") >
+    |
+    < READ: ( "R" | "r") ( "E" | "e")  ( "A" | "a") ( "D" | "d")>
+    |
+    < ALL: ( "A" | "a") ( "L" | "l") ( "L" | "l")>
+    |
+    < NONE: ( "N" | "n") ( "O" | "o")  ( "N" | "n") ( "E" | "e")>
+    |
+    < FUNCTION: ( "F" | "f") ( "U" | "u")  ( "N" | "n") ( "C" | "c") ( "T" | "t")  ( "I" | "i") ( "O" | "o")  ( "N" | "n") >
+    |
+    < PARAMETERS: ( "P" | "p") ( "A" | "a")  ( "R" | "r") ( "A" | "a") ( "M" | "m")  ( "E" | "e") ( "T" | "t")  ( "E" | "e") ( "R" | "r") ( "S" | "s") >
+    |
+    < IDEMPOTENT: ( "I" | "i") ( "D" | "d")  ( "E" | "e") ( "M" | "m") ( "P" | "p")  ( "O" | "o") ( "T" | "t")  ( "E" | "e") ( "N" | "n") ( "T" | "t") >
+    |
+    < LANGUAGE: ( "L" | "l") ( "A" | "a")  ( "N" | "n") ( "G" | "g") ( "U" | "u")  ( "A" | "a") ( "G" | "g")  ( "E" | "e") >
 	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
@@ -473,13 +519,13 @@ TOKEN :
 |
   < QUOTED_IDENTIFIER: ( "`" (~["`"]) (~["`"])*  "`") >
 |
-  < INDEX_IDENTIFIER: ( "I" | "i") ( "N" | "n") ( "D" | "d") ( "E" | "e") ( "X" | "x") ":" ( "__@recordmap@___" )? <IDENTIFIER> ( ( <DOT> | <MINUS> ) <IDENTIFIER> )*  >
+  < INDEX_COLON: <INDEX> ":" >
 |
-  < INDEXVALUES_IDENTIFIER: ( "I" | "i") ( "N" | "n") ( "D" | "d") ( "E" | "e") ( "X" | "x") ( "V" | "v") ( "A" | "a") ( "L" | "l") ( "U" | "u") ( "E" | "e") ( "S" | "s") ":" <IDENTIFIER> ( ( <DOT> | <MINUS> ) <IDENTIFIER> )*  >
+  < INDEXVALUES_IDENTIFIER: ( "I" | "i") ( "N" | "n") ( "D" | "d") ( "E" | "e") ( "X" | "x") ( "V" | "v") ( "A" | "a") ( "L" | "l") ( "U" | "u") ( "E" | "e") ( "S" | "s") ":" ( "__@recordmap@___" )? <IDENTIFIER> ( ( <DOT> | <MINUS> ) <IDENTIFIER> )* >
 |
-  < INDEXVALUESASC_IDENTIFIER:( "I" | "i") ( "N" | "n") ( "D" | "d") ( "E" | "e") ( "X" | "x") ( "V" | "v") ( "A" | "a") ( "L" | "l") ( "U" | "u") ( "E" | "e") ( "S" | "s") ( "A" | "a") ( "S" | "s") ( "C" | "c") ":" <IDENTIFIER> ( ( <DOT> | <MINUS> ) <IDENTIFIER> )*  >
+  < INDEXVALUESASC_IDENTIFIER:( "I" | "i") ( "N" | "n") ( "D" | "d") ( "E" | "e") ( "X" | "x") ( "V" | "v") ( "A" | "a") ( "L" | "l") ( "U" | "u") ( "E" | "e") ( "S" | "s") ( "A" | "a") ( "S" | "s") ( "C" | "c") ":" ( "__@recordmap@___" )? <IDENTIFIER> ( ( <DOT> | <MINUS> ) <IDENTIFIER> )* >
 |
-  < INDEXVALUESDESC_IDENTIFIER: ( "I" | "i") ( "N" | "n") ( "D" | "d") ( "E" | "e") ( "X" | "x") ( "V" | "v") ( "A" | "a") ( "L" | "l") ( "U" | "u") ( "E" | "e") ( "S" | "s") ( "D" | "d") ( "E" | "e") ( "S" | "s") ( "C" | "c") ":" <IDENTIFIER> ( ( <DOT> | <MINUS> ) <IDENTIFIER> )*  >
+  < INDEXVALUESDESC_IDENTIFIER: ( "I" | "i") ( "N" | "n") ( "D" | "d") ( "E" | "e") ( "X" | "x") ( "V" | "v") ( "A" | "a") ( "L" | "l") ( "U" | "u") ( "E" | "e") ( "S" | "s") ( "D" | "d") ( "E" | "e") ( "S" | "s") ( "C" | "c") ":" ( "__@recordmap@___" )? <IDENTIFIER> ( ( <DOT> | <MINUS> ) <IDENTIFIER> )* >
 |
   < CLUSTER_IDENTIFIER: <CLUSTER> <COLON> <IDENTIFIER>  >
 |
@@ -556,6 +602,8 @@ OIdentifier Identifier():
     |
     token = <GROUP>
     |
+    token = <VALUE>
+    |
     token = <VALUES>
     |
     token = <RECORD>
@@ -626,6 +674,50 @@ OIdentifier Identifier():
 	|
 	token = <PROPERTY>
 	|
+	token = <FORCE>
+	|
+	token = <METADATA>
+	|
+	token = <COLLATE>
+	|
+	token = <INDEX>
+	|
+	token = <ENGINE>
+	|
+	token = <REBUILD>
+	|
+	token = <ID>
+	|
+	token = <DATABASE>
+	|
+	token = <OPTIMIZE>
+	|
+	token = <LINK>
+	|
+	token = <TYPE>
+    |
+    token = <INVERSE>
+    |
+    token = <EXPLAIN>
+    |
+    token = <GRANT>
+    |
+    token = <REVOKE>
+    |
+    token = <READ>
+    |
+    token = <ALL>
+    |
+    token = <NONE>
+    |
+    token = <FUNCTION>
+    |
+    token = <PARAMETERS>
+    |
+    token = <IDEMPOTENT>
+    |
+    token = <LANGUAGE>
+    |
     quotedToken = <QUOTED_IDENTIFIER>
 ) {
 
@@ -692,73 +784,113 @@ OStatement Statement():
     OStatement result = null;
 }
 {
-	(
-	    result = QueryStatement()
+    (
+        (
+            (
+                result = QueryStatement()
+                |
+                LOOKAHEAD(2)
+                result = DeleteStatement()
+                |
+                LOOKAHEAD(2)
+                result = DeleteVertexStatement()
+                |
+                LOOKAHEAD(2)
+                result = DeleteEdgeStatement()
+                |
+                result = InsertStatement()
+                |
+                LOOKAHEAD(CreateVertexStatementNoTarget())
+                result = CreateVertexStatementNoTarget()
+                |
+                LOOKAHEAD(CreateVertexStatement())
+                result = CreateVertexStatement()
+                |
+                LOOKAHEAD(CreateVertexStatementEmpty())
+                result = CreateVertexStatementEmpty()
+                |
+                LOOKAHEAD(CreateVertexStatementEmptyNoTarget())
+                result = CreateVertexStatementEmptyNoTarget()
+                |
+                LOOKAHEAD(CreateEdgeStatement())
+                result = CreateEdgeStatement()
+                |
+                LOOKAHEAD(UpdateEdgeStatement())
+                result = UpdateEdgeStatement()
+                |
+                LOOKAHEAD(UpdateStatement())
+                result = UpdateStatement()
+                |
+                result = MatchStatement()
+                |
+                result = ProfileStorageStatement()
+                |
+                LOOKAHEAD(TruncateClassStatement())
+                result = TruncateClassStatement()
+                |
+                LOOKAHEAD(TruncateClusterStatement())
+                result = TruncateClusterStatement()
+                |
+                LOOKAHEAD(FindReferencesStatement())
+                result = FindReferencesStatement()
+                |
+                LOOKAHEAD(TruncateRecordStatement())
+                result = TruncateRecordStatement()
+                |
+                LOOKAHEAD(CreateClassStatement())
+                result = CreateClassStatement()
+                |
+                LOOKAHEAD(AlterClassStatement())
+                result = AlterClassStatement()
+                |
+                LOOKAHEAD(DropClassStatement())
+                result = DropClassStatement()
+                |
+                LOOKAHEAD(CreatePropertyStatement())
+                result = CreatePropertyStatement()
+                |
+                LOOKAHEAD(AlterPropertyStatement())
+                result = AlterPropertyStatement()
+                |
+                LOOKAHEAD(DropPropertyStatement())
+                result = DropPropertyStatement()
+                |
+                LOOKAHEAD(CreateIndexStatement())
+                result = CreateIndexStatement()
+                |
+                result = RebuildIndexStatement()
+                |
+                LOOKAHEAD(2)
+                result = DropIndexStatement()
+                |
+                LOOKAHEAD(CreateClusterStatement())
+                result = CreateClusterStatement()
+                |
+                LOOKAHEAD(AlterClusterStatement())
+                result = AlterClusterStatement()
+                |
+                LOOKAHEAD(2)
+                result = DropClusterStatement()
+                |
+                LOOKAHEAD(2)
+                result = AlterDatabaseStatement()
+                |
+                result = OptimizeDatabaseStatement()
+                |
+                LOOKAHEAD(2)
+                result = CreateLinkStatement()
+                |
+                result = GrantStatement()
+                |
+                result = RevokeStatement()
+                |
+                LOOKAHEAD(2)
+                result = CreateFunctionStatement()
+            ) [ <SEMICOLON> ]
+        )
         |
-        LOOKAHEAD(2)
-		result = DeleteStatement()
-		|
-		LOOKAHEAD(2)
-		result = DeleteVertexStatement()
-		|
-		LOOKAHEAD(2)
-        result = DeleteEdgeStatement()
-		|
-		result = InsertStatement()
-		|
-		LOOKAHEAD(CreateVertexStatementNoTarget())
-		result = CreateVertexStatementNoTarget()
-		|
-		LOOKAHEAD(CreateVertexStatement())
-        result = CreateVertexStatement()
-        |
-		LOOKAHEAD(CreateVertexStatementEmpty())
-        result = CreateVertexStatementEmpty()
-        |
-		LOOKAHEAD(CreateVertexStatementEmptyNoTarget())
-        result = CreateVertexStatementEmptyNoTarget()
-        |
-		LOOKAHEAD(CreateEdgeStatement())
-        result = CreateEdgeStatement()
-        |
-        LOOKAHEAD(UpdateEdgeStatement())
-        result = UpdateEdgeStatement()
-        |
-        LOOKAHEAD(UpdateStatement())
-		result = UpdateStatement()
-		|
-		result = MatchStatement()
-		|
-		result = ProfileStorageStatement()
-		|
-		LOOKAHEAD(TruncateClassStatement())
-		result = TruncateClassStatement()
-		|
-		LOOKAHEAD(TruncateClusterStatement())
-        result = TruncateClusterStatement()
-		|
-		LOOKAHEAD(FindReferencesStatement())
-		result = FindReferencesStatement()
-		|
-		LOOKAHEAD(TruncateRecordStatement())
-        result = TruncateRecordStatement()
-        |
-		LOOKAHEAD(CreateClassStatement())
-		result = CreateClassStatement()
-		|
-		LOOKAHEAD(AlterClassStatement())
-		result = AlterClassStatement()
-		|
-		LOOKAHEAD(DropClassStatement())
-		result = DropClassStatement()
-		|
-		LOOKAHEAD(CreatePropertyStatement())
-		result = CreatePropertyStatement()
-		|
-		LOOKAHEAD(AlterPropertyStatement())
-		result = AlterPropertyStatement()
-
-	) [ <SEMICOLON> ]
+        result = ExplainStatement()
+    )
 	{
 	    return result;
 	}
@@ -1378,11 +1510,13 @@ OInsertStatement InsertStatement():
 	<INSERT>
 	<INTO>
 	(
+	    LOOKAHEAD(IndexIdentifier())
+    	jjtThis.targetIndex = IndexIdentifier()
+    	|
 	    jjtThis.targetClass = Identifier() [<CLUSTER> jjtThis.targetClusterName = Identifier()]
 	    |
 	    jjtThis.targetCluster = Cluster()
-	    |
-	    jjtThis.targetIndex = IndexIdentifier()
+
 	)
     [ LOOKAHEAD(InsertBody()) jjtThis.insertBody = InsertBody() ]
     [ <RETURN> jjtThis.returnStatement = Projection() ]
@@ -2116,12 +2250,11 @@ OFromItem FromItem():
     	|
     	jjtThis.clusterList = ClusterList()
     	|
+    	LOOKAHEAD(IndexIdentifier())
     	jjtThis.index = IndexIdentifier()
     	|
         jjtThis.metadata = MetadataIdentifier()
     	|
-    	/*jjtThis.className = Identifier()
-    	|*/
     	<LPAREN> (
     	            LOOKAHEAD(SelectStatement()) jjtThis.statement = SelectStatement()
     	            |
@@ -2182,24 +2315,58 @@ OMetadataIdentifier MetadataIdentifier():
     { return jjtThis; }
 }
 
+OIndexName IndexName():
+{
+    StringBuilder builder = new StringBuilder();
+    Token token;
+    OIdentifier lastIdentifier;
+}
+{
+    (
+      ( "__@recordmap@___" { builder.append("__@recordmap@___"); } )?
+
+      lastIdentifier = Identifier() { builder.append(lastIdentifier.getValue()); }
+      (
+        (
+            <DOT> { builder.append("."); }
+            |
+            <MINUS> { builder.append("-"); }
+        )
+        lastIdentifier = Identifier() { builder.append(lastIdentifier.getValue()); }
+      )*
+    )
+    {
+        jjtThis.value = builder.toString();
+        return jjtThis;
+    }
+}
+
+
 OIndexIdentifier IndexIdentifier():
 {
     Token token;
 }
 {
     (
-    	token = <INDEX_IDENTIFIER> { jjtThis.type = OIndexIdentifier.Type.INDEX; }
-    	|
-    	token = <INDEXVALUES_IDENTIFIER> { jjtThis.type = OIndexIdentifier.Type.VALUES; }
-    	|
-    	token = <INDEXVALUESASC_IDENTIFIER> { jjtThis.type = OIndexIdentifier.Type.VALUESASC; }
-    	|
-    	token = <INDEXVALUESDESC_IDENTIFIER> { jjtThis.type = OIndexIdentifier.Type.VALUESDESC; }
+        (
+            <INDEX_COLON>
+            jjtThis.indexName = IndexName() { jjtThis.type = OIndexIdentifier.Type.INDEX; }
+        )
+        |
+        (
+            (
+                token = <INDEXVALUES_IDENTIFIER> { jjtThis.type = OIndexIdentifier.Type.VALUES; }
+                |
+                token = <INDEXVALUESASC_IDENTIFIER> { jjtThis.type = OIndexIdentifier.Type.VALUESASC; }
+                |
+                token = <INDEXVALUESDESC_IDENTIFIER> { jjtThis.type = OIndexIdentifier.Type.VALUESDESC; }
+            )
+            {
+                jjtThis.indexNameString = token.image.split(":")[1];
+            }
+        )
     )
-    {
-        jjtThis.indexName = token.image.split(":")[1];
-        return jjtThis;
-    }
+    { return jjtThis; }
 }
 
 OWhereClause WhereClause():
@@ -3448,9 +3615,10 @@ OFindReferencesStatement FindReferencesStatement():
     [
     	<LBRACKET> { jjtThis.targets = new ArrayList<SimpleNode>(); }
     	(
-    		lastTarget = Identifier()
-    		|
+    	    LOOKAHEAD(IndexIdentifier())
     		lastTarget = IndexIdentifier()
+            |
+    		lastTarget = Identifier()
     	){ jjtThis.targets.add(lastTarget); }
     	(
     		<COMMA>
@@ -3692,4 +3860,394 @@ OAlterPropertyStatement AlterPropertyStatement():
 		)
 	)
 	{ return jjtThis; }
+}
+
+ODropPropertyStatement DropPropertyStatement():
+{}
+{
+	<DROP> <PROPERTY>
+	jjtThis.className = Identifier()
+	<DOT>
+	jjtThis.propertyName = Identifier()
+	[ <FORCE> { jjtThis.force = true; }]
+	{ return jjtThis; }
+}
+
+OCreateIndexStatement CreateIndexStatement():
+{
+    OCreateIndexStatement.Property lastProperty;
+    OIdentifier lastIdentifier;
+    ORecordAttribute lastRecordAttr;
+}
+{
+	<CREATE> <INDEX>
+
+	jjtThis.name = IndexName()
+    (
+        LOOKAHEAD(3)
+        (
+            <ON>
+            jjtThis.className = Identifier()
+            <LPAREN>
+            (
+                lastIdentifier = Identifier() {
+                    lastProperty = new OCreateIndexStatement.Property();
+                    lastProperty.name = lastIdentifier;
+                    jjtThis.propertyList.add(lastProperty);
+                }
+                |
+                lastRecordAttr = RecordAttribute() {
+                    lastProperty = new OCreateIndexStatement.Property();
+                    lastProperty.recordAttribute = lastRecordAttr;
+                    jjtThis.propertyList.add(lastProperty);
+                }
+            )
+            [
+                <BY>
+                (
+                    <KEY> { lastProperty.byKey = true; }
+                    |
+                    <VALUE> { lastProperty.byValue = true; }
+                )
+            ]
+            [
+                <COLLATE>
+                lastProperty.collate = Identifier()
+            ]
+            (
+                <COMMA>
+                (
+                    lastIdentifier = Identifier() {
+                        lastProperty = new OCreateIndexStatement.Property();
+                        lastProperty.name = lastIdentifier;
+                        jjtThis.propertyList.add(lastProperty);
+                    }
+                    |
+                    lastRecordAttr = RecordAttribute() {
+                        lastProperty = new OCreateIndexStatement.Property();
+                        lastProperty.recordAttribute = lastRecordAttr;
+                        jjtThis.propertyList.add(lastProperty);
+                    }
+                )
+                [
+                    <BY>
+                    (
+                        <KEY> { lastProperty.byKey = true; }
+                        |
+                        <VALUE> { lastProperty.byValue = true; }
+                    )
+                ]
+                [
+                    <COLLATE>
+                    lastProperty.collate = Identifier()
+                ]
+            )*
+            <RPAREN>
+
+
+            jjtThis.type = Identifier()
+        )
+        |
+        jjtThis.type = Identifier()
+    )
+
+    (
+        LOOKAHEAD(2)
+        (
+            <ENGINE> jjtThis.engine = Identifier()
+            [
+                LOOKAHEAD(2)
+                (
+                   <METADATA> jjtThis.metadata = Json()
+                )
+                |
+                (
+                    lastIdentifier = Identifier() {jjtThis.keyTypes.add(lastIdentifier);}
+                    (
+                        <COMMA> lastIdentifier = Identifier() {jjtThis.keyTypes.add(lastIdentifier);}
+                    )*
+                    [ <METADATA> jjtThis.metadata = Json() ]
+                )
+            ]
+        )
+        |
+        (
+            [
+                LOOKAHEAD(2)
+                (
+                   <METADATA> jjtThis.metadata = Json()
+                )
+                |
+                (
+                    lastIdentifier = Identifier() {jjtThis.keyTypes.add(lastIdentifier);}
+                    (
+                        <COMMA> lastIdentifier = Identifier() {jjtThis.keyTypes.add(lastIdentifier);}
+                    )*
+                    [ <METADATA> jjtThis.metadata = Json() ]
+                )
+            ]
+        )
+    )
+
+	{ return jjtThis; }
+}
+
+ORebuildIndexStatement RebuildIndexStatement():
+{}
+{
+    (
+        <REBUILD> <INDEX>
+        (
+            jjtThis.name = IndexName()
+            |
+            <STAR> { jjtThis.all = true; }
+        )
+	)
+	{ return jjtThis; }
+}
+
+ODropIndexStatement DropIndexStatement():
+{}
+{
+    (
+        <DROP> <INDEX>
+        (
+            jjtThis.name = IndexName()
+            |
+            <STAR> { jjtThis.all = true; }
+        )
+	)
+	{ return jjtThis; }
+}
+
+
+OCreateClusterStatement CreateClusterStatement():
+{}
+{
+	<CREATE> <CLUSTER>
+	(
+		jjtThis.name = Identifier()
+	)
+	[ <ID> jjtThis.id = Integer() ]
+	{ return jjtThis; }
+}
+
+OAlterClusterStatement AlterClusterStatement():
+{}
+{
+	<ALTER> <CLUSTER>
+	(
+		jjtThis.name = Identifier()
+	)
+	[ <STAR> { jjtThis.starred = true; }]
+	jjtThis.attributeName = Identifier()
+	jjtThis.attributeValue = Expression()
+	{ return jjtThis; }
+}
+
+ODropClusterStatement DropClusterStatement():
+{}
+{
+	<DROP> <CLUSTER>
+	(
+		jjtThis.name = Identifier()
+		|
+		jjtThis.id = Integer()
+	)
+	{ return jjtThis; }
+}
+
+OAlterDatabaseStatement AlterDatabaseStatement():
+{}
+{
+	<ALTER> <DATABASE>
+    (
+        LOOKAHEAD(3)
+        (
+            <CUSTOM>
+            jjtThis.customPropertyName = Identifier()
+            <EQ>
+            jjtThis.customPropertyValue = Expression()
+        )
+        |
+        (
+            jjtThis.settingName = Identifier()
+            jjtThis.settingValue = Expression()
+        )
+    )
+	{ return jjtThis; }
+}
+
+OCommandLineOption CommandLineOption():
+{}
+{
+    (
+        <MINUS> jjtThis.name = Identifier()
+    )
+    {return jjtThis;}
+}
+
+OOptimizeDatabaseStatement OptimizeDatabaseStatement():
+{ OCommandLineOption lastOption; }
+{
+    (
+        <OPTIMIZE> <DATABASE>
+        (
+            lastOption = CommandLineOption() { jjtThis.options.add(lastOption); }
+        )*
+    )
+    {return jjtThis;}
+}
+
+OCreateLinkStatement CreateLinkStatement():
+{  }
+{
+    (
+        <CREATE> <LINK>
+        jjtThis.name = Identifier()
+        <TYPE>
+        jjtThis.type = Identifier()
+        <FROM>
+        jjtThis.sourceClass = Identifier()
+        <DOT>
+        (
+            jjtThis.sourceField = Identifier()
+            |
+            jjtThis.sourceRecordAttr = RecordAttribute()
+        )
+        <TO>
+        jjtThis.destClass = Identifier()
+        <DOT>
+        (
+            jjtThis.destField = Identifier()
+            |
+            jjtThis.destRecordAttr = RecordAttribute()
+        )
+        [ <INVERSE> { jjtThis.inverse = true; } ]
+    )
+    {return jjtThis;}
+}
+
+OExplainStatement ExplainStatement():
+{}
+{
+    (
+        <EXPLAIN>
+        jjtThis.statement = Statement()
+    )
+    { return jjtThis; }
+}
+
+OPermission Permission():
+{}
+{
+    (
+        <CREATE> { jjtThis.permission = "CREATE"; }
+        |
+        <READ> { jjtThis.permission = "READ"; }
+        |
+        <UPDATE> { jjtThis.permission = "UPDATE"; }
+        |
+        <DELETE> { jjtThis.permission = "DELETE"; }
+        |
+        <ALL> { jjtThis.permission = "ALL"; }
+        |
+        <NONE> { jjtThis.permission = "NONE"; }
+    )
+    {return jjtThis;}
+}
+
+OResourcePathItem ResourcePathItem():
+{}
+{
+    (
+        <CLUSTER> { jjtThis.name = "cluster"; }
+        |
+        <STAR> { jjtThis.star = true; }
+        |
+        jjtThis.identifier = Identifier()
+    )
+    {return jjtThis;}
+}
+
+OGrantStatement GrantStatement():
+{
+    OResourcePathItem lastItem;
+}
+{
+    (
+        <GRANT>
+        jjtThis.permission = Permission()
+        <ON>
+        lastItem = ResourcePathItem() { jjtThis.resourceChain.add(lastItem); }
+        (
+            <DOT>
+            lastItem = ResourcePathItem() { jjtThis.resourceChain.add(lastItem); }
+        )*
+        <TO>
+        jjtThis.actor = Identifier()
+    )
+    { return jjtThis; }
+}
+
+ORevokeStatement RevokeStatement():
+{
+    OResourcePathItem lastItem;
+}
+{
+    (
+        <REVOKE>
+        jjtThis.permission = Permission()
+        <ON>
+        lastItem = ResourcePathItem() { jjtThis.resourceChain.add(lastItem); }
+        (
+            <DOT>
+            lastItem = ResourcePathItem() { jjtThis.resourceChain.add(lastItem); }
+        )*
+        <FROM>
+        jjtThis.actor = Identifier()
+    )
+    { return jjtThis; }
+}
+
+OCreateFunctionStatement CreateFunctionStatement():
+{
+    Token token;
+    OIdentifier lastIdentifier;
+}
+{
+    (
+        <CREATE> <FUNCTION>
+        jjtThis.name = Identifier()
+        token = <STRING_LITERAL> {
+            jjtThis.codeQuoted = token.image;
+            jjtThis.code = token.image.substring(1, token.image.length() -1);
+        }
+        [
+            <PARAMETERS>
+            <LBRACKET>
+            lastIdentifier = Identifier() {
+                jjtThis.parameters = new ArrayList<OIdentifier>();
+                jjtThis.parameters.add(lastIdentifier);
+            }
+            (
+                <COMMA>
+                lastIdentifier = Identifier() { jjtThis.parameters.add(lastIdentifier); }
+            )*
+            <RBRACKET>
+        ]
+        [
+            <IDEMPOTENT>
+            (
+                <TRUE> { jjtThis.idempotent = true; }
+                |
+                <FALSE> { jjtThis.idempotent = false; }
+            )
+        ]
+        [
+            <LANGUAGE>
+            jjtThis.language = Identifier()
+        ]
+    )
+    { return jjtThis; }
 }

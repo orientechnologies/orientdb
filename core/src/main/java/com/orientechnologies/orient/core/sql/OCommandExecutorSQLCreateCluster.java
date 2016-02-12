@@ -31,9 +31,8 @@ import java.util.Map;
 
 /**
  * SQL CREATE CLUSTER command: Creates a new cluster.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 @SuppressWarnings("unchecked")
 public class OCommandExecutorSQLCreateCluster extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
@@ -41,31 +40,43 @@ public class OCommandExecutorSQLCreateCluster extends OCommandExecutorSQLAbstrac
   public static final String KEYWORD_CLUSTER = "CLUSTER";
   public static final String KEYWORD_ID      = "ID";
 
-  private String             clusterName;
-  private int                requestedId     = -1;
+  private String clusterName;
+  private int requestedId = -1;
 
   public OCommandExecutorSQLCreateCluster parse(final OCommandRequest iRequest) {
-    final ODatabaseDocumentInternal database = getDatabase();
+    final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
 
-    init((OCommandRequestText) iRequest);
+    String queryText = textRequest.getText();
+    String originalQuery = queryText;
+    try {
+      queryText = preParse(queryText, iRequest);
+      textRequest.setText(queryText);
 
-    parserRequiredKeyword(KEYWORD_CREATE);
-    parserRequiredKeyword(KEYWORD_CLUSTER);
+      final ODatabaseDocumentInternal database = getDatabase();
 
-    clusterName = parserRequiredWord(false);
-    if (!clusterName.isEmpty() && Character.isDigit(clusterName.charAt(0)))
-      throw new IllegalArgumentException("Cluster name cannot begin with a digit");
+      init((OCommandRequestText) iRequest);
 
-    String temp = parseOptionalWord(true);
+      parserRequiredKeyword(KEYWORD_CREATE);
+      parserRequiredKeyword(KEYWORD_CLUSTER);
 
-    while (temp != null) {
-      if (temp.equals(KEYWORD_ID)) {
-        requestedId = Integer.parseInt(parserRequiredWord(false));
+      clusterName = parserRequiredWord(false);
+      if (!clusterName.isEmpty() && Character.isDigit(clusterName.charAt(0)))
+        throw new IllegalArgumentException("Cluster name cannot begin with a digit");
+
+      String temp = parseOptionalWord(true);
+
+      while (temp != null) {
+        if (temp.equals(KEYWORD_ID)) {
+          requestedId = Integer.parseInt(parserRequiredWord(false));
+        }
+
+        temp = parseOptionalWord(true);
+        if (parserIsEnded())
+          break;
       }
 
-      temp = parseOptionalWord(true);
-      if (parserIsEnded())
-        break;
+    } finally {
+      textRequest.setText(originalQuery);
     }
 
     return this;

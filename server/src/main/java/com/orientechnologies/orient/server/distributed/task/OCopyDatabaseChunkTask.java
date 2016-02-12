@@ -43,17 +43,19 @@ import java.io.ObjectOutput;
 public class OCopyDatabaseChunkTask extends OAbstractReplicatedTask {
   private static final long serialVersionUID = 1L;
 
-  private String fileName;
-  private int    chunkNum;
-  private long   offset;
+  private String  fileName;
+  private int     chunkNum;
+  private long    offset;
+  private boolean compressed;
 
   public OCopyDatabaseChunkTask() {
   }
 
-  public OCopyDatabaseChunkTask(final String iFileName, final int iChunkNum, final long iOffset) {
+  public OCopyDatabaseChunkTask(final String iFileName, final int iChunkNum, final long iOffset, final boolean iCompressed) {
     fileName = iFileName;
     chunkNum = iChunkNum;
     offset = iOffset;
+    compressed = iCompressed;
   }
 
   @Override
@@ -64,7 +66,7 @@ public class OCopyDatabaseChunkTask extends OAbstractReplicatedTask {
       throw new IllegalArgumentException("File name '" + fileName + "' not found");
 
     final ODistributedDatabaseChunk result = new ODistributedDatabaseChunk(0, f, offset, OSyncDatabaseTask.CHUNK_MAX_SIZE,
-        new OLogSequenceNumber(-1, -1), true);
+        new OLogSequenceNumber(-1, -1), false);
 
     ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
         "- transferring chunk #%d offset=%d size=%s...", chunkNum, result.offset, OFileUtils.getSizeAsNumber(result.buffer.length));

@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Iterator;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
@@ -374,6 +375,26 @@ public abstract class LRUListTest {
 
       Assert.assertTrue(entryIterator.hasNext());
       Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, i * 10, cachePointers[i], false));
+    }
+  }
+
+  @Test
+  public void testInverseIterator() {
+    final ArrayList<OCacheEntry> entries = new ArrayList<OCacheEntry>();
+
+    for (int i = 0; i < 10; i++) {
+      final OCacheEntry cacheEntry = new OCacheEntry(1, i, null, false);
+
+      entries.add(cacheEntry);
+      lruList.putToMRU(cacheEntry);
+    }
+
+    final Iterator<OCacheEntry> reverseIterator = lruList.reverseIterator();
+    for (int i = 0; i < 10; i++) {
+      Assert.assertTrue(reverseIterator.hasNext());
+      final OCacheEntry cacheEntry = reverseIterator.next();
+      Assert.assertEquals(entries.get(i), cacheEntry);
+      Assert.assertTrue(i < 9 == reverseIterator.hasNext());
     }
   }
 }

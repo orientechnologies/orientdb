@@ -211,6 +211,22 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>${surefire.version}</version>
+                    <configuration>
+                        <systemPropertyVariables>
+                            <security.userPasswordSaltIterations>1</security.userPasswordSaltIterations>
+                        </systemPropertyVariables>
+                    </configuration>
+
+                </plugin>
+
+
+
+                <plugin>
+
+
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-failsafe-plugin</artifactId>
+                    <version>${surefire.version}</version>
 
                 </plugin>
 
@@ -346,10 +362,16 @@
 
                     <configuration>
                         <licenseMerges>
-                            <licenseMerge>ASL 2.0|Apache License 2.0|Apache License, Version 2.0|Apache 2|ASL, version 2|The Apache Software License|Version 2.0,Apache License, Version 2.0| The Apache Software License, Version 2.0</licenseMerge>
+                            <licenseMerge>ASL 2.0|Apache License 2.0|Apache License, Version 2.0|Apache 2|ASL, version 2|The Apache
+                                Software License|Version 2.0,Apache License, Version 2.0| The Apache Software License, Version 2.0
+                            </licenseMerge>
                             <licenseMerge>BSD|BSD License|New BSD License</licenseMerge>
-                            <licenseMerge>LGPL 2.1|GNU Lesser General Public License (LGPL), Version 2.1|GNU Lesser General Public License, Version 2.1</licenseMerge>
-                            <licenseMerge>CDDL 1.0|COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.0|Common Development and Distribution License (CDDL) v1.0</licenseMerge>
+                            <licenseMerge>LGPL 2.1|GNU Lesser General Public License (LGPL), Version 2.1|GNU Lesser General Public
+                                License, Version 2.1
+                            </licenseMerge>
+                            <licenseMerge>CDDL 1.0|COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.0|Common Development
+                                and Distribution License (CDDL) v1.0
+                            </licenseMerge>
                             <licenseMerge>LGPL 3|GNU LESSER GENERAL PUBLIC LICENSE|GNU Lesser Public License</licenseMerge>
                         </licenseMerges>
                     </configuration>
@@ -390,18 +412,6 @@
                 </configuration>
             </plugin>
 
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <systemPropertyVariables>
-                        <!-- SET THIS TO AVOID ASKING FOR PASSWORD DURING 
-                            TESTS -->
-                        <propertyName>ORIENTDB_ROOT_PASSWORD</propertyName>
-                        <propertyName>ORIENTDB_NODE_NAME</propertyName>
-                    </systemPropertyVariables>
-                </configuration>
-            </plugin>
 
             <plugin>
                 <groupId>org.apache.felix</groupId>
@@ -475,6 +485,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
+                <version>2.4</version>
                 <executions>
                     <execution>
                         <id>attach-sources</id>

@@ -9,29 +9,27 @@ import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.metadata.security.jwt.OJwtHeader;
 import com.orientechnologies.orient.core.metadata.security.jwt.OJwtPayload;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
-
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.Assert.*;
 
 public class OTokenHandlerImplTest {
 
-  @BeforeMethod
+  @Before
   public void beforeTest() {
     if (Orient.instance().getEngine("memory") == null) {
       Orient.instance().startup();
     }
   }
 
-  @Test(enabled = false)
+  @Test
+  @Ignore
   public void testWebTokenCreationValidation() throws InvalidKeyException, NoSuchAlgorithmException, IOException {
     ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + OTokenHandlerImplTest.class.getSimpleName());
     db.create();
@@ -62,7 +60,7 @@ public class OTokenHandlerImplTest {
     }
   }
 
-  @Test(expectedExceptions = Exception.class)
+  @Test(expected = Exception.class)
   public void testInvalidToken() throws InvalidKeyException, NoSuchAlgorithmException, IOException {
     OTokenHandlerImpl handler = new OTokenHandlerImpl("any key".getBytes(), 60, "HmacSHA256");
     handler.parseWebToken("random".getBytes());
@@ -187,7 +185,7 @@ public class OTokenHandlerImplTest {
       OToken tok = handler.parseBinaryToken(token);
       token = handler.renewIfNeeded(tok);
 
-      assertEquals(0,token.length);
+      assertEquals(0, token.length);
 
     } finally {
       db.drop();
@@ -210,7 +208,7 @@ public class OTokenHandlerImplTest {
       byte[] token = handler.getSignedBinaryToken(db, original, data);
 
       OToken tok = handler.parseBinaryToken(token);
-      tok.setExpiry(System.currentTimeMillis() + (handler.getSessionInMills() / 2 ) - 1);
+      tok.setExpiry(System.currentTimeMillis() + (handler.getSessionInMills() / 2) - 1);
       token = handler.renewIfNeeded(tok);
 
       assertTrue(token.length != 0);

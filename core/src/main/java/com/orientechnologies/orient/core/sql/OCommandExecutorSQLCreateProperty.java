@@ -191,7 +191,7 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
     }
 
     // CREATE IT LOCALLY
-    sourceClass.addPropertyInternal(fieldName, type, linkedType, linkedClass, !unsafe);
+    sourceClass.addPropertyInternal(fieldName, type, linkedType, linkedClass, unsafe);
     return sourceClass.properties().size();
   }
 

@@ -10,7 +10,7 @@ import org.testng.annotations.Test;
 @Test
 public class UpdatePageRecordTest {
   public void testSerializationPrevLSNIsNotNull() {
-    OWALChangesTree changesTree = new OWALChangesTree();
+    OWALChanges changesTree = new OWALPageChangesPortion();
 
     OOperationUnitId unitId = OOperationUnitId.generateId();
 
@@ -30,7 +30,7 @@ public class UpdatePageRecordTest {
   }
 
   public void testSerializationPrevLSNIsNull() {
-    OWALChangesTree changesTree = new OWALChangesTree();
+    OWALChanges changesTree = new OWALPageChangesPortion();
 
     OOperationUnitId unitId = OOperationUnitId.generateId();
 

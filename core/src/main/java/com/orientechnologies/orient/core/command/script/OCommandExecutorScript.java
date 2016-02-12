@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.command.script;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.concur.resource.OPartitionedObjectPool;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -68,14 +67,13 @@ import java.util.Random;
 
 /**
  * Executes Script Commands.
- * 
- * @see OCommandScript
+ *
  * @author Luca Garulli
- * 
+ * @see OCommandScript
  */
 public class OCommandExecutorScript extends OCommandExecutorAbstract implements OCommandDistributedReplicateRequest {
-  private static final int             MAX_DELAY     = 100;
-  protected OCommandScript             request;
+  private static final int MAX_DELAY = 100;
+  protected OCommandScript request;
   protected DISTRIBUTED_EXECUTION_MODE executionMode = DISTRIBUTED_EXECUTION_MODE.LOCAL;
 
   public OCommandExecutorScript() {
@@ -204,24 +202,6 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
 
             // this block is here (and not below, with the other conditions)
             // just because of the smartSprit() that does not parse correctly a single bracket
-            if (isIfCondition(lastLine)) {
-              nestedLevel++;
-              if (skippingScriptsAtNestedLevel >= 0) {
-                continue; // I'm in an (outer) IF that did not match the condition
-              }
-              boolean ifResult = evaluateIfCondition(lastLine);
-              if (!ifResult) {
-                // if does not match the condition, skip all the inner statements
-                skippingScriptsAtNestedLevel = nestedLevel;
-              }
-              continue;
-            } else if (lastLine.equals("}")) {
-              nestedLevel--;
-              if (skippingScriptsAtNestedLevel > nestedLevel) {
-                skippingScriptsAtNestedLevel = -1;
-              }
-              continue;
-            }
 
             // final List<String> lineParts = OStringSerializerHelper.smartSplit(lastLine, ';', true);
             final List<String> lineParts = splitBySemicolon(lastLine);
@@ -237,7 +217,24 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
             for (; linePart < lineParts.size(); ++linePart) {
               final String lastCommand = lineParts.get(linePart);
 
-              if (skippingScriptsAtNestedLevel >= 0) {
+              if (isIfCondition(lastCommand)) {
+                nestedLevel++;
+                if (skippingScriptsAtNestedLevel >= 0) {
+                  continue; // I'm in an (outer) IF that did not match the condition
+                }
+                boolean ifResult = evaluateIfCondition(lastCommand);
+                if (!ifResult) {
+                  // if does not match the condition, skip all the inner statements
+                  skippingScriptsAtNestedLevel = nestedLevel;
+                }
+                continue;
+              } else if (lastCommand.equals("}")) {
+                nestedLevel--;
+                if (skippingScriptsAtNestedLevel > nestedLevel) {
+                  skippingScriptsAtNestedLevel = -1;
+                }
+                continue;
+              } else if (skippingScriptsAtNestedLevel >= 0) {
                 continue; // I'm in an IF that did not match the condition
               } else if (OStringSerializerHelper.startsWithIgnoreCase(lastCommand, "let ")) {
                 lastResult = executeLet(lastCommand, db);
@@ -388,7 +385,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
       if ((c == '"' || c == '\'') && (prev == null || !prev.equals('\\'))) {
         if (lastQuote != null && lastQuote.equals(c)) {
           lastQuote = null;
-        } else {
+        } else if (lastQuote == null) {
           lastQuote = c;
         }
       }
@@ -532,7 +529,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
     try {
       Thread.sleep(Integer.parseInt(sleepTimeInMs));
     } catch (InterruptedException e) {
-      OLogManager.instance().error(this, "Sleep was interrupted", e);
+      OLogManager.instance().debug(this, "Sleep was interrupted in SQL batch");
     }
   }
 

@@ -46,4 +46,9 @@ public interface LRUList extends Iterable<OCacheEntry> {
 
   @Override
   Iterator<OCacheEntry> iterator();
+
+  /**
+   * @return Iterator which iterates from head to tail, or in other words from least recently used to most recently used pages.
+   */
+  Iterator<OCacheEntry> reverseIterator();
 }

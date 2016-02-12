@@ -360,9 +360,9 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     boolean originalSaved = false;
     ODirtyManager dirtyManager = ORecordInternal.getDirtyManager(iRecord);
     do {
-      Set<ORecord> newRecord = dirtyManager.getNewRecord();
+      Set<ORecord> newRecord = dirtyManager.getNewRecords();
       Set<ORecord> updatedRecord = dirtyManager.getUpdateRecords();
-      dirtyManager.cleanForSave();
+      dirtyManager.clearForSave();
       if (newRecord != null) {
         for (ORecord rec : newRecord) {
           if (rec instanceof ODocument)
@@ -387,7 +387,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
             addRecord(rec, ORecordOperation.UPDATED, getClusterName(rec));
         }
       }
-    } while (dirtyManager.getNewRecord() != null || dirtyManager.getUpdateRecords() != null);
+    } while (dirtyManager.getNewRecords() != null || dirtyManager.getUpdateRecords() != null);
 
     if (!originalSaved && iRecord.isDirty()) {
       final byte operation = iForceCreate ? ORecordOperation.CREATED

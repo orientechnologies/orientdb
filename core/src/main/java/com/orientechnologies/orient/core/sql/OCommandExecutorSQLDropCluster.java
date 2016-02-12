@@ -32,38 +32,49 @@ import java.util.Map;
 
 /**
  * SQL DROP CLUSTER command: Drop a cluster from the database
- * 
+ *
  * @author Luca Garulli
- * 
  */
 @SuppressWarnings("unchecked")
 public class OCommandExecutorSQLDropCluster extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
   public static final String KEYWORD_DROP    = "DROP";
   public static final String KEYWORD_CLUSTER = "CLUSTER";
 
-  private String             clusterName;
+  private String clusterName;
 
   public OCommandExecutorSQLDropCluster parse(final OCommandRequest iRequest) {
-    init((OCommandRequestText) iRequest);
+    final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
 
-    final StringBuilder word = new StringBuilder();
+    String queryText = textRequest.getText();
+    String originalQuery = queryText;
+    try {
+      queryText = preParse(queryText, iRequest);
+      textRequest.setText(queryText);
 
-    int oldPos = 0;
-    int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_DROP))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_DROP + " not found. Use " + getSyntax(), parserText, oldPos);
+      init((OCommandRequestText) iRequest);
 
-    pos = nextWord(parserText, parserTextUpperCase, pos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_CLUSTER))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLUSTER + " not found. Use " + getSyntax(), parserText, oldPos);
+      final StringBuilder word = new StringBuilder();
 
-    pos = nextWord(parserText, parserTextUpperCase, pos, word, false);
-    if (pos == -1)
-      throw new OCommandSQLParsingException("Expected <cluster>. Use " + getSyntax(), parserText, pos);
+      int oldPos = 0;
+      int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
+      if (pos == -1 || !word.toString().equals(KEYWORD_DROP))
+        throw new OCommandSQLParsingException("Keyword " + KEYWORD_DROP + " not found. Use " + getSyntax(), parserText, oldPos);
 
-    clusterName = word.toString();
-    if (clusterName == null)
-      throw new OCommandSQLParsingException("Cluster is null. Use " + getSyntax(), parserText, pos);
+      pos = nextWord(parserText, parserTextUpperCase, pos, word, true);
+      if (pos == -1 || !word.toString().equals(KEYWORD_CLUSTER))
+        throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLUSTER + " not found. Use " + getSyntax(), parserText, oldPos);
+
+      pos = nextWord(parserText, parserTextUpperCase, pos, word, false);
+      if (pos == -1)
+        throw new OCommandSQLParsingException("Expected <cluster>. Use " + getSyntax(), parserText, pos);
+
+      clusterName = word.toString();
+      if (clusterName == null)
+        throw new OCommandSQLParsingException("Cluster is null. Use " + getSyntax(), parserText, pos);
+
+    } finally {
+      textRequest.setText(originalQuery);
+    }
 
     return this;
   }

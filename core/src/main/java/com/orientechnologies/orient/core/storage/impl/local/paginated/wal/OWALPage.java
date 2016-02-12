@@ -32,10 +32,10 @@ public class OWALPage {
 
   public static final  int CRC_OFFSET          = 0;
   public static final  int MAGIC_NUMBER_OFFSET = CRC_OFFSET + OIntegerSerializer.INT_SIZE;
-  private static final int FREE_SPACE_OFFSET   = MAGIC_NUMBER_OFFSET + OLongSerializer.LONG_SIZE;
+  public static final int FREE_SPACE_OFFSET   = MAGIC_NUMBER_OFFSET + OLongSerializer.LONG_SIZE;
   public static final  int RECORDS_OFFSET      = FREE_SPACE_OFFSET + OIntegerSerializer.INT_SIZE;
 
-  private static final int MAX_ENTRY_SIZE = PAGE_SIZE - RECORDS_OFFSET;
+  public static final int MAX_ENTRY_SIZE = PAGE_SIZE - RECORDS_OFFSET;
 
   private final ByteBuffer buffer;
 

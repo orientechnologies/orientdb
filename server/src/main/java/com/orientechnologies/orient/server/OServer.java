@@ -170,9 +170,12 @@ public class OServer {
 
   public void restart() throws ClassNotFoundException, InvocationTargetException, InstantiationException, NoSuchMethodException,
       IllegalAccessException {
-    shutdown();
-    startup(serverCfg.getConfiguration());
-    activate();
+    try {
+      shutdown();
+    } finally {
+      startup(serverCfg.getConfiguration());
+      activate();
+    }
   }
 
   /**
@@ -193,7 +196,7 @@ public class OServer {
   }
 
   /**
-   * Attempt to load a class from given class-loader.
+   * Attempt to load a class from givenstar class-loader.
    */
   /* @Nullable */
   private Class<?> tryLoadClass(/* @Nullable */final ClassLoader classLoader, final String name) {
@@ -233,19 +236,6 @@ public class OServer {
 
     startup(new File(OSystemVariableResolver.resolveSystemVariables(config)));
 
-    Orient.instance().getProfiler().registerHookValue("system.databases", "List of databases configured in Server",
-        METRIC_TYPE.TEXT, new OProfilerHookValue() {
-          @Override
-          public Object getValue() {
-            final StringBuilder dbs = new StringBuilder(64);
-            for (String dbName : getAvailableStorageNames().keySet()) {
-              if (dbs.length() > 0)
-                dbs.append(',');
-              dbs.append(dbName);
-            }
-            return dbs.toString();
-          }
-        });
 
     return this;
   }
@@ -313,6 +303,20 @@ public class OServer {
 
     OLogManager.instance().info(this, "Databases directory: " + new File(databaseDirectory).getAbsolutePath());
 
+    Orient.instance().getProfiler().registerHookValue("system.databases", "List of databases configured in Server",
+        METRIC_TYPE.TEXT, new OProfilerHookValue() {
+          @Override
+          public Object getValue() {
+            final StringBuilder dbs = new StringBuilder(64);
+            for (String dbName : getAvailableStorageNames().keySet()) {
+              if (dbs.length() > 0)
+                dbs.append(',');
+              dbs.append(dbName);
+            }
+            return dbs.toString();
+          }
+        });
+    
     return this;
   }
 
@@ -769,7 +773,7 @@ public class OServer {
     }
 
     // HASH THE PASSWORD
-    iPassword = OSecurityManager.instance().createHash(iPassword, OSecurityManager.PBKDF2_SHA256_ALGORITHM, true);
+    iPassword = OSecurityManager.instance().createHash(iPassword, getContextConfiguration().getValueAsString(OGlobalConfiguration.SECURITY_USER_PASSWORD_DEFAULT_ALGORITHM), true);
 
     serverCfg.setUser(iName, iPassword, iPermissions);
     serverCfg.saveConfiguration();
