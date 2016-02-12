@@ -2740,7 +2740,15 @@ OFetchPlanItem FetchPlanItem():
         (
             <STAR> { jjtThis.star = true; }
             |
-            [ <LBRACKET> jjtThis.leftDepth = Integer() <RBRACKET> ]
+            [
+                <LBRACKET>
+                (
+                    jjtThis.leftDepth = Integer()
+                    |
+                    <STAR> { jjtThis.leftStar = true; }
+                )
+                <RBRACKET>
+            ]
             lastIdentifier = Identifier() { lastStarred = false; } [<STAR> { lastStarred = true; }]
             {
                 String field = lastIdentifier.getValue();
