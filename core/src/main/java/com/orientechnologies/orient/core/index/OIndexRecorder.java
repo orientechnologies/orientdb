@@ -19,14 +19,13 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import java.util.*;
+
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
-import java.util.*;
 
 public class OIndexRecorder implements OIndex<OIdentifiable>, OIndexInternal<OIdentifiable> {
   private final OIndexInternal<OIdentifiable> delegate;
@@ -311,24 +310,6 @@ public class OIndexRecorder implements OIndex<OIdentifiable>, OIndexInternal<OId
   @Override
   public boolean hasRangeQuerySupport() {
     return delegate.hasRangeQuerySupport();
-  }
-
-  @Override
-  public void freeze(boolean throwException) {
-    throw new UnsupportedOperationException("Not allowed operation");
-  }
-
-  @Override
-  public void release() {
-    throw new UnsupportedOperationException("Not allowed operation");
-  }
-
-  @Override
-  public void acquireModificationLock() {
-  }
-
-  @Override
-  public void releaseModificationLock() {
   }
 
   @Override

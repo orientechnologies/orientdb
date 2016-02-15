@@ -28,17 +28,12 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.exception.OSchemaException;
-import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.exception.OTransactionException;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.hook.ORecordHook.RESULT;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexAbstract;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
@@ -55,10 +50,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
@@ -67,8 +59,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class OTransactionOptimistic extends OTransactionRealAbstract {
   private static AtomicInteger txSerial = new AtomicInteger();
 
-  private boolean usingLog = true;
-  private int     txStartCounter;
+  private boolean              usingLog = true;
+  private int                  txStartCounter;
 
   private class CommitIndexesCallback implements Runnable {
     private final Map<String, OIndex<?>> indexes;
@@ -592,29 +584,24 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
           && !(database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage))
         database.getStorage().commit(this, null);
       else {
-        List<OIndexAbstract<?>> lockedIndexes = acquireIndexLocks();
-        try {
-          final Map<String, OIndex<?>> indexes = new HashMap<String, OIndex<?>>();
-          for (OIndex<?> index : database.getMetadata().getIndexManager().getIndexes())
-            indexes.put(index.getName(), index);
+        final Map<String, OIndex<?>> indexes = new HashMap<String, OIndex<?>>();
+        for (OIndex<?> index : database.getMetadata().getIndexManager().getIndexes())
+          indexes.put(index.getName(), index);
 
-          final Runnable callback = new CommitIndexesCallback(indexes);
+        final Runnable callback = new CommitIndexesCallback(indexes);
 
-          final String storageType = database.getStorage().getUnderlying().getType();
+        final String storageType = database.getStorage().getUnderlying().getType();
 
-          if (storageType.equals(OEngineLocalPaginated.NAME) || storageType.equals(OEngineMemory.NAME))
-            database.getStorage().commit(OTransactionOptimistic.this, callback);
-          else {
-            database.getStorage().callInLock(new Callable<Object>() {
-              @Override
-              public Object call() throws Exception {
-                database.getStorage().commit(OTransactionOptimistic.this, callback);
-                return null;
-              }
-            }, true);
-          }
-        } finally {
-          releaseIndexLocks(lockedIndexes);
+        if (storageType.equals(OEngineLocalPaginated.NAME) || storageType.equals(OEngineMemory.NAME))
+          database.getStorage().commit(OTransactionOptimistic.this, callback);
+        else {
+          database.getStorage().callInLock(new Callable<Object>() {
+            @Override
+            public Object call() throws Exception {
+              database.getStorage().commit(OTransactionOptimistic.this, callback);
+              return null;
+            }
+          }, true);
         }
       }
     }
@@ -622,39 +609,5 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     close();
 
     status = TXSTATUS.COMPLETED;
-  }
-
-  private List<OIndexAbstract<?>> acquireIndexLocks() {
-    List<OIndexAbstract<?>> lockedIndexes = null;
-    final List<String> involvedIndexes = getInvolvedIndexes();
-
-    if (involvedIndexes != null)
-      Collections.sort(involvedIndexes);
-
-    try {
-      // LOCK INVOLVED INDEXES
-      if (involvedIndexes != null)
-        for (String indexName : involvedIndexes) {
-          final OIndexAbstract<?> index = (OIndexAbstract<?>) database.getMetadata().getIndexManager().getIndexInternal(indexName);
-          if (lockedIndexes == null)
-            lockedIndexes = new ArrayList<OIndexAbstract<?>>();
-
-          index.acquireModificationLock();
-          lockedIndexes.add(index);
-        }
-
-      return lockedIndexes;
-    } catch (RuntimeException e) {
-      releaseIndexLocks(lockedIndexes);
-      throw e;
-    }
-  }
-
-  private void releaseIndexLocks(List<OIndexAbstract<?>> lockedIndexes) {
-    if (lockedIndexes != null) {
-      for (OIndexAbstract<?> index : lockedIndexes)
-        index.releaseModificationLock();
-
-    }
   }
 }
