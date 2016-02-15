@@ -5,6 +5,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.UUID;
@@ -372,7 +373,7 @@ public class OrientTokenHandler extends OServerPluginAbstract implements OTokenH
       mac.update(base, baseOffset, baseLength);
       final byte[] calculatedSignature = mac.doFinal();
 
-      return Arrays.equals(calculatedSignature, signature);
+      return MessageDigest.isEqual(calculatedSignature, signature);
 
     } catch (RuntimeException e) {
       throw e;
