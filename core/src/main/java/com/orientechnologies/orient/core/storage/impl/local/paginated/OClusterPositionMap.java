@@ -238,6 +238,57 @@ public class OClusterPositionMap extends ODurableComponent {
     }
   }
 
+  public long allocate() throws IOException {
+    startOperation();
+    try {
+      OAtomicOperation atomicOperation = startAtomicOperation(true);
+
+      acquireExclusiveLock();
+      try {
+        long lastPage = getFilledUpTo(atomicOperation, fileId) - 1;
+        OCacheEntry cacheEntry;
+        if (lastPage < 0)
+          cacheEntry = addPage(atomicOperation, fileId);
+        else
+          cacheEntry = loadPage(atomicOperation, fileId, lastPage, false, 1);
+
+        cacheEntry.acquireExclusiveLock();
+        try {
+
+          OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry, getChanges(atomicOperation, cacheEntry));
+          if (bucket.isFull()) {
+            cacheEntry.releaseExclusiveLock();
+            releasePage(atomicOperation, cacheEntry);
+
+            cacheEntry = addPage(atomicOperation, fileId);
+
+            cacheEntry.acquireExclusiveLock();
+            bucket = new OClusterPositionMapBucket(cacheEntry, getChanges(atomicOperation, cacheEntry));
+          }
+
+          final long index = bucket.allocate();
+          final long result = index + cacheEntry.getPageIndex() * OClusterPositionMapBucket.MAX_ENTRIES;
+
+          endAtomicOperation(false, null);
+          return result;
+        } catch (Exception e) {
+          endAtomicOperation(true, e);
+          throw OException.wrapException(
+              new OClusterPositionMapException("Error during creation of mapping between logical adn physical record position",
+                  this), e);
+        } finally {
+          cacheEntry.releaseExclusiveLock();
+          releasePage(atomicOperation, cacheEntry);
+        }
+      } finally {
+        releaseExclusiveLock();
+      }
+    } finally {
+      completeOperation();
+    }
+  }
+
+
   public void update(long clusterPosition, OClusterPositionMapBucket.PositionEntry entry) throws IOException {
     startOperation();
     try {

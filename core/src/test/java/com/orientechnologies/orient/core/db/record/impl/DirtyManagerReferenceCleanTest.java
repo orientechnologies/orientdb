@@ -51,7 +51,7 @@ public class DirtyManagerReferenceCleanTest {
     doc.field("ref", doc1);
     assertEquals(1, ORecordInternal.getDirtyManager(doc).getReferences().size());
     db.save(doc);
-    assertEquals(1, ORecordInternal.getDirtyManager(doc).getReferences().size());
+    assertNull(ORecordInternal.getDirtyManager(doc).getReferences());
     db.commit();
     assertNull(ORecordInternal.getDirtyManager(doc).getReferences());
   }
