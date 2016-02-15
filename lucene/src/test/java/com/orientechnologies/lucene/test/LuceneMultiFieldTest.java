@@ -40,13 +40,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Test(groups = "embedded")
 public class LuceneMultiFieldTest extends BaseLuceneTest {
 
-  public LuceneMultiFieldTest() {
-    this(false);
-  }
 
-  public LuceneMultiFieldTest(boolean remote) {
-    // super(remote);
-  }
 
   @BeforeClass
   public void init() {
