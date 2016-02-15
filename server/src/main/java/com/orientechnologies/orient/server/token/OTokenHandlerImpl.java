@@ -27,6 +27,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Random;
@@ -393,7 +394,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
       mac.init(getKeyProvider().getKey(header));
       mac.update(base, baseOffset, baseLength);
       final byte[] calculatedSignature = mac.doFinal();
-      boolean valid = Arrays.equals(calculatedSignature, signature);
+      boolean valid = MessageDigest.isEqual(calculatedSignature, signature);
       if (!valid) {
         OLogManager.instance().warn(this, "Signature failure: %s", OBase64Utils.encodeBytes(base));
       }

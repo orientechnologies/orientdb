@@ -105,4 +105,21 @@ public class AlterSuperclassTest {
     classChild.setSuperClasses(Arrays.asList(classA, classA));
   }
 
+  /**
+   * This tests fixes a problem created in Issue #5586.
+   * It should not throw ArrayIndexOutOfBoundsException
+   */
+  @Test
+  public void testBrokenDbAlteringSuperClass() {
+    OSchema schema = db.getMetadata().getSchema();
+    OClass classA = schema.createClass("BaseClass");
+    OClass classChild = schema.createClass("ChildClass1", classA);
+    OClass classChild2 = schema.createClass("ChildClass2", classA);
+
+    classChild2.setSuperClass(classChild);
+
+    schema.dropClass("ChildClass2");
+
+  }
+
 }

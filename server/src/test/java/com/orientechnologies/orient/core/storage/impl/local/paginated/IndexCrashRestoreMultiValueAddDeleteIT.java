@@ -14,16 +14,14 @@ import com.orientechnologies.orient.server.OServerMain;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Test;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -90,6 +88,7 @@ public class IndexCrashRestoreMultiValueAddDeleteIT {
     testDocumentTx.open("admin", "admin");
   }
 
+  @Test
   public void testEntriesAddition() throws Exception {
 
     createSchema(baseDocumentTx);
@@ -102,7 +101,8 @@ public class IndexCrashRestoreMultiValueAddDeleteIT {
       futures.add(executorService.submit(new DataPropagationTask(baseDocumentTx, testDocumentTx)));
     }
 
-    Thread.sleep(3000);
+    System.out.println("Wait for 5 minutes");
+    TimeUnit.MINUTES.sleep(5);
 
     System.out.println("Wait for process to destroy");
     process.destroy();

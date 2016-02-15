@@ -117,7 +117,8 @@ public class LocalPaginatedStorageMixCrashRestoreIT {
       futures.add(executorService.submit(new DataChangeTask(baseDocumentTx, testDocumentTx)));
     }
 
-    Thread.sleep(3000);
+    System.out.println("Wait for 5 minutes");
+    TimeUnit.MINUTES.sleep(5);
 
     long lastTs = System.currentTimeMillis();
     System.out.println("Wait for process to destroy");
@@ -289,8 +290,6 @@ public class LocalPaginatedStorageMixCrashRestoreIT {
       server.startup(RemoteDBRunner.class
           .getResourceAsStream("/com/orientechnologies/orient/core/storage/impl/local/paginated/db-mix-config.xml"));
       server.activate();
-      while (true)
-        ;
     }
   }
 

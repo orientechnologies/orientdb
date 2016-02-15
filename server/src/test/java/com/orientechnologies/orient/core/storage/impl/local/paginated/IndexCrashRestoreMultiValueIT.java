@@ -118,8 +118,8 @@ public class IndexCrashRestoreMultiValueIT {
       futures.add(executorService.submit(new DataPropagationTask(baseDocumentTx, testDocumentTx)));
     }
 
-    System.out.println("Wait for 300 second");
-    TimeUnit.SECONDS.sleep(10);
+    System.out.println("Wait for 5 minutes");
+    TimeUnit.MINUTES.sleep(5);
 
     System.out.println("Wait for process to destroy");
     serverProcess.destroy();

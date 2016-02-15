@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.server.distributed;
 
-import junit.framework.Assert;
-
+import org.junit.Assert;
 import org.junit.Test;
 
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -38,32 +37,27 @@ public class TestSharding extends AbstractServerClusterTest {
   }
 
   @Override
+  protected void onAfterDatabaseCreation(OrientBaseGraph graphNoTx) {
+    final OrientVertexType clientType = graphNoTx.createVertexType("Client-Type");
+    final OrientVertexType.OrientVertexProperty prop = clientType.createProperty("name-property", OType.STRING);
+    prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+
+    clientType.addCluster("client-type_europe");
+    clientType.addCluster("client-type_usa");
+    clientType.addCluster("client-type_asia");
+
+    graphNoTx.createVertexType("Product-Type");
+    graphNoTx.createVertexType("Hobby-Type");
+
+    graphNoTx.createEdgeType("Knows-Type");
+    graphNoTx.createEdgeType("Buy-Type");
+    graphNoTx.createEdgeType("Loves-Type");
+  }
+
+  @Override
   protected void executeTest() throws Exception {
     try {
       OrientGraphFactory localFactory = new OrientGraphFactory("plocal:target/server0/databases/" + getDatabaseName());
-      OrientGraphNoTx graphNoTx = localFactory.getNoTx();
-
-      try {
-        final OrientVertexType clientType = graphNoTx.createVertexType("Client-Type");
-        final OrientVertexType.OrientVertexProperty prop = clientType.createProperty("name-property", OType.STRING);
-        prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
-
-        for (int i = 1; i < serverInstance.size(); ++i) {
-          final String serverName = serverInstance.get(i).getServerInstance().getDistributedManager().getLocalNodeName();
-          clientType.addCluster("client_" + serverName);
-        }
-
-        graphNoTx.createVertexType("Product-Type");
-        graphNoTx.createVertexType("Hobby-Type");
-
-        graphNoTx.createEdgeType("Knows-Type");
-        graphNoTx.createEdgeType("Buy-Type");
-        graphNoTx.createEdgeType("Loves-Type");
-
-        Thread.sleep(500);
-      } finally {
-        graphNoTx.shutdown();
-      }
 
       final OrientVertex product;
       final OrientVertex fishing;

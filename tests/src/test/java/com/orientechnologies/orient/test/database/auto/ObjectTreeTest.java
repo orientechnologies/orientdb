@@ -656,6 +656,9 @@ public class ObjectTreeTest extends ObjectDBBaseTest {
     Child listChild4 = database.newInstance(Child.class);
     listChild4.setName("list4");
     test.getList().add(listChild4);
+    Child listChildDel = database.newInstance(Child.class);
+    listChildDel.setName("list4");
+    test.getList().add(listChildDel);
 
     setChild1 = database.newInstance(Child.class);
     setChild1.setName("set1");
@@ -675,6 +678,7 @@ public class ObjectTreeTest extends ObjectDBBaseTest {
     list1Rid = database.getRecordByUserObject(listChild1, false).getIdentity();
     list2Rid = database.getRecordByUserObject(listChild2, false).getIdentity();
     list3Rid = database.getRecordByUserObject(listChild3, false).getIdentity();
+    ORID list3Del = database.getRecordByUserObject(listChildDel, false).getIdentity();
     ORID list4Rid = database.getRecordByUserObject(listChild4, false).getIdentity();
     set1Rid = database.getRecordByUserObject(setChild1, false).getIdentity();
     set2Rid = database.getRecordByUserObject(setChild2, false).getIdentity();
@@ -700,6 +704,8 @@ public class ObjectTreeTest extends ObjectDBBaseTest {
     it.remove();
     Assert.assertTrue((!test.getSet().contains(setChild2) || !test.getSet().contains(setChild3)));
     test.getSet().add(setChild4);
+    test.getList().remove(list3Del);
+    database.delete(list3Del);
     database.save(test);
     test = database.load(testRid);
     Assert.assertTrue(!test.getList().contains(listChild3));

@@ -26,9 +26,8 @@ import com.orientechnologies.orient.core.db.record.OProxedResource;
 
 /**
  * Proxy class to access to the centralized Function Library instance.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 public class OFunctionLibraryProxy extends OProxedResource<OFunctionLibrary> implements OFunctionLibrary {
   public OFunctionLibraryProxy(final OFunctionLibrary iDelegate, final ODatabaseDocumentInternal iDatabase) {
@@ -63,5 +62,15 @@ public class OFunctionLibraryProxy extends OProxedResource<OFunctionLibrary> imp
   @Override
   public void close() {
     delegate.close();
+  }
+
+  @Override
+  public void dropFunction(OFunction function) {
+    delegate.dropFunction(function);
+  }
+
+  @Override
+  public void dropFunction(String iName) {
+    delegate.dropFunction(iName);
   }
 }

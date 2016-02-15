@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.script.OCommandExecutorFunction;
 import com.orientechnologies.orient.core.command.script.OCommandFunction;
@@ -33,13 +34,15 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 
 /**
  * Manages stored functions.
- * 
+ *
  * @author Luca Garulli
  */
 public class OFunctionLibraryImpl implements OFunctionLibrary {
@@ -82,7 +85,11 @@ public class OFunctionLibraryImpl implements OFunctionLibrary {
     init();
 
     final OFunction f = new OFunction().setName(iName);
-    f.save();
+    try {
+      f.save();
+    } catch (ORecordDuplicatedException ex) {
+      throw OException.wrapException(new OFunctionDuplicatedException("Function with name '" + iName + "' already exist"), null);
+    }
     functions.put(iName.toUpperCase(), f);
 
     return f;
@@ -94,14 +101,36 @@ public class OFunctionLibraryImpl implements OFunctionLibrary {
 
   protected void init() {
     final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
-    if (db.getMetadata().getSchema().existsClass("OFunction"))
+    if (db.getMetadata().getSchema().existsClass("OFunction")) {
+      final OClass f = db.getMetadata().getSchema().getClass("OFunction");
+      OProperty prop = f.getProperty("name");
+      if (prop.getAllIndexes().isEmpty())
+        prop.createIndex(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX);
       return;
+    }
 
     final OClass f = db.getMetadata().getSchema().createClass("OFunction");
-    f.createProperty("name", OType.STRING, (OType) null, true);
+    OProperty prop = f.createProperty("name", OType.STRING, (OType) null, true);
+    prop.createIndex(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX);
     f.createProperty("code", OType.STRING, (OType) null, true);
     f.createProperty("language", OType.STRING, (OType) null, true);
     f.createProperty("idempotent", OType.BOOLEAN, (OType) null, true);
     f.createProperty("parameters", OType.EMBEDDEDLIST, OType.STRING, true);
+  }
+
+  @Override
+  public synchronized void dropFunction(OFunction function) {
+    String name = function.getName();
+    ODocument doc = function.getDocument();
+    doc.delete();
+    functions.remove(name.toUpperCase());
+  }
+
+  @Override
+  public synchronized void dropFunction(String iName) {
+    OFunction function = getFunction(iName);
+    ODocument doc = function.getDocument();
+    doc.delete();
+    functions.remove(iName.toUpperCase());
   }
 }

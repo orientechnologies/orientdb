@@ -155,6 +155,14 @@ public class OTxTask extends OAbstractReplicatedTask {
           }
         }
       } catch (Exception t) {
+        // RESET ANY ASSIGNED CLUSTER ID
+        for (OAbstractRecordReplicatedTask task : tasks) {
+          if (task instanceof OCreateRecordTask) {
+            final OCreateRecordTask createRT = (OCreateRecordTask) task;
+            createRT.resetRecord();
+          }
+        }
+
         // EXCEPTION: ASSURE ALL LOCKS ARE FREED
         for (ORID r : result.locks)
           ddb.unlockRecord(r);
@@ -189,8 +197,8 @@ public class OTxTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public List<OAbstractRemoteTask> getFixTask(final ODistributedRequest iRequest, OAbstractRemoteTask iOriginalTask, final Object iBadResponse, final Object iGoodResponse, String executorNodeName,
-                                                 ODistributedServerManager dManager) {
+  public List<OAbstractRemoteTask> getFixTask(final ODistributedRequest iRequest, OAbstractRemoteTask iOriginalTask,
+      final Object iBadResponse, final Object iGoodResponse, String executorNodeName, ODistributedServerManager dManager) {
     if (!(iBadResponse instanceof OTxTaskResult)) {
       // TODO: MANAGE ERROR ON LOCAL NODE
       ODistributedServerLog.debug(this, getNodeSource(), null, DIRECTION.NONE,

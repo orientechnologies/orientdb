@@ -632,6 +632,12 @@ public class OSelectStatementTest {
     checkRightSyntax("select from V limit :limit");
   }
 
+  @Test
+  public void testFetchPlanBracketStar(){
+    //issue #5689
+    checkRightSyntax("SELECT FROM Def fetchplan *:2 [*]in_*:-2");
+    checkRightSyntax("SELECT FROM Def fetchplan *:2 [1]in_*:-2");
+  }
 
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);

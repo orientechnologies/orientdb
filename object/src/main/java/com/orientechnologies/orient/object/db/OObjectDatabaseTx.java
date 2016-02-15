@@ -863,7 +863,8 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object>implements O
     for (ORID orphan : handler.getOrphans()) {
       final ODocument doc = orphan.getRecord();
       deleteCascade(doc);
-      underlying.delete(doc);
+      if (doc != null)
+        underlying.delete(doc);
     }
     handler.getOrphans().clear();
   }

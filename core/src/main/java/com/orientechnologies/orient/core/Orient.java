@@ -19,21 +19,6 @@
  */
 package com.orientechnologies.orient.core;
 
-import java.lang.ref.ReferenceQueue;
-import java.lang.ref.WeakReference;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.listener.OListenerManger;
@@ -41,7 +26,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfilerStub;
-import com.orientechnologies.common.serialization.types.OShortSerializer;
+import com.orientechnologies.common.util.OClassLoaderHelper;
 import com.orientechnologies.orient.core.cache.OLocalRecordCacheFactory;
 import com.orientechnologies.orient.core.cache.OLocalRecordCacheFactoryImpl;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
@@ -50,8 +35,6 @@ import com.orientechnologies.orient.core.conflict.ORecordConflictStrategyFactory
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseThreadLocalFactory;
 import com.orientechnologies.orient.core.engine.OEngine;
-import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
-import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.ORecordFactoryManager;
 import com.orientechnologies.orient.core.shutdown.OShutdownHandler;
@@ -62,13 +45,7 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -99,7 +76,9 @@ public class Orient extends OListenerManger<OOrientListener> {
   private final Set<WeakHashSetValueHolder<OOrientShutdownListener>> weakShutdownListeners         = Collections
       .newSetFromMap(new ConcurrentHashMap<WeakHashSetValueHolder<OOrientShutdownListener>, Boolean>());
 
-  private final PriorityQueue<OShutdownHandler> shutdownHandlers = new PriorityQueue<OShutdownHandler>(
+
+
+  private final PriorityQueue<OShutdownHandler> shutdownHandlers = new PriorityQueue<OShutdownHandler>(11,
       new Comparator<OShutdownHandler>() {
         @Override
         public int compare(OShutdownHandler handlerOne, OShutdownHandler handlerTwo) {
@@ -249,10 +228,7 @@ public class Orient extends OListenerManger<OOrientListener> {
         }
       });
 
-      // REGISTER THE EMBEDDED ENGINE
-      registerEngine(new OEngineLocalPaginated());
-      registerEngine(new OEngineMemory());
-      registerEngine("com.orientechnologies.orient.client.remote.OEngineRemote");
+      registerEngines();
 
       if (OGlobalConfiguration.ENVIRONMENT_DUMP_CFG_AT_STARTUP.getValueAsBoolean())
         OGlobalConfiguration.dumpConfiguration(System.out);
@@ -321,6 +297,25 @@ public class Orient extends OListenerManger<OOrientListener> {
    * @see OShutdownWorkersHandler
    * @see
    */
+  private void registerEngines() {
+    ClassLoader classLoader = Orient.class.getClassLoader();
+
+    Iterator<OEngine> engines = OClassLoaderHelper.lookupProviderWithOrientClassLoader(OEngine.class, classLoader);
+
+    OEngine engine = null;
+    while (engines.hasNext()) {
+      try {
+        engine = engines.next();
+        registerEngine(engine);
+      } catch (IllegalArgumentException e) {
+        if (engine != null)
+          OLogManager.instance().debug(this, "Failed to replace engine " + engine.getName());
+      }
+    }
+
+    initEngines();
+  }
+
   public Orient shutdown() {
     engineLock.writeLock().lock();
     try {
@@ -559,12 +554,39 @@ public class Orient extends OListenerManger<OOrientListener> {
     }
   }
 
-  public void registerEngine(final OEngine iEngine) {
-    engineLock.readLock().lock();
-    try {
-      engines.put(iEngine.getName(), iEngine);
-    } finally {
-      engineLock.readLock().unlock();
+  private void registerEngine(final OEngine iEngine) throws IllegalArgumentException {
+    OEngine oEngine = engines.get(iEngine.getName());
+
+    if (oEngine != null) {
+      if (!oEngine.getClass().isAssignableFrom(iEngine.getClass())) {
+        throw new IllegalArgumentException("Cannot replace storage " + iEngine.getName());
+      }
+    }
+    engines.put(iEngine.getName(), iEngine);
+  }
+
+  private void initEngines() {
+    final List<String> entriesToDelete = new ArrayList<String>();
+
+    for (Map.Entry<String, OEngine> entry : engines.entrySet()) {
+      final OEngine engine = entry.getValue();
+      try {
+        engine.startup();
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "Error during initialization of engine %s , engine will be removed", entry.getKey());
+
+        try {
+          engine.shutdown();
+        } catch (Exception se) {
+          OLogManager.instance().error(this, "Error during engine shutdown", se);
+        }
+
+        entriesToDelete.add(entry.getKey());
+      }
+    }
+
+    for (String storageType : entriesToDelete) {
+      engines.remove(storageType);
     }
   }
 
@@ -782,14 +804,6 @@ public class Orient extends OListenerManger<OOrientListener> {
 
   public OLocalRecordCacheFactory getLocalRecordCache() {
     return localRecordCache;
-  }
-
-  private void registerEngine(final String className) {
-    try {
-      final Class<?> cls = Class.forName(className);
-      registerEngine((OEngine) cls.newInstance());
-    } catch (Exception e) {
-    }
   }
 
   private void purgeWeakStartupListeners() {
