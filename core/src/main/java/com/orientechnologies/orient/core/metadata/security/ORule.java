@@ -24,11 +24,13 @@ public class ORule implements Serializable{
     public static ResourceGeneric DATABASE = new ResourceGeneric("DATABASE", ODatabaseSecurityResources.DATABASE){private static final long serialVersionUID = 1L;};
     public static ResourceGeneric SCHEMA = new ResourceGeneric("SCHEMA", ODatabaseSecurityResources.SCHEMA){private static final long serialVersionUID = 1L;};
     public static ResourceGeneric COMMAND = new ResourceGeneric("COMMAND", ODatabaseSecurityResources.COMMAND){private static final long serialVersionUID = 1L;};
+    public static ResourceGeneric COMMAND_GREMLIN = new ResourceGeneric("COMMAND_GREMLIN", ODatabaseSecurityResources.COMMAND_GREMLIN) {private static final long serialVersionUID = 1L;};
     public static ResourceGeneric RECORD_HOOK = new ResourceGeneric("RECORD_HOOK", ODatabaseSecurityResources.RECORD_HOOK){private static final long serialVersionUID = 1L;};
     public static ResourceGeneric SYSTEM_CLUSTERS = new ResourceGeneric("SYSTEM_CLUSTER", ODatabaseSecurityResources.SYSTEMCLUSTERS){private static final long serialVersionUID = 1L;};
 
     private final String name;
     private final String legacyName;
+
     protected ResourceGeneric(String name, String legacyName) {
     	this.name = name;
     	this.legacyName = legacyName!=null?legacyName:name;
