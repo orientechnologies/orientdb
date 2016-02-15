@@ -48,20 +48,15 @@ public class OIndexDictionary extends OIndexOneValue {
       keyLockManager.acquireExclusiveLock(key);
 
     try {
-      modificationLock.requestModificationLock();
+      checkForKeyType(key);
+      acquireSharedLock();
       try {
-        checkForKeyType(key);
-        acquireSharedLock();
-        try {
-          markStorageDirty();
-          indexEngine.put(key, value);
-          return this;
+        markStorageDirty();
+        indexEngine.put(key, value);
+        return this;
 
-        } finally {
-          releaseSharedLock();
-        }
       } finally {
-        modificationLock.releaseModificationLock();
+        releaseSharedLock();
       }
     } finally {
       if (!txIsActive)
