@@ -24,10 +24,11 @@ You might want to use [orientdb-migrations](https://github.com/springnz/orientdb
 
 ## Release
 * upgrade version: remove SNAPSHOT (driver/pom.xml and tests-scala/build.sbt)
-* commit, tag
+* commit
 * final test before deploying: 
   * driver: mvn install -P release
   * tests-scala: sbt test
 * mvn clean deploy -P release   # use -DskipTests if hanging
+* tag, push, push --tags
 * bump versions to next SNAPSHOT
-* commit, push, push --tags
+* commit, push
