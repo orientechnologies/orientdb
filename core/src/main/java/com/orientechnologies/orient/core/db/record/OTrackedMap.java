@@ -20,14 +20,7 @@
 package com.orientechnologies.orient.core.db.record;
 
 import java.io.Serializable;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.WeakHashMap;
+import java.util.*;
 
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -37,18 +30,17 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 /**
  * Implementation of LinkedHashMap bound to a source ORecord object to keep track of changes. This avoid to call the makeDirty() by
  * hand when the map is changed.
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
+ *
  */
 @SuppressWarnings("serial")
 public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordElement, OTrackedMultiValue<Object, T>, Serializable {
-  final protected ORecord                           sourceRecord;
-  private STATUS                                    status          = STATUS.NOT_LOADED;
-  private Set<OMultiValueChangeListener<Object, T>> changeListeners = Collections
-                                                                        .newSetFromMap(new WeakHashMap<OMultiValueChangeListener<Object, T>, Boolean>());
-  protected Class<?>                                genericClass;
-  private final boolean                             embeddedCollection;
+  final protected ORecord                            sourceRecord;
+  private STATUS                                     status          = STATUS.NOT_LOADED;
+  private List<OMultiValueChangeListener<Object, T>> changeListeners = null;
+  protected Class<?>                                 genericClass;
+  private final boolean                              embeddedCollection;
 
   public OTrackedMap(final ORecord iRecord, final Map<Object, T> iOrigin, final Class<?> cls) {
     this(iRecord);
@@ -115,7 +107,7 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
   @Override
   public void clear() {
     final Map<Object, T> origValues;
-    if (changeListeners.isEmpty())
+    if (changeListeners == null)
       origValues = null;
     else
       origValues = new HashMap<Object, T>(this);
@@ -171,11 +163,14 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
   }
 
   public void addChangeListener(OMultiValueChangeListener<Object, T> changeListener) {
+    if(changeListeners == null)
+      changeListeners = new LinkedList<OMultiValueChangeListener<Object, T>>();
     changeListeners.add(changeListener);
   }
 
   public void removeRecordChangeListener(OMultiValueChangeListener<Object, T> changeListener) {
-    changeListeners.remove(changeListener);
+    if (changeListeners != null)
+      changeListeners.remove(changeListener);
   }
 
   public Map<Object, T> returnOriginalState(final List<OMultiValueChangeEvent<Object, T>> multiValueChangeEvents) {
@@ -209,9 +204,11 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
       return;
 
     setDirty();
-    for (final OMultiValueChangeListener<Object, T> changeListener : changeListeners) {
-      if (changeListener != null)
-        changeListener.onAfterRecordChanged(event);
+    if (changeListeners != null) {
+      for (final OMultiValueChangeListener<Object, T> changeListener : changeListeners) {
+        if (changeListener != null)
+          changeListener.onAfterRecordChanged(event);
+      }
     }
   }
 

@@ -1697,8 +1697,8 @@ public class ODocument extends ORecordAbstract
           cur.getValue().setChanged(false);
           cur.getValue().original = null;
           cur.getValue().timeLine = null;
-          if (cur.getValue().value instanceof OTrackedMultiValue<?, ?>) {
-            removeCollectionChangeListener(cur.getValue(), cur.getValue().value);
+
+          if (cur.getValue().changeListener == null && cur.getValue().value instanceof OTrackedMultiValue<?, ?>) {
             addCollectionChangeListener(cur.getValue());
           }
         }

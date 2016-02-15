@@ -37,7 +37,6 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.UUID;
-import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -74,22 +73,21 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.ORidBagUpd
  * @author Artem Orobets (enisher-at-gmail.com)
  */
 public class OSBTreeRidBag implements ORidBagDelegate {
-  private final OSBTreeCollectionManager                               collectionManager   = ODatabaseRecordThreadLocal.INSTANCE
+  private final OSBTreeCollectionManager                                collectionManager   = ODatabaseRecordThreadLocal.INSTANCE
                                                                                                .get().getSbTreeCollectionManager();
-  private final NavigableMap<OIdentifiable, Change>                    changes             = new ConcurrentSkipListMap<OIdentifiable, Change>();
+  private final NavigableMap<OIdentifiable, Change>                     changes             = new ConcurrentSkipListMap<OIdentifiable, Change>();
   /**
    * Entries with not valid id.
    */
-  private final IdentityHashMap<OIdentifiable, OModifiableInteger>     newEntries          = new IdentityHashMap<OIdentifiable, OModifiableInteger>();
-  private OBonsaiCollectionPointer                                     collectionPointer;
-  private int                                                          size;
+  private final IdentityHashMap<OIdentifiable, OModifiableInteger>      newEntries          = new IdentityHashMap<OIdentifiable, OModifiableInteger>();
+  private OBonsaiCollectionPointer                                      collectionPointer;
+  private int                                                           size;
 
-  private boolean                                                      autoConvertToRecord = true;
+  private boolean                                                       autoConvertToRecord = true;
 
-  private Set<OMultiValueChangeListener<OIdentifiable, OIdentifiable>> changeListeners     = Collections
-                                                                                               .newSetFromMap(new WeakHashMap<OMultiValueChangeListener<OIdentifiable, OIdentifiable>, Boolean>());
-  private transient ORecord                                            owner;
-  private boolean                                                      updateOwner         = true;
+  private List<OMultiValueChangeListener<OIdentifiable, OIdentifiable>> changeListeners;
+  private transient ORecord                                             owner;
+  private boolean                                                       updateOwner         = true;
 
   public static interface Change {
     public static final int SIZE = OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE;
@@ -394,7 +392,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
       if (OSBTreeRidBag.this.owner != null)
         ORecordInternal.unTrack(OSBTreeRidBag.this.owner, currentValue);
 
-      if (updateOwner && !changeListeners.isEmpty())
+      if (updateOwner)
         fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
             OMultiValueChangeEvent.OChangeType.REMOVE, currentValue, null, currentValue, false));
       currentRemoved = true;
@@ -695,7 +693,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     if (this.owner != null)
       ORecordInternal.track(this.owner, identifiable);
 
-    if (updateOwner && !changeListeners.isEmpty())
+    if (updateOwner)
       fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD,
           identifiable, identifiable, null, false));
   }
@@ -728,7 +726,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     if (this.owner != null)
       ORecordInternal.unTrack(this.owner, identifiable);
 
-    if (updateOwner && !changeListeners.isEmpty())
+    if (updateOwner)
       fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
           OMultiValueChangeEvent.OChangeType.REMOVE, identifiable, null, identifiable, false));
   }
@@ -773,11 +771,14 @@ public class OSBTreeRidBag implements ORidBagDelegate {
   }
 
   public void addChangeListener(final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener) {
+    if(changeListeners == null)
+      changeListeners = new LinkedList<OMultiValueChangeListener<OIdentifiable, OIdentifiable>>();
     changeListeners.add(changeListener);
   }
 
   public void removeRecordChangeListener(final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener) {
-    changeListeners.remove(changeListener);
+    if (changeListeners != null)
+      changeListeners.remove(changeListener);
   }
 
   @Override
@@ -907,7 +908,9 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     changes.clear();
     newEntries.clear();
     size = 0;
-    changeListeners.clear();
+    if(changeListeners != null)
+      changeListeners.clear();
+    changeListeners = null;
   }
 
   @Override
@@ -945,14 +948,18 @@ public class OSBTreeRidBag implements ORidBagDelegate {
   }
 
   @Override
-  public Set<OMultiValueChangeListener<OIdentifiable, OIdentifiable>> getChangeListeners() {
-    return Collections.unmodifiableSet(changeListeners);
+  public List<OMultiValueChangeListener<OIdentifiable, OIdentifiable>> getChangeListeners() {
+    if(changeListeners == null)
+      return Collections.emptyList();
+    return Collections.unmodifiableList(changeListeners);
   }
 
   protected void fireCollectionChangedEvent(final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> event) {
-    for (final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener : changeListeners) {
-      if (changeListener != null)
-        changeListener.onAfterRecordChanged(event);
+    if (changeListeners != null) {
+      for (final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener : changeListeners) {
+        if (changeListener != null)
+          changeListener.onAfterRecordChanged(event);
+      }
     }
   }
 

@@ -25,37 +25,40 @@ import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
 import com.orientechnologies.orient.core.db.record.ORecordElement.STATUS;
 
+import java.lang.ref.WeakReference;
+
 /**
  * Perform gathering of all operations performed on tracked collection and create mapping between list of collection operations and
  * field name that contains collection that was changed.
- * 
- * @param <K>
- *          Value that uniquely identifies position of item in collection
- * @param <V>
- *          Item value.
+ *
+ * @param <K> Value that uniquely identifies position of item in collection
+ * @param <V> Item value.
  */
 final class OSimpleMultiValueChangeListener<K, V> implements OMultiValueChangeListener<K, V> {
   /**
-   * 
+   *
    */
-  private final ODocument      oDocument;
-  private final ODocumentEntry entry;
+  private final WeakReference<ODocument> oDocument;
+  private final ODocumentEntry           entry;
 
   OSimpleMultiValueChangeListener(ODocument oDocument, final ODocumentEntry entry) {
-    this.oDocument = oDocument;
+    this.oDocument = new WeakReference<ODocument>(oDocument);
     this.entry = entry;
   }
 
   public void onAfterRecordChanged(final OMultiValueChangeEvent<K, V> event) {
-    if (this.oDocument.getInternalStatus() != STATUS.UNMARSHALLING) {
+    ODocument document = oDocument.get();
+    if (document == null)
+      //doc not alive anymore, do nothing.
+      return;
+    if (document.getInternalStatus() != STATUS.UNMARSHALLING) {
       if (event.isChangesOwnerContent())
-        this.oDocument.setDirty();
+        document.setDirty();
       else
-        this.oDocument.setDirtyNoChanged();
+        document.setDirtyNoChanged();
     }
 
-    if (!(this.oDocument._trackingChanges && this.oDocument.getIdentity().isValid())
-        || this.oDocument.getInternalStatus() == STATUS.UNMARSHALLING)
+    if (!(document._trackingChanges && document.getIdentity().isValid()) || document.getInternalStatus() == STATUS.UNMARSHALLING)
       return;
 
     if (entry == null || entry.isChanged())
