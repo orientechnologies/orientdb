@@ -30,4 +30,4 @@ You might want to use [orientdb-migrations](https://github.com/springnz/orientdb
   * tests-scala: sbt test
 * mvn clean deploy -P release   # use -DskipTests if hanging
 * bump versions to next SNAPSHOT
-* commit, push
+* commit, push, push --tags
