@@ -31,13 +31,7 @@ import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import java.io.IOException;
 import java.util.Locale;
@@ -292,4 +286,24 @@ public class DbCreationTest extends ObjectDBBaseTest {
     OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.setValue(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getValue());
   }
 
+  public void testDbOutOfPath() throws IOException {
+    if (!url.startsWith("remote"))
+      return;
+
+    // TRY UNIX PATH
+    try {
+      ODatabaseDocumentTx db = new ODatabaseDocumentTx("remote:/db");
+      database.open("admin", "admin");
+      Assert.fail("Security breach: database with path /db was created");
+    } catch (Exception e) {
+    }
+
+    // TRY WINDOWS PATH
+    try {
+      ODatabaseDocumentTx db = new ODatabaseDocumentTx("remote:C:/db");
+      database.open("admin", "admin");
+      Assert.fail("Security breach: database with path c:/db was created");
+    } catch (Exception e) {
+    }
+  }
 }

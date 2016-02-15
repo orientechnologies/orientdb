@@ -636,6 +636,12 @@ public class OSelectStatementTest {
         + " SKIP 10 LIMIT 1");
   }
 
+  @Test
+  public void testFetchPlanWithSuqareStar() {
+    checkRightSyntax("SELECT FROM Def fetchplan *:2 [*]in_*:-2");
+  }
+
+
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);
     try {

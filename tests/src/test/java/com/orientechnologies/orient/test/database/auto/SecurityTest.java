@@ -15,28 +15,26 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.orient.core.exception.OSecurityAccessException;
-import com.orientechnologies.orient.core.exception.OSecurityException;
-import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.metadata.security.OSecurity;
-import com.orientechnologies.orient.core.metadata.security.OSecurityRole;
-import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
-import com.orientechnologies.orient.core.metadata.security.OUser;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
-import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
+import java.io.IOException;
+import java.util.Date;
+import java.util.List;
+
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import java.io.IOException;
-import java.util.Date;
-import java.util.List;
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.exception.OSecurityException;
+import com.orientechnologies.orient.core.metadata.security.*;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
+import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
+import com.orientechnologies.orient.graph.gremlin.OCommandGremlin;
 
 @Test(groups = "security")
 public class SecurityTest extends DocumentDBBaseTest {
@@ -83,8 +81,8 @@ public class SecurityTest extends DocumentDBBaseTest {
     database.open("reader", "reader");
 
     try {
-      new ODocument("Profile").fields("nick", "error", "password", "I don't know", "lastAccessOn", new Date(), "registeredOn",
-          new Date()).save();
+      new ODocument("Profile")
+          .fields("nick", "error", "password", "I don't know", "lastAccessOn", new Date(), "registeredOn", new Date()).save();
     } catch (OSecurityAccessException e) {
       Assert.assertTrue(true);
     } catch (OResponseProcessingException e) {
@@ -269,6 +267,37 @@ public class SecurityTest extends DocumentDBBaseTest {
       database.command(new OCommandSQL("alter class Protected superclass OUser")).execute();
     } finally {
       database.getMetadata().getSchema().dropClass("Protected");
+    }
+  }
+
+  @Test
+  public void testGremlinExecution() throws IOException {
+    if (!database.getURL().startsWith("remote:"))
+      return;
+
+    database.open("admin", "admin");
+    try {
+      database.command(new OCommandGremlin("g.V")).execute();
+    } finally {
+      database.close();
+    }
+
+    database.open("reader", "reader");
+    try {
+      database.command(new OCommandGremlin("g.V")).execute();
+      Assert.fail("Security breach: Gremlin can be executed by reader user!");
+    } catch (OSecurityException e) {
+    } finally {
+      database.close();
+    }
+
+    database.open("writer", "writer");
+    try {
+      database.command(new OCommandGremlin("g.V")).execute();
+      Assert.fail("Security breach: Gremlin can be executed by writer user!");
+    } catch (OSecurityException e) {
+    } finally {
+      database.close();
     }
   }
 }
