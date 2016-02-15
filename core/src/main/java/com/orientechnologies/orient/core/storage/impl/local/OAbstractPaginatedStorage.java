@@ -1284,6 +1284,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     final ODatabaseDocumentInternal databaseRecord = (ODatabaseDocumentInternal) clientTx.getDatabase();
     ((OMetadataInternal) databaseRecord.getMetadata()).makeThreadLocalSchemaSnapshot();
+    final Iterable<ORecordOperation> entries = (Iterable<ORecordOperation>) clientTx.getAllRecordEntries();
+
+    for (ORecordOperation txEntry : entries) {
+      if (txEntry.type == ORecordOperation.CREATED || txEntry.type == ORecordOperation.UPDATED) {
+        final ORecord record = txEntry.getRecord();
+        if (record instanceof ODocument)
+          ((ODocument) record).validate();
+      }
+    }
 
     stateLock.acquireReadLock();
     try {
@@ -1299,15 +1308,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           makeStorageDirty();
           startStorageTx(clientTx);
 
-          final Iterable<ORecordOperation> entries = (Iterable<ORecordOperation>) clientTx.getAllRecordEntries();
-
-          for (ORecordOperation txEntry : entries) {
-            if (txEntry.type == ORecordOperation.CREATED || txEntry.type == ORecordOperation.UPDATED) {
-              final ORecord record = txEntry.getRecord();
-              if (record instanceof ODocument)
-                ((ODocument) record).validate();
-            }
-          }
           Map<ORecordOperation, OPhysicalPosition> positions = new IdentityHashMap<ORecordOperation, OPhysicalPosition>();
           for (ORecordOperation txEntry : entries) {
             ORecord rec = txEntry.getRecord();
