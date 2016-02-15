@@ -20,7 +20,6 @@ import org.apache.tinkerpop.gremlin.structure.VertexProperty;
 import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
 import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
 
-import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
@@ -344,49 +343,6 @@ public final class OrientVertex extends OrientElement implements Vertex {
                 return iFieldName.substring(CONNECTION_IN_PREFIX.length());
         }
         return OImmutableClass.EDGE_CLASS_NAME;
-    }
-
-    protected void addSingleEdge(final ODocument doc, final OMultiCollectionIterator<Edge> iterable, String fieldName,
-            final OPair<Direction, String> connection, final Object fieldValue,
-            final OIdentifiable iTargetVertex, final String[] iLabels) {
-        final OrientEdge toAdd = getEdge(graph, doc, fieldName, connection, fieldValue, iTargetVertex, iLabels);
-        iterable.add(toAdd);
-    }
-
-    protected static OrientEdge getEdge(final OrientGraph graph, final ODocument doc, String fieldName,
-            final OPair<Direction, String> connection, final Object fieldValue,
-            final OIdentifiable iTargetVertex, final String[] iLabels) {
-        final OrientEdge toAdd;
-
-        final ODocument fieldRecord = ((OIdentifiable) fieldValue).getRecord();
-        if (fieldRecord == null)
-            return null;
-
-        OImmutableClass immutableClass = ODocumentInternal.getImmutableSchemaClass(fieldRecord);
-        if (immutableClass.isVertexType()) {
-            if (iTargetVertex != null && !iTargetVertex.equals(fieldValue))
-                return null;
-
-            // DIRECT VERTEX, CREATE A DUMMY EDGE BETWEEN VERTICES
-            if (connection.getKey() == Direction.OUT)
-                toAdd = new OrientEdge(graph, doc, fieldRecord, connection.getValue());
-            else
-                toAdd = new OrientEdge(graph, fieldRecord, doc, connection.getValue());
-
-        } else if (immutableClass.isEdgeType()) {
-            // EDGE
-            if (iTargetVertex != null) {
-                Object targetVertex = OrientEdge.getConnection(fieldRecord, connection.getKey().opposite());
-
-                if (!iTargetVertex.equals(targetVertex))
-                    return null;
-            }
-
-            toAdd = new OrientEdge(graph, fieldRecord);
-        } else
-            throw new IllegalStateException("Invalid content found in " + fieldName + " field: " + fieldRecord);
-
-        return toAdd;
     }
 
 }
