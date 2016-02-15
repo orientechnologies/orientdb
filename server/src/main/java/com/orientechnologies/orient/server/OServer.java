@@ -19,26 +19,6 @@
  */
 package com.orientechnologies.orient.server;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.locks.ReentrantLock;
-
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MalformedObjectNameException;
-import javax.management.NotCompliantMBeanException;
-
 import com.orientechnologies.common.console.OConsoleReader;
 import com.orientechnologies.common.console.ODefaultConsoleReader;
 import com.orientechnologies.common.exception.OException;
@@ -82,6 +62,21 @@ import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 import com.orientechnologies.orient.server.plugin.OServerPluginManager;
 import com.orientechnologies.orient.server.security.OSecurityServerUser;
 import com.orientechnologies.orient.server.token.OTokenHandlerImpl;
+
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.MBeanRegistrationException;
+import javax.management.MalformedObjectNameException;
+import javax.management.NotCompliantMBeanException;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.security.SecureRandom;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class OServer {
   private static final String                              ROOT_PASSWORD_VAR      = "ORIENTDB_ROOT_PASSWORD";
@@ -236,7 +231,6 @@ public class OServer {
 
     startup(new File(OSystemVariableResolver.resolveSystemVariables(config)));
 
-
     return this;
   }
 
@@ -316,7 +310,7 @@ public class OServer {
             return dbs.toString();
           }
         });
-    
+
     return this;
   }
 
@@ -480,6 +474,17 @@ public class OServer {
 
     final String dbName = Orient.isRegisterDatabaseByPath() ? getDatabaseDirectory() + name : name;
     final String dbPath = Orient.isRegisterDatabaseByPath() ? dbName : getDatabaseDirectory() + name;
+
+    if (dbPath.contains(".."))
+      throw new IllegalArgumentException("Storage path is invalid because contains '..'");
+
+    if (dbPath.contains("*"))
+      throw new IllegalArgumentException("Storage path is invalid because the wildcard '*'");
+
+    if (dbPath.startsWith("/")) {
+      if (!dbPath.startsWith(getDatabaseDirectory()))
+        throw new IllegalArgumentException("Storage path is invalid because points to an absolute directory");
+    }
 
     final OStorage stg = Orient.instance().getStorage(dbName);
     if (stg != null)
@@ -773,7 +778,8 @@ public class OServer {
     }
 
     // HASH THE PASSWORD
-    iPassword = OSecurityManager.instance().createHash(iPassword, getContextConfiguration().getValueAsString(OGlobalConfiguration.SECURITY_USER_PASSWORD_DEFAULT_ALGORITHM), true);
+    iPassword = OSecurityManager.instance().createHash(iPassword,
+        getContextConfiguration().getValueAsString(OGlobalConfiguration.SECURITY_USER_PASSWORD_DEFAULT_ALGORITHM), true);
 
     serverCfg.setUser(iName, iPassword, iPermissions);
     serverCfg.saveConfiguration();

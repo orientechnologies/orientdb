@@ -144,9 +144,6 @@ public class AutoRestartStalledNodeTest extends AbstractServerClusterTxTest {
                     }
                   }, true);
 
-                  // g.command(new OCommandScript("sql", "sleep 60000")
-                  // .setExecutionMode(OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE.REPLICATE)).execute();
-
                 } finally {
                   g.shutdown();
 
