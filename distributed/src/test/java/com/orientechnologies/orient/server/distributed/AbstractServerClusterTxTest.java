@@ -29,7 +29,8 @@ import java.util.concurrent.Callable;
  * Test distributed TX
  */
 public abstract class AbstractServerClusterTxTest extends AbstractServerClusterInsertTest {
-  private final OPartitionedDatabasePoolFactory poolFactory = new OPartitionedDatabasePoolFactory();
+  protected final OPartitionedDatabasePoolFactory poolFactory   = new OPartitionedDatabasePoolFactory();
+  protected int                                   printBlocksOf = 100;
 
   protected AbstractServerClusterTxTest() {
     useTransactions = true;
@@ -53,11 +54,11 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
           int retry = 0;
 
           for (retry = 0; retry < maxRetries; retry++) {
-            if ((i + 1) % 100 == 0)
+            if ((i + 1) % printBlocksOf == 0)
               System.out.println("\nWriter " + database.getURL() + "(thread=" + threadId + ") managed " + (i + 1) + "/" + count
                   + " records so far");
 
-            if( useTransactions)
+            if (useTransactions)
               database.begin();
 
             try {
@@ -71,8 +72,8 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
               updateRecord(database, person);
               checkRecord(database, person);
 
-              if( useTransactions)
-              database.commit();
+              if (useTransactions)
+                database.commit();
 
               if (delayWriter > 0)
                 Thread.sleep(delayWriter);

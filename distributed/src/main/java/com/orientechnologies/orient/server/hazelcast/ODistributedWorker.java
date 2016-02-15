@@ -30,20 +30,12 @@ import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.server.distributed.ODiscardedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
-import com.orientechnologies.orient.server.distributed.task.OCreateRecordTask;
-import com.orientechnologies.orient.server.distributed.task.ODeleteRecordTask;
-import com.orientechnologies.orient.server.distributed.task.OFixTxTask;
-import com.orientechnologies.orient.server.distributed.task.OResurrectRecordTask;
-import com.orientechnologies.orient.server.distributed.task.OSQLCommandTask;
-import com.orientechnologies.orient.server.distributed.task.OTxTask;
-import com.orientechnologies.orient.server.distributed.task.OUpdateRecordTask;
 
 import java.io.Serializable;
 import java.util.Queue;
@@ -261,29 +253,38 @@ public class ODistributedWorker extends Thread {
           responsePayload = manager.executeOnLocalNode(iRequest, database);
 
           if (responsePayload instanceof OModificationOperationProhibitedException) {
-            OLogManager.instance().info(this,
-                "Database is locked on current node (backup is running?) retrying to execute the operation (retry=%d)", retry);
             // RETRY
             try {
+              ODistributedServerLog.info(this, manager.getLocalNodeName(), iRequest.getSenderNodeName(), DIRECTION.OUT,
+                  "Database is frozen, waiting and retrying. Request %s (retry=%d)", iRequest, retry);
+
               Thread.sleep(1000);
             } catch (InterruptedException e) {
             }
-          } else
+          } else {
             // OPERATION EXECUTED (OK OR ERROR), NO RETRY NEEDED
+            if (retry > 1)
+              ODistributedServerLog.info(this, manager.getLocalNodeName(), iRequest.getSenderNodeName(), DIRECTION.OUT,
+                  "Request %s succeed after retry=%d", iRequest, retry);
+
             break;
+          }
 
         }
 
       } finally {
         if (database != null && !database.isClosed()) {
           database.activateOnCurrentThread();
-          database.rollback();
-          database.getLocalCache().clear();
-          database.setUser(origin);
+          if (!database.isClosed()) {
+            database.rollback();
+            database.getLocalCache().clear();
+            database.setUser(origin);
+          }
         }
       }
 
-      sendResponseBack(iRequest, task, responsePayload);
+      if (running)
+        sendResponseBack(iRequest, task, responsePayload);
 
     } finally {
       OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.DEFAULT);
@@ -317,55 +318,6 @@ public class ODistributedWorker extends Thread {
 
     ODistributedServerLog.warn(this, getLocalNodeName(), iLastPendingRequest.getSenderNodeName(), DIRECTION.IN, "- " + msg);
     throw new OHotAlignmentNotPossibleException(msg);
-  }
-
-  protected boolean checkIfOperationHasBeenExecuted(final ODistributedRequest lastPendingRequest, final OAbstractRemoteTask task) {
-    boolean executeLastPendingRequest = false;
-
-    // ASK FOR RECORD
-    if (task instanceof ODeleteRecordTask) {
-      // EXECUTE ONLY IF THE RECORD HASN'T BEEN DELETED YET
-      executeLastPendingRequest = ((ODeleteRecordTask) task).getRid().getRecord() != null;
-    } else if (task instanceof OUpdateRecordTask) {
-      final ORecord rec = ((OUpdateRecordTask) task).getRid().getRecord();
-      if (rec == null)
-        ODistributedServerLog.warn(this, getLocalNodeName(), lastPendingRequest.getSenderNodeName(), DIRECTION.IN,
-            "- cannot update deleted record %s, database could be not aligned", ((OUpdateRecordTask) task).getRid());
-      else
-        // EXECUTE ONLY IF VERSIONS DIFFER
-        executeLastPendingRequest = rec.getVersion() != ((OUpdateRecordTask) task).getVersion();
-    } else if (task instanceof OCreateRecordTask) {
-      // EXECUTE ONLY IF THE RECORD HASN'T BEEN CREATED YET
-      executeLastPendingRequest = ((OCreateRecordTask) task).getRid().getRecord() == null;
-    } else if (task instanceof OSQLCommandTask) {
-      if (!task.isIdempotent()) {
-        hotAlignmentError(lastPendingRequest, "Not able to assure last command has been completed before last crash. Command='%s'",
-            ((OSQLCommandTask) task).getPayload());
-      }
-    } else if (task instanceof OResurrectRecordTask) {
-      if (((OResurrectRecordTask) task).getRid().getRecord() == null)
-        // ALREADY DELETED: CANNOT RESTORE IT
-        hotAlignmentError(lastPendingRequest, "Not able to resurrect deleted record '%s'", ((OResurrectRecordTask) task).getRid());
-    } else if (task instanceof OTxTask) {
-      // CHECK EACH TX ITEM IF HAS BEEN COMMITTED
-      for (OAbstractRemoteTask t : ((OTxTask) task).getTasks()) {
-        executeLastPendingRequest = checkIfOperationHasBeenExecuted(lastPendingRequest, t);
-        if (executeLastPendingRequest)
-          // REPEAT THE ENTIRE TX
-          return true;
-      }
-    } else if (task instanceof OFixTxTask) {
-      // CHECK EACH FIX-TX ITEM IF HAS BEEN COMMITTED
-      for (OAbstractRemoteTask t : ((OFixTxTask) task).getTasks()) {
-        executeLastPendingRequest = checkIfOperationHasBeenExecuted(lastPendingRequest, t);
-        if (executeLastPendingRequest)
-          // REPEAT THE ENTIRE TX
-          return true;
-      }
-    } else
-      hotAlignmentError(lastPendingRequest, "Not able to assure last operation has been completed before last crash. Task='%s'",
-          task);
-    return executeLastPendingRequest;
   }
 
   private void sendResponseBack(final ODistributedRequest iRequest, final OAbstractRemoteTask task, Serializable responsePayload) {

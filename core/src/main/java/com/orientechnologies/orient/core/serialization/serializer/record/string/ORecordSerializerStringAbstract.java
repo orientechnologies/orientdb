@@ -19,11 +19,13 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
+import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -39,6 +41,7 @@ import com.orientechnologies.orient.core.serialization.serializer.string.OString
 import com.orientechnologies.orient.core.util.ODateHelper;
 
 import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -378,6 +381,10 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
       return OType.LINK;
     else if (iCharType == 'n')
       return OType.LINKSET;
+    else if (iCharType == 'x')
+      return OType.LINK;
+    else if (iCharType == 'u')
+      return OType.CUSTOM;
 
     return OType.STRING;
   }
@@ -673,7 +680,9 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
     final long timer = PROFILER.startChrono();
 
     try {
-      return fromString(OBinaryProtocol.bytes2string(iSource), iRecord, iFields);
+      return fromString(new String(iSource,"UTF-8"), iRecord, iFields);
+    } catch (UnsupportedEncodingException e) {
+      throw OException.wrapException(new OSchemaException("Error reading record"),e);
     } finally {
 
       PROFILER
@@ -685,7 +694,9 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
     final long timer = PROFILER.startChrono();
 
     try {
-      return OBinaryProtocol.string2bytes(toString(iRecord, new StringBuilder(2048), null, null, iOnlyDelta, true).toString());
+      return toString(iRecord, new StringBuilder(2048), null, null, iOnlyDelta, true).toString().getBytes("UTF-8");
+    } catch (UnsupportedEncodingException e) {
+      throw OException.wrapException(new OSchemaException("error encoding string"), e);
     } finally {
 
       PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.toStream"), "Serialize record to stream", timer);

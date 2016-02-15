@@ -60,7 +60,7 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
   public int fromStream(final byte[] content, int offset) {
     offset = super.fromStream(content, offset);
 
-    changes = new OWALChangesTree();
+    changes = new OWALPageChangesPortion();
     offset = changes.fromStream(offset, content);
 
     return offset;

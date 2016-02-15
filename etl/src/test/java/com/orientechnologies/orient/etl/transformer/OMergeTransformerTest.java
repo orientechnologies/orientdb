@@ -2,7 +2,7 @@ package com.orientechnologies.orient.etl.transformer;
 
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.etl.ETLBaseTest;
+import com.orientechnologies.orient.etl.OETLBaseTest;
 import com.tinkerpop.blueprints.Parameter;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
@@ -14,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Created by frank on 23/11/2015.
  */
-public class OMergeTransformerTest extends ETLBaseTest {
+public class OMergeTransformerTest extends OETLBaseTest {
 
   @Before
   public void loadData() {
@@ -47,10 +47,10 @@ public class OMergeTransformerTest extends ETLBaseTest {
         + "{merge: {  joinFieldName:'num', lookup:'Person.num'}}, "
         + "{vertex: { class:'Person', skipDuplicates: false}}"
         + "],"
-        + "loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', tx: true} } }");
+        + "loader: { orientdb: { dbURL: 'memory:OETLBaseTest', dbType:'graph', tx: true} } }");
 
     //verify
-    graph = new OrientGraph("memory:ETLBaseTest");
+    graph = new OrientGraph("memory:OETLBaseTest");
 
     assertThat(graph.countVertices("Person")).isEqualTo(1);
 
@@ -71,7 +71,7 @@ public class OMergeTransformerTest extends ETLBaseTest {
     process(
         "{source: { content: { value: 'num,name\n10000,FirstName\n10001,SecondName\n10000,FirstNameUpdated' } }, extractor : { csv: {} },"
             + " transformers: [{merge: { joinFieldName:'num', lookup:'Person.num'}}, {vertex: {class:'Person', skipDuplicates: true}}],"
-            + " " + "loader: { orientdb: { dbURL: 'memory:ETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
+            + " " + "loader: { orientdb: { dbURL: 'memory:OETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
 
     assertThat(graph.countVertices("Person")).isEqualTo(2);
 

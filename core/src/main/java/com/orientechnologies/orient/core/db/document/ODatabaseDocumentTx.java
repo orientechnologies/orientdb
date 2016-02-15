@@ -110,8 +110,13 @@ import com.orientechnologies.orient.core.tx.OTransactionNoTx;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 
+/**
+ * Document API entrypoint.
+ * 
+ * @author Luca Garulli
+ */
 @SuppressWarnings("unchecked")
-public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>implements ODatabaseDocumentInternal {
+public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> implements ODatabaseDocumentInternal {
 
   @Deprecated
   private static final String        DEF_RECORD_FORMAT = "csv";
@@ -140,8 +145,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
   private byte                                              recordType;
   @Deprecated
   private String                                            recordFormat;
-  private final Map<ORecordHook, ORecordHook.HOOK_POSITION> hooks         = new LinkedHashMap<ORecordHook, ORecordHook.HOOK_POSITION>();
-  private       boolean                                     retainRecords = true;
+  private final Map<ORecordHook, ORecordHook.HOOK_POSITION> hooks           = new LinkedHashMap<ORecordHook, ORecordHook.HOOK_POSITION>();
+  private boolean                                           retainRecords   = true;
   private OLocalRecordCache                                 localCache;
   private boolean                                           mvcc;
   private OCurrentStorageComponentsFactory                  componentsFactory;
@@ -217,7 +222,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
 
   /**
    * Opens connection to the storage with given user and password.
-   *
+   * <p>
    * But we do suggest {@link com.orientechnologies.orient.core.db.OPartitionedDatabasePool#acquire()} instead. It will make work
    * faster even with embedded database.
    *
@@ -225,7 +230,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
    *          Username to login
    * @param iUserPassword
    *          Password associated to the user
-   *
    * @return Current database instance.
    */
   @Override
@@ -1012,10 +1016,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
         else if (res == ORecordHook.RESULT.SKIP_IO)
           // SKIP IO OPERATION
           return res;
-        else
-          if (res == ORecordHook.RESULT.SKIP)
-            // SKIP NEXT HOOKS AND RETURN IT
-            return res;
+        else if (res == ORecordHook.RESULT.SKIP)
+          // SKIP NEXT HOOKS AND RETURN IT
+          return res;
         else if (res == ORecordHook.RESULT.RECORD_REPLACED)
           return res;
       }
@@ -1031,14 +1034,14 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
    * {@inheritDoc}
    */
   public boolean isValidationEnabled() {
-    return !getStatus().equals(STATUS.IMPORTING) && storage.getConfiguration().isValidationEnabled();
+    return (Boolean) get(ATTRIBUTES.VALIDATION);
   }
 
   /**
    * {@inheritDoc}
    */
   public <DB extends ODatabaseDocument> DB setValidationEnabled(final boolean iEnabled) {
-    storage.getConfiguration().setValidation(iEnabled);
+    set(ATTRIBUTES.VALIDATION, iEnabled);
     return (DB) this;
   }
 
@@ -1324,7 +1327,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
       return storage.getConfiguration().getConflictStrategy();
 
     case VALIDATION:
-      return isValidationEnabled();
+      return storage.getConfiguration().isValidationEnabled();
     }
 
     return null;
@@ -1445,7 +1448,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
       break;
 
     case VALIDATION:
-      setValidationEnabled(Boolean.parseBoolean(stringValue));
+      storage.getConfiguration().setValidation(Boolean.parseBoolean(stringValue));
+      storage.getConfiguration().update();
       break;
 
     default:
@@ -2300,7 +2304,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
    * transaction will continue to see the record as modified, while others not. If a Pessimistic transaction is running, then an
    * exclusive lock is acquired against the record. Current transaction will continue to see the record as modified, while others
    * cannot access to it since it's locked.
-   * <p/>
+   * <p>
    * If MVCC is enabled and the version of the document is different by the version stored in the database, then a
    * {@link OConcurrentModificationException} exception is thrown.Before to save the document it must be valid following the
    * constraints declared in the schema if any (can work also in schema-less mode). To validate the document the
@@ -2326,13 +2330,11 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
    * transaction will continue to see the record as modified, while others not. If a Pessimistic transaction is running, then an
    * exclusive lock is acquired against the record. Current transaction will continue to see the record as modified, while others
    * cannot access to it since it's locked.
-   * <p/>
+   * <p>
    * If MVCC is enabled and the version of the document is different by the version stored in the database, then a
    * {@link OConcurrentModificationException} exception is thrown.Before to save the document it must be valid following the
    * constraints declared in the schema if any (can work also in schema-less mode). To validate the document the
    * {@link ODocument#validate()} is called.
-   *
-   *
    *
    * @param iRecord
    *          Record to save.
@@ -2361,7 +2363,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
    * changed at commit time. The current transaction will continue to see the record as modified, while others not. If a Pessimistic
    * transaction is running, then an exclusive lock is acquired against the record. Current transaction will continue to see the
    * record as modified, while others cannot access to it since it's locked.
-   * <p/>
+   * <p>
    * If MVCC is enabled and the version of the document is different by the version stored in the database, then a
    * {@link OConcurrentModificationException} exception is thrown. Before to save the document it must be valid following the
    * constraints declared in the schema if any (can work also in schema-less mode). To validate the document the
@@ -2389,12 +2391,11 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
    * changed at commit time. The current transaction will continue to see the record as modified, while others not. If a Pessimistic
    * transaction is running, then an exclusive lock is acquired against the record. Current transaction will continue to see the
    * record as modified, while others cannot access to it since it's locked.
-   * <p/>
+   * <p>
    * If MVCC is enabled and the version of the document is different by the version stored in the database, then a
    * {@link OConcurrentModificationException} exception is thrown. Before to save the document it must be valid following the
    * constraints declared in the schema if any (can work also in schema-less mode). To validate the document the
    * {@link ODocument#validate()} is called.
-   *
    *
    * @param iRecord
    *          Record to save
@@ -2488,7 +2489,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
    * transaction will continue to see the record as deleted, while others not. If a Pessimistic transaction is running, then an
    * exclusive lock is acquired against the record. Current transaction will continue to see the record as deleted, while others
    * cannot access to it since it's locked.
-   * <p/>
+   * <p>
    * If MVCC is enabled and the version of the document is different by the version stored in the database, then a
    * {@link OConcurrentModificationException} exception is thrown.
    *

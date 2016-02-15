@@ -104,26 +104,41 @@ public class OCharSerializer implements OBinarySerializer<Character> {
     return value;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void serializeInByteBufferObject(Character object, ByteBuffer buffer, Object... hints) {
     buffer.putChar(object);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Character deserializeFromByteBufferObject(ByteBuffer buffer) {
     return buffer.getChar();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
     return CHAR_SIZE;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Character deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return (char) walChanges.getShortValue(buffer, offset);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return CHAR_SIZE;

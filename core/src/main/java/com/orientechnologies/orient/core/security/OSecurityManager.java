@@ -106,7 +106,10 @@ public class OSecurityManager {
       return checkPasswordWithSalt(iPassword, s, PBKDF2_SHA256_ALGORITHM);
     }
 
-    return iPassword.equals(iHash);
+    // Do not compare raw strings against each other, to avoid timing attacks.
+    // Instead, hash them both with a cryptographic hash function and
+    // compare their hashes with a constant-time comparison method.
+    return MessageDigest.isEqual(digestSHA256(iPassword), digestSHA256(iHash));
   }
 
   public String createSHA256(final String iInput) {
@@ -170,7 +173,7 @@ public class OSecurityManager {
 
   public String createHashWithSalt(final String iPassword) {
     return createHashWithSalt(iPassword, OGlobalConfiguration.SECURITY_USER_PASSWORD_SALT_ITERATIONS.getValueAsInteger(),
-        PBKDF2_SHA256_ALGORITHM);
+        OGlobalConfiguration.SECURITY_USER_PASSWORD_DEFAULT_ALGORITHM.getValueAsString());
   }
 
   public String createHashWithSalt(final String iPassword, final int iIterations, final String algorithm) {
@@ -185,7 +188,7 @@ public class OSecurityManager {
   }
 
   public boolean checkPasswordWithSalt(final String iPassword, final String iHash) {
-    return checkPasswordWithSalt(iPassword, iHash, OSecurityManager.PBKDF2_SHA256_ALGORITHM);
+    return checkPasswordWithSalt(iPassword, iHash, OGlobalConfiguration.SECURITY_USER_PASSWORD_DEFAULT_ALGORITHM.getValueAsString());
   }
 
   public boolean checkPasswordWithSalt(final String iPassword, final String iHash, final String algorithm) {
@@ -199,7 +202,7 @@ public class OSecurityManager {
     final int iterations = Integer.parseInt(params[2]);
 
     final byte[] testHash = getPbkdf2(iPassword, salt, iterations, hash.length, algorithm);
-    return compareHash(hash, testHash);
+    return MessageDigest.isEqual(hash, testHash);
   }
 
   private byte[] getPbkdf2(final String iPassword, final byte[] salt, final int iterations, final int bytes,
@@ -231,13 +234,6 @@ public class OSecurityManager {
     } catch (Exception e) {
       throw OException.wrapException(new OSecurityException("Cannot create a key with '" + PBKDF2_ALGORITHM + "' algorithm"), e);
     }
-  }
-
-  private static boolean compareHash(final byte[] iFirst, final byte[] iSecond) {
-    int diff = iFirst.length ^ iSecond.length;
-    for (int i = 0; i < iFirst.length && i < iSecond.length; i++)
-      diff |= iFirst[i] ^ iSecond[i];
-    return diff == 0;
   }
 
   public static String byteArrayToHexStr(final byte[] data) {

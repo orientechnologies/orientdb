@@ -836,7 +836,9 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    *
    * @return true if enabled, otherwise false
    * @see com.orientechnologies.orient.core.db.document.ODatabaseDocument#setMVCC(boolean)
+   * deprecated since 2.2
    */
+  @Deprecated
   boolean isMVCC();
 
   /**
@@ -853,7 +855,9 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * @param iValue
    * @see com.orientechnologies.orient.core.db.document.ODatabaseDocument#isMVCC()
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+   * deprecated since 2.2
    */
+  @Deprecated
   <DB extends ODatabase<?>> DB setMVCC(boolean iValue);
 
   String getType();

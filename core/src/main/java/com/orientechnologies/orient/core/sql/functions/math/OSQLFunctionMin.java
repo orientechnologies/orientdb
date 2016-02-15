@@ -56,6 +56,11 @@ public class OSQLFunctionMin extends OSQLFunctionMathAbstract {
             min = subitem;
         }
       } else {
+        if ((item instanceof Number) && (min instanceof Number)) {
+          Number[] converted = OType.castComparableNumber((Number) item, (Number) min);
+          item = converted[0];
+          min = converted[1];
+        }
         if (min == null || item != null && ((Comparable) item).compareTo(min) < 0)
           min = item;
       }

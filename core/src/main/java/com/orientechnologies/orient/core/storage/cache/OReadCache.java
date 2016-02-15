@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.storage.cache;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OStoragePerformanceStatistic;
 
 import java.io.IOException;
@@ -94,5 +95,24 @@ public interface OReadCache {
 
   void deleteStorage(OWriteCache writeCache) throws IOException;
 
+  /**
+   * Closes all files inside of write cache and flushes all associated data.
+   *
+   * @param writeCache Write cache to close.
+   */
   void closeStorage(OWriteCache writeCache) throws IOException;
+
+  /**
+   * Load state of cache from file system if possible.
+   *
+   * @param writeCache Write cache is used to load pages back into cache if possible.
+   */
+  void loadCacheState(OWriteCache writeCache);
+
+  /**
+   * Stores state of cache inside file if possible.
+   *
+   * @param writeCache Write cache which manages files cache state of which is going to be stored.
+   */
+  void storeCacheState(OWriteCache writeCache);
 }

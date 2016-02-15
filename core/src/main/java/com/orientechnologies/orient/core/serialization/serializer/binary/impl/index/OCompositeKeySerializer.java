@@ -162,7 +162,7 @@ public class OCompositeKeySerializer implements OBinarySerializer<OCompositeKey>
     final int keysSize = inputStream.getAsInteger();
     for (int i = 0; i < keysSize; i++) {
       final byte[] keyBytes = inputStream.getAsByteArray();
-      final String keyString = OBinaryProtocol.bytes2string(keyBytes);
+      final String keyString = new String(keyBytes,"UTF-8");
       final int typeSeparatorPos = keyString.indexOf(',');
       final OType type = OType.valueOf(keyString.substring(0, typeSeparatorPos));
       compositeKey.addKey(ORecordSerializerStringAbstract.simpleValueFromStream(keyString.substring(typeSeparatorPos + 1), type));
@@ -286,6 +286,9 @@ public class OCompositeKeySerializer implements OBinarySerializer<OCompositeKey>
     return compositeKey;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void serializeInByteBufferObject(OCompositeKey object, ByteBuffer buffer, Object... hints) {
     final OType[] types = getKeyTypes(hints);
@@ -327,6 +330,9 @@ public class OCompositeKeySerializer implements OBinarySerializer<OCompositeKey>
     buffer.position(finalPosition);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public OCompositeKey deserializeFromByteBufferObject(ByteBuffer buffer) {
     final OCompositeKey compositeKey = new OCompositeKey();
@@ -345,11 +351,17 @@ public class OCompositeKeySerializer implements OBinarySerializer<OCompositeKey>
     return compositeKey;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
     return buffer.getInt();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public OCompositeKey deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     final OCompositeKey compositeKey = new OCompositeKey();
@@ -374,6 +386,9 @@ public class OCompositeKeySerializer implements OBinarySerializer<OCompositeKey>
     return compositeKey;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return walChanges.getIntValue(buffer, offset);

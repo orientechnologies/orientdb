@@ -403,6 +403,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   }
 
   public ODatabaseImport importDatabase() {
+    boolean preValidation = database.isValidationEnabled();
     try {
       listener.onMessage("\nStarted import of database '" + database.getURL() + "' from " + fileName + "...");
 
@@ -415,13 +416,15 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
       database.setStatus(STATUS.IMPORTING);
 
+      if (!merge) {
+        removeDefaultNonSecurityClasses();
+        database.getMetadata().getIndexManager().reload();
+      }
+
       for (OIndex<?> index : database.getMetadata().getIndexManager().getIndexes()) {
         if (index.isAutomatic())
           indexesToRebuild.add(index.getName().toLowerCase());
       }
-
-      if (!merge)
-        removeDefaultNonSecurityClasses();
 
       String tag;
       while (jsonReader.hasNext() && jsonReader.lastChar() != '}') {
@@ -475,6 +478,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
       throw new ODatabaseExportException("Error on importing database '" + database.getName() + "' from file: " + fileName, e);
     } finally {
+      database.setValidationEnabled(preValidation);
       close();
     }
 
@@ -606,6 +610,32 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     database.getMetadata().getSecurity().create();
   }
 
+  private void importInfo() throws IOException, ParseException {
+    listener.onMessage("\nImporting database info...");
+
+    jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
+    while (jsonReader.lastChar() != '}') {
+      final String fieldName = jsonReader.readString(OJSONReader.FIELD_ASSIGNMENT);
+      if (fieldName.equals("exporter-version"))
+        exporterVersion = jsonReader.readInteger(OJSONReader.NEXT_IN_OBJECT);
+      else if (fieldName.equals("schemaRecordId"))
+        schemaRecordId = new ORecordId(jsonReader.readString(OJSONReader.NEXT_IN_OBJECT));
+      else if (fieldName.equals("indexMgrRecordId"))
+        indexMgrRecordId = new ORecordId(jsonReader.readString(OJSONReader.NEXT_IN_OBJECT));
+      else
+        jsonReader.readNext(OJSONReader.NEXT_IN_OBJECT);
+    }
+    jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
+
+    if (schemaRecordId == null)
+      schemaRecordId = new ORecordId(database.getStorage().getConfiguration().schemaRecordId);
+
+    if (indexMgrRecordId == null)
+      indexMgrRecordId = new ORecordId(database.getStorage().getConfiguration().indexMgrRecordId);
+
+    listener.onMessage("OK");
+  }
+
   private void removeDefaultNonSecurityClasses() {
     listener.onMessage("\nNon merge mode (-merge=false): removing all default non security classes");
 
@@ -655,32 +685,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     schema.reload();
 
     listener.onMessage("\nRemoved " + removedClasses + " classes.");
-  }
-
-  private void importInfo() throws IOException, ParseException {
-    listener.onMessage("\nImporting database info...");
-
-    jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
-    while (jsonReader.lastChar() != '}') {
-      final String fieldName = jsonReader.readString(OJSONReader.FIELD_ASSIGNMENT);
-      if (fieldName.equals("exporter-version"))
-        exporterVersion = jsonReader.readInteger(OJSONReader.NEXT_IN_OBJECT);
-      else if (fieldName.equals("schemaRecordId"))
-        schemaRecordId = new ORecordId(jsonReader.readString(OJSONReader.NEXT_IN_OBJECT));
-      else if (fieldName.equals("indexMgrRecordId"))
-        indexMgrRecordId = new ORecordId(jsonReader.readString(OJSONReader.NEXT_IN_OBJECT));
-      else
-        jsonReader.readNext(OJSONReader.NEXT_IN_OBJECT);
-    }
-    jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
-
-    if (schemaRecordId == null)
-      schemaRecordId = new ORecordId(database.getStorage().getConfiguration().schemaRecordId);
-
-    if (indexMgrRecordId == null)
-      indexMgrRecordId = new ORecordId(database.getStorage().getConfiguration().indexMgrRecordId);
-
-    listener.onMessage("OK");
   }
 
   private void importManualIndexes() throws IOException, ParseException {
@@ -998,6 +1002,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       else if (attrib.equals("\"linked-type\""))
         linkedType = OType.valueOf(value);
       else if (attrib.equals("\"collate\""))
+        collate = value;
+      else if (attrib.equals("\"default-value\""))
         collate = value;
       else if (attrib.equals("\"customFields\""))
         customFields = importCustomFields();

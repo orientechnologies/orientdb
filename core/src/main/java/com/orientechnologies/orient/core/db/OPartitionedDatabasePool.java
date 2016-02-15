@@ -19,10 +19,12 @@
  */
 package com.orientechnologies.orient.core.db;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OStorageExistsException;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.storage.OStorage;
 
@@ -94,7 +96,7 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
   private final    int                   maxPartitions = Runtime.getRuntime().availableProcessors() << 3;
   private volatile PoolPartition[] partitions;
   private volatile boolean closed     = false;
-  private          boolean autoCreate = false;
+  private volatile boolean autoCreate = false;
 
   private static final class PoolData {
     private final int                      hashCode;
@@ -343,7 +345,12 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
   protected void openDatabase(final DatabaseDocumentTxPolled db) {
     if (autoCreate) {
       if (!db.getURL().startsWith("remote:") && !db.exists()) {
-        db.create();
+        try {
+          db.create();
+        } catch (OStorageExistsException ex) {
+          OLogManager.instance().debug(this, "Can not create storage " + db.getStorage() + " because it already exists.");
+          db.internalOpen();
+        }
       } else {
         db.internalOpen();
       }

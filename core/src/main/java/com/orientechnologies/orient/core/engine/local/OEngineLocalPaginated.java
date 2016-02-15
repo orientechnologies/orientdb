@@ -20,8 +20,6 @@
 
 package com.orientechnologies.orient.core.engine.local;
 
-import java.util.Map;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -31,6 +29,8 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
+import java.util.Map;
+
 /**
  * @author Andrey Lomakin
  * @since 28.03.13
@@ -38,9 +38,13 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
 public class OEngineLocalPaginated extends OEngineAbstract {
   public static final String NAME = "plocal";
 
-  private final O2QCache     readCache;
+  private volatile O2QCache readCache;
 
   public OEngineLocalPaginated() {
+  }
+
+  @Override
+  public void startup() {
     readCache = new O2QCache(calculateReadCacheMaxMemory(OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024),
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, true,
         OGlobalConfiguration.DISK_CACHE_PINNED_PAGES.getValueAsInteger());
@@ -65,12 +69,11 @@ public class OEngineLocalPaginated extends OEngineAbstract {
 
   public OStorage createStorage(final String dbName, final Map<String, String> configuration) {
     try {
-      // GET THE STORAGE
-      return new OLocalPaginatedStorage(dbName, dbName, getMode(configuration), generateStorageId(), readCache);
 
+      return new OLocalPaginatedStorage(dbName, dbName, getMode(configuration), generateStorageId(), readCache);
     } catch (Exception e) {
-      final String message = "Error on opening database: " + dbName + ". Current location is: "
-          + new java.io.File(".").getAbsolutePath();
+      final String message =
+          "Error on opening database: " + dbName + ". Current location is: " + new java.io.File(".").getAbsolutePath();
       OLogManager.instance().error(this, message, e);
 
       throw OException.wrapException(new ODatabaseException(message), e);
@@ -83,6 +86,10 @@ public class OEngineLocalPaginated extends OEngineAbstract {
 
   public boolean isShared() {
     return true;
+  }
+
+  public O2QCache getReadCache() {
+    return readCache;
   }
 
   @Override

@@ -25,21 +25,12 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
-import com.orientechnologies.orient.core.command.OCommandExecutor;
-import com.orientechnologies.orient.core.command.OCommandManager;
-import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.command.OCommandRequestText;
-import com.orientechnologies.orient.core.command.ODistributedCommand;
+import com.orientechnologies.orient.core.command.*;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.OExecutionThreadLocal;
-import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal.RUN_MODE;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
@@ -63,14 +54,7 @@ import com.orientechnologies.orient.core.sql.OCommandExecutorSQLDelegate;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
-import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
-import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.ORecordMetadata;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
@@ -99,18 +83,19 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ODistributedStorage implements OStorage, OFreezableStorage, OAutoshardedStorage {
-  protected final OServer                   serverInstance;
-  protected final ODistributedServerManager dManager;
-  protected final OAbstractPaginatedStorage wrapped;
+  protected final OServer                                            serverInstance;
+  protected final ODistributedServerManager                          dManager;
+  protected final OAbstractPaginatedStorage                          wrapped;
 
   protected final TimerTask                                          purgeDeletedRecordsTask;
   protected final ConcurrentHashMap<ORecordId, OPair<Long, Integer>> deletedRecords  = new ConcurrentHashMap<ORecordId, OPair<Long, Integer>>();
   protected final AtomicLong                                         lastOperationId = new AtomicLong();
 
-  protected final BlockingQueue<OAsynchDistributedOperation> asynchronousOperationsQueue;
-  protected final Thread                                     asynchWorker;
-  protected volatile boolean                                 running         = true;
-  protected volatile File                                    lastValidBackup = null;
+  protected final BlockingQueue<OAsynchDistributedOperation>         asynchronousOperationsQueue;
+  protected final Thread                                             asynchWorker;
+  protected volatile boolean                                         running         = true;
+  protected volatile File                                            lastValidBackup = null;
+  private ODistributedServerManager.DB_STATUS                        prevStatus;
 
   public ODistributedStorage(final OServer iServer, final OAbstractPaginatedStorage wrapped) {
     this.serverInstance = iServer;
@@ -1121,6 +1106,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         }
       });
 
+      //After commit force the clean of dirty managers due to possible copy and miss clean.
+      for (ORecordOperation ent : iTx.getAllRecordEntries()) {
+        ORecordInternal.getDirtyManager(ent.getRecord()).clear();
+      }
+
       nodes.remove(localNodeName);
       if (!nodes.isEmpty()) {
         if (executionModeSynch)
@@ -1321,8 +1311,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.DEFAULT) {
 
-        final StringBuilder cmd = new StringBuilder("create cluster ");
+        final StringBuilder cmd = new StringBuilder("create cluster `");
         cmd.append(iClusterName);
+        cmd.append("`");
 
         // EXECUTE THIS OUTSIDE LOCK TO AVOID DEADLOCKS
         OCommandSQL commandSQL = new OCommandSQL(cmd.toString());
@@ -1517,11 +1508,24 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
   @Override
   public void freeze(final boolean throwException) {
+    final String localNode = dManager.getLocalNodeName();
+
+    prevStatus = dManager.getDatabaseStatus(localNode, getName());
+    if (prevStatus == ODistributedServerManager.DB_STATUS.ONLINE)
+      // SET STATUS = BACKUP
+      dManager.setDatabaseStatus(localNode, getName(), ODistributedServerManager.DB_STATUS.BACKUP);
+
     getFreezableStorage().freeze(throwException);
   }
 
   @Override
   public void release() {
+    final String localNode = dManager.getLocalNodeName();
+
+    if (prevStatus == ODistributedServerManager.DB_STATUS.ONLINE)
+      // RESTORE PREVIOUS STATUS
+      dManager.setDatabaseStatus(localNode, getName(), ODistributedServerManager.DB_STATUS.ONLINE);
+
     getFreezableStorage().release();
   }
 

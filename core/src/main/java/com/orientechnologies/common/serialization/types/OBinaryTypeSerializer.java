@@ -96,6 +96,9 @@ public class OBinaryTypeSerializer implements OBinarySerializer<byte[]> {
     return value;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void serializeInByteBufferObject(byte[] object, ByteBuffer buffer, Object... hints) {
     final int len = object.length;
@@ -103,6 +106,9 @@ public class OBinaryTypeSerializer implements OBinarySerializer<byte[]> {
     buffer.put(object);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public byte[] deserializeFromByteBufferObject(ByteBuffer buffer) {
     final int len = buffer.getInt();
@@ -111,11 +117,17 @@ public class OBinaryTypeSerializer implements OBinarySerializer<byte[]> {
     return result;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
     return buffer.getInt() + OIntegerSerializer.INT_SIZE;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public byte[] deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     final int len = walChanges.getIntValue(buffer, offset);
@@ -123,6 +135,9 @@ public class OBinaryTypeSerializer implements OBinarySerializer<byte[]> {
     return walChanges.getBinaryValue(buffer, offset, len);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return walChanges.getIntValue(buffer, offset) + OIntegerSerializer.INT_SIZE;

@@ -293,7 +293,17 @@ public class OImmutableClass implements OClass {
   }
 
   @Override
+  public OProperty createProperty(String iPropertyName, OType iType, OClass iLinkedClass, boolean unsafe) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public OProperty createProperty(String iPropertyName, OType iType, OType iLinkedType) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public OProperty createProperty(String iPropertyName, OType iType, OType iLinkedType, boolean unsafe) {
     throw new UnsupportedOperationException();
   }
 

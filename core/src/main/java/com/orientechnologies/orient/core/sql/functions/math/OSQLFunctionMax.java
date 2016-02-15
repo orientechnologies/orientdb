@@ -19,24 +19,23 @@
   */
 package com.orientechnologies.orient.core.sql.functions.math;
 
-import java.util.Collection;
-import java.util.List;
-
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 
+import java.util.Collection;
+import java.util.List;
+
 /**
  * Compute the maximum value for a field. Uses the context to save the last maximum number. When different Number class are used,
  * take the class with most precision.
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
  */
 public class OSQLFunctionMax extends OSQLFunctionMathAbstract {
   public static final String NAME = "max";
 
-  private Object             context;
+  private Object context;
 
   public OSQLFunctionMax() {
     super(NAME, 1, -1);
@@ -56,6 +55,11 @@ public class OSQLFunctionMax extends OSQLFunctionMathAbstract {
             max = subitem;
         }
       } else {
+        if ((item instanceof Number) && (max instanceof Number)) {
+          Number[] converted = OType.castComparableNumber((Number) item, (Number) max);
+          item = converted[0];
+          max = converted[1];
+        }
         if (max == null || item != null && ((Comparable) item).compareTo(max) > 0)
           max = item;
       }

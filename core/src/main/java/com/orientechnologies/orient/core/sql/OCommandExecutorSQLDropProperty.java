@@ -19,10 +19,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.common.comparator.OCaseInsentiveComparator;
 import com.orientechnologies.common.util.OCollections;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
@@ -34,56 +30,70 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 /**
  * SQL CREATE PROPERTY command: Creates a new property in the target class.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 @SuppressWarnings("unchecked")
 public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
   public static final String KEYWORD_DROP     = "DROP";
   public static final String KEYWORD_PROPERTY = "PROPERTY";
 
-  private String             className;
-  private String             fieldName;
-  private boolean            force            = false;
+  private String className;
+  private String fieldName;
+  private boolean force = false;
 
   public OCommandExecutorSQLDropProperty parse(final OCommandRequest iRequest) {
-    init((OCommandRequestText) iRequest);
+    final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
 
-    final StringBuilder word = new StringBuilder();
+    String queryText = textRequest.getText();
+    String originalQuery = queryText;
+    try {
+      queryText = preParse(queryText, iRequest);
+      textRequest.setText(queryText);
 
-    int oldPos = 0;
-    int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_DROP))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_DROP + " not found. Use " + getSyntax(), parserText, oldPos);
+      init((OCommandRequestText) iRequest);
 
-    pos = nextWord(parserText, parserTextUpperCase, pos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_PROPERTY))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_PROPERTY + " not found. Use " + getSyntax(), parserText, oldPos);
+      final StringBuilder word = new StringBuilder();
 
-    pos = nextWord(parserText, parserTextUpperCase, pos, word, false);
-    if (pos == -1)
-      throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), parserText, pos);
+      int oldPos = 0;
+      int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
+      if (pos == -1 || !word.toString().equals(KEYWORD_DROP))
+        throw new OCommandSQLParsingException("Keyword " + KEYWORD_DROP + " not found. Use " + getSyntax(), parserText, oldPos);
 
-    String[] parts = word.toString().split("\\.");
-    if (parts.length != 2)
-      throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), parserText, pos);
+      pos = nextWord(parserText, parserTextUpperCase, pos, word, true);
+      if (pos == -1 || !word.toString().equals(KEYWORD_PROPERTY))
+        throw new OCommandSQLParsingException("Keyword " + KEYWORD_PROPERTY + " not found. Use " + getSyntax(), parserText, oldPos);
 
-    className = parts[0];
-    if (className == null)
-      throw new OCommandSQLParsingException("Class not found", parserText, pos);
-    fieldName = parts[1];
+      pos = nextWord(parserText, parserTextUpperCase, pos, word, false);
+      if (pos == -1)
+        throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), parserText, pos);
 
-    pos = nextWord(parserText, parserTextUpperCase, pos, word, false);
-    if (pos != -1) {
-      final String forceParameter = word.toString();
-      if ("FORCE".equals(forceParameter)) {
-        force = true;
-      } else {
-        throw new OCommandSQLParsingException("Wrong query parameter", parserText, pos);
+      String[] parts = word.toString().split("\\.");
+      if (parts.length != 2)
+        throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), parserText, pos);
+
+      className = parts[0];
+      if (className == null)
+        throw new OCommandSQLParsingException("Class not found", parserText, pos);
+      fieldName = parts[1];
+
+      pos = nextWord(parserText, parserTextUpperCase, pos, word, false);
+      if (pos != -1) {
+        final String forceParameter = word.toString();
+        if ("FORCE".equals(forceParameter)) {
+          force = true;
+        } else {
+          throw new OCommandSQLParsingException("Wrong query parameter", parserText, pos);
+        }
       }
+    } finally {
+      textRequest.setText(originalQuery);
     }
 
     return this;

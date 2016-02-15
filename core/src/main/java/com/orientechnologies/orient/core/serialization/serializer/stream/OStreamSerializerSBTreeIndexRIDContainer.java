@@ -185,6 +185,9 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
     return OLongSerializer.LONG_SIZE + 2 * OBooleanSerializer.BOOLEAN_SIZE + OIntegerSerializer.INT_SIZE + size * RID_SIZE;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void serializeInByteBufferObject(OIndexRIDContainer object, ByteBuffer buffer, Object... hints) {
     buffer.putLong(object.getFileId());
@@ -210,6 +213,9 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public OIndexRIDContainer deserializeFromByteBufferObject(ByteBuffer buffer) {
     final long fileId = buffer.getLong();
@@ -237,6 +243,9 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
     final int offset = buffer.position();
@@ -248,6 +257,9 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public OIndexRIDContainer deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     final long fileId = walChanges.getLongValue(buffer, offset + FILE_ID_OFFSET);
@@ -275,6 +287,9 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     if (walChanges.getByteValue(buffer, offset + EMBEDDED_OFFSET) > 0) {

@@ -47,7 +47,7 @@ public final class DatabaseConflictStategyTest {
   public void runTest() {
     OrientBaseGraph orientGraph = new OrientGraphNoTx(getDBURL());
     log("Set database CONFLICTSTRATEGY to automerge");
-    orientGraph.command(new OCommandSQL("ALTER database CONFLICTSTRATEGY automerge")).execute();
+    orientGraph.command(new OCommandSQL("ALTER database CONFLICTSTRATEGY 'automerge'")).execute();
     createVertexType(orientGraph, "Test");
     orientGraph.shutdown();
 

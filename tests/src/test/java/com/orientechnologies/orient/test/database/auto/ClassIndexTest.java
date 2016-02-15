@@ -12,9 +12,12 @@ import com.orientechnologies.orient.core.index.OPropertyRidBagIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
+import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import org.testng.Assert;
-import org.testng.annotations.*;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -105,7 +108,7 @@ public class ClassIndexTest extends DocumentDBBaseTest {
       while (cause.getCause() != null)
         cause = cause.getCause();
 
-      assertTrue(cause instanceof IllegalArgumentException);
+      assertTrue((cause instanceof IllegalArgumentException) || (cause instanceof OCommandSQLParsingException));
     }
   }
 

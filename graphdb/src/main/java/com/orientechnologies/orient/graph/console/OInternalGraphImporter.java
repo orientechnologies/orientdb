@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.graph.console;
 
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.console.OConsoleDatabaseApp;
@@ -45,9 +44,9 @@ public class OInternalGraphImporter {
 
     System.out.println("Imported in " + (System.currentTimeMillis() - startTime) + "ms. Vertexes: " + g.countVertices());
 
-    g.command(new OCommandSQL("alter database TIMEZONE GMT")).execute();
-    g.command(new OCommandSQL("alter database LOCALECOUNTRY UK")).execute();
-    g.command(new OCommandSQL("alter database LOCALELANGUAGE EN")).execute();
+    g.command(new OCommandSQL("alter database TIMEZONE 'GMT'")).execute();
+    g.command(new OCommandSQL("alter database LOCALECOUNTRY 'UK'")).execute();
+    g.command(new OCommandSQL("alter database LOCALELANGUAGE 'EN'")).execute();
     g.shutdown();
   }
 }

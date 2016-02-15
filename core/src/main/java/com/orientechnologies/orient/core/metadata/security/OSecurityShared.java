@@ -456,38 +456,33 @@ public class OSecurityShared implements OSecurity, OCloseable {
 
   private void createOrUpdateORestrictedClass(final ODatabaseDocument database) {
     OClass restrictedClass = database.getMetadata().getSchema().getClass(RESTRICTED_CLASSNAME);
-    boolean checkData = true;
+    boolean unsafe = false;
     if (restrictedClass == null) {
       restrictedClass = database.getMetadata().getSchema().createAbstractClass(RESTRICTED_CLASSNAME);
-      checkData = false;
+      unsafe = true;
     }
     if (!restrictedClass.existsProperty(ALLOW_ALL_FIELD))
-      ((OClassImpl) restrictedClass).createProperty(ALLOW_ALL_FIELD, OType.LINKSET,
-          database.getMetadata().getSchema().getClass(OIdentity.CLASS_NAME), checkData);
+      restrictedClass.createProperty(ALLOW_ALL_FIELD, OType.LINKSET, database.getMetadata().getSchema().getClass(OIdentity.CLASS_NAME), unsafe);
     if (!restrictedClass.existsProperty(ALLOW_READ_FIELD))
-      ((OClassImpl) restrictedClass).createProperty(ALLOW_READ_FIELD, OType.LINKSET,
-          database.getMetadata().getSchema().getClass(OIdentity.CLASS_NAME), checkData);
+      restrictedClass.createProperty(ALLOW_READ_FIELD, OType.LINKSET, database.getMetadata().getSchema().getClass(OIdentity.CLASS_NAME), unsafe);
     if (!restrictedClass.existsProperty(ALLOW_UPDATE_FIELD))
-      ((OClassImpl) restrictedClass).createProperty(ALLOW_UPDATE_FIELD, OType.LINKSET,
-          database.getMetadata().getSchema().getClass(OIdentity.CLASS_NAME), checkData);
+      restrictedClass.createProperty(ALLOW_UPDATE_FIELD, OType.LINKSET, database.getMetadata().getSchema().getClass(OIdentity.CLASS_NAME), unsafe);
     if (!restrictedClass.existsProperty(ALLOW_DELETE_FIELD))
-      ((OClassImpl) restrictedClass).createProperty(ALLOW_DELETE_FIELD, OType.LINKSET,
-          database.getMetadata().getSchema().getClass(OIdentity.CLASS_NAME), checkData);
+      restrictedClass.createProperty(ALLOW_DELETE_FIELD, OType.LINKSET, database.getMetadata().getSchema().getClass(OIdentity.CLASS_NAME), unsafe);
   }
 
   private void createOrUpdateOUserClass(final ODatabaseDocument database, OClass identityClass, OClass roleClass) {
-    boolean checkData = true;
+    boolean unsafe = false;
     OClass userClass = database.getMetadata().getSchema().getClass("OUser");
     if (userClass == null) {
       userClass = database.getMetadata().getSchema().createClass("OUser", identityClass);
-      checkData = false;
+      unsafe = true;
     } else if (!userClass.getSuperClasses().contains(identityClass))
       // MIGRATE AUTOMATICALLY TO 1.2.0
       userClass.setSuperClasses(Arrays.asList(identityClass));
 
     if (!userClass.existsProperty("name")) {
-      ((OClassImpl) userClass).createProperty("name", OType.STRING, (OType) null, checkData).setMandatory(true).setNotNull(true)
-          .setCollate("ci");
+      userClass.createProperty("name", OType.STRING, (OType) null, unsafe).setMandatory(true).setNotNull(true).setCollate("ci");
       userClass.createIndex("OUser.name", INDEX_TYPE.UNIQUE, ONullOutputListener.INSTANCE, "name");
     } else {
       final OProperty name = userClass.getProperty("name");
@@ -495,27 +490,25 @@ public class OSecurityShared implements OSecurity, OCloseable {
         userClass.createIndex("OUser.name", INDEX_TYPE.UNIQUE, ONullOutputListener.INSTANCE, "name");
     }
     if (!userClass.existsProperty(OUser.PASSWORD_FIELD))
-      ((OClassImpl) userClass).createProperty(OUser.PASSWORD_FIELD, OType.STRING, (OType) null, checkData).setMandatory(true)
-          .setNotNull(true);
+      userClass.createProperty(OUser.PASSWORD_FIELD, OType.STRING, (OType) null, unsafe).setMandatory(true).setNotNull(true);
     if (!userClass.existsProperty("roles"))
-      ((OClassImpl) userClass).createProperty("roles", OType.LINKSET, roleClass, checkData);
+      userClass.createProperty("roles", OType.LINKSET, roleClass, unsafe);
     if (!userClass.existsProperty("status"))
-      ((OClassImpl) userClass).createProperty("status", OType.STRING, (OType) null, checkData).setMandatory(true).setNotNull(true);
+      userClass.createProperty("status", OType.STRING, (OType) null, unsafe).setMandatory(true).setNotNull(true);
   }
 
   private OClass createOrUpdateORoleClass(final ODatabaseDocument database, OClass identityClass) {
     OClass roleClass = database.getMetadata().getSchema().getClass("ORole");
-    boolean checkData = true;
+    boolean unsafe = false;
     if (roleClass == null) {
       roleClass = database.getMetadata().getSchema().createClass("ORole", identityClass);
-      checkData = false;
+      unsafe = true;
     } else if (!roleClass.getSuperClasses().contains(identityClass))
       // MIGRATE AUTOMATICALLY TO 1.2.0
       roleClass.setSuperClasses(Arrays.asList(identityClass));
 
     if (!roleClass.existsProperty("name")) {
-      ((OClassImpl) roleClass).createProperty("name", OType.STRING, (OType) null, checkData).setMandatory(true).setNotNull(true)
-          .setCollate("ci");
+      roleClass.createProperty("name", OType.STRING, (OType) null, unsafe).setMandatory(true).setNotNull(true).setCollate("ci");
       roleClass.createIndex("ORole.name", INDEX_TYPE.UNIQUE, ONullOutputListener.INSTANCE, "name");
     } else {
       final OProperty name = roleClass.getProperty("name");
@@ -524,12 +517,12 @@ public class OSecurityShared implements OSecurity, OCloseable {
     }
 
     if (!roleClass.existsProperty("mode"))
-      ((OClassImpl) roleClass).createProperty("mode", OType.BYTE, (OType) null, checkData);
+      roleClass.createProperty("mode", OType.BYTE, (OType) null, unsafe);
 
     if (!roleClass.existsProperty("rules"))
-      ((OClassImpl) roleClass).createProperty("rules", OType.EMBEDDEDMAP, OType.BYTE, checkData);
+      roleClass.createProperty("rules", OType.EMBEDDEDMAP, OType.BYTE, unsafe);
     if (!roleClass.existsProperty("inheritedRole"))
-      ((OClassImpl) roleClass).createProperty("inheritedRole", OType.LINK, roleClass, checkData);
+      roleClass.createProperty("inheritedRole", OType.LINK, roleClass, unsafe);
     return roleClass;
   }
 

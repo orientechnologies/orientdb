@@ -43,20 +43,17 @@ import java.util.Set;
  * @author Andrey Lomakin
  * @since 8/30/13
  */
-public class OSBTreeIndexEngine extends OSharedResourceAdaptiveExternal implements OIndexEngine {
-  public static final int               VERSION                    = 1;
+public class OSBTreeIndexEngine implements OIndexEngine {
+  public static final int VERSION = 1;
 
-  public static final String            DATA_FILE_EXTENSION        = ".sbt";
-  public static final String            NULL_BUCKET_FILE_EXTENSION = ".nbt";
+  public static final String DATA_FILE_EXTENSION        = ".sbt";
+  public static final String NULL_BUCKET_FILE_EXTENSION = ".nbt";
 
   private final OSBTree<Object, Object> sbTree;
-  private int                           version;
+  private       int                     version;
   private final String                  name;
 
   public OSBTreeIndexEngine(String name, Boolean durableInNonTxMode, OAbstractPaginatedStorage storage, int version) {
-    super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), OGlobalConfiguration.MVRBTREE_TIMEOUT
-        .getValueAsInteger(), true);
-
     this.name = name;
     boolean durableInNonTx;
 
@@ -81,16 +78,12 @@ public class OSBTreeIndexEngine extends OSharedResourceAdaptiveExternal implemen
 
   @Override
   public void flush() {
-    acquireSharedLock();
-    try {
-      sbTree.flush();
-    } finally {
-      releaseSharedLock();
-    }
+    sbTree.flush();
   }
 
   @Override
   public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
+<<<<<<< HEAD
                         OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, ODocument metadata) {
     acquireExclusiveLock();
     try {
@@ -98,57 +91,36 @@ public class OSBTreeIndexEngine extends OSharedResourceAdaptiveExternal implemen
     } finally {
       releaseExclusiveLock();
     }
+=======
+      OBinarySerializer keySerializer, int keySize) {
+    sbTree.create(keySerializer, valueSerializer, keyTypes, keySize, nullPointerSupport);
+>>>>>>> develop
   }
 
   @Override
   public void delete() {
-    acquireSharedLock();
-    try {
-      sbTree.delete();
-    } finally {
-      releaseSharedLock();
-    }
+    sbTree.delete();
   }
 
   @Override
   public void deleteWithoutLoad(String indexName) {
-    acquireExclusiveLock();
-    try {
-      sbTree.deleteWithoutLoad(indexName);
-    } finally {
-      releaseExclusiveLock();
-    }
+    sbTree.deleteWithoutLoad(indexName);
   }
 
   @Override
   public void load(String indexName, OBinarySerializer valueSerializer, boolean isAutomatic, OBinarySerializer keySerializer,
       OType[] keyTypes, boolean nullPointerSupport, int keySize) {
-    acquireExclusiveLock();
-    try {
-      sbTree.load(indexName, keySerializer, valueSerializer, keyTypes, keySize, nullPointerSupport);
-    } finally {
-      releaseExclusiveLock();
-    }
+    sbTree.load(indexName, keySerializer, valueSerializer, keyTypes, keySize, nullPointerSupport);
   }
 
   @Override
   public boolean contains(Object key) {
-    acquireSharedLock();
-    try {
-      return sbTree.get(key) != null;
-    } finally {
-      releaseSharedLock();
-    }
+    return sbTree.get(key) != null;
   }
 
   @Override
   public boolean remove(Object key) {
-    acquireSharedLock();
-    try {
-      return sbTree.remove(key) != null;
-    } finally {
-      releaseSharedLock();
-    }
+    return sbTree.remove(key) != null;
   }
 
   @Override
@@ -158,169 +130,104 @@ public class OSBTreeIndexEngine extends OSharedResourceAdaptiveExternal implemen
 
   @Override
   public void clear() {
-    acquireSharedLock();
-    try {
-      sbTree.clear();
-    } finally {
-      releaseSharedLock();
-    }
+    sbTree.clear();
   }
 
   @Override
   public void close() {
-    acquireSharedLock();
-    try {
-      sbTree.close();
-    } finally {
-      releaseSharedLock();
-    }
+    sbTree.close();
   }
 
   @Override
   public Object get(Object key) {
-    acquireSharedLock();
-    try {
-      return sbTree.get(key);
-    } finally {
-      releaseSharedLock();
-    }
+    return sbTree.get(key);
   }
 
   @Override
   public OIndexCursor cursor(ValuesTransformer valuesTransformer) {
-    acquireSharedLock();
-    try {
-      final Object firstKey = sbTree.firstKey();
-      if (firstKey == null)
-        return new NullCursor();
+    final Object firstKey = sbTree.firstKey();
+    if (firstKey == null)
+      return new NullCursor();
 
-      return new OSBTreeIndexCursor(sbTree.iterateEntriesMajor(firstKey, true, true), valuesTransformer);
-    } finally {
-      releaseSharedLock();
-    }
+    return new OSBTreeIndexCursor(sbTree.iterateEntriesMajor(firstKey, true, true), valuesTransformer);
   }
 
   @Override
   public OIndexCursor descCursor(ValuesTransformer valuesTransformer) {
-    acquireSharedLock();
-    try {
-      final Object lastKey = sbTree.lastKey();
-      if (lastKey == null)
-        return new NullCursor();
+    final Object lastKey = sbTree.lastKey();
+    if (lastKey == null)
+      return new NullCursor();
 
-      return new OSBTreeIndexCursor(sbTree.iterateEntriesMinor(lastKey, true, false), valuesTransformer);
-    } finally {
-      releaseSharedLock();
-    }
+    return new OSBTreeIndexCursor(sbTree.iterateEntriesMinor(lastKey, true, false), valuesTransformer);
   }
 
   @Override
   public OIndexKeyCursor keyCursor() {
-    acquireSharedLock();
-    try {
-      return new OIndexKeyCursor() {
-        private final OSBTree.OSBTreeKeyCursor<Object> sbTreeKeyCursor = sbTree.keyCursor();
+    return new OIndexKeyCursor() {
+      private final OSBTree.OSBTreeKeyCursor<Object> sbTreeKeyCursor = sbTree.keyCursor();
 
-        @Override
-        public Object next(int prefetchSize) {
-          return sbTreeKeyCursor.next(prefetchSize);
-        }
-      };
-    } finally {
-      releaseSharedLock();
-    }
+      @Override
+      public Object next(int prefetchSize) {
+        return sbTreeKeyCursor.next(prefetchSize);
+      }
+    };
   }
 
   @Override
   public void put(Object key, Object value) {
-    acquireSharedLock();
-    try {
-      sbTree.put(key, value);
-    } finally {
-      releaseSharedLock();
-    }
+    sbTree.put(key, value);
   }
 
   @Override
   public Object getFirstKey() {
-    acquireSharedLock();
-    try {
-      return sbTree.firstKey();
-    } finally {
-      releaseSharedLock();
-    }
+    return sbTree.firstKey();
   }
 
   @Override
   public Object getLastKey() {
-    acquireSharedLock();
-    try {
-      return sbTree.lastKey();
-    } finally {
-      releaseSharedLock();
-    }
+    return sbTree.lastKey();
   }
 
   @Override
   public OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
       boolean ascSortOrder, ValuesTransformer transformer) {
-    acquireSharedLock();
-    try {
-      return new OSBTreeIndexCursor(sbTree.iterateEntriesBetween(rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder),
-          transformer);
-    } finally {
-      releaseSharedLock();
-    }
+    return new OSBTreeIndexCursor(sbTree.iterateEntriesBetween(rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder),
+        transformer);
   }
 
   @Override
-  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
-    acquireSharedLock();
-    try {
-      return new OSBTreeIndexCursor(sbTree.iterateEntriesMajor(fromKey, isInclusive, ascSortOrder), transformer);
-    } finally {
-      releaseSharedLock();
-    }
+  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
+      ValuesTransformer transformer) {
+    return new OSBTreeIndexCursor(sbTree.iterateEntriesMajor(fromKey, isInclusive, ascSortOrder), transformer);
   }
 
   @Override
   public OIndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
-    acquireSharedLock();
-    try {
-      return new OSBTreeIndexCursor(sbTree.iterateEntriesMinor(toKey, isInclusive, ascSortOrder), transformer);
-
-    } finally {
-      releaseSharedLock();
-    }
+    return new OSBTreeIndexCursor(sbTree.iterateEntriesMinor(toKey, isInclusive, ascSortOrder), transformer);
   }
 
   @Override
   public long size(final ValuesTransformer transformer) {
-    acquireSharedLock();
-    try {
-      if (transformer == null)
-        return sbTree.size();
-      else {
-        final Object firstKey = sbTree.firstKey();
-        final Object lastKey = sbTree.lastKey();
+    if (transformer == null)
+      return sbTree.size();
+    else {
+      final Object firstKey = sbTree.firstKey();
+      final Object lastKey = sbTree.lastKey();
 
-        if (firstKey != null && lastKey != null) {
-          int counter = 0;
+      if (firstKey != null && lastKey != null) {
+        int counter = 0;
 
-          final OSBTree.OSBTreeCursor<Object, Object> cursor = sbTree.iterateEntriesBetween(firstKey, true, lastKey, true, true);
-          Map.Entry<Object, Object> entry = cursor.next(-1);
-          while (entry != null) {
-            counter += transformer.transformFromValue(entry.getValue()).size();
-            entry = cursor.next(-1);
-          }
-
-          return counter;
+        final OSBTree.OSBTreeCursor<Object, Object> cursor = sbTree.iterateEntriesBetween(firstKey, true, lastKey, true, true);
+        Map.Entry<Object, Object> entry = cursor.next(-1);
+        while (entry != null) {
+          counter += transformer.transformFromValue(entry.getValue()).size();
+          entry = cursor.next(-1);
         }
 
-        return 0;
+        return counter;
       }
-    } finally {
-      releaseSharedLock();
+
+      return 0;
     }
   }
 
@@ -333,8 +240,8 @@ public class OSBTreeIndexEngine extends OSharedResourceAdaptiveExternal implemen
     private final OSBTree.OSBTreeCursor<Object, Object> treeCursor;
     private final ValuesTransformer                     valuesTransformer;
 
-    private Iterator<OIdentifiable>                     currentIterator = OEmptyIterator.IDENTIFIABLE_INSTANCE;
-    private Object                                      currentKey      = null;
+    private Iterator<OIdentifiable> currentIterator = OEmptyIterator.IDENTIFIABLE_INSTANCE;
+    private Object                  currentKey      = null;
 
     private OSBTreeIndexCursor(OSBTree.OSBTreeCursor<Object, Object> treeCursor, ValuesTransformer valuesTransformer) {
       this.treeCursor = treeCursor;

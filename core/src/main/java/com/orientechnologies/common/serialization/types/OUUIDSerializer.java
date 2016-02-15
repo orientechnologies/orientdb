@@ -95,12 +95,18 @@ public class OUUIDSerializer implements OBinarySerializer<UUID> {
     return value;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void serializeInByteBufferObject(UUID object, ByteBuffer buffer, Object... hints) {
     buffer.putLong(object.getMostSignificantBits());
     buffer.putLong(object.getLeastSignificantBits());
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public UUID deserializeFromByteBufferObject(ByteBuffer buffer) {
     final long mostSignificantBits = buffer.getLong();
@@ -108,11 +114,17 @@ public class OUUIDSerializer implements OBinarySerializer<UUID> {
     return new UUID(mostSignificantBits, leastSignificantBits);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
     return UUID_SIZE;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public UUID deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     final long mostSignificantBits = walChanges.getLongValue(buffer, offset);
@@ -120,6 +132,9 @@ public class OUUIDSerializer implements OBinarySerializer<UUID> {
     return new UUID(mostSignificantBits, leastSignificantBits);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return UUID_SIZE;

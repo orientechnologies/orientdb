@@ -2,8 +2,8 @@ package com.orientechnologies.orient.server.network.http;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -13,7 +13,6 @@ import java.util.Collection;
  * 
  * @author Luca Garulli (l.garulli--at-orientechnologies.com)
  */
-@Test
 public class HttpConnectionTest extends BaseHttpDatabaseTest {
   @Test
   public void testConnect() throws Exception {

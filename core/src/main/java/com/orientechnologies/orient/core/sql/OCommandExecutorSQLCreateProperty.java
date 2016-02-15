@@ -37,134 +37,91 @@ import java.util.Map;
 
 /**
  * SQL CREATE PROPERTY command: Creates a new property in the target class.
- * 
+ *
  * @author Luca Garulli
- * @author Michael MacFadden
  */
 @SuppressWarnings("unchecked")
 public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
-  public static final String KEYWORD_CREATE     = "CREATE";
-  public static final String KEYWORD_PROPERTY   = "PROPERTY";
-  public static final String KEYWORD_MANDATORY  = "MANDATORY";
-  public static final String KEYWORD_NOTNULL    = "NOTNULL";
-  public static final String KEYWORD_READONLY   = "READONLY";
+  public static final String KEYWORD_CREATE   = "CREATE";
+  public static final String KEYWORD_PROPERTY = "PROPERTY";
 
-  private String             className;
-  private String             fieldName;
-  private OType              type;
-  private String             linked;
-  private boolean            unsafe             = false;
-  private boolean            mandatory          = false;
-  private boolean            readOnly           = false;
-  private boolean            notNull            = false;
+  private String className;
+  private String fieldName;
+  private OType  type;
+  private String linked;
+  private boolean unsafe = false;
 
   public OCommandExecutorSQLCreateProperty parse(final OCommandRequest iRequest) {
-    init((OCommandRequestText) iRequest);
 
-    final StringBuilder word = new StringBuilder();
+    final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
 
-    int oldPos = 0;
-    int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_CREATE))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_CREATE + " not found", parserText, oldPos);
+    String queryText = textRequest.getText();
+    String originalQuery = queryText;
+    try {
+      queryText = preParse(queryText, iRequest);
+      textRequest.setText(queryText);
 
-    oldPos = pos;
-    pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_PROPERTY))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_PROPERTY + " not found", parserText, oldPos);
+      init((OCommandRequestText) iRequest);
 
-    oldPos = pos;
-    pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false);
-    if (pos == -1)
-      throw new OCommandSQLParsingException("Expected <class>.<property>", parserText, oldPos);
+      final StringBuilder word = new StringBuilder();
 
-    String[] parts = split(word);
-    if (parts.length != 2)
-      throw new OCommandSQLParsingException("Expected <class>.<property>", parserText, oldPos);
+      int oldPos = 0;
+      int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
+      if (pos == -1 || !word.toString().equals(KEYWORD_CREATE))
+        throw new OCommandSQLParsingException("Keyword " + KEYWORD_CREATE + " not found", parserText, oldPos);
 
-    className = parts[0];
-    if (className == null)
-      throw new OCommandSQLParsingException("Class not found", parserText, oldPos);
-    fieldName = parts[1];
+      oldPos = pos;
+      pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
+      if (pos == -1 || !word.toString().equals(KEYWORD_PROPERTY))
+        throw new OCommandSQLParsingException("Keyword " + KEYWORD_PROPERTY + " not found", parserText, oldPos);
 
-    oldPos = pos;
-    pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1)
-      throw new OCommandSQLParsingException("Missed property type", parserText, oldPos);
+      oldPos = pos;
+      pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false);
+      if (pos == -1)
+        throw new OCommandSQLParsingException("Expected <class>.<property>", parserText, oldPos);
 
-    type = OType.valueOf(word.toString());
+      String[] parts = split(word);
+      if (parts.length != 2)
+        throw new OCommandSQLParsingException("Expected <class>.<property>", parserText, oldPos);
 
-    oldPos = pos;
-    pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false);
-    if (pos == -1)
-    	return this;
-    
-    // We have another parsed word.  If it follows the type, then it could
-    // be a linked or embedded type.  If so, it may be followed by the
-    // linked or embedded type.
-    switch(type) {
-    case EMBEDDED:
-    case EMBEDDEDMAP:
-    case EMBEDDEDLIST:
-    case EMBEDDEDSET:
-    case LINK:
-    case LINKMAP:
-    case LINKLIST:
-    case LINKSET:
-    	// See if the parsed word is a keyword if it is not, then we assume it to 
-    	// be the linked type/class.
-    	// TODO handle escaped strings.
-    	if (!isKeyword(word.toString())) {
-    		// grab the word and look for the next
-    		linked = word.toString();
-    		oldPos = pos;
-    	    pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false);
-    	    if (pos == -1)
-    	    	return this;
-    	} else {
-    		// This was a keyword.  We need to back up to handle it later.
-    		pos = oldPos;
-    	}
-    	default:
-    		// not a type that should have a linked type, so back up to handle
-    		// potential keywords.
-    		pos = oldPos;
+      className = parts[0];
+      if (className == null)
+        throw new OCommandSQLParsingException("Class not found", parserText, oldPos);
+      fieldName = parts[1];
+
+      oldPos = pos;
+      pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
+      if (pos == -1)
+        throw new OCommandSQLParsingException("Missed property type", parserText, oldPos);
+
+      type = OType.valueOf(word.toString());
+
+      oldPos = pos;
+      pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false);
+      if (pos == -1)
+        return this;
+
+      if (word.toString().equals(KEYWORD_UNSAFE))
+        unsafe = true;
+      else {
+        linked = word.toString();
+        if (linked.startsWith("`") && linked.endsWith("`") && linked.length() > 1) {
+          linked = linked.substring(1, linked.length() - 1);
+        }
+
+        oldPos = pos;
+        pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false);
+        if (pos == -1)
+          return this;
+
+        if (word.toString().equals(KEYWORD_UNSAFE))
+          unsafe = true;
+      }
+    } finally {
+      textRequest.setText(originalQuery);
     }
-    
-    while(pos >= 0) {
-    	oldPos = pos;
-    	pos = parseKeyword(pos);
-    }
-
     return this;
   }
-  
-  private int parseKeyword(int pos) {
-	  final StringBuilder word = new StringBuilder();
-	  int oldPos = pos;
-      pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false);
-      
-      String keyword = word.toString();
-      if (KEYWORD_MANDATORY.equals(keyword)) {
-    	  mandatory = true;
-      } else if (KEYWORD_READONLY.equals(keyword)) {
-    	  readOnly = true;
-      } else if (KEYWORD_NOTNULL.equals(keyword)) {
-    	  notNull = true;
-      } else if (KEYWORD_UNSAFE.equals(keyword)) {
-    	  unsafe = true;
-      }
-      
-      return pos;
-  }
-  
-  private boolean isKeyword(String text) {
-	  return KEYWORD_MANDATORY.equals(text) ||
-			  KEYWORD_NOTNULL.equals(text) ||
-			  KEYWORD_READONLY.equals(text) ||
-			  KEYWORD_UNSAFE.equals(text);
-  }
-
 
   private String[] split(StringBuilder word) {
     List<String> result = new ArrayList<String>();
@@ -234,13 +191,7 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
     }
 
     // CREATE IT LOCALLY
-    OPropertyImpl property = sourceClass.addPropertyInternal(fieldName, type, linkedType, linkedClass, !unsafe);
-    
-    // Set attributes.  Note unsafe is handled above.
-    property.setMandatory(mandatory);
-    property.setNotNull(notNull);
-    property.setReadonly(readOnly);
-    
+    sourceClass.addPropertyInternal(fieldName, type, linkedType, linkedClass, unsafe);
     return sourceClass.properties().size();
   }
 
@@ -251,6 +202,6 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
 
   @Override
   public String getSyntax() {
-    return "CREATE PROPERTY <class>.<property> <type> [<linked-type>|<linked-class>] [UNSAFE | MANDATORY | READONLY | NOTNULL]";
+    return "CREATE PROPERTY <class>.<property> <type> [<linked-type>|<linked-class>] [UNSAFE]";
   }
 }

@@ -17,55 +17,100 @@
  */
 package com.orientechnologies.orient.jdbc;
 
-import java.sql.*;
-import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.Executor;
-
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
+import java.sql.Array;
+import java.sql.Blob;
+import java.sql.CallableStatement;
+import java.sql.Clob;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.NClob;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLClientInfoException;
+import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
+import java.sql.SQLWarning;
+import java.sql.SQLXML;
+import java.sql.Savepoint;
+import java.sql.Statement;
+import java.sql.Struct;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.Executor;
+
 /**
- * 
  * @author Roberto Franchini (CELI Srl - franchini@celi.it)
  * @author Salvatore Piccione (TXT e-solutions SpA - salvo.picci@gmail.com)
  */
 public class OrientJdbcConnection implements Connection {
 
-  private final String        dbUrl;
-  private final Properties    info;
-  private final boolean       usePool;
+  private final String     dbUrl;
+  private final Properties info;
+  private final boolean    usePool;
+
   private ODatabaseDocumentTx database;
-  private boolean             readOnly = false;
+  private boolean             readOnly;
   private boolean             autoCommit;
   private ODatabase.STATUS    status;
 
-  public OrientJdbcConnection(String iUrl, Properties iInfo) {
-    dbUrl = iUrl.replace("jdbc:orient:", "");
+  public OrientJdbcConnection(final String dbUrl, final Properties info) {
+    this.dbUrl = dbUrl.replace("jdbc:orient:", "");
 
-    info = iInfo;
+    this.info = info;
 
-    final String username = iInfo.getProperty("user", "admin");
-    final String password = iInfo.getProperty("password", "admin");
+    readOnly = false;
+    final String username = info.getProperty("user", "admin");
+    final String password = info.getProperty("password", "admin");
 
-    usePool = Boolean.parseBoolean(iInfo.getProperty("db.usePool", "false"));
+    usePool = Boolean.parseBoolean(info.getProperty("db.usePool", "false"));
     if (usePool) {
       final int poolMinSize = Integer
-          .parseInt(iInfo.getProperty("db.pool.min", OGlobalConfiguration.DB_POOL_MAX.getValueAsString()));
+          .parseInt(info.getProperty("db.pool.min", OGlobalConfiguration.DB_POOL_MAX.getValueAsString()));
       final int poolMaxSize = Integer
-          .parseInt(iInfo.getProperty("db.pool.max", OGlobalConfiguration.DB_POOL_MAX.getValueAsString()));
+          .parseInt(info.getProperty("db.pool.max", OGlobalConfiguration.DB_POOL_MAX.getValueAsString()));
 
-      database = ODatabaseDocumentPool.global(poolMinSize, poolMaxSize).acquire(dbUrl, username, password);
+      database = ODatabaseDocumentPool.global(poolMinSize, poolMaxSize).acquire(this.dbUrl, username, password);
     } else {
-      database = new ODatabaseDocumentTx(dbUrl);
+      database = new ODatabaseDocumentTx(this.dbUrl);
       database.open(username, password);
     }
     status = ODatabase.STATUS.OPEN;
   }
 
-  public void clearWarnings() throws SQLException {
+  public Statement createStatement() throws SQLException {
+    return new OrientJdbcStatement(this);
+  }
+
+  public PreparedStatement prepareStatement(String sql) throws SQLException {
+    return new OrientJdbcPreparedStatement(this, sql);
+  }
+
+  public CallableStatement prepareCall(String sql) throws SQLException {
+    throw new SQLFeatureNotSupportedException();
+  }
+
+  public String nativeSQL(String sql) throws SQLException {
+    throw new SQLFeatureNotSupportedException();
+  }  public void clearWarnings() throws SQLException {
+  }
+
+  public <T> T unwrap(Class<T> iface) throws SQLException {
+
+    throw new SQLFeatureNotSupportedException();
+  }
+
+  public boolean isWrapperFor(Class<?> iface) throws SQLException {
+
+    throw new SQLFeatureNotSupportedException();
+  }
+
+  public String getUrl() {
+    return dbUrl;
   }
 
   public void close() throws SQLException {
@@ -76,6 +121,8 @@ public class OrientJdbcConnection implements Connection {
       database = null;
     }
   }
+
+
 
   public void commit() throws SQLException {
     database.commit();
@@ -124,10 +171,6 @@ public class OrientJdbcConnection implements Connection {
   public SQLXML createSQLXML() throws SQLException {
 
     return null;
-  }
-
-  public Statement createStatement() throws SQLException {
-    return new OrientJdbcStatement(this);
   }
 
   public Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
@@ -205,14 +248,6 @@ public class OrientJdbcConnection implements Connection {
     return null;
   }
 
-  public String nativeSQL(String sql) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  public CallableStatement prepareCall(String sql) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
   public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
@@ -220,10 +255,6 @@ public class OrientJdbcConnection implements Connection {
   public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability)
       throws SQLException {
     throw new SQLFeatureNotSupportedException();
-  }
-
-  public PreparedStatement prepareStatement(String sql) throws SQLException {
-    return new OrientJdbcPreparedStatement(this, sql);
   }
 
   public PreparedStatement prepareStatement(String sql, int autoGeneratedKeys) throws SQLException {
@@ -267,20 +298,6 @@ public class OrientJdbcConnection implements Connection {
   public Savepoint setSavepoint(String name) throws SQLException {
 
     return null;
-  }
-
-  public boolean isWrapperFor(Class<?> iface) throws SQLException {
-
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  public <T> T unwrap(Class<T> iface) throws SQLException {
-
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  public String getUrl() {
-    return dbUrl;
   }
 
   public ODatabaseDocumentTx getDatabase() {

@@ -11,8 +11,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
-@Test
-public class OStoragePerformanceStatisticTest {
+@Test public class OStoragePerformanceStatisticTest {
   public void testReadSpeedFromCache() throws Exception {
     final AssertDataFunction assertDataFunction = new AssertDataFunction() {
       @Override
@@ -258,13 +257,21 @@ public class OStoragePerformanceStatisticTest {
     long counter = 0;
 
     while (notZeroSpeedCount < 1000) {
-      if (counter % 1000 == 0 && System.currentTimeMillis() - msStart > 10000)
+      if (counter % 1000 == 0 && System.currentTimeMillis() - msStart > 1200000)
         break;
 
       speedData = getDataFunction.getData(storagePerformanceStatistic);
 
-      //background thread did not run.
-      if (speedData[0] == -1) {
+      //check if background thread did not run
+      boolean allDataAreMeasured = true;
+      for (long data : speedData) {
+        if (data == -1) {
+          allDataAreMeasured = false;
+          break;
+        }
+      }
+
+      if (!allDataAreMeasured) {
         Thread.yield();
       } else {
         notZeroSpeedCount++;
@@ -365,13 +372,21 @@ public class OStoragePerformanceStatisticTest {
     long counter = 0;
 
     while (notZeroSpeedCount < 1000) {
-      if (counter % 1000 == 0 && System.currentTimeMillis() - msStart > 120000)
+      if (counter % 1000 == 0 && System.currentTimeMillis() - msStart > 1200000)
         break;
 
       speedData = getDataFunction.getData(mxBean);
 
-      //background thread did not run.
-      if (speedData[0] == -1) {
+      //check if background thread did not run.
+      boolean allDataAreMeasured = true;
+      for (long data : speedData) {
+        if (data == -1) {
+          allDataAreMeasured = false;
+          break;
+        }
+      }
+
+      if (!allDataAreMeasured) {
         Thread.yield();
       } else {
         notZeroSpeedCount++;

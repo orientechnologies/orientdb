@@ -19,7 +19,7 @@
 package com.orientechnologies.orient.etl.extractor;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.etl.ETLBaseTest;
+import com.orientechnologies.orient.etl.OETLBaseTest;
 import org.junit.Test;
 
 import java.util.Collection;
@@ -34,7 +34,7 @@ import static org.junit.Assert.assertNotNull;
  *
  * @author Luca Garulli
  */
-public class OXmlExtractorTest extends ETLBaseTest {
+public class OXmlExtractorTest extends OETLBaseTest {
 
   @Test
   public void testSimpleXml() {

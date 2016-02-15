@@ -113,8 +113,8 @@
         <module>distributed</module>
         <module>graphdb</module>
         <module>lucene</module>
-        <module>etl</module>
         <module>jdbc</module>
+        <module>etl</module>
         <module>distribution</module>
     </modules>
 
@@ -183,7 +183,7 @@
         <osgi.dynamicImport/>
         <osgi.private/>
         <!-- | shared build/report plugins version -->
-        <surefire.version>2.17</surefire.version>
+        <surefire.version>2.19.1</surefire.version>
         <sonatypeOssDistMgmtSnapshotsUrl>https://oss.sonatype.org/content/repositories/snapshots/
         </sonatypeOssDistMgmtSnapshotsUrl>
     </properties>
@@ -204,12 +204,28 @@
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>buildnumber-maven-plugin</artifactId>
-                    <version>1.3</version>
+                    <version>1.4</version>
                 </plugin>
 
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
+                    <version>${surefire.version}</version>
+                    <configuration>
+                        <systemPropertyVariables>
+                            <security.userPasswordSaltIterations>1</security.userPasswordSaltIterations>
+                        </systemPropertyVariables>
+                    </configuration>
+
+                </plugin>
+
+
+
+                <plugin>
+
+
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-failsafe-plugin</artifactId>
                     <version>${surefire.version}</version>
 
                 </plugin>
@@ -260,10 +276,17 @@
 
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-source-plugin</artifactId>
-                    <version>2.4</version>
+                    <artifactId>maven-checkstyle-plugin</artifactId>
+                    <version>2.8</version>
                 </plugin>
-                <!-- | This plugin's configuration is used to store Eclipse 
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-pmd-plugin</artifactId>
+                    <version>2.6</version>
+                </plugin>
+
+                <!-- | This plugin's configuration is used to store Eclipse
                     | m2e settings only. It has no influence on the Maven build itself. -->
                 <plugin>
                     <groupId>org.eclipse.m2e</groupId>
@@ -339,10 +362,16 @@
 
                     <configuration>
                         <licenseMerges>
-                            <licenseMerge>ASL 2.0|Apache License 2.0|Apache License, Version 2.0|Apache 2|ASL, version 2|The Apache Software License|Version 2.0,Apache License, Version 2.0| The Apache Software License, Version 2.0</licenseMerge>
+                            <licenseMerge>ASL 2.0|Apache License 2.0|Apache License, Version 2.0|Apache 2|ASL, version 2|The Apache
+                                Software License|Version 2.0,Apache License, Version 2.0| The Apache Software License, Version 2.0
+                            </licenseMerge>
                             <licenseMerge>BSD|BSD License|New BSD License</licenseMerge>
-                            <licenseMerge>LGPL 2.1|GNU Lesser General Public License (LGPL), Version 2.1|GNU Lesser General Public License, Version 2.1</licenseMerge>
-                            <licenseMerge>CDDL 1.0|COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.0|Common Development and Distribution License (CDDL) v1.0</licenseMerge>
+                            <licenseMerge>LGPL 2.1|GNU Lesser General Public License (LGPL), Version 2.1|GNU Lesser General Public
+                                License, Version 2.1
+                            </licenseMerge>
+                            <licenseMerge>CDDL 1.0|COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.0|Common Development
+                                and Distribution License (CDDL) v1.0
+                            </licenseMerge>
                             <licenseMerge>LGPL 3|GNU LESSER GENERAL PUBLIC LICENSE|GNU Lesser Public License</licenseMerge>
                         </licenseMerges>
                     </configuration>
@@ -383,18 +412,6 @@
                 </configuration>
             </plugin>
 
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <systemPropertyVariables>
-                        <!-- SET THIS TO AVOID ASKING FOR PASSWORD DURING 
-                            TESTS -->
-                        <propertyName>ORIENTDB_ROOT_PASSWORD</propertyName>
-                        <propertyName>ORIENTDB_NODE_NAME</propertyName>
-                    </systemPropertyVariables>
-                </configuration>
-            </plugin>
 
             <plugin>
                 <groupId>org.apache.felix</groupId>
@@ -468,6 +485,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
+                <version>2.4</version>
                 <executions>
                     <execution>
                         <id>attach-sources</id>

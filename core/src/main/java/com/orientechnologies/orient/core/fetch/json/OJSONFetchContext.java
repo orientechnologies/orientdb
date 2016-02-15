@@ -245,6 +245,8 @@ public class OJSONFetchContext implements OFetchContext {
           appendType(typesStack.peek(), iFieldName, 'z');
         else if (t == OType.LINKMAP)
           appendType(typesStack.peek(), iFieldName, 'm');
+        else if (t == OType.CUSTOM)
+          appendType(typesStack.peek(), iFieldName, 'u');
       }
     }
   }

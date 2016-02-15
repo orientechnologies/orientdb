@@ -23,8 +23,10 @@ package com.orientechnologies.orient.core.record;
  * Listener interface to catch all the record events.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
+ *
+ * @since 2.2
  */
+@Deprecated
 public interface ORecordListener {
   public enum EVENT {
     CLEAR, RESET, MARSHALL, UNMARSHALL, UNLOAD, IDENTITY_CHANGED

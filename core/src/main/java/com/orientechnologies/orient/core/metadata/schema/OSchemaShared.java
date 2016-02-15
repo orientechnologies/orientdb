@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
+import com.orientechnologies.orient.core.exception.OSchemaNotCreatedException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -70,15 +71,14 @@ import java.util.concurrent.Callable;
  * Shared schema class. It's shared by all the database instances that point to the same storage.
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- *
  */
 @SuppressWarnings("unchecked")
 public class OSchemaShared extends ODocumentWrapperNoClass
     implements OSchema, OCloseable, OOrientStartupListener, OOrientShutdownListener {
-  public static final int   CURRENT_VERSION_NUMBER = 4;
-  public static final int   VERSION_NUMBER_V4      = 4;
+  public static final  int  CURRENT_VERSION_NUMBER = 4;
+  public static final  int  VERSION_NUMBER_V4      = 4;
   // this is needed for guarantee the compatibility to 2.0-M1 and 2.0-M2 no changed associated with it
-  public static final int   VERSION_NUMBER_V5      = 5;
+  public static final  int  VERSION_NUMBER_V5      = 5;
   private static final long serialVersionUID       = 1L;
 
   private final boolean clustersCanNotBeSharedAmongClasses;
@@ -90,11 +90,11 @@ public class OSchemaShared extends ODocumentWrapperNoClass
 
   private final OClusterSelectionFactory clusterSelectionFactory = new OClusterSelectionFactory();
 
-  private volatile ThreadLocal<OModifiableInteger> modificationCounter    = new OModificationsCounter();
-  private final List<OGlobalProperty>              properties             = new ArrayList<OGlobalProperty>();
-  private final Map<String, OGlobalProperty>       propertiesByNameType   = new HashMap<String, OGlobalProperty>();
-  private volatile int                             version                = 0;
-  private volatile OImmutableSchema                snapshot;
+  private volatile ThreadLocal<OModifiableInteger> modificationCounter  = new OModificationsCounter();
+  private final    List<OGlobalProperty>           properties           = new ArrayList<OGlobalProperty>();
+  private final    Map<String, OGlobalProperty>    propertiesByNameType = new HashMap<String, OGlobalProperty>();
+  private volatile int                             version              = 0;
+  private volatile OImmutableSchema snapshot;
 
   private static Set<String> internalClasses = new HashSet<String>();
 
@@ -836,9 +836,12 @@ public class OSchemaShared extends ODocumentWrapperNoClass
 
   @Override
   public OSchemaShared load() {
+
     rwSpinLock.acquireWriteLock();
     try {
-      getDatabase();
+      if (!new ORecordId(getDatabase().getStorage().getConfiguration().schemaRecordId).isValid())
+        throw new OSchemaNotCreatedException("Schema is not created and can not be loaded");
+
       ((ORecordId) document.getIdentity()).fromString(getDatabase().getStorage().getConfiguration().schemaRecordId);
       reload("*:-1 index:0");
 
@@ -1022,7 +1025,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass
       result = classes.get(className.toLowerCase());
 
       // WAKE UP DB LIFECYCLE LISTENER
-      for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
+      for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext(); )
         it.next().onCreateClass(getDatabase(), result);
 
     } finally {
@@ -1100,7 +1103,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass
       result = classes.get(className.toLowerCase());
 
       // WAKE UP DB LIFECYCLE LISTENER
-      for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
+      for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext(); )
         it.next().onCreateClass(getDatabase(), result);
 
     } catch (ClusterIdsAreEmptyException e) {

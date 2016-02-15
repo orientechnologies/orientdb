@@ -235,7 +235,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
       onIndexEngineChange(indexId);
 
       if (rebuild)
-        rebuild(progressListener);
+        fillIndex(progressListener);
 
       updateConfiguration();
     } catch (Exception e) {
@@ -428,29 +428,9 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
 
       onIndexEngineChange(indexId);
 
-      long documentNum = 0;
-      long documentTotal = 0;
-
-      for (final String cluster : clustersToIndex)
-        documentTotal += getDatabase().countClusterElements(cluster);
-
-      if (iProgressListener != null)
-        iProgressListener.onBegin(this, documentTotal, true);
-
-      // INDEX ALL CLUSTERS
-      for (final String clusterName : clustersToIndex) {
-        final long[] metrics = indexCluster(clusterName, iProgressListener, documentNum, documentIndexed, documentTotal);
-        documentNum = metrics[0];
-        documentIndexed = metrics[1];
-      }
-
-      if (iProgressListener != null)
-        iProgressListener.onCompletition(this, true);
+      documentIndexed = fillIndex(iProgressListener);
 
     } catch (final Exception e) {
-      if (iProgressListener != null)
-        iProgressListener.onCompletition(this, false);
-
       try {
         if (indexId >= 0)
           storage.clearIndex(indexId);
@@ -471,6 +451,35 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
       releaseExclusiveLock();
     }
 
+    return documentIndexed;
+  }
+
+  private long fillIndex(OProgressListener iProgressListener) {
+    long documentIndexed = 0;
+    try {
+      long documentNum = 0;
+      long documentTotal = 0;
+
+      for (final String cluster : clustersToIndex)
+        documentTotal += getDatabase().countClusterElements(cluster);
+
+      if (iProgressListener != null)
+        iProgressListener.onBegin(this, documentTotal, true);
+
+      // INDEX ALL CLUSTERS
+      for (final String clusterName : clustersToIndex) {
+        final long[] metrics = indexCluster(clusterName, iProgressListener, documentNum, documentIndexed, documentTotal);
+        documentNum = metrics[0];
+        documentIndexed = metrics[1];
+      }
+
+      if (iProgressListener != null)
+        iProgressListener.onCompletition(this, true);
+    } catch (final RuntimeException e) {
+      if (iProgressListener != null)
+        iProgressListener.onCompletition(this, false);
+      throw e;
+    }
     return documentIndexed;
   }
 

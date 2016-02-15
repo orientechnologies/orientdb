@@ -3,9 +3,8 @@ package com.orientechnologies.orient.server.network.http;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
-import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.Before;
+import org.junit.Assert;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -19,10 +18,9 @@ import java.util.List;
  * 
  * @author Luca Garulli (l.garulli--at-orientechnologies.com)
  */
-@Test
 public class HttpBatchTest extends BaseHttpDatabaseTest {
 
-  @BeforeMethod
+  @Before
   public void beforeMethod(){
     getServer().getPlugin("script-interpreter").startup();
   }
