@@ -45,6 +45,12 @@ public class ORule implements Serializable {
                                                                                  ODatabaseSecurityResources.COMMAND) {
                                                                                private static final long serialVersionUID = 1L;
                                                                              };
+
+    public static final ResourceGeneric                         COMMAND_GREMLIN    = new ResourceGeneric("COMMAND_GREMLIN",
+                                                                                ODatabaseSecurityResources.COMMAND_GREMLIN) {
+                                                                              private static final long serialVersionUID = 1L;
+                                                                            };
+
     public static final ResourceGeneric                         RECORD_HOOK        = new ResourceGeneric("RECORD_HOOK",
                                                                                  ODatabaseSecurityResources.RECORD_HOOK) {
                                                                                private static final long serialVersionUID = 1L;
