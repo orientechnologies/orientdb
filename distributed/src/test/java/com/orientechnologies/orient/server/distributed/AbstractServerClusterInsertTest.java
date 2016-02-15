@@ -334,8 +334,6 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
     return new Reader(databaseURL);
   }
 
-  protected abstract String getDatabaseURL(ServerRun server);
-
   /**
    * Event called right after the database has been created and right before to be replicated to the X servers
    *

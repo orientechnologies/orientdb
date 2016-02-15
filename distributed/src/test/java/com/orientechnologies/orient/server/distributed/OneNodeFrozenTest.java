@@ -15,59 +15,46 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Starts 3 servers, backup on node3, check other nodes can work in the meanwhile and node3 is realigned once backup is finished. No
- * automatic restart must be executed.
+ * Starts 3 servers, freeze node3, check other nodes can work in the meanwhile and node3 is realigned once the frozen node is
+ * released.
  */
-public class OneNodeBackupTest extends AbstractServerClusterTxTest {
+public class OneNodeFrozenTest extends AbstractServerClusterTxTest {
   final static int    SERVERS          = 3;
   volatile boolean    inserting        = true;
   volatile int        serverStarted    = 0;
-  volatile boolean    backupInProgress = false;
+  volatile boolean    freezeInProgress = false;
   final AtomicInteger nodeLefts        = new AtomicInteger();
 
   @Test
   public void test() throws Exception {
-    // SET MAXQUEUE SIZE LOWER TO TEST THE NODE IS NOT RESTARTED AUTOMATICALLY
-    final long queueMaxSize = OGlobalConfiguration.DISTRIBUTED_QUEUE_MAXSIZE.getValueAsLong();
-    OGlobalConfiguration.DISTRIBUTED_QUEUE_MAXSIZE.setValue(1000);
+    startupNodesInSequence = true;
+    count = 1500;
+    maxRetries = 10;
+    init(SERVERS);
+    prepare(false);
 
-    try {
-      startupNodesInSequence = true;
-      count = 1500;
-      maxRetries = 10;
-      init(SERVERS);
-      prepare(false);
-
-      // EXECUTE TESTS ONLY ON FIRST 2 NODES LEAVING NODE3 AS BACKUP ONLY REPLICA
-      executeTestsOnServers = new ArrayList<ServerRun>();
-      for (int i = 0; i < serverInstance.size() - 1; ++i) {
-        executeTestsOnServers.add(serverInstance.get(i));
-      }
-
-      execute();
-
-    } finally {
-      OGlobalConfiguration.DISTRIBUTED_QUEUE_MAXSIZE.setValue(queueMaxSize);
+    // EXECUTE TESTS ONLY ON FIRST 2 NODES LEAVING NODE3 AS BACKUP ONLY REPLICA
+    executeTestsOnServers = new ArrayList<ServerRun>();
+    for (int i = 0; i < serverInstance.size() - 1; ++i) {
+      executeTestsOnServers.add(serverInstance.get(i));
     }
+
+    execute();
   }
 
   @Override
-  protected void onServerStarted(ServerRun server) {
+  protected void onServerStarted(final ServerRun server) {
     super.onServerStarted(server);
 
     if (serverStarted == 0) {
@@ -98,7 +85,7 @@ public class OneNodeBackupTest extends AbstractServerClusterTxTest {
         @Override
         public void run() {
           try {
-            // CRASH LAST SERVER try {
+            // CRASH LAST SERVER
             executeWhen(new Callable<Boolean>() {
               // CONDITION
               @Override
@@ -117,42 +104,30 @@ public class OneNodeBackupTest extends AbstractServerClusterTxTest {
               public Object call() throws Exception {
                 Assert.assertTrue("Insert was too fast", inserting);
 
-                banner("STARTING BACKUP SERVER " + (SERVERS - 1));
+                banner("FREEZING SERVER " + (SERVERS - 1));
 
-                OrientGraphFactory factory = new OrientGraphFactory(
-                    "plocal:target/server" + (SERVERS - 1) + "/databases/" + getDatabaseName());
-                OrientGraphNoTx g = factory.getNoTx();
-
-                backupInProgress = true;
-                File file = null;
+                freezeInProgress = true;
                 try {
-                  file = File.createTempFile("orientdb_test_backup", ".zip");
-                  if (file.exists())
-                    Assert.assertTrue(file.delete());
 
-                  g.getRawGraph().backup(new FileOutputStream(file), null, new Callable<Object>() {
-                    @Override
-                    public Object call() throws Exception {
+                  final OServerAdmin admin = new OServerAdmin(getDatabaseURL(server)).connect("root", "test");
 
-                      // SIMULATE LONG BACKUP UP TO 2/3 OF RECORDS
-                      while (totalVertices.get() < (count * SERVERS) * 2 / 3) {
-                        Thread.sleep(1000);
-                      }
+                  admin.freezeDatabase("plocal");
+                  try {
 
-                      return null;
+                    // SIMULATE LONG BACKUP UP TO 2/3 OF RECORDS
+                    while (totalVertices.get() < (count * SERVERS) * 2 / 3) {
+                      Thread.sleep(1000);
                     }
-                  }, null, 9, 1000000);
+
+                  } finally {
+                    admin.releaseDatabase("plocal");
+                  }
 
                 } catch (IOException e) {
                   e.printStackTrace();
                 } finally {
-                  banner("COMPLETED BACKUP SERVER " + (SERVERS - 1));
-                  backupInProgress = false;
-
-                  g.shutdown();
-
-                  if (file != null)
-                    file.delete();
+                  banner("RELEASING SERVER " + (SERVERS - 1));
+                  freezeInProgress = false;
                 }
                 return null;
               }
@@ -170,7 +145,7 @@ public class OneNodeBackupTest extends AbstractServerClusterTxTest {
   @Override
   protected void onAfterExecution() throws Exception {
     inserting = false;
-    Assert.assertFalse(backupInProgress);
+    Assert.assertFalse(freezeInProgress);
     Assert.assertEquals("Found some nodes has been restarted", 0, nodeLefts.get());
   }
 
@@ -180,6 +155,6 @@ public class OneNodeBackupTest extends AbstractServerClusterTxTest {
 
   @Override
   public String getDatabaseName() {
-    return "distributed-backup1node";
+    return "distributed-freeze1node";
   }
 }

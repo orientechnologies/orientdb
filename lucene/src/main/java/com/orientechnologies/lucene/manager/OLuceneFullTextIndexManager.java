@@ -24,7 +24,6 @@ import com.orientechnologies.lucene.query.QueryContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.apache.lucene.analysis.Analyzer;
@@ -111,8 +110,8 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
     Set<OIdentifiable> container = (Set<OIdentifiable>) value;
     for (OIdentifiable oIdentifiable : container) {
       Document doc = new Document();
-      doc.add(OLuceneIndexType
-          .createField(RID, oIdentifiable.getIdentity().toString(), Field.Store.YES, Field.Index.NOT_ANALYZED_NO_NORMS));
+      doc.add(OLuceneIndexType.createField(RID, oIdentifiable.getIdentity().toString(), Field.Store.YES,
+          Field.Index.NOT_ANALYZED_NO_NORMS));
       int i = 0;
       if (index.isAutomatic()) {
         for (String f : index.getFields()) {
@@ -142,16 +141,17 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
         Object val = null;
         if (key instanceof OCompositeKey) {
           List<Object> keys = ((OCompositeKey) key).getKeys();
-
           int k = 0;
           for (Object o : keys) {
-            doc.add(OLuceneIndexType.createField("k" + k, val, Field.Store.NO, Field.Index.ANALYZED));
+            doc.add(OLuceneIndexType.createField("k" + k, o, Field.Store.NO, Field.Index.ANALYZED));
+            k++;
           }
         } else if (key instanceof Collection) {
           Collection<Object> keys = (Collection<Object>) key;
           int k = 0;
           for (Object o : keys) {
             doc.add(OLuceneIndexType.createField("k" + k, o, Field.Store.NO, Field.Index.ANALYZED));
+            k++;
           }
         } else {
           val = key;
@@ -314,8 +314,8 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
 
   public class LuceneIndexCursor implements OIndexCursor {
 
-    private final Object          key;
-    private       LuceneResultSet resultSet;
+    private final Object            key;
+    private LuceneResultSet         resultSet;
 
     private Iterator<OIdentifiable> iterator;
 

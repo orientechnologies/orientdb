@@ -185,4 +185,8 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   public String getName() {
     return "record_create";
   }
+
+  public void resetRecord() {
+    record = null;
+  }
 }

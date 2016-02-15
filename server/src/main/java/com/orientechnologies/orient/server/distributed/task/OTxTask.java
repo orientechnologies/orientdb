@@ -19,6 +19,13 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
@@ -44,13 +51,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-
 /**
  * Distributed transaction task.
  *
@@ -58,11 +58,11 @@ import java.util.List;
  *
  */
 public class OTxTask extends OAbstractReplicatedTask {
-  private static final long serialVersionUID = 1L;
+  private static final long                   serialVersionUID = 1L;
 
-  private List<OAbstractRecordReplicatedTask> tasks      = new ArrayList<OAbstractRecordReplicatedTask>();
+  private List<OAbstractRecordReplicatedTask> tasks            = new ArrayList<OAbstractRecordReplicatedTask>();
   private transient OTxTaskResult             result;
-  private transient boolean                   lockRecord = true;
+  private transient boolean                   lockRecord       = true;
 
   public OTxTask() {
   }
@@ -148,9 +148,18 @@ public class OTxTask extends OAbstractReplicatedTask {
           }
         }
       } catch (Exception t) {
+        // RESET ANY ASSIGNED CLUSTER ID
+        for (OAbstractRecordReplicatedTask task : tasks) {
+          if (task instanceof OCreateRecordTask) {
+            final OCreateRecordTask createRT = (OCreateRecordTask) task;
+            createRT.resetRecord();
+          }
+        }
+
         // EXCEPTION: ASSURE ALL LOCKS ARE FREED
         for (ORID r : result.locks)
           ddb.unlockRecord(r);
+
         // RETHROW IT
         throw t;
       }

@@ -52,7 +52,7 @@ public class ORequestSyncClusterTask extends OAbstractRemoteTask {
   public Object execute(final OServer iServer, final ODistributedServerManager iManager, final ODatabaseDocumentTx database)
       throws Exception {
 
-    final ODistributedConfiguration dbCfg = iManager.getDatabaseConfiguration(getName());
+    final ODistributedConfiguration dbCfg = iManager.getDatabaseConfiguration(database.getName());
     List<String> nodes = dbCfg.getServers(clusterName, null);
     nodes.remove(iManager.getLocalNodeName());
 

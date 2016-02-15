@@ -60,12 +60,14 @@ public class OOrderByOptimizer {
 
   /**
    * checks if, given a list of "=" conditions and a set of ORDER BY fields
+   *
    * @param index
    * @param equalsFilterFields
    * @param orderedFields
    * @return
    */
-  boolean canBeUsedByOrderByAfterFilter(OIndex<?> index, List<String> equalsFilterFields, List<OPair<String, String>> orderedFields) {
+  boolean canBeUsedByOrderByAfterFilter(OIndex<?> index, List<String> equalsFilterFields,
+      List<OPair<String, String>> orderedFields) {
     if (orderedFields.isEmpty())
       return false;
 
@@ -79,17 +81,21 @@ public class OOrderByOptimizer {
     final String firstOrder = orderedFields.get(0).getValue();
 
     //check that all the "equals" clauses are a prefix for the index
-    for(int i=0;i<endIndex;i++){
+    for (int i = 0; i < endIndex; i++) {
       final String equalsFieldName = equalsFilterFields.get(i).toLowerCase();
       final String indexFieldName = indexFields.get(i).toLowerCase();
       if (!equalsFieldName.equals(indexFieldName))
         return false;
     }
 
+    endIndex = Math.min(indexFields.size(), orderedFields.size() + equalsFilterFields.size());
+    if (endIndex == equalsFilterFields.size()) {
+      //the index is used only for filtering
+      return false;
+    }
     //check that after that prefix there all the Order By fields in the right order
-    endIndex = Math.min(indexFields.size(), orderedFields.size()+equalsFilterFields.size());
     for (int i = equalsFilterFields.size(); i < endIndex; i++) {
-      int fieldOrderInOrderByClause = i-equalsFilterFields.size();
+      int fieldOrderInOrderByClause = i - equalsFilterFields.size();
       final OPair<String, String> pair = orderedFields.get(fieldOrderInOrderByClause);
 
       if (!firstOrder.equals(pair.getValue()))

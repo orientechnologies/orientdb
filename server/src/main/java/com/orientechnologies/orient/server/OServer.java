@@ -19,14 +19,30 @@
  */
 package com.orientechnologies.orient.server;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.security.SecureRandom;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.locks.ReentrantLock;
+
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.MBeanRegistrationException;
+import javax.management.MalformedObjectNameException;
+import javax.management.NotCompliantMBeanException;
+
 import com.orientechnologies.common.console.DefaultConsoleReader;
 import com.orientechnologies.common.console.OConsoleReader;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
-import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
-import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
+import com.orientechnologies.common.profiler.OAbstractProfiler;
+import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -36,11 +52,7 @@ import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.OSecurityAccessException;
-import com.orientechnologies.orient.core.exception.OSecurityException;
-import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.OUser;
@@ -61,26 +73,6 @@ import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 import com.orientechnologies.orient.server.plugin.OServerPluginManager;
 import com.orientechnologies.orient.server.security.OSecurityServerUser;
-
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MalformedObjectNameException;
-import javax.management.NotCompliantMBeanException;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class OServer {
   private static final String                              ROOT_PASSWORD_VAR      = "ORIENTDB_ROOT_PASSWORD";
@@ -232,20 +224,6 @@ public class OServer {
 
     startup(new File(OSystemVariableResolver.resolveSystemVariables(config)));
 
-    Orient.instance().getProfiler().registerHookValue("system.databases", "List of databases configured in Server",
-        METRIC_TYPE.TEXT, new OProfilerHookValue() {
-          @Override
-          public Object getValue() {
-            final StringBuilder dbs = new StringBuilder(64);
-            for (String dbName : getAvailableStorageNames().keySet()) {
-              if (dbs.length() > 0)
-                dbs.append(',');
-              dbs.append(dbName);
-            }
-            return dbs.toString();
-          }
-        });
-
     return this;
   }
 
@@ -299,6 +277,19 @@ public class OServer {
 
     OLogManager.instance().info(this, "Databases directory: " + new File(databaseDirectory).getAbsolutePath());
 
+    Orient.instance().getProfiler().registerHookValue("system.databases", "List of databases configured in Server",
+        OProfiler.METRIC_TYPE.TEXT, new OAbstractProfiler.OProfilerHookValue() {
+          @Override
+          public Object getValue() {
+            final StringBuilder dbs = new StringBuilder(64);
+            for (String dbName : getAvailableStorageNames().keySet()) {
+              if (dbs.length() > 0)
+                dbs.append(',');
+              dbs.append(dbName);
+            }
+            return dbs.toString();
+          }
+        });
     return this;
   }
 
@@ -452,6 +443,17 @@ public class OServer {
     final String dbName = Orient.isRegisterDatabaseByPath() ? getDatabaseDirectory() + name : name;
     final String dbPath = Orient.isRegisterDatabaseByPath() ? dbName : getDatabaseDirectory() + name;
 
+    if (dbPath.contains(".."))
+      throw new IllegalArgumentException("Storage path is invalid because contains '..'");
+
+    if (dbPath.contains("*"))
+      throw new IllegalArgumentException("Storage path is invalid because the wildcard '*'");
+
+    if (dbPath.startsWith("/")) {
+      if (!dbPath.startsWith(getDatabaseDirectory()))
+        throw new IllegalArgumentException("Storage path is invalid because points to an absolute directory");
+    }
+
     final OStorage stg = Orient.instance().getStorage(dbName);
     if (stg != null)
       // ALREADY OPEN
@@ -526,7 +528,7 @@ public class OServer {
 
   /**
    * Authenticate a server user.
-   * 
+   *
    * @param iUserName
    *          Username to authenticate
    * @param iPassword
@@ -536,7 +538,17 @@ public class OServer {
   public boolean authenticate(final String iUserName, final String iPassword, final String iResourceToCheck) {
     final OServerUserConfiguration user = getUser(iUserName);
 
-    if (user != null && user.password.equals(iPassword)) {
+    if (user == null) {
+      return false;
+    }
+
+    // Avoid timing attacks:
+    // instead of comparing raw strings, hash the strings and compare their digests
+    // with a constant-time comparison function.
+    final byte[] providedDigest = OSecurityManager.instance().digestSHA256(iPassword);
+    final byte[] expectedDigest = OSecurityManager.instance().digestSHA256(user.password);
+
+    if (OSecurityManager.instance().check(providedDigest, expectedDigest)) {
       if (user.resources.equals("*"))
         // ACCESS TO ALL
         return true;
