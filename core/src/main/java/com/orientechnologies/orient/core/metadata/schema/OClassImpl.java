@@ -460,11 +460,11 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       List<OClassImpl> toRemoveList = new ArrayList<OClassImpl>(superClasses);
       toRemoveList.removeAll(newSuperClasses);
 
-      for (OClassImpl addTo : toAddList) {
-        addTo.addBaseClass(this);
-      }
       for (OClassImpl toRemove : toRemoveList) {
         toRemove.removeBaseClassInternal(this);
+      }
+      for (OClassImpl addTo : toAddList) {
+        addTo.addBaseClass(this);
       }
       superClasses.clear();
       superClasses.addAll(newSuperClasses);
