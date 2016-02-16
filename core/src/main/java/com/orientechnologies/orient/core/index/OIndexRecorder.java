@@ -314,16 +314,6 @@ public class OIndexRecorder implements OIndex<OIdentifiable>, OIndexInternal<OId
   }
 
   @Override
-  public void freeze(boolean throwException) {
-    throw new UnsupportedOperationException("Not allowed operation");
-  }
-
-  @Override
-  public void release() {
-    throw new UnsupportedOperationException("Not allowed operation");
-  }
-
-  @Override
   public void acquireModificationLock() {
   }
 

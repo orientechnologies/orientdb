@@ -93,23 +93,10 @@ public interface OIndexInternal<T> extends OIndex<T> {
 
   public boolean hasRangeQuerySupport();
 
-  /**
-   * Prohibit index modifications. Only index read commands are allowed after this call.
-   * 
-   * @param throwException
-   *          If <code>true</code> {@link com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException}
-   *          exception will be thrown in case of write command will be performed.
-   */
-  public void freeze(boolean throwException);
-
-  /**
-   * Allow any index modifications. Is called after {@link #freeze(boolean)} command.
-   */
-  public void release();
 
   /**
    * Is used to indicate that several index changes are going to be seen as single unit from users point of view. This command is
-   * used with conjunction of {@link #freeze(boolean)} command.
+   * used with conjunction of {@link com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage#freeze(boolean)} command.
    */
   public void acquireModificationLock();
 

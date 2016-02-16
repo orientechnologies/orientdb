@@ -25,6 +25,8 @@ import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexMultiValues;
 import com.orientechnologies.orient.core.index.OIndexNotUnique;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.apache.lucene.search.IndexSearcher;
 
 import java.io.IOException;
@@ -36,8 +38,8 @@ import java.util.Set;
 public class OLuceneIndexNotUnique extends OIndexNotUnique implements OLuceneIndex {
 
   public OLuceneIndexNotUnique(String name, String typeId, String algorithm, OLuceneIndexEngine engine,
-      String valueContainerAlgorithm, ODocument metadata) {
-    super(name, typeId, algorithm, engine, valueContainerAlgorithm, metadata);
+      String valueContainerAlgorithm, ODocument metadata, OStorage storage) {
+    super(name, typeId, algorithm, engine, valueContainerAlgorithm, metadata, storage);
 
     engine.setIndexMetadata(metadata);
   }
@@ -57,7 +59,8 @@ public class OLuceneIndexNotUnique extends OIndexNotUnique implements OLuceneInd
 
     key = getCollatingValue(key);
 
-    modificationLock.requestModificationLock();
+    if (modificationLock != null)
+      modificationLock.requestModificationLock();
     try {
       acquireExclusiveLock();
       try {
@@ -71,7 +74,8 @@ public class OLuceneIndexNotUnique extends OIndexNotUnique implements OLuceneInd
         releaseExclusiveLock();
       }
     } finally {
-      modificationLock.releaseModificationLock();
+      if (modificationLock != null)
+        modificationLock.releaseModificationLock();
     }
   }
 
@@ -201,13 +205,12 @@ public class OLuceneIndexNotUnique extends OIndexNotUnique implements OLuceneInd
   public IndexSearcher searcher() throws IOException {
     return ((OLuceneIndexEngine) indexEngine).searcher();
 
-
   }
 
-
-  protected OLuceneIndexEngine getIndexEngine(){
+  protected OLuceneIndexEngine getIndexEngine() {
     return (OLuceneIndexEngine) indexEngine;
   }
+
   @Override
   public boolean canBeUsedInEqualityOperators() {
     return false;

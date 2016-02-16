@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.storage;
 
+import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.concur.resource.OSharedContainer;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
@@ -250,4 +251,11 @@ public interface OStorage extends OBackupable, OSharedContainer {
   ORecordConflictStrategy getConflictStrategy();
 
   void setConflictStrategy(ORecordConflictStrategy iResolver);
+
+  /**
+   * Internal API.
+   *
+   * @return Modification lock is used to stop all data modification operations to put database at "safepoint like" state.
+   */
+  OModificationLock getModificationLock();
 }
