@@ -69,7 +69,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
    */
   public static final int MIN_CACHE_SIZE = 256;
 
-  private static final int                             MAX_CACHE_OVERFLOW         = Runtime.getRuntime().availableProcessors() * 8;
+  private static final int MAX_CACHE_OVERFLOW = Runtime.getRuntime().availableProcessors() * 8;
 
   private final LRUList am;
   private final LRUList a1out;
@@ -81,7 +81,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
   /**
    * Contains all pages in cache for given file.
    */
-  private final ConcurrentMap<Long, Set<Long>>         filePages;
+  private final ConcurrentMap<Long, Set<Long>> filePages;
 
   /**
    * Maximum percent of pinned pages which may be hold in this cache.
@@ -95,9 +95,9 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
   private final ONewLockManager<PageKey>               pageLockManager = new ONewLockManager<PageKey>();
   private final ConcurrentMap<PinnedPage, OCacheEntry> pinnedPages     = new ConcurrentHashMap<PinnedPage, OCacheEntry>();
 
-  private final AtomicBoolean                          coldPagesRemovalInProgress = new AtomicBoolean();
-  private final ODistributedCounter                    cacheHitCounter            = new ODistributedCounter();
-  private final ODistributedCounter                    cacheQueriesCounter        = new ODistributedCounter();
+  private final AtomicBoolean       coldPagesRemovalInProgress = new AtomicBoolean();
+  private final ODistributedCounter cacheHitCounter            = new ODistributedCounter();
+  private final ODistributedCounter cacheQueriesCounter        = new ODistributedCounter();
 
   private final       AtomicBoolean mbeanIsRegistered = new AtomicBoolean();
   public static final String        MBEAN_NAME        = "com.orientechnologies.orient.core.storage.cache.local:type=O2QCacheMXBean";
@@ -217,8 +217,8 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
         if (fileId == existingFileId)
           return;
 
-        throw new OStorageException("File with given name already exists but has different id " + existingFileId + " vs. proposed "
-            + fileId);
+        throw new OStorageException(
+            "File with given name already exists but has different id " + existingFileId + " vs. proposed " + fileId);
       }
 
       writeCache.openFile(fileName, fileId);
@@ -529,8 +529,8 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
           }
 
         } else
-          throw new OStorageException("Page with index " + pageIndex + " for file with id " + fileId
-              + " cannot be freed because it is used.");
+          throw new OStorageException(
+              "Page with index " + pageIndex + " for file with id " + fileId + " cannot be freed because it is used.");
       } else
         throw new OStorageException("Page with index " + pageIndex + " was  not found in cache for file with id " + fileId);
     }
@@ -616,7 +616,14 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
       try {
         final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
         final ObjectName mbeanName = new ObjectName(MBEAN_NAME);
-        server.registerMBean(this, mbeanName);
+        if (!server.isRegistered(mbeanName)) {
+          server.registerMBean(this, mbeanName);
+        } else {
+          mbeanIsRegistered.set(false);
+          OLogManager.instance().warn(this,
+              "MBean with name %s has already registered. Probably your system was not shutdown correctly"
+                  + " or you have several running applications which use OrientDB engine inside", mbeanName.getCanonicalName());
+        }
       } catch (MalformedObjectNameException e) {
         throw new OStorageException("Error during registration of read cache MBean.", e);
       } catch (InstanceAlreadyExistsException e) {
@@ -743,8 +750,8 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
           newMemoryData = new MemoryData(memoryData.maxSize, memoryData.pinnedPages - 1);
         }
       } else
-        throw new OStorageException("Page with index " + pinnedEntry.getPageIndex() + " for file with id "
-            + pinnedEntry.getFileId() + "cannot be freed because it is used.");
+        throw new OStorageException("Page with index " + pinnedEntry.getPageIndex() + " for file with id " + pinnedEntry.getFileId()
+            + "cannot be freed because it is used.");
     }
 
     pinnedPages.clear();
@@ -904,8 +911,8 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
         } else {
           fileLock = fileLockManager.acquireSharedLock(removedFromAInEntry.getFileId());
           try {
-            pageLock = pageLockManager.acquireExclusiveLock(new PageKey(removedFromAInEntry.getFileId(), removedFromAInEntry
-                .getPageIndex()));
+            pageLock = pageLockManager
+                .acquireExclusiveLock(new PageKey(removedFromAInEntry.getFileId(), removedFromAInEntry.getPageIndex()));
             try {
               if (a1in.get(removedFromAInEntry.getFileId(), removedFromAInEntry.getPageIndex()) == null)
                 continue;
