@@ -267,7 +267,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
   }
 
   @Override
-  protected boolean isWritesAllowedDuringBackup() {
+  protected boolean isWriteAllowedDuringIncrementalBackup() {
     return true;
   }
 
