@@ -155,11 +155,30 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
         PoolPartition p = partition;
         partition = null;
 
-        super.close();
+        final OStorage storage = getStorage();
+        //if connection is lost and storage is closed as result we should not put closed connection back to the pool
+        if (!storage.isClosed()) {
+          super.close();
 
-        data.acquiredDatabase = null;
+          data.acquiredDatabase = null;
 
-        p.queue.offer(this);
+          p.queue.offer(this);
+        } else {
+          //close database instance but be ready that it will throw exception because of storage is closed
+          try {
+            super.close();
+          } catch (Exception e) {
+            OLogManager.instance().error(this, "Error during closing of database % when storage %s was already closed", e, getUrl(),
+                storage.getName());
+          }
+
+          data.acquiredDatabase = null;
+
+          //we create new connection instead of old one
+          final DatabaseDocumentTxPolled db = new DatabaseDocumentTxPolled(url);
+          p.queue.offer(db);
+        }
+
         p.acquiredConnections.decrementAndGet();
       } else {
         super.close();
