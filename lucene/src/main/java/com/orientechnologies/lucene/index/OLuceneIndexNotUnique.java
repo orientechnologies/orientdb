@@ -57,21 +57,16 @@ public class OLuceneIndexNotUnique extends OIndexNotUnique implements OLuceneInd
 
     key = getCollatingValue(key);
 
-    modificationLock.requestModificationLock();
+    acquireExclusiveLock();
     try {
-      acquireExclusiveLock();
-      try {
-        checkForKeyType(key);
-        Set<OIdentifiable> values = new HashSet<OIdentifiable>();
-        values.add(iSingleValue);
-        indexEngine.put(key, values);
-        return this;
+      checkForKeyType(key);
+      Set<OIdentifiable> values = new HashSet<OIdentifiable>();
+      values.add(iSingleValue);
+      indexEngine.put(key, values);
+      return this;
 
-      } finally {
-        releaseExclusiveLock();
-      }
     } finally {
-      modificationLock.releaseModificationLock();
+      releaseExclusiveLock();
     }
   }
 
@@ -157,22 +152,18 @@ public class OLuceneIndexNotUnique extends OIndexNotUnique implements OLuceneInd
     checkForRebuild();
 
     key = getCollatingValue(key);
-    modificationLock.requestModificationLock();
+
+    acquireExclusiveLock();
     try {
-      acquireExclusiveLock();
-      try {
 
-        if (indexEngine instanceof OLuceneIndexEngine) {
-          return ((OLuceneIndexEngine) indexEngine).remove(key, value);
-        } else {
-          return false;
-        }
-
-      } finally {
-        releaseExclusiveLock();
+      if (indexEngine instanceof OLuceneIndexEngine) {
+        return ((OLuceneIndexEngine) indexEngine).remove(key, value);
+      } else {
+        return false;
       }
+
     } finally {
-      modificationLock.releaseModificationLock();
+      releaseExclusiveLock();
     }
   }
 
@@ -189,7 +180,6 @@ public class OLuceneIndexNotUnique extends OIndexNotUnique implements OLuceneInd
     }
     engine.flush();
     return ((OLuceneIndexEngine) indexEngine).size(null);
-
   }
 
   @Override
@@ -201,17 +191,14 @@ public class OLuceneIndexNotUnique extends OIndexNotUnique implements OLuceneInd
   public IndexSearcher searcher() throws IOException {
     return ((OLuceneIndexEngine) indexEngine).searcher();
 
-
   }
 
-
-  protected OLuceneIndexEngine getIndexEngine(){
+  protected OLuceneIndexEngine getIndexEngine() {
     return (OLuceneIndexEngine) indexEngine;
   }
+
   @Override
   public boolean canBeUsedInEqualityOperators() {
     return false;
   }
 }
-
-

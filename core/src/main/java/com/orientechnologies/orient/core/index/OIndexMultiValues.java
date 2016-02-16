@@ -33,15 +33,7 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerSBTreeIndexRIDContainer;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Abstract index implementation that supports multi-values for the same key.
@@ -126,45 +118,41 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
     if (!txIsActive)
       keyLockManager.acquireExclusiveLock(key);
+
     try {
-      modificationLock.requestModificationLock();
+      checkForKeyType(key);
+      acquireSharedLock();
+      startStorageAtomicOperation();
       try {
-        checkForKeyType(key);
-        acquireSharedLock();
-        startStorageAtomicOperation();
-        try {
-          Set<OIdentifiable> values = indexEngine.get(key);
+        Set<OIdentifiable> values = indexEngine.get(key);
 
-          if (values == null) {
-            if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
-              boolean durable = false;
-              if (metadata != null && Boolean.TRUE.equals(metadata.field("durableInNonTxMode")))
-                durable = true;
+        if (values == null) {
+          if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
+            boolean durable = false;
+            if (metadata != null && Boolean.TRUE.equals(metadata.field("durableInNonTxMode")))
+              durable = true;
 
-              values = new OIndexRIDContainer(getName(), durable);
-            } else {
-              values = new OMVRBTreeRIDSet(OGlobalConfiguration.MVRBTREE_RID_BINARY_THRESHOLD.getValueAsInteger());
-              ((OMVRBTreeRIDSet) values).setAutoConvertToRecord(false);
-            }
+            values = new OIndexRIDContainer(getName(), durable);
+          } else {
+            values = new OMVRBTreeRIDSet(OGlobalConfiguration.MVRBTREE_RID_BINARY_THRESHOLD.getValueAsInteger());
+            ((OMVRBTreeRIDSet) values).setAutoConvertToRecord(false);
           }
-
-          if (!iSingleValue.getIdentity().isValid())
-            ((ORecord) iSingleValue).save();
-
-          values.add(iSingleValue.getIdentity());
-          indexEngine.put(key, values);
-
-          commitStorageAtomicOperation();
-          return this;
-
-        } catch (RuntimeException e) {
-          rollbackStorageAtomicOperation();
-          throw new OIndexException("Error during insertion of key in index", e);
-        } finally {
-          releaseSharedLock();
         }
+
+        if (!iSingleValue.getIdentity().isValid())
+          ((ORecord) iSingleValue).save();
+
+        values.add(iSingleValue.getIdentity());
+        indexEngine.put(key, values);
+
+        commitStorageAtomicOperation();
+        return this;
+
+      } catch (RuntimeException e) {
+        rollbackStorageAtomicOperation();
+        throw new OIndexException("Error during insertion of key in index", e);
       } finally {
-        modificationLock.releaseModificationLock();
+        releaseSharedLock();
       }
     } finally {
       if (!txIsActive)
@@ -185,42 +173,37 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
       keyLockManager.acquireExclusiveLock(key);
 
     try {
-      modificationLock.requestModificationLock();
+      acquireSharedLock();
+      startStorageAtomicOperation();
       try {
-        acquireSharedLock();
-        startStorageAtomicOperation();
-        try {
 
-          Set<OIdentifiable> values = indexEngine.get(key);
+        Set<OIdentifiable> values = indexEngine.get(key);
 
-          if (values == null) {
-            commitStorageAtomicOperation();
-            return false;
-          }
-
-          if (value == null) {
-            indexEngine.remove(key);
-          } else if (values.remove(value)) {
-            if (values.isEmpty())
-              indexEngine.remove(key);
-            else
-              indexEngine.put(key, values);
-
-            commitStorageAtomicOperation();
-            return true;
-          }
-
+        if (values == null) {
           commitStorageAtomicOperation();
           return false;
-
-        } catch (RuntimeException e) {
-          rollbackStorageAtomicOperation();
-          throw new OIndexException("Error during removal of entry by key", e);
-        } finally {
-          releaseSharedLock();
         }
+
+        if (value == null) {
+          indexEngine.remove(key);
+        } else if (values.remove(value)) {
+          if (values.isEmpty())
+            indexEngine.remove(key);
+          else
+            indexEngine.put(key, values);
+
+          commitStorageAtomicOperation();
+          return true;
+        }
+
+        commitStorageAtomicOperation();
+        return false;
+
+      } catch (RuntimeException e) {
+        rollbackStorageAtomicOperation();
+        throw new OIndexException("Error during removal of entry by key", e);
       } finally {
-        modificationLock.releaseModificationLock();
+        releaseSharedLock();
       }
     } finally {
       if (!txIsActive)
@@ -238,8 +221,8 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
   protected OStreamSerializer determineValueSerializer() {
     if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm))
-      return (OStreamSerializer) getDatabase().getSerializerFactory().getObjectSerializer(
-          OStreamSerializerSBTreeIndexRIDContainer.ID);
+      return (OStreamSerializer) getDatabase().getSerializerFactory()
+          .getObjectSerializer(OStreamSerializerSBTreeIndexRIDContainer.ID);
     else
       return OStreamSerializerListRID.INSTANCE;
   }
