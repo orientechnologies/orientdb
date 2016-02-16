@@ -581,7 +581,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
   }
 
   private void replaceConfiguration(ZipInputStream zipInputStream) throws IOException {
-    final Map<String, Object> loadProperties = configuration.getLoadProperties();
+    final Map<String, Object> loadProperties = (Map<String, Object>) configuration.getProperties();
 
     byte[] buffer = new byte[1024];
 
