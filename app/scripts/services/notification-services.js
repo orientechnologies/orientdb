@@ -17,18 +17,23 @@ notification.factory('Notification', function ($timeout, $rootScope) {
 
 
       var n;
+
+      if(this.current){
+        this.current.close();
+      }
       if (notification.error) {
         if (typeof notification.content != 'string') {
           notification.content = notification.content.errors[0].content;
         }
-        noty({text: notification.content, layout: 'bottom', type: 'error', theme: 'relax'});
+        n = noty({text: notification.content, layout: 'bottom', type: 'error', theme: 'relax'});
       } else if (notification.warning) {
         n = noty({text: notification.content, layout: 'bottom', type: 'warning', theme: 'relax'});
       } else {
         n = noty({text: notification.content, layout: 'bottom', type: 'success', theme: 'relax'});
       }
+      this.current = n;
       $timeout(function () {
-        if (n)
+        if (n && !(n.options.type === 'error'))
           n.close();
       }, 4000);
     },
