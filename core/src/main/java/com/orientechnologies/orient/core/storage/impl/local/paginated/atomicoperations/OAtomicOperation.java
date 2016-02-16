@@ -102,7 +102,7 @@ public class OAtomicOperation {
     } else {
       FilePageChanges pageChangesContainer = changesContainer.pageChangesMap.get(pageIndex);
 
-      final long filledUpTo = filledUpTo(fileId);
+      final long filledUpTo = internalFilledUpTo(fileId, changesContainer);
 
       if (pageIndex < filledUpTo) {
         if (pageChangesContainer == null) {
@@ -166,10 +166,10 @@ public class OAtomicOperation {
     if (deletedFiles.contains(fileId))
       throw new OStorageException("File with id " + fileId + " is deleted.");
 
-    final long filledUpTo = filledUpTo(fileId);
-
     final FileChanges changesContainer = fileChanges.get(fileId);
     assert changesContainer != null;
+
+    final long filledUpTo = internalFilledUpTo(fileId, changesContainer);
 
     FilePageChanges pageChangesContainer = changesContainer.pageChangesMap.get(filledUpTo);
     assert pageChangesContainer == null;
@@ -215,6 +215,10 @@ public class OAtomicOperation {
 
     FileChanges changesContainer = fileChanges.get(fileId);
 
+    return internalFilledUpTo(fileId, changesContainer);
+  }
+
+  private long internalFilledUpTo(long fileId, FileChanges changesContainer) throws IOException {
     if (changesContainer == null) {
       changesContainer = new FileChanges();
       fileChanges.put(fileId, changesContainer);
