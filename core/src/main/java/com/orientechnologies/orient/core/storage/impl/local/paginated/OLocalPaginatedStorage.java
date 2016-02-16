@@ -20,6 +20,13 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
+import java.io.*;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.*;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
@@ -45,12 +52,8 @@ import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODiskWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
-
-import java.io.*;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.*;
 
 /**
  * @author Andrey Lomakin
@@ -254,6 +257,50 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
   }
 
   @Override
+  protected OLogSequenceNumber copyWALToIncrementalBackup(ZipOutputStream zipOutputStream, long startSegment) throws IOException {
+
+    File[] nonActiveSegments;
+
+    OLogSequenceNumber lastLSN;
+    long freezeId = getAtomicOperationsManager().freezeAtomicOperations(null, null);
+    try {
+      lastLSN = writeAheadLog.end();
+      writeAheadLog.newSegment();
+      nonActiveSegments = writeAheadLog.nonActiveSegments(startSegment);
+    } finally {
+      getAtomicOperationsManager().releaseAtomicOperations(freezeId);
+    }
+
+    for (final File nonActiveSegment : nonActiveSegments) {
+      final FileInputStream fileInputStream = new FileInputStream(nonActiveSegment);
+      try {
+        final BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
+        try {
+          final ZipEntry entry = new ZipEntry(nonActiveSegment.getName());
+          zipOutputStream.putNextEntry(entry);
+          try {
+            final byte[] buffer = new byte[4096];
+
+            int br = 0;
+
+            while ((br = bufferedInputStream.read(buffer)) >= 0) {
+              zipOutputStream.write(buffer, 0, br);
+            }
+          } finally {
+            zipOutputStream.closeEntry();
+          }
+        } finally {
+          bufferedInputStream.close();
+        }
+      } finally {
+        fileInputStream.close();
+      }
+    }
+
+    return lastLSN;
+  }
+
+  @Override
   protected OWriteAheadLog createWalFromIBUFiles(File directory) throws IOException {
     final OWriteAheadLog restoreWAL = new ODiskWriteAheadLog(OGlobalConfiguration.WAL_CACHE_SIZE.getValueAsInteger(),
         OGlobalConfiguration.WAL_COMMIT_TIMEOUT.getValueAsInteger(),
@@ -375,6 +422,11 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
   @Override
   protected boolean isDirty() throws IOException {
     return dirtyFlag.isDirty();
+  }
+
+  @Override
+  protected boolean isWriteAllowedDuringIncrementalBackup() {
+    return true;
   }
 
   protected void initWalAndDiskCache() throws IOException {
