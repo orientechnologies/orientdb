@@ -69,12 +69,28 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
    */
   public static final int MIN_CACHE_SIZE = 256;
 
+  /**
+   * Maximum amount of times when we will show message that limit of pinned pages was exhausted.
+   */
+  private static final int MAX_AMOUNT_OF_WARNINGS_PINNED_PAGES = 10;
+
   private static final int MAX_CACHE_OVERFLOW = Runtime.getRuntime().availableProcessors() * 8;
 
   private final LRUList am;
   private final LRUList a1out;
   private final LRUList a1in;
   private final int     pageSize;
+
+  /**
+   * Counts how much time we warned user that limit of amount of pinned pages is reached.
+   */
+  private final ODistributedCounter pinnedPagesWarningCounter = new ODistributedCounter();
+
+  /**
+   * Cache of value which is contained inside of {@link #pinnedPagesWarningCounter}.
+   * It is used to speed up calculation of warnings.
+   */
+  private volatile int pinnedPagesWarningsCache = 0;
 
   private final AtomicReference<MemoryData> memoryDataContainer = new AtomicReference<MemoryData>();
 
@@ -251,9 +267,18 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
     MemoryData memoryData = memoryDataContainer.get();
 
     if ((100 * (memoryData.pinnedPages + 1)) / memoryData.maxSize > percentOfPinnedPages) {
-      OLogManager.instance().warn(this, "Maximum amount of pinned pages is reached , given page " + cacheEntry +
-          " will not be marked as pinned which may lead to performance degradation. You may consider to increase percent of pined pages "
-          + "by changing of property " + OGlobalConfiguration.DISK_CACHE_PINNED_PAGES.getKey());
+      if (pinnedPagesWarningsCache < MAX_PERCENT_OF_PINED_PAGES) {
+        pinnedPagesWarningCounter.increment();
+
+        final long warnings = pinnedPagesWarningCounter.get();
+        if (warnings < MAX_PERCENT_OF_PINED_PAGES) {
+          pinnedPagesWarningsCache = (int) warnings;
+
+          OLogManager.instance().warn(this, "Maximum amount of pinned pages is reached , given page " + cacheEntry +
+              " will not be marked as pinned which may lead to performance degradation. You may consider to increase percent of pined pages "
+              + "by changing of property " + OGlobalConfiguration.DISK_CACHE_PINNED_PAGES.getKey());
+        }
+      }
 
       return;
     }
