@@ -221,6 +221,7 @@ ee.controller('ClusterController', function ($scope, Cluster, Notification, $roo
 
       }).catch(function (error) {
         Notification.push({content: error.data, error: true, autoHide: true});
+        $scope.polling = false;
       })
     } else {
       $scope.polling = false;

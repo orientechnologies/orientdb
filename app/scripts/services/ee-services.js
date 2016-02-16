@@ -55,9 +55,9 @@ ee.factory('CommandLogApi', function ($http, $resource, DatabaseApi) {
     if (params.file != undefined) {
 
       file = '&file=' + params.file;
-      console.log(params.file);
+
     }
-    $http.get(API + '/log/' + params.typeofSearch + '?' + 'tail=100000' + server + searchValue + logtype + dateFrom + hourFrom + dateTo + hourTo + file).success(function (data) {
+    $http.get(API + 'log/' + params.typeofSearch + '?' + 'tail=100000' + server + searchValue + logtype + dateFrom + hourFrom + dateTo + hourTo + file).success(function (data) {
       callback(data);
     }).error(function (data) {
       callback(data);
@@ -67,8 +67,8 @@ ee.factory('CommandLogApi', function ($http, $resource, DatabaseApi) {
 
   resource.getListFiles = function (params, callback) {
     var server = params.server;
-
-    $http.get(API + '/log/files?node=' + encodeURIComponent(server)).success(function (data) {
+    var url = API + 'log/files?node=' + encodeURIComponent(server);
+    $http.get(url).success(function (data) {
       callback(data);
     }).error(function (data) {
     })
