@@ -19,10 +19,11 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-<<<<<<< HEAD
-=======
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.*;
+
 import com.orientechnologies.common.exception.OException;
->>>>>>> develop
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.common.util.OCommonConst;
@@ -39,12 +40,7 @@ import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexDefinitionFactory;
-import com.orientechnologies.orient.core.index.OIndexException;
-import com.orientechnologies.orient.core.index.OIndexManager;
-import com.orientechnologies.orient.core.index.OIndexManagerProxy;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.ORoundRobinClusterSelectionStrategy;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -54,39 +50,15 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.sharding.auto.OAutoShardingClusterSelectionStrategy;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
-import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
-import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
+import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
-
-import java.io.IOException;
-<<<<<<< HEAD
-import java.util.*;
-=======
-import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
->>>>>>> develop
 
 /**
  * Schema Class implementation.
@@ -114,7 +86,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   private volatile OClusterSelectionStrategy clusterSelection;                                          // @SINCE 1.7
   private volatile int                       hashCode;
 
-  private static Set<String> reserved = new HashSet<String>();
+  private static Set<String>                 reserved                = new HashSet<String>();
 
   static {
     // reserved.add("select");
@@ -842,8 +814,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     return addProperty(iPropertyName, iType, null, iLinkedClass, false);
   }
 
-  public OProperty createProperty(final String iPropertyName, final OType iType, final OClass iLinkedClass,
-      final boolean unsafe) {
+  public OProperty createProperty(final String iPropertyName, final OType iType, final OClass iLinkedClass, final boolean unsafe) {
     if (iLinkedClass == null)
       throw new OSchemaException("Missing linked class");
 
@@ -854,8 +825,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     return addProperty(iPropertyName, iType, iLinkedType, null, false);
   }
 
-  public OProperty createProperty(final String iPropertyName, final OType iType, final OType iLinkedType,
-      final boolean unsafe) {
+  public OProperty createProperty(final String iPropertyName, final OType iType, final OType iLinkedType, final boolean unsafe) {
     return addProperty(iPropertyName, iType, iLinkedType, null, unsafe);
   }
 
@@ -1732,7 +1702,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
     final OPropertyImpl prop;
 
-    //This check are doubled becouse used by sql commands
+    // This check are doubled becouse used by sql commands
     if (linkedType != null)
       OPropertyImpl.checkLinkTypeSupport(type);
 
@@ -2166,7 +2136,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
               if (record.recordType == ODocument.RECORD_TYPE) {
                 final ORecordSerializerSchemaAware2CSV serializer = (ORecordSerializerSchemaAware2CSV) ORecordSerializerFactory
                     .instance().getFormat(ORecordSerializerSchemaAware2CSV.NAME);
-                String persName = new String(record.buffer,"UTF-8");
+                String persName = new String(record.buffer, "UTF-8");
                 if (serializer.getClassName(persName).equalsIgnoreCase(name)) {
                   final ODocument document = new ODocument();
                   document.setLazyLoad(false);
@@ -2447,8 +2417,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     try {
       final StringBuilder cmd = new StringBuilder("create property ");
       // CLASS.PROPERTY NAME
-       if (getDatabase().getStorage().getConfiguration().isStrictSql())
-       cmd.append('`');
+      if (getDatabase().getStorage().getConfiguration().isStrictSql())
+        cmd.append('`');
       cmd.append(name);
       if (getDatabase().getStorage().getConfiguration().isStrictSql())
         cmd.append('`');
@@ -2456,8 +2426,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       if (getDatabase().getStorage().getConfiguration().isStrictSql())
         cmd.append('`');
       cmd.append(propertyName);
-       if (getDatabase().getStorage().getConfiguration().isStrictSql())
-       cmd.append('`');
+      if (getDatabase().getStorage().getConfiguration().isStrictSql())
+        cmd.append('`');
 
       // TYPE
       cmd.append(' ');

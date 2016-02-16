@@ -20,10 +20,11 @@
 
 package com.orientechnologies.orient.core.storage.cache.local.twoq;
 
-import java.io.IOException;
+import java.io.*;
 import java.lang.management.ManagementFactory;
-import java.util.Collections;
-import java.util.Set;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Future;
@@ -31,13 +32,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.InstanceNotFoundException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.NotCompliantMBeanException;
-import javax.management.ObjectName;
+import javax.management.*;
 
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.ONewLockManager;
@@ -50,43 +45,10 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedException;
 import com.orientechnologies.orient.core.exception.OReadCacheException;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.storage.cache.OAbstractWriteCache;
-import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
-import com.orientechnologies.orient.core.storage.cache.OCachePointer;
-import com.orientechnologies.orient.core.storage.cache.OReadCache;
-import com.orientechnologies.orient.core.storage.cache.OWriteCache;
-<<<<<<< HEAD
-import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+import com.orientechnologies.orient.core.storage.cache.*;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OStoragePerformanceStatistic;
 
-=======
-import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
-import com.orientechnologies.orient.core.storage.impl.local.statistic.OStoragePerformanceStatistic;
-
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.InstanceNotFoundException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.NotCompliantMBeanException;
-import javax.management.ObjectName;
-import java.io.*;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.lang.management.ManagementFactory;
-import java.nio.channels.Channels;
-import java.nio.channels.FileChannel;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
-
->>>>>>> develop
 /**
  * @author Andrey Lomakin
  * @since 7/24/13
@@ -95,54 +57,55 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
   /**
    * Maximum percent of pinned pages which may be contained in this cache.
    */
-  public static final int MAX_PERCENT_OF_PINED_PAGES = 50;
+  public static final int                              MAX_PERCENT_OF_PINED_PAGES     = 50;
 
   /**
    * Minimum size of memory which may be allocated by cache (in pages). This parameter is used only if related flag is set in
    * constrictor of cache.
    */
-  public static final int MIN_CACHE_SIZE = 256;
+  public static final int                              MIN_CACHE_SIZE                 = 256;
 
-  private static final int MAX_CACHE_OVERFLOW = Runtime.getRuntime().availableProcessors() * 8;
+  private static final int                             MAX_CACHE_OVERFLOW             = Runtime.getRuntime().availableProcessors()
+      * 8;
 
   /**
    * File which contains stored state of disk cache after storage close.
    */
-  public static final String CACHE_STATE_FILE = "cache.stt";
+  public static final String                           CACHE_STATE_FILE               = "cache.stt";
 
   /**
    * Extension for file which contains stored state of disk cache after storage close.
    */
-  public static final String CACHE_STATISTIC_FILE_EXTENSION = ".stt";
+  public static final String                           CACHE_STATISTIC_FILE_EXTENSION = ".stt";
 
-  private final LRUList am;
-  private final LRUList a1out;
-  private final LRUList a1in;
-  private final int     pageSize;
+  private final LRUList                                am;
+  private final LRUList                                a1out;
+  private final LRUList                                a1in;
+  private final int                                    pageSize;
 
-  private final AtomicReference<MemoryData> memoryDataContainer = new AtomicReference<MemoryData>();
+  private final AtomicReference<MemoryData>            memoryDataContainer            = new AtomicReference<MemoryData>();
 
   /**
    * Contains all pages in cache for given file.
    */
-  private final ConcurrentMap<Long, Set<Long>> filePages;
+  private final ConcurrentMap<Long, Set<Long>>         filePages;
 
   /**
    * Maximum percent of pinned pages which may be hold in this cache.
    *
    * @see com.orientechnologies.orient.core.config.OGlobalConfiguration#DISK_CACHE_PINNED_PAGES
    */
-  private final int percentOfPinnedPages;
+  private final int                                    percentOfPinnedPages;
 
-  private final OReadersWriterSpinLock                 cacheLock       = new OReadersWriterSpinLock();
-  private final ONewLockManager                        fileLockManager = new ONewLockManager(true);
-  private final ONewLockManager<PageKey>               pageLockManager = new ONewLockManager<PageKey>();
-  private final ConcurrentMap<PinnedPage, OCacheEntry> pinnedPages     = new ConcurrentHashMap<PinnedPage, OCacheEntry>();
+  private final OReadersWriterSpinLock                 cacheLock                      = new OReadersWriterSpinLock();
+  private final ONewLockManager                        fileLockManager                = new ONewLockManager(true);
+  private final ONewLockManager<PageKey>               pageLockManager                = new ONewLockManager<PageKey>();
+  private final ConcurrentMap<PinnedPage, OCacheEntry> pinnedPages                    = new ConcurrentHashMap<PinnedPage, OCacheEntry>();
 
-  private final AtomicBoolean coldPagesRemovalInProgress = new AtomicBoolean();
+  private final AtomicBoolean                          coldPagesRemovalInProgress     = new AtomicBoolean();
 
-  private final AtomicBoolean mbeanIsRegistered = new AtomicBoolean();
-  public static final String  MBEAN_NAME        = "com.orientechnologies.orient.core.storage.cache.local:type=O2QCacheMXBean";
+  private final AtomicBoolean                          mbeanIsRegistered              = new AtomicBoolean();
+  public static final String                           MBEAN_NAME                     = "com.orientechnologies.orient.core.storage.cache.local:type=O2QCacheMXBean";
 
   /**
    * @param readCacheMaxMemory
@@ -403,7 +366,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
         if (cacheResult.removeColdPages)
           removeColdestPagesIfNeeded();
       } catch (RuntimeException e) {
-        assert!cacheResult.cacheEntry.isDirty();
+        assert !cacheResult.cacheEntry.isDirty();
 
         release(cacheResult.cacheEntry, writeCache, storagePerformanceStatistic);
         throw e;
@@ -520,7 +483,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
         if (cacheResult.removeColdPages)
           removeColdestPagesIfNeeded();
       } catch (RuntimeException e) {
-        assert!cacheResult.cacheEntry.isDirty();
+        assert !cacheResult.cacheEntry.isDirty();
 
         release(cacheResult.cacheEntry, writeCache, storagePerformanceStatistic);
         throw e;
@@ -719,12 +682,13 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
   /**
    * Performs following steps:
    * <ol>
-   * <li>If flag {@link OGlobalConfiguration#STORAGE_KEEP_DISK_CACHE_STATE} is set to <code>true</code>
-   * saves state of all queues of 2Q cache into file {@link #CACHE_STATE_FILE}.The only exception is pinned pages they need to pinned again.</li>
+   * <li>If flag {@link OGlobalConfiguration#STORAGE_KEEP_DISK_CACHE_STATE} is set to <code>true</code> saves state of all queues of
+   * 2Q cache into file {@link #CACHE_STATE_FILE}.The only exception is pinned pages they need to pinned again.</li>
    * <li>Closes all files and flushes all data associated to them.</li>
    * </ol>
    *
-   * @param writeCache Write cache all files of which should be closed. In terms of cache write cache = storage.
+   * @param writeCache
+   *          Write cache all files of which should be closed. In terms of cache write cache = storage.
    */
   @Override
   public void closeStorage(OWriteCache writeCache) throws IOException {
@@ -749,7 +713,8 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
    * <p>
    * If maximum size of cache was decreased cache state will not be restored.
    *
-   * @param writeCache Write cache is used to load pages back into cache if needed.
+   * @param writeCache
+   *          Write cache is used to load pages back into cache if needed.
    * @see #closeStorage(OWriteCache)
    */
   public void loadCacheState(final OWriteCache writeCache) {
@@ -793,8 +758,8 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
         }
       }
     } catch (Exception e) {
-      OLogManager.instance()
-          .error(this, "Can not restore state of cache for storage placed under %s", writeCache.getRootDirectory(), e);
+      OLogManager.instance().error(this, "Can not restore state of cache for storage placed under %s",
+          writeCache.getRootDirectory(), e);
     } finally {
       cacheLock.releaseReadLock();
     }
@@ -808,10 +773,14 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
    * <li>Page index (long), is absent if end of the queue is reached</li>
    * </ol>
    *
-   * @param dataInputStream Stream of file which contains state of the cache.
-   * @param queue           Queue, state of which should be restored.
-   * @param loadPages       Indicates whether pages should be loaded from disk or only stubs should be added.
-   * @param writeCache      Write cache is used to load data from disk if needed.
+   * @param dataInputStream
+   *          Stream of file which contains state of the cache.
+   * @param queue
+   *          Queue, state of which should be restored.
+   * @param loadPages
+   *          Indicates whether pages should be loaded from disk or only stubs should be added.
+   * @param writeCache
+   *          Write cache is used to load data from disk if needed.
    */
   private void restoreQueue(OWriteCache writeCache, LRUList queue, DataInputStream dataInputStream, boolean loadPages)
       throws IOException {
@@ -832,13 +801,16 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
    * <li>Page index (long), is absent if end of the queue is reached</li>
    * </ol>
    *
-   * @param dataInputStream Stream of file which contains state of the cache.
-   * @param queue           Queue, state of which should be restored.
-   * @param writeCache      Write cache is used to load data from disk if needed.
+   * @param dataInputStream
+   *          Stream of file which contains state of the cache.
+   * @param queue
+   *          Queue, state of which should be restored.
+   * @param writeCache
+   *          Write cache is used to load data from disk if needed.
    */
   private void restoreQueueWithoutPageLoad(OWriteCache writeCache, LRUList queue, DataInputStream dataInputStream)
       throws IOException {
-    //used only for statistics, and there is passed merely as stub
+    // used only for statistics, and there is passed merely as stub
     final OModifiableBoolean cacheHit = new OModifiableBoolean();
 
     int internalFileId = dataInputStream.readInt();
@@ -876,16 +848,19 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
    * <li>Page index (long), is absent if end of the queue is reached</li>
    * </ol>
    *
-   * @param dataInputStream Stream of file which contains state of the cache.
-   * @param queue           Queue, state of which should be restored.
-   * @param writeCache      Write cache is used to load data from disk if needed.
+   * @param dataInputStream
+   *          Stream of file which contains state of the cache.
+   * @param queue
+   *          Queue, state of which should be restored.
+   * @param writeCache
+   *          Write cache is used to load data from disk if needed.
    */
   private void restoreQueueWithPageLoad(OWriteCache writeCache, LRUList queue, DataInputStream dataInputStream) throws IOException {
-    //used only for statistics, and there is passed merely as stub
+    // used only for statistics, and there is passed merely as stub
     final OModifiableBoolean cacheHit = new OModifiableBoolean();
 
-    //first step, we will create two tree maps to sort data by position in file and load them with maximum speed and
-    //then to put data into the queue to restore position of entries in LRU list.
+    // first step, we will create two tree maps to sort data by position in file and load them with maximum speed and
+    // then to put data into the queue to restore position of entries in LRU list.
 
     final TreeMap<PageKey, OPair<Long, OCacheEntry>> filePositionMap = new TreeMap<PageKey, OPair<Long, OCacheEntry>>();
     final TreeMap<Long, OCacheEntry> queuePositionMap = new TreeMap<Long, OCacheEntry>();
@@ -906,7 +881,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
       }
     }
 
-    //second step: load pages sorted by position in file
+    // second step: load pages sorted by position in file
     for (final Map.Entry<PageKey, OPair<Long, OCacheEntry>> entry : filePositionMap.entrySet()) {
       final PageKey pageKey = entry.getKey();
       final OPair<Long, OCacheEntry> pair = entry.getValue();
@@ -925,7 +900,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
       cacheEntry.setCachePointer(pointers[0]);
     }
 
-    //third step: add pages according to their order in LRU queue
+    // third step: add pages according to their order in LRU queue
     for (final OCacheEntry cacheEntry : queuePositionMap.values()) {
       final long fileId = cacheEntry.getFileId();
       Set<Long> pages = filePages.get(fileId);
@@ -955,7 +930,8 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
    * <li>Page index (long), is absent if end of the queue is reached</li>
    * </ol>
    *
-   * @param writeCache Write cache which manages files cache state of which is going to be stored.
+   * @param writeCache
+   *          Write cache which manages files cache state of which is going to be stored.
    */
   public void storeCacheState(OWriteCache writeCache) {
     if (!OGlobalConfiguration.STORAGE_KEEP_DISK_CACHE_STATE.getValueAsBoolean()) {
@@ -1000,17 +976,16 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
         cacheState.close();
       }
     } catch (Exception e) {
-      OLogManager.instance()
-          .error(this, "Can not store state of cache for storage placed under %s", writeCache.getRootDirectory(), e);
+      OLogManager.instance().error(this, "Can not store state of cache for storage placed under %s", writeCache.getRootDirectory(),
+          e);
     } finally {
       cacheLock.releaseWriteLock();
     }
   }
 
   /**
-   * Stores state of single queue to the {@link OutputStream} .
-   * Items are stored from least recently used to most recently used, so in case of sequential read of data
-   * we will restore the same state of queue.
+   * Stores state of single queue to the {@link OutputStream} . Items are stored from least recently used to most recently used, so
+   * in case of sequential read of data we will restore the same state of queue.
    * <p>
    * Not all queue items are stored, only ones which contains pages of selected files.
    * <p>
@@ -1022,10 +997,14 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
    * <li>Page index (long), is absent if end of the queue is reached</li>
    * </ol>
    *
-   * @param writeCache       Write cache is used to convert external file ids to internal ones.
-   * @param filesToStore     List of files state of which should be stored.
-   * @param dataOutputStream Output stream for state file
-   * @param queue            Queue state of which should be stored
+   * @param writeCache
+   *          Write cache is used to convert external file ids to internal ones.
+   * @param filesToStore
+   *          List of files state of which should be stored.
+   * @param dataOutputStream
+   *          Output stream for state file
+   * @param queue
+   *          Queue state of which should be stored
    */
   private static void storeQueueState(OWriteCache writeCache, Set<Long> filesToStore, DataOutputStream dataOutputStream,
       LRUList queue) throws IOException {
@@ -1206,7 +1185,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
 
     assert dataPointer != null;
     assert cacheEntry.getCachePointer() == null;
-    assert!cacheEntry.isDirty();
+    assert !cacheEntry.isDirty();
 
     cacheEntry.setCachePointer(dataPointer);
 
@@ -1367,7 +1346,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
           throw new OAllCacheEntriesAreUsedException("All records in aIn queue in 2q cache are used!");
         } else {
           assert removedFromAInEntry.getUsagesCount() == 0;
-          assert!removedFromAInEntry.isDirty();
+          assert !removedFromAInEntry.isDirty();
 
           final OCachePointer cachePointer = removedFromAInEntry.getCachePointer();
           cachePointer.decrementReadersReferrer();
@@ -1381,7 +1360,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
 
           assert removedEntry.getUsagesCount() == 0;
           assert removedEntry.getCachePointer() == null;
-          assert!removedEntry.isDirty();
+          assert !removedEntry.isDirty();
 
           Set<Long> pageEntries = filePages.get(removedEntry.getFileId());
           pageEntries.remove(removedEntry.getPageIndex());
@@ -1393,7 +1372,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
           throw new OAllCacheEntriesAreUsedException("All records in aIn queue in 2q cache are used!");
         } else {
           assert removedEntry.getUsagesCount() == 0;
-          assert!removedEntry.isDirty();
+          assert !removedEntry.isDirty();
 
           final OCachePointer cachePointer = removedEntry.getCachePointer();
           cachePointer.decrementReadersReferrer();
@@ -1431,7 +1410,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
               if (removedFromAInEntry.getUsagesCount() > 0)
                 continue;
 
-              assert!removedFromAInEntry.isDirty();
+              assert !removedFromAInEntry.isDirty();
 
               a1in.remove(removedFromAInEntry.getFileId(), removedFromAInEntry.getPageIndex());
 
@@ -1462,7 +1441,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
 
               assert removedEntry.getUsagesCount() == 0;
               assert removedEntry.getCachePointer() == null;
-              assert!removedEntry.isDirty();
+              assert !removedEntry.isDirty();
 
               Set<Long> pageEntries = filePages.get(removedEntry.getFileId());
               pageEntries.remove(removedEntry.getPageIndex());
@@ -1489,7 +1468,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
               if (removedEntry.getUsagesCount() > 0)
                 continue;
 
-              assert!removedEntry.isDirty();
+              assert !removedEntry.isDirty();
 
               am.remove(removedEntry.getFileId(), removedEntry.getPageIndex());
 

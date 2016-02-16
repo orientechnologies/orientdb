@@ -20,24 +20,6 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
-
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
@@ -63,8 +45,12 @@ import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODiskWriteAheadLog;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+
+import java.io.*;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.*;
 
 /**
  * @author Andrey Lomakin
@@ -72,24 +58,24 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWrite
  */
 public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements OFreezableStorage {
 
-  private static String[] ALL_FILE_EXTENSIONS = { ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx", ".ocs", ".oef", ".oem", ".oet",
-      ODiskWriteAheadLog.WAL_SEGMENT_EXTENSION, ODiskWriteAheadLog.MASTER_RECORD_EXTENSION,
+  private static String[]                  ALL_FILE_EXTENSIONS = { ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx", ".ocs", ".oef",
+      ".oem", ".oet", ODiskWriteAheadLog.WAL_SEGMENT_EXTENSION, ODiskWriteAheadLog.MASTER_RECORD_EXTENSION,
       OHashTableIndexEngine.BUCKET_FILE_EXTENSION, OHashTableIndexEngine.METADATA_FILE_EXTENSION,
       OHashTableIndexEngine.TREE_FILE_EXTENSION, OHashTableIndexEngine.NULL_BUCKET_FILE_EXTENSION,
       OClusterPositionMap.DEF_EXTENSION, OSBTreeIndexEngine.DATA_FILE_EXTENSION, OWOWCache.NAME_ID_MAP_EXTENSION,
       OIndexRIDContainer.INDEX_FILE_EXTENSION, OSBTreeCollectionManagerShared.DEFAULT_EXTENSION,
       OSBTreeIndexEngine.NULL_BUCKET_FILE_EXTENSION, O2QCache.CACHE_STATISTIC_FILE_EXTENSION };
 
-  private static final int ONE_KB = 1024;
+  private static final int                 ONE_KB              = 1024;
 
-  private final int DELETE_MAX_RETRIES;
-  private final int DELETE_WAIT_TIME;
+  private final int                        DELETE_MAX_RETRIES;
+  private final int                        DELETE_WAIT_TIME;
 
   private final OStorageVariableParser     variableParser;
   private final OPaginatedStorageDirtyFlag dirtyFlag;
 
-  private final String          storagePath;
-  private       ExecutorService checkpointExecutor;
+  private final String                     storagePath;
+  private ExecutorService                  checkpointExecutor;
 
   public OLocalPaginatedStorage(final String name, final String filePath, final String mode, final int id, OReadCache readCache)
       throws IOException {
@@ -187,9 +173,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
 
       final OutputStream bo = bufferSize > 0 ? new BufferedOutputStream(out, bufferSize) : out;
       try {
-        return OZIPCompressionUtil
-            .compressDirectory(new File(getStoragePath()).getAbsolutePath(), bo, new String[] { ".wal" }, iOutput,
-                compressionLevel);
+        return OZIPCompressionUtil.compressDirectory(new File(getStoragePath()).getAbsolutePath(), bo, new String[] { ".wal" },
+            iOutput, compressionLevel);
       } finally {
         if (bufferSize > 0) {
           bo.flush();
@@ -220,55 +205,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
     } finally {
       stateLock.releaseReadLock();
     }
-  }
-
-  @Override
-  protected OLogSequenceNumber copyWALToIncrementalBackup(ZipOutputStream zipOutputStream, long startSegment) throws IOException {
-
-    File[] nonActiveSegments;
-
-    OLogSequenceNumber lastLSN;
-    long freezeId = getAtomicOperationsManager().freezeAtomicOperations(null, null);
-    try {
-      lastLSN = writeAheadLog.end();
-      writeAheadLog.newSegment();
-      nonActiveSegments = writeAheadLog.nonActiveSegments(startSegment);
-    } finally {
-      getAtomicOperationsManager().releaseAtomicOperations(freezeId);
-    }
-
-    for (final File nonActiveSegment : nonActiveSegments) {
-      final FileInputStream fileInputStream = new FileInputStream(nonActiveSegment);
-      try {
-        final BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
-        try {
-          final ZipEntry entry = new ZipEntry(nonActiveSegment.getName());
-          zipOutputStream.putNextEntry(entry);
-          try {
-            final byte[] buffer = new byte[4096];
-
-            int br = 0;
-
-            while ((br = bufferedInputStream.read(buffer)) >= 0) {
-              zipOutputStream.write(buffer, 0, br);
-            }
-          } finally {
-            zipOutputStream.closeEntry();
-          }
-        } finally {
-          bufferedInputStream.close();
-        }
-      } finally {
-        fileInputStream.close();
-      }
-    }
-
-    return lastLSN;
-  }
-
-  @Override
-  protected boolean isWritesAllowedDuringBackup() {
-    return true;
   }
 
   @Override
@@ -373,8 +309,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
     try {
       if (writeAheadLog != null) {
         checkpointExecutor.shutdown();
-        if (!checkpointExecutor
-            .awaitTermination(OGlobalConfiguration.WAL_FULL_CHECKPOINT_SHUTDOWN_TIMEOUT.getValueAsInteger(), TimeUnit.SECONDS))
+        if (!checkpointExecutor.awaitTermination(OGlobalConfiguration.WAL_FULL_CHECKPOINT_SHUTDOWN_TIMEOUT.getValueAsInteger(),
+            TimeUnit.SECONDS))
           throw new OStorageException("Cannot terminate full checkpoint task");
       }
     } catch (InterruptedException e) {
