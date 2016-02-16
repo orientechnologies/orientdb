@@ -19,13 +19,6 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
-import java.lang.reflect.Array;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.Map.Entry;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
@@ -60,6 +53,22 @@ import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.method.OSQLMethod;
+
+import java.lang.reflect.Array;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * Helper class to manage documents.
@@ -659,12 +668,9 @@ public class ODocumentHelper {
   /**
    * Retrieves the value crossing the map with the dotted notation
    *
-<<<<<<< HEAD
    * @param iKey
    *          Field(s) to retrieve. If are multiple fields, then the dot must be used as separator
-=======
-   * @param iKey Field(s) to retrieve. If are multiple fields, then the dot must be used as separator
->>>>>>> c6fba8c... Support full SQL filters in square brackets
+   * @param iMap
    * @return
    */
   @SuppressWarnings("unchecked")
@@ -967,12 +973,8 @@ public class ODocumentHelper {
    * Makes a deep comparison field by field to check if the passed ODocument instance is identical in the content to the current
    * one. Instead equals() just checks if the RID are the same.
    *
-<<<<<<< HEAD
    * @param iOther
    *          ODocument instance
-=======
-   * @param iOther ODocument instance
->>>>>>> c6fba8c... Support full SQL filters in square brackets
    * @return true if the two document are identical, otherwise false
    * @see #equals(Object)
    */
