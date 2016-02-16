@@ -48,7 +48,6 @@ public class ODatabaseDocumentPoolOpenCloseTest {
 
   }
 
-
   @Test
   public void checkSchemaRefresh() throws ExecutionException, InterruptedException {
     String url = "memory:" + ODatabaseDocumentPoolOpenCloseTest.class.getSimpleName();
