@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.db;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
