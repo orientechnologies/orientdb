@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.id.OImmutableRecordId;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.ORoundRobinClusterSelectionStrategy;
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -210,7 +210,7 @@ public class OStorageConfiguration implements OSerializableStream {
 
   public void update() throws OSerializationException {
     final byte[] record = toStream();
-    storage.updateRecord(CONFIG_RID, true, record, -1, ORecordBytes.RECORD_TYPE, 0, null);
+    storage.updateRecord(CONFIG_RID, true, record, -1, OBlob.RECORD_TYPE, 0, null);
   }
 
   public boolean isEmpty() {
@@ -631,7 +631,7 @@ public class OStorageConfiguration implements OSerializableStream {
   }
 
   public void create() throws IOException {
-    storage.createRecord(CONFIG_RID, new byte[] { 0, 0, 0, 0 }, 0, ORecordBytes.RECORD_TYPE, (byte) 0, null);
+    storage.createRecord(CONFIG_RID, new byte[] { 0, 0, 0, 0 }, 0, OBlob.RECORD_TYPE, (byte) 0, null);
   }
 
   public void synch() throws IOException {

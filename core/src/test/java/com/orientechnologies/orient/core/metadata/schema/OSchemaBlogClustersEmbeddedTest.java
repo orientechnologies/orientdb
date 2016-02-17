@@ -42,7 +42,7 @@ public class OSchemaBlogClustersEmbeddedTest {
     db.getMetadata().getSchema().addBlobCluster("test_blob");
     int newSize = db.getMetadata().getSchema().getBlobClusters().size();
     assertEquals(prevSize + 1, newSize);
-
+    db.getMetadata().getSchema().removeBlobCluster("test_blob");
     newSize = db.getMetadata().getSchema().getBlobClusters().size();
     assertEquals(prevSize, newSize);
 

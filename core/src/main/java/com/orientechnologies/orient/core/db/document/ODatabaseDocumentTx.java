@@ -85,6 +85,7 @@ import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
+import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.schedule.OSchedulerTrigger;
@@ -2416,8 +2417,17 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       ORecordCallback<Integer> iRecordUpdatedCallback) {
     checkOpeness();
 
-    if (!(iRecord instanceof ODocument))
+    if (!(iRecord instanceof ODocument)) {
+      int clusterId = iRecord.getIdentity().getClusterId();
+      if (iRecord instanceof OBlob && clusterId >= 0) {
+//        Set<Integer> blobClusters = getMetadata().getSchema().getBlobClusters();
+//        if (!blobClusters.contains(clusterId))
+//          throw new IllegalArgumentException(
+//              "Cluster name '" + iClusterName + "' (id=" + clusterId + ") is not configured to store the blobs, valid are "
+//                  + blobClusters.toString());
+      }
       return (RET) currentTx.saveRecord(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
+    }
 
     ODocument doc = (ODocument) iRecord;
     ODocumentInternal.checkClass(doc, this);

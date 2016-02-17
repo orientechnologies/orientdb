@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 
@@ -161,11 +162,11 @@ public class OrientDbCreationHelper {
     return article;
   }
 
-  private static ORecordBytes loadFile(ODatabaseDocumentInternal database, String filePath) throws IOException {
+  private static OBlob loadFile(ODatabaseDocumentInternal database, String filePath) throws IOException {
     final File f = new File(filePath);
     if (f.exists()) {
       BufferedInputStream inputStream = new BufferedInputStream(new FileInputStream(f));
-      ORecordBytes record = new ORecordBytes(database);
+      OBlob record = new ORecordBytes(database);
       record.fromInputStream(inputStream);
       return record;
     }
@@ -185,7 +186,7 @@ public class OrientDbCreationHelper {
     byte[] chunk;
 
     database.declareIntent(new OIntentMassiveInsert());
-    ORecordBytes recordChunk;
+    OBlob recordChunk;
     for (int i = 0; i < numberOfRecords; i++) {
       if (i == numberOfRecords - 1)
         chunk = new byte[remainder];

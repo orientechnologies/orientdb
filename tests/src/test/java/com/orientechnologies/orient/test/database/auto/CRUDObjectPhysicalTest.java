@@ -19,6 +19,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.*;
 
+import com.orientechnologies.orient.core.record.impl.OBlob;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeMethod;
@@ -1885,7 +1886,7 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
 
     p.setDocument(testDocument);
 
-    ORecordBytes testRecordBytes = new ORecordBytes(
+    OBlob testRecordBytes = new ORecordBytes(
         "this is a bytearray test. if you read this Object database has stored it correctly".getBytes());
 
     p.setByteArray(testRecordBytes);
@@ -1899,7 +1900,7 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     JavaComplexTestClass loaded = database.load(rid);
 
-    Assert.assertTrue(loaded.getByteArray() instanceof ORecordBytes);
+    Assert.assertTrue(loaded.getByteArray() instanceof OBlob);
     try {
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       try {
@@ -1928,11 +1929,11 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     p = database.newInstance(JavaComplexTestClass.class);
     byte[] thumbnailImageBytes = "this is a bytearray test. if you read this Object database has stored it correctlyVERSION2"
         .getBytes();
-    ORecordBytes oRecordBytes = new ORecordBytes(database.getUnderlying(), thumbnailImageBytes);
+    OBlob oRecordBytes = new ORecordBytes(database.getUnderlying(), thumbnailImageBytes);
     oRecordBytes.save();
     p.setByteArray(oRecordBytes);
     p = database.save(p);
-    Assert.assertTrue(p.getByteArray() instanceof ORecordBytes);
+    Assert.assertTrue(p.getByteArray() instanceof OBlob);
     try {
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       try {
@@ -1955,7 +1956,7 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     loaded = database.load(rid);
 
-    Assert.assertTrue(loaded.getByteArray() instanceof ORecordBytes);
+    Assert.assertTrue(loaded.getByteArray() instanceof OBlob);
     try {
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       try {
@@ -1979,7 +1980,7 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     oRecordBytes.save();
     p.setByteArray(oRecordBytes);
     p = database.save(p);
-    Assert.assertTrue(p.getByteArray() instanceof ORecordBytes);
+    Assert.assertTrue(p.getByteArray() instanceof OBlob);
     try {
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       try {
@@ -2002,7 +2003,7 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     loaded = database.load(rid);
 
-    Assert.assertTrue(loaded.getByteArray() instanceof ORecordBytes);
+    Assert.assertTrue(loaded.getByteArray() instanceof OBlob);
     try {
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       try {
@@ -2025,7 +2026,7 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     try {
       OObjectIteratorClass<JavaComplexTestClass> browseClass = database.browseClass(JavaComplexTestClass.class);
       for (JavaComplexTestClass ebookPropertyItem : browseClass) {
-        ORecordBytes coverThumbnail = ebookPropertyItem.getByteArray(); // The IllegalArgumentException is thrown here.
+        OBlob coverThumbnail = ebookPropertyItem.getByteArray(); // The IllegalArgumentException is thrown here.
       }
     } catch (IllegalArgumentException iae) {
       Assert.fail("ORecordBytes field getter should not throw this exception", iae);
@@ -2056,7 +2057,7 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
   @Test(dependsOnMethods = "testAddingORecordBytesAfterParentCreation")
   public void testObjectDelete() {
     Media media = new Media();
-    ORecordBytes testRecord = new ORecordBytes("This is a test".getBytes());
+    OBlob testRecord = new ORecordBytes("This is a test".getBytes());
     media.setContent(testRecord);
     media = database.save(media);
 
@@ -2069,7 +2070,7 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
   @Test(dependsOnMethods = "testObjectDelete")
   public void testOrphanDelete() {
     Media media = new Media();
-    ORecordBytes testRecord = new ORecordBytes("This is a test".getBytes());
+    OBlob testRecord = new ORecordBytes("This is a test".getBytes());
     media.setContent(testRecord);
     media = database.save(media);
 

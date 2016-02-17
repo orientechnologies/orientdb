@@ -30,7 +30,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Version;
 
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.test.domain.business.Child;
 
 /**
@@ -44,10 +44,10 @@ public class JavaCascadeDeleteTestClass {
 	private Object							version;
 
 	@OneToOne(orphanRemoval = true)
-	private JavaSimpleTestClass	simpleClass;
+	private JavaSimpleTestClass simpleClass;
 	@OneToOne(orphanRemoval = true)
-	private ORecordBytes				byteArray;
-	private String							name;
+	private OBlob               byteArray;
+	private String              name;
 	@ManyToMany(cascade = { CascadeType.REMOVE })
 	private Map<String, Child>	children	= new HashMap<String, Child>();
 	@OneToMany(orphanRemoval = true)
@@ -95,11 +95,11 @@ public class JavaCascadeDeleteTestClass {
 		this.set = enumSet;
 	}
 
-	public ORecordBytes getByteArray() {
+	public OBlob getByteArray() {
 		return byteArray;
 	}
 
-	public void setByteArray(ORecordBytes byteArray) {
+	public void setByteArray(OBlob byteArray) {
 		this.byteArray = byteArray;
 	}
 

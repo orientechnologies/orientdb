@@ -1395,7 +1395,6 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     return clId;
   }
 
-
   protected int createClusterIfNeeded(String nameOrId) {
     final String[] parts = nameOrId.split(" ");
     int clId = getClusterId(parts[0]);

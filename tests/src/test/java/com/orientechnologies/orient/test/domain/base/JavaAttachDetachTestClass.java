@@ -28,7 +28,7 @@ import javax.persistence.Transient;
 import javax.persistence.Version;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.test.domain.business.Child;
 
 /**
@@ -45,7 +45,7 @@ public class JavaAttachDetachTestClass {
   public Object                version;
   public ODocument             embeddedDocument;
   public ODocument             document;
-  public ORecordBytes          byteArray;
+  public OBlob                 byteArray;
   public String                name;
   public Child                 specialChild;
   public Child                 specialChild2;
@@ -102,11 +102,11 @@ public class JavaAttachDetachTestClass {
     this.document = document;
   }
 
-  public ORecordBytes getByteArray() {
+  public OBlob getByteArray() {
     return byteArray;
   }
 
-  public void setByteArray(ORecordBytes byteArray) {
+  public void setByteArray(OBlob byteArray) {
     this.byteArray = byteArray;
   }
 

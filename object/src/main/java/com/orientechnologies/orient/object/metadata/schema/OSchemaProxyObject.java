@@ -30,8 +30,8 @@ import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionFactory;
+import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
@@ -273,7 +273,7 @@ public class OSchemaProxyObject implements OSchema {
         if (OObjectEntitySerializer.isVersionField(iClass, field) || OObjectEntitySerializer.isIdField(iClass, field))
           continue;
         Field f = OObjectEntitySerializer.getField(field, iClass);
-        if (f.getType().equals(Object.class) || f.getType().equals(ODocument.class) || f.getType().equals(ORecordBytes.class)) {
+        if (f.getType().equals(Object.class) || f.getType().equals(ODocument.class) || OBlob.class.isAssignableFrom(f.getType())) {
           continue;
         }
         OType t = OObjectEntitySerializer.getTypeByClass(iClass, field, f);
@@ -312,7 +312,7 @@ public class OSchemaProxyObject implements OSchema {
         case EMBEDDED:
           linkedClazz = f.getType();
           if (linkedClazz == null || linkedClazz.equals(Object.class) || linkedClazz.equals(ODocument.class)
-              || f.getType().equals(ORecordBytes.class)) {
+              || OBlob.class.isAssignableFrom(f.getType())) {
             continue;
           } else {
             generateLinkProperty(database, schema, field, t, linkedClazz);
@@ -324,7 +324,7 @@ public class OSchemaProxyObject implements OSchema {
         case EMBEDDEDMAP:
           linkedClazz = OReflectionHelper.getGenericMultivalueType(f);
           if (linkedClazz == null || linkedClazz.equals(Object.class) || linkedClazz.equals(ODocument.class)
-              || f.getType().equals(ORecordBytes.class)) {
+              || OBlob.class.isAssignableFrom(f.getType())) {
             continue;
           } else {
             if (OReflectionHelper.isJavaType(linkedClazz)) {

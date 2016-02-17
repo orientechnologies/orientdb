@@ -23,6 +23,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
@@ -55,7 +56,7 @@ public class ORecordFactoryManager {
         return new ODocument();
       }
     });
-    declareRecordType(ORecordBytes.RECORD_TYPE, "bytes", ORecordBytes.class, new ORecordFactory() {
+    declareRecordType(OBlob.RECORD_TYPE, "bytes", OBlob.class, new ORecordFactory() {
       public ORecord newRecord() {
         return new ORecordBytes();
       }

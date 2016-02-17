@@ -23,6 +23,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import com.orientechnologies.orient.core.record.impl.OBlob;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -53,7 +54,7 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
 
     database.begin();
 
-    ORecordBytes recordBytes = new ORecordBytes("This is the first version".getBytes());
+    OBlob recordBytes = new ORecordBytes("This is the first version".getBytes());
     recordBytes.save("binary");
 
     database.rollback();
@@ -70,7 +71,7 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
 
     database.begin();
 
-    ORecordBytes recordBytes = new ORecordBytes("This is the first version".getBytes());
+    OBlob recordBytes = new ORecordBytes("This is the first version".getBytes());
     recordBytes.save("binary");
 
     database.commit();
@@ -87,7 +88,7 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
     db2.open("admin", "admin");
 
     database.activateOnCurrentThread();
-    ORecordBytes record1 = new ORecordBytes("This is the first version".getBytes());
+    OBlob record1 = new ORecordBytes("This is the first version".getBytes());
     record1.save("binary");
 
     try {
@@ -97,7 +98,7 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
       record1.load();
 
       ODatabaseRecordThreadLocal.INSTANCE.set(db2);
-      ORecordBytes record2 = db2.load(record1.getIdentity());
+      OBlob record2 = db2.load(record1.getIdentity());
 
       record2.setDirty();
       record2.fromStream("This is the second version".getBytes());
@@ -130,7 +131,7 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
     if (database.getClusterIdByName("binary") == -1)
       database.addCluster("binary");
 
-    ORecordBytes record = new ORecordBytes("This is the first version".getBytes());
+    OBlob record = new ORecordBytes("This is the first version".getBytes());
     record.save();
 
     try {
@@ -160,7 +161,7 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
     ODatabaseDocumentTx db2 = new ODatabaseDocumentTx(database.getURL());
     db2.open("admin", "admin");
 
-    ORecordBytes record1 = new ORecordBytes("This is the first version".getBytes());
+    OBlob record1 = new ORecordBytes("This is the first version".getBytes());
     record1.save();
 
     try {
@@ -178,7 +179,7 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
 
       db2.activateOnCurrentThread();
 
-      ORecordBytes record2 = db2.load(record1.getIdentity(), "*:-1", true);
+      OBlob record2 = db2.load(record1.getIdentity(), "*:-1", true);
       Assert.assertEquals(record2.getVersion(), v1 + 1);
       Assert.assertTrue(new String(record2.toStream()).contains("second"));
 

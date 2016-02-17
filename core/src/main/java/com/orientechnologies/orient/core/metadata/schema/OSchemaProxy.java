@@ -250,6 +250,6 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared>implements OSche
 
   @Override
   public void removeBlobCluster(final String clusterName) {
-    removeBlobCluster(clusterName);
+    delegate.removeBlobCluster(clusterName);
   }
 }

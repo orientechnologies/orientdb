@@ -1,18 +1,18 @@
 /**
  * Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
- *
+ * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- * 	http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p/>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
+ * <p/>
  * For more information: http://www.orientechnologies.com
  */
 package com.orientechnologies.orient.jdbc;
@@ -22,8 +22,8 @@ import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 
 import java.math.BigDecimal;
 import java.sql.ResultSetMetaData;
@@ -70,7 +70,7 @@ public class OrientJdbcResultSetMetaData implements ResultSetMetaData {
     typesSqlTypes.put(OType.TRANSIENT, Types.NULL);
   }
 
-  private OrientJdbcResultSet              resultSet;
+  private OrientJdbcResultSet resultSet;
 
   public OrientJdbcResultSetMetaData(final OrientJdbcResultSet iResultSet) {
     resultSet = iResultSet;
@@ -130,9 +130,9 @@ public class OrientJdbcResultSetMetaData implements ResultSetMetaData {
 
       if (value == null) {
         return Types.NULL;
-      } else if (value instanceof ORecordBytes) {
-      // Check if the type is a binary record or a collection of binary
-      // records
+      } else if (value instanceof OBlob) {
+        // Check if the type is a binary record or a collection of binary
+        // records
         return Types.BINARY;
       } else if (value instanceof ORecordLazyList) {
         ORecordLazyList list = (ORecordLazyList) value;
@@ -142,60 +142,60 @@ public class OrientJdbcResultSetMetaData implements ResultSetMetaData {
         boolean stop = false;
         while (iterator.hasNext() && !stop) {
           listElement = iterator.next();
-          if (!(listElement instanceof ORecordBytes))
+          if (!(listElement instanceof OBlob))
             stop = true;
         }
         if (!stop) {
           return Types.BLOB;
+        }
       }
-      }
-
       return this.getSQLTypeFromJavaClass(value);
     } else {
       if (otype == OType.EMBEDDED || otype == OType.LINK) {
-      Object value = currentRecord.field(fieldName);
+        Object value = currentRecord.field(fieldName);
         if (value == null) {
-        return Types.NULL;
+          return Types.NULL;
         }
-      // 1. Check if the type is another record or a collection of records
-        if (value instanceof ORecordBytes) {
-        return Types.BINARY;
+        // 1. Check if the type is another record or a collection of records
+        if (value instanceof OBlob) {
+          return Types.BINARY;
         } else {
-        // the default type
-        return typesSqlTypes.get(otype);
+          // the default type
+          return typesSqlTypes.get(otype);
         }
       } else {
         if (otype == OType.EMBEDDEDLIST || otype == OType.LINKLIST) {
-      Object value = currentRecord.field(fieldName);
+          Object value = currentRecord.field(fieldName);
           if (value == null) {
-        return Types.NULL;
+            return Types.NULL;
           }
-      if (value instanceof ORecordLazyList) {
-        ORecordLazyList list = (ORecordLazyList) value;
-        // check if all the list items are instances of ORecordBytes
-        ListIterator<OIdentifiable> iterator = list.listIterator();
-        OIdentifiable listElement;
-        boolean stop = false;
-        while (iterator.hasNext() && !stop) {
-          listElement = iterator.next();
-          if (!(listElement instanceof ORecordBytes))
-            stop = true;
-        }
+          if (value instanceof ORecordLazyList) {
+            ORecordLazyList list = (ORecordLazyList) value;
+            // check if all the list items are instances of ORecordBytes
+            ListIterator<OIdentifiable> iterator = list.listIterator();
+            OIdentifiable listElement;
+            boolean stop = false;
+            while (iterator.hasNext() && !stop) {
+              listElement = iterator.next();
+              if (!(listElement instanceof OBlob))
+                stop = true;
+            }
             if (stop) {
-          return typesSqlTypes.get(otype);
+              return typesSqlTypes.get(otype);
             } else {
-          return Types.BLOB;
+              return Types.BLOB;
             }
           } else {
-        return Types.JAVA_OBJECT;
+            return Types.JAVA_OBJECT;
           }
         } else {
-      return typesSqlTypes.get(otype);
-  }
+          return typesSqlTypes.get(otype);
+        }
       }
+
     }
   }
-
+  
   protected ODocument getCurrentRecord() throws SQLException {
     final ODocument currentRecord = this.resultSet.unwrap(ODocument.class);
     if (currentRecord == null)
