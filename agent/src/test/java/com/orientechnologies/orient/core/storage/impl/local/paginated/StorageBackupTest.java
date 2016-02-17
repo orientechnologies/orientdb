@@ -27,9 +27,9 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
-import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,18 +39,19 @@ import java.util.Random;
  * @author Andrey Lomakin <lomakin.andrey@gmail.com>.
  * @since 9/9/2015
  */
-@Test
+
 public class StorageBackupTest {
   private String buildDirectory;
 
-  @BeforeClass
+  @Before
   public void before() {
     buildDirectory = System.getProperty("buildDirectory", ".");
 
-//    OEngineLocalPaginated plocalEngine = (OEngineLocalPaginated) Orient.instance().getEngine("plocal");
-//    Orient.instance().registerEngine(new OEnterpriseEnginePaginated(plocalEngine));
+    //    OEngineLocalPaginated plocalEngine = (OEngineLocalPaginated) Orient.instance().getEngine("plocal");
+    //    Orient.instance().registerEngine(new OEnterpriseEnginePaginated(plocalEngine));
   }
 
+  @Test
   public void testSingeThreadFullBackup() throws IOException {
     final String dbDirectory = buildDirectory + File.separator + StorageBackupTest.class.getSimpleName();
     OFileUtils.deleteRecursively(new File(dbDirectory));
@@ -105,11 +106,11 @@ public class StorageBackupTest {
 
     final ODatabaseCompare compare = new ODatabaseCompare("plocal:" + dbDirectory, "plocal:" + backedUpDbDirectory, "admin",
         "admin", new OCommandOutputListener() {
-          @Override
-          public void onMessage(String iText) {
-            System.out.println(iText);
-          }
-        });
+      @Override
+      public void onMessage(String iText) {
+        System.out.println(iText);
+      }
+    });
 
     Assert.assertTrue(compare.compare());
 
@@ -122,6 +123,7 @@ public class StorageBackupTest {
     OFileUtils.deleteRecursively(backupDir);
   }
 
+  @Test
   public void testSingeThreadIncrementalBackup() throws IOException {
     final String dbDirectory = buildDirectory + File.separator + StorageBackupTest.class.getSimpleName();
     OFileUtils.deleteRecursively(new File(dbDirectory));
@@ -196,11 +198,11 @@ public class StorageBackupTest {
 
     final ODatabaseCompare compare = new ODatabaseCompare("plocal:" + dbDirectory, "plocal:" + backedUpDbDirectory, "admin",
         "admin", new OCommandOutputListener() {
-          @Override
-          public void onMessage(String iText) {
-            System.out.println(iText);
-          }
-        });
+      @Override
+      public void onMessage(String iText) {
+        System.out.println(iText);
+      }
+    });
 
     Assert.assertTrue(compare.compare());
 

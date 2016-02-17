@@ -10,9 +10,8 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
-
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -24,13 +23,13 @@ import java.util.concurrent.*;
  * @author Andrey Lomakin <lomakin.andrey@gmail.com>.
  * @since 9/17/2015
  */
-@Test
 public class StorageBackupMTTest {
-  private ODatabaseDocumentTx  databaseDocumentTx;
-  private volatile boolean     stop  = false;
   private final CountDownLatch latch = new CountDownLatch(1);
-  private String               dbURL;
+  private ODatabaseDocumentTx databaseDocumentTx;
+  private volatile boolean stop = false;
+  private String dbURL;
 
+  @Test
   public void testParallelBackup() throws Exception {
     String buildDirectory = System.getProperty("buildDirectory", ".");
     String dbDirectory = buildDirectory + File.separator + StorageBackupMTTest.class.getSimpleName();
@@ -66,7 +65,7 @@ public class StorageBackupMTTest {
 
     latch.countDown();
 
-    Thread.sleep(15 * 1000 * 60);
+    TimeUnit.MINUTES.sleep(15);
 
     stop = true;
 
@@ -74,6 +73,7 @@ public class StorageBackupMTTest {
       future.get();
     }
 
+    System.out.println("do inc backuop last time");
     databaseDocumentTx.incrementalBackup(backupDir.getAbsolutePath());
 
     final OStorage storage = databaseDocumentTx.getStorage();
@@ -84,9 +84,11 @@ public class StorageBackupMTTest {
     final String backedUpDbDirectory = buildDirectory + File.separator + StorageBackupMTTest.class.getSimpleName() + "BackUp";
     OFileUtils.deleteRecursively(new File(backedUpDbDirectory));
 
+    System.out.println("create");
     final ODatabaseDocumentTx backedUpDb = new ODatabaseDocumentTx("plocal:" + backedUpDbDirectory);
     backedUpDb.create();
 
+    System.out.println("restore");
     backedUpDb.incrementalRestore(backupDir.getAbsolutePath());
     final OStorage backupStorage = backedUpDb.getStorage();
     backedUpDb.close();
@@ -95,13 +97,15 @@ public class StorageBackupMTTest {
 
     final ODatabaseCompare compare = new ODatabaseCompare("plocal:" + dbDirectory, "plocal:" + backedUpDbDirectory, "admin",
         "admin", new OCommandOutputListener() {
-          @Override
-          public void onMessage(String iText) {
-            System.out.println(iText);
-          }
-        });
+      @Override
+      public void onMessage(String iText) {
+        System.out.println(iText);
+      }
+    });
+    System.out.println("compare");
 
-    Assert.assertTrue(compare.compare());
+    boolean areSame = compare.compare();
+    Assert.assertTrue(areSame);
 
     databaseDocumentTx.open("admin", "admin");
     databaseDocumentTx.drop();
@@ -116,6 +120,8 @@ public class StorageBackupMTTest {
     @Override
     public Void call() throws Exception {
       latch.await();
+
+      System.out.println(Thread.currentThread() + " - start writing");
       final ODatabaseDocumentTx databaseDocumentTx = new ODatabaseDocumentTx(dbURL);
       databaseDocumentTx.open("admin", "admin");
 
@@ -145,6 +151,8 @@ public class StorageBackupMTTest {
         databaseDocumentTx.close();
       }
 
+      System.out.println(Thread.currentThread() + " - done writing");
+
       return null;
     }
   }
@@ -162,11 +170,17 @@ public class StorageBackupMTTest {
 
       final ODatabaseDocumentTx databaseDocumentTx = new ODatabaseDocumentTx(dbURL);
       databaseDocumentTx.open("admin", "admin");
+
+      System.out.println(Thread.currentThread() + " - start backup");
+
       try {
         while (!stop) {
-          Thread.sleep(1000 * 60 * 5);
+          TimeUnit.MINUTES.sleep(5);
 
+          System.out.println(Thread.currentThread() + " do inc backup");
           databaseDocumentTx.incrementalBackup(backupPath);
+          System.out.println(Thread.currentThread() + " done inc backup");
+
         }
       } catch (RuntimeException e) {
         e.printStackTrace();
@@ -174,6 +188,8 @@ public class StorageBackupMTTest {
       } finally {
         databaseDocumentTx.close();
       }
+
+      System.out.println(Thread.currentThread() + " - done writing");
 
       return null;
     }
