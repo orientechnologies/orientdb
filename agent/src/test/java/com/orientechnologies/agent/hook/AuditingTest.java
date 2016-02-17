@@ -20,6 +20,7 @@
 
 package com.orientechnologies.agent.hook;
 
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
@@ -43,6 +44,10 @@ public class AuditingTest extends TestCase {
   @Override
   protected void setUp() {
     graph = new OrientGraphNoTx("memory:AuditingTest");
+
+
+    graph.getRawGraph().set(ODatabase.ATTRIBUTES.MINIMUMCLUSTERS,1);
+
     graph.createVertexType("User");
   }
 
