@@ -234,7 +234,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
 
       final long freezeId;
 
-      if (!isWritesAllowedDuringBackup())
+      if (!isWriteAllowedDuringIncrementalBackup())
         freezeId = atomicOperationsManager
             .freezeAtomicOperations(OModificationOperationProhibitedException.class, "Incremental backup in progress");
       else
@@ -284,7 +284,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
           bufferedOutputStream.flush();
         }
       } finally {
-        if (!isWritesAllowedDuringBackup())
+        if (!isWriteAllowedDuringIncrementalBackup())
           atomicOperationsManager.releaseAtomicOperations(freezeId);
       }
     } finally {
