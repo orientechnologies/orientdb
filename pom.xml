@@ -105,7 +105,6 @@
         <module>test-commons</module>
         <module>client</module>
         <module>core</module>
-        <module>enterprise</module>
         <module>object</module>
         <module>server</module>
         <module>tools</module>
