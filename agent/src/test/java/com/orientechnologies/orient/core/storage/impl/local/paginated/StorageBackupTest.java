@@ -206,13 +206,13 @@ public class StorageBackupTest {
 
     Assert.assertTrue(compare.compare());
 
-    // db.open("admin", "admin");
-    // db.drop();
-    //
-    // backedUpDb.open("admin", "admin");
-    // backedUpDb.drop();
-    //
-    // OFileUtils.deleteRecursively(backupDir);
+     db.open("admin", "admin");
+     db.drop();
+
+     backedUpDb.open("admin", "admin");
+     backedUpDb.drop();
+
+     OFileUtils.deleteRecursively(backupDir);
   }
 
 }
