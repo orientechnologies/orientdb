@@ -65,9 +65,10 @@ public class OServerInfo {
 
     final List<OClientConnection> conns = server.getClientConnectionManager().getConnections();
     for (OClientConnection c : conns) {
-      final ONetworkProtocolData data = c.data;
+      final ONetworkProtocolData data = c.getData();
+      final OClientConnectionStats stats = c.getStats();
 
-      if (databaseName != null && !databaseName.equals((data.lastDatabase)))
+      if (databaseName != null && !databaseName.equals((stats.lastDatabase)))
         // SKIP IT
         continue;
 
@@ -75,25 +76,33 @@ public class OServerInfo {
       final String connectedOn;
 
       synchronized (dateTimeFormat) {
-        lastCommandOn = dateTimeFormat.format(new Date(data.lastCommandReceived));
-        connectedOn = dateTimeFormat.format(new Date(c.since));
+        lastCommandOn = dateTimeFormat.format(new Date(stats.lastCommandReceived));
+        connectedOn = dateTimeFormat.format(new Date(c.getSince()));
       }
-
+      String lastDatabase;
+      String lastUser;
+      if (stats.lastDatabase != null && stats.lastUser != null) {
+        lastDatabase = stats.lastDatabase;
+        lastUser = stats.lastUser;
+      } else {
+        lastDatabase = data.lastDatabase;
+        lastUser = data.lastUser;
+      }
       json.beginObject(2);
-      writeField(json, 2, "connectionId", c.id);
-      writeField(json, 2, "remoteAddress", c.protocol.getChannel() != null ? c.protocol.getChannel().toString() : "Disconnected");
-      writeField(json, 2, "db", data.lastDatabase != null ? data.lastDatabase : "-");
-      writeField(json, 2, "user", data.lastUser != null ? data.lastUser : "-");
-      writeField(json, 2, "totalRequests", data.totalRequests);
+      writeField(json, 2, "connectionId", c.getId());
+      writeField(json, 2, "remoteAddress", c.getProtocol().getChannel() != null ? c.getProtocol().getChannel().toString() : "Disconnected");
+      writeField(json, 2, "db", lastDatabase!= null ? lastDatabase : "-");
+      writeField(json, 2, "user", lastUser != null ? lastUser : "-");
+      writeField(json, 2, "totalRequests", stats.totalRequests);
       writeField(json, 2, "commandInfo", data.commandInfo);
       writeField(json, 2, "commandDetail", data.commandDetail);
       writeField(json, 2, "lastCommandOn", lastCommandOn);
-      writeField(json, 2, "lastCommandInfo", data.lastCommandInfo);
-      writeField(json, 2, "lastCommandDetail", data.lastCommandDetail);
-      writeField(json, 2, "lastExecutionTime", data.lastCommandExecutionTime);
-      writeField(json, 2, "totalWorkingTime", data.totalCommandExecutionTime);
+      writeField(json, 2, "lastCommandInfo", stats.lastCommandInfo);
+      writeField(json, 2, "lastCommandDetail", stats.lastCommandDetail);
+      writeField(json, 2, "lastExecutionTime", stats.lastCommandExecutionTime);
+      writeField(json, 2, "totalWorkingTime", stats.totalCommandExecutionTime);
       writeField(json, 2, "connectedOn", connectedOn);
-      writeField(json, 2, "protocol", c.protocol.getType());
+      writeField(json, 2, "protocol", c.getProtocol().getType());
       writeField(json, 2, "sessionId", data.sessionId);
       writeField(json, 2, "clientId", data.clientId);
 

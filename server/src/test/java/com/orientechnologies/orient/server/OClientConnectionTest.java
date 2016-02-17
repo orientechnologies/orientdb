@@ -2,7 +2,6 @@ package com.orientechnologies.orient.server;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.enterprise.channel.binary.OTokenSecurityException;
 import com.orientechnologies.orient.server.token.OTokenHandlerImpl;
@@ -40,12 +39,12 @@ public class OClientConnectionTest {
   public void testValidToken() throws IOException {
     OClientConnection conn = new OClientConnection(1, null);
     OTokenHandler handler = new OTokenHandlerImpl(null);
-    byte[] tokenBytes = handler.getSignedBinaryToken(db, db.getUser(), conn.data);
+    byte[] tokenBytes = handler.getSignedBinaryToken(db, db.getUser(), conn.getData());
 
-    conn.validateSession(tokenBytes, handler);
-    assertTrue(conn.tokenBased);
-    assertEquals(tokenBytes, conn.tokenBytes);
-    assertNotNull(conn.token);
+    conn.validateSession(tokenBytes, handler, null);
+    assertTrue(conn.getTokenBased());
+    assertEquals(tokenBytes, conn.getTokenBytes());
+    assertNotNull(conn.getToken());
   }
 
   @Test(expected = OTokenSecurityException.class)
@@ -55,9 +54,9 @@ public class OClientConnectionTest {
     OGlobalConfiguration.NETWORK_TOKEN_EXPIRE_TIMEOUT.setValue(0);
     OTokenHandler handler = new OTokenHandlerImpl(null);
     OGlobalConfiguration.NETWORK_TOKEN_EXPIRE_TIMEOUT.setValue(sessionTimeout);
-    byte[] tokenBytes = handler.getSignedBinaryToken(db, db.getUser(), conn.data);
+    byte[] tokenBytes = handler.getSignedBinaryToken(db, db.getUser(), conn.getData());
     Thread.sleep(1);
-    conn.validateSession(tokenBytes, handler);
+    conn.validateSession(tokenBytes, handler, null);
 
   }
 
@@ -66,7 +65,7 @@ public class OClientConnectionTest {
     OClientConnection conn = new OClientConnection(1, null);
     OTokenHandler handler = new OTokenHandlerImpl(null);
     byte[] tokenBytes =new byte [120];
-    conn.validateSession(tokenBytes, handler);
+    conn.validateSession(tokenBytes, handler, null);
 
   }
 

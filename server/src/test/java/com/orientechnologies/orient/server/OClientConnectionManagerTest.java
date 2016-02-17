@@ -13,8 +13,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
-import java.io.IOException;
-
 import static org.junit.Assert.*;
 
 public class OClientConnectionManagerTest {
@@ -39,11 +37,11 @@ public class OClientConnectionManagerTest {
     OClientConnectionManager manager = new OClientConnectionManager();
     OClientConnection ret = manager.connect(protocol);
     assertNotNull(ret);
-    OClientConnection ret1 = manager.getConnection(ret.id, protocol);
+    OClientConnection ret1 = manager.getConnection(ret.getId(), protocol);
     assertSame(ret, ret1);
     manager.disconnect(ret);
 
-    OClientConnection ret2 = manager.getConnection(ret.id, protocol);
+    OClientConnection ret2 = manager.getConnection(ret.getId(), protocol);
     assertNull(ret2);
   }
 
@@ -58,7 +56,7 @@ public class OClientConnectionManagerTest {
     OClientSessions sess = manager.getSession(ret);
     assertNotNull(sess);
     assertEquals(sess.getConnections().size(), 1);
-    OClientConnection ret1 = manager.getConnection(ret.id, protocol);
+    OClientConnection ret1 = manager.getConnection(ret.getId(), protocol);
     assertSame(ret, ret1);
     OClientConnection ret2 = manager.reConnect(protocol, atoken, token);
     assertNotSame(ret1, ret2);
@@ -66,12 +64,12 @@ public class OClientConnectionManagerTest {
     manager.disconnect(ret);
 
     assertEquals(sess.getConnections().size(), 1);
-    OClientConnection ret3 = manager.getConnection(ret.id, protocol);
+    OClientConnection ret3 = manager.getConnection(ret.getId(), protocol);
     assertNull(ret3);
 
     manager.disconnect(ret2);
     assertEquals(sess.getConnections().size(), 0);
-    OClientConnection ret4 = manager.getConnection(ret2.id, protocol);
+    OClientConnection ret4 = manager.getConnection(ret2.getId(), protocol);
     assertNull(ret4);
   }
 

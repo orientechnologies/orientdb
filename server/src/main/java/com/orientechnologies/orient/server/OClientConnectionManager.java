@@ -21,8 +21,6 @@ package com.orientechnologies.orient.server;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -87,19 +85,19 @@ public class OClientConnectionManager {
       final Entry<Integer, OClientConnection> entry = iterator.next();
 
       final Socket socket;
-      if (entry.getValue().protocol == null || entry.getValue().protocol.getChannel() == null)
+      if (entry.getValue().getProtocol() == null || entry.getValue().getProtocol().getChannel() == null)
         socket = null;
       else
-        socket = entry.getValue().protocol.getChannel().socket;
+        socket = entry.getValue().getProtocol().getChannel().socket;
 
       if (socket == null || socket.isClosed() || socket.isInputShutdown()) {
         OLogManager.instance().debug(this, "[OClientConnectionManager] found and removed pending closed channel %d (%s)",
             entry.getKey(), socket);
         try {
-          OCommandRequestText command = entry.getValue().data.command;
+          OCommandRequestText command = entry.getValue().getData().command;
           if (command != null && command.isIdempotent()) {
-            entry.getValue().protocol.sendShutdown();
-            entry.getValue().protocol.interrupt();
+            entry.getValue().getProtocol().sendShutdown();
+            entry.getValue().getProtocol().interrupt();
           }
           entry.getValue().close();
 
@@ -125,7 +123,7 @@ public class OClientConnectionManager {
 
     connection = new OClientConnection(connectionSerial.incrementAndGet(), iProtocol);
 
-    connections.put(connection.id, connection);
+    connections.put(connection.getId(), connection);
     OLogManager.instance().config(this, "Remote client connected from: " + connection);
 
     return connection;
@@ -153,9 +151,9 @@ public class OClientConnectionManager {
       session = new OClientSessions(tokenBytes, token);
       sessions.put(new OHashToken(tokenBytes), session);
     }
-    connection.tokenBytes = tokenBytes;
-    connection.tokenBased = true;
-    connection.token = token;
+    connection.setTokenBytes(tokenBytes);
+    connection.setTokenBased(true);
+    connection.setToken(token);
     session.addConnection(connection);
     OLogManager.instance().config(this, "Remote client connected from: " + connection);
 
@@ -168,7 +166,7 @@ public class OClientConnectionManager {
     final OClientConnection connection;
     connection = new OClientConnection(connectionSerial.incrementAndGet(), iProtocol);
 
-    connections.put(connection.id, connection);
+    connections.put(connection.getId(), connection);
     OHashToken key = new OHashToken(tokenBytes);
     OClientSessions sess;
     synchronized (sessions) {
@@ -179,9 +177,9 @@ public class OClientConnectionManager {
         sessions.put(new OHashToken(tokenBytes), sess);
       }
     }
-    connection.tokenBytes = tokenBytes;
-    connection.tokenBased = true;
-    connection.token = token;
+    connection.setTokenBytes(tokenBytes);
+    connection.setTokenBased(true);
+    connection.setToken(token);
     sess.addConnection(connection);
     return connection;
   }
@@ -197,7 +195,7 @@ public class OClientConnectionManager {
     // SEARCH THE CONNECTION BY ID
     OClientConnection connection = connections.get(iChannelId);
     if (connection != null)
-      connection.protocol = protocol;
+      connection.setProtocol(protocol);
 
     return connection;
   }
@@ -235,7 +233,7 @@ public class OClientConnectionManager {
    */
   public void kill(final OClientConnection connection) {
     if (connection != null) {
-      final ONetworkProtocol protocol = connection.protocol;
+      final ONetworkProtocol protocol = connection.getProtocol();
 
       try {
         // INTERRUPT THE NEWTORK MANAGER TOO
@@ -264,7 +262,7 @@ public class OClientConnectionManager {
   public void interrupt(final int iChannelId) {
     final OClientConnection connection = connections.get(iChannelId);
     if (connection != null) {
-      final ONetworkProtocol protocol = connection.protocol;
+      final ONetworkProtocol protocol = connection.getProtocol();
       if (protocol != null)
         // INTERRUPT THE NEWTORK MANAGER
         protocol.interruptCurrentOperation();
@@ -366,13 +364,13 @@ public class OClientConnectionManager {
         continue;
       }
 
-      if (!(c.protocol instanceof ONetworkProtocolBinary) || c.data.serializationImpl == null)
+      if (!(c.getProtocol() instanceof ONetworkProtocolBinary) || c.getData().serializationImpl == null)
         // INVOLVE ONLY BINARY PROTOCOLS
         continue;
 
-      final ONetworkProtocolBinary p = (ONetworkProtocolBinary) c.protocol;
+      final ONetworkProtocolBinary p = (ONetworkProtocolBinary) c.getProtocol();
       final OChannelBinary channel = (OChannelBinary) p.getChannel();
-      final ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(c.data.serializationImpl);
+      final ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(c.getData().serializationImpl);
       if (ser == null)
         return;
 
@@ -407,11 +405,11 @@ public class OClientConnectionManager {
     while (iterator.hasNext()) {
       final Entry<Integer, OClientConnection> entry = iterator.next();
 
-      final ONetworkProtocol protocol = entry.getValue().protocol;
+      final ONetworkProtocol protocol = entry.getValue().getProtocol();
 
       protocol.sendShutdown();
 
-      OCommandRequestText command = entry.getValue().data.command;
+      OCommandRequestText command = entry.getValue().getData().command;
       if (command != null && command.isIdempotent()) {
         protocol.interrupt();
       } else {
@@ -457,7 +455,7 @@ public class OClientConnectionManager {
   public void killAllChannels() {
     for (Map.Entry<Integer, OClientConnection> entry : connections.entrySet()) {
       try {
-        ONetworkProtocol protocol = entry.getValue().protocol;
+        ONetworkProtocol protocol = entry.getValue().getProtocol();
 
         protocol.getChannel().close();
 

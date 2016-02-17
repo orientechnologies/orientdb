@@ -63,13 +63,13 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
       OCommandResultListener wrappedResultListener) {
     super(wrappedResultListener);
     this.connection = connection;
-    session = connection.protocol.getServer().getClientConnectionManager().getSession(connection);
+    session = connection.getProtocol().getServer().getClientConnectionManager().getSession(connection);
     this.txId = txId;
   }
 
   @Override
   public boolean result(final Object iRecord) {
-    final ONetworkProtocolBinary protocol = ((ONetworkProtocolBinary)connection.protocol);
+    final ONetworkProtocolBinary protocol = ((ONetworkProtocolBinary) connection.getProtocol());
     if (empty.compareAndSet(true, false))
       try {
         protocol.sendOk(txId);
@@ -108,7 +108,7 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
     boolean sendFail = true;
     do {
       List<OClientConnection> connections = session.getConnections();
-      ONetworkProtocolBinary protocol = (ONetworkProtocolBinary) connections.get(0).protocol;
+      ONetworkProtocolBinary protocol = (ONetworkProtocolBinary) connections.get(0).getProtocol();
 
       OChannelBinaryServer channel = (OChannelBinaryServer) protocol.getChannel();
       try {
@@ -139,14 +139,14 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
       } catch (IOException e) {
         connections = session.getConnections();
         if (connections.isEmpty()) {
-          OLiveQueryHook.unsubscribe(iToken, protocol.connection.database);
+          OLiveQueryHook.unsubscribe(iToken, protocol.connection.getDatabase());
           break;
         }
       } catch (Exception e) {
         OLogManager.instance().warn(this, "Cannot push cluster configuration to the client %s", e,
             protocol.connection.getRemoteAddress());
         protocol.getServer().getClientConnectionManager().disconnect(protocol.connection);
-        OLiveQueryHook.unsubscribe(iToken, protocol.connection.database);
+        OLiveQueryHook.unsubscribe(iToken, protocol.connection.getDatabase());
         break;
       }
 
@@ -163,7 +163,7 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
     boolean sendFail = true;
     do {
       List<OClientConnection> connections = session.getConnections();
-      ONetworkProtocolBinary protocol = (ONetworkProtocolBinary) connections.get(0).protocol;
+      ONetworkProtocolBinary protocol = (ONetworkProtocolBinary) connections.get(0).getProtocol();
 
       OChannelBinaryServer channel = (OChannelBinaryServer) protocol.getChannel();
       try {
