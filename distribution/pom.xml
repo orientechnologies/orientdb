@@ -47,12 +47,6 @@
 
         <dependency>
             <groupId>com.orientechnologies</groupId>
-            <artifactId>orientdb-enterprise</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-server</artifactId>
             <version>${project.version}</version>
         </dependency>
