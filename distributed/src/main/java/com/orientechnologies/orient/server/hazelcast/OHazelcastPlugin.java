@@ -913,6 +913,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   }
 
   public boolean installDatabase(boolean iStartup, final String databaseName, final ODocument config) {
+    final ODistributedConfiguration cfg = getDatabaseConfiguration(databaseName);
+
+    ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Current node started as %s for database '%s'",
+        cfg.getServerRole(nodeName), databaseName);
 
     final Boolean hotAlignment = config.field("hotAlignment");
     final boolean backupDatabase = iStartup && hotAlignment != null && !hotAlignment;
@@ -1568,9 +1572,12 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       final String databaseName = storageEntry.getKey();
 
       if (messageService.getDatabase(databaseName) == null) {
-        ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "opening database '%s'...", databaseName);
+        ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Opening database '%s'...", databaseName);
 
         ODistributedConfiguration cfg = getDatabaseConfiguration(databaseName);
+
+        ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Current node started as %s for database '%s'",
+            cfg.getServerRole(nodeName), databaseName);
 
         boolean publishCfg = !getConfigurationMap().containsKey(CONFIG_DATABASE_PREFIX + databaseName);
 
@@ -1850,8 +1857,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
                 if (now - lastLap > 1000) {
                   // DUMP STATS EVERY SECOND
                   ODistributedServerLog.info(this, nodeName, null, DIRECTION.IN,
-                      "- %d total entries: %d created, %d updated, %d deleted, %d holes...",
-                      db.getName(), totalRecords, totalCreated, totalUpdated, totalDeleted, totalHoles);
+                      "- %d total entries: %d created, %d updated, %d deleted, %d holes...", db.getName(), totalRecords,
+                      totalCreated, totalUpdated, totalDeleted, totalHoles);
                   lastLap = now;
                 }
               }

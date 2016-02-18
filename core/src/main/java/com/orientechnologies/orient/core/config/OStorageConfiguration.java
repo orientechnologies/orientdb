@@ -19,21 +19,6 @@
  */
 package com.orientechnologies.orient.core.config;
 
-import java.io.IOException;
-import java.text.DecimalFormatSymbols;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimeZone;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategyFactory;
@@ -48,6 +33,13 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+
+import java.io.IOException;
+import java.text.DecimalFormatSymbols;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Versions:
@@ -103,6 +95,7 @@ public class OStorageConfiguration implements OSerializableStream {
   private volatile String                                 recordSerializer;
   private volatile int                                    recordSerializerVersion;
   private volatile boolean                                strictSQL;
+  private volatile Map<String, Object>                    loadProperties;
   private volatile ConcurrentMap<String, IndexEngineData> indexEngines;
   private volatile transient boolean                      validation                    = true;
   private volatile boolean                                txRequiredForSQLGraphOperations;
@@ -203,7 +196,16 @@ public class OStorageConfiguration implements OSerializableStream {
 
     fromStream(record);
 
+    this.loadProperties = new HashMap<String, Object>(iProperties);
+
     return this;
+  }
+
+  public Map<String, Object> getLoadProperties() {
+    if (loadProperties == null)
+      return Collections.emptyMap();
+
+    return Collections.unmodifiableMap(loadProperties);
   }
 
   public void update() throws OSerializationException {
