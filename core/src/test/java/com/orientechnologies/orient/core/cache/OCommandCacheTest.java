@@ -87,8 +87,8 @@ public class OCommandCacheTest {
 
     try {
 
-      File commandCacheCfg = new File(buildDirectory + File.separator + OCommandCacheTest.class.getSimpleName()
-          + "/command-cache.json");
+      File commandCacheCfg = new File(
+          buildDirectory + File.separator + OCommandCacheTest.class.getSimpleName() + "/command-cache.json");
       final String configurationContent = OIOUtils.readFileAsString(commandCacheCfg);
       ODocument cfg = new ODocument().fromJSON(configurationContent);
 
@@ -97,10 +97,10 @@ public class OCommandCacheTest {
       OCommandCache.STRATEGY evictStrategy = OCommandCache.STRATEGY.valueOf(evict);
       int minExecutionTime = cfg.field("minExecutionTime");
       int maxResultsetSize = cfg.field("maxResultsetSize");
-      Assert.assertEquals(OGlobalConfiguration.COMMAND_CACHE_ENABLED.getValue(), enabled);
-      Assert.assertEquals(OGlobalConfiguration.COMMAND_CACHE_EVICT_STRATEGY.getValue().toString(), evictStrategy.toString());
-      Assert.assertEquals(OGlobalConfiguration.COMMAND_CACHE_MIN_EXECUTION_TIME.getValue(), minExecutionTime);
-      Assert.assertEquals(OGlobalConfiguration.COMMAND_CACHE_MAX_RESULSET_SIZE.getValue(), maxResultsetSize);
+      Assert.assertEquals(enabled, OGlobalConfiguration.COMMAND_CACHE_ENABLED.getValue());
+      Assert.assertEquals(evictStrategy.toString(), OGlobalConfiguration.COMMAND_CACHE_EVICT_STRATEGY.getValue().toString());
+      Assert.assertEquals(minExecutionTime, OGlobalConfiguration.COMMAND_CACHE_MIN_EXECUTION_TIME.getValue());
+      Assert.assertEquals(maxResultsetSize, OGlobalConfiguration.COMMAND_CACHE_MAX_RESULSET_SIZE.getValue());
 
     } catch (IOException e) {
       Assert.fail("Cannot find file configuration", e);
@@ -108,5 +108,8 @@ public class OCommandCacheTest {
       db.drop();
     }
 
+    File f = new File(buildDirectory + File.separator + OCommandCacheTest.class.getSimpleName());
+
+    Assert.assertEquals(f.exists(), false);
   }
 }
