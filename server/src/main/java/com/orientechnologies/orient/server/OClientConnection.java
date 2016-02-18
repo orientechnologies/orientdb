@@ -41,18 +41,18 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class OClientConnection {
-  private final    int                      id;
-  private final    long                     since;
-  private Set<ONetworkProtocol>             protocols = Collections.newSetFromMap(new WeakHashMap<ONetworkProtocol, Boolean>());
+  private final int  id;
+  private final long since;
+  private Set<ONetworkProtocol> protocols = Collections.newSetFromMap(new WeakHashMap<ONetworkProtocol, Boolean>());
   private volatile ONetworkProtocol         protocol;
   private volatile ODatabaseDocumentTx      database;
   private volatile OServerUserConfiguration serverUser;
-  private ONetworkProtocolData              data = new ONetworkProtocolData();
-  private OClientConnectionStats            stats = new OClientConnectionStats();
-  private Lock                              lock = new ReentrantLock();
-  private Boolean                           tokenBased;
-  private byte[]                            tokenBytes;
-  private OToken                            token;
+  private ONetworkProtocolData   data  = new ONetworkProtocolData();
+  private OClientConnectionStats stats = new OClientConnectionStats();
+  private Lock                   lock  = new ReentrantLock();
+  private Boolean tokenBased;
+  private byte[]  tokenBytes;
+  private OToken  token;
 
   public OClientConnection(final int id, final ONetworkProtocol protocol) throws IOException {
     this.id = id;
@@ -139,7 +139,7 @@ public class OClientConnection {
 
   public void validateSession(byte[] tokenFromNetwork, OTokenHandler handler, ONetworkProtocolBinary protocol) {
     if (tokenFromNetwork == null || tokenFromNetwork.length == 0) {
-      if(!protocols.contains(protocol))
+      if (!protocols.contains(protocol))
         throw new OTokenSecurityException("No valid session found, provide a token");
     } else {
       // Active This Optimization but it need a periodic check on session
@@ -279,4 +279,20 @@ public class OClientConnection {
     return stats;
   }
 
+  public void statsUpdate() {
+
+    if (database != null) {
+      database.activateOnCurrentThread();
+      stats.lastDatabase = database.getName();
+      stats.lastUser = database.getUser() != null ? database.getUser().getName() : null;
+    } else {
+      stats.lastDatabase = null;
+      stats.lastUser = null;
+    }
+
+    ++stats.totalRequests;
+    data.commandInfo = "Listening";
+    data.commandDetail = "-";
+    stats.lastCommandReceived = System.currentTimeMillis();
+  }
 }

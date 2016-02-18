@@ -164,19 +164,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     solveSession();
 
     if (connection != null) {
-      if (connection.getDatabase() != null) {
-        connection.getDatabase().activateOnCurrentThread();
-        connection.getStats().lastDatabase = connection.getDatabase().getName();
-        connection.getStats().lastUser = connection.getDatabase().getUser() != null ? connection.getDatabase().getUser().getName() : null;
-      } else {
-        connection.getStats().lastDatabase = null;
-        connection.getStats().lastUser = null;
-      }
-
-      ++connection.getStats().totalRequests;
-      setDataCommandInfo("Listening");
-      connection.getData().commandDetail = "-";
-      connection.getStats().lastCommandReceived = System.currentTimeMillis();
+      connection.statsUpdate();
     } else {
       ODatabaseRecordThreadLocal.INSTANCE.remove();
       if (requestType != OChannelBinaryProtocol.REQUEST_DB_CLOSE && requestType != OChannelBinaryProtocol.REQUEST_SHUTDOWN) {
@@ -208,17 +196,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     if (noToken) {
       if (clientTxId < 0) {
-        short protocolId = 0;
-
-        if (connection != null)
-          protocolId = connection.getData().protocolVersion;
-
         connection = server.getClientConnectionManager().connect(this);
-
-        if (connection != null) {
-          connection.getData().protocolVersion = protocolId;
-          connection.getData().sessionId = clientTxId;
-        }
+        connection.getData().sessionId = clientTxId;
       }
       if (connection != null) {
         //This should not be needed
