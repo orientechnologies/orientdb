@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.storage.impl.local.statistic;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OReadCacheException;
 import com.orientechnologies.orient.core.storage.OIdentifiableStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -203,8 +204,14 @@ public class OStoragePerformanceStatistic implements OStoragePerformanceStatisti
         final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
         final ObjectName beanName = new ObjectName(mbeanName);
 
-        if (!server.isRegistered(beanName))
+        if (!server.isRegistered(beanName)) {
           server.registerMBean(this, beanName);
+        } else {
+          mbeanIsRegistered.set(false);
+          OLogManager.instance().warn(this, "MBean with name %s has already registered. Probably your system was not shutdown correctly"
+              + " or you have several running applications which use OrientDB engine inside",
+              beanName.getCanonicalName());
+        }
 
       } catch (MalformedObjectNameException e) {
         throw OException.wrapException(new OReadCacheException("Error during registration of read cache MBean"), e);

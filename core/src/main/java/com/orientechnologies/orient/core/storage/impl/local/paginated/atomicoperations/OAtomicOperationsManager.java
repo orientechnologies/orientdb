@@ -222,7 +222,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   /**
    * Switch off unsafe mode. During this mode it is not guaranteed that operations will support
    * ACID properties but system performance will be faster.
-   *
+   * <p>
    * To switch off unsafe mode call {@link #switchOffUnsafeMode()}
    */
   public void switchOnUnsafeMode() {
@@ -457,8 +457,15 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       try {
         final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
         final ObjectName mbeanName = new ObjectName(getMBeanName());
-        if (!server.isRegistered(mbeanName))
+
+        if (!server.isRegistered(mbeanName)) {
           server.registerMBean(this, mbeanName);
+        } else {
+          mbeanIsRegistered.set(false);
+          OLogManager.instance().warn(this, "MBean with name %s has already registered. Probably your system was not shutdown correctly "
+              + "or you have several running applications which use OrientDB engine inside",
+              mbeanName.getCanonicalName());
+        }
 
       } catch (MalformedObjectNameException e) {
         throw OException.wrapException(new OStorageException("Error during registration of atomic manager MBean"), e);

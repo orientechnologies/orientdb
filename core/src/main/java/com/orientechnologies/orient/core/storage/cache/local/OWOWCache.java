@@ -1032,7 +1032,15 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       try {
         final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
         final ObjectName mbeanName = new ObjectName(getMBeanName());
-        server.registerMBean(this, mbeanName);
+        if (!server.isRegistered(mbeanName)) {
+          server.registerMBean(this, mbeanName);
+        } else {
+          mbeanIsRegistered.set(false);
+          OLogManager.instance().warn(this,
+              "MBean with name %s has already registered. Probably your system was not shutdown correctly"
+                  + " or you have several running applications which use OrientDB engine inside", mbeanName.getCanonicalName());
+        }
+
       } catch (MalformedObjectNameException e) {
         throw OException.wrapException(new OStorageException("Error during registration of write cache MBean"), e);
       } catch (InstanceAlreadyExistsException e) {

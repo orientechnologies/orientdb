@@ -910,7 +910,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     final String path = channel.readString();
 
-    connection.database.incrementalBackup(path);
+    connection.database.incrementalRestore(path);
 
     beginResponse();
     try {

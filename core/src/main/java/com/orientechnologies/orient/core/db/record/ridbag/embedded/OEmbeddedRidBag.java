@@ -33,32 +33,23 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.NoSuchElementException;
-import java.util.Set;
-import java.util.UUID;
-import java.util.WeakHashMap;
+import java.util.*;
 
 public class OEmbeddedRidBag implements ORidBagDelegate {
-  private byte[]                                                       serializedContent = null;
+  private byte[]                                                        serializedContent = null;
 
-  private boolean                                                      contentWasChanged = false;
-  private boolean                                                      deserialized      = true;
+  private boolean                                                       contentWasChanged = false;
+  private boolean                                                       deserialized      = true;
 
-  private Object[]                                                     entries           = OCommonConst.EMPTY_OBJECT_ARRAY;
-  private int                                                          entriesLength     = 0;
+  private Object[]                                                      entries           = OCommonConst.EMPTY_OBJECT_ARRAY;
+  private int                                                           entriesLength     = 0;
 
-  private boolean                                                      convertToRecord   = true;
-  private int                                                          size              = 0;
+  private boolean                                                       convertToRecord   = true;
+  private int                                                           size              = 0;
 
-  private transient ORecord                                            owner;
+  private transient ORecord                                             owner;
 
-  private Set<OMultiValueChangeListener<OIdentifiable, OIdentifiable>> changeListeners   = Collections
-                                                                                             .newSetFromMap(new WeakHashMap<OMultiValueChangeListener<OIdentifiable, OIdentifiable>, Boolean>());
+  private List<OMultiValueChangeListener<OIdentifiable, OIdentifiable>> changeListeners;
 
   private static enum Tombstone {
     TOMBSTONE
@@ -115,9 +106,8 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       if (OEmbeddedRidBag.this.owner != null)
         ORecordInternal.unTrack(OEmbeddedRidBag.this.owner, nextValue);
 
-      if (!changeListeners.isEmpty())
-        fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
-            OMultiValueChangeEvent.OChangeType.REMOVE, nextValue, null, nextValue));
+      fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
+          OMultiValueChangeEvent.OChangeType.REMOVE, nextValue, null, nextValue));
     }
 
     @Override
@@ -204,9 +194,8 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
     size++;
     contentWasChanged = true;
 
-    if (!changeListeners.isEmpty())
-      fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD,
-          identifiable, identifiable));
+    fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD,
+        identifiable, identifiable));
   }
 
   public OEmbeddedRidBag copy() {
@@ -219,7 +208,9 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
     copy.convertToRecord = convertToRecord;
     copy.size = size;
     copy.owner = owner;
-    copy.changeListeners.addAll(changeListeners);
+    if (changeListeners != null) {
+      copy.changeListeners = new LinkedList<OMultiValueChangeListener<OIdentifiable, OIdentifiable>>(changeListeners);
+    }
     return copy;
   }
 
@@ -234,9 +225,8 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       if (this.owner != null)
         ORecordInternal.unTrack(this.owner, identifiable);
 
-      if (!changeListeners.isEmpty())
-        fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
-            OMultiValueChangeEvent.OChangeType.REMOVE, identifiable, null, identifiable));
+      fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
+          OMultiValueChangeEvent.OChangeType.REMOVE, identifiable, null, identifiable));
     }
   }
 
@@ -346,11 +336,14 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
   }
 
   public void addChangeListener(final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener) {
+    if(changeListeners == null)
+      changeListeners = new LinkedList<OMultiValueChangeListener<OIdentifiable, OIdentifiable>>();
     changeListeners.add(changeListener);
   }
 
   public void removeRecordChangeListener(final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener) {
-    changeListeners.remove(changeListener);
+    if (changeListeners != null)
+      changeListeners.remove(changeListener);
   }
 
   @Override
@@ -455,14 +448,18 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
   }
 
   @Override
-  public Set<OMultiValueChangeListener<OIdentifiable, OIdentifiable>> getChangeListeners() {
-    return Collections.unmodifiableSet(changeListeners);
+  public List<OMultiValueChangeListener<OIdentifiable, OIdentifiable>> getChangeListeners() {
+    if(changeListeners == null)
+      return Collections.emptyList();
+    return Collections.unmodifiableList(changeListeners);
   }
 
   protected void fireCollectionChangedEvent(final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> event) {
-    for (final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener : changeListeners) {
-      if (changeListener != null)
-        changeListener.onAfterRecordChanged(event);
+    if (changeListeners != null) {
+      for (final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener : changeListeners) {
+        if (changeListener != null)
+          changeListener.onAfterRecordChanged(event);
+      }
     }
   }
 

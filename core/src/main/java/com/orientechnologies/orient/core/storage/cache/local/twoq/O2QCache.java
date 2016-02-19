@@ -34,6 +34,7 @@ import java.util.concurrent.locks.Lock;
 
 import javax.management.*;
 
+import com.orientechnologies.common.concur.lock.ODistributedCounter;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.ONewLockManager;
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
@@ -57,33 +58,48 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
   /**
    * Maximum percent of pinned pages which may be contained in this cache.
    */
-  public static final int                              MAX_PERCENT_OF_PINED_PAGES     = 50;
+  public static final int                              MAX_PERCENT_OF_PINED_PAGES          = 50;
 
   /**
    * Minimum size of memory which may be allocated by cache (in pages). This parameter is used only if related flag is set in
    * constrictor of cache.
    */
-  public static final int                              MIN_CACHE_SIZE                 = 256;
+  public static final int                              MIN_CACHE_SIZE                      = 256;
 
-  private static final int                             MAX_CACHE_OVERFLOW             = Runtime.getRuntime().availableProcessors()
-      * 8;
+  /**
+   * Maximum amount of times when we will show message that limit of pinned pages was exhausted.
+   */
+  private static final int                             MAX_AMOUNT_OF_WARNINGS_PINNED_PAGES = 10;
+
+  private static final int                             MAX_CACHE_OVERFLOW                  = Runtime.getRuntime()
+      .availableProcessors() * 8;
 
   /**
    * File which contains stored state of disk cache after storage close.
    */
-  public static final String                           CACHE_STATE_FILE               = "cache.stt";
+  public static final String                           CACHE_STATE_FILE                    = "cache.stt";
 
   /**
    * Extension for file which contains stored state of disk cache after storage close.
    */
-  public static final String                           CACHE_STATISTIC_FILE_EXTENSION = ".stt";
+  public static final String                           CACHE_STATISTIC_FILE_EXTENSION      = ".stt";
 
   private final LRUList                                am;
   private final LRUList                                a1out;
   private final LRUList                                a1in;
   private final int                                    pageSize;
 
-  private final AtomicReference<MemoryData>            memoryDataContainer            = new AtomicReference<MemoryData>();
+  /**
+   * Counts how much time we warned user that limit of amount of pinned pages is reached.
+   */
+  private final ODistributedCounter                    pinnedPagesWarningCounter           = new ODistributedCounter();
+
+  /**
+   * Cache of value which is contained inside of {@link #pinnedPagesWarningCounter}. It is used to speed up calculation of warnings.
+   */
+  private volatile int                                 pinnedPagesWarningsCache            = 0;
+
+  private final AtomicReference<MemoryData>            memoryDataContainer                 = new AtomicReference<MemoryData>();
 
   /**
    * Contains all pages in cache for given file.
@@ -97,15 +113,15 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
    */
   private final int                                    percentOfPinnedPages;
 
-  private final OReadersWriterSpinLock                 cacheLock                      = new OReadersWriterSpinLock();
-  private final ONewLockManager                        fileLockManager                = new ONewLockManager(true);
-  private final ONewLockManager<PageKey>               pageLockManager                = new ONewLockManager<PageKey>();
-  private final ConcurrentMap<PinnedPage, OCacheEntry> pinnedPages                    = new ConcurrentHashMap<PinnedPage, OCacheEntry>();
+  private final OReadersWriterSpinLock                 cacheLock                           = new OReadersWriterSpinLock();
+  private final ONewLockManager                        fileLockManager                     = new ONewLockManager(true);
+  private final ONewLockManager<PageKey>               pageLockManager                     = new ONewLockManager<PageKey>();
+  private final ConcurrentMap<PinnedPage, OCacheEntry> pinnedPages                         = new ConcurrentHashMap<PinnedPage, OCacheEntry>();
 
-  private final AtomicBoolean                          coldPagesRemovalInProgress     = new AtomicBoolean();
+  private final AtomicBoolean                          coldPagesRemovalInProgress          = new AtomicBoolean();
 
-  private final AtomicBoolean                          mbeanIsRegistered              = new AtomicBoolean();
-  public static final String                           MBEAN_NAME                     = "com.orientechnologies.orient.core.storage.cache.local:type=O2QCacheMXBean";
+  private final AtomicBoolean                          mbeanIsRegistered                   = new AtomicBoolean();
+  public static final String                           MBEAN_NAME                          = "com.orientechnologies.orient.core.storage.cache.local:type=O2QCacheMXBean";
 
   /**
    * @param readCacheMaxMemory
@@ -270,10 +286,19 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
     MemoryData memoryData = memoryDataContainer.get();
 
     if ((100 * (memoryData.pinnedPages + 1)) / memoryData.maxSize > percentOfPinnedPages) {
-      OLogManager.instance().warn(this,
-          "Maximum amount of pinned pages is reached , given page " + cacheEntry
-              + " will not be marked as pinned which may lead to performance degradation. You may consider to increase percent of pined pages "
-              + "by changing of property " + OGlobalConfiguration.DISK_CACHE_PINNED_PAGES.getKey());
+      if (pinnedPagesWarningsCache < MAX_PERCENT_OF_PINED_PAGES) {
+        pinnedPagesWarningCounter.increment();
+
+        final long warnings = pinnedPagesWarningCounter.get();
+        if (warnings < MAX_PERCENT_OF_PINED_PAGES) {
+          pinnedPagesWarningsCache = (int) warnings;
+
+          OLogManager.instance().warn(this,
+              "Maximum amount of pinned pages is reached , given page " + cacheEntry
+                  + " will not be marked as pinned which may lead to performance degradation. You may consider to increase percent of pined pages "
+                  + "by changing of property " + OGlobalConfiguration.DISK_CACHE_PINNED_PAGES.getKey());
+        }
+      }
 
       return;
     }
@@ -1049,7 +1074,17 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
       try {
         final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
         final ObjectName mbeanName = new ObjectName(MBEAN_NAME);
-        server.registerMBean(this, mbeanName);
+
+        if (!server.isRegistered(mbeanName)) {
+          server.registerMBean(this, mbeanName);
+        } else {
+          mbeanIsRegistered.set(false);
+          OLogManager.instance().warn(this,
+              "MBean with name %s has already registered. Probably your system was not shutdown correctly"
+                  + " or you have several running applications which use OrientDB engine inside",
+              mbeanName.getCanonicalName());
+        }
+
       } catch (MalformedObjectNameException e) {
         throw OException.wrapException(new OReadCacheException("Error during registration of read cache MBean"), e);
       } catch (InstanceAlreadyExistsException e) {

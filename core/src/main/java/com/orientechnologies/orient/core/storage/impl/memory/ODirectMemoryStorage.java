@@ -52,16 +52,6 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
-  protected OLogSequenceNumber copyWALToIncrementalBackup(ZipOutputStream zipOutputStream, long startSegment) throws IOException {
-    return null;
-  }
-
-  @Override
-  protected boolean isWriteAllowedDuringIncrementalBackup() {
-    return false;
-  }
-
-  @Override
   protected void initWalAndDiskCache() throws IOException {
     if (configuration.getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.USE_WAL)) {
       if (writeAheadLog == null)
@@ -109,6 +99,16 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
   public void restore(InputStream in, Map<String, Object> options, Callable<Object> callable, OCommandOutputListener iListener)
       throws IOException {
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  protected OLogSequenceNumber copyWALToIncrementalBackup(ZipOutputStream zipOutputStream, long startSegment) throws IOException {
+    return null;
+  }
+
+  @Override
+  protected boolean isWriteAllowedDuringIncrementalBackup() {
+    return false;
   }
 
   @Override

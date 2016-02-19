@@ -21,7 +21,7 @@
 package com.orientechnologies.orient.core.db.record.ridbag;
 
 import java.util.Collection;
-import java.util.Set;
+import java.util.List;
 import java.util.UUID;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -78,5 +78,5 @@ public interface ORidBagDelegate extends Iterable<OIdentifiable>, ORecordLazyMul
 
   public String toString();
 
-  public Set<OMultiValueChangeListener<OIdentifiable, OIdentifiable>> getChangeListeners();
+  public List<OMultiValueChangeListener<OIdentifiable, OIdentifiable>> getChangeListeners();
 }

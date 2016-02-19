@@ -189,6 +189,22 @@ public class OCommandExecutorSQLSelectTest {
     initLinkListSequence(db);
     initMaxLongNumber(db);
     initFilterAndOrderByTest(db);
+    initComplexFilterInSquareBrackets(db);
+  }
+
+  private void initComplexFilterInSquareBrackets(ODatabaseDocumentTx db) {
+    db.command(new OCommandSQL("CREATE CLASS ComplexFilterInSquareBrackets1")).execute();
+    db.command(new OCommandSQL("CREATE CLASS ComplexFilterInSquareBrackets2")).execute();
+    db.command(new OCommandSQL("INSERT INTO ComplexFilterInSquareBrackets1 SET name = 'n1', value = 1")).execute();
+    db.command(new OCommandSQL("INSERT INTO ComplexFilterInSquareBrackets1 SET name = 'n2', value = 2")).execute();
+    db.command(new OCommandSQL("INSERT INTO ComplexFilterInSquareBrackets1 SET name = 'n3', value = 3")).execute();
+    db.command(new OCommandSQL("INSERT INTO ComplexFilterInSquareBrackets1 SET name = 'n4', value = 4")).execute();
+    db.command(new OCommandSQL("INSERT INTO ComplexFilterInSquareBrackets1 SET name = 'n5', value = 5")).execute();
+    db.command(new OCommandSQL("INSERT INTO ComplexFilterInSquareBrackets1 SET name = 'n6', value = -1")).execute();
+    db.command(new OCommandSQL("INSERT INTO ComplexFilterInSquareBrackets1 SET name = 'n7', value = null")).execute();
+    db.command(
+        new OCommandSQL("INSERT INTO ComplexFilterInSquareBrackets2 SET collection = (select from ComplexFilterInSquareBrackets1)"))
+        .execute();
   }
 
   private void initFilterAndOrderByTest(ODatabaseDocumentTx db) {
@@ -1121,7 +1137,8 @@ public class OCommandExecutorSQLSelectTest {
     assertEquals(results.size(), 0);
   }
 
-  public void testFilterAndOrderBy(){
+  @Test
+  public void testFilterAndOrderBy() {
     //issue http://www.prjhub.com/#/issues/6199
 
     OSQLSynchQuery sql = new OSQLSynchQuery("SELECT FROM FilterAndOrderByTest WHERE active = true ORDER BY dc DESC");
@@ -1143,6 +1160,52 @@ public class OCommandExecutorSQLSelectTest {
     assertEquals(cal.get(Calendar.YEAR), 2009);
 
   }
+
+  @Test
+  public void testComplexFilterInSquareBrackets() {
+    //issues #513 #5451
+
+    OSQLSynchQuery sql = new OSQLSynchQuery("SELECT expand(collection[name = 'n1']) FROM ComplexFilterInSquareBrackets2");
+    List<ODocument> results = db.query(sql);
+    assertEquals(results.size(), 1);
+    assertEquals(results.iterator().next().field("name"), "n1");
+
+    sql = new OSQLSynchQuery("SELECT expand(collection[name = 'n1' and value = 1]) FROM ComplexFilterInSquareBrackets2");
+    results = db.query(sql);
+    assertEquals(results.size(), 1);
+    assertEquals(results.iterator().next().field("name"), "n1");
+
+    sql = new OSQLSynchQuery("SELECT expand(collection[name = 'n1' and value > 1]) FROM ComplexFilterInSquareBrackets2");
+    results = db.query(sql);
+    assertEquals(results.size(), 0);
+
+    sql = new OSQLSynchQuery("SELECT expand(collection[name = 'n1' or value = -1]) FROM ComplexFilterInSquareBrackets2");
+    results = db.query(sql);
+    assertEquals(results.size(), 2);
+    for (ODocument doc : results) {
+      assertTrue(doc.field("name").equals("n1") || doc.field("value").equals(-1));
+    }
+
+    sql = new OSQLSynchQuery("SELECT expand(collection[name = 'n1' and not value = 1]) FROM ComplexFilterInSquareBrackets2");
+    results = db.query(sql);
+    assertEquals(results.size(), 0);
+
+    sql = new OSQLSynchQuery("SELECT expand(collection[value < 0]) FROM ComplexFilterInSquareBrackets2");
+    results = db.query(sql);
+    assertEquals(results.size(), 1);
+    assertEquals(results.iterator().next().field("value"), -1);
+
+    sql = new OSQLSynchQuery("SELECT expand(collection[2]) FROM ComplexFilterInSquareBrackets2");
+    results = db.query(sql);
+    assertEquals(results.size(), 1);
+
+    sql = new OSQLSynchQuery("SELECT expand(collection[1-3]) FROM ComplexFilterInSquareBrackets2");
+    results = db.query(sql);
+    assertEquals(results.size(), 3);
+
+
+  }
+
   private long indexUsages(ODatabaseDocumentTx db) {
     final long oldIndexUsage;
     try {

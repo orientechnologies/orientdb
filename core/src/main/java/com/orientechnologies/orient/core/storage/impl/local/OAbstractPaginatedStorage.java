@@ -130,7 +130,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   private volatile boolean                          checkpointRequest                          = false;
 
   private final int                                 id;
-  private final AtomicBoolean                       backupInProgress                           = new AtomicBoolean(false);
 
   private Map<String, OIndexEngine>                 indexEngineNameMap                         = new HashMap<String, OIndexEngine>();
   private List<OIndexEngine>                        indexEngines                               = new ArrayList<OIndexEngine>();
@@ -1255,6 +1254,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     final ODatabaseDocumentInternal databaseRecord = (ODatabaseDocumentInternal) clientTx.getDatabase();
     ((OMetadataInternal) databaseRecord.getMetadata()).makeThreadLocalSchemaSnapshot();
+    final Iterable<ORecordOperation> entries = (Iterable<ORecordOperation>) clientTx.getAllRecordEntries();
+
+    for (ORecordOperation txEntry : entries) {
+      if (txEntry.type == ORecordOperation.CREATED || txEntry.type == ORecordOperation.UPDATED) {
+        final ORecord record = txEntry.getRecord();
+        if (record instanceof ODocument)
+          ((ODocument) record).validate();
+      }
+    }
 
     stateLock.acquireReadLock();
     try {
@@ -1270,15 +1278,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           makeStorageDirty();
           startStorageTx(clientTx);
 
-          final Iterable<ORecordOperation> entries = (Iterable<ORecordOperation>) clientTx.getAllRecordEntries();
-
-          for (ORecordOperation txEntry : entries) {
-            if (txEntry.type == ORecordOperation.CREATED || txEntry.type == ORecordOperation.UPDATED) {
-              final ORecord record = txEntry.getRecord();
-              if (record instanceof ODocument)
-                ((ODocument) record).validate();
-            }
-          }
           Map<ORecordOperation, OPhysicalPosition> positions = new IdentityHashMap<ORecordOperation, OPhysicalPosition>();
           for (ORecordOperation txEntry : entries) {
             ORecord rec = txEntry.getRecord();

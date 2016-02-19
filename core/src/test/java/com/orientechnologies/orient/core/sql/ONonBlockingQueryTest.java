@@ -12,10 +12,10 @@ import org.testng.annotations.Test;
 @Test
 public class ONonBlockingQueryTest {
 
-  static class MyResultListener implements OCommandResultListener{
+  static class MyResultListener implements OCommandResultListener {
 
-    public int numResults = 0;
-    public boolean finished = false;
+    public int     numResults = 0;
+    public boolean finished   = false;
 
     @Override public boolean result(Object iRecord) {
       numResults++;
@@ -40,11 +40,9 @@ public class ONonBlockingQueryTest {
     db.activateOnCurrentThread();
     db.create();
 
+    db.getMetadata().getSchema().createClass("test");
+    MyResultListener listener = new MyResultListener();
     try {
-      db.getMetadata().getSchema().createClass("test");
-      MyResultListener listener = new MyResultListener();
-
-
       db.command(new OCommandSQL("insert into test set name = 'foo', surname = 'bar'")).execute();
 
       db.query(new OSQLNonBlockingQuery<Object>("select from test bla blu", listener));
@@ -58,16 +56,16 @@ public class ONonBlockingQueryTest {
       listener = new MyResultListener();
       db.query(new OSQLNonBlockingQuery<Object>("select from test", listener));
 
-      try {
-        Thread.sleep(3000);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-      Assert.assertEquals(listener.numResults, 1);
-
     } finally {
-      db.drop();
+      db.close();
     }
+    try {
+      Thread.sleep(3000);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+    Assert.assertEquals(listener.numResults, 1);
+
   }
 
 }

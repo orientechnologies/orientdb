@@ -211,6 +211,50 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
   }
 
   @Override
+  protected OLogSequenceNumber copyWALToIncrementalBackup(ZipOutputStream zipOutputStream, long startSegment) throws IOException {
+
+    File[] nonActiveSegments;
+
+    OLogSequenceNumber lastLSN;
+    long freezeId = getAtomicOperationsManager().freezeAtomicOperations(null, null);
+    try {
+      lastLSN = writeAheadLog.end();
+      writeAheadLog.newSegment();
+      nonActiveSegments = writeAheadLog.nonActiveSegments(startSegment);
+    } finally {
+      getAtomicOperationsManager().releaseAtomicOperations(freezeId);
+    }
+
+    for (final File nonActiveSegment : nonActiveSegments) {
+      final FileInputStream fileInputStream = new FileInputStream(nonActiveSegment);
+      try {
+        final BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
+        try {
+          final ZipEntry entry = new ZipEntry(nonActiveSegment.getName());
+          zipOutputStream.putNextEntry(entry);
+          try {
+            final byte[] buffer = new byte[4096];
+
+            int br = 0;
+
+            while ((br = bufferedInputStream.read(buffer)) >= 0) {
+              zipOutputStream.write(buffer, 0, br);
+            }
+          } finally {
+            zipOutputStream.closeEntry();
+          }
+        } finally {
+          bufferedInputStream.close();
+        }
+      } finally {
+        fileInputStream.close();
+      }
+    }
+
+    return lastLSN;
+  }
+
+  @Override
   protected File createWalTempDirectory() {
     final File walDirectory = new File(getStoragePath(), "walIncrementalBackupRestoreDirectory");
 
@@ -254,50 +298,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
     } finally {
       outputStream.close();
     }
-  }
-
-  @Override
-  protected OLogSequenceNumber copyWALToIncrementalBackup(ZipOutputStream zipOutputStream, long startSegment) throws IOException {
-
-    File[] nonActiveSegments;
-
-    OLogSequenceNumber lastLSN;
-    long freezeId = getAtomicOperationsManager().freezeAtomicOperations(null, null);
-    try {
-      lastLSN = writeAheadLog.end();
-      writeAheadLog.newSegment();
-      nonActiveSegments = writeAheadLog.nonActiveSegments(startSegment);
-    } finally {
-      getAtomicOperationsManager().releaseAtomicOperations(freezeId);
-    }
-
-    for (final File nonActiveSegment : nonActiveSegments) {
-      final FileInputStream fileInputStream = new FileInputStream(nonActiveSegment);
-      try {
-        final BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
-        try {
-          final ZipEntry entry = new ZipEntry(nonActiveSegment.getName());
-          zipOutputStream.putNextEntry(entry);
-          try {
-            final byte[] buffer = new byte[4096];
-
-            int br = 0;
-
-            while ((br = bufferedInputStream.read(buffer)) >= 0) {
-              zipOutputStream.write(buffer, 0, br);
-            }
-          } finally {
-            zipOutputStream.closeEntry();
-          }
-        } finally {
-          bufferedInputStream.close();
-        }
-      } finally {
-        fileInputStream.close();
-      }
-    }
-
-    return lastLSN;
   }
 
   @Override

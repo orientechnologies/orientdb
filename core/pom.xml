@@ -41,7 +41,8 @@
             *
         </osgi.import>
         <osgi.export>com.orientechnologies.orient.core.*,
-            com.orientechnologies.common.*,com.orientechnologies.nio.*
+            com.orientechnologies.common.*,com.orientechnologies.nio.*,
+            com.orientechnologies.orient.enterprise.*
         </osgi.export>
         <jna.version>4.0.0</jna.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
