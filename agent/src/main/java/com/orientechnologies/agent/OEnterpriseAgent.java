@@ -17,7 +17,6 @@
  */
 package com.orientechnologies.agent;
 
-
 import com.orientechnologies.agent.hook.OAuditingHook;
 import com.orientechnologies.agent.http.command.*;
 import com.orientechnologies.agent.plugins.OEventPlugin;
@@ -44,6 +43,7 @@ import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 
 import java.util.Map;
+import java.util.UUID;
 
 public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabaseLifecycleListener {
   public static final String  EE                         = "ee.";
@@ -52,6 +52,18 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
   private String              license;
   private boolean             enabled                    = false;
   public OAuditingListener    auditingListener;
+  public static final String  TOKEN;
+
+  static {
+    String t = null;
+    try {
+      t = OL.encrypt(UUID.randomUUID().toString());
+
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    TOKEN = t;
+  }
 
   public OEnterpriseAgent() {
   }
@@ -101,14 +113,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
               continue;
             } else {
               Map<String, Object> map = manager.getConfigurationMap();
-              String pwd = OServerMain.server().getUser("root").password;
-              try {
-                String enc = OL.encrypt(pwd);
-                map.put(EE + manager.getLocalNodeName(), enc);
-              } catch (Exception e) {
-                e.printStackTrace();
-              }
-
+              map.put(EE + manager.getLocalNodeName(), TOKEN);
               break;
             }
 
@@ -129,8 +134,8 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
 
     eventPlugin.config(server, null);
     eventPlugin.startup();
-    server.getPluginManager().registerPlugin(
-        new OServerPluginInfo(eventPlugin.getName(), null, null, null, eventPlugin, null, 0, null));
+    server.getPluginManager()
+        .registerPlugin(new OServerPluginInfo(eventPlugin.getName(), null, null, null, eventPlugin, null, 0, null));
   }
 
   @Override
@@ -206,7 +211,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
 
     OEngine plocal = Orient.instance().getEngine("plocal");
 
-
     if (profiler instanceof OEnterpriseProfiler) {
       iConfiguration.field("cpu", ((OEnterpriseProfiler) profiler).cpuUsage());
     }
@@ -269,17 +273,14 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
     System.out.printf("\n*                 ORIENTDB  -  ENTERPRISE EDITION                  *");
     System.out.printf("\n*                                                                  *");
     System.out.printf("\n********************************************************************");
-    Orient
-        .instance()
-        .getProfiler()
-        .registerHookValue(Orient.instance().getProfiler().getSystemMetric("config.agentVersion"), "Enterprise License",
-            OProfiler.METRIC_TYPE.TEXT, new OProfilerHookValue() {
+    Orient.instance().getProfiler().registerHookValue(Orient.instance().getProfiler().getSystemMetric("config.agentVersion"),
+        "Enterprise License", OProfiler.METRIC_TYPE.TEXT, new OProfilerHookValue() {
 
-              @Override
-              public Object getValue() {
-                return ORIENDB_ENTERPRISE_VERSION;
-              }
-            });
+          @Override
+          public Object getValue() {
+            return ORIENDB_ENTERPRISE_VERSION;
+          }
+        });
 
     return true;
   }

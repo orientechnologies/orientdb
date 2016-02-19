@@ -12,7 +12,6 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
-import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
 
 import java.io.IOException;
 import java.util.List;
@@ -20,7 +19,7 @@ import java.util.List;
 /**
  * Created by Enrico Risa on 16/11/15.
  */
-public abstract class OServerCommandDistributedScope extends OServerCommandAuthenticatedServerAbstract {
+public abstract class OServerCommandDistributedScope extends OServerCommandDistributedAuthenticated {
 
   HttpProxy proxy = new HttpProxy();
 
@@ -29,16 +28,6 @@ public abstract class OServerCommandDistributedScope extends OServerCommandAuthe
 
   }
 
-  boolean isLocalNode(OHttpRequest iRequest) {
-
-    ODistributedServerManager distributedManager = server.getDistributedManager();
-    String node = iRequest.getParameter("node");
-
-    if (node == null || distributedManager == null) {
-      return true;
-    }
-    return distributedManager.getLocalNodeName().equalsIgnoreCase(node);
-  }
 
   public void proxyRequest(OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
     proxyRequest(iRequest, iResponse, null);

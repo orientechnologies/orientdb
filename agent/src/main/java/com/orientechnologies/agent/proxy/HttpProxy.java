@@ -55,7 +55,8 @@ public class HttpProxy {
     return members;
   }
 
-  public void broadcastRequest(ODistributedServerManager manager, OHttpRequest request, OHttpResponse iResponse) throws IOException {
+  public void broadcastRequest(ODistributedServerManager manager, OHttpRequest request, OHttpResponse iResponse)
+      throws IOException {
 
     Collection<ODocument> members = getMembers(manager);
 
@@ -165,7 +166,7 @@ public class HttpProxy {
           url += appendParamenters(parameters);
         }
         final URL remoteUrl = new java.net.URL(url);
-        HttpURLConnection urlConnection = openConnectionForServer(member, authStringEnc, remoteUrl, request.httpMethod,
+        HttpURLConnection urlConnection = openConnectionForServer(member, authStringEnc, pwd, remoteUrl, request.httpMethod,
             request.content);
 
         try {
@@ -196,12 +197,14 @@ public class HttpProxy {
     return stringBuilder.toString();
   }
 
-  private static HttpURLConnection openConnectionForServer(final ODocument member, String authentication, URL iRemoteUrl,
-      String httpMethod, final String content) throws IOException, ProtocolException {
+  private static HttpURLConnection openConnectionForServer(final ODocument member, String authentication, String token,
+      URL iRemoteUrl, String httpMethod, final String content) throws IOException, ProtocolException {
 
     HttpURLConnection urlConnection = (HttpURLConnection) iRemoteUrl.openConnection();
 
     urlConnection.setRequestProperty("Authorization", authentication);
+
+    urlConnection.setRequestProperty("X-REQUEST-AGENT", token);
 
     urlConnection.setRequestMethod(httpMethod);
 
