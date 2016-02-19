@@ -7,6 +7,8 @@ import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
 import java.io.*;
 import java.util.Map;
@@ -43,25 +45,27 @@ public class OAuditingListener implements ODatabaseLifecycleListener {
   }
 
   private OAuditingHook defaultHook(final ODatabaseInternal iDatabase) {
-    final File auditingFileConfig = getAuditingFileConfig(iDatabase.getName());
+    final File auditingFileConfig = getConfigFile(iDatabase.getName());
     String content = null;
-    if (auditingFileConfig.exists()) {
+    if (auditingFileConfig != null && auditingFileConfig.exists()) {
       content = getContent(auditingFileConfig);
 
     } else {
-      final InputStream resourceAsStream = OEnterpriseAgent.class.getClassLoader().getResourceAsStream(
-              DEFAULT_FILE_AUDITING_DB_CONFIG);
+      final InputStream resourceAsStream = OEnterpriseAgent.class.getClassLoader()
+          .getResourceAsStream(DEFAULT_FILE_AUDITING_DB_CONFIG);
       content = getString(resourceAsStream);
-      try {
-        auditingFileConfig.getParentFile().mkdirs();
-        auditingFileConfig.createNewFile();
+      if (auditingFileConfig != null) {
+        try {
+          auditingFileConfig.getParentFile().mkdirs();
+          auditingFileConfig.createNewFile();
 
-        final FileOutputStream f = new FileOutputStream(auditingFileConfig);
-        f.write(content.getBytes());
-        f.flush();
-      } catch (IOException e) {
-        content = "{}";
-        OLogManager.instance().error(this, "Cannot save auditing file configuration", e);
+          final FileOutputStream f = new FileOutputStream(auditingFileConfig);
+          f.write(content.getBytes());
+          f.flush();
+        } catch (IOException e) {
+          content = "{}";
+          OLogManager.instance().error(this, "Cannot save auditing file configuration", e);
+        }
       }
     }
     final ODocument cfg = new ODocument().fromJSON(content, "noMap");
@@ -123,6 +127,21 @@ public class OAuditingListener implements ODatabaseLifecycleListener {
   @Override
   public void onDrop(ODatabaseInternal iDatabase) {
     onClose(iDatabase);
+    File f = getConfigFile(iDatabase.getName());
+    if (f != null && f.exists()) {
+      OLogManager.instance().info(this, "Removing Auditing config for db : %s", iDatabase.getName());
+      f.delete();
+    }
+  }
+
+  private File getConfigFile(String iDatabaseName) {
+    OStorage storage = Orient.instance().getStorage(iDatabaseName);
+
+    if (storage instanceof OLocalPaginatedStorage) {
+      return new File(((OLocalPaginatedStorage) storage).getStoragePath() + File.separator + FILE_AUDITING_DB_CONFIG);
+    }
+
+    return null;
   }
 
   @Override
@@ -139,20 +158,18 @@ public class OAuditingListener implements ODatabaseLifecycleListener {
   public void onLocalNodeConfigurationRequest(ODocument iConfiguration) {
   }
 
-  public File getAuditingFileConfig(final String iDatabaseName) {
-    return new File(enterpriseAgent.server.getDatabaseDirectory() + iDatabaseName + "/" + FILE_AUDITING_DB_CONFIG);
-  }
-
   public void changeConfig(final String iDatabaseName, final ODocument cfg) throws IOException {
     hooks.put(iDatabaseName, new OAuditingHook(cfg));
     updateConfigOnDisk(iDatabaseName, cfg);
   }
 
   protected void updateConfigOnDisk(final String iDatabaseName, final ODocument cfg) throws IOException {
-    final File auditingFileConfig = getAuditingFileConfig(iDatabaseName);
-    final FileOutputStream f = new FileOutputStream(auditingFileConfig);
-    f.write(cfg.toJSON("prettyPrint=true").getBytes());
-    f.flush();
+    final File auditingFileConfig = getConfigFile(iDatabaseName);
+    if (auditingFileConfig != null) {
+      final FileOutputStream f = new FileOutputStream(auditingFileConfig);
+      f.write(cfg.toJSON("prettyPrint=true").getBytes());
+      f.flush();
+    }
   }
 
   public ODocument getConfig(final String iDatabaseName) {

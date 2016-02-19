@@ -52,10 +52,13 @@ public class AuditingTest extends TestCase {
   }
 
   public void testBaseCfg() {
-    graph.getRawGraph().registerHook(
-        new OAuditingHook("{classes:{" + "'User':{onCreateEnabled:true, onCreateMessage:'Created new user ${field.name}'},"
+    OAuditingHook iHookImpl = new OAuditingHook(
+        "{classes:{" + "'User':{onCreateEnabled:true, onCreateMessage:'Created new user ${field.name}'},"
             + "'V':{onCreateEnabled:true, onCreateMessage:'Created vertex of class ${field.@class}'},"
-            + "'*':{onCreateEnabled:false}}}"));
+            + "'*':{onCreateEnabled:false}}}");
+    graph.getRawGraph().registerHook(iHookImpl);
+    graph.getRawGraph().registerListener(iHookImpl);
+
 
     // TEST CASE OF USER CLASS
     OrientVertex v = graph.addVertex("class:User", "name", "Jill");
@@ -103,10 +106,12 @@ public class AuditingTest extends TestCase {
   }
 
   public void testPolymorphismEnabled() {
-    graph.getRawGraph().registerHook(
-        new OAuditingHook("{classes:{" + "'V':{onCreateEnabled:true, onCreateMessage:'Created vertex of class ${field.@class}'},"
-            + "'*':{onCreateEnabled:false}}}"));
+    OAuditingHook iHookImpl = new OAuditingHook(
+        "{classes:{" + "'V':{onCreateEnabled:true, onCreateMessage:'Created vertex of class ${field.@class}'},"
+            + "'*':{onCreateEnabled:false}}}");
+    graph.getRawGraph().registerHook(iHookImpl);
 
+    graph.getRawGraph().registerListener(iHookImpl);
     // TEST CASE OF USER CLASS
     OrientVertex v = graph.addVertex("class:User", "name", "Jill");
 
@@ -148,12 +153,14 @@ public class AuditingTest extends TestCase {
 
   // FAILING due 2.2 minimum cluster policy
   public void testCRUDOperations() {
-    graph.getRawGraph().registerHook(
-        new OAuditingHook("{classes:{" + "'V':{onCreateEnabled:true, onCreateMessage:'Created vertex of class ${field.@class}',"
+    OAuditingHook iHookImpl = new OAuditingHook(
+        "{classes:{" + "'V':{onCreateEnabled:true, onCreateMessage:'Created vertex of class ${field.@class}',"
             + "onReadEnabled:true, onReadMessage:'Read vertex of class ${field.@class}',"
             + "onUpdateEnabled:true, onUpdateMessage:'Updated vertex of class ${field.@class}',"
-            + "onDeleteEnabled:true, onDeleteMessage:'Deleted vertex of class ${field.@class}'}}}"));
+            + "onDeleteEnabled:true, onDeleteMessage:'Deleted vertex of class ${field.@class}'}}}");
+    graph.getRawGraph().registerHook(iHookImpl);
 
+    graph.getRawGraph().registerListener(iHookImpl);
     // TEST CREATE
     OrientVertex v = graph.addVertex("class:User", "name", "Jill");
 
@@ -281,7 +288,7 @@ public class AuditingTest extends TestCase {
 
   protected void waitForPropagation() {
     try {
-      Thread.sleep(500);
+      Thread.sleep(100);
     } catch (InterruptedException e) {
     }
   }

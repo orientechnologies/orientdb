@@ -18,6 +18,7 @@
 
 package com.orientechnologies.agent.auditing;
 
+import com.orientechnologies.orient.core.db.ODatabase;
 import junit.framework.Assert;
 
 import com.orientechnologies.agent.hook.AuditingTest;
@@ -43,6 +44,7 @@ public class AuditingTestTx extends AuditingTest {
     graph.executeOutsideTx(new OCallable<Object, OrientBaseGraph>() {
       @Override
       public Object call(OrientBaseGraph graph) {
+        graph.getRawGraph().set(ODatabase.ATTRIBUTES.MINIMUMCLUSTERS,1);
         OrientVertexType cls = graph.createVertexType("AuditingLog");
         cls.createProperty("date", OType.DATETIME);
         cls.createProperty("user", OType.LINK);
