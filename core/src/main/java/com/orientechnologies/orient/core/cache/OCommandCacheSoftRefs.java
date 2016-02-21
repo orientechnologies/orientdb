@@ -27,10 +27,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -50,7 +47,7 @@ import java.util.Set;
  * 
  * @author Luca Garulli
  */
-public class OCommandCacheSoftRefs implements OCommandCache, ODatabaseLifecycleListener {
+public class OCommandCacheSoftRefs implements OCommandCache {
 
   private String CONFIG_FILE = "command-cache.json";
 
@@ -93,7 +90,6 @@ public class OCommandCacheSoftRefs implements OCommandCache, ODatabaseLifecycleL
 
     initCache();
 
-    Orient.instance().addDbLifecycleListener(this);
   }
 
   private void initCache() {
@@ -188,6 +184,15 @@ public class OCommandCacheSoftRefs implements OCommandCache, ODatabaseLifecycleL
   @Override
   public void shutdown() {
     clear();
+    deleteFileIfExists();
+  }
+
+  protected void deleteFileIfExists() {
+    File f = getConfigFile();
+    if (f != null) {
+      OLogManager.instance().info(this, "Removing Command Cache config for db : %s", databaseName);
+      f.delete();
+    }
   }
 
   @Override
@@ -423,49 +428,4 @@ public class OCommandCacheSoftRefs implements OCommandCache, ODatabaseLifecycleL
     }
   }
 
-  @Override
-  public PRIORITY getPriority() {
-    return PRIORITY.LAST;
-  }
-
-  @Override
-  public void onCreate(ODatabaseInternal iDatabase) {
-
-  }
-
-  @Override
-  public void onOpen(ODatabaseInternal iDatabase) {
-
-  }
-
-  @Override
-  public void onClose(ODatabaseInternal iDatabase) {
-
-  }
-
-  @Override
-  public void onDrop(ODatabaseInternal iDatabase) {
-    if (iDatabase.getName().equals(databaseName)) {
-      File f = getConfigFile();
-      if (f != null) {
-        OLogManager.instance().info(this, "Removing Command Cache config for db : %s", databaseName);
-        f.delete();
-      }
-    }
-  }
-
-  @Override
-  public void onCreateClass(ODatabaseInternal iDatabase, OClass iClass) {
-
-  }
-
-  @Override
-  public void onDropClass(ODatabaseInternal iDatabase, OClass iClass) {
-
-  }
-
-  @Override
-  public void onLocalNodeConfigurationRequest(ODocument iConfiguration) {
-
-  }
 }

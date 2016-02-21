@@ -292,8 +292,10 @@ public class OMetadataDefault implements OMetadataInternal {
       schema.close();
     if (security != null)
       security.close(false);
-    if (commandCache != null)
+    if (commandCache != null) {
       commandCache.clear();
+      commandCache.shutdown();
+    }
   }
 
   protected ODatabaseDocumentInternal getDatabase() {
