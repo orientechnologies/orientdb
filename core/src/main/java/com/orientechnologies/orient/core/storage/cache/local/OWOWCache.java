@@ -117,8 +117,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
   private final long freeSpaceLimit = OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT.getValueAsLong() * 1024L * 1024L;
 
-  private final long                                       diskSizeCheckInterval =
-      OGlobalConfiguration.DISC_CACHE_FREE_SPACE_CHECK_INTERVAL.getValueAsInteger() * 1000;
+  private final int                                        diskSizeCheckInterval = OGlobalConfiguration.DISC_CACHE_FREE_SPACE_CHECK_INTERVAL_IN_PAGES
+      .getValueAsInteger();
   private final List<WeakReference<OLowDiskSpaceListener>> listeners             = new CopyOnWriteArrayList<WeakReference<OLowDiskSpaceListener>>();
 
   private final AtomicLong lastDiskSpaceCheck = new AtomicLong(System.currentTimeMillis());
@@ -133,6 +133,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   private final int                        pageSize;
   private final long                       groupTTL;
   private final OWriteAheadLog             writeAheadLog;
+  private final AtomicLong amountOfNewPagesAdded = new AtomicLong();
 
   private final ODistributedCounter writeCacheSize          = new ODistributedCounter();
   private final ODistributedCounter exclusiveWriteCacheSize = new ODistributedCounter();
@@ -156,7 +157,6 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
   private File nameIdMapHolderFile;
 
-  private final ODistributedCounter allocatedSpace = new ODistributedCounter();
   private final int id;
 
   private final AtomicReference<Date> lastFuzzyCheckpointDate  = new AtomicReference<Date>();
@@ -244,25 +244,19 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       listeners.remove(ref);
   }
 
-  private void addAllocatedSpace(final long diff) {
-    if (diff == 0)
-      return;
-
-    allocatedSpace.add(diff);
-
-    final long ts = System.currentTimeMillis();
+  private void freeSpaceCheckAfterNewPageAdd() {
+    final long newPagesAdded = amountOfNewPagesAdded.incrementAndGet();
     final long lastSpaceCheck = lastDiskSpaceCheck.get();
 
-    if (ts - lastSpaceCheck > diskSizeCheckInterval) {
+    if (newPagesAdded - lastSpaceCheck > diskSizeCheckInterval) {
       final File storageDir = new File(storagePath);
 
       final long freeSpace = storageDir.getFreeSpace();
-      final long effectiveFreeSpace = freeSpace - allocatedSpace.get();
 
-      if (effectiveFreeSpace < freeSpaceLimit)
-        callLowSpaceListeners(new OLowDiskSpaceInformation(effectiveFreeSpace, freeSpaceLimit));
+      if (freeSpace < freeSpaceLimit)
+        callLowSpaceListeners(new OLowDiskSpaceInformation(freeSpace, freeSpaceLimit));
 
-      lastDiskSpaceCheck.lazySet(ts);
+      lastDiskSpaceCheck.lazySet(newPagesAdded);
     }
   }
 
@@ -459,10 +453,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   public boolean checkLowDiskSpace() {
     final File storageDir = new File(storagePath);
 
-    long freeSpace = storageDir.getFreeSpace();
-    long effectiveFreeSpace = freeSpace - allocatedSpace.get();
-
-    return effectiveFreeSpace < freeSpaceLimit;
+    final long freeSpace = storageDir.getFreeSpace();
+    return freeSpace < freeSpaceLimit;
   }
 
   public void makeFuzzyCheckpoint() {
@@ -1213,7 +1205,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       final int space = (int) (endPosition - fileClassic.getFileSize());
       fileClassic.allocateSpace(space);
 
-      addAllocatedSpace(space);
+      freeSpaceCheckAfterNewPageAdd();
 
       final ODirectMemoryPointer pointer = ODirectMemoryPointerFactory.instance().createPointer(content);
       dataPointer = new OCachePointer(pointer, lastLsn, fileId, pageIndex);
@@ -1237,13 +1229,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     final int crc32 = calculatePageCrc(content);
     OIntegerSerializer.INSTANCE.serializeNative(crc32, content, OLongSerializer.LONG_SIZE);
 
-    final OFileClassic fileClassic = files.get(fileId);
-
-    final long spaceDiff = fileClassic.write(pageIndex * pageSize, content);
-
-    assert spaceDiff >= 0;
-
-    addAllocatedSpace(-spaceDiff);
+      final OFileClassic fileClassic = files.get(fileId);
+      fileClassic.write(pageIndex * pageSize, content);
 
     if (syncOnPageFlush)
       fileClassic.synch();

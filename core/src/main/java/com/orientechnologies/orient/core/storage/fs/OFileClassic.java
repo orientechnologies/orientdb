@@ -78,13 +78,18 @@ public class OFileClassic implements OFile {
   }
 
   @Override
-  public long allocateSpace(long size) {
+  public long allocateSpace(long size) throws IOException {
     acquireWriteLock();
     try {
+      assert channel.size() - HEADER_SIZE == this.size;
+
       final long currentSize = this.size;
       this.size += size;
 
       assert this.size >= size;
+
+      accessFile.setLength(this.size + HEADER_SIZE);
+      assert channel.size() - HEADER_SIZE == this.size;
 
       return currentSize;
     } finally {
