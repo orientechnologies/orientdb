@@ -323,6 +323,8 @@ TOKEN:
     < BEGIN: ( "B" | "b") ( "E" | "e")  ( "G" | "g") ( "I" | "i") ( "N" | "n") >
     |
     < COMMIT: ( "C" | "c") ( "O" | "o")  ( "M" | "m") ( "M" | "m") ( "I" | "i")  ( "T" | "t") >
+    |
+    < IF: ( "I" | "i") ( "F" | "f") >
 	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
@@ -580,10 +582,13 @@ List<OStatement> parseScript() :
   OStatement last;
 }
 {
-    last = StatementInternal() {result.add(last);}
     (
+        LOOKAHEAD(StatementSemicolon())
+        last = StatementSemicolon() {result.add(last);}
+        |
+        last = IfStatement() {result.add(last);}
+        |
         <SEMICOLON>
-        [ last = StatementInternal() {result.add(last);} ]
     )*
 
   <EOF>
@@ -738,6 +743,12 @@ OIdentifier Identifier():
     |
     token = <LANGUAGE>
     |
+    token = <BEGIN>
+    |
+    token = <COMMIT>
+    |
+    token = <IF>
+    |
     quotedToken = <QUOTED_IDENTIFIER>
 ) {
 
@@ -803,6 +814,14 @@ OStatement Statement():
 {
     result = StatementInternal()
     [ <SEMICOLON> ]
+    {return result;}
+}
+
+OStatement StatementSemicolon():
+{OStatement result = null;}
+{
+    result = StatementInternal()
+    <SEMICOLON>
     {return result;}
 }
 
@@ -925,6 +944,8 @@ OStatement StatementInternal():
         result = ExplainStatement()
         |
         result = LetStatement()
+        |
+        result = IfStatement()
     )
 	{
 	    return result;
@@ -4346,4 +4367,24 @@ OReturnStatement ReturnStatement():
         ]
     )
     {return jjtThis;}
+}
+
+OIfStatement IfStatement():
+{ OStatement last; }
+{
+    (
+        <IF><LPAREN>
+        jjtThis.expression = OrBlock()
+        <RPAREN><LBRACE>
+        (
+            LOOKAHEAD(StatementSemicolon())
+            last = StatementSemicolon() { jjtThis.statements.add(last); }
+            |
+            last = IfStatement() { jjtThis.statements.add(last); }
+            |
+            <SEMICOLON>
+        )*
+        <RBRACE>
+    )
+    { return jjtThis; }
 }
