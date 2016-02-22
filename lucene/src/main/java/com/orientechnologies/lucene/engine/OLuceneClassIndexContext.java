@@ -47,4 +47,11 @@ public class OLuceneClassIndexContext {
     }
   }
 
+  public boolean isFieldToStore(String field) {
+    if (fieldsToStore.containsKey(field))
+      return fieldsToStore.get(field);
+    return false;
+
+  }
+
 }

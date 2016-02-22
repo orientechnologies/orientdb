@@ -107,10 +107,9 @@ public class OLuceneExpTextOperator extends OQueryTargetOperator {
   public Object evaluateRecord(OIdentifiable iRecord, ODocument iCurrentResult, OSQLFilterCondition iCondition, Object iLeft,
       Object iRight, OCommandContext iContext) {
 
-
-//    OLogManager.instance().info(this, "condition left:: " + iCondition.getLeft());
-//    OLogManager.instance().info(this, "condition op:: " + iCondition.getOperator());
-//    OLogManager.instance().info(this, "condition right:: " + iCondition.getRight());
+    //    OLogManager.instance().info(this, "condition left:: " + iCondition.getLeft());
+    //    OLogManager.instance().info(this, "condition op:: " + iCondition.getOperator());
+    //    OLogManager.instance().info(this, "condition right:: " + iCondition.getRight());
 
     OLuceneFullTextExpIndex index = involvedIndex(iRecord, iCurrentResult, iCondition, iLeft, iRight);
 
@@ -124,14 +123,13 @@ public class OLuceneExpTextOperator extends OQueryTargetOperator {
     }
     memoryIndex.reset();
 
-
     Document doc = index.buildDocument(iLeft);
 
-//    OLogManager.instance().info(this, "----");
+    //    OLogManager.instance().info(this, "----");
 
     for (IndexableField field : doc.getFields()) {
 
-//      OLogManager.instance().info(this, "name:: " + field.name() + " value :: " + field.stringValue());
+      //      OLogManager.instance().info(this, "name:: " + field.name() + " value :: " + field.stringValue());
       memoryIndex.addField(field.name(), field.stringValue(), index.indexAnalyzer());
     }
     Query query = null;

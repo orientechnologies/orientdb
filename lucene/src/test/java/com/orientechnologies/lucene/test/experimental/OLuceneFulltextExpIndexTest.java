@@ -23,6 +23,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.logging.Level;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * Created by frank on 9/30/15.
  */
@@ -37,14 +39,14 @@ public class OLuceneFulltextExpIndexTest extends BaseLuceneTest {
     OLogManager.instance().installCustomFormatter();
     OLogManager.instance().setConsoleLevel(Level.INFO.getName());
 
+    //    System.setProperty("orientdb.test.env", "ci");
+
     initDB();
 
     databaseDocumentTx.command(new OCommandSQL("ALTER DATABASE custom strictSql=false")).execute();
 
     OSchema schema = databaseDocumentTx.getMetadata().getSchema();
-    OClass v = schema.getClass("V");
-    OClass song = schema.createClass("Song");
-    song.setSuperClass(v);
+    OClass song = schema.createClass("Song", schema.getClass("V"));
     song.createProperty("title", OType.STRING);
     song.createProperty("author", OType.STRING);
     song.createProperty("lyrics", OType.STRING);
@@ -92,7 +94,7 @@ public class OLuceneFulltextExpIndexTest extends BaseLuceneTest {
     docs = databaseDocumentTx
         .query(new OSQLSynchQuery<ODocument>("select * from Song where [title] LUCENEEXP \"Song.title:mountain\""));
 
-    Assert.assertEquals(docs.size(), 4);
+    assertThat(docs).hasSize(4);
 
     //    docs = databaseDocumentTx
     //        .query(new OSQLSynchQuery<ODocument>("select * from Song where [author] LUCENEEXP \"Song.author:Fabbio\""));
@@ -111,12 +113,18 @@ public class OLuceneFulltextExpIndexTest extends BaseLuceneTest {
   @Test
   public void testName2() throws Exception {
     List<ODocument> docs = databaseDocumentTx
-        .query(new OSQLSynchQuery<ODocument>("select * from Song where [title,author] LUCENEEXP \"Song.author:Fabbio\""));
+        .query(new OSQLSynchQuery<ODocument>("select * from Song where [title,author]  LUCENEEXP \"Song.author:Fabbio\""));
 
-    //     docs = databaseDocumentTx
-    //        .query(new OSQLSynchQuery<ODocument>("select * from Song where author LUCENEEXP \"Fabbio\""));
+    assertThat(docs).hasSize(87);
 
-    Assert.assertEquals(docs.size(), 87);
+  }
+
+  @Test
+  public void testLuceneFunction() throws Exception {
+    List<ODocument> docs = databaseDocumentTx
+        .query(new OSQLSynchQuery<ODocument>("select * from Song where lucene_match(Song.author:Fabbio) "));
+
+    assertThat(docs).hasSize(87);
 
   }
 }

@@ -60,10 +60,10 @@ public class OLuceneTxResultSet extends OLuceneAbstractResultSet {
       for (IndexableField field : doc.getFields()) {
 
         if (field.stringValue() != null) {
-          memoryIndex.addField(field.name(), field.stringValue(), manager.indexAnalyzer());
+          memoryIndex.addField(field.name(), field.stringValue(), engine.indexAnalyzer());
         } else {
           try {
-            memoryIndex.addField(field.name(), field.tokenStream(manager.indexAnalyzer(), null));
+            memoryIndex.addField(field.name(), field.tokenStream(engine.indexAnalyzer(), null));
           } catch (IOException e) {
             e.printStackTrace();
           }
@@ -142,7 +142,7 @@ public class OLuceneTxResultSet extends OLuceneAbstractResultSet {
     private OContextualRecordId toRecordId(Document doc, ScoreDoc score) {
       String rId = doc.get(OLuceneIndexEngineAbstract.RID);
       OContextualRecordId res = new OContextualRecordId(rId);
-      manager.onRecordAddedToResultSet(queryContext, res, doc, score);
+      engine.onRecordAddedToResultSet(queryContext, res, doc, score);
       return res;
     }
 

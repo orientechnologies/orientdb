@@ -15,17 +15,13 @@ import java.lang.reflect.Constructor;
  */
 public class OLuceneAnalyzerFactory {
 
-  public enum AnalyzerKind {
-    INDEX, QUERY;
-
-    @Override
-    public String toString() {
-      return name().toLowerCase();
-    }
-  }
-
   public Analyzer createAnalyzer(OIndexDefinition index, AnalyzerKind kind, ODocument metadata) {
     String defaultAnalyzerFQN = metadata.field("analyzer");
+
+    String prefix = "";
+    if (metadata.containsField("prefix_with_class_name") && metadata.<Boolean>field("prefix_with_class_name"))
+      prefix = index.getClassName() + ".";
+
 
     //preset default analyzer for all fields
     OLucenePerFieldAnalyzerWrapper analyzer;
@@ -36,18 +32,19 @@ public class OLuceneAnalyzerFactory {
     }
 
     //default analyzer for indexing
-    String indexAnalyzerFQN = metadata.field(kind + "_analyzer");
-    if (indexAnalyzerFQN != null) {
+    String specializedAnalyzerFQN = metadata.field(kind.toString());
+    if (specializedAnalyzerFQN != null) {
       for (String field : index.getFields()) {
-        analyzer.add(field, buildAnalyzer(indexAnalyzerFQN));
+        analyzer.add(prefix + field, buildAnalyzer(specializedAnalyzerFQN));
       }
     }
 
     //specialized for each field
     for (String field : index.getFields()) {
       for (String meta : metadata.fieldNames()) {
-        if (meta.startsWith(field) && meta.contains(kind + "_analyzer")) {
-          analyzer.add(field, buildAnalyzer(metadata.<String>field(meta)));
+        if (meta.startsWith(field) && meta.contains(kind.toString())) {
+
+          analyzer.add(prefix + field, buildAnalyzer(metadata.<String>field(meta)));
         }
       }
     }
@@ -81,6 +78,15 @@ public class OLuceneAnalyzerFactory {
                  .error(this, "Error on getting analyzer for Lucene index", e);
     }
     return new StandardAnalyzer();
+  }
+
+  public enum AnalyzerKind {
+    INDEX, QUERY;
+
+    @Override
+    public String toString() {
+      return name().toLowerCase();
+    }
   }
 
 }

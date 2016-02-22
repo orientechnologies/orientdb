@@ -4,7 +4,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
-import com.orientechnologies.lucene.OLuceneIndexType;
 import com.orientechnologies.lucene.builder.ODocBuilder;
 import com.orientechnologies.lucene.builder.OQueryBuilderImpl;
 import com.orientechnologies.lucene.collections.LuceneResultSetFactory;
@@ -19,12 +18,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
-import com.orientechnologies.orient.core.index.OCompositeKey;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexEngineException;
-import com.orientechnologies.orient.core.index.OIndexException;
-import com.orientechnologies.orient.core.index.OIndexKeyCursor;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.parser.ParseException;
@@ -32,9 +26,11 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
+import org.apache.lucene.index.Term;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.RAMDirectory;
 
 import java.io.IOException;
@@ -42,6 +38,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+
+import static com.orientechnologies.lucene.OLuceneIndexType.createField;
 
 /**
  * Created by frank on 10/8/15.
@@ -140,9 +138,10 @@ public class OLuceneFullTextExpIndexEngine implements OLuceneIndexEngine, OOrien
   public Object getInTx(Object key, OLuceneTxChanges changes) {
     OLogManager.instance().info(this, "getInTx");
 
-    Query q = null;
     try {
-      q = queryBuilder.query(indexDefinition, key, luceneStorage.queryAnalyzer());
+      Query q = queryBuilder.query(indexDefinition, key, luceneStorage.queryAnalyzer());
+
+      OLogManager.instance().info(this, "query:: " + q);
       OCommandContext context = null;
       if (key instanceof OFullTextCompositeKey) {
         context = ((OFullTextCompositeKey) key).getContext();
@@ -156,7 +155,15 @@ public class OLuceneFullTextExpIndexEngine implements OLuceneIndexEngine, OOrien
 
   @Override
   public long sizeInTx(OLuceneTxChanges changes) {
-    return luceneStorage.sizeInTx(changes);
+
+    Query query = new TermQuery(new Term("INDEX", indexName()));
+    try {
+      return luceneStorage.searcher().count(query);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
+    return luceneStorage.size();
   }
 
   @Override
@@ -265,12 +272,11 @@ public class OLuceneFullTextExpIndexEngine implements OLuceneIndexEngine, OOrien
     Collection<OIdentifiable> container = (Collection<OIdentifiable>) value;
     for (OIdentifiable oIdentifiable : container) {
       Document doc = new Document();
-      doc.add(OLuceneIndexType
-          .createField(RID, oIdentifiable.getIdentity().toString(), Field.Store.YES, Field.Index.NOT_ANALYZED_NO_NORMS));
-      doc.add(OLuceneIndexType
-          .createField("CLUSTER", oIdentifiable.getIdentity().getClusterId(), Field.Store.YES, Field.Index.NOT_ANALYZED_NO_NORMS));
-      doc.add(OLuceneIndexType
-          .createField("CLASS", indexContext.indexClass.getName(), Field.Store.YES, Field.Index.NOT_ANALYZED_NO_NORMS));
+      doc.add(createField(RID, oIdentifiable.getIdentity().toString(), Field.Store.YES, Field.Index.NOT_ANALYZED_NO_NORMS));
+      doc.add(
+          createField("CLUSTER", oIdentifiable.getIdentity().getClusterId(), Field.Store.YES, Field.Index.NOT_ANALYZED_NO_NORMS));
+      doc.add(createField("CLASS", indexContext.indexClass.getName(), Field.Store.YES, Field.Index.NOT_ANALYZED_NO_NORMS));
+      doc.add(createField("INDEX", indexContext.name, Field.Store.YES, Field.Index.NOT_ANALYZED_NO_NORMS));
 
       int i = 0;
       if (indexDefinition.isAutomatic()) {
@@ -284,30 +290,19 @@ public class OLuceneFullTextExpIndexEngine implements OLuceneIndexEngine, OOrien
   private void mapFields(Object key, Document doc, int i) {
 
     for (String field : indexDefinition.getFields()) {
-      Object val = null;
+      Object val = key;
       if (key instanceof OCompositeKey) {
         val = ((OCompositeKey) key).getKeys().get(i);
         i++;
-      } else {
-        val = key;
       }
 
-      if (val != null) {
-
-        //FIXME why 2 fields? May we use STORED+ANALYZED?
-        if (isToStore(field).equals(Field.Store.YES)) {
-          doc.add(OLuceneIndexType.createField(indexContext.indexClass.getName() + "." + field + STORED, val, Field.Store.YES,
-              Field.Index.NOT_ANALYZED_NO_NORMS));
-        }
-        doc.add(OLuceneIndexType
-            .createField(indexContext.indexClass.getName() + "." + field, val, Field.Store.NO, Field.Index.ANALYZED));
+      if (indexContext.isFieldToStore(field)) {
+        doc.add(createField(indexContext.indexClass.getName() + "." + field + STORED, val, Field.Store.YES,
+            Field.Index.NOT_ANALYZED_NO_NORMS));
       }
+      doc.add(createField(indexContext.indexClass.getName() + "." + field, val, Field.Store.NO, Field.Index.ANALYZED));
+
     }
-
-  }
-
-  protected Field.Store isToStore(String f) {
-    return indexContext.fieldsToStore.get(f) ? Field.Store.YES : Field.Store.NO;
   }
 
   @Override
@@ -379,23 +374,23 @@ public class OLuceneFullTextExpIndexEngine implements OLuceneIndexEngine, OOrien
 
       int k = 0;
       for (Object o : keys) {
-        doc.add(OLuceneIndexType.createField("k" + k, val, Field.Store.NO, Field.Index.ANALYZED));
+        doc.add(createField("k" + k, val, Field.Store.NO, Field.Index.ANALYZED));
       }
     } else if (key instanceof Collection) {
       Collection<Object> keys = (Collection<Object>) key;
       int k = 0;
       for (Object o : keys) {
-        doc.add(OLuceneIndexType.createField("k" + k, o, Field.Store.NO, Field.Index.ANALYZED));
+        doc.add(createField("k" + k, o, Field.Store.NO, Field.Index.ANALYZED));
       }
     } else {
       val = key;
-      doc.add(OLuceneIndexType.createField("k0", val, Field.Store.NO, Field.Index.ANALYZED));
+      doc.add(createField("k0", val, Field.Store.NO, Field.Index.ANALYZED));
     }
   }
 
   @Override
   public void onShutdown() {
-    OLogManager.instance().info(this, "SHUTDONW");
+    OLogManager.instance().info(this, "SHUTDOWN");
     luceneStorage.onShutdown();
   }
 

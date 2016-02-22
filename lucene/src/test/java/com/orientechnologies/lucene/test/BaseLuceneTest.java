@@ -99,24 +99,6 @@ public abstract class BaseLuceneTest {
       storageType = OEngineMemory.NAME;
 
     buildDirectory = System.getProperty("buildDirectory", ".");
-    if (buildDirectory == null)
-      buildDirectory = ".";
-
-    if (remote)
-      System.out.println("REMOTE IS DISABLED IN LUCENE TESTS");
-    //    TODO: understand why remote tests aren't working
-    //    if (remote) {
-    //      try {
-    //
-    //        startServer(drop);
-    //
-    //        url = "remote:localhost/" + getDatabaseName();
-    //        databaseDocumentTx = new ODatabaseDocumentTx(url);
-    //        databaseDocumentTx.open("admin", "admin");
-    //      } catch (Exception e) {
-    //        e.printStackTrace();
-    //      }
-    //    } else {
 
     if (storageType.equals(OEngineLocalPaginated.NAME))
       url = OEngineLocalPaginated.NAME + ":" + buildDirectory + "/databases/" + getDatabaseName();

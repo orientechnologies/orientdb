@@ -1,0 +1,20 @@
+{
+  "analyzer": "org.apache.lucene.analysis.standard.StandardAnalyzer",
+  "index_analyzer": "org.apache.lucene.analysis.core.KeywordAnalyzer",
+  "query_analyzer": "org.apache.lucene.analysis.standard.StandardAnalyzer",
+  "name_index_analyzer": "org.apache.lucene.analysis.standard.StandardAnalyzer",
+  "name_query_analyzer": "org.apache.lucene.analysis.core.KeywordAnalyzer",
+  "lyrics_index_analyzer": "org.apache.lucene.analysis.en.EnglishAnalyzer",
+  "title_index_analyzer": "org.apache.lucene.analysis.en.EnglishAnalyzer",
+  "title_query_analyzer": "org.apache.lucene.analysis.en.EnglishAnalyzer",
+  "author_query_analyzer": "org.apache.lucene.analysis.core.KeywordAnalyzer",
+  "description_index_analyzer": {
+    "class": "org.apache.lucene.analysis.standard.StandardAnalyzer",
+    "stopwords": [
+      "the",
+      "is"
+    ]
+  }
+}
+
+

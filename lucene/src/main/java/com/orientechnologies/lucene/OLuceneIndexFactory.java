@@ -40,11 +40,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleListener {
 
@@ -68,7 +64,7 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
     ALGORITHMS = Collections.unmodifiableSet(algorithms);
   }
 
-  private final Map<String, OIndexInternal>                    db2luceneindexes;
+  //  private final Map<String, OIndexInternal>                    db2luceneindexes;
   private final Map<ODatabaseDocumentInternal, OLuceneStorage> db2luceneEngine;
 
   public OLuceneIndexFactory() {
@@ -77,10 +73,9 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
 
   public OLuceneIndexFactory(boolean manual) {
     if (!manual)
-      Orient.instance()
-            .addDbLifecycleListener(this);
+      Orient.instance().addDbLifecycleListener(this);
 
-    db2luceneindexes = new HashMap<String, OIndexInternal>();
+    //    db2luceneindexes = new HashMap<String, OIndexInternal>();
     db2luceneEngine = new HashMap<ODatabaseDocumentInternal, OLuceneStorage>();
   }
 
@@ -101,27 +96,24 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
 
   @Override
   public OIndexInternal<?> createIndex(String name, ODatabaseDocumentInternal database, String indexType, String algorithm,
-                                       String valueContainerAlgorithm, ODocument metadata, int version)
-      throws OConfigurationException {
+      String valueContainerAlgorithm, ODocument metadata, int version) throws OConfigurationException {
 
-    OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) database.getStorage()
-                                                                            .getUnderlying();
+    OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
 
     if (metadata == null)
       metadata = new ODocument().field("analyzer", StandardAnalyzer.class.getName());
 
     if (OClass.INDEX_TYPE.FULLTEXT.toString().equals(indexType)) {
       return new OLuceneFullTextIndex(name, indexType, LUCENE_ALGORITHM, version, storage, valueContainerAlgorithm, metadata);
-    } else if (OClass.INDEX_TYPE.FULLTEXTEXP.toString()
-                                            .equals(indexType)) {
+    } else if (OClass.INDEX_TYPE.FULLTEXTEXP.toString().equals(indexType)) {
 
       OLogManager.instance()
-                 .info(this, "create index - database:: %s , indexName:: %s , algo:: %s , valuecontalgo:: %s", database.getName(),
-                       name,
-                       algorithm, valueContainerAlgorithm);
-      if (!db2luceneindexes.containsKey(database.getName()))
-        db2luceneindexes.put(name, new OLuceneFullTextExpIndex(name, indexType, LUCENEEXP_ALGORITHM, version, storage,
-                                                               valueContainerAlgorithm, metadata));
+          .info(this, "create index - database:: %s , indexName:: %s , algo:: %s , valuecontalgo:: %s", database.getName(), name,
+              algorithm, valueContainerAlgorithm);
+      if (!db2luceneEngine.containsKey(database.getName())) {
+        //create the lucene storage
+        db2luceneEngine.put(database, new OLuceneStorage(name, new ODocBuilder(), new OQueryBuilderImpl(), metadata));
+      }
 
       return new OLuceneFullTextExpIndex(name, indexType, LUCENEEXP_ALGORITHM, version, storage, valueContainerAlgorithm, metadata);
 
@@ -131,20 +123,13 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
 
   @Override
   public OIndexEngine createIndexEngine(String algorithm, String name, Boolean durableInNonTxMode, OStorage storage, int version,
-                                        Map<String, String> engineProperties) {
+      Map<String, String> engineProperties) {
 
     if (LUCENEEXP_ALGORITHM.equalsIgnoreCase(algorithm)) {
       final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
 
       OLogManager.instance()
-                 .info(this, "CREATE ENGINE database:: %s , name:: %s , algoritmh:: %s", database.getName(), name, algorithm);
-      if (!db2luceneEngine.containsKey(database)) {
-        OLogManager.instance()
-                   .info(this, "REGISTERING name:: %s , algoritmh:: %s , engProps:: %s", name, algorithm, engineProperties);
-
-        db2luceneEngine.put(database, new OLuceneStorage(name, new ODocBuilder(), new OQueryBuilderImpl()));
-
-      }
+          .info(this, "CREATE ENGINE database:: %s , name:: %s , algorithm:: %s", database.getName(), name, algorithm);
       return new OLuceneFullTextExpIndexEngine(name, db2luceneEngine.get(database), new ODocBuilder(), new OQueryBuilderImpl());
     }
     return new OLuceneIndexEngineDelegate(name, durableInNonTxMode, storage, version);
@@ -180,8 +165,7 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
       OLogManager.instance().info(this, "Dropping Lucene indexes...");
       for (OIndex idx : iDatabase.getMetadata().getIndexManager().getIndexes()) {
 
-        if (idx.getInternal() instanceof OLuceneFullTextExpIndex
-            || idx.getInternal() instanceof OLuceneFullTextIndex) {
+        if (idx.getInternal() instanceof OLuceneFullTextExpIndex || idx.getInternal() instanceof OLuceneFullTextIndex) {
 
           OLogManager.instance().debug(this, "- index '%s'", idx.getName());
           idx.delete();
@@ -195,8 +179,7 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
       }
 
     } catch (Exception e) {
-      OLogManager.instance()
-                 .warn(this, "Error on dropping Lucene indexes", e);
+      OLogManager.instance().warn(this, "Error on dropping Lucene indexes", e);
     }
   }
 

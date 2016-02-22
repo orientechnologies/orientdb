@@ -16,7 +16,6 @@
 
 package com.orientechnologies.lucene.index;
 
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.OLuceneIndex;
 import com.orientechnologies.lucene.engine.OLuceneFullTextExpIndexEngine;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
@@ -36,15 +35,13 @@ public class OLuceneFullTextExpIndex extends OLuceneIndexNotUnique implements OL
     super(name, typeId, algorithm, version, storage, valueContainerAlgorithm, metadata);
   }
 
-
-
   public Document buildDocument(final Object key) {
 
     return storage.callIndexEngine(false, false, indexId, new OIndexEngineCallback<Document>() {
       @Override
       public Document callEngine(OIndexEngine engine) {
 
-//        OLogManager.instance().info(this,"callback buildDoc:: " + key);
+        //        OLogManager.instance().info(this,"callback buildDoc:: " + key);
         OLuceneFullTextExpIndexEngine indexEngine = (OLuceneFullTextExpIndexEngine) engine;
         return indexEngine.buildDocument(key, null);
       }
@@ -72,6 +69,7 @@ public class OLuceneFullTextExpIndex extends OLuceneIndexNotUnique implements OL
       }
     });
   }
+
   public Analyzer queryAnalyzer() {
 
     return storage.callIndexEngine(false, false, indexId, new OIndexEngineCallback<Analyzer>() {
