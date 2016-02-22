@@ -96,7 +96,7 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
   private final    int                   maxPartitions = Runtime.getRuntime().availableProcessors() << 3;
   private volatile PoolPartition[] partitions;
   private volatile boolean closed     = false;
-  private volatile boolean autoCreate = false;
+  private          boolean autoCreate = false;
 
   private static final class PoolData {
     private final int                      hashCode;
@@ -359,6 +359,10 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
   public OPartitionedDatabasePool setAutoCreate(final boolean autoCreate) {
     this.autoCreate = autoCreate;
     return this;
+  }
+
+  public boolean isClosed() {
+    return closed;
   }
 
   protected void openDatabase(final DatabaseDocumentTxPolled db) {
