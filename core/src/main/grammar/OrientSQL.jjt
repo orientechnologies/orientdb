@@ -566,11 +566,27 @@ ORid Rid():
     { return jjtThis; }
 }
 
-/** Root production. */
+/** Root productions. */
 OStatement parse() :
 {OStatement result;}
 {
   result = Statement() <EOF>
+  { return result; }
+}
+
+List<OStatement> parseScript() :
+{
+  List<OStatement> result = new ArrayList<OStatement>();
+  OStatement last;
+}
+{
+    last = StatementInternal() {result.add(last);}
+    (
+        <SEMICOLON>
+        [ last = StatementInternal() {result.add(last);} ]
+    )*
+
+  <EOF>
   { return result; }
 }
 
@@ -782,8 +798,15 @@ ONumber Number():
     { return result; }
 }
 
-
 OStatement Statement():
+{OStatement result = null;}
+{
+    result = StatementInternal()
+    [ <SEMICOLON> ]
+    {return result;}
+}
+
+OStatement StatementInternal():
 {
     OStatement result = null;
 }
@@ -896,7 +919,7 @@ OStatement Statement():
                 result = CommitStatement()
                 |
                 result = ReturnStatement()
-            ) [ <SEMICOLON> ]
+            )
         )
         |
         result = ExplainStatement()
@@ -3628,7 +3651,7 @@ OFindReferencesStatement FindReferencesStatement():
         |
         (
             <LPAREN>
-            jjtThis.subQuery = Statement()
+            jjtThis.subQuery = StatementInternal()
             <RPAREN>
         )
     )
@@ -4153,7 +4176,7 @@ OExplainStatement ExplainStatement():
 {
     (
         <EXPLAIN>
-        jjtThis.statement = Statement()
+        jjtThis.statement = StatementInternal()
     )
     { return jjtThis; }
 }
@@ -4282,7 +4305,7 @@ OLetStatement LetStatement():
         <EQ>
         (
             LOOKAHEAD(Statement())
-            jjtThis.statement =  Statement()
+            jjtThis.statement =  StatementInternal()
             |
             LOOKAHEAD(Expression())
             jjtThis.expression = Expression()
