@@ -44,6 +44,10 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
+import com.orientechnologies.orient.core.sql.parser.OIfStatement;
+import com.orientechnologies.orient.core.sql.parser.OStatement;
+import com.orientechnologies.orient.core.sql.parser.OrientSql;
+import com.orientechnologies.orient.core.sql.parser.ParseException;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
@@ -55,7 +59,9 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 import javax.script.SimpleBindings;
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -100,11 +106,32 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
     parameters = iArgs;
 
     parameters = iArgs;
-    if (language.equalsIgnoreCase("SQL"))
+    if (language.equalsIgnoreCase("SQL")) {
       // SPECIAL CASE: EXECUTE THE COMMANDS IN SEQUENCE
+//      try {//TODO enable this for strict parsing, but it will break backward compatibility (mandatory ; as a statement delimiter)
+//        parserText = preParse(parserText, iArgs);
+//      } catch (ParseException e) {
+//        throw new OCommandExecutionException("Invalid script:" + e.getMessage());
+//      }
       return executeSQL();
-    else
+    } else {
       return executeJsr223Script(language, iContext, iArgs);
+    }
+  }
+
+  private String preParse(String parserText, final Map<Object, Object> iArgs) throws ParseException {
+    InputStream is = new ByteArrayInputStream(parserText.getBytes());
+    OrientSql osql = new OrientSql(is);
+    List<OStatement> statements = osql.parseScript();
+    StringBuilder result = new StringBuilder();
+    for (OStatement stm : statements) {
+      stm.toString(iArgs, result);
+      if (!(stm instanceof OIfStatement)) {
+        result.append(";");
+      }
+      result.append("\n");
+    }
+    return result.toString();
   }
 
   public boolean isIdempotent() {
