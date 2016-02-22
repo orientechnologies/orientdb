@@ -20,7 +20,7 @@
 package com.orientechnologies.orient.core;
 
 public class OConstants {
-  public static final String  ORIENT_VERSION       = "2.2.0-SNAPSHOT";
+  public static final String  ORIENT_VERSION       = "2.2.0-beta";
 
   public static final int     ORIENT_VERSION_MAJOR = 2;
   public static final int     ORIENT_VERSION_MINOR = 2;
