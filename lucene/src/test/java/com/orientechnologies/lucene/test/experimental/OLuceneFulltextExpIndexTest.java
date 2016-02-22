@@ -17,9 +17,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -43,7 +41,7 @@ public class OLuceneFulltextExpIndexTest extends BaseLuceneTest {
 
     initDB();
 
-    databaseDocumentTx.command(new OCommandSQL("ALTER DATABASE custom strictSql=false")).execute();
+//    databaseDocumentTx.command(new OCommandSQL("ALTER DATABASE custom strictSql=false")).execute();
 
     OSchema schema = databaseDocumentTx.getMetadata().getSchema();
     OClass song = schema.createClass("Song", schema.getClass("V"));
@@ -70,7 +68,8 @@ public class OLuceneFulltextExpIndexTest extends BaseLuceneTest {
     // new OCommandSQL("create index Song.lyrics on Song (lyrics) FULLTEXTEXP ENGINE LUCENE METADATA {\"index_analyzer\":\""
     // + EnglishAnalyzer.class.getName() + "\"}")).execute();
 
-    String fromStream = OIOUtils.readFileAsString(new File("./src/test/resources/testLuceneIndex.sql"), StandardCharsets.UTF_8);
+    String fromStream = OIOUtils.readStreamAsString(ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql"));
+//    String fromStream = OIOUtils.readFileAsString(new File("./src/test/resources/testLuceneIndex.sql"), StandardCharsets.UTF_8);
     databaseDocumentTx.command(new OCommandScript("sql", fromStream)).execute();
 
   }
@@ -122,7 +121,7 @@ public class OLuceneFulltextExpIndexTest extends BaseLuceneTest {
   @Test
   public void testLuceneFunction() throws Exception {
     List<ODocument> docs = databaseDocumentTx
-        .query(new OSQLSynchQuery<ODocument>("select * from Song where lucene_match(Song.author:Fabbio) "));
+        .query(new OSQLSynchQuery<ODocument>("select * from Song where lucene_match('Song.author:Fabbio') = true "));
 
     assertThat(docs).hasSize(87);
 
