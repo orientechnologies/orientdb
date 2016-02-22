@@ -1,0 +1,24 @@
+package com.orientechnologies.orient.core.sql.parser;
+
+import org.testng.annotations.Test;
+
+@Test
+public class OLetStatementTest extends OParserTestAbstract {
+
+  @Test
+  public void testPlain() {
+    checkRightSyntax("let foo = select from foo where name = 'bar'");
+    checkRightSyntax("LET foo = select from foo where name = 'bar'");
+    checkRightSyntax("LET foo = select from foo where name = 'bar';");
+    checkRightSyntax("LET $foo = select from foo where name = 'bar'");
+    checkRightSyntax("LET $foo = (select from foo where name = 'bar')");
+    checkRightSyntax("LET $foo = bar");
+    checkRightSyntax("LET $foo = 1 + 2 + 3");
+    checkRightSyntax("LET $foo = [1, 3, 5]");
+
+    checkWrongSyntax("LET ");
+    checkWrongSyntax("LET foo");
+  }
+
+
+}

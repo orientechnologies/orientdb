@@ -319,6 +319,10 @@ TOKEN:
     < IDEMPOTENT: ( "I" | "i") ( "D" | "d")  ( "E" | "e") ( "M" | "m") ( "P" | "p")  ( "O" | "o") ( "T" | "t")  ( "E" | "e") ( "N" | "n") ( "T" | "t") >
     |
     < LANGUAGE: ( "L" | "l") ( "A" | "a")  ( "N" | "n") ( "G" | "g") ( "U" | "u")  ( "A" | "a") ( "G" | "g")  ( "E" | "e") >
+    |
+    < BEGIN: ( "B" | "b") ( "E" | "e")  ( "G" | "g") ( "I" | "i") ( "N" | "n") >
+    |
+    < COMMIT: ( "C" | "c") ( "O" | "o")  ( "M" | "m") ( "M" | "m") ( "I" | "i")  ( "T" | "t") >
 	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
@@ -886,10 +890,18 @@ OStatement Statement():
                 |
                 LOOKAHEAD(2)
                 result = CreateFunctionStatement()
+                |
+                result = BeginStatement()
+                |
+                result = CommitStatement()
+                |
+                result = ReturnStatement()
             ) [ <SEMICOLON> ]
         )
         |
         result = ExplainStatement()
+        |
+        result = LetStatement()
     )
 	{
 	    return result;
@@ -4258,4 +4270,57 @@ OCreateFunctionStatement CreateFunctionStatement():
         ]
     )
     { return jjtThis; }
+}
+
+
+OLetStatement LetStatement():
+{ }
+{
+    (
+        <LET>
+        jjtThis.name = Identifier()
+        <EQ>
+        (
+            LOOKAHEAD(Statement())
+            jjtThis.statement =  Statement()
+            |
+            LOOKAHEAD(Expression())
+            jjtThis.expression = Expression()
+        )
+    )
+    {return jjtThis;}
+}
+
+OBeginStatement BeginStatement():
+{ }
+{
+    (
+        <BEGIN>
+    )
+    {return jjtThis;}
+}
+
+OCommitStatement CommitStatement():
+{ }
+{
+    (
+        <COMMIT>
+        [
+            <RETRY>
+            jjtThis.retry = Integer()
+        ]
+    )
+    {return jjtThis;}
+}
+
+OReturnStatement ReturnStatement():
+{ }
+{
+    (
+        <RETURN>
+        [
+            jjtThis.expression = Expression()
+        ]
+    )
+    {return jjtThis;}
 }

@@ -161,6 +161,10 @@ public interface OrientSqlTreeConstants
   public int JJTGRANTSTATEMENT = 155;
   public int JJTREVOKESTATEMENT = 156;
   public int JJTCREATEFUNCTIONSTATEMENT = 157;
+  public int JJTLETSTATEMENT = 158;
+  public int JJTBEGINSTATEMENT = 159;
+  public int JJTCOMMITSTATEMENT = 160;
+  public int JJTRETURNSTATEMENT = 161;
 
 
   public String[] jjtNodeName = {
@@ -322,6 +326,10 @@ public interface OrientSqlTreeConstants
     "GrantStatement",
     "RevokeStatement",
     "CreateFunctionStatement",
+    "LetStatement",
+    "BeginStatement",
+    "CommitStatement",
+    "ReturnStatement",
   };
 }
-/* JavaCC - OriginalChecksum=4a3864cb50b24bf5e038066d2640050c (do not edit this line) */
+/* JavaCC - OriginalChecksum=ed25d590b762f232eef8b73370f8c49d (do not edit this line) */
