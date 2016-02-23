@@ -849,7 +849,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object>implements O
 
   protected void init() {
     entityManager = OEntityManager.getEntityManagerByDatabaseURL(getURL());
-    entityManager.setClassHandler(OObjectEntityClassHandler.getInstance());
+    entityManager.setClassHandler(OObjectEntityClassHandler.getInstance(getURL()));
     saveOnlyDirty = OGlobalConfiguration.OBJECT_SAVE_ONLY_DIRTY.getValueAsBoolean();
     OObjectSerializerHelper.register();
     lazyLoading = true;
