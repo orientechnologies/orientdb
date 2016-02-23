@@ -56,9 +56,6 @@ import static org.junit.Assert.*;
  * - restart server3
  * - 5 threads on server3 write 100 records
  * - check consistency
-
- *  TO REVIEW AND COMPLETE
- *
  */
 
 public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
