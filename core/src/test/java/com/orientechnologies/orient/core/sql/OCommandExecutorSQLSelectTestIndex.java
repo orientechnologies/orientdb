@@ -49,4 +49,28 @@ public class OCommandExecutorSQLSelectTestIndex {
     }
   }
 
+
+  @Test
+  public void testIndexOnHierarchyChange(){
+    //issue #5743
+    ODatabaseDocumentTx databaseDocumentTx = new ODatabaseDocumentTx("memory:OCommandExecutorSQLSelectTestIndex_testIndexOnHierarchyChange");
+    databaseDocumentTx.create();
+    try {
+
+      databaseDocumentTx.command(new OCommandSQL("CREATE CLASS Main ABSTRACT")).execute();
+      databaseDocumentTx.command(new OCommandSQL("CREATE PROPERTY Main.uuid String")).execute();
+      databaseDocumentTx.command(new OCommandSQL("CREATE INDEX Main.uuid UNIQUE_HASH_INDEX")).execute();
+      databaseDocumentTx.command(new OCommandSQL("CREATE CLASS Base EXTENDS Main ABSTRACT")).execute();
+      databaseDocumentTx.command(new OCommandSQL("CREATE CLASS Derived EXTENDS Main")).execute();
+      databaseDocumentTx.command(new OCommandSQL("INSERT INTO Derived SET uuid='abcdef'")).execute();
+      databaseDocumentTx.command(new OCommandSQL("ALTER CLASS Derived SUPERCLASSES Base")).execute();
+
+      List<ODocument> results = databaseDocumentTx.command(new OCommandSQL("SELECT * FROM Derived WHERE uuid='abcdef'")).execute();
+      assertEquals(results.size(), 1);
+
+    } finally {
+      databaseDocumentTx.drop();
+    }
+
+  }
 }
