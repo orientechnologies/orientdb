@@ -85,9 +85,9 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
       Future currentFuture = null;
 
 
-            /*
-             * Test with quorum = 2
-             */
+      /*
+       * Test with quorum = 2
+       */
 
       try {
         currentFuture = exec.submit(tq2);
@@ -98,9 +98,9 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
       }
 
 
-            /*
-             * Test with quorum = 3
-             */
+      /*
+       * Test with quorum = 3
+       */
 
       try {
         currentFuture = exec.submit(tq3);
@@ -139,9 +139,9 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
 
       try {
 
-      /*
-       * Test with quorum = 2
-       */
+        /*
+         * Test with quorum = 2
+         */
 
         banner("Test with quorum = 2");
 
@@ -258,9 +258,9 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
 
       try {
 
-       /*
-        * Test with quorum = 1
-        */
+        /*
+         * Test with quorum = 1
+         */
 
         banner("Test with quorum = 1");
 

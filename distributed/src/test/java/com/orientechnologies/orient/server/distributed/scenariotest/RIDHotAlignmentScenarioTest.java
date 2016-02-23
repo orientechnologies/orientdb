@@ -63,9 +63,9 @@ public class RIDHotAlignmentScenarioTest extends AbstractScenarioTest {
   @Override
   public void executeTest() throws Exception {
 
-        /*
-         * Test with quorum = 1
-         */
+    /*
+     * Test with quorum = 1
+     */
 
     banner("Test with quorum = 1");
 
@@ -179,7 +179,6 @@ public class RIDHotAlignmentScenarioTest extends AbstractScenarioTest {
     ODocument thirdInsert = null;
     ORID rid3 = null;
     try {
-//      dbServer1 = new ODatabaseDocumentTx(getPlocalDatabaseURL(serverInstance.get(1))).open("admin", "admin");
       thirdInsert = new ODocument("Hero").fields("id", "R002", "firstName", "Han", "lastName", "Solo").save();
       System.out.println("Third insert: " + thirdInsert.getRecord().toString());
       rid3 = thirdInsert.getRecord().getIdentity();

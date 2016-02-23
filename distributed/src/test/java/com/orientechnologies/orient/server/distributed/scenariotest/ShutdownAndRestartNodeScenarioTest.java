@@ -78,9 +78,9 @@ public class ShutdownAndRestartNodeScenarioTest extends AbstractScenarioTest {
       Future currentFuture = null;
 
 
-            /*
-             * Test with quorum = 2
-             */
+      /*
+       * Test with quorum = 2
+       */
 
       try {
         currentFuture = exec.submit(tq2);
@@ -91,9 +91,9 @@ public class ShutdownAndRestartNodeScenarioTest extends AbstractScenarioTest {
       }
 
 
-            /*
-             * Test with quorum = 3
-             */
+      /*
+       * Test with quorum = 3
+       */
 
       try {
         currentFuture = exec.submit(tq3);
@@ -132,9 +132,9 @@ public class ShutdownAndRestartNodeScenarioTest extends AbstractScenarioTest {
 
       try {
 
-            /*
-             * Test with quorum = 2
-             */
+        /*
+         * Test with quorum = 2
+         */
 
         banner("Test with quorum = 2");
 
@@ -215,9 +215,9 @@ public class ShutdownAndRestartNodeScenarioTest extends AbstractScenarioTest {
 
       try {
 
-            /*
-             * Test with quorum = 3
-             */
+        /*
+         * Test with quorum = 3
+         */
 
         banner("Test with quorum = 3");
 

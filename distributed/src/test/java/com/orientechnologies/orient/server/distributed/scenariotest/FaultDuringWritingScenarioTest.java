@@ -77,9 +77,9 @@ public class FaultDuringWritingScenarioTest extends AbstractScenarioTest {
 
     try {
 
-            /*
-             * Test with quorum = 2
-             */
+      /*
+       * Test with quorum = 2
+       */
 
       banner("Test with quorum = 2");
 

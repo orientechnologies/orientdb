@@ -60,9 +60,9 @@ public class ReadQuorumScenarioTest  extends AbstractScenarioTest {
   @Override
   public void executeTest() throws Exception {
 
-      /*
-       * Test with readQuorum = 2
-       */
+    /*
+     * Test with readQuorum = 2
+     */
 
     banner("Test with readQuorum = 2");
 

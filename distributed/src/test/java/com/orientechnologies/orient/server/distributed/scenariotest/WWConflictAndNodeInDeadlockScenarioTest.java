@@ -80,9 +80,9 @@ public class WWConflictAndNodeInDeadlockScenarioTest extends UpdateConflictFixTa
   @Override
   public void executeTest() throws Exception {
 
-      /*
-       * Test with quorum = 1
-       */
+    /*
+     * Test with quorum = 1
+     */
 
     banner("Test with quorum = 1");
 

@@ -28,7 +28,6 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ServerRun;
-import com.orientechnologies.orient.server.distributed.scenariotest.AbstractScenarioTest;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
@@ -38,6 +37,7 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -425,10 +425,10 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
 
       List<ODocument> result = graph.getRawGraph().query(new OSQLSynchQuery<OIdentifiable>("select from `index:Client.name` where key = ?"));
 
-      junit.framework.Assert.assertNotNull(result);
-      junit.framework.Assert.assertEquals(result.size(), 1);
-      junit.framework.Assert.assertNotNull(result.get(0).getRecord());
-      junit.framework.Assert.assertEquals((result.get(0)).field("rid"), rid);
+      assertNotNull(result);
+      assertEquals(result.size(), 1);
+      assertNotNull(result.get(0).getRecord());
+      assertEquals((result.get(0)).field("rid"), rid);
     }
 
     protected void updateVertex(OrientBaseGraph graph, OrientVertex vertex) {
