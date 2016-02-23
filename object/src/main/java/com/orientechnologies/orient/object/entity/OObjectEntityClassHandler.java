@@ -19,13 +19,15 @@ package com.orientechnologies.orient.object.entity;
 import com.orientechnologies.orient.core.entity.OEntityManagerClassHandler;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
 /**
  * @author luca.molino
- * 
  */
 public class OObjectEntityClassHandler extends OEntityManagerClassHandler {
 
-  private static final OObjectEntityClassHandler instance = new OObjectEntityClassHandler();
+  private static final ConcurrentMap<String, OObjectEntityClassHandler> instances = new ConcurrentHashMap<String, OObjectEntityClassHandler>();
 
   @Override
   public void registerEntityClass(Class<?> iClass) {
@@ -49,8 +51,17 @@ public class OObjectEntityClassHandler extends OEntityManagerClassHandler {
     }
   }
 
-  public static synchronized OObjectEntityClassHandler getInstance() {
-    return instance;
+  public static OObjectEntityClassHandler getInstance(String url) {
+    OObjectEntityClassHandler classHandler = instances.get(url);
+    if (classHandler != null)
+      return classHandler;
+
+    classHandler = new OObjectEntityClassHandler();
+    OObjectEntityClassHandler oldClassHandler = instances.putIfAbsent(url, classHandler);
+    if (oldClassHandler != null)
+      classHandler = oldClassHandler;
+
+    return classHandler;
   }
 
 }

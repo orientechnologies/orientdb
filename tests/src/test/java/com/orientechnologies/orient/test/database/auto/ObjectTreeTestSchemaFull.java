@@ -863,7 +863,7 @@ public class ObjectTreeTestSchemaFull extends ObjectDBBaseTest {
         return new CustomType(iFieldValue);
       }
 
-    });
+    }, database);
     OObjectSerializerHelper.bindSerializerContext(null, serializerContext);
     database.getEntityManager().registerEntityClass(CustomClass.class);
 
@@ -984,7 +984,7 @@ public class ObjectTreeTestSchemaFull extends ObjectDBBaseTest {
         public Object unserializeFieldValue(Class<?> type, String str) {
           return SecurityRole.getByName(str);
         }
-      });
+      }, database);
 
       OObjectSerializerHelper.bindSerializerContext(null, serializerContext);
 
