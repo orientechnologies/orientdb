@@ -29,6 +29,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -90,6 +91,14 @@ public class OStorageRemoteThread implements OStorageProxy {
     } finally {
       popSession();
     }
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public OModificationLock getModificationLock() {
+    return null;
   }
 
   @Override

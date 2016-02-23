@@ -22,19 +22,20 @@ package com.orientechnologies.orient.core.index;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 /**
  * Dictionary index similar to unique index but does not check for updates, just executes changes. Last put always wins and override
  * the previous value.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 public class OIndexDictionary extends OIndexOneValue {
 
   public OIndexDictionary(String name, String typeId, String algorithm, OIndexEngine<OIdentifiable> engine,
-      String valueContainerAlgorithm, ODocument metadata) {
-    super(name, typeId, algorithm, engine, valueContainerAlgorithm, metadata);
+      String valueContainerAlgorithm, ODocument metadata, OStorage storage) {
+    super(name, typeId, algorithm, engine, valueContainerAlgorithm, metadata, storage);
   }
 
   public OIndexOneValue put(Object key, final OIdentifiable value) {
@@ -48,7 +49,8 @@ public class OIndexDictionary extends OIndexOneValue {
       keyLockManager.acquireExclusiveLock(key);
 
     try {
-      modificationLock.requestModificationLock();
+      if (modificationLock != null)
+        modificationLock.requestModificationLock();
       try {
         checkForKeyType(key);
         acquireSharedLock();
@@ -61,7 +63,8 @@ public class OIndexDictionary extends OIndexOneValue {
           releaseSharedLock();
         }
       } finally {
-        modificationLock.releaseModificationLock();
+        if (modificationLock != null)
+          modificationLock.releaseModificationLock();
       }
     } finally {
       if (!txIsActive)

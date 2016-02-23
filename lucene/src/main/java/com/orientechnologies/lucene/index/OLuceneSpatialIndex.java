@@ -18,12 +18,14 @@ package com.orientechnologies.lucene.index;
 
 import com.orientechnologies.lucene.OLuceneIndexEngine;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 public class OLuceneSpatialIndex extends OLuceneIndexNotUnique {
 
   public OLuceneSpatialIndex(String name, String typeId, String algorithm, OLuceneIndexEngine engine,
-      String valueContainerAlgorithm, ODocument metadata) {
-    super(name, typeId, algorithm, engine, valueContainerAlgorithm, metadata);
+      String valueContainerAlgorithm, ODocument metadata, OStorage storage) {
+    super(name, typeId, algorithm, engine, valueContainerAlgorithm, metadata, storage);
   }
 
 }

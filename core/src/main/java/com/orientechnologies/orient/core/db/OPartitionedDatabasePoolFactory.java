@@ -31,29 +31,26 @@ import com.orientechnologies.orient.core.Orient;
 
 /**
  * Factory for {@link OPartitionedDatabasePool} pool, which also works as LRU cache with good mutlicore architecture support.
- *
+ * <p>
  * In case of remote storage database pool will keep connections to the remote storage till you close pool. So in case of remote
  * storage you should close pool factory at the end of it's usage, it also may be closed on application shutdown but you should not
  * rely on this behaviour.
- * 
+ *
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 06/11/14
  */
 public class OPartitionedDatabasePoolFactory extends OOrientListenerAbstract {
-  private volatile int                                                          maxPoolSize      = 64;
-  private boolean                                                               closed           = false;
+  private volatile int     maxPoolSize = 64;
+  private          boolean closed      = false;
 
   private final ConcurrentLinkedHashMap<PoolIdentity, OPartitionedDatabasePool> poolStore;
 
-  private final EvictionListener<PoolIdentity, OPartitionedDatabasePool>        evictionListener = new EvictionListener<PoolIdentity, OPartitionedDatabasePool>() {
-                                                                                                   @Override
-                                                                                                   public void onEviction(
-                                                                                                       PoolIdentity poolIdentity,
-                                                                                                       OPartitionedDatabasePool partitionedDatabasePool) {
-                                                                                                     partitionedDatabasePool
-                                                                                                         .close();
-                                                                                                   }
-                                                                                                 };
+  private final EvictionListener<PoolIdentity, OPartitionedDatabasePool> evictionListener = new EvictionListener<PoolIdentity, OPartitionedDatabasePool>() {
+    @Override
+    public void onEviction(PoolIdentity poolIdentity, OPartitionedDatabasePool partitionedDatabasePool) {
+      partitionedDatabasePool.close();
+    }
+  };
 
   public OPartitionedDatabasePoolFactory() {
     this(100);
@@ -83,16 +80,28 @@ public class OPartitionedDatabasePoolFactory extends OOrientListenerAbstract {
     final PoolIdentity poolIdentity = new PoolIdentity(url, userName, userPassword);
 
     OPartitionedDatabasePool pool = poolStore.get(poolIdentity);
-    if (pool != null)
+    if (pool != null && !pool.isClosed())
       return pool;
 
-    pool = new OPartitionedDatabasePool(url, userName, userPassword, maxPoolSize);
+    if (pool != null)
+      poolStore.remove(poolIdentity, pool);
 
-    final OPartitionedDatabasePool oldPool = poolStore.putIfAbsent(poolIdentity, pool);
-    if (oldPool != null)
-      return oldPool;
+    while (true) {
+      pool = new OPartitionedDatabasePool(url, userName, userPassword, maxPoolSize);
 
-    return pool;
+      final OPartitionedDatabasePool oldPool = poolStore.putIfAbsent(poolIdentity, pool);
+
+      if (oldPool != null) {
+        if (!oldPool.isClosed()) {
+          return oldPool;
+        } else {
+          poolStore.remove(poolIdentity, oldPool);
+        }
+      } else {
+        return pool;
+      }
+    }
+
   }
 
   public Collection<OPartitionedDatabasePool> getPools() {

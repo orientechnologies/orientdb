@@ -230,6 +230,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     open(iToken.getUserName(), "", iProperties);
   }
 
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public OModificationLock getModificationLock() {
+    return modificationLock;
+  }
+
   public void create(final Map<String, Object> iProperties) {
     stateLock.acquireWriteLock();
     try {

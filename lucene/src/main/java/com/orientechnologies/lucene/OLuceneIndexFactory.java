@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.index.OIndexFactory;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorage;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -138,14 +139,16 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
     return createLuceneIndex(name, oDatabaseRecord, indexType, valueContainerAlgorithm, metadata);
   }
 
-  private OIndexInternal<?> createLuceneIndex(String name, ODatabaseDocumentInternal oDatabaseRecord, String indexType,
+  private OIndexInternal<?> createLuceneIndex(String name, ODatabaseDocumentInternal database, String indexType,
       String valueContainerAlgorithm, ODocument metadata) {
+    final OStorage storage = database.getStorage().getUnderlying();
+
     if (OClass.INDEX_TYPE.FULLTEXT.toString().equals(indexType)) {
       return new OLuceneFullTextIndex(name, indexType, LUCENE_ALGORITHM, new OLuceneIndexEngine<Set<OIdentifiable>>(
-          new OLuceneFullTextIndexManager(), indexType), valueContainerAlgorithm, metadata);
+          new OLuceneFullTextIndexManager(), indexType), valueContainerAlgorithm, metadata, storage);
     } else if (OClass.INDEX_TYPE.SPATIAL.toString().equals(indexType)) {
       return new OLuceneSpatialIndex(name, indexType, LUCENE_ALGORITHM, new OLuceneIndexEngine<Set<OIdentifiable>>(
-          new OLuceneSpatialIndexManager(OShapeFactoryImpl.INSTANCE), indexType), valueContainerAlgorithm, metadata);
+          new OLuceneSpatialIndexManager(OShapeFactoryImpl.INSTANCE), indexType), valueContainerAlgorithm, metadata, storage);
     }
     throw new OConfigurationException("Unsupported type : " + indexType);
   }

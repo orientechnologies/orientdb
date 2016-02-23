@@ -2244,12 +2244,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
 
     final long startTime = Orient.instance().getProfiler().startChrono();
 
-    final Collection<? extends OIndex<?>> indexes = getMetadata().getIndexManager().getIndexes();
-    final List<OIndexAbstract<?>> indexesToLock = prepareIndexesToFreeze(indexes);
-
-    freezeIndexes(indexesToLock, true);
-    flushIndexes(indexesToLock);
-
     final OFreezableStorage storage = getFreezableStorage();
     if (storage != null) {
       storage.freeze(throwException);
@@ -2277,7 +2271,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
     final Collection<? extends OIndex<?>> indexes = getMetadata().getIndexManager().getIndexes();
     final List<OIndexAbstract<?>> indexesToLock = prepareIndexesToFreeze(indexes);
 
-    freezeIndexes(indexesToLock, false);
     flushIndexes(indexesToLock);
 
     final OFreezableStorage storage = getFreezableStorage();
@@ -2307,9 +2300,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
     if (storage != null) {
       storage.release();
     }
-
-    Collection<? extends OIndex<?>> indexes = getMetadata().getIndexManager().getIndexes();
-    releaseIndexes(indexes);
 
     Orient.instance().getProfiler().stopChrono("db." + getName() + ".release", "Time to release the database", startTime,
         "db.*.release");
@@ -3164,14 +3154,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
     }
   }
 
-  private void freezeIndexes(final List<OIndexAbstract<?>> indexesToFreeze, final boolean throwException) {
-    if (indexesToFreeze != null) {
-      for (OIndexAbstract<?> indexToLock : indexesToFreeze) {
-        indexToLock.freeze(throwException);
-      }
-    }
-  }
-
   private void flushIndexes(final List<OIndexAbstract<?>> indexesToFlush) {
     for (OIndexAbstract<?> index : indexesToFlush) {
       index.flush();
@@ -3196,15 +3178,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>imple
     return indexesToFreeze;
   }
 
-  private void releaseIndexes(final Collection<? extends OIndex<?>> indexesToRelease) {
-    if (indexesToRelease != null) {
-      Iterator<? extends OIndex<?>> it = indexesToRelease.iterator();
-      while (it.hasNext()) {
-        it.next().getInternal().release();
-        it.remove();
-      }
-    }
-  }
 
   /**
    * @Internal
