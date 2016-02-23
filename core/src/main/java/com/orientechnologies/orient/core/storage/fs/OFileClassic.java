@@ -25,6 +25,7 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.exception.OFileLockedByAnotherProcessException;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 
 import java.io.File;
@@ -750,7 +751,7 @@ public class OFileClassic implements OFile {
         }
 
         if (fileLock == null)
-          throw new OLockException(
+          throw new OFileLockedByAnotherProcessException(
               "File '"
                   + osFile.getPath()
                   + "' is locked by another process, maybe the database is in use by another process. Use the remote mode with a OrientDB server to allow multiple access to the same database");
