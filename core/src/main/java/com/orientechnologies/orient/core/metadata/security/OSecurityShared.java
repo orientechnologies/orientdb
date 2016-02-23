@@ -482,7 +482,8 @@ public class OSecurityShared implements OSecurity, OCloseable {
       userClass.setSuperClasses(Arrays.asList(identityClass));
 
     if (!userClass.existsProperty("name")) {
-      userClass.createProperty("name", OType.STRING, (OType) null, unsafe).setMandatory(true).setNotNull(true).setCollate("ci");
+      ((OClassImpl) userClass).createProperty("name", OType.STRING, (OType) null, checkData).setMandatory(true).setNotNull(true)
+          .setCollate("ci").setMin("1").setRegexp("\\S+(.*\\S+)*");
       userClass.createIndex("OUser.name", INDEX_TYPE.UNIQUE, ONullOutputListener.INSTANCE, "name");
     } else {
       final OProperty name = userClass.getProperty("name");
@@ -543,7 +544,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
       }
       OProperty p = userClass.getProperty("name");
       if (p == null)
-        p = userClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true);
+        p = userClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true).setMin("1").setRegexp("\\S+(.*\\S+)*");
 
       if (userClass.getInvolvedIndexes("name") == null)
         p.createIndex(INDEX_TYPE.UNIQUE);
