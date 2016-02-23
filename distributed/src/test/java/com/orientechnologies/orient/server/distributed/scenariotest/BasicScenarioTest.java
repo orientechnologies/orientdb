@@ -39,7 +39,7 @@ import org.junit.Test;
 /**
  * Basic Test that checks the consistency in the cluster with the following scenario:
  * - 3 server
- * - 5 thread for each server write 100 records
+ * - 5 threads for each server write 100 records
  * - check consistency
  * - no faults
  */
@@ -47,28 +47,28 @@ import org.junit.Test;
 public class BasicScenarioTest extends AbstractScenarioTest {
 
 
-    @Test
-    public void test() throws Exception {
-        init(SERVERS);
-        prepare(false);
-        super.executeWritesOnServers.addAll(super.serverInstance);
-        execute();
+  @Test
+  public void test() throws Exception {
+    init(SERVERS);
+    prepare(false);
+    super.executeWritesOnServers.addAll(super.serverInstance);
+    execute();
+  }
+
+  @Override
+  public void executeTest() throws Exception {
+
+    ODatabaseDocumentTx database = poolFactory.get(getPlocalDatabaseURL(serverInstance.get(0)), "admin", "admin").acquire();
+    try {
+      new ODocument("Customer").fields("name", "Jay", "surname", "Miner").save();
+      new ODocument("Customer").fields("name", "Luke", "surname", "Skywalker").save();
+      new ODocument("Provider").fields("name", "Yoda", "surname", "Nothing").save();
+    } finally {
+      database.close();
     }
 
-    @Override
-    public void executeTest() throws Exception {
-
-        ODatabaseDocumentTx database = poolFactory.get(getPlocalDatabaseURL(serverInstance.get(0)), "admin", "admin").acquire();
-        try {
-            new ODocument("Customer").fields("name", "Jay", "surname", "Miner").save();
-            new ODocument("Customer").fields("name", "Luke", "surname", "Skywalker").save();
-            new ODocument("Provider").fields("name", "Yoda", "surname", "Nothing").save();
-        } finally {
-            database.close();
-        }
-
-        executeMultipleWrites(super.executeWritesOnServers, "plocal");
-        super.checkWritesAboveCluster(serverInstance, executeWritesOnServers);
-    }
+    executeMultipleWrites(super.executeWritesOnServers, "plocal");
+    super.checkWritesAboveCluster(serverInstance, executeWritesOnServers);
+  }
 
 }

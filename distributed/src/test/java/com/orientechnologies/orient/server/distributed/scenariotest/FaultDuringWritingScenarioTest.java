@@ -38,141 +38,144 @@ import static org.junit.Assert.*;
 /**
  * It checks the consistency in the cluster with the following scenario:
  * - 3 server (quorum=2)
- * - 5 thread write 100 records on server3, meanwhile after 1/3 of to-write records server3 fault happens.
+ * - 5 threads write 100 records on server3, meanwhile after 1/3 of to-write records server3 fault happens.
  * - after 2/3 to-write records are inserted server3 is restarted.
- * - check consistency on all servers (all the records destined to server3 were redirected to an other server, so we must inspect consistency for all 500 records)
+ * - check consistency on all servers:
+ *      - all the records destined to server3 were redirected to an other server, so we must inspect consistency for all 500 records
+ *      - all records on each server are consistent in the cluster
  */
 
 public class FaultDuringWritingScenarioTest extends AbstractScenarioTest {
 
-    protected Timer timer             = new Timer(true);
-    volatile boolean inserting        = true;
-    volatile int     serverStarted    = 0;
-    volatile boolean backupInProgress = false;
+  protected Timer timer             = new Timer(true);
+  volatile boolean inserting        = true;
+  volatile int     serverStarted    = 0;
+  volatile boolean backupInProgress = false;
 
 
-    @Test
-    public void test() throws Exception {
+  @Test
+  public void test() throws Exception {
 
-        maxRetries = 10;
-        init(SERVERS);
-        prepare(false);
+    maxRetries = 10;
+    init(SERVERS);
+    prepare(false);
 
-        // execute writes only on server3
-        executeWritesOnServers = new ArrayList<ServerRun>();
-        executeWritesOnServers.add(serverInstance.get(2));
+    // execute writes only on server3
+    executeWritesOnServers = new ArrayList<ServerRun>();
+    executeWritesOnServers.add(serverInstance.get(2));
 
-        execute();
-    }
+    execute();
+  }
 
 
-    @Override
-    public void executeTest() throws Exception {    //  TO-CHANGE
+  @Override
+  public void executeTest() throws Exception {    //  TO-CHANGE
 
-        List<ODocument> result = null;
-        ODatabaseDocumentTx dbServer3 = new ODatabaseDocumentTx(getRemoteDatabaseURL(serverInstance.get(2))).open("admin", "admin");
-        String dbServerUrl1 = getRemoteDatabaseURL(serverInstance.get(0));
+    List<ODocument> result = null;
+    ODatabaseDocumentTx dbServer3 = new ODatabaseDocumentTx(getRemoteDatabaseURL(serverInstance.get(2))).open("admin", "admin");
+    String dbServerUrl1 = getRemoteDatabaseURL(serverInstance.get(0));
 
-        try {
+    try {
 
             /*
              * Test with quorum = 2
              */
 
-            banner("Test with quorum = 2");
+      banner("Test with quorum = 2");
 
-            // writes on server3 (remote access) while a task is monitoring the inserted records amount and shutdown server
-            // after 1/3 of total number of records to insert, and restarting it when 2/3 of records were inserted.
-            ODatabaseRecordThreadLocal.INSTANCE.set(null);
-            Callable shutdownAndRestartTask = new shutdownAndRestartServer(serverInstance.get(2), dbServerUrl1, "net-fault");
-            final ExecutorService executor = Executors.newSingleThreadExecutor();
-            Future f = executor.submit(shutdownAndRestartTask);
-            executeMultipleWrites(this.executeWritesOnServers,"remote");
+      // writes on server3 (remote access) while a task is monitoring the inserted records amount and shutdown server
+      // after 1/3 of total number of records to insert, and restarting it when 2/3 of records were inserted.
+      ODatabaseRecordThreadLocal.INSTANCE.set(null);
+      Callable shutdownAndRestartTask = new ShutdownAndRestartServer(serverInstance.get(2), dbServerUrl1, "net-fault");
+      final ExecutorService executor = Executors.newSingleThreadExecutor();
+      Future f = executor.submit(shutdownAndRestartTask);
+      executeMultipleWrites(this.executeWritesOnServers,"remote");
 
-            f.get(); // waiting for task ending
+      f.get(); // waiting for task ending
 
-            // waiting for changes propagation
-            Thread.sleep(1000);
+      // waiting for changes propagation
+      Thread.sleep(1000);
 
-            // preliminar check
-            ODatabaseRecordThreadLocal.INSTANCE.set(dbServer3);
-            result = dbServer3.query(new OSQLSynchQuery<OIdentifiable>("select from Person"));
-            assertEquals(500, result.size());
+      // preliminar check
+      ODatabaseRecordThreadLocal.INSTANCE.set(dbServer3);
+      result = dbServer3.query(new OSQLSynchQuery<OIdentifiable>("select from Person"));
+      assertEquals(500, result.size());
 
-            // check consistency on all the server
-            checkWritesAboveCluster(serverInstance, executeWritesOnServers);
+      // check consistency on all the server:
+      // all the records destined to server3 were redirected to an other server, so we must inspect consistency for all 500 records
+      checkWritesAboveCluster(serverInstance, executeWritesOnServers);
 
-        } catch(Exception e) {
-            e.printStackTrace();
-            assertTrue(false);
-        } finally {
+    } catch(Exception e) {
+      e.printStackTrace();
+      assertTrue(false);
+    } finally {
 
-            if(!dbServer3.isClosed()) {
-                ODatabaseRecordThreadLocal.INSTANCE.set(dbServer3);
-                dbServer3.close();
-                ODatabaseRecordThreadLocal.INSTANCE.set(null);
-            }
-        }
+      if(!dbServer3.isClosed()) {
+        ODatabaseRecordThreadLocal.INSTANCE.set(dbServer3);
+        dbServer3.close();
+        ODatabaseRecordThreadLocal.INSTANCE.set(null);
+      }
     }
+  }
 
-    protected class shutdownAndRestartServer implements Callable<Void> {
+  protected class ShutdownAndRestartServer implements Callable<Void> {
 
-        private ServerRun server;
-        private String dbServerUrl1;
-        private String faultType;
+    private ServerRun server;
+    private String dbServerUrl1;
+    private String faultType;
 
-        protected shutdownAndRestartServer(ServerRun server, String dbServerUrl1, String faultType) {
-            this.server = server;
-            this.dbServerUrl1 = dbServerUrl1;
-            this.faultType = faultType;
-        }
-
-        @Override
-        public Void call() throws Exception {
-
-            boolean reachedAmountOfInsertedRecords = false;
-            long totalNumberOfRecordsToInsert = count * writerCount;
-
-            // open server1 db
-            ODatabaseDocumentTx dbServer1 = poolFactory.get(dbServerUrl1, "admin", "admin").acquire();
-
-            while (true) {
-
-                // check inserted record amount
-                long insertedRecords = dbServer1.countClass("Person");
-
-                if(insertedRecords > totalNumberOfRecordsToInsert/3) {
-                    System.out.println("Fault on server3: " + faultType);
-                    simulateServerFault(server,this.faultType);
-                    assertFalse(server.isActive());
-                    break;
-                }
-            }
-
-            while (true) {
-
-                // check inserted record amount
-                ODatabaseRecordThreadLocal.INSTANCE.set(dbServer1);
-                long insertedRecords = dbServer1.countClass("Person");
-
-                if(insertedRecords > 2*totalNumberOfRecordsToInsert/3) {
-                    server.startServer(getDistributedServerConfiguration(server));
-                    System.out.println("Server 3 restarted.");
-                    assertTrue(server.isActive());
-                    break;
-                }
-            }
-
-            return null;
-        }
+    protected ShutdownAndRestartServer(ServerRun server, String dbServerUrl1, String faultType) {
+      this.server = server;
+      this.dbServerUrl1 = dbServerUrl1;
+      this.faultType = faultType;
     }
-
 
     @Override
-    protected void onAfterExecution() throws Exception {
-        inserting = false;
-        Assert.assertFalse(backupInProgress);
+    public Void call() throws Exception {
+
+      boolean reachedAmountOfInsertedRecords = false;
+      long totalNumberOfRecordsToInsert = count * writerCount;
+
+      // open server1 db
+      ODatabaseDocumentTx dbServer1 = poolFactory.get(dbServerUrl1, "admin", "admin").acquire();
+
+      while (true) {
+
+        // check inserted record amount
+        long insertedRecords = dbServer1.countClass("Person");
+
+        if(insertedRecords > totalNumberOfRecordsToInsert/3) {
+          System.out.println("Fault on server3: " + faultType);
+          simulateServerFault(server,this.faultType);
+          assertFalse(server.isActive());
+          break;
+        }
+      }
+
+      while (true) {
+
+        // check inserted record amount
+        ODatabaseRecordThreadLocal.INSTANCE.set(dbServer1);
+        long insertedRecords = dbServer1.countClass("Person");
+
+        if(insertedRecords > 2*totalNumberOfRecordsToInsert/3) {
+          server.startServer(getDistributedServerConfiguration(server));
+          System.out.println("Server 3 restarted.");
+          assertTrue(server.isActive());
+          break;
+        }
+      }
+
+      return null;
     }
+  }
+
+
+  @Override
+  protected void onAfterExecution() throws Exception {
+    inserting = false;
+    Assert.assertFalse(backupInProgress);
+  }
 
 
 }

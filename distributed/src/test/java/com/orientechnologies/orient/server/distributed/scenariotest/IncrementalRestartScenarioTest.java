@@ -39,275 +39,313 @@ import static org.junit.Assert.*;
 
 /**
  * It checks the consistency in the cluster with the following scenario:
- * - 3 server
+ * - 3 server  (quorum=2)
  * - network fault on server2 and server3
- * - 5 thread for each running server write 100 records
- * - writes on server2 and server3 are redirected on server1, writes on server1 don't succeed
+ * - 5 threads for each running server write 100 records: writes on server2 and server3 are redirected on server1, writes on server1 don't succeed
  * - restart server2
- * - 5 thread for each running server write 100 records
- * - writes server3 are redirected on server1 or server2, writes on server1 and server2 succeed
+ * - 5 threads for each running server write 100 records: writes server3 are redirected on server1 or server2, writes on server1 and server2 succeed
+ * - check consistency
  * - restart server3
+ * - 5 threads on server3 write 100 records
+ * - check consistency
  * - changing quorum (quorum=3)
- * - ...
+ * - network fault on server2 and server3
+ * - 3 writes on server1 checking they succeed
+ * - restart server2
+ * - 5 threads for each running server write 100 records
+ * - restart server3
+ * - 5 threads on server3 write 100 records
+ * - check consistency
+
  *  TO REVIEW AND COMPLETE
  *
  */
 
 public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
 
-    @Ignore
-    @Test
-    public void test() throws Exception {
-        init(SERVERS);
-        prepare(false);
-        super.executeWritesOnServers.addAll(super.serverInstance);
-        execute();
-    }
+  @Ignore
+  @Test
+  public void test() throws Exception {
+    init(SERVERS);
+    prepare(false);
+    super.executeWritesOnServers.addAll(super.serverInstance);
+    execute();
+  }
 
-    @Override
-    public void executeTest() throws Exception {
+  @Override
+  public void executeTest() throws Exception {
 
-        ODatabaseDocumentTx dbServer3 = new ODatabaseDocumentTx(getPlocalDatabaseURL(serverInstance.get(SERVERS-1))).open("admin", "admin");
+    ODatabaseDocumentTx dbServer3 = new ODatabaseDocumentTx(getPlocalDatabaseURL(serverInstance.get(SERVERS-1))).open("admin", "admin");
 
-        try {
+    try {
 
-            TestQuorum2 tq2 = new TestQuorum2(serverInstance);     // Connection to dbServer3
-            TestQuorum3 tq3 = new TestQuorum3(serverInstance);       // Connection to dbServer1
-            ExecutorService exec = Executors.newSingleThreadExecutor();
-            Future currentFuture = null;
+      TestQuorum2 tq2 = new TestQuorum2(serverInstance);     // Connection to dbServer3
+      TestQuorum1 tq3 = new TestQuorum1(serverInstance);       // Connection to dbServer1
+      ExecutorService exec = Executors.newSingleThreadExecutor();
+      Future currentFuture = null;
 
 
             /*
              * Test with quorum = 2
              */
 
-            try {
-                currentFuture = exec.submit(tq2);
-                currentFuture.get();
-            } catch (Exception e) {
-                e.printStackTrace();
-                assertTrue(false);
-            }
+      try {
+        currentFuture = exec.submit(tq2);
+        currentFuture.get();
+      } catch (Exception e) {
+        e.printStackTrace();
+        assertTrue(false);
+      }
 
 
             /*
              * Test with quorum = 3
              */
 
-            try {
-                currentFuture = exec.submit(tq3);
-                currentFuture.get();
-            } catch (Exception e) {
-                e.printStackTrace();
-                assertTrue(false);
-            }
+      try {
+        currentFuture = exec.submit(tq3);
+        currentFuture.get();
+      } catch (Exception e) {
+        e.printStackTrace();
+        assertTrue(false);
+      }
 
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+  }
+
+  private class TestQuorum2 implements Callable<Void> {
+
+    private final String databaseUrl;
+    private List<ServerRun> serverInstances;
+    private List<ServerRun> executeWritesOnServers;
+    private int initialCount = 0;
+
+    public TestQuorum2(List<ServerRun> serverInstances) {
+
+      this.serverInstances = serverInstances;
+      this.executeWritesOnServers = new LinkedList<ServerRun>();
+      this.executeWritesOnServers.addAll(this.serverInstances);
+      this.databaseUrl = getRemoteDatabaseURL(serverInstances.get(2));
+    }
+
+    @Override
+    public Void call() throws Exception {
+
+      List<ODocument> result = null;
+      final ODatabaseDocumentTx dbServer1 = new ODatabaseDocumentTx(getPlocalDatabaseURL(serverInstance.get(0))).open("admin", "admin");
+
+      try {
+
+      /*
+       * Test with quorum = 2
+       */
+
+        banner("Test with quorum = 2");
+
+        // checking distributed configuration
+        OHazelcastPlugin manager = (OHazelcastPlugin) serverInstance.get(0).getServerInstance().getDistributedManager();
+        ODistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration("distributed-inserttxha");
+        ODocument cfg = databaseConfiguration.serialize();
+        cfg.field("failureAvailableNodesLessQuorum", true);
+        cfg.field("version", (Integer) cfg.field("version") + 1);
+        manager.updateCachedDatabaseConfiguration("distributed-inserttxha", cfg, true, true);
+        assertEquals(2, cfg.field("writeQuorum"));
+
+        // network fault on server2
+        System.out.println("Network fault on server2.\n");
+        simulateServerFault(serverInstance.get(1), "net-fault");
+        assertFalse(serverInstance.get(1).isActive());
+
+        // network fault on server3
+        System.out.println("Network fault on server3.\n");
+        simulateServerFault(serverInstance.get(SERVERS - 1), "net-fault");
+        assertFalse(serverInstance.get(2).isActive());
+
+        // writes on server1
+        ODatabaseRecordThreadLocal.INSTANCE.set(dbServer1);
+        try {
+          new ODocument("Person").fields("name", "Jay", "surname", "Miner").save();
+          new ODocument("Person").fields("name", "Luke", "surname", "Skywalker").save();
+          new ODocument("Person").fields("name", "Yoda", "surname", "Nothing").save();
+          assertTrue("Record inserted with server1 running and writeQuorum=2", false);
         } catch (Exception e) {
-            e.printStackTrace();
+          e.printStackTrace();
+          assertTrue(true);
         }
 
+        // check that no records were inserted
+        result = dbServer1.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));
+        assertEquals(1, result.size());
+        assertEquals(0, ((Number) result.get(0).field("count")).intValue());
+
+        // restarting server2
+        try {
+          serverInstance.get(1).startServer(getDistributedServerConfiguration(serverInstance.get(1)));
+          System.out.println("Server 2 restarted.");
+          assertTrue(serverInstance.get(1).isActive());
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+
+        // writes on server1 and server2
+        executeWritesOnServers.remove(2);
+        executeMultipleWrites(executeWritesOnServers, "plocal");
+
+        // check consistency on server1 and server2
+        checkWritesAboveCluster(executeWritesOnServers, executeWritesOnServers);
+
+        // restarting server3
+        try {
+          serverInstance.get(2).startServer(getDistributedServerConfiguration(serverInstance.get(2)));
+          System.out.println("Server 2 restarted.");
+          assertTrue(serverInstance.get(2).isActive());
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+
+        // writes on server3
+        executeWritesOnServers.add(serverInstance.get(2));
+        executeWritesOnServers.remove(serverInstance.get(0));
+        executeWritesOnServers.remove(serverInstance.get(1));
+        executeMultipleWrites(executeWritesOnServers, "plocal");
+
+        // check consistency
+        executeWritesOnServers.remove(serverInstance.get(2));
+        executeWritesOnServers.addAll(serverInstance);
+        checkWritesAboveCluster(serverInstance, executeWritesOnServers);
+
+      } catch (Exception e) {
+        e.printStackTrace();
+        assertTrue(e.getMessage(), false);
+      } finally {
+        if(dbServer1 != null) {
+          ODatabaseRecordThreadLocal.INSTANCE.set(dbServer1);
+          dbServer1.close();
+          ODatabaseRecordThreadLocal.INSTANCE.set(null);
+        }
+      }
+
+      return null;
+    }
+  }
+
+  private class TestQuorum1 implements Callable<Void>  {
+
+    private final String databaseUrl1;
+    private final String databaseUrl2;
+    private List<ServerRun> serverInstances;
+    private List<ServerRun> executeWritesOnServers;
+    private int initialCount = 0;
+
+    public TestQuorum1(List<ServerRun> serverInstances) {
+
+      this.serverInstances = serverInstances;
+      this.executeWritesOnServers = new LinkedList<ServerRun>();
+      this.executeWritesOnServers.addAll(this.serverInstances);
+      this.databaseUrl1 = getPlocalDatabaseURL(serverInstances.get(0));
+      this.databaseUrl2 = getPlocalDatabaseURL(serverInstances.get(1));
     }
 
-    private class TestQuorum2 implements Callable<Void> {
 
-        private final String databaseUrl;
-        private List<ServerRun> serverInstances;
-        private List<ServerRun> executeWritesOnServers;
-        private int initialCount = 0;
+    @Override
+    public Void call() throws Exception {
 
-        public TestQuorum2(List<ServerRun> serverInstances) {
+      List<ODocument> result = null;
+      final ODatabaseDocumentTx dbServer1 = new ODatabaseDocumentTx(databaseUrl1).open("admin", "admin");
 
-            this.serverInstances = serverInstances;
-            this.executeWritesOnServers = new LinkedList<ServerRun>();
-            this.executeWritesOnServers.addAll(this.serverInstances);
-            this.databaseUrl = getRemoteDatabaseURL(serverInstances.get(2));
+      try {
+
+       /*
+        * Test with quorum = 1
+        */
+
+        banner("Test with quorum = 1");
+
+        // checking distributed configuration
+        OHazelcastPlugin manager = (OHazelcastPlugin) serverInstance.get(0).getServerInstance().getDistributedManager();
+        ODistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration("distributed-inserttxha");
+        ODocument cfg = databaseConfiguration.serialize();
+        cfg.field("writeQuorum", 1);
+        cfg.field("version", (Integer) cfg.field("version") + 1);
+        manager.updateCachedDatabaseConfiguration("distributed-inserttxha", cfg, true, true);
+        assertEquals(1, cfg.field("writeQuorum"));
+
+        // network fault on server2
+        System.out.println("Network fault on server2.\n");
+        simulateServerFault(serverInstance.get(1), "net-fault");
+        assertFalse(serverInstance.get(1).isActive());
+
+        // network fault on server3
+        System.out.println("Network fault on server3.\n");
+        simulateServerFault(serverInstance.get(2), "net-fault");
+        assertFalse(serverInstance.get(2).isActive());
+
+        // writes on server1
+        ODatabaseRecordThreadLocal.INSTANCE.set(dbServer1);
+        try {
+          new ODocument("Person").fields("name", "Jay", "surname", "Miner").save();
+          new ODocument("Person").fields("name", "Luke", "surname", "Skywalker").save();
+          new ODocument("Person").fields("name", "Yoda", "surname", "Nothing").save();
+        } catch (Exception e) {
+          e.printStackTrace();
+          assertTrue("Record not inserted even though writeQuorum=1.", false);
         }
 
-        @Override
-        public Void call() throws Exception {
+        // check that records were inserted
+        result = dbServer1.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));
+        assertEquals(1, result.size());
+        assertEquals(3, ((Number) result.get(0).field("count")).intValue());
 
-            List<ODocument> result = null;
-            final ODatabaseDocumentTx dbServer1 = new ODatabaseDocumentTx(getPlocalDatabaseURL(serverInstance.get(0))).open("admin", "admin");
-
-            try {
-
-              /*
-               * Test with quorum = 2
-               */
-
-                banner("Test with quorum = 2");
-
-                // checking distributed configuration
-                OHazelcastPlugin manager = (OHazelcastPlugin) serverInstance.get(0).getServerInstance().getDistributedManager();
-                ODistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration("distributed-inserttxha");
-                ODocument cfg = databaseConfiguration.serialize();
-                cfg.field("failureAvailableNodesLessQuorum", true);
-                cfg.field("version", (Integer) cfg.field("version") + 1);
-                manager.updateCachedDatabaseConfiguration("distributed-inserttxha", cfg, true, true);
-                assertEquals(2, cfg.field("writeQuorum"));
-
-                // network fault on server2
-                System.out.println("Network fault on server2.\n");
-                simulateServerFault(serverInstance.get(1), "net-fault");
-                assertFalse(serverInstance.get(1).isActive());
-
-                // network fault on server3
-                System.out.println("Network fault on server3.\n");
-                simulateServerFault(serverInstance.get(SERVERS - 1), "net-fault");
-                assertFalse(serverInstance.get(2).isActive());
-
-                // writes on server1
-                ODatabaseRecordThreadLocal.INSTANCE.set(dbServer1);
-                try {
-                    new ODocument("Person").fields("name", "Jay", "surname", "Miner").save();
-                    new ODocument("Person").fields("name", "Luke", "surname", "Skywalker").save();
-                    new ODocument("Person").fields("name", "Yoda", "surname", "Nothing").save();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
-                // check that no records were inserted
-                result = dbServer1.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));
-                //                assertEquals(1, result.size());    // OSQLSynchQuery:91, this add is not necessary and in the distibute mode causes the adding of a copy already present in the resultset.
-                assertEquals(0, ((Number) result.get(0).field("count")).intValue());
-
-                // restarting server2
-                try {
-                    serverInstance.get(1).startServer(getDistributedServerConfiguration(serverInstance.get(1)));
-                    System.out.println("Server 2 restarted.");
-                    assertTrue(serverInstance.get(1).isActive());
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
-                // writes on server1 and server2
-                executeWritesOnServers.remove(2);
-                executeMultipleWrites(executeWritesOnServers, "plocal");
-
-                List<ServerRun> checkOnServers = new LinkedList<ServerRun>();
-                checkOnServers.addAll(serverInstance);
-                checkOnServers.remove(2);
-
-                // check consistency on server1 and server2
-                //                checkWritesAboveCluster(checkOnServers, executeWritesOnServers);
-
-                // restarting server3
-                try {
-                    serverInstance.get(2).startServer(getDistributedServerConfiguration(serverInstance.get(2)));
-                    System.out.println("Server 2 restarted.");
-                    assertTrue(serverInstance.get(2).isActive());
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
-                // writes on server3
-                executeWritesOnServers.add(serverInstance.get(2));
-                executeWritesOnServers.remove(serverInstance.get(0));
-                executeWritesOnServers.remove(serverInstance.get(1));
-                //                executeMultipleWrites(executeWritesOnServers);
-
-                // check consistency
-                executeWritesOnServers.remove(serverInstance.get(2));
-                executeWritesOnServers.add(serverInstance.get(0));
-                executeWritesOnServers.add(serverInstance.get(1));
-                executeWritesOnServers.add(serverInstance.get(2));
-                //                checkWritesAboveCluster(serverInstance, executeWritesOnServers);
-
-            } catch (Exception e) {
-                e.printStackTrace();
-                assertTrue(e.getMessage(), false);
-            } finally {
-                if(dbServer1 != null) {
-                    ODatabaseRecordThreadLocal.INSTANCE.set(dbServer1);
-                    dbServer1.close();
-                    ODatabaseRecordThreadLocal.INSTANCE.set(null);
-                }
-            }
-
-            return null;
+        // restarting server2
+        try {
+          serverInstance.get(1).startServer(getDistributedServerConfiguration(serverInstance.get(1)));
+          System.out.println("Server 2 restarted.");
+          assertTrue(serverInstance.get(1).isActive());
+        } catch (Exception e) {
+          e.printStackTrace();
         }
+
+        // writes on server1 and server2
+        executeWritesOnServers.remove(2);
+        executeMultipleWrites(executeWritesOnServers, "plocal");
+
+        // check consistency on server1 and server2
+        checkWritesAboveCluster(executeWritesOnServers, executeWritesOnServers);
+
+        // restarting server3
+        try {
+          serverInstance.get(2).startServer(getDistributedServerConfiguration(serverInstance.get(2)));
+          System.out.println("Server 2 restarted.");
+          assertTrue(serverInstance.get(2).isActive());
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+
+        // writes on server3
+        executeWritesOnServers.clear();
+        executeWritesOnServers.add(serverInstance.get(2));
+        executeMultipleWrites(executeWritesOnServers, "plocal");
+
+        // check consistency on server1, server2 and server3
+        checkWritesAboveCluster(serverInstance, serverInstance);
+
+
+      } catch (Exception e) {
+        e.printStackTrace();
+        assertTrue(e.getMessage(), false);
+      } finally {
+        if(dbServer1 != null) {
+          ODatabaseRecordThreadLocal.INSTANCE.set(dbServer1);
+          dbServer1.close();
+          ODatabaseRecordThreadLocal.INSTANCE.set(null);
+        }
+      }
+
+      return null;
     }
-
-    private class TestQuorum3 implements Callable<Void>  {
-
-        private final String databaseUrl1;
-        private final String databaseUrl2;
-        private List<ServerRun> serverInstances;
-        private List<ServerRun> executeWritesOnServers;
-        private int initialCount = 0;
-
-        public TestQuorum3(List<ServerRun> serverInstances) {
-
-            this.serverInstances = serverInstances;
-            this.executeWritesOnServers = new LinkedList<ServerRun>();
-            this.executeWritesOnServers.addAll(this.serverInstances);
-            this.databaseUrl1 = getPlocalDatabaseURL(serverInstances.get(0));
-            this.databaseUrl2 = getPlocalDatabaseURL(serverInstances.get(1));
-        }
-
-
-        @Override
-        public Void call() throws Exception {
-
-            List<ODocument> result = null;
-            final ODatabaseDocumentTx dbServer1 = new ODatabaseDocumentTx(databaseUrl1).open("admin", "admin");
-
-            try {
-
-            /*
-             * Test with quorum = 3
-             */
-
-                banner("Test with quorum = 3");
-
-                // checking distributed configuration
-                OHazelcastPlugin manager = (OHazelcastPlugin) serverInstance.get(0).getServerInstance().getDistributedManager();
-                ODistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration("distributed-inserttxha");
-                ODocument cfg = databaseConfiguration.serialize();
-                cfg.field("writeQuorum", 1);
-                cfg.field("version", (Integer) cfg.field("version") + 1);
-                manager.updateCachedDatabaseConfiguration("distributed-inserttxha", cfg, true, true);
-                assertEquals(1, cfg.field("writeQuorum"));
-
-                // network fault on server2
-                System.out.println("Network fault on server2.\n");
-                simulateServerFault(serverInstance.get(1), "net-fault");
-                assertFalse(serverInstance.get(1).isActive());
-
-                // network fault on server3
-                System.out.println("Network fault on server3.\n");
-                simulateServerFault(serverInstance.get(2), "net-fault");
-                assertFalse(serverInstance.get(2).isActive());
-
-                // writes on server1
-                ODatabaseRecordThreadLocal.INSTANCE.set(dbServer1);
-                try {
-                    new ODocument("Person").fields("name", "Jay", "surname", "Miner").save();
-                    new ODocument("Person").fields("name", "Luke", "surname", "Skywalker").save();
-                    new ODocument("Person").fields("name", "Yoda", "surname", "Nothing").save();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
-                // check that records were inserted
-                result = dbServer1.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));
-                //                assertEquals(1, result.size());    // OSQLSynchQuery:91, this add is not necessary and in the distibute mode causes the adding of a copy already present in the resultset.
-                assertEquals(0, ((Number) result.get(0).field("count")).intValue());
-
-
-            } catch (Exception e) {
-                e.printStackTrace();
-                assertTrue(e.getMessage(), false);
-            } finally {
-                if(dbServer1 != null) {
-                    ODatabaseRecordThreadLocal.INSTANCE.set(dbServer1);
-                    dbServer1.close();
-                    ODatabaseRecordThreadLocal.INSTANCE.set(null);
-                }
-            }
-
-            return null;
-        }
-    }
+  }
 
 }
