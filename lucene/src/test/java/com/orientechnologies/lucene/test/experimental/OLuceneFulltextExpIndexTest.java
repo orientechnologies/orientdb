@@ -121,7 +121,7 @@ public class OLuceneFulltextExpIndexTest extends BaseLuceneTest {
   @Test
   public void testLuceneFunction() throws Exception {
     List<ODocument> docs = databaseDocumentTx
-        .query(new OSQLSynchQuery<ODocument>("select * from Song where lucene_match('Song.author:Fabbio') = true "));
+        .query(new OSQLSynchQuery<ODocument>("select * from Song where lucene_match(\"Song.author:Fabbio\") = true "));
 
     assertThat(docs).hasSize(87);
 

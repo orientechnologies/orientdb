@@ -73,7 +73,12 @@ public class OLuceneSearchFunction extends OSQLFunctionAbstract implements OInde
     OBaseIdentifier identifier = item.getIdentifier();
     String fieldName = args[0].toString();
 
-    Set<OIndex<?>> indexes = getDb().getMetadata().getIndexManager().getClassInvolvedIndexes(identifier.toString(), fieldName);
+    OLogManager.instance().info(this, "query:: " + fieldName);
+
+//    Set<OIndex<?>> indexes = getDb().getMetadata().getIndexManager().getClassInvolvedIndexes(identifier.toString());
+
+    Set<OIndex<?>> indexes =getDb().getMetadata().getIndexManager().getClassIndexes(identifier.toString());
+    OLogManager.instance().info(this, "iindexes:: " + indexes.size());
     for (OIndex<?> index : indexes) {
       if (index.getInternal() instanceof OLuceneFullTextExpIndex) {
         return index;
@@ -88,10 +93,12 @@ public class OLuceneSearchFunction extends OSQLFunctionAbstract implements OInde
 
   protected LuceneResultSet results(OFromClause target, OExpression[] args, OCommandContext ctx) {
     OIndex oIndex = searchForIndex(target, args);
+
+    OLogManager.instance().info(this, "index :: " + oIndex);
     if (oIndex != null) {
       OLogManager.instance().info(this, "index:: " + oIndex);
 
-      return (LuceneResultSet) oIndex.get(args);
+      return (LuceneResultSet) oIndex.get(args[0].toString());
     }
     return null;
   }
