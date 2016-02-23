@@ -319,6 +319,12 @@ TOKEN:
     < IDEMPOTENT: ( "I" | "i") ( "D" | "d")  ( "E" | "e") ( "M" | "m") ( "P" | "p")  ( "O" | "o") ( "T" | "t")  ( "E" | "e") ( "N" | "n") ( "T" | "t") >
     |
     < LANGUAGE: ( "L" | "l") ( "A" | "a")  ( "N" | "n") ( "G" | "g") ( "U" | "u")  ( "A" | "a") ( "G" | "g")  ( "E" | "e") >
+    |
+    < BEGIN: ( "B" | "b") ( "E" | "e")  ( "G" | "g") ( "I" | "i") ( "N" | "n") >
+    |
+    < COMMIT: ( "C" | "c") ( "O" | "o")  ( "M" | "m") ( "M" | "m") ( "I" | "i")  ( "T" | "t") >
+    |
+    < IF: ( "I" | "i") ( "F" | "f") >
 	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
@@ -562,11 +568,30 @@ ORid Rid():
     { return jjtThis; }
 }
 
-/** Root production. */
+/** Root productions. */
 OStatement parse() :
 {OStatement result;}
 {
   result = Statement() <EOF>
+  { return result; }
+}
+
+List<OStatement> parseScript() :
+{
+  List<OStatement> result = new ArrayList<OStatement>();
+  OStatement last;
+}
+{
+    (
+        LOOKAHEAD(StatementSemicolon())
+        last = StatementSemicolon() {result.add(last);}
+        |
+        last = IfStatement() {result.add(last);}
+        |
+        <SEMICOLON>
+    )*
+
+  <EOF>
   { return result; }
 }
 
@@ -718,6 +743,12 @@ OIdentifier Identifier():
     |
     token = <LANGUAGE>
     |
+    token = <BEGIN>
+    |
+    token = <COMMIT>
+    |
+    token = <IF>
+    |
     quotedToken = <QUOTED_IDENTIFIER>
 ) {
 
@@ -778,8 +809,23 @@ ONumber Number():
     { return result; }
 }
 
-
 OStatement Statement():
+{OStatement result = null;}
+{
+    result = StatementInternal()
+    [ <SEMICOLON> ]
+    {return result;}
+}
+
+OStatement StatementSemicolon():
+{OStatement result = null;}
+{
+    result = StatementInternal()
+    <SEMICOLON>
+    {return result;}
+}
+
+OStatement StatementInternal():
 {
     OStatement result = null;
 }
@@ -886,10 +932,20 @@ OStatement Statement():
                 |
                 LOOKAHEAD(2)
                 result = CreateFunctionStatement()
-            ) [ <SEMICOLON> ]
+                |
+                result = BeginStatement()
+                |
+                result = CommitStatement()
+                |
+                result = ReturnStatement()
+            )
         )
         |
         result = ExplainStatement()
+        |
+        result = LetStatement()
+        |
+        result = IfStatement()
     )
 	{
 	    return result;
@@ -3616,7 +3672,7 @@ OFindReferencesStatement FindReferencesStatement():
         |
         (
             <LPAREN>
-            jjtThis.subQuery = Statement()
+            jjtThis.subQuery = StatementInternal()
             <RPAREN>
         )
     )
@@ -4141,7 +4197,7 @@ OExplainStatement ExplainStatement():
 {
     (
         <EXPLAIN>
-        jjtThis.statement = Statement()
+        jjtThis.statement = StatementInternal()
     )
     { return jjtThis; }
 }
@@ -4256,6 +4312,79 @@ OCreateFunctionStatement CreateFunctionStatement():
             <LANGUAGE>
             jjtThis.language = Identifier()
         ]
+    )
+    { return jjtThis; }
+}
+
+
+OLetStatement LetStatement():
+{ }
+{
+    (
+        <LET>
+        jjtThis.name = Identifier()
+        <EQ>
+        (
+            LOOKAHEAD(Statement())
+            jjtThis.statement =  StatementInternal()
+            |
+            LOOKAHEAD(Expression())
+            jjtThis.expression = Expression()
+        )
+    )
+    {return jjtThis;}
+}
+
+OBeginStatement BeginStatement():
+{ }
+{
+    (
+        <BEGIN>
+    )
+    {return jjtThis;}
+}
+
+OCommitStatement CommitStatement():
+{ }
+{
+    (
+        <COMMIT>
+        [
+            <RETRY>
+            jjtThis.retry = Integer()
+        ]
+    )
+    {return jjtThis;}
+}
+
+OReturnStatement ReturnStatement():
+{ }
+{
+    (
+        <RETURN>
+        [
+            jjtThis.expression = Expression()
+        ]
+    )
+    {return jjtThis;}
+}
+
+OIfStatement IfStatement():
+{ OStatement last; }
+{
+    (
+        <IF><LPAREN>
+        jjtThis.expression = OrBlock()
+        <RPAREN><LBRACE>
+        (
+            LOOKAHEAD(StatementSemicolon())
+            last = StatementSemicolon() { jjtThis.statements.add(last); }
+            |
+            last = IfStatement() { jjtThis.statements.add(last); }
+            |
+            <SEMICOLON>
+        )*
+        <RBRACE>
     )
     { return jjtThis; }
 }

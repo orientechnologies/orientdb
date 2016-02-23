@@ -127,9 +127,19 @@ public enum OGlobalConfiguration {
   DISK_CACHE_FREE_SPACE_LIMIT("storage.diskCache.diskFreeSpaceLimit", "Minimum amount of space on disk, which, when exceeded, "
       + "will cause the database to switch to read-only mode (in megabytes).", Long.class, 100),
 
+  @Deprecated
+
   DISC_CACHE_FREE_SPACE_CHECK_INTERVAL("storage.diskCache.diskFreeSpaceCheckInterval",
       "The interval (in seconds), after which the storage periodically "
           + "checks whether the amount of free disk space is enough to work in write mode", Integer.class, 5),
+
+  /**
+   * The interval (how many new pages should be added before free space will be checked), after which the storage periodically
+   * checks whether the amount of free disk space is enough to work in write mode.
+   */
+  DISC_CACHE_FREE_SPACE_CHECK_INTERVAL_IN_PAGES("storage.diskCache.diskFreeSpaceCheckIntervalInPages",
+      "The interval (how many new pages should be added before free space will be checked), after which the storage periodically "
+          + "checks whether the amount of free disk space is enough to work in write mode", Integer.class, 4096),
 
   /**
    * Keep disk cache state between moment when storage is closed and moment when it is opened again.

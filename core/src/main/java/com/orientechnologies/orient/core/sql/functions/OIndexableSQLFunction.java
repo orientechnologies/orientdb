@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.sql.parser.OFromClause;
 /**
  *
  * This interface represents SQL functions whose implementation can rely on an index. If used in a WHERE condition, this kind of
- * function can be invoked to retrieve target records from an underlying stricture, like an index
+ * function can be invoked to retrieve target records from an underlying structure, like an index
  *
  * @author Luigi Dell'Aquila
  */

@@ -103,6 +103,8 @@ public class HttpConnectionTest extends BaseHttpDatabaseTest {
       Thread.sleep(1000);
     }
 
+    System.out.printf("\nOK: connections: " + conns.size());
+
     Assert.assertTrue(conns.size() <= 1);
   }
 

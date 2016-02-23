@@ -54,9 +54,8 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstrac
     String queryText = textRequest.getText();
     String originalQuery = queryText;
     try {
-      //TODO disabled for now, because the API of setXXX has to be refactored
-//      queryText = preParse(queryText, iRequest);
-//      textRequest.setText(queryText);
+      queryText = preParse(queryText, iRequest);
+      textRequest.setText(queryText);
 
       init((OCommandRequestText) iRequest);
 
@@ -102,17 +101,40 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstrac
 
       value = parserText.substring(pos + 1).trim();
 
-      if (value.length() == 0)
+      if (value.length() == 0) {
         throw new OCommandSQLParsingException("Missing property value to change for attribute '" + attribute + "'. Use "
             + getSyntax(), parserText, oldPos);
+      }
 
-      if (value.equalsIgnoreCase("null"))
+      if (value.equalsIgnoreCase("null")) {
         value = null;
+      }
+      if (isQuoted(value)) {
+        value = removeQuotes(value);
+      }
 
     } finally {
       textRequest.setText(originalQuery);
     }
     return this;
+  }
+
+  private String removeQuotes(String s) {
+    s = s.trim();
+    return s.substring(1, s.length() - 1);
+  }
+
+
+  private boolean isQuoted(String s) {
+    s = s.trim();
+    if (s.startsWith("\"") && s.endsWith("\""))
+      return true;
+    if (s.startsWith("'") && s.endsWith("'"))
+      return true;
+    if (s.startsWith("`") && s.endsWith("`"))
+      return true;
+
+    return false;
   }
 
   @Override
