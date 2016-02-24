@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.enterprise.channel.binary;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -43,16 +44,14 @@ public abstract class OChannelBinary extends OChannel {
   private static final int MAX_LENGTH_DEBUG = 150;
   protected final boolean  debug;
   private final int        maxChunkSize;
-  private final byte[]     buffer;
   public DataInputStream   in;
   public DataOutputStream  out;
 
   public OChannelBinary(final Socket iSocket, final OContextConfiguration iConfig) throws IOException {
     super(iSocket, iConfig);
 
-    maxChunkSize = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_BINARY_MAX_CONTENT_LENGTH);
+    maxChunkSize = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_BINARY_MAX_CONTENT_LENGTH) * 1024;
     debug = iConfig.getValueAsBoolean(OGlobalConfiguration.NETWORK_BINARY_DEBUG);
-    buffer = new byte[maxChunkSize];
 
     if (debug)
       OLogManager.instance().info(this, "%s - Connected", socket.getRemoteSocketAddress());
@@ -159,6 +158,11 @@ public abstract class OChannelBinary extends OChannel {
           socket.getRemoteSocketAddress());
 
     final int len = in.readInt();
+    if (len > maxChunkSize) {
+      throw OException.wrapException(new OIOException(
+          "Impossible to read a chunk of length:" + len + " max allowed chunk length:" + maxChunkSize
+              + " see NETWORK_BINARY_MAX_CONTENT_LENGTH settings "), null);
+    }
     updateMetricReceivedBytes(OBinaryProtocol.SIZE_INT + len);
 
     if (debug)
@@ -178,54 +182,6 @@ public abstract class OChannelBinary extends OChannel {
       OLogManager.instance().info(this, "%s - Read %d bytes: %s", socket.getRemoteSocketAddress(), len, new String(tmp));
 
     return tmp;
-  }
-
-  public List<String> readStringList() throws IOException {
-    if (debug)
-      OLogManager.instance().info(this, "%s - Reading string list. Reading string list items as int (4 bytes)...",
-          socket.getRemoteSocketAddress());
-
-    final int items = in.readInt();
-    updateMetricReceivedBytes(OBinaryProtocol.SIZE_INT);
-
-    if (debug)
-      OLogManager.instance().info(this, "%s - Read string list items: %d", socket.getRemoteSocketAddress(), items);
-
-    if (items < 0)
-      return null;
-
-    List<String> result = new ArrayList<String>();
-    for (int i = 0; i < items; ++i)
-      result.add(readString());
-
-    if (debug)
-      OLogManager.instance().info(this, "%s - Read string list with %d items: %d", socket.getRemoteSocketAddress(), items);
-
-    return result;
-  }
-
-  public Set<String> readStringSet() throws IOException {
-    if (debug)
-      OLogManager.instance().info(this, "%s - Reading string set. Reading string set items as int (4 bytes)...",
-          socket.getRemoteSocketAddress());
-
-    int items = in.readInt();
-    updateMetricReceivedBytes(OBinaryProtocol.SIZE_INT);
-
-    if (debug)
-      OLogManager.instance().info(this, "%s - Read string set items: %d", socket.getRemoteSocketAddress(), items);
-
-    if (items < 0)
-      return null;
-
-    Set<String> result = new HashSet<String>();
-    for (int i = 0; i < items; ++i)
-      result.add(readString());
-
-    if (debug)
-      OLogManager.instance().info(this, "%s - Read string set with %d items: %d", socket.getRemoteSocketAddress(), items, result);
-
-    return result;
   }
 
   public ORecordId readRID() throws IOException {
@@ -314,29 +270,16 @@ public abstract class OChannelBinary extends OChannel {
       out.writeInt(-1);
       updateMetricTransmittedBytes(OBinaryProtocol.SIZE_INT);
     } else {
+      if(iLength > maxChunkSize){
+        throw OException.wrapException(new OIOException(
+            "Impossible to write a chunk of length:" + iLength + " max allowed chunk length:" + maxChunkSize
+                + " see NETWORK_BINARY_MAX_CONTENT_LENGTH settings "), null);
+      }
+
       out.writeInt(iLength);
       out.write(iContent, 0, iLength);
       updateMetricTransmittedBytes(OBinaryProtocol.SIZE_INT + iLength);
     }
-    return this;
-  }
-
-  public OChannelBinary writeCollectionString(final Collection<String> iCollection) throws IOException {
-    if (debug)
-      OLogManager.instance().info(this, "%s - Writing strings (4+%d=%d items): %s", socket.getRemoteSocketAddress(),
-          iCollection != null ? iCollection.size() : 0, iCollection != null ? iCollection.size() + 4 : 4,
-          iCollection != null ? iCollection.toString() : "null");
-
-    updateMetricTransmittedBytes(OBinaryProtocol.SIZE_INT);
-    if (iCollection == null)
-      writeInt(-1);
-    else {
-      writeInt(iCollection.size());
-
-      for (String s : iCollection)
-        writeString(s);
-    }
-
     return this;
   }
 
@@ -410,11 +353,4 @@ public abstract class OChannelBinary extends OChannel {
     super.close();
   }
 
-  public byte[] getBuffer() {
-    return buffer;
-  }
-
-  public int getMaxChunkSize() {
-    return maxChunkSize;
-  }
 }

@@ -102,8 +102,6 @@ public class OServerAdmin {
           sessionToken = network.readBytes();
           if (sessionToken.length == 0) {
             sessionToken = null;
-          } else {
-            network.getServiceThread().setTokenBased(true);
           }
           storage.setSessionId(network.getServerURL(), sessionId, sessionToken);
         } finally {

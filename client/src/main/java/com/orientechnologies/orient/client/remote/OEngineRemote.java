@@ -66,8 +66,7 @@ public class OEngineRemote extends OEngineAbstract {
 
   @Override
   public void startup() {
-    connectionManager = new ORemoteConnectionManager(OGlobalConfiguration.CLIENT_CHANNEL_MAX_POOL.getValueAsInteger(),
-        OGlobalConfiguration.NETWORK_LOCK_TIMEOUT.getValueAsLong());
+    connectionManager = new ORemoteConnectionManager(OGlobalConfiguration.NETWORK_LOCK_TIMEOUT.getValueAsLong());
   }
 
   @Override

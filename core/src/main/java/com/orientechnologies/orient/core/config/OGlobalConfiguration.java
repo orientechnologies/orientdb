@@ -397,8 +397,8 @@ public enum OGlobalConfiguration {
   NETWORK_BINARY_DNS_LOADBALANCING_TIMEOUT("network.binary.loadBalancing.timeout",
       "Maximum time (in ms) to wait for the answer from DNS about the TXT record for load balancing.", Integer.class, 2000, true),
 
-  NETWORK_BINARY_MAX_CONTENT_LENGTH("network.binary.maxLength", "TCP/IP max content length (in bytes) of BINARY requests.",
-      Integer.class, 32736, true),
+  NETWORK_BINARY_MAX_CONTENT_LENGTH("network.binary.maxLength", "TCP/IP max content length (in KB) of BINARY requests.",
+      Integer.class, 16384, true),
 
   NETWORK_BINARY_READ_RESPONSE_MAX_TIMES("network.binary.readResponse.maxTimes",
       "Maximum attempts, until a response can be read. Otherwise, the response will be dropped from the channel.", Integer.class,
