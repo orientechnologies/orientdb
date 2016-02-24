@@ -22,6 +22,10 @@ package com.orientechnologies.orient.client.remote;
 import com.orientechnologies.orient.client.remote.OStorageRemoteThreadLocal.OStorageRemoteSession;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public class OStorageRemoteThreadLocal extends ThreadLocal<OStorageRemoteSession> {
   public static volatile OStorageRemoteThreadLocal INSTANCE = new OStorageRemoteThreadLocal();
@@ -46,10 +50,24 @@ public class OStorageRemoteThreadLocal extends ThreadLocal<OStorageRemoteSession
     public Integer sessionId        = -1;
     public String  serverURL        = null;
     public int     serverURLIndex   = -1;
+    private Set<OChannelBinaryAsynchClient> connections = new HashSet<OChannelBinaryAsynchClient>();
+
+    public boolean has(OChannelBinaryAsynchClient connection) {
+      return connections.contains(connection);
+    }
+
+    public void add(OChannelBinaryAsynchClient connection) {
+      connections.add(connection);
+    }
+
+    public void clear() {
+      connections.clear();
+    }
   }
 
   @Override
   protected OStorageRemoteSession initialValue() {
     return new OStorageRemoteSession();
   }
+
 }

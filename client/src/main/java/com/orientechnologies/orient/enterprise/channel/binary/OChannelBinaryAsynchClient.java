@@ -57,9 +57,6 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
   private          byte                                                 currentStatus;
   private          int                                                  currentSessionId;
   private volatile OAsynchChannelServiceThread                          serviceThread;
-  private Set<OStorageRemoteThreadLocal.OStorageRemoteSession> sessions = Collections
-      .synchronizedSet(Collections.newSetFromMap(new WeakHashMap<OStorageRemoteThreadLocal.OStorageRemoteSession, Boolean>()));
-
 
   public OChannelBinaryAsynchClient(final String remoteHost, final int remotePort, final String iDatabaseName,
       final OContextConfiguration iConfig, final int iProtocolVersion) throws IOException {
@@ -476,7 +473,11 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     writeByte(iCommand);
     writeInt(session.sessionId);
     if (token != null) {
-      writeBytes(token);
+      if (!session.has(this)) {
+        writeBytes(token);
+        session.add(this);
+      } else
+        writeBytes(new byte[] {});
     }
   }
 }
