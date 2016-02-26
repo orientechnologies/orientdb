@@ -380,13 +380,17 @@ public class OAtomicOperation {
           writeAheadLog.log(new OFileCreatedWALRecord(operationUnitId, fileChanges.fileName, fileId));
         else if (fileChanges.truncate)
           writeAheadLog.log(new OFileTruncatedWALRecord(operationUnitId, fileId));
+        Iterator<Map.Entry<Long, FilePageChanges>> filePageChangesIterator = fileChanges.pageChangesMap.entrySet().iterator();
+        while (filePageChangesIterator.hasNext()) {
+          Map.Entry<Long, FilePageChanges> filePageChangesEntry = filePageChangesIterator.next();
+          //I assume new pages have everytime changes
+          if(filePageChangesEntry.getValue().changes.hasChanges()) {
+            final long pageIndex = filePageChangesEntry.getKey();
+            final FilePageChanges filePageChanges = filePageChangesEntry.getValue();
 
-        for (Map.Entry<Long, FilePageChanges> filePageChangesEntry : fileChanges.pageChangesMap.entrySet()) {
-          final long pageIndex = filePageChangesEntry.getKey();
-          final FilePageChanges filePageChanges = filePageChangesEntry.getValue();
-
-          filePageChanges.lsn = writeAheadLog
-              .log(new OUpdatePageRecord(pageIndex, fileId, operationUnitId, filePageChanges.changes));
+            filePageChanges.lsn = writeAheadLog.log(new OUpdatePageRecord(pageIndex, fileId, operationUnitId, filePageChanges.changes));
+          } else
+            filePageChangesIterator.remove();
         }
       }
 

@@ -33,6 +33,8 @@ public interface OWALChanges {
 
   void moveData(ByteBuffer buffer, int from, int to, int len);
 
+  boolean hasChanges();
+
   /**
    * Apply the changes to a page.
    *
