@@ -120,7 +120,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     channel = new OChannelTextServer(iSocket, iConfiguration);
     channel.connected();
 
-    connection.data.caller = channel.toString();
+    connection.getData().caller = channel.toString();
 
     listeningAddress = getListeningAddress();
 
@@ -128,9 +128,9 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
   }
 
   public void service() throws ONetworkProtocolException, IOException {
-    ++connection.data.totalRequests;
-    connection.data.commandInfo = null;
-    connection.data.commandDetail = null;
+    ++connection.getStats().totalRequests;
+    connection.getData().commandInfo = null;
+    connection.getData().commandDetail = null;
 
     final String callbackF;
     if (OGlobalConfiguration.NETWORK_HTTP_JSONP_ENABLED.getValueAsBoolean() && request.parameters != null && request.parameters.containsKey(OHttpUtils.CALLBACK_PARAMETER_NAME))
@@ -139,7 +139,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
       callbackF = null;
 
     response = new OHttpResponse(channel.outStream, request.httpVersion, additionalResponseHeaders, responseCharSet,
-        connection.data.serverInfo, request.sessionId, callbackF, request.keepAlive, connection);
+        connection.getData().serverInfo, request.sessionId, callbackF, request.keepAlive, connection);
     response.setJsonErrorResponse(jsonResponseError);
     if (request.contentEncoding != null && request.contentEncoding.equals(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED)) {
       response.setContentEncoding(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED);
@@ -200,11 +200,11 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
       }
     } while (isChain);
 
-    connection.data.lastCommandInfo = connection.data.commandInfo;
-    connection.data.lastCommandDetail = connection.data.commandDetail;
+    connection.getStats().lastCommandInfo = connection.getData().commandInfo;
+    connection.getStats().lastCommandDetail = connection.getData().commandDetail;
 
-    connection.data.lastCommandExecutionTime = System.currentTimeMillis() - begin;
-    connection.data.totalCommandExecutionTime += connection.data.lastCommandExecutionTime;
+    connection.getStats().lastCommandExecutionTime = System.currentTimeMillis() - begin;
+    connection.getStats().totalCommandExecutionTime += connection.getStats().lastCommandExecutionTime;
   }
 
   @Override
@@ -226,7 +226,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
       channel.close();
 
     } finally {
-      server.getClientConnectionManager().disconnect(connection.id);
+      server.getClientConnectionManager().disconnect(connection.getId());
 
       if (OLogManager.instance().isDebugEnabled())
         OLogManager.instance().debug(this, "Connection closed");
@@ -423,7 +423,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     writeLine("Pragma: no-cache");
     writeLine("Date: " + new Date());
     writeLine("Content-Type: " + iContentType + "; charset=" + responseCharSet);
-    writeLine("Server: " + connection.data.serverInfo);
+    writeLine("Server: " + connection.getData().serverInfo);
     writeLine("Connection: " + (iKeepAlive ? "Keep-Alive" : "close"));
     if (getAdditionalResponseHeaders() != null)
       for (String h : getAdditionalResponseHeaders())
@@ -494,7 +494,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
             iRequest.ifMatch = line.substring(OHttpUtils.HEADER_IF_MATCH.length());
 
           else if (OStringSerializerHelper.startsWithIgnoreCase(line, OHttpUtils.HEADER_X_FORWARDED_FOR))
-            connection.data.caller = line.substring(OHttpUtils.HEADER_X_FORWARDED_FOR.length());
+            connection.getData().caller = line.substring(OHttpUtils.HEADER_X_FORWARDED_FOR.length());
 
           else if (OStringSerializerHelper.startsWithIgnoreCase(line, OHttpUtils.HEADER_AUTHENTICATION))
             iRequest.authentication = line.substring(OHttpUtils.HEADER_AUTHENTICATION.length());
@@ -561,12 +561,12 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
       return;
     }
 
-    connection.data.commandInfo = "Listening";
-    connection.data.commandDetail = null;
+    connection.getData().commandInfo = "Listening";
+    connection.getData().commandDetail = null;
 
     try {
       channel.socket.setSoTimeout(socketTimeout);
-      connection.data.lastCommandReceived = -1;
+      connection.getStats().lastCommandReceived = -1;
 
       char c = (char) channel.read();
 
@@ -576,9 +576,9 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
       }
 
       channel.socket.setSoTimeout(socketTimeout);
-      connection.data.lastCommandReceived = System.currentTimeMillis();
+      connection.getStats().lastCommandReceived = System.currentTimeMillis();
 
-      request = new OHttpRequest(this, channel.inStream, connection.data, configuration);
+      request = new OHttpRequest(this, channel.inStream, connection.getData(), configuration);
 
       requestContent.setLength(0);
       request.isMultipart = false;
@@ -652,11 +652,11 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
       readAllContent(request);
     } finally {
-      if (connection.data.lastCommandReceived > -1)
+      if (connection.getStats().lastCommandReceived > -1)
         Orient
             .instance()
             .getProfiler()
-            .stopChrono("server.network.requests", "Total received requests", connection.data.lastCommandReceived,
+            .stopChrono("server.network.requests", "Total received requests", connection.getStats().lastCommandReceived,
                 "server.network.requests");
 
       request = null;

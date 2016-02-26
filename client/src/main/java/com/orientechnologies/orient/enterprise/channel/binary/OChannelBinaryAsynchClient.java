@@ -26,6 +26,7 @@ import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.client.remote.OStorageRemoteThreadLocal;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
@@ -42,8 +43,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 
@@ -54,10 +54,9 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
   private final int                            maxUnreadResponses;
   private String                               serverURL;
   private volatile boolean                     channelRead   = false;
-  private byte                                 currentStatus;
-  private int                                  currentSessionId;
-  private byte[]                               tokenBytes;
-  private volatile OAsynchChannelServiceThread serviceThread;
+  private          byte                                                 currentStatus;
+  private          int                                                  currentSessionId;
+  private volatile OAsynchChannelServiceThread                          serviceThread;
 
   public OChannelBinaryAsynchClient(final String remoteHost, final int remotePort, final String iDatabaseName,
       final OContextConfiguration iConfig, final int iProtocolVersion) throws IOException {
@@ -272,7 +271,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
 
       if (debug)
         OLogManager.instance().debug(this, "%s - Session %d handle response", socket.getLocalAddress(), iRequesterId);
-
+      byte [] tokenBytes;
       if (token)
         tokenBytes = this.readBytes();
       else
@@ -469,4 +468,16 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
               + (throwable != null ? throwable.getClass().getName() : "null"));
   }
 
+  public void beginRequest(byte iCommand, OStorageRemoteThreadLocal.OStorageRemoteSession session, byte[] token)
+      throws IOException {
+    writeByte(iCommand);
+    writeInt(session.sessionId);
+    if (token != null) {
+      if (!session.has(this)) {
+        writeBytes(token);
+        session.add(this);
+      } else
+        writeBytes(new byte[] {});
+    }
+  }
 }

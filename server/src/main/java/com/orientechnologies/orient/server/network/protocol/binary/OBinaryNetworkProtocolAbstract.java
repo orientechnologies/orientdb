@@ -76,10 +76,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
   protected OChannelBinaryServer channel;
   protected volatile int         requestType;
   protected int                  clientTxId;
-  protected OToken               token;
-  protected byte[]               tokenBytes;
   protected boolean              okSent;
-  protected OTokenHandler        tokenHandler;
 
   public OBinaryNetworkProtocolAbstract(final String iThreadName) {
     super(Orient.instance().getThreadGroup(), iThreadName);
@@ -92,7 +89,6 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       final OContextConfiguration iConfig) throws IOException {
     server = iServer;
     channel = new OChannelBinaryServer(iSocket, iConfig);
-    tokenHandler = iServer.getTokenHandler();
   }
 
   @Override
@@ -463,7 +459,4 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     return requestType;
   }
 
-  public byte[] getTokenBytes() {
-    return tokenBytes;
-  }
 }

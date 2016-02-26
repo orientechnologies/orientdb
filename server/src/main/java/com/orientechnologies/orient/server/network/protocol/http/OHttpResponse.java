@@ -350,10 +350,10 @@ public class OHttpResponse {
 
   private void checkConnection() throws IOException {
     final Socket socket;
-    if (connection.protocol == null || connection.protocol.getChannel() == null)
+    if (connection.getProtocol() == null || connection.getProtocol().getChannel() == null)
       socket = null;
     else
-      socket = connection.protocol.getChannel().socket;
+      socket = connection.getProtocol().getChannel().socket;
     if (socket == null || socket.isClosed() || socket.isInputShutdown()) {
       OLogManager.instance().debug(this, "[OHttpResponse] found and removed pending closed channel %d (%s)", connection, socket);
       throw new IOException("Connection is closed");

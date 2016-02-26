@@ -32,7 +32,6 @@ import java.io.IOException;
 public class OAsynchChannelServiceThread extends OSoftThread {
   private OChannelBinaryAsynchClient network;
   private int                        sessionId;
-  private boolean                    tokenBased = false;
   private ORemoteServerEventListener remoteServerEventListener;
 
   public OAsynchChannelServiceThread(final ORemoteServerEventListener iRemoteServerEventListener,
@@ -73,9 +72,5 @@ public class OAsynchChannelServiceThread extends OSoftThread {
       if (network != null)
         network.endResponse();
     }
-  }
-
-  public void setTokenBased(boolean tokenBased) {
-    this.tokenBased = tokenBased;
   }
 }

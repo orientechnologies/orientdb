@@ -122,7 +122,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   private OCluster[]                           clusters                = OCommonConst.EMPTY_CLUSTER_ARRAY;
   private int                                  defaultClusterId;
   private OStorageRemoteAsynchEventListener    asynchEventListener;
-  private String                               connectionDbType;
   private volatile String                      connectionUserName;
   private String                               connectionUserPassword;
   private Map<String, Object>                  connectionOptions;
@@ -208,6 +207,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       final OStorageRemoteSession tl = instance.get();
       tl.serverURL = iServerURL;
       tl.sessionId = iSessionId;
+      tl.clear();
     }
     if (token != null && iServerURL != null) {
       this.tokens.put(iServerURL, token);
@@ -300,7 +300,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
   public boolean exists() {
     throw new UnsupportedOperationException(
-        "Cannot check the existance of a database in a remote server. Please use the console or the OServerAdmin class.");
+        "Cannot check the existence of a database in a remote server. Please use the console or the OServerAdmin class.");
   }
 
   public void close(final boolean iForce, boolean onDelete) {
@@ -314,7 +314,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       if (status == STATUS.CLOSED)
         return;
       if (getSessionToken() != null && getSessionId() != -1) {
-
         network = beginRequest(OChannelBinaryProtocol.REQUEST_DB_CLOSE);
         try {
           setSessionId(null, -1, null);
@@ -1610,10 +1609,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return OEngineRemote.NAME + ":" + url;
   }
 
-  public String getClientId() {
-    return clientId;
-  }
-
   public int getClusters() {
     stateLock.acquireReadLock();
     try {
@@ -1836,15 +1831,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   protected synchronized String openRemoteDatabase() throws IOException {
-    connectionDbType = ODatabaseDocument.TYPE;
-
-    if (connectionOptions != null && connectionOptions.size() > 0) {
-      if (connectionOptions.containsKey(PARAM_DB_TYPE))
-        connectionDbType = connectionOptions.get(PARAM_DB_TYPE).toString();
-    }
-
     final String currentURL = getNextAvailableServerURL(true);
-
     return openRemoteDatabase(currentURL);
   }
 
@@ -1875,8 +1862,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         byte[] token = network.readBytes();
         if (token.length == 0) {
           token = null;
-        } else {
-          network.getServiceThread().setTokenBased(true);
         }
         setSessionId(network.getServerURL(), sessionId, token);
 
@@ -2075,10 +2060,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return host;
   }
 
-  protected String getDefaultHost() {
-    return DEFAULT_HOST;
-  }
-
   protected int getDefaultPort() {
     return DEFAULT_PORT;
   }
@@ -2101,13 +2082,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
   protected OChannelBinaryAsynchClient beginRequest(final OChannelBinaryAsynchClient network, final byte iCommand)
       throws IOException {
-    network.writeByte(iCommand);
-    network.writeInt(getSessionId());
-    byte[] token = tokens.get(network.getServerURL());
-    if (token != null) {
-      network.writeBytes(token);
-    }
-
+    final OStorageRemoteThreadLocal instance = OStorageRemoteThreadLocal.INSTANCE;
+    network.beginRequest(iCommand,instance.get(),tokens.get(network.getServerURL()));
     return network;
   }
 

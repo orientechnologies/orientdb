@@ -139,7 +139,7 @@ public class OChannelBinaryProtocol {
 
   public static final int CURRENT_PROTOCOL_VERSION = PROTOCOL_VERSION_33;
 
-  public static OIdentifiable readIdentifiable(final OChannelBinaryAsynchClient network) throws IOException {
+  public static OIdentifiable readIdentifiable(final OChannelBinary network) throws IOException {
     final int classId = network.readShort();
     if (classId == RECORD_NULL)
       return null;

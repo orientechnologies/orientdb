@@ -15,6 +15,17 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.io.IOException;
+import java.util.Date;
+import java.util.List;
+
+import com.orientechnologies.orient.core.exception.OValidationException;
+import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
@@ -290,6 +301,128 @@ public class SecurityTest extends DocumentDBBaseTest {
       database.command(new OCommandGremlin("g.V")).execute();
       Assert.fail("Security breach: Gremlin can be executed by writer user!");
     } catch (OSecurityException e) {
+    } finally {
+      database.close();
+    }
+  }
+
+  @Test
+  public void testEmptyUserName() {
+    database.open("admin", "admin");
+    try {
+      OSecurity security = database.getMetadata().getSecurity();
+
+      ORole reader = security.getRole("reader");
+      String userName = "";
+      try {
+        security.createUser(userName, "foobar", reader);
+        Assert.assertTrue(false);
+      } catch (OValidationException ve) {
+        Assert.assertTrue(true);
+
+      }
+      Assert.assertNull(security.getUser(userName));
+    } finally {
+      database.close();
+    }
+  }
+
+  @Test
+  public void testUserNameWithAllSpaces() {
+    database.open("admin", "admin");
+    try {
+      OSecurity security = database.getMetadata().getSecurity();
+
+      ORole reader = security.getRole("reader");
+      final String userName = "  ";
+      try {
+        security.createUser(userName, "foobar", reader);
+        Assert.assertTrue(false);
+      } catch (OValidationException ve) {
+        Assert.assertTrue(true);
+
+      }
+      Assert.assertNull(security.getUser(userName));
+    } finally {
+      database.close();
+    }
+  }
+
+  @Test
+  public void testUserNameWithSurroundingSpacesOne() {
+    database.open("admin", "admin");
+    try {
+      OSecurity security = database.getMetadata().getSecurity();
+
+      ORole reader = security.getRole("reader");
+      final String userName = " sas";
+      try {
+        security.createUser(userName, "foobar", reader);
+        Assert.assertTrue(false);
+      } catch (OValidationException ve) {
+        Assert.assertTrue(true);
+
+      }
+      Assert.assertNull(security.getUser(userName));
+    } finally {
+      database.close();
+    }
+  }
+
+  @Test
+  public void testUserNameWithSurroundingSpacesTwo() {
+    database.open("admin", "admin");
+    try {
+      OSecurity security = database.getMetadata().getSecurity();
+
+      ORole reader = security.getRole("reader");
+      final String userName = "sas ";
+      try {
+        security.createUser(userName, "foobar", reader);
+        Assert.assertTrue(false);
+      } catch (OValidationException ve) {
+        Assert.assertTrue(true);
+
+      }
+      Assert.assertNull(security.getUser(userName));
+    } finally {
+      database.close();
+    }
+  }
+
+  @Test
+  public void testUserNameWithSurroundingSpacesThree() {
+    database.open("admin", "admin");
+    try {
+      OSecurity security = database.getMetadata().getSecurity();
+
+      ORole reader = security.getRole("reader");
+      final String userName = " sas ";
+      try {
+        security.createUser(userName, "foobar", reader);
+        Assert.assertTrue(false);
+      } catch (OValidationException ve) {
+        Assert.assertTrue(true);
+
+      }
+      Assert.assertNull(security.getUser(userName));
+    } finally {
+      database.close();
+    }
+  }
+
+  @Test
+  public void testUserNameWithSpacesInTheMiddle() {
+    database.open("admin", "admin");
+    try {
+      OSecurity security = database.getMetadata().getSecurity();
+
+      ORole reader = security.getRole("reader");
+      final String userName = "s a s";
+      security.createUser(userName, "foobar", reader);
+      Assert.assertNotNull(security.getUser(userName));
+      security.dropUser(userName);
+      Assert.assertNull(security.getUser(userName));
     } finally {
       database.close();
     }
