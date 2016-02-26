@@ -160,7 +160,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected void onBeforeRequest() throws IOException {
     waitNodeIsOnline();
 
-    if (Boolean.FALSE.equals(tokenBased) || requestType == OChannelBinaryProtocol.REQUEST_CONNECT
+    if (!Boolean.TRUE.equals(tokenBased) || requestType == OChannelBinaryProtocol.REQUEST_CONNECT
         || requestType == OChannelBinaryProtocol.REQUEST_DB_OPEN || (tokenHandler == null)) {
       connection = server.getClientConnectionManager().getConnection(clientTxId, this);
       if (clientTxId < 0) {
