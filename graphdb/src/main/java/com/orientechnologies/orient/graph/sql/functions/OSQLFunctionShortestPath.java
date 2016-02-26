@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionMathAbstract;
 import com.orientechnologies.orient.graph.sql.OGraphCommandExecutorSQLFactory;
@@ -44,24 +45,24 @@ import java.util.Set;
 
 /**
  * Shortest path algorithm to find the shortest path from one node to another node in a directed graph.
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
  */
 public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
   public static final String NAME = "shortestPath";
+  public static final String PARAM_MAX_DEPTH = "maxDepth";
 
   protected static final float DISTANCE = 1f;
 
   public OSQLFunctionShortestPath() {
-    super(NAME, 2, 4);
+    super(NAME, 2, 5);
   }
 
   private class OShortestPathContext {
     OrientVertex sourceVertex;
     OrientVertex destinationVertex;
-    Direction    directionLeft  = Direction.BOTH;
-    Direction    directionRight = Direction.BOTH;
+    Direction directionLeft  = Direction.BOTH;
+    Direction directionRight = Direction.BOTH;
 
     String   edgeType;
     String[] edgeTypeParam;
@@ -77,6 +78,7 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
 
     OrientVertex current;
     OrientVertex currentRight;
+    public Integer maxDepth;
   }
 
   public List<ORID> execute(Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult, final Object[] iParams,
@@ -126,13 +128,21 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
         }
         ctx.edgeTypeParam = new String[] { ctx.edgeType };
 
+        if (iParams.length > 4) {
+          bindAdditionalParams(iParams[4], ctx);
+        }
+
         ctx.queueLeft.add(ctx.sourceVertex);
         ctx.leftVisited.add(ctx.sourceVertex.getIdentity());
 
         ctx.queueRight.add(ctx.destinationVertex);
         ctx.rightVisited.add(ctx.destinationVertex.getIdentity());
 
+        int depth = 1;
         while (true) {
+          if (ctx.maxDepth != null && ctx.maxDepth <= depth) {
+            break;
+          }
           if (ctx.queueLeft.isEmpty() || ctx.queueRight.isEmpty())
             break;
 
@@ -149,6 +159,10 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
             neighborIdentity = walkLeft(ctx);
             if (neighborIdentity != null)
               return neighborIdentity;
+            depth++;
+            if (ctx.maxDepth != null && ctx.maxDepth <= depth) {
+              break;
+            }
 
             if (ctx.queueLeft.isEmpty())
               break;
@@ -164,6 +178,11 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
             if (neighborIdentity != null)
               return neighborIdentity;
 
+            depth++;
+            if (ctx.maxDepth != null && ctx.maxDepth <= depth) {
+              break;
+            }
+
             if (ctx.queueRight.isEmpty())
               break;
 
@@ -172,10 +191,42 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
               return neighborIdentity;
           }
 
+          depth++;
         }
         return new ArrayList<ORID>();
       }
     });
+  }
+
+  private void bindAdditionalParams(Object additionalParams, OShortestPathContext ctx) {
+    if (additionalParams == null) {
+      return;
+    }
+    Map<String, Object> mapParams = null;
+    if (additionalParams instanceof Map) {
+      mapParams = (Map) additionalParams;
+    } else if (additionalParams instanceof OIdentifiable) {
+      mapParams = ((ODocument) ((OIdentifiable) additionalParams).getRecord()).toMap();
+    }
+    if (mapParams != null) {
+      ctx.maxDepth = integer(mapParams.get("maxDepth"));
+    }
+  }
+
+  private Integer integer(Object fromObject) {
+    if (fromObject == null) {
+      return null;
+    }
+    if (fromObject instanceof Number) {
+      return ((Number) fromObject).intValue();
+    }
+    if (fromObject instanceof String) {
+      try {
+        return Integer.parseInt((String) fromObject);
+      } catch (Exception e) {
+      }
+    }
+    return null;
   }
 
   public String getSyntax() {
