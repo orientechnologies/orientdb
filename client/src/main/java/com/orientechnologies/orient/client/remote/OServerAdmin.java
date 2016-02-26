@@ -239,7 +239,7 @@ public class OServerAdmin {
           storage.getResponse(network);
           return null;
         }
-      }, "Cannot create the remote storage: \" + storage.getName();");
+      }, "Cannot create the remote storage: " + storage.getName());
 
     }
 
