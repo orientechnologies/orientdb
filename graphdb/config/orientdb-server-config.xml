@@ -61,18 +61,6 @@
                 <parameter name="allowedLanguages" value="SQL"/>
             </parameters>
         </handler>
-        <!-- USE SESSION TOKEN, TO TURN ON SET THE 'ENABLED' PARAMETER TO 'true' -->
-        <handler class="com.orientechnologies.orient.server.token.OrientTokenHandler">
-            <parameters>
-                <parameter name="enabled" value="false"/>
-                <!-- PRIVATE KEY -->
-                <parameter name="oAuth2Key" value=""/>
-                <!-- SESSION LENGTH IN MINUTES, DEFAULT=1 HOUR -->
-                <parameter name="sessionLength" value="60"/>
-                <!-- ENCRYPTION ALGORITHM, DEFAULT=HmacSHA256 -->
-                <parameter name="encryptionAlgorithm" value="HmacSHA256"/>
-            </parameters>
-        </handler>
 
         <handler class="com.orientechnologies.orient.server.plugin.livequery.OLiveQueryPlugin">
             <!-- EXPERIMENTAL FEATURE, enable at your own risk -->
