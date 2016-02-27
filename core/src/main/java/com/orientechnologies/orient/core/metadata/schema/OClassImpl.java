@@ -67,22 +67,22 @@ import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
  */
 @SuppressWarnings("unchecked")
 public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
-  private static final long                  serialVersionUID        = 1L;
-  private static final int                   NOT_EXISTENT_CLUSTER_ID = -1;
-  final OSchemaShared                        owner;
-  private final Map<String, OProperty>       properties              = new HashMap<String, OProperty>();
-  private int                                defaultClusterId        = NOT_EXISTENT_CLUSTER_ID;
-  private String                             name;
-  private String                             description;
-  private int[]                              clusterIds;
-  private List<OClassImpl>                   superClasses            = new ArrayList<OClassImpl>();
-  private int[]                              polymorphicClusterIds;
-  private List<OClass>                       subclasses;
-  private float                              overSize                = 0f;
-  private String                             shortName;
-  private boolean                            strictMode              = false;                           // @SINCE v1.0rc8
-  private boolean                            abstractClass           = false;                           // @SINCE v1.2.0
-  private Map<String, String>                customFields;
+  private static final long serialVersionUID        = 1L;
+  private static final int  NOT_EXISTENT_CLUSTER_ID = -1;
+  final OSchemaShared owner;
+  private final Map<String, OProperty> properties       = new HashMap<String, OProperty>();
+  private       int                    defaultClusterId = NOT_EXISTENT_CLUSTER_ID;
+  private String name;
+  private String description;
+  private int[]  clusterIds;
+  private List<OClassImpl> superClasses = new ArrayList<OClassImpl>();
+  private int[]        polymorphicClusterIds;
+  private List<OClass> subclasses;
+  private float overSize = 0f;
+  private String shortName;
+  private boolean strictMode    = false;                           // @SINCE v1.0rc8
+  private boolean abstractClass = false;                           // @SINCE v1.2.0
+  private          Map<String, String>       customFields;
   private volatile OClusterSelectionStrategy clusterSelection;                                          // @SINCE 1.7
   private volatile int                       hashCode;
 
@@ -1481,8 +1481,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   /**
    * Check if the current instance extends specified schema class.
    *
-   * @param iClassName
-   *          of class that should be checked
+   * @param iClassName of class that should be checked
    * @return Returns true if the current instance extends the passed schema class (iClass)
    * @see #isSuperClassOf(OClass)
    */
@@ -1507,8 +1506,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   /**
    * Check if the current instance extends specified schema class.
    *
-   * @param clazz
-   *          to check
+   * @param clazz to check
    * @return true if the current instance extends the passed schema class (iClass)
    * @see #isSuperClassOf(OClass)
    */
@@ -1532,8 +1530,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   /**
    * Returns true if the passed schema class (iClass) extends the current instance.
    *
-   * @param clazz
-   *          to check
+   * @param clazz to check
    * @return Returns true if the passed schema class extends the current instance
    * @see #isSubClassOf(OClass)
    */
@@ -1979,23 +1976,23 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     database.query(new OSQLAsynchQuery<Object>("select from " + getEscapedName(name, strictSQL) + " where "
         + getEscapedName(propertyName, strictSQL) + ".type() <> \"" + type.name() + "\"", new OCommandResultListener() {
 
-          @Override
-          public boolean result(Object iRecord) {
-            final ODocument record = ((OIdentifiable) iRecord).getRecord();
-            record.field(propertyName, record.field(propertyName), type);
-            database.save(record);
-            return true;
-          }
+      @Override
+      public boolean result(Object iRecord) {
+        final ODocument record = ((OIdentifiable) iRecord).getRecord();
+        record.field(propertyName, record.field(propertyName), type);
+        database.save(record);
+        return true;
+      }
 
-          @Override
-          public void end() {
-          }
+      @Override
+      public void end() {
+      }
 
-          @Override
-          public Object getResult() {
-            return null;
-          }
-        }));
+      @Override
+      public Object getResult() {
+        return null;
+      }
+    }));
   }
 
   public void firePropertyNameMigration(final ODatabaseDocument database, final String propertyName, final String newPropertyName,
@@ -2505,8 +2502,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   /**
    * Adds a base class to the current one. It adds also the base class cluster ids to the polymorphic cluster ids array.
    *
-   * @param iBaseClass
-   *          The base class to add.
+   * @param iBaseClass The base class to add.
    */
   private OClass addBaseClass(final OClassImpl iBaseClass) {
     checkRecursion(iBaseClass);
@@ -2568,7 +2564,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
   private void removePolymorphicClusterId(final int clusterId) {
     final int index = Arrays.binarySearch(polymorphicClusterIds, clusterId);
-    if (index == -1)
+    if (index < 0)
       return;
 
     if (index < polymorphicClusterIds.length - 1)
@@ -2623,11 +2619,18 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       }
 
       if (!found) {
+        int[] oldClusterId = polymorphicClusterIds;
         // ADD IT
         polymorphicClusterIds = OArrays.copyOf(polymorphicClusterIds, polymorphicClusterIds.length + 1);
         polymorphicClusterIds[polymorphicClusterIds.length - 1] = i;
         Arrays.sort(polymorphicClusterIds);
+        try {
+          addClusterIdToIndexes(i);
+        } catch (Exception e) {
+          polymorphicClusterIds = oldClusterId;
+        }
       }
+
     }
   }
 

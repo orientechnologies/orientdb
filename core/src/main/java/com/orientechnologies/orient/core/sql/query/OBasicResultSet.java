@@ -234,4 +234,9 @@ public class OBasicResultSet<T> implements OResultSet<T> {
     return newValue;
   }
 
+  @Override
+  public boolean isEmptyNoWait() {
+    return underlying.isEmpty();
+  }
+
 }

@@ -79,11 +79,6 @@ public class OCopyDatabaseChunkTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public boolean isRequireNodeOnline() {
-    return false;
-  }
-
-  @Override
   public RESULT_STRATEGY getResultStrategy() {
     return RESULT_STRATEGY.ANY;
   }

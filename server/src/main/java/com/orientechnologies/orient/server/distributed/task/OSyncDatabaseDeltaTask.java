@@ -19,15 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -44,6 +35,11 @@ import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+
+import java.io.*;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Ask for synchronization of delta of chanegs on database from a remote node.
@@ -200,11 +196,6 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
   @Override
   public OCommandDistributedReplicateRequest.QUORUM_TYPE getQuorumType() {
     return OCommandDistributedReplicateRequest.QUORUM_TYPE.NONE;
-  }
-
-  @Override
-  public boolean isRequireNodeOnline() {
-    return false;
   }
 
   @Override

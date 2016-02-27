@@ -204,11 +204,6 @@ public class OSyncClusterTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public boolean isRequireNodeOnline() {
-    return false;
-  }
-
-  @Override
   public long getDistributedTimeout() {
     return OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_SYNCH_TIMEOUT.getValueAsLong();
   }

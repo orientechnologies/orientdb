@@ -40,6 +40,8 @@ public interface OResultSet<T> extends List<T>, Externalizable {
 
   OResultSet<T> copy();
 
+  boolean isEmptyNoWait();
+
   /**
    * Returns the current size. If the resultset is not yet ready, returns te current size.
    * 

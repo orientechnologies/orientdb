@@ -138,9 +138,4 @@ public class OFixTxTask extends OAbstractRemoteTask {
   public String getName() {
     return "fix_tx";
   }
-  //
-  // @Override
-  // public String getQueueName(final String iOriginalQueueName) {
-  // return iOriginalQueueName + OCreateRecordTask.SUFFIX_QUEUE_NAME;
-  // }
 }

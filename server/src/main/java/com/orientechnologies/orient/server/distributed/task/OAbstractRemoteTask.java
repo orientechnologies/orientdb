@@ -83,19 +83,11 @@ public abstract class OAbstractRemoteTask implements Externalizable {
     this.nodeSource = nodeSource;
   }
 
-  public boolean isRequireNodeOnline() {
-    return true;
-  }
-
   public boolean isRequiredOpenDatabase() {
     return true;
   }
 
   public boolean isIdempotent() {
     return false;
-  }
-
-  public String getQueueName(final String iOriginalQueueName) {
-    return iOriginalQueueName;
   }
 }

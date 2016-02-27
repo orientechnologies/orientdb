@@ -219,11 +219,6 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
   }
 
   @Override
-  public boolean isRequireNodeOnline() {
-    return false;
-  }
-
-  @Override
   public long getDistributedTimeout() {
     return OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_SYNCH_TIMEOUT.getValueAsLong();
   }
