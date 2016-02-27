@@ -19,12 +19,13 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
+import com.hazelcast.nio.ObjectDataInput;
+import com.hazelcast.nio.ObjectDataOutput;
+import com.hazelcast.nio.serialization.DataSerializable;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
+import com.orientechnologies.orient.server.distributed.OSerializableWrappedResponse;
 
-import java.io.Externalizable;
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.util.Arrays;
 
@@ -34,7 +35,7 @@ import java.util.Arrays;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OHazelcastDistributedResponse implements ODistributedResponse, Externalizable {
+public class OHazelcastDistributedResponse implements ODistributedResponse, DataSerializable {
   private long   requestId;
   private String executorNodeName;
   private String senderNodeName;
@@ -47,7 +48,7 @@ public class OHazelcastDistributedResponse implements ODistributedResponse, Exte
   }
 
   public OHazelcastDistributedResponse(final long iRequestId, final String executorNodeName, final String senderNodeName,
-      final Serializable payload) {
+      final DataSerializable payload) {
     this.requestId = iRequestId;
     this.executorNodeName = executorNodeName;
     this.senderNodeName = senderNodeName;
@@ -79,6 +80,8 @@ public class OHazelcastDistributedResponse implements ODistributedResponse, Exte
   }
 
   public Object getPayload() {
+    if (payload instanceof OSerializableWrappedResponse)
+      return ((OSerializableWrappedResponse) payload).getWrapped();
     return payload;
   }
 
@@ -93,21 +96,24 @@ public class OHazelcastDistributedResponse implements ODistributedResponse, Exte
   }
 
   @Override
-  public void writeExternal(final ObjectOutput out) throws IOException {
+  public void writeData(final ObjectDataOutput out) throws IOException {
     out.writeLong(requestId);
     out.writeUTF(executorNodeName);
     out.writeUTF(senderNodeName);
-//    if (payload != null && !(payload instanceof Boolean))
-//      OLogManager.instance().info(this, "PAYLOAD: " + (payload != null ? (payload.getClass().getName() + "/" + payload) : null));
-    out.writeObject(payload);
+    if (!(payload instanceof DataSerializable))
+      out.writeObject(new OSerializableWrappedResponse((Serializable) payload));
+    else
+      out.writeObject(payload);
   }
 
   @Override
-  public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
+  public void readData(final ObjectDataInput in) throws IOException {
     requestId = in.readLong();
     executorNodeName = in.readUTF();
     senderNodeName = in.readUTF();
-    payload = (Serializable) in.readObject();
+    payload = in.readObject();
+    if (payload instanceof OSerializableWrappedResponse)
+      payload = ((OSerializableWrappedResponse) payload).getWrapped();
   }
 
   @Override

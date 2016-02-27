@@ -19,6 +19,8 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
+import com.hazelcast.nio.ObjectDataInput;
+import com.hazelcast.nio.ObjectDataOutput;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -36,7 +38,9 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -214,14 +218,15 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public void writeExternal(final ObjectOutput out) throws IOException {
-    startLSN.writeExternal(out);
+  public void writeData(final ObjectDataOutput out) throws IOException {
+    out.writeLong(startLSN.getSegment());
+    out.writeLong(startLSN.getPosition());
     out.writeLong(random);
   }
 
   @Override
-  public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-    startLSN = new OLogSequenceNumber(in);
+  public void readData(final ObjectDataInput in) throws IOException {
+    startLSN = new OLogSequenceNumber(in.readLong(), in.readLong());
     random = in.readLong();
   }
 

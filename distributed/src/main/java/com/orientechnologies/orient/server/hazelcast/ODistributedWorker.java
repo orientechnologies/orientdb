@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server.hazelcast;
 
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.IQueue;
+import com.hazelcast.nio.serialization.DataSerializable;
 import com.hazelcast.spi.exception.DistributedObjectDestroyedException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
@@ -30,14 +31,9 @@ import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
-import com.orientechnologies.orient.server.distributed.ODiscardedResponse;
-import com.orientechnologies.orient.server.distributed.ODistributedException;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 
-import java.io.Serializable;
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -217,14 +213,14 @@ public class ODistributedWorker extends Thread {
     OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED);
 
     try {
-      final OAbstractRemoteTask task = iRequest.getTask();
+      final ORemoteTask task = iRequest.getTask();
 
       if (ODistributedServerLog.isDebugEnabled())
         ODistributedServerLog.debug(this, manager.getLocalNodeName(), iRequest.getSenderNodeName(), DIRECTION.OUT,
             "received request: %s", iRequest);
 
       // EXECUTE IT LOCALLY
-      Serializable responsePayload;
+      DataSerializable responsePayload;
       OSecurityUser origin = null;
       try {
         // EXECUTE THE TASK
@@ -320,7 +316,7 @@ public class ODistributedWorker extends Thread {
     throw new OHotAlignmentNotPossibleException(msg);
   }
 
-  private void sendResponseBack(final ODistributedRequest iRequest, final OAbstractRemoteTask task, Serializable responsePayload) {
+  private void sendResponseBack(final ODistributedRequest iRequest, final ORemoteTask task, DataSerializable responsePayload) {
     ODistributedServerLog.debug(this, manager.getLocalNodeName(), iRequest.getSenderNodeName(), DIRECTION.OUT,
         "sending back response '%s' to request %d (%s)", responsePayload, iRequest.getId(), task);
 

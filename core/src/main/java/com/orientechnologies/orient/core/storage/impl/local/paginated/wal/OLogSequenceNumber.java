@@ -15,10 +15,6 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-
 /**
  * Immutable number representing the position in WAL file (LSN).
  * 
@@ -32,11 +28,6 @@ public class OLogSequenceNumber implements Comparable<OLogSequenceNumber> {
   public OLogSequenceNumber(final long segment, final long position) {
     this.segment = segment;
     this.position = position;
-  }
-
-  public OLogSequenceNumber(final ObjectInput in) throws IOException, ClassNotFoundException {
-    this.segment = in.readLong();
-    this.position = in.readLong();
   }
 
   public long getSegment() {
@@ -84,11 +75,6 @@ public class OLogSequenceNumber implements Comparable<OLogSequenceNumber> {
       return -1;
 
     return 0;
-  }
-
-  public void writeExternal(final ObjectOutput out) throws IOException {
-    out.writeLong(segment);
-    out.writeLong(position);
   }
 
   @Override

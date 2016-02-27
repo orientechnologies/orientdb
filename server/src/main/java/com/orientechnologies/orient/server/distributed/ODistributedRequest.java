@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 
 /**
   *
@@ -46,9 +45,9 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 
    ODistributedRequest setSenderNodeName(String localNodeName);
 
-   OAbstractRemoteTask getTask();
+   ORemoteTask getTask();
 
-   ODistributedRequest setTask(final OAbstractRemoteTask payload);
+   ODistributedRequest setTask(final ORemoteTask payload);
 
    ORID getUserRID();
 

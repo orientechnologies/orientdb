@@ -19,6 +19,8 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
+import com.hazelcast.nio.ObjectDataInput;
+import com.hazelcast.nio.ObjectDataOutput;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -31,8 +33,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIR
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Map;
 
 /**
@@ -93,13 +93,13 @@ public class OScriptTask extends OAbstractCommandTask {
   }
 
   @Override
-  public void writeExternal(final ObjectOutput out) throws IOException {
+  public void writeData(final ObjectDataOutput out) throws IOException {
     out.writeUTF(text);
     out.writeObject(params);
   }
 
   @Override
-  public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
+  public void readData(final ObjectDataInput in) throws IOException {
     text = in.readUTF();
     params = (Map<Object, Object>) in.readObject();
   }

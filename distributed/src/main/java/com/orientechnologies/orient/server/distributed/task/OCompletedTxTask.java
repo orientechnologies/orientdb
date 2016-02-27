@@ -19,21 +19,19 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
+import com.hazelcast.nio.ObjectDataInput;
+import com.hazelcast.nio.ObjectDataOutput;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -80,9 +78,8 @@ public class OCompletedTxTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public List<OAbstractRemoteTask> getFixTask(final ODistributedRequest iRequest, OAbstractRemoteTask iOriginalTask, final Object iBadResponse,
-                                                 final Object iGoodResponse, String executorNodeName,
-                                                 ODistributedServerManager dManager) {
+  public List<OAbstractRemoteTask> getFixTask(final ODistributedRequest iRequest, ORemoteTask iOriginalTask,
+      final Object iBadResponse, final Object iGoodResponse, String executorNodeName, OHazelcastPlugin dManager) {
     return null;
   }
 
@@ -92,14 +89,14 @@ public class OCompletedTxTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public void writeExternal(final ObjectOutput out) throws IOException {
+  public void writeData(final ObjectDataOutput out) throws IOException {
     out.writeInt(locks.size());
     for (ORID task : locks)
       out.writeObject(task);
   }
 
   @Override
-  public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
+  public void readData(final ObjectDataInput in) throws IOException {
     locks.clear();
     final int size = in.readInt();
     for (int i = 0; i < size; ++i)
