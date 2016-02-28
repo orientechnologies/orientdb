@@ -20,9 +20,9 @@
 package com.orientechnologies.orient.server.distributed.task;
 
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
-import com.hazelcast.nio.ObjectDataInput;
-import com.hazelcast.nio.ObjectDataOutput;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -57,13 +57,13 @@ public class OReadRecordIfNotLatestTask extends OAbstractRemoteTask {
   }
 
   @Override
-  public void writeData(final ObjectDataOutput out) throws IOException {
+  public void writeExternal(final ObjectOutput out) throws IOException {
     out.writeUTF(rid.toString());
     out.writeInt(recordVersion);
   }
 
   @Override
-  public void readData(final ObjectDataInput in) throws IOException {
+  public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
     rid = new ORecordId(in.readUTF());
     recordVersion = in.readInt();
   }

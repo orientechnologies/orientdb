@@ -19,18 +19,18 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+
+import java.io.Externalizable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.zip.GZIPInputStream;
 
-import com.hazelcast.nio.ObjectDataInput;
-import com.hazelcast.nio.ObjectDataOutput;
-import com.hazelcast.nio.serialization.DataSerializable;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-
-public class ODistributedDatabaseChunk implements DataSerializable {
+public class ODistributedDatabaseChunk implements Externalizable {
   public long               lastOperationId;
   public String             filePath;
   public long               offset;
@@ -105,23 +105,21 @@ public class ODistributedDatabaseChunk implements DataSerializable {
   }
 
   @Override
-  public void writeData(final ObjectDataOutput out) throws IOException {
+  public void writeExternal(final ObjectOutput out) throws IOException {
     out.writeLong(lastOperationId);
     out.writeUTF(filePath);
     out.writeLong(offset);
     out.writeInt(buffer.length);
     out.write(buffer);
     out.writeBoolean(lsn != null);
-    if (lsn != null) {
-      out.writeLong(lsn.getSegment());
-      out.writeLong(lsn.getPosition());
-    }
+    if (lsn != null)
+      lsn.writeExternal(out);
     out.writeBoolean(gzipCompressed);
     out.writeBoolean(last);
   }
 
   @Override
-  public void readData(final ObjectDataInput in) throws IOException {
+  public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
     lastOperationId = in.readLong();
     filePath = in.readUTF();
     offset = in.readLong();
@@ -129,7 +127,7 @@ public class ODistributedDatabaseChunk implements DataSerializable {
     buffer = new byte[size];
     in.readFully(buffer);
     final boolean lsnNotNull = in.readBoolean();
-    lsn = lsnNotNull ? new OLogSequenceNumber(in.readLong(), in.readLong()) : null;
+    lsn = lsnNotNull ? new OLogSequenceNumber(in) : null;
     gzipCompressed = in.readBoolean();
     last = in.readBoolean();
   }

@@ -20,42 +20,12 @@
 
 package com.orientechnologies.orient.server.distributed;
 
-import com.hazelcast.nio.ObjectDataInput;
-import com.hazelcast.nio.ObjectDataOutput;
-import com.hazelcast.nio.serialization.DataSerializable;
-
-import java.io.IOException;
 import java.io.Serializable;
 
 /**
- * Immutable Serializable wrapper.
- * 
- * @author Luca Garulli
+ * Immutable class used to report back a discarded response.
  */
-public class OSerializableWrappedResponse implements DataSerializable {
-  private Serializable wrapped;
-
-  /**
-   * Constructor for unmarshalling.
-   */
-  public OSerializableWrappedResponse() {
-  }
-
-  public OSerializableWrappedResponse(final Serializable e) {
-    wrapped = e;
-  }
-
-  public Serializable getWrapped() {
-    return wrapped;
-  }
-
-  @Override
-  public void writeData(final ObjectDataOutput out) throws IOException {
-    out.writeObject(wrapped);
-  }
-
-  @Override
-  public void readData(final ObjectDataInput in) throws IOException {
-    wrapped = in.readObject();
+public class ODiscardedResponse implements Serializable {
+  public ODiscardedResponse() {
   }
 }

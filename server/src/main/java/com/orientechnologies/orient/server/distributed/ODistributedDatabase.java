@@ -19,9 +19,9 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.orient.core.id.ORID;
-
 import java.util.Collection;
+
+import com.orientechnologies.orient.core.id.ORID;
 
 /**
  * Generic Distributed Database interface.

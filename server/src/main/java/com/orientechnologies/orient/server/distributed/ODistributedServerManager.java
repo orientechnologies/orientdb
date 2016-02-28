@@ -21,6 +21,8 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 
 import java.util.Collection;
 import java.util.Map;
@@ -61,9 +63,6 @@ public interface ODistributedServerManager {
   DB_STATUS getDatabaseStatus(String iNode, String iDatabaseName);
 
   void setDatabaseStatus(String iNode, String iDatabaseName, DB_STATUS iStatus);
-
-  Object sendRequest(final String iDatabaseName, final Collection<String> iClusterNames, final Collection<String> iTargetNodes,
-      final ORemoteTask iTask, final ODistributedRequest.EXECUTION_MODE iExecutionMode);
 
   ODistributedMessageService getMessageService();
 
@@ -113,6 +112,9 @@ public interface ODistributedServerManager {
   Lock getLock(String iLockName);
 
   ODistributedConfiguration getDatabaseConfiguration(String iDatabaseName);
+
+  Object sendRequest(String iDatabaseName, Collection<String> iClusterNames, Collection<String> iTargetNodeNames,
+      OAbstractRemoteTask iTask, EXECUTION_MODE iExecutionMode);
 
   ODocument getStats();
 

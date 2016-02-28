@@ -22,7 +22,6 @@ package com.orientechnologies.orient.server.hazelcast;
 import com.hazelcast.config.FileSystemXmlConfig;
 import com.hazelcast.config.QueueConfig;
 import com.hazelcast.core.*;
-import com.hazelcast.nio.serialization.DataSerializable;
 import com.orientechnologies.common.console.OConsoleReader;
 import com.orientechnologies.common.console.ODefaultConsoleReader;
 import com.orientechnologies.common.exception.OException;
@@ -367,8 +366,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     }
   }
 
+  @Override
   public Object sendRequest(final String iDatabaseName, final Collection<String> iClusterNames,
-      final Collection<String> iTargetNodes, final ORemoteTask iTask, final EXECUTION_MODE iExecutionMode) {
+      final Collection<String> iTargetNodes, final OAbstractRemoteTask iTask, final EXECUTION_MODE iExecutionMode) {
 
     checkForClusterRebalance(iDatabaseName);
 
@@ -840,34 +840,31 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   /**
    * Executes the request on local node. In case of error returns the Exception itself
    */
-  public DataSerializable executeOnLocalNode(final ODistributedRequest req, final ODatabaseDocumentTx database) {
+  public Serializable executeOnLocalNode(final ODistributedRequest req, final ODatabaseDocumentTx database) {
     if (database != null && !(database.getStorage() instanceof ODistributedStorage))
       throw new ODistributedException("Distributed storage was not installed for database '" + database.getName()
           + "'. Implementation found: " + database.getStorage().getClass().getName());
 
-    final ORemoteTask task = req.getTask();
+    final OAbstractRemoteTask task = req.getTask();
 
     try {
       if (database != null)
         ((ODistributedStorage) database.getStorage()).setLastOperationId(req.getId());
 
-      Object result = task.execute(serverInstance, this, database);
+      final Serializable result = (Serializable) task.execute(serverInstance, this, database);
 
       if (result instanceof Throwable && !(result instanceof OException))
         ODistributedServerLog.error(this, nodeName, req.getSenderNodeName(), DIRECTION.IN,
             "error on executing request %d (%s) on local node: ", (Throwable) result, req.getId(), req.getTask());
 
-      if (!(result instanceof DataSerializable))
-        result = new OSerializableWrappedResponse((Serializable) result);
-
-      return (DataSerializable) result;
+      return result;
 
     } catch (Throwable e) {
       if (!(e instanceof OException))
         ODistributedServerLog.error(this, nodeName, req.getSenderNodeName(), DIRECTION.IN,
             "error on executing distributed request %d on local node: %s", e, req.getId(), req.getTask());
 
-      return new OSerializableWrappedResponse(e);
+      return e;
     }
   }
 

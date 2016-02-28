@@ -19,15 +19,14 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
-import com.hazelcast.nio.ObjectDataInput;
-import com.hazelcast.nio.ObjectDataOutput;
-import com.hazelcast.nio.serialization.DataSerializable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
-import com.orientechnologies.orient.server.distributed.ORemoteTask;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 
+import java.io.Externalizable;
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 /**
  * Hazelcast implementation of distributed peer.
@@ -35,14 +34,14 @@ import java.io.IOException;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OHazelcastDistributedRequest implements ODistributedRequest, DataSerializable {
-  private long           id;
-  private EXECUTION_MODE executionMode;
-  private String         senderNodeName;
-  private String         databaseName;
-  private long           senderThreadId;
-  private ORemoteTask    task;
-  private ORID           userRID;       // KEEP ALSO THE RID TO AVOID SECURITY PROBLEM ON DELETE & RECREATE USERS
+public class OHazelcastDistributedRequest implements ODistributedRequest, Externalizable {
+  private long                id;
+  private EXECUTION_MODE      executionMode;
+  private String              senderNodeName;
+  private String              databaseName;
+  private long                senderThreadId;
+  private OAbstractRemoteTask task;
+  private ORID                userRID;       // KEEP ALSO THE RID TO AVOID SECURITY PROBLEM ON DELETE & RECREATE USERS
 
   /**
    * Constructor used by serializer.
@@ -50,7 +49,7 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, DataSe
   public OHazelcastDistributedRequest() {
   }
 
-  public OHazelcastDistributedRequest(final String senderNodeName, final String databaseName, final ORemoteTask payload,
+  public OHazelcastDistributedRequest(final String senderNodeName, final String databaseName, final OAbstractRemoteTask payload,
       EXECUTION_MODE iExecutionMode) {
     this.senderNodeName = senderNodeName;
     this.databaseName = databaseName;
@@ -80,12 +79,12 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, DataSe
   }
 
   @Override
-  public ORemoteTask getTask() {
+  public OAbstractRemoteTask getTask() {
     return task;
   }
 
   @Override
-  public OHazelcastDistributedRequest setTask(final ORemoteTask payload) {
+  public OHazelcastDistributedRequest setTask(final OAbstractRemoteTask payload) {
     this.task = payload;
     return this;
   }
@@ -118,7 +117,7 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, DataSe
   }
 
   @Override
-  public void writeData(final ObjectDataOutput out) throws IOException {
+  public void writeExternal(final ObjectOutput out) throws IOException {
     out.writeLong(id);
     out.writeUTF(senderNodeName);
     out.writeLong(senderThreadId);
@@ -128,7 +127,7 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, DataSe
   }
 
   @Override
-  public void readData(final ObjectDataInput in) throws IOException {
+  public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
     id = in.readLong();
     senderNodeName = in.readUTF();
     senderThreadId = in.readLong();

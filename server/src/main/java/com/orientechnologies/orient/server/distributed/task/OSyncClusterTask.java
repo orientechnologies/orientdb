@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
-import com.hazelcast.nio.ObjectDataInput;
-import com.hazelcast.nio.ObjectDataOutput;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -41,6 +39,8 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.UUID;
 import java.util.concurrent.locks.Lock;
 
@@ -219,13 +219,13 @@ public class OSyncClusterTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public void writeData(final ObjectDataOutput out) throws IOException {
+  public void writeExternal(final ObjectOutput out) throws IOException {
     out.writeLong(random);
     out.writeUTF(clusterName);
   }
 
   @Override
-  public void readData(final ObjectDataInput in) throws IOException {
+  public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
     random = in.readLong();
     clusterName = in.readUTF();
   }
