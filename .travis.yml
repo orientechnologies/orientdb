@@ -11,5 +11,5 @@ install:
   - mvn install dependency:go-offline -Pskip-formatter -DskipTests=true -q -f driver/pom.xml -Dfailsafe.timeout=0
 
 script:
-  - mvn install -P travis,release -B -f driver/pom.xml -Dfailsafe.timeout=0
+  - mvn install -P travis -B -f driver/pom.xml -Dfailsafe.timeout=0
   - cd tests-scala ; sbt test
