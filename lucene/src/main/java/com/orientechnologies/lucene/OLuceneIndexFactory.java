@@ -18,6 +18,7 @@ package com.orientechnologies.lucene;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.builder.ODocBuilder;
+import com.orientechnologies.lucene.builder.OLuceneSimpleQueryBuilder;
 import com.orientechnologies.lucene.builder.OQueryBuilderImpl;
 import com.orientechnologies.lucene.engine.OLuceneFullTextExpIndexEngine;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngineDelegate;
@@ -130,7 +131,8 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
 
       OLogManager.instance()
           .info(this, "CREATE ENGINE database:: %s , name:: %s , algorithm:: %s", database.getName(), name, algorithm);
-      return new OLuceneFullTextExpIndexEngine(name, db2luceneEngine.get(database), new ODocBuilder(), new OQueryBuilderImpl());
+      return new OLuceneFullTextExpIndexEngine(name, db2luceneEngine.get(database), new ODocBuilder(),
+          new OLuceneSimpleQueryBuilder());
     }
     return new OLuceneIndexEngineDelegate(name, durableInNonTxMode, storage, version);
 

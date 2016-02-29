@@ -59,6 +59,7 @@ public abstract class OLuceneAbstractResultSet implements Set<OIdentifiable> {
   protected void fetchFirstBatch() {
     try {
 
+      OLogManager.instance().info(this, "query context cfg:: " + queryContext.cfg.name());
       switch (queryContext.cfg) {
 
       case NO_FILTER_NO_SORT:

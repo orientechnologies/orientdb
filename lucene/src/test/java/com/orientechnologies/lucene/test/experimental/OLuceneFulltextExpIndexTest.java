@@ -37,7 +37,7 @@ public class OLuceneFulltextExpIndexTest extends BaseLuceneTest {
     OLogManager.instance().installCustomFormatter();
     OLogManager.instance().setConsoleLevel(Level.INFO.getName());
 
-    //    System.setProperty("orientdb.test.env", "ci");
+        System.setProperty("orientdb.test.env", "ci");
 
     initDB();
 
@@ -121,7 +121,7 @@ public class OLuceneFulltextExpIndexTest extends BaseLuceneTest {
   @Test
   public void testLuceneFunction() throws Exception {
     List<ODocument> docs = databaseDocumentTx
-        .query(new OSQLSynchQuery<ODocument>("select * from Song where lucene_match(\"Song.author:Fabbio\") = true "));
+        .query(new OSQLSynchQuery<ODocument>("select from Song where lucene_match( \"Song.author:Fabbio\" ) = true "));
 
     assertThat(docs).hasSize(87);
 

@@ -29,11 +29,6 @@ public class OLuceneSearchFunction extends OSQLFunctionAbstract implements OInde
   public Iterable<OIdentifiable> searchFromTarget(OFromClause target, OBinaryCompareOperator operator, Object rightValue,
       OCommandContext ctx, OExpression... args) {
 
-    OLogManager.instance().info(this, "target :: " + target);
-    OLogManager.instance().info(this, "operator :: " + operator);
-    OLogManager.instance().info(this, "right :: " + rightValue);
-    OLogManager.instance().info(this, "ctx:: " + ctx);
-    OLogManager.instance().info(this, "args :: " + args);
 
     return results(target, args, ctx);
   }
@@ -50,13 +45,13 @@ public class OLuceneSearchFunction extends OSQLFunctionAbstract implements OInde
   public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iParams,
       OCommandContext iContext) {
 
-    //    OLogManager.instance().info(this, "ithis :: " + iThis);
-    //    OLogManager.instance().info(this, "currentRecord :: " + iCurrentRecord);
+//        OLogManager.instance().info(this, "ithis :: " + iThis);
+        OLogManager.instance().info(this, "currentRecord :: " + iCurrentRecord);
     //    OLogManager.instance().info(this, "currentRes :: " + iCurrentResult);
     //    OLogManager.instance().info(this, "params :: " + iParams);
     //    OLogManager.instance().info(this, "ctx :: " + iContext);
 
-    return null;
+    return iCurrentResult;
   }
 
   @Override
@@ -94,11 +89,10 @@ public class OLuceneSearchFunction extends OSQLFunctionAbstract implements OInde
   protected LuceneResultSet results(OFromClause target, OExpression[] args, OCommandContext ctx) {
     OIndex oIndex = searchForIndex(target, args);
 
-    OLogManager.instance().info(this, "index :: " + oIndex);
     if (oIndex != null) {
-      OLogManager.instance().info(this, "index:: " + oIndex);
 
-      return (LuceneResultSet) oIndex.get(args[0].toString());
+      OExpression exp = args[0];
+      return (LuceneResultSet) oIndex.get(exp.toString());
     }
     return null;
   }

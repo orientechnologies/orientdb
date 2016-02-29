@@ -18,6 +18,7 @@
 
 package com.orientechnologies.lucene.builder;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.sql.parser.ParseException;
@@ -32,9 +33,11 @@ import java.util.Map;
  * Created by Enrico Risa on 02/09/15.
  */
 public class OQueryBuilderImpl implements OQueryBuilder {
+
   @Override
   public Query query(OIndexDefinition index, Object key, Analyzer analyzer) throws ParseException {
     String query = "";
+    OLogManager.instance().info(this, "key:: " + key);
     if (key instanceof OCompositeKey) {
       Object params = ((OCompositeKey) key).getKeys().get(0);
       if (params instanceof Map) {
@@ -53,10 +56,11 @@ public class OQueryBuilderImpl implements OQueryBuilder {
     return getQueryParser(index, query, analyzer);
   }
 
-  protected static Query getQueryParser(OIndexDefinition index, String key, Analyzer analyzer)
-      throws ParseException {
+  protected Query getQueryParser(OIndexDefinition index, String query, Analyzer analyzer) throws ParseException {
+    OLogManager.instance().info(this, "getQueryParser - query :: " + query);
+
     QueryParser queryParser;
-    if ((key).startsWith("(")) {
+    if ((query).startsWith("(")) {
       queryParser = new QueryParser("", analyzer);
 
     } else {
@@ -75,7 +79,7 @@ public class OQueryBuilderImpl implements OQueryBuilder {
     }
 
     try {
-      return queryParser.parse(key);
+      return queryParser.parse(query);
 
     } catch (org.apache.lucene.queryparser.classic.ParseException e) {
       throw new ParseException(e.getMessage());

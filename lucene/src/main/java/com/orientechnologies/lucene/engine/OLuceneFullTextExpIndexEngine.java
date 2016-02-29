@@ -5,6 +5,7 @@ import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.lucene.builder.ODocBuilder;
+import com.orientechnologies.lucene.builder.OQueryBuilder;
 import com.orientechnologies.lucene.builder.OQueryBuilderImpl;
 import com.orientechnologies.lucene.collections.LuceneResultSetFactory;
 import com.orientechnologies.lucene.collections.OFullTextCompositeKey;
@@ -53,8 +54,8 @@ public class OLuceneFullTextExpIndexEngine implements OLuceneIndexEngine, OOrien
   private final String         name;
   private final OLuceneStorage luceneStorage;
 
-  private ODocBuilder       docBuilder;
-  private OQueryBuilderImpl queryBuilder;
+  private ODocBuilder   docBuilder;
+  private OQueryBuilder queryBuilder;
 
   private String                   indexType;
   private OIndexDefinition         indexDefinition;
@@ -63,7 +64,7 @@ public class OLuceneFullTextExpIndexEngine implements OLuceneIndexEngine, OOrien
   private OLuceneClassIndexContext indexContext;
 
   public OLuceneFullTextExpIndexEngine(String name, OLuceneStorage luceneStorage, ODocBuilder oDocBuilder,
-      OQueryBuilderImpl oQueryBuilder) {
+      OQueryBuilder oQueryBuilder) {
     this.name = name;
     this.luceneStorage = luceneStorage;
     this.docBuilder = oDocBuilder;
@@ -240,7 +241,6 @@ public class OLuceneFullTextExpIndexEngine implements OLuceneIndexEngine, OOrien
 
   @Override
   public Object get(Object key) {
-    OLogManager.instance().info(this, "get");
     Object inTx = getInTx(key, null);
 
     return inTx;
