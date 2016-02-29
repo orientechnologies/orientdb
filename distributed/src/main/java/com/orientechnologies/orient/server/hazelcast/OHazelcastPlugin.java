@@ -41,6 +41,7 @@ import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
@@ -82,26 +83,27 @@ import java.util.concurrent.locks.Lock;
 public class OHazelcastPlugin extends ODistributedAbstractPlugin
     implements MembershipListener, EntryListener<String, Object>, OCommandOutputListener {
 
-  public static final String                    CONFIG_DATABASE_PREFIX = "database.";
+  public static final String                     CONFIG_DATABASE_PREFIX = "database.";
 
-  protected static final String                 NODE_NAME_ENV          = "ORIENTDB_NODE_NAME";
-  protected static final String                 CONFIG_NODE_PREFIX     = "node.";
-  protected static final String                 CONFIG_DBSTATUS_PREFIX = "dbstatus.";
-  protected static final int                    DEPLOY_DB_MAX_RETRIES  = 10;
-  protected String                              nodeId;
-  protected String                              hazelcastConfigFile    = "hazelcast.xml";
-  protected Map<String, Member>                 activeNodes            = new ConcurrentHashMap<String, Member>();
-  protected OHazelcastDistributedMessageService messageService;
-  protected long                                timeOffset             = 0;
-  protected Date                                startedOn              = new Date();
+  protected static final String                  NODE_NAME_ENV          = "ORIENTDB_NODE_NAME";
+  protected static final String                  CONFIG_NODE_PREFIX     = "node.";
+  protected static final String                  CONFIG_DBSTATUS_PREFIX = "dbstatus.";
+  protected static final int                     DEPLOY_DB_MAX_RETRIES  = 10;
+  protected String                               nodeId;
+  protected String                               hazelcastConfigFile    = "hazelcast.xml";
+  protected Map<String, Member>                  activeNodes            = new ConcurrentHashMap<String, Member>();
+  protected OHazelcastDistributedMessageService  messageService;
+  protected long                                 timeOffset             = 0;
+  protected Date                                 startedOn              = new Date();
 
-  protected volatile NODE_STATUS                status                 = NODE_STATUS.OFFLINE;
+  protected volatile NODE_STATUS                 status                 = NODE_STATUS.OFFLINE;
 
-  protected String                              membershipListenerRegistration;
+  protected String                               membershipListenerRegistration;
 
-  protected volatile HazelcastInstance          hazelcastInstance;
-  protected long                                lastClusterChangeOn;
-  protected List<ODistributedLifecycleListener> listeners              = new ArrayList<ODistributedLifecycleListener>();
+  protected volatile HazelcastInstance           hazelcastInstance;
+  protected long                                 lastClusterChangeOn;
+  protected List<ODistributedLifecycleListener>  listeners              = new ArrayList<ODistributedLifecycleListener>();
+  protected Map<String, ORemoteServerController> remoteServers          = new ConcurrentHashMap<String, ORemoteServerController>();
 
   public OHazelcastPlugin() {
   }
@@ -368,7 +370,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
   @Override
   public Object sendRequest(final String iDatabaseName, final Collection<String> iClusterNames,
-      final Collection<String> iTargetNodes, final OAbstractRemoteTask iTask, final EXECUTION_MODE iExecutionMode) {
+      final Collection<String> iTargetNodes, final ORemoteTask iTask, final EXECUTION_MODE iExecutionMode) {
 
     checkForClusterRebalance(iDatabaseName);
 
@@ -398,6 +400,49 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       return response.getPayload();
 
     return null;
+  }
+
+  @Override
+  public ODistributedRequest createRequest() {
+    return new OHazelcastDistributedRequest();
+  }
+
+  @Override
+  public ODistributedResponse createResponse() {
+    return new OHazelcastDistributedResponse();
+  }
+
+  @Override
+  public ODistributedResponse createResponse(final long requestId, final String executorNodeName, final String senderNodeName,
+      final Serializable payload) {
+    return new OHazelcastDistributedResponse(requestId, executorNodeName, senderNodeName, payload);
+  }
+
+  public ORemoteServerController getRemoteServer(final String nodeName) throws IOException {
+    ORemoteServerController remoteServer = remoteServers.get(nodeName);
+    if (remoteServer == null) {
+      final ODocument cfg = getNodeConfigurationById(nodeName);
+
+      final Collection<Map<String, Object>> listeners = (Collection<Map<String, Object>>) cfg.field("listeners");
+      if (listeners == null)
+        throw new ODatabaseException(
+            "Cannot connect to a remote node because bad distributed configuration: missing 'listeners' array field");
+
+      String url = null;
+      for (Map<String, Object> listener : listeners) {
+        if (((String) listener.get("protocol")).equals("ONetworkProtocolBinary")) {
+          url = (String) listener.get("listen");
+          break;
+        }
+      }
+
+      if (url == null)
+        throw new ODatabaseException("Cannot connect to a remote node because the url was not found");
+
+      remoteServer = new ORemoteServerController(url);
+      remoteServers.put(nodeName, remoteServer);
+    }
+    return remoteServer;
   }
 
   public Set<String> getManagedDatabases() {
@@ -845,7 +890,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       throw new ODistributedException("Distributed storage was not installed for database '" + database.getName()
           + "'. Implementation found: " + database.getStorage().getClass().getName());
 
-    final OAbstractRemoteTask task = req.getTask();
+    final ORemoteTask task = req.getTask();
 
     try {
       if (database != null)

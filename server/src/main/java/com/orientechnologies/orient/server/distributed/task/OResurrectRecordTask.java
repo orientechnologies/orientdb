@@ -19,6 +19,10 @@
      */
 package com.orientechnologies.orient.server.distributed.task;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -28,10 +32,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIR
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedStorage;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-
 /**
  * Distributed task to fix delete record in conflict on synchronization.
  *
@@ -40,6 +40,7 @@ import java.io.ObjectOutput;
  */
 public class OResurrectRecordTask extends OAbstractRemoteTask {
   private static final long serialVersionUID = 1L;
+  public static final int   FACTORYID        = 11;
   private ORecordId         rid;
   private int               version;
 
@@ -96,4 +97,10 @@ public class OResurrectRecordTask extends OAbstractRemoteTask {
   public String getName() {
     return "fix_record_delete";
   }
+
+  @Override
+  public int getFactoryId() {
+    return FACTORYID;
+  }
+
 }

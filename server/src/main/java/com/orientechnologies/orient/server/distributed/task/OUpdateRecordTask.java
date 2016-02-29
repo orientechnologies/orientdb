@@ -49,6 +49,7 @@ import java.util.List;
  */
 public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
   private static final long serialVersionUID = 1L;
+  public static final int FACTORYID          = 3;
 
   protected byte[] previousContent;
   protected int    previousVersion;
@@ -146,17 +147,17 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
   }
 
   @Override
-  public List<OAbstractRemoteTask> getFixTask(final ODistributedRequest iRequest, OAbstractRemoteTask iOriginalTask, final Object iBadResponse, final Object iGoodResponse,
+  public List<ORemoteTask> getFixTask(final ODistributedRequest iRequest, ORemoteTask iOriginalTask, final Object iBadResponse, final Object iGoodResponse,
                                                  String executorNodeName, ODistributedServerManager dManager) {
     final int versionCopy = ORecordVersionHelper.setRollbackMode(previousVersion);
 
-    final List<OAbstractRemoteTask> fixTasks = new ArrayList<OAbstractRemoteTask>(1);
+    final List<ORemoteTask> fixTasks = new ArrayList<ORemoteTask>(1);
     fixTasks.add(new OUpdateRecordTask(rid, null, -1, ((OUpdateRecordTask) iOriginalTask).content, versionCopy, recordType));
     return fixTasks;
   }
 
   @Override
-  public OAbstractRemoteTask getUndoTask(final ODistributedRequest iRequest, final Object iBadResponse) {
+  public ORemoteTask getUndoTask(final ODistributedRequest iRequest, final Object iBadResponse) {
     final int versionCopy = ORecordVersionHelper.setRollbackMode(previousVersion);
     return new OUpdateRecordTask(rid, null, -1, previousContent, versionCopy, recordType);
   }
@@ -210,4 +211,9 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
   public byte[] getContent() {
     return content;
   }
+  @Override
+  public int getFactoryId() {
+    return FACTORYID;
+  }
+
 }

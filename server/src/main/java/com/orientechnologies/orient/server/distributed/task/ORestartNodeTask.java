@@ -19,17 +19,17 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.TimerTask;
+
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.TimerTask;
 
 /**
  * Distributed task to restart a node.
@@ -39,6 +39,7 @@ import java.util.TimerTask;
  */
 public class ORestartNodeTask extends OAbstractRemoteTask {
   private static final long serialVersionUID = 1L;
+  public static final int   FACTORYID        = 10;
 
   public ORestartNodeTask() {
   }
@@ -82,4 +83,10 @@ public class ORestartNodeTask extends OAbstractRemoteTask {
   @Override
   public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
   }
+
+  @Override
+  public int getFactoryId() {
+    return FACTORYID;
+  }
+
 }

@@ -1134,7 +1134,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
                 return null;
               } else if (iArgument instanceof Exception) {
                 try {
-                  final OAbstractRemoteTask undo = txTask.getUndoTaskForLocalStorage(iArgument);
+                  final ORemoteTask undo = txTask.getUndoTaskForLocalStorage(iArgument);
 
                   if (undo != null)
                     try {

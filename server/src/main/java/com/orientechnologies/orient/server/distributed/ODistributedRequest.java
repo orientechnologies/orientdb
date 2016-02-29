@@ -20,37 +20,39 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
+import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
+
+import java.io.Externalizable;
 
 /**
-  *
-  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
-  *
-  */
- public interface ODistributedRequest {
-   enum EXECUTION_MODE {
-     RESPONSE, NO_RESPONSE
-   }
+ *
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ *
+ */
+public interface ODistributedRequest extends Externalizable {
+  enum EXECUTION_MODE {
+    RESPONSE, NO_RESPONSE
+  }
 
-   long getId();
+  long getId();
 
-   void setId(long iId);
+  void setId(long iId);
 
-   EXECUTION_MODE getExecutionMode();
+  EXECUTION_MODE getExecutionMode();
 
-   String getDatabaseName();
+  String getDatabaseName();
 
-   ODistributedRequest setDatabaseName(final String databaseName);
+  ODistributedRequest setDatabaseName(final String databaseName);
 
-   String getSenderNodeName();
+  String getSenderNodeName();
 
-   ODistributedRequest setSenderNodeName(String localNodeName);
+  ODistributedRequest setSenderNodeName(String localNodeName);
 
-   OAbstractRemoteTask getTask();
+  ORemoteTask getTask();
 
-   ODistributedRequest setTask(final OAbstractRemoteTask payload);
+  ODistributedRequest setTask(final ORemoteTask payload);
 
-   ORID getUserRID();
+  ORID getUserRID();
 
-   void setUserRID(ORID iUserRID);
- }
+  void setUserRID(ORID iUserRID);
+}

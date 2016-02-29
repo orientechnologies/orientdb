@@ -19,22 +19,6 @@
  */
 package com.orientechnologies.orient.client.remote;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.FutureTask;
-
-import javax.naming.NamingException;
-import javax.naming.directory.Attribute;
-import javax.naming.directory.Attributes;
-import javax.naming.directory.DirContext;
-import javax.naming.directory.InitialDirContext;
-
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
@@ -59,13 +43,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.exception.OSecurityException;
-import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.exception.OTransactionException;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.OTokenException;
@@ -78,19 +56,23 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.sql.query.OLiveQuery;
 import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
-import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.ORecordMetadata;
-import com.orientechnologies.orient.core.storage.OStorageAbstract;
-import com.orientechnologies.orient.core.storage.OStorageOperationResult;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
+import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+
+import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.DirContext;
+import javax.naming.directory.InitialDirContext;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.*;
+import java.util.concurrent.*;
 
 /**
  * This object is bound to each remote ODatabase instances.
@@ -2080,7 +2062,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return beginRequest(getAvailableNetwork(getNextAvailableServerURL(false)), iCommand);
   }
 
-  protected OChannelBinaryAsynchClient beginRequest(final OChannelBinaryAsynchClient network, final byte iCommand)
+  public OChannelBinaryAsynchClient beginRequest(final OChannelBinaryAsynchClient network, final byte iCommand)
       throws IOException {
     final OStorageRemoteThreadLocal instance = OStorageRemoteThreadLocal.INSTANCE;
     network.beginRequest(iCommand,instance.get(),tokens.get(network.getServerURL()));
@@ -2189,7 +2171,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   /**
    * Starts listening the response.
    */
-  protected void beginResponse(final OChannelBinaryAsynchClient iNetwork) throws IOException {
+  public void beginResponse(final OChannelBinaryAsynchClient iNetwork) throws IOException {
     byte[] newToken = iNetwork.beginResponse(getSessionId(), true);
     if (newToken != null && newToken.length > 0) {
       setSessionId(getServerURL(), getSessionId(), newToken);

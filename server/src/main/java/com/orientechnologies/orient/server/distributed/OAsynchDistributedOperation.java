@@ -20,30 +20,30 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.util.OCallable;
-import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
+import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 import java.util.Collection;
 import java.util.Set;
 
 /**
- * Asynchronous sistributed operation.
+ * Asynchronous distributed operation.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class OAsynchDistributedOperation {
-  private final String              databaseName;
-  private final Set<String>         clusterNames;
-  private final Collection<String>  nodes;
-  private final OAbstractRemoteTask task;
-  private final OCallable           callback;
+  private final String             databaseName;
+  private final Set<String>        clusterNames;
+  private final Collection<String> nodes;
+  private final ORemoteTask        task;
+  private final OCallable          callback;
 
   public OAsynchDistributedOperation(final String iDatabaseName, final Set<String> iClusterNames, final Collection<String> iNodes,
-      final OAbstractRemoteTask iTask) {
+      final ORemoteTask iTask) {
     this(iDatabaseName, iClusterNames, iNodes, iTask, null);
   }
 
   public OAsynchDistributedOperation(final String iDatabaseName, final Set<String> iClusterNames, final Collection<String> iNodes,
-      final OAbstractRemoteTask iTask, final OCallable iCallback) {
+      final ORemoteTask iTask, final OCallable iCallback) {
     databaseName = iDatabaseName;
     clusterNames = iClusterNames;
     nodes = iNodes;
@@ -59,7 +59,7 @@ public class OAsynchDistributedOperation {
     return nodes;
   }
 
-  public OAbstractRemoteTask getTask() {
+  public ORemoteTask getTask() {
     return task;
   }
 

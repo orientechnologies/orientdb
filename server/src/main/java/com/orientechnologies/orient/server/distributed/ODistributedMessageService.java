@@ -38,4 +38,6 @@ public interface ODistributedMessageService {
   ODistributedDatabase unregisterDatabase(String iDatabaseName);
 
   List<String> getManagedQueueNames();
+
+  long dispatchResponseToThread(final ODistributedResponse response);
 }

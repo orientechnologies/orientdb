@@ -19,6 +19,15 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.Callable;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -31,24 +40,16 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.Callable;
-
 /**
  * Distributed create record task used for synchronization.
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class OFixTxTask extends OAbstractRemoteTask {
-  private static final long         serialVersionUID = 1L;
-  private List<OAbstractRemoteTask> tasks            = new ArrayList<OAbstractRemoteTask>();
-  private Set<ORID>                 locks;
+  private static final long serialVersionUID = 1L;
+  public static final int   FACTORYID        = 9;
+  private List<ORemoteTask> tasks            = new ArrayList<ORemoteTask>();
+  private Set<ORID>         locks;
 
   public OFixTxTask() {
   }
@@ -57,15 +58,15 @@ public class OFixTxTask extends OAbstractRemoteTask {
     locks = iLocks;
   }
 
-  public List<OAbstractRemoteTask> getTasks() {
+  public List<ORemoteTask> getTasks() {
     return tasks;
   }
 
-  public void add(final OAbstractRemoteTask iTask) {
+  public void add(final ORemoteTask iTask) {
     tasks.add(iTask);
   }
 
-  public void addAll(final Collection<OAbstractRemoteTask> iTasks) {
+  public void addAll(final Collection<ORemoteTask> iTasks) {
     tasks.addAll(iTasks);
   }
 
@@ -80,7 +81,7 @@ public class OFixTxTask extends OAbstractRemoteTask {
       OScenarioThreadLocal.executeAsDistributed(new Callable<Object>() {
         @Override
         public Object call() throws Exception {
-          for (OAbstractRemoteTask task : tasks) {
+          for (ORemoteTask task : tasks) {
             if (task instanceof OAbstractRecordReplicatedTask)
               // AVOID LOCKING RECORDS AGAIN BECAUSE ARE ALREADY LOCKED
               ((OAbstractRecordReplicatedTask) task).setLockRecord(false);
@@ -114,7 +115,7 @@ public class OFixTxTask extends OAbstractRemoteTask {
   public void writeExternal(final ObjectOutput out) throws IOException {
     // TASKS
     out.writeInt(tasks.size());
-    for (OAbstractRemoteTask task : tasks)
+    for (ORemoteTask task : tasks)
       out.writeObject(task);
     // LOCKS
     out.writeInt(locks.size());
@@ -127,7 +128,7 @@ public class OFixTxTask extends OAbstractRemoteTask {
     // TASKS
     final int size = in.readInt();
     for (int i = 0; i < size; ++i)
-      tasks.add((OAbstractRemoteTask) in.readObject());
+      tasks.add((ORemoteTask) in.readObject());
     // LOCKS
     final int lockSize = in.readInt();
     for (int i = 0; i < lockSize; ++i)
@@ -138,4 +139,10 @@ public class OFixTxTask extends OAbstractRemoteTask {
   public String getName() {
     return "fix_tx";
   }
+
+  @Override
+  public int getFactoryId() {
+    return FACTORYID;
+  }
+
 }

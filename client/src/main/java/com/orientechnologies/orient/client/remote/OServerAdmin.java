@@ -41,9 +41,9 @@ import java.util.Set;
  * Remote administration class of OrientDB Server instances.
  */
 public class OServerAdmin {
-  private OStorageRemote storage;
-  private int            sessionId    = -1;
-  private byte[]         sessionToken = null;
+  protected OStorageRemote storage;
+  private int              sessionId    = -1;
+  private byte[]           sessionToken = null;
 
   /**
    * Creates the object passing a remote URL to connect. sessionToken
@@ -86,7 +86,7 @@ public class OServerAdmin {
       @Override
       public Void execute(OChannelBinaryAsynchClient network) throws IOException {
         try {
-          storage.beginRequest(network,OChannelBinaryProtocol.REQUEST_CONNECT);
+          storage.beginRequest(network, OChannelBinaryProtocol.REQUEST_CONNECT);
 
           storage.sendClientInfo(network);
 
@@ -110,7 +110,7 @@ public class OServerAdmin {
 
         return null;
       }
-    },"Cannot connect to the remote server/database '" + storage.getURL() + "'");
+    }, "Cannot connect to the remote server/database '" + storage.getURL() + "'");
     return this;
   }
 
@@ -210,7 +210,8 @@ public class OServerAdmin {
    * @return The instance itself. Useful to execute method in chain
    * @throws IOException
    */
-  public synchronized OServerAdmin createDatabase(final String iDatabaseName, final String iDatabaseType, final String iStorageMode) throws IOException {
+  public synchronized OServerAdmin createDatabase(final String iDatabaseName, final String iDatabaseType, final String iStorageMode)
+      throws IOException {
 
     if (iDatabaseName == null || iDatabaseName.length() <= 0) {
       final String message = "Cannot create unnamed remote storage. Check your syntax";
@@ -396,7 +397,7 @@ public class OServerAdmin {
       @Override
       public Void execute(OChannelBinaryAsynchClient network) throws IOException {
         try {
-          storage.beginRequest(network,OChannelBinaryProtocol.REQUEST_DB_FREEZE);
+          storage.beginRequest(network, OChannelBinaryProtocol.REQUEST_DB_FREEZE);
           network.writeString(storage.getName());
           network.writeString(storageType);
         } finally {
@@ -406,7 +407,7 @@ public class OServerAdmin {
         storage.getResponse(network);
         return null;
       }
-    },"Cannot freeze the remote storage: " + storage.getName());
+    }, "Cannot freeze the remote storage: " + storage.getName());
 
     return this;
   }
@@ -499,7 +500,6 @@ public class OServerAdmin {
           storage.endRequest(network);
         }
 
-
         storage.getResponse(network);
         return null;
       }
@@ -532,14 +532,15 @@ public class OServerAdmin {
    * @return The instance itself. Useful to execute method in chain
    * @throws IOException
    */
-  public synchronized OServerAdmin copyDatabase(final String databaseName, final String iDatabaseUserName, final String iDatabaseUserPassword, final String iRemoteName, final String iRemoteEngine) throws IOException {
+  public synchronized OServerAdmin copyDatabase(final String databaseName, final String iDatabaseUserName,
+      final String iDatabaseUserPassword, final String iRemoteName, final String iRemoteEngine) throws IOException {
 
     networkAdminOperation(new OStorageRemoteOperation<Void>() {
       @Override
       public Void execute(final OChannelBinaryAsynchClient network) throws IOException {
 
         try {
-          storage.beginRequest(network,OChannelBinaryProtocol.REQUEST_DB_COPY);
+          storage.beginRequest(network, OChannelBinaryProtocol.REQUEST_DB_COPY);
           network.writeString(databaseName);
           network.writeString(iDatabaseUserName);
           network.writeString(iDatabaseUserPassword);
@@ -564,7 +565,7 @@ public class OServerAdmin {
       @Override
       public Map<String, String> execute(OChannelBinaryAsynchClient network) throws IOException {
         final Map<String, String> config = new HashMap<String, String>();
-        storage.beginRequest(network,OChannelBinaryProtocol.REQUEST_CONFIG_LIST);
+        storage.beginRequest(network, OChannelBinaryProtocol.REQUEST_CONFIG_LIST);
         storage.endRequest(network);
 
         try {
@@ -586,7 +587,7 @@ public class OServerAdmin {
     return networkAdminOperation(new OStorageRemoteOperation<String>() {
       @Override
       public String execute(OChannelBinaryAsynchClient network) throws IOException {
-        storage.beginRequest(network,OChannelBinaryProtocol.REQUEST_CONFIG_GET);
+        storage.beginRequest(network, OChannelBinaryProtocol.REQUEST_CONFIG_GET);
         network.writeString(config.getKey());
         network.endRequest();
 
@@ -597,10 +598,11 @@ public class OServerAdmin {
           storage.endResponse(network);
         }
       }
-    },"Cannot retrieve the configuration value: " + config.getKey());
+    }, "Cannot retrieve the configuration value: " + config.getKey());
   }
 
-  public synchronized OServerAdmin setGlobalConfiguration(final OGlobalConfiguration config, final Object iValue) throws IOException {
+  public synchronized OServerAdmin setGlobalConfiguration(final OGlobalConfiguration config, final Object iValue)
+      throws IOException {
 
     networkAdminOperation(new OStorageRemoteOperation<Void>() {
       @Override
@@ -637,8 +639,8 @@ public class OServerAdmin {
   }
 
   protected ODocument sendRequest(final byte iRequest, final ODocument iPayLoad, final String iActivity) {
-    //Using here networkOperation because the original retry logic was lik networkOperation
-    storage.setSessionId(getURL(),sessionId,sessionToken);
+    // Using here networkOperation because the original retry logic was lik networkOperation
+    storage.setSessionId(getURL(), sessionId, sessionToken);
     return storage.networkOperation(new OStorageRemoteOperation<ODocument>() {
       @Override
       public ODocument execute(OChannelBinaryAsynchClient network) throws IOException {
@@ -676,17 +678,16 @@ public class OServerAdmin {
 
   protected <T> T networkAdminOperation(final OStorageRemoteOperation<T> operation, final String errorMessage) {
 
-      OChannelBinaryAsynchClient network=null;
-      try {
-        storage.setSessionId(getURL(),sessionId,sessionToken);
-        //TODO:replace this api with one that get connection for only the specified url.
-        network = storage.getAvailableNetwork(getURL());
-        return operation.execute(network);
-      } catch (Exception e) {
-        storage.close(true, false);
-        throw OException.wrapException(new OStorageException(errorMessage), e);
-      }
+    OChannelBinaryAsynchClient network = null;
+    try {
+      storage.setSessionId(getURL(), sessionId, sessionToken);
+      // TODO:replace this api with one that get connection for only the specified url.
+      network = storage.getAvailableNetwork(getURL());
+      return operation.execute(network);
+    } catch (Exception e) {
+      storage.close(true, false);
+      throw OException.wrapException(new OStorageException(errorMessage), e);
+    }
   }
-
 
 }

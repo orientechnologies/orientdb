@@ -26,12 +26,8 @@ import com.orientechnologies.orient.core.exception.OConcurrentModificationExcept
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.ODistributedStorage;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -43,12 +39,12 @@ import java.util.List;
  * Distributed delete record task used for synchronization.
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- *
  */
 public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
-  private static final long serialVersionUID = 1L;
-  private boolean           delayed          = false;
-  private transient boolean lockRecord       = true;
+  private static final long    serialVersionUID = 1L;
+  public static final  int     FACTORYID        = 4;
+  private              boolean delayed          = false;
+  private transient    boolean lockRecord       = true;
 
   public ODeleteRecordTask() {
   }
@@ -65,8 +61,9 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
   @Override
   public Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
       throws Exception {
-    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), null, DIRECTION.IN, "delete record %s/%s v.%d",
-        database.getName(), rid.toString(), version);
+    ODistributedServerLog
+        .debug(this, iManager.getLocalNodeName(), null, DIRECTION.IN, "delete record %s/%s v.%d", database.getName(),
+            rid.toString(), version);
 
     // TRY LOCKING RECORD
     final ODistributedDatabase ddb = iManager.getMessageService().getDatabase(database.getName());
@@ -102,16 +99,16 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
   }
 
   @Override
-  public List<OAbstractRemoteTask> getFixTask(final ODistributedRequest iRequest, final OAbstractRemoteTask iOriginalTask, final Object iBadResponse, final Object iGoodResponse,
-                                                 String executorNodeName, ODistributedServerManager dManager) {
-    final List<OAbstractRemoteTask> fixTasks = new ArrayList<OAbstractRemoteTask>(1);
+  public List<ORemoteTask> getFixTask(final ODistributedRequest iRequest, final ORemoteTask iOriginalTask,
+      final Object iBadResponse, final Object iGoodResponse, String executorNodeName, ODistributedServerManager dManager) {
+    final List<ORemoteTask> fixTasks = new ArrayList<ORemoteTask>(1);
     fixTasks.add(new OResurrectRecordTask(rid, version));
     return fixTasks;
 
   }
 
   @Override
-  public OAbstractRemoteTask getUndoTask(final ODistributedRequest iRequest, final Object iBadResponse) {
+  public ORemoteTask getUndoTask(final ODistributedRequest iRequest, final Object iBadResponse) {
     return new OResurrectRecordTask(rid, version);
   }
 
@@ -150,4 +147,10 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
   public String toString() {
     return getName() + "(" + rid + " delayed=" + delayed + ")";
   }
+
+  @Override
+  public int getFactoryId() {
+    return FACTORYID;
+  }
+
 }

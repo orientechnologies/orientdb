@@ -22,12 +22,9 @@ package com.orientechnologies.orient.server.hazelcast;
 import com.hazelcast.collection.impl.queue.QueueService;
 import com.hazelcast.config.QueueConfig;
 import com.hazelcast.core.DistributedObject;
-import com.hazelcast.core.HazelcastException;
-import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.IAtomicLong;
 import com.hazelcast.core.IQueue;
 import com.hazelcast.monitor.LocalQueueStats;
-import com.hazelcast.spi.exception.DistributedObjectDestroyedException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -36,15 +33,9 @@ import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedResponseManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -96,65 +87,6 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
         purgePendingMessages();
       }
     };
-
-    // CREATE THREAD LISTENER AGAINST orientdb.node.<node>.response, ONE PER NODE, THEN DISPATCH THE MESSAGE INTERNALLY USING THE
-    // THREAD ID
-    responseThread = new Thread(new Runnable() {
-      @Override
-      public void run() {
-        Thread.currentThread().setName("OrientDB Node Response " + queueName);
-
-        while (running) {
-          String senderNode = null;
-          ODistributedResponse message = null;
-          try {
-            message = (ODistributedResponse) nodeResponseQueue.take();
-
-            if (message != null) {
-              senderNode = message.getSenderNodeName();
-
-              final long reqId = message.getRequestId();
-              if (reqId < 0) {
-                // REQUEST
-                final OAbstractRemoteTask task = (OAbstractRemoteTask) message.getPayload();
-                task.execute(manager.getServerInstance(), manager, null);
-              } else {
-                // RESPONSE
-                final long responseTime = dispatchResponseToThread(message);
-
-                if (responseTime > -1)
-                  collectMetric(responseTime);
-              }
-            }
-
-          } catch (InterruptedException e) {
-            // EXIT CURRENT THREAD
-            Thread.interrupted();
-            break;
-          } catch (DistributedObjectDestroyedException e) {
-            Thread.interrupted();
-            break;
-          } catch (HazelcastInstanceNotActiveException e) {
-            Thread.interrupted();
-            break;
-          } catch (HazelcastException e) {
-            if (e.getCause() instanceof InterruptedException)
-              Thread.interrupted();
-            else
-              ODistributedServerLog.error(this, manager.getLocalNodeName(), senderNode, DIRECTION.IN,
-                  "error on reading distributed response", e, message != null ? message.getPayload() : "-");
-          } catch (Throwable e) {
-            ODistributedServerLog.error(this, manager.getLocalNodeName(), senderNode, DIRECTION.IN,
-                "error on reading distributed response", e, message != null ? message.getPayload() : "-");
-          }
-        }
-
-        ODistributedServerLog.debug(this, manager.getLocalNodeName(), null, DIRECTION.NONE, "end of reading responses");
-      }
-    });
-
-    responseThread.setDaemon(true);
-    responseThread.start();
   }
 
   /**
@@ -324,7 +256,7 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
    * 
    * @param response
    */
-  protected long dispatchResponseToThread(final ODistributedResponse response) {
+  public long dispatchResponseToThread(final ODistributedResponse response) {
     final long chrono = Orient.instance().getProfiler().startChrono();
 
     try {

@@ -19,6 +19,10 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
+import java.io.*;
+import java.util.UUID;
+import java.util.concurrent.locks.Lock;
+
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -36,14 +40,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.UUID;
-import java.util.concurrent.locks.Lock;
-
 /**
  * Ask for deployment of single cluster from a remote node.
  * 
@@ -53,6 +49,7 @@ import java.util.concurrent.locks.Lock;
 public class OSyncClusterTask extends OAbstractReplicatedTask {
   public final static int    CHUNK_MAX_SIZE = 4194304;         // 4MB
   public static final String DEPLOYCLUSTER  = "deploycluster.";
+  public static final int    FACTORYID      = 12;
 
   public enum MODE {
     FULL_REPLACE, MERGE
@@ -233,6 +230,11 @@ public class OSyncClusterTask extends OAbstractReplicatedTask {
   @Override
   public boolean isRequiredOpenDatabase() {
     return true;
+  }
+
+  @Override
+  public int getFactoryId() {
+    return FACTORYID;
   }
 
 }

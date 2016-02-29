@@ -26,10 +26,7 @@ import com.orientechnologies.orient.core.db.record.OPlaceholder;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
-import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
-import com.orientechnologies.orient.server.distributed.task.OCreateRecordTask;
-import com.orientechnologies.orient.server.distributed.task.ODeleteRecordTask;
+import com.orientechnologies.orient.server.distributed.task.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -581,9 +578,9 @@ public class ODistributedResponseManager {
     if (!realignRecordClusters()) {
 
       for (ODistributedResponse r : getReceivedResponses()) {
-        final OAbstractRemoteTask task = request.getTask();
+        final ORemoteTask task = request.getTask();
         if (task instanceof OAbstractReplicatedTask) {
-          final OAbstractRemoteTask undoTask = ((OAbstractReplicatedTask) task).getUndoTask(request, r.getPayload());
+          final ORemoteTask undoTask = ((OAbstractReplicatedTask) task).getUndoTask(request, r.getPayload());
 
           if (undoTask != null) {
             ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
@@ -604,7 +601,7 @@ public class ODistributedResponseManager {
     long maxClusterPos = Long.MIN_VALUE;
 
     for (ODistributedResponse r : getReceivedResponses()) {
-      final OAbstractRemoteTask task = request.getTask();
+      final ORemoteTask task = request.getTask();
       if (task instanceof OCreateRecordTask) {
         final Object badResponse = r.getPayload();
         if (badResponse instanceof Throwable)
@@ -638,7 +635,7 @@ public class ODistributedResponseManager {
 
     // FOUND HOLE(S)
     for (ODistributedResponse r : getReceivedResponses()) {
-      final OAbstractRemoteTask task = request.getTask();
+      final ORemoteTask task = request.getTask();
 
       final OPlaceholder origPh = (OPlaceholder) r.getPayload();
 
@@ -681,11 +678,11 @@ public class ODistributedResponseManager {
       if (responseGroup != bestResponsesGroup) {
         // CONFLICT GROUP: FIX THEM ONE BY ONE
         for (ODistributedResponse r : responseGroup) {
-          final List<OAbstractRemoteTask> fixTasks = ((OAbstractReplicatedTask) request.getTask()).getFixTask(request,
+          final List<ORemoteTask> fixTasks = ((OAbstractReplicatedTask) request.getTask()).getFixTask(request,
               request.getTask(), r.getPayload(), goodResponse.getPayload(), r.getExecutorNodeName(), dManager);
 
           if (fixTasks != null) {
-            for (OAbstractRemoteTask fixTask : fixTasks) {
+            for (ORemoteTask fixTask : fixTasks) {
               ODistributedServerLog.warn(this, dManager.getLocalNodeName(), r.getExecutorNodeName(), DIRECTION.OUT,
                   "sending fix message (%s) for response (%s) on request (%s) to be: %s", fixTask, r, request, goodResponse);
 

@@ -50,11 +50,11 @@ import java.util.List;
  * Distributed create record task used for synchronization.
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- *
  */
 public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   public static final String SUFFIX_QUEUE_NAME = ".insert";
   private static final long  serialVersionUID  = 1L;
+  public static final int    FACTORYID         = 0;
   protected byte[]           content;
   protected byte             recordType;
   protected int              clusterId         = -1;
@@ -145,15 +145,15 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   }
 
   @Override
-  public List<OAbstractRemoteTask> getFixTask(final ODistributedRequest iRequest, OAbstractRemoteTask iOriginalTask,
-      final Object iBadResponse, final Object iGoodResponse, final String executorNode, final ODistributedServerManager dManager) {
+  public List<ORemoteTask> getFixTask(final ODistributedRequest iRequest, ORemoteTask iOriginalTask, final Object iBadResponse,
+      final Object iGoodResponse, final String executorNode, final ODistributedServerManager dManager) {
     if (iBadResponse instanceof Throwable)
       return null;
 
     final OPlaceholder badResult = (OPlaceholder) iBadResponse;
     final OPlaceholder goodResult = (OPlaceholder) iGoodResponse;
 
-    final List<OAbstractRemoteTask> result = new ArrayList<OAbstractRemoteTask>(2);
+    final List<ORemoteTask> result = new ArrayList<ORemoteTask>(2);
 
     if (!badResult.equals(goodResult)) {
       // CREATE RECORD FAILED TO HAVE THE SAME RIDS. FORCE REALIGNING OF DATA CLUSTERS
@@ -247,5 +247,10 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   @Override
   public String getName() {
     return "record_create";
+  }
+
+  @Override
+  public int getFactoryId() {
+    return FACTORYID;
   }
 }

@@ -19,6 +19,13 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -31,13 +38,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 /**
  * Task to manage the end of distributed transaction when no fix is needed (OFixTxTask) and all the locks must be released. Locks
  * are necessary to prevent concurrent modification of records before the transaction is finished.
@@ -47,6 +47,7 @@ import java.util.Set;
  */
 public class OCompletedTxTask extends OAbstractReplicatedTask {
   private static final long serialVersionUID = 1L;
+  public static final int   FACTORYID        = 8;
   private final Set<ORID>   locks;
 
   public OCompletedTxTask() {
@@ -80,14 +81,13 @@ public class OCompletedTxTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public List<OAbstractRemoteTask> getFixTask(final ODistributedRequest iRequest, OAbstractRemoteTask iOriginalTask, final Object iBadResponse,
-                                                 final Object iGoodResponse, String executorNodeName,
-                                                 ODistributedServerManager dManager) {
+  public List<ORemoteTask> getFixTask(final ODistributedRequest iRequest, ORemoteTask iOriginalTask, final Object iBadResponse,
+      final Object iGoodResponse, String executorNodeName, ODistributedServerManager dManager) {
     return null;
   }
 
   @Override
-  public OAbstractRemoteTask getUndoTask(final ODistributedRequest iRequest, final Object iBadResponse) {
+  public ORemoteTask getUndoTask(final ODistributedRequest iRequest, final Object iBadResponse) {
     return null;
   }
 
@@ -126,4 +126,10 @@ public class OCompletedTxTask extends OAbstractReplicatedTask {
   public String getPayload() {
     return null;
   }
+
+  @Override
+  public int getFactoryId() {
+    return FACTORYID;
+  }
+
 }

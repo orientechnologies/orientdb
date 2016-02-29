@@ -33,6 +33,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 
 public class OReadRecordIfNotLatestTask extends OAbstractRemoteTask {
   private static final long serialVersionUID = 1L;
+  public static final  int  FACTORYID        = 2;
 
   protected ORecordId rid;
   protected int       recordVersion;
@@ -81,4 +82,10 @@ public class OReadRecordIfNotLatestTask extends OAbstractRemoteTask {
   public boolean isIdempotent() {
     return true;
   }
+
+  @Override
+  public int getFactoryId() {
+    return FACTORYID;
+  }
+
 }

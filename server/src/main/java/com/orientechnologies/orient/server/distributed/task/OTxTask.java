@@ -19,6 +19,14 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
@@ -43,14 +51,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-
 /**
  * Distributed transaction task.
  *
@@ -59,6 +59,7 @@ import java.util.List;
  */
 public class OTxTask extends OAbstractReplicatedTask {
   private static final long                   serialVersionUID = 1L;
+  public static final int                     FACTORYID        = 7;
 
   private List<OAbstractRecordReplicatedTask> tasks            = new ArrayList<OAbstractRecordReplicatedTask>();
   private transient OTxTaskResult             result;
@@ -197,8 +198,8 @@ public class OTxTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public List<OAbstractRemoteTask> getFixTask(final ODistributedRequest iRequest, OAbstractRemoteTask iOriginalTask,
-      final Object iBadResponse, final Object iGoodResponse, String executorNodeName, ODistributedServerManager dManager) {
+  public List<ORemoteTask> getFixTask(final ODistributedRequest iRequest, ORemoteTask iOriginalTask, final Object iBadResponse,
+      final Object iGoodResponse, String executorNodeName, ODistributedServerManager dManager) {
     if (!(iBadResponse instanceof OTxTaskResult)) {
       // TODO: MANAGE ERROR ON LOCAL NODE
       ODistributedServerLog.debug(this, getNodeSource(), null, DIRECTION.NONE,
@@ -213,7 +214,7 @@ public class OTxTask extends OAbstractReplicatedTask {
       return Collections.EMPTY_LIST;
     }
 
-    final List<OAbstractRemoteTask> fixTasks = new ArrayList<OAbstractRemoteTask>();
+    final List<ORemoteTask> fixTasks = new ArrayList<ORemoteTask>();
 
     final OFixTxTask fixTask = new OFixTxTask(((OTxTaskResult) iBadResponse).locks);
     fixTasks.add(fixTask);
@@ -224,7 +225,7 @@ public class OTxTask extends OAbstractReplicatedTask {
       final Object badResult = ((OTxTaskResult) iBadResponse).results.get(i);
       final Object goodResult = ((OTxTaskResult) iGoodResponse).results.get(i);
 
-      final List<OAbstractRemoteTask> tasks = t.getFixTask(iRequest, t, badResult, goodResult, executorNodeName, dManager);
+      final List<ORemoteTask> tasks = t.getFixTask(iRequest, t, badResult, goodResult, executorNodeName, dManager);
       if (tasks != null)
         fixTask.addAll(tasks);
     }
@@ -233,7 +234,7 @@ public class OTxTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public OAbstractRemoteTask getUndoTask(final ODistributedRequest iRequest, final Object iBadResponse) {
+  public ORemoteTask getUndoTask(final ODistributedRequest iRequest, final Object iBadResponse) {
     if (result == null)
       // NO RESULT: NO UNDO NEEDED
       return null;
@@ -241,13 +242,13 @@ public class OTxTask extends OAbstractReplicatedTask {
     return getUndoTaskForLocalStorage(iBadResponse);
   }
 
-  public OAbstractRemoteTask getUndoTaskForLocalStorage(final Object iBadResponse) {
+  public ORemoteTask getUndoTaskForLocalStorage(final Object iBadResponse) {
     final OFixTxTask fixTask = new OFixTxTask(result != null ? result.locks : new HashSet<ORID>());
 
     for (int i = 0; i < tasks.size(); ++i) {
       final OAbstractRecordReplicatedTask t = tasks.get(i);
 
-      final OAbstractRemoteTask undoTask;
+      final ORemoteTask undoTask;
       if (iBadResponse instanceof List)
         undoTask = t.getUndoTask(null, ((List<Object>) iBadResponse).get(i));
       else
@@ -306,4 +307,10 @@ public class OTxTask extends OAbstractReplicatedTask {
   public List<OAbstractRecordReplicatedTask> getTasks() {
     return tasks;
   }
+
+  @Override
+  public int getFactoryId() {
+    return FACTORYID;
+  }
+
 }

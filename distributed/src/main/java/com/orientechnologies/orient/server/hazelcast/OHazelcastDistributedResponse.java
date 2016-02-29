@@ -19,14 +19,13 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
-import com.orientechnologies.orient.server.distributed.ODistributedResponse;
-
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.util.Arrays;
+
+import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 
 /**
  * Hazelcast implementation of distributed peer.
@@ -34,7 +33,7 @@ import java.util.Arrays;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OHazelcastDistributedResponse implements ODistributedResponse, Externalizable {
+public class OHazelcastDistributedResponse implements ODistributedResponse {
   private long   requestId;
   private String executorNodeName;
   private String senderNodeName;
@@ -97,8 +96,6 @@ public class OHazelcastDistributedResponse implements ODistributedResponse, Exte
     out.writeLong(requestId);
     out.writeUTF(executorNodeName);
     out.writeUTF(senderNodeName);
-//    if (payload != null && !(payload instanceof Boolean))
-//      OLogManager.instance().info(this, "PAYLOAD: " + (payload != null ? (payload.getClass().getName() + "/" + payload) : null));
     out.writeObject(payload);
   }
 

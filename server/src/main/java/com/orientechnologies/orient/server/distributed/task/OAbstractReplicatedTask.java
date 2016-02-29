@@ -34,12 +34,12 @@ import java.util.List;
 public abstract class OAbstractReplicatedTask extends OAbstractRemoteTask {
   private static final long serialVersionUID = 1L;
 
-  public List<OAbstractRemoteTask> getFixTask(ODistributedRequest iRequest, OAbstractRemoteTask iOriginalTask, Object iBadResponse,
+  public List<ORemoteTask> getFixTask(ODistributedRequest iRequest, ORemoteTask iOriginalTask, Object iBadResponse,
       Object iGoodResponse, String executorNodeName, ODistributedServerManager dManager) {
     return Collections.EMPTY_LIST;
   }
 
-  public OAbstractRemoteTask getUndoTask(ODistributedRequest iRequest, Object iBadResponse) {
+  public ORemoteTask getUndoTask(ODistributedRequest iRequest, Object iBadResponse) {
     return null;
   }
 

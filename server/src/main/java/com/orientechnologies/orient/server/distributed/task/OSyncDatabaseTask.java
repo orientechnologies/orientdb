@@ -19,6 +19,13 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
+import java.io.*;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -29,23 +36,8 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedDatabaseChunk;
-import com.orientechnologies.orient.server.distributed.ODistributedException;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.ODistributedStorage;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.UUID;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
 
 /**
  * Ask for synchronization of database from a remote node.
@@ -55,8 +47,9 @@ import java.util.concurrent.locks.Lock;
 public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OCommandOutputListener {
   public final static int    CHUNK_MAX_SIZE = 4194304;    // 4MB
   public static final String DEPLOYDB       = "deploydb.";
+  public static final int    FACTORYID      = 14;
 
-  protected long random;
+  protected long             random;
 
   public OSyncDatabaseTask() {
     random = UUID.randomUUID().getLeastSignificantBits();
@@ -256,6 +249,11 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
   @Override
   public boolean isRequiredOpenDatabase() {
     return true;
+  }
+
+  @Override
+  public int getFactoryId() {
+    return FACTORYID;
   }
 
 }

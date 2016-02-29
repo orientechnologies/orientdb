@@ -53,6 +53,7 @@ import java.util.Map;
  */
 public class OSQLCommandTask extends OAbstractCommandTask {
   private static final long                                 serialVersionUID = 1L;
+  public static final int FACTORYID                                          = 5;
 
   protected String                                          text;
   protected Map<Object, Object>                             params;
@@ -171,4 +172,9 @@ public class OSQLCommandTask extends OAbstractCommandTask {
   public String getPayload() {
     return text;
   }
+  @Override
+  public int getFactoryId() {
+    return FACTORYID;
+  }
+
 }

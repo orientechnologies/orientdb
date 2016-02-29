@@ -19,6 +19,11 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
+import java.io.*;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -36,11 +41,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
-import java.io.*;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-
 /**
  * Ask for synchronization of delta of chanegs on database from a remote node.
  *
@@ -49,6 +49,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
   public final static int      CHUNK_MAX_SIZE = 4194304;    // 4MB
   public static final String   DEPLOYDB       = "deploydb.";
+  public static final int      FACTORYID      = 13;
 
   protected OLogSequenceNumber startLSN;
   protected long               random;
@@ -229,6 +230,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
   public boolean isRequiredOpenDatabase() {
     return true;
   }
+
   //
   // public static void dumpClusters(OAbstractPaginatedStorage storage) {
   // OLogManager.instance().flush();
@@ -241,4 +243,9 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
   // OLogManager.instance().info(storage, "***************************************");
   // OLogManager.instance().flush();
   // }
+  @Override
+  public int getFactoryId() {
+    return FACTORYID;
+  }
+
 }

@@ -19,12 +19,14 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import java.io.Externalizable;
+
 /**
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  *
  */
-public interface ODistributedResponse {
+public interface ODistributedResponse extends Externalizable {
 
   String getExecutorNodeName();
 
