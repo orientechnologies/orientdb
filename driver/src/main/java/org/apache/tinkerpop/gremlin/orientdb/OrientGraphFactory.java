@@ -132,8 +132,8 @@ public final class OrientGraphFactory {
     }
 
     /**
-     * Enable or disable the prefixing of class names with V_<label> for
-     * vertices or E_<label> for edges.
+     * Enable or disable the prefixing of class names with V_&lt;label&gt; for
+     * vertices or E_&lt;label&gt; for edges.
      * 
      * @param is
      *            if true classname equals label, if false classname is prefixed
