@@ -169,6 +169,8 @@ public interface OrientSqlTreeConstants
   public int JJTCOMMITSTATEMENT = 163;
   public int JJTRETURNSTATEMENT = 164;
   public int JJTIFSTATEMENT = 165;
+  public int JJTSLEEPSTATEMENT = 166;
+  public int JJTCONSOLESTATEMENT = 167;
 
 
   public String[] jjtNodeName = {
@@ -338,6 +340,8 @@ public interface OrientSqlTreeConstants
     "CommitStatement",
     "ReturnStatement",
     "IfStatement",
+    "SleepStatement",
+    "ConsoleStatement",
   };
 }
-/* JavaCC - OriginalChecksum=885a170f7d0814c8243be771dbd420b7 (do not edit this line) */
+/* JavaCC - OriginalChecksum=469eb6299259891d2e8aa04bd521db9d (do not edit this line) */

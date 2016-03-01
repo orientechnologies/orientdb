@@ -325,6 +325,12 @@ TOKEN:
     < COMMIT: ( "C" | "c") ( "O" | "o")  ( "M" | "m") ( "M" | "m") ( "I" | "i")  ( "T" | "t") >
     |
     < IF: ( "I" | "i") ( "F" | "f") >
+    |
+    < ISOLATION: ( "I" | "i") ( "S" | "s") ( "O" | "o") ( "L" | "l") ( "A" | "a") ( "T" | "t") ( "I" | "i") ( "O" | "o") ( "N" | "n") >
+    |
+    < SLEEP: ( "S" | "s") ( "L" | "l") ( "E" | "e") ( "E" | "e") ( "P" | "p")  >
+    |
+    < CONSOLE: ( "C" | "c") ( "O" | "o") ( "N" | "n") ( "S" | "s") ( "O" | "o")  ( "L" | "l") ( "E" | "e")>
 	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
@@ -749,6 +755,12 @@ OIdentifier Identifier():
     |
     token = <IF>
     |
+    token = <ISOLATION>
+    |
+    token = <SLEEP>
+    |
+    token = <CONSOLE>
+    |
     quotedToken = <QUOTED_IDENTIFIER>
 ) {
 
@@ -938,14 +950,19 @@ OStatement StatementInternal():
                 result = CommitStatement()
                 |
                 result = ReturnStatement()
+                |
+                result = SleepStatement()
+                |
+                result = ConsoleStatement()
+                |
+                result = IfStatement()
             )
         )
         |
         result = ExplainStatement()
         |
         result = LetStatement()
-        |
-        result = IfStatement()
+
     )
 	{
 	    return result;
@@ -4340,6 +4357,7 @@ OBeginStatement BeginStatement():
 {
     (
         <BEGIN>
+        [ <ISOLATION> jjtThis.isolation = Identifier() ]
     )
     {return jjtThis;}
 }
@@ -4385,6 +4403,26 @@ OIfStatement IfStatement():
             <SEMICOLON>
         )*
         <RBRACE>
+    )
+    { return jjtThis; }
+}
+
+OSleepStatement SleepStatement():
+{ }
+{
+    (
+        <SLEEP> jjtThis.millis = Integer()
+    )
+    { return jjtThis; }
+}
+
+OConsoleStatement ConsoleStatement():
+{ }
+{
+    (
+        <CONSOLE> <DOT>
+        jjtThis.logLevel = Identifier()
+        jjtThis.message = Expression()
     )
     { return jjtThis; }
 }

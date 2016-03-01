@@ -108,11 +108,11 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
     parameters = iArgs;
     if (language.equalsIgnoreCase("SQL")) {
       // SPECIAL CASE: EXECUTE THE COMMANDS IN SEQUENCE
-//      try {//TODO enable this for strict parsing, but it will break backward compatibility (mandatory ; as a statement delimiter)
-//        parserText = preParse(parserText, iArgs);
-//      } catch (ParseException e) {
-//        throw new OCommandExecutionException("Invalid script:" + e.getMessage());
-//      }
+      try {
+        parserText = preParse(parserText, iArgs);
+      } catch (ParseException e) {
+        throw new OCommandExecutionException("Invalid script:" + e.getMessage());
+      }
       return executeSQL();
     } else {
       return executeJsr223Script(language, iContext, iArgs);
@@ -120,18 +120,38 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
   }
 
   private String preParse(String parserText, final Map<Object, Object> iArgs) throws ParseException {
-    InputStream is = new ByteArrayInputStream(parserText.getBytes());
-    OrientSql osql = new OrientSql(is);
-    List<OStatement> statements = osql.parseScript();
-    StringBuilder result = new StringBuilder();
-    for (OStatement stm : statements) {
-      stm.toString(iArgs, result);
-      if (!(stm instanceof OIfStatement)) {
-        result.append(";");
+    final boolean strict = getDatabase().getStorage().getConfiguration().isStrictSql();
+    if (strict) {
+      parserText = addSemicolons(parserText);
+      InputStream is = new ByteArrayInputStream(parserText.getBytes());
+      OrientSql osql = new OrientSql(is);
+      List<OStatement> statements = osql.parseScript();
+      StringBuilder result = new StringBuilder();
+      for (OStatement stm : statements) {
+        stm.toString(iArgs, result);
+        if (!(stm instanceof OIfStatement)) {
+          result.append(";");
+        }
+        result.append("\n");
       }
-      result.append("\n");
+      return result.toString();
+    }else{
+      return parserText;
     }
-    return result.toString();
+  }
+
+  private String addSemicolons(String parserText) {
+    String[] rows = parserText.split("\n");
+    StringBuilder builder = new StringBuilder();
+    for(String row:rows){
+      row = row.trim();
+      builder.append(row);
+      if(!(row.endsWith(";") || row.endsWith("{"))){
+        builder.append(";");
+      }
+      builder.append("\n");
+    }
+    return builder.toString();
   }
 
   public boolean isIdempotent() {

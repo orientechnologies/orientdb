@@ -107,7 +107,7 @@ public class OCommandExecutorSQLScriptTest {
   public void testConsoleLog() throws Exception {
     StringBuilder script = new StringBuilder();
     script.append("LET $a = 'log'\n");
-    script.append("console.log This is a test of log for ${a}");
+    script.append("console.log 'This is a test of log for ${a}'");
     db.command(new OCommandScript("sql", script.toString())).execute();
   }
 
@@ -115,7 +115,7 @@ public class OCommandExecutorSQLScriptTest {
   public void testConsoleOutput() throws Exception {
     StringBuilder script = new StringBuilder();
     script.append("LET $a = 'output'\n");
-    script.append("console.output This is a test of log for ${a}");
+    script.append("console.output 'This is a test of log for ${a}'");
     db.command(new OCommandScript("sql", script.toString())).execute();
   }
 
@@ -123,7 +123,7 @@ public class OCommandExecutorSQLScriptTest {
   public void testConsoleError() throws Exception {
     StringBuilder script = new StringBuilder();
     script.append("LET $a = 'error'\n");
-    script.append("console.error This is a test of log for ${a}");
+    script.append("console.error 'This is a test of log for ${a}'");
     db.command(new OCommandScript("sql", script.toString())).execute();
   }
 
@@ -183,6 +183,14 @@ public class OCommandExecutorSQLScriptTest {
     Assert.assertEquals(qResult, "OK");
   }
 
+  @Test
+  public void testIf3() throws Exception {
+    StringBuilder script = new StringBuilder();
+    script.append("let $a = select 1 as one; if($a[0].one = 1){return 'OK';}return 'FAIL';");
+    Object qResult = db.command(new OCommandScript("sql", script.toString())).execute();
+    Assert.assertNotNull(qResult);
+    Assert.assertEquals(qResult, "OK");
+  }
   @Test
   public void testNestedIf2() throws Exception {
     StringBuilder script = new StringBuilder();
