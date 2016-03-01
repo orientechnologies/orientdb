@@ -51,7 +51,6 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -2618,7 +2617,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
   private void removePolymorphicClusterId(final int clusterId) {
     final int index = Arrays.binarySearch(polymorphicClusterIds, clusterId);
-    if (index == -1)
+    if (index < 0)
       return;
 
     if (index < polymorphicClusterIds.length - 1)
@@ -2673,11 +2672,18 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       }
 
       if (!found) {
+        int[] oldClusterId = polymorphicClusterIds;
         // ADD IT
         polymorphicClusterIds = OArrays.copyOf(polymorphicClusterIds, polymorphicClusterIds.length + 1);
         polymorphicClusterIds[polymorphicClusterIds.length - 1] = i;
         Arrays.sort(polymorphicClusterIds);
+        try {
+          addClusterIdToIndexes(i);
+        } catch (Exception e) {
+          polymorphicClusterIds = oldClusterId;
+        }
       }
+
     }
   }
 
