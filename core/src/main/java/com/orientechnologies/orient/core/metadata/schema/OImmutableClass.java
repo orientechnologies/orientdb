@@ -333,6 +333,11 @@ public class OImmutableClass implements OClass {
   }
 
   @Override
+  public OClass truncateCluster(String clusterName) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public OClass removeClusterId(int iId) {
     throw new UnsupportedOperationException();
   }

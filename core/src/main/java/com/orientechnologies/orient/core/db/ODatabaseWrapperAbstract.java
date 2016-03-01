@@ -98,20 +98,14 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T> 
 
   /**
    * Executes a backup of the database. During the backup the database will be frozen in read-only mode.
-   * 
-   * @param out
-   *          OutputStream used to write the backup content. Use a FileOutputStream to make the backup persistent on disk
-   * @param options
-   *          Backup options as Map<String, Object> object
-   * @param callable
-   *          Callback to execute when the database is locked
-   * @param iListener
-   *          Listener called for backup messages
-   * @param compressionLevel
-   *          ZIP Compression level between 0 (no compression) and 9 (maximum). The bigger is the compression, the smaller will be
-   *          the final backup content, but will consume more CPU and time to execute
-   * @param bufferSize
-   *          Buffer size in bytes, the bigger is the buffer, the more efficient will be the compression
+   *
+   * @param out              OutputStream used to write the backup content. Use a FileOutputStream to make the backup persistent on disk
+   * @param options          Backup options as Map<String, Object> object
+   * @param callable         Callback to execute when the database is locked
+   * @param iListener        Listener called for backup messages
+   * @param compressionLevel ZIP Compression level between 0 (no compression) and 9 (maximum). The bigger is the compression, the smaller will be
+   *                         the final backup content, but will consume more CPU and time to execute
+   * @param bufferSize       Buffer size in bytes, the bigger is the buffer, the more efficient will be the compression
    * @throws IOException
    */
   @Override
@@ -122,21 +116,17 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T> 
 
   /**
    * Executes a restore of a database backup. During the restore the database will be frozen in read-only mode.
-   * 
-   * @param in
-   *          InputStream used to read the backup content. Use a FileInputStream to read a backup on a disk
-   * @param options
-   *          Backup options as Map<String, Object> object
-   * @param callable
-   *          Callback to execute when the database is locked
-   * @param iListener
-   *          Listener called for backup messages
+   *
+   * @param in        InputStream used to read the backup content. Use a FileInputStream to read a backup on a disk
+   * @param options   Backup options as Map<String, Object> object
+   * @param callable  Callback to execute when the database is locked
+   * @param iListener Listener called for backup messages
    * @throws IOException
    * @see ODatabaseImport
    */
   @Override
-  public void restore(InputStream in, Map<String, Object> options, Callable<Object> callable, final OCommandOutputListener iListener)
-      throws IOException {
+  public void restore(InputStream in, Map<String, Object> options, Callable<Object> callable,
+      final OCommandOutputListener iListener) throws IOException {
     underlying.restore(in, options, callable, iListener);
   }
 
@@ -250,6 +240,15 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T> 
   public int addCluster(final String iClusterName, final Object... iParameters) {
     checkOpeness();
     return underlying.addCluster(iClusterName, iParameters);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void truncateCluster(String clusterName) {
+    checkOpeness();
+    underlying.truncateCluster(clusterName);
   }
 
   public boolean dropCluster(final String iClusterName, final boolean iTruncate) {
