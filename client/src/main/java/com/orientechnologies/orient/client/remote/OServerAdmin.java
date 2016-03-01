@@ -589,7 +589,7 @@ public class OServerAdmin {
       public String execute(OChannelBinaryAsynchClient network) throws IOException {
         storage.beginRequest(network, OChannelBinaryProtocol.REQUEST_CONFIG_GET);
         network.writeString(config.getKey());
-        network.endRequest();
+        storage.endRequest(network);
 
         try {
           storage.beginResponse(network);
