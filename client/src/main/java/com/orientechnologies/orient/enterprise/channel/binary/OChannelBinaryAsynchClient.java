@@ -155,15 +155,6 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     return rootException;
   }
 
-  public void beginRequest() {
-    acquireWriteLock();
-  }
-
-  public void endRequest() throws IOException {
-    flush();
-    releaseWriteLock();
-  }
-
   public byte[] beginResponse(final int iRequesterId, final boolean token) throws IOException {
     return beginResponse(iRequesterId, timeout, token);
   }
