@@ -239,6 +239,16 @@ public abstract class OClassAbstractDelegate implements OClass {
     return this;
   }
 
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public OClass truncateCluster(String clusterName) {
+    delegate.truncateCluster(clusterName);
+
+    return this;
+  }
+
   @Override
   public OClass removeClusterId(final int iId) {
     delegate.removeClusterId(iId);

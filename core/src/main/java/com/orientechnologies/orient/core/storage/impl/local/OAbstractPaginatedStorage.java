@@ -2210,7 +2210,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       final OCluster cluster = clusterMap.get(clusterName.toLowerCase(configuration.getLocaleInstance()));
 
       if (cluster == null)
-        throw new IllegalArgumentException("Cluster " + clusterName + " does not exist in database '" + name + "'");
+        throw new OStorageException("Cluster " + clusterName + " does not exist in database '" + name + "'");
       return cluster;
     } finally {
       stateLock.releaseReadLock();
