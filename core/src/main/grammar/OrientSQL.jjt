@@ -331,6 +331,8 @@ TOKEN:
     < SLEEP: ( "S" | "s") ( "L" | "l") ( "E" | "e") ( "E" | "e") ( "P" | "p")  >
     |
     < CONSOLE: ( "C" | "c") ( "O" | "o") ( "N" | "n") ( "S" | "s") ( "O" | "o")  ( "L" | "l") ( "E" | "e")>
+    |
+    < BLOB: ( "B" | "b") ( "L" | "l") ( "O" | "o") ( "B" | "b") >
 	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
@@ -760,6 +762,8 @@ OIdentifier Identifier():
     token = <SLEEP>
     |
     token = <CONSOLE>
+    |
+    token = <BLOB>
     |
     quotedToken = <QUOTED_IDENTIFIER>
 ) {
@@ -4105,11 +4109,16 @@ ODropIndexStatement DropIndexStatement():
 OCreateClusterStatement CreateClusterStatement():
 {}
 {
-	<CREATE> <CLUSTER>
-	(
-		jjtThis.name = Identifier()
+    (
+        <CREATE>
+        (
+            ( <CLUSTER> )
+            |
+            ( <BLOB> <CLUSTER> { jjtThis.blob = true; } )
+        )
+        jjtThis.name = Identifier()
+        [ <ID> jjtThis.id = Integer() ]
 	)
-	[ <ID> jjtThis.id = Integer() ]
 	{ return jjtThis; }
 }
 

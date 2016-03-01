@@ -13,6 +13,8 @@ public class OCreateClusterStatement extends OStatement {
 
   protected OInteger id;
 
+  protected boolean blob = false;
+
   public OCreateClusterStatement(int id) {
     super(id);
   }
@@ -22,7 +24,11 @@ public class OCreateClusterStatement extends OStatement {
   }
 
   @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
-    builder.append("CREATE CLUSTER ");
+    builder.append("CREATE ");
+    if(blob){
+      builder.append("BLOB ");
+    }
+    builder.append("CLUSTER ");
     name.toString(params, builder);
     if (id != null) {
       builder.append(" ID ");
