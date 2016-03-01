@@ -125,10 +125,27 @@ public enum OGlobalConfiguration {
   DISK_CACHE_FREE_SPACE_LIMIT("storage.diskCache.diskFreeSpaceLimit",
       "Minimum amount of space on disk after which database will " + "work only in read mode, in megabytes", Long.class, 100),
 
+  @Deprecated
+
   DISC_CACHE_FREE_SPACE_CHECK_INTERVAL("storage.diskCache.diskFreeSpaceCheckInterval",
-      "Interval, in seconds, after which storage periodically "
-          + "checks whether amount of free space enough to work in write mode",
-      Integer.class, 5),
+      "The interval (in seconds), after which the storage periodically "
+          + "checks whether the amount of free disk space is enough to work in write mode", Integer.class, 5),
+
+  /**
+   * The interval (how many new pages should be added before free space will be checked), after which the storage periodically
+   * checks whether the amount of free disk space is enough to work in write mode.
+   */
+  DISC_CACHE_FREE_SPACE_CHECK_INTERVAL_IN_PAGES("storage.diskCache.diskFreeSpaceCheckIntervalInPages",
+      "The interval (how many new pages should be added before free space will be checked), after which the storage periodically "
+          + "checks whether the amount of free disk space is enough to work in write mode", Integer.class, 4096),
+
+  /**
+   * Keep disk cache state between moment when storage is closed and moment when it is opened again.
+   * <code>true</code> by default.
+   */
+  STORAGE_KEEP_DISK_CACHE_STATE("storage.diskCache.keepState",
+      "Keep disk cache state between moment when storage is closed and moment when it is opened again. true by default.",
+      Boolean.class, true),
 
   STORAGE_CONFIGURATION_SYNC_ON_UPDATE("storage.configuration.syncOnUpdate",
       "Should we perform force sync of storage configuration for each update", Boolean.class, true),

@@ -79,6 +79,10 @@ public class OResultSet<T> implements List<T>, Externalizable {
     return empty;
   }
 
+  public boolean isEmptyNoWait() {
+    return underlying.isEmpty();
+  }
+
   @Override
   public boolean contains(final Object o) {
     waitForCompletion();
@@ -112,8 +116,8 @@ public class OResultSet<T> implements List<T>, Externalizable {
         }
 
         if (index > size() || size() == 0)
-          throw new NoSuchElementException("Error on browsing at element " + index + " while the resultset contains only " + size()
-              + " items");
+          throw new NoSuchElementException(
+              "Error on browsing at element " + index + " while the resultset contains only " + size() + " items");
 
         return underlying.get(index++);
 

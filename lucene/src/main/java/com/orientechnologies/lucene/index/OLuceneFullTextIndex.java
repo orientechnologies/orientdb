@@ -19,6 +19,8 @@ package com.orientechnologies.lucene.index;
 import com.orientechnologies.lucene.OLuceneIndex;
 import com.orientechnologies.lucene.OLuceneIndexEngine;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.queryparser.classic.ParseException;
@@ -27,8 +29,8 @@ import org.apache.lucene.search.Query;
 public class OLuceneFullTextIndex extends OLuceneIndexNotUnique implements OLuceneIndex {
 
   public OLuceneFullTextIndex(String name, String typeId, String algorithm, OLuceneIndexEngine indexEngine,
-      String valueContainerAlgorithm, ODocument metadata) {
-    super(name, typeId, algorithm, indexEngine, valueContainerAlgorithm, metadata);
+      String valueContainerAlgorithm, ODocument metadata, OStorage storage) {
+    super(name, typeId, algorithm, indexEngine, valueContainerAlgorithm, metadata, storage);
     indexEngine.setIndexMetadata(metadata);
   }
 

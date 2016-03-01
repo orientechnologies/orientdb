@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.client.remote;
 
+import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
@@ -237,6 +238,14 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     } finally {
       stateLock.releaseWriteLock();
     }
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public OModificationLock getModificationLock() {
+    return null;
   }
 
   public void reload() {

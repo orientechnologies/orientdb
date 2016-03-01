@@ -448,10 +448,10 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       toRemoveList.removeAll(newSuperClasses);
 
       for (OClassImpl toRemove : toRemoveList) {
-        toRemove.removeBaseClassInternal(this);
+        toRemove.removeSubclassInternal(this);
       }
       for (OClassImpl addTo : toAddList) {
-        addTo.addBaseClass(this);
+        addTo.addSubclass(this);
       }
       superClasses.clear();
       superClasses.addAll(newSuperClasses);
@@ -510,7 +510,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
               "Class: '" + this.getName() + "' already has the class '" + superClass.getName() + "' as superclass");
         }
 
-        cls.addBaseClass(this);
+        cls.addSubclass(this);
         superClasses.add(cls);
       }
     } finally {
@@ -558,7 +558,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
       if (superClasses.contains(cls)) {
         if (cls != null)
-          cls.removeBaseClassInternal(this);
+          cls.removeSubclassInternal(this);
 
         superClasses.remove(superClass);
       }
@@ -1174,7 +1174,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     }
   }
 
-  OClass removeBaseClassInternal(final OClass baseClass) {
+  OClass removeSubclassInternal(final OClass baseClass) {
     acquireSchemaWriteLock();
     try {
       checkEmbedded();
@@ -2372,21 +2372,21 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   /**
    * Adds a base class to the current one. It adds also the base class cluster ids to the polymorphic cluster ids array.
    *
-   * @param iBaseClass
+   * @param subclass
    *          The base class to add.
    */
-  private OClass addBaseClass(final OClassImpl iBaseClass) {
-    checkRecursion(iBaseClass);
-    checkParametersConflict(iBaseClass);
+  private OClass addSubclass(final OClassImpl subclass) {
+    checkRecursion(subclass);
+    checkParametersConflict(subclass);
 
     if (subclasses == null)
       subclasses = new ArrayList<OClass>();
 
-    if (subclasses.contains(iBaseClass))
+    if (subclasses.contains(subclass))
       return this;
 
-    subclasses.add(iBaseClass);
-    addPolymorphicClusterIdsWithInheritance(iBaseClass);
+    subclasses.add(subclass);
+    addPolymorphicClusterIdsWithInheritance(subclass);
     return this;
   }
 
@@ -2435,7 +2435,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
   private void removePolymorphicClusterId(final int clusterId) {
     final int index = Arrays.binarySearch(polymorphicClusterIds, clusterId);
-    if (index == -1)
+    if (index < 0)
       return;
 
     if (index < polymorphicClusterIds.length - 1)
@@ -2479,29 +2479,15 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
    * Add different cluster id to the "polymorphic cluster ids" array.
    */
   private void addPolymorphicClusterIds(final OClassImpl iBaseClass) {
-    boolean found;
-    for (int i : iBaseClass.polymorphicClusterIds) {
-      found = false;
-      for (int k : polymorphicClusterIds) {
-        if (i == k) {
-          found = true;
-          break;
-        }
-      }
-
-      if (!found) {
-        // ADD IT
-        polymorphicClusterIds = OArrays.copyOf(polymorphicClusterIds, polymorphicClusterIds.length + 1);
-        polymorphicClusterIds[polymorphicClusterIds.length - 1] = i;
-        Arrays.sort(polymorphicClusterIds);
-      }
+    for (int clusterId : iBaseClass.polymorphicClusterIds) {
+      addPolymorphicClusterId(clusterId);
     }
   }
 
-  private void addPolymorphicClusterIdsWithInheritance(final OClassImpl iBaseClass) {
-    addPolymorphicClusterIds(iBaseClass);
+  private void addPolymorphicClusterIdsWithInheritance(final OClassImpl subclass) {
+    addPolymorphicClusterIds(subclass);
     for (OClassImpl superClass : superClasses) {
-      superClass.addPolymorphicClusterIdsWithInheritance(iBaseClass);
+      superClass.addPolymorphicClusterIdsWithInheritance(subclass);
     }
   }
 

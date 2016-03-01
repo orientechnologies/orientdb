@@ -17,25 +17,23 @@
  */
 package com.orientechnologies.orient.jdbc;
 
+import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.exception.OQueryParsingException;
+import com.orientechnologies.orient.core.query.OQuery;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import com.orientechnologies.orient.core.command.OCommandRequest;
-import com.orientechnologies.orient.core.exception.OQueryParsingException;
-import com.orientechnologies.orient.core.query.OQuery;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import java.sql.Date;
+import java.util.*;
 
 /**
- * 
  * @author Roberto Franchini (CELI Srl - franchini@celi.it)
  * @author Salvatore Piccione (TXT e-solutions SpA - salvo.picci@gmail.com)
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
@@ -273,7 +271,7 @@ public class OrientJdbcPreparedStatement extends OrientJdbcStatement implements 
   }
 
   public void setBinaryStream(int parameterIndex, InputStream x, long length) throws SQLException {
-    throw new UnsupportedOperationException();
+    setBinaryStream(parameterIndex, x);
   }
 
   public void setCharacterStream(int parameterIndex, Reader reader, long length) throws SQLException {
@@ -285,7 +283,15 @@ public class OrientJdbcPreparedStatement extends OrientJdbcStatement implements 
   }
 
   public void setBinaryStream(int parameterIndex, InputStream x) throws SQLException {
-    throw new UnsupportedOperationException();
+    try {
+      ORecordBytes record = new ORecordBytes();
+      record.fromInputStream(x);
+      record.save();
+      params.put(parameterIndex, record);
+    } catch (IOException e) {
+      throw new SQLException("unable to store inputStream", e);
+    }
+
   }
 
   public void setCharacterStream(int parameterIndex, Reader reader) throws SQLException {

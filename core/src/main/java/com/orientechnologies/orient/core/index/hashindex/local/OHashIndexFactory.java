@@ -34,16 +34,15 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * 
- * 
  * @author Artem Orobets (enisher-at-gmail.com)
  */
 public class OHashIndexFactory implements OIndexFactory {
 
   private static final Set<String> TYPES;
-  public static final String       SBTREE_ALGORITHM   = "SBTREE";
-  public static final String       MVRBTREE_ALGORITHM = "MVRBTREE";
+  public static final String SBTREE_ALGORITHM   = "SBTREE";
+  public static final String MVRBTREE_ALGORITHM = "MVRBTREE";
   private static final Set<String> ALGORITHMS;
+
   static {
     final Set<String> types = new HashSet<String>();
     types.add(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.toString());
@@ -52,6 +51,7 @@ public class OHashIndexFactory implements OIndexFactory {
     types.add(OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString());
     TYPES = Collections.unmodifiableSet(types);
   }
+
   static {
     final Set<String> algorithms = new HashSet<String>();
     algorithms.add(SBTREE_ALGORITHM);
@@ -105,21 +105,21 @@ public class OHashIndexFactory implements OIndexFactory {
       indexEngine = new OHashTableIndexEngine(name, durableInNonTxMode, (OAbstractPaginatedStorage) database.getStorage(), version);
     else if (storageType.equals("distributed"))
       // DISTRIBUTED CASE: HANDLE IT AS FOR LOCAL
-      indexEngine = new OHashTableIndexEngine(name, durableInNonTxMode, (OAbstractPaginatedStorage) database.getStorage()
-          .getUnderlying(), version);
+      indexEngine = new OHashTableIndexEngine(name, durableInNonTxMode,
+          (OAbstractPaginatedStorage) database.getStorage().getUnderlying(), version);
     else if (storageType.equals("remote"))
       indexEngine = new ORemoteIndexEngine();
     else
       throw new OIndexException("Unsupported storage type : " + storageType);
 
     if (OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.toString().equals(indexType))
-      return new OIndexUnique(name, indexType, algorithm, indexEngine, valueContainerAlgorithm, metadata);
+      return new OIndexUnique(name, indexType, algorithm, indexEngine, valueContainerAlgorithm, metadata, storage);
     else if (OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString().equals(indexType))
-      return new OIndexNotUnique(name, indexType, algorithm, indexEngine, valueContainerAlgorithm, metadata);
+      return new OIndexNotUnique(name, indexType, algorithm, indexEngine, valueContainerAlgorithm, metadata, storage);
     else if (OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.toString().equals(indexType))
-      return new OIndexFullText(name, indexType, algorithm, indexEngine, valueContainerAlgorithm, metadata);
+      return new OIndexFullText(name, indexType, algorithm, indexEngine, valueContainerAlgorithm, metadata, storage);
     else if (OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString().equals(indexType))
-      return new OIndexDictionary(name, indexType, algorithm, indexEngine, valueContainerAlgorithm, metadata);
+      return new OIndexDictionary(name, indexType, algorithm, indexEngine, valueContainerAlgorithm, metadata, storage);
 
     throw new OConfigurationException("Unsupported type : " + indexType);
   }

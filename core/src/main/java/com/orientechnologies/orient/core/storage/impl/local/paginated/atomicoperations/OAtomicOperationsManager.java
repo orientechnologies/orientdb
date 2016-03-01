@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations;
 
 import com.orientechnologies.common.concur.lock.OLockManager;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
@@ -220,7 +221,15 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       try {
         final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
         final ObjectName mbeanName = new ObjectName(getMBeanName());
-        server.registerMBean(this, mbeanName);
+        if (!server.isRegistered(mbeanName)) {
+          server.registerMBean(this, mbeanName);
+        } else {
+          mbeanIsRegistered.set(false);
+          OLogManager
+              .instance().warn(this, "MBean with name %s has already registered. Probably your system was not shutdown correctly"
+                  + " or you have several running applications which use OrientDB engine inside",
+              mbeanName.getCanonicalName());
+        }
       } catch (MalformedObjectNameException e) {
         throw new OStorageException("Error during registration of atomic manager MBean.", e);
       } catch (InstanceAlreadyExistsException e) {

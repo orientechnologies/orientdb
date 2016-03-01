@@ -1168,7 +1168,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass
 
       for (OClass superClass : cls.getSuperClasses()) {
         // REMOVE DEPENDENCY FROM SUPERCLASS
-        ((OClassImpl) superClass).removeBaseClassInternal(cls);
+        ((OClassImpl) superClass).removeSubclassInternal(cls);
       }
       deleteDefaultCluster(cls);
 

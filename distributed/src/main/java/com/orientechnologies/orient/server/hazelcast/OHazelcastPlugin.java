@@ -870,6 +870,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
   public boolean installDatabase(boolean iStartup, final String databaseName, final ODocument config) {
 
+    final ODistributedConfiguration cfg = getDatabaseConfiguration(databaseName);
+
+    ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Current node started as %s for database '%s'",
+        cfg.getServerRole(nodeName), databaseName);
+
     final Boolean hotAlignment = config.field("hotAlignment");
     final boolean backupDatabase = iStartup && hotAlignment != null && !hotAlignment;
 
@@ -1414,9 +1419,12 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       final String databaseName = storageEntry.getKey();
 
       if (messageService.getDatabase(databaseName) == null) {
-        ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE, "opening database '%s'...", databaseName);
+        ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE, "Opening database '%s'...", databaseName);
 
         ODistributedConfiguration cfg = getDatabaseConfiguration(databaseName);
+
+        ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Current node started as %s for database '%s'",
+            cfg.getServerRole(nodeName), databaseName);
 
         final boolean hotAlignment = cfg.isHotAlignment();
 

@@ -39,10 +39,9 @@ import java.util.concurrent.TimeoutException;
  * SQL asynchronous query. When executed the caller does not wait for the execution, rather the listener will be called for each
  * item found in the query. OSQLAsynchQuery has been built on top of this. NOTE: if you're working with remote databases don't
  * execute any remote call inside the callback function because the network channel is locked until the query command has finished.
- * 
- * @author Luca Garulli
- * 
+ *
  * @param <T>
+ * @author Luca Garulli
  * @see com.orientechnologies.orient.core.sql.query.OSQLSynchQuery
  */
 public class OSQLNonBlockingQuery<T extends Object> extends OSQLQuery<T> implements OCommandRequestAsynch {
@@ -243,18 +242,26 @@ public class OSQLNonBlockingQuery<T extends Object> extends OSQLQuery<T> impleme
     final ONonBlockingQueryFuture future = new ONonBlockingQueryFuture();
 
     if (database instanceof ODatabaseDocumentTx) {
+      ODatabaseDocumentInternal currentThreadLocal = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      final ODatabaseDocumentTx db = ((ODatabaseDocumentTx) database).copy();
+      if (currentThreadLocal != null) {
+        currentThreadLocal.activateOnCurrentThread();
+      } else {
+        ODatabaseRecordThreadLocal.INSTANCE.set(null);
+      }
+
       Thread t = new Thread(new Runnable() {
         @Override
         public void run() {
-          final ODatabaseDocumentTx db = ((ODatabaseDocumentTx) database).copy();
+          db.activateOnCurrentThread();
           try {
             OSQLNonBlockingQuery.super.execute(iArgs);
-          } catch(RuntimeException e){
-            if(getResultListener()!=null){
+          } catch (RuntimeException e) {
+            if (getResultListener() != null) {
               getResultListener().end();
             }
             throw e;
-          }finally {
+          } finally {
             if (db != null) {
               try {
                 db.close();

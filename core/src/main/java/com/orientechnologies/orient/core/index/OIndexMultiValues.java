@@ -31,6 +31,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerListRID;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerSBTreeIndexRIDContainer;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 import java.util.ArrayList;
@@ -45,14 +47,13 @@ import java.util.Set;
 
 /**
  * Abstract index implementation that supports multi-values for the same key.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable>> {
   public OIndexMultiValues(String name, final String type, String algorithm, OIndexEngine<Set<OIdentifiable>> indexEngine,
-      String valueContainerAlgorithm, final ODocument metadata) {
-    super(name, type, algorithm, indexEngine, valueContainerAlgorithm, metadata);
+      String valueContainerAlgorithm, final ODocument metadata, OStorage storage) {
+    super(name, type, algorithm, indexEngine, valueContainerAlgorithm, metadata, storage);
   }
 
   public Set<OIdentifiable> get(Object key) {
@@ -127,7 +128,8 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     if (!txIsActive)
       keyLockManager.acquireExclusiveLock(key);
     try {
-      modificationLock.requestModificationLock();
+      if (modificationLock != null)
+        modificationLock.requestModificationLock();
       try {
         checkForKeyType(key);
         acquireSharedLock();
@@ -164,7 +166,8 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
           releaseSharedLock();
         }
       } finally {
-        modificationLock.releaseModificationLock();
+        if (modificationLock != null)
+          modificationLock.releaseModificationLock();
       }
     } finally {
       if (!txIsActive)
@@ -185,7 +188,8 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
       keyLockManager.acquireExclusiveLock(key);
 
     try {
-      modificationLock.requestModificationLock();
+      if (modificationLock != null)
+        modificationLock.requestModificationLock();
       try {
         acquireSharedLock();
         startStorageAtomicOperation();
@@ -220,7 +224,8 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
           releaseSharedLock();
         }
       } finally {
-        modificationLock.releaseModificationLock();
+        if (modificationLock != null)
+          modificationLock.releaseModificationLock();
       }
     } finally {
       if (!txIsActive)
@@ -232,14 +237,14 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
   public OIndexMultiValues create(final String name, final OIndexDefinition indexDefinition, final String clusterIndexName,
       final Set<String> clustersToIndex, boolean rebuild, final OProgressListener progressListener) {
 
-    return (OIndexMultiValues) super.create(indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener,
-        determineValueSerializer());
+    return (OIndexMultiValues) super
+        .create(indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener, determineValueSerializer());
   }
 
   protected OStreamSerializer determineValueSerializer() {
     if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm))
-      return (OStreamSerializer) getDatabase().getSerializerFactory().getObjectSerializer(
-          OStreamSerializerSBTreeIndexRIDContainer.ID);
+      return (OStreamSerializer) getDatabase().getSerializerFactory()
+          .getObjectSerializer(OStreamSerializerSBTreeIndexRIDContainer.ID);
     else
       return OStreamSerializerListRID.INSTANCE;
   }
@@ -254,8 +259,8 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
     acquireSharedLock();
     try {
-      return indexEngine.iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascOrder,
-          MultiValuesTransformer.INSTANCE);
+      return indexEngine
+          .iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascOrder, MultiValuesTransformer.INSTANCE);
     } finally {
       releaseSharedLock();
     }
@@ -304,10 +309,10 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     Collections.sort(sortedKeys, comparator);
 
     return new OIndexAbstractCursor() {
-      private Iterator<?>             keysIterator    = sortedKeys.iterator();
+      private Iterator<?> keysIterator = sortedKeys.iterator();
 
       private Iterator<OIdentifiable> currentIterator = OEmptyIterator.IDENTIFIABLE_INSTANCE;
-      private Object                  currentKey;
+      private Object currentKey;
 
       @Override
       public Map.Entry<Object, OIdentifiable> nextEntry() {

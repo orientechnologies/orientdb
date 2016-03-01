@@ -99,7 +99,7 @@ public class ServerRun {
     OFileUtils.copyDirectory(new File(getDatabasePath(iDatabaseName)), new File(iDestinationDirectory));
   }
 
-  protected OServer startServer(final String iServerConfigFile) throws Exception {
+  public OServer startServer(final String iServerConfigFile) throws Exception {
     System.out.println("Starting server " + serverId + " from " + getServerHome() + "...");
 
     System.setProperty("ORIENTDB_HOME", getServerHome());
@@ -114,7 +114,7 @@ public class ServerRun {
     return server;
   }
 
-  protected void shutdownServer() {
+  public void shutdownServer() {
     if (server != null)
       server.shutdown();
   }
@@ -123,7 +123,7 @@ public class ServerRun {
     return getServerHome(serverId);
   }
 
-  protected String getDatabasePath(final String iDatabaseName) {
+  public String getDatabasePath(final String iDatabaseName) {
     return getDatabasePath(serverId, iDatabaseName);
   }
 
