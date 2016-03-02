@@ -90,7 +90,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
   private volatile OIndexDefinition indexDefinition;
   private volatile boolean rebuilding = false;
 
-  private Thread rebuildThread = null;
+  private volatile Thread rebuildThread = null;
 
   private volatile ThreadLocal<IndexTxSnapshot> txSnapshot = new IndexTxSnapshotThreadLocal();
 
@@ -389,39 +389,44 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
 
     if (modificationLock != null)
       modificationLock.requestModificationLock();
-    try {
-      acquireExclusiveLock();
-      try {
-        markStorageDirty();
 
+    try {
+      markStorageDirty();
+
+      try {
         rebuildThread = Thread.currentThread();
         rebuilding = true;
 
+        acquireSharedLock();
         try {
-          indexEngine.deleteWithoutLoad(name);
-        } catch (Exception e) {
-          OLogManager.instance().error(this, "Error during index '%s' delete", name);
-        }
+          try {
+            indexEngine.deleteWithoutLoad(name);
+          } catch (Exception e) {
+            OLogManager.instance().error(this, "Error during index '%s' delete", name);
+          }
 
-        removeValuesContainer();
+          removeValuesContainer();
 
-        indexEngine.create(indexDefinition, getDatabase().getMetadata().getIndexManager().getDefaultClusterName(),
-            determineValueSerializer(), isAutomatic());
+          indexEngine.create(indexDefinition, getDatabase().getMetadata().getIndexManager().getDefaultClusterName(),
+              determineValueSerializer(), isAutomatic());
 
-        long documentNum = 0;
-        long documentTotal = 0;
+          long documentNum = 0;
+          long documentTotal = 0;
 
-        for (final String cluster : clustersToIndex)
-          documentTotal += getDatabase().countClusterElements(cluster);
+          for (final String cluster : clustersToIndex)
+            documentTotal += getDatabase().countClusterElements(cluster);
 
-        if (iProgressListener != null)
-          iProgressListener.onBegin(this, documentTotal, true);
+          if (iProgressListener != null)
+            iProgressListener.onBegin(this, documentTotal, true);
 
-        // INDEX ALL CLUSTERS
-        for (final String clusterName : clustersToIndex) {
-          final long[] metrics = indexCluster(clusterName, iProgressListener, documentNum, documentIndexed, documentTotal);
-          documentNum = metrics[0];
-          documentIndexed = metrics[1];
+          // INDEX ALL CLUSTERS
+          for (final String clusterName : clustersToIndex) {
+            final long[] metrics = indexCluster(clusterName, iProgressListener, documentNum, documentIndexed, documentTotal);
+            documentNum = metrics[0];
+            documentIndexed = metrics[1];
+          }
+        } finally {
+          releaseSharedLock();
         }
 
         if (iProgressListener != null)
@@ -445,8 +450,6 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
 
         if (intentInstalled)
           getDatabase().declareIntent(null);
-
-        releaseExclusiveLock();
       }
     } finally {
       if (modificationLock != null)
