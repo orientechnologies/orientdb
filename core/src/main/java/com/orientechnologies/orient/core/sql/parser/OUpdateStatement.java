@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 public class OUpdateStatement extends OStatement {
-  protected OFromClause             target;
+  public OFromClause             target;
 //  protected ORid                    targetRid;
 //  protected List<ORid>              targetRids;
 //  protected OIdentifier             targetClass;
