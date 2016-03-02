@@ -1914,10 +1914,13 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
     final ODatabaseDocument db = getDatabaseIfDefined();
     if (db != null) {
-      final OClass _clazz = ((OMetadataInternal) db.getMetadata()).getImmutableSchemaSnapshot().getClass(iClassName);
-      if (_clazz != null) {
-        _className = _clazz.getName();
-        convertFieldsToClass(_clazz);
+      OImmutableSchema snapshot = ((OMetadataInternal) db.getMetadata()).getImmutableSchemaSnapshot();
+      if (snapshot != null) {
+        final OClass _clazz = snapshot.getClass(iClassName);
+        if (_clazz != null) {
+          _className = _clazz.getName();
+          convertFieldsToClass(_clazz);
+        }
       }
     }
   }

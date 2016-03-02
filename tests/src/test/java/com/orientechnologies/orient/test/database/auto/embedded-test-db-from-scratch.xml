@@ -150,6 +150,7 @@
             <class name="com.orientechnologies.orient.test.database.auto.SQLFunctionsTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLUpdateTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLDeleteTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.SQLTruncateRecordTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLCreateVertexTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLDeleteEdgeTest"/>
         </classes>
@@ -161,7 +162,7 @@
     </test>
     <test name="misc">
         <classes>
-            <class name="com.orientechnologies.orient.test.database.auto.TruncateTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.TruncateClassTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.DateTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLFindReferencesTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLCreateLinkTest"/>

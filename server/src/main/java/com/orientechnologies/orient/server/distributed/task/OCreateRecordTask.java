@@ -115,8 +115,8 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
 
     rid = (ORecordId) record.getIdentity();
 
-    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-        "+-> assigned new rid %s/%s v.%d", database.getName(), rid.toString(), record.getVersion());
+    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> assigned new rid %s/%s v.%d",
+        database.getName(), rid.toString(), record.getVersion());
 
     // TODO: IMPROVE TRANSPORT BY AVOIDING THE RECORD CONTENT, BUT JUST RID + VERSION
     return new OPlaceholder(record);
@@ -128,13 +128,16 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   }
 
   @Override
-  public ODeleteRecordTask getFixTask(final ODistributedRequest iRequest, OAbstractRemoteTask iOriginalTask,
+  public OAbstractRemoteTask getFixTask(final ODistributedRequest iRequest, OAbstractRemoteTask iOriginalTask,
       final Object iBadResponse, final Object iGoodResponse) {
     if (iBadResponse instanceof Throwable)
       return null;
 
-    final OPlaceholder badResult = (OPlaceholder) iBadResponse;
-    return new ODeleteRecordTask(new ORecordId(badResult.getIdentity()), badResult.getRecordVersion()).setDelayed(false);
+    final OPlaceholder badResult = ((OPlaceholder) iBadResponse);
+
+    // FORCE RE-ALIGN OF DATA CLUSTER
+    return new ORequestSyncClusterTask(
+        ODatabaseRecordThreadLocal.INSTANCE.get().getClusterNameById(badResult.getIdentity().getClusterId()));
   }
 
   @Override
@@ -181,5 +184,9 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   @Override
   public String getName() {
     return "record_create";
+  }
+
+  public void resetRecord() {
+    record = null;
   }
 }

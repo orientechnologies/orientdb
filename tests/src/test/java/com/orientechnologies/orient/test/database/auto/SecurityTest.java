@@ -15,28 +15,27 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.orient.core.exception.OSecurityAccessException;
-import com.orientechnologies.orient.core.exception.OSecurityException;
-import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.metadata.security.OSecurity;
-import com.orientechnologies.orient.core.metadata.security.OSecurityRole;
-import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
-import com.orientechnologies.orient.core.metadata.security.OUser;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
-import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
+import java.io.IOException;
+import java.util.Date;
+import java.util.List;
+
+import com.orientechnologies.orient.core.exception.OValidationException;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import java.io.IOException;
-import java.util.Date;
-import java.util.List;
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.exception.OSecurityException;
+import com.orientechnologies.orient.core.metadata.security.*;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
+import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
+import com.orientechnologies.orient.graph.gremlin.OCommandGremlin;
 
 @Test(groups = "security")
 public class SecurityTest extends DocumentDBBaseTest {
@@ -83,8 +82,8 @@ public class SecurityTest extends DocumentDBBaseTest {
     database.open("reader", "reader");
 
     try {
-      new ODocument("Profile").fields("nick", "error", "password", "I don't know", "lastAccessOn", new Date(), "registeredOn",
-          new Date()).save();
+      new ODocument("Profile")
+          .fields("nick", "error", "password", "I don't know", "lastAccessOn", new Date(), "registeredOn", new Date()).save();
     } catch (OSecurityAccessException e) {
       Assert.assertTrue(true);
     } catch (OResponseProcessingException e) {
@@ -269,6 +268,159 @@ public class SecurityTest extends DocumentDBBaseTest {
       database.command(new OCommandSQL("alter class Protected superclass OUser")).execute();
     } finally {
       database.getMetadata().getSchema().dropClass("Protected");
+    }
+  }
+
+  @Test
+  public void testGremlinExecution() throws IOException {
+    if (!database.getURL().startsWith("remote:"))
+      return;
+
+    database.open("admin", "admin");
+    try {
+      database.command(new OCommandGremlin("g.V")).execute();
+    } finally {
+      database.close();
+    }
+
+    database.open("reader", "reader");
+    try {
+      database.command(new OCommandGremlin("g.V")).execute();
+      Assert.fail("Security breach: Gremlin can be executed by reader user!");
+    } catch (OSecurityException e) {
+    } finally {
+      database.close();
+    }
+
+    database.open("writer", "writer");
+    try {
+      database.command(new OCommandGremlin("g.V")).execute();
+      Assert.fail("Security breach: Gremlin can be executed by writer user!");
+    } catch (OSecurityException e) {
+    } finally {
+      database.close();
+    }
+  }
+
+  @Test
+  public void testEmptyUserName() {
+    database.open("admin", "admin");
+    try {
+      OSecurity security = database.getMetadata().getSecurity();
+
+      ORole reader = security.getRole("reader");
+      String userName = "";
+      try {
+        security.createUser(userName, "foobar", reader);
+        Assert.assertTrue(false);
+      } catch (OValidationException ve) {
+        Assert.assertTrue(true);
+
+      }
+      Assert.assertNull(security.getUser(userName));
+    } finally {
+      database.close();
+    }
+  }
+
+  @Test
+  public void testUserNameWithAllSpaces() {
+    database.open("admin", "admin");
+    try {
+      OSecurity security = database.getMetadata().getSecurity();
+
+      ORole reader = security.getRole("reader");
+      final String userName = "  ";
+      try {
+        security.createUser(userName, "foobar", reader);
+        Assert.assertTrue(false);
+      } catch (OValidationException ve) {
+        Assert.assertTrue(true);
+
+      }
+      Assert.assertNull(security.getUser(userName));
+    } finally {
+      database.close();
+    }
+  }
+
+  @Test
+  public void testUserNameWithSurroundingSpacesOne() {
+    database.open("admin", "admin");
+    try {
+      OSecurity security = database.getMetadata().getSecurity();
+
+      ORole reader = security.getRole("reader");
+      final String userName = " sas";
+      try {
+        security.createUser(userName, "foobar", reader);
+        Assert.assertTrue(false);
+      } catch (OValidationException ve) {
+        Assert.assertTrue(true);
+
+      }
+      Assert.assertNull(security.getUser(userName));
+    } finally {
+      database.close();
+    }
+  }
+
+  @Test
+  public void testUserNameWithSurroundingSpacesTwo() {
+    database.open("admin", "admin");
+    try {
+      OSecurity security = database.getMetadata().getSecurity();
+
+      ORole reader = security.getRole("reader");
+      final String userName = "sas ";
+      try {
+        security.createUser(userName, "foobar", reader);
+        Assert.assertTrue(false);
+      } catch (OValidationException ve) {
+        Assert.assertTrue(true);
+
+      }
+      Assert.assertNull(security.getUser(userName));
+    } finally {
+      database.close();
+    }
+  }
+
+  @Test
+  public void testUserNameWithSurroundingSpacesThree() {
+    database.open("admin", "admin");
+    try {
+      OSecurity security = database.getMetadata().getSecurity();
+
+      ORole reader = security.getRole("reader");
+      final String userName = " sas ";
+      try {
+        security.createUser(userName, "foobar", reader);
+        Assert.assertTrue(false);
+      } catch (OValidationException ve) {
+        Assert.assertTrue(true);
+
+      }
+      Assert.assertNull(security.getUser(userName));
+    } finally {
+      database.close();
+    }
+  }
+
+  @Test
+  public void testUserNameWithSpacesInTheMiddle() {
+    database.open("admin", "admin");
+    try {
+      OSecurity security = database.getMetadata().getSecurity();
+
+      ORole reader = security.getRole("reader");
+      final String userName = "s a s";
+      security.createUser(userName, "foobar", reader);
+      Assert.assertNotNull(security.getUser(userName));
+      security.dropUser(userName);
+      Assert.assertNull(security.getUser(userName));
+    } finally {
+      database.close();
     }
   }
 }

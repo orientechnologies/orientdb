@@ -19,26 +19,18 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Asynchronous response manager
@@ -173,11 +165,9 @@ public class ODistributedResponseManager {
 
       completed = getExpectedResponses() == receivedResponses;
 
-      if (receivedResponses >= quorum && (!waitForLocalNode || receivedCurrentNode)) {
-        if (completed || isMinimumQuorumReached(false)) {
-          // NOTIFY TO THE WAITER THE RESPONSE IS COMPLETE NOW
-          notifyWaiters();
-        }
+      if (completed || isMinimumQuorumReached(false)) {
+        // NOTIFY TO THE WAITER THE RESPONSE IS COMPLETE NOW
+        notifyWaiters();
       }
       return completed;
     }
@@ -246,14 +236,14 @@ public class ODistributedResponseManager {
     try {
 
       long currentTimeout = synchTimeout;
-      while (currentTimeout > 0
-          && ((waitForLocalNode && !receivedCurrentNode) || receivedResponses < expectedSynchronousResponses)) {
+      while (currentTimeout > 0 && !isMinimumQuorumReached(false) && receivedResponses < expectedSynchronousResponses) {
+
         // WAIT FOR THE RESPONSES
         synchronousResponsesArrived.await(currentTimeout, TimeUnit.MILLISECONDS);
 
-        if ((!waitForLocalNode || receivedCurrentNode) && (receivedResponses >= expectedSynchronousResponses))
+        if (isMinimumQuorumReached(false) || receivedResponses >= expectedSynchronousResponses)
           // OK
-          break;
+          return true;
 
         if (Thread.currentThread().isInterrupted()) {
           // INTERRUPTED
@@ -315,7 +305,7 @@ public class ODistributedResponseManager {
         }
       }
 
-      return receivedResponses >= expectedSynchronousResponses;
+      return isMinimumQuorumReached(false) || receivedResponses >= expectedSynchronousResponses;
 
     } finally {
       synchronousResponsesLock.unlock();
@@ -466,8 +456,6 @@ public class ODistributedResponseManager {
 
   protected boolean isMinimumQuorumReached(final boolean iCheckAvailableNodes) {
     if (isWaitForLocalNode() && !isReceivedCurrentNode()) {
-      ODistributedServerLog.warn(this, dManager.getLocalNodeName(), dManager.getLocalNodeName(), DIRECTION.IN,
-          "no response received from local node about request %s", request);
       return false;
     }
 
@@ -576,6 +564,7 @@ public class ODistributedResponseManager {
   }
 
   protected void undoRequest() {
+    // DETERMINE IF ANY CREATE FAILED TO RESTORE RIDS
     for (ODistributedResponse r : getReceivedResponses()) {
       final OAbstractRemoteTask task = request.getTask();
       if (task instanceof OAbstractReplicatedTask) {
@@ -608,7 +597,7 @@ public class ODistributedResponseManager {
               r.getPayload(), goodResponse.getPayload());
 
           if (fixTask != null) {
-            ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
+            ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.OUT,
                 "sending fix message (%s) for response (%s) on request (%s) in server %s to be: %s", fixTask, r, request,
                 r.getExecutorNodeName(), goodResponse);
 

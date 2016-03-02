@@ -28,6 +28,7 @@ import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -206,7 +207,6 @@ public class GraphDatabaseTest extends DocumentDBBaseTest {
     result = database.getRawGraph().query(new OSQLSynchQuery<ODocument>(query2));
     Assert.assertEquals(result.size(), 1);
 
-
     //TODO these tests are broken, they should test "contains" instead of "="
     String query3 = "select driver from V where outE()[action='owns'].inV().car = 'ford'";
     result = database.getRawGraph().query(new OSQLSynchQuery<ODocument>(query3));
@@ -238,7 +238,7 @@ public class GraphDatabaseTest extends DocumentDBBaseTest {
 
     Assert.assertEquals(result.size(), 2);
     for (int i = 0; i < result.size(); i++) {
-//      System.out.println("uno: " + result.get(i));
+      //      System.out.println("uno: " + result.get(i));
       Assert.assertTrue(((ODocument) result.get(i).getRecord()).containsField("lat"));
     }
 
@@ -247,7 +247,7 @@ public class GraphDatabaseTest extends DocumentDBBaseTest {
 
     Assert.assertEquals(result.size(), 2);
     for (int i = 0; i < result.size(); i++) {
-//      System.out.println("dos: " + result.get(i));
+      //      System.out.println("dos: " + result.get(i));
       Assert.assertTrue(((ODocument) result.get(i).getRecord()).containsField("lat"));
       Assert.assertTrue(((ODocument) result.get(i).getRecord()).containsField("distance"));
     }
@@ -309,6 +309,19 @@ public class GraphDatabaseTest extends DocumentDBBaseTest {
 
     Integer confirmDeleted = database.command(new OCommandSQL("delete from " + insertedEdge.getIdentity() + " unsafe")).execute();
     Assert.assertEquals(confirmDeleted.intValue(), 1);
+  }
+
+  public void checkSetPropertyCustomInTransaction() {
+    OrientVertexType typedef = database.createVertexType("SetPropertyCustomInTransaction");
+    OrientVertexType.OrientVertexProperty prop = typedef.createProperty("foo", OType.STRING);
+    prop.setCustom("someparam", "param value");
+    Assert.assertEquals(prop.getCustom("someparam"), "param value");
+    prop.setMax("10");
+    Assert.assertEquals(prop.getMax(), "10");
+    prop.setMin("10");
+    Assert.assertEquals(prop.getMin(), "10");
+    prop.setDefaultValue("FooBarBaz1");
+    Assert.assertEquals(prop.getDefaultValue(), "FooBarBaz1");
   }
 
 }

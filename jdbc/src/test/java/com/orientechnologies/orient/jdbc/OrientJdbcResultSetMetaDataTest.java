@@ -1,7 +1,9 @@
 package com.orientechnologies.orient.jdbc;
 
+import org.hamcrest.Matchers;
 import org.junit.Test;
 
+import java.math.BigDecimal;
 import java.sql.*;
 import java.util.Calendar;
 import java.util.TimeZone;
@@ -17,36 +19,30 @@ public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
     assertThat(conn.isClosed(), is(false));
 
     Statement stmt = conn.createStatement();
-    ResultSet rs = stmt.executeQuery("SELECT stringKey, intKey, text, length, date FROM Item");
-    assertThat(rs.getFetchSize(), equalTo(20));
+    ResultSet rs = stmt.executeQuery("SELECT stringKey, intKey, text, length, date, score FROM Item");
 
-    assertThat(rs.isBeforeFirst(), is(true));
-
-    assertThat(rs.next(), is(true));
-
-    assertThat(rs.getRow(), equalTo(0));
-
+    //STRING
     assertThat(rs.getString(1), equalTo("1"));
     assertThat(rs.getString("stringKey"), equalTo("1"));
     assertThat(rs.findColumn("stringKey"), equalTo(1));
 
+    //INT
     assertThat(rs.getInt(2), equalTo(1));
     assertThat(rs.getInt("intKey"), equalTo(1));
 
-    assertEquals(rs.getString("text").length(), rs.getInt("length"));
+    assertThat(rs.getString("text").length(), equalTo(rs.getInt("length")));
 
+    //DATE
     Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
     cal.add(Calendar.HOUR_OF_DAY, -1);
     Date date = new Date(cal.getTimeInMillis());
     assertThat(rs.getDate("date").toString(), equalTo(date.toString()));
     assertThat(rs.getDate(5).toString(), equalTo(date.toString()));
 
-    rs.last();
+    //DECIMAL
+    assertThat(rs.getBigDecimal("score"), equalTo(BigDecimal.valueOf(959)));
 
-    assertThat(rs.getRow(), equalTo(19));
-    rs.close();
 
-    assertThat(rs.isClosed(), is(true));
   }
 
   @Test
@@ -126,12 +122,12 @@ public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
     assertThat(conn.isClosed(), is(false));
 
     Statement stmt = conn.createStatement();
-    ResultSet rs = stmt.executeQuery("SELECT stringKey, intKey, text, length, date FROM Item");
+    ResultSet rs = stmt.executeQuery("SELECT stringKey, intKey, text, length, date, score FROM Item");
 
     rs.next();
     ResultSetMetaData metaData = rs.getMetaData();
 
-    assertThat(metaData.getColumnCount(), equalTo(5));
+    assertThat(metaData.getColumnCount(), equalTo(6));
 
     assertThat(metaData.getColumnType(2), equalTo(java.sql.Types.INTEGER));
 
@@ -142,9 +138,13 @@ public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
 
     assertThat(metaData.getColumnType(5), equalTo(java.sql.Types.TIMESTAMP));
 
+    assertThat(metaData.getColumnType(6), equalTo(Types.DECIMAL));
+
     assertThat(metaData.getColumnClassName(1), equalTo(String.class.getName()));
     assertThat(metaData.getColumnType(1), equalTo(java.sql.Types.VARCHAR));
 
   }
+
+
 
 }

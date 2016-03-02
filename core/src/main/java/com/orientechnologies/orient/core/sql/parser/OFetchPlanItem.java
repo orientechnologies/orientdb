@@ -7,11 +7,13 @@ import java.util.List;
 
 public class OFetchPlanItem extends SimpleNode {
 
-  protected Boolean      star;
+  protected Boolean star;
 
-  protected OInteger     leftDepth;
+  protected OInteger leftDepth;
 
-  protected OInteger     rightDepth;
+  protected boolean leftStar = false;
+
+  protected OInteger rightDepth;
 
   protected List<String> fieldChain = new ArrayList<String>();
 
@@ -23,7 +25,9 @@ public class OFetchPlanItem extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -38,6 +42,8 @@ public class OFetchPlanItem extends SimpleNode {
         result.append("[");
         result.append(leftDepth.toString());
         result.append("]");
+      }else if(leftStar){
+        result.append("[*]");
       }
 
       boolean first = true;

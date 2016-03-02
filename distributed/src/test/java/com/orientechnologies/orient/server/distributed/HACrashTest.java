@@ -15,11 +15,11 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.concurrent.Callable;
 
 /**
  * Distributed TX test against "remote" protocol. It starts 3 servers and during a stress test, kill last server. The test checks
@@ -27,7 +27,6 @@ import java.util.TimerTask;
  */
 public class HACrashTest extends AbstractServerClusterTxTest {
   final static int SERVERS       = 3;
-  protected Timer  timer         = new Timer(true);
   volatile boolean inserting     = true;
   volatile int     serverStarted = 0;
   volatile boolean lastServerOn  = false;
@@ -49,33 +48,70 @@ public class HACrashTest extends AbstractServerClusterTxTest {
     if (serverStarted++ == (SERVERS - 1)) {
       lastServerOn = true;
 
-      // CRASH LAST SERVER IN 2 SECONDS
-      timer.schedule(new TimerTask() {
+      // RUN ASYNCHRONOUSLY
+      new Thread(new Runnable() {
         @Override
         public void run() {
-          Assert.assertTrue("Insert was too fast", inserting);
-
-          // RESTART LAST SERVER IN 10 SECONDS
-          timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-              Assert.assertTrue("Insert was too fast", inserting);
-
-              banner("RESTART SERVER " + (SERVERS - 1));
-              try {
-                serverInstance.get(SERVERS - 1).startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
-                lastServerOn = true;
-              } catch (Exception e) {
-                e.printStackTrace();
+          try {
+            // CRASH LAST SERVER try {
+            executeWhen(new Callable<Boolean>() {
+              // CONDITION
+              @Override
+              public Boolean call() throws Exception {
+                final ODatabaseDocumentTx database = poolFactory.get(getDatabaseURL(serverInstance.get(0)), "admin", "admin")
+                    .acquire();
+                try {
+                  return database.countClass("Person") > (count * SERVERS) * 1 / 3;
+                } finally {
+                  database.close();
+                }
               }
-            }
-          }, 10000);
+            }, // ACTION
+                new Callable() {
+              @Override
+              public Object call() throws Exception {
+                Assert.assertTrue("Insert was too fast", inserting);
+                banner("SIMULATE FAILURE ON SERVER " + (SERVERS - 1));
+                serverInstance.get(SERVERS - 1).crashServer();
+                lastServerOn = false;
 
-          banner("SIMULATE FAILURE ON SERVER " + (SERVERS - 1));
-          serverInstance.get(SERVERS - 1).crashServer();
-          lastServerOn = false;
+                executeWhen(new Callable<Boolean>() {
+                  @Override
+                  public Boolean call() throws Exception {
+                    final ODatabaseDocumentTx database = poolFactory.get(getDatabaseURL(serverInstance.get(0)), "admin", "admin")
+                        .acquire();
+                    try {
+                      return database.countClass("Person") > (count * SERVERS) * 2 / 3;
+                    } finally {
+                      database.close();
+                    }
+                  }
+                }, new Callable() {
+                  @Override
+                  public Object call() throws Exception {
+                    Assert.assertTrue("Insert was too fast", inserting);
+
+                    banner("RESTARTING SERVER " + (SERVERS - 1) + "...");
+                    try {
+                      serverInstance.get(SERVERS - 1)
+                          .startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
+                      lastServerOn = true;
+                    } catch (Exception e) {
+                      e.printStackTrace();
+                    }
+                    return null;
+                  }
+                });
+                return null;
+              }
+            });
+
+          } catch (Exception e) {
+            e.printStackTrace();
+            Assert.fail("Error on execution flow");
+          }
         }
-      }, 3000);
+      }).start();
     }
   }
 

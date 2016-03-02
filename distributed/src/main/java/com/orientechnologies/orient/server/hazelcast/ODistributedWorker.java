@@ -33,20 +33,9 @@ import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationSetThreadLocal;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
-import com.orientechnologies.orient.server.distributed.ODiscardedResponse;
-import com.orientechnologies.orient.server.distributed.ODistributedAbstractPlugin;
-import com.orientechnologies.orient.server.distributed.ODistributedException;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
-import com.orientechnologies.orient.server.distributed.task.OCreateRecordTask;
-import com.orientechnologies.orient.server.distributed.task.ODeleteRecordTask;
-import com.orientechnologies.orient.server.distributed.task.OFixTxTask;
-import com.orientechnologies.orient.server.distributed.task.OResurrectRecordTask;
-import com.orientechnologies.orient.server.distributed.task.OSQLCommandTask;
-import com.orientechnologies.orient.server.distributed.task.OTxTask;
-import com.orientechnologies.orient.server.distributed.task.OUpdateRecordTask;
+import com.orientechnologies.orient.server.distributed.task.*;
 
 import java.io.Serializable;
 import java.util.Queue;
@@ -109,18 +98,9 @@ public class ODistributedWorker extends Thread {
 
         if (message != null) {
           lastMessageId = message.getId();
-          // DECIDE TO USE THE HZ MAP ONLY IF THE COMMAND IS NOT IDEMPOTENT (ALL BUT READ-RECORD/SQL SELECT/SQL TRAVERSE
-          // final boolean saveAsPending = !message.getTask().isIdempotent();
-          // if (saveAsPending)
-          // SAVE THE MESSAGE IN TO THE UNDO MAP IN CASE OF FAILURE
-          // lastPendingMessagesMap.put(databaseName, message);
 
           senderNode = message.getSenderNodeName();
           onMessage(message);
-
-          // if (saveAsPending)
-          // OK: REMOVE THE UNDO BUFFER
-          // lastPendingMessagesMap.remove(databaseName);
         }
 
       } catch (InterruptedException e) {
@@ -299,29 +279,38 @@ public class ODistributedWorker extends Thread {
           responsePayload = manager.executeOnLocalNode(iRequest, database);
 
           if (responsePayload instanceof OModificationOperationProhibitedException) {
-            OLogManager.instance().info(this,
-                "Database is locked on current node (backup is running?) retrying to execute the operation (retry=%d)", retry);
             // RETRY
             try {
+              ODistributedServerLog.info(this, manager.getLocalNodeName(), iRequest.getSenderNodeName(), DIRECTION.OUT,
+                  "Database is frozen, waiting and retrying. Request %s (retry=%d)", iRequest, retry);
+
               Thread.sleep(1000);
             } catch (InterruptedException e) {
             }
-          } else
+          } else {
             // OPERATION EXECUTED (OK OR ERROR), NO RETRY NEEDED
+            if (retry > 1)
+              ODistributedServerLog.info(this, manager.getLocalNodeName(), iRequest.getSenderNodeName(), DIRECTION.OUT,
+                  "Request %s succeed after retry=%d", iRequest, retry);
+
             break;
+          }
 
         }
 
       } finally {
         if (database != null) {
           database.activateOnCurrentThread();
-          database.rollback();
-          database.getLocalCache().clear();
-          database.setUser(origin);
+          if (!database.isClosed()) {
+            database.rollback();
+            database.getLocalCache().clear();
+            database.setUser(origin);
+          }
         }
       }
 
-      sendResponseBack(iRequest, task, responsePayload);
+      if (running)
+        sendResponseBack(iRequest, task, responsePayload);
 
     } finally {
       OScenarioThreadLocal.INSTANCE.setRunMode(OScenarioThreadLocal.RUN_MODE.DEFAULT);

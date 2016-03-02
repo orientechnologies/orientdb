@@ -443,9 +443,7 @@ public class OSelectStatementTest {
   @Test()
   public void testMultipleLucene() {
     checkRightSyntax("select from Foo where a lucene 'a'");
-    checkWrongSyntax("select from Foo where a lucene 'a' and b lucene 'a'");
 
-    checkWrongSyntax("select union($a, $b) let $a = (select from Foo where a lucene 'a' and b lucene 'b'), $b = (select from Foo where b lucene 'b')");
     checkRightSyntax("select union($a, $b) let $a = (select from Foo where a lucene 'a'), $b = (select from Foo where b lucene 'b')");
     checkWrongSyntax("select from (select from Foo) where a lucene 'a'");
 
@@ -637,6 +635,12 @@ public class OSelectStatementTest {
         + "   LET $TotalListsQuery = ( SELECT Count(1) AS Count FROM ContactList WHERE Account=#20:1 AND EntityInfo.State=0)\n"
         + " SKIP 10 LIMIT 1");
   }
+
+  @Test
+  public void testFetchPlanWithSuqareStar() {
+    checkRightSyntax("SELECT FROM Def fetchplan *:2 [*]in_*:-2");
+  }
+
 
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);

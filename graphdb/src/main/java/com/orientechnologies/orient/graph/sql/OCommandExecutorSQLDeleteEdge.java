@@ -46,7 +46,6 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -226,7 +225,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
 
     } else {
       // MULTIPLE EDGES
-      final Set<OrientEdge> edges = new HashSet<OrientEdge>();
+      final List<OrientEdge> edges = new ArrayList<OrientEdge>();
       if (query == null) {
         OGraphCommandExecutorSQLFactory.runInConfiguredTxMode(new OGraphCommandExecutorSQLFactory.GraphCallBack<Object>() {
           @Override

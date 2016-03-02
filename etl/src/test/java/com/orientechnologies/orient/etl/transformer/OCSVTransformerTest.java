@@ -19,7 +19,7 @@
 package com.orientechnologies.orient.etl.transformer;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.etl.ETLBaseTest;
+import com.orientechnologies.orient.etl.OETLBaseTest;
 import org.junit.Test;
 
 import java.util.Date;
@@ -33,7 +33,7 @@ import static org.junit.Assert.*;
  *
  * @author Luca Garulli
  */
-public class OCSVTransformerTest extends ETLBaseTest {
+public class OCSVTransformerTest extends OETLBaseTest {
 
   @Test
   public void testEmpty() {

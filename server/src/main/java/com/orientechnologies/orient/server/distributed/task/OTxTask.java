@@ -19,6 +19,13 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
@@ -43,13 +50,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
 
 /**
  * Distributed transaction task.
@@ -93,8 +93,8 @@ public class OTxTask extends OAbstractReplicatedTask {
         for (OAbstractRecordReplicatedTask task : tasks) {
           if (task instanceof OCreateRecordTask) {
             final OCreateRecordTask createRT = (OCreateRecordTask) task;
-            final int clId = createRT.clusterId > -1 ? createRT.clusterId : createRT.getRid().isValid() ? createRT.getRid()
-                .getClusterId() : -1;
+            final int clId = createRT.clusterId > -1 ? createRT.clusterId
+                : createRT.getRid().isValid() ? createRT.getRid().getClusterId() : -1;
             final String clusterName = clId > -1 ? database.getClusterNameById(clId) : null;
             tx.addRecord(createRT.getRecord(), ORecordOperation.CREATED, clusterName);
           } else {
@@ -148,9 +148,18 @@ public class OTxTask extends OAbstractReplicatedTask {
           }
         }
       } catch (Exception t) {
+        // RESET ANY ASSIGNED CLUSTER ID
+        for (OAbstractRecordReplicatedTask task : tasks) {
+          if (task instanceof OCreateRecordTask) {
+            final OCreateRecordTask createRT = (OCreateRecordTask) task;
+            createRT.resetRecord();
+          }
+        }
+
         // EXCEPTION: ASSURE ALL LOCKS ARE FREED
         for (ORID r : result.locks)
           ddb.unlockRecord(r);
+
         // RETHROW IT
         throw t;
       }
@@ -184,26 +193,27 @@ public class OTxTask extends OAbstractReplicatedTask {
   @Override
   public OFixTxTask getFixTask(final ODistributedRequest iRequest, OAbstractRemoteTask iOriginalTask, final Object iBadResponse,
       final Object iGoodResponse) {
-    if (!(iBadResponse instanceof List)) {
+    if (!(iBadResponse instanceof OTxTaskResult)) {
       // TODO: MANAGE ERROR ON LOCAL NODE
       ODistributedServerLog.debug(this, getNodeSource(), null, DIRECTION.NONE,
           "error on creating fix-task for request: '%s' because bad response is not expected type: %s", iRequest, iBadResponse);
       return null;
     }
 
-    if (!(iGoodResponse instanceof List)) {
+    if (!(iGoodResponse instanceof OTxTaskResult)) {
       // TODO: MANAGE ERROR ON LOCAL NODE
       ODistributedServerLog.debug(this, getNodeSource(), null, DIRECTION.NONE,
           "error on creating fix-task for request: '%s' because good response is not expected type: %s", iRequest, iBadResponse);
       return null;
     }
 
-    final OFixTxTask fixTask = new OFixTxTask(result.locks);
+    final OFixTxTask fixTask = new OFixTxTask(((OTxTaskResult) iBadResponse).locks);
 
     for (int i = 0; i < tasks.size(); ++i) {
       final OAbstractRecordReplicatedTask t = tasks.get(i);
-      final OAbstractRemoteTask task = t.getFixTask(iRequest, t, ((List<Object>) iBadResponse).get(i),
-          ((List<Object>) iGoodResponse).get(i));
+
+      final OAbstractRemoteTask task = t.getFixTask(iRequest, t, ((OTxTaskResult) iBadResponse).results.get(i),
+          ((OTxTaskResult) iGoodResponse).results.get(i));
 
       if (task != null)
         fixTask.add(task);

@@ -23,23 +23,27 @@ import com.orientechnologies.orient.core.command.OCommandDistributedReplicateReq
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OStorage;
 
 import java.io.IOException;
 import java.util.Map;
 
 /**
  * SQL TRUNCATE CLUSTER command: Truncates an entire record cluster.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 public class OCommandExecutorSQLTruncateCluster extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
   public static final String KEYWORD_TRUNCATE = "TRUNCATE";
   public static final String KEYWORD_CLUSTER  = "CLUSTER";
-  private String             clusterName;
+  private String clusterName;
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLTruncateCluster parse(final OCommandRequest iRequest) {
@@ -77,17 +81,33 @@ public class OCommandExecutorSQLTruncateCluster extends OCommandExecutorSQLAbstr
     if (clusterName == null)
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
-    final OCluster cluster = getDatabase().getStorage().getClusterByName(clusterName);
+    final ODatabaseDocumentInternal database = getDatabase();
 
-    final long recs = cluster.getEntries();
-
-    try {
-      cluster.truncate();
-    } catch (IOException e) {
-      throw new OCommandExecutionException("Error on executing command", e);
+    final int clusterId = database.getClusterIdByName(clusterName);
+    if (clusterId < 0) {
+      throw new ODatabaseException("Cluster with name " + clusterName + " does not exist");
     }
 
-    return recs;
+    final OSchema schema = database.getMetadata().getSchema();
+    final OClass clazz = schema.getClassByClusterId(clusterId);
+    if (clazz == null) {
+      final OStorage storage = database.getStorage();
+      final OCluster cluster = storage.getClusterById(clusterId);
+
+      if (cluster == null) {
+        throw new ODatabaseException("Cluster with name " + clusterName + " does not exist");
+      }
+
+      try {
+        cluster.truncate();
+      } catch (IOException ioe) {
+        throw new ODatabaseException("Error during truncation of cluster with name " + clusterName, ioe);
+      }
+    } else {
+      clazz.truncateCluster(clusterName);
+    }
+
+    return true;
   }
 
   @Override

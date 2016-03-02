@@ -298,7 +298,37 @@ public class OConsoleDatabaseAppTest {
     } finally {
       c.shutdown();
     }
-
   }
 
+  @Test
+  public void testDeclareIntent() {
+    ConsoleTest c = new ConsoleTest();
+    try {
+      c.console().createDatabase("memory:OConsoleDatabaseAppTestDeclareIntent", null, null, null, null);
+      c.resetOutput();
+      try {
+        c.console().declareIntent("foobar");
+        Assert.fail();
+      }catch(Exception e){
+
+      }
+
+      c.resetOutput();
+      c.console().declareIntent("massiveinsert");
+      c.console().declareIntent("massiveread");
+      c.console().declareIntent("null");
+
+      String resultString = c.getConsoleOutput();
+
+      Assert.assertTrue(resultString.contains("Intent 'massiveinsert' set successfully"));
+      Assert.assertTrue(resultString.contains("Intent 'massiveread' set successfully"));
+      Assert.assertTrue(resultString.contains("Intent 'null' set successfully"));
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      Assert.fail();
+    } finally {
+      c.shutdown();
+    }
+  }
 }

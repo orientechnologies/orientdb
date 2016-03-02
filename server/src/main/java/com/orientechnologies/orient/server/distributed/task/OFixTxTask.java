@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
@@ -34,6 +35,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -44,9 +46,9 @@ import java.util.concurrent.Callable;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class OFixTxTask extends OAbstractRemoteTask {
-  private static final long                      serialVersionUID = 1L;
-  private              List<OAbstractRemoteTask> tasks            = new ArrayList<OAbstractRemoteTask>();
-  private Set<ORID> locks;
+  private static final long         serialVersionUID = 1L;
+  private List<OAbstractRemoteTask> tasks            = new ArrayList<OAbstractRemoteTask>();
+  private Set<ORID>                 locks;
 
   public OFixTxTask() {
   }
@@ -64,8 +66,10 @@ public class OFixTxTask extends OAbstractRemoteTask {
   }
 
   @Override
-  public Object execute(final OServer iServer, final ODistributedServerManager iManager, final ODatabaseDocumentTx database) throws Exception {
-    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "fixing %d conflicts found during committing transaction against db=%s...", tasks.size(), database.getName());
+  public Object execute(final OServer iServer, final ODistributedServerManager iManager, final ODatabaseDocumentTx database)
+      throws Exception {
+    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+        "fixing %d conflicts found during committing transaction against db=%s...", tasks.size(), database.getName());
 
     ODatabaseRecordThreadLocal.INSTANCE.set(database);
     try {
@@ -84,12 +88,14 @@ public class OFixTxTask extends OAbstractRemoteTask {
       });
 
     } catch (Exception e) {
+      OLogManager.instance().error(this, "Exception during attempt to fix inconsistency between nodes", e);
       return Boolean.FALSE;
     } finally {
       // UNLOCK ALL RIDS IN ANY CASE
       final ODistributedDatabase ddb = iManager.getMessageService().getDatabase(database.getName());
-      for (ORID r : locks)
-        ddb.unlockRecord(r);
+      if (locks != null)
+        for (ORID r : locks)
+          ddb.unlockRecord(r);
     }
 
     return Boolean.TRUE;
@@ -107,20 +113,24 @@ public class OFixTxTask extends OAbstractRemoteTask {
     for (OAbstractRemoteTask task : tasks)
       out.writeObject(task);
     // LOCKS
-    out.writeInt(locks.size());
-    for (ORID r : locks)
-      out.writeObject(r);
+    if (locks != null) {
+      out.writeInt(locks.size());
+      for (ORID r : locks)
+        out.writeObject(r);
+    } else
+      out.writeInt(0);
   }
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
     // TASKS
     final int size = in.readInt();
-    for (int i = 0; i<size; ++i)
-      tasks.add((OAbstractRecordReplicatedTask) in.readObject());
+    for (int i = 0; i < size; ++i)
+      tasks.add((OAbstractRemoteTask) in.readObject());
     // LOCKS
     final int lockSize = in.readInt();
-    for (int i = 0; i<lockSize; ++i)
+    locks = new HashSet<ORID>(lockSize);
+    for (int i = 0; i < lockSize; ++i)
       locks.add((ORID) in.readObject());
   }
 

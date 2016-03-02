@@ -33,7 +33,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -333,8 +333,6 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
   protected Callable<Void> createReader(String databaseURL) {
     return new Reader(databaseURL);
   }
-
-  protected abstract String getDatabaseURL(ServerRun server);
 
   /**
    * Event called right after the database has been created and right before to be replicated to the X servers

@@ -19,6 +19,17 @@
  */
 package com.orientechnologies.orient.core.config;
 
+import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.common.util.OApi;
+import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
+import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
+import com.orientechnologies.orient.core.storage.cache.local.O2QCache;
+
 import java.io.File;
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
@@ -30,17 +41,6 @@ import java.util.Map.Entry;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
-
-import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OProfiler;
-import com.orientechnologies.common.util.OApi;
-import com.orientechnologies.orient.core.OConstants;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
-import com.orientechnologies.orient.core.metadata.OMetadataDefault;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
-import com.orientechnologies.orient.core.storage.cache.local.O2QCache;
 
 /**
  * Keeps all configuration settings. At startup assigns the configuration values by reading system properties.
@@ -125,10 +125,27 @@ public enum OGlobalConfiguration {
   DISK_CACHE_FREE_SPACE_LIMIT("storage.diskCache.diskFreeSpaceLimit",
       "Minimum amount of space on disk after which database will " + "work only in read mode, in megabytes", Long.class, 100),
 
+  @Deprecated
+
   DISC_CACHE_FREE_SPACE_CHECK_INTERVAL("storage.diskCache.diskFreeSpaceCheckInterval",
-      "Interval, in seconds, after which storage periodically "
-          + "checks whether amount of free space enough to work in write mode",
-      Integer.class, 5),
+      "The interval (in seconds), after which the storage periodically "
+          + "checks whether the amount of free disk space is enough to work in write mode", Integer.class, 5),
+
+  /**
+   * The interval (how many new pages should be added before free space will be checked), after which the storage periodically
+   * checks whether the amount of free disk space is enough to work in write mode.
+   */
+  DISC_CACHE_FREE_SPACE_CHECK_INTERVAL_IN_PAGES("storage.diskCache.diskFreeSpaceCheckIntervalInPages",
+      "The interval (how many new pages should be added before free space will be checked), after which the storage periodically "
+          + "checks whether the amount of free disk space is enough to work in write mode", Integer.class, 4096),
+
+  /**
+   * Keep disk cache state between moment when storage is closed and moment when it is opened again.
+   * <code>true</code> by default.
+   */
+  STORAGE_KEEP_DISK_CACHE_STATE("storage.diskCache.keepState",
+      "Keep disk cache state between moment when storage is closed and moment when it is opened again. true by default.",
+      Boolean.class, true),
 
   STORAGE_CONFIGURATION_SYNC_ON_UPDATE("storage.configuration.syncOnUpdate",
       "Should we perform force sync of storage configuration for each update", Boolean.class, true),
@@ -529,7 +546,7 @@ public enum OGlobalConfiguration {
    * @Since 2.1.3
    */
   @OApi(maturity = OApi.MATURITY.NEW) DISTRIBUTED_QUEUE_MAXSIZE("distributed.queueMaxSize",
-      "Maximum queue size to mark a node as stalled. If the numer of messages in queue are more than this values, the node is restarted with a remote command (0 = no maximum, which means up to 2^31-1 entries).",
+      "Maximum queue size to mark a node as stalled. If the number of messages in queue are more than this values, the node is restarted with a remote command (0 = no maximum, which means up to 2^31-1 entries).",
       Integer.class, 10000),
 
   /**

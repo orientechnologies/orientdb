@@ -17,6 +17,7 @@
 package com.tinkerpop.blueprints.impls.orient;
 
 import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -26,7 +27,7 @@ import com.tinkerpop.blueprints.Direction;
 
 /**
  * Represents a Vertex class.
- * 
+ *
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
 public class OrientVertexType extends OrientElementType {
@@ -34,7 +35,7 @@ public class OrientVertexType extends OrientElementType {
   public static final String CLASS_NAME = OImmutableClass.VERTEX_CLASS_NAME;
 
   public class OrientVertexProperty extends OPropertyAbstractDelegate {
-    public static final String      ORDERED = "ordered";
+    public static final String ORDERED = "ordered";
     protected final OrientBaseGraph graph;
 
     public OrientVertexProperty(final OrientBaseGraph iGraph, final OProperty iProperty) {
@@ -49,6 +50,161 @@ public class OrientVertexType extends OrientElementType {
 
     public OrientVertexProperty setOrdered(final boolean iOrdered) {
       delegate.setCustom(ORDERED, Boolean.toString(iOrdered));
+      return this;
+    }
+
+    @Override public OProperty setCustom(final String iName, final String iValue) {
+      graph.executeOutsideTx(new OCallable<OrientVertexProperty, OrientBaseGraph>() {
+        @Override
+        public OrientVertexProperty call(OrientBaseGraph iArgument) {
+          delegate.setCustom(iName, iValue);
+          return null;
+        }
+      });
+      return this;
+
+    }
+
+    @Override public OProperty setMin(final String min) {
+      graph.executeOutsideTx(new OCallable<OrientVertexProperty, OrientBaseGraph>() {
+        @Override
+        public OrientVertexProperty call(OrientBaseGraph iArgument) {
+          delegate.setMin(min);
+          return null;
+        }
+      });
+      return this;
+    }
+
+    @Override public OProperty setMax(final String max) {
+      graph.executeOutsideTx(new OCallable<OrientVertexProperty, OrientBaseGraph>() {
+        @Override
+        public OrientVertexProperty call(OrientBaseGraph iArgument) {
+          delegate.setMax(max);
+          return null;
+        }
+      });
+      return this;
+    }
+
+    @Override public OProperty setCollate(final OCollate collate) {
+      graph.executeOutsideTx(new OCallable<OrientVertexProperty, OrientBaseGraph>() {
+        @Override
+        public OrientVertexProperty call(OrientBaseGraph iArgument) {
+          delegate.setCollate(collate);
+          return null;
+        }
+      });
+      return this;
+    }
+
+    @Override public OProperty setCollate(final String iCollateName) {
+      graph.executeOutsideTx(new OCallable<OrientVertexProperty, OrientBaseGraph>() {
+        @Override
+        public OrientVertexProperty call(OrientBaseGraph iArgument) {
+          delegate.setCollate(iCollateName);
+          return null;
+        }
+      });
+      return this;
+    }
+
+    @Override public OProperty setDefaultValue(final String defaultValue) {
+      graph.executeOutsideTx(new OCallable<OrientVertexProperty, OrientBaseGraph>() {
+        @Override
+        public OrientVertexProperty call(OrientBaseGraph iArgument) {
+          delegate.setDefaultValue(defaultValue);
+          return null;
+        }
+      });
+      return this;
+    }
+
+    @Override public OProperty setLinkedClass(final OClass oClass) {
+      graph.executeOutsideTx(new OCallable<OrientVertexProperty, OrientBaseGraph>() {
+        @Override
+        public OrientVertexProperty call(OrientBaseGraph iArgument) {
+          delegate.setLinkedClass(oClass);
+          return null;
+        }
+      });
+      return this;
+    }
+
+    @Override public OProperty setLinkedType(final OType type) {
+      graph.executeOutsideTx(new OCallable<OrientVertexProperty, OrientBaseGraph>() {
+        @Override
+        public OrientVertexProperty call(OrientBaseGraph iArgument) {
+          delegate.setLinkedType(type);
+          return null;
+        }
+      });
+      return this;
+    }
+
+    @Override public OProperty setMandatory(final boolean mandatory) {
+      graph.executeOutsideTx(new OCallable<OrientVertexProperty, OrientBaseGraph>() {
+        @Override
+        public OrientVertexProperty call(OrientBaseGraph iArgument) {
+          delegate.setMandatory(mandatory);
+          return null;
+        }
+      });
+      return this;
+    }
+
+    @Override public OProperty setName(final String iName) {
+      graph.executeOutsideTx(new OCallable<OrientVertexProperty, OrientBaseGraph>() {
+        @Override
+        public OrientVertexProperty call(OrientBaseGraph iArgument) {
+          delegate.setName(iName);
+          return null;
+        }
+      });
+      return this;
+    }
+
+    @Override public OProperty setNotNull(final boolean iNotNull) {
+      graph.executeOutsideTx(new OCallable<OrientVertexProperty, OrientBaseGraph>() {
+        @Override
+        public OrientVertexProperty call(OrientBaseGraph iArgument) {
+          delegate.setNotNull(iNotNull);
+          return null;
+        }
+      });
+      return this;
+    }
+
+    @Override public OProperty setReadonly(final boolean iReadonly) {
+      graph.executeOutsideTx(new OCallable<OrientVertexProperty, OrientBaseGraph>() {
+        @Override
+        public OrientVertexProperty call(OrientBaseGraph iArgument) {
+          delegate.setReadonly(iReadonly);
+          return null;
+        }
+      });
+      return this;
+    }
+
+    @Override public OProperty setRegexp(final String regexp) {
+      graph.executeOutsideTx(new OCallable<OrientVertexProperty, OrientBaseGraph>() {
+        @Override
+        public OrientVertexProperty call(OrientBaseGraph iArgument) {
+          delegate.setRegexp(regexp);
+          return null;
+        }
+      });
+      return this;
+    }
+
+    @Override public OProperty setType(final OType iType) {
+      graph.executeOutsideTx(new OCallable<OrientVertexProperty, OrientBaseGraph>() {
+        @Override
+        public OrientVertexProperty call(OrientBaseGraph iArgument) {
+          delegate.setType(iType);
+          return null;
+        }
+      });
       return this;
     }
   }

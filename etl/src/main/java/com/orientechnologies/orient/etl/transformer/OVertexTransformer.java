@@ -42,9 +42,18 @@ public class OVertexTransformer extends OAbstractTransformer {
   public void configure(final OETLProcessor iProcessor, final ODocument iConfiguration, final OCommandContext iContext) {
     super.configure(iProcessor, iConfiguration, iContext);
     if (iConfiguration.containsField("class"))
-      vertexClass = (String) resolve(iConfiguration.field("class"));
+      vertexClass = (String) resolve(iConfiguration.<String>field("class"));
     if (iConfiguration.containsField("skipDuplicates"))
       skipDuplicates = (Boolean) resolve(iConfiguration.field("skipDuplicates"));
+  }
+
+  @Override
+  public void begin() {
+    if (vertexClass != null) {
+      final OClass cls = pipeline.getGraphDatabase().getVertexType(vertexClass);
+      if (cls == null)
+        pipeline.getGraphDatabase().createVertexType(vertexClass);
+    }
   }
 
   @Override
@@ -54,12 +63,6 @@ public class OVertexTransformer extends OAbstractTransformer {
 
   @Override
   public Object executeTransform(final Object input) {
-    vertexClass = (String) resolve(vertexClass);
-    if (vertexClass != null) {
-      final OClass cls = pipeline.getGraphDatabase().getVertexType(vertexClass);
-      if (cls == null)
-        pipeline.getGraphDatabase().createVertexType(vertexClass);
-    }
 
     final OrientVertex v = pipeline.getGraphDatabase().getVertex(input);
     if (v == null)

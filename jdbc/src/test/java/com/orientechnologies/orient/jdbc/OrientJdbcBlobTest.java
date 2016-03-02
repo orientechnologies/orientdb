@@ -1,15 +1,9 @@
 package com.orientechnologies.orient.jdbc;
 
 import org.hamcrest.Matchers;
-import org.hamcrest.core.Is;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.math.BigInteger;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
@@ -19,57 +13,78 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.*;
 
 public class OrientJdbcBlobTest extends OrientJdbcBaseTest {
   private static final String TEST_WORKING_DIR = "./target/working/";
 
   @Test
-  public void shouldLoadBlob() throws SQLException, FileNotFoundException, IOException, NoSuchAlgorithmException {
-    File binaryFile = getOutFile();
+  public void shouldStoreBinaryStream() throws Exception {
+    conn.createStatement().executeQuery("CREATE CLASS Blobs");
 
-    String digest = this.calculateMD5checksum(ClassLoader.getSystemResourceAsStream("file.pdf"));
+    PreparedStatement statement = conn.prepareStatement("INSERT INTO Blobs (uuid,attachment) VALUES (?,?)");
 
-    PreparedStatement stmt = conn.prepareStatement("SELECT FROM Article WHERE uuid = 1 ");
+    statement.setInt(1, 1);
+    statement.setBinaryStream(2, ClassLoader.getSystemResourceAsStream("file.pdf"));
+
+    int rowsInserted = statement.executeUpdate();
+
+    assertThat(rowsInserted, Matchers.is(1));
+
+    //verify the blob
+
+    PreparedStatement stmt = conn.prepareStatement("SELECT FROM Blobs WHERE uuid = 1 ");
 
     ResultSet rs = stmt.executeQuery();
-    assertThat(rs.next(), is(true));
+    assertThat(rs.next(), Matchers.is(true));
     rs.next();
 
     Blob blob = rs.getBlob("attachment");
+    verifyBlobAgainstFile(blob);
 
-    assertThat(blob, notNullValue());
+  }
+
+  private void verifyBlobAgainstFile(Blob blob) throws NoSuchAlgorithmException, IOException, SQLException {
+    String digest = this.calculateMD5checksum(ClassLoader.getSystemResourceAsStream("file.pdf"));
+    File binaryFile = getOutFile();
+
+    assertThat(blob, Matchers.notNullValue());
 
     dumpBlobToFile(binaryFile, blob);
 
-    assertTrue("The file '" + binaryFile.getName() + "' does not exist", binaryFile.exists());
+    assertThat(binaryFile.exists(), Matchers.is(true));
+
     verifyMD5checksum(binaryFile, digest);
 
   }
 
-
   @Test
-  public void shouldLoadChuckedBlob() throws SQLException, FileNotFoundException, IOException, NoSuchAlgorithmException {
-    File binaryFile = getOutFile();
+  public void shouldLoadBlob() throws SQLException, IOException, NoSuchAlgorithmException {
 
-    String digest = this.calculateMD5checksum(ClassLoader.getSystemResourceAsStream("file.pdf"));
-
-    PreparedStatement stmt = conn.prepareStatement("SELECT FROM Article WHERE uuid = 2 ");
+    PreparedStatement stmt = conn.prepareStatement("SELECT FROM Article WHERE uuid = 1 ");
 
     ResultSet rs = stmt.executeQuery();
-    assertThat(rs.next(), is(true));
+    assertThat(rs.next(), Matchers.is(true));
     rs.next();
 
     Blob blob = rs.getBlob("attachment");
 
-    assertThat(blob, notNullValue());
+    verifyBlobAgainstFile(blob);
 
-    dumpBlobToFile(binaryFile, blob);
+  }
 
-    assertTrue("The file '" + binaryFile.getName() + "' does not exist", binaryFile.exists());
-    this.verifyMD5checksum(binaryFile, digest);
+  @Test
+  public void shouldLoadChuckedBlob() throws SQLException, IOException, NoSuchAlgorithmException {
+
+    PreparedStatement stmt = conn.prepareStatement("SELECT FROM Article WHERE uuid = 2 ");
+
+    ResultSet rs = stmt.executeQuery();
+    assertThat(rs.next(), Matchers.is(true));
+    rs.next();
+
+    Blob blob = rs.getBlob("attachment");
+
+    verifyBlobAgainstFile(blob);
 
   }
 
@@ -78,7 +93,6 @@ public class OrientJdbcBlobTest extends OrientJdbcBaseTest {
   }
 
   protected File getOutFile() {
-    File binaryFile = new File("./target/working/output_blob.pdf");
     createWorkingDirIfRequired();
     File outFile = new File(TEST_WORKING_DIR + "output_blob.pdf");
     deleteFileIfItExists(outFile);
@@ -95,8 +109,8 @@ public class OrientJdbcBlobTest extends OrientJdbcBaseTest {
 
   private void verifyMD5checksum(File fileToBeChecked, String digest) {
     try {
-      assertEquals("The MD5 checksum of the file '" + fileToBeChecked.getAbsolutePath() + "' does not match the given one.",
-          digest, calculateMD5checksum(new FileInputStream(fileToBeChecked)));
+      assertEquals("The MD5 checksum of the file '" + fileToBeChecked.getAbsolutePath() + "' does not match the given one.", digest,
+          calculateMD5checksum(new FileInputStream(fileToBeChecked)));
     } catch (NoSuchAlgorithmException e) {
       fail(e.getMessage());
     } catch (IOException e) {

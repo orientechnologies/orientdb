@@ -836,7 +836,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 
   protected void init() {
     entityManager = OEntityManager.getEntityManagerByDatabaseURL(getURL());
-    entityManager.setClassHandler(OObjectEntityClassHandler.getInstance());
+    entityManager.setClassHandler(OObjectEntityClassHandler.getInstance(getURL()));
     saveOnlyDirty = OGlobalConfiguration.OBJECT_SAVE_ONLY_DIRTY.getValueAsBoolean();
     OObjectSerializerHelper.register();
     lazyLoading = true;
@@ -850,7 +850,8 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
     for (ORID orphan : handler.getOrphans()) {
       final ODocument doc = orphan.getRecord();
       deleteCascade(doc);
-      underlying.delete(doc);
+      if (doc != null)
+        underlying.delete(doc);
     }
     handler.getOrphans().clear();
   }

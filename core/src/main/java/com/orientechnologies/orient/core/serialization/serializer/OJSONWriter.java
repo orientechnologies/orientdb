@@ -25,13 +25,12 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.exception.OSerializationException;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.util.ODateHelper;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.io.Writer;
+import java.io.*;
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.util.Collection;
@@ -163,11 +162,22 @@ public class OJSONWriter {
       iteratorToJSON(((Iterable<?>) iValue).iterator(), iFormat, buffer);
 
     else {
-      // TREAT IT AS STRING
-      final String v = iValue.toString();
-      buffer.append('"');
-      buffer.append(encode(v));
-      buffer.append('"');
+      OType  t = OType.getTypeByValue(iValue);
+      if(t == OType.CUSTOM){
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ObjectOutputStream object = new ObjectOutputStream(baos);
+        object.writeObject(iValue);
+        object.flush();
+        buffer.append('"');
+        buffer.append(OBase64Utils.encodeBytes(baos.toByteArray()));
+        buffer.append('"');
+      }else {
+        // TREAT IT AS STRING
+        final String v = iValue.toString();
+        buffer.append('"');
+        buffer.append(encode(v));
+        buffer.append('"');
+      }
     }
 
     if (iValue instanceof ORecordLazyMultiValue)

@@ -23,6 +23,8 @@ import java.util.Set;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 /**
  * Index implementation that allows multiple values for the same key.
@@ -33,8 +35,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public class OIndexNotUnique extends OIndexMultiValues {
 
   public OIndexNotUnique(String name, String typeId, String algorithm, OIndexEngine<Set<OIdentifiable>> engine,
-      String valueContainerAlgorithm, ODocument metadata) {
-    super(name, typeId, algorithm, engine, valueContainerAlgorithm, metadata);
+      String valueContainerAlgorithm, ODocument metadata, OStorage storage) {
+    super(name, typeId, algorithm, engine, valueContainerAlgorithm, metadata, storage);
   }
 
   public boolean canBeUsedInEqualityOperators() {

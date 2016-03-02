@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.client.remote;
 
+import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
@@ -237,6 +238,14 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     } finally {
       stateLock.releaseWriteLock();
     }
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public OModificationLock getModificationLock() {
+    return null;
   }
 
   public void reload() {
@@ -2313,32 +2322,39 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     // @COMPATIBILITY 1.0rc8
     final int tot = network.getSrvProtocolVersion() >= 7 ? network.readShort() : network.readInt();
 
-    clusters = new OCluster[tot];
-    clusterMap.clear();
+    stateLock.acquireWriteLock();
+    try {
 
-    for (int i = 0; i < tot; ++i) {
-      final OClusterRemote cluster = new OClusterRemote();
-      String clusterName = network.readString();
-      final int clusterId = network.readShort();
-      if (clusterName != null) {
-        clusterName = clusterName.toLowerCase();
+      clusters = new OCluster[tot];
+      clusterMap.clear();
 
-        if (network.getSrvProtocolVersion() < 24)
-          network.readString();
+      for (int i = 0; i < tot; ++i) {
+        final OClusterRemote cluster = new OClusterRemote();
+        String clusterName = network.readString();
+        final int clusterId = network.readShort();
+        if (clusterName != null) {
+          clusterName = clusterName.toLowerCase();
 
-        final int dataSegmentId = network.getSrvProtocolVersion() >= 12 && network.getSrvProtocolVersion() < 24
-            ? (int) network.readShort() : 0;
+          if (network.getSrvProtocolVersion() < 24)
+            network.readString();
 
-        cluster.configure(this, clusterId, clusterName);
+          final int dataSegmentId = network.getSrvProtocolVersion() >= 12 && network.getSrvProtocolVersion() < 24
+              ? (int) network.readShort() : 0;
 
-        if (clusterId >= clusters.length)
-          clusters = Arrays.copyOf(clusters, clusterId + 1);
-        clusters[clusterId] = cluster;
-        clusterMap.put(clusterName, cluster);
+          cluster.configure(this, clusterId, clusterName);
+
+          if (clusterId >= clusters.length)
+            clusters = Arrays.copyOf(clusters, clusterId + 1);
+          clusters[clusterId] = cluster;
+          clusterMap.put(clusterName, cluster);
+        }
       }
-    }
 
-    defaultClusterId = clusterMap.get(CLUSTER_DEFAULT_NAME).getId();
+      defaultClusterId = clusterMap.get(CLUSTER_DEFAULT_NAME).getId();
+
+    } finally {
+      stateLock.releaseWriteLock();
+    }
   }
 
   private boolean deleteRecord(final ORecordId iRid, ORecordVersion iVersion, int iMode, final ORecordCallback<Boolean> iCallback,

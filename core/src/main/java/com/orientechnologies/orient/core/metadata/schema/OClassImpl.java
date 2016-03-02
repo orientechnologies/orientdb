@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.common.util.OCommonConst;
@@ -31,6 +32,7 @@ import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
@@ -54,11 +56,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
-import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
+import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
@@ -447,11 +445,11 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       List<OClassImpl> toRemoveList = new ArrayList<OClassImpl>(superClasses);
       toRemoveList.removeAll(newSuperClasses);
 
-      for (OClassImpl addTo : toAddList) {
-        addTo.addBaseClass(this);
-      }
       for (OClassImpl toRemove : toRemoveList) {
-        toRemove.removeBaseClassInternal(this);
+        toRemove.removeSubclassInternal(this);
+      }
+      for (OClassImpl addTo : toAddList) {
+        addTo.addSubclass(this);
       }
       superClasses.clear();
       superClasses.addAll(newSuperClasses);
@@ -510,7 +508,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
               "Class: '" + this.getName() + "' already has the class '" + superClass.getName() + "' as superclass");
         }
 
-        cls.addBaseClass(this);
+        cls.addSubclass(this);
         superClasses.add(cls);
       }
     } finally {
@@ -558,7 +556,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
       if (superClasses.contains(cls)) {
         if (cls != null)
-          cls.removeBaseClassInternal(this);
+          cls.removeSubclassInternal(this);
 
         superClasses.remove(superClass);
       }
@@ -877,10 +875,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       final Collection<Integer> coll = document.field("clusterIds");
       clusterIds = new int[coll.size()];
       int i = 0;
-      for (final Integer item : coll) {
-        if (item.intValue() != -1 || coll.size() < 2)
-          clusterIds[i++] = item;
-      }
+      for (final Integer item : coll)
+        clusterIds[i++] = item;
     } else
       clusterIds = (int[]) cc;
     Arrays.sort(clusterIds);
@@ -1097,6 +1093,56 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     return this;
   }
 
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public OClass truncateCluster(String clusterName) {
+    getDatabase().checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_DELETE, name);
+
+    acquireSchemaReadLock();
+    try {
+      final ODatabaseDocumentInternal database = getDatabase();
+      final OStorage storage = database.getStorage();
+      if (storage instanceof OStorageProxy) {
+        final String cmd = String.format("truncate cluster %s", clusterName);
+        database.command(new OCommandSQL(cmd)).execute();
+      } else if (isDistributedCommand()) {
+        final String cmd = String.format("truncate cluster %s", clusterName);
+
+        final OCommandSQL commandSQL = new OCommandSQL(cmd);
+        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
+
+        database.command(commandSQL).execute();
+
+        truncateClusterInternal(clusterName, storage);
+      } else
+        truncateClusterInternal(clusterName, storage);
+    } finally {
+      releaseSchemaReadLock();
+    }
+
+    return this;
+  }
+
+  private void truncateClusterInternal(final String clusterName, final OStorage storage) {
+    final OCluster cluster = storage.getClusterByName(clusterName);
+
+    if (cluster == null) {
+      throw new ODatabaseException("Cluster with name " + clusterName + " does not exist");
+    }
+
+    try {
+      cluster.truncate();
+    } catch (IOException e) {
+      throw new ODatabaseException("Error during truncate of cluster " + clusterName);
+    }
+
+    for (OIndex index : getIndexes()) {
+      index.rebuild();
+    }
+  }
+
   public OClass removeClusterId(final int clusterId) {
     getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
@@ -1176,7 +1222,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     }
   }
 
-  OClass removeBaseClassInternal(final OClass baseClass) {
+  OClass removeSubclassInternal(final OClass baseClass) {
     acquireSchemaWriteLock();
     try {
       checkEmbedded();
@@ -2125,7 +2171,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     return clId;
   }
 
-  protected OClass addClusterIdInternal(final int clusterId) {
+  private OClass addClusterIdInternal(final int clusterId) {
     acquireSchemaWriteLock();
     try {
       checkEmbedded();
@@ -2374,21 +2420,21 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   /**
    * Adds a base class to the current one. It adds also the base class cluster ids to the polymorphic cluster ids array.
    *
-   * @param iBaseClass
+   * @param subclass
    *          The base class to add.
    */
-  private OClass addBaseClass(final OClassImpl iBaseClass) {
-    checkRecursion(iBaseClass);
-    checkParametersConflict(iBaseClass);
+  private OClass addSubclass(final OClassImpl subclass) {
+    checkRecursion(subclass);
+    checkParametersConflict(subclass);
 
     if (subclasses == null)
       subclasses = new ArrayList<OClass>();
 
-    if (subclasses.contains(iBaseClass))
+    if (subclasses.contains(subclass))
       return this;
 
-    subclasses.add(iBaseClass);
-    addPolymorphicClusterIdsWithInheritance(iBaseClass);
+    subclasses.add(subclass);
+    addPolymorphicClusterIdsWithInheritance(subclass);
     return this;
   }
 
@@ -2437,7 +2483,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
   private void removePolymorphicClusterId(final int clusterId) {
     final int index = Arrays.binarySearch(polymorphicClusterIds, clusterId);
-    if (index == -1)
+    if (index < 0)
       return;
 
     if (index < polymorphicClusterIds.length - 1)
@@ -2481,29 +2527,15 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
    * Add different cluster id to the "polymorphic cluster ids" array.
    */
   private void addPolymorphicClusterIds(final OClassImpl iBaseClass) {
-    boolean found;
-    for (int i : iBaseClass.polymorphicClusterIds) {
-      found = false;
-      for (int k : polymorphicClusterIds) {
-        if (i == k) {
-          found = true;
-          break;
-        }
-      }
-
-      if (!found) {
-        // ADD IT
-        polymorphicClusterIds = OArrays.copyOf(polymorphicClusterIds, polymorphicClusterIds.length + 1);
-        polymorphicClusterIds[polymorphicClusterIds.length - 1] = i;
-        Arrays.sort(polymorphicClusterIds);
-      }
+    for (int clusterId : iBaseClass.polymorphicClusterIds) {
+      addPolymorphicClusterId(clusterId);
     }
   }
 
-  private void addPolymorphicClusterIdsWithInheritance(final OClassImpl iBaseClass) {
-    addPolymorphicClusterIds(iBaseClass);
+  private void addPolymorphicClusterIdsWithInheritance(final OClassImpl subclass) {
+    addPolymorphicClusterIds(subclass);
     for (OClassImpl superClass : superClasses) {
-      superClass.addPolymorphicClusterIdsWithInheritance(iBaseClass);
+      superClass.addPolymorphicClusterIdsWithInheritance(subclass);
     }
   }
 

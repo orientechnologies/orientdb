@@ -21,7 +21,7 @@ package com.orientechnologies.orient.etl.extractor;
 import org.junit.Test;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.etl.ETLBaseTest;
+import com.orientechnologies.orient.etl.OETLBaseTest;
 
 import static org.junit.Assert.assertEquals;
 
@@ -30,7 +30,7 @@ import static org.junit.Assert.assertEquals;
  *
  * @author Luca Garulli
  */
-public class OJsonExtractorTest extends ETLBaseTest {
+public class OJsonExtractorTest extends OETLBaseTest {
 
   @Test
   public void testEmptyCollection() {
