@@ -79,8 +79,6 @@ public class OIndexFullText extends OIndexMultiValues {
    */
   @Override
   public OIndexFullText put(Object key, final OIdentifiable iSingleValue) {
-    checkForRebuild();
-
     if (key == null)
       return this;
 
@@ -158,8 +156,6 @@ public class OIndexFullText extends OIndexMultiValues {
    */
   @Override
   public boolean remove(Object key, final OIdentifiable value) {
-    checkForRebuild();
-
     key = getCollatingValue(key);
 
     final ODatabase database = getDatabase();

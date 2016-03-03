@@ -40,8 +40,6 @@ public class OIndexUnique extends OIndexOneValue {
 
   @Override
   public OIndexOneValue put(Object key, final OIdentifiable iSingleValue) {
-    checkForRebuild();
-
     key = getCollatingValue(key);
 
     final ODatabase database = getDatabase();

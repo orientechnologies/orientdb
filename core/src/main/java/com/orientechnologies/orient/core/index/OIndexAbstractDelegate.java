@@ -21,7 +21,6 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -30,9 +29,8 @@ import java.util.Set;
 
 /**
  * Generic abstract wrapper for indexes. It delegates all the operations to the wrapped OIndex instance.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 public class OIndexAbstractDelegate<T> implements OIndex<T> {
   protected OIndex<T> delegate;
@@ -139,7 +137,6 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
     return delegate.getMetadata();
   }
 
-
   public long rebuild() {
     return delegate.rebuild();
   }
@@ -208,8 +205,13 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
   }
 
   @Override
-  public boolean isRebuiding() {
-    return delegate.isRebuiding();
+  public long getRebuildVersion() {
+    return delegate.getRebuildVersion();
+  }
+
+  @Override
+  public boolean isRebuilding() {
+    return delegate.isRebuilding();
   }
 
   @Override

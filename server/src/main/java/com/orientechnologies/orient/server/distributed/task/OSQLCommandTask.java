@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.ORetryQueryException;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClusters;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLDelegate;
@@ -47,12 +48,11 @@ import java.util.Map;
 
 /**
  * Distributed task used for synchronization.
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
  */
 public class OSQLCommandTask extends OAbstractCommandTask {
-  private static final long                                 serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
   protected String                                          text;
   protected Map<Object, Object>                             params;
@@ -80,40 +80,51 @@ public class OSQLCommandTask extends OAbstractCommandTask {
   public Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
       throws Exception {
 
-    if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "execute command=%s db=%s",
-          text.toString(), database.getName());
+    Object res;
+    while (true) {
+      try {
+        if (ODistributedServerLog.isDebugEnabled())
+          ODistributedServerLog
+              .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "execute command=%s db=%s", text.toString(),
+                  database.getName());
 
-    final OCommandRequest cmd = database.command(new OCommandSQL(text));
+        final OCommandRequest cmd = database.command(new OCommandSQL(text));
 
-    OCommandExecutor executor = OCommandManager.instance().getExecutor((OCommandRequestInternal) cmd);
-    executor.parse(cmd);
+        OCommandExecutor executor = OCommandManager.instance().getExecutor((OCommandRequestInternal) cmd);
+        executor.parse(cmd);
 
-    final OCommandExecutor exec = executor instanceof OCommandExecutorSQLDelegate ? ((OCommandExecutorSQLDelegate) executor)
-        .getDelegate() : executor;
+        final OCommandExecutor exec = executor instanceof OCommandExecutorSQLDelegate ?
+            ((OCommandExecutorSQLDelegate) executor).getDelegate() :
+            executor;
 
-    if (exec instanceof OCommandExecutorSQLSelect && clusters.size() > 0) {
-      final Iterator<? extends OIdentifiable> target = ((OCommandExecutorSQLSelect) exec).getTarget();
+        if (exec instanceof OCommandExecutorSQLSelect && clusters.size() > 0) {
+          final Iterator<? extends OIdentifiable> target = ((OCommandExecutorSQLSelect) exec).getTarget();
 
-      final int[] clusterIds = new int[clusters.size()];
-      int i = 0;
-      for (String c : clusters)
-        clusterIds[i++] = database.getClusterIdByName(c);
+          final int[] clusterIds = new int[clusters.size()];
+          int i = 0;
+          for (String c : clusters)
+            clusterIds[i++] = database.getClusterIdByName(c);
 
-      final ORecordIteratorClusters<ORecord> filteredTarget = new ORecordIteratorClusters<ORecord>(database, database, clusterIds);
-      if (target instanceof ORecordIteratorClusters)
-        filteredTarget.setRange(((ORecordIteratorClusters) target).getBeginRange(),
-            ((ORecordIteratorClusters) target).getEndRange());
+          final ORecordIteratorClusters<ORecord> filteredTarget = new ORecordIteratorClusters<ORecord>(database, database,
+              clusterIds);
+          if (target instanceof ORecordIteratorClusters)
+            filteredTarget
+                .setRange(((ORecordIteratorClusters) target).getBeginRange(), ((ORecordIteratorClusters) target).getEndRange());
 
-      ((OCommandExecutorSQLSelect) exec).setTarget(filteredTarget);
+          ((OCommandExecutorSQLSelect) exec).setTarget(filteredTarget);
+        }
+
+        if (params != null)
+          // EXECUTE WITH PARAMETERS
+          res = executor.execute(params);
+        else
+          res = executor.execute(null);
+
+        break;
+      } catch (ORetryQueryException e) {
+        continue;
+      }
     }
-
-    final Object res;
-    if (params != null)
-      // EXECUTE WITH PARAMETERS
-      res = executor.execute(params);
-    else
-      res = executor.execute(null);
 
     return res;
   }

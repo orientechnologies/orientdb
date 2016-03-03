@@ -1504,18 +1504,24 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * Executes the command request and return the result back.
    */
   public Object command(final OCommandRequestText iCommand) {
-    final OCommandExecutor executor = OCommandManager.instance().getExecutor(iCommand);
+    while (true) {
+      try {
+        final OCommandExecutor executor = OCommandManager.instance().getExecutor(iCommand);
 
-    // COPY THE CONTEXT FROM THE REQUEST
-    executor.setContext(iCommand.getContext());
+        // COPY THE CONTEXT FROM THE REQUEST
+        executor.setContext(iCommand.getContext());
 
-    executor.setProgressListener(iCommand.getProgressListener());
-    executor.parse(iCommand);
+        executor.setProgressListener(iCommand.getProgressListener());
+        executor.parse(iCommand);
 
-    return executeCommand(iCommand, executor);
+        return executeCommand(iCommand, executor);
+      } catch (ORetryQueryException e) {
+        continue;
+      }
+    }
   }
 
-  public Object executeCommand(final OCommandRequestText iCommand, final OCommandExecutor executor) {
+  private Object executeCommand(final OCommandRequestText iCommand, final OCommandExecutor executor) {
     if (iCommand.isIdempotent() && !executor.isIdempotent())
       throw new OCommandExecutionException("Cannot execute non idempotent command");
 

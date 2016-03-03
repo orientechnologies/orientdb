@@ -24,6 +24,7 @@ import java.lang.reflect.Array;
 import java.util.*;
 import java.util.Map.Entry;
 
+import com.orientechnologies.orient.core.exception.ORetryQueryException;
 import sun.misc.Signal;
 import sun.misc.SignalHandler;
 
@@ -844,12 +845,20 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     resetResultSet();
 
-    final OCommandExecutorScript cmd = new OCommandExecutorScript();
-    cmd.parse(new OCommandScript("Javascript", iText));
+    float elapsedSeconds;
+    while (true) {
+      try {
+        final OCommandExecutorScript cmd = new OCommandExecutorScript();
+        cmd.parse(new OCommandScript("Javascript", iText));
 
-    long start = System.currentTimeMillis();
-    currentResult = cmd.execute(null);
-    float elapsedSeconds = getElapsedSecs(start);
+        long start = System.currentTimeMillis();
+        currentResult = cmd.execute(null);
+        elapsedSeconds = getElapsedSecs(start);
+        break;
+      } catch (ORetryQueryException e) {
+        continue;
+      }
+    }
 
     parseResult();
 
