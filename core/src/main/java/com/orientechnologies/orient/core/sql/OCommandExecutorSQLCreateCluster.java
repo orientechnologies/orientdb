@@ -113,10 +113,18 @@ public class OCommandExecutorSQLCreateCluster extends OCommandExecutorSQLAbstrac
     if (clusterId > -1)
       throw new OCommandSQLParsingException("Cluster '" + clusterName + "' already exists");
 
-    if (requestedId == -1) {
-      return database.addCluster(clusterName);
+    if (blob) {
+      if (requestedId == -1) {
+        return database.addBlobCluster(clusterName);
+      } else {
+        throw new OCommandExecutionException("Request id not supported by blob cluster creation.");
+      }
     } else {
-      return database.addCluster(clusterName, requestedId, null);
+      if (requestedId == -1) {
+        return database.addCluster(clusterName);
+      } else {
+        return database.addCluster(clusterName, requestedId, null);
+      }
     }
   }
 

@@ -56,7 +56,6 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -1361,9 +1360,21 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
   @Override
   public int addBlobCluster(String clusterName) {
-    //TODO: Handle remote case;
-    acquireSchemaWriteLock();
+
+    ODatabaseDocumentInternal db = getDatabase();
     int clusterId;
+    if (db.getStorage() instanceof OStorageProxy) {
+      clusterId = getDatabase().command(new OCommandSQL("create blob cluster :1")).execute(clusterName);
+      reload();
+    } else
+      clusterId= addBlobClusterIdInternal(clusterName);
+
+    return clusterId;
+  }
+
+  private int addBlobClusterIdInternal(String clusterName) {
+    int clusterId;
+    acquireSchemaWriteLock();
     try {
       clusterId = createClusterIfNeeded(clusterName);
       checkClusterCanBeAdded(clusterId, null);
@@ -1377,7 +1388,17 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
   @Override
   public void removeBlobCluster(String clusterName) {
-    //TODO: Handle remote case;
+
+    ODatabaseDocumentInternal db = getDatabase();
+    if (db.getStorage() instanceof OStorageProxy) {
+      getDatabase().command(new OCommandSQL("delete cluster :1")).execute(clusterName);
+      reload();
+    } else
+      removeBlobClusterInternal(clusterName);
+
+  }
+
+  private void removeBlobClusterInternal(String clusterName) {
     acquireSchemaWriteLock();
     try {
       int clusterId = getClusterId(clusterName);
