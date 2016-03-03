@@ -185,6 +185,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return false;
   }
 
+  public Set<OChannelBinaryAsynchClient> getSessionConnections() {
+    final OStorageRemoteThreadLocal instance = OStorageRemoteThreadLocal.INSTANCE;
+    return instance != null ? instance.get().connections : null;
+  }
   public int getSessionId() {
     final OStorageRemoteThreadLocal instance = OStorageRemoteThreadLocal.INSTANCE;
     return instance != null ? instance.get().sessionId : -1;
@@ -208,6 +212,19 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       tl.serverURL = iServerURL;
       tl.sessionId = iSessionId;
       tl.clear();
+    }
+    if (token != null && iServerURL != null) {
+      this.tokens.put(iServerURL, token);
+    }
+  }
+
+  public void pushSessionId(final String iServerURL, final int iSessionId, byte[] token,Set<OChannelBinaryAsynchClient> connections) {
+    final OStorageRemoteThreadLocal instance = OStorageRemoteThreadLocal.INSTANCE;
+    if (instance != null) {
+      final OStorageRemoteSession tl = instance.get();
+      tl.serverURL = iServerURL;
+      tl.sessionId = iSessionId;
+      tl.connections = connections;
     }
     if (token != null && iServerURL != null) {
       this.tokens.put(iServerURL, token);

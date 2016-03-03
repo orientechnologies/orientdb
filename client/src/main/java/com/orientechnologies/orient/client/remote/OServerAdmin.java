@@ -44,6 +44,7 @@ public class OServerAdmin {
   private OStorageRemote storage;
   private int            sessionId    = -1;
   private byte[]         sessionToken = null;
+  private Set<OChannelBinaryAsynchClient>                  connections = new HashSet<OChannelBinaryAsynchClient>();
 
   /**
    * Creates the object passing a remote URL to connect. sessionToken
@@ -678,7 +679,7 @@ public class OServerAdmin {
 
       OChannelBinaryAsynchClient network=null;
       try {
-        storage.setSessionId(getURL(),sessionId,sessionToken);
+        storage.pushSessionId(getURL(),sessionId,sessionToken,connections);
         //TODO:replace this api with one that get connection for only the specified url.
         network = storage.getAvailableNetwork(getURL());
         return operation.execute(network);
