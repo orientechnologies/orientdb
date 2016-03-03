@@ -19,10 +19,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -44,10 +40,15 @@ import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
+import com.orientechnologies.orient.core.sql.parser.ODeleteStatement;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * SQL UPDATE command.
@@ -150,7 +151,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
         }
 
         final String condition = parserGetCurrentPosition() > -1 ? " " + parserText.substring(parserGetCurrentPosition()) : "";
-        query = database.command(new OSQLAsynchQuery<ODocument>("select from " + subjectName + condition, this));
+        query = database.command(new OSQLAsynchQuery<ODocument>("select from " + getSelectTarget(subjectName) + condition, this));
       }
     } finally {
       textRequest.setText(originalQuery);
@@ -158,6 +159,14 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
 
     return this;
   }
+
+  private String getSelectTarget(String subjectName) {
+    if(preParsedStatement == null){
+      return subjectName;
+    }
+    return ((ODeleteStatement)preParsedStatement).fromClause.toString();
+  }
+
 
   public Object execute(final Map<Object, Object> iArgs) {
     if (query == null && indexName == null)

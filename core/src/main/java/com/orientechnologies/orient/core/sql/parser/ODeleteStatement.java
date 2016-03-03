@@ -6,7 +6,7 @@ import java.util.Map;
 
 public class ODeleteStatement extends OStatement {
 
-  protected OFromClause  fromClause;
+  public OFromClause  fromClause;
   protected OWhereClause whereClause;
   protected boolean      returnBefore = false;
   protected OLimit       limit        = null;
