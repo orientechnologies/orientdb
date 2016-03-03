@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 
+import java.math.BigDecimal;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
@@ -49,7 +50,8 @@ public class OrientJdbcResultSetMetaData implements ResultSetMetaData {
     typesSqlTypes.put(OType.SHORT, Types.SMALLINT);
     typesSqlTypes.put(OType.BOOLEAN, Types.BOOLEAN);
     typesSqlTypes.put(OType.LONG, Types.BIGINT);
-    typesSqlTypes.put(OType.DOUBLE, Types.DECIMAL);
+    typesSqlTypes.put(OType.DOUBLE, Types.DOUBLE);
+    typesSqlTypes.put(OType.DECIMAL, Types.DECIMAL);
     typesSqlTypes.put(OType.DATE, Types.DATE);
     typesSqlTypes.put(OType.DATETIME, Types.TIMESTAMP);
     typesSqlTypes.put(OType.BYTE, Types.TINYINT);
@@ -68,7 +70,7 @@ public class OrientJdbcResultSetMetaData implements ResultSetMetaData {
     typesSqlTypes.put(OType.TRANSIENT, Types.NULL);
   }
 
-  private OrientJdbcResultSet              resultSet;
+  private OrientJdbcResultSet resultSet;
 
   public OrientJdbcResultSetMetaData(final OrientJdbcResultSet iResultSet) {
     resultSet = iResultSet;
@@ -125,13 +127,14 @@ public class OrientJdbcResultSetMetaData implements ResultSetMetaData {
 
     if (otype == null) {
       Object value = currentRecord.field(fieldName);
-      if (value == null)
+
+      if (value == null) {
         return Types.NULL;
-      // Check if the type is a binary record or a collection of binary
-      // records
-      else if (value instanceof ORecordBytes)
+      } else if (value instanceof ORecordBytes) {
+        // Check if the type is a binary record or a collection of binary
+        // records
         return Types.BINARY;
-      else if (value instanceof ORecordLazyList) {
+      } else if (value instanceof ORecordLazyList) {
         ORecordLazyList list = (ORecordLazyList) value;
         // check if all the list items are instances of ORecordBytes
         ListIterator<OIdentifiable> iterator = list.listIterator();
@@ -142,43 +145,55 @@ public class OrientJdbcResultSetMetaData implements ResultSetMetaData {
           if (!(listElement instanceof ORecordBytes))
             stop = true;
         }
-        if (!stop)
+        if (!stop) {
           return Types.BLOB;
+        }
       }
+
       return this.getSQLTypeFromJavaClass(value);
-    } else if (otype == OType.EMBEDDED || otype == OType.LINK) {
-      Object value = currentRecord.field(fieldName);
-      if (value == null)
-        return Types.NULL;
-      // 1. Check if the type is another record or a collection of records
-      if (value instanceof ORecordBytes)
-        return Types.BINARY;
-      else
-        // the default type
-        return typesSqlTypes.get(otype);
-    } else if (otype == OType.EMBEDDEDLIST || otype == OType.LINKLIST) {
-      Object value = currentRecord.field(fieldName);
-      if (value == null)
-        return Types.NULL;
-      if (value instanceof ORecordLazyList) {
-        ORecordLazyList list = (ORecordLazyList) value;
-        // check if all the list items are instances of ORecordBytes
-        ListIterator<OIdentifiable> iterator = list.listIterator();
-        OIdentifiable listElement;
-        boolean stop = false;
-        while (iterator.hasNext() && !stop) {
-          listElement = iterator.next();
-          if (!(listElement instanceof ORecordBytes))
-            stop = true;
+    } else {
+      if (otype == OType.EMBEDDED || otype == OType.LINK) {
+        Object value = currentRecord.field(fieldName);
+        if (value == null) {
+          return Types.NULL;
         }
-        if (stop)
+        // 1. Check if the type is another record or a collection of records
+        if (value instanceof ORecordBytes) {
+          return Types.BINARY;
+        } else {
+          // the default type
           return typesSqlTypes.get(otype);
-        else
-          return Types.BLOB;
-      } else
-        return Types.JAVA_OBJECT;
-    } else
-      return typesSqlTypes.get(otype);
+        }
+      } else {
+        if (otype == OType.EMBEDDEDLIST || otype == OType.LINKLIST) {
+          Object value = currentRecord.field(fieldName);
+          if (value == null) {
+            return Types.NULL;
+          }
+          if (value instanceof ORecordLazyList) {
+            ORecordLazyList list = (ORecordLazyList) value;
+            // check if all the list items are instances of ORecordBytes
+            ListIterator<OIdentifiable> iterator = list.listIterator();
+            OIdentifiable listElement;
+            boolean stop = false;
+            while (iterator.hasNext() && !stop) {
+              listElement = iterator.next();
+              if (!(listElement instanceof ORecordBytes))
+                stop = true;
+            }
+            if (stop) {
+              return typesSqlTypes.get(otype);
+            } else {
+              return Types.BLOB;
+            }
+          } else {
+            return Types.JAVA_OBJECT;
+          }
+        } else {
+          return typesSqlTypes.get(otype);
+        }
+      }
+    }
   }
 
   protected ODocument getCurrentRecord() throws SQLException {
@@ -189,7 +204,6 @@ public class OrientJdbcResultSetMetaData implements ResultSetMetaData {
   }
 
   private int getSQLTypeFromJavaClass(final Object value) {
-    // START inferencing the OType from the Java class
     if (value instanceof Boolean)
       return typesSqlTypes.get(OType.BOOLEAN);
     else if (value instanceof Byte)
@@ -198,6 +212,8 @@ public class OrientJdbcResultSetMetaData implements ResultSetMetaData {
       return typesSqlTypes.get(OType.DATETIME);
     else if (value instanceof Double)
       return typesSqlTypes.get(OType.DOUBLE);
+    else if (value instanceof BigDecimal)
+      return typesSqlTypes.get(OType.DECIMAL);
     else if (value instanceof Float)
       return typesSqlTypes.get(OType.FLOAT);
     else if (value instanceof Integer)
@@ -210,9 +226,9 @@ public class OrientJdbcResultSetMetaData implements ResultSetMetaData {
       return typesSqlTypes.get(OType.STRING);
     else
       return Types.JAVA_OBJECT;
-    // STOP inferencing the OType from the Java class
   }
 
+  @Override
   public String getColumnTypeName(final int column) throws SQLException {
     final ODocument currentRecord = getCurrentRecord();
 

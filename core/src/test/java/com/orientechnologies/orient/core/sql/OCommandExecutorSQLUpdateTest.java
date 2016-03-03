@@ -362,4 +362,20 @@ public class OCommandExecutorSQLUpdateTest {
     assertEquals(result.get(0).field("name"), "baz");
     db.close();
   }
+
+  @Test
+  public void testBacktickClassName() throws Exception {
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLUpdateTest_testBacktickClassName");
+    db.create();
+    try {
+      db.getMetadata().getSchema().createClass("foo-bar");
+      db.command(new OCommandSQL("insert into `foo-bar` set name = 'foo'")).execute();
+      db.command(new OCommandSQL("UPDATE `foo-bar` set name = 'bar' where name = 'foo'")).execute();
+      Iterable result = db.query(new OSQLSynchQuery<Object>("select from `foo-bar`"));
+      ODocument doc = (ODocument) result.iterator().next();
+      assertEquals(doc.field("name"), "bar");
+    } finally {
+      db.close();
+    }
+  }
 }

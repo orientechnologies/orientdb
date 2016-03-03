@@ -6,15 +6,15 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.junit.Assert.*;
 import static org.hamcrest.Matchers.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 
 public class OrientJdbcStatementDMLtest extends OrientJdbcBaseTest {
 
@@ -24,18 +24,19 @@ public class OrientJdbcStatementDMLtest extends OrientJdbcBaseTest {
     Date date = new Date(System.currentTimeMillis());
 
     Statement stmt = conn.createStatement();
-    int updated = stmt
-        .executeUpdate("INSERT into Item (stringKey, intKey, text, length, date) values ('100','100','dummy text','10','"
-            + date.toString() + "')");
+    int updated = stmt.executeUpdate(
+        "INSERT into Item (stringKey, intKey, text, length, date,score) values ('100','100','dummy text','10','" + date.toString()
+            + "','10.10')");
 
     assertThat(updated, equalTo(1));
 
     stmt = conn.createStatement();
-    ResultSet rs = stmt.executeQuery("SELECT stringKey, intKey, text, length, date FROM Item where intKey = '100' ");
+    ResultSet rs = stmt.executeQuery("SELECT stringKey, intKey, text, length, date, score FROM Item where intKey = '100' ");
     rs.next();
     assertThat(rs.getInt("intKey"), equalTo(100));
     assertThat(rs.getString("stringKey"), equalTo("100"));
     assertThat(rs.getDate("date").toString(), equalTo(date.toString()));
+    assertThat(rs.getBigDecimal("score"), equalTo(BigDecimal.valueOf(1010, 2)));
 
   }
 
@@ -57,7 +58,6 @@ public class OrientJdbcStatementDMLtest extends OrientJdbcBaseTest {
 
   @Test
   public void shouldDeleteAnItem() throws Exception {
-
 
     Statement stmt = conn.createStatement();
     int updated = stmt.executeUpdate("DELETE FROM Item WHERE intKey = '10'");

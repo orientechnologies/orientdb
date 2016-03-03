@@ -2,6 +2,7 @@ package com.orientechnologies.orient.jdbc;
 
 import org.junit.Test;
 
+import java.nio.channels.Pipe;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.Types;
@@ -15,7 +16,7 @@ public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
   @Test
   public void shouldMapReturnTypes() throws Exception {
 
-    ResultSet rs = conn.createStatement().executeQuery("SELECT stringKey, intKey, text, length, date FROM Item");
+    ResultSet rs = conn.createStatement().executeQuery("SELECT stringKey, intKey, text, length, date, score FROM Item");
 
     ResultSetMetaData metaData = rs.getMetaData();
     assertThat(metaData, is(notNullValue()));
@@ -25,6 +26,8 @@ public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
     assertThat(metaData.getColumnType(3), equalTo(Types.VARCHAR));
     assertThat(metaData.getColumnType(4), equalTo(Types.BIGINT));
     assertThat(metaData.getColumnType(5), equalTo(Types.TIMESTAMP));
+    assertThat(metaData.getColumnType(6), equalTo(Types.DECIMAL));
+
   }
 
   @Test
