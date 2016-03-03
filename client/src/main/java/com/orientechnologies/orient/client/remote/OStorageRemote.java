@@ -90,7 +90,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     STICKY, ROUND_ROBIN_CONNECT, ROUND_ROBIN_REQUEST
   }
 
-  private CONNECTION_STRATEGY connectionStrategy = CONNECTION_STRATEGY.STICKY;
+  private CONNECTION_STRATEGY                  connectionStrategy      = CONNECTION_STRATEGY.STICKY;
 
   private final OSBTreeCollectionManagerRemote sbTreeCollectionManager = new OSBTreeCollectionManagerRemote();
   protected final List<String>                 serverURLs              = new ArrayList<String>();
@@ -112,10 +112,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   private Map<String, byte[]>                  tokens                  = new ConcurrentHashMap<String, byte[]>();
 
   public OStorageRemote(final String iClientId, final String iURL, final String iMode) throws IOException {
-    this(iClientId, iURL, iMode, null);
+    this(iClientId, iURL, iMode, null, true);
   }
 
-  public OStorageRemote(final String iClientId, final String iURL, final String iMode, STATUS status) throws IOException {
+  public OStorageRemote(final String iClientId, final String iURL, final String iMode, final STATUS status,
+      final boolean managePushMessages) throws IOException {
     super(iURL, iURL, iMode, 0); // NO TIMEOUT @SINCE 1.5
     if (status != null)
       this.status = status;
@@ -126,7 +127,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     clientConfiguration = new OContextConfiguration();
     connectionRetry = clientConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_RETRY);
     connectionRetryDelay = clientConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_RETRY_DELAY);
-    asynchEventListener = new OStorageRemoteAsynchEventListener(this);
+    if (managePushMessages)
+      asynchEventListener = new OStorageRemoteAsynchEventListener(this);
     parseServerURLs();
 
     asynchExecutor = Executors.newSingleThreadScheduledExecutor();
@@ -388,7 +390,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           mode = 2;
         else
           mode = iMode;
-        // ASYNCHRONOUS MODE NO ANSWER
 
         final OPhysicalPosition ppos = new OPhysicalPosition(iRecordType);
 
@@ -832,6 +833,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         "restore is not supported against remote storage. Open the database with plocal or use Enterprise Edition");
   }
 
+  public OContextConfiguration getClientConfiguration() {
+    return clientConfiguration;
+  }
+
   public long count(final int iClusterId) {
     return count(new int[] { iClusterId });
   }
@@ -1141,6 +1146,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
                 final Boolean unsubscribe = doc.field("unsubscribe");
                 if (token != null) {
                   if (Boolean.TRUE.equals(unsubscribe)) {
+                    if( OStorageRemote.this.asynchEventListener != null )
                     OStorageRemote.this.asynchEventListener.unregisterLiveListener(token);
                   } else {
                     OLiveResultListener listener = (OLiveResultListener) iCommand.getResultListener();
@@ -1875,7 +1881,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         try {
           network = getAvailableNetwork(currentURL);
         } catch (IOException exception) {
-          throw OException.wrapException(new OStorageException("Cannot create a connection to remote server address(es): " + serverURLs), exception);
+          throw OException.wrapException(
+              new OStorageException("Cannot create a connection to remote server address(es): " + serverURLs), exception);
         }
         try {
           openRemoteDatabase(network);
@@ -1943,7 +1950,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return null;
   }
 
-  protected void sendClientInfo(OChannelBinaryAsynchClient network) throws IOException {
+  protected void sendClientInfo(final OChannelBinaryAsynchClient network) throws IOException {
     if (network.getSrvProtocolVersion() >= 7) {
       // @COMPATIBILITY 1.0rc8
       network.writeString(DRIVER_NAME).writeString(OConstants.ORIENT_VERSION)
@@ -2062,10 +2069,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return beginRequest(getAvailableNetwork(getNextAvailableServerURL(false)), iCommand);
   }
 
-  public OChannelBinaryAsynchClient beginRequest(final OChannelBinaryAsynchClient network, final byte iCommand)
-      throws IOException {
+  public OChannelBinaryAsynchClient beginRequest(final OChannelBinaryAsynchClient network, final byte iCommand) throws IOException {
     final OStorageRemoteThreadLocal instance = OStorageRemoteThreadLocal.INSTANCE;
-    network.beginRequest(iCommand,instance.get(),tokens.get(network.getServerURL()));
+    network.beginRequest(iCommand, instance.get(), tokens.get(network.getServerURL()));
     return network;
   }
 
