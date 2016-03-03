@@ -19,6 +19,12 @@
  */
 package com.orientechnologies.orient.client.remote;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -31,19 +37,14 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 /**
  * Remote administration class of OrientDB Server instances.
  */
 public class OServerAdmin {
-  protected OStorageRemote storage;
-  private int              sessionId    = -1;
-  private byte[]           sessionToken = null;
+  private OStorageRemote                  storage;
+  private int                             sessionId    = -1;
+  private byte[]                          sessionToken = null;
+  private Set<OChannelBinaryAsynchClient> connections  = new HashSet<OChannelBinaryAsynchClient>();
 
   /**
    * Creates the object passing a remote URL to connect. sessionToken
@@ -59,7 +60,7 @@ public class OServerAdmin {
     if (!iURL.contains("/"))
       iURL += "/";
 
-    storage = new OStorageRemote(null, iURL, "", OStorage.STATUS.OPEN);
+    storage = new OStorageRemote(null, iURL, "", OStorage.STATUS.OPEN, false);
   }
 
   /**
@@ -680,7 +681,7 @@ public class OServerAdmin {
 
     OChannelBinaryAsynchClient network = null;
     try {
-      storage.setSessionId(getURL(), sessionId, sessionToken);
+      storage.pushSessionId(getURL(), sessionId, sessionToken, connections);
       // TODO:replace this api with one that get connection for only the specified url.
       network = storage.getAvailableNetwork(getURL());
       return operation.execute(network);

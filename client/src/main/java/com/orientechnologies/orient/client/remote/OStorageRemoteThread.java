@@ -22,10 +22,7 @@ package com.orientechnologies.orient.client.remote;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -62,6 +59,7 @@ public class OStorageRemoteThread implements OStorageProxy {
   private final OStorageRemote delegate;
   private String               serverURL;
   private int                  sessionId;
+  private Set<OChannelBinaryAsynchClient>                  connections = new HashSet<OChannelBinaryAsynchClient>();
   private byte[]               token;
 
   public OStorageRemoteThread(final OStorageRemote iSharedStorage) {
@@ -743,12 +741,13 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   protected void pushSession() {
-    delegate.setSessionId(serverURL, sessionId, token);
+    delegate.pushSessionId(serverURL, sessionId, token,connections);
   }
 
   protected void popSession() {
     serverURL = delegate.getServerURL();
     sessionId = delegate.getSessionId();
+    connections = delegate.getSessionConnections();
     // delegate.clearSession();
   }
 }

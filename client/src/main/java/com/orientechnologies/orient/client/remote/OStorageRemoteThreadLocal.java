@@ -50,7 +50,7 @@ public class OStorageRemoteThreadLocal extends ThreadLocal<OStorageRemoteSession
     public Integer sessionId        = -1;
     public String  serverURL        = null;
     public int     serverURLIndex   = -1;
-    private Set<OChannelBinaryAsynchClient> connections = new HashSet<OChannelBinaryAsynchClient>();
+    public Set<OChannelBinaryAsynchClient> connections;
 
     public boolean has(OChannelBinaryAsynchClient connection) {
       return connections.contains(connection);
