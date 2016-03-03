@@ -67,6 +67,7 @@ import com.orientechnologies.orient.server.distributed.task.*;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 
 import java.io.*;
+import java.security.SecureRandom;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
@@ -89,6 +90,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   protected static final String                  CONFIG_NODE_PREFIX     = "node.";
   protected static final String                  CONFIG_DBSTATUS_PREFIX = "dbstatus.";
   protected static final int                     DEPLOY_DB_MAX_RETRIES  = 10;
+  public static final String                     REPLICATOR_USER        = "_CrossServerTempUser";
   protected String                               nodeId;
   protected String                               hazelcastConfigFile    = "hazelcast.xml";
   protected Map<String, Member>                  activeNodes            = new ConcurrentHashMap<String, Member>();
@@ -129,6 +131,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(Integer.MAX_VALUE);
     OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(-1);
     OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.setValue(true);
+
+    // REGISTER TEMPORARY USER FOR REPLICATION PURPOSE
+    serverInstance.addTemporaryUser(REPLICATOR_USER, "" + new SecureRandom().nextLong(), "*");
 
     super.startup();
 
@@ -312,6 +317,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       listenerCfg.put("protocol", listener.getProtocolType().getSimpleName());
       listenerCfg.put("listen", listener.getListeningAddress(true));
     }
+
+    // STORE THE TEMP USER/PASSWD USED FOR REPLICATION
+    nodeCfg.field("user_replicator", serverInstance.getUser(REPLICATOR_USER).password);
+
     nodeCfg.field("databases", getManagedDatabases());
 
     final long maxMem = Runtime.getRuntime().maxMemory();
@@ -418,10 +427,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     return new OHazelcastDistributedResponse(requestId, executorNodeName, senderNodeName, payload);
   }
 
-  public ORemoteServerController getRemoteServer(final String nodeName) throws IOException {
-    ORemoteServerController remoteServer = remoteServers.get(nodeName);
+  public ORemoteServerController getRemoteServer(final String rNodeName) throws IOException {
+    ORemoteServerController remoteServer = remoteServers.get(rNodeName);
     if (remoteServer == null) {
-      final ODocument cfg = getNodeConfigurationById(nodeName);
+      final Member member = activeNodes.get(rNodeName);
+      final ODocument cfg = getNodeConfigurationById(member.getUuid());
 
       final Collection<Map<String, Object>> listeners = (Collection<Map<String, Object>>) cfg.field("listeners");
       if (listeners == null)
@@ -439,8 +449,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       if (url == null)
         throw new ODatabaseException("Cannot connect to a remote node because the url was not found");
 
-      remoteServer = new ORemoteServerController(url);
-      remoteServers.put(nodeName, remoteServer);
+      final String userPassword = cfg.field("user_replicator");
+
+      remoteServer = new ORemoteServerController(this, url, REPLICATOR_USER, userPassword);
+      remoteServers.put(rNodeName, remoteServer);
     }
     return remoteServer;
   }
@@ -497,6 +509,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   public void onOpen(final ODatabaseInternal iDatabase) {
     final String dbUrl = OSystemVariableResolver.resolveSystemVariables(iDatabase.getURL());
 
+    // if (!isNodeOnline(getLocalNodeName(), iDatabase.getName()))
+    // return;
+
     if (dbUrl.startsWith("plocal:")) {
       // CHECK SPECIAL CASE WITH MULTIPLE SERVER INSTANCES ON THE SAME JVM
       final String dbDirectory = serverInstance.getDatabaseDirectory();
@@ -526,7 +541,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
           iDatabase.replaceStorage(storage);
 
-          installDbClustersLocalStrategy(iDatabase);
+          if (isNodeOnline(getLocalNodeName(), iDatabase.getName()))
+            installDbClustersLocalStrategy(iDatabase);
         }
 
       }
@@ -677,16 +693,31 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         for (String dbName : messageService.getDatabases())
           messageService.getDatabase(dbName).unlockRecords(nodeLeftName);
 
+      final HashSet<String> entriesToRemove = new HashSet<String>();
+
+      final Map<String, Object> map = getConfigurationMap();
+
       // UNREGISTER DB STATUSES
-      for (Iterator<String> it = getConfigurationMap().keySet().iterator(); it.hasNext();) {
+      for (Iterator<String> it = map.keySet().iterator(); it.hasNext();) {
         final String n = it.next();
 
-        if (n.startsWith(CONFIG_DBSTATUS_PREFIX))
-          if (n.substring(CONFIG_DBSTATUS_PREFIX.length()).equals(nodeLeftName)) {
-            ODistributedServerLog.debug(this, nodeName, null, DIRECTION.NONE,
-                "removing dbstatus for the node %s that just left: %s", nodeLeftName, n);
-            it.remove();
+        if (n.startsWith(CONFIG_DBSTATUS_PREFIX)) {
+          final String part = n.substring(CONFIG_DBSTATUS_PREFIX.length());
+          final int pos = part.indexOf(".");
+          if (pos > -1) {
+            // CHECK ANY DB STATUS OF THE LEFT NODE
+            if (part.substring(0, pos).equals(nodeLeftName)) {
+              ODistributedServerLog.debug(this, nodeName, null, DIRECTION.NONE,
+                  "removing dbstatus for the node %s that just left: %s", nodeLeftName, n);
+              entriesToRemove.add(n);
+            }
           }
+        }
+      }
+
+      // REMOVE THE ENTRIES
+      for (String entry : entriesToRemove) {
+        map.remove(entry);
       }
 
       activeNodes.remove(nodeLeftName);

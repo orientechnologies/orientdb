@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.client.remote.OStorageRemoteOperation;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
@@ -34,11 +35,20 @@ import java.io.ObjectOutputStream;
  * @author Luca Garulli
  */
 public class ORemoteServerController extends OServerAdmin {
-  public ORemoteServerController(final String iURL) throws IOException {
+  private final ODistributedServerManager manager;
+
+  public ORemoteServerController(final ODistributedServerManager manager, final String iURL, final String user, final String passwd)
+      throws IOException {
     super(iURL);
+    this.manager = manager;
+    setUseToken(false); // AVOID THE TOKEN TO IMPROVE PERFORMANCE
+    connect(user, passwd);
+
+    // FORCE ALL THE MESSAGES TO BE QUEUED IN THE SAME CHANNEL
+    storage.getClientConfiguration().setValue(OGlobalConfiguration.CLIENT_CHANNEL_MAX_POOL, 1);
   }
 
-  public void executeRequest(final ODistributedRequest req) {
+  public void sendRequest(final ODistributedRequest req, final String node) {
     networkAdminOperation(new OStorageRemoteOperation<Object>() {
       @Override
       public Object execute(final OChannelBinaryAsynchClient network) throws IOException {
@@ -53,6 +63,9 @@ public class ORemoteServerController extends OServerAdmin {
               req.writeExternal(outStream);
               serializedRequest = out.toByteArray();
 
+              ODistributedServerLog.info(this, manager.getLocalNodeName(), node, ODistributedServerLog.DIRECTION.OUT,
+                  "Sending request %s (%d bytes)", req, serializedRequest.length);
+
               network.writeBytes(serializedRequest);
 
             } finally {
@@ -64,13 +77,15 @@ public class ORemoteServerController extends OServerAdmin {
 
         } finally {
           storage.endRequest(network);
+          // NO RESPONSE: FREE THE CHANNEL
+          storage.getEngine().getConnectionManager().release(network);
         }
         return null;
       }
     }, "Cannot send distributed request");
   }
 
-  public void sendResponse(final ODistributedResponse response) {
+  public void sendResponse(final ODistributedResponse response, final String node) {
     networkAdminOperation(new OStorageRemoteOperation<Object>() {
       @Override
       public Object execute(final OChannelBinaryAsynchClient network) throws IOException {
@@ -84,6 +99,9 @@ public class ORemoteServerController extends OServerAdmin {
               response.writeExternal(outStream);
               final byte[] serializedResponse = out.toByteArray();
 
+              ODistributedServerLog.info(this, manager.getLocalNodeName(), node, ODistributedServerLog.DIRECTION.OUT,
+                  "Sending response %s (%d bytes)", response, serializedResponse.length);
+
               network.writeBytes(serializedResponse);
 
             } finally {
@@ -95,6 +113,8 @@ public class ORemoteServerController extends OServerAdmin {
 
         } finally {
           storage.endRequest(network);
+          // NO RESPONSE: FREE THE CHANNEL
+          storage.getEngine().getConnectionManager().release(network);
         }
         return null;
       }

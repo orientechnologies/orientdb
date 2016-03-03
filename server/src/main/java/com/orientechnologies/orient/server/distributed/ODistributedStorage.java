@@ -561,18 +561,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       return localResult;
 
-    } catch (
-
-    ONeedRetryException e)
-
-    {
+    } catch (ONeedRetryException e) {
       // PASS THROUGH
       throw e;
-    } catch (
-
-    Exception e)
-
-    {
+    } catch (Exception e) {
       handleDistributedException("Cannot route CREATE_RECORD operation for %s to the distributed node", e, iRecordId);
       // UNREACHABLE
       return null;
@@ -1106,7 +1098,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         }
       });
 
-      //After commit force the clean of dirty managers due to possible copy and miss clean.
+      // After commit force the clean of dirty managers due to possible copy and miss clean.
       for (ORecordOperation ent : iTx.getAllRecordEntries()) {
         ORecordInternal.getDirtyManager(ent.getRecord()).clear();
       }

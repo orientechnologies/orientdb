@@ -24,6 +24,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.server.distributed.*;
@@ -32,7 +33,10 @@ import com.orientechnologies.orient.server.distributed.task.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -120,8 +124,8 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
         expectedSynchronousResponses, quorum, waitLocalNode, iRequest.getTask().getSynchronousTimeout(expectedSynchronousResponses),
         iRequest.getTask().getTotalTimeout(queueSize), groupByResponse);
 
-//    final long timeout = OGlobalConfiguration.DISTRIBUTED_QUEUE_TIMEOUT.getValueAsLong();
-//    final int queueMaxSize = OGlobalConfiguration.DISTRIBUTED_QUEUE_MAXSIZE.getValueAsInteger();
+    // final long timeout = OGlobalConfiguration.DISTRIBUTED_QUEUE_TIMEOUT.getValueAsLong();
+    // final int queueMaxSize = OGlobalConfiguration.DISTRIBUTED_QUEUE_MAXSIZE.getValueAsInteger();
 
     try {
       requestLock.lock();
@@ -142,70 +146,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
           final String node = entry.getKey();
 
           final ORemoteServerController remoteServer = manager.getRemoteServer(node);
-          remoteServer.executeRequest(iRequest);
-
-          // if (queue != null) {
-          // int nodeQueueSize = queue.size();
-          //
-          // if (queueMaxSize > 0 && nodeQueueSize > queueMaxSize) {
-          //
-          // Integer nodeQueuePrevSize = queueSizes.get(node);
-          // if (nodeQueuePrevSize == null) {
-          // nodeQueuePrevSize = 0;
-          // }
-          // Integer nodeQueueWarnings = queueWarningCounter.get(node);
-          // if (nodeQueueWarnings == null) {
-          // nodeQueueWarnings = 0;
-          // }
-          //
-          // final ODistributedServerManager.DB_STATUS nodeStatus = manager.getDatabaseStatus(node, databaseName);
-          // if (nodeStatus == ODistributedServerManager.DB_STATUS.SYNCHRONIZING
-          // || nodeStatus == ODistributedServerManager.DB_STATUS.BACKUP) {
-          //
-          // // BACKUP, SYNCHRONIZING: SEND THE MESSAGE AS WELL
-          // queue.offer(iRequest, timeout, TimeUnit.MILLISECONDS);
-          //
-          // queueWarningCounter.remove(node);
-          //
-          // } else if (nodeQueueSize < nodeQueuePrevSize || nodeQueueWarnings < 10) {
-          //
-          // // THE QUEUE IS NOT INCREASING IN SIZE OR IS UNDER THE WARNING THRESHOLD: SEND THE MESSAGE AS WELL
-          // queue.offer(iRequest, timeout, TimeUnit.MILLISECONDS);
-          //
-          // if (System.currentTimeMillis() - manager.getLastClusterChangeOn() > 10000) {
-          // queueWarningCounter.put(node, nodeQueueWarnings + 1);
-          // ODistributedServerLog.debug(this, getLocalNodeName(), node, DIRECTION.OUT,
-          // "queue '%s' has too many messages (%d), checking if the node is in stall (warnings=%d)", queue.getName(),
-          // nodeQueueSize, nodeQueueWarnings);
-          // } else {
-          // queueWarningCounter.remove(node);
-          // ODistributedServerLog.debug(this, getLocalNodeName(), node, DIRECTION.OUT,
-          // "queue '%s' has too many messages (%d), but the cluster shape is changed recently (%d secs)", queue.getName(),
-          // nodeQueueSize, ((System.currentTimeMillis() - manager.getLastClusterChangeOn()) / 1000));
-          // }
-          //
-          // } else {
-          // // NODE SEEMS IN STALL FOR UNKNOWN REASON
-          // ODistributedServerLog.warn(this, getLocalNodeName(), node, DIRECTION.OUT,
-          // "queue '%s' has too many messages (%d), treating the node as in stall: trying to restart it...",
-          // queue.getName(), nodeQueueSize);
-          //
-          // // CLEAR THE QUEUE TO AVOID AN OOM IN THE CLUSTER
-          // queue.clear();
-          // queueWarningCounter.remove(node);
-          // nodeQueueSize = 0;
-          //
-          // manager.disconnectNode(entry.getKey());
-          // }
-          // } else {
-          // // SEND THE MESSAGE
-          // queue.offer(iRequest, timeout, TimeUnit.MILLISECONDS);
-          // queueWarningCounter.remove(node);
-          // }
-          //
-          // // SAVE LAST QUEUE SIZE VALUE
-          // queueSizes.put(node, nodeQueueSize);
-          // }
+          remoteServer.sendRequest(iRequest, node);
         }
 
       } finally {
@@ -261,11 +202,15 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     final String queueName = OHazelcastDistributedMessageService.getRequestQueueName(getLocalNodeName(), databaseName);
     final IQueue requestQueue = msgService.getQueue(queueName);
 
+    // OPEN THE DB THE FIRST TIME
+    ODatabaseDocumentTx db = (ODatabaseDocumentTx) manager.getServerInstance().openDatabase(databaseName, "internal", "internal",
+        null, true);
+
     if (iCallback != null)
       try {
         iCallback.call();
       } catch (Exception e) {
-        throw OException.wrapException(new ODistributedException("Database can not be configured"), e);
+        throw OException.wrapException(new ODistributedException("Database cannot be configured"), e);
       }
 
     setOnline();

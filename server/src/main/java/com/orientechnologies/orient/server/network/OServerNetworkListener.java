@@ -31,19 +31,12 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.ShutdownHelper;
 import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
-import java.net.BindException;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.SocketException;
-import java.net.UnknownHostException;
+import java.net.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -193,19 +186,19 @@ public class OServerNetworkListener extends Thread {
           // listen for and accept a client connection to serverSocket
           final Socket socket = serverSocket.accept();
 
-          if (server.getDistributedManager() != null) {
-            final ODistributedServerManager.NODE_STATUS nodeStatus = server.getDistributedManager().getNodeStatus();
-            if (nodeStatus != ODistributedServerManager.NODE_STATUS.ONLINE) {
-              OLogManager.instance().warn(this,
-                  "Distributed server is not yet ONLINE (status=%s), reject incoming connection from %s. If you are trying to shutdown the server, please kill the process",
-                  nodeStatus, socket.getRemoteSocketAddress());
-              socket.close();
-
-              // PAUSE CURRENT THREAD TO SLOW DOWN ANY POSSIBLE ATTACK
-              Thread.sleep(100);
-              continue;
-            }
-          }
+//          if (server.getDistributedManager() != null) {
+//            final ODistributedServerManager.NODE_STATUS nodeStatus = server.getDistributedManager().getNodeStatus();
+//            if (nodeStatus != ODistributedServerManager.NODE_STATUS.ONLINE) {
+//              OLogManager.instance().warn(this,
+//                  "Distributed server is not yet ONLINE (status=%s), reject incoming connection from %s. If you are trying to shutdown the server, please kill the process",
+//                  nodeStatus, socket.getRemoteSocketAddress());
+//              socket.close();
+//
+//              // PAUSE CURRENT THREAD TO SLOW DOWN ANY POSSIBLE ATTACK
+//              Thread.sleep(100);
+//              continue;
+//            }
+//          }
 
           final int max = OGlobalConfiguration.NETWORK_MAX_CONCURRENT_SESSIONS.getValueAsInteger();
 

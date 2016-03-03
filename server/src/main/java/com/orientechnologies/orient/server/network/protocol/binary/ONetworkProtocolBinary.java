@@ -41,6 +41,7 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -96,6 +97,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.Callable;
 
 public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected OClientConnection connection;
@@ -426,6 +428,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
       case OChannelBinaryProtocol.DISTRIBUTED_RESPONSE:
         executeDistributedResponse();
+        break;
 
       default:
         setDataCommandInfo("Command not supported");
@@ -847,20 +850,45 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         throw new IOException("Error on unmarshalling of remote task", e);
       }
 
+      ODistributedServerLog.info(this, manager.getLocalNodeName(), req.getSenderNodeName(), ODistributedServerLog.DIRECTION.IN,
+          "Received request %s (%d bytes)", req, serializedReq.length);
+
       final Object responsePayload;
 
       final ORemoteTask task = req.getTask();
 
       try {
-        responsePayload = task.execute(server, server.getDistributedManager(), connection.getDatabase());
+        task.setNodeSource(req.getSenderNodeName());
+
+        ODatabaseDocumentTx db = connection.getDatabase();
+        if (req.getDatabaseName() != null && (db == null || !db.getName().equals(req.getDatabaseName()))) {
+          db = (ODatabaseDocumentTx) server.openDatabase(req.getDatabaseName(), "internal", "internal", null, true);
+          connection.setDatabase(db);
+        }
+        final ODatabaseDocumentTx database = db;
+
+        ODistributedServerLog.info(this, manager.getLocalNodeName(), req.getSenderNodeName(), ODistributedServerLog.DIRECTION.IN,
+            "Executing request %s (%d bytes)", req, serializedReq.length);
+
+        responsePayload = OScenarioThreadLocal.executeAsDistributed(new Callable<Object>() {
+          @Override
+          public Object call() throws Exception {
+            return task.execute(server, server.getDistributedManager(), database);
+          }
+        });
+
+      } catch (RuntimeException e) {
+        throw e;
       } catch (Exception e) {
+        ODistributedServerLog.error(this, manager.getLocalNodeName(), req.getSenderNodeName(), ODistributedServerLog.DIRECTION.IN,
+            "Error on executing request %s", e, req);
         throw new IOException("Error on executing remote task", e);
       }
 
       if (responsePayload instanceof OModificationOperationProhibitedException) {
         // RETRY
         try {
-          ODistributedServerLog.info(this, manager.getLocalNodeName(), req.getSenderNodeName(), ODistributedServerLog.DIRECTION.OUT,
+          ODistributedServerLog.info(this, manager.getLocalNodeName(), req.getSenderNodeName(), ODistributedServerLog.DIRECTION.IN,
               "Database is frozen, waiting and retrying. Request %s (retry=%d)", req, retry);
 
           Thread.sleep(1000);
@@ -869,10 +897,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       } else {
         // OPERATION EXECUTED (OK OR ERROR), NO RETRY NEEDED
         if (retry > 1)
-          ODistributedServerLog.info(this, manager.getLocalNodeName(), req.getSenderNodeName(), ODistributedServerLog.DIRECTION.OUT,
+          ODistributedServerLog.info(this, manager.getLocalNodeName(), req.getSenderNodeName(), ODistributedServerLog.DIRECTION.IN,
               "Request %s succeed after retry=%d", req, retry);
 
-        ODistributedServerLog.debug(this, manager.getLocalNodeName(), req.getSenderNodeName(), ODistributedServerLog.DIRECTION.OUT,
+        ODistributedServerLog.info(this, manager.getLocalNodeName(), req.getSenderNodeName(), ODistributedServerLog.DIRECTION.OUT,
             "sending back response '%s' to request %d (%s)", responsePayload, req.getId(), task);
 
         final ODistributedResponse response = manager.createResponse(req.getId(), manager.getLocalNodeName(),
@@ -882,7 +910,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
           // GET THE SENDER'S RESPONSE QUEUE
           final ORemoteServerController remoteSenderServer = manager.getRemoteServer(req.getSenderNodeName());
 
-          remoteSenderServer.sendResponse(response);
+          ODistributedServerLog.info(this, manager.getLocalNodeName(), req.getSenderNodeName(), ODistributedServerLog.DIRECTION.OUT,
+              "Sending back response %s to %s", response, req.getSenderNodeName());
+
+          remoteSenderServer.sendResponse(response, req.getSenderNodeName());
 
         } catch (Exception e) {
           throw OException
@@ -909,7 +940,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       throw new IOException("Error on unmarshalling of remote task", e);
     }
 
-    final Object payload = response.getPayload();
+    ODistributedServerLog.info(this, manager.getLocalNodeName(), response.getSenderNodeName(), ODistributedServerLog.DIRECTION.IN,
+        "Executing distributed response %s", response);
 
     manager.getMessageService().dispatchResponseToThread(response);
   }
