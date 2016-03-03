@@ -19,10 +19,6 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.util.*;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.OArrays;
@@ -60,6 +56,10 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.*;
+
 /**
  * Schema Class implementation.
  *
@@ -67,22 +67,22 @@ import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
  */
 @SuppressWarnings("unchecked")
 public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
-  private static final long serialVersionUID        = 1L;
-  private static final int  NOT_EXISTENT_CLUSTER_ID = -1;
-  final OSchemaShared owner;
-  private final Map<String, OProperty> properties       = new HashMap<String, OProperty>();
-  private       int                    defaultClusterId = NOT_EXISTENT_CLUSTER_ID;
-  private String name;
-  private String description;
-  private int[]  clusterIds;
-  private List<OClassImpl> superClasses = new ArrayList<OClassImpl>();
-  private int[]        polymorphicClusterIds;
-  private List<OClass> subclasses;
-  private float overSize = 0f;
-  private String shortName;
-  private boolean strictMode    = false;                           // @SINCE v1.0rc8
-  private boolean abstractClass = false;                           // @SINCE v1.2.0
-  private          Map<String, String>       customFields;
+  private static final long                  serialVersionUID        = 1L;
+  private static final int                   NOT_EXISTENT_CLUSTER_ID = -1;
+  final OSchemaShared                        owner;
+  private final Map<String, OProperty>       properties              = new HashMap<String, OProperty>();
+  private int                                defaultClusterId        = NOT_EXISTENT_CLUSTER_ID;
+  private String                             name;
+  private String                             description;
+  private int[]                              clusterIds;
+  private List<OClassImpl>                   superClasses            = new ArrayList<OClassImpl>();
+  private int[]                              polymorphicClusterIds;
+  private List<OClass>                       subclasses;
+  private float                              overSize                = 0f;
+  private String                             shortName;
+  private boolean                            strictMode              = false;                           // @SINCE v1.0rc8
+  private boolean                            abstractClass           = false;                           // @SINCE v1.2.0
+  private Map<String, String>                customFields;
   private volatile OClusterSelectionStrategy clusterSelection;                                          // @SINCE 1.7
   private volatile int                       hashCode;
 
@@ -1481,7 +1481,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   /**
    * Check if the current instance extends specified schema class.
    *
-   * @param iClassName of class that should be checked
+   * @param iClassName
+   *          of class that should be checked
    * @return Returns true if the current instance extends the passed schema class (iClass)
    * @see #isSuperClassOf(OClass)
    */
@@ -1506,7 +1507,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   /**
    * Check if the current instance extends specified schema class.
    *
-   * @param clazz to check
+   * @param clazz
+   *          to check
    * @return true if the current instance extends the passed schema class (iClass)
    * @see #isSuperClassOf(OClass)
    */
@@ -1530,7 +1532,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   /**
    * Returns true if the passed schema class (iClass) extends the current instance.
    *
-   * @param clazz to check
+   * @param clazz
+   *          to check
    * @return Returns true if the passed schema class extends the current instance
    * @see #isSubClassOf(OClass)
    */
@@ -1976,23 +1979,23 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     database.query(new OSQLAsynchQuery<Object>("select from " + getEscapedName(name, strictSQL) + " where "
         + getEscapedName(propertyName, strictSQL) + ".type() <> \"" + type.name() + "\"", new OCommandResultListener() {
 
-      @Override
-      public boolean result(Object iRecord) {
-        final ODocument record = ((OIdentifiable) iRecord).getRecord();
-        record.field(propertyName, record.field(propertyName), type);
-        database.save(record);
-        return true;
-      }
+          @Override
+          public boolean result(Object iRecord) {
+            final ODocument record = ((OIdentifiable) iRecord).getRecord();
+            record.field(propertyName, record.field(propertyName), type);
+            database.save(record);
+            return true;
+          }
 
-      @Override
-      public void end() {
-      }
+          @Override
+          public void end() {
+          }
 
-      @Override
-      public Object getResult() {
-        return null;
-      }
-    }));
+          @Override
+          public Object getResult() {
+            return null;
+          }
+        }));
   }
 
   public void firePropertyNameMigration(final ODatabaseDocument database, final String propertyName, final String newPropertyName,
@@ -2234,12 +2237,15 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     int clId = getClusterId(parts[0]);
 
     if (clId == NOT_EXISTENT_CLUSTER_ID) {
-      try {
-        clId = Integer.parseInt(parts[0]);
-        throw new IllegalArgumentException("Cluster id '" + clId + "' cannot be added");
-      } catch (NumberFormatException e) {
+      if (!parts[0].isEmpty() && Character.isDigit(parts[0].charAt(0)))
+        try {
+          clId = Integer.parseInt(parts[0]);
+          throw new IllegalArgumentException("Cluster id '" + clId + "' cannot be added");
+        } catch (NumberFormatException e) {
+          clId = getDatabase().addCluster(parts[0]);
+        }
+      else
         clId = getDatabase().addCluster(parts[0]);
-      }
     }
 
     return clId;
@@ -2477,11 +2483,15 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
   private int getClusterId(final String stringValue) {
     int clId;
-    try {
-      clId = Integer.parseInt(stringValue);
-    } catch (NumberFormatException e) {
+    if (!stringValue.isEmpty() && Character.isDigit(stringValue.charAt(0)))
+      try {
+        clId = Integer.parseInt(stringValue);
+      } catch (NumberFormatException e) {
+        clId = getDatabase().getClusterIdByName(stringValue);
+      }
+    else
       clId = getDatabase().getClusterIdByName(stringValue);
-    }
+
     return clId;
   }
 
@@ -2502,7 +2512,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   /**
    * Adds a base class to the current one. It adds also the base class cluster ids to the polymorphic cluster ids array.
    *
-   * @param iBaseClass The base class to add.
+   * @param iBaseClass
+   *          The base class to add.
    */
   private OClass addBaseClass(final OClassImpl iBaseClass) {
     checkRecursion(iBaseClass);
