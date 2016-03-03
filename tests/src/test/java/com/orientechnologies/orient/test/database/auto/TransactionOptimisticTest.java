@@ -48,7 +48,7 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
   @Test
   public void testTransactionOptimisticRollback() throws IOException {
     if (database.getClusterIdByName("binary") == -1)
-      database.addCluster("binary");
+      database.addBlobCluster("binary");
 
     long rec = database.countClusterElements("binary");
 
@@ -65,7 +65,7 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
   @Test(dependsOnMethods = "testTransactionOptimisticRollback")
   public void testTransactionOptimisticCommit() throws IOException {
     if (database.getClusterIdByName("binary") == -1)
-      database.addCluster("binary");
+      database.addBlobCluster("binary");
 
     long tot = database.countClusterElements("binary");
 
@@ -82,7 +82,7 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
   @Test(dependsOnMethods = "testTransactionOptimisticCommit")
   public void testTransactionOptimisticConcurrentException() throws IOException {
     if (database.getClusterIdByName("binary") == -1)
-      database.addCluster("binary");
+      database.addBlobCluster("binary");
 
     ODatabaseDocumentTx db2 = new ODatabaseDocumentTx(database.getURL());
     db2.open("admin", "admin");
@@ -129,7 +129,7 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
   @Test(dependsOnMethods = "testTransactionOptimisticConcurrentException")
   public void testTransactionOptimisticCacheMgmt1Db() throws IOException {
     if (database.getClusterIdByName("binary") == -1)
-      database.addCluster("binary");
+      database.addBlobCluster("binary");
 
     OBlob record = new ORecordBytes("This is the first version".getBytes());
     record.save();
@@ -156,7 +156,7 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
   @Test(dependsOnMethods = "testTransactionOptimisticCacheMgmt1Db")
   public void testTransactionOptimisticCacheMgmt2Db() throws IOException {
     if (database.getClusterIdByName("binary") == -1)
-      database.addCluster("binary");
+      database.addBlobCluster("binary");
 
     ODatabaseDocumentTx db2 = new ODatabaseDocumentTx(database.getURL());
     db2.open("admin", "admin");

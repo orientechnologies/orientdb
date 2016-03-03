@@ -2419,12 +2419,24 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
     if (!(iRecord instanceof ODocument)) {
       int clusterId = iRecord.getIdentity().getClusterId();
-      if (iRecord instanceof OBlob && clusterId >= 0) {
-//        Set<Integer> blobClusters = getMetadata().getSchema().getBlobClusters();
-//        if (!blobClusters.contains(clusterId))
-//          throw new IllegalArgumentException(
-//              "Cluster name '" + iClusterName + "' (id=" + clusterId + ") is not configured to store the blobs, valid are "
-//                  + blobClusters.toString());
+      if (iRecord instanceof OBlob ) {
+        if (clusterId == ORID.CLUSTER_ID_INVALID && iClusterName != null) {
+          clusterId = getClusterIdByName(iClusterName);
+        }
+        if(clusterId == ORID.CLUSTER_ID_INVALID && storage.isAssigningClusterIds()){
+          clusterId = getClusterIdByName("blob");
+        }
+        if (clusterId != ORID.CLUSTER_ID_INVALID) {
+          Set<Integer> blobClusters = getMetadata().getSchema().getBlobClusters();
+          if (!blobClusters.contains(clusterId) && clusterId != 0) {
+            if(iClusterName == null)
+              iClusterName = getClusterNameById(clusterId);
+            throw new IllegalArgumentException(
+                "Cluster name '" + iClusterName + "' (id=" + clusterId + ") is not configured to store blobs, valid are "
+                    + blobClusters.toString());
+          }
+          ((ORecordId) iRecord.getIdentity()).clusterId = clusterId;
+        }
       }
       return (RET) currentTx.saveRecord(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
     }
@@ -3047,5 +3059,12 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       throw new IllegalStateException(
           "Current database instance (" + toString() + ") is not active on current thread (" + Thread.currentThread()
               + "). Current active database is: " + currentDatabase);
+  }
+
+  @Override
+  public int addBlobCluster(String iClusterName, Object... iParameters) {
+    int id = addCluster(iClusterName, iParameters);
+    getMetadata().getSchema().addBlobCluster(iClusterName);
+    return id;
   }
 }

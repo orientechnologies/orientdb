@@ -892,4 +892,9 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object>implements O
     }
     return false;
   }
+
+  @Override
+  public int addBlobCluster(String iClusterName, Object... iParameters) {
+    return getUnderlying().addBlobCluster(iClusterName,iParameters);
+  }
 }

@@ -47,6 +47,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODirtyManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
@@ -451,6 +452,29 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       }
 
       try {
+        if (iRecord instanceof OBlob) {
+          int clusterId = iRecord.getIdentity().getClusterId();
+          if (clusterId == ORID.CLUSTER_ID_INVALID && iClusterName != null) {
+            clusterId = database.getClusterIdByName(iClusterName);
+          }
+          if (clusterId == ORID.CLUSTER_ID_INVALID && database.getStorage().isAssigningClusterIds()) {
+            clusterId = database.getClusterIdByName("blob");
+          }
+          if (clusterId != ORID.CLUSTER_ID_INVALID) {
+            Set<Integer> blobClusters = database.getMetadata().getSchema().getBlobClusters();
+            if (!blobClusters.contains(clusterId) && clusterId != 0 ) {
+              String errorClusterName = iClusterName;
+              if (errorClusterName == null)
+                errorClusterName = database.getClusterNameById(clusterId);
+              throw new IllegalArgumentException(
+                  "Cluster name '" + errorClusterName + "' (id=" + clusterId + ") is not configured to store blobs, valid are "
+                      + blobClusters.toString());
+            }
+            ((ORecordId) iRecord.getIdentity()).clusterId = clusterId;
+          }
+
+        }
+
         final ORecordId rid = (ORecordId) iRecord.getIdentity();
 
         if (!rid.isValid()) {

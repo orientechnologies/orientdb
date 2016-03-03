@@ -61,6 +61,8 @@ import java.util.Map;
  */
 public interface ODatabase<T> extends OBackupable, Closeable {
 
+
+
   enum OPTIONS {
     SECURITY
   }
@@ -293,6 +295,15 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * @return Cluster id
    */
   int addCluster(String iClusterName, Object... iParameters);
+
+  /**
+   * Adds a new cluster.
+   *
+   * @param iClusterName Cluster name
+   * @param iParameters  Additional parameters to pass to the factories
+   * @return Cluster id
+   */
+  int addBlobCluster(String iClusterName, Object... iParameters);
 
   /**
    * Adds a new cluster.

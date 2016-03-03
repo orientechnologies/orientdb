@@ -17,6 +17,7 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -501,9 +502,11 @@ public class SQLSelectTest extends AbstractSelectTest {
 
   @Test
   public void queryWhereRidDirectMatching() {
-    List<Long> positions = getValidPositions(4);
+    int clusterId = database.getMetadata().getSchema().getClass("ORole").getDefaultClusterId();
+    List<Long> positions = getValidPositions(clusterId);
 
-    List<ODocument> result = executeQuery("select * from OUser where roles contains #4:" + positions.get(0), database);
+    List<ODocument> result = executeQuery("select * from OUser where roles contains #" + clusterId + ":" + positions.get(0),
+        database);
 
     Assert.assertEquals(result.size(), 1);
   }

@@ -56,6 +56,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -747,8 +748,8 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
         }
       }
 
-      if (document.containsField("blogClusters"))
-        blobClusters = document.field("blogClusters");
+      if (document.containsField("blobClusters"))
+        blobClusters = document.field("blobClusters");
 
       if (!hasGlobalProperties) {
         if (getDatabase().getStorage().getUnderlying() instanceof OAbstractPaginatedStorage)
@@ -1367,6 +1368,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       clusterId = createClusterIfNeeded(clusterName);
       checkClusterCanBeAdded(clusterId, null);
       blobClusters.add(clusterId);
+
     } finally {
       releaseSchemaWriteLock();
     }
