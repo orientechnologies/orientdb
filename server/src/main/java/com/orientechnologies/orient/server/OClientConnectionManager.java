@@ -49,17 +49,23 @@ public class OClientConnectionManager {
   protected final ConcurrentMap<Integer, OClientConnection>  connections      = new ConcurrentHashMap<Integer, OClientConnection>();
   protected AtomicInteger                                    connectionSerial = new AtomicInteger(0);
   protected final ConcurrentMap<OHashToken, OClientSessions> sessions         = new ConcurrentHashMap<OHashToken, OClientSessions>();
+  protected final TimerTask                                  timerTask;
 
   public OClientConnectionManager() {
     final int delay = OGlobalConfiguration.SERVER_CHANNEL_CLEAN_DELAY.getValueAsInteger();
 
-    Orient.instance().scheduleTask(new TimerTask() {
-
+    timerTask = new TimerTask() {
       @Override
       public void run() {
-        cleanExpiredConnections();
+        try {
+          cleanExpiredConnections();
+        } catch (Throwable e) {
+          OLogManager.instance().debug(this, "Error on client connection purge task", e);
+        }
       }
-    }, delay, delay);
+    };
+
+    Orient.instance().scheduleTask(timerTask, delay, delay);
 
     Orient.instance().getProfiler().registerHookValue("server.connections.actives", "Number of active network connections",
         METRIC_TYPE.COUNTER, new OProfilerHookValue() {
@@ -394,6 +400,8 @@ public class OClientConnectionManager {
   }
 
   public void shutdown() {
+    timerTask.cancel();
+
     final Iterator<Entry<Integer, OClientConnection>> iterator = connections.entrySet().iterator();
     while (iterator.hasNext()) {
       final Entry<Integer, OClientConnection> entry = iterator.next();

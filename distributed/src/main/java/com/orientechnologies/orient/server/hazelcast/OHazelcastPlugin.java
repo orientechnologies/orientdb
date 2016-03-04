@@ -196,7 +196,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         publishLocalNodeConfigurationTask = new TimerTask() {
           @Override
           public void run() {
-            publishLocalNodeConfiguration();
+            try {
+              publishLocalNodeConfiguration();
+            } catch (Throwable e) {
+              OLogManager.instance().debug(this, "Error on distributed configuration node updater", e);
+            }
           }
         };
         Orient.instance().scheduleTask(publishLocalNodeConfigurationTask, delay, delay);
@@ -1272,7 +1276,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       final OHazelcastDistributedDatabase distrDatabase, final String iNode, final ODistributedDatabaseChunk value,
       final boolean delta) {
     // DISCARD ALL THE MESSAGES BEFORE THE BACKUP
-    //distrDatabase.setWaitForMessage(value.getLastOperationId());
+    // distrDatabase.setWaitForMessage(value.getLastOperationId());
 
     final String fileName = Orient.getTempPath() + "install_" + databaseName + ".zip";
 

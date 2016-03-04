@@ -108,25 +108,29 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     purgeDeletedRecordsTask = new TimerTask() {
       @Override
       public void run() {
-        final long now = System.currentTimeMillis();
-        for (Iterator<Map.Entry<ORecordId, OPair<Long, Integer>>> it = deletedRecords.entrySet().iterator(); it.hasNext();) {
-          final Map.Entry<ORecordId, OPair<Long, Integer>> entry = it.next();
+        try {
+          final long now = System.currentTimeMillis();
+          for (Iterator<Map.Entry<ORecordId, OPair<Long, Integer>>> it = deletedRecords.entrySet().iterator(); it.hasNext();) {
+            final Map.Entry<ORecordId, OPair<Long, Integer>> entry = it.next();
 
-          try {
-            final ORecordId rid = entry.getKey();
-            final long time = entry.getValue().getKey();
-            final int version = entry.getValue().getValue();
+            try {
+              final ORecordId rid = entry.getKey();
+              final long time = entry.getValue().getKey();
+              final int version = entry.getValue().getValue();
 
-            if (now - time > (OGlobalConfiguration.DISTRIBUTED_ASYNCH_RESPONSES_TIMEOUT.getValueAsLong() * 2)) {
-              // DELETE RECORD
-              final OStorageOperationResult<Boolean> result = wrapped.deleteRecord(rid, version, 0, null);
-              if (result == null || !result.getResult())
-                OLogManager.instance().error(this, "Error on deleting record %s v.%s", rid, version);
+              if (now - time > (OGlobalConfiguration.DISTRIBUTED_ASYNCH_RESPONSES_TIMEOUT.getValueAsLong() * 2)) {
+                // DELETE RECORD
+                final OStorageOperationResult<Boolean> result = wrapped.deleteRecord(rid, version, 0, null);
+                if (result == null || !result.getResult())
+                  OLogManager.instance().error(this, "Error on deleting record %s v.%s", rid, version);
+              }
+            } finally {
+              // OK, REMOVE IT
+              it.remove();
             }
-          } finally {
-            // OK, REMOVE IT
-            it.remove();
           }
+        } catch (Throwable e) {
+          OLogManager.instance().debug(this, "Error on purge deleted record tasks for database %s", e, getName());
         }
       }
     };
