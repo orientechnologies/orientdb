@@ -361,9 +361,9 @@ public class OServer {
         throw OException.wrapException(new OConfigurationException(message), e);
       }
 
-      registerPlugins();
-
       tokenHandler = new OTokenHandlerImpl(this);
+
+      registerPlugins();
 
       for (OServerLifecycleListener l : lifecycleListeners)
         l.onAfterActivate();

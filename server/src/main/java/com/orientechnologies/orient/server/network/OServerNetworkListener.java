@@ -186,20 +186,6 @@ public class OServerNetworkListener extends Thread {
           // listen for and accept a client connection to serverSocket
           final Socket socket = serverSocket.accept();
 
-//          if (server.getDistributedManager() != null) {
-//            final ODistributedServerManager.NODE_STATUS nodeStatus = server.getDistributedManager().getNodeStatus();
-//            if (nodeStatus != ODistributedServerManager.NODE_STATUS.ONLINE) {
-//              OLogManager.instance().warn(this,
-//                  "Distributed server is not yet ONLINE (status=%s), reject incoming connection from %s. If you are trying to shutdown the server, please kill the process",
-//                  nodeStatus, socket.getRemoteSocketAddress());
-//              socket.close();
-//
-//              // PAUSE CURRENT THREAD TO SLOW DOWN ANY POSSIBLE ATTACK
-//              Thread.sleep(100);
-//              continue;
-//            }
-//          }
-
           final int max = OGlobalConfiguration.NETWORK_MAX_CONCURRENT_SESSIONS.getValueAsInteger();
 
           int conns = server.getClientConnectionManager().getTotal();

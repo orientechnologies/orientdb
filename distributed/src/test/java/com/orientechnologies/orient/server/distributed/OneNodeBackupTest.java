@@ -15,19 +15,20 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.junit.Assert;
+import org.junit.Test;
+
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 
 /**
  * Starts 3 servers, backup on node3, check other nodes can work in the meanwhile and node3 is realigned once backup is finished. No
@@ -94,8 +95,6 @@ public class OneNodeBackupTest extends AbstractServerClusterTxTest {
     }
 
     if (serverStarted++ == (SERVERS - 1)) {
-      startQueueMonitorTask();
-
       // BACKUP LAST SERVER, RUN ASYNCHRONOUSLY
       new Thread(new Runnable() {
         @Override

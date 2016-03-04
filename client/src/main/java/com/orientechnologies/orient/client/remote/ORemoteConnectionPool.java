@@ -19,10 +19,11 @@ import java.util.Map;
 public class ORemoteConnectionPool implements OResourcePoolListener<String, OChannelBinaryAsynchClient>, OChannelListener {
 
   private OResourcePool<String, OChannelBinaryAsynchClient> pool;
-  private ORemoteConnectionPushListener                     listener = new ORemoteConnectionPushListener();
+  private ORemoteConnectionPushListener                     listener;
 
-  public ORemoteConnectionPool(int iMaxResources) {
+  public ORemoteConnectionPool(int iMaxResources, final boolean createAsyncListener) {
     pool = new OResourcePool<String, OChannelBinaryAsynchClient>(iMaxResources, this);
+    listener = createAsyncListener ? new ORemoteConnectionPushListener() : null;
   }
 
   protected OChannelBinaryAsynchClient createNetworkConnection(String iServerURL, final OContextConfiguration clientConfiguration,
@@ -99,8 +100,9 @@ public class ORemoteConnectionPool implements OResourcePoolListener<String, OCha
   public OChannelBinaryAsynchClient acquire(final String iServerURL, final long timeout,
       final OContextConfiguration clientConfiguration, final Map<String, Object> iConfiguration,
       final OStorageRemoteAsynchEventListener iListener) {
-    final OChannelBinaryAsynchClient ret = pool.getResource(iServerURL, timeout, clientConfiguration, iConfiguration);
-    if (iListener != null)
+    final OChannelBinaryAsynchClient ret = pool.getResource(iServerURL, timeout, clientConfiguration, iConfiguration,
+        iListener != null);
+    if (listener != null && iListener != null)
       listener.addListener(this, ret, iListener);
     return ret;
   }

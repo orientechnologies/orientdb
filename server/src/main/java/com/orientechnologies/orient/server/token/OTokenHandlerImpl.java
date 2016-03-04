@@ -16,20 +16,16 @@ import com.orientechnologies.orient.core.metadata.security.jwt.OKeyProvider;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
+import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OTokenHandler;
 import com.orientechnologies.orient.server.binary.impl.OBinaryToken;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
 
 import javax.crypto.Mac;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
 import java.util.Random;
 import java.util.UUID;
 
@@ -230,7 +226,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
   }
 
 
-  public ONetworkProtocolData getProtocolDataFromToken(final OToken token) {
+  public ONetworkProtocolData getProtocolDataFromToken(OClientConnection connection, final OToken token) {
     if (token instanceof OBinaryToken) {
       final OBinaryToken binary = (OBinaryToken) token;
       final ONetworkProtocolData data = new ONetworkProtocolData();
@@ -241,6 +237,9 @@ public class OTokenHandlerImpl implements OTokenHandler {
       data.driverVersion = binary.getDriverVersion();
       data.serverUser = binary.isServerUser();
       data.serverUsername = binary.getUserName();
+      data.serverUsername = binary.getUserName();
+      data.supportsPushMessages = connection.getData().supportsPushMessages;
+      data.collectStats = connection.getData().collectStats;
       return data;
     }
     return null;

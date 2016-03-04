@@ -140,8 +140,10 @@ public class OChannelBinaryProtocol {
   public static final int   PROTOCOL_VERSION_32                       = 32;                 // STREAMABLE RESULT SET
 
   public static final int   PROTOCOL_VERSION_33                       = 33;                 // INCREMENTAL BACKUP/RESTORE
+  public static final int   PROTOCOL_VERSION_34                       = 34;                 // ON CONNECT DECLARE IF PUSH MESSAGES
+                                                                                            // ARE SUPPORTED + COLLECT STATS
 
-  public static final int   CURRENT_PROTOCOL_VERSION                  = PROTOCOL_VERSION_33;
+  public static final int   CURRENT_PROTOCOL_VERSION                  = PROTOCOL_VERSION_34;
 
   public static OIdentifiable readIdentifiable(final OChannelBinary network) throws IOException {
     final int classId = network.readShort();

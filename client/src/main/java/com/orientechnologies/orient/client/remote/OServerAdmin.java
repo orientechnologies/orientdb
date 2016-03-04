@@ -19,12 +19,6 @@
  */
 package com.orientechnologies.orient.client.remote;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -37,14 +31,23 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 /**
  * Remote administration class of OrientDB Server instances.
  */
 public class OServerAdmin {
-  private OStorageRemote                  storage;
+  protected OStorageRemote                storage;
   private int                             sessionId    = -1;
   private byte[]                          sessionToken = null;
   private Set<OChannelBinaryAsynchClient> connections  = new HashSet<OChannelBinaryAsynchClient>();
+
+  protected String                        clientType   = OStorageRemote.DRIVER_NAME;
+  protected boolean                       collectStats = true;
 
   /**
    * Creates the object passing a remote URL to connect. sessionToken
@@ -89,7 +92,7 @@ public class OServerAdmin {
         try {
           storage.beginRequest(network, OChannelBinaryProtocol.REQUEST_CONNECT);
 
-          storage.sendClientInfo(network);
+          storage.sendClientInfo(network, clientType, false, collectStats);
 
           network.writeString(iUserName);
           network.writeString(iUserPassword);
@@ -260,12 +263,12 @@ public class OServerAdmin {
   /**
    * Checks if a database exists in the remote server.
    *
-   * @return true if exists, otherwise false
-   * @throws IOException
    * @param iDatabaseName
    *          The database name
    * @param storageType
    *          Storage type between "plocal" or "memory".
+   * @return true if exists, otherwise false
+   * @throws IOException
    */
   public synchronized boolean existsDatabase(final String iDatabaseName, final String storageType) throws IOException {
 
@@ -295,10 +298,10 @@ public class OServerAdmin {
   /**
    * Checks if a database exists in the remote server.
    *
-   * @return true if exists, otherwise false
-   * @throws IOException
    * @param storageType
    *          Storage type between "plocal" or "memory".
+   * @return true if exists, otherwise false
+   * @throws IOException
    */
   public synchronized boolean existsDatabase(final String storageType) throws IOException {
     return existsDatabase(storage.getName(), storageType);
@@ -307,11 +310,11 @@ public class OServerAdmin {
   /**
    * Deprecated. Use dropDatabase() instead.
    *
-   * @return The instance itself. Useful to execute method in chain
-   * @see #dropDatabase(String)
-   * @throws IOException
    * @param storageType
    *          Storage type between "plocal" or "memory".
+   * @return The instance itself. Useful to execute method in chain
+   * @throws IOException
+   * @see #dropDatabase(String)
    */
   @Deprecated
   public OServerAdmin deleteDatabase(final String storageType) throws IOException {
@@ -321,12 +324,12 @@ public class OServerAdmin {
   /**
    * Drops a database from a remote server instance.
    *
-   * @return The instance itself. Useful to execute method in chain
-   * @throws IOException
    * @param iDatabaseName
    *          The database name
    * @param storageType
    *          Storage type between "plocal" or "memory".
+   * @return The instance itself. Useful to execute method in chain
+   * @throws IOException
    */
   public synchronized OServerAdmin dropDatabase(final String iDatabaseName, final String storageType) throws IOException {
 
@@ -375,10 +378,10 @@ public class OServerAdmin {
   /**
    * Drops a database from a remote server instance.
    *
-   * @return The instance itself. Useful to execute method in chain
-   * @throws IOException
    * @param storageType
    *          Storage type between "plocal" or "memory".
+   * @return The instance itself. Useful to execute method in chain
+   * @throws IOException
    */
   public synchronized OServerAdmin dropDatabase(final String storageType) throws IOException {
     return dropDatabase(storage.getName(), storageType);
@@ -678,17 +681,28 @@ public class OServerAdmin {
   }
 
   protected <T> T networkAdminOperation(final OStorageRemoteOperation<T> operation, final String errorMessage) {
+    Exception lastException = null;
+    for (int retry = 0; retry < 2; ++retry) {
+      OChannelBinaryAsynchClient network = null;
+      try {
+        storage.pushSessionId(getURL(), sessionId, sessionToken, connections);
+        // TODO:replace this api with one that get connection for only the specified url.
+        network = storage.getAvailableNetwork(getURL());
+        return operation.execute(network);
 
-    OChannelBinaryAsynchClient network = null;
-    try {
-      storage.pushSessionId(getURL(), sessionId, sessionToken, connections);
-      // TODO:replace this api with one that get connection for only the specified url.
-      network = storage.getAvailableNetwork(getURL());
-      return operation.execute(network);
-    } catch (Exception e) {
-      storage.close(true, false);
-      throw OException.wrapException(new OStorageException(errorMessage), e);
+      } catch (IOException e) {
+        // DIRTY CONNECTION, CLOSE IT AND RE-ACQUIRE A NEW ONE
+        network.close();
+        lastException = e;
+
+      } catch (Exception e) {
+        // DIRTY CONNECTION, CLOSE IT AND RE-ACQUIRE A NEW ONE
+        storage.close(true, false);
+        lastException = e;
+        break;
+      }
     }
+    throw OException.wrapException(new OStorageException(errorMessage), lastException);
   }
 
 }

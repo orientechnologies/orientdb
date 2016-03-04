@@ -37,11 +37,11 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ORemoteConnectionManager {
-  public static final String PARAM_MAX_POOL = "maxpool";
+  public static final String                                       PARAM_MAX_POOL = "maxpool";
 
   protected final ConcurrentHashMap<String, ORemoteConnectionPool> connections;
   protected final long                                             timeout;
-  protected       ORemoteConnectionPushListener                    listener;
+  protected ORemoteConnectionPushListener                          listener;
 
   public ORemoteConnectionManager(final long iTimeout) {
     connections = new ConcurrentHashMap<String, ORemoteConnectionPool>();
@@ -56,7 +56,8 @@ public class ORemoteConnectionManager {
     connections.clear();
   }
 
-  public OChannelBinaryAsynchClient acquire(String iServerURL, final OContextConfiguration clientConfiguration, final Map<String, Object> iConfiguration, final OStorageRemoteAsynchEventListener iListener) {
+  public OChannelBinaryAsynchClient acquire(String iServerURL, final OContextConfiguration clientConfiguration,
+      final Map<String, Object> iConfiguration, final OStorageRemoteAsynchEventListener iListener) {
     ORemoteConnectionPool pool = connections.get(iServerURL);
     if (pool == null) {
       int maxPool = OGlobalConfiguration.CLIENT_CHANNEL_MAX_POOL.getValueAsInteger();
@@ -66,7 +67,16 @@ public class ORemoteConnectionManager {
           maxPool = Integer.parseInt(iConfiguration.get(PARAM_MAX_POOL).toString());
       }
 
-      pool = new ORemoteConnectionPool(maxPool);
+      if (clientConfiguration != null) {
+        final Object max = clientConfiguration.getValue(OGlobalConfiguration.CLIENT_CHANNEL_MAX_POOL);
+        if (max != null)
+          maxPool = Integer.parseInt(max.toString());
+      }
+
+      if (iServerURL.startsWith(OEngineRemote.PREFIX))
+        iServerURL = iServerURL.substring(OEngineRemote.PREFIX.length());
+
+      pool = new ORemoteConnectionPool(maxPool, listener != null);
       final ORemoteConnectionPool prev = connections.putIfAbsent(iServerURL, pool);
       if (prev != null) {
         // ALREADY PRESENT, DESTROY IT AND GET THE ALREADY EXISTENT OBJ
@@ -171,7 +181,7 @@ public class ORemoteConnectionManager {
     final List<OChannelBinaryAsynchClient> conns = new ArrayList<OChannelBinaryAsynchClient>(pool.getPool().getAllResources());
     for (OChannelBinaryAsynchClient c : conns)
       try {
-        //Unregister the listener that make the connection return to the closing pool.
+        // Unregister the listener that make the connection return to the closing pool.
         c.unregisterListener(pool);
         c.close();
       } catch (Exception e) {

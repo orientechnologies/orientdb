@@ -19,9 +19,9 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.util.Collection;
-
 import com.orientechnologies.orient.core.id.ORID;
+
+import java.util.Collection;
 
 /**
  * Generic Distributed Database interface.
@@ -67,4 +67,8 @@ public interface ODistributedDatabase {
   void unlockRecords(String iNodeName);
 
   ODistributedSyncConfiguration getSyncConfiguration();
+
+  long getWaitForMessageId();
+
+  ODistributedDatabase setWaitForMessage(long iMessageId);
 }

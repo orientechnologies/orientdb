@@ -84,28 +84,29 @@ import java.util.concurrent.locks.Lock;
 public class OHazelcastPlugin extends ODistributedAbstractPlugin
     implements MembershipListener, EntryListener<String, Object>, OCommandOutputListener {
 
-  public static final String                     CONFIG_DATABASE_PREFIX = "database.";
+  public static final String                     CONFIG_DATABASE_PREFIX            = "database.";
 
-  protected static final String                  NODE_NAME_ENV          = "ORIENTDB_NODE_NAME";
-  protected static final String                  CONFIG_NODE_PREFIX     = "node.";
-  protected static final String                  CONFIG_DBSTATUS_PREFIX = "dbstatus.";
-  protected static final int                     DEPLOY_DB_MAX_RETRIES  = 10;
-  public static final String                     REPLICATOR_USER        = "_CrossServerTempUser";
+  protected static final String                  NODE_NAME_ENV                     = "ORIENTDB_NODE_NAME";
+  protected static final String                  CONFIG_NODE_PREFIX                = "node.";
+  protected static final String                  CONFIG_DBSTATUS_PREFIX            = "dbstatus.";
+  protected static final int                     DEPLOY_DB_MAX_RETRIES             = 10;
+  public static final String                     REPLICATOR_USER                   = "_CrossServerTempUser";
   protected String                               nodeId;
-  protected String                               hazelcastConfigFile    = "hazelcast.xml";
-  protected Map<String, Member>                  activeNodes            = new ConcurrentHashMap<String, Member>();
+  protected String                               hazelcastConfigFile               = "hazelcast.xml";
+  protected Map<String, Member>                  activeNodes                       = new ConcurrentHashMap<String, Member>();
   protected OHazelcastDistributedMessageService  messageService;
-  protected long                                 timeOffset             = 0;
-  protected Date                                 startedOn              = new Date();
+  protected long                                 timeOffset                        = 0;
+  protected Date                                 startedOn                         = new Date();
 
-  protected volatile NODE_STATUS                 status                 = NODE_STATUS.OFFLINE;
+  protected volatile NODE_STATUS                 status                            = NODE_STATUS.OFFLINE;
 
   protected String                               membershipListenerRegistration;
 
   protected volatile HazelcastInstance           hazelcastInstance;
   protected long                                 lastClusterChangeOn;
-  protected List<ODistributedLifecycleListener>  listeners              = new ArrayList<ODistributedLifecycleListener>();
-  protected Map<String, ORemoteServerController> remoteServers          = new ConcurrentHashMap<String, ORemoteServerController>();
+  protected List<ODistributedLifecycleListener>  listeners                         = new ArrayList<ODistributedLifecycleListener>();
+  protected Map<String, ORemoteServerController> remoteServers                     = new ConcurrentHashMap<String, ORemoteServerController>();
+  protected TimerTask                            publishLocalNodeConfigurationTask = null;
 
   public OHazelcastPlugin() {
   }
@@ -191,13 +192,15 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       publishLocalNodeConfiguration();
 
       final long delay = OGlobalConfiguration.DISTRIBUTED_PUBLISH_NODE_STATUS_EVERY.getValueAsLong();
-      if (delay > 0)
-        Orient.instance().scheduleTask(new TimerTask() {
+      if (delay > 0) {
+        publishLocalNodeConfigurationTask = new TimerTask() {
           @Override
           public void run() {
             publishLocalNodeConfiguration();
           }
-        }, delay, delay);
+        };
+        Orient.instance().scheduleTask(publishLocalNodeConfigurationTask, delay, delay);
+      }
 
     } catch (Exception e) {
       ODistributedServerLog.error(this, localNodeName, null, DIRECTION.NONE, "Error on starting distributed plugin", e);
@@ -243,6 +246,14 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     super.shutdown();
 
     setNodeStatus(NODE_STATUS.SHUTTINGDOWN);
+
+    // CLOSE ALL CONNECTIONS TO THE SERVERS
+    for (ORemoteServerController server : remoteServers.values()) {
+      server.close(true);
+    }
+
+    if (publishLocalNodeConfigurationTask != null)
+      publishLocalNodeConfigurationTask.cancel();
 
     if (messageService != null)
       messageService.shutdown();
@@ -431,6 +442,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     ORemoteServerController remoteServer = remoteServers.get(rNodeName);
     if (remoteServer == null) {
       final Member member = activeNodes.get(rNodeName);
+      if (member == null)
+        throw new ODistributedException("Cannot find node '" + rNodeName + "'");
+
       final ODocument cfg = getNodeConfigurationById(member.getUuid());
 
       final Collection<Map<String, Object>> listeners = (Collection<Map<String, Object>>) cfg.field("listeners");
@@ -684,6 +698,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     final Member member = iEvent.getMember();
     final String nodeLeftName = getNodeName(member);
     if (nodeLeftName != null) {
+      // REMOVE INTRA SERVER CONNECTION
+      final ORemoteServerController removed = remoteServers.remove(nodeLeftName);
+      if (removed != null)
+        removed.close(true);
+
       // NOTIFY NODE LEFT
       for (ODistributedLifecycleListener l : listeners)
         l.onNodeLeft(nodeLeftName);
@@ -1079,6 +1098,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       ODistributedServerLog.info(this, nodeName, entry.getKey(), DIRECTION.OUT, "Requesting database delta sync for '%s' LSN=%s...",
           databaseName, entry.getValue());
 
+      final ODistributedDatabase ddb = getMessageService().getDatabase(databaseName);
+      ddb.setWaitForMessage(1);
+
       final Map<String, Object> results = (Map<String, Object>) sendRequest(databaseName, null, targetNodes, deployTask,
           EXECUTION_MODE.RESPONSE);
 
@@ -1121,6 +1143,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           ODistributedServerLog.info(this, nodeName, entry.getKey(), DIRECTION.IN, "Installed delta of database '%s'...",
               databaseName);
 
+          ddb.setWaitForMessage(-1);
+
         } else
           throw new IllegalArgumentException("Type " + value + " not supported");
       }
@@ -1160,6 +1184,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
     final OAbstractReplicatedTask deployTask = new OSyncDatabaseTask();
 
+    distrDatabase.setWaitForMessage(1);
+
     final Map<String, Object> results = (Map<String, Object>) sendRequest(databaseName, null, selectedNodes, deployTask,
         EXECUTION_MODE.RESPONSE);
 
@@ -1193,6 +1219,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           // FILTER CLUSTER CHECKING IF ANY NODE IS ACTIVE
           OCommandExecutorSQLSyncCluster.replaceCluster(this, serverInstance, databaseName, cl);
         }
+
+        distrDatabase.setWaitForMessage(-1);
 
         return true;
 
@@ -1244,7 +1272,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       final OHazelcastDistributedDatabase distrDatabase, final String iNode, final ODistributedDatabaseChunk value,
       final boolean delta) {
     // DISCARD ALL THE MESSAGES BEFORE THE BACKUP
-    distrDatabase.setWaitForMessage(value.getLastOperationId());
+    //distrDatabase.setWaitForMessage(value.getLastOperationId());
 
     final String fileName = Orient.getTempPath() + "install_" + databaseName + ".zip";
 

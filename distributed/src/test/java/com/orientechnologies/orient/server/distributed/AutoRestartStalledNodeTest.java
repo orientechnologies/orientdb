@@ -15,17 +15,17 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.util.ArrayList;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import org.junit.Assert;
-import org.junit.Test;
-
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Starts 3 servers, lock on node3 simulating a unknown stall situation, checks:
@@ -43,6 +43,7 @@ public class AutoRestartStalledNodeTest extends AbstractServerClusterTxTest {
   final private AtomicInteger nodeLefts     = new AtomicInteger();
 
   @Test
+  @Ignore
   public void test() throws Exception {
     // SET MAXQUEUE SIZE LOWER TO TEST THE NODE IS RESTARTED AUTOMATICALLY
     final long queueMaxSize = OGlobalConfiguration.DISTRIBUTED_QUEUE_MAXSIZE.getValueAsLong();
@@ -97,8 +98,6 @@ public class AutoRestartStalledNodeTest extends AbstractServerClusterTxTest {
     }
 
     if (serverStarted++ == (SERVERS - 1)) {
-
-      startQueueMonitorTask();
 
       // BACKUP LAST SERVER, RUN ASYNCHRONOUSLY
       new Thread(new Runnable() {

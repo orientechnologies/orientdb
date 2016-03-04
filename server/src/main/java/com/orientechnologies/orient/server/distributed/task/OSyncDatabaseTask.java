@@ -19,13 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
-import java.io.*;
-import java.util.UUID;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
-
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -38,6 +31,13 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+
+import java.io.*;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Ask for synchronization of database from a remote node.
@@ -248,7 +248,7 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
 
   @Override
   public boolean isRequiredOpenDatabase() {
-    return true;
+    return false;
   }
 
   @Override

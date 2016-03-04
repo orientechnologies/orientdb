@@ -19,21 +19,6 @@
  */
 package com.orientechnologies.orient.server;
 
-import java.io.IOException;
-import java.net.Socket;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TimerTask;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
@@ -52,9 +37,17 @@ import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.binary.OBinaryNetworkProtocolAbstract;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 
+import java.io.IOException;
+import java.net.Socket;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class OClientConnectionManager {
   protected final ConcurrentMap<Integer, OClientConnection>  connections      = new ConcurrentHashMap<Integer, OClientConnection>();
-  protected AtomicInteger                              connectionSerial = new AtomicInteger(0);
+  protected AtomicInteger                                    connectionSerial = new AtomicInteger(0);
   protected final ConcurrentMap<OHashToken, OClientSessions> sessions         = new ConcurrentHashMap<OHashToken, OClientSessions>();
 
   public OClientConnectionManager() {
@@ -68,15 +61,12 @@ public class OClientConnectionManager {
       }
     }, delay, delay);
 
-    Orient
-        .instance()
-        .getProfiler()
-        .registerHookValue("server.connections.actives", "Number of active network connections", METRIC_TYPE.COUNTER,
-            new OProfilerHookValue() {
-              public Object getValue() {
-                return connections.size();
-              }
-            });
+    Orient.instance().getProfiler().registerHookValue("server.connections.actives", "Number of active network connections",
+        METRIC_TYPE.COUNTER, new OProfilerHookValue() {
+          public Object getValue() {
+            return connections.size();
+          }
+        });
   }
 
   public void cleanExpiredConnections() {
@@ -144,7 +134,7 @@ public class OClientConnectionManager {
     try {
       token = handler.parseBinaryToken(tokenBytes);
     } catch (Exception e) {
-      throw OException.wrapException(new OTokenSecurityException("Error on token parsing"),e);
+      throw OException.wrapException(new OTokenSecurityException("Error on token parsing"), e);
     }
     OClientSessions session;
     synchronized (sessions) {
@@ -287,8 +277,8 @@ public class OClientConnectionManager {
       // CHECK IF THERE ARE OTHER CONNECTIONS
       for (Entry<Integer, OClientConnection> entry : connections.entrySet()) {
         if (entry.getValue().getProtocol().equals(connection.getProtocol())) {
-          OLogManager.instance()
-              .debug(this, "Disconnected connection with id=%d but are present other active channels", iChannelId);
+          OLogManager.instance().debug(this, "Disconnected connection with id=%d but are present other active channels",
+              iChannelId);
           return false;
         }
       }
@@ -353,6 +343,9 @@ public class OClientConnectionManager {
 
     final Set<String> pushed = new HashSet<String>();
     for (OClientConnection c : connections.values()) {
+      if (!c.getData().supportsPushMessages)
+        continue;
+
       try {
         final String remoteAddress = c.getRemoteAddress();
         if (pushed.contains(remoteAddress))

@@ -84,7 +84,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   private static final int    DEFAULT_PORT              = 2424;
   private static final int    DEFAULT_SSL_PORT          = 2434;
   private static final String ADDRESS_SEPARATOR         = ";";
-  private static final String DRIVER_NAME               = "OrientDB Java";
+  public static final String  DRIVER_NAME               = "OrientDB Java";
 
   public enum CONNECTION_STRATEGY {
     STICKY, ROUND_ROBIN_CONNECT, ROUND_ROBIN_REQUEST
@@ -173,6 +173,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     final OStorageRemoteThreadLocal instance = OStorageRemoteThreadLocal.INSTANCE;
     return instance != null ? instance.get().connections : null;
   }
+
   public int getSessionId() {
     final OStorageRemoteThreadLocal instance = OStorageRemoteThreadLocal.INSTANCE;
     return instance != null ? instance.get().sessionId : -1;
@@ -202,7 +203,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     }
   }
 
-  public void pushSessionId(final String iServerURL, final int iSessionId, byte[] token,Set<OChannelBinaryAsynchClient> connections) {
+  public void pushSessionId(final String iServerURL, final int iSessionId, byte[] token,
+      Set<OChannelBinaryAsynchClient> connections) {
     final OStorageRemoteThreadLocal instance = OStorageRemoteThreadLocal.INSTANCE;
     if (instance != null) {
       final OStorageRemoteSession tl = instance.get();
@@ -1163,8 +1165,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
                 final Boolean unsubscribe = doc.field("unsubscribe");
                 if (token != null) {
                   if (Boolean.TRUE.equals(unsubscribe)) {
-                    if( OStorageRemote.this.asynchEventListener != null )
-                    OStorageRemote.this.asynchEventListener.unregisterLiveListener(token);
+                    if (OStorageRemote.this.asynchEventListener != null)
+                      OStorageRemote.this.asynchEventListener.unregisterLiveListener(token);
                   } else {
                     OLiveResultListener listener = (OLiveResultListener) iCommand.getResultListener();
                     // TODO pass db copy!!!
@@ -1849,7 +1851,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         network.writeInt(getSessionId());
 
         // @SINCE 1.0rc8
-        sendClientInfo(network);
+        sendClientInfo(network, DRIVER_NAME, true, true);
 
         network.writeString(name);
         network.writeString(connectionUserName);
@@ -1967,10 +1969,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return null;
   }
 
-  protected void sendClientInfo(final OChannelBinaryAsynchClient network) throws IOException {
+  protected void sendClientInfo(final OChannelBinaryAsynchClient network, final String driverName,
+      final boolean supportsPushMessages, final boolean collectStats) throws IOException {
     if (network.getSrvProtocolVersion() >= 7) {
       // @COMPATIBILITY 1.0rc8
-      network.writeString(DRIVER_NAME).writeString(OConstants.ORIENT_VERSION)
+      network.writeString(driverName).writeString(OConstants.ORIENT_VERSION)
           .writeShort((short) OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION).writeString(clientId);
     }
     if (network.getSrvProtocolVersion() > OChannelBinaryProtocol.PROTOCOL_VERSION_21) {
@@ -1980,6 +1983,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       recordFormat = ORecordSerializerSchemaAware2CSV.NAME;
     if (network.getSrvProtocolVersion() > OChannelBinaryProtocol.PROTOCOL_VERSION_26)
       network.writeBoolean(true);
+    if (network.getSrvProtocolVersion() > OChannelBinaryProtocol.PROTOCOL_VERSION_33) {
+      network.writeBoolean(supportsPushMessages);
+      network.writeBoolean(collectStats);
+    }
   }
 
   /**

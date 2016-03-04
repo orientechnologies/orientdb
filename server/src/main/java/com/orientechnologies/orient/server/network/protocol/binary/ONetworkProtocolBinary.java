@@ -147,8 +147,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
   @Override
   protected void onBeforeRequest() throws IOException {
-    waitNodeIsOnline();
-
     solveSession();
 
     if (connection != null) {
@@ -850,13 +848,30 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         throw new IOException("Error on unmarshalling of remote task", e);
       }
 
-      ODistributedServerLog.info(this, manager.getLocalNodeName(), req.getSenderNodeName(), ODistributedServerLog.DIRECTION.IN,
+      ODistributedServerLog.debug(this, manager.getLocalNodeName(), req.getSenderNodeName(), ODistributedServerLog.DIRECTION.IN,
           "Received request %s (%d bytes)", req, serializedReq.length);
-
-      final Object responsePayload;
 
       final ORemoteTask task = req.getTask();
 
+      final ODistributedDatabase ddb = manager.getMessageService().getDatabase(req.getDatabaseName());
+      if (ddb != null) {
+        final long waitForMessage = ddb.getWaitForMessageId();
+        // if (waitForMessage > -1 && req.getId() < waitForMessage) {
+        if (waitForMessage > -1) {
+          if (!(task instanceof ODistributedDatabaseChunk)) {
+            // SKIP IT
+            ODistributedServerLog.info(this, manager.getLocalNodeName(), req.getSenderNodeName(),
+                ODistributedServerLog.DIRECTION.IN, "Skipping request %s waiting for %d", req, waitForMessage);
+            return;
+          }
+          ddb.setWaitForMessage(-1);
+        }
+      }
+
+      if (task.isRequiredOpenDatabase())
+        waitNodeIsOnline(req);
+
+      Object responsePayload;
       try {
         task.setNodeSource(req.getSenderNodeName());
 
@@ -867,7 +882,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         }
         final ODatabaseDocumentTx database = db;
 
-        ODistributedServerLog.info(this, manager.getLocalNodeName(), req.getSenderNodeName(), ODistributedServerLog.DIRECTION.IN,
+        ODistributedServerLog.debug(this, manager.getLocalNodeName(), req.getSenderNodeName(), ODistributedServerLog.DIRECTION.IN,
             "Executing request %s (%d bytes)", req, serializedReq.length);
 
         responsePayload = OScenarioThreadLocal.executeAsDistributed(new Callable<Object>() {
@@ -878,11 +893,11 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         });
 
       } catch (RuntimeException e) {
-        throw e;
+        responsePayload = e;
       } catch (Exception e) {
         ODistributedServerLog.error(this, manager.getLocalNodeName(), req.getSenderNodeName(), ODistributedServerLog.DIRECTION.IN,
             "Error on executing request %s", e, req);
-        throw new IOException("Error on executing remote task", e);
+        responsePayload = e;
       }
 
       if (responsePayload instanceof OModificationOperationProhibitedException) {
@@ -900,7 +915,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
           ODistributedServerLog.info(this, manager.getLocalNodeName(), req.getSenderNodeName(), ODistributedServerLog.DIRECTION.IN,
               "Request %s succeed after retry=%d", req, retry);
 
-        ODistributedServerLog.info(this, manager.getLocalNodeName(), req.getSenderNodeName(), ODistributedServerLog.DIRECTION.OUT,
+        ODistributedServerLog.debug(this, manager.getLocalNodeName(), req.getSenderNodeName(), ODistributedServerLog.DIRECTION.OUT,
             "sending back response '%s' to request %d (%s)", responsePayload, req.getId(), task);
 
         final ODistributedResponse response = manager.createResponse(req.getId(), manager.getLocalNodeName(),
@@ -910,8 +925,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
           // GET THE SENDER'S RESPONSE QUEUE
           final ORemoteServerController remoteSenderServer = manager.getRemoteServer(req.getSenderNodeName());
 
-          ODistributedServerLog.info(this, manager.getLocalNodeName(), req.getSenderNodeName(), ODistributedServerLog.DIRECTION.OUT,
-              "Sending back response %s to %s", response, req.getSenderNodeName());
+          ODistributedServerLog.debug(this, manager.getLocalNodeName(), req.getSenderNodeName(),
+              ODistributedServerLog.DIRECTION.OUT, "Sending back response %s to %s", response, req.getSenderNodeName());
 
           remoteSenderServer.sendResponse(response, req.getSenderNodeName());
 
@@ -940,7 +955,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       throw new IOException("Error on unmarshalling of remote task", e);
     }
 
-    ODistributedServerLog.info(this, manager.getLocalNodeName(), response.getSenderNodeName(), ODistributedServerLog.DIRECTION.IN,
+    ODistributedServerLog.debug(this, manager.getLocalNodeName(), response.getSenderNodeName(), ODistributedServerLog.DIRECTION.IN,
         "Executing distributed response %s", response);
 
     manager.getMessageService().dispatchResponseToThread(response);
@@ -1978,6 +1993,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       connection.getData().serializationImpl = channel.readString();
     else
       connection.getData().serializationImpl = ORecordSerializerSchemaAware2CSV.NAME;
+
     if (connection.getTokenBased() == null) {
       if (connection.getData().protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_26)
         connection.setTokenBased(channel.readBoolean());
@@ -1988,6 +2004,14 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         if (channel.readBoolean() != connection.getTokenBased()) {
           // throw new OException("Not supported mixed connection managment");
         }
+    }
+
+    if (connection.getData().protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_33) {
+      connection.getData().supportsPushMessages = channel.readBoolean();
+      connection.getData().collectStats = channel.readBoolean();
+    } else {
+      connection.getData().supportsPushMessages = true;
+      connection.getData().collectStats = true;
     }
   }
 

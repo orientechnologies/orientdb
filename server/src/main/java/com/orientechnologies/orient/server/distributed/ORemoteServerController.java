@@ -40,12 +40,15 @@ public class ORemoteServerController extends OServerAdmin {
   public ORemoteServerController(final ODistributedServerManager manager, final String iURL, final String user, final String passwd)
       throws IOException {
     super(iURL);
-    this.manager = manager;
-    setUseToken(false); // AVOID THE TOKEN TO IMPROVE PERFORMANCE
-    connect(user, passwd);
+
+    clientType = "RemoteServerController";
+    collectStats = false;
 
     // FORCE ALL THE MESSAGES TO BE QUEUED IN THE SAME CHANNEL
     storage.getClientConfiguration().setValue(OGlobalConfiguration.CLIENT_CHANNEL_MAX_POOL, 1);
+
+    this.manager = manager;
+    connect(user, passwd);
   }
 
   public void sendRequest(final ODistributedRequest req, final String node) {
@@ -63,7 +66,7 @@ public class ORemoteServerController extends OServerAdmin {
               req.writeExternal(outStream);
               serializedRequest = out.toByteArray();
 
-              ODistributedServerLog.info(this, manager.getLocalNodeName(), node, ODistributedServerLog.DIRECTION.OUT,
+              ODistributedServerLog.debug(this, manager.getLocalNodeName(), node, ODistributedServerLog.DIRECTION.OUT,
                   "Sending request %s (%d bytes)", req, serializedRequest.length);
 
               network.writeBytes(serializedRequest);
@@ -99,7 +102,7 @@ public class ORemoteServerController extends OServerAdmin {
               response.writeExternal(outStream);
               final byte[] serializedResponse = out.toByteArray();
 
-              ODistributedServerLog.info(this, manager.getLocalNodeName(), node, ODistributedServerLog.DIRECTION.OUT,
+              ODistributedServerLog.debug(this, manager.getLocalNodeName(), node, ODistributedServerLog.DIRECTION.OUT,
                   "Sending response %s (%d bytes)", response, serializedResponse.length);
 
               network.writeBytes(serializedResponse);
@@ -120,4 +123,5 @@ public class ORemoteServerController extends OServerAdmin {
       }
     }, "Cannot send response back to the sender node '" + response.getSenderNodeName() + "'");
   }
+
 }

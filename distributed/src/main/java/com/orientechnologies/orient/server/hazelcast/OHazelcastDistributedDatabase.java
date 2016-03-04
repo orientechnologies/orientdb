@@ -60,13 +60,9 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
   protected final String                              databaseName;
   protected final Lock                                requestLock;
   protected ODistributedSyncConfiguration             syncConfiguration;
-  protected final int                                 numWorkers                     = 8;
-  protected volatile boolean                          restoringMessages              = false;
   protected AtomicBoolean                             status                         = new AtomicBoolean(false);
   protected AtomicLong                                waitForMessageId               = new AtomicLong(-1);
   protected ConcurrentHashMap<ORID, String>           lockManager                    = new ConcurrentHashMap<ORID, String>();
-  protected ConcurrentHashMap<String, Integer>        queueSizes                     = new ConcurrentHashMap<String, Integer>();
-  protected ConcurrentHashMap<String, Integer>        queueWarningCounter            = new ConcurrentHashMap<String, Integer>();
 
   public OHazelcastDistributedDatabase(final OHazelcastPlugin manager, final OHazelcastDistributedMessageService msgService,
       final String iDatabaseName) {
@@ -273,6 +269,10 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     }
 
     return syncConfiguration;
+  }
+
+  public long getWaitForMessageId() {
+    return waitForMessageId.get();
   }
 
   @Override
