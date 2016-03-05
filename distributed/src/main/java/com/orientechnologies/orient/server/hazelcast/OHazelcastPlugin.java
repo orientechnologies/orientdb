@@ -527,9 +527,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   public void onOpen(final ODatabaseInternal iDatabase) {
     final String dbUrl = OSystemVariableResolver.resolveSystemVariables(iDatabase.getURL());
 
-    // if (!isNodeOnline(getLocalNodeName(), iDatabase.getName()))
-    // return;
-
     if (dbUrl.startsWith("plocal:")) {
       // CHECK SPECIAL CASE WITH MULTIPLE SERVER INSTANCES ON THE SAME JVM
       final String dbDirectory = serverInstance.getDatabaseDirectory();
@@ -1965,7 +1962,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
                 if (now - lastLap > 1000) {
                   // DUMP STATS EVERY SECOND
                   ODistributedServerLog.info(this, nodeName, null, DIRECTION.IN,
-                      "- %d total entries: %d created, %d updated, %d deleted, %d holes...", db.getName(), totalRecords,
+                      "- %d total entries: %d created, %d updated, %d deleted, %d holes...", totalRecords,
                       totalCreated, totalUpdated, totalDeleted, totalHoles);
                   lastLap = now;
                 }
