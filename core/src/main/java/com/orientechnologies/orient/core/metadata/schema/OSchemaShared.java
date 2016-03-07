@@ -99,7 +99,6 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
   private static Set<String> internalClasses = new HashSet<String>();
 
-
   static {
     internalClasses.add("ouser");
     internalClasses.add("orole");

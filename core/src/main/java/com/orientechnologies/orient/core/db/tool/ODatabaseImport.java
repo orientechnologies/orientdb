@@ -792,11 +792,13 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       String blobClusterIds = jsonReader.readString(OJSONReader.END_COLLECTION, true).trim();
       blobClusterIds = blobClusterIds.substring(1, blobClusterIds.length() - 1);
 
-      // ASSIGN OTHER CLUSTER IDS
-      for (String i : OStringSerializerHelper.split(blobClusterIds,OStringSerializerHelper.RECORD_SEPARATOR)) {
-         Integer cluster = Integer.parseInt(i);
-        if (!database.getMetadata().getSchema().getBlobClusters().contains(cluster))
-          database.getMetadata().getSchema().addBlobCluster(i);
+      if(!"".equals(blobClusterIds)) {
+        // READ BLOB CLUSTER IDS
+        for (String i : OStringSerializerHelper.split(blobClusterIds, OStringSerializerHelper.RECORD_SEPARATOR)) {
+          Integer cluster = Integer.parseInt(i);
+          if (!database.getMetadata().getSchema().getBlobClusters().contains(cluster))
+            database.getMetadata().getSchema().addBlobCluster(i);
+        }
       }
 
       jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);

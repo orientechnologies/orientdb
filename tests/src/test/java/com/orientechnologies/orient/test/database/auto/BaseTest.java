@@ -157,7 +157,7 @@ public abstract class BaseTest<T extends ODatabase> {
 
     database.addCluster("csv");
     database.addCluster("flat");
-    database.addBlobCluster("binary");
+    database.addCluster("binary");
 
     OClass account = database.getMetadata().getSchema().createClass("Account", 1, null);
     account.createProperty("id", OType.INTEGER);
