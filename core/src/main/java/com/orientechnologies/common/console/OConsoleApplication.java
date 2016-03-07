@@ -197,7 +197,10 @@ public class OConsoleApplication {
   }
 
   protected boolean executeBatch(final String commandLine) {
-    final File commandFile = new File(commandLine);
+    File commandFile = new File(commandLine);
+    if(!commandFile.isAbsolute()){
+      commandFile = new File(new File("."), commandLine);
+    }
 
     OCommandStream scanner;
     try {
