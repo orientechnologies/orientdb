@@ -19,22 +19,34 @@
  */
 package com.orientechnologies.common.console;
 
-import java.io.*;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
 import com.orientechnologies.common.console.annotation.ConsoleParameter;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.common.util.OArrays;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.ServiceLoader;
+import java.util.TreeMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class OConsoleApplication {
   protected static final String[]   COMMENT_PREFIXS = new String[] { "#", "--", "//" };
@@ -187,7 +199,10 @@ public class OConsoleApplication {
   }
 
   protected boolean executeBatch(final String commandLine) {
-    final File commandFile = new File(commandLine);
+    File commandFile = new File(commandLine);
+    if(!commandFile.isAbsolute()){
+      commandFile = new File(new File("."), commandLine);
+    }
 
     OCommandStream scanner;
     try {
