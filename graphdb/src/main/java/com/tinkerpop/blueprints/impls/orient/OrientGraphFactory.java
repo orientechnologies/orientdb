@@ -142,6 +142,8 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
   /**
    * Check if the database with path given to the factory exists.
    *
+   * this api can be used only in embedded mode, and has no need of authentication.
+   *
    * @return true if database is exists
    */
   public boolean exists() {
