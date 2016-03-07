@@ -38,31 +38,30 @@ import java.io.IOException;
  */
 public interface OLuceneIndexEngine extends OIndexEngine {
 
-  public void initIndex(String indexType, OIndexDefinition indexDefinition, boolean isAutomatic, ODocument metadata);
+  void initIndex(String indexType, OIndexDefinition indexDefinition, boolean isAutomatic, ODocument metadata);
 
-  public String indexName();
+  String indexName();
 
-  public abstract void onRecordAddedToResultSet(QueryContext queryContext, OContextualRecordId recordId, Document ret,
-      ScoreDoc score);
+  void onRecordAddedToResultSet(QueryContext queryContext, OContextualRecordId recordId, Document ret, ScoreDoc score);
 
-  public Document buildDocument(Object key, OIdentifiable value);
+  Document buildDocument(Object key, OIdentifiable value);
 
-  public Query buildQuery(Object query);
+  Query buildQuery(Object query);
 
-  public Analyzer indexAnalyzer();
+  Analyzer indexAnalyzer();
 
-  public Analyzer queryAnalyzer();
+  Analyzer queryAnalyzer();
 
-  public boolean remove(Object key, OIdentifiable value);
+  boolean remove(Object key, OIdentifiable value);
 
-  public IndexSearcher searcher() throws IOException;
+  IndexSearcher searcher() throws IOException;
 
-  public Object getInTx(Object key, OLuceneTxChanges changes);
+  Object getInTx(Object key, OLuceneTxChanges changes);
 
-  public long sizeInTx(OLuceneTxChanges changes);
+  long sizeInTx(OLuceneTxChanges changes);
 
-  public OLuceneTxChanges buildTxChanges() throws IOException;
+  OLuceneTxChanges buildTxChanges() throws IOException;
 
-  public Query deleteQuery(Object key, OIdentifiable value);
+  Query deleteQuery(Object key, OIdentifiable value);
 
 }
