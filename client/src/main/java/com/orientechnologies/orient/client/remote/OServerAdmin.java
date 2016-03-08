@@ -707,6 +707,7 @@ public class OServerAdmin {
 
       } catch (Exception e) {
         // DIRTY CONNECTION, CLOSE IT AND RE-ACQUIRE A NEW ONE
+        network.close();
         storage.close(true, false);
         lastException = e;
         break;

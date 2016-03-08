@@ -44,12 +44,16 @@ public abstract class OAbstractRemoteTask implements ORemoteTask {
   @Override
   public abstract String getName();
 
-  @Override
   public abstract OCommandDistributedReplicateRequest.QUORUM_TYPE getQuorumType();
 
   @Override
   public abstract Object execute(long requestId, OServer iServer, ODistributedServerManager iManager, ODatabaseDocumentTx database)
       throws Exception;
+
+  @Override
+  public int getPartitionKey() {
+    return 0;
+  }
 
   @Override
   public long getDistributedTimeout() {

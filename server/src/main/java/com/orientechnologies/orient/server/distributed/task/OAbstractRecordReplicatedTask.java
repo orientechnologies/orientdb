@@ -48,6 +48,11 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
   public abstract ORecord getRecord();
 
   @Override
+  public int getPartitionKey() {
+    return rid.clusterId;
+  }
+
+  @Override
   public String toString() {
     return super.toString() + "(" + rid + " v." + version + ")";
   }

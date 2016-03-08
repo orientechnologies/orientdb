@@ -34,16 +34,14 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -52,13 +50,12 @@ import java.util.List;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
-  public static final String SUFFIX_QUEUE_NAME = ".insert";
-  private static final long  serialVersionUID  = 1L;
-  public static final int    FACTORYID         = 0;
-  protected byte[]           content;
-  protected byte             recordType;
-  protected int              clusterId         = -1;
-  private transient ORecord  record;
+  private static final long serialVersionUID = 1L;
+  public static final int   FACTORYID        = 0;
+  protected byte[]          content;
+  protected byte            recordType;
+  protected int             clusterId        = -1;
+  private transient ORecord record;
 
   public OCreateRecordTask() {
   }
@@ -102,20 +99,23 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   }
 
   @Override
-  public Object execute(long requestId, final OServer iServer, final ODistributedServerManager iManager, final ODatabaseDocumentTx database)
-      throws Exception {
+  public Object execute(final long requestId, final OServer iServer, final ODistributedServerManager iManager,
+      final ODatabaseDocumentTx database) throws Exception {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "creating record %s/%s v.%d...",
         database.getName(), rid.toString(), version);
 
-    getRecord();
+    final ORecord loadedRecord = rid.getRecord();
+    if (loadedRecord != null) {
+      // RECORD HAS BEEN ALREADY CREATED (PROBABLY DURING DATABASE SYNC) CHECKING COHERENCY
+      if (!Arrays.equals(loadedRecord.toStream(), content))
+        throw new ODistributedException("Record " + rid + " is already present with different content");
 
-    final long clusterPosToReach = rid.getClusterPosition();
-    if (ORecordId.isPersistent(clusterPosToReach)) {
-      // THIS IS A FIX TO FILL THE MISSING HOLES
-      ORecordInternal.setIdentity(record, rid.getClusterId(), ORID.CLUSTER_POS_INVALID);
-    }
+      record = loadedRecord;
 
-    while (true) {
+    } else {
+
+      getRecord();
+
       if (clusterId > -1)
         record.save(database.getClusterNameById(clusterId), true);
       else if (rid.getClusterId() != -1)
@@ -123,19 +123,15 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
       else
         record.save();
 
-      rid = (ORecordId) record.getIdentity();
+      final ORecordId newRid = (ORecordId) record.getIdentity();
+      if (!rid.equals(newRid))
+        throw new ODistributedException("Record " + rid + " has been saved with the different RID " + newRid);
 
-      if (clusterPosToReach > 0 && rid.clusterPosition < clusterPosToReach) {
-        // DELETE THE HOLE
-        rid.getRecord().delete();
-      } else
-        break;
+      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+          "+-> assigned new rid %s/%s v.%d", database.getName(), rid.toString(), record.getVersion());
     }
 
-    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> assigned new rid %s/%s v.%d",
-        database.getName(), rid.toString(), record.getVersion());
-
-    // TODO: IMPROVE TRANSPORT BY AVOIDING THE RECORD CONTENT, BUT JUST RID + VERSION
+    // IMPROVED TRANSPORT BY AVOIDING THE RECORD CONTENT, BUT JUST RID + VERSION
     return new OPlaceholder(record);
   }
 
@@ -173,7 +169,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
                 dManager.getLocalNodeName());
 
             final ORawBuffer remoteReadRecord = (ORawBuffer) dManager.sendRequest(iRequest.getDatabaseName(), null, nodes,
-                new OReadRecordTask(toUpdateRid), ODistributedRequest.EXECUTION_MODE.RESPONSE);
+                new OReadRecordTask(toUpdateRid), ODistributedRequest.EXECUTION_MODE.RESPONSE, 0);
 
             if (remoteReadRecord != null) {
               toUpdateRecord = Orient.instance().getRecordFactoryManager().newInstance(recordType);

@@ -95,27 +95,25 @@ public interface ODistributedServerManager {
    */
   boolean isNodeOnline(String iNodeName, String databaseName);
 
+  int getAvailableNodes(final Collection<String> iNodes, final String databaseName);
+
   boolean isOffline();
 
-  String getLocalNodeId();
+  int getLocalNodeId();
 
   String getLocalNodeName();
 
   ODocument getClusterConfiguration();
 
-  ODocument getNodeConfigurationById(String iNode);
+  String getNodeNameById(int id);
+
+  int getNodeIdByName(String node);
+
+  ODocument getNodeConfigurationByUuid(String iNode);
 
   ODocument getLocalNodeConfiguration();
 
   void propagateSchemaChanges(ODatabaseInternal iStorage);
-
-  /**
-   * Returns a time taking care about the offset with the cluster time. This allows to have a quite precise idea about information
-   * on date times, such as logs to determine the youngest in case of conflict.
-   *
-   * @return
-   */
-  long getDistributedTime(long iTme);
 
   /**
    * Gets a distributed lock
@@ -128,8 +126,21 @@ public interface ODistributedServerManager {
 
   ODistributedConfiguration getDatabaseConfiguration(String iDatabaseName);
 
+  /**
+   * Sends a distributed request against multiple servers.
+   * 
+   * @param iDatabaseName
+   * @param iClusterNames
+   * @param iTargetNodeNames
+   * @param iTask
+   * @param iExecutionMode
+   * @param quorumOffset
+   *          is the quorum offset. For example create record already write locally before to distributed, so it's 1.
+   * 
+   * @return
+   */
   Object sendRequest(String iDatabaseName, Collection<String> iClusterNames, List<String> iTargetNodeNames, ORemoteTask iTask,
-      EXECUTION_MODE iExecutionMode);
+      EXECUTION_MODE iExecutionMode, int quorumOffset);
 
   ODocument getStats();
 

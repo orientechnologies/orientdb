@@ -19,10 +19,10 @@
       */
 package com.orientechnologies.orient.server.distributed;
 
+import java.io.Externalizable;
+
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
-
-import java.io.Externalizable;
 
 /**
  *
@@ -44,9 +44,9 @@ public interface ODistributedRequest extends Externalizable {
 
   ODistributedRequest setDatabaseName(final String databaseName);
 
-  String getSenderNodeName();
+  int getSenderNodeId();
 
-  ODistributedRequest setSenderNodeName(String localNodeName);
+  ODistributedRequest setSenderNodeId(int localNodeId);
 
   ORemoteTask getTask();
 

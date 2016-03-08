@@ -31,7 +31,6 @@ import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
 
-import java.io.File;
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
@@ -614,6 +613,22 @@ public enum OGlobalConfiguration {
   DISTRIBUTED_PUBLISH_NODE_STATUS_EVERY("distributed.publishNodeStatusEvery",
       "Time in ms to publish the node status on distributed map. Set to 0 to disable such refresh of node configuration",
       Long.class, 5000l),
+
+  /**
+   * @Since 2.2.0
+   */
+  @OApi(maturity = OApi.MATURITY.NEW)
+  DISTRIBUTED_LOCAL_QUEUESIZE("distributed.localQueueSize",
+      "Size of the intra thread queue for distributed messages",
+      Integer.class, 2000),
+
+  /**
+   * @Since 2.2
+   */
+  @OApi(maturity = OApi.MATURITY.NEW)
+  DISTRIBUTED_DB_WORKERTHREADS("distributed.dbWorkerThreads",
+      "Number of parallel worker threads per database that process distributed messages",
+      Integer.class, 4),
 
   /**
    * @Since 2.1.3

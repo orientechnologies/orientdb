@@ -52,8 +52,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  *
  */
-public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract implements ODistributedServerManager,
-    ODatabaseLifecycleListener {
+public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
+    implements ODistributedServerManager, ODatabaseLifecycleListener {
   protected static final String                            PAR_DEF_DISTRIB_DB_CONFIG   = "configuration.db.default";
   protected static final String                            FILE_DISTRIBUTED_DB_CONFIG  = "distributed-config.json";
 
@@ -62,6 +62,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
 
   protected boolean                                        enabled                     = true;
   protected String                                         nodeName                    = null;
+  protected int                                            nodeId                      = -1;
   protected File                                           defaultDatabaseConfigFile;
   protected ConcurrentHashMap<String, ODistributedStorage> storages                    = new ConcurrentHashMap<String, ODistributedStorage>();
 
@@ -236,8 +237,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
     return "cluster";
   }
 
-  public String getLocalNodeId() {
-    return nodeName;
+  public int getLocalNodeId() {
+    return nodeId;
   }
 
   public boolean updateCachedDatabaseConfiguration(final String iDatabaseName, final ODocument cfg, final boolean iSaveToDisk) {

@@ -19,7 +19,10 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
-import com.hazelcast.core.IAtomicLong;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
+
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedMessageService;
@@ -27,10 +30,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedResponseManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Hazelcast implementation of distributed peer. There is one instance per database. Each node creates own instance to talk with
@@ -44,11 +43,11 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
   protected final OHazelcastPlugin                                     manager;
   protected final ConcurrentHashMap<Long, ODistributedResponseManager> responsesByRequestIds;
   protected final TimerTask                                            asynchMessageManager;
-  protected Map<String, OHazelcastDistributedDatabase>                 databases                   = new ConcurrentHashMap<String, OHazelcastDistributedDatabase>();
+  protected Map<String, OHazelcastDistributedDatabase>                 databases               = new ConcurrentHashMap<String, OHazelcastDistributedDatabase>();
   protected Thread                                                     responseThread;
-  protected long[]                                                     responseTimeMetrics         = new long[10];
-  protected int                                                        responseTimeMetricIndex     = 0;
-  protected volatile boolean                                           running                     = true;
+  protected long[]                                                     responseTimeMetrics     = new long[10];
+  protected int                                                        responseTimeMetricIndex = 0;
+  protected volatile boolean                                           running                 = true;
 
   public OHazelcastDistributedMessageService(final OHazelcastPlugin manager) {
     this.manager = manager;
@@ -99,10 +98,6 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
 
     for (ODistributedResponseManager r : responsesByRequestIds.values())
       r.notifyWaiters();
-  }
-
-  public IAtomicLong getMessageIdCounter() {
-    return manager.getHazelcastInstance().getAtomicLong("orientdb.requestId");
   }
 
   public long getAverageResponseTime() {

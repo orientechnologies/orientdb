@@ -341,8 +341,14 @@ public class ODistributedResponseManager {
 
       manageConflicts();
 
-      if (receivedResponses == 0)
-        throw new ODistributedException("No response received from any of nodes " + getExpectedNodes() + " for request " + request);
+      if (receivedResponses == 0) {
+        if (quorum > 0)
+          throw new ODistributedException(
+              "No response received from any of nodes " + getExpectedNodes() + " for request " + request);
+
+        // NO QUORUM, RETURN NULL
+        return null;
+      }
 
       // MANAGE THE RESULT BASED ON RESULT STRATEGY
       switch (request.getTask().getResultStrategy()) {
@@ -607,7 +613,7 @@ public class ODistributedResponseManager {
                 "sending undo message (%s) for request (%s) to server %s", undoTask, request, r.getExecutorNodeName());
 
             dManager.sendRequest(request.getDatabaseName(), null, Collections.singletonList(r.getExecutorNodeName()), undoTask,
-                ODistributedRequest.EXECUTION_MODE.RESPONSE);
+                ODistributedRequest.EXECUTION_MODE.RESPONSE, 0);
           }
         }
       }
@@ -666,7 +672,7 @@ public class ODistributedResponseManager {
           ORecordInternal.setIdentity(((OCreateRecordTask) task).getRecord(),
               ((OCreateRecordTask) task).getRecord().getIdentity().getClusterId(), -1);
           dManager.sendRequest(request.getDatabaseName(), null, Collections.singletonList(r.getExecutorNodeName()), task,
-              ODistributedRequest.EXECUTION_MODE.NO_RESPONSE);
+              ODistributedRequest.EXECUTION_MODE.NO_RESPONSE, 0);
         }
 
         final OPlaceholder ph = new OPlaceholder(new ORecordId(origPh.getIdentity().getClusterId(), i), -1);
@@ -678,7 +684,7 @@ public class ODistributedResponseManager {
               "sending undo message (%s) for request (%s) to server %s", undoTask, request, r.getExecutorNodeName());
 
           dManager.sendRequest(request.getDatabaseName(), null, Collections.singletonList(r.getExecutorNodeName()), undoTask,
-              ODistributedRequest.EXECUTION_MODE.NO_RESPONSE);
+              ODistributedRequest.EXECUTION_MODE.NO_RESPONSE, 0);
         }
       }
     }
@@ -707,7 +713,7 @@ public class ODistributedResponseManager {
                   "sending fix message (%s) for response (%s) on request (%s) to be: %s", fixTask, r, request, goodResponse);
 
               dManager.sendRequest(request.getDatabaseName(), null, Collections.singletonList(r.getExecutorNodeName()), fixTask,
-                  ODistributedRequest.EXECUTION_MODE.NO_RESPONSE);
+                  ODistributedRequest.EXECUTION_MODE.NO_RESPONSE, 0);
             }
           }
         }

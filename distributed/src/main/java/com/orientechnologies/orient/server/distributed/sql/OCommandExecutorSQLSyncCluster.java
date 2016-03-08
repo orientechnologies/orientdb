@@ -19,6 +19,14 @@
  */
 package com.orientechnologies.orient.server.distributed.sql;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.Orient;
@@ -40,14 +48,6 @@ import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.task.OCopyDatabaseChunkTask;
 import com.orientechnologies.orient.server.distributed.task.OSyncClusterTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 
 /**
  * SQL SYNC CLUSTER command: synchronize a cluster from distributed servers.
@@ -150,7 +150,7 @@ public class OCommandExecutorSQLSyncCluster extends OCommandExecutorSQLAbstract 
 
     final OSyncClusterTask task = new OSyncClusterTask(clusterName);
     final Map<String, Object> results = (Map<String, Object>) dManager.sendRequest(databaseName, null, nodesWhereClusterIsCfg, task,
-        ODistributedRequest.EXECUTION_MODE.RESPONSE);
+        ODistributedRequest.EXECUTION_MODE.RESPONSE, 0);
 
     File tempFile = null;
     FileOutputStream out = null;
@@ -184,7 +184,7 @@ public class OCommandExecutorSQLSyncCluster extends OCommandExecutorSQLAbstract 
           for (int chunkNum = 2; !chunk.last; chunkNum++) {
             final Object result = dManager.sendRequest(databaseName, null, Collections.singletonList(r.getKey()),
                 new OCopyDatabaseChunkTask(chunk.filePath, chunkNum, chunk.offset + chunk.buffer.length, false),
-                ODistributedRequest.EXECUTION_MODE.RESPONSE);
+                ODistributedRequest.EXECUTION_MODE.RESPONSE, 0);
 
             if (result instanceof Boolean)
               continue;

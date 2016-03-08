@@ -19,10 +19,10 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.orient.core.id.ORID;
-
 import java.util.Collection;
 import java.util.List;
+
+import com.orientechnologies.orient.core.id.ORID;
 
 /**
  * Generic Distributed Database interface.
@@ -32,7 +32,7 @@ import java.util.List;
  */
 public interface ODistributedDatabase {
   ODistributedResponse send2Nodes(ODistributedRequest iRequest, Collection<String> iClusterNames, List<String> iNodes,
-      ODistributedRequest.EXECUTION_MODE iExecutionMode);
+      ODistributedRequest.EXECUTION_MODE iExecutionMode, int quorumOffset);
 
   void setOnline();
 
@@ -68,10 +68,6 @@ public interface ODistributedDatabase {
   void unlockRecords(String iNodeName);
 
   ODistributedSyncConfiguration getSyncConfiguration();
-
-  long getWaitForMessageId();
-
-  void setWaitForMessageId(long value);
 
   void processRequest(ODistributedRequest request);
 }

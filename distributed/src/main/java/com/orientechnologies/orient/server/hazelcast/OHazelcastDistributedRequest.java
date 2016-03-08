@@ -34,9 +34,9 @@ import java.io.ObjectOutput;
  * 
  */
 public class OHazelcastDistributedRequest implements ODistributedRequest {
+  private int            senderNodeId;
   private long           id;
   private EXECUTION_MODE executionMode;
-  private String         senderNodeName;
   private String         databaseName;
   private long           senderThreadId;
   private ORemoteTask    task;
@@ -48,9 +48,9 @@ public class OHazelcastDistributedRequest implements ODistributedRequest {
   public OHazelcastDistributedRequest() {
   }
 
-  public OHazelcastDistributedRequest(final String senderNodeName, final String databaseName, final ORemoteTask payload,
+  public OHazelcastDistributedRequest(final int senderNodeId, final String databaseName, final ORemoteTask payload,
       EXECUTION_MODE iExecutionMode) {
-    this.senderNodeName = senderNodeName;
+    this.senderNodeId = senderNodeId;
     this.databaseName = databaseName;
     this.senderThreadId = Thread.currentThread().getId();
     this.task = payload;
@@ -88,12 +88,12 @@ public class OHazelcastDistributedRequest implements ODistributedRequest {
     return this;
   }
 
-  public String getSenderNodeName() {
-    return senderNodeName;
+  public int getSenderNodeId() {
+    return senderNodeId;
   }
 
-  public OHazelcastDistributedRequest setSenderNodeName(final String senderNodeName) {
-    this.senderNodeName = senderNodeName;
+  public OHazelcastDistributedRequest setSenderNodeId(final int senderNodeId) {
+    this.senderNodeId = senderNodeId;
     return this;
   }
 
@@ -117,8 +117,8 @@ public class OHazelcastDistributedRequest implements ODistributedRequest {
 
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
+    out.writeInt(senderNodeId);
     out.writeLong(id);
-    out.writeUTF(senderNodeName);
     out.writeLong(senderThreadId);
     out.writeUTF(databaseName != null ? databaseName : "");
     out.writeObject(task);
@@ -127,8 +127,8 @@ public class OHazelcastDistributedRequest implements ODistributedRequest {
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
+    senderNodeId = in.readInt();
     id = in.readLong();
-    senderNodeName = in.readUTF();
     senderThreadId = in.readLong();
     databaseName = in.readUTF();
     if (databaseName.isEmpty())
@@ -141,9 +141,9 @@ public class OHazelcastDistributedRequest implements ODistributedRequest {
   public String toString() {
     final StringBuilder buffer = new StringBuilder(256);
     buffer.append("id=");
+    buffer.append(senderNodeId);
+    buffer.append('.');
     buffer.append(id);
-    buffer.append(" from=");
-    buffer.append(senderNodeName);
     if (task != null) {
       buffer.append(" task=");
       buffer.append(task.toString());

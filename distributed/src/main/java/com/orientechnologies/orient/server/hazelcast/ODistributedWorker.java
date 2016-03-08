@@ -23,14 +23,17 @@ import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.spi.exception.DistributedObjectDestroyedException;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
-import com.orientechnologies.orient.server.distributed.*;
+import com.orientechnologies.orient.server.distributed.ODistributedRequest;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 import java.io.Serializable;
@@ -45,40 +48,46 @@ import java.util.concurrent.ArrayBlockingQueue;
  */
 public class ODistributedWorker extends Thread {
 
-  private final static int                            LOCAL_QUEUE_MAXSIZE = 2000;
-  protected final OHazelcastDistributedDatabase       distributed;
-  protected final OHazelcastPlugin                    manager;
-  protected final OHazelcastDistributedMessageService msgService;
-  protected final String                              databaseName;
-  protected ArrayBlockingQueue<ODistributedRequest>   localQueue          = new ArrayBlockingQueue<ODistributedRequest>(
-      LOCAL_QUEUE_MAXSIZE);
-  protected volatile ODatabaseDocumentTx              database;
-  protected volatile OUser                            lastUser;
-  protected volatile boolean                          running             = true;
+  protected final OHazelcastDistributedDatabase           distributed;
+  protected final OHazelcastPlugin                        manager;
+  protected final OHazelcastDistributedMessageService     msgService;
+  protected final String                                  databaseName;
+  protected final ArrayBlockingQueue<ODistributedRequest> localQueue;
+  protected volatile ODatabaseDocumentTx                  database;
+  protected volatile OUser                                lastUser;
+  protected volatile boolean                              running = true;
 
   public ODistributedWorker(final OHazelcastDistributedDatabase iDistributed, final String iDatabaseName, final int i) {
     setName("OrientDB DistributedWorker node=" + iDistributed.getLocalNodeName() + " db=" + iDatabaseName + " id=" + i);
     distributed = iDistributed;
+    localQueue = new ArrayBlockingQueue<ODistributedRequest>(OGlobalConfiguration.DISTRIBUTED_LOCAL_QUEUESIZE.getValueAsInteger());
     databaseName = iDatabaseName;
     manager = distributed.manager;
     msgService = distributed.msgService;
   }
 
-  public void executeRequest(final ODistributedRequest request) {
-    localQueue.offer(request);
+  public void processRequest(final ODistributedRequest request) {
+    try {
+      localQueue.put(request);
+    } catch (InterruptedException e) {
+      ODistributedServerLog.warn(this, getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+          "Received interruption signal, closing distributed worker thread");
+
+      shutdown();
+    }
   }
 
   @Override
   public void run() {
     for (long processedMessages = 0; running; processedMessages++) {
-      String senderNode = null;
+      int senderNodeId = -1;
       ODistributedRequest message = null;
       try {
         message = readRequest();
 
         if (message != null) {
           message.getId();
-          senderNode = message.getSenderNodeName();
+          senderNodeId = message.getSenderNodeId();
           onMessage(message);
         }
 
@@ -96,9 +105,9 @@ public class ODistributedWorker extends Thread {
         if (e.getCause() instanceof InterruptedException)
           Thread.interrupted();
         else
-          ODistributedServerLog.error(this, manager.getLocalNodeName(), senderNode, ODistributedServerLog.DIRECTION.IN,
-              "error on executing distributed request %d: %s", e, message != null ? message.getId() : -1,
-              message != null ? message.getTask() : "-");
+          ODistributedServerLog.error(this, manager.getLocalNodeName(), manager.getNodeNameById(senderNodeId),
+              ODistributedServerLog.DIRECTION.IN, "Error on executing distributed request %d: %s", e,
+              message != null ? message.getId() : -1, message != null ? message.getTask() : "-");
       }
     }
 
@@ -159,33 +168,11 @@ public class ODistributedWorker extends Thread {
     if (manager.isOffline())
       waitNodeIsOnline();
 
-    while (distributed.waitForMessageId.get() > -1) {
-      if (req != null) {
-        if (req.getId() > distributed.waitForMessageId.get()) {
-          // ARRIVED, RESET IT
-          ODistributedServerLog.info(this, manager.getLocalNodeName(), req.getSenderNodeName(), DIRECTION.IN,
-              "Reached waited request %d on request=%s sourceNode=%s", distributed.waitForMessageId.get(), req,
-              req.getSenderNodeName());
-
-          distributed.waitForMessageId.set(-1);
-          break;
-        } else {
-          // DISCARD IT
-          ODistributedServerLog.info(this, manager.getLocalNodeName(), req.getSenderNodeName(), DIRECTION.IN,
-              "Discarded request %d because waiting for %d request=%s sourceNode=%s", req.getId(),
-              distributed.waitForMessageId.get(), req, req.getSenderNodeName());
-
-          sendResponseBack(req, req.getTask(), new ODiscardedResponse());
-
-          // READ THE NEXT ONE
-          req = nextMessage();
-        }
-      }
-    }
+    final String senderNodeName = manager.getNodeNameById(req.getSenderNodeId());
 
     if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog.debug(this, manager.getLocalNodeName(), req.getSenderNodeName(), DIRECTION.IN,
-          "processing request=%s sourceNode=%s", req, req.getSenderNodeName());
+      ODistributedServerLog.debug(this, manager.getLocalNodeName(), senderNodeName, DIRECTION.IN,
+          "Processing request=%s sourceNode=%s", req, senderNodeName);
 
     return req;
   }
@@ -201,11 +188,13 @@ public class ODistributedWorker extends Thread {
     OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED);
 
     try {
+      final String senderNodeName = manager.getNodeNameById(iRequest.getSenderNodeId());
+
       final ORemoteTask task = iRequest.getTask();
 
       if (ODistributedServerLog.isDebugEnabled())
-        ODistributedServerLog.debug(this, manager.getLocalNodeName(), iRequest.getSenderNodeName(), DIRECTION.OUT,
-            "received request: %s", iRequest);
+        ODistributedServerLog.debug(this, manager.getLocalNodeName(), senderNodeName, DIRECTION.OUT, "received request: %s",
+            iRequest);
 
       // EXECUTE IT LOCALLY
       Serializable responsePayload;
@@ -213,7 +202,7 @@ public class ODistributedWorker extends Thread {
       try {
         // EXECUTE THE TASK
         for (int retry = 1;; ++retry) {
-          task.setNodeSource(iRequest.getSenderNodeName());
+          task.setNodeSource(senderNodeName);
 
           waitNodeIsOnline();
           initDatabaseInstance();
@@ -237,7 +226,7 @@ public class ODistributedWorker extends Thread {
           if (responsePayload instanceof OModificationOperationProhibitedException) {
             // RETRY
             try {
-              ODistributedServerLog.info(this, manager.getLocalNodeName(), iRequest.getSenderNodeName(), DIRECTION.OUT,
+              ODistributedServerLog.info(this, manager.getLocalNodeName(), senderNodeName, DIRECTION.OUT,
                   "Database is frozen, waiting and retrying. Request %s (retry=%d)", iRequest, retry);
 
               Thread.sleep(1000);
@@ -246,7 +235,7 @@ public class ODistributedWorker extends Thread {
           } else {
             // OPERATION EXECUTED (OK OR ERROR), NO RETRY NEEDED
             if (retry > 1)
-              ODistributedServerLog.info(this, manager.getLocalNodeName(), iRequest.getSenderNodeName(), DIRECTION.OUT,
+              ODistributedServerLog.info(this, manager.getLocalNodeName(), senderNodeName, DIRECTION.OUT,
                   "Request %s succeed after retry=%d", iRequest, retry);
 
             break;
@@ -278,21 +267,23 @@ public class ODistributedWorker extends Thread {
   }
 
   private void sendResponseBack(final ODistributedRequest iRequest, final ORemoteTask task, Serializable responsePayload) {
+    final String senderNodeName = manager.getNodeNameById(iRequest.getSenderNodeId());
+
     final OHazelcastDistributedResponse response = new OHazelcastDistributedResponse(iRequest.getId(), manager.getLocalNodeName(),
-        iRequest.getSenderNodeName(), responsePayload);
+        senderNodeName, responsePayload);
 
     try {
       // GET THE SENDER'S RESPONSE QUEUE
-      final ORemoteServerController remoteSenderServer = manager.getRemoteServer(iRequest.getSenderNodeName());
+      final ORemoteServerController remoteSenderServer = manager.getRemoteServer(senderNodeName);
 
-      ODistributedServerLog.debug(this, manager.getLocalNodeName(), iRequest.getSenderNodeName(),
-          ODistributedServerLog.DIRECTION.OUT, "Sending back response %s to %s", response, iRequest.getSenderNodeName());
+      ODistributedServerLog.debug(this, manager.getLocalNodeName(), senderNodeName, ODistributedServerLog.DIRECTION.OUT,
+          "Sending response %s back", response);
 
-      remoteSenderServer.sendResponse(response, iRequest.getSenderNodeName());
+      remoteSenderServer.sendResponse(response, senderNodeName);
 
     } catch (Exception e) {
-      throw OException.wrapException(
-          new ODistributedException("Cannot dispatch response to the thread queue " + iRequest.getSenderNodeName()), e);
+      ODistributedServerLog.debug(this, manager.getLocalNodeName(), senderNodeName, ODistributedServerLog.DIRECTION.OUT,
+          "Error on sending response %s back", response);
     }
   }
 

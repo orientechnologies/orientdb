@@ -845,7 +845,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       throw new IOException("Error on unmarshalling of remote task", e);
     }
 
-    ODistributedServerLog.debug(this, manager.getLocalNodeName(), req.getSenderNodeName(), ODistributedServerLog.DIRECTION.IN,
+    ODistributedServerLog.debug(this, manager.getLocalNodeName(), manager.getNodeNameById(req.getSenderNodeId()), ODistributedServerLog.DIRECTION.IN,
         "Received request %s (%d bytes)", req, serializedReq.length);
 
     final String dbName = req.getDatabaseName();

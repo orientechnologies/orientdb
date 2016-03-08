@@ -31,24 +31,26 @@ import java.util.Set;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class OAsynchDistributedOperation {
-  private final String             databaseName;
-  private final Set<String>        clusterNames;
+  private final String       databaseName;
+  private final Set<String>  clusterNames;
   private final List<String> nodes;
-  private final ORemoteTask        task;
-  private final OCallable          callback;
+  private final ORemoteTask  task;
+  private final OCallable    callback;
+  private final int          quorumOffset;
 
   public OAsynchDistributedOperation(final String iDatabaseName, final Set<String> iClusterNames, final List<String> iNodes,
-      final ORemoteTask iTask) {
-    this(iDatabaseName, iClusterNames, iNodes, iTask, null);
+      final ORemoteTask iTask, final int iQuorumOffset) {
+    this(iDatabaseName, iClusterNames, iNodes, iTask, null, iQuorumOffset);
   }
 
   public OAsynchDistributedOperation(final String iDatabaseName, final Set<String> iClusterNames, final List<String> iNodes,
-      final ORemoteTask iTask, final OCallable iCallback) {
+      final ORemoteTask iTask, final OCallable iCallback, final int iQuorumOffset) {
     databaseName = iDatabaseName;
     clusterNames = iClusterNames;
     nodes = iNodes;
     task = iTask;
     callback = iCallback;
+    quorumOffset = iQuorumOffset;
   }
 
   public Set<String> getClusterNames() {
@@ -70,4 +72,9 @@ public class OAsynchDistributedOperation {
   public OCallable getCallback() {
     return callback;
   }
+
+  public int getQuorumOffset() {
+    return quorumOffset;
+  }
+
 }
