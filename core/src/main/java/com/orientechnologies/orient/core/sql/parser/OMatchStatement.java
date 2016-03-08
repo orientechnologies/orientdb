@@ -32,6 +32,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   private OSQLAsynchQuery<ODocument> request;
 
   long                               threshold            = 20;
+  private int                        limitFromProtocol    = -1;
 
   class MatchContext {
     int                        currentEdgeNumber = 0;
@@ -176,7 +177,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
 
   /**
    * rebinds filter (where) conditions to alias nodes after optimization
-   * 
+   *
    * @param aliasFilters
    */
   private void rebindFilters(Map<String, OWhereClause> aliasFilters) {
@@ -193,7 +194,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
 
   /**
    * assigns default aliases to pattern nodes that do not have an explicit alias
-   * 
+   *
    * @param matchExpressions
    */
   private void assignDefaultAliases(List<OMatchExpression> matchExpressions) {
@@ -236,7 +237,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   /**
    * executes the match statement. This is the preferred execute() method and it has to be used as the default one in the future.
    * This method works in stateless mode
-   * 
+   *
    * @param request
    * @param context
    * @return
@@ -592,11 +593,12 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       if(((OBasicCommandContext) context).addToUniqueResult(doc)){
         request.getResultListener().result(doc);
         long currentCount = ((OBasicCommandContext) ctx).getResultsProcessed().incrementAndGet();
+        long limitValue = limitFromProtocol;
         if (limit != null) {
-          long limitValue = limit.num.getValue().longValue();
-          if (limitValue > -1 && limitValue <= currentCount) {
-            return false;
-          }
+          limitValue = limit.num.getValue().longValue();
+        }
+        if (limitValue > -1 && limitValue <= currentCount) {
+          return false;
         }
       }
     }
@@ -801,11 +803,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
 
   @Override
   public <RET extends OCommandExecutor> RET setLimit(int iLimit) {
-    if (this.limit == null) {
-      this.limit = new OLimit(-1);
-      this.limit.num = new OInteger(-1);
-      this.limit.num.value = iLimit;
-    }
+    limitFromProtocol = iLimit;
     return (RET) this;
   }
 
