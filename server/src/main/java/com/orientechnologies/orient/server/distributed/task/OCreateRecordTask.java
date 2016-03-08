@@ -71,16 +71,12 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
 
   public OCreateRecordTask(final ORecord record) {
     this((ORecordId) record.getIdentity(), record.toStream(), record.getVersion(), ORecordInternal.getRecordType(record));
-
+    // THIS LOGIC SHOULD BE MOVED TO THE STORAGE.
     if (rid.getClusterId() == ORID.CLUSTER_ID_INVALID) {
-      final OClass clazz;
-      if (record instanceof ODocument && (clazz = ODocumentInternal.getImmutableSchemaClass((ODocument) record)) != null) {
-        // PRE-ASSIGN THE CLUSTER ID ON CALLER NODE
-        clusterId = clazz.getClusterSelection().getCluster(clazz, (ODocument) record);
-      } else {
-        ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
-        clusterId = db.getDefaultClusterId();
-      }
+      ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+      clusterId = db.assignAndCheckCluster(record, null);
+      //RESETTING FOR AVOID DESERIALIZATION ISSUE.
+      ((ORecordId)record.getIdentity()).clusterId = ORID.CLUSTER_ID_INVALID;
     }
   }
 

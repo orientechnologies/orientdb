@@ -51,4 +51,6 @@ public interface ODatabaseDocumentInternal extends ODatabaseDocument, ODatabaseI
    */
   public ORecordSerializer getSerializer();
 
+  int assignAndCheckCluster(ORecord record, String iClusterName);
+
 }
