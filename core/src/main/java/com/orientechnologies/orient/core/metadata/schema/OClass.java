@@ -41,7 +41,8 @@ public interface OClass extends Comparable<OClass> {
   }
 
   enum INDEX_TYPE {
-    UNIQUE(true), NOTUNIQUE(true), FULLTEXT(true), DICTIONARY(false), PROXY(true), UNIQUE_HASH_INDEX(true), NOTUNIQUE_HASH_INDEX(true), FULLTEXT_HASH_INDEX(true), DICTIONARY_HASH_INDEX(false), SPATIAL(true), FULLTEXTEXP(true);
+    UNIQUE(true), NOTUNIQUE(true), FULLTEXT(true), DICTIONARY(false), PROXY(true), UNIQUE_HASH_INDEX(true), NOTUNIQUE_HASH_INDEX(
+        true), FULLTEXT_HASH_INDEX(true), DICTIONARY_HASH_INDEX(false), SPATIAL(true), FULLTEXTEXP(true);
 
     private boolean automaticIndexable;
 
@@ -149,6 +150,15 @@ public interface OClass extends Comparable<OClass> {
   OClass setClusterSelection(String iStrategyName);
 
   OClass addCluster(String iClusterName);
+
+  /**
+   * Removes all data in the cluster with given name.
+   * As result indexes for this class will be rebuilt.
+   *
+   * @param clusterName Name of cluster to be truncated.
+   * @return Instance of current object.
+   */
+  OClass truncateCluster(String clusterName);
 
   OClass removeClusterId(int iId);
 
@@ -293,7 +303,8 @@ public interface OClass extends Comparable<OClass> {
    * @param fields            Field names from which index will be created. @return Class index registered inside of given class ans associated with
    *                          database index.
    */
-  OIndex<?> createIndex(String iName, String iType, OProgressListener iProgressListener, ODocument metadata, String algorithm, String... fields);
+  OIndex<?> createIndex(String iName, String iType, OProgressListener iProgressListener, ODocument metadata, String algorithm,
+      String... fields);
 
   /**
    * Creates database index that is based on passed in field names. Given index will be added into class instance.

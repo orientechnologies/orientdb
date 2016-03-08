@@ -19,6 +19,10 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.*;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.OArrays;
@@ -32,6 +36,7 @@ import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
@@ -55,10 +60,6 @@ import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
-
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.util.*;
 
 /**
  * Schema Class implementation.
@@ -1133,6 +1134,56 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     return this;
   }
 
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public OClass truncateCluster(String clusterName) {
+    getDatabase().checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_DELETE, name);
+
+    acquireSchemaReadLock();
+    try {
+      final ODatabaseDocumentInternal database = getDatabase();
+      final OStorage storage = database.getStorage();
+      if (storage instanceof OStorageProxy) {
+        final String cmd = String.format("truncate cluster %s", clusterName);
+        database.command(new OCommandSQL(cmd)).execute();
+      } else if (isDistributedCommand()) {
+        final String cmd = String.format("truncate cluster %s", clusterName);
+
+        final OCommandSQL commandSQL = new OCommandSQL(cmd);
+        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
+
+        database.command(commandSQL).execute();
+
+        truncateClusterInternal(clusterName, storage);
+      } else
+        truncateClusterInternal(clusterName, storage);
+    } finally {
+      releaseSchemaReadLock();
+    }
+
+    return this;
+  }
+
+  private void truncateClusterInternal(final String clusterName, final OStorage storage) {
+    final OCluster cluster = storage.getClusterByName(clusterName);
+
+    if (cluster == null) {
+      throw new ODatabaseException("Cluster with name " + clusterName + " does not exist");
+    }
+
+    try {
+      cluster.truncate();
+    } catch (IOException e) {
+      throw OException.wrapException(new ODatabaseException("Error during truncate of cluster " + clusterName), e);
+    }
+
+    for (OIndex index : getIndexes()) {
+      index.rebuild();
+    }
+  }
+
   public OClass removeClusterId(final int clusterId) {
     getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
@@ -1765,27 +1816,24 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       throw new OIndexException("List of fields to index cannot be empty.");
     }
 
-    final OIndexDefinition indexDefinition;
-
     acquireSchemaReadLock();
     try {
       for (final String fieldToIndex : fields) {
         final String fieldName = OIndexDefinitionFactory.extractFieldName(fieldToIndex);
 
         if (!fieldName.equals("@rid") && !existsProperty(fieldName))
-          throw new OIndexException("Index with name : '" + name + "' cannot be created on class '" + this.name
-              + "' because field '" + fieldName + "' is absent in class definition.");
+          throw new OIndexException("Index with name : '" + name + "' cannot be created on class : '" + this.name
+              + "' because field: '" + fieldName + "' is absent in class definition.");
       }
 
-      indexDefinition = OIndexDefinitionFactory.createIndexDefinition(this, Arrays.asList(fields), extractFieldTypes(fields), null,
-          type, algorithm);
+      final OIndexDefinition indexDefinition = OIndexDefinitionFactory.createIndexDefinition(this, Arrays.asList(fields),
+          extractFieldTypes(fields), null, type, algorithm);
 
+      return getDatabase().getMetadata().getIndexManager().createIndex(name, type, indexDefinition, polymorphicClusterIds,
+          progressListener, metadata, algorithm);
     } finally {
       releaseSchemaReadLock();
     }
-
-    return getDatabase().getMetadata().getIndexManager().createIndex(name, type, indexDefinition, polymorphicClusterIds,
-        progressListener, metadata, algorithm);
   }
 
   public boolean areIndexed(final String... fields) {

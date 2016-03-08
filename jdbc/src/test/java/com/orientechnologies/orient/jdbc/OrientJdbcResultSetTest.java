@@ -13,7 +13,7 @@ public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
   @Test
   public void shouldMapReturnTypes() throws Exception {
 
-    ResultSet rs = conn.createStatement().executeQuery("SELECT stringKey, intKey, text, length, date FROM Item");
+    ResultSet rs = conn.createStatement().executeQuery("SELECT stringKey, intKey, text, length, date, score FROM Item");
 
     ResultSetMetaData metaData = rs.getMetaData();
     assertThat(metaData).isNotNull();
@@ -23,6 +23,7 @@ public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
     assertThat(metaData.getColumnType(3)).isEqualTo(Types.VARCHAR);
     assertThat(metaData.getColumnType(4)).isEqualTo(Types.BIGINT);
     assertThat(metaData.getColumnType(5)).isEqualTo(Types.TIMESTAMP);
+    assertThat(metaData.getColumnType(6)).isEqualTo(Types.DECIMAL);
   }
 
   @Test

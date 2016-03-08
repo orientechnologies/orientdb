@@ -16,6 +16,9 @@ public class OLetStatementTest extends OParserTestAbstract {
     checkRightSyntax("LET $foo = 1 + 2 + 3");
     checkRightSyntax("LET $foo = [1, 3, 5]");
 
+    checkRightSyntax("LET a = create vertex Test content {\"id\": \"12345678\"}");
+
+
     checkWrongSyntax("LET ");
     checkWrongSyntax("LET foo");
   }
