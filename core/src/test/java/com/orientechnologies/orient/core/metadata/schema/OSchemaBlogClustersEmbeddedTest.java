@@ -49,6 +49,28 @@ public class OSchemaBlogClustersEmbeddedTest {
   }
 
   @Test
+  public void addDbRemoveBlobCluster() {
+    int prevSize = db.getMetadata().getSchema().getBlobClusters().size();
+    db.getMetadata().getSchema().addBlobCluster("test_blob");
+    int newSize = db.getMetadata().getSchema().getBlobClusters().size();
+    assertEquals(prevSize + 1, newSize);
+    db.dropCluster("test_blob", true);
+    newSize = db.getMetadata().getSchema().getBlobClusters().size();
+    assertEquals(prevSize, newSize);
+  }
+
+  @Test
+  public void addDbRemoveBlobClusterById() {
+    int prevSize = db.getMetadata().getSchema().getBlobClusters().size();
+    int id = db.getMetadata().getSchema().addBlobCluster("test_blob");
+    int newSize = db.getMetadata().getSchema().getBlobClusters().size();
+    assertEquals(prevSize + 1, newSize);
+    db.dropCluster(id, true);
+    newSize = db.getMetadata().getSchema().getBlobClusters().size();
+    assertEquals(prevSize, newSize);
+  }
+
+  @Test
   public void addRemoveMultipleBlobCluster() {
     int prevSize = db.getMetadata().getSchema().getBlobClusters().size();
     db.getMetadata().getSchema().addBlobCluster("test_blob");
@@ -67,4 +89,13 @@ public class OSchemaBlogClustersEmbeddedTest {
     int cl = db.getClusterIdByName("example_blob");
     assertTrue(db.getMetadata().getSchema().getBlobClusters().contains(cl));
   }
+
+  @Test
+  public void addBlobClusterRemoveSqlTest() {
+    db.command(new OCommandSQL("create blob cluster example_blob_remove")).execute();
+    assertEquals(1, db.getMetadata().getSchema().getBlobClusters().size());
+    db.command(new OCommandSQL("drop cluster example_blob_remove")).execute();
+    assertEquals(0, db.getMetadata().getSchema().getBlobClusters().size());
+  }
+
 }
