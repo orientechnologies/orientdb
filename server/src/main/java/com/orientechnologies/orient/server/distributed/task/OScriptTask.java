@@ -57,7 +57,7 @@ public class OScriptTask extends OAbstractCommandTask {
     params = iCommand.getParameters();
   }
 
-  public Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
+  public Object execute(long requestId, final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
       throws Exception {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "execute command=%s db=%s",
         text.toString(), database.getName());

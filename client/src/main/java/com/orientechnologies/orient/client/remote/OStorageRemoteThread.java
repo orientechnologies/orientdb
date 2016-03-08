@@ -19,13 +19,6 @@
  */
 package com.orientechnologies.orient.client.remote;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -37,30 +30,29 @@ import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.ORecordMetadata;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageOperationResult;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
+import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
-import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEventListener;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Wrapper of OStorageRemote that maintains the sessionId. It's bound to the ODatabase and allow to use the shared OStorageRemote.
  */
 @SuppressWarnings("unchecked")
 public class OStorageRemoteThread implements OStorageProxy {
-  private static AtomicInteger sessionSerialId = new AtomicInteger(-1);
+  private static AtomicInteger            sessionSerialId = new AtomicInteger(-1);
 
-  private final OStorageRemote delegate;
-  private String               serverURL;
-  private int                  sessionId;
-  private Set<OChannelBinaryAsynchClient>                  connections = new HashSet<OChannelBinaryAsynchClient>();
-  private byte[]               token;
+  private final OStorageRemote            delegate;
+  private String                          serverURL;
+  private int                             sessionId;
+  private Set<OChannelBinaryAsynchClient> connections     = new HashSet<OChannelBinaryAsynchClient>();
+  private byte[]                          token;
 
   public OStorageRemoteThread(final OStorageRemote iSharedStorage) {
     delegate = iSharedStorage;
@@ -680,11 +672,6 @@ public class OStorageRemoteThread implements OStorageProxy {
     return delegate.getComponentsFactory();
   }
 
-  @Override
-  public long getLastOperationId() {
-    return 0;
-  }
-
   public boolean existsResource(final String iName) {
     return delegate.existsResource(iName);
   }
@@ -741,7 +728,7 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   protected void pushSession() {
-    delegate.pushSessionId(serverURL, sessionId, token,connections);
+    delegate.pushSessionId(serverURL, sessionId, token, connections);
   }
 
   protected void popSession() {

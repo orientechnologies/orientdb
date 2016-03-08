@@ -60,7 +60,6 @@ import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
-import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.task.*;
@@ -287,7 +286,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
               : new OSQLCommandTask(iCommand, new HashSet<String>());
           task.setResultStrategy(OAbstractRemoteTask.RESULT_STRATEGY.ANY);
 
-          final Collection<String> nodes = dbCfg.getServers(involvedClusters);
+          final List<String> nodes = dbCfg.getServers(involvedClusters);
 
           if (iCommand instanceof ODistributedCommand)
             nodes.removeAll(((ODistributedCommand) iCommand).nodesToExclude());
@@ -451,9 +450,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       final int iRecordVersion, final byte iRecordType, final int iMode, final ORecordCallback<Long> iCallback) {
     resetLastValidBackup();
 
-    if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.RUNNING_DISTRIBUTED)
+    if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.RUNNING_DISTRIBUTED) {
       // ALREADY DISTRIBUTED
       return wrapped.createRecord(iRecordId, iContent, iRecordVersion, iRecordType, iMode, iCallback);
+    }
 
     try {
       // ASSIGN DESTINATION NODE
@@ -682,9 +682,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       // DELETED
       throw new ORecordNotFoundException("Record " + iRecordId + " was not found");
 
-    if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.RUNNING_DISTRIBUTED)
+    if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.RUNNING_DISTRIBUTED) {
       // ALREADY DISTRIBUTED
       return wrapped.updateRecord(iRecordId, updateContent, iContent, iVersion, iRecordType, iMode, iCallback);
+    }
 
     try {
       final String clusterName = getClusterNameByRID(iRecordId);
@@ -785,9 +786,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       final ORecordCallback<Boolean> iCallback) {
     resetLastValidBackup();
 
-    if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.RUNNING_DISTRIBUTED)
+    if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.RUNNING_DISTRIBUTED) {
       // ALREADY DISTRIBUTED
       return wrapped.deleteRecord(iRecordId, iVersion, iMode, iCallback);
+    }
 
     try {
       final String clusterName = getClusterNameByRID(iRecordId);
@@ -1062,7 +1064,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       OTransactionInternal.setStatus((OTransactionAbstract) iTx, OTransaction.TXSTATUS.COMMITTING);
 
-      final Set<String> nodes = dbCfg.getServers(involvedClusters);
+      final List<String> nodes = dbCfg.getServers(involvedClusters);
 
       // if (executionModeSynch && !iTx.hasRecordCreation()) {
       if (executionModeSynch) {
@@ -1096,7 +1098,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
         @Override
         public Object call() throws Exception {
-          ((OTransactionRealAbstract) iTx).restore();
+          iTx.restore();
           wrapped.commit(iTx, callback);
           return null;
         }
@@ -1141,7 +1143,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
                       try {
 
-                        undo.execute(serverInstance, dManager, database);
+                        undo.execute(0, serverInstance, dManager, database);
                       } finally {
                         database.close();
                       }
@@ -1198,7 +1200,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   }
 
   protected boolean processCommitResult(String localNodeName, OTransaction iTx, OTxTask txTask, Set<String> involvedClusters,
-      Iterable<ORecordOperation> tmpEntries, Set<String> nodes, int autoRetryDelay, Object result) throws InterruptedException {
+      Iterable<ORecordOperation> tmpEntries, List<String> nodes, int autoRetryDelay, Object result) throws InterruptedException {
     if (result instanceof OTxTaskResult) {
       final OTxTaskResult txResult = ((OTxTaskResult) result);
 
@@ -1258,7 +1260,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     return true;
   }
 
-  private void sendTxCompleted(String localNodeName, Set<String> involvedClusters, Set<String> nodes, OTxTaskResult txResult) {
+  private void sendTxCompleted(String localNodeName, Set<String> involvedClusters, List<String> nodes, OTxTaskResult txResult) {
     // SEND FINAL TX COMPLETE TASK TO UNLOCK RECORDS
     final Object completedResult = dManager.sendRequest(getName(), involvedClusters, nodes, new OCompletedTxTask(txResult.locks),
         EXECUTION_MODE.RESPONSE);
@@ -1550,15 +1552,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   public void restore(final InputStream in, final Map<String, Object> options, final Callable<Object> callable,
       final OCommandOutputListener iListener) throws IOException {
     wrapped.restore(in, options, callable, iListener);
-  }
-
-  @Override
-  public long getLastOperationId() {
-    return lastOperationId.get();
-  }
-
-  public void setLastOperationId(final long lastOperationId) {
-    this.lastOperationId.set(lastOperationId);
   }
 
   public void pushDeletedRecord(final ORecordId rid, final int version) {

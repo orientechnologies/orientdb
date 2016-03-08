@@ -19,14 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
@@ -51,6 +43,14 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+
 /**
  * Distributed transaction task.
  *
@@ -74,7 +74,7 @@ public class OTxTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
+  public Object execute(long requestId, final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
       throws Exception {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
         "committing transaction against db=%s...", database.getName());
@@ -125,7 +125,7 @@ public class OTxTask extends OAbstractReplicatedTask {
         }
 
         for (OAbstractRecordReplicatedTask task : tasks) {
-          final Object taskResult = task.execute(iServer, iManager, database);
+          final Object taskResult = task.execute(requestId, iServer, iManager, database);
           result.results.add(taskResult);
         }
 

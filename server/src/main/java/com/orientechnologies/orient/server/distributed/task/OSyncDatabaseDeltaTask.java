@@ -19,11 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
-import java.io.*;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -40,6 +35,10 @@ import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+
+import java.io.*;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Ask for synchronization of delta of chanegs on database from a remote node.
@@ -63,8 +62,8 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public Object execute(final OServer iServer, final ODistributedServerManager iManager, final ODatabaseDocumentTx database)
-      throws Exception {
+  public Object execute(final long requestId, final OServer iServer, final ODistributedServerManager iManager,
+      final ODatabaseDocumentTx database) throws Exception {
 
     if (!getNodeSource().equals(iManager.getLocalNodeName())) {
       if (database == null)
@@ -72,7 +71,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
 
       final String databaseName = database.getName();
 
-      final Object chunk = deltaBackup(iManager, database, databaseName);
+      final Object chunk = deltaBackup(requestId, iManager, database, databaseName);
       if (chunk != null)
         return chunk;
 
@@ -83,7 +82,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
     return Boolean.FALSE;
   }
 
-  protected Object deltaBackup(final ODistributedServerManager iManager, final ODatabaseDocumentTx database,
+  protected Object deltaBackup(final long requestId, final ODistributedServerManager iManager, final ODatabaseDocumentTx database,
       final String databaseName) throws IOException, InterruptedException {
 
     try {
@@ -104,7 +103,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
       ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
           "deploying database %s with delta of changes...", databaseName);
 
-      final AtomicLong lastOperationId = new AtomicLong(-1);
+      final long lastOperationId = requestId;
 
       // CREATE A BACKUP OF DATABASE
       final File backupFile = new File(Orient.getTempPath() + "/backup_" + getNodeSource() + "_" + database.getName() + ".zip");
@@ -135,8 +134,6 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
 
       try {
         endLSN.set(((OAbstractPaginatedStorage) storage).recordsChangedAfterLSN(startLSN, fileOutputStream));
-
-        lastOperationId.set(database.getStorage().getLastOperationId());
 
         if (endLSN.get() == null)
           // DELTA NOT AVAILABLE, TRY WITH FULL BACKUP
@@ -171,7 +168,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
       if (exception.get() instanceof ODistributedDatabaseDeltaSyncException)
         throw exception.get();
 
-      final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(lastOperationId.get(), backupFile, 0, CHUNK_MAX_SIZE,
+      final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(lastOperationId, backupFile, 0, CHUNK_MAX_SIZE,
           endLSN.get(), false);
 
       ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
@@ -224,11 +221,6 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
     startLSN = new OLogSequenceNumber(in);
     random = in.readLong();
-  }
-
-  @Override
-  public boolean isRequiredOpenDatabase() {
-    return true;
   }
 
   //

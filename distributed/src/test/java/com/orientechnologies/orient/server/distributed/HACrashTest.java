@@ -17,6 +17,7 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.concurrent.Callable;
@@ -25,6 +26,7 @@ import java.util.concurrent.Callable;
  * Distributed non TX test against "remote" protocol. It starts 3 servers and during a stress test, kill last server. The test checks
  * all the clients can auto-reconnect to the next available server.
  */
+@Ignore
 public class HACrashTest extends AbstractServerClusterTxTest {
   final static int SERVERS       = 3;
   volatile boolean inserting     = true;

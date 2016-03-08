@@ -61,7 +61,7 @@ public class OResurrectRecordTask extends OAbstractRemoteTask {
   }
 
   @Override
-  public Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
+  public Object execute(long requestId, final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
       throws Exception {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
         "resurrecting deleted record %s/%s v.%d", database.getName(), rid.toString(), version);

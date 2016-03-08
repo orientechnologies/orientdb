@@ -102,7 +102,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   }
 
   @Override
-  public Object execute(final OServer iServer, final ODistributedServerManager iManager, final ODatabaseDocumentTx database)
+  public Object execute(long requestId, final OServer iServer, final ODistributedServerManager iManager, final ODatabaseDocumentTx database)
       throws Exception {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "creating record %s/%s v.%d...",
         database.getName(), rid.toString(), version);
@@ -238,11 +238,6 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
     recordType = in.readByte();
     clusterId = in.readInt();
   }
-
-  // @Override
-  // public String getQueueName(final String iOriginalQueueName) {
-  // return iOriginalQueueName + SUFFIX_QUEUE_NAME;
-  // }
 
   @Override
   public String getName() {

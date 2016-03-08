@@ -22,6 +22,7 @@ package com.orientechnologies.orient.server.distributed;
 import com.orientechnologies.orient.core.id.ORID;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Generic Distributed Database interface.
@@ -30,7 +31,7 @@ import java.util.Collection;
  *
  */
 public interface ODistributedDatabase {
-  ODistributedResponse send2Nodes(ODistributedRequest iRequest, Collection<String> iClusterNames, Collection<String> iNodes,
+  ODistributedResponse send2Nodes(ODistributedRequest iRequest, Collection<String> iClusterNames, List<String> iNodes,
       ODistributedRequest.EXECUTION_MODE iExecutionMode);
 
   void setOnline();
@@ -70,5 +71,7 @@ public interface ODistributedDatabase {
 
   long getWaitForMessageId();
 
-  ODistributedDatabase setWaitForMessage(long iMessageId);
+  void setWaitForMessageId(long value);
+
+  void processRequest(ODistributedRequest request);
 }

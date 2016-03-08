@@ -51,12 +51,12 @@ import java.util.Set;
  * @author Luca Garulli
  */
 public final class OAutoShardingIndexEngine implements OIndexEngine {
-  public static final int    VERSION                             = 1;
-  public static final String METADATA_FILE_EXTENSION             = ".asmm";
-  public static final String SUBINDEX_METADATA_FILE_EXTENSION    = ".asm";
-  public static final String SUBINDEX_TREE_FILE_EXTENSION        = ".ast";
-  public static final String SUBINDEX_BUCKET_FILE_EXTENSION      = ".asb";
-  public static final String SUBINDEX_NULL_BUCKET_FILE_EXTENSION = ".asn";
+  public static final int                        VERSION                             = 1;
+  public static final String                     METADATA_FILE_EXTENSION             = ".asmm";
+  public static final String                     SUBINDEX_METADATA_FILE_EXTENSION    = ".asm";
+  public static final String                     SUBINDEX_TREE_FILE_EXTENSION        = ".ast";
+  public static final String                     SUBINDEX_BUCKET_FILE_EXTENSION      = ".asb";
+  public static final String                     SUBINDEX_NULL_BUCKET_FILE_EXTENSION = ".asn";
 
   private final OAbstractPaginatedStorage        storage;
   private final boolean                          durableInNonTx;
@@ -157,14 +157,16 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
 
   @Override
   public void flush() {
-    for (OHashTable<Object, Object> p : partitions)
-      p.flush();
+    if (partitions != null)
+      for (OHashTable<Object, Object> p : partitions)
+        p.flush();
   }
 
   @Override
   public void deleteWithoutLoad(final String indexName) {
-    for (OHashTable<Object, Object> p : partitions)
-      p.deleteWithoutLoad(indexName, (OAbstractPaginatedStorage) getDatabase().getStorage().getUnderlying());
+    if (partitions != null)
+      for (OHashTable<Object, Object> p : partitions)
+        p.deleteWithoutLoad(indexName, (OAbstractPaginatedStorage) getDatabase().getStorage().getUnderlying());
   }
 
   @Override

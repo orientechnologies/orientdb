@@ -22,7 +22,7 @@ package com.orientechnologies.orient.server.distributed;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
-import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -33,16 +33,16 @@ import java.util.Set;
 public class OAsynchDistributedOperation {
   private final String             databaseName;
   private final Set<String>        clusterNames;
-  private final Collection<String> nodes;
+  private final List<String> nodes;
   private final ORemoteTask        task;
   private final OCallable          callback;
 
-  public OAsynchDistributedOperation(final String iDatabaseName, final Set<String> iClusterNames, final Collection<String> iNodes,
+  public OAsynchDistributedOperation(final String iDatabaseName, final Set<String> iClusterNames, final List<String> iNodes,
       final ORemoteTask iTask) {
     this(iDatabaseName, iClusterNames, iNodes, iTask, null);
   }
 
-  public OAsynchDistributedOperation(final String iDatabaseName, final Set<String> iClusterNames, final Collection<String> iNodes,
+  public OAsynchDistributedOperation(final String iDatabaseName, final Set<String> iClusterNames, final List<String> iNodes,
       final ORemoteTask iTask, final OCallable iCallback) {
     databaseName = iDatabaseName;
     clusterNames = iClusterNames;
@@ -55,7 +55,7 @@ public class OAsynchDistributedOperation {
     return clusterNames;
   }
 
-  public Collection<String> getNodes() {
+  public List<String> getNodes() {
     return nodes;
   }
 

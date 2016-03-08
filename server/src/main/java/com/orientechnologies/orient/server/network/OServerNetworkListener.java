@@ -291,8 +291,11 @@ public class OServerNetworkListener extends Thread {
 
         if (serverSocket.isBound()) {
           OLogManager.instance().info(this,
-              "Listening $ANSI{green " + iProtocolName + "} connections on $ANSI{green " + inboundAddr.getAddress().getHostAddress() + ":"
-                  + inboundAddr.getPort() + "} (protocol v." + protocolVersion + ", socket=" + socketFactory.getName() + ")");
+              "Listening $ANSI{green " + iProtocolName + "} connections on $ANSI{green " + inboundAddr.getAddress().getHostAddress()
+                  + ":" + inboundAddr.getPort() + "} (protocol v." + protocolVersion + ", socket=" + socketFactory.getName() + ")");
+
+          Thread.currentThread().setName("OrientDB " + protocolClass.getSimpleName() + " listen at " + iHostName + ":" + port);
+
           return;
         }
       } catch (BindException be) {

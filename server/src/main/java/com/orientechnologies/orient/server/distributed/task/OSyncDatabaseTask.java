@@ -35,7 +35,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIR
 import java.io.*;
 import java.util.UUID;
 import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 
@@ -56,8 +55,8 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
   }
 
   @Override
-  public Object execute(final OServer iServer, final ODistributedServerManager iManager, final ODatabaseDocumentTx database)
-      throws Exception {
+  public Object execute(final long requestId, final OServer iServer, final ODistributedServerManager iManager,
+      final ODatabaseDocumentTx database) throws Exception {
 
     if (!getNodeSource().equals(iManager.getLocalNodeName())) {
       if (database == null)
@@ -85,7 +84,6 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
           ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT, "deploying database %s...",
               databaseName);
 
-          final AtomicLong lastOperationId = new AtomicLong(-1);
           final AtomicReference<OLogSequenceNumber> endLSN = new AtomicReference<OLogSequenceNumber>();
 
           File backupFile = ((ODistributedStorage) database.getStorage()).getLastValidBackup();
@@ -121,7 +119,6 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
                   database.backup(fileOutputStream, null, new Callable<Object>() {
                     @Override
                     public Object call() throws Exception {
-                      lastOperationId.set(database.getStorage().getLastOperationId());
                       endLSN.set(((OAbstractPaginatedStorage) database.getStorage().getUnderlying()).getLSN());
                       return null;
                     }
@@ -136,7 +133,7 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
                   }, OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger(), CHUNK_MAX_SIZE);
 
                   ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-                      "backup of database '%s' completed. lastOperationId=%d...", databaseName, lastOperationId.get());
+                      "backup of database '%s' completed. lastOperationId=%d...", databaseName, requestId);
 
                 } catch (IOException e) {
                   OLogManager.instance().error(this, "Cannot execute backup of database '%s' for deploy database", e, databaseName);
@@ -158,22 +155,13 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
             // RECORD LAST BACKUP TO BE REUSED IN CASE ANOTHER NODE ASK FOR THE SAME IN SHORT TIME WHILE THE DB IS NOT UPDATED
             ((ODistributedStorage) database.getStorage()).setLastValidBackup(backupFile);
 
-            // WAIT UNTIL THE lastOperationId IS SET
-            while (lastOperationId.get() < 0) {
-              try {
-                Thread.sleep(100);
-              } catch (InterruptedException e) {
-              }
-            }
           } else {
-            lastOperationId.set(database.getStorage().getLastOperationId());
-
             ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
                 "reusing last backup of database '%s' in directory: %s...", databaseName, backupFile.getAbsolutePath());
           }
 
-          final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(lastOperationId.get(), backupFile, 0,
-              CHUNK_MAX_SIZE, endLSN.get(), false);
+          final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(requestId, backupFile, 0, CHUNK_MAX_SIZE,
+              endLSN.get(), false);
 
           ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
               "- transferring chunk #%d offset=%d size=%s...", 1, 0, OFileUtils.getSizeAsNumber(chunk.buffer.length));
@@ -244,11 +232,6 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
       iText = iText.substring(1);
 
     OLogManager.instance().info(this, iText);
-  }
-
-  @Override
-  public boolean isRequiredOpenDatabase() {
-    return false;
   }
 
   @Override

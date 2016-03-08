@@ -48,7 +48,7 @@ public abstract class OAbstractRemoteTask implements ORemoteTask {
   public abstract OCommandDistributedReplicateRequest.QUORUM_TYPE getQuorumType();
 
   @Override
-  public abstract Object execute(OServer iServer, ODistributedServerManager iManager, ODatabaseDocumentTx database)
+  public abstract Object execute(long requestId, OServer iServer, ODistributedServerManager iManager, ODatabaseDocumentTx database)
       throws Exception;
 
   @Override
@@ -84,11 +84,6 @@ public abstract class OAbstractRemoteTask implements ORemoteTask {
   @Override
   public void setNodeSource(String nodeSource) {
     this.nodeSource = nodeSource;
-  }
-
-  @Override
-  public boolean isRequiredOpenDatabase() {
-    return true;
   }
 
   @Override

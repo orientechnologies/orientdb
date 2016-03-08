@@ -688,6 +688,16 @@ public class OServerAdmin {
         storage.pushSessionId(getURL(), sessionId, sessionToken, connections);
         // TODO:replace this api with one that get connection for only the specified url.
         network = storage.getAvailableNetwork(getURL());
+
+        // In case i do not have a token or i'm switching between server i've to execute a open operation.
+        if (!storage.getServerURL().endsWith(network.getServerURL())) {
+          // TODO: Remove this workaround in favor of a proper per server authentication.
+          storage.setSessionId(network.getServerURL(), -1, null);
+          storage.openRemoteDatabase(network);
+          if (!network.tryLock())
+            throw new OStorageException(errorMessage);
+        }
+
         return operation.execute(network);
 
       } catch (IOException e) {

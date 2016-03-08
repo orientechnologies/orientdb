@@ -26,17 +26,12 @@ import com.orientechnologies.orient.core.db.record.OPlaceholder;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.task.*;
+import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
+import com.orientechnologies.orient.server.distributed.task.OCreateRecordTask;
+import com.orientechnologies.orient.server.distributed.task.ODeleteRecordTask;
+import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -67,7 +62,6 @@ public class ODistributedResponseManager {
   private volatile int                           receivedResponses                = 0;
   private volatile int                           discardedResponses               = 0;
   private volatile boolean                       receivedCurrentNode;
-  private Object                                 responseLock                     = new Object();
 
   public ODistributedResponseManager(final ODistributedServerManager iManager, final ODistributedRequest iRequest,
       final Collection<String> expectedResponses, final int iExpectedSynchronousResponses, final int iQuorum,
@@ -99,7 +93,8 @@ public class ODistributedResponseManager {
   public boolean collectResponse(final ODistributedResponse response) {
     final String executorNode = response.getExecutorNodeName();
 
-    synchronized (responseLock) {
+    synchronousResponsesLock.lock();
+    try {
       if (!responses.containsKey(executorNode)) {
         ODistributedServerLog.warn(this, response.getSenderNodeName(), executorNode, DIRECTION.IN,
             "received response for request (%s) from unexpected node. Expected are: %s", request, getExpectedNodes());
@@ -180,6 +175,9 @@ public class ODistributedResponseManager {
         notifyWaiters();
       }
       return completed;
+
+    } finally {
+      synchronousResponsesLock.unlock();
     }
   }
 
@@ -271,7 +269,8 @@ public class ODistributedResponseManager {
         int synchronizingNodes = 0;
         int missingActiveNodes = 0;
 
-        synchronized (responseLock) {
+        synchronousResponsesLock.lock();
+        try {
           for (Iterator<Map.Entry<String, Object>> iter = responses.entrySet().iterator(); iter.hasNext();) {
             final Map.Entry<String, Object> curr = iter.next();
 
@@ -289,6 +288,9 @@ public class ODistributedResponseManager {
               }
             }
           }
+
+        } finally {
+          synchronousResponsesLock.unlock();
         }
 
         if (missingActiveNodes == 0) {
@@ -334,7 +336,8 @@ public class ODistributedResponseManager {
   }
 
   public ODistributedResponse getFinalResponse() {
-    synchronized (responseLock) {
+    synchronousResponsesLock.lock();
+    try {
 
       manageConflicts();
 
@@ -364,6 +367,9 @@ public class ODistributedResponseManager {
       final int bestResponsesGroupIndex = getBestResponsesGroup();
       final List<ODistributedResponse> bestResponsesGroup = responseGroups.get(bestResponsesGroupIndex);
       return bestResponsesGroup.get(0);
+
+    } finally {
+      synchronousResponsesLock.unlock();
     }
   }
 
@@ -376,8 +382,11 @@ public class ODistributedResponseManager {
   }
 
   public void timeout() {
-    synchronized (responseLock) {
+    synchronousResponsesLock.lock();
+    try {
       manageConflicts();
+    } finally {
+      synchronousResponsesLock.unlock();
     }
   }
 
@@ -385,18 +394,26 @@ public class ODistributedResponseManager {
    * Returns the list of node names that didn't provide a response.
    */
   public List<String> getMissingNodes() {
-    synchronized (responseLock) {
+    synchronousResponsesLock.lock();
+    try {
+
       final List<String> missingNodes = new ArrayList<String>();
       for (Map.Entry<String, Object> entry : responses.entrySet())
         if (entry.getValue() == NO_RESPONSE)
           missingNodes.add(entry.getKey());
       return missingNodes;
+
+    } finally {
+      synchronousResponsesLock.unlock();
     }
   }
 
   public Set<String> getExpectedNodes() {
-    synchronized (responseLock) {
+    synchronousResponsesLock.lock();
+    try {
       return new HashSet<String>(responses.keySet());
+    } finally {
+      synchronousResponsesLock.unlock();
     }
   }
 
@@ -405,10 +422,13 @@ public class ODistributedResponseManager {
    */
   public List<String> getRespondingNodes() {
     final List<String> respondedNodes = new ArrayList<String>();
-    synchronized (responseLock) {
+    synchronousResponsesLock.lock();
+    try {
       for (Map.Entry<String, Object> entry : responses.entrySet())
         if (entry.getValue() != NO_RESPONSE)
           respondedNodes.add(entry.getKey());
+    } finally {
+      synchronousResponsesLock.unlock();
     }
     return respondedNodes;
   }
@@ -586,8 +606,8 @@ public class ODistributedResponseManager {
             ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
                 "sending undo message (%s) for request (%s) to server %s", undoTask, request, r.getExecutorNodeName());
 
-            dManager.sendRequest(request.getDatabaseName(), null, Collections.singleton(r.getExecutorNodeName()), undoTask,
-                ODistributedRequest.EXECUTION_MODE.NO_RESPONSE);
+            dManager.sendRequest(request.getDatabaseName(), null, Collections.singletonList(r.getExecutorNodeName()), undoTask,
+                ODistributedRequest.EXECUTION_MODE.RESPONSE);
           }
         }
       }
@@ -645,7 +665,7 @@ public class ODistributedResponseManager {
           // CREATE THE RECORD FIRST AND THEN DELETE IT TO LEAVE THE HOLE AND ALIGN CLUSTER POS NUMERATION
           ORecordInternal.setIdentity(((OCreateRecordTask) task).getRecord(),
               ((OCreateRecordTask) task).getRecord().getIdentity().getClusterId(), -1);
-          dManager.sendRequest(request.getDatabaseName(), null, Collections.singleton(r.getExecutorNodeName()), task,
+          dManager.sendRequest(request.getDatabaseName(), null, Collections.singletonList(r.getExecutorNodeName()), task,
               ODistributedRequest.EXECUTION_MODE.NO_RESPONSE);
         }
 
@@ -657,7 +677,7 @@ public class ODistributedResponseManager {
           ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
               "sending undo message (%s) for request (%s) to server %s", undoTask, request, r.getExecutorNodeName());
 
-          dManager.sendRequest(request.getDatabaseName(), null, Collections.singleton(r.getExecutorNodeName()), undoTask,
+          dManager.sendRequest(request.getDatabaseName(), null, Collections.singletonList(r.getExecutorNodeName()), undoTask,
               ODistributedRequest.EXECUTION_MODE.NO_RESPONSE);
         }
       }
@@ -678,15 +698,15 @@ public class ODistributedResponseManager {
       if (responseGroup != bestResponsesGroup) {
         // CONFLICT GROUP: FIX THEM ONE BY ONE
         for (ODistributedResponse r : responseGroup) {
-          final List<ORemoteTask> fixTasks = ((OAbstractReplicatedTask) request.getTask()).getFixTask(request,
-              request.getTask(), r.getPayload(), goodResponse.getPayload(), r.getExecutorNodeName(), dManager);
+          final List<ORemoteTask> fixTasks = ((OAbstractReplicatedTask) request.getTask()).getFixTask(request, request.getTask(),
+              r.getPayload(), goodResponse.getPayload(), r.getExecutorNodeName(), dManager);
 
           if (fixTasks != null) {
             for (ORemoteTask fixTask : fixTasks) {
               ODistributedServerLog.warn(this, dManager.getLocalNodeName(), r.getExecutorNodeName(), DIRECTION.OUT,
                   "sending fix message (%s) for response (%s) on request (%s) to be: %s", fixTask, r, request, goodResponse);
 
-              dManager.sendRequest(request.getDatabaseName(), null, Collections.singleton(r.getExecutorNodeName()), fixTask,
+              dManager.sendRequest(request.getDatabaseName(), null, Collections.singletonList(r.getExecutorNodeName()), fixTask,
                   ODistributedRequest.EXECUTION_MODE.NO_RESPONSE);
             }
           }

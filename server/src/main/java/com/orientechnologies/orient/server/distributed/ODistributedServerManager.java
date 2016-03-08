@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
@@ -27,6 +28,7 @@ import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
 
@@ -58,6 +60,8 @@ public interface ODistributedServerManager {
   ODistributedServerManager registerLifecycleListener(ODistributedLifecycleListener iListener);
 
   ODistributedServerManager unregisterLifecycleListener(ODistributedLifecycleListener iListener);
+
+  Serializable executeOnLocalNode(ODistributedRequest req, ODatabaseDocumentTx database);
 
   ORemoteServerController getRemoteServer(final String nodeName) throws IOException;
 
@@ -124,7 +128,7 @@ public interface ODistributedServerManager {
 
   ODistributedConfiguration getDatabaseConfiguration(String iDatabaseName);
 
-  Object sendRequest(String iDatabaseName, Collection<String> iClusterNames, Collection<String> iTargetNodeNames, ORemoteTask iTask,
+  Object sendRequest(String iDatabaseName, Collection<String> iClusterNames, List<String> iTargetNodeNames, ORemoteTask iTask,
       EXECUTION_MODE iExecutionMode);
 
   ODocument getStats();

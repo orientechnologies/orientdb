@@ -19,15 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.Callable;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -39,6 +30,15 @@ import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.Callable;
 
 /**
  * Distributed create record task used for synchronization.
@@ -71,7 +71,7 @@ public class OFixTxTask extends OAbstractRemoteTask {
   }
 
   @Override
-  public Object execute(final OServer iServer, final ODistributedServerManager iManager, final ODatabaseDocumentTx database)
+  public Object execute(final long requestId, final OServer iServer, final ODistributedServerManager iManager, final ODatabaseDocumentTx database)
       throws Exception {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
         "fixing %d conflicts found during committing transaction against db=%s...", tasks.size(), database.getName());
@@ -86,7 +86,7 @@ public class OFixTxTask extends OAbstractRemoteTask {
               // AVOID LOCKING RECORDS AGAIN BECAUSE ARE ALREADY LOCKED
               ((OAbstractRecordReplicatedTask) task).setLockRecord(false);
 
-            task.execute(iServer, iManager, database);
+            task.execute(requestId, iServer, iManager, database);
           }
           return null;
         }

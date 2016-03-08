@@ -395,7 +395,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
       final byte[] calculatedSignature = mac.doFinal();
       boolean valid = MessageDigest.isEqual(calculatedSignature, signature);
       if (!valid) {
-        OLogManager.instance().warn(this, "Signature failure: %s", OBase64Utils.encodeBytes(base));
+        OLogManager.instance().warn(this, "Token signature failure: %s", OBase64Utils.encodeBytes(base));
       }
       return valid;
 

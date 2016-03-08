@@ -120,7 +120,7 @@ public class OHazelcastDistributedRequest implements ODistributedRequest {
     out.writeLong(id);
     out.writeUTF(senderNodeName);
     out.writeLong(senderThreadId);
-    out.writeUTF(databaseName);
+    out.writeUTF(databaseName != null ? databaseName : "");
     out.writeObject(task);
     out.writeObject(userRID);
   }
@@ -131,6 +131,8 @@ public class OHazelcastDistributedRequest implements ODistributedRequest {
     senderNodeName = in.readUTF();
     senderThreadId = in.readLong();
     databaseName = in.readUTF();
+    if (databaseName.isEmpty())
+      databaseName = null;
     task = (ORemoteTask) in.readObject();
     userRID = (ORID) in.readObject();
   }

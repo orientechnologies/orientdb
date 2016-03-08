@@ -74,6 +74,9 @@ public class ORemoteTaskFactory {
 
     case OCopyDatabaseChunkTask.FACTORYID: // 15
       return new OCopyDatabaseChunkTask();
+
+    case OStopNodeTask.FACTORYID: // 16
+      return new OStopNodeTask();
     }
 
     throw new IllegalArgumentException("Task with code " + code + " is not supported");

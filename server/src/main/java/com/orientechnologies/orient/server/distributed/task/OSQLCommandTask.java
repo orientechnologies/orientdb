@@ -78,7 +78,7 @@ public class OSQLCommandTask extends OAbstractCommandTask {
     timeout = ((OCommandDistributedReplicateRequest) executor).getDistributedTimeout();
   }
 
-  public Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
+  public Object execute(long requestId, final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
       throws Exception {
 
     if (ODistributedServerLog.isDebugEnabled())

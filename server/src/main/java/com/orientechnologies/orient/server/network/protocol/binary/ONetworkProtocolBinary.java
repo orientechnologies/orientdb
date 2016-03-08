@@ -21,8 +21,6 @@ package com.orientechnologies.orient.server.network.protocol.binary;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.lock.OLockException;
-import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
@@ -41,7 +39,6 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -86,18 +83,19 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerInfo;
 import com.orientechnologies.orient.server.ShutdownHelper;
 import com.orientechnologies.orient.server.distributed.*;
-import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.concurrent.Callable;
 
 public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected OClientConnection connection;
@@ -840,104 +838,24 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     final ODistributedServerManager manager = server.getDistributedManager();
     final ODistributedRequest req = manager.createRequest();
 
-    for (int retry = 1;; ++retry) {
-      final ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(serializedReq));
-      try {
-        req.readExternal(in);
-      } catch (ClassNotFoundException e) {
-        throw new IOException("Error on unmarshalling of remote task", e);
-      }
-
-      ODistributedServerLog.debug(this, manager.getLocalNodeName(), req.getSenderNodeName(), ODistributedServerLog.DIRECTION.IN,
-          "Received request %s (%d bytes)", req, serializedReq.length);
-
-      final ORemoteTask task = req.getTask();
-
-      final ODistributedDatabase ddb = manager.getMessageService().getDatabase(req.getDatabaseName());
-      if (ddb != null) {
-        final long waitForMessage = ddb.getWaitForMessageId();
-        // if (waitForMessage > -1 && req.getId() < waitForMessage) {
-        if (waitForMessage > -1) {
-          if (!(task instanceof ODistributedDatabaseChunk)) {
-            // SKIP IT
-            ODistributedServerLog.info(this, manager.getLocalNodeName(), req.getSenderNodeName(),
-                ODistributedServerLog.DIRECTION.IN, "Skipping request %s waiting for %d", req, waitForMessage);
-            return;
-          }
-          ddb.setWaitForMessage(-1);
-        }
-      }
-
-      if (task.isRequiredOpenDatabase())
-        waitNodeIsOnline(req);
-
-      Object responsePayload;
-      try {
-        task.setNodeSource(req.getSenderNodeName());
-
-        ODatabaseDocumentTx db = connection.getDatabase();
-        if (req.getDatabaseName() != null && (db == null || !db.getName().equals(req.getDatabaseName()))) {
-          db = (ODatabaseDocumentTx) server.openDatabase(req.getDatabaseName(), "internal", "internal", null, true);
-          connection.setDatabase(db);
-        }
-        final ODatabaseDocumentTx database = db;
-
-        ODistributedServerLog.debug(this, manager.getLocalNodeName(), req.getSenderNodeName(), ODistributedServerLog.DIRECTION.IN,
-            "Executing request %s (%d bytes)", req, serializedReq.length);
-
-        responsePayload = OScenarioThreadLocal.executeAsDistributed(new Callable<Object>() {
-          @Override
-          public Object call() throws Exception {
-            return task.execute(server, server.getDistributedManager(), database);
-          }
-        });
-
-      } catch (RuntimeException e) {
-        responsePayload = e;
-      } catch (Exception e) {
-        ODistributedServerLog.error(this, manager.getLocalNodeName(), req.getSenderNodeName(), ODistributedServerLog.DIRECTION.IN,
-            "Error on executing request %s", e, req);
-        responsePayload = e;
-      }
-
-      if (responsePayload instanceof OModificationOperationProhibitedException) {
-        // RETRY
-        try {
-          ODistributedServerLog.info(this, manager.getLocalNodeName(), req.getSenderNodeName(), ODistributedServerLog.DIRECTION.IN,
-              "Database is frozen, waiting and retrying. Request %s (retry=%d)", req, retry);
-
-          Thread.sleep(1000);
-        } catch (InterruptedException e) {
-        }
-      } else {
-        // OPERATION EXECUTED (OK OR ERROR), NO RETRY NEEDED
-        if (retry > 1)
-          ODistributedServerLog.info(this, manager.getLocalNodeName(), req.getSenderNodeName(), ODistributedServerLog.DIRECTION.IN,
-              "Request %s succeed after retry=%d", req, retry);
-
-        ODistributedServerLog.debug(this, manager.getLocalNodeName(), req.getSenderNodeName(), ODistributedServerLog.DIRECTION.OUT,
-            "sending back response '%s' to request %d (%s)", responsePayload, req.getId(), task);
-
-        final ODistributedResponse response = manager.createResponse(req.getId(), manager.getLocalNodeName(),
-            req.getSenderNodeName(), (Serializable) responsePayload);
-
-        try {
-          // GET THE SENDER'S RESPONSE QUEUE
-          final ORemoteServerController remoteSenderServer = manager.getRemoteServer(req.getSenderNodeName());
-
-          ODistributedServerLog.debug(this, manager.getLocalNodeName(), req.getSenderNodeName(),
-              ODistributedServerLog.DIRECTION.OUT, "Sending back response %s to %s", response, req.getSenderNodeName());
-
-          remoteSenderServer.sendResponse(response, req.getSenderNodeName());
-
-        } catch (Exception e) {
-          throw OException
-              .wrapException(new ODistributedException("Cannot send response to the sender node " + req.getSenderNodeName()), e);
-        }
-
-        break;
-      }
+    final ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(serializedReq));
+    try {
+      req.readExternal(in);
+    } catch (ClassNotFoundException e) {
+      throw new IOException("Error on unmarshalling of remote task", e);
     }
+
+    ODistributedServerLog.debug(this, manager.getLocalNodeName(), req.getSenderNodeName(), ODistributedServerLog.DIRECTION.IN,
+        "Received request %s (%d bytes)", req, serializedReq.length);
+
+    final String dbName = req.getDatabaseName();
+    if (dbName != null) {
+      final ODistributedDatabase ddb = manager.getMessageService().getDatabase(dbName);
+      if (ddb == null)
+        throw new ODistributedException("Database configuration not found for database '" + req.getDatabaseName() + "'");
+      ddb.processRequest(req);
+    } else
+      manager.executeOnLocalNode(req, null);
   }
 
   private void executeDistributedResponse() throws IOException {

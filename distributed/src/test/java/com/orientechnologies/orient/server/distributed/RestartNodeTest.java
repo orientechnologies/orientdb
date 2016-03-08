@@ -16,38 +16,41 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Starts 3 servers, backup on node3, check other nodes can work in the meanwhile and node3 is realigned once backup is finished. No
- * automatic restart must be executed.
+ * Starts 3 servers, lock on node3 simulating a unknown stall situation, checks:
+ * <ul>
+ * <li>other nodes can work in the meanwhile</li>
+ * <li>node3 is restarted automatically</li>
+ * <li>node3 is realigned once backup is finished</li>
+ * </ul>
  */
-public class OneNodeBackupTest extends AbstractServerClusterTxTest {
-  final static int    SERVERS          = 3;
-  volatile boolean    inserting        = true;
-  volatile int        serverStarted    = 0;
-  volatile boolean    backupInProgress = false;
-  final AtomicInteger nodeLefts        = new AtomicInteger();
+public class RestartNodeTest extends AbstractServerClusterTxTest {
+  final static int            SERVERS       = 3;
+  volatile boolean            inserting     = true;
+  volatile int                serverStarted = 0;
+  final private Set<String>   nodeReJoined  = new HashSet<String>();
+  final private AtomicInteger nodeLefts     = new AtomicInteger();
 
   @Test
   public void test() throws Exception {
     startupNodesInSequence = true;
-    count = 1000;
+    useTransactions = false;
+    count = 400;
     maxRetries = 10;
     init(SERVERS);
     prepare(false);
 
-    // EXECUTE TESTS ONLY ON FIRST 2 NODES LEAVING NODE3 AS BACKUP ONLY REPLICA
+    // EXECUTE TESTS ONLY ON FIRST 2 NODES LEAVING NODE3 AD BACKUP ONLY REPLICA
     executeTestsOnServers = new ArrayList<ServerRun>();
     for (int i = 0; i < serverInstance.size() - 1; ++i) {
       executeTestsOnServers.add(serverInstance.get(i));
@@ -57,7 +60,7 @@ public class OneNodeBackupTest extends AbstractServerClusterTxTest {
   }
 
   @Override
-  protected void onServerStarted(ServerRun server) {
+  protected void onServerStarted(final ServerRun server) {
     super.onServerStarted(server);
 
     if (serverStarted == 0) {
@@ -70,10 +73,12 @@ public class OneNodeBackupTest extends AbstractServerClusterTxTest {
 
         @Override
         public void onNodeJoined(String iNode) {
+          nodeReJoined.add(iNode);
         }
 
         @Override
         public void onNodeLeft(String iNode) {
+          nodeReJoined.clear();
           nodeLefts.incrementAndGet();
         }
 
@@ -84,8 +89,10 @@ public class OneNodeBackupTest extends AbstractServerClusterTxTest {
     }
 
     if (serverStarted++ == (SERVERS - 1)) {
+
       // BACKUP LAST SERVER, RUN ASYNCHRONOUSLY
       new Thread(new Runnable() {
+
         @Override
         public void run() {
           try {
@@ -97,7 +104,7 @@ public class OneNodeBackupTest extends AbstractServerClusterTxTest {
                 final ODatabaseDocumentTx database = poolFactory.get(getDatabaseURL(serverInstance.get(0)), "admin", "admin")
                     .acquire();
                 try {
-                  return database.countClass("Person") > (count * SERVERS) * 1 / 3;
+                  return database.countClass("Person") > (count * SERVERS) * 1 / 2;
                 } finally {
                   database.close();
                 }
@@ -108,39 +115,13 @@ public class OneNodeBackupTest extends AbstractServerClusterTxTest {
               public Object call() throws Exception {
                 Assert.assertTrue("Insert was too fast", inserting);
 
-                banner("STARTING BACKUP SERVER " + (SERVERS - 1));
+                banner("RESTARTING SERVER " + (SERVERS - 1));
 
-                OrientGraphFactory factory = new OrientGraphFactory(
-                    "plocal:target/server" + (SERVERS - 1) + "/databases/" + getDatabaseName());
-                OrientGraphNoTx g = factory.getNoTx();
+                ((OHazelcastPlugin) serverInstance.get(0).getServerInstance().getDistributedManager())
+                    .restartNode(server.server.getDistributedManager().getLocalNodeName());
 
-                backupInProgress = true;
-                File file = null;
-                try {
-                  file = File.createTempFile("orientdb_test_backup", ".zip");
-                  if (file.exists())
-                    Assert.assertTrue(file.delete());
+                Thread.sleep(5000);
 
-                  g.getRawGraph().backup(new FileOutputStream(file), null, new Callable<Object>() {
-                    @Override
-                    public Object call() throws Exception {
-
-                      // SIMULATE LONG BACKUP
-                      Thread.sleep(10000);
-
-                      return null;
-                    }
-                  }, null, 9, 1000000);
-
-                } catch (IOException e) {
-                  e.printStackTrace();
-                } finally {
-                  banner("COMPLETED BACKUP SERVER " + (SERVERS - 1));
-                  backupInProgress = false;
-
-                  if (file != null)
-                    file.delete();
-                }
                 return null;
               }
             });
@@ -150,6 +131,7 @@ public class OneNodeBackupTest extends AbstractServerClusterTxTest {
             Assert.fail("Error on execution flow");
           }
         }
+
       }).start();
     }
   }
@@ -157,8 +139,8 @@ public class OneNodeBackupTest extends AbstractServerClusterTxTest {
   @Override
   protected void onAfterExecution() throws Exception {
     inserting = false;
-    Assert.assertFalse(backupInProgress);
-    Assert.assertEquals("Found some nodes has been restarted", 0, nodeLefts.get());
+    Assert.assertEquals("Node was not restarted", 1, nodeReJoined.size());
+    Assert.assertEquals("Found no node has been restarted", 1, nodeLefts.get());
   }
 
   protected String getDatabaseURL(final ServerRun server) {
@@ -167,6 +149,6 @@ public class OneNodeBackupTest extends AbstractServerClusterTxTest {
 
   @Override
   public String getDatabaseName() {
-    return "distributed-backup1node";
+    return "distributed-restartnode";
   }
 }

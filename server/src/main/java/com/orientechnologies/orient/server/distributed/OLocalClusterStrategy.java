@@ -44,6 +44,7 @@ public class OLocalClusterStrategy implements OClusterSelectionStrategy {
   protected final String                    nodeName;
   protected final String                    databaseName;
   protected volatile int                    bestClusterId = -1;
+  private int                               lastVersion   = -1;
 
   public OLocalClusterStrategy(final ODistributedServerManager iManager, final String iDatabaseName, final OClass iClass) {
     this.manager = iManager;
@@ -59,12 +60,15 @@ public class OLocalClusterStrategy implements OClusterSelectionStrategy {
 
     if (bestClusterId == -1)
       readConfiguration();
+    else {
+      final ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
+      if (lastVersion != cfg.getVersion()) {
+        // DISTRIBUTED CFG IS CHANGED: GET BEST CLUSTER AGAIN
+        readConfiguration();
+      }
+    }
 
     return bestClusterId;
-  }
-
-  public void resetConfiguration() {
-    bestClusterId = -1;
   }
 
   @Override
@@ -108,5 +112,6 @@ public class OLocalClusterStrategy implements OClusterSelectionStrategy {
     }
 
     bestClusterId = db.getClusterIdByName(bestCluster);
+    lastVersion = cfg.getVersion();
   }
 }

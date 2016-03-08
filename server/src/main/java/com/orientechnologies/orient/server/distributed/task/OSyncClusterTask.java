@@ -68,7 +68,7 @@ public class OSyncClusterTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public Object execute(final OServer iServer, final ODistributedServerManager iManager, final ODatabaseDocumentTx database)
+  public Object execute(long requestId, final OServer iServer, final ODistributedServerManager iManager, final ODatabaseDocumentTx database)
       throws Exception {
 
     if (getNodeSource() == null || !getNodeSource().equals(iManager.getLocalNodeName())) {
@@ -225,11 +225,6 @@ public class OSyncClusterTask extends OAbstractReplicatedTask {
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
     random = in.readLong();
     clusterName = in.readUTF();
-  }
-
-  @Override
-  public boolean isRequiredOpenDatabase() {
-    return true;
   }
 
   @Override

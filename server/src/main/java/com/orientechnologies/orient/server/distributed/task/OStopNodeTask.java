@@ -32,16 +32,16 @@ import java.io.ObjectOutput;
 import java.util.TimerTask;
 
 /**
- * Distributed task to restart a node.
+ * Distributed task to stop a node.
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  *
  */
-public class ORestartNodeTask extends OAbstractRemoteTask {
+public class OStopNodeTask extends OAbstractRemoteTask {
   private static final long serialVersionUID = 1L;
-  public static final int   FACTORYID        = 10;
+  public static final int   FACTORYID        = 16;
 
-  public ORestartNodeTask() {
+  public OStopNodeTask() {
   }
 
   @Override
@@ -49,16 +49,16 @@ public class ORestartNodeTask extends OAbstractRemoteTask {
       throws Exception {
 
     ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.IN,
-        "restarting server...");
+        "Stopping current server...");
 
     Orient.instance().scheduleTask(new TimerTask() {
       @Override
       public void run() {
         try {
-          iServer.restart();
+          iServer.shutdown();
         } catch (Exception e) {
           ODistributedServerLog.error(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.IN,
-              "error on restarting server", e);
+              "Error on stopping current server", e);
         }
       }
     }, 1, 0);
@@ -73,7 +73,7 @@ public class ORestartNodeTask extends OAbstractRemoteTask {
 
   @Override
   public String getName() {
-    return "restart_node";
+    return "stop_node";
   }
 
   @Override

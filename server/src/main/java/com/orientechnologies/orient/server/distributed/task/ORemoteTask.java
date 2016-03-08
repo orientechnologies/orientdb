@@ -19,12 +19,12 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
+import java.io.Externalizable;
+
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-
-import java.io.Externalizable;
 
 /**
  * Remote Task interface.
@@ -40,7 +40,7 @@ public interface ORemoteTask extends Externalizable {
 
   OCommandDistributedReplicateRequest.QUORUM_TYPE getQuorumType();
 
-  Object execute(OServer iServer, ODistributedServerManager iManager, ODatabaseDocumentTx database) throws Exception;
+  Object execute(long requestId, OServer iServer, ODistributedServerManager iManager, ODatabaseDocumentTx database) throws Exception;
 
   long getDistributedTimeout();
 
@@ -53,8 +53,6 @@ public interface ORemoteTask extends Externalizable {
   String getNodeSource();
 
   void setNodeSource(String nodeSource);
-
-  boolean isRequiredOpenDatabase();
 
   boolean isIdempotent();
 
