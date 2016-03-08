@@ -58,6 +58,12 @@ public class ORemoteConnectionManager {
 
   public OChannelBinaryAsynchClient acquire(String iServerURL, final OContextConfiguration clientConfiguration,
       final Map<String, Object> iConfiguration, final OStorageRemoteAsynchEventListener iListener) {
+    if (iServerURL.startsWith(OEngineRemote.PREFIX))
+      iServerURL = iServerURL.substring(OEngineRemote.PREFIX.length());
+
+    if (iServerURL.endsWith("/"))
+      iServerURL = iServerURL.substring(0, iServerURL.length() - 1);
+
     ORemoteConnectionPool pool = connections.get(iServerURL);
     if (pool == null) {
       int maxPool = OGlobalConfiguration.CLIENT_CHANNEL_MAX_POOL.getValueAsInteger();
@@ -72,9 +78,6 @@ public class ORemoteConnectionManager {
         if (max != null)
           maxPool = Integer.parseInt(max.toString());
       }
-
-      if (iServerURL.startsWith(OEngineRemote.PREFIX))
-        iServerURL = iServerURL.substring(OEngineRemote.PREFIX.length());
 
       pool = new ORemoteConnectionPool(maxPool, listener != null);
       final ORemoteConnectionPool prev = connections.putIfAbsent(iServerURL, pool);

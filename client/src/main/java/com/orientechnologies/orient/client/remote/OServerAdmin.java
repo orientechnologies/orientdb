@@ -690,7 +690,7 @@ public class OServerAdmin {
         network = storage.getAvailableNetwork(getURL());
 
         // In case i do not have a token or i'm switching between server i've to execute a open operation.
-        if (!storage.getServerURL().endsWith(network.getServerURL())) {
+        if (!storage.getServerURL().contains(network.getServerURL())) {
           // TODO: Remove this workaround in favor of a proper per server authentication.
           storage.setSessionId(network.getServerURL(), -1, null);
           storage.openRemoteDatabase(network);
@@ -707,7 +707,8 @@ public class OServerAdmin {
 
       } catch (Exception e) {
         // DIRTY CONNECTION, CLOSE IT AND RE-ACQUIRE A NEW ONE
-        network.close();
+        if (network != null)
+          network.close();
         storage.close(true, false);
         lastException = e;
         break;

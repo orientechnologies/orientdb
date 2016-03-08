@@ -1091,8 +1091,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       final List<String> nodes = dbCfg.getServers(involvedClusters);
 
-      // if (executionModeSynch && !iTx.hasRecordCreation()) {
-      if (executionModeSynch) {
+      if (executionModeSynch && !iTx.hasRecordCreation()) {
         // SYNCHRONOUS
 
         final int maxAutoRetry = OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.getValueAsInteger();
@@ -1130,16 +1129,19 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       });
 
       // After commit force the clean of dirty managers due to possible copy and miss clean.
-      for (
-
-      ORecordOperation ent : iTx.getAllRecordEntries()) {
+      for (ORecordOperation ent : iTx.getAllRecordEntries()) {
         ORecordInternal.getDirtyManager(ent.getRecord()).clear();
       }
 
+      // REMOVE CURRENT NODE BECAUSE IT HAS BEEN ALREADY EXECUTED LOCALLY
       nodes.remove(localNodeName);
+
+      // FILTER ONLY AVAILABLE NODES
+      dManager.getAvailableNodes(nodes, getName());
+
       if (!nodes.isEmpty()) {
         if (executionModeSynch)
-          dManager.sendRequest(getName(), involvedClusters, nodes, txTask, EXECUTION_MODE.RESPONSE, 0);
+          dManager.sendRequest(getName(), involvedClusters, nodes, txTask, EXECUTION_MODE.RESPONSE, 1);
         else {
 
           // MANAGE REPLICATION CALLBACK
@@ -1169,7 +1171,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
                       database.open("system", "system");
 
                       try {
-
                         undo.execute(0, serverInstance, dManager, database);
                       } finally {
                         database.close();
@@ -1211,16 +1212,13 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
               throw new OTransactionException(
                   "Error on committing async distributed transaction, received unknown response type " + iArgument);
             }
-          }, 0));
+          }, 1));
         }
       }
 
-    } catch (
-
-    OValidationException e) {
+    } catch (OValidationException e) {
       throw e;
     } catch (Exception e) {
-
       handleDistributedException("Cannot route TX operation against distributed node", e);
     }
 
@@ -1407,6 +1405,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
   @Override
   public long count(int[] iClusterIds, boolean countTombstones) {
+    // TODO: SUPPORT SHARDING HERE
     return wrapped.count(iClusterIds, countTombstones);
   }
 
