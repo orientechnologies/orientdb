@@ -66,11 +66,7 @@ import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper
 import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyObject;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Object Database instance. It's a wrapper to the class ODatabaseDocumentTx that handles conversion between ODocument instances and
@@ -896,5 +892,10 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object>implements O
   @Override
   public int addBlobCluster(String iClusterName, Object... iParameters) {
     return getUnderlying().addBlobCluster(iClusterName,iParameters);
+  }
+
+  @Override
+  public Set<Integer> getBlobClusterIds() {
+    return getUnderlying().getBlobClusterIds();
   }
 }

@@ -1357,47 +1357,18 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     }
   }
 
-  @Override
-  public int addBlobCluster(String clusterName) {
-
-    ODatabaseDocumentInternal db = getDatabase();
-    int clusterId;
-    if (db.getStorage() instanceof OStorageProxy) {
-      clusterId = getDatabase().command(new OCommandSQL("create blob cluster :1")).execute(clusterName);
-      reload();
-    } else
-      clusterId= addBlobClusterIdInternal(clusterName);
-
-    return clusterId;
-  }
-
-  private int addBlobClusterIdInternal(String clusterName) {
-    int clusterId;
+  public int addBlobCluster(int clusterId) {
     acquireSchemaWriteLock();
     try {
-      clusterId = createClusterIfNeeded(clusterName);
       checkClusterCanBeAdded(clusterId, null);
       blobClusters.add(clusterId);
-
     } finally {
       releaseSchemaWriteLock();
     }
     return clusterId;
   }
 
-  @Override
   public void removeBlobCluster(String clusterName) {
-
-    ODatabaseDocumentInternal db = getDatabase();
-    if (db.getStorage() instanceof OStorageProxy) {
-      getDatabase().command(new OCommandSQL("delete cluster :1")).execute(clusterName);
-      reload();
-    } else
-      removeBlobClusterInternal(clusterName);
-
-  }
-
-  private void removeBlobClusterInternal(String clusterName) {
     acquireSchemaWriteLock();
     try {
       int clusterId = getClusterId(clusterName);
@@ -1433,7 +1404,6 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     return clId;
   }
 
-  @Override
   public Set<Integer> getBlobClusters() {
     return Collections.unmodifiableSet(blobClusters);
   }

@@ -796,8 +796,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         // READ BLOB CLUSTER IDS
         for (String i : OStringSerializerHelper.split(blobClusterIds, OStringSerializerHelper.RECORD_SEPARATOR)) {
           Integer cluster = Integer.parseInt(i);
-          if (!database.getMetadata().getSchema().getBlobClusters().contains(cluster))
-            database.getMetadata().getSchema().addBlobCluster(i);
+          if (!database.getBlobClusterIds().contains(cluster))
+            database.addBlobCluster(i);
         }
       }
 

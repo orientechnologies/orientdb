@@ -41,10 +41,7 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.util.OBackupable;
 
 import java.io.Closeable;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Generic Database interface. Represents the lower level of the Database providing raw API to access to the raw records.<br>
@@ -297,13 +294,22 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   int addCluster(String iClusterName, Object... iParameters);
 
   /**
-   * Adds a new cluster.
+   * Adds a new cluster for store blobs.
+   *
+   * A blob cluster cannot be used to store documents.
    *
    * @param iClusterName Cluster name
    * @param iParameters  Additional parameters to pass to the factories
    * @return Cluster id
    */
   int addBlobCluster(String iClusterName, Object... iParameters);
+
+  /**
+   * Retrieve the set of defined blob cluster.
+   *
+   * @return the set of defined blob cluster ids.
+   */
+  Set<Integer> getBlobClusterIds();
 
   /**
    * Adds a new cluster.

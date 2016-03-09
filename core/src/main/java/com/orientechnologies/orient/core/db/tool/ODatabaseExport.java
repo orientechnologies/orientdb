@@ -468,7 +468,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     writer.beginObject(1, true, "schema");
     OSchema s = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot();
     writer.writeAttribute(2, true, "version", s.getVersion());
-    writer.writeAttribute(2, false, "blob-clusters", s.getBlobClusters());
+    writer.writeAttribute(2, false, "blob-clusters", database.getBlobClusterIds());
     if (!s.getClasses().isEmpty()) {
       writer.beginCollection(2, true, "classes");
 

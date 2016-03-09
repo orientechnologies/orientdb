@@ -455,18 +455,4 @@ public class OSchemaProxyObject implements OSchema {
     return underlying.createGlobalProperty(name, type, id);
   }
 
-  @Override
-  public Set<Integer> getBlobClusters() {
-    return underlying.getBlobClusters();
-  }
-
-  @Override
-  public int addBlobCluster(String clusterName) {
-    return underlying.addBlobCluster(clusterName);
-  }
-
-  @Override
-  public void removeBlobCluster(String clusterName) {
-    underlying.removeBlobCluster(clusterName);
-  }
 }

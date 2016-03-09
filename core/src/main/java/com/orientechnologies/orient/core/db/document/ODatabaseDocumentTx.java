@@ -3063,8 +3063,22 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
   @Override
   public int addBlobCluster(String iClusterName, Object... iParameters) {
-    int id = addCluster(iClusterName, iParameters);
-    getMetadata().getSchema().addBlobCluster(iClusterName);
+    int id;
+    if (getStorage() instanceof OStorageProxy) {
+      id = command(new OCommandSQL("create blob cluster :1")).execute(iClusterName);
+      getMetadata().getSchema().reload();
+    } else {
+      if (!existsCluster(iClusterName)) {
+        id = addCluster(iClusterName, iParameters);
+      } else
+        id = getClusterIdByName(iClusterName);
+      getMetadata().getSchema().addBlobCluster(id);
+    }
     return id;
   }
+
+  public Set<Integer> getBlobClusterIds() {
+    return getMetadata().getSchema().getBlobClusters();
+  }
+
 }

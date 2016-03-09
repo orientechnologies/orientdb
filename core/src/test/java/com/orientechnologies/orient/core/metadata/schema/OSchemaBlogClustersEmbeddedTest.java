@@ -30,56 +30,56 @@ public class OSchemaBlogClustersEmbeddedTest {
 
   @Test
   public void addBlobCluster() {
-    int prevSize = db.getMetadata().getSchema().getBlobClusters().size();
-    db.getMetadata().getSchema().addBlobCluster("test_blob");
-    int newSize = db.getMetadata().getSchema().getBlobClusters().size();
+    int prevSize = db.getBlobClusterIds().size();
+    db.addBlobCluster("test_blob");
+    int newSize = db.getBlobClusterIds().size();
     assertEquals(prevSize + 1, newSize);
 
   }
 
   @Test
   public void addRemoveBlobCluster() {
-    int prevSize = db.getMetadata().getSchema().getBlobClusters().size();
-    db.getMetadata().getSchema().addBlobCluster("test_blob");
-    int newSize = db.getMetadata().getSchema().getBlobClusters().size();
+    int prevSize = db.getBlobClusterIds().size();
+    db.addBlobCluster("test_blob");
+    int newSize = db.getBlobClusterIds().size();
     assertEquals(prevSize + 1, newSize);
-    db.getMetadata().getSchema().removeBlobCluster("test_blob");
-    newSize = db.getMetadata().getSchema().getBlobClusters().size();
+    db.dropCluster("test_blob", true);
+    newSize = db.getBlobClusterIds().size();
     assertEquals(prevSize, newSize);
   }
 
   @Test
   public void addDbRemoveBlobCluster() {
-    int prevSize = db.getMetadata().getSchema().getBlobClusters().size();
-    db.getMetadata().getSchema().addBlobCluster("test_blob");
-    int newSize = db.getMetadata().getSchema().getBlobClusters().size();
+    int prevSize = db.getBlobClusterIds().size();
+    db.addBlobCluster("test_blob");
+    int newSize = db.getBlobClusterIds().size();
     assertEquals(prevSize + 1, newSize);
     db.dropCluster("test_blob", true);
-    newSize = db.getMetadata().getSchema().getBlobClusters().size();
+    newSize = db.getBlobClusterIds().size();
     assertEquals(prevSize, newSize);
   }
 
   @Test
   public void addDbRemoveBlobClusterById() {
-    int prevSize = db.getMetadata().getSchema().getBlobClusters().size();
-    int id = db.getMetadata().getSchema().addBlobCluster("test_blob");
-    int newSize = db.getMetadata().getSchema().getBlobClusters().size();
+    int prevSize = db.getBlobClusterIds().size();
+    int id = db.addBlobCluster("test_blob");
+    int newSize = db.getBlobClusterIds().size();
     assertEquals(prevSize + 1, newSize);
     db.dropCluster(id, true);
-    newSize = db.getMetadata().getSchema().getBlobClusters().size();
+    newSize = db.getBlobClusterIds().size();
     assertEquals(prevSize, newSize);
   }
 
   @Test
   public void addRemoveMultipleBlobCluster() {
-    int prevSize = db.getMetadata().getSchema().getBlobClusters().size();
-    db.getMetadata().getSchema().addBlobCluster("test_blob");
-    db.getMetadata().getSchema().addBlobCluster("test_blob1");
-    int newSize = db.getMetadata().getSchema().getBlobClusters().size();
+    int prevSize = db.getBlobClusterIds().size();
+    db.addBlobCluster("test_blob");
+    db.addBlobCluster("test_blob1");
+    int newSize = db.getBlobClusterIds().size();
     assertEquals(prevSize + 2, newSize);
-    db.getMetadata().getSchema().removeBlobCluster("test_blob");
-    db.getMetadata().getSchema().removeBlobCluster("test_blob1");
-    newSize = db.getMetadata().getSchema().getBlobClusters().size();
+    db.dropCluster("test_blob", true);
+    db.dropCluster("test_blob1", true);
+    newSize = db.getBlobClusterIds().size();
     assertEquals(prevSize, newSize);
   }
 
@@ -87,15 +87,15 @@ public class OSchemaBlogClustersEmbeddedTest {
   public void addBlobClusterSqlTest() {
     db.command(new OCommandSQL("create blob cluster example_blob")).execute();
     int cl = db.getClusterIdByName("example_blob");
-    assertTrue(db.getMetadata().getSchema().getBlobClusters().contains(cl));
+    assertTrue(db.getBlobClusterIds().contains(cl));
   }
 
   @Test
   public void addBlobClusterRemoveSqlTest() {
     db.command(new OCommandSQL("create blob cluster example_blob_remove")).execute();
-    assertEquals(1, db.getMetadata().getSchema().getBlobClusters().size());
+    assertEquals(1, db.getBlobClusterIds().size());
     db.command(new OCommandSQL("drop cluster example_blob_remove")).execute();
-    assertEquals(0, db.getMetadata().getSchema().getBlobClusters().size());
+    assertEquals(0, db.getBlobClusterIds().size());
   }
 
 }

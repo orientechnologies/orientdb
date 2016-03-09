@@ -114,11 +114,5 @@ public interface OSchema {
 
   OClusterSelectionFactory getClusterSelectionFactory();
 
-  int addBlobCluster(String clusterName);
-
-  void removeBlobCluster(String clusterName);
-
-  Set<Integer> getBlobClusters();
-
   OImmutableSchema makeSnapshot();
 }

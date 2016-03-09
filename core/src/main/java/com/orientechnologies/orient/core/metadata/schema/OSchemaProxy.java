@@ -238,18 +238,16 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared>implements OSche
   }
 
 
-  @Override
   public Set<Integer> getBlobClusters() {
     return delegate.getBlobClusters();
   }
 
-  @Override
-  public int addBlobCluster(final String clusterName) {
-    return delegate.addBlobCluster(clusterName);
+  public int addBlobCluster(final int clusterId) {
+    return delegate.addBlobCluster(clusterId);
   }
 
-  @Override
-  public void removeBlobCluster(final String clusterName) {
+  public void removeBlobCluster(String clusterName){
     delegate.removeBlobCluster(clusterName);
   }
+
 }

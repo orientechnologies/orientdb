@@ -275,18 +275,9 @@ public class OImmutableSchema implements OSchema {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 
-  @Override
   public Set<Integer> getBlobClusters() {
     return blogClusters;
   }
 
-  @Override
-  public int addBlobCluster(String clusterName) {
-    throw new UnsupportedOperationException();
-  }
 
-  @Override
-  public void removeBlobCluster(String clusterName) {
-    throw new UnsupportedOperationException();
-  }
 }
