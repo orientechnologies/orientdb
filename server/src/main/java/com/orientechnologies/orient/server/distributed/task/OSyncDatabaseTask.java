@@ -44,7 +44,7 @@ import java.util.concurrent.locks.Lock;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OCommandOutputListener {
-  public final static int    CHUNK_MAX_SIZE = 4194304;    // 4MB
+  public final static int    CHUNK_MAX_SIZE = 1048576;    // 1MB
   public static final String DEPLOYDB       = "deploydb.";
   public static final int    FACTORYID      = 14;
 

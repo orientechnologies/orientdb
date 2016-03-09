@@ -142,8 +142,8 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
           final ORemoteServerController remoteServer = manager.getRemoteServer(node);
           remoteServer.sendRequest(iRequest, node);
         } catch (Throwable e) {
-          ODistributedServerLog.info(this, manager.getLocalNodeName(), node, ODistributedServerLog.DIRECTION.OUT,
-              "Error on sending distributed request %s (%s). Active nodes: %s", iRequest, e.getMessage(),
+          ODistributedServerLog.error(this, manager.getLocalNodeName(), node, ODistributedServerLog.DIRECTION.OUT,
+              "Error on sending distributed request %s. Active nodes: %s", e, iRequest,
               manager.getAvailableNodeNames(databaseName));
         }
       }

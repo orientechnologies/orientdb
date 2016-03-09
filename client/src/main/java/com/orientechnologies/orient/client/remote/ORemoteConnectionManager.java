@@ -64,11 +64,15 @@ public class ORemoteConnectionManager {
     if (iServerURL.endsWith("/"))
       iServerURL = iServerURL.substring(0, iServerURL.length() - 1);
 
+    long localTimeout = timeout;
+
     ORemoteConnectionPool pool = connections.get(iServerURL);
     if (pool == null) {
       int maxPool = OGlobalConfiguration.CLIENT_CHANNEL_MAX_POOL.getValueAsInteger();
 
       if (iConfiguration != null && iConfiguration.size() > 0) {
+        if (iConfiguration.containsKey(PARAM_MAX_POOL))
+          maxPool = Integer.parseInt(iConfiguration.get(PARAM_MAX_POOL).toString());
         if (iConfiguration.containsKey(PARAM_MAX_POOL))
           maxPool = Integer.parseInt(iConfiguration.get(PARAM_MAX_POOL).toString());
       }
@@ -77,6 +81,10 @@ public class ORemoteConnectionManager {
         final Object max = clientConfiguration.getValue(OGlobalConfiguration.CLIENT_CHANNEL_MAX_POOL);
         if (max != null)
           maxPool = Integer.parseInt(max.toString());
+
+        final Object netLockTimeout = clientConfiguration.getValue(OGlobalConfiguration.NETWORK_LOCK_TIMEOUT);
+        if (netLockTimeout != null)
+          localTimeout = Integer.parseInt(netLockTimeout.toString());
       }
 
       pool = new ORemoteConnectionPool(maxPool, listener != null);
@@ -90,7 +98,7 @@ public class ORemoteConnectionManager {
 
     try {
       // RETURN THE RESOURCE
-      OChannelBinaryAsynchClient ret = pool.acquire(iServerURL, timeout, clientConfiguration, iConfiguration, iListener);
+      OChannelBinaryAsynchClient ret = pool.acquire(iServerURL, localTimeout, clientConfiguration, iConfiguration, iListener);
       return ret;
 
     } catch (RuntimeException e) {

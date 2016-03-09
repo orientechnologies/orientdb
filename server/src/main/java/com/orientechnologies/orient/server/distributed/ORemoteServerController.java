@@ -46,6 +46,8 @@ public class ORemoteServerController extends OServerAdmin {
 
     // FORCE ALL THE MESSAGES TO BE QUEUED IN THE SAME CHANNEL
     storage.getClientConfiguration().setValue(OGlobalConfiguration.CLIENT_CHANNEL_MAX_POOL, 1);
+    storage.getClientConfiguration().setValue(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT, 0);
+    storage.getClientConfiguration().setValue(OGlobalConfiguration.NETWORK_LOCK_TIMEOUT, 0);
 
     this.manager = manager;
     connect(user, passwd);
