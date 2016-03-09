@@ -98,9 +98,9 @@ public class OLocalClusterStrategy implements OClusterSelectionStrategy {
         if (buffer.length() > 0)
           buffer.append(" ");
 
-        buffer.append("cluster ");
+        buffer.append(" ");
         buffer.append(c);
-        buffer.append(": ");
+        buffer.append(":");
         buffer.append(cfg.getServers(c, null));
       }
 

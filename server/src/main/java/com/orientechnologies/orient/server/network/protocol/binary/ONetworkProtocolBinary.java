@@ -843,6 +843,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       req.readExternal(in);
     } catch (ClassNotFoundException e) {
       throw new IOException("Error on unmarshalling of remote task", e);
+    } finally {
+      in.close();
     }
 
     ODistributedServerLog.debug(this, manager.getLocalNodeName(), manager.getNodeNameById(req.getSenderNodeId()), ODistributedServerLog.DIRECTION.IN,

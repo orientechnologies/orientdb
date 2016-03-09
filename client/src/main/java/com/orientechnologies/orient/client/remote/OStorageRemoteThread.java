@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
 
 import java.io.IOException;
@@ -46,13 +47,13 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @SuppressWarnings("unchecked")
 public class OStorageRemoteThread implements OStorageProxy {
-  private static AtomicInteger            sessionSerialId = new AtomicInteger(-1);
+  private static AtomicInteger sessionSerialId = new AtomicInteger(-1);
 
-  private final OStorageRemote            delegate;
-  private String                          serverURL;
-  private int                             sessionId;
-  private Set<OChannelBinaryAsynchClient> connections     = new HashSet<OChannelBinaryAsynchClient>();
-  private byte[]                          token;
+  private final OStorageRemote delegate;
+  private String               serverURL;
+  private int                  sessionId;
+  private Set<OChannelBinary>  connections     = new HashSet<OChannelBinary>();
+  private byte[]               token;
 
   public OStorageRemoteThread(final OStorageRemote iSharedStorage) {
     delegate = iSharedStorage;

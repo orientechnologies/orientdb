@@ -73,13 +73,21 @@ public class ORemoteConnectionPool implements OResourcePoolListener<String, OCha
   }
 
   @Override
-  public OChannelBinaryAsynchClient createNewResource(String iKey, Object... iAdditionalArgs) {
+  public OChannelBinaryAsynchClient createNewResource(final String iKey, final Object... iAdditionalArgs) {
     return createNetworkConnection(iKey, (OContextConfiguration) iAdditionalArgs[0], (Map<String, Object>) iAdditionalArgs[1]);
   }
 
   @Override
-  public boolean reuseResource(String iKey, Object[] iAdditionalArgs, OChannelBinaryAsynchClient iValue) {
-    return iValue.isConnected();
+  public boolean reuseResource(final String iKey, final Object[] iAdditionalArgs, final OChannelBinaryAsynchClient iValue) {
+    final boolean canReuse = iValue.isConnected();
+    if (!canReuse)
+      // CANNOT REUSE: CLOSE IT PROPERLY
+      try {
+        iValue.close();
+      } catch (Exception e) {
+        OLogManager.instance().debug(this, "Error on closing socket connection", e);
+      }
+    return canReuse;
   }
 
   public OResourcePool<String, OChannelBinaryAsynchClient> getPool() {

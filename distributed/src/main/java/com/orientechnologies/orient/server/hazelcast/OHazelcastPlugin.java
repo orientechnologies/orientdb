@@ -84,35 +84,35 @@ import java.util.concurrent.locks.Lock;
 public class OHazelcastPlugin extends ODistributedAbstractPlugin
     implements MembershipListener, EntryListener<String, Object>, OCommandOutputListener {
 
-  public static final String                     CONFIG_DATABASE_PREFIX            = "database.";
+  public static final String                           CONFIG_DATABASE_PREFIX            = "database.";
 
-  protected static final String                  NODE_NAME_ENV                     = "ORIENTDB_NODE_NAME";
-  protected static final String                  CONFIG_NODE_PREFIX                = "node.";
-  protected static final String                  CONFIG_DBSTATUS_PREFIX            = "dbstatus.";
-  protected static final String                  CONFIG_REGISTEREDNODES            = "registeredNodes";
-  protected static final int                     DEPLOY_DB_MAX_RETRIES             = 10;
-  public static final String                     REPLICATOR_USER                   = "_CrossServerTempUser";
+  protected static final String                        NODE_NAME_ENV                     = "ORIENTDB_NODE_NAME";
+  protected static final String                        CONFIG_NODE_PREFIX                = "node.";
+  protected static final String                        CONFIG_DBSTATUS_PREFIX            = "dbstatus.";
+  protected static final String                        CONFIG_REGISTEREDNODES            = "registeredNodes";
+  protected static final int                           DEPLOY_DB_MAX_RETRIES             = 10;
+  public static final String                           REPLICATOR_USER                   = "_CrossServerTempUser";
 
-  protected String                               nodeUuid;
-  protected String                               hazelcastConfigFile               = "hazelcast.xml";
-  protected Map<String, Member>                  activeNodes                       = new ConcurrentHashMap<String, Member>();
-  protected List<String>                         registeredNodeById;
-  protected Map<String, Integer>                 registeredNodeByName;
-  protected OHazelcastDistributedMessageService  messageService;
-  protected Date                                 startedOn                         = new Date();
+  protected String                                     nodeUuid;
+  protected String                                     hazelcastConfigFile               = "hazelcast.xml";
+  protected Map<String, Member>                        activeNodes                       = new ConcurrentHashMap<String, Member>();
+  protected List<String>                               registeredNodeById;
+  protected Map<String, Integer>                       registeredNodeByName;
+  protected OHazelcastDistributedMessageService        messageService;
+  protected Date                                       startedOn                         = new Date();
 
-  protected volatile NODE_STATUS                 status                            = NODE_STATUS.OFFLINE;
+  protected volatile NODE_STATUS                       status                            = NODE_STATUS.OFFLINE;
 
-  protected String                               membershipListenerRegistration;
+  protected String                                     membershipListenerRegistration;
 
-  protected volatile HazelcastInstance           hazelcastInstance;
-  protected long                                 lastClusterChangeOn;
-  protected List<ODistributedLifecycleListener>  listeners                         = new ArrayList<ODistributedLifecycleListener>();
-  protected Map<String, ORemoteServerController> remoteServers                     = new ConcurrentHashMap<String, ORemoteServerController>();
-  protected TimerTask                            publishLocalNodeConfigurationTask = null;
+  protected volatile HazelcastInstance                 hazelcastInstance;
+  protected long                                       lastClusterChangeOn;
+  protected List<ODistributedLifecycleListener>        listeners                         = new ArrayList<ODistributedLifecycleListener>();
+  protected final Map<String, ORemoteServerController> remoteServers                     = new ConcurrentHashMap<String, ORemoteServerController>();
+  protected TimerTask                                  publishLocalNodeConfigurationTask = null;
 
   // LOCAL MSG COUNTER
-  protected AtomicLong                           localMessageIdCounter             = new AtomicLong();
+  protected AtomicLong                                 localMessageIdCounter             = new AtomicLong();
 
   public OHazelcastPlugin() {
   }
@@ -149,7 +149,12 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     final String localNodeName = nodeName;
 
     activeNodes.clear();
+
+    // CLOSE ALL CONNECTIONS TO THE SERVERS
+    for (ORemoteServerController server : remoteServers.values())
+      server.close();
     remoteServers.clear();
+
     registeredNodeById = null;
     registeredNodeByName = null;
 
@@ -229,7 +234,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
       // CONNECTS TO ALL THE AVAILABLE NODES
       for (String m : activeNodes.keySet())
-        getRemoteServer(m);
+        if (!m.equals(nodeName))
+          getRemoteServer(m);
 
       messageService = new OHazelcastDistributedMessageService(this);
 
@@ -241,8 +247,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       setNodeStatus(NODE_STATUS.ONLINE);
 
       publishLocalNodeConfiguration();
-
-      getRemoteServer(localNodeName);
 
       final long delay = OGlobalConfiguration.DISTRIBUTED_PUBLISH_NODE_STATUS_EVERY.getValueAsLong();
       if (delay > 0) {
@@ -321,9 +325,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       getConfigurationMap().put(k, DB_STATUS.OFFLINE);
 
     // CLOSE ALL CONNECTIONS TO THE SERVERS
-    for (ORemoteServerController server : remoteServers.values()) {
-      server.close(true);
-    }
+    for (ORemoteServerController server : remoteServers.values())
+      server.close();
+    remoteServers.clear();
 
     if (publishLocalNodeConfigurationTask != null)
       publishLocalNodeConfigurationTask.cancel();
@@ -332,7 +336,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       messageService.shutdown();
 
     activeNodes.clear();
-    remoteServers.clear();
 
     if (membershipListenerRegistration != null) {
       hazelcastInstance.getCluster().removeMembershipListener(membershipListenerRegistration);
@@ -571,7 +574,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       final String userPassword = cfg.field("user_replicator");
 
       remoteServer = new ORemoteServerController(this, url, REPLICATOR_USER, userPassword);
-      remoteServers.put(rNodeName, remoteServer);
+      final ORemoteServerController old = remoteServers.putIfAbsent(rNodeName, remoteServer);
+      if (old != null) {
+        remoteServer.close();
+        remoteServer = old;
+      }
     }
     return remoteServer;
   }
@@ -737,6 +744,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     if (cfg != null)
       return cfg.field("name");
 
+    if (iMember.getUuid().equals(nodeUuid))
+      // LOCAL NODE (NOT YET NAMED)
+      return nodeName;
+
     return "ext:" + iMember.getUuid();
   }
 
@@ -779,9 +790,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     final String nodeLeftName = getNodeName(member);
     if (nodeLeftName != null) {
       // REMOVE INTRA SERVER CONNECTION
-      final ORemoteServerController removed = remoteServers.remove(nodeLeftName);
-      if (removed != null)
-        removed.close(true);
+      closeRemoteServer(nodeLeftName);
 
       // NOTIFY NODE LEFT
       for (ODistributedLifecycleListener l : listeners)
@@ -820,7 +829,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       }
 
       activeNodes.remove(nodeLeftName);
-      remoteServers.remove(nodeLeftName);
 
       // REMOVE NODE IN DB CFG
       if (messageService != null)
@@ -961,7 +969,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Removed node configuration id=%s name=%s",
             iEvent.getMember(), nName);
         activeNodes.remove(nName);
-        remoteServers.remove(nName);
+        closeRemoteServer(nName);
       }
 
       updateLastClusterChange();
@@ -2297,5 +2305,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
   public AtomicLong getLocalMessageIdCounter() {
     return localMessageIdCounter;
+  }
+
+  private void closeRemoteServer(final String node) {
+    final ORemoteServerController c = remoteServers.remove(node);
+    if (c != null)
+      c.close();
   }
 }

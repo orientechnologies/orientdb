@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
@@ -41,13 +42,13 @@ import java.util.Set;
  * Remote administration class of OrientDB Server instances.
  */
 public class OServerAdmin {
-  protected OStorageRemote                storage;
-  private int                             sessionId    = -1;
-  private byte[]                          sessionToken = null;
-  private Set<OChannelBinaryAsynchClient> connections  = new HashSet<OChannelBinaryAsynchClient>();
+  protected OStorageRemote      storage;
+  protected int                 sessionId    = -1;
+  protected byte[]              sessionToken = null;
+  protected Set<OChannelBinary> connections  = new HashSet<OChannelBinary>();
 
-  protected String                        clientType   = OStorageRemote.DRIVER_NAME;
-  protected boolean                       collectStats = true;
+  protected String              clientType   = OStorageRemote.DRIVER_NAME;
+  protected boolean             collectStats = true;
 
   /**
    * Creates the object passing a remote URL to connect. sessionToken

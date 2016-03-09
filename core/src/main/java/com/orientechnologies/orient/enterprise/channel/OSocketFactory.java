@@ -15,26 +15,21 @@
  */
 package com.orientechnologies.orient.enterprise.channel;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.InetAddress;
-import java.net.MalformedURLException;
-import java.net.Socket;
-import java.net.SocketException;
-import java.net.URL;
-import java.net.UnknownHostException;
-import java.security.KeyStore;
-import javax.net.SocketFactory;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManagerFactory;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+
+import javax.net.SocketFactory;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.*;
+import java.security.KeyStore;
 
 public class OSocketFactory {
 
@@ -50,7 +45,7 @@ public class OSocketFactory {
   private String        trustStorePassword = null;
   private String        trustStoreType     = KeyStore.getDefaultType();
 
-  private OSocketFactory(OContextConfiguration iConfig) {
+  private OSocketFactory(final OContextConfiguration iConfig) {
     config = iConfig;
 
     useSSL = iConfig.getValueAsBoolean(OGlobalConfiguration.CLIENT_USE_SSL);

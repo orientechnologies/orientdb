@@ -213,9 +213,12 @@ public class ODistributedWorker extends Thread {
             database.activateOnCurrentThread();
             origin = database.getUser();
             try {
-              if (lastUser == null || !(lastUser.getIdentity()).equals(iRequest.getUserRID()))
+              if (lastUser == null || !(lastUser.getIdentity()).equals(iRequest.getUserRID())) {
                 lastUser = database.getMetadata().getSecurity().getUser(iRequest.getUserRID());
-              database.setUser(lastUser);// set to new user
+                database.setUser(lastUser);// set to new user
+              } else
+                origin = null;
+
             } catch (Throwable ex) {
               OLogManager.instance().error(this, "Failed on user switching " + ex.getMessage());
             }
@@ -249,7 +252,8 @@ public class ODistributedWorker extends Thread {
           if (!database.isClosed()) {
             database.rollback();
             database.getLocalCache().clear();
-            database.setUser(origin);
+            if (origin != null)
+              database.setUser(origin);
           }
         }
       }

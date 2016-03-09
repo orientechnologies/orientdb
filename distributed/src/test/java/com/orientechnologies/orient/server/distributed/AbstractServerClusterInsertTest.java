@@ -36,12 +36,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import org.junit.Assert;
 
 import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * Insert records concurrently against the cluster
@@ -468,8 +463,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
 
       final String name = database.getURL();
 
-      System.out.println("\nReader " + name + " sql count: " + result.get(0) + " counting class: " + database.countClass("Person")
-          + " counting cluster: " + database.countClusterElements("Person"));
+      System.out.println("\nReader " + name + " sql count: " + result.get(0) + " counting class: " + database.countClass("Person"));
 
       if (((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().existsClass("ODistributedConflict"))
         try {
@@ -482,14 +476,15 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
           // IGNORE IT
         }
 
-      result = database.query(new OSQLSynchQuery<OIdentifiable>("select  from Person"));
+      result = database.query(new OSQLSynchQuery<OIdentifiable>("select from Person"));
 
-      Set<Integer> clusters = new HashSet<Integer>();
-      for (ODocument doc : result){
-        clusters.add(doc.getIdentity().getClusterId());
+      Set<String> clusters = new HashSet<String>();
+      for (ODocument doc : result) {
+        clusters.add(
+            "" + doc.getIdentity().getClusterId() + " (" + database.getClusterNameById(doc.getIdentity().getClusterId()) + ")");
       }
 
-      System.out.println("\nReader "+" clusters:"+clusters);
+      System.out.println("\nReader " + name + " clusters: " + clusters);
 
     } finally {
       database.close();

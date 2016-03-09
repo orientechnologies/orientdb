@@ -19,6 +19,18 @@
  */
 package com.orientechnologies.orient.client.remote;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.*;
+import java.util.concurrent.*;
+
+import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.DirContext;
+import javax.naming.directory.InitialDirContext;
+
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
@@ -60,19 +72,9 @@ import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
-
-import javax.naming.NamingException;
-import javax.naming.directory.Attribute;
-import javax.naming.directory.Attributes;
-import javax.naming.directory.DirContext;
-import javax.naming.directory.InitialDirContext;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.*;
-import java.util.concurrent.*;
 
 /**
  * This object is bound to each remote ODatabase instances.
@@ -169,7 +171,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return false;
   }
 
-  public Set<OChannelBinaryAsynchClient> getSessionConnections() {
+  public Set<OChannelBinary> getSessionConnections() {
     final OStorageRemoteThreadLocal instance = OStorageRemoteThreadLocal.INSTANCE;
     return instance != null ? instance.get().connections : null;
   }
@@ -203,8 +205,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     }
   }
 
-  public void pushSessionId(final String iServerURL, final int iSessionId, byte[] token,
-      Set<OChannelBinaryAsynchClient> connections) {
+  public void pushSessionId(final String iServerURL, final int iSessionId, byte[] token, Set<OChannelBinary> connections) {
     final OStorageRemoteThreadLocal instance = OStorageRemoteThreadLocal.INSTANCE;
     if (instance != null) {
       final OStorageRemoteSession tl = instance.get();
@@ -1842,7 +1843,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return openRemoteDatabase(currentURL);
   }
 
-  protected void openRemoteDatabase(OChannelBinaryAsynchClient network) throws IOException {
+  public void openRemoteDatabase(OChannelBinaryAsynchClient network) throws IOException {
     stateLock.acquireWriteLock();
     try {
 
@@ -2160,7 +2161,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     }
   }
 
-  protected OChannelBinaryAsynchClient getAvailableNetwork(final String iCurrentURL) throws IOException {
+  public OChannelBinaryAsynchClient getAvailableNetwork(final String iCurrentURL) throws IOException {
     OChannelBinaryAsynchClient network;
 
     String lastURL = iCurrentURL;
