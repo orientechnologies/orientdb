@@ -221,7 +221,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
   /**
    * Opens connection to the storage with given user and password.
-   * <p>
+   * <p/>
    * But we do suggest {@link com.orientechnologies.orient.core.db.OPartitionedDatabasePool#acquire()} instead. It will make work
    * faster even with embedded database.
    *
@@ -1815,22 +1815,54 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     }
   }
 
-  public <RET extends ORecord> RET executeSaveEmptyRecord(ORecord record, String clusterName) {
-    boolean isNew = record.getIdentity().isNew();
+  public int assignAndCheckCluster(ORecord record, String iClusterName) {
     ORecordId rid = (ORecordId) record.getIdentity();
+    //if provided a cluster name use it.
+    if (rid.clusterId <= ORID.CLUSTER_POS_INVALID && iClusterName != null) {
+      rid.clusterId = getClusterIdByName(iClusterName);
+      if (rid.clusterId == -1)
+        throw new IllegalArgumentException("Cluster name '" + iClusterName + "' is not configured");
+
+    }
+    OClass schemaClass= null;
+    //if cluster id is not set yet try to find it out
+    if (rid.getClusterId() <= ORID.CLUSTER_ID_INVALID && storage.isAssigningClusterIds()) {
+      if (record instanceof ODocument) {
+        schemaClass = ODocumentInternal.getImmutableSchemaClass(((ODocument) record));
+        if (schemaClass!= null) {
+          if (schemaClass.isAbstract())
+            throw new OSchemaException("Document belongs to abstract class " + schemaClass.getName() + " and cannot be saved");
+          rid.clusterId = schemaClass.getClusterForNewInstance((ODocument) record);
+        }else
+          rid.clusterId = getDefaultClusterId();
+      }
+      else rid.clusterId = getDefaultClusterId();
+    } else if (record instanceof ODocument)
+      schemaClass = ODocumentInternal.getImmutableSchemaClass(((ODocument) record));
+    //If the cluster id was set check is validity
+    if (rid.getClusterId() > ORID.CLUSTER_ID_INVALID) {
+      if (schemaClass != null) {
+        String messageClusterName = getClusterNameById(rid.getClusterId());
+        checkRecordClass(schemaClass, messageClusterName, rid);
+        if (!schemaClass.hasClusterId(rid.getClusterId())) {
+          throw new IllegalArgumentException(
+              "Cluster name '" + messageClusterName + "' (id=" + rid.getClusterId() + ") is not configured to store the class '"
+                  + schemaClass.getName() + "', valid are " + Arrays.toString(schemaClass.getClusterIds()));
+        }
+      }
+    }
+    return rid.getClusterId();
+  }
+
+  public <RET extends ORecord> RET executeSaveEmptyRecord(ORecord record, String clusterName) {
+    ORecordId rid = (ORecordId) record.getIdentity();
+    assert rid.isNew();
 
     ORecordInternal.onBeforeIdentityChanged(record);
+    int id = assignAndCheckCluster(record, clusterName);
+    clusterName = getClusterNameById(id);
+    checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_CREATE, clusterName);
 
-    if (isNew && rid.clusterId < 0 && storage.isAssigningClusterIds())
-      rid.clusterId = clusterName != null ? getClusterIdByName(clusterName) : getDefaultClusterId();
-
-    if (rid.clusterId > -1 && clusterName == null)
-      clusterName = getClusterNameById(rid.clusterId);
-
-    if (storage.isAssigningClusterIds())
-      checkRecordClass(record, clusterName, rid, isNew);
-
-    checkSecurity(ORule.ResourceGeneric.CLUSTER, isNew ? ORole.PERMISSION_CREATE : ORole.PERMISSION_UPDATE, clusterName);
     byte[] content = getSerializer().writeClassOnly(record);
 
     final OStorageOperationResult<OPhysicalPosition> ppos = storage
@@ -1864,18 +1896,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
     record.setInternalStatus(ORecordElement.STATUS.MARSHALLING);
     try {
-      final boolean wasNew = forceCreate || rid.isNew();
-
-      if (wasNew && rid.clusterId == -1 && (clusterName != null || storage.isAssigningClusterIds())) {
-        // ASSIGN THE CLUSTER ID
-        if (clusterName != null)
-          rid.clusterId = getClusterIdByName(clusterName);
-        else if (record instanceof ODocument && ODocumentInternal.getImmutableSchemaClass(((ODocument) record)) != null)
-          rid.clusterId = ODocumentInternal.getImmutableSchemaClass(((ODocument) record))
-              .getClusterForNewInstance((ODocument) record);
-        else
-          getDefaultClusterId();
-      }
 
       byte[] stream = null;
       final OStorageOperationResult<Integer> operationResult;
@@ -1884,27 +1904,23 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       if (record instanceof ODocument)
         ODocumentInternal.checkClass((ODocument) record, this);
       ORecordSerializationContext.pushContext();
+      final boolean isNew = forceCreate || rid.isNew();
       try {
-        // STREAM.LENGTH == 0 -> RECORD IN STACK: WILL BE SAVED AFTER
-        stream = record.toStream();
 
-        final boolean isNew = forceCreate || rid.isNew();
-        if (isNew)
+        final ORecordHook.TYPE triggerType;
+        if (isNew) {
           // NOTIFY IDENTITY HAS CHANGED
           ORecordInternal.onBeforeIdentityChanged(record);
-
-        if (isNew && rid.clusterId < 0 && storage.isAssigningClusterIds())
-          rid.clusterId = clusterName != null ? getClusterIdByName(clusterName) : getDefaultClusterId();
-
-        if (rid.clusterId > -1 && clusterName == null)
-          clusterName = getClusterNameById(rid.clusterId);
-
-        if (storage.isAssigningClusterIds())
-          checkRecordClass(record, clusterName, rid, isNew);
-
-        checkSecurity(ORule.ResourceGeneric.CLUSTER, wasNew ? ORole.PERMISSION_CREATE : ORole.PERMISSION_UPDATE, clusterName);
-
-        final ORecordHook.TYPE triggerType = wasNew ? ORecordHook.TYPE.BEFORE_CREATE : ORecordHook.TYPE.BEFORE_UPDATE;
+          int id = assignAndCheckCluster(record, clusterName);
+          clusterName = getClusterNameById(id);
+          checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_CREATE, clusterName);
+          triggerType = ORecordHook.TYPE.BEFORE_CREATE;
+        } else {
+          clusterName = getClusterNameById(record.getIdentity().getClusterId());
+          checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_UPDATE, clusterName);
+          triggerType = ORecordHook.TYPE.BEFORE_UPDATE;
+        }
+        stream = record.toStream();
 
         final ORecordHook.RESULT hookResult = callbackHooks(triggerType, record);
 
@@ -1955,13 +1971,13 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
           ORecordInternal.fill(record, rid, version, stream, false);
 
-          callbackHookSuccess(record, wasNew, stream, operationResult);
+          callbackHookSuccess(record, isNew, stream, operationResult);
         } catch (Exception t) {
-          callbackHookFailure(record, wasNew, stream);
+          callbackHookFailure(record, isNew, stream);
           throw t;
         }
       } finally {
-        callbackHookFinalize(record, wasNew, stream);
+        callbackHookFinalize(record, isNew, stream);
         ORecordSerializationContext.pullContext();
         getMetadata().clearThreadLocalSchemaSnapshot();
         ORecordSaveThreadLocal.removeLast();
@@ -2303,7 +2319,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    * transaction will continue to see the record as modified, while others not. If a Pessimistic transaction is running, then an
    * exclusive lock is acquired against the record. Current transaction will continue to see the record as modified, while others
    * cannot access to it since it's locked.
-   * <p>
+   * <p/>
    * If MVCC is enabled and the version of the document is different by the version stored in the database, then a
    * {@link OConcurrentModificationException} exception is thrown.Before to save the document it must be valid following the
    * constraints declared in the schema if any (can work also in schema-less mode). To validate the document the
@@ -2326,7 +2342,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    * transaction will continue to see the record as modified, while others not. If a Pessimistic transaction is running, then an
    * exclusive lock is acquired against the record. Current transaction will continue to see the record as modified, while others
    * cannot access to it since it's locked.
-   * <p>
+   * <p/>
    * If MVCC is enabled and the version of the document is different by the version stored in the database, then a
    * {@link OConcurrentModificationException} exception is thrown.Before to save the document it must be valid following the
    * constraints declared in the schema if any (can work also in schema-less mode). To validate the document the
@@ -2353,7 +2369,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    * changed at commit time. The current transaction will continue to see the record as modified, while others not. If a Pessimistic
    * transaction is running, then an exclusive lock is acquired against the record. Current transaction will continue to see the
    * record as modified, while others cannot access to it since it's locked.
-   * <p>
+   * <p/>
    * If MVCC is enabled and the version of the document is different by the version stored in the database, then a
    * {@link OConcurrentModificationException} exception is thrown. Before to save the document it must be valid following the
    * constraints declared in the schema if any (can work also in schema-less mode). To validate the document the
@@ -2377,7 +2393,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    * changed at commit time. The current transaction will continue to see the record as modified, while others not. If a Pessimistic
    * transaction is running, then an exclusive lock is acquired against the record. Current transaction will continue to see the
    * record as modified, while others cannot access to it since it's locked.
-   * <p>
+   * <p/>
    * If MVCC is enabled and the version of the document is different by the version stored in the database, then a
    * {@link OConcurrentModificationException} exception is thrown. Before to save the document it must be valid following the
    * constraints declared in the schema if any (can work also in schema-less mode). To validate the document the
@@ -2414,40 +2430,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       if (doc.getClassName() != null)
         checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_CREATE, doc.getClassName());
 
-      final OClass schemaClass = ODocumentInternal.getImmutableSchemaClass(doc);
-
-      int clusterId = iRecord.getIdentity().getClusterId();
-      if (clusterId == ORID.CLUSTER_ID_INVALID) {
-        // COMPUTE THE CLUSTER ID
-        if (iClusterName == null) {
-          if (storage.isAssigningClusterIds()) {
-            if (schemaClass != null) {
-              // FIND THE RIGHT CLUSTER AS CONFIGURED IN CLASS
-              if (schemaClass.isAbstract())
-                throw new OSchemaException("Document belongs to abstract class " + schemaClass.getName() + " and cannot be saved");
-              clusterId = schemaClass.getClusterForNewInstance(doc);
-              iClusterName = getClusterNameById(clusterId);
-            } else {
-              clusterId = storage.getDefaultClusterId();
-              iClusterName = getClusterNameById(clusterId);
-            }
-          }
-        } else {
-          clusterId = getClusterIdByName(iClusterName);
-          if (clusterId == -1)
-            throw new IllegalArgumentException("Cluster name '" + iClusterName + "' is not configured");
-        }
-      }
-
-      // CHECK IF THE CLUSTER IS PART OF THE CONFIGURED CLUSTERS
-      if (schemaClass != null && clusterId > -1 && !schemaClass.hasClusterId(clusterId)) {
-        throw new IllegalArgumentException(
-            "Cluster name '" + iClusterName + "' (id=" + clusterId + ") is not configured to store the class '" + doc.getClassName()
-                + "', valid are " + Arrays.toString(schemaClass.getClusterIds()));
-      }
-
-      // SET BACK THE CLUSTER ID
-      ((ORecordId) iRecord.getIdentity()).clusterId = clusterId;
+      assignAndCheckCluster(doc, iClusterName);
 
     } else {
       // UPDATE: CHECK ACCESS ON SCHEMA CLASS NAME (IF ANY)
@@ -2467,7 +2450,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    * transaction will continue to see the record as deleted, while others not. If a Pessimistic transaction is running, then an
    * exclusive lock is acquired against the record. Current transaction will continue to see the record as deleted, while others
    * cannot access to it since it's locked.
-   * <p>
+   * <p/>
    * If MVCC is enabled and the version of the document is different by the version stored in the database, then a
    * {@link OConcurrentModificationException} exception is thrown.
    *
@@ -2984,14 +2967,12 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     }
   }
 
-  private void checkRecordClass(final ORecord record, final String iClusterName, final ORecordId rid, final boolean isNew) {
-    if (rid.clusterId > -1 && getStorageVersions().classesAreDetectedByClusterId() && isNew && record instanceof ODocument) {
-      final ODocument recordSchemaAware = (ODocument) record;
-      final OClass recordClass = ODocumentInternal.getImmutableSchemaClass(recordSchemaAware);
+  private void checkRecordClass(final OClass recordClass, final String iClusterName, final ORecordId rid) {
+    if (getStorageVersions().classesAreDetectedByClusterId()) {
       final OClass clusterIdClass = metadata.getImmutableSchemaSnapshot().getClassByClusterId(rid.clusterId);
       if (recordClass == null && clusterIdClass != null || clusterIdClass == null && recordClass != null || (recordClass != null
           && !recordClass.equals(clusterIdClass)))
-        throw new OSchemaException("Record saved into cluster '" + iClusterName + "' should be saved with class '" + clusterIdClass
+        throw new IllegalArgumentException("Record saved into cluster '" + iClusterName + "' should be saved with class '" + clusterIdClass
             + "' but has been created with class '" + recordClass + "'");
     }
   }

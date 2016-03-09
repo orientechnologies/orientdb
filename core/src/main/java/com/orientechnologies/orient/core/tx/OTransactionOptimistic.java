@@ -455,22 +455,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
         if (!rid.isValid()) {
           ORecordInternal.onBeforeIdentityChanged(iRecord);
-          if (database.getStorage().isAssigningClusterIds() || iClusterName != null) {
-            // ASSIGN A UNIQUE SERIAL TEMPORARY ID
-            if (rid.clusterId == ORID.CLUSTER_ID_INVALID)
-              rid.clusterId = iClusterName != null ? database.getClusterIdByName(iClusterName) : database.getDefaultClusterId();
-
-            if (database.getStorageVersions().classesAreDetectedByClusterId() && iRecord instanceof ODocument) {
-              final ODocument recordSchemaAware = (ODocument) iRecord;
-              final OClass recordClass = ODocumentInternal.getImmutableSchemaClass(recordSchemaAware);
-              final OClass clusterIdClass = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot()
-                  .getClassByClusterId(rid.clusterId);
-              if (recordClass == null && clusterIdClass != null || clusterIdClass == null && recordClass != null
-                  || (recordClass != null && !recordClass.equals(clusterIdClass)))
-                throw new OSchemaException("Record saved into cluster " + iClusterName + " should be saved with class "
-                    + clusterIdClass + " but saved with class " + recordClass);
-            }
-          }
+          database.assignAndCheckCluster(iRecord, iClusterName);
 
           rid.clusterPosition = newObjectCounter--;
 

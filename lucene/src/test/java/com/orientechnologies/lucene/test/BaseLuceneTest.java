@@ -34,6 +34,7 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Field;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by enricorisa on 19/09/14.
@@ -123,23 +124,31 @@ public abstract class BaseLuceneTest {
     else
       url = OEngineMemory.NAME + ":" + getDatabaseName();
 
-    databaseDocumentTx = new ODatabaseDocumentTx(url);
 
-    if (databaseDocumentTx.exists()) {
-      databaseDocumentTx.open("admin", "admin");
+    databaseDocumentTx = dropOrCreate(url, drop);
+    //    }
+  }
+
+  protected ODatabaseDocumentTx dropOrCreate(String url, boolean drop) {
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
+    if (db.exists()) {
+      db.open("admin", "admin");
       if (drop) {
         // DROP AND RE-CREATE IT
-        databaseDocumentTx.drop();
-        databaseDocumentTx = new ODatabaseDocumentTx(url);
-        databaseDocumentTx.create();
+        db.drop();
+        db = new ODatabaseDocumentTx(url);
+        db.create();
       }
     } else {
       // CREATE IT
-      databaseDocumentTx = new ODatabaseDocumentTx(url);
-      databaseDocumentTx.create();
+      db = new ODatabaseDocumentTx(url);
+      db.create();
+
     }
-    databaseDocumentTx.activateOnCurrentThread();
-    //    }
+
+    db.activateOnCurrentThread();
+
+    return db;
   }
 
   protected final String getDatabaseName() {

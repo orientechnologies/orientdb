@@ -464,6 +464,11 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       return;
     }
 
+    if(currentDatabase.getStorage().isRemote()){
+      message("\nWARNING - Transactions are not supported from console in remote, please use an sql script: \neg.\n\nscript sql\nbegin;\n<your commands here>\ncommit;\nend\n\n");
+      return;
+    }
+
     currentDatabase.begin();
     message("\nTransaction " + currentDatabase.getTransaction().getId() + " is running");
   }
@@ -477,6 +482,10 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       return;
     }
 
+    if(currentDatabase.getStorage().isRemote()){
+      message("\nWARNING - Transactions are not supported from console in remote, please use an sql script: \neg.\n\nscript sql\nbegin;\n<your commands here>\ncommit;\nend\n\n");
+      return;
+    }
     final long begin = System.currentTimeMillis();
 
     final int txId = currentDatabase.getTransaction().getId();
@@ -491,6 +500,11 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     if (!currentDatabase.getTransaction().isActive()) {
       message("\nError: no active transaction is running right now.");
+      return;
+    }
+
+    if(currentDatabase.getStorage().isRemote()){
+      message("\nWARNING - Transactions are not supported from console in remote, please use an sql script: \neg.\n\nscript sql\nbegin;\n<your commands here>\ncommit;\nend\n\n");
       return;
     }
 

@@ -98,6 +98,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
       String temp = parseOptionalWord(true);
       String originalTemp = null;
 
+      int limit = -1;
       if (temp != null && !parserIsEnded())
         originalTemp = parserText.substring(parserGetPreviousPosition(), parserGetCurrentPosition()).trim();
 
