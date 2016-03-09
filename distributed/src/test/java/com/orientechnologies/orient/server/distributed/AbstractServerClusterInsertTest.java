@@ -35,10 +35,7 @@ import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import org.junit.Assert;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -113,6 +110,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
               Thread.currentThread().interrupt();
               break;
             } catch (ORecordDuplicatedException e) {
+              System.out.println("Writer received exception (db=" + database.getURL());
               // IGNORE IT
             } catch (ONeedRetryException e) {
               System.out.println("Writer received exception (db=" + database.getURL());
@@ -483,6 +481,15 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
         } catch (OQueryParsingException e) {
           // IGNORE IT
         }
+
+      result = database.query(new OSQLSynchQuery<OIdentifiable>("select  from Person"));
+
+      Set<Integer> clusters = new HashSet<Integer>();
+      for (ODocument doc : result){
+        clusters.add(doc.getIdentity().getClusterId());
+      }
+
+      System.out.println("\nReader "+" clusters:"+clusters);
 
     } finally {
       database.close();

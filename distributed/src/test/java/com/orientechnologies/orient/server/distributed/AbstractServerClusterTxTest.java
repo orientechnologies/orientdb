@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 
+import java.util.*;
 import java.util.concurrent.Callable;
 
 /**
@@ -44,7 +45,8 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
     @Override
     public Void call() throws Exception {
       final String name = Integer.toString(threadId);
-
+      Set<Integer> clusters = new LinkedHashSet<Integer>();
+      Set<String> clusterNames = new LinkedHashSet<String>();
       for (int i = 0; i < count; i++) {
         final ODatabaseDocumentTx database = poolFactory.get(databaseUrl, "admin", "admin").acquire();
 
@@ -67,7 +69,6 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
               checkRecord(database, person);
               deleteRecord(database, person);
               checkRecordIsDeleted(database, person);
-
               person = createRecord(database, id);
               updateRecord(database, person);
               checkRecord(database, person);
@@ -77,6 +78,8 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
 
               if (delayWriter > 0)
                 Thread.sleep(delayWriter);
+              clusters.add(person.getIdentity().getClusterId());
+              clusterNames.add(database.getClusterNameById(person.getIdentity().getClusterId()));
 
               // OK
               break;
@@ -117,7 +120,8 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
         }
       }
 
-      System.out.println("\nWriter " + name + " END");
+
+      System.out.println("\nWriter " + name + " END" + " clusters:"+clusters + " names " +clusterNames);
       return null;
     }
 
