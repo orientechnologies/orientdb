@@ -269,6 +269,7 @@ public final class OrientVertex extends OrientElement implements Vertex {
 
         return streamVertices.stream()
                 .flatMap(edges -> edges.stream())
+                .filter(oId -> oId != null)
                 .map(oIdentifiable -> new OrientEdge(graph, oIdentifiable.getRecord()))
                 .map(edge -> (Edge) edge)
                 .iterator();
