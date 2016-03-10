@@ -1755,6 +1755,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
             }
           } catch (Exception e) {
+            if(exceptions[current] == null){
+              exceptions[current] = new RuntimeException(e);
+            }
             e.printStackTrace();
           }
         }
