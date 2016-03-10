@@ -3,8 +3,7 @@
   "hotAlignment": false,
   "executionMode": "undefined",
   "readQuorum": 1,
-  "writeQuorum": 2,
-  "failureAvailableNodesLessQuorum": false,
+  "writeQuorum": "majority",
   "readYourWrites": true,
   "servers": {
     "*": "master"

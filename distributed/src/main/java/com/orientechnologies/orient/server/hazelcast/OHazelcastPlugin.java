@@ -19,6 +19,17 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
+import java.io.*;
+import java.security.SecureRandom;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+
 import com.hazelcast.config.FileSystemXmlConfig;
 import com.hazelcast.core.*;
 import com.orientechnologies.common.collection.OMultiValue;
@@ -65,17 +76,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIR
 import com.orientechnologies.orient.server.distributed.sql.OCommandExecutorSQLSyncCluster;
 import com.orientechnologies.orient.server.distributed.task.*;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
-
-import java.io.*;
-import java.security.SecureRandom;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
 
 /**
  * Hazelcast implementation for clustering.
@@ -2135,7 +2135,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   private synchronized boolean assignLocalClusters(final ODatabaseInternal iDatabase, final ODistributedConfiguration cfg,
       final String iClusterName) {
     if (iClusterName.endsWith("_" + nodeName)) {
-      final String bestCluster = cfg.getLeaderServer(iClusterName);
+      final String bestCluster = cfg.getMasterServer(iClusterName);
       if (bestCluster == null) {
         // ASSIGN IT TO THE LOCAL NODE
         ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE,
@@ -2180,7 +2180,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         // TRY TO AUTO ASSIGN ANY CLUSTER WHERE THE LEADER IS OFFLINE, AVOIDING TO CREATE A NEW ONE, IF POSSIBLE
         final Set<String> clustersManagedOnLocalNode = cfg.getClustersOnServer(nodeName);
         for (String cl : clustersManagedOnLocalNode) {
-          final String leaderNode = cfg.getLeaderServer(cl);
+          final String leaderNode = cfg.getMasterServer(cl);
           if (!isNodeAvailable(leaderNode, iDatabase.getName())) {
 
             // ASSIGN CLUSTER WHERE LEADER IS OFFLINE

@@ -3,7 +3,6 @@
     "hotAlignment": true,
     "readQuorum": 1,
     "writeQuorum": 1,
-    "failureAvailableNodesLessQuorum": false,
     "readYourWrites": true,
     "clusters": {
         "internal": {

@@ -105,15 +105,15 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
     iRequest.setSenderNodeId(manager.getLocalNodeId());
 
-    final int onlineNodes = manager.getAvailableNodes(iNodes, databaseName);
+    final int availableNodes = manager.getAvailableNodes(iNodes, databaseName);
 
-    final int quorum = calculateQuorum(iRequest, iClusterNames, cfg, onlineNodes, iExecutionMode, quorumOffset);
+    final int quorum = calculateQuorum(iRequest, iClusterNames, cfg, availableNodes, iExecutionMode, quorumOffset);
 
-    int expectedSynchronousResponses = onlineNodes;
+    int expectedSynchronousResponses = availableNodes;
 
     final boolean groupByResponse;
     if (iRequest.getTask().getResultStrategy() == OAbstractRemoteTask.RESULT_STRATEGY.UNION) {
-      expectedSynchronousResponses = onlineNodes;
+      expectedSynchronousResponses = availableNodes;
       groupByResponse = false;
     } else {
       groupByResponse = true;
@@ -124,7 +124,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     // CREATE THE RESPONSE MANAGER
     final ODistributedResponseManager currentResponseMgr = new ODistributedResponseManager(manager, iRequest, iNodes,
         expectedSynchronousResponses, quorum, waitLocalNode, iRequest.getTask().getSynchronousTimeout(expectedSynchronousResponses),
-        iRequest.getTask().getTotalTimeout(onlineNodes), groupByResponse);
+        iRequest.getTask().getTotalTimeout(availableNodes), groupByResponse);
 
     Collections.sort(iNodes);
 
@@ -289,10 +289,10 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
   }
 
   protected int calculateQuorum(final ODistributedRequest iRequest, final Collection<String> clusterNames,
-      final ODistributedConfiguration cfg, final int iAvailableNodes, final ODistributedRequest.EXECUTION_MODE iExecutionMode,
+      final ODistributedConfiguration cfg, final int availableNodes, final ODistributedRequest.EXECUTION_MODE iExecutionMode,
       final int quorumOffset) {
 
-    if (iAvailableNodes == 0 && iExecutionMode == ODistributedRequest.EXECUTION_MODE.RESPONSE)
+    if (availableNodes == 0 && iExecutionMode == ODistributedRequest.EXECUTION_MODE.RESPONSE)
       throw new ODistributedException("Quorum cannot be reached because there are no nodes available");
 
     final String clusterName = clusterNames == null || clusterNames.isEmpty() ? null : clusterNames.iterator().next();
@@ -306,33 +306,26 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       // IGNORE IT
       break;
     case READ:
-      quorum = cfg.getReadQuorum(clusterName);
+      quorum = cfg.getReadQuorum(clusterName, availableNodes);
       break;
     case WRITE:
-      quorum = cfg.getWriteQuorum(clusterName);
+      quorum = cfg.getWriteQuorum(clusterName, availableNodes);
       break;
     case ALL:
-      quorum = iAvailableNodes;
+      quorum = availableNodes;
       break;
     }
 
-    if (quorum > iAvailableNodes) {
-      final boolean failureAvailableNodesLessQuorum = cfg.getFailureAvailableNodesLessQuorum(clusterName);
-      if (failureAvailableNodesLessQuorum)
-        throw new ODistributedException(
-            "Quorum cannot be reached because it is major than available nodes and failureAvailableNodesLessQuorum=true");
-      else {
-        // SET THE QUORUM TO THE AVAILABLE NODE SIZE
-        ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
-            "quorum less then available nodes, downgrade quorum to %d", iAvailableNodes);
-        quorum = iAvailableNodes;
-      }
-    }
+    final int originalQuorum = quorum;
 
     // CHECK THE QUORUM OFFSET IF ANY
     quorum -= quorumOffset;
     if (quorum < 0)
       quorum = 0;
+
+    if (quorum > availableNodes)
+      throw new ODistributedException(
+          "Quorum (" + originalQuorum + ") cannot be reached because it is major than available nodes (" + availableNodes + ")");
 
     return quorum;
   }
@@ -403,7 +396,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       for (String c : cfg.getClusterNames()) {
         if (c.endsWith(suffix2Search)) {
           // FOUND: ASSIGN TO LOCAL NODE
-          final String currentMaster = cfg.getLeaderServer(c);
+          final String currentMaster = cfg.getMasterServer(c);
 
           if (!getLocalNodeName().equals(currentMaster)) {
             ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE,

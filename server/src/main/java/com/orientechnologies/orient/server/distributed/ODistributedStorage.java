@@ -428,14 +428,16 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       final Collection<String> involvedClusters, final Collection<String> nodes) {
     boolean executeLocally = false;
     if (exec.isIdempotent()) {
+      final int availableNodes = dManager.getAvailableNodes(nodes, getName());
+
       // IDEMPOTENT: CHECK IF CAN WORK LOCALLY ONLY
       int maxReadQuorum;
       if (involvedClusters.isEmpty())
-        maxReadQuorum = dbCfg.getReadQuorum(null);
+        maxReadQuorum = dbCfg.getReadQuorum(null, availableNodes);
       else {
         maxReadQuorum = 0;
         for (String cl : involvedClusters)
-          maxReadQuorum = Math.max(maxReadQuorum, dbCfg.getReadQuorum(cl));
+          maxReadQuorum = Math.max(maxReadQuorum, dbCfg.getReadQuorum(cl, availableNodes));
       }
 
       if (nodes.size() == 1 && nodes.iterator().next().equals(localNodeName) && maxReadQuorum <= 1)
@@ -612,8 +614,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(getName());
       final List<String> nodes = dbCfg.getServers(clusterName, null);
 
+      final int availableNodes = dManager.getAvailableNodes(nodes, getName());
+
       // CHECK IF LOCAL NODE OWNS THE DATA AND READ-QUORUM = 1: GET IT LOCALLY BECAUSE IT'S FASTER
-      if (nodes.isEmpty() || nodes.contains(dManager.getLocalNodeName()) && dbCfg.getReadQuorum(clusterName) <= 1) {
+      if (nodes.isEmpty() || nodes.contains(dManager.getLocalNodeName()) && dbCfg.getReadQuorum(clusterName, availableNodes) <= 1) {
         // DON'T REPLICATE
         return (OStorageOperationResult<ORawBuffer>) ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
           @Override
@@ -658,8 +662,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(getName());
       final List<String> nodes = dbCfg.getServers(clusterName, null);
 
+      final int availableNodes = dManager.getAvailableNodes(nodes, getName());
+
       // CHECK IF LOCAL NODE OWNS THE DATA AND READ-QUORUM = 1: GET IT LOCALLY BECAUSE IT'S FASTER
-      if (nodes.isEmpty() || nodes.contains(dManager.getLocalNodeName()) && dbCfg.getReadQuorum(clusterName) <= 1) {
+      if (nodes.isEmpty() || nodes.contains(dManager.getLocalNodeName()) && dbCfg.getReadQuorum(clusterName, availableNodes) <= 1) {
         // DON'T REPLICATE
         return (OStorageOperationResult<ORawBuffer>) ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
           @Override

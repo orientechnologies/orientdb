@@ -41,14 +41,15 @@ import java.util.concurrent.atomic.AtomicLong;
  * 
  */
 public class OLocalClusterStrategy implements OClusterSelectionStrategy {
-  public final static String                NAME           = "local";
-  protected final OClass                    cls;
-  protected final ODistributedServerManager manager;
-  protected final String                    nodeName;
-  protected final String                    databaseName;
-  protected List<Integer>                   bestClusterIds = new ArrayList<Integer>(5);
-  private AtomicLong                        pointer        = new AtomicLong(0);
-  private int                               lastVersion    = -1;
+  public final static String              NAME           = "local";
+
+  private OClass                          cls;
+  private final ODistributedServerManager manager;
+  private final String                    nodeName;
+  private final String                    databaseName;
+  private final List<Integer>             bestClusterIds = new ArrayList<Integer>(5);
+  private final AtomicLong                pointer        = new AtomicLong(0);
+  private int                             lastVersion    = -1;
 
   public OLocalClusterStrategy(final ODistributedServerManager iManager, final String iDatabaseName, final OClass iClass) {
     this.manager = iManager;
@@ -71,6 +72,9 @@ public class OLocalClusterStrategy implements OClusterSelectionStrategy {
         readConfiguration();
       }
     }
+
+    if (bestClusterIds.isEmpty())
+      return -1;
 
     if (bestClusterIds.size() == 1)
       // ONLY ONE: RETURN THE FIRST ONE

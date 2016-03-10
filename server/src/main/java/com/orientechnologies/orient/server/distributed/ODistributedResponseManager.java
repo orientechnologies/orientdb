@@ -19,6 +19,12 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
@@ -30,12 +36,6 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedT
 import com.orientechnologies.orient.server.distributed.task.OCreateRecordTask;
 import com.orientechnologies.orient.server.distributed.task.ODeleteRecordTask;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
-
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Asynchronous response manager
@@ -170,7 +170,7 @@ public class ODistributedResponseManager {
 
       completed = getExpectedResponses() == receivedResponses;
 
-      if (completed || isMinimumQuorumReached(false)) {
+      if (completed || isMinimumQuorumReached()) {
         // NOTIFY TO THE WAITER THE RESPONSE IS COMPLETE NOW
         notifyWaiters();
       }
@@ -244,12 +244,12 @@ public class ODistributedResponseManager {
     try {
 
       long currentTimeout = synchTimeout;
-      while (currentTimeout > 0 && !isMinimumQuorumReached(false) && receivedResponses < expectedSynchronousResponses) {
+      while (currentTimeout > 0 && !isMinimumQuorumReached() && receivedResponses < expectedSynchronousResponses) {
 
         // WAIT FOR THE RESPONSES
         synchronousResponsesArrived.await(currentTimeout, TimeUnit.MILLISECONDS);
 
-        if (isMinimumQuorumReached(false) || receivedResponses >= expectedSynchronousResponses)
+        if (isMinimumQuorumReached() || receivedResponses >= expectedSynchronousResponses)
           // OK
           return true;
 
@@ -317,7 +317,7 @@ public class ODistributedResponseManager {
         }
       }
 
-      return isMinimumQuorumReached(false) || receivedResponses >= expectedSynchronousResponses;
+      return isMinimumQuorumReached() || receivedResponses >= expectedSynchronousResponses;
 
     } finally {
       synchronousResponsesLock.unlock();
@@ -490,7 +490,7 @@ public class ODistributedResponseManager {
     return bestGroupSoFar;
   }
 
-  protected boolean isMinimumQuorumReached(final boolean iCheckAvailableNodes) {
+  protected boolean isMinimumQuorumReached() {
     if (isWaitForLocalNode() && !isReceivedCurrentNode()) {
       return false;
     }
@@ -504,25 +504,6 @@ public class ODistributedResponseManager {
     for (List<ODistributedResponse> group : responseGroups)
       if (group.size() + discardedResponses >= quorum)
         return true;
-
-    if (receivedResponses < quorum && iCheckAvailableNodes) {
-      final ODistributedConfiguration dbConfig = dManager.getDatabaseConfiguration(getDatabaseName());
-      if (!dbConfig.getFailureAvailableNodesLessQuorum("*")) {
-        // CHECK IF ANY NODE IS OFFLINE
-        int onlineNodes = 0;
-        for (Map.Entry<String, Object> r : responses.entrySet()) {
-          if (dManager.isNodeOnline(r.getKey(), getDatabaseName()))
-            onlineNodes++;
-        }
-
-        if (onlineNodes < quorum) {
-          ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
-              "overridden quorum (%d) for request (%s) because available nodes (%d) are less than quorum, received responses: %s",
-              quorum, request, onlineNodes, responses);
-          return true;
-        }
-      }
-    }
 
     return false;
   }
@@ -553,7 +534,7 @@ public class ODistributedResponseManager {
     final int maxCoherentResponses = bestResponsesGroup.size();
     final int conflicts = getExpectedResponses() - (maxCoherentResponses + discardedResponses);
 
-    if (isMinimumQuorumReached(true)) {
+    if (isMinimumQuorumReached()) {
       // QUORUM SATISFIED
 
       if (responseGroups.size() == 1)
