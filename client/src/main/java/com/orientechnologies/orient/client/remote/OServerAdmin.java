@@ -682,40 +682,18 @@ public class OServerAdmin {
   }
 
   protected <T> T networkAdminOperation(final OStorageRemoteOperation<T> operation, final String errorMessage) {
-    Exception lastException = null;
-    for (int retry = 0; retry < 2; ++retry) {
-      OChannelBinaryAsynchClient network = null;
+
+      OChannelBinaryAsynchClient network=null;
       try {
-        storage.pushSessionId(getURL(), sessionId, sessionToken, connections);
-        // TODO:replace this api with one that get connection for only the specified url.
+        storage.pushSessionId(getURL(),sessionId,sessionToken,connections);
+        //TODO:replace this api with one that get connection for only the specified url.
         network = storage.getAvailableNetwork(getURL());
-
-        // In case i do not have a token or i'm switching between server i've to execute a open operation.
-        if (!storage.getServerURL().contains(network.getServerURL())) {
-          // TODO: Remove this workaround in favor of a proper per server authentication.
-          storage.setSessionId(network.getServerURL(), -1, null);
-          storage.openRemoteDatabase(network);
-          if (!network.tryLock())
-            throw new OStorageException(errorMessage);
-        }
-
         return operation.execute(network);
-
-      } catch (IOException e) {
-        // DIRTY CONNECTION, CLOSE IT AND RE-ACQUIRE A NEW ONE
-        network.close();
-        lastException = e;
-
       } catch (Exception e) {
-        // DIRTY CONNECTION, CLOSE IT AND RE-ACQUIRE A NEW ONE
-        if (network != null)
-          network.close();
         storage.close(true, false);
-        lastException = e;
-        break;
+        throw OException.wrapException(new OStorageException(errorMessage), e);
       }
-    }
-    throw OException.wrapException(new OStorageException(errorMessage), lastException);
   }
+
 
 }

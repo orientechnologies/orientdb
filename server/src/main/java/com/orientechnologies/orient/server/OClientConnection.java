@@ -139,8 +139,8 @@ public class OClientConnection {
 
   public void validateSession(byte[] tokenFromNetwork, OTokenHandler handler, ONetworkProtocolBinary protocol) {
     if (tokenFromNetwork == null || tokenFromNetwork.length == 0) {
-//      if (!protocols.contains(protocol))
-//        throw new OTokenSecurityException("No valid session found, provide a token");
+      if (!protocols.contains(protocol))
+        throw new OTokenSecurityException("No valid session found, provide a token");
     } else {
       // Active This Optimization but it need a periodic check on session
       /*
