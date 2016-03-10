@@ -180,8 +180,33 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
       } else if (additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE)
           || additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_LIMIT)
           || additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_LET) || additionalStatement.equals(KEYWORD_LOCK)) {
-        query = new OSQLAsynchQuery<ODocument>("select from " + getSelectTarget() + " " + additionalStatement + " "
-            + parserText.substring(parserGetCurrentPosition()), this);
+        if (this.preParsedStatement != null) {
+          Map<Object, Object> params = ((OCommandRequestText) iRequest).getParameters();
+          OUpdateStatement updateStm = (OUpdateStatement) preParsedStatement;
+          StringBuilder selectString = new StringBuilder();
+          selectString.append("select from ");
+          selectString.append(updateStm.target.toString());
+          if (updateStm.whereClause != null) {
+            selectString.append(" WHERE ");
+            selectString.append(updateStm.whereClause.toString());
+          }
+          if (updateStm.limit != null) {
+            selectString.append(" ");
+            selectString.append(updateStm.limit.toString());
+          }
+          if(updateStm.timeout!=null){
+            selectString.append(" ");
+            selectString.append(updateStm.timeout.toString());
+          }
+          if(updateStm.lockRecord) {
+            selectString.append(" LOCK RECORD");
+          }
+
+          query = new OSQLAsynchQuery<ODocument>(selectString.toString(), this);
+        } else {
+          query = new OSQLAsynchQuery<ODocument>("select from " + getSelectTarget() + " " + additionalStatement + " " + parserText
+              .substring(parserGetCurrentPosition()), this);
+        }
 
         isUpsertAllowed = (((OMetadataInternal) getDatabase().getMetadata()).getImmutableSchemaSnapshot().getClass(subjectName) != null);
       } else if (!additionalStatement.isEmpty())
