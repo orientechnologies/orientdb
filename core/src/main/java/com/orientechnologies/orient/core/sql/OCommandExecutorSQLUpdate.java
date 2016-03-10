@@ -188,8 +188,33 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
       } else if (additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE)
           || additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_LIMIT)
           || additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_LET) || additionalStatement.equals(KEYWORD_LOCK)) {
-        query = new OSQLAsynchQuery<ODocument>("select from " + getSelectTarget() + " " + additionalStatement + " "
-            + parserText.substring(parserGetCurrentPosition()), this);
+        if (this.preParsedStatement != null) {
+          Map<Object, Object> params = ((OCommandRequestText) iRequest).getParameters();
+          OUpdateStatement updateStm = (OUpdateStatement) preParsedStatement;
+          StringBuilder selectString = new StringBuilder();
+          selectString.append("select from ");
+          updateStm.target.toString(params, selectString);
+          if (updateStm.whereClause != null) {
+            selectString.append(" WHERE ");
+            updateStm.whereClause.toString(params, selectString);
+          }
+          if (updateStm.limit != null) {
+            selectString.append(" ");
+            updateStm.limit.toString(params, selectString);
+          }
+          if(updateStm.timeout!=null){
+            selectString.append(" ");
+            updateStm.timeout.toString(params, selectString);
+          }
+          if(updateStm.lockRecord) {
+            selectString.append(" LOCK RECORD");
+          }
+
+          query = new OSQLAsynchQuery<ODocument>(selectString.toString(), this);
+        } else {
+          query = new OSQLAsynchQuery<ODocument>("select from " + getSelectTarget() + " " + additionalStatement + " " + parserText
+              .substring(parserGetCurrentPosition()), this);
+        }
 
         isUpsertAllowed = (((OMetadataInternal) getDatabase().getMetadata()).getImmutableSchemaSnapshot().getClass(subjectName) != null);
       } else if (!additionalStatement.isEmpty())
