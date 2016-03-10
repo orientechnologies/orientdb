@@ -1986,7 +1986,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
         // go through all possible index for given set of fields.
         for (final OIndex index : involvedIndexes) {
-          if (index.isRebuiding()) {
+          final long indexRebuildVersion = index.getRebuildVersion();
+
+          if (index.isRebuilding()) {
             continue;
           }
 
@@ -2060,10 +2062,13 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           if (cursor == null) {
             continue;
           }
-          cursors.add(cursor);
-          indexUseAttempts.add(new IndexUsageLog(index, keyParams, indexDefinition));
-          indexUsed = true;
-          break;
+
+          if (indexRebuildVersion == index.getRebuildVersion()) {
+            cursors.add(OIndexChangesWrapper.wrap(index, cursor));
+            indexUseAttempts.add(new IndexUsageLog(index, keyParams, indexDefinition));
+            indexUsed = true;
+            break;
+          }
         }
         if (indexUsed) {
           break;
@@ -2083,21 +2088,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (cursors.size() == 0 || lastSearchResult == null) {
       return null;
     }
-    // if (cursors.size() == 1 && canOptimize(conditionHierarchy)) {
-    // filterOptimizer.optimize(compiledFilter, lastSearchResult);
-    // }
 
     metricRecorder.recordOrderByOptimizationMetric(indexIsUsedInOrderBy, this.fullySortedByIndex);
 
     indexUseAttempts.clear();
 
     return cursors;
-
-    // } finally {
-    // for (IndexUsageLog wastedIndexUsage : indexUseAttempts) {
-    // revertProfiler(context, wastedIndexUsage.index, wastedIndexUsage.keyParams, wastedIndexUsage.indexDefinition);
-    // }//TODO profiler
-    // }
   }
 
   @SuppressWarnings("rawtypes")
@@ -2143,7 +2139,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
           // go through all possible index for given set of fields.
           for (final OIndex index : involvedIndexes) {
-            if (index.isRebuiding()) {
+            final long indexRebuildVersion = index.getRebuildVersion();
+
+            if (index.isRebuilding()) {
               continue;
             }
 
@@ -2217,10 +2215,13 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             if (cursor == null) {
               continue;
             }
-            cursors.add(cursor);
-            indexUseAttempts.add(new IndexUsageLog(index, keyParams, indexDefinition));
-            indexUsed = true;
-            break;
+
+            if (index.getRebuildVersion() == indexRebuildVersion) {
+              cursors.add(OIndexChangesWrapper.wrap(index, cursor));
+              indexUseAttempts.add(new IndexUsageLog(index, keyParams, indexDefinition));
+              indexUsed = true;
+              break;
+            }
           }
           if (indexUsed) {
             break;
@@ -2371,6 +2372,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     for (OIndex<?> index : indexes) {
       if (orderByOptimizer.canBeUsedByOrderBy(index, orderedFields)) {
+        final long indexRebuildVersion = index.getRebuildVersion();
+
+        if (index.isRebuilding())
+          return null;
+
         final boolean ascSortOrder = orderedFields.get(0).getValue().equals(KEYWORD_ASC);
 
         final Object key;
@@ -2382,21 +2388,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
         if (index.getKeySize() == 0) {
           return null;
-        }
-
-        fullySortedByIndex = true;
-
-        if (context.isRecordingMetrics()) {
-          context.setVariable("indexIsUsedInOrderBy", true);
-          context.setVariable("fullySortedByIndex", fullySortedByIndex);
-
-          Set<String> idxNames = (Set<String>) context.getVariable("involvedIndexes");
-          if (idxNames == null) {
-            idxNames = new HashSet<String>();
-            context.setVariable("involvedIndexes", idxNames);
-          }
-
-          idxNames.add(index.getName());
         }
 
         final List<OIndexCursor> cursors = new ArrayList<OIndexCursor>();
@@ -2412,19 +2403,38 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         }
 
         if (cursor != null)
-          cursors.add(cursor);
+          cursors.add(OIndexChangesWrapper.wrap(index, cursor));
 
         if (index.getMetadata() != null && !index.getDefinition().isNullValuesIgnored()) {
           Object nullValue = index.get(null);
           if (nullValue != null) {
             if (nullValue instanceof Collection)
-              cursors.add(new OIndexCursorCollectionValue((Collection) nullValue, null));
+              cursors.add(OIndexChangesWrapper.wrap(index, new OIndexCursorCollectionValue((Collection) nullValue, null)));
             else
-              cursors.add(new OIndexCursorSingleValue((OIdentifiable) nullValue, null));
+              cursors.add(OIndexChangesWrapper.wrap(index, new OIndexCursorSingleValue((OIdentifiable) nullValue, null)));
           }
         }
 
-        return new OCompositeIndexCursor(cursors);
+        if (indexRebuildVersion == index.getRebuildVersion()) {
+          fullySortedByIndex = true;
+
+          if (context.isRecordingMetrics()) {
+            context.setVariable("indexIsUsedInOrderBy", true);
+            context.setVariable("fullySortedByIndex", fullySortedByIndex);
+
+            Set<String> idxNames = (Set<String>) context.getVariable("involvedIndexes");
+            if (idxNames == null) {
+              idxNames = new HashSet<String>();
+              context.setVariable("involvedIndexes", idxNames);
+            }
+
+            idxNames.add(index.getName());
+          }
+
+          return new OCompositeIndexCursor(cursors);
+        } else {
+          return null;
+        }
       }
     }
 
