@@ -34,10 +34,10 @@ import java.util.*;
  * 
  */
 public class ODistributedConfiguration {
-  public static final String       NEW_NODE_TAG         = "<NEW_NODE>";
-  public static final String       ALL_WILDCARD         = "*";
-  private static final Set<String> DEFAULT_CLUSTER_NAME = Collections.singleton(ALL_WILDCARD);
-  private ODocument                configuration;
+  public static final String        NEW_NODE_TAG         = "<NEW_NODE>";
+  public static final String        ALL_WILDCARD         = "*";
+  private static final List<String> DEFAULT_CLUSTER_NAME = Collections.singletonList(ALL_WILDCARD);
+  private ODocument                 configuration;
 
   public enum ROLES {
     MASTER, REPLICA
@@ -301,14 +301,13 @@ public class ODistributedConfiguration {
   }
 
   /**
-   * Returns the local cluster. This is used when a cluster must be selected: local is always the best choice.
+   * Returns the local clusters. This is used when a cluster must be selected: local is always the best choice.
    * 
    * @param iClusterNames
    *          Set of cluster names
    * @param iLocalNode
-   *          Local node name
    */
-  public String getLocalCluster(Collection<String> iClusterNames, final String iLocalNode) {
+  public List<String> getLocalClusters(List<String> iClusterNames, final String iLocalNode) {
     synchronized (configuration) {
       if (iClusterNames == null || iClusterNames.isEmpty())
         iClusterNames = DEFAULT_CLUSTER_NAME;
@@ -318,10 +317,6 @@ public class ODistributedConfiguration {
       for (String p : iClusterNames) {
         final String masterServer = getLeaderServer(p);
         if (iLocalNode.equals(masterServer)) {
-          if (p.endsWith(iLocalNode.toLowerCase()))
-            // BEST CANDIDATE: NODE SUFFIX
-            return p;
-
           // COLLECT AS CANDIDATE
           candidates.add(p);
         }
@@ -329,15 +324,15 @@ public class ODistributedConfiguration {
 
       if (!candidates.isEmpty())
         // RETURN THE FIRST ONE
-        return candidates.get(0);
+        return candidates;
 
       final String masterServer = getLeaderServer(ALL_WILDCARD);
       if (iLocalNode.equals(masterServer))
         // DEFAULT IS OK: RETURN THE FIRST CLUSTER NAME
-        return iClusterNames.iterator().next();
+        return iClusterNames;
 
       // NO MASTER FOUND
-      return null;
+      return candidates;
     }
   }
 
