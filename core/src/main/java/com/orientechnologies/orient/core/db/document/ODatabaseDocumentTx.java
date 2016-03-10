@@ -78,6 +78,7 @@ import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.function.OFunctionTrigger;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.metadata.security.*;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceTrigger;
 import com.orientechnologies.orient.core.query.OQuery;
@@ -85,6 +86,7 @@ import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
+import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.schedule.OSchedulerTrigger;
@@ -1246,9 +1248,12 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   public boolean dropCluster(final String iClusterName, final boolean iTruncate) {
     checkIfActive();
     final int clusterId = getClusterIdByName(iClusterName);
-    OClass clazz = metadata.getSchema().getClassByClusterId(clusterId);
+    OSchemaProxy schema = metadata.getSchema();
+    OClass clazz = schema.getClassByClusterId(clusterId);
     if (clazz != null)
       clazz.removeClusterId(clusterId);
+    if (schema.getBlobClusters().contains(clusterId))
+      schema.removeBlobCluster(iClusterName);
     getLocalCache().freeCluster(clusterId);
     return storage.dropCluster(iClusterName, iTruncate);
   }
@@ -1259,10 +1264,14 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
     checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_DELETE, getClusterNameById(iClusterId));
 
-    final OClass clazz = metadata.getSchema().getClassByClusterId(iClusterId);
+    OSchemaProxy schema = metadata.getSchema();
+    final OClass clazz = schema.getClassByClusterId(iClusterId);
     if (clazz != null)
       clazz.removeClusterId(iClusterId);
     getLocalCache().freeCluster(iClusterId);
+    if (schema.getBlobClusters().contains(iClusterId))
+      schema.removeBlobCluster(getClusterNameById(iClusterId));
+
     return storage.dropCluster(iClusterId, iTruncate);
   }
 
@@ -1835,8 +1844,19 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
           rid.clusterId = schemaClass.getClusterForNewInstance((ODocument) record);
         }else
           rid.clusterId = getDefaultClusterId();
+      } else {
+        rid.clusterId = getDefaultClusterId();
+        if (record instanceof OBlob && rid.clusterId != ORID.CLUSTER_ID_INVALID) {
+//          Set<Integer> blobClusters = getMetadata().getSchema().getBlobClusters();
+//          if (!blobClusters.contains(rid.clusterId) && rid.clusterId != getDefaultClusterId() && rid.clusterId != 0) {
+//            if (iClusterName == null)
+//              iClusterName = getClusterNameById(rid.clusterId);
+//            throw new IllegalArgumentException(
+//                "Cluster name '" + iClusterName + "' (id=" + rid.clusterId + ") is not configured to store blobs, valid are "
+//                    + blobClusters.toString());
+//          }
+        }
       }
-      else rid.clusterId = getDefaultClusterId();
     } else if (record instanceof ODocument)
       schemaClass = ODocumentInternal.getImmutableSchemaClass(((ODocument) record));
     //If the cluster id was set check is validity
@@ -2416,8 +2436,10 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       ORecordCallback<Integer> iRecordUpdatedCallback) {
     checkOpeness();
 
-    if (!(iRecord instanceof ODocument))
+    if (!(iRecord instanceof ODocument)) {
+      assignAndCheckCluster(iRecord, iClusterName);
       return (RET) currentTx.saveRecord(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
+    }
 
     ODocument doc = (ODocument) iRecord;
     ODocumentInternal.checkClass(doc, this);
@@ -3038,4 +3060,25 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
           "Current database instance (" + toString() + ") is not active on current thread (" + Thread.currentThread()
               + "). Current active database is: " + currentDatabase);
   }
+
+  @Override
+  public int addBlobCluster(String iClusterName, Object... iParameters) {
+    int id;
+    if (getStorage() instanceof OStorageProxy) {
+      id = command(new OCommandSQL("create blob cluster :1")).execute(iClusterName);
+      getMetadata().getSchema().reload();
+    } else {
+      if (!existsCluster(iClusterName)) {
+        id = addCluster(iClusterName, iParameters);
+      } else
+        id = getClusterIdByName(iClusterName);
+      getMetadata().getSchema().addBlobCluster(id);
+    }
+    return id;
+  }
+
+  public Set<Integer> getBlobClusterIds() {
+    return getMetadata().getSchema().getBlobClusters();
+  }
+
 }

@@ -76,8 +76,8 @@ import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.serializer.ONetworkThreadLocalSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
@@ -1677,9 +1677,9 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         if (connection.getData().protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_27) {
           channel.writeBytes(connection.getDatabase().getStorage().getConfiguration().toStream(connection.getData().protocolVersion));
           channel.writeVersion(0);
-          channel.writeByte(ORecordBytes.RECORD_TYPE);
+          channel.writeByte(OBlob.RECORD_TYPE);
         } else {
-          channel.writeByte(ORecordBytes.RECORD_TYPE);
+          channel.writeByte(OBlob.RECORD_TYPE);
           channel.writeVersion(0);
           channel.writeBytes(connection.getDatabase().getStorage().getConfiguration().toStream(connection.getData().protocolVersion));
         }
@@ -1771,9 +1771,9 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         if (connection.getData().protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_27) {
           channel.writeBytes(connection.getDatabase().getStorage().getConfiguration().toStream(connection.getData().protocolVersion));
           channel.writeVersion(0);
-          channel.writeByte(ORecordBytes.RECORD_TYPE);
+          channel.writeByte(OBlob.RECORD_TYPE);
         } else {
-          channel.writeByte(ORecordBytes.RECORD_TYPE);
+          channel.writeByte(OBlob.RECORD_TYPE);
           channel.writeVersion(0);
           channel.writeBytes(connection.getDatabase().getStorage().getConfiguration().toStream(connection.getData().protocolVersion));
         }

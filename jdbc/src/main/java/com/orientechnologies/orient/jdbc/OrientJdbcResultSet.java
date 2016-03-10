@@ -22,8 +22,8 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 
 import java.io.InputStream;
 import java.io.Reader;
@@ -254,18 +254,18 @@ public class OrientJdbcResultSet implements ResultSet {
     try {
       Object value = document.field(columnLabel);
 
-      if (value instanceof ORecordBytes) {
-        return new OrientBlob((ORecordBytes) value);
+      if (value instanceof OBlob) {
+        return new OrientBlob((OBlob) value);
       } else if (value instanceof ORecordLazyList) {
         ORecordLazyList list = (ORecordLazyList) value;
         // check if all the list items are instances of ORecordBytes
         ListIterator<OIdentifiable> iterator = list.listIterator();
 
-        List<ORecordBytes> binaryRecordList = new ArrayList<ORecordBytes>(list.size());
+        List<OBlob> binaryRecordList = new ArrayList<OBlob>(list.size());
         while (iterator.hasNext()) {
           OIdentifiable listElement = iterator.next();
 
-          ORecordBytes ob = document.getDatabase().load(listElement.getIdentity());
+          OBlob ob = document.getDatabase().load(listElement.getIdentity());
 
           binaryRecordList.add(ob);
 
@@ -318,8 +318,8 @@ public class OrientJdbcResultSet implements ResultSet {
       if (value == null)
         return null;
       else {
-        if (value instanceof ORecordBytes)
-          return ((ORecordBytes) value).toStream();
+        if (value instanceof OBlob)
+          return ((OBlob) value).toStream();
         return document.field(columnLabel, OType.BINARY);
       }
     } catch (Exception e) {

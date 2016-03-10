@@ -788,6 +788,24 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT);
     }
 
+    if (jsonReader.getValue().equals("\"blob-clusters\"")) {
+      String blobClusterIds = jsonReader.readString(OJSONReader.END_COLLECTION, true).trim();
+      blobClusterIds = blobClusterIds.substring(1, blobClusterIds.length() - 1);
+
+      if(!"".equals(blobClusterIds)) {
+        // READ BLOB CLUSTER IDS
+        for (String i : OStringSerializerHelper.split(blobClusterIds, OStringSerializerHelper.RECORD_SEPARATOR)) {
+          Integer cluster = Integer.parseInt(i);
+          if (!database.getBlobClusterIds().contains(cluster))
+            database.addBlobCluster(i);
+        }
+      }
+
+      jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
+      jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT);
+    }
+
+
     jsonReader.checkContent("\"classes\"").readNext(OJSONReader.BEGIN_COLLECTION);
 
     long classImported = 0;

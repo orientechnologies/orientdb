@@ -29,8 +29,8 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -140,14 +140,14 @@ public class OTableFormatter {
       value = iRecord.getIdentity().toString();
     else if (iRecord instanceof ODocument)
       value = ((ODocument) iRecord).field(iColumnName);
-    else if (iRecord instanceof ORecordBytes)
-      value = "<binary> (size=" + ((ORecordBytes) iRecord).toStream().length + " bytes)";
+    else if (iRecord instanceof OBlob)
+      value = "<binary> (size=" + ((OBlob) iRecord).toStream().length + " bytes)";
     else if (iRecord instanceof OIdentifiable) {
       final ORecord rec = iRecord.getRecord();
       if (rec instanceof ODocument)
         value = ((ODocument) rec).field(iColumnName);
-      else if (rec instanceof ORecordBytes)
-        value = "<binary> (size=" + ((ORecordBytes) rec).toStream().length + " bytes)";
+      else if (rec instanceof OBlob)
+        value = "<binary> (size=" + ((OBlob) rec).toStream().length + " bytes)";
     }
 
     return getPrettyFieldValue(value, maxMultiValueEntries);
@@ -275,7 +275,7 @@ public class OTableFormatter {
         if (!hasClass && doc.getClassName() != null)
           hasClass = true;
 
-      } else if (rec instanceof ORecordBytes) {
+      } else if (rec instanceof OBlob) {
         // UNIQUE BINARY FIELD
         columns.put("value", maxWidthSize - 15);
 

@@ -23,6 +23,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 
 public class ORecordSerializerRaw implements ORecordSerializer {
@@ -53,9 +54,9 @@ public class ORecordSerializerRaw implements ORecordSerializer {
   }
 
   public ORecord fromStream(final byte[] iSource, final ORecord iRecord, String[] iFields) {
-    final ORecordBytes record = (ORecordBytes) iRecord;
+    final OBlob record = (OBlob) iRecord;
+    record.reset();
     record.fromStream(iSource);
-    record.reset(iSource);
 
     return record;
   }

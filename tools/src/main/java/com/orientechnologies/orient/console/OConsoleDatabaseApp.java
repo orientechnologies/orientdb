@@ -59,8 +59,8 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -2693,8 +2693,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         message("\n| %24s | %-68s |", fieldName, value);
       }
 
-    } else if (currentRecord instanceof ORecordBytes) {
-      ORecordBytes rec = (ORecordBytes) currentRecord;
+    } else if (currentRecord instanceof OBlob) {
+      OBlob rec = (OBlob) currentRecord;
       message("\n+-------------------------------------------------------------------------------------------------+");
       message("\n| Bytes    - @rid: %s @version: %d", rec.getIdentity().toString(), rec.getVersion());
       message("\n+-------------------------------------------------------------------------------------------------+");
