@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server.hazelcast;
 
 import com.hazelcast.config.FileSystemXmlConfig;
 import com.hazelcast.core.*;
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.console.OConsoleReader;
 import com.orientechnologies.common.console.ODefaultConsoleReader;
 import com.orientechnologies.common.exception.OException;
@@ -1392,7 +1393,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
               long fileSize = writeDatabaseChunk(1, chunk, fOut);
               for (int chunkNum = 2; !chunk.last; chunkNum++) {
-                final Object result = sendRequest(databaseName, null, Collections.singletonList(iNode),
+                final Object result = sendRequest(databaseName, null, OMultiValue.getSingletonList(iNode),
                     new OCopyDatabaseChunkTask(chunk.filePath, chunkNum, chunk.offset + chunk.buffer.length, false),
                     EXECUTION_MODE.RESPONSE, 0);
 
@@ -1555,8 +1556,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       // CHECK IF EACH NODE HAS IS MASTER OF ONE CLUSTER
       final List<String> servers = cfg.getServers(null);
       for (String server : servers) {
-        final String bestCluster = cfg.getLocalCluster(clusterNames, server);
-        if (bestCluster == null) {
+        if (cfg.getLocalClusters(clusterNames, server).isEmpty()) {
           // TRY TO FIND A CLUSTER PREVIOUSLY ASSIGNED TO THE LOCAL NODE
           final String newClusterName = (iClass.getName() + "_" + server).toLowerCase();
 
@@ -2159,8 +2159,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     for (int clusterId : clusterIds)
       clusterNames.add(iDatabase.getClusterNameById(clusterId));
 
-    String bestCluster = cfg.getLocalCluster(clusterNames, nodeName);
-    if (bestCluster == null) {
+    if (cfg.getLocalClusters(clusterNames, nodeName).isEmpty()) {
       // TRY TO FIND A CLUSTER PREVIOUSLY ASSIGNED TO THE LOCAL NODE
       final String newClusterName = (iClass.getName() + "_" + nodeName).toLowerCase();
 

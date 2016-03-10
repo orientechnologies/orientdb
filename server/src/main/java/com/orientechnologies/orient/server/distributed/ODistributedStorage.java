@@ -502,10 +502,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
         if (!masterNode.equals(localNodeName))
           throw new ODistributedException("Error on inserting into cluster '" + clusterName + "' where local node '" + localNodeName
-              + "' is not the master of it, but it's '" + masterNode + "'");
+              + "' is not the master of it, but it is '" + masterNode + "'");
 
         OLogManager.instance().warn(this, "Local node '" + localNodeName + "' is not the master for cluster '" + clusterName
-            + "' (it's '" + masterNode + "'). Switching to a valid cluster of the same class: '" + newClusterName + "'");
+            + "' (it is '" + masterNode + "'). Switching to a valid cluster of the same class: '" + newClusterName + "'");
 
         clusterName = newClusterName;
       }

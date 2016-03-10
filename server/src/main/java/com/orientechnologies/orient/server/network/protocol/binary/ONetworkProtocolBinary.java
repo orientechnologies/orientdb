@@ -833,6 +833,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   private void executeDistributedRequest() throws IOException {
     setDataCommandInfo("Distributed request");
 
+//    checkServerAccess("server.replication");
+
     final byte[] serializedReq = channel.readBytes();
 
     final ODistributedServerManager manager = server.getDistributedManager();
@@ -862,6 +864,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
   private void executeDistributedResponse() throws IOException {
     setDataCommandInfo("Distributed response");
+
+//    checkServerAccess("server.replication");
 
     final byte[] serializedResponse = channel.readBytes();
 

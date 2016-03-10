@@ -612,7 +612,7 @@ public class ODistributedResponseManager {
             ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
                 "sending undo message (%s) for request (%s) to server %s", undoTask, request, r.getExecutorNodeName());
 
-            dManager.sendRequest(request.getDatabaseName(), null, Collections.singletonList(r.getExecutorNodeName()), undoTask,
+            dManager.sendRequest(request.getDatabaseName(), null, OMultiValue.getSingletonList(r.getExecutorNodeName()), undoTask,
                 ODistributedRequest.EXECUTION_MODE.RESPONSE, 0);
           }
         }
@@ -671,7 +671,7 @@ public class ODistributedResponseManager {
           // CREATE THE RECORD FIRST AND THEN DELETE IT TO LEAVE THE HOLE AND ALIGN CLUSTER POS NUMERATION
           ORecordInternal.setIdentity(((OCreateRecordTask) task).getRecord(),
               ((OCreateRecordTask) task).getRecord().getIdentity().getClusterId(), -1);
-          dManager.sendRequest(request.getDatabaseName(), null, Collections.singletonList(r.getExecutorNodeName()), task,
+          dManager.sendRequest(request.getDatabaseName(), null, OMultiValue.getSingletonList(r.getExecutorNodeName()), task,
               ODistributedRequest.EXECUTION_MODE.NO_RESPONSE, 0);
         }
 
@@ -683,7 +683,7 @@ public class ODistributedResponseManager {
           ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
               "sending undo message (%s) for request (%s) to server %s", undoTask, request, r.getExecutorNodeName());
 
-          dManager.sendRequest(request.getDatabaseName(), null, Collections.singletonList(r.getExecutorNodeName()), undoTask,
+          dManager.sendRequest(request.getDatabaseName(), null, OMultiValue.getSingletonList(r.getExecutorNodeName()), undoTask,
               ODistributedRequest.EXECUTION_MODE.NO_RESPONSE, 0);
         }
       }
@@ -712,7 +712,7 @@ public class ODistributedResponseManager {
               ODistributedServerLog.warn(this, dManager.getLocalNodeName(), r.getExecutorNodeName(), DIRECTION.OUT,
                   "sending fix message (%s) for response (%s) on request (%s) to be: %s", fixTask, r, request, goodResponse);
 
-              dManager.sendRequest(request.getDatabaseName(), null, Collections.singletonList(r.getExecutorNodeName()), fixTask,
+              dManager.sendRequest(request.getDatabaseName(), null, OMultiValue.getSingletonList(r.getExecutorNodeName()), fixTask,
                   ODistributedRequest.EXECUTION_MODE.NO_RESPONSE, 0);
             }
           }

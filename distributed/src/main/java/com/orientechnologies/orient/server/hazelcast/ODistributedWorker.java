@@ -19,6 +19,9 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
+import java.io.Serializable;
+import java.util.concurrent.ArrayBlockingQueue;
+
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.spi.exception.DistributedObjectDestroyedException;
 import com.orientechnologies.common.concur.OTimeoutException;
@@ -35,9 +38,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIR
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
-
-import java.io.Serializable;
-import java.util.concurrent.ArrayBlockingQueue;
 
 /**
  * Hazelcast implementation of distributed peer. There is one instance per database. Each node creates own instance to talk with
@@ -299,8 +299,8 @@ public class ODistributedWorker extends Thread {
         if (mgr != null && mgr.isOffline()) {
           // NODE NOT ONLINE YET, REFUSE THE CONNECTION
           OLogManager.instance().info(this,
-              "Node is not online yet (status=%s), blocking the command until it is online (retry=%d)", mgr.getNodeStatus(),
-              retry + 1);
+              "Node is not online yet (status=%s), blocking the command until it is online (retry=%d, queue=%d)",
+              mgr.getNodeStatus(), retry + 1, localQueue.size());
           try {
             Thread.sleep(3000);
           } catch (InterruptedException e) {

@@ -19,11 +19,11 @@
  */
 package com.orientechnologies.orient.enterprise.channel.binary;
 
-import java.io.IOException;
-
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
+
+import java.io.IOException;
 
 /**
  * Synchronous implementation of binary channel.
@@ -32,6 +32,18 @@ public class OChannelBinarySynchClient extends OChannelBinaryClientAbstract {
   public OChannelBinarySynchClient(final String remoteHost, final int remotePort, final String iDatabaseName,
       final OContextConfiguration iConfig, final int protocolVersion) throws IOException {
     super(remoteHost, remotePort, iDatabaseName, iConfig, protocolVersion);
+  }
+
+  public void beginRequest(final byte iCommand, final int sessionId, final byte[] token) throws IOException {
+    writeByte(iCommand);
+    writeInt(sessionId);
+    if (token != null) {
+      if (sessionId == -1)
+        // SEND THE TOKEN ONLY THE FIRST TIME
+        writeBytes(token);
+      else
+        writeBytes(new byte[] {});
+    }
   }
 
   public byte[] beginResponse(final int iRequesterId, final boolean token) throws IOException {

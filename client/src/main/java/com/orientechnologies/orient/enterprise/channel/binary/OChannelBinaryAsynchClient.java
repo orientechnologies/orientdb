@@ -22,6 +22,7 @@ package com.orientechnologies.orient.enterprise.channel.binary;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.client.remote.OStorageRemoteThreadLocal;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
@@ -48,6 +49,19 @@ public class OChannelBinaryAsynchClient extends OChannelBinaryClientAbstract {
 
     if (asynchEventListener != null)
       serviceThread = new OAsynchChannelServiceThread(asynchEventListener, this);
+  }
+
+  public void beginRequest(byte iCommand, OStorageRemoteThreadLocal.OStorageRemoteSession session, byte[] token)
+      throws IOException {
+    writeByte(iCommand);
+    writeInt(session.sessionId);
+    if (token != null) {
+      if (!session.has(this)) {
+        writeBytes(token);
+        session.add(this);
+      } else
+        writeBytes(new byte[] {});
+    }
   }
 
   public byte[] beginResponse(final int iRequesterId, final boolean token) throws IOException {

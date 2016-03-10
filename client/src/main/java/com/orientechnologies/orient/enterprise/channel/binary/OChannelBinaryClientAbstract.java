@@ -24,7 +24,6 @@ import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
-import com.orientechnologies.orient.client.remote.OStorageRemoteThreadLocal;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
@@ -222,7 +221,7 @@ public abstract class OChannelBinaryClientAbstract extends OChannelBinary {
       s.setSoTimeout(socketTimeout);
   }
 
-  protected void setWaitResponseTimeout() throws SocketException {
+  public void setWaitResponseTimeout() throws SocketException {
     final Socket s = socket;
     if (s != null)
       s.setSoTimeout(OGlobalConfiguration.NETWORK_REQUEST_TIMEOUT.getValueAsInteger());
@@ -270,18 +269,5 @@ public abstract class OChannelBinaryClientAbstract extends OChannelBinary {
       OLogManager.instance().error(this,
           "Error during exception serialization, serialized exception is not Throwable, exception type is "
               + (throwable != null ? throwable.getClass().getName() : "null"));
-  }
-
-  public void beginRequest(byte iCommand, OStorageRemoteThreadLocal.OStorageRemoteSession session, byte[] token)
-      throws IOException {
-    writeByte(iCommand);
-    writeInt(session.sessionId);
-    if (token != null) {
-      if (!session.has(this)) {
-        writeBytes(token);
-        session.add(this);
-      } else
-        writeBytes(new byte[] {});
-    }
   }
 }
