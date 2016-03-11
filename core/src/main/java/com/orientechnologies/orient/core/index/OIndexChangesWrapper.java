@@ -6,25 +6,43 @@ import com.orientechnologies.orient.core.exception.OIndexIsRebuildingException;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Wrapper which is used to detect whether the cursor is working with index
+ * which is being rebuilt at the moment.
+ * <p>
+ * If such situation is detected any call to any method throws {@link OIndexIsRebuildingException}
+ *
+ * @see OIndexAbstract#getRebuildVersion()
+ */
 public class OIndexChangesWrapper implements OIndexCursor {
   private final OIndex<?>    source;
   private final OIndexCursor delegate;
   private final long         indexVersion;
 
-  public static OIndexCursor wrap(OIndex<?> source, OIndexCursor cursor, long indexVersion) {
+  /**
+   * Wraps courser only if it is not already wrapped.
+   *
+   * @param source Index which is used to create given cursor.
+   * @param cursor Cursor to wrap.
+   * @return Wrapped cursor.
+   */
+  public static OIndexCursor wrap(OIndex<?> source, OIndexCursor cursor) {
     if (cursor instanceof OIndexChangesWrapper)
       return cursor;
 
     return new OIndexChangesWrapper(source, cursor, indexVersion);
   }
 
-  public OIndexChangesWrapper(OIndex<?> source, OIndexCursor delegate, long indexVersion) {
+  private OIndexChangesWrapper(OIndex<?> source, OIndexCursor delegate) {
     this.source = source;
     this.delegate = delegate;
 
     this.indexVersion = source.getRebuildVersion();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Map.Entry<Object, OIdentifiable> nextEntry() {
     if (source.isRebuilding())
@@ -38,6 +56,9 @@ public class OIndexChangesWrapper implements OIndexCursor {
     return entry;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Set<OIdentifiable> toValues() {
     if (source.isRebuilding())
@@ -51,6 +72,9 @@ public class OIndexChangesWrapper implements OIndexCursor {
     return values;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Set<Map.Entry<Object, OIdentifiable>> toEntries() {
     if (source.isRebuilding())
@@ -64,6 +88,9 @@ public class OIndexChangesWrapper implements OIndexCursor {
     return entries;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Set<Object> toKeys() {
     if (source.isRebuilding())
@@ -77,11 +104,17 @@ public class OIndexChangesWrapper implements OIndexCursor {
     return keys;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void setPrefetchSize(int prefetchSize) {
     delegate.setPrefetchSize(prefetchSize);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean hasNext() {
     if (source.isRebuilding())
@@ -95,6 +128,9 @@ public class OIndexChangesWrapper implements OIndexCursor {
     return isNext;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public OIdentifiable next() {
     if (source.isRebuilding())
