@@ -58,6 +58,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
+import com.orientechnologies.orient.core.query.OQueryAbstract;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
@@ -2381,6 +2382,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         return executeCommand(iCommand, executor);
       } catch (ORetryQueryException e) {
+
+        if (iCommand instanceof OQueryAbstract) {
+          final OQueryAbstract query = (OQueryAbstract) iCommand;
+          query.reset();
+        }
+
         continue;
       }
     }

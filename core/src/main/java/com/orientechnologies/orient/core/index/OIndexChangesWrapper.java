@@ -18,36 +18,41 @@ import java.util.Set;
 public class OIndexChangesWrapper implements OIndexCursor {
   protected final OIndex<?>    source;
   protected final OIndexCursor delegate;
-  protected final long         indexVersion;
+  protected final long         indexRebuildVersion;
 
-  public OIndexChangesWrapper(OIndex<?> source, OIndexCursor delegate) {
+  public OIndexChangesWrapper(OIndex<?> source, OIndexCursor delegate, long indexRebuildVersion) {
     this.source = source;
     this.delegate = delegate;
 
-    indexVersion = source.getRebuildVersion();
+    this.indexRebuildVersion = indexRebuildVersion;
   }
 
   /**
    * Wraps courser only if it is not already wrapped.
    *
-   * @param source Index which is used to create given cursor.
-   * @param cursor Cursor to wrap.
+   * @param source              Index which is used to create given cursor.
+   * @param cursor              Cursor to wrap.
+   * @param indexRebuildVersion Rebuild version of index <b>before</b> cursor was created.
    * @return Wrapped cursor.
+   * @see OIndex#getRebuildVersion()
    */
-  public static OIndexCursor wrap(OIndex<?> source, OIndexCursor cursor) {
+  public static OIndexCursor wrap(OIndex<?> source, OIndexCursor cursor, long indexRebuildVersion) {
     if (cursor instanceof OIndexChangesWrapper)
       return cursor;
 
     if (cursor instanceof OSizeable) {
-      return new OIndexChangesSizeable(source, cursor);
+      return new OIndexChangesSizeable(source, cursor, indexRebuildVersion);
     }
 
-    return new OIndexChangesWrapper(source, cursor);
+    return new OIndexChangesWrapper(source, cursor, indexRebuildVersion);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void remove() {
-    throw new UnsupportedOperationException("remove");
+    delegate.remove();
   }
 
   /**
@@ -60,7 +65,7 @@ public class OIndexChangesWrapper implements OIndexCursor {
 
     final Map.Entry<Object, OIdentifiable> entry = delegate.nextEntry();
 
-    if (source.getRebuildVersion() != indexVersion)
+    if (source.getRebuildVersion() != indexRebuildVersion)
       throwRebuildException();
 
     return entry;
@@ -76,7 +81,7 @@ public class OIndexChangesWrapper implements OIndexCursor {
 
     final Set<OIdentifiable> values = delegate.toValues();
 
-    if (source.getRebuildVersion() != indexVersion)
+    if (source.getRebuildVersion() != indexRebuildVersion)
       throwRebuildException();
 
     return values;
@@ -92,7 +97,7 @@ public class OIndexChangesWrapper implements OIndexCursor {
 
     final Set<Map.Entry<Object, OIdentifiable>> entries = delegate.toEntries();
 
-    if (source.getRebuildVersion() != indexVersion)
+    if (source.getRebuildVersion() != indexRebuildVersion)
       throwRebuildException();
 
     return entries;
@@ -108,7 +113,7 @@ public class OIndexChangesWrapper implements OIndexCursor {
 
     final Set<Object> keys = delegate.toKeys();
 
-    if (source.getRebuildVersion() != indexVersion)
+    if (source.getRebuildVersion() != indexRebuildVersion)
       throwRebuildException();
 
     return keys;
@@ -132,7 +137,7 @@ public class OIndexChangesWrapper implements OIndexCursor {
 
     final boolean isNext = delegate.hasNext();
 
-    if (source.getRebuildVersion() != indexVersion)
+    if (source.getRebuildVersion() != indexRebuildVersion)
       throwRebuildException();
 
     return isNext;
@@ -148,7 +153,7 @@ public class OIndexChangesWrapper implements OIndexCursor {
 
     final OIdentifiable next = delegate.next();
 
-    if (source.getRebuildVersion() != indexVersion)
+    if (source.getRebuildVersion() != indexRebuildVersion)
       throwRebuildException();
 
     return next;
@@ -163,8 +168,8 @@ public class OIndexChangesWrapper implements OIndexCursor {
  * Adds support of {@link OSizeable} interface if index cursor implements it.
  */
 class OIndexChangesSizeable extends OIndexChangesWrapper implements OSizeable {
-  public OIndexChangesSizeable(OIndex<?> source, OIndexCursor delegate) {
-    super(source, delegate);
+  public OIndexChangesSizeable(OIndex<?> source, OIndexCursor delegate, long indexRebuildVersion) {
+    super(source, delegate, indexRebuildVersion);
   }
 
   @Override
@@ -174,7 +179,7 @@ class OIndexChangesSizeable extends OIndexChangesWrapper implements OSizeable {
 
     final int size = ((OSizeable) delegate).size();
 
-    if (source.getRebuildVersion() != indexVersion)
+    if (source.getRebuildVersion() != indexRebuildVersion)
       throwRebuildException();
 
     return size;

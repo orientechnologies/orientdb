@@ -1673,7 +1673,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     final long to = range[1] != null && range[1].getClusterId() == clusterId ? range[1].getClusterPosition() : -1;
 
     try {
-      ((OLocalPaginatedStorage) localDatabase.getStorage().getUnderlying())
+      ((OAbstractPaginatedStorage) localDatabase.getStorage().getUnderlying())
           .scanCluster(iClusterName, isBrowsingAscendingOrder(), from, to, new OCallable<Boolean, ORecord>() {
             @Override
             public Boolean call(final ORecord iRecord) {
@@ -2067,7 +2067,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           }
 
           if (indexRebuildVersion == index.getRebuildVersion()) {
-            cursors.add(OIndexChangesWrapper.wrap(index, cursor));
+            cursors.add(OIndexChangesWrapper.wrap(index, cursor, indexRebuildVersion));
             indexUseAttempts.add(new IndexUsageLog(index, keyParams, indexDefinition));
             indexUsed = true;
             break;
@@ -2220,7 +2220,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             }
 
             if (index.getRebuildVersion() == indexRebuildVersion) {
-              cursors.add(OIndexChangesWrapper.wrap(index, cursor));
+              cursors.add(OIndexChangesWrapper.wrap(index, cursor, indexRebuildVersion));
               indexUseAttempts.add(new IndexUsageLog(index, keyParams, indexDefinition));
               indexUsed = true;
               break;
@@ -2406,15 +2406,17 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         }
 
         if (cursor != null)
-          cursors.add(OIndexChangesWrapper.wrap(index, cursor));
+          cursors.add(OIndexChangesWrapper.wrap(index, cursor, indexRebuildVersion));
 
         if (index.getMetadata() != null && !index.getDefinition().isNullValuesIgnored()) {
           Object nullValue = index.get(null);
           if (nullValue != null) {
             if (nullValue instanceof Collection)
-              cursors.add(OIndexChangesWrapper.wrap(index, new OIndexCursorCollectionValue((Collection) nullValue, null)));
+              cursors.add(OIndexChangesWrapper
+                  .wrap(index, new OIndexCursorCollectionValue((Collection) nullValue, null), indexRebuildVersion));
             else
-              cursors.add(OIndexChangesWrapper.wrap(index, new OIndexCursorSingleValue((OIdentifiable) nullValue, null)));
+              cursors.add(OIndexChangesWrapper
+                  .wrap(index, new OIndexCursorSingleValue((OIdentifiable) nullValue, null), indexRebuildVersion));
           }
         }
 

@@ -38,7 +38,7 @@ public class OLiveIndexRebuildTest {
 
     clazz.createIndex(indexName, OClass.INDEX_TYPE.UNIQUE, propertyName);
 
-    for (int i = 0; i < 10000000; i++) {
+    for (int i = 0; i < 1000000; i++) {
       ODocument document = new ODocument(className);
       document.field(propertyName, i);
       document.save();
@@ -53,7 +53,7 @@ public class OLiveIndexRebuildTest {
 
     futures.add(executorService.submit(new Writer()));
 
-    Thread.sleep(10 * 60 * 1000);
+    Thread.sleep(60 * 60 * 1000);
 
     stop.set(true);
     executorService.shutdown();
@@ -73,7 +73,7 @@ public class OLiveIndexRebuildTest {
       }
     }
 
-    System.out.println("Min interval " + (minInterval/1000000) + ", max interval " + (maxInterval/1000000) + " ms");
+    System.out.println("Min interval " + (minInterval / 1000000) + ", max interval " + (maxInterval / 1000000) + " ms");
   }
 
   private final class Writer implements Callable<Void> {
@@ -100,7 +100,7 @@ public class OLiveIndexRebuildTest {
               break;
           }
 
-          Thread.sleep(2 * 60 * 60 * 1000);
+          Thread.sleep(5 * 60 * 1000);
         }
 
         System.out.println("Average rebuild interval " + ((rebuildInterval / rebuildCount) / 1000000) + ", ms");
