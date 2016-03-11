@@ -30,10 +30,10 @@ public class ORemoteServerController {
   private final ORemoteServerChannel requestChannel;
   private final ORemoteServerChannel responseChannel;
 
-  public ORemoteServerController(final ODistributedServerManager manager, final String iURL, final String user, final String passwd)
-      throws IOException {
-    requestChannel = new ORemoteServerChannel(manager, iURL, user, passwd);
-    responseChannel = new ORemoteServerChannel(manager, iURL, user, passwd);
+  public ORemoteServerController(final ODistributedServerManager manager, final String iServer, final String iURL,
+      final String user, final String passwd) throws IOException {
+    requestChannel = new ORemoteServerChannel(manager, iServer, iURL, user, passwd);
+    responseChannel = new ORemoteServerChannel(manager, iServer, iURL, user, passwd);
   }
 
   public void sendRequest(final ODistributedRequest req, final String node) {

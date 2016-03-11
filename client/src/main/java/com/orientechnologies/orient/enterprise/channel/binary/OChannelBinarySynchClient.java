@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.enterprise.channel.binary;
 
-import com.orientechnologies.common.concur.lock.OLockException;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 
 import java.io.IOException;
@@ -46,32 +44,16 @@ public class OChannelBinarySynchClient extends OChannelBinaryClientAbstract {
     }
   }
 
-  public byte[] beginResponse(final int iRequesterId, final boolean token) throws IOException {
-    return beginResponse(iRequesterId, timeout, token);
-  }
+  public byte[] beginResponse(final boolean token) throws IOException {
+    currentStatus = readByte();
+    currentSessionId = readInt();
 
-  public byte[] beginResponse(final int iRequesterId, final long iTimeout, final boolean token) throws IOException {
-    try {
-      currentStatus = readByte();
-      currentSessionId = readInt();
-
-      byte[] tokenBytes;
-      if (token)
-        tokenBytes = this.readBytes();
-      else
-        tokenBytes = null;
-      handleStatus(currentStatus, currentSessionId);
-      return tokenBytes;
-
-    } catch (OLockException e) {
-      Thread.currentThread().interrupt();
-      // NEVER HAPPENS?
-      OLogManager.instance().error(this, "Unexpected error on reading response from channel", e);
-    }
-    return null;
-  }
-
-  public void endResponse() throws IOException {
-    releaseWriteLock();
+    byte[] tokenBytes;
+    if (token)
+      tokenBytes = this.readBytes();
+    else
+      tokenBytes = null;
+    handleStatus(currentStatus, currentSessionId);
+    return tokenBytes;
   }
 }

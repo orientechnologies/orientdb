@@ -23,7 +23,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinarySynchClient;
 
@@ -33,11 +32,12 @@ import java.io.ObjectOutputStream;
 
 /**
  * Remote server channel.
- * 
+ *
  * @author Luca Garulli
  */
 public class ORemoteServerChannel {
   final ODistributedServerManager manager;
+  final String                    server;
   final String                    url;
   final String                    remoteHost;
   final int                       remotePort;
@@ -47,13 +47,15 @@ public class ORemoteServerChannel {
 
   static final String             CLIENT_TYPE   = "OrientDB Server";
   static final boolean            COLLECT_STATS = false;
+  private static final int        MAX_RETRY     = 3;
   int                             sessionId     = -1;
   byte[]                          sessionToken;
   OContextConfiguration           contextConfig = new OContextConfiguration();
 
-  public ORemoteServerChannel(final ODistributedServerManager manager, final String iURL, final String user, final String passwd)
-      throws IOException {
+  public ORemoteServerChannel(final ODistributedServerManager manager, final String iServer, final String iURL, final String user,
+      final String passwd) throws IOException {
     this.manager = manager;
+    this.server = iServer;
     this.url = iURL;
     this.userName = user;
     this.userPassword = passwd;
@@ -65,23 +67,57 @@ public class ORemoteServerChannel {
     connect();
   }
 
-  protected <T> T networkOperation(final byte operationId, final OStorageRemoteOperation<T> operation, final String errorMessage) {
-    try {
-      if (channel == null || !channel.isConnected())
-        connect();
+  protected synchronized <T> T networkOperation(final byte operationId, final OStorageRemoteOperation<T> operation,
+      final String errorMessage) {
+    Exception lastException = null;
+    for (int retry = 1; retry <= MAX_RETRY; ++retry) {
+      try {
+        channel.setWaitResponseTimeout();
+        channel.beginRequest(operationId, sessionId, sessionToken);
 
-      channel.acquireWriteLock();
+        final T result = operation.execute();
 
-      channel.setWaitResponseTimeout();
-      channel.beginRequest(operationId, sessionId, sessionToken);
+        channel.flush();
 
-      return operation.execute();
+        return result;
 
-    } catch (Exception e) {
-      // DIRTY CONNECTION, CLOSE IT AND RE-ACQUIRE A NEW ONE
-      close();
-      throw OException.wrapException(new OStorageException(errorMessage), e);
+      } catch (IOException e) {
+        // IO EXCEPTION: RETRY THE CONNECTION AND COMMAND
+        lastException = e;
+
+        ODistributedServerLog.warn(this, manager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.OUT,
+            "IO Exception during %s (%s). Retrying (%d/%d)...", operation.toString(), lastException.getMessage(), retry, MAX_RETRY);
+
+        // DIRTY CONNECTION, CLOSE IT AND RE-ACQUIRE A NEW ONE
+        for (; retry <= MAX_RETRY; ++retry) {
+          try {
+            close();
+
+            channel = new OChannelBinarySynchClient(remoteHost, remotePort, null, contextConfig,
+                OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION);
+
+            authenticate();
+
+            // OK
+            break;
+
+          } catch (IOException e1) {
+            // IO EXCEPTION: RETRY THE CONNECTION AND COMMAND
+            lastException = e;
+
+            ODistributedServerLog.warn(this, manager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.OUT,
+                "IO Exception during %s (%s). Retrying (%d/%d)...", operation.toString(), lastException.getMessage(), retry,
+                MAX_RETRY);
+          }
+        }
+      }
     }
+
+    ODistributedServerLog.warn(this, manager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.OUT,
+        "IO Exception during %s (%s)", operation.toString(), lastException.getMessage());
+
+    throw OException.wrapException(new ODistributedException(errorMessage),
+        new IOException("Cannot connect to remote node " + url, lastException));
   }
 
   public interface OStorageRemoteOperation<T> {
@@ -92,31 +128,32 @@ public class ORemoteServerChannel {
     networkOperation(OChannelBinaryProtocol.DISTRIBUTED_REQUEST, new OStorageRemoteOperation<Object>() {
       @Override
       public Object execute() throws IOException {
+        final byte[] serializedRequest;
+        final ByteArrayOutputStream out = new ByteArrayOutputStream();
         try {
-          final byte[] serializedRequest;
-          final ByteArrayOutputStream out = new ByteArrayOutputStream();
+          final ObjectOutputStream outStream = new ObjectOutputStream(out);
           try {
-            final ObjectOutputStream outStream = new ObjectOutputStream(out);
-            try {
-              req.writeExternal(outStream);
-              serializedRequest = out.toByteArray();
+            req.writeExternal(outStream);
+            serializedRequest = out.toByteArray();
 
-              ODistributedServerLog.debug(this, manager.getLocalNodeName(), node, ODistributedServerLog.DIRECTION.OUT,
-                  "Sending request %s (%d bytes)", req, serializedRequest.length);
+            ODistributedServerLog.debug(this, manager.getLocalNodeName(), node, ODistributedServerLog.DIRECTION.OUT,
+                "Sending request %s (%d bytes)", req, serializedRequest.length);
 
-              channel.writeBytes(serializedRequest);
+            channel.writeBytes(serializedRequest);
 
-            } finally {
-              outStream.close();
-            }
           } finally {
-            out.close();
+            outStream.close();
           }
         } finally {
-          endRequest();
+          out.close();
         }
 
         return null;
+      }
+
+      @Override
+      public String toString() {
+        return "SEND REQUEST";
       }
     }, "Cannot send distributed request");
 
@@ -126,30 +163,31 @@ public class ORemoteServerChannel {
     networkOperation(OChannelBinaryProtocol.DISTRIBUTED_RESPONSE, new OStorageRemoteOperation<Object>() {
       @Override
       public Object execute() throws IOException {
+        final ByteArrayOutputStream out = new ByteArrayOutputStream();
         try {
-          final ByteArrayOutputStream out = new ByteArrayOutputStream();
+          final ObjectOutputStream outStream = new ObjectOutputStream(out);
           try {
-            final ObjectOutputStream outStream = new ObjectOutputStream(out);
-            try {
-              response.writeExternal(outStream);
-              final byte[] serializedResponse = out.toByteArray();
+            response.writeExternal(outStream);
+            final byte[] serializedResponse = out.toByteArray();
 
-              ODistributedServerLog.debug(this, manager.getLocalNodeName(), node, ODistributedServerLog.DIRECTION.OUT,
-                  "Sending response %s (%d bytes)", response, serializedResponse.length);
+            ODistributedServerLog.debug(this, manager.getLocalNodeName(), node, ODistributedServerLog.DIRECTION.OUT,
+                "Sending response %s (%d bytes)", response, serializedResponse.length);
 
-              channel.writeBytes(serializedResponse);
+            channel.writeBytes(serializedResponse);
 
-            } finally {
-              outStream.close();
-            }
           } finally {
-            out.close();
+            outStream.close();
           }
         } finally {
-          endRequest();
+          out.close();
         }
 
         return null;
+      }
+
+      @Override
+      public String toString() {
+        return "SEND RESPONSE";
       }
     }, "Cannot send response back to the sender node '" + response.getSenderNodeName() + "'");
 
@@ -162,30 +200,13 @@ public class ORemoteServerChannel {
     networkOperation(OChannelBinaryProtocol.REQUEST_CONNECT, new OStorageRemoteOperation<Void>() {
       @Override
       public Void execute() throws IOException {
-        try {
-          channel.writeString(CLIENT_TYPE).writeString(OConstants.ORIENT_VERSION)
-              .writeShort((short) OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION).writeString("0");
-          channel.writeString(ODatabaseDocumentTx.getDefaultSerializer().toString());
-          channel.writeBoolean(false);
-          channel.writeBoolean(false); // SUPPORT PUSH
-          channel.writeBoolean(COLLECT_STATS); // COLLECT STATS
-
-          channel.writeString(userName);
-          channel.writeString(userPassword);
-
-          channel.flush();
-
-          channel.beginResponse(sessionId, false);
-          sessionId = channel.readInt();
-          sessionToken = channel.readBytes();
-          if (sessionToken.length == 0) {
-            sessionToken = null;
-          }
-        } finally {
-          channel.endResponse();
-        }
-
+        authenticate();
         return null;
+      }
+
+      @Override
+      public String toString() {
+        return "CONNECT";
       }
     }, "Cannot connect to the remote server '" + url + "'");
   }
@@ -195,8 +216,21 @@ public class ORemoteServerChannel {
       channel.close();
   }
 
-  private void endRequest() throws IOException {
+  private void authenticate() throws IOException {
+    channel.writeString(CLIENT_TYPE).writeString(OConstants.ORIENT_VERSION)
+        .writeShort((short) OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION).writeString("0");
+    channel.writeString(ODatabaseDocumentTx.getDefaultSerializer().toString());
+    channel.writeBoolean(false); // NO TOKEN
+    channel.writeBoolean(false); // SUPPORT PUSH
+    channel.writeBoolean(COLLECT_STATS); // COLLECT STATS
+
+    channel.writeString(userName);
+    channel.writeString(userPassword);
+
     channel.flush();
-    channel.releaseWriteLock();
+
+    sessionToken = channel.beginResponse(false);
+    if (sessionToken != null && sessionToken.length == 0)
+      sessionToken = null;
   }
 }

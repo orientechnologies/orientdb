@@ -19,9 +19,6 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
-import java.io.Serializable;
-import java.util.concurrent.ArrayBlockingQueue;
-
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.spi.exception.DistributedObjectDestroyedException;
 import com.orientechnologies.common.concur.OTimeoutException;
@@ -38,6 +35,9 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIR
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
+
+import java.io.Serializable;
+import java.util.concurrent.ArrayBlockingQueue;
 
 /**
  * Hazelcast implementation of distributed peer. There is one instance per database. Each node creates own instance to talk with
@@ -138,7 +138,12 @@ public class ODistributedWorker extends Thread {
       interrupt();
 
       if (pendingMsgs > 0)
-        join();
+        try {
+          join();
+        } catch (Exception e) {
+          ODistributedServerLog.debug(this, getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+              "Interrupted shutdown of distributed worker thread");
+        }
 
       ODistributedServerLog.warn(this, getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
           "Shutdown distributed worker completed");
