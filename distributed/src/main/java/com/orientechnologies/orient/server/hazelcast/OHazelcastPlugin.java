@@ -846,6 +846,23 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       }
     }
 
+    for (String databaseName : getManagedDatabases()) {
+      final ODatabaseDocumentTx database = (ODatabaseDocumentTx) serverInstance.openDatabase(databaseName, "internal", "internal",
+          null, true);
+      ODistributedConfiguration cfg;
+      try {
+        // ASSIGN CLUSTERS AT STARTUP
+        cfg = getDatabaseConfiguration(databaseName);
+        final boolean distribCfgDirty = rebalanceClusterOwnership(database, cfg);
+        if (distribCfgDirty) {
+          OLogManager.instance().info(this, "Distributed configuration modified");
+          updateCachedDatabaseConfiguration(databaseName, cfg.serialize(), true, true);
+        }
+      } finally {
+        database.close();
+      }
+    }
+
     serverInstance.getClientConnectionManager().pushDistribCfg2Clients(getClusterConfiguration());
   }
 
@@ -1474,7 +1491,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
           @Override
           public Void call() throws Exception {
-            final boolean distribCfgDirty = installDbClustersForLocalNode(db, cfg);
+            final boolean distribCfgDirty = rebalanceClusterOwnership(db, cfg);
             if (distribCfgDirty) {
               OLogManager.instance().warn(this, "Distributed configuration modified");
               updateCachedDatabaseConfiguration(db.getName(), cfg.serialize(), true, true);
@@ -1575,7 +1592,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     updateLastClusterChange();
   }
 
-  protected boolean installDbClustersForLocalNode(final ODatabaseInternal iDatabase, final ODistributedConfiguration cfg) {
+  protected synchronized boolean rebalanceClusterOwnership(final ODatabaseInternal iDatabase, final ODistributedConfiguration cfg) {
     final ODistributedConfiguration.ROLES role = cfg.getServerRole(nodeName);
     if (role != ODistributedConfiguration.ROLES.MASTER)
       // NO MASTER, DON'T CREATE LOCAL CLUSTERS
@@ -1747,7 +1764,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         try {
           // ASSIGN CLUSTERS AT STARTUP
           cfg = getDatabaseConfiguration(databaseName);
-          final boolean distribCfgDirty = installDbClustersForLocalNode(database, cfg);
+          final boolean distribCfgDirty = rebalanceClusterOwnership(database, cfg);
           if (distribCfgDirty) {
             OLogManager.instance().info(this, "Distributed configuration modified");
             updateCachedDatabaseConfiguration(databaseName, cfg.serialize(), true, true);
@@ -2089,9 +2106,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     }
   }
 
-  private synchronized boolean rebalanceClusterOwnershipOfClass(final ODatabaseInternal iDatabase,
-      final ODistributedConfiguration cfg, final OClass iClass, final Set<String> availableNodes,
-      final Set<String> clustersToReassign) {
+  private boolean rebalanceClusterOwnershipOfClass(final ODatabaseInternal iDatabase, final ODistributedConfiguration cfg,
+      final OClass iClass, final Set<String> availableNodes, final Set<String> clustersToReassign) {
 
     if (availableNodes.isEmpty())
       return false;
