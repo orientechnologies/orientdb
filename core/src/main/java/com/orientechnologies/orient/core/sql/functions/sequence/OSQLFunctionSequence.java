@@ -3,12 +3,14 @@ package com.orientechnologies.orient.core.sql.functions.sequence;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.metadata.sequence.OSequence;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionConfigurableAbstract;
 
 /**
  * Returns a sequence by name.
- * 
+ *
  * @author Luca Garulli
  */
 public class OSQLFunctionSequence extends OSQLFunctionConfigurableAbstract {
@@ -27,7 +29,11 @@ public class OSQLFunctionSequence extends OSQLFunctionConfigurableAbstract {
     else
       seqName = configuredParameters[0].toString();
 
-    return ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSequenceLibrary().getSequence(seqName);
+    OSequence result = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSequenceLibrary().getSequence(seqName);
+    if (result == null) {
+      throw new OCommandExecutionException("Sequence not found: " + seqName);
+    }
+    return result;
   }
 
   @Override
