@@ -25,43 +25,31 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.common.util.OArrays;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintStream;
+import java.io.*;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.ServiceLoader;
-import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class OConsoleApplication {
-  protected static final String[]            COMMENT_PREFIXS = new String[] { "#", "--", "//" };
-  public static final    String              ONLINE_HELP_URL = "https://raw.githubusercontent.com/orientechnologies/orientdb-docs/master/";
-  public static final    String              ONLINE_HELP_EXT = ".md";
-  protected final        StringBuilder       commandBuffer   = new StringBuilder(2048);
-  protected              InputStream         in              = System.in;                                                                  // System.in;
-  protected              PrintStream         out             = System.out;
-  protected              PrintStream         err             = System.err;
-  protected              String              wordSeparator   = " ";
-  protected              String[]            helpCommands    = { "help", "?" };
-  protected              String[]            exitCommands    = { "exit", "bye", "quit" };
-  protected              Map<String, String> properties      = new HashMap<String, String>();
+  protected static final String[]   COMMENT_PREFIXS = new String[] { "#", "--", "//" };
+  public static final String        ONLINE_HELP_URL = "https://raw.githubusercontent.com/orientechnologies/orientdb-docs/master/";
+  public static final String        ONLINE_HELP_EXT = ".md";
+  protected final StringBuilder     commandBuffer   = new StringBuilder(2048);
+  protected InputStream             in              = System.in;                                                                  // System.in;
+  protected PrintStream             out             = System.out;
+  protected PrintStream             err             = System.err;
+  protected String                  wordSeparator   = " ";
+  protected String[]                helpCommands    = { "help", "?" };
+  protected String[]                exitCommands    = { "exit", "bye", "quit" };
+  protected Map<String, String>     properties      = new HashMap<String, String>();
   // protected OConsoleReader reader = new TTYConsoleReader();
-  protected              OConsoleReader      reader          = new ODefaultConsoleReader();
+  protected OConsoleReader          reader          = new ODefaultConsoleReader();
   protected boolean                 interactiveMode;
   protected String[]                args;
   protected TreeMap<Method, Object> methods;
@@ -77,10 +65,12 @@ public class OConsoleApplication {
   public static String getCorrectMethodName(Method m) {
     StringBuilder buffer = new StringBuilder(128);
     buffer.append(getClearName(m.getName()));
-    for (int i = 0; i<m.getParameterAnnotations().length; i++) {
-      for (int j = 0; j<m.getParameterAnnotations()[i].length; j++) {
+    for (int i = 0; i < m.getParameterAnnotations().length; i++) {
+      for (int j = 0; j < m.getParameterAnnotations()[i].length; j++) {
         if (m.getParameterAnnotations()[i][j] instanceof com.orientechnologies.common.console.annotation.ConsoleParameter) {
-          buffer.append(" <" + ((com.orientechnologies.common.console.annotation.ConsoleParameter) m.getParameterAnnotations()[i][j]).name() + ">");
+          buffer.append(
+              " <" + ((com.orientechnologies.common.console.annotation.ConsoleParameter) m.getParameterAnnotations()[i][j]).name()
+                  + ">");
         }
       }
     }
@@ -93,7 +83,7 @@ public class OConsoleApplication {
     char c;
     if (iJavaName != null) {
       buffer.append(iJavaName.charAt(0));
-      for (int i = 1; i<iJavaName.length(); ++i) {
+      for (int i = 1; i < iJavaName.length(); ++i) {
         c = iJavaName.charAt(i);
 
         if (Character.isUpperCase(c)) {
@@ -250,8 +240,8 @@ public class OConsoleApplication {
           final RESULT status = execute(commandLine);
           commandLine = null;
 
-          if (status == RESULT.EXIT || (status == RESULT.ERROR && !Boolean.parseBoolean(properties.get("ignoreErrors")))
-              && iBatchMode)
+          if (status == RESULT.EXIT
+              || (status == RESULT.ERROR && !Boolean.parseBoolean(properties.get("ignoreErrors"))) && iBatchMode)
             return false;
         }
       }
@@ -266,8 +256,8 @@ public class OConsoleApplication {
           }
 
           final RESULT status = execute(commandBuffer.toString());
-          if (status == RESULT.EXIT || (status == RESULT.ERROR && !Boolean.parseBoolean(properties.get("ignoreErrors")))
-              && iBatchMode)
+          if (status == RESULT.EXIT
+              || (status == RESULT.ERROR && !Boolean.parseBoolean(properties.get("ignoreErrors"))) && iBatchMode)
             return false;
         }
       }
@@ -646,15 +636,15 @@ public class OConsoleApplication {
       if (ann != null) {
         // FETCH ONLINE CONTENT
         if (onlineMode && !ann.onlineHelp().isEmpty()) {
-//          try {
-            final String text = getOnlineHelp(ONLINE_HELP_URL + ann.onlineHelp() + ONLINE_HELP_EXT);
-            if (text != null && !text.isEmpty()) {
-              message(text);
-              // ONLINE FETCHING SUCCEED: RETURN
-              return;
-            }
-//          } catch (Exception e) {
-//          }
+          // try {
+          final String text = getOnlineHelp(ONLINE_HELP_URL + ann.onlineHelp() + ONLINE_HELP_EXT);
+          if (text != null && !text.isEmpty()) {
+            message(text);
+            // ONLINE FETCHING SUCCEED: RETURN
+            return;
+          }
+          // } catch (Exception e) {
+          // }
           error("!CANNOT FETCH ONLINE DOCUMENTATION, CHECK IF COMPUTER IS CONNECTED TO THE INTERNET.");
           return;
         }
