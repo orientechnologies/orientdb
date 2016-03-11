@@ -95,6 +95,8 @@ public interface ODistributedServerManager {
    */
   boolean isNodeOnline(String iNodeName, String databaseName);
 
+  int getAvailableNodes(final String iDatabaseName);
+
   int getAvailableNodes(final Collection<String> iNodes, final String databaseName);
 
   boolean isOffline();

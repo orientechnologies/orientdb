@@ -47,9 +47,9 @@ public class OLocalClusterStrategy implements OClusterSelectionStrategy {
   private final ODistributedServerManager manager;
   private final String                    nodeName;
   private final String                    databaseName;
-  private final List<Integer>             bestClusterIds = new ArrayList<Integer>(5);
   private final AtomicLong                pointer        = new AtomicLong(0);
   private int                             lastVersion    = -1;
+  private volatile List<Integer>          bestClusterIds = new ArrayList<Integer>();
 
   public OLocalClusterStrategy(final ODistributedServerManager iManager, final String iDatabaseName, final OClass iClass) {
     this.manager = iManager;
@@ -73,14 +73,15 @@ public class OLocalClusterStrategy implements OClusterSelectionStrategy {
       }
     }
 
-    if (bestClusterIds.isEmpty())
+    final int size = bestClusterIds.size();
+    if (size == 0)
       return -1;
 
-    if (bestClusterIds.size() == 1)
+    if (size == 1)
       // ONLY ONE: RETURN THE FIRST ONE
       return bestClusterIds.get(0);
 
-    return bestClusterIds.get((int) (pointer.getAndIncrement() % bestClusterIds.size()));
+    return bestClusterIds.get((int) (pointer.getAndIncrement() % size));
   }
 
   @Override
@@ -101,7 +102,7 @@ public class OLocalClusterStrategy implements OClusterSelectionStrategy {
 
     final ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
 
-    final List<String> bestClusters = cfg.getLocalClusters(clusterNames, nodeName);
+    final List<String> bestClusters = cfg.getOwnedClusters(clusterNames, nodeName);
     if (bestClusters.isEmpty()) {
 
       // FILL THE MAP CLUSTER/SERVERS
@@ -123,9 +124,10 @@ public class OLocalClusterStrategy implements OClusterSelectionStrategy {
           "Cannot find best cluster for class '" + cls.getName() + "' on server '" + nodeName + "'. ClusterStrategy=" + getName());
     }
 
-    bestClusterIds.clear();
+    final List<Integer> newBestClusters = new ArrayList<Integer>();
     for (String c : bestClusters)
-      bestClusterIds.add(db.getClusterIdByName(c));
+      newBestClusters.add(db.getClusterIdByName(c));
+    bestClusterIds = newBestClusters;
 
     lastVersion = cfg.getVersion();
   }

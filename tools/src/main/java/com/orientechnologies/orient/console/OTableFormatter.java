@@ -41,8 +41,6 @@ public class OTableFormatter {
     LEFT, CENTER, RIGHT
   }
 
-  ;
-
   protected final static String           MORE                 = "...";
   protected final static SimpleDateFormat DEF_DATEFORMAT       = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 

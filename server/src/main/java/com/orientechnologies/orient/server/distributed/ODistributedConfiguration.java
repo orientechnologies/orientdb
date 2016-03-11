@@ -254,13 +254,14 @@ public class ODistributedConfiguration {
   }
 
   /**
-   * Returns the local clusters. This is used when a cluster must be selected: local is always the best choice.
+   * Returns the clusters where a server is owner. This is used when a cluster must be selected: locality is always the best choice.
    *
    * @param iClusterNames
    *          Set of cluster names
-   * @param iLocalNode
+   * @param iNode
+   *          Node
    */
-  public List<String> getLocalClusters(List<String> iClusterNames, final String iLocalNode) {
+  public List<String> getOwnedClusters(Collection<String> iClusterNames, final String iNode) {
     synchronized (configuration) {
       if (iClusterNames == null || iClusterNames.isEmpty())
         iClusterNames = DEFAULT_CLUSTER_NAME;
@@ -269,10 +270,10 @@ public class ODistributedConfiguration {
       final List<String> candidates = new ArrayList<String>(5);
 
       for (String p : iClusterNames) {
-        final String masterServer = getMasterServer(p);
+        final String masterServer = getOwnerOfCluster(p);
         if (masterServer == null)
           notDefinedClusters.add(p);
-        else if (iLocalNode.equals(masterServer)) {
+        else if (iNode.equals(masterServer)) {
           // COLLECT AS CANDIDATE
           candidates.add(p);
         }
@@ -282,12 +283,12 @@ public class ODistributedConfiguration {
         // RETURN THE FIRST ONE
         return candidates;
 
-      final String masterServer = getMasterServer(ALL_WILDCARD);
-      if (iLocalNode.equals(masterServer))
-        // DEFAULT IS OK: RETURN THE FIRST CLUSTER NAME
+      final String masterServer = getOwnerOfCluster(ALL_WILDCARD);
+      if (iNode.equals(masterServer))
+        // CURRENT SERVER IS MASTER OF DEFAULT: RETURN ALL THE NON CONFIGURED CLUSTERS
         return notDefinedClusters;
 
-      // NO MASTER FOUND
+      // NO MASTER FOUND, RETURN EMPTY LIST
       return candidates;
     }
   }
@@ -376,14 +377,29 @@ public class ODistributedConfiguration {
   }
 
   /**
-   * Returns the master server for the given cluster excluding the passed node. The Leader server is the first in server list.
+   * Returns the set of clusters where server is the owner.
+   *
+   * @param iNodeName
+   *          Server name
+   */
+  public Set<String> getClustersWithOwner(final String iNodeName) {
+    final Set<String> clusters = new HashSet<String>();
+    for (String cl : getClusterNames()) {
+      if (iNodeName.equals(getOwnerOfCluster(cl)))
+        clusters.add(cl);
+    }
+    return clusters;
+  }
+
+  /**
+   * Returns the owner server for the given cluster excluding the passed node. The Owner server is the first in server list.
    *
    * @param iClusterName
    *          Cluster name, or null for *
    */
-  public String getMasterServer(final String iClusterName) {
+  public String getOwnerOfCluster(final String iClusterName) {
     synchronized (configuration) {
-      String leader = null;
+      String owner = null;
 
       final ODocument clusters = configuration.field("clusters");
       if (clusters == null)
@@ -396,14 +412,14 @@ public class ODistributedConfiguration {
         final List<String> serverList = cfg.field("servers");
         if (serverList != null && !serverList.isEmpty()) {
           // RETURN THE FIRST ONE
-          leader = serverList.get(0);
-          if (NEW_NODE_TAG.equals(leader) && serverList.size() > 1)
+          owner = serverList.get(0);
+          if (NEW_NODE_TAG.equals(owner) && serverList.size() > 1)
             // DON'T RETURN <NEW_NODE>
-            leader = serverList.get(1);
+            owner = serverList.get(1);
         }
       }
 
-      return leader;
+      return owner;
     }
   }
 
@@ -533,12 +549,12 @@ public class ODistributedConfiguration {
   }
 
   /**
-   * Sets the master server for the given cluster. Master server is the first in server list
+   * Sets the server as owner for the given cluster. The owner server is the first in server list.
    *
    * @param iClusterName
    *          Cluster name or *. Doesn't accept null.
    */
-  public void setMasterServer(final String iClusterName, final String iServerName) {
+  public void setServerOwner(final String iClusterName, final String iServerName) {
     if (iClusterName == null)
       throw new IllegalArgumentException("cluster name cannot be null");
 
@@ -621,7 +637,7 @@ public class ODistributedConfiguration {
     return null;
   }
 
-  public List<String> removeMasterServer(final String iServerName) {
+  public List<String> removeOwnerServer(final String iServerName) {
     final List<String> changedPartitions = new ArrayList<String>();
 
     synchronized (configuration) {
@@ -636,7 +652,7 @@ public class ODistributedConfiguration {
           continue;
 
         if (!serverList.get(0).equals(iServerName))
-          // WASN'T MASTER
+          // WASN'T OWNER
           continue;
 
         // PUT THE FIRST NODE AS LAST

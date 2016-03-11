@@ -396,12 +396,12 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       for (String c : cfg.getClusterNames()) {
         if (c.endsWith(suffix2Search)) {
           // FOUND: ASSIGN TO LOCAL NODE
-          final String currentMaster = cfg.getMasterServer(c);
+          final String currentMaster = cfg.getOwnerOfCluster(c);
 
           if (!getLocalNodeName().equals(currentMaster)) {
             ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE,
                 "changing mastership of cluster '%s' from node '%s' to '%s'", c, currentMaster, getLocalNodeName());
-            cfg.setMasterServer(c, getLocalNodeName());
+            cfg.setServerOwner(c, getLocalNodeName());
             distribCfgDirty = true;
           }
         }

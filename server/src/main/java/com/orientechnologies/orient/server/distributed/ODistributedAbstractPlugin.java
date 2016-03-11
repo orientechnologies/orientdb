@@ -266,9 +266,11 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       cachedDatabaseConfiguration.put(iDatabaseName, cfg);
 
       // PRINT THE NEW CONFIGURATION
+      final String cfgOutput = ODistributedOutput.formatClusterTable(new ODistributedConfiguration(cfg),
+          getAvailableNodes(iDatabaseName));
+
       ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE,
-          "updated distributed configuration for database: %s:\n----------\n%s\n----------", iDatabaseName,
-          cfg.toJSON("prettyPrint"));
+          "New distributed configuration for database: %s%s\n", iDatabaseName, cfgOutput);
 
       if (iSaveToDisk) {
         // SAVE THE CONFIGURATION TO DISK
