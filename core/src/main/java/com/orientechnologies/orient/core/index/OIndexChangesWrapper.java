@@ -11,18 +11,18 @@ public class OIndexChangesWrapper implements OIndexCursor {
   private final OIndexCursor delegate;
   private final long         indexVersion;
 
-  public static OIndexCursor wrap(OIndex<?> source, OIndexCursor cursor) {
+  public static OIndexCursor wrap(OIndex<?> source, OIndexCursor cursor, long indexVersion) {
     if (cursor instanceof OIndexChangesWrapper)
       return cursor;
 
-    return new OIndexChangesWrapper(source, cursor);
+    return new OIndexChangesWrapper(source, cursor, indexVersion);
   }
 
-  public OIndexChangesWrapper(OIndex<?> source, OIndexCursor delegate) {
+  public OIndexChangesWrapper(OIndex<?> source, OIndexCursor delegate, long indexVersion) {
     this.source = source;
     this.delegate = delegate;
 
-    indexVersion = source.getRebuildVersion();
+    this.indexVersion = source.getRebuildVersion();
   }
 
   @Override
