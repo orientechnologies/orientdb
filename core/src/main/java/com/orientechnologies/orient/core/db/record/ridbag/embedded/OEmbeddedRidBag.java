@@ -454,7 +454,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
     return Collections.unmodifiableList(changeListeners);
   }
 
-  protected void fireCollectionChangedEvent(final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> event) {
+  public void fireCollectionChangedEvent(final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> event) {
     if (changeListeners != null) {
       for (final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener : changeListeners) {
         if (changeListener != null)
@@ -518,5 +518,10 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
     }
 
     deserialized = true;
+  }
+
+  @Override
+  public void replace(OMultiValueChangeEvent<Object, Object> event, Object newValue) {
+    //do nothing not needed
   }
 }

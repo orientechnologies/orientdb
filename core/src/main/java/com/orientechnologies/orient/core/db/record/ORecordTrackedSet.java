@@ -192,7 +192,7 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> impleme
     return reverted;
   }
 
-  protected void fireCollectionChangedEvent(final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> event) {
+  public void fireCollectionChangedEvent(final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> event) {
     if (getOwner().getInternalStatus() == STATUS.UNMARSHALLING)
       return;
 
@@ -208,6 +208,12 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> impleme
   @Override
   public Class<?> getGenericClass() {
     return OIdentifiable.class;
+  }
+
+
+  @Override
+  public void replace(OMultiValueChangeEvent<Object, Object> event, Object newValue) {
+    //not needed do nothing
   }
 
 }

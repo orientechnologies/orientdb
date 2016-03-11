@@ -20,6 +20,13 @@ public class OIndexChangesWrapper implements OIndexCursor {
   protected final OIndexCursor delegate;
   protected final long         indexVersion;
 
+  public OIndexChangesWrapper(OIndex<?> source, OIndexCursor delegate) {
+    this.source = source;
+    this.delegate = delegate;
+
+    indexVersion = source.getRebuildVersion();
+  }
+
   /**
    * Wraps courser only if it is not already wrapped.
    *
@@ -38,11 +45,9 @@ public class OIndexChangesWrapper implements OIndexCursor {
     return new OIndexChangesWrapper(source, cursor);
   }
 
-  public OIndexChangesWrapper(OIndex<?> source, OIndexCursor delegate) {
-    this.source = source;
-    this.delegate = delegate;
-
-    indexVersion = source.getRebuildVersion();
+  @Override
+  public void remove() {
+    throw new UnsupportedOperationException("remove");
   }
 
   /**

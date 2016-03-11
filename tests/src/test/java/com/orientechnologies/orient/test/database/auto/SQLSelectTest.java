@@ -15,9 +15,7 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -25,6 +23,7 @@ import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -141,6 +140,7 @@ public class SQLSelectTest extends AbstractSelectTest {
 
   @Test
   public void testQueryCount() {
+    database.getMetadata().reload();
     final long vertexesCount = database.countClass("V");
     List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select count(*) from V"));
     Assert.assertEquals(result.get(0).field("count"), vertexesCount);
@@ -1667,6 +1667,26 @@ public class SQLSelectTest extends AbstractSelectTest {
 
     } finally {
       database.getMetadata().getSchema().dropClass("PersonMultipleClusters");
+    }
+  }
+
+  public void testOutFilterInclude() {
+    OSchemaProxy schema = database.getMetadata().getSchema();
+    schema.createClass("TestOutFilterInclude", schema.getClass("V"));
+    database.command(new OCommandSQL("create class linkedToOutFilterInclude extends E")).execute();
+    database.command(new OCommandSQL("insert into TestOutFilterInclude content { \"name\": \"one\" }")).execute();
+    database.command(new OCommandSQL("insert into TestOutFilterInclude content { \"name\": \"two\" }")).execute();
+    database.command(new OCommandSQL(
+        "create edge linkedToOutFilterInclude from (select from TestOutFilterInclude where name = 'one') to (select from TestOutFilterInclude where name = 'two')"))
+        .execute();
+
+    final List<OIdentifiable> result = database.query(new OSQLSynchQuery<OIdentifiable>(
+        "select expand(out('linkedToOutFilterInclude')[@class='TestOutFilterInclude'].include('@rid')) from TestOutFilterInclude where name = 'one'"));
+
+    Assert.assertEquals(result.size(), 1);
+
+    for (OIdentifiable r : result) {
+      Assert.assertEquals(((ODocument) r.getRecord()).field("name"), null);
     }
   }
 

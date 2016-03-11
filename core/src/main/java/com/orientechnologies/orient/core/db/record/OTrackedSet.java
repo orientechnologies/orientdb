@@ -87,11 +87,20 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
       addOwnerToEmbeddedDoc(e);
 
       fireCollectionChangedEvent(new OMultiValueChangeEvent<T, T>(OMultiValueChangeEvent.OChangeType.ADD, e, e));
+      addNested(e);
       return true;
     }
 
     return false;
   }
+
+  private void addNested(T element) {
+    if (element instanceof OTrackedMultiValue) {
+      ((OTrackedMultiValue) element)
+          .addChangeListener(new ONestedValueChangeListener((ODocument) sourceRecord, this, (OTrackedMultiValue) element));
+    }
+  }
+
 
   @SuppressWarnings("unchecked")
   @Override
@@ -101,6 +110,7 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
         ODocumentInternal.removeOwner((ODocument) o, this);
 
       fireCollectionChangedEvent(new OMultiValueChangeEvent<T, T>(OMultiValueChangeEvent.OChangeType.REMOVE, (T) o, null, (T) o));
+      removeNested(o);
       return true;
     }
     return false;
@@ -129,10 +139,18 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
           ODocumentInternal.removeOwner((ODocument) item, this);
 
         fireCollectionChangedEvent(new OMultiValueChangeEvent<T, T>(OMultiValueChangeEvent.OChangeType.REMOVE, item, null, item));
+        removeNested(item);
       }
 
     } else
       setDirty();
+  }
+
+
+  private void removeNested(Object element){
+    if(element instanceof OTrackedMultiValue){
+      //      ((OTrackedMultiValue) element).removeRecordChangeListener(null);
+    }
   }
 
   @SuppressWarnings("unchecked")
@@ -199,7 +217,7 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
     this.genericClass = genericClass;
   }
 
-  protected void fireCollectionChangedEvent(final OMultiValueChangeEvent<T, T> event) {
+  public void fireCollectionChangedEvent(final OMultiValueChangeEvent<T, T> event) {
     if (status == STATUS.UNMARSHALLING)
       return;
 
@@ -221,5 +239,12 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
 
   private Object writeReplace() {
     return new HashSet<T>(this);
+  }
+
+  @Override
+  public void replace(OMultiValueChangeEvent<Object, Object> event, Object newValue) {
+    super.remove(event.getKey());
+    super.add((T) newValue);
+    addNested((T) newValue);
   }
 }

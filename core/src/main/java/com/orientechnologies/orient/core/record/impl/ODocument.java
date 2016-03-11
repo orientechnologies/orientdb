@@ -2382,6 +2382,9 @@ public class ODocument extends ORecordAbstract
       if (!(fieldValue instanceof Collection<?>) && !(fieldValue instanceof Map<?, ?>) && !(fieldValue instanceof ODocument))
         continue;
       if (addCollectionChangeListener(fieldEntry.getValue())) {
+        if (fieldEntry.getValue().timeLine != null && !fieldEntry.getValue().timeLine.getMultiValueChangeEvents().isEmpty()) {
+          checkTimelineTrackable(fieldEntry.getValue().timeLine, (OTrackedMultiValue) fieldEntry.getValue().value);
+        }
         continue;
       }
 
@@ -2443,6 +2446,28 @@ public class ODocument extends ORecordAbstract
       }
     }
 
+  }
+
+  private void checkTimelineTrackable(OMultiValueChangeTimeLine<Object, Object> timeLine, OTrackedMultiValue origin) {
+    List<OMultiValueChangeEvent<Object, Object>> events = timeLine.getMultiValueChangeEvents();
+    for (OMultiValueChangeEvent<Object, Object> event : events) {
+      Object value = event.getValue();
+      if (event.getChangeType() == OMultiValueChangeEvent.OChangeType.ADD && !(value instanceof OTrackedMultiValue)) {
+        if (value instanceof Collection) {
+          Collection<Object> newCollection = value instanceof List ? new OTrackedList<Object>(this) : new OTrackedSet<Object>(this);
+          fillTrackedCollection(newCollection, (Collection<Object>) value);
+          origin.replace(event, newCollection);
+        } else if (value instanceof Map) {
+          Map<Object, Object> newMap = new OTrackedMap<Object>(this);
+          fillTrackedMap(newMap, (Map<Object, Object>) value);
+          origin.replace(event, newMap);
+        }
+      } else if (event.getChangeType() == OMultiValueChangeEvent.OChangeType.NESTED) {
+        OMultiValueChangeTimeLine nestedTimeline = ((ONestedMultiValueChangeEvent) event).getTimeLine();
+        if (nestedTimeline != null)
+          checkTimelineTrackable(nestedTimeline, (OTrackedMultiValue) value);
+      }
+    }
   }
 
   private void fillTrackedCollection(Collection<Object> dest, Collection<Object> source) {

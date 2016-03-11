@@ -404,4 +404,21 @@ public class OCommandExecutorSQLUpdateTest {
     }
   }
 
+  @Test
+  public void testUpdateLockLimit() throws Exception {
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLUpdateTest_testUpdateLockLimit");
+    db.create();
+    try {
+      db.getMetadata().getSchema().createClass("foo");
+      db.command(new OCommandSQL("insert into foo set name = 'foo'")).execute();
+      db.command(new OCommandSQL("UPDATE foo set name = 'bar' where name = 'foo' lock record limit 1")).execute();
+      Iterable result = db.query(new OSQLSynchQuery<Object>("select from foo"));
+      ODocument doc = (ODocument) result.iterator().next();
+      assertEquals(doc.field("name"), "bar");
+      db.command(new OCommandSQL("UPDATE foo set name = 'foo' where name = 'bar' lock record limit 1")).execute();
+    } finally {
+      db.close();
+    }
+  }
+
 }

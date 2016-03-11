@@ -78,8 +78,15 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
           oldValue));
     else
       fireCollectionChangedEvent(new OMultiValueChangeEvent<Object, T>(OMultiValueChangeEvent.OChangeType.ADD, key, value));
-
+    addNested(value);
     return oldValue;
+  }
+
+  private void addNested(T element) {
+    if (element instanceof OTrackedMultiValue) {
+      ((OTrackedMultiValue) element)
+          .addChangeListener(new ONestedValueChangeListener((ODocument) sourceRecord, this, (OTrackedMultiValue) element));
+    }
   }
 
   private void addOwnerToEmbeddedDoc(T e) {
@@ -97,9 +104,13 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
     if (oldValue instanceof ODocument)
       ODocumentInternal.removeOwner((ODocument) oldValue, this);
 
-    if (containsKey)
-      fireCollectionChangedEvent(new OMultiValueChangeEvent<Object, T>(OMultiValueChangeEvent.OChangeType.REMOVE, iKey, null,
-          oldValue));
+    if (containsKey) {
+      fireCollectionChangedEvent(
+          new OMultiValueChangeEvent<Object, T>(OMultiValueChangeEvent.OChangeType.REMOVE, iKey, null, oldValue));
+      removeNested(oldValue);
+    }
+
+
 
     return oldValue;
   }
@@ -128,9 +139,16 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
         }
         fireCollectionChangedEvent(new OMultiValueChangeEvent<Object, T>(OMultiValueChangeEvent.OChangeType.REMOVE, entry.getKey(),
             null, entry.getValue()));
+        removeNested(entry.getValue());
       }
     } else
       setDirty();
+  }
+
+  private void removeNested(Object element){
+    if(element instanceof OTrackedMultiValue){
+      //      ((OTrackedMultiValue) element).removeRecordChangeListener(null);
+    }
   }
 
   @Override
@@ -199,7 +217,7 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
     return reverted;
   }
 
-  protected void fireCollectionChangedEvent(final OMultiValueChangeEvent<Object, T> event) {
+  public void fireCollectionChangedEvent(final OMultiValueChangeEvent<Object, T> event) {
     if (status == STATUS.UNMARSHALLING)
       return;
 
@@ -222,5 +240,11 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
 
   private Object writeReplace() {
     return new LinkedHashMap<Object, T>(this);
+  }
+
+  @Override
+  public void replace(OMultiValueChangeEvent<Object, Object> event, Object newValue) {
+    super.put(event.getKey(), (T) newValue);
+    addNested((T) newValue);
   }
 }
