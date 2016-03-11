@@ -24,16 +24,17 @@ public class OIndexChangesWrapper implements OIndexCursor {
    *
    * @param source Index which is used to create given cursor.
    * @param cursor Cursor to wrap.
+   * @param indexVersion Version of index <b>before</b> passed in cursor was created.
    * @return Wrapped cursor.
    */
-  public static OIndexCursor wrap(OIndex<?> source, OIndexCursor cursor) {
+  public static OIndexCursor wrap(OIndex<?> source, OIndexCursor cursor, long indexVersion) {
     if (cursor instanceof OIndexChangesWrapper)
       return cursor;
 
     return new OIndexChangesWrapper(source, cursor, indexVersion);
   }
 
-  private OIndexChangesWrapper(OIndex<?> source, OIndexCursor delegate) {
+  private OIndexChangesWrapper(OIndex<?> source, OIndexCursor delegate, long indexVersion) {
     this.source = source;
     this.delegate = delegate;
 
