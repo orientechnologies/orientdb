@@ -452,4 +452,13 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     return delegate;
   }
 
+  @Override
+  public void fireCollectionChangedEvent(OMultiValueChangeEvent<OIdentifiable, OIdentifiable> event) {
+    delegate.fireCollectionChangedEvent(event);
+  }
+
+  @Override
+  public void replace(OMultiValueChangeEvent<Object, Object> event, Object newValue) {
+    //not needed do nothing
+  }
 }

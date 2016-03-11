@@ -31,8 +31,8 @@ public class OMultiValueChangeEvent<K, V> {
   /**
    * Operation that is performed on collection.
    */
-  public static enum OChangeType {
-    ADD, UPDATE, REMOVE
+  public enum OChangeType {
+    ADD, UPDATE, REMOVE, NESTED
   }
 
   /**

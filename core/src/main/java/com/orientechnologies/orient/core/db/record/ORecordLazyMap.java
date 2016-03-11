@@ -233,7 +233,7 @@ public class ORecordLazyMap extends OTrackedMap<OIdentifiable> implements ORecor
   }
 
   @Override
-  protected void fireCollectionChangedEvent(final OMultiValueChangeEvent<Object, OIdentifiable> event) {
+  public void fireCollectionChangedEvent(final OMultiValueChangeEvent<Object, OIdentifiable> event) {
     if (!marshalling)
       super.fireCollectionChangedEvent(event);
   }
