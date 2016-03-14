@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.jdbc;
 
+import org.hamcrest.Matchers;
 import org.junit.Test;
 
 import java.sql.PreparedStatement;
@@ -7,7 +8,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
+import static java.sql.ResultSet.CONCUR_READ_ONLY;
+import static java.sql.ResultSet.TYPE_FORWARD_ONLY;
+
 
 public class OrientJdbcPreparedStatementTest extends OrientJdbcBaseTest {
 
@@ -116,5 +121,22 @@ public class OrientJdbcPreparedStatementTest extends OrientJdbcBaseTest {
     // Let's verify the previous process
     ResultSet resultSet = conn.createStatement().executeQuery("SELECT count(*) FROM insertable WHERE id = 'someRandomUid'");
     assertThat(resultSet.getInt(1), equalTo(1));
+  }
+
+  @Test
+  public void shouldCreatePreparedStatementWithExtendConstructor() throws Exception {
+
+    PreparedStatement stmt = conn.prepareStatement("SELECT FROM Item WHERE intKey = ?", TYPE_FORWARD_ONLY, CONCUR_READ_ONLY);
+    stmt.setInt(1, 1);
+
+    ResultSet rs = stmt.executeQuery();
+
+    assertThat(rs.next(), is(true));
+
+    assertThat(rs.getString("@class"), Matchers.equalToIgnoringCase("Item"));
+
+    assertThat(rs.getString("stringKey"), Matchers.equalTo("1"));
+    assertThat(rs.getInt("intKey"), Matchers.is(1));
+    //
   }
 }
