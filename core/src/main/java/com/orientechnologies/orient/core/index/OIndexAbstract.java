@@ -30,6 +30,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.orientechnologies.common.concur.lock.OModificationLock;
@@ -90,11 +91,10 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
   private volatile OIndexDefinition indexDefinition;
   private volatile boolean rebuilding = false;
 
-  private Thread rebuildThread = null;
-
   private volatile ThreadLocal<IndexTxSnapshot> txSnapshot = new IndexTxSnapshotThreadLocal();
 
-  private final OReadersWriterSpinLock rwLock = new OReadersWriterSpinLock();
+  private final OReadersWriterSpinLock rwLock         = new OReadersWriterSpinLock();
+  private final AtomicLong             rebuildVersion = new AtomicLong();
 
   protected static final class IndexTxSnapshot {
     public Map<Object, Object> indexSnapshot = new HashMap<Object, Object>();
@@ -317,8 +317,6 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
   }
 
   public boolean contains(Object key) {
-    checkForRebuild();
-
     key = getCollatingValue(key);
 
     final ODatabase database = getDatabase();
@@ -340,6 +338,9 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public long rebuild() {
     return rebuild(new OIndexRebuildOutputListener(this));
   }
@@ -380,7 +381,14 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
   }
 
   /**
-   * Populates the index with all the existent records. Uses the massive insert intent to speed up and keep the consumed memory low.
+   * {@inheritDoc}
+   */
+  public long getRebuildVersion() {
+    return rebuildVersion.get();
+  }
+
+  /**
+   * {@inheritDoc}
    */
   public long rebuild(final OProgressListener iProgressListener) {
     long documentIndexed = 0;
@@ -389,39 +397,46 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
 
     if (modificationLock != null)
       modificationLock.requestModificationLock();
+
     try {
-      acquireExclusiveLock();
+      markStorageDirty();
+
       try {
-        markStorageDirty();
-
-        rebuildThread = Thread.currentThread();
+        //DO NOT REORDER 2 assignments bellow
+        //see #getRebuildVersion()
         rebuilding = true;
+        rebuildVersion.incrementAndGet();
 
+        acquireSharedLock();
         try {
-          indexEngine.deleteWithoutLoad(name);
-        } catch (Exception e) {
-          OLogManager.instance().error(this, "Error during index '%s' delete", name);
-        }
+          try {
+            indexEngine.deleteWithoutLoad(name);
+          } catch (Exception e) {
+            OLogManager.instance().error(this, "Error during index '%s' delete", name);
+          }
 
-        removeValuesContainer();
+          removeValuesContainer();
 
-        indexEngine.create(indexDefinition, getDatabase().getMetadata().getIndexManager().getDefaultClusterName(),
-            determineValueSerializer(), isAutomatic());
+          indexEngine.create(indexDefinition, getDatabase().getMetadata().getIndexManager().getDefaultClusterName(),
+              determineValueSerializer(), isAutomatic());
 
-        long documentNum = 0;
-        long documentTotal = 0;
+          long documentNum = 0;
+          long documentTotal = 0;
 
-        for (final String cluster : clustersToIndex)
-          documentTotal += getDatabase().countClusterElements(cluster);
+          for (final String cluster : clustersToIndex)
+            documentTotal += getDatabase().countClusterElements(cluster);
 
-        if (iProgressListener != null)
-          iProgressListener.onBegin(this, documentTotal, true);
+          if (iProgressListener != null)
+            iProgressListener.onBegin(this, documentTotal, true);
 
-        // INDEX ALL CLUSTERS
-        for (final String clusterName : clustersToIndex) {
-          final long[] metrics = indexCluster(clusterName, iProgressListener, documentNum, documentIndexed, documentTotal);
-          documentNum = metrics[0];
-          documentIndexed = metrics[1];
+          // INDEX ALL CLUSTERS
+          for (final String clusterName : clustersToIndex) {
+            final long[] metrics = indexCluster(clusterName, iProgressListener, documentNum, documentIndexed, documentTotal);
+            documentNum = metrics[0];
+            documentIndexed = metrics[1];
+          }
+        } finally {
+          releaseSharedLock();
         }
 
         if (iProgressListener != null)
@@ -441,12 +456,9 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
 
       } finally {
         rebuilding = false;
-        rebuildThread = null;
 
         if (intentInstalled)
           getDatabase().declareIntent(null);
-
-        releaseExclusiveLock();
       }
     } finally {
       if (modificationLock != null)
@@ -461,8 +473,6 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
   }
 
   public boolean remove(Object key) {
-    checkForRebuild();
-
     key = getCollatingValue(key);
 
     final ODatabase database = getDatabase();
@@ -540,8 +550,6 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
   }
 
   public OIndex<T> clear() {
-    checkForRebuild();
-
     final ODatabase database = getDatabase();
     final boolean txIsActive = database.getTransaction().isActive();
 
@@ -753,8 +761,6 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
 
   @SuppressWarnings("unchecked")
   public void addTxOperation(final ODocument operationDocument) {
-    checkForRebuild();
-
     if (operationDocument == null)
       return;
 
@@ -836,8 +842,6 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
 
   @Override
   public OIndexKeyCursor keyCursor() {
-    checkForRebuild();
-
     acquireSharedLock();
     try {
       return indexEngine.keyCursor();
@@ -899,7 +903,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
     return databaseName;
   }
 
-  public boolean isRebuiding() {
+  public boolean isRebuilding() {
     return rebuilding;
   }
 
@@ -1010,12 +1014,6 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
 
   protected ODatabaseDocumentInternal getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
-  }
-
-  protected void checkForRebuild() {
-    if (rebuilding && !Thread.currentThread().equals(rebuildThread)) {
-      throw new OIndexException("Index " + name + " is rebuilding now and cannot be used");
-    }
   }
 
   protected long[] indexCluster(final String clusterName, final OProgressListener iProgressListener, long documentNum,

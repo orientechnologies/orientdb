@@ -19,14 +19,6 @@
  */
 package com.orientechnologies.orient.console;
 
-import java.io.*;
-import java.lang.reflect.Array;
-import java.util.*;
-import java.util.Map.Entry;
-
-import sun.misc.Signal;
-import sun.misc.SignalHandler;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.console.TTYConsoleReader;
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
@@ -52,8 +44,13 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.db.tool.*;
+import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
+import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
+import com.orientechnologies.orient.core.db.tool.ODatabaseExportException;
+import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
+import com.orientechnologies.orient.core.db.tool.ODatabaseImportException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.ORetryQueryException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -88,6 +85,32 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPa
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedClusterDebug;
+import sun.misc.Signal;
+import sun.misc.SignalHandler;
+
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Scanner;
+import java.util.Set;
 
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutputListener, OProgressListener {
   protected static final int    DEFAULT_WIDTH      = 150;
@@ -398,6 +421,10 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
           + "). Commit or rollback before starting a new one.");
       return;
     }
+    if(currentDatabase.getStorage().isRemote()){
+      message("\nWARNING - Transactions are not supported from console in remote, please use an sql script: \neg.\n\nscript sql\nbegin;\n<your commands here>\ncommit;\nend\n\n");
+      return;
+    }
 
     currentDatabase.begin();
     message("\nTransaction " + currentDatabase.getTransaction().getId() + " is running");
@@ -409,6 +436,11 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     if (!currentDatabase.getTransaction().isActive()) {
       message("\nError: no active transaction is currently open.");
+      return;
+    }
+
+    if(currentDatabase.getStorage().isRemote()){
+      message("\nWARNING - Transactions are not supported from console in remote, please use an sql script: \neg.\n\nscript sql\nbegin;\n<your commands here>\ncommit;\nend\n\n");
       return;
     }
 
@@ -426,6 +458,11 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     if (!currentDatabase.getTransaction().isActive()) {
       message("\nError: no active transaction is running right now.");
+      return;
+    }
+
+    if(currentDatabase.getStorage().isRemote()){
+      message("\nWARNING - Transactions are not supported from console in remote, please use an sql script: \neg.\n\nscript sql\nbegin;\n<your commands here>\ncommit;\nend\n\n");
       return;
     }
 
@@ -844,12 +881,20 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     resetResultSet();
 
-    final OCommandExecutorScript cmd = new OCommandExecutorScript();
-    cmd.parse(new OCommandScript("Javascript", iText));
+    float elapsedSeconds;
+    while (true) {
+      try {
+        final OCommandExecutorScript cmd = new OCommandExecutorScript();
+        cmd.parse(new OCommandScript("Javascript", iText));
 
-    long start = System.currentTimeMillis();
-    currentResult = cmd.execute(null);
-    float elapsedSeconds = getElapsedSecs(start);
+        long start = System.currentTimeMillis();
+        currentResult = cmd.execute(null);
+        elapsedSeconds = getElapsedSecs(start);
+        break;
+      } catch (ORetryQueryException e) {
+        continue;
+      }
+    }
 
     parseResult();
 
@@ -2234,7 +2279,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
   /**
    * Checks if the link must be fixed.
-   * 
+   *
    * @param fieldValue
    *          Field containing the OIdentifiable (RID or Record)
    * @return true to fix it, otherwise false

@@ -19,15 +19,15 @@
   */
 package com.orientechnologies.orient.core.sql.functions.misc;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.method.misc.OAbstractSQLMethod;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Filter the content by including only some fields. If the content is a document, then creates a copy with only the included
@@ -71,6 +71,9 @@ public class OSQLMethodInclude extends OAbstractSQLMethod {
   public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
 
     if (iParams[0] != null) {
+      if(iThis instanceof OIdentifiable){
+        iThis = ((OIdentifiable) iThis).getRecord();
+      }
       if (iThis instanceof ODocument) {
         // ACT ON SINGLE DOCUMENT
         return copy((ODocument) iThis, iParams);

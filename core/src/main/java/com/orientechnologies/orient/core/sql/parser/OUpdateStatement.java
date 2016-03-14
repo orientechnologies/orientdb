@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 public class OUpdateStatement extends OStatement {
-  protected OFromClause             target;
+  public OFromClause             target;
 //  protected ORid                    targetRid;
 //  protected List<ORid>              targetRids;
 //  protected OIdentifier             targetClass;
@@ -23,12 +23,12 @@ public class OUpdateStatement extends OStatement {
   protected boolean                 returnAfter  = false;
   protected OProjection             returnProjection;
 
-  protected OWhereClause            whereClause;
+  public OWhereClause               whereClause;
 
-  protected boolean                 lockRecord   = false;
+  public boolean                    lockRecord   = false;
 
-  protected OLimit                  limit;
-  protected OTimeout                  timeout;
+  public OLimit                     limit;
+  public OTimeout                   timeout;
 
   public OUpdateStatement(int id) {
     super(id);

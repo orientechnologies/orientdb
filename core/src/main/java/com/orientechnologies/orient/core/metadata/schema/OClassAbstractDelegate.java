@@ -29,7 +29,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Abstract Delegate for OClass interface.
- * 
+ *
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
 public abstract class OClassAbstractDelegate implements OClass {
@@ -242,6 +242,16 @@ public abstract class OClassAbstractDelegate implements OClass {
   @Override
   public OClass removeClusterId(final int iId) {
     delegate.removeClusterId(iId);
+    return this;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public OClass truncateCluster(String clusterName) {
+    delegate.truncateCluster(clusterName);
+
     return this;
   }
 

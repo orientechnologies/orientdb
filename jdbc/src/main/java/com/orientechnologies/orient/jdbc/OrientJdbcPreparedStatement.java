@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.jdbc.OrientJdbcParameterMetadata.ParameterDefinition;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,11 +41,21 @@ import java.util.*;
  */
 public class OrientJdbcPreparedStatement extends OrientJdbcStatement implements PreparedStatement {
 
-  private final String               sql;
-  private final Map<Integer, Object> params;
+  protected final String               sql;
+  protected final Map<Integer, Object> params;
 
   public OrientJdbcPreparedStatement(OrientJdbcConnection iConnection, String sql) {
-    super(iConnection);
+    this(iConnection, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT, sql);
+  }
+
+  public OrientJdbcPreparedStatement(OrientJdbcConnection iConnection, int resultSetType, int resultSetConcurrency, String sql)
+      throws SQLException {
+    this(iConnection, resultSetType, resultSetConcurrency, ResultSet.HOLD_CURSORS_OVER_COMMIT, sql);
+  }
+
+  public OrientJdbcPreparedStatement(OrientJdbcConnection iConnection, int resultSetType, int resultSetConcurrency,
+      int resultSetHoldability, String sql) {
+    super(iConnection, resultSetType, resultSetConcurrency, resultSetHoldability);
     this.sql = sql;
     params = new HashMap<Integer, Object>();
   }
@@ -214,20 +225,22 @@ public class OrientJdbcPreparedStatement extends OrientJdbcStatement implements 
     params.put(parameterIndex, null);
   }
 
+  @Override
   public ParameterMetaData getParameterMetaData() throws SQLException {
-    final List<OrientJdbcParameterMetadata.ParameterDefinition> definitions = new ArrayList<OrientJdbcParameterMetadata.ParameterDefinition>();
 
+    OrientJdbcParameterMetadata parameterMetadata = new OrientJdbcParameterMetadata();
     int start = 0;
     int index = sql.indexOf('?', start);
     while (index > 0) {
-      final OrientJdbcParameterMetadata.ParameterDefinition def = new OrientJdbcParameterMetadata.ParameterDefinition();
+      final ParameterDefinition def = new ParameterDefinition();
       // TODO find a way to know a bit more on each parameter
-      definitions.add(def);
+
+      parameterMetadata.add(def);
       start = index + 1;
       index = sql.indexOf('?', start);
     }
 
-    return new OrientJdbcParameterMetadata(definitions);
+    return parameterMetadata;
   }
 
   public void setRowId(int parameterIndex, RowId x) throws SQLException {

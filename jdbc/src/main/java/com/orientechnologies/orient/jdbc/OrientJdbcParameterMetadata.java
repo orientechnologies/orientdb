@@ -19,6 +19,7 @@ package com.orientechnologies.orient.jdbc;
 
 import java.sql.ParameterMetaData;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -41,8 +42,8 @@ class OrientJdbcParameterMetadata implements ParameterMetaData {
 
   private final List<ParameterDefinition> definitions;
 
-  public OrientJdbcParameterMetadata(List<ParameterDefinition> definitions) {
-    this.definitions = definitions;
+  public OrientJdbcParameterMetadata() {
+    this.definitions = new ArrayList<ParameterDefinition>();
   }
 
   @Override
@@ -114,4 +115,7 @@ class OrientJdbcParameterMetadata implements ParameterMetaData {
     }
   }
 
+  public boolean add(ParameterDefinition parameterDefinition) {
+    return definitions.add(parameterDefinition);
+  }
 }

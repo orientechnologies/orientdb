@@ -55,8 +55,6 @@ public class OLuceneIndexNotUnique extends OIndexNotUnique implements OLuceneInd
 
   @Override
   public OIndexMultiValues put(Object key, OIdentifiable iSingleValue) {
-    checkForRebuild();
-
     key = getCollatingValue(key);
 
     if (modificationLock != null)
@@ -104,8 +102,6 @@ public class OLuceneIndexNotUnique extends OIndexNotUnique implements OLuceneInd
 
   @Override
   public Set<OIdentifiable> get(Object key) {
-    checkForRebuild();
-
     key = getCollatingValue(key);
 
     acquireSharedLock();
@@ -158,8 +154,6 @@ public class OLuceneIndexNotUnique extends OIndexNotUnique implements OLuceneInd
 
   @Override
   public boolean remove(Object key, OIdentifiable value) {
-    checkForRebuild();
-
     key = getCollatingValue(key);
     modificationLock.requestModificationLock();
     try {
