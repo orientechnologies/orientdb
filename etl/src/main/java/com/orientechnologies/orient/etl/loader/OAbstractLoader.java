@@ -18,15 +18,25 @@
 
 package com.orientechnologies.orient.etl.loader;
 
+import com.orientechnologies.orient.etl.OAbstractETLComponent;
 import com.orientechnologies.orient.etl.OAbstractETLPipelineComponent;
+import com.orientechnologies.orient.etl.OETLPipeline;
 
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * ETL Abstract Loader component.
  */
-public abstract class OAbstractLoader extends OAbstractETLPipelineComponent implements OLoader {
+public abstract class OAbstractLoader extends OAbstractETLComponent implements OLoader {
   protected AtomicLong progress = new AtomicLong(0);
+
+  @Override
+  public void beginLoader(OETLPipeline pipeline) {
+  }
+
+  @Override
+  public void endLoader(OETLPipeline pipeline) {
+  }
 
   @Override
   public long getProgress() {

@@ -61,13 +61,11 @@ public class OETLPipeline {
 
     for (OTransformer t : this.transformers)
       t.setPipeline(this);
-    this.loader.setPipeline(this);
 
   }
 
   public synchronized void begin() {
-    loader.setPipeline(this);
-    loader.begin();
+    loader.beginLoader(this);
     for (OTransformer t : transformers)
       t.begin();
   }
@@ -118,18 +116,18 @@ public class OETLPipeline {
         }
         if (current != null)
           // LOAD
-          loader.load(current, context);
+          loader.load(this, current, context);
 
         return current;
       } catch (ONeedRetryException e) {
-        loader.rollback();
+        loader.rollback(this);
         retry++;
         processor.out(INFO, "Error in pipeline execution, retry = %d/%d (exception=%s)", retry, maxRetries, e);
       } catch (OETLProcessHaltedException e) {
         processor.out(ERROR, "Pipeline execution halted");
         processor.getStats().incrementErrors();
 
-        loader.rollback();
+        loader.rollback(this);
         throw e;
 
       } catch (Exception e) {
@@ -140,7 +138,7 @@ public class OETLPipeline {
           return null;
         }
 
-        loader.rollback();
+        loader.rollback(this);
         throw new OETLProcessHaltedException("Halt", e);
 
       }
@@ -148,5 +146,9 @@ public class OETLPipeline {
         ;
 
     return this;
+  }
+
+  public void end() {
+    loader.endLoader(this);
   }
 }

@@ -18,12 +18,6 @@
 
 package com.orientechnologies.orient.etl.loader;
 
-import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.DEBUG;
-import static com.orientechnologies.orient.etl.loader.OOrientDBLoader.DB_TYPE.DOCUMENT;
-
-import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
-
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -31,17 +25,23 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
-import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.etl.OETLPipeline;
 import com.orientechnologies.orient.etl.OETLProcessor;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientElement;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+
+import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
+
+import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.DEBUG;
+import static com.orientechnologies.orient.etl.loader.OOrientDBLoader.DB_TYPE.DOCUMENT;
 
 /**
  * ETL Loader that saves record into OrientDB database.
@@ -61,7 +61,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
   protected boolean         useLightweightEdges        = false;
   protected boolean         standardElementConstraints = true;
   protected boolean         tx                         = false;
-  protected int             batchCommit                = 0;
+  protected int        batchCommitSize            = 0;
   protected AtomicLong      batchCounter               = new AtomicLong(0);
   protected DB_TYPE         dbType                     = DOCUMENT;
   protected boolean         wal                        = true;
@@ -71,12 +71,12 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
   }
 
   @Override
-  public void load(final Object input, OCommandContext context) {
+  public void load(OETLPipeline pipeline, final Object input, OCommandContext context) {
     if (input == null)
       return;
 
     if (dbAutoCreateProperties) {
-      autoCreateProperties(input);
+      autoCreateProperties(pipeline, input);
     }
 
     if (tx && dbType == DOCUMENT) {
@@ -116,7 +116,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
     progress.incrementAndGet();
 
     // DO BATCH COMMIT
-    if (batchCommit > 0 && batchCounter.get() > batchCommit) {
+    if (batchCommitSize > 0 && batchCounter.get() > batchCommitSize) {
       if (dbType == DOCUMENT) {
         final ODatabaseDocumentTx documentDatabase = pipeline.getDocumentDatabase();
         log(DEBUG, "committing batch");
@@ -132,13 +132,13 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
     }
   }
 
-  private void autoCreateProperties(Object input) {
+  private void autoCreateProperties(OETLPipeline pipeline, Object input) {
     if (dbType == DOCUMENT) {
       if (input instanceof ODocument) {
         final ODocument doc = (ODocument) input;
         final OClass cls;
         if (className != null)
-          cls = getOrCreateClass(className, null);
+          cls = getOrCreateClass(pipeline, className, null);
         else
           cls = doc.getSchemaClass();
 
@@ -166,7 +166,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
         final String clsName = className != null ? className
             : (element instanceof OrientVertex ? element.getLabel() : element.getLabel());
         if (clsName != null)
-          cls = getOrCreateClass(clsName, element.getBaseClassName());
+          cls = getOrCreateClass(pipeline, clsName, element.getBaseClassName());
         else
           throw new IllegalArgumentException("No class defined on graph element: " + input);
 
@@ -195,7 +195,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
   }
 
   @Override
-  public void rollback() {
+  public void rollback(OETLPipeline pipeline) {
     if (tx)
       if (dbType == DOCUMENT) {
         final ODatabaseDocumentTx documentDatabase = pipeline.getDocumentDatabase();
@@ -205,7 +205,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
         pipeline.getGraphDatabase().rollback();
   }
 
-  protected OClass getOrCreateClass(final String iClassName, final String iSuperClass) {
+  protected OClass getOrCreateClass(OETLPipeline pipeline, final String iClassName, final String iSuperClass) {
     OClass cls;
 
     if (dbType == DOCUMENT) {
@@ -229,12 +229,11 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
     } else {
       // GRAPH
       final OrientBaseGraph graphDatabase = pipeline.getGraphDatabase();
-      OMetadataDefault metadata = pipeline.getDocumentDatabase().getMetadata();
-      cls = metadata.getSchema().getClass(iClassName);
+      cls = graphDatabase.getRawGraph().getMetadata().getSchema().getClass(iClassName);
       if (cls == null) {
 
         if (iSuperClass != null) {
-          final OClass superClass = metadata.getSchema().getClass(iSuperClass);
+          final OClass superClass = graphDatabase.getRawGraph().getMetadata().getSchema().getClass(iSuperClass);
           if (superClass == null)
             throw new OLoaderException("Cannot find super class '" + iSuperClass + "'");
 
@@ -323,7 +322,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
     if (iConfiguration.containsField("txUseLog"))
       txUseLog = iConfiguration.<Boolean> field("txUseLog");
     if (iConfiguration.containsField("batchCommit"))
-      batchCommit = iConfiguration.<Integer> field("batchCommit");
+      batchCommitSize = iConfiguration.<Integer>field("batchCommit");
     if (iConfiguration.containsField("dbAutoCreate"))
       dbAutoCreate = iConfiguration.<Boolean> field("dbAutoCreate");
     if (iConfiguration.containsField("dbAutoDropIfExists"))
@@ -387,11 +386,15 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
   }
 
   @Override
-  public synchronized void begin() {
+  public void begin() {
+
+  }
+
+  public void beginLoader(OETLPipeline pipeline) {
 
     synchronized (this) {
       ODatabaseDocumentTx documentDatabase = null;
-      OrientBaseGraph graphDatabase;
+      OrientBaseGraph graphDatabase = null;
       switch (dbType) {
       case DOCUMENT:
         documentDatabase = new ODatabaseDocumentTx(dbURL);
@@ -412,12 +415,11 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
       }
 
       pipeline.setDocumentDatabase(documentDatabase);
-
-      pipeline.getDocumentDatabase().getMetadata();
+      pipeline.setGraphDatabase(graphDatabase);
 
       if (classes != null) {
         for (ODocument cls : classes) {
-          schemaClass = getOrCreateClass((String) cls.field("name"), (String) cls.field("extends"));
+          schemaClass = getOrCreateClass(pipeline, (String) cls.field("name"), (String) cls.field("extends"));
 
           Integer clusters = cls.field("clusters");
           if (clusters != null)
@@ -428,7 +430,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
       }
 
       if (className != null) {
-        schemaClass = getOrCreateClass(className, null);
+        schemaClass = getOrCreateClass(pipeline, className, null);
         log(DEBUG, "%s: found %d %s in class '%s'", getName(), schemaClass.count(), getUnit(), className);
       }
 
@@ -451,7 +453,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
           if (idxClass == null)
             throw new OConfigurationException("Index 'class' missed in OrientDB Loader");
 
-          final OClass cls = getOrCreateClass(idxClass, null);
+          final OClass cls = getOrCreateClass(pipeline, idxClass, null);
           final String idxType = idx.field("type");
           if (idxType == null)
             throw new OConfigurationException("Index 'type' missed in OrientDB Loader for index '" + idxName + "'");
@@ -503,18 +505,21 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
         }
       }
       documentDatabase.declareIntent(new OIntentMassiveInsert());
-      pipeline.setDocumentDatabase(documentDatabase);
     }
 
   }
 
   @Override
-  public void end() {
+  public void endLoader(OETLPipeline pipeline) {
     log(OETLProcessor.LOG_LEVELS.INFO, "committing");
     if (dbType == DOCUMENT)
       pipeline.getDocumentDatabase().commit();
     else
       pipeline.getGraphDatabase().commit();
+  }
+
+  @Override
+  public void end() {
   }
 
   @Override
