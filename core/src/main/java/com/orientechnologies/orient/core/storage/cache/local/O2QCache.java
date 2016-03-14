@@ -28,20 +28,10 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedException;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.storage.cache.OAbstractWriteCache;
-import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
-import com.orientechnologies.orient.core.storage.cache.OCachePointer;
-import com.orientechnologies.orient.core.storage.cache.OReadCache;
-import com.orientechnologies.orient.core.storage.cache.OWriteCache;
+import com.orientechnologies.orient.core.storage.cache.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.InstanceNotFoundException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.NotCompliantMBeanException;
-import javax.management.ObjectName;
+import javax.management.*;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.util.Collections;
@@ -107,8 +97,10 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
   private final int percentOfPinnedPages;
 
   private final OReadersWriterSpinLock                 cacheLock       = new OReadersWriterSpinLock();
-  private final ONewLockManager                        fileLockManager = new ONewLockManager(true);
-  private final ONewLockManager<PageKey>               pageLockManager = new ONewLockManager<PageKey>();
+  private final ONewLockManager                        fileLockManager = new ONewLockManager(true,
+      OGlobalConfiguration.ENVNRONMENT_CONCURRENCY_LEVEL.getValueAsInteger());
+  private final ONewLockManager<PageKey>               pageLockManager = new ONewLockManager<PageKey>(
+      OGlobalConfiguration.ENVNRONMENT_CONCURRENCY_LEVEL.getValueAsInteger());
   private final ConcurrentMap<PinnedPage, OCacheEntry> pinnedPages     = new ConcurrentHashMap<PinnedPage, OCacheEntry>();
 
   private final AtomicBoolean       coldPagesRemovalInProgress = new AtomicBoolean();
@@ -181,9 +173,13 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
 
   @Override
   public long openFile(final String fileName, OWriteCache writeCache) throws IOException {
+    Long fileId = writeCache.isOpen(fileName);
+    if (fileId != null)
+      return fileId;
+
     cacheLock.acquireWriteLock();
     try {
-      Long fileId = writeCache.isOpen(fileName);
+      fileId = writeCache.isOpen(fileName);
       if (fileId != null)
         return fileId;
 
@@ -200,6 +196,9 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
   @Override
   public void openFile(long fileId, OWriteCache writeCache) throws IOException {
     fileId = OAbstractWriteCache.checkFileIdCompatibility(writeCache.getId(), fileId);
+
+    if (writeCache.isOpen(fileId))
+      return;
 
     cacheLock.acquireReadLock();
     Lock fileLock;
@@ -225,9 +224,19 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
   public void openFile(String fileName, long fileId, OWriteCache writeCache) throws IOException {
     fileId = OAbstractWriteCache.checkFileIdCompatibility(writeCache.getId(), fileId);
 
+    Long existingFileId = writeCache.isOpen(fileName);
+
+    if (existingFileId != null) {
+      if (fileId == existingFileId)
+        return;
+
+      throw new OStorageException(
+          "File with given name already exists but has different id " + existingFileId + " vs. proposed " + fileId);
+    }
+
     cacheLock.acquireWriteLock();
     try {
-      Long existingFileId = writeCache.isOpen(fileName);
+      existingFileId = writeCache.isOpen(fileName);
 
       if (existingFileId != null) {
         if (fileId == existingFileId)
@@ -318,6 +327,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
    * @param readCacheMaxMemory New maximum size of cache in bytes.
    * @throws IllegalStateException In case of new size of disk cache is too small to hold existing pinned pages.
    */
+
   public void changeMaximumAmountOfMemory(final long readCacheMaxMemory) throws IllegalStateException {
     MemoryData memoryData;
     MemoryData newMemoryData;
