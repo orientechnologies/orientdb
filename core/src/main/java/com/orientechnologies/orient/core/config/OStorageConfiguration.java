@@ -19,6 +19,13 @@
  */
 package com.orientechnologies.orient.core.config;
 
+import java.io.IOException;
+import java.text.DecimalFormatSymbols;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategyFactory;
@@ -33,13 +40,6 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
-
-import java.io.IOException;
-import java.text.DecimalFormatSymbols;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * Versions:
@@ -62,16 +62,16 @@ import java.util.concurrent.ConcurrentMap;
  */
 @SuppressWarnings("serial")
 public class OStorageConfiguration implements OSerializableStream {
-  public static final ORecordId CONFIG_RID = new OImmutableRecordId(0, 0);
+  public static final ORecordId                           CONFIG_RID                    = new OImmutableRecordId(0, 0);
 
-  public static final String DEFAULT_CHARSET         = "UTF-8";
-  public static final String DEFAULT_DATE_FORMAT     = "yyyy-MM-dd";
-  public static final String DEFAULT_DATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
+  public static final String                              DEFAULT_CHARSET               = "UTF-8";
+  public static final String                              DEFAULT_DATE_FORMAT           = "yyyy-MM-dd";
+  public static final String                              DEFAULT_DATETIME_FORMAT       = "yyyy-MM-dd HH:mm:ss";
 
   private String                                          charset;
   public static final int                                 CURRENT_VERSION               = 17;
   public static final int                                 CURRENT_BINARY_FORMAT_VERSION = 12;
-  private final List<OStorageEntryConfiguration>          properties = new ArrayList<OStorageEntryConfiguration>();
+  private final List<OStorageEntryConfiguration>          properties                    = new ArrayList<OStorageEntryConfiguration>();
   protected final transient OStorage                      storage;
   private volatile OContextConfiguration                  configuration;
   public volatile int                                     version;
@@ -640,9 +640,12 @@ public class OStorageConfiguration implements OSerializableStream {
   public void setSoftlyClosed(boolean softlyClosed) throws IOException {
   }
 
+  public void delete() throws IOException {
+    close();
+  }
+
   public void close() throws IOException {
     clear();
-
     initConfiguration();
   }
 
@@ -792,7 +795,7 @@ public class OStorageConfiguration implements OSerializableStream {
       validation = "true".equalsIgnoreCase(iValue);
 
     synchronized (properties) {
-      for (Iterator<OStorageEntryConfiguration> it = properties.iterator(); it.hasNext(); ) {
+      for (Iterator<OStorageEntryConfiguration> it = properties.iterator(); it.hasNext();) {
         final OStorageEntryConfiguration e = it.next();
         if (e.name.equalsIgnoreCase(iName)) {
           // FOUND: OVERWRITE IT
@@ -808,7 +811,7 @@ public class OStorageConfiguration implements OSerializableStream {
 
   public String getProperty(final String iName) {
     synchronized (properties) {
-      for (Iterator<OStorageEntryConfiguration> it = properties.iterator(); it.hasNext(); ) {
+      for (Iterator<OStorageEntryConfiguration> it = properties.iterator(); it.hasNext();) {
         final OStorageEntryConfiguration e = it.next();
         if (e.name.equalsIgnoreCase(iName))
           return e.value;
@@ -819,7 +822,7 @@ public class OStorageConfiguration implements OSerializableStream {
 
   public boolean existsProperty(final String iName) {
     synchronized (properties) {
-      for (Iterator<OStorageEntryConfiguration> it = properties.iterator(); it.hasNext(); ) {
+      for (Iterator<OStorageEntryConfiguration> it = properties.iterator(); it.hasNext();) {
         final OStorageEntryConfiguration e = it.next();
         if (e.name.equalsIgnoreCase(iName))
           return true;
@@ -830,7 +833,7 @@ public class OStorageConfiguration implements OSerializableStream {
 
   public void removeProperty(final String iName) {
     synchronized (properties) {
-      for (Iterator<OStorageEntryConfiguration> it = properties.iterator(); it.hasNext(); ) {
+      for (Iterator<OStorageEntryConfiguration> it = properties.iterator(); it.hasNext();) {
         final OStorageEntryConfiguration e = it.next();
         if (e.name.equalsIgnoreCase(iName)) {
           it.remove();

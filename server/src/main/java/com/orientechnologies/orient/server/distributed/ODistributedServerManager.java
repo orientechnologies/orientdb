@@ -39,6 +39,7 @@ import java.util.concurrent.locks.Lock;
  *
  */
 public interface ODistributedServerManager {
+  String FILE_DISTRIBUTED_DB_CONFIG = "distributed-config.json";
 
   enum NODE_STATUS {
     OFFLINE, STARTING, ONLINE, SHUTTINGDOWN
