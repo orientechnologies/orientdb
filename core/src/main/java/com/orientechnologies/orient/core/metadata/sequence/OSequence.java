@@ -169,12 +169,12 @@ public abstract class OSequence extends ODocumentWrapper {
   }
 
   public static void initClass(OClassImpl sequenceClass) {
-    sequenceClass.createProperty(OSequence.FIELD_START, OType.LONG, (OType) null, false);
-    sequenceClass.createProperty(OSequence.FIELD_INCREMENT, OType.INTEGER, (OType) null, false);
-    sequenceClass.createProperty(OSequence.FIELD_VALUE, OType.LONG, (OType) null, false);
+    sequenceClass.createProperty(OSequence.FIELD_START, OType.LONG, (OType) null, true);
+    sequenceClass.createProperty(OSequence.FIELD_INCREMENT, OType.INTEGER, (OType) null, true);
+    sequenceClass.createProperty(OSequence.FIELD_VALUE, OType.LONG, (OType) null, true);
 
-    sequenceClass.createProperty(OSequence.FIELD_NAME, OType.STRING, (OType) null, false);
-    sequenceClass.createProperty(OSequence.FIELD_TYPE, OType.STRING, (OType) null, false);
+    sequenceClass.createProperty(OSequence.FIELD_NAME, OType.STRING, (OType) null, true);
+    sequenceClass.createProperty(OSequence.FIELD_TYPE, OType.STRING, (OType) null, true);
   }
 
   protected void reloadSequence() {
