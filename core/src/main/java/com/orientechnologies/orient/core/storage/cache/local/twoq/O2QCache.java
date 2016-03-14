@@ -32,24 +32,12 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedException;
 import com.orientechnologies.orient.core.exception.OReadCacheException;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.storage.cache.OAbstractWriteCache;
-import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
-import com.orientechnologies.orient.core.storage.cache.OCachePointer;
-import com.orientechnologies.orient.core.storage.cache.OReadCache;
-import com.orientechnologies.orient.core.storage.cache.OWriteCache;
+import com.orientechnologies.orient.core.storage.cache.*;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OStoragePerformanceStatistic;
 
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.InstanceNotFoundException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.NotCompliantMBeanException;
-import javax.management.ObjectName;
+import javax.management.*;
 import java.io.*;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.lang.management.ManagementFactory;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
@@ -201,9 +189,13 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
 
   @Override
   public long openFile(final String fileName, OWriteCache writeCache) throws IOException {
+    Long fileId = writeCache.isOpen(fileName);
+    if (fileId != null)
+      return fileId;
+
     cacheLock.acquireWriteLock();
     try {
-      Long fileId = writeCache.isOpen(fileName);
+      fileId = writeCache.isOpen(fileName);
       if (fileId != null)
         return fileId;
 
@@ -220,6 +212,9 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
   @Override
   public long openFile(long fileId, OWriteCache writeCache) throws IOException {
     fileId = OAbstractWriteCache.checkFileIdCompatibility(writeCache.getId(), fileId);
+
+    if (writeCache.isOpen(fileId))
+      return fileId;
 
     cacheLock.acquireReadLock();
     Lock fileLock;
@@ -247,9 +242,18 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
   public long openFile(String fileName, long fileId, OWriteCache writeCache) throws IOException {
     fileId = OAbstractWriteCache.checkFileIdCompatibility(writeCache.getId(), fileId);
 
+    Long existingFileId = writeCache.isOpen(fileName);
+    if (existingFileId != null) {
+      if (writeCache.fileIdsAreEqual(fileId, existingFileId))
+        return fileId;
+
+      throw new OStorageException(
+          "File with given name already exists but has different id " + existingFileId + " vs. proposed " + fileId);
+    }
+
     cacheLock.acquireWriteLock();
     try {
-      Long existingFileId = writeCache.isOpen(fileName);
+      existingFileId = writeCache.isOpen(fileName);
 
       if (existingFileId != null) {
         if (writeCache.fileIdsAreEqual(fileId, existingFileId))
@@ -1067,9 +1071,9 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
           server.registerMBean(this, mbeanName);
         } else {
           mbeanIsRegistered.set(false);
-          OLogManager.instance().warn(this, "MBean with name %s has already registered. Probably your system was not shutdown correctly"
-              + " or you have several running applications which use OrientDB engine inside",
-              mbeanName.getCanonicalName());
+          OLogManager.instance().warn(this,
+              "MBean with name %s has already registered. Probably your system was not shutdown correctly"
+                  + " or you have several running applications which use OrientDB engine inside", mbeanName.getCanonicalName());
         }
 
       } catch (MalformedObjectNameException e) {
