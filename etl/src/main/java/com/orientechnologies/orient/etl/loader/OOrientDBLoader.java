@@ -18,12 +18,6 @@
 
 package com.orientechnologies.orient.etl.loader;
 
-import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.DEBUG;
-import static com.orientechnologies.orient.etl.loader.OOrientDBLoader.DB_TYPE.DOCUMENT;
-
-import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
-
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -43,6 +37,12 @@ import com.tinkerpop.blueprints.impls.orient.OrientElement;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
+import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
+
+import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.DEBUG;
+import static com.orientechnologies.orient.etl.loader.OOrientDBLoader.DB_TYPE.DOCUMENT;
+
 /**
  * ETL Loader that saves record into OrientDB database.
  */
@@ -53,19 +53,19 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
   protected List<ODocument> indexes;
   protected OClass          schemaClass;
   protected String          dbURL;
-  protected String          dbUser                     = "admin";
-  protected String          dbPassword                 = "admin";
-  protected boolean         dbAutoCreate               = true;
-  protected boolean         dbAutoDropIfExists         = false;
-  protected boolean         dbAutoCreateProperties     = false;
-  protected boolean         useLightweightEdges        = false;
-  protected boolean         standardElementConstraints = true;
-  protected boolean         tx                         = false;
-  protected int             batchCommit                = 0;
-  protected AtomicLong      batchCounter               = new AtomicLong(0);
-  protected DB_TYPE         dbType                     = DOCUMENT;
-  protected boolean         wal                        = true;
-  protected boolean         txUseLog                   = false;
+  protected String     dbUser                     = "admin";
+  protected String     dbPassword                 = "admin";
+  protected boolean    dbAutoCreate               = true;
+  protected boolean    dbAutoDropIfExists         = false;
+  protected boolean    dbAutoCreateProperties     = false;
+  protected boolean    useLightweightEdges        = false;
+  protected boolean    standardElementConstraints = true;
+  protected boolean    tx                         = false;
+  protected int        batchCommitSize            = 0;
+  protected AtomicLong batchCounter               = new AtomicLong(0);
+  protected DB_TYPE    dbType                     = DOCUMENT;
+  protected boolean    wal                        = true;
+  protected boolean    txUseLog                   = false;
 
   public OOrientDBLoader() {
   }
@@ -116,7 +116,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
     progress.incrementAndGet();
 
     // DO BATCH COMMIT
-    if (batchCommit > 0 && batchCounter.get() > batchCommit) {
+    if (batchCommitSize > 0 && batchCounter.get() > batchCommitSize) {
       if (dbType == DOCUMENT) {
         final ODatabaseDocumentTx documentDatabase = pipeline.getDocumentDatabase();
         log(DEBUG, "committing batch");
@@ -163,8 +163,8 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
         final OrientElement element = (OrientElement) input;
 
         final OClass cls;
-        final String clsName = className != null ? className
-            : (element instanceof OrientVertex ? element.getLabel() : element.getLabel());
+        final String clsName =
+            className != null ? className : (element instanceof OrientVertex ? element.getLabel() : element.getLabel());
         if (clsName != null)
           cls = getOrCreateClass(pipeline, clsName, element.getBaseClassName());
         else
@@ -316,23 +316,23 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
     if (iConfiguration.containsField("dbType"))
       dbType = DB_TYPE.valueOf(iConfiguration.field("dbType").toString().toUpperCase());
     if (iConfiguration.containsField("tx"))
-      tx = iConfiguration.<Boolean> field("tx");
+      tx = iConfiguration.<Boolean>field("tx");
     if (iConfiguration.containsField("wal"))
-      wal = iConfiguration.<Boolean> field("wal");
+      wal = iConfiguration.<Boolean>field("wal");
     if (iConfiguration.containsField("txUseLog"))
-      txUseLog = iConfiguration.<Boolean> field("txUseLog");
+      txUseLog = iConfiguration.<Boolean>field("txUseLog");
     if (iConfiguration.containsField("batchCommit"))
-      batchCommit = iConfiguration.<Integer> field("batchCommit");
+      batchCommitSize = iConfiguration.<Integer>field("batchCommit");
     if (iConfiguration.containsField("dbAutoCreate"))
-      dbAutoCreate = iConfiguration.<Boolean> field("dbAutoCreate");
+      dbAutoCreate = iConfiguration.<Boolean>field("dbAutoCreate");
     if (iConfiguration.containsField("dbAutoDropIfExists"))
-      dbAutoDropIfExists = iConfiguration.<Boolean> field("dbAutoDropIfExists");
+      dbAutoDropIfExists = iConfiguration.<Boolean>field("dbAutoDropIfExists");
     if (iConfiguration.containsField("dbAutoCreateProperties"))
-      dbAutoCreateProperties = iConfiguration.<Boolean> field("dbAutoCreateProperties");
+      dbAutoCreateProperties = iConfiguration.<Boolean>field("dbAutoCreateProperties");
     if (iConfiguration.containsField("useLightweightEdges"))
-      useLightweightEdges = iConfiguration.<Boolean> field("useLightweightEdges");
+      useLightweightEdges = iConfiguration.<Boolean>field("useLightweightEdges");
     if (iConfiguration.containsField("standardElementConstraints"))
-      standardElementConstraints = iConfiguration.<Boolean> field("standardElementConstraints");
+      standardElementConstraints = iConfiguration.<Boolean>field("standardElementConstraints");
 
     clusterName = iConfiguration.field("cluster");
     className = iConfiguration.field("class");
@@ -394,7 +394,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
 
     synchronized (this) {
       ODatabaseDocumentTx documentDatabase = null;
-      OrientBaseGraph graphDatabase =null;
+      OrientBaseGraph graphDatabase = null;
       switch (dbType) {
       case DOCUMENT:
         documentDatabase = new ODatabaseDocumentTx(dbURL);

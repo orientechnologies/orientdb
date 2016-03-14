@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * 	http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -41,16 +41,16 @@ public class OrientJdbcStatement implements Statement {
   protected final ODatabaseDocumentTx  database;
 
   // protected OCommandSQL query;
-  protected OCommandRequest            query;
-  protected List<ODocument>            documents;
-  protected boolean                    closed;
-  protected Object                     rawResult;
-  protected OrientJdbcResultSet        resultSet;
-  protected List<String>               batches;
+  protected OCommandRequest     query;
+  protected List<ODocument>     documents;
+  protected boolean             closed;
+  protected Object              rawResult;
+  protected OrientJdbcResultSet resultSet;
+  protected List<String>        batches;
 
-  protected int                        resultSetType;
-  protected int                        resultSetConcurrency;
-  protected int                        resultSetHoldability;
+  protected int resultSetType;
+  protected int resultSetConcurrency;
+  protected int resultSetHoldability;
 
   public OrientJdbcStatement(final OrientJdbcConnection iConnection) {
     this(iConnection, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
@@ -72,7 +72,8 @@ public class OrientJdbcStatement implements Statement {
    * @param resultSetConcurrency
    * @param resultSetHoldability
    */
-  public OrientJdbcStatement(OrientJdbcConnection iConnection, int resultSetType, int resultSetConcurrency, int resultSetHoldability) {
+  public OrientJdbcStatement(OrientJdbcConnection iConnection, int resultSetType, int resultSetConcurrency,
+      int resultSetHoldability) {
     this.connection = iConnection;
     this.database = iConnection.getDatabase();
     ODatabaseRecordThreadLocal.INSTANCE.set(database);
@@ -83,6 +84,7 @@ public class OrientJdbcStatement implements Statement {
     this.resultSetHoldability = resultSetHoldability;
   }
 
+  @Override
   public boolean execute(final String sql) throws SQLException {
     if ("".equals(sql))
       return false;
@@ -96,8 +98,9 @@ public class OrientJdbcStatement implements Statement {
         rawResult = executeCommand(query);
         if (rawResult instanceof List<?>) {
           documents = (List<ODocument>) rawResult;
-        } else
+        } else {
           return false;
+        }
 
       } catch (OQueryParsingException e) {
         throw new SQLSyntaxErrorException("Error on parsing the query", e);
@@ -143,7 +146,7 @@ public class OrientJdbcStatement implements Statement {
     return 0;
   }
 
-  public <RET> RET executeCommand(OCommandRequest query) {
+  protected <RET> RET executeCommand(OCommandRequest query) {
     return database.command(query).execute();
   }
 
