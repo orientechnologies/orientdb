@@ -26,14 +26,10 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OPlaceholder;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.server.OServer;
@@ -105,22 +101,6 @@ public class OTxTask extends OAbstractReplicatedTask {
               throw new ODistributedRecordLockedException(rid);
 
             result.locks.add(rid);
-          }
-        }
-
-        for (OAbstractRecordReplicatedTask task : tasks) {
-          final ORecord record = task.getRecord();
-
-          if (record instanceof ODocument) {
-            // ASSURE ALL RIDBAGS ARE UNMARSHALLED TO AVOID STORING TEMP RIDS
-            for (String f : ((ODocument) record).fieldNames()) {
-              final Object fValue = ((ODocument) record).field(f);
-              if (fValue instanceof ORecordLazyMultiValue)
-                // DESERIALIZE IT TO ASSURE TEMPORARY RIDS ARE TREATED CORRECTLY
-                ((ORecordLazyMultiValue) fValue).convertLinks2Records();
-              else if (fValue instanceof ORecordId)
-                ((ODocument) record).field(f, ((ORecordId) fValue).getRecord());
-            }
           }
         }
 

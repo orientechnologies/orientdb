@@ -105,36 +105,37 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "creating record %s/%s v.%d...",
         database.getName(), rid.toString(), version);
 
-    final OStorageOperationResult<ORawBuffer> loadedRecord = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().readRecord(rid,
-        null, true, null);
+    if (rid.isPersistent()) {
+      final OStorageOperationResult<ORawBuffer> loadedRecord = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
+          .readRecord(rid, null, true, null);
 
-    if (loadedRecord.getResult() != null) {
-      // RECORD HAS BEEN ALREADY CREATED (PROBABLY DURING DATABASE SYNC) CHECKING COHERENCY
-      if (!Arrays.equals(loadedRecord.getResult().getBuffer(), content))
-        throw new ODistributedException("Record " + rid + " is already present with different content");
+      if (loadedRecord.getResult() != null) {
+        // RECORD HAS BEEN ALREADY CREATED (PROBABLY DURING DATABASE SYNC) CHECKING COHERENCY
+        if (!Arrays.equals(loadedRecord.getResult().getBuffer(), content))
+          throw new ODistributedException("Record " + rid + " is already present with different content");
 
-      return new OPlaceholder(rid, loadedRecord.getResult().version);
-
-    } else {
-      getRecord();
-
-      if (clusterId > -1)
-        record.save(database.getClusterNameById(clusterId), true);
-      else if (rid.getClusterId() != -1)
-        record.save(database.getClusterNameById(rid.getClusterId()), true);
-      else
-        record.save();
-
-      final ORecordId newRid = (ORecordId) record.getIdentity();
-      if (!rid.equals(newRid))
-        throw new ODistributedException("Record " + rid + " has been saved with the different RID " + newRid);
-
-      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-          "+-> assigned new rid %s/%s v.%d", database.getName(), rid.toString(), record.getVersion());
-
-      // IMPROVED TRANSPORT BY AVOIDING THE RECORD CONTENT, BUT JUST RID + VERSION
-      return new OPlaceholder(record);
+        return new OPlaceholder(rid, loadedRecord.getResult().version);
+      }
     }
+
+    getRecord();
+
+    if (clusterId > -1)
+      record.save(database.getClusterNameById(clusterId), true);
+    else if (rid.getClusterId() != -1)
+      record.save(database.getClusterNameById(rid.getClusterId()), true);
+    else
+      record.save();
+
+    final ORecordId newRid = (ORecordId) record.getIdentity();
+    if (!rid.equals(newRid))
+      throw new ODistributedException("Record " + rid + " has been saved with the different RID " + newRid);
+
+    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> assigned new rid %s/%s v.%d",
+        database.getName(), rid.toString(), record.getVersion());
+
+    // IMPROVED TRANSPORT BY AVOIDING THE RECORD CONTENT, BUT JUST RID + VERSION
+    return new OPlaceholder(record);
   }
 
   @Override

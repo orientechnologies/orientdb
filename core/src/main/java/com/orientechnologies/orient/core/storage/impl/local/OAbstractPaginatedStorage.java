@@ -1281,15 +1281,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           Map<ORecordOperation, OPhysicalPosition> positions = new IdentityHashMap<ORecordOperation, OPhysicalPosition>();
           for (ORecordOperation txEntry : entries) {
             ORecord rec = txEntry.getRecord();
-            if (txEntry.type == ORecordOperation.CREATED) {
-              // if (rec.getIdentity().isNew() && rec.isDirty()) {
+
+            if (txEntry.type == ORecordOperation.CREATED && rec.isDirty()) {
               ORecordId rid = (ORecordId) rec.getIdentity().copy();
               ORecordId oldRID = rid.copy();
               int clusterId = rid.clusterId;
               if (rid.clusterId == ORID.CLUSTER_ID_INVALID && rec instanceof ODocument
                   && ODocumentInternal.getImmutableSchemaClass(((ODocument) rec)) != null) {
                 // TRY TO FIX CLUSTER ID TO THE DEFAULT CLUSTER ID DEFINED IN SCHEMA CLASS
-
                 final OClass schemaClass = ODocumentInternal.getImmutableSchemaClass(((ODocument) rec));
                 clusterId = schemaClass.getClusterForNewInstance((ODocument) rec);
               }
@@ -2933,8 +2932,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     }
   }
 
-  private OStorageOperationResult<OPhysicalPosition> doCreateRecord(ORecordId rid, byte[] content, int recordVersion,
-      byte recordType, ORecordCallback<Long> callback, OCluster cluster, OPhysicalPosition ppos, OPhysicalPosition allocated) {
+  private OStorageOperationResult<OPhysicalPosition> doCreateRecord(final ORecordId rid, final byte[] content, int recordVersion,
+      final byte recordType, final ORecordCallback<Long> callback, final OCluster cluster, OPhysicalPosition ppos,
+      final OPhysicalPosition allocated) {
     if (content == null)
       throw new IllegalArgumentException("Record is null");
 

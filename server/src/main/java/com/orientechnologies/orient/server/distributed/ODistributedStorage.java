@@ -1103,9 +1103,24 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       OTransactionInternal.setStatus((OTransactionAbstract) iTx, OTransaction.TXSTATUS.COMMITTING);
 
+      ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
+
+        @Override
+        public Object call() throws Exception {
+          wrapped.commit(iTx, callback);
+          return null;
+        }
+      });
+
       final List<String> nodes = dbCfg.getServers(involvedClusters);
 
-      if (executionModeSynch && !iTx.hasRecordCreation()) {
+      // REMOVE CURRENT NODE BECAUSE IT HAS BEEN ALREADY EXECUTED LOCALLY
+      nodes.remove(localNodeName);
+
+      // FILTER ONLY AVAILABLE NODES
+      dManager.getAvailableNodes(nodes, getName());
+
+      if (executionModeSynch) {
         // SYNCHRONOUS
 
         final int maxAutoRetry = OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.getValueAsInteger();
@@ -1125,32 +1140,17 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
         if (ODistributedServerLog.isDebugEnabled())
           ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
-              "distributed transaction retries exceed maximum auto-retries (%d)", maxAutoRetry);
+              "Distributed transaction retries exceed maximum auto-retries (%d)", maxAutoRetry);
 
         // ONLY CASE: ODistributedRecordLockedException MORE THAN AUTO-RETRY
         throw (ODistributedRecordLockedException) result;
       }
 
       // ASYNCH
-      ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
-
-        @Override
-        public Object call() throws Exception {
-          wrapped.commit(iTx, callback);
-          return null;
-        }
-      });
-
       // After commit force the clean of dirty managers due to possible copy and miss clean.
       for (ORecordOperation ent : iTx.getAllRecordEntries()) {
         ORecordInternal.getDirtyManager(ent.getRecord()).clear();
       }
-
-      // REMOVE CURRENT NODE BECAUSE IT HAS BEEN ALREADY EXECUTED LOCALLY
-      nodes.remove(localNodeName);
-
-      // FILTER ONLY AVAILABLE NODES
-      dManager.getAvailableNodes(nodes, getName());
 
       if (!nodes.isEmpty()) {
         if (executionModeSynch)
@@ -1191,7 +1191,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
                     } catch (Exception e) {
                       ODistributedServerLog.error(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
-                          "async distributed transaction failed, cannot revert local transaction. Current node could have a not aligned database. Remote answer: %s",
+                          "Async distributed transaction failed, cannot revert local transaction. Current node could have a not aligned database. Remote answer: %s",
                           e, iArgument);
                       throw OException.wrapException(
                           new OTransactionException(
@@ -1201,7 +1201,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
                   if (ODistributedServerLog.isDebugEnabled())
                     ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
-                        "async distributed transaction failed: %s", iArgument);
+                        "Async distributed transaction failed: %s", iArgument);
 
                   if (iArgument instanceof RuntimeException)
                     throw (RuntimeException) iArgument;
@@ -1220,7 +1220,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
               // UNKNOWN RESPONSE TYPE
               if (ODistributedServerLog.isDebugEnabled())
                 ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
-                    "async distributed transaction error, received unknown response type: %s", iArgument);
+                    "Async distributed transaction error, received unknown response type: %s", iArgument);
 
               throw new OTransactionException(
                   "Error on committing async distributed transaction, received unknown response type " + iArgument);

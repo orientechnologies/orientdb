@@ -441,11 +441,11 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
       if (server.isActive()) {
         database = poolFactory.get(getDatabaseURL(server), "admin", "admin").acquire();
         try {
-          OClass cls = database.getMetadata().getSchema().getClass("Person");
-          for (int id : cls.getPolymorphicClusterIds()) {
-            System.out.println("CLUSTER " + id + " total=" + database.countClusterElements(id));
-          }
-
+//          OClass cls = database.getMetadata().getSchema().getClass("Person");
+//          for (int id : cls.getPolymorphicClusterIds()) {
+//            System.out.println("CLUSTER " + id + " total=" + database.countClusterElements(id));
+//          }
+//
           final int total = (int) database.countClass("Person");
 
           Assert.assertEquals(expected, total);
