@@ -57,6 +57,7 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
@@ -163,7 +164,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
             final int pendingMessages = asynchronousOperationsQueue.size();
             if (pendingMessages > 0)
-              ODistributedServerLog.warn(this, dManager != null ? dManager.getLocalNodeName() : "?", null,
+              ODistributedServerLog.info(this, dManager != null ? dManager.getLocalNodeName() : "?", null,
                   ODistributedServerLog.DIRECTION.NONE,
                   "Received shutdown signal, waiting for asynchronous queue is empty (pending msgs=%d)...", pendingMessages);
 
@@ -180,7 +181,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
                     ODistributedServerLog.DIRECTION.OUT, "Error on executing asynchronous operation", e);
           }
         }
-        ODistributedServerLog.warn(this, dManager != null ? dManager.getLocalNodeName() : "?", null,
+        ODistributedServerLog.debug(this, dManager != null ? dManager.getLocalNodeName() : "?", null,
             ODistributedServerLog.DIRECTION.NONE, "Shutdown asynchronous queue worker for database '%s' completed",
             wrapped.getName());
       }
@@ -987,8 +988,15 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
   @Override
   public void close(final boolean iForce, final boolean onDelete) {
-    wrapped.close(iForce, onDelete);
+    if (onDelete && wrapped instanceof OLocalPaginatedStorage) {
+      // REMOVE distributed-config.json FILE to allow removal of directory
+      final File dCfg = new File(
+          ((OLocalPaginatedStorage) wrapped).getStoragePath() + "/" + getDistributedManager().FILE_DISTRIBUTED_DB_CONFIG);
+      if (dCfg.exists())
+        dCfg.delete();
+    }
 
+    wrapped.close(iForce, onDelete);
     if (isClosed())
       shutdownAsynchronousWorker();
   }
@@ -1128,7 +1136,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
         @Override
         public Object call() throws Exception {
-          iTx.restore();
           wrapped.commit(iTx, callback);
           return null;
         }

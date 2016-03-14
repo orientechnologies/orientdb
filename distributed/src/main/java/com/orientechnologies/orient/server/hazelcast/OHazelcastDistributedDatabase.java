@@ -378,8 +378,6 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       // GET LAST VERSION IN LOCK
       final ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
 
-      boolean distribCfgDirty = false;
-
       final List<String> foundPartition = cfg.addNewNodeInServerList(getLocalNodeName());
       if (foundPartition != null) {
         // SET THE NODE.DB AS OFFLINE, READY TO BE SYNCHRONIZED
@@ -388,27 +386,8 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
         ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "adding node '%s' in partition: db=%s %s",
             getLocalNodeName(), databaseName, foundPartition);
 
-        distribCfgDirty = true;
-      }
-
-      // SELF ASSIGN CLUSTERS PREVIOUSLY ASSIGNED TO THIS LOCAL NODE (BY SUFFIX)
-      final String suffix2Search = "_" + getLocalNodeName();
-      for (String c : cfg.getClusterNames()) {
-        if (c.endsWith(suffix2Search)) {
-          // FOUND: ASSIGN TO LOCAL NODE
-          final String currentMaster = cfg.getOwnerOfCluster(c);
-
-          if (!getLocalNodeName().equals(currentMaster)) {
-            ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE,
-                "changing mastership of cluster '%s' from node '%s' to '%s'", c, currentMaster, getLocalNodeName());
-            cfg.setServerOwner(c, getLocalNodeName());
-            distribCfgDirty = true;
-          }
-        }
-      }
-
-      if (distribCfgDirty)
         manager.updateCachedDatabaseConfiguration(databaseName, cfg.serialize(), true, true);
+      }
 
     } finally {
       lock.unlock();

@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
@@ -104,16 +105,17 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "creating record %s/%s v.%d...",
         database.getName(), rid.toString(), version);
 
-    final ORecord loadedRecord = rid.getRecord();
-    if (loadedRecord != null) {
+    final OStorageOperationResult<ORawBuffer> loadedRecord = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().readRecord(rid,
+        null, true, null);
+
+    if (loadedRecord.getResult() != null) {
       // RECORD HAS BEEN ALREADY CREATED (PROBABLY DURING DATABASE SYNC) CHECKING COHERENCY
-      if (!Arrays.equals(loadedRecord.toStream(), content))
+      if (!Arrays.equals(loadedRecord.getResult().getBuffer(), content))
         throw new ODistributedException("Record " + rid + " is already present with different content");
 
-      record = loadedRecord;
+      return new OPlaceholder(rid, loadedRecord.getResult().version);
 
     } else {
-
       getRecord();
 
       if (clusterId > -1)
@@ -129,10 +131,10 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
 
       ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
           "+-> assigned new rid %s/%s v.%d", database.getName(), rid.toString(), record.getVersion());
-    }
 
-    // IMPROVED TRANSPORT BY AVOIDING THE RECORD CONTENT, BUT JUST RID + VERSION
-    return new OPlaceholder(record);
+      // IMPROVED TRANSPORT BY AVOIDING THE RECORD CONTENT, BUT JUST RID + VERSION
+      return new OPlaceholder(record);
+    }
   }
 
   @Override

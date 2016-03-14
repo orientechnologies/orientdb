@@ -1281,7 +1281,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           Map<ORecordOperation, OPhysicalPosition> positions = new IdentityHashMap<ORecordOperation, OPhysicalPosition>();
           for (ORecordOperation txEntry : entries) {
             ORecord rec = txEntry.getRecord();
-            if (rec.getIdentity().isNew() && rec.isDirty()) {
+            if (txEntry.type == ORecordOperation.CREATED) {
+              // if (rec.getIdentity().isNew() && rec.isDirty()) {
               ORecordId rid = (ORecordId) rec.getIdentity().copy();
               ORecordId oldRID = rid.copy();
               int clusterId = rid.clusterId;
@@ -1297,8 +1298,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
               OPhysicalPosition ppos = cluster.allocatePosition(ORecordInternal.getRecordType(rec));
               positions.put(txEntry, ppos);
               rid.clusterId = cluster.getId();
-              ;
+
+              if (rid.clusterPosition > -1 && rid.clusterPosition != ppos.clusterPosition)
+                throw new OTransactionException(
+                    "New record allocated #" + rid.clusterId + ":" + ppos.clusterPosition + " but the expected was " + rid);
+
               rid.clusterPosition = ppos.clusterPosition;
+
               clientTx.updateIdentityAfterCommit(oldRID, rid);
             }
           }
@@ -3318,7 +3324,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       closeIndexes(onDelete);
 
       if (configuration != null)
-        configuration.close();
+        if (onDelete)
+          configuration.delete();
+        else
+          configuration.close();
 
       super.close(force, onDelete);
 
@@ -3460,7 +3469,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
           ORecordInternal.setVersion(rec, ppos.recordVersion);
         } else {
-          // USE -2 AS VESION TO AVOID INCREMENTING THE VERSION
+          // USE -2 AS VERSION TO AVOID INCREMENTING THE VERSION
           ORecordInternal.setVersion(rec,
               updateRecord(rid, ORecordInternal.isContentChanged(rec), stream, -2, ORecordInternal.getRecordType(rec), -1, null)
                   .getResult());

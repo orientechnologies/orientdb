@@ -23,7 +23,9 @@ import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.concurrent.Callable;
 
 /**
@@ -46,7 +48,7 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
     public Void call() throws Exception {
       final String name = Integer.toString(threadId);
       Set<Integer> clusters = new LinkedHashSet<Integer>();
-      Set<String> clusterNames = new LinkedHashSet<String>();
+      LinkedHashMap<String, Long> clusterNames = new LinkedHashMap<String, Long>();
       for (int i = 0; i < count; i++) {
         final ODatabaseDocumentTx database = poolFactory.get(databaseUrl, "admin", "admin").acquire();
 
@@ -79,7 +81,13 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
               if (delayWriter > 0)
                 Thread.sleep(delayWriter);
               clusters.add(person.getIdentity().getClusterId());
-              clusterNames.add(database.getClusterNameById(person.getIdentity().getClusterId()));
+
+              String clusterName = database.getClusterNameById(person.getIdentity().getClusterId());
+              Long counter = clusterNames.get(clusterName);
+              if (counter == null)
+                counter = 0L;
+
+              clusterNames.put(clusterName, counter + 1);
 
               // OK
               break;
@@ -90,6 +98,7 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
               break;
             } catch (ORecordDuplicatedException e) {
               // IGNORE IT
+              e.printStackTrace();
             } catch (OTransactionException e) {
               if (e.getCause() instanceof ORecordDuplicatedException)
                 // IGNORE IT
@@ -120,8 +129,7 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
         }
       }
 
-
-      System.out.println("\nWriter " + name + " END" + " clusters:"+clusters + " names " +clusterNames);
+      System.out.println("\nWriter " + name + " END total:" + count + " clusters:" + clusters + " names:" + clusterNames);
       return null;
     }
 

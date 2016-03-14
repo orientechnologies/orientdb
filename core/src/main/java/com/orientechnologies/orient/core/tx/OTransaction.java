@@ -180,9 +180,4 @@ public interface OTransaction {
   int getEntryCount();
 
   boolean hasRecordCreation();
-
-  /**
-   * Restores a partially committed transaction to the tial
-   */
-  void restore();
 }

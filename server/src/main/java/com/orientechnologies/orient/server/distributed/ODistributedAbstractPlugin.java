@@ -55,7 +55,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     implements ODistributedServerManager, ODatabaseLifecycleListener {
   protected static final String                            PAR_DEF_DISTRIB_DB_CONFIG   = "configuration.db.default";
-  protected static final String                            FILE_DISTRIBUTED_DB_CONFIG  = "distributed-config.json";
 
   protected OServer                                        serverInstance;
   protected Map<String, ODocument>                         cachedDatabaseConfiguration = new HashMap<String, ODocument>();
@@ -270,7 +269,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
           getAvailableNodes(iDatabaseName));
 
       ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE,
-          "New distributed configuration for database: %s%s\n", iDatabaseName, cfgOutput);
+          "New distributed configuration for database: %s (version=%d)%s\n", iDatabaseName, cfg.field("version"), cfgOutput);
 
       if (iSaveToDisk) {
         // SAVE THE CONFIGURATION TO DISK
