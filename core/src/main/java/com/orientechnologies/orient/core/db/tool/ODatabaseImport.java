@@ -28,16 +28,8 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
-import java.util.AbstractList;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.zip.GZIPInputStream;
 
 import com.orientechnologies.common.exception.OException;
@@ -575,6 +567,12 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     else
       super.parseSetting(option, items);
   }
+
+
+  public void setOption(final String option, String value){
+    parseSetting("-" + option, Arrays.asList(value));
+  }
+
 
   protected void removeDefaultClusters() {
     listener.onMessage(

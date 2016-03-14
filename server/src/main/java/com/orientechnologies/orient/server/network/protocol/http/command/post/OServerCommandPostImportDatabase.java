@@ -18,6 +18,7 @@ package com.orientechnologies.orient.server.network.protocol.http.command.post;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.util.HashMap;
+import java.util.Map;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCommonConst;
@@ -57,7 +58,10 @@ public class OServerCommandPostImportDatabase extends OHttpMultipartRequestComma
         parse(iRequest, iResponse, new OHttpMultipartContentBaseParser(), new OHttpMultipartDatabaseImportContentParser(), database);
 
         ODatabaseImport importer = new ODatabaseImport(getProfiledDatabaseInstance(iRequest), importData, this);
+        for(Map.Entry<String,String> option :iRequest.getParameters().entrySet())
+          importer.setOption(option.getKey(),option.getValue());
         importer.importDatabase();
+
         iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON,
             "{\"responseText\": \"Database imported Correctly, see server log for more informations.\"}", null);
       } catch (Exception e) {
