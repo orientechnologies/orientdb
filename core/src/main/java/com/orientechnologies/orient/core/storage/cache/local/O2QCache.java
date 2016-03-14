@@ -97,8 +97,10 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
   private final int percentOfPinnedPages;
 
   private final OReadersWriterSpinLock                 cacheLock       = new OReadersWriterSpinLock();
-  private final ONewLockManager                        fileLockManager = new ONewLockManager(true);
-  private final ONewLockManager<PageKey>               pageLockManager = new ONewLockManager<PageKey>();
+  private final ONewLockManager                        fileLockManager = new ONewLockManager(true,
+      OGlobalConfiguration.ENVNRONMENT_CONCURRENCY_LEVEL.getValueAsInteger());
+  private final ONewLockManager<PageKey>               pageLockManager = new ONewLockManager<PageKey>(
+      OGlobalConfiguration.ENVNRONMENT_CONCURRENCY_LEVEL.getValueAsInteger());
   private final ConcurrentMap<PinnedPage, OCacheEntry> pinnedPages     = new ConcurrentHashMap<PinnedPage, OCacheEntry>();
 
   private final AtomicBoolean       coldPagesRemovalInProgress = new AtomicBoolean();

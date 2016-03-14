@@ -59,6 +59,10 @@ public enum OGlobalConfiguration {
   ENVIRONMENT_ALLOW_JVM_SHUTDOWN("environment.allowJVMShutdown", "Allows to shutdown the JVM if needed/requested", Boolean.class,
       true, true),
 
+  ENVNRONMENT_CONCURRENCY_LEVEL("envinronment.concurrency.level", "Level of paralellization for structures which are "
+      + "split their internal container on several partitions to increase multicore scalability"
+      + " like ConcurrentHashMap, bigger value means bigger memory consumption.", Integer.class, Runtime.getRuntime().availableProcessors()),
+
   // SCRIPT
       SCRIPT_POOL("script.pool.maxSize", "Maximum number of instances in the pool of script engines", Integer.class, 20),
 

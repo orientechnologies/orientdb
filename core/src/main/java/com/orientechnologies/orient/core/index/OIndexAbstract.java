@@ -19,20 +19,6 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.concur.lock.ONewLockManager;
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
@@ -42,6 +28,7 @@ import com.orientechnologies.orient.core.OOrientShutdownListener;
 import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.annotation.ODocumentInstance;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -67,6 +54,12 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+
 /**
  * Handles indexing when records change.
  *
@@ -79,7 +72,8 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
   private final   String            databaseName;
   protected       String            type;
   protected       String            valueContainerAlgorithm;
-  protected final ONewLockManager<Object> keyLockManager = new ONewLockManager<Object>();
+  protected final ONewLockManager<Object> keyLockManager = new ONewLockManager<Object>(
+      OGlobalConfiguration.ENVNRONMENT_CONCURRENCY_LEVEL.getValueAsInteger());
 
   @ODocumentInstance
   protected final AtomicReference<ODocument> configuration = new AtomicReference<ODocument>();

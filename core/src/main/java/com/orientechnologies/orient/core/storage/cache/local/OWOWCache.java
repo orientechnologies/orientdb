@@ -104,7 +104,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   private final ODistributedCounter writeCacheSize          = new ODistributedCounter();
   private final ODistributedCounter exclusiveWriteCacheSize = new ODistributedCounter();
 
-  private final ONewLockManager<PagedKey> lockManager = new ONewLockManager<PagedKey>();
+  private final ONewLockManager<PagedKey> lockManager = new ONewLockManager<PagedKey>(
+      OGlobalConfiguration.ENVNRONMENT_CONCURRENCY_LEVEL.getValueAsInteger());
   private final OLocalPaginatedStorage storageLocal;
   private final OReadersWriterSpinLock filesLock = new OReadersWriterSpinLock();
   private final ScheduledExecutorService commitExecutor;
