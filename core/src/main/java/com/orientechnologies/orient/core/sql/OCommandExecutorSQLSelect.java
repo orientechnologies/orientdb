@@ -539,11 +539,13 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     context.updateMetric("recordReads", +1);
 
-    if (record == null || ORecordInternal.getRecordType(record) != ODocument.RECORD_TYPE)
-    // SKIP IT
-    {
+    if (record == null)
+      // SKIP IT
       return true;
-    }
+    if ((projections != null || expandTarget != null) && ORecordInternal.getRecordType(record) != ODocument.RECORD_TYPE)
+      //SKIP binary records in case of projection.
+      return true;
+
     context.updateMetric("documentReads", +1);
 
     if (localLockingStrategy == LOCKING_STRATEGY.SHARED_LOCK) {
