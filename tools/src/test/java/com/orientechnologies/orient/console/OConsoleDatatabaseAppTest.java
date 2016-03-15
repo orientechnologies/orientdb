@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.server.config;
+package com.orientechnologies.orient.console;
 
 import com.orientechnologies.orient.console.OConsoleDatabaseApp;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;

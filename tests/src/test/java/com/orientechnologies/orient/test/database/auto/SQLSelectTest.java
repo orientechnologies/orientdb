@@ -1708,7 +1708,7 @@ public class SQLSelectTest extends AbstractSelectTest {
   }
 
   public void testBinaryClusterSelect() {
-    database.command(new OCommandSQL("create cluster binarycluster")).execute();
+    database.command(new OCommandSQL("create blob cluster binarycluster")).execute();
     database.reload();
     OBlob bytes = new ORecordBytes(new byte[]{1,2,3});
     database.save(bytes, "binarycluster");
