@@ -159,10 +159,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   @Override
   protected void onBeforeRequest() throws IOException {
     waitNodeIsOnline();
-
-    if (!Boolean.TRUE.equals(tokenBased) || requestType == OChannelBinaryProtocol.REQUEST_CONNECT
+    connection = server.getClientConnectionManager().getConnection(clientTxId, this);
+    if (connection ==null || !Boolean.TRUE.equals(connection.tokenBased) || requestType == OChannelBinaryProtocol.REQUEST_CONNECT
         || requestType == OChannelBinaryProtocol.REQUEST_DB_OPEN || (tokenHandler == null)) {
-      connection = server.getClientConnectionManager().getConnection(clientTxId, this);
+
       if (clientTxId < 0) {
         short protocolId = 0;
 
@@ -186,13 +186,14 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
           throw new OSecurityException("The token provided is not a valid token, signature doesn't match");
         }
 
-        if (tokenBased == null)
-          tokenBased = Boolean.TRUE;
         if (token != null) {
           if (!tokenHandler.validateBinaryToken(token)) {
             throw new OSecurityException("The token provided is expired");
           }
           connection = new OClientConnection(clientTxId, this);
+          if (connection.tokenBased == null)
+            connection.tokenBased = Boolean.TRUE;
+
           if (tokenHandler != null) {
             final ONetworkProtocolData data = tokenHandler.getProtocolDataFromToken(token);
             if (data != null)
@@ -250,7 +251,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     OServerPluginHelper.invokeHandlerCallbackOnAfterClientRequest(server, connection, (byte) requestType);
 
     if (connection != null) {
-      if (!Boolean.TRUE.equals(tokenBased)) {
+      if (!Boolean.TRUE.equals(connection.tokenBased)) {
         if (connection.database != null)
           if (!connection.database.isClosed() && connection.database.getLocalCache() != null)
             connection.database.getLocalCache().clear();
@@ -793,7 +794,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         sendOk(clientTxId);
         channel.writeInt(connection.id);
         if (connection.data.protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_26) {
-          if (Boolean.TRUE.equals(tokenBased)) {
+          if (Boolean.TRUE.equals(connection.tokenBased)) {
             byte[] token = tokenHandler.getSignedBinaryToken(connection.database, connection.database.getUser(), connection.data);
             channel.writeBytes(token);
           } else
@@ -831,7 +832,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         connection.data.serverUsername = connection.serverUser.name;
         connection.data.serverUser = true;
         byte[] token;
-        if (Boolean.TRUE.equals(tokenBased)) {
+        if (Boolean.TRUE.equals(connection.tokenBased)) {
           token = tokenHandler.getSignedBinaryToken(null, null, connection.data);
         } else
           token = OCommonConst.EMPTY_BYTE_ARRAY;
@@ -849,7 +850,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
       channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_ERROR);
       channel.writeInt(iClientTxId);
-      if (Boolean.TRUE.equals(tokenBased) && token != null) {
+      if ((connection == null || Boolean.TRUE.equals(connection.tokenBased)) && tokenHandler != null && token != null) {
         // TODO: Check if the token is expiring and if it is send a new token
         byte[] renewedToken = tokenHandler.renewIfNeeded(token);
         channel.writeBytes(renewedToken);
@@ -1128,7 +1129,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         // OLD CLIENTS WAIT FOR A OK
         sendOk(clientTxId);
 
-      if (Boolean.FALSE.equals(tokenBased) && server.getClientConnectionManager().disconnect(connection.id))
+      if (Boolean.FALSE.equals(connection.tokenBased) && server.getClientConnectionManager().disconnect(connection.id))
         sendShutdown();
     }
   }
@@ -1822,28 +1823,28 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       connection.data.serializationImpl = channel.readString();
     else
       connection.data.serializationImpl = ORecordSerializerSchemaAware2CSV.NAME;
-    if (tokenBased == null) {
+    if (connection.tokenBased == null) {
       if (connection.data.protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_26)
-        tokenBased = channel.readBoolean();
+        connection.tokenBased = channel.readBoolean();
       else
-        tokenBased = false;
+        connection.tokenBased = false;
     } else {
       if (connection.data.protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_26)
-        if (channel.readBoolean() != tokenBased) {
+        if (channel.readBoolean() != connection.tokenBased) {
           // throw new OException("Not supported mixed connection managment");
         }
     }
-    if (tokenBased && tokenHandler == null) {
+    if (connection.tokenBased && tokenHandler == null) {
       // this is not the way
       // throw new OException("The server doesn't support the token based authentication");
-      tokenBased = false;
+      connection.tokenBased = false;
     }
   }
 
   protected void sendOk(final int iClientTxId) throws IOException {
     channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_OK);
     channel.writeInt(iClientTxId);
-    if (Boolean.TRUE.equals(tokenBased) && token != null && requestType != OChannelBinaryProtocol.REQUEST_CONNECT
+    if (connection== null || Boolean.TRUE.equals(connection.tokenBased) && token != null && requestType != OChannelBinaryProtocol.REQUEST_CONNECT
         && requestType != OChannelBinaryProtocol.REQUEST_DB_OPEN) {
       // TODO: Check if the token is expiring and if it is send a new token
       byte[] renewedToken = tokenHandler.renewIfNeeded(token);
