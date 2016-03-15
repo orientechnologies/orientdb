@@ -89,10 +89,11 @@ public enum OGlobalConfiguration {
       "Minimal amount of time (in seconds), since the last System.gc(), when called after tree optimization.", Long.class, 600),
 
   // STORAGE
-      DISK_CACHE_PINNED_PAGES("storage.diskCache.pinnedPages",
-          "Maximum amount of pinned pages which may be contained in cache,"
-              + " if this percent is reached next pages will be left in unpinned state. You can not set value more than 50",
-          Integer.class, 20, false),
+
+  DISK_CACHE_PINNED_PAGES("storage.diskCache.pinnedPages",
+      "Maximum amount of pinned pages which may be contained in cache,"
+          + " if this percent is reached next pages will be left in unpinned state. You cannot set value more than 50",
+      Integer.class, 20, false),
 
   DISK_CACHE_SIZE("storage.diskCache.bufferSize",
       "Size of disk buffer in megabytes, disk size may be changed at runtime, "
@@ -636,7 +637,7 @@ public enum OGlobalConfiguration {
    * @Since 2.2.0
    */
   @OApi(maturity = OApi.MATURITY.NEW) DISTRIBUTED_DB_WORKERTHREADS("distributed.dbWorkerThreads",
-      "Number of parallel worker threads per database that process distributed messages", Integer.class, 8),
+      "Number of parallel worker threads per database that process distributed messages", Integer.class, 1),
 
   /**
    * @Since 2.1.3

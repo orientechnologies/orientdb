@@ -137,7 +137,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
   public O2QCache(final long readCacheMaxMemory, final int pageSize, final boolean checkMinSize, final int percentOfPinnedPages) {
     if (percentOfPinnedPages > MAX_PERCENT_OF_PINED_PAGES)
       throw new IllegalArgumentException(
-          "Percent of pinned pages can not be more than " + percentOfPinnedPages + " but passed value is " + percentOfPinnedPages);
+          "Percent of pinned pages cannot be more than " + percentOfPinnedPages + " but passed value is " + percentOfPinnedPages);
 
     this.percentOfPinnedPages = percentOfPinnedPages;
 
@@ -352,7 +352,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
         return;
 
       if ((100 * memoryData.pinnedPages / newMemorySize) > percentOfPinnedPages) {
-        throw new IllegalStateException("Can not decrease amount of memory used by disk cache "
+        throw new IllegalStateException("Cannot decrease amount of memory used by disk cache "
             + "because limit of pinned pages will be more than allowed limit " + percentOfPinnedPages);
       }
 
@@ -783,8 +783,8 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
         }
       }
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Can not restore state of cache for storage placed under %s",
-          writeCache.getRootDirectory(), e);
+      OLogManager.instance().error(this, "Cannot restore state of cache for storage placed under %s", writeCache.getRootDirectory(),
+          e);
     } finally {
       cacheLock.releaseReadLock();
     }
@@ -970,7 +970,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
 
       if (stateFile.exists()) {
         if (!stateFile.delete()) {
-          OLogManager.instance().warn(this, "Can not delete cache state file %s", stateFile);
+          OLogManager.instance().warn(this, "Cannot delete cache state file %s", stateFile);
         }
       }
 
@@ -1001,7 +1001,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
         cacheState.close();
       }
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Can not store state of cache for storage placed under %s", writeCache.getRootDirectory(),
+      OLogManager.instance().error(this, "Cannot store state of cache for storage placed under %s", writeCache.getRootDirectory(),
           e);
     } finally {
       cacheLock.releaseWriteLock();
@@ -1060,7 +1060,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
       final File stateFile = new File(rootDirectory, CACHE_STATE_FILE);
       if (stateFile.exists()) {
         if (!stateFile.delete()) {
-          OLogManager.instance().error(this, "Cache state file %s can not be deleted", stateFile);
+          OLogManager.instance().error(this, "Cache state file %s cannot be deleted", stateFile);
         }
       }
 

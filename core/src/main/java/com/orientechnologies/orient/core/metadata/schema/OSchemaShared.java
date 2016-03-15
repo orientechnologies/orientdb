@@ -19,6 +19,9 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
+import java.util.*;
+import java.util.concurrent.Callable;
+
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.exception.OException;
@@ -56,17 +59,6 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-
 /**
  * Shared schema class. It's shared by all the database instances that point to the same storage.
  *
@@ -75,28 +67,28 @@ import java.util.concurrent.Callable;
 @SuppressWarnings("unchecked")
 public class OSchemaShared extends ODocumentWrapperNoClass
     implements OSchema, OCloseable, OOrientStartupListener, OOrientShutdownListener {
-  public static final  int  CURRENT_VERSION_NUMBER = 4;
-  public static final  int  VERSION_NUMBER_V4      = 4;
+  public static final int                          CURRENT_VERSION_NUMBER  = 4;
+  public static final int                          VERSION_NUMBER_V4       = 4;
   // this is needed for guarantee the compatibility to 2.0-M1 and 2.0-M2 no changed associated with it
-  public static final  int  VERSION_NUMBER_V5      = 5;
-  private static final long serialVersionUID       = 1L;
+  public static final int                          VERSION_NUMBER_V5       = 5;
+  private static final long                        serialVersionUID        = 1L;
 
-  private final boolean clustersCanNotBeSharedAmongClasses;
+  private final boolean                            clustersCanNotBeSharedAmongClasses;
 
-  private final OReadersWriterSpinLock rwSpinLock = new OReadersWriterSpinLock();
+  private final OReadersWriterSpinLock             rwSpinLock              = new OReadersWriterSpinLock();
 
-  private final Map<String, OClass>  classes           = new HashMap<String, OClass>();
-  private final Map<Integer, OClass> clustersToClasses = new HashMap<Integer, OClass>();
+  private final Map<String, OClass>                classes                 = new HashMap<String, OClass>();
+  private final Map<Integer, OClass>               clustersToClasses       = new HashMap<Integer, OClass>();
 
-  private final OClusterSelectionFactory clusterSelectionFactory = new OClusterSelectionFactory();
+  private final OClusterSelectionFactory           clusterSelectionFactory = new OClusterSelectionFactory();
 
-  private volatile ThreadLocal<OModifiableInteger> modificationCounter  = new OModificationsCounter();
-  private final    List<OGlobalProperty>           properties           = new ArrayList<OGlobalProperty>();
-  private final    Map<String, OGlobalProperty>    propertiesByNameType = new HashMap<String, OGlobalProperty>();
-  private volatile int                             version              = 0;
-  private volatile OImmutableSchema snapshot;
+  private volatile ThreadLocal<OModifiableInteger> modificationCounter     = new OModificationsCounter();
+  private final List<OGlobalProperty>              properties              = new ArrayList<OGlobalProperty>();
+  private final Map<String, OGlobalProperty>       propertiesByNameType    = new HashMap<String, OGlobalProperty>();
+  private volatile int                             version                 = 0;
+  private volatile OImmutableSchema                snapshot;
 
-  private static Set<String> internalClasses = new HashSet<String>();
+  private static Set<String>                       internalClasses         = new HashSet<String>();
 
   static {
     internalClasses.add("ouser");
@@ -840,7 +832,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass
     rwSpinLock.acquireWriteLock();
     try {
       if (!new ORecordId(getDatabase().getStorage().getConfiguration().schemaRecordId).isValid())
-        throw new OSchemaNotCreatedException("Schema is not created and can not be loaded");
+        throw new OSchemaNotCreatedException("Schema is not created and cannot be loaded");
 
       ((ORecordId) document.getIdentity()).fromString(getDatabase().getStorage().getConfiguration().schemaRecordId);
       reload("*:-1 index:0");
@@ -1025,7 +1017,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass
       result = classes.get(className.toLowerCase());
 
       // WAKE UP DB LIFECYCLE LISTENER
-      for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext(); )
+      for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
         it.next().onCreateClass(getDatabase(), result);
 
     } finally {
@@ -1103,7 +1095,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass
       result = classes.get(className.toLowerCase());
 
       // WAKE UP DB LIFECYCLE LISTENER
-      for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext(); )
+      for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
         it.next().onCreateClass(getDatabase(), result);
 
     } catch (ClusterIdsAreEmptyException e) {

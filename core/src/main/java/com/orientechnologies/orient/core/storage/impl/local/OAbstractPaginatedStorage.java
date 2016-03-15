@@ -722,7 +722,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   public OLogSequenceNumber recordsChangedAfterLSN(final OLogSequenceNumber lsn, final OutputStream stream) {
     if (!OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.getValueAsBoolean())
       throw new IllegalStateException(
-          "Can not find records which were changed starting from provided LSN because tracking of rids of changed records in WAL is switched off, "
+          "Cannot find records which were changed starting from provided LSN because tracking of rids of changed records in WAL is switched off, "
               + "to switch it on please set property " + OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.getKey()
               + " to the true value, please note that only records"
               + " which are stored after this property was set will be retrieved");
@@ -1397,7 +1397,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
       return indexEngines.size() - 1;
     } catch (IOException e) {
-      throw OException.wrapException(new OStorageException("Can not add index engine " + engineName + " in storage."), e);
+      throw OException.wrapException(new OStorageException("Cannot add index engine " + engineName + " in storage."), e);
     } finally {
       stateLock.releaseWriteLock();
     }
@@ -1449,7 +1449,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
       return indexEngines.size() - 1;
     } catch (IOException e) {
-      throw OException.wrapException(new OStorageException("Can not add index engine " + engineName + " in storage."), e);
+      throw OException.wrapException(new OStorageException("Cannot add index engine " + engineName + " in storage."), e);
     } finally {
       stateLock.releaseWriteLock();
     }
@@ -1476,7 +1476,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
             keySerializer = currentStorageComponentsFactory.binarySerializerFactory
                 .getObjectSerializer(indexDefinition.getTypes()[0]);
           else
-            throw new IllegalStateException("Can not load binary serializer, storage is not porperly initialized");
+            throw new IllegalStateException("Cannot load binary serializer, storage is not porperly initialized");
         }
       }
     } else {
@@ -1701,7 +1701,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       if (atomicOperation)
         atomicOperationsManager.startAtomicOperation((String) null, true);
     } catch (IOException e) {
-      throw OException.wrapException(new OStorageException("Can not put key value entry in index"), e);
+      throw OException.wrapException(new OStorageException("Cannot put key value entry in index"), e);
     }
 
     try {
@@ -1721,7 +1721,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         if (atomicOperation)
           atomicOperationsManager.endAtomicOperation(true, e);
 
-        throw OException.wrapException(new OStorageException("Can not put key value entry in index"), e);
+        throw OException.wrapException(new OStorageException("Cannot put key value entry in index"), e);
       } catch (IOException ioe) {
         throw OException.wrapException(new OStorageException("Error during operation rollback"), ioe);
       }
@@ -1733,7 +1733,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     try {
       atomicOperationsManager.startAtomicOperation((String) null, true);
     } catch (IOException e) {
-      throw OException.wrapException(new OStorageException("Can not put key value entry in index"), e);
+      throw OException.wrapException(new OStorageException("Cannot put key value entry in index"), e);
     }
 
     try {
@@ -1753,7 +1753,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     } catch (Exception e) {
       try {
         atomicOperationsManager.endAtomicOperation(true, e);
-        throw OException.wrapException(new OStorageException("Can not put key value entry in index"), e);
+        throw OException.wrapException(new OStorageException("Cannot put key value entry in index"), e);
       } catch (IOException ioe) {
         throw OException.wrapException(new OStorageException("Error during operation rollback"), ioe);
       }
@@ -1792,7 +1792,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
       engine.put(key, value);
     } catch (IOException e) {
-      throw new OStorageException("Can not put key " + key + " value " + value + " entry to the index");
+      throw new OStorageException("Cannot put key " + key + " value " + value + " entry to the index");
     }
   }
 
