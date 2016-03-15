@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
+import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
@@ -1687,5 +1688,27 @@ public class SQLSelectTest extends AbstractSelectTest {
     }
     return positions;
   }
+
+  public void testBinaryClusterSelect() {
+    database.command(new OCommandSQL("create cluster binarycluster")).execute();
+    database.reload();
+    ORecordBytes bytes = new ORecordBytes(new byte[]{1,2,3});
+    database.save(bytes, "binarycluster");
+
+
+    List<OIdentifiable> result = database.query(
+        new OSQLSynchQuery<OIdentifiable>("select from cluster:binarycluster"));
+
+    Assert.assertEquals(result.size(), 1);
+
+    database.command(
+        new OCommandSQL("delete from cluster:binarycluster")).execute();
+
+    result = database.query(
+        new OSQLSynchQuery<OIdentifiable>("select from cluster:binarycluster"));
+
+    Assert.assertEquals(result.size(), 0);
+  }
+
 
 }
