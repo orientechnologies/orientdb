@@ -105,17 +105,18 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "creating record %s/%s v.%d...",
         database.getName(), rid.toString(), version);
 
-    if (rid.isPersistent()) {
-      final OStorageOperationResult<ORawBuffer> loadedRecord = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
-          .readRecord(rid, null, true, null);
+    if (!rid.isPersistent())
+      throw new ODistributedException("Record " + rid + " has not been saved on owner node first (temporary rid)");
 
-      if (loadedRecord.getResult() != null) {
-        // RECORD HAS BEEN ALREADY CREATED (PROBABLY DURING DATABASE SYNC) CHECKING COHERENCY
-        if (!Arrays.equals(loadedRecord.getResult().getBuffer(), content))
-          throw new ODistributedException("Record " + rid + " is already present with different content");
+    final OStorageOperationResult<ORawBuffer> loadedRecord = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().readRecord(rid,
+        null, true, null);
 
-        return new OPlaceholder(rid, loadedRecord.getResult().version);
-      }
+    if (loadedRecord.getResult() != null) {
+      // RECORD HAS BEEN ALREADY CREATED (PROBABLY DURING DATABASE SYNC) CHECKING COHERENCY
+      if (!Arrays.equals(loadedRecord.getResult().getBuffer(), content))
+        throw new ODistributedException("Record " + rid + " is already present with different content");
+
+      return new OPlaceholder(rid, loadedRecord.getResult().version);
     }
 
     getRecord();
@@ -129,10 +130,12 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
 
     final ORecordId newRid = (ORecordId) record.getIdentity();
     if (!rid.equals(newRid))
-      throw new ODistributedException("Record " + rid + " has been saved with the different RID " + newRid);
+      throw new ODistributedException(
+          "Record " + rid + " has been saved with the different RID " + newRid + " on server " + iManager.getLocalNodeName());
 
-    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> assigned new rid %s/%s v.%d",
-        database.getName(), rid.toString(), record.getVersion());
+    ODistributedServerLog.debug(this, iManager.getLocalNodeName(),
+
+        getNodeSource(), DIRECTION.IN, "+-> assigned new rid %s/%s v.%d", database.getName(), rid.toString(), record.getVersion());
 
     // IMPROVED TRANSPORT BY AVOIDING THE RECORD CONTENT, BUT JUST RID + VERSION
     return new OPlaceholder(record);

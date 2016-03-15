@@ -19,11 +19,9 @@ package com.orientechnologies.orient.server.distributed;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -35,7 +33,10 @@ import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import org.junit.Assert;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.*;
 
 /**
@@ -441,11 +442,11 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
       if (server.isActive()) {
         database = poolFactory.get(getDatabaseURL(server), "admin", "admin").acquire();
         try {
-//          OClass cls = database.getMetadata().getSchema().getClass("Person");
-//          for (int id : cls.getPolymorphicClusterIds()) {
-//            System.out.println("CLUSTER " + id + " total=" + database.countClusterElements(id));
-//          }
-//
+          // OClass cls = database.getMetadata().getSchema().getClass("Person");
+          // for (int id : cls.getPolymorphicClusterIds()) {
+          // System.out.println("CLUSTER " + id + " total=" + database.countClusterElements(id));
+          // }
+          //
           final int total = (int) database.countClass("Person");
 
           Assert.assertEquals(expected, total);
@@ -468,27 +469,6 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
       final String name = database.getURL();
 
       System.out.println("\nReader " + name + " sql count: " + result.get(0) + " counting class: " + database.countClass("Person"));
-
-      if (((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().existsClass("ODistributedConflict"))
-        try {
-          List<ODocument> conflicts = database
-              .query(new OSQLSynchQuery<OIdentifiable>("select count(*) from ODistributedConflict"));
-          long totalConflicts = conflicts.get(0).field("count");
-          Assert.assertEquals(0l, totalConflicts);
-          System.out.println("\nReader " + name + " conflicts: " + totalConflicts);
-        } catch (OQueryParsingException e) {
-          // IGNORE IT
-        }
-
-      result = database.query(new OSQLSynchQuery<OIdentifiable>("select from Person"));
-
-      Set<String> clusters = new HashSet<String>();
-      for (ODocument doc : result) {
-        clusters.add(
-            "" + doc.getIdentity().getClusterId() + " (" + database.getClusterNameById(doc.getIdentity().getClusterId()) + ")");
-      }
-
-      System.out.println("\nReader " + name + " clusters: " + clusters);
 
     } finally {
       database.close();

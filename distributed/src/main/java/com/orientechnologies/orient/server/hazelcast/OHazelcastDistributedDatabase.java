@@ -84,6 +84,9 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
     final int partition = partitionKey % workerThreads.size();
 
+    ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE, "Request %s on database %s dispatched to worker %d",
+        request, databaseName, partition);
+
     final ODistributedWorker worker = workerThreads.get(partition);
     worker.processRequest(request);
   }
