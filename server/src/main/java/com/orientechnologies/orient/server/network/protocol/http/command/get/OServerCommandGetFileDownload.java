@@ -42,7 +42,6 @@ public class OServerCommandGetFileDownload extends OServerCommandAuthenticatedDb
 
   @Override
   public boolean execute(OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
     String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: fileDownload/<database>/rid/[/<fileName>][/<fileType>].");
 
     final String fileName = urlParts.length > 3 ? encodeResponseText(urlParts[3]) : "unknown";
@@ -56,7 +55,7 @@ public class OServerCommandGetFileDownload extends OServerCommandAuthenticatedDb
     iRequest.data.commandDetail = rid;
 
     final ORecordAbstract response;
-
+    ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
     try {
 
       response = db.load(new ORecordId(rid));
