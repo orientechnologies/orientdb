@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -78,9 +77,7 @@ public class OPropertyListIndexDefinition extends OAbstractIndexDefinitionMultiV
     try {
       return OType.convert(param[0], keyType.getDefaultJavaType());
     } catch (Exception e) {
-      OException ex = OException
-          .wrapException(new OIndexException("Invalid key for index: " + param[0] + " cannot be converted to " + keyType), e);
-      throw ex;
+      throw new OIndexException("Invalid key for index: " + param[0] + " cannot be converted to " + keyType, e);
     }
   }
 
