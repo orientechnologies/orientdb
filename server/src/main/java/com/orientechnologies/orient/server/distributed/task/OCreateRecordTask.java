@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
@@ -121,21 +122,37 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
 
     getRecord();
 
-    if (clusterId > -1)
-      record.save(database.getClusterNameById(clusterId), true);
-    else if (rid.getClusterId() != -1)
-      record.save(database.getClusterNameById(rid.getClusterId()), true);
-    else
-      record.save();
+    try {
+      if (clusterId > -1)
+        record.save(database.getClusterNameById(clusterId), true);
+      else if (rid.getClusterId() != -1)
+        record.save(database.getClusterNameById(rid.getClusterId()), true);
+      else
+        record.save();
+    } catch (ORecordDuplicatedException e) {
+      // DUPLICATED INDEX ON THE TARGET: CREATE AN EMPTY RECORD JUST TO MAINTAIN THE RID AND LET TO THE FIX OPERATION TO SORT OUT
+      // WHAT HAPPENED
+      ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+          "+-> duplicated record, assigned new rid %s/%s v.%d", database.getName(), rid.toString(), record.getVersion());
+
+      record.clear();
+      if (clusterId > -1)
+        record.save(database.getClusterNameById(clusterId), true);
+      else if (rid.getClusterId() != -1)
+        record.save(database.getClusterNameById(rid.getClusterId()), true);
+      else
+        record.save();
+
+      throw e;
+    }
 
     final ORecordId newRid = (ORecordId) record.getIdentity();
     if (!rid.equals(newRid))
       throw new ODistributedException(
           "Record " + rid + " has been saved with the different RID " + newRid + " on server " + iManager.getLocalNodeName());
 
-    ODistributedServerLog.debug(this, iManager.getLocalNodeName(),
-
-        getNodeSource(), DIRECTION.IN, "+-> assigned new rid %s/%s v.%d", database.getName(), rid.toString(), record.getVersion());
+    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> assigned new rid %s/%s v.%d",
+        database.getName(), rid.toString(), record.getVersion());
 
     // IMPROVED TRANSPORT BY AVOIDING THE RECORD CONTENT, BUT JUST RID + VERSION
     return new OPlaceholder(record);

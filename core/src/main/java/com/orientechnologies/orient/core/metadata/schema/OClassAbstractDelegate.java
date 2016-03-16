@@ -43,7 +43,8 @@ public abstract class OClassAbstractDelegate implements OClass {
     this.delegate = delegate;
   }
 
-  @Override public OIndex<?> getAutoShardingIndex() {
+  @Override
+  public OIndex<?> getAutoShardingIndex() {
     return delegate.getAutoShardingIndex();
   }
 

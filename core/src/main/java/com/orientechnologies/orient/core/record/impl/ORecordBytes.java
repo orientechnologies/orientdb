@@ -90,6 +90,12 @@ public class ORecordBytes extends ORecordAbstract {
   }
 
   @Override
+  public ORecordAbstract clear() {
+    clearSource();
+    return super.clear();
+  }
+
+  @Override
   public byte[] toStream() {
     return _source;
   }

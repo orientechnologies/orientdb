@@ -750,8 +750,16 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
         final OServerPlugin plugin = server.getPlugin("cluster");
         ODocument distributedCfg = null;
-        if (plugin != null && plugin instanceof ODistributedServerManager)
+        if (plugin != null && plugin instanceof ODistributedServerManager) {
           distributedCfg = ((ODistributedServerManager) plugin).getClusterConfiguration();
+
+          final ODistributedConfiguration dbCfg = ((ODistributedServerManager) plugin)
+              .getDatabaseConfiguration(connection.getDatabase().getName());
+          if (dbCfg != null) {
+            // ENHANCE SERVER CFG WITH DATABASE CFG
+            distributedCfg.field("database", dbCfg);
+          }
+        }
 
         channel.writeBytes(distributedCfg != null ? getRecordBytes(distributedCfg) : null);
 
@@ -849,8 +857,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       in.close();
     }
 
-    ODistributedServerLog.debug(this, manager.getLocalNodeName(), manager.getNodeNameById(req.getSenderNodeId()), ODistributedServerLog.DIRECTION.IN,
-        "Received request %s (%d bytes)", req, serializedReq.length);
+    ODistributedServerLog.debug(this, manager.getLocalNodeName(), manager.getNodeNameById(req.getSenderNodeId()),
+        ODistributedServerLog.DIRECTION.IN, "Received request %s (%d bytes)", req, serializedReq.length);
 
     final String dbName = req.getDatabaseName();
     if (dbName != null) {

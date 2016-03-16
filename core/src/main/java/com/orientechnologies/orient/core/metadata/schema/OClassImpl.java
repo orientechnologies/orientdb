@@ -19,6 +19,10 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.*;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.OArrays;
@@ -56,10 +60,6 @@ import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
-
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.util.*;
 
 /**
  * Schema Class implementation.
@@ -1960,7 +1960,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   public Set<OIndex<?>> getIndexes() {
-    Set<OIndex<?>> indexes = new HashSet<OIndex<?>>();
+    final Set<OIndex<?>> indexes = new HashSet<OIndex<?>>();
     getIndexes(indexes);
     return indexes;
   }

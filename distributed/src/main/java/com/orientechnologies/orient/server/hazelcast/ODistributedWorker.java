@@ -135,11 +135,11 @@ public class ODistributedWorker extends Thread {
 
     try {
       running = false;
-      interrupt();
 
       if (pendingMsgs > 0)
         try {
           join();
+          interrupt();
         } catch (Exception e) {
           ODistributedServerLog.debug(this, getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
               "Interrupted shutdown of distributed worker thread");
@@ -198,7 +198,7 @@ public class ODistributedWorker extends Thread {
       final ORemoteTask task = iRequest.getTask();
 
       if (ODistributedServerLog.isDebugEnabled())
-        ODistributedServerLog.debug(this, manager.getLocalNodeName(), senderNodeName, DIRECTION.OUT, "received request: %s",
+        ODistributedServerLog.debug(this, manager.getLocalNodeName(), senderNodeName, DIRECTION.OUT, "Received request: %s",
             iRequest);
 
       // EXECUTE IT LOCALLY
@@ -264,7 +264,7 @@ public class ODistributedWorker extends Thread {
       }
 
       if (running)
-        sendResponseBack(iRequest, task, responsePayload);
+        sendResponseBack(iRequest, responsePayload);
 
     } finally {
       OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.DEFAULT);
@@ -275,7 +275,7 @@ public class ODistributedWorker extends Thread {
     return manager.getLocalNodeName();
   }
 
-  private void sendResponseBack(final ODistributedRequest iRequest, final ORemoteTask task, Serializable responsePayload) {
+  private void sendResponseBack(final ODistributedRequest iRequest, Serializable responsePayload) {
     final String senderNodeName = manager.getNodeNameById(iRequest.getSenderNodeId());
 
     final OHazelcastDistributedResponse response = new OHazelcastDistributedResponse(iRequest.getId(), manager.getLocalNodeName(),

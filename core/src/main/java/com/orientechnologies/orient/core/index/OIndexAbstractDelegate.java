@@ -21,7 +21,6 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.ODatabaseThreadLocalFactory;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -95,7 +94,6 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
     }
   }
 
-
   @Override
   public OIndexCursor iterateEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
       boolean ascOrder) {
@@ -130,7 +128,6 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
     return delegate.delete();
   }
 
-
   public String getName() {
     return delegate.getName();
   }
@@ -148,6 +145,11 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
     return delegate.isAutomatic();
   }
 
+  @Override
+  public boolean isUnique() {
+    return delegate.isUnique();
+  }
+
   public ODocument getConfiguration() {
     return delegate.getConfiguration();
   }
@@ -156,7 +158,6 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
   public ODocument getMetadata() {
     return delegate.getMetadata();
   }
-
 
   public long rebuild() {
     return delegate.rebuild();
@@ -240,7 +241,8 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
     return delegate.getLastKey();
   }
 
-  @Override public int getIndexId() {
+  @Override
+  public int getIndexId() {
     return delegate.getIndexId();
   }
 

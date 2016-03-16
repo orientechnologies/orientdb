@@ -132,6 +132,11 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManager> implement
     return delegate.getClassIndex(className, indexName);
   }
 
+  @Override
+  public OIndexUnique getClassUniqueIndex(final String className) {
+    return delegate.getClassUniqueIndex(className);
+  }
+
   public OIndex<?> getClassAutoShardingIndex(final String className) {
     return delegate.getClassAutoShardingIndex(className);
   }

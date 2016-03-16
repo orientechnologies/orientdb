@@ -75,9 +75,9 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Distributed storage implementation that routes to the owner node the request.
@@ -91,14 +91,15 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
   protected final TimerTask                                          purgeDeletedRecordsTask;
   protected final ConcurrentHashMap<ORecordId, OPair<Long, Integer>> deletedRecords    = new ConcurrentHashMap<ORecordId, OPair<Long, Integer>>();
-  protected final AtomicLong                                         lastOperationId   = new AtomicLong();
 
   protected final BlockingQueue<OAsynchDistributedOperation>         asynchronousOperationsQueue;
   protected final Thread                                             asynchWorker;
   protected volatile boolean                                         running           = true;
   protected volatile File                                            lastValidBackup   = null;
   private ODistributedServerManager.DB_STATUS                        prevStatus;
-  private Lock                                                       sequentialRIDLock = new ReentrantLock();
+  private final ReentrantReadWriteLock                               sequentialRIDLock = new ReentrantReadWriteLock();
+  // ARRAY OF LOCKS FOR CONCURRENT OPERATIONS ON CLUSTERS
+  private final Lock[]                                               clusterLocks;
 
   public ODistributedStorage(final OServer iServer, final OAbstractPaginatedStorage wrapped) {
     this.serverInstance = iServer;
@@ -191,6 +192,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     };
     asynchWorker.setName("OrientDB Distributed asynch ops node=" + getNodeId() + " db=" + getName());
     asynchWorker.start();
+
+    clusterLocks = new ReentrantLock[32];
+    for (int i = 0; i < clusterLocks.length; ++i)
+      clusterLocks[i] = new ReentrantLock();
   }
 
   @Override
@@ -501,6 +506,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
             clSel = cls.getClusterSelection();
           }
 
+          OLogManager.instance().warn(this, "Local node '" + localNodeName + "' is not the master for cluster '" + clusterName
+              + "' (it is '" + masterNode + "'). Reloading distributed configuration for database '" + getName() + "'");
+
+          ((OLocalClusterStrategy) clSel).readConfiguration();
+
           newClusterName = getPhysicalClusterNameById(clSel.getCluster(cls, null));
           nodes = dbCfg.getServers(newClusterName, null);
           masterNode = nodes.get(0);
@@ -513,12 +523,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         OLogManager.instance().warn(this, "Local node '" + localNodeName + "' is not the master for cluster '" + clusterName
             + "' (it is '" + masterNode + "'). Switching to a valid cluster of the same class: '" + newClusterName + "'");
 
+        // OVERWRITE CLUSTER
         clusterName = newClusterName;
+        iRecordId.clusterId = db.getClusterIdByName(newClusterName);
       }
-
-      Boolean executionModeSynch = dbCfg.isExecutionModeSynchronous(clusterName);
-      if (executionModeSynch == null)
-        executionModeSynch = iMode == 0;
 
       // IN ANY CASE EXECUTE LOCALLY AND THEN DISTRIBUTE
       final OStorageOperationResult<OPhysicalPosition> localResult;
@@ -529,80 +537,80 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       // FILTER ONLY AVAILABLE NODES
       dManager.getAvailableNodes(nodes, getName());
 
-      // LOCK TO MAINTAIN ORDER BETWEEN RID ALLOCATION AND SEND MSG
-      sequentialRIDLock.lock();
+      // LOCK TO MAINTAIN ORDER BETWEEN RID ALLOCATION AND SEND MSG. sequentialRIDLock RWLOCK PREVENTS TRANSACTIONS TO RUN AT THE
+      // SAME TIME, WHILE THE CLUSTER LOCK PREVENT CONCURRENT RUN ON THE SAME CLUSTER
+      sequentialRIDLock.writeLock().lock();
       try {
-        localResult = (OStorageOperationResult<OPhysicalPosition>) ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
+        clusterLocks[clusterId % clusterLocks.length].lock();
+        try {
+          localResult = (OStorageOperationResult<OPhysicalPosition>) ODistributedAbstractPlugin
+              .runInDistributedMode(new Callable() {
 
-          @Override
-          public Object call() throws Exception {
-            // USE THE DATABASE TO CALL HOOKS
-            final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+                @Override
+                public Object call() throws Exception {
+                  // USE THE DATABASE TO CALL HOOKS
+                  final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
 
-            final ORecord record = Orient.instance().getRecordFactoryManager().newInstance(iRecordType);
-            ORecordInternal.fill(record, iRecordId, iRecordVersion, iContent, true);
-            db.save(record);
+                  final ORecord record = Orient.instance().getRecordFactoryManager().newInstance(iRecordType);
+                  ORecordInternal.fill(record, iRecordId, iRecordVersion, iContent, true);
+                  db.save(record);
 
-            final OPhysicalPosition ppos = new OPhysicalPosition(iRecordType);
-            ppos.clusterPosition = record.getIdentity().getClusterPosition();
-            ppos.recordVersion = record.getVersion();
-            return new OStorageOperationResult<OPhysicalPosition>(ppos);
-          }
-        });
+                  final OPhysicalPosition ppos = new OPhysicalPosition(iRecordType);
+                  ppos.clusterPosition = record.getIdentity().getClusterPosition();
+                  ppos.recordVersion = record.getVersion();
+                  return new OStorageOperationResult<OPhysicalPosition>(ppos);
+                }
+              });
 
-        // UPDATE RID WITH NEW POSITION
-        iRecordId.clusterPosition = localResult.getResult().clusterPosition;
+          // UPDATE RID WITH NEW POSITION
+          iRecordId.clusterPosition = localResult.getResult().clusterPosition;
 
-        if (!nodes.isEmpty()) {
-          if (executionModeSynch) {
+          if (!nodes.isEmpty()) {
+            Boolean executionModeSynch = dbCfg.isExecutionModeSynchronous(clusterName);
+            if (executionModeSynch == null)
+              executionModeSynch = iMode == 0;
 
-            // SYNCHRONOUS CALL: REPLICATE IT
-            final Object masterResult = dManager.sendRequest(getName(), Collections.singleton(clusterName), nodes,
-                new OCreateRecordTask(iRecordId, iContent, iRecordVersion, iRecordType), EXECUTION_MODE.RESPONSE, 1);
+            if (executionModeSynch) {
 
-            if (masterResult != null)
+              // SYNCHRONOUS CALL: REPLICATE IT
+              final Object masterResult = dManager.sendRequest(getName(), Collections.singleton(clusterName), nodes,
+                  new OCreateRecordTask(iRecordId, iContent, iRecordVersion, iRecordType), EXECUTION_MODE.RESPONSE, 1);
 
-            {
-              if (masterResult instanceof ONeedRetryException)
-                throw (ONeedRetryException) masterResult;
-              else if (masterResult instanceof Exception)
-                throw OException.wrapException(new ODistributedException("Error on execution distributed CREATE_RECORD"),
-                    (Exception) masterResult);
+              if (masterResult != null) {
+                if (masterResult instanceof ONeedRetryException)
+                  throw (ONeedRetryException) masterResult;
+                else if (masterResult instanceof Exception)
+                  throw OException.wrapException(new ODistributedException("Error on execution distributed CREATE_RECORD"),
+                      (Exception) masterResult);
 
-              // COPY THE CLUSTER POS -> RID
-              final OPlaceholder masterPlaceholder = (OPlaceholder) masterResult;
-              iRecordId.copyFrom(masterPlaceholder.getIdentity());
+                // COPY THE CLUSTER POS -> RID
+                final OPlaceholder masterPlaceholder = (OPlaceholder) masterResult;
+                iRecordId.copyFrom(masterPlaceholder.getIdentity());
 
-              return new OStorageOperationResult<OPhysicalPosition>(
-                  new OPhysicalPosition(masterPlaceholder.getIdentity().getClusterPosition(), masterPlaceholder.getVersion()));
+                return new OStorageOperationResult<OPhysicalPosition>(
+                    new OPhysicalPosition(masterPlaceholder.getIdentity().getClusterPosition(), masterPlaceholder.getVersion()));
+              }
+
+            } else {
+
+              // ASYNCHRONOUSLY REPLICATE IT TO ALL THE OTHER NODES
+              asynchronousExecution(new OAsynchDistributedOperation(getName(), Collections.singleton(clusterName), nodes,
+                  new OCreateRecordTask(iRecordId, iContent, iRecordVersion, iRecordType), 1));
             }
-
-          } else {
-
-            // ASYNCHRONOUSLY REPLICATE IT TO ALL THE OTHER NODES
-            asynchronousExecution(new OAsynchDistributedOperation(getName(), Collections.singleton(clusterName), nodes,
-                new OCreateRecordTask(iRecordId, iContent, iRecordVersion, iRecordType), 1));
           }
+        } finally {
+          clusterLocks[clusterId % clusterLocks.length].unlock();
         }
-
       } finally {
-        sequentialRIDLock.unlock();
+        sequentialRIDLock.writeLock().unlock();
       }
 
       return localResult;
 
-    } catch (
-
-    ONeedRetryException e)
-
-    {
+    } catch (ONeedRetryException e) {
       // PASS THROUGH
       throw e;
-    } catch (
-
-    Exception e)
-
-    {
+    } catch (Exception e) {
       handleDistributedException("Cannot route CREATE_RECORD operation for %s to the distributed node", e, iRecordId);
       // UNREACHABLE
       return null;
@@ -737,7 +745,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       final List<String> nodes = dbCfg.getServers(clusterName, null);
 
       if (nodes.isEmpty()) {
-
         // DON'T REPLICATE OR DISTRIBUTE
         return (OStorageOperationResult<Integer>) ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
           @Override
@@ -747,72 +754,82 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         });
       }
 
-      Boolean executionModeSynch = dbCfg.isExecutionModeSynchronous(clusterName);
-      if (executionModeSynch == null)
-        executionModeSynch = iMode == 0;
+      nodes.remove(localNodeName);
 
-      if (executionModeSynch) {
-        // SYNCHRONOUS: LOAD PREVIOUS CONTENT TO BE USED IN CASE OF UNDO
-        final OStorageOperationResult<ORawBuffer> previousContent = readRecord(iRecordId, null, false, null);
-        if (previousContent == null)
-          throw new ORecordNotFoundException("Record with rid " + iRecordId + " was not found in database");
+      // FILTER ONLY AVAILABLE NODES
+      dManager.getAvailableNodes(nodes, getName());
 
-        // REPLICATE IT
-        final Object result = dManager.sendRequest(
-            getName(), Collections.singleton(clusterName), nodes, new OUpdateRecordTask(iRecordId,
-                previousContent.getResult().getBuffer(), previousContent.getResult().version, iContent, iVersion, iRecordType),
-            EXECUTION_MODE.RESPONSE, 0);
-
-        if (result instanceof ONeedRetryException)
-          throw (ONeedRetryException) result;
-        else if (result instanceof Exception)
-          throw OException.wrapException(new ODistributedException("Error on execution distributed UPDATE_RECORD"),
-              (Exception) result);
-
-        // UPDATE LOCALLY
-        return new OStorageOperationResult<Integer>((Integer) result);
-      }
-
-      // ASYNCHRONOUS CALL: EXECUTE LOCALLY AND THEN DISTRIBUTE
       final OStorageOperationResult<Integer> localResult;
 
-      localResult = (OStorageOperationResult<Integer>) ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
+      sequentialRIDLock.writeLock().lock();
+      try {
+        clusterLocks[iRecordId.clusterId % clusterLocks.length].lock();
+        try {
 
-        @Override
-        public Object call() throws Exception {
-          // USE THE DATABASE TO CALL HOOKS
-          final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+          localResult = (OStorageOperationResult<Integer>) ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
 
-          final ORecord record = Orient.instance().getRecordFactoryManager().newInstance(iRecordType);
-          ORecordInternal.fill(record, iRecordId, iVersion, iContent, true);
-          db.save(record);
+            @Override
+            public Object call() throws Exception {
+              // USE THE DATABASE TO CALL HOOKS
+              final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
 
-          return new OStorageOperationResult<Integer>(record.getVersion());
-        }
-      });
+              final ORecord record = Orient.instance().getRecordFactoryManager().newInstance(iRecordType);
+              ORecordInternal.fill(record, iRecordId, iVersion, iContent, true);
+              db.save(record);
 
-      nodes.remove(localNodeName);
-      if (!nodes.isEmpty()) {
+              return new OStorageOperationResult<Integer>(record.getVersion());
+            }
+          });
 
-        // LOAD PREVIOUS CONTENT TO BE USED IN CASE OF UNDO
-        final OStorageOperationResult<ORawBuffer> previousContent = readRecord(iRecordId, null, false, null);
+          if (!nodes.isEmpty()) {
+            Boolean executionModeSynch = dbCfg.isExecutionModeSynchronous(clusterName);
+            if (executionModeSynch == null)
+              executionModeSynch = iMode == 0;
 
-        asynchronousExecution(
-            new OAsynchDistributedOperation(
+            if (executionModeSynch) {
+              // SYNCHRONOUS: LOAD PREVIOUS CONTENT TO BE USED IN CASE OF UNDO
+              final OStorageOperationResult<ORawBuffer> previousContent = readRecord(iRecordId, null, false, null);
+              if (previousContent == null)
+                throw new ORecordNotFoundException("Record with rid " + iRecordId + " was not found in database");
+
+              // REPLICATE IT
+              final Object result = dManager.sendRequest(getName(), Collections.singleton(clusterName), nodes,
+                  new OUpdateRecordTask(iRecordId, previousContent.getResult().getBuffer(), previousContent.getResult().version,
+                      iContent, iVersion, iRecordType),
+                  EXECUTION_MODE.RESPONSE, 0);
+
+              if (result instanceof ONeedRetryException)
+                throw (ONeedRetryException) result;
+              else if (result instanceof Exception)
+                throw OException.wrapException(new ODistributedException("Error on execution distributed UPDATE_RECORD"),
+                    (Exception) result);
+
+              // UPDATE LOCALLY
+              return new OStorageOperationResult<Integer>((Integer) result);
+            }
+
+            // ASYNCHRONOUS CALL: EXECUTE LOCALLY AND THEN DISTRIBUTE
+            // LOAD PREVIOUS CONTENT TO BE USED IN CASE OF UNDO
+            final OStorageOperationResult<ORawBuffer> previousContent = readRecord(iRecordId, null, false, null);
+
+            asynchronousExecution(new OAsynchDistributedOperation(
                 getName(), Collections.singleton(clusterName), nodes, new OUpdateRecordTask(iRecordId,
                     previousContent.getResult().getBuffer(), previousContent.getResult().version, iContent, iVersion, iRecordType),
-            0));
+                0));
+          }
+        } finally {
+          clusterLocks[iRecordId.clusterId % clusterLocks.length].unlock();
+        }
+      } finally {
+        sequentialRIDLock.writeLock().unlock();
       }
 
       return localResult;
 
-    } catch (
-
-    ONeedRetryException e) {
+    } catch (ONeedRetryException e) {
       // PASS THROUGH
       throw e;
     } catch (Exception e) {
-
       handleDistributedException("Cannot route UPDATE_RECORD operation for %s to the distributed node", e, iRecordId);
       // UNREACHABLE
       return null;
@@ -852,52 +869,67 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         });
       }
 
-      Boolean executionModeSynch = dbCfg.isExecutionModeSynchronous(clusterName);
-      if (executionModeSynch == null)
-        executionModeSynch = iMode == 0;
+      nodes.remove(localNodeName);
 
-      if (executionModeSynch) {
-        // REPLICATE IT
-        final Object result = dManager.sendRequest(getName(), Collections.singleton(clusterName), nodes,
-            new ODeleteRecordTask(iRecordId, iVersion), EXECUTION_MODE.RESPONSE, 0);
+      // FILTER ONLY AVAILABLE NODES
+      dManager.getAvailableNodes(nodes, getName());
 
-        if (result instanceof ONeedRetryException)
-          throw (ONeedRetryException) result;
-        else if (result instanceof Exception)
-          throw OException.wrapException(new ODistributedException("Error on execution distributed DELETE_RECORD"),
-              (Exception) result);
-
-        return new OStorageOperationResult<Boolean>(true);
-      }
-
-      // ASYNCHRONOUS CALL: EXECUTE LOCALLY AND THEN DISTRIBUTE
       final OStorageOperationResult<Boolean> localResult;
 
-      localResult = (OStorageOperationResult<Boolean>) ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
+      sequentialRIDLock.writeLock().lock();
+      try {
+        clusterLocks[iRecordId.clusterId % clusterLocks.length].lock();
+        try {
 
-        @Override
-        public Object call() throws Exception {
-          // USE THE DATABASE TO CALL HOOKS
-          final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
-          try {
-            db.delete(iRecordId, iVersion);
-            return new OStorageOperationResult<Boolean>(true);
-          } catch (ORecordNotFoundException e) {
-            return new OStorageOperationResult<Boolean>(false);
+          localResult = (OStorageOperationResult<Boolean>) ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
+
+            @Override
+            public Object call() throws Exception {
+              // USE THE DATABASE TO CALL HOOKS
+              final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+              try {
+                db.delete(iRecordId, iVersion);
+                return new OStorageOperationResult<Boolean>(true);
+              } catch (ORecordNotFoundException e) {
+                return new OStorageOperationResult<Boolean>(false);
+              }
+            }
+          });
+
+          if (!nodes.isEmpty()) {
+            Boolean executionModeSynch = dbCfg.isExecutionModeSynchronous(clusterName);
+            if (executionModeSynch == null)
+              executionModeSynch = iMode == 0;
+
+            if (executionModeSynch) {
+              // REPLICATE IT
+              final Object result = dManager.sendRequest(getName(), Collections.singleton(clusterName), nodes,
+                  new ODeleteRecordTask(iRecordId, iVersion), EXECUTION_MODE.RESPONSE, 0);
+
+              if (result instanceof ONeedRetryException)
+                throw (ONeedRetryException) result;
+              else if (result instanceof Exception)
+                throw OException.wrapException(new ODistributedException("Error on execution distributed DELETE_RECORD"),
+                    (Exception) result);
+
+              return new OStorageOperationResult<Boolean>(true);
+            }
+
+            // ASYNCHRONOUS CALL: EXECUTE LOCALLY AND THEN DISTRIBUTE
+            if (!nodes.isEmpty())
+              asynchronousExecution(new OAsynchDistributedOperation(getName(), Collections.singleton(clusterName), nodes,
+                  new ODeleteRecordTask(iRecordId, iVersion), 0));
           }
+        } finally {
+          clusterLocks[iRecordId.clusterId % clusterLocks.length].unlock();
         }
-      });
-
-      nodes.remove(localNodeName);
-      if (!nodes.isEmpty())
-        asynchronousExecution(new OAsynchDistributedOperation(getName(), Collections.singleton(clusterName), nodes,
-            new ODeleteRecordTask(iRecordId, iVersion), 0));
+      } finally {
+        sequentialRIDLock.writeLock().unlock();
+      }
 
       return localResult;
 
-    } catch (
-
-    ONeedRetryException e) {
+    } catch (ONeedRetryException e) {
       // PASS THROUGH
       throw e;
     } catch (Exception e) {
@@ -906,7 +938,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       // UNREACHABLE
       return null;
     }
-
   }
 
   @Override
@@ -1123,7 +1154,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       final boolean exclusiveLock = iTx.hasRecordCreation();
 
       if (exclusiveLock)
-        sequentialRIDLock.lock();
+        sequentialRIDLock.writeLock().lock();
 
       try {
         ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
@@ -1252,7 +1283,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       } finally {
         if (exclusiveLock)
-          sequentialRIDLock.unlock();
+          sequentialRIDLock.writeLock().unlock();
       }
 
     } catch (OValidationException e) {

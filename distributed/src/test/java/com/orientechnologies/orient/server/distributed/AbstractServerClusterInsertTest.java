@@ -55,8 +55,8 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
 
   protected class BaseWriter implements Callable<Void> {
     protected final String databaseUrl;
-    protected int          serverId;
-    protected int          threadId;
+    protected final int    serverId;
+    protected final int    threadId;
 
     protected BaseWriter(final int iServerId, final int iThreadId, final String db) {
       serverId = iServerId;
@@ -320,6 +320,8 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
       }
     }
 
+    Thread.sleep(2000);
+
     checkInsertedEntries();
     checkIndexedEntries();
   }
@@ -442,14 +444,10 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
       if (server.isActive()) {
         database = poolFactory.get(getDatabaseURL(server), "admin", "admin").acquire();
         try {
-          // OClass cls = database.getMetadata().getSchema().getClass("Person");
-          // for (int id : cls.getPolymorphicClusterIds()) {
-          // System.out.println("CLUSTER " + id + " total=" + database.countClusterElements(id));
-          // }
-          //
           final int total = (int) database.countClass("Person");
 
-          Assert.assertEquals(expected, total);
+          Assert.assertEquals("Server " + server.getServerId() + " count is not what was expected", expected, total);
+
         } finally {
           database.close();
         }
@@ -469,6 +467,8 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
       final String name = database.getURL();
 
       System.out.println("\nReader " + name + " sql count: " + result.get(0) + " counting class: " + database.countClass("Person"));
+
+    } catch (Exception e) {
 
     } finally {
       database.close();

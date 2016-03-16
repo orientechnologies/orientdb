@@ -587,8 +587,9 @@ public enum OGlobalConfiguration {
       "Dumps the full stack trace of the exception sent to the client", Boolean.class, Boolean.FALSE, true),
 
   // DISTRIBUTED
-      DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT("distributed.crudTaskTimeout", "Maximum timeout (in ms) to wait for CRUD remote tasks.",
-          Long.class, 3000l, true),
+
+  DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT("distributed.crudTaskTimeout", "Maximum timeout (in ms) to wait for CRUD remote tasks.",
+      Long.class, 3000l, true),
 
   DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT("distributed.commandTaskTimeout",
       "Maximum timeout (in ms) to wait for Command remote tasks.", Long.class, 10000l, true),
@@ -604,9 +605,6 @@ public enum OGlobalConfiguration {
 
   DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION("distributed.deployDbTaskCompression",
       "Compression level (between 0 and 9) to use in backup for database deployment.", Integer.class, 7, true),
-
-  DISTRIBUTED_QUEUE_TIMEOUT("distributed.queueTimeout", "Maximum timeout (in ms) to wait for the response in replication.",
-      Long.class, 5000l, true),
 
   DISTRIBUTED_ASYNCH_QUEUE_SIZE("distributed.asynchQueueSize",
       "Queue size to handle distributed asynchronous operations. The bigger is the queue, the more operation are buffered, but also more memory it's consumed. 0 = dynamic allocation, which means up to 2^31-1 entries.",
@@ -637,7 +635,7 @@ public enum OGlobalConfiguration {
    * @Since 2.2.0
    */
   @OApi(maturity = OApi.MATURITY.NEW) DISTRIBUTED_DB_WORKERTHREADS("distributed.dbWorkerThreads",
-      "Number of parallel worker threads per database that process distributed messages", Integer.class, 1),
+      "Number of parallel worker threads per database that process distributed messages", Integer.class, 8),
 
   /**
    * @Since 2.1.3
@@ -667,14 +665,17 @@ public enum OGlobalConfiguration {
       "Delay (in ms) between attempts on executing a distributed transaction, which had failed because of locked records. (0=no delay)",
       Integer.class, 100, true),
 
+  DB_DOCUMENT_SERIALIZER("db.document.serializer", "The default record serializer used by the document database.", String.class,
+      ORecordSerializerBinary.NAME),
+
+  @Deprecated DISTRIBUTED_QUEUE_TIMEOUT("distributed.queueTimeout",
+      "Maximum timeout (in ms) to wait for the response in replication.", Long.class, 500000l, true),
+
   @Deprecated DB_MAKE_FULL_CHECKPOINT_ON_INDEX_CHANGE("db.makeFullCheckpointOnIndexChange",
       "When index metadata is changed, a full checkpoint is performed.", Boolean.class, true, true),
 
   @Deprecated DB_MAKE_FULL_CHECKPOINT_ON_SCHEMA_CHANGE("db.makeFullCheckpointOnSchemaChange",
       "When index schema is changed, a full checkpoint is performed.", Boolean.class, true, true),
-
-  DB_DOCUMENT_SERIALIZER("db.document.serializer", "The default record serializer used by the document database.", String.class,
-      ORecordSerializerBinary.NAME),
 
   @Deprecated CLIENT_SESSION_TOKEN_BASED("client.session.tokenBased", "Request a token based session to the server.", Boolean.class,
       true),

@@ -34,8 +34,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIR
 
 import java.io.*;
 import java.util.UUID;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -84,7 +82,7 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
           ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT, "deploying database %s...",
               databaseName);
 
-          final AtomicReference<OLogSequenceNumber> endLSN = new AtomicReference<OLogSequenceNumber>();
+          OLogSequenceNumber endLSN = null;
 
           File backupFile = ((ODistributedStorage) database.getStorage()).getLastValidBackup();
 
@@ -110,19 +108,15 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
             if (completedFile.exists())
               completedFile.delete();
 
+            endLSN = ((OAbstractPaginatedStorage) database.getStorage().getUnderlying()).getLSN();
+
             new Thread(new Runnable() {
               @Override
               public void run() {
                 Thread.currentThread().setName("OrientDB SyncDatabase node=" + iManager.getLocalNodeName() + " db=" + databaseName);
 
                 try {
-                  database.backup(fileOutputStream, null, new Callable<Object>() {
-                    @Override
-                    public Object call() throws Exception {
-                      endLSN.set(((OAbstractPaginatedStorage) database.getStorage().getUnderlying()).getLSN());
-                      return null;
-                    }
-                  }, new OCommandOutputListener() {
+                  database.backup(fileOutputStream, null, null, new OCommandOutputListener() {
                     @Override
                     public void onMessage(String iText) {
                       if (iText.startsWith("\n"))
@@ -160,8 +154,8 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
                 "reusing last backup of database '%s' in directory: %s...", databaseName, backupFile.getAbsolutePath());
           }
 
-          final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(requestId, backupFile, 0, CHUNK_MAX_SIZE,
-              endLSN.get(), false);
+          final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(requestId, backupFile, 0, CHUNK_MAX_SIZE, endLSN,
+              false);
 
           ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
               "- transferring chunk #%d offset=%d size=%s...", 1, 0, OFileUtils.getSizeAsNumber(chunk.buffer.length));

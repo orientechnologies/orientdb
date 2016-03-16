@@ -285,6 +285,11 @@ public class OIndexRecorder implements OIndex<OIdentifiable>, OIndexInternal<OId
   }
 
   @Override
+  public boolean isUnique() {
+    return delegate.isUnique();
+  }
+
+  @Override
   public int compareTo(OIndex<OIdentifiable> o) {
     throw new UnsupportedOperationException("Not allowed operation");
   }

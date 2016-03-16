@@ -17,7 +17,7 @@ package com.orientechnologies.orient.server.distributed;
 
 import org.junit.Test;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
 /**
  * Distributed TX test against "plocal" protocol + shutdown and restart of a node.
@@ -37,6 +37,7 @@ public class HATest extends AbstractServerClusterTxTest {
   protected void onAfterExecution() throws Exception {
     banner("SIMULATE SOFT SHUTDOWN OF SERVER " + (SERVERS - 1));
     serverInstance.get(SERVERS - 1).shutdownServer();
+    poolFactory.reset();
 
     Thread.sleep(1000);
 
@@ -47,17 +48,16 @@ public class HATest extends AbstractServerClusterTxTest {
     executeMultipleTest();
 
     banner("RESTARTING SERVER " + (SERVERS - 1) + "...");
+
     serverInstance.get(SERVERS - 1).startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
+    if (serverInstance.get(SERVERS - 1).server.getPluginByClass(OHazelcastPlugin.class) != null)
+      serverInstance.get(SERVERS - 1).server.getPluginByClass(OHazelcastPlugin.class).waitUntilOnline();
 
     Thread.sleep(1000);
 
     banner("RESTARTING TESTS WITH SERVER " + (SERVERS - 1) + " UP...");
 
-    // TODO: WHY REOPENING DATABASE LET TEST TO PASS?
-    for (int i = 0; i < SERVERS; ++i) {
-      final ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(serverInstance.get(i))).open("admin", "admin");
-      db.close();
-    }
+    count = 10;
 
     executeMultipleTest();
   }

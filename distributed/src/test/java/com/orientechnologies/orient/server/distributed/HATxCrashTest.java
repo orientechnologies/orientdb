@@ -76,6 +76,7 @@ public class HATxCrashTest extends AbstractServerClusterTxTest {
                 Assert.assertTrue("Insert was too fast", inserting);
                 banner("SIMULATE FAILURE ON SERVER " + (SERVERS - 1));
                 serverInstance.get(SERVERS - 1).crashServer();
+                poolFactory.reset();
                 lastServerOn = false;
 
                 executeWhen(new Callable<Boolean>() {

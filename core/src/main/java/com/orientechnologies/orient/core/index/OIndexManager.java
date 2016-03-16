@@ -19,15 +19,15 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.Collection;
-import java.util.Set;
-
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.OApi;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
+
+import java.util.Collection;
+import java.util.Set;
 
 /**
  * Manager of indexes.
@@ -252,6 +252,11 @@ public interface OIndexManager {
    *          Collection of indexes where to add all the indexes
    */
   void getClassIndexes(String className, Collection<OIndex<?>> indexes);
+
+  /**
+   * Returns the unique index for a class, if any.
+   */
+  OIndexUnique getClassUniqueIndex(String className);
 
   /**
    * Searches for index for a specified class with specified name.

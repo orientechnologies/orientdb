@@ -19,12 +19,17 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Set;
 
 /**
  * Distributed create record task used for synchronization.
@@ -35,7 +40,8 @@ import java.io.ObjectOutput;
 public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedTask {
   protected ORecordId rid;
   protected int       version;
-  protected boolean   inTx = false;
+  protected int       partitionKey = -1;
+  protected boolean   inTx         = false;
 
   public OAbstractRecordReplicatedTask() {
   }
@@ -43,13 +49,25 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
   public OAbstractRecordReplicatedTask(final ORecordId iRid, final int iVersion) {
     this.rid = iRid;
     this.version = iVersion;
+
+    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    if (db != null) {
+      final OClass clazz = db.getMetadata().getSchema().getClassByClusterId(rid.clusterId);
+      final Set<OIndex<?>> indexes = clazz.getIndexes();
+      if (indexes != null && !indexes.isEmpty()) {
+        for (OIndex idx : indexes)
+          if (idx.isUnique())
+            // UNIQUE INDEX: RETURN THE HASH OF THE NAME TO USE THE SAME PARTITION ID AVOIDING CONCURRENCY ON INDEX UPDATES
+            partitionKey = idx.getName().hashCode();
+      }
+    }
   }
 
   public abstract ORecord getRecord();
 
   @Override
   public int getPartitionKey() {
-    return rid.clusterId;
+    return partitionKey > -1 ? partitionKey : rid.clusterId;
   }
 
   @Override
@@ -79,6 +97,7 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
   public void writeExternal(final ObjectOutput out) throws IOException {
     out.writeUTF(rid.toString());
     out.writeInt(version);
+    out.writeInt(partitionKey);
     out.writeBoolean(inTx);
   }
 
@@ -86,6 +105,7 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
     rid = new ORecordId(in.readUTF());
     version = in.readInt();
+    partitionKey = in.readInt();
     inTx = in.readBoolean();
   }
 

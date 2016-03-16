@@ -52,7 +52,7 @@ public abstract class OAbstractRemoteTask implements ORemoteTask {
 
   @Override
   public int getPartitionKey() {
-    return 0;
+    return -1;
   }
 
   @Override

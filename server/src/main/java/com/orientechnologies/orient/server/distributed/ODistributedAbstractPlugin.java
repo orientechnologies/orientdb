@@ -249,7 +249,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
       Integer currVersion = (Integer) cfg.field("version");
       if (currVersion == null)
-        currVersion = 0;
+        currVersion = 1;
 
       final boolean modified = currVersion >= oldVersion;
 
@@ -268,7 +268,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       final String cfgOutput = ODistributedOutput.formatClusterTable(new ODistributedConfiguration(cfg),
           getAvailableNodes(iDatabaseName));
 
-      ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE,
+      ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
           "New distributed configuration for database: %s (version=%d)%s\n", iDatabaseName, cfg.field("version"), cfgOutput);
 
       if (iSaveToDisk) {
@@ -348,7 +348,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       f.read(buffer);
 
       final ODocument doc = (ODocument) new ODocument().fromJSON(new String(buffer), "noMap");
-      doc.field("version", 0);
+      doc.field("version", 1);
       updateCachedDatabaseConfiguration(iDatabaseName, doc, false);
       return doc;
 

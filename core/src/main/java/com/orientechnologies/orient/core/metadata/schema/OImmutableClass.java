@@ -19,6 +19,9 @@
   */
 package com.orientechnologies.orient.core.metadata.schema;
 
+import java.io.IOException;
+import java.util.*;
+
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -32,17 +35,6 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.schedule.OScheduler;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
@@ -71,20 +63,20 @@ public class OImmutableClass implements OClass {
   private final Map<String, String>       customFields;
   private final String                    description;
 
-  private final OImmutableSchema      schema;
+  private final OImmutableSchema          schema;
   // do not do it volatile it is already SAFE TO USE IT in MT mode.
-  private final List<OImmutableClass> superClasses;
+  private final List<OImmutableClass>     superClasses;
   // do not do it volatile it is already SAFE TO USE IT in MT mode.
-  private Collection<OImmutableClass> subclasses;
-  private boolean                     restricted;
-  private boolean                     isVertexType;
-  private boolean                     isEdgeType;
-  private boolean                     triggered;
-  private boolean                     function;
-  private boolean                     scheduler;
-  private boolean                     ouser;
-  private boolean                     orole;
-  private OIndex<?>                   autoShardingIndex;
+  private Collection<OImmutableClass>     subclasses;
+  private boolean                         restricted;
+  private boolean                         isVertexType;
+  private boolean                         isEdgeType;
+  private boolean                         triggered;
+  private boolean                         function;
+  private boolean                         scheduler;
+  private boolean                         ouser;
+  private boolean                         orole;
+  private OIndex<?>                       autoShardingIndex;
 
   public OImmutableClass(final OClass oClass, final OImmutableSchema schema) {
     isAbstract = oClass.isAbstract();
@@ -652,7 +644,7 @@ public class OImmutableClass implements OClass {
 
   @Override
   public OIndex<?> getClassIndex(String iName) {
-    return getDatabase().getMetadata().getIndexManager().getClassIndex(this.name, name);
+    return getDatabase().getMetadata().getIndexManager().getClassIndex(this.name, iName);
   }
 
   @Override

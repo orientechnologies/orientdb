@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.server.hazelcast;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -55,30 +56,53 @@ public class ODefaultClusterOwnershipRebalanceStrategy implements OClusterOwners
     if (iClass.isAbstract())
       return false;
 
+    final Set<String> clustersOfClassToReassign = new HashSet<String>();
+
     final int[] clusterIds = iClass.getClusterIds();
     final Set<String> clusterNames = new HashSet<String>(clusterIds.length);
-    for (int clusterId : clusterIds)
-      clusterNames.add(iDatabase.getClusterNameById(clusterId));
+    for (int clusterId : clusterIds) {
+      final String clusterName = iDatabase.getClusterNameById(clusterId);
+      clusterNames.add(clusterName);
+      if (clustersToReassign.remove(clusterName))
+        // MOVE THE CLUSTER TO THE REASSIGNMENT FOR THIS CLASS
+        clustersOfClassToReassign.add(clusterName);
+    }
 
     final Map<String, String> clusterToAssignOwnership = new HashMap<String, String>();
 
     // RE-BALANCE THE CLUSTER BASED ON AN AVERAGE OF NUMBER OF NODES
     int targetClustersPerNode = clusterNames.size() / availableNodes.size();
-    if (targetClustersPerNode == 0)
-      targetClustersPerNode = 1;
+    if (targetClustersPerNode == 0 || clusterNames.size() % availableNodes.size() > 0)
+      targetClustersPerNode += 1;
 
+    // ORDER OWNERSHIP BY SIZE
+    final List<OPair<String, List<String>>> nodeOwners = new ArrayList<OPair<String, List<String>>>(availableNodes.size());
     for (String server : availableNodes) {
       final List<String> ownedClusters = cfg.getOwnedClusters(clusterNames, server);
+      nodeOwners.add(new OPair<String, List<String>>(server, ownedClusters));
+    }
+
+    Collections.sort(nodeOwners, new Comparator<OPair<String, List<String>>>() {
+      @Override
+      public int compare(OPair<String, List<String>> o1, OPair<String, List<String>> o2) {
+        return o2.getValue().size() - o1.getValue().size();
+      }
+    });
+
+    for (OPair<String, List<String>> owner : nodeOwners) {
+      final String server = owner.getKey();
+      final List<String> ownedClusters = owner.getValue();
+
       if (ownedClusters.size() > targetClustersPerNode) {
         // REMOVE CLUSTERS
         while (ownedClusters.size() > targetClustersPerNode) {
-          clustersToReassign.add(ownedClusters.remove(ownedClusters.size() - 1));
+          clustersOfClassToReassign.add(ownedClusters.remove(ownedClusters.size() - 1));
         }
       } else if (ownedClusters.size() < targetClustersPerNode) {
         // ADD CLUSTERS
-        while (ownedClusters.size() < targetClustersPerNode && !clustersToReassign.isEmpty()) {
+        while (ownedClusters.size() < targetClustersPerNode && !clustersOfClassToReassign.isEmpty()) {
           // POP THE FIRST ITEM
-          final Iterator<String> it = clustersToReassign.iterator();
+          final Iterator<String> it = clustersOfClassToReassign.iterator();
           final String cluster = it.next();
           it.remove();
 
@@ -98,6 +122,9 @@ public class ODefaultClusterOwnershipRebalanceStrategy implements OClusterOwners
       assignClusterOwnerswhip(iDatabase, cfg, iClass, cluster, node);
     }
 
+    // MOVE THE UNASSIGNED CLUSTERS TO THE ORIGINAL SET TO BE REALLOCATED FROM THE EXTERNAL
+    clustersToReassign.addAll(clustersOfClassToReassign);
+
     final Collection<String> allClusterNames = iDatabase.getClusterNames();
 
     // CHECK OWNER AFTER RE-BALANCE AND CREATE NEW CLUSTERS IF NEEDED
@@ -106,7 +133,7 @@ public class ODefaultClusterOwnershipRebalanceStrategy implements OClusterOwners
       if (ownedClusters.isEmpty()) {
         // CREATE A NEW CLUSTER WHERE LOCAL NODE IS THE MASTER
         String newClusterName;
-        for (int i = 0; ; ++i) {
+        for (int i = 0;; ++i) {
           newClusterName = iClass.getName().toLowerCase() + "_" + i;
           if (!allClusterNames.contains(newClusterName))
             break;
@@ -145,8 +172,8 @@ public class ODefaultClusterOwnershipRebalanceStrategy implements OClusterOwners
     return cfgChanged;
   }
 
-  private void assignClusterOwnerswhip(ODatabaseInternal iDatabase, ODistributedConfiguration cfg, OClass iClass, String cluster,
-      String node) {
+  private void assignClusterOwnerswhip(final ODatabaseInternal iDatabase, final ODistributedConfiguration cfg, final OClass iClass,
+      final String cluster, final String node) {
     ODistributedServerLog.info(this, node, null, ODistributedServerLog.DIRECTION.NONE,
         "Class '%s': change mastership of cluster '%s' (id=%d) to node '%s'", iClass, cluster,
         iDatabase.getClusterIdByName(cluster), node);

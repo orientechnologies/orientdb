@@ -19,24 +19,16 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import java.util.*;
+
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerRID;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Abstract Index implementation that allows only one value for a key.
@@ -276,6 +268,11 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
     } finally {
       releaseSharedLock();
     }
+  }
+
+  @Override
+  public boolean isUnique() {
+    return true;
   }
 
   @Override

@@ -19,12 +19,6 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.util.OMultiKey;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
@@ -49,6 +43,12 @@ import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 /**
  * Abstract class to manage indexes.
  *
@@ -56,8 +56,8 @@ import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
  */
 @SuppressWarnings({ "unchecked", "serial" })
 public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass implements OIndexManager, OCloseable {
-  public static final String CONFIG_INDEXES  = "indexes";
-  public static final String DICTIONARY_NAME = "dictionary";
+  public static final String                                  CONFIG_INDEXES     = "indexes";
+  public static final String                                  DICTIONARY_NAME    = "dictionary";
 
   // values of this Map should be IMMUTABLE !! for thread safety reasons.
   protected final Map<String, Map<OMultiKey, Set<OIndex<?>>>> classPropertyIndex = new ConcurrentHashMap<String, Map<OMultiKey, Set<OIndex<?>>>>();
@@ -65,7 +65,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
   protected String                                            defaultClusterName = OMetadataDefault.CLUSTER_INDEX_NAME;
   protected String                                            manualClusterName  = OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME;
 
-  protected ReadWriteLock lock = new ReentrantReadWriteLock();
+  protected ReadWriteLock                                     lock               = new ReentrantReadWriteLock();
 
   public OIndexManagerAbstract(final ODatabaseDocument iDatabase) {
     super(new ODocument().setTrackingChanges(false));
@@ -328,6 +328,20 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     for (final Set<OIndex<?>> propertyIndexes : propertyIndex.values())
       for (final OIndex<?> index : propertyIndexes)
         indexes.add(preProcessBeforeReturn(index));
+  }
+
+  @Override
+  public OIndexUnique getClassUniqueIndex(final String className) {
+    final Locale locale = getServerLocale();
+    final Map<OMultiKey, Set<OIndex<?>>> propertyIndex = classPropertyIndex.get(className.toLowerCase(locale));
+
+    if (propertyIndex != null)
+      for (final Set<OIndex<?>> propertyIndexes : propertyIndex.values())
+        for (final OIndex<?> index : propertyIndexes)
+          if (index instanceof OIndexUnique)
+            return (OIndexUnique) index;
+
+    return null;
   }
 
   public OIndex<?> getClassIndex(String className, String indexName) {
