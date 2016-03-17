@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.record.impl;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -646,6 +647,7 @@ public class ODocumentValidationTest {
       clazz.createProperty("linkList", OType.LINKLIST).setLinkedClass(clazz1);
       clazz.createProperty("linkSet", OType.LINKSET).setLinkedClass(clazz1);
       clazz.createProperty("linkMap", OType.LINKMAP).setLinkedClass(clazz1);
+      clazz.createProperty("linkBag", OType.LINKBAG).setLinkedClass(clazz1);
       ODocument d = new ODocument(clazz);
       d.field("link", new ODocument(clazz1));
       d.field("embedded", new ODocument(clazz1));
@@ -673,6 +675,9 @@ public class ODocumentValidationTest {
 
       checkField(d, "linkList", Arrays.asList(new ODocument(clazz)));
       checkField(d, "linkSet", new HashSet<ODocument>(Arrays.asList(new ODocument(clazz))));
+      ORidBag bag = new ORidBag();
+      bag.add(new ODocument(clazz));
+      checkField(d, "linkBag", bag);
       Map<String, ODocument> map2 = new HashMap<String, ODocument>();
       map2.put("a", new ODocument(clazz));
       checkField(d, "linkMap", map2);
