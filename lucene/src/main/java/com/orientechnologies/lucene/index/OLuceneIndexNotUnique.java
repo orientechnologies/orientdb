@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.index.OIndexMultiValues;
 import com.orientechnologies.orient.core.index.OIndexNotUnique;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.apache.lucene.search.IndexSearcher;
 
 import java.io.IOException;
@@ -60,7 +59,7 @@ public class OLuceneIndexNotUnique extends OIndexNotUnique implements OLuceneInd
     if (modificationLock != null)
       modificationLock.requestModificationLock();
     try {
-      acquireExclusiveLock();
+      acquireSharedLock();
       try {
         checkForKeyType(key);
         Set<OIdentifiable> values = new HashSet<OIdentifiable>();
@@ -69,7 +68,7 @@ public class OLuceneIndexNotUnique extends OIndexNotUnique implements OLuceneInd
         return this;
 
       } finally {
-        releaseExclusiveLock();
+        releaseSharedLock();
       }
     } finally {
       if (modificationLock != null)
