@@ -40,7 +40,7 @@ import java.util.concurrent.Future;
  * - 5th operation: deleting the last 10 added vertices
  * - 3rd incremental backup
  * - restore of the primary db backup on the secondary db
- * - comparing primary db and secondary db checking they are equal
+ * - comparing primary db and secondary db checking if they are equal
  *
  */
 public class IncrementalBackupTest extends TestCase {
