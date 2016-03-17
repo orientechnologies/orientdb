@@ -109,7 +109,7 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstrac
       if (value.equalsIgnoreCase("null")) {
         value = null;
       }
-      if (isQuoted(value)) {
+      if (value != null && isQuoted(value)) {
         value = removeQuotes(value);
       }
 

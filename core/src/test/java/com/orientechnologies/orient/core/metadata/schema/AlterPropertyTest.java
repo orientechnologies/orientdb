@@ -1,10 +1,12 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
+import static org.junit.Assert.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.fail;
 
 import com.orientechnologies.orient.core.exception.OSchemaException;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -84,5 +86,26 @@ public class AlterPropertyTest {
     assertNull(prop);
   }
 
+  @Test
+  public void testRemoveLinkedClass() {
+    OSchema schema = db.getMetadata().getSchema();
+    OClass classA = schema.createClass("TestRemoveLinkedClass");
+    OClass classLinked = schema.createClass("LinkedClass");
+    OProperty prop = classA.createProperty("propertyLink", OType.LINK, classLinked);
+    assertNotNull(prop.getLinkedClass());
+    prop.setLinkedClass(null);
+    assertNull(prop.getLinkedClass());
+  }
+
+  @Test
+  public void testRemoveLinkedClassSQL() {
+    OSchema schema = db.getMetadata().getSchema();
+    OClass classA = schema.createClass("TestRemoveLinkedClass");
+    OClass classLinked = schema.createClass("LinkedClass");
+    OProperty prop = classA.createProperty("propertyLink", OType.LINK, classLinked);
+    assertNotNull(prop.getLinkedClass());
+    db.command(new OCommandSQL("alter property TestRemoveLinkedClass.propertyLink linkedclass null")).execute();
+    assertNull(prop.getLinkedClass());
+  }
 
 }
