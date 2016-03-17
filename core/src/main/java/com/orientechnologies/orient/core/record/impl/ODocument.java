@@ -54,7 +54,6 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordListener;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
-import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
@@ -263,26 +262,26 @@ public class ODocument extends ORecordAbstract
         if (!(fieldValue instanceof List))
           throw new OValidationException("The field '" + p.getFullName()
               + "' has been declared as LINKLIST but an incompatible type is used. Value: " + fieldValue);
-        validateLinkCollection(p, (Collection<Object>) fieldValue);
+        validateLinkCollection(p, (Collection<Object>) fieldValue, entry);
         break;
       case LINKSET:
         if (!(fieldValue instanceof Set))
           throw new OValidationException("The field '" + p.getFullName()
               + "' has been declared as LINKSET but an incompatible type is used. Value: " + fieldValue);
-        validateLinkCollection(p, (Collection<Object>) fieldValue);
+        validateLinkCollection(p, (Collection<Object>) fieldValue, entry);
         break;
       case LINKMAP:
         if (!(fieldValue instanceof Map))
           throw new OValidationException("The field '" + p.getFullName()
               + "' has been declared as LINKMAP but an incompatible type is used. Value: " + fieldValue);
-        validateLinkCollection(p, ((Map<?, Object>) fieldValue).values());
+        validateLinkCollection(p, ((Map<?, Object>) fieldValue).values(), entry);
         break;
 
       case LINKBAG:
         if (!(fieldValue instanceof ORidBag))
           throw new OValidationException("The field '" + p.getFullName()
               + "' has been declared as LINKBAG but an incompatible type is used. Value: " + fieldValue);
-        validateLinkCollection(p, (Iterable<Object>) fieldValue);
+        validateLinkCollection(p, (Iterable<Object>) fieldValue, entry);
         break;
       case EMBEDDED:
         validateEmbedded(p, fieldValue);
@@ -392,18 +391,27 @@ public class ODocument extends ORecordAbstract
     }
   }
 
-  protected static void validateLinkCollection(final OProperty property, Iterable<Object> values) {
+  protected static void validateLinkCollection(final OProperty property, Iterable<Object> values, ODocumentEntry value) {
     if (property.getLinkedClass() != null) {
-      boolean autoconvert = false;
-      if (values instanceof ORecordLazyMultiValue) {
-        autoconvert = ((ORecordLazyMultiValue) values).isAutoConvertToRecord();
-        ((ORecordLazyMultiValue) values).setAutoConvertToRecord(false);
+      if (value.timeLine != null) {
+        List<OMultiValueChangeEvent<Object, Object>> event = value.timeLine.getMultiValueChangeEvents();
+        for (OMultiValueChangeEvent object : event) {
+          if (object.getChangeType() == OMultiValueChangeEvent.OChangeType.ADD
+              || object.getChangeType() == OMultiValueChangeEvent.OChangeType.UPDATE && object.getValue() != null)
+          validateLink(property, object.getValue(), OSecurityShared.ALLOW_FIELDS.contains(property.getName()));
+        }
+      } else {
+        boolean autoconvert = false;
+        if (values instanceof ORecordLazyMultiValue) {
+          autoconvert = ((ORecordLazyMultiValue) values).isAutoConvertToRecord();
+          ((ORecordLazyMultiValue) values).setAutoConvertToRecord(false);
+        }
+        for (Object object : values) {
+          validateLink(property, object, OSecurityShared.ALLOW_FIELDS.contains(property.getName()));
+        }
+        if (values instanceof ORecordLazyMultiValue)
+          ((ORecordLazyMultiValue) values).setAutoConvertToRecord(autoconvert);
       }
-      for (Object object : values) {
-        validateLink(property, object, OSecurityShared.ALLOW_FIELDS.contains(property.getName()));
-      }
-      if (values instanceof ORecordLazyMultiValue)
-        ((ORecordLazyMultiValue) values).setAutoConvertToRecord(autoconvert);
     }
   }
 
