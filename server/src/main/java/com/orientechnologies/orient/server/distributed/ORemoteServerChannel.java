@@ -61,7 +61,7 @@ public class ORemoteServerChannel {
     this.userName = user;
     this.userPassword = passwd;
 
-    final int sepPos = iURL.indexOf(":");
+    final int sepPos = iURL.lastIndexOf(":");
     remoteHost = iURL.substring(0, sepPos);
     remotePort = Integer.parseInt(iURL.substring(sepPos + 1));
 

@@ -32,9 +32,7 @@ import com.orientechnologies.orient.enterprise.channel.OSocketFactory;
 import java.io.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.SocketException;
+import java.net.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -64,7 +62,15 @@ public abstract class OChannelBinaryClientAbstract extends OChannelBinary {
       socket.setSendBufferSize(socketBufferSize);
       socket.setReceiveBufferSize(socketBufferSize);
       try {
-        socket.connect(new InetSocketAddress(remoteHost, remotePort), socketTimeout);
+        if (remoteHost.contains(":")) {
+          // IPV6
+          final InetAddress[] addresses = Inet6Address.getAllByName(remoteHost);
+          socket.connect(new InetSocketAddress(addresses[0], remotePort), socketTimeout);
+
+        } else {
+          // IPV4
+          socket.connect(new InetSocketAddress(remoteHost, remotePort), socketTimeout);
+        }
         setReadResponseTimeout();
         connected();
       } catch (java.net.SocketTimeoutException e) {
