@@ -5,8 +5,8 @@ import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.util.wrappers.batch.cache.ObjectIDVertexCache;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.util.concurrent.*;
 import java.util.concurrent.locks.Condition;
@@ -17,9 +17,10 @@ import java.util.concurrent.locks.ReentrantLock;
  * @author Sergey Sitnikov
  * @since 16/03/16
  */
-@Test public class NestedTxTest {
+public class NestedTxTest {
 
-  @Test public void testNestedTx() throws InterruptedException, ExecutionException {
+  @Test
+  public void testNestedTx() throws InterruptedException, ExecutionException {
     final ExecutorService executorService = Executors.newSingleThreadExecutor();
     final OrientGraphFactory factory = new OrientGraphFactory("memory:NestedTxTest.testNestedTx", "admin", "admin")
         .setupPool(2, 10);
@@ -36,7 +37,7 @@ import java.util.concurrent.locks.ReentrantLock;
         graph.addVertex("class:A");
       }
     }).get();
-    Assert.assertTrue(!vertexExists(graph, "A"), "vertex A should not exist before top-level commit");
+    Assert.assertTrue("vertex A should not exist before top-level commit", !vertexExists(graph, "A"));
 
     executorService.submit(new Runnable() {
       @Override public void run() {
@@ -45,7 +46,7 @@ import java.util.concurrent.locks.ReentrantLock;
         graph.addVertex("class:B");
       }
     }).get();
-    Assert.assertTrue(!vertexExists(graph, "B"), "vertex B should not exist before top-level commit");
+    Assert.assertTrue("vertex B should not exist before top-level commit", !vertexExists(graph, "B"));
 
     executorService.submit(new Runnable() {
       @Override public void run() {
@@ -53,8 +54,8 @@ import java.util.concurrent.locks.ReentrantLock;
         graph.commit();
       }
     }).get();
-    Assert.assertTrue(!vertexExists(graph, "A"), "vertex A should not exist before top-level commit");
-    Assert.assertTrue(!vertexExists(graph, "B"), "vertex B should not exist before top-level commit");
+    Assert.assertTrue("vertex A should not exist before top-level commit", !vertexExists(graph, "A"));
+    Assert.assertTrue("vertex B should not exist before top-level commit", !vertexExists(graph, "B"));
 
     executorService.submit(new Runnable() {
       @Override public void run() {
@@ -62,8 +63,8 @@ import java.util.concurrent.locks.ReentrantLock;
         graph.commit();
       }
     }).get();
-    Assert.assertTrue(vertexExists(graph, "A"), "vertex A should exist after top-level commit");
-    Assert.assertTrue(vertexExists(graph, "B"), "vertex B should exist after top-level commit");
+    Assert.assertTrue("vertex A should exist after top-level commit", vertexExists(graph, "A"));
+    Assert.assertTrue("vertex B should exist after top-level commit", vertexExists(graph, "B"));
   }
 
   private static boolean vertexExists(OrientGraph graph, String class_) {

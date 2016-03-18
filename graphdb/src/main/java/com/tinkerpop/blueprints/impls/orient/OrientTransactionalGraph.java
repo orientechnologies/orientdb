@@ -177,7 +177,8 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
       ensureTransaction();
   }
 
-  @Override public void begin() {
+  @Override
+  public void begin() {
     makeActive();
 
     database.begin();
