@@ -255,7 +255,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     final ORecord txRecord = getRecord(rid);
     if (txRecord == OTransactionRealAbstract.DELETED_RECORD)
       // DELETED IN TX
-      throw new ORecordNotFoundException("Record with id " + rid + " was not found in database.");
+      throw new ORecordNotFoundException(rid);
 
     if (txRecord != null) {
       if (txRecord.getVersion() > recordVersion)
@@ -265,7 +265,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     }
 
     if (rid.isTemporary())
-      throw new ORecordNotFoundException("Record with id " + rid + " was not found in database.");
+      throw new ORecordNotFoundException(rid);
 
     // DELEGATE TO THE STORAGE, NO TOMBSTONES SUPPORT IN TX MODE
     final ORecord record = database.executeReadRecord((ORecordId) rid, null, recordVersion, fetchPlan, ignoreCache, !ignoreCache,
@@ -358,7 +358,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       return null;
 
     boolean originalSaved = false;
-    ODirtyManager dirtyManager = ORecordInternal.getDirtyManager(iRecord);
+    final ODirtyManager dirtyManager = ORecordInternal.getDirtyManager(iRecord);
     do {
       Set<ORecord> newRecord = dirtyManager.getNewRecords();
       Set<ORecord> updatedRecord = dirtyManager.getUpdateRecords();

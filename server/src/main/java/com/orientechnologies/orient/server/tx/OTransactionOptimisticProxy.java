@@ -25,11 +25,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.exception.OSerializationException;
-import com.orientechnologies.orient.core.exception.OTransactionAbortedException;
-import com.orientechnologies.orient.core.exception.OTransactionException;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OCompositeKey;
@@ -49,13 +45,7 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProt
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.IdentityHashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 
 public class OTransactionOptimisticProxy extends OTransactionOptimistic {
@@ -179,7 +169,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 
           final ORecord loadedRecord = record.getIdentity().copy().getRecord();
           if (loadedRecord == null)
-            throw new ORecordNotFoundException(record.getIdentity().toString());
+            throw new ORecordNotFoundException(record.getIdentity());
 
           if (ORecordInternal.getRecordType(loadedRecord) == ODocument.RECORD_TYPE
               && ORecordInternal.getRecordType(loadedRecord) == ORecordInternal.getRecordType(record)) {

@@ -624,7 +624,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
     if (deletedRecords.get(iRecordId) != null)
       // DELETED
-      throw new ORecordNotFoundException("Record " + iRecordId + " was not found");
+      throw new ORecordNotFoundException(iRecordId);
 
     try {
       final String clusterName = getClusterNameByRID(iRecordId);
@@ -672,7 +672,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
     if (deletedRecords.get(rid) != null)
       // DELETED
-      throw new ORecordNotFoundException("Record " + rid + " was not found");
+      throw new ORecordNotFoundException(rid);
 
     try {
       final String clusterName = getClusterNameByRID(rid);
@@ -727,7 +727,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
     if (deletedRecords.get(iRecordId) != null)
       // DELETED
-      throw new ORecordNotFoundException("Record " + iRecordId + " was not found");
+      throw new ORecordNotFoundException(iRecordId);
 
     if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.RUNNING_DISTRIBUTED) {
       // ALREADY DISTRIBUTED
@@ -791,7 +791,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
               // SYNCHRONOUS: LOAD PREVIOUS CONTENT TO BE USED IN CASE OF UNDO
               final OStorageOperationResult<ORawBuffer> previousContent = readRecord(iRecordId, null, false, null);
               if (previousContent == null)
-                throw new ORecordNotFoundException("Record with rid " + iRecordId + " was not found in database");
+                throw new ORecordNotFoundException(iRecordId);
 
               // REPLICATE IT
               final Object result = dManager.sendRequest(getName(), Collections.singleton(clusterName),
@@ -1098,7 +1098,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
           if (rid.isNew()) {
             // CREATE THE TASK PASSING THE RECORD OR A COPY BASED ON EXECUTION TYPE: IF ASYNCHRONOUS THE COPY PREVENT TO EARLY
             // ASSIGN CLUSTER IDS
-            final ORecord rec = executionModeSynch ? record : record.copy();
+            final ORecord rec = record;
             task = new OCreateRecordTask(rec);
             if (record instanceof ODocument)
               ((ODocument) record).validate();
@@ -1116,9 +1116,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
           if (previousContent.getResult() == null)
             // DELETED
-            throw new ORecordNotFoundException("Cannot update record '" + rid + "' because has been deleted");
+            throw new ORecordNotFoundException(rid, "Cannot update record " + rid + " because has been deleted");
 
-          final int v = executionModeSynch ? record.getVersion() : record.getVersion();
+          final int v = record.getVersion();
 
           task = new OUpdateRecordTask(rid, previousContent.getResult().getBuffer(), previousContent.getResult().version,
               record.toStream(), v, ORecordInternal.getRecordType(record));
@@ -1127,7 +1127,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         }
 
         case ORecordOperation.DELETED: {
-          final int v = executionModeSynch ? record.getVersion() : record.getVersion();
+          final int v = record.getVersion();
           task = new ODeleteRecordTask(rid, v);
           break;
         }

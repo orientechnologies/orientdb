@@ -15,6 +15,14 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISK_CACHE_PAGE_SIZE;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -46,14 +54,6 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISK_CACHE_PAGE_SIZE;
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
@@ -671,14 +671,14 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
           OClusterPositionMapBucket.PositionEntry positionEntry = clusterPositionMap.get(clusterPosition, 1);
 
           if (positionEntry == null)
-            throw new ORecordNotFoundException(
+            throw new ORecordNotFoundException(new ORecordId(id, clusterPosition),
                 "Record for cluster with id " + id + " and position " + clusterPosition + " is absent.");
 
           int recordPosition = positionEntry.getRecordPosition();
           long pageIndex = positionEntry.getPageIndex();
 
           if (getFilledUpTo(atomicOperation, fileId) <= pageIndex)
-            throw new ORecordNotFoundException(
+            throw new ORecordNotFoundException(new ORecordId(id, clusterPosition),
                 "Record for cluster with id " + id + " and position " + clusterPosition + " is absent.");
 
           int loadedRecordVersion = 0;
@@ -687,7 +687,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
           try {
             final OClusterPage localPage = new OClusterPage(cacheEntry, false, getChanges(atomicOperation, cacheEntry));
             if (localPage.isDeleted(recordPosition))
-              throw new ORecordNotFoundException(
+              throw new ORecordNotFoundException(new ORecordId(id, clusterPosition),
                   "Record for cluster with id " + id + " and position " + clusterPosition + " is absent.");
 
             loadedRecordVersion = localPage.getRecordVersion(recordPosition);

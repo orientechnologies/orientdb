@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.record.OPlaceholder;
@@ -532,10 +533,18 @@ public class ODistributedResponseManager {
     final int bestResponsesGroupIndex = getBestResponsesGroup();
     final List<ODistributedResponse> bestResponsesGroup = responseGroups.get(bestResponsesGroupIndex);
 
+    if (bestResponsesGroup.get(0) instanceof RuntimeException)
+      // PROPAGATE RUNTIME EXCEPTION
+      throw (RuntimeException) bestResponsesGroup.get(0);
+    else if (bestResponsesGroup.get(0) instanceof Throwable)
+      // WRAP EXCEPTION
+      throw OException.wrapException(new ODistributedException("Error on executing distributed request"),
+          (Throwable) bestResponsesGroup.get(0));
+
     final int maxCoherentResponses = bestResponsesGroup.size();
     final int conflicts = getExpectedResponses() - (maxCoherentResponses + discardedResponses);
 
-    if (!(bestResponsesGroup.get(0) instanceof Throwable) && isMinimumQuorumReached()) {
+    if (isMinimumQuorumReached()) {
       // QUORUM SATISFIED
       if (responseGroups.size() == 1)
         // NO CONFLICT

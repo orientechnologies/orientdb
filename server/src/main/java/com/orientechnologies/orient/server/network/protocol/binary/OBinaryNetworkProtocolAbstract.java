@@ -19,6 +19,10 @@
  */
 package com.orientechnologies.orient.server.network.protocol.binary;
 
+import java.io.IOException;
+import java.net.Socket;
+import java.util.logging.Level;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -38,7 +42,6 @@ import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -56,13 +59,8 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProt
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryServer;
 import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.OTokenHandler;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
-
-import java.io.IOException;
-import java.net.Socket;
-import java.util.logging.Level;
 
 /**
  * Abstract base class for binary network implementations.
@@ -369,7 +367,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       }
 
       if (currentRecord == null)
-        throw new ORecordNotFoundException(rid.toString());
+        throw new ORecordNotFoundException(rid);
 
       ((ODocument) currentRecord).merge((ODocument) newRecord, false, false);
 
@@ -403,8 +401,8 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     if (ODatabaseRecordThreadLocal.INSTANCE.getIfDefined() != null)
       dbSerializerName = ((ODatabaseDocumentInternal) iRecord.getDatabase()).getSerializer().toString();
     String name = getRecordSerializerName();
-    if (ORecordInternal.getRecordType(iRecord) == ODocument.RECORD_TYPE && (dbSerializerName == null || !dbSerializerName
-        .equals(name))) {
+    if (ORecordInternal.getRecordType(iRecord) == ODocument.RECORD_TYPE
+        && (dbSerializerName == null || !dbSerializerName.equals(name))) {
       ((ODocument) iRecord).deserializeFields();
       ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(name);
       stream = ser.toStream(iRecord, false);

@@ -37,24 +37,10 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.OEmptyMapEntryIterator;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
-import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
-import com.orientechnologies.orient.core.metadata.schema.OImmutableProperty;
-import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
-import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.metadata.security.OIdentity;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordAbstract;
-import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.ORecordListener;
-import com.orientechnologies.orient.core.record.ORecordSchemaAware;
-import com.orientechnologies.orient.core.record.ORecordVersionHelper;
-import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
+import com.orientechnologies.orient.core.record.*;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
@@ -76,12 +62,12 @@ import java.util.Map.Entry;
 public class ODocument extends ORecordAbstract
     implements Iterable<Entry<String, Object>>, ORecordSchemaAware, ODetachable, Externalizable {
 
-  public static final byte        RECORD_TYPE      = 'd';
-  protected static final String[] EMPTY_STRINGS    = new String[] {};
-  private static final long       serialVersionUID = 1L;
-  protected int                   _fieldSize;
+  public static final byte                                RECORD_TYPE             = 'd';
+  protected static final String[]                         EMPTY_STRINGS           = new String[] {};
+  private static final long                               serialVersionUID        = 1L;
+  protected int                                           _fieldSize;
 
-  protected Map<String, ODocumentEntry> _fields;
+  protected Map<String, ODocumentEntry>                   _fields;
 
   protected boolean                                       _trackingChanges        = true;
   protected boolean                                       _ordered                = true;
@@ -605,11 +591,11 @@ public class ODocument extends ORecordAbstract
     try {
       result = getDatabase().load(this, iFetchPlan, iIgnoreCache);
     } catch (Exception e) {
-      throw OException.wrapException(new ORecordNotFoundException("The record with id '" + getIdentity() + "' was not found"), e);
+      throw OException.wrapException(new ORecordNotFoundException(getIdentity()), e);
     }
 
     if (result == null)
-      throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' was not found");
+      throw new ORecordNotFoundException(getIdentity());
 
     return (ODocument) result;
   }
@@ -620,11 +606,11 @@ public class ODocument extends ORecordAbstract
     try {
       result = getDatabase().load(this, iFetchPlan, iIgnoreCache, loadTombstone, OStorage.LOCKING_STRATEGY.DEFAULT);
     } catch (Exception e) {
-      throw OException.wrapException(new ORecordNotFoundException("The record with id '" + getIdentity() + "' was not found"), e);
+      throw OException.wrapException(new ORecordNotFoundException(getIdentity()), e);
     }
 
     if (result == null)
-      throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' was not found");
+      throw new ORecordNotFoundException(getIdentity());
 
     return (ODocument) result;
   }
@@ -1054,7 +1040,8 @@ public class ODocument extends ORecordAbstract
           return this;
         }
       } else
-        throw new IllegalArgumentException("Property '" + iFieldName.substring(0, lastSep)+ "' is null, is possible to set a value with dotted notation only on not null property");
+        throw new IllegalArgumentException("Property '" + iFieldName.substring(0, lastSep)
+            + "' is null, is possible to set a value with dotted notation only on not null property");
       return null;
     }
 
@@ -1298,7 +1285,7 @@ public class ODocument extends ORecordAbstract
     final Iterator<Entry<String, ODocumentEntry>> iterator = _fields.entrySet().iterator();
     return new Iterator<Entry<String, Object>>() {
       private Entry<String, ODocumentEntry> current;
-      private boolean read = true;
+      private boolean                       read = true;
 
       public boolean hasNext() {
         while (iterator.hasNext()) {

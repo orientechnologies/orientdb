@@ -20,6 +20,14 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.util.*;
+import java.util.logging.Level;
+
+import org.apache.commons.configuration.Configuration;
+
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
@@ -49,42 +57,17 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.index.OPropertyIndexDefinition;
 import com.orientechnologies.orient.core.intent.OIntent;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageRecoverListener;
-import com.tinkerpop.blueprints.Direction;
-import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.Element;
-import com.tinkerpop.blueprints.GraphQuery;
-import com.tinkerpop.blueprints.Index;
-import com.tinkerpop.blueprints.Parameter;
-import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.*;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
 import com.tinkerpop.blueprints.util.wrappers.partition.PartitionVertex;
-import org.apache.commons.configuration.Configuration;
-
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Deque;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
-import java.util.logging.Level;
 
 /**
  * A Blueprints implementation of the graph database OrientDB (http://www.orientechnologies.com)
@@ -563,10 +546,9 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
           if (s.startsWith(CLASS_PREFIX))
             // GET THE CLASS NAME
             className = s.substring(CLASS_PREFIX.length());
-          else
-            if (s.startsWith(CLUSTER_PREFIX))
-              // GET THE CLASS NAME
-              clusterName = s.substring(CLUSTER_PREFIX.length());
+          else if (s.startsWith(CLUSTER_PREFIX))
+            // GET THE CLASS NAME
+            clusterName = s.substring(CLUSTER_PREFIX.length());
           else
             id = s;
         }
@@ -665,10 +647,9 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
           if (s.startsWith(CLASS_PREFIX))
             // GET THE CLASS NAME
             className = s.substring(CLASS_PREFIX.length());
-          else
-            if (s.startsWith(CLUSTER_PREFIX))
-              // GET THE CLASS NAME
-              clusterName = s.substring(CLUSTER_PREFIX.length());
+          else if (s.startsWith(CLUSTER_PREFIX))
+            // GET THE CLASS NAME
+            clusterName = s.substring(CLUSTER_PREFIX.length());
         }
       }
     }
@@ -1793,11 +1774,11 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     return iValue;
   }
 
-  void throwRecordNotFoundException(final String message) {
+  void throwRecordNotFoundException(final ORID identity, final String message) {
     if (settings.isStandardExceptions())
       throw new IllegalStateException(message);
     else
-      throw new ORecordNotFoundException(message);
+      throw new ORecordNotFoundException(identity, message);
   }
 
   protected void setCurrentGraphInThreadLocal() {

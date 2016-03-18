@@ -1554,7 +1554,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       record.fromStream(loadedRecord.toStream());
       ORecordInternal.setVersion(record, loadedRecord.getVersion());
     } else if (loadedRecord == null) {
-      throw new ORecordNotFoundException("Record with rid " + record.getIdentity() + " was not found in database");
+      throw new ORecordNotFoundException(record.getIdentity());
     }
 
     return (RET) record;
@@ -1788,7 +1788,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       throw t;
     } catch (Throwable t) {
       if (rid.isTemporary())
-        throw OException.wrapException(new ODatabaseException("Error on retrieving record using temporary RecordId: " + rid), t);
+        throw OException.wrapException(new ODatabaseException("Error on retrieving record using temporary RID: " + rid), t);
       else
         throw OException
             .wrapException(
@@ -2013,12 +2013,12 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
           if (prohibitTombstones) {
             final boolean result = storage.cleanOutRecord(rid, iVersion, iMode.ordinal(), null);
             if (!result && iRequired)
-              throw new ORecordNotFoundException("The record with id " + rid + " was not found");
+              throw new ORecordNotFoundException(rid);
             operationResult = new OStorageOperationResult<Boolean>(result);
           } else {
             final OStorageOperationResult<Boolean> result = storage.deleteRecord(rid, iVersion, iMode.ordinal(), null);
             if (!result.getResult() && iRequired)
-              throw new ORecordNotFoundException("The record with id " + rid + " was not found");
+              throw new ORecordNotFoundException(rid);
             operationResult = new OStorageOperationResult<Boolean>(result.getResult());
           }
 

@@ -19,6 +19,12 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.List;
+
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -35,12 +41,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Distributed updated record task used for synchronization.
  *
@@ -49,15 +49,15 @@ import java.util.List;
  */
 public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
   private static final long serialVersionUID = 1L;
-  public static final int FACTORYID          = 3;
+  public static final int   FACTORYID        = 3;
 
-  protected byte[] previousContent;
-  protected int    previousVersion;
-  protected byte   recordType;
-  protected byte[] content;
+  protected byte[]          previousContent;
+  protected int             previousVersion;
+  protected byte            recordType;
+  protected byte[]          content;
 
   private transient ORecord record;
-  private transient boolean lockRecord = true;
+  private transient boolean lockRecord       = true;
 
   public class VersionPlaceholder {
     protected ORecord record;
@@ -93,8 +93,8 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
   }
 
   @Override
-  public Object execute(long requestId, final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
-      throws Exception {
+  public Object execute(long requestId, final OServer iServer, ODistributedServerManager iManager,
+      final ODatabaseDocumentTx database) throws Exception {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "updating record %s/%s v.%d",
         database.getName(), rid.toString(), version);
 
@@ -108,7 +108,7 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
     try {
       ORecord loadedRecord = rid.getRecord();
       if (loadedRecord == null)
-        throw new ORecordNotFoundException("Record " + rid + " was not found on update");
+        throw new ORecordNotFoundException(rid);
 
       if (loadedRecord instanceof ODocument) {
         // APPLY CHANGES FIELD BY FIELD TO MARK DIRTY FIELDS FOR INDEXES/HOOKS
@@ -147,8 +147,8 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
   }
 
   @Override
-  public List<ORemoteTask> getFixTask(final ODistributedRequest iRequest, ORemoteTask iOriginalTask, final Object iBadResponse, final Object iGoodResponse,
-                                                 String executorNodeName, ODistributedServerManager dManager) {
+  public List<ORemoteTask> getFixTask(final ODistributedRequest iRequest, ORemoteTask iOriginalTask, final Object iBadResponse,
+      final Object iGoodResponse, String executorNodeName, ODistributedServerManager dManager) {
     final int versionCopy = ORecordVersionHelper.setRollbackMode(previousVersion);
 
     final List<ORemoteTask> fixTasks = new ArrayList<ORemoteTask>(1);
@@ -211,6 +211,7 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
   public byte[] getContent() {
     return content;
   }
+
   @Override
   public int getFactoryId() {
     return FACTORYID;

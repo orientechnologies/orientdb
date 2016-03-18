@@ -20,14 +20,6 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Map;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OPair;
@@ -52,6 +44,14 @@ import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.util.ElementHelper;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
+
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Map;
 
 /**
  * Base Graph Element where OrientVertex and OrientEdge classes extends from. Labels are managed as OrientDB classes.
@@ -104,12 +104,12 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     graph.autoStartTransaction();
 
     if (checkDeletedInTx())
-      graph.throwRecordNotFoundException("The graph element with id '" + getIdentity() + "' not found");
+      graph.throwRecordNotFoundException(getIdentity(), "The graph element with id " + getIdentity() + " not found");
 
     try {
       getRecord().load();
     } catch (ORecordNotFoundException e) {
-      graph.throwRecordNotFoundException(e.getMessage());
+      graph.throwRecordNotFoundException(getIdentity(), e.getMessage());
     }
     getRecord().delete();
   }
@@ -159,7 +159,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    */
   public <T extends OrientElement> T setProperties(final Object... fields) {
     if (checkDeletedInTx())
-      graph.throwRecordNotFoundException("The graph element " + getIdentity() + " has been deleted");
+      graph.throwRecordNotFoundException(getIdentity(), "The graph element " + getIdentity() + " has been deleted");
 
     setPropertiesInternal(fields);
     save();
@@ -191,7 +191,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
   @Override
   public void setProperty(final String key, final Object value) {
     if (checkDeletedInTx())
-      graph.throwRecordNotFoundException("The graph element " + getIdentity() + " has been deleted");
+      graph.throwRecordNotFoundException(getIdentity(), "The graph element " + getIdentity() + " has been deleted");
 
     validateProperty(this, key, value);
     final OrientBaseGraph graph = getGraph();
@@ -216,7 +216,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    */
   public void setProperty(final String key, final Object value, final OType iType) {
     if (checkDeletedInTx())
-      graph.throwRecordNotFoundException("The graph element " + getIdentity() + " has been deleted");
+      graph.throwRecordNotFoundException(getIdentity(), "The graph element " + getIdentity() + " has been deleted");
 
     validateProperty(this, key, value);
 

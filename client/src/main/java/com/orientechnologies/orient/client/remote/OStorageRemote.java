@@ -1263,7 +1263,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return result;
   }
 
-  public List<OPair<ORecordOperation, Object>> commit(final OTransaction iTx, Runnable callback) {
+  public List<OPair<ORecordOperation, Object>> commit(final OTransaction iTx, final Runnable callback) {
     networkOperation(new OStorageRemoteOperation<Void>() {
       @Override
       public Void execute(OChannelBinaryAsynchClient network) throws IOException {

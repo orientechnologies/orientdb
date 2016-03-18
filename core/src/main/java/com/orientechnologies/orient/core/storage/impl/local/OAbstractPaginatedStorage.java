@@ -20,17 +20,6 @@
 
 package com.orientechnologies.orient.core.storage.impl.local;
 
-import java.io.*;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
-
 import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
@@ -90,6 +79,17 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTxListener;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
+import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * @author Andrey Lomakin
@@ -1014,7 +1014,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     try {
       cluster = getClusterById(iRid.clusterId);
     } catch (IllegalArgumentException e) {
-      throw OException.wrapException(new ORecordNotFoundException("The record with id '" + iRid + "' was not found"), e);
+      throw OException.wrapException(new ORecordNotFoundException(iRid), e);
     }
 
     return new OStorageOperationResult<ORawBuffer>(readRecord(cluster, iRid));
@@ -2749,7 +2749,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     checkOpeness();
 
     if (!rid.isPersistent())
-      throw new IllegalArgumentException(
+      throw new ORecordNotFoundException(rid,
           "Cannot read record " + rid + " since the position is invalid in database '" + name + '\'');
 
     if (transaction.get() != null) {
@@ -2789,7 +2789,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     checkOpeness();
 
     if (!rid.isPersistent())
-      throw new IllegalArgumentException(
+      throw new ORecordNotFoundException(rid,
           "Cannot read record " + rid + " since the position is invalid in database '" + name + '\'');
 
     if (transaction.get() != null) {
@@ -2844,7 +2844,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     if (transaction.get() != null) {
       for (ORecordId rid : iRids) {
         if (!rid.isPersistent())
-          throw new IllegalArgumentException(
+          throw new ORecordNotFoundException(rid,
               "Cannot read record " + rid + " since the position is invalid in database '" + name + '\'');
 
         records.add(new OPair<ORecordId, ORawBuffer>(rid, doReadRecord(getClusterById(rid.clusterId), rid)));

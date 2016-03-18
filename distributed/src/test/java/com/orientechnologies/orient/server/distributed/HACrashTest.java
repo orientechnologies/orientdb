@@ -17,6 +17,7 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.concurrent.Callable;
@@ -31,6 +32,7 @@ public class HACrashTest extends AbstractServerClusterTxTest {
   volatile int     serverStarted = 0;
   volatile boolean lastServerOn  = false;
 
+  @Ignore
   @Test
   public void test() throws Exception {
     startupNodesInSequence = true;
