@@ -19,10 +19,10 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.orient.core.id.ORID;
+
 import java.util.Collection;
 import java.util.List;
-
-import com.orientechnologies.orient.core.id.ORID;
 
 /**
  * Generic Distributed Database interface.
@@ -32,7 +32,7 @@ import com.orientechnologies.orient.core.id.ORID;
  */
 public interface ODistributedDatabase {
   ODistributedResponse send2Nodes(ODistributedRequest iRequest, Collection<String> iClusterNames, List<String> iNodes,
-      ODistributedRequest.EXECUTION_MODE iExecutionMode, int quorumOffset);
+      ODistributedRequest.EXECUTION_MODE iExecutionMode, Object localResult);
 
   void setOnline();
 

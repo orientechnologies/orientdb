@@ -757,7 +757,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
               .getDatabaseConfiguration(connection.getDatabase().getName());
           if (dbCfg != null) {
             // ENHANCE SERVER CFG WITH DATABASE CFG
-            distributedCfg.field("database", dbCfg);
+            distributedCfg.field("database", dbCfg.serialize(), OType.EMBEDDED);
           }
         }
 

@@ -137,13 +137,13 @@ public interface ODistributedServerManager {
    * @param iTargetNodeNames
    * @param iTask
    * @param iExecutionMode
-   * @param quorumOffset
-   *          is the quorum offset. For example create record already write locally before to distributed, so it's 1.
+   * @param localResult
+   *          It's the result of the request executed locally
    * 
    * @return
    */
   Object sendRequest(String iDatabaseName, Collection<String> iClusterNames, List<String> iTargetNodeNames, ORemoteTask iTask,
-      EXECUTION_MODE iExecutionMode, int quorumOffset);
+      EXECUTION_MODE iExecutionMode, Object localResult);
 
   ODocument getStats();
 

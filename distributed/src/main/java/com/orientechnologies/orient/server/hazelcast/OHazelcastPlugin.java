@@ -43,14 +43,11 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -70,7 +67,6 @@ import java.io.*;
 import java.security.SecureRandom;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -473,9 +469,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
   @Override
   public Object sendRequest(final String iDatabaseName, final Collection<String> iClusterNames, final List<String> iTargetNodes,
-      final ORemoteTask iTask, final EXECUTION_MODE iExecutionMode, final int quorumOffset) {
-
-    // checkForClusterRebalance(iDatabaseName);
+      final ORemoteTask iTask, final EXECUTION_MODE iExecutionMode, final Object localResult) {
 
     final OHazelcastDistributedRequest req = new OHazelcastDistributedRequest(nodeId, iDatabaseName, iTask, iExecutionMode);
 
@@ -498,7 +492,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       throw new ODistributedException("Distributed database '" + iDatabaseName + "' not found on server '" + nodeName + "'");
     }
 
-    final ODistributedResponse response = db.send2Nodes(req, iClusterNames, iTargetNodes, iExecutionMode, quorumOffset);
+    final ODistributedResponse response = db.send2Nodes(req, iClusterNames, iTargetNodes, iExecutionMode, localResult);
     if (response != null)
       return response.getPayload();
 
@@ -619,7 +613,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         throw new ODistributedException("Cannot create a new database with the same name of one available distributed");
 
       final OHazelcastDistributedDatabase distribDatabase = messageService.registerDatabase(iDatabase.getName());
-      distribDatabase.configureDatabase(null).setOnline();
+      distribDatabase.setOnline();
       onOpen(iDatabase);
 
     } finally {
@@ -1261,7 +1255,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           databaseName, entry.getValue());
 
       final Map<String, Object> results = (Map<String, Object>) sendRequest(databaseName, null, targetNodes, deployTask,
-          EXECUTION_MODE.RESPONSE, 0);
+          EXECUTION_MODE.RESPONSE, null);
 
       ODistributedServerLog.info(this, nodeName, entry.getKey(), DIRECTION.IN, "Receiving delta sync for '%s'...", databaseName);
 
@@ -1342,7 +1336,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     final OAbstractReplicatedTask deployTask = new OSyncDatabaseTask();
 
     final Map<String, Object> results = (Map<String, Object>) sendRequest(databaseName, null, selectedNodes, deployTask,
-        EXECUTION_MODE.RESPONSE, 0);
+        EXECUTION_MODE.RESPONSE, null);
 
     ODistributedServerLog.debug(this, nodeName, selectedNodes.toString(), DIRECTION.OUT, "deploy returned: %s", results);
 
@@ -1468,7 +1462,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
               for (int chunkNum = 2; !chunk.last; chunkNum++) {
                 final Object result = sendRequest(databaseName, null, OMultiValue.getSingletonList(iNode),
                     new OCopyDatabaseChunkTask(chunk.filePath, chunkNum, chunk.offset + chunk.buffer.length, false),
-                    EXECUTION_MODE.RESPONSE, 0);
+                    EXECUTION_MODE.RESPONSE, null);
 
                 if (result instanceof Boolean)
                   continue;
@@ -1542,18 +1536,13 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         // GET LAST VERSION IN LOCK
         final ODistributedConfiguration cfg = getDatabaseConfiguration(db.getName());
 
-        distrDatabase.configureDatabase(new Callable<Void>() {
+        final boolean distribCfgDirty = rebalanceClusterOwnership(db, cfg);
+        if (distribCfgDirty) {
+          OLogManager.instance().warn(this, "Distributed configuration modified");
+          updateCachedDatabaseConfiguration(db.getName(), cfg.serialize(), true, true);
+        }
 
-          @Override
-          public Void call() throws Exception {
-            final boolean distribCfgDirty = rebalanceClusterOwnership(db, cfg);
-            if (distribCfgDirty) {
-              OLogManager.instance().warn(this, "Distributed configuration modified");
-              updateCachedDatabaseConfiguration(db.getName(), cfg.serialize(), true, true);
-            }
-            return null;
-          }
-        });
+        distrDatabase.setOnline();
       } finally {
         lock.unlock();
       }
@@ -1810,7 +1799,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           getConfigurationMap().put(CONFIG_DATABASE_PREFIX + databaseName, cfgDoc);
         }
 
-        final OHazelcastDistributedDatabase db = messageService.registerDatabase(databaseName).configureDatabase(null);
+        messageService.registerDatabase(databaseName);
 
         final ODatabaseDocumentTx database = (ODatabaseDocumentTx) serverInstance.openDatabase(databaseName, "internal", "internal",
             null, true);
@@ -1830,9 +1819,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   }
 
   protected void installNewDatabases(final boolean iStartup) {
-    if (activeNodes.size() <= 1)
+    if (activeNodes.size() <= 1) {
       // NO OTHER NODES WHERE ALIGN
       return;
+    }
 
     // LOCKING THIS RESOURCE PREVENT CONCURRENT INSTALL OF THE SAME DB
     for (Entry<String, Object> entry : getConfigurationMap().entrySet()) {
@@ -1911,7 +1901,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       try {
         if (delta) {
 
-          importDelta(db, in);
+          new OServerIncrementalSynchronization().importDelta(serverInstance, db, in);
 
         } else {
 
@@ -1934,179 +1924,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           databaseName);
     }
     return null;
-  }
-
-  /**
-   * Deleted records are written in output stream first, then created/updated records. All records are sorted by record id.
-   * <p>
-   * Each record in output stream is written using following format:
-   * <ol>
-   * <li>Record's cluster id - 4 bytes</li>
-   * <li>Record's cluster position - 8 bytes</li>
-   * <li>Delete flag, 1 if record is deleted - 1 byte</li>
-   * <li>Record version , only if record is not deleted - 4 bytes</li>
-   * <li>Record type, only if record is not deleted - 1 byte</li>
-   * <li>Length of binary presentation of record, only if record is not deleted - 4 bytes</li>
-   * <li>Binary presentation of the record, only if record is not deleted - length of content is provided in above entity</li>
-   * </ol>
-   *
-   * @param in
-   */
-  private void importDelta(final ODatabaseDocumentTx db, final FileInputStream in) throws IOException {
-    try {
-      serverInstance.openDatabase(db);
-
-      OScenarioThreadLocal.executeAsDistributed(new Callable<Object>() {
-        @Override
-        public Object call() throws Exception {
-          db.activateOnCurrentThread();
-
-          long totalRecords = 0;
-          long totalCreated = 0;
-          long totalUpdated = 0;
-          long totalDeleted = 0;
-          long totalHoles = 0;
-
-          ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE,
-              "Started import of delta for database '" + db.getName() + "'");
-
-          long lastLap = System.currentTimeMillis();
-
-          // final GZIPInputStream gzipInput = new GZIPInputStream(in);
-          try {
-
-            final DataInputStream input = new DataInputStream(in);
-            try {
-
-              final long records = input.readLong();
-
-              for (long i = 0; i < records; ++i) {
-                final int clusterId = input.readInt();
-                final long clusterPos = input.readLong();
-                final boolean deleted = input.readBoolean();
-
-                final ORecordId rid = new ORecordId(clusterId, clusterPos);
-
-                totalRecords++;
-
-                final ORecord loadedRecord = rid.getRecord();
-
-                if (deleted) {
-                  ODistributedServerLog.debug(this, nodeName, null, DIRECTION.NONE, "DELTA <- deleting " + rid);
-
-                  if (loadedRecord != null)
-                    // DELETE IT
-                    db.delete(rid);
-
-                  totalDeleted++;
-
-                } else {
-                  final int recordVersion = input.readInt();
-                  final int recordType = input.readByte();
-                  final int recordSize = input.readInt();
-                  final byte[] recordContent = new byte[recordSize];
-                  input.read(recordContent);
-
-                  ORecord newRecord = null;
-
-                  if (loadedRecord == null) {
-                    // CREATE
-                    ODistributedServerLog.debug(this, nodeName, null, DIRECTION.NONE,
-                        "DELTA <- creating rid=%s type=%d size=%d v=%d", rid, recordType, recordSize, recordVersion);
-
-                    do {
-                      newRecord = Orient.instance().getRecordFactoryManager().newInstance((byte) recordType);
-
-                      ORecordInternal.fill(newRecord, new ORecordId(rid.getClusterId(), -1), recordVersion - 1, recordContent,
-                          true);
-
-                      newRecord.save();
-
-                      if (newRecord.getIdentity().getClusterPosition() < clusterPos) {
-                        // DELETE THE RECORD TO CREATE A HOLE
-                        ODistributedServerLog.debug(this, nodeName, null, DIRECTION.NONE, "DELTA <- creating hole rid=%s",
-                            newRecord.getIdentity());
-                        newRecord.delete();
-                        totalHoles++;
-                      }
-
-                    } while (newRecord.getIdentity().getClusterPosition() < clusterPos);
-
-                    totalCreated++;
-
-                  } else {
-                    // UPDATE
-                    ODistributedServerLog.debug(this, nodeName, null, DIRECTION.NONE,
-                        "DELTA <- updating rid=%s type=%d size=%d v=%d", rid, recordType, recordSize, recordVersion);
-
-                    newRecord = Orient.instance().getRecordFactoryManager().newInstance((byte) recordType);
-                    ORecordInternal.fill(newRecord, rid, ORecordVersionHelper.setRollbackMode(recordVersion), recordContent, true);
-
-                    if (loadedRecord instanceof ODocument) {
-                      // APPLY CHANGES FIELD BY FIELD TO MARK DIRTY FIELDS FOR INDEXES/HOOKS
-                      ODocument loadedDocument = (ODocument) loadedRecord;
-                      loadedDocument.merge((ODocument) newRecord, false, false).getVersion();
-                      loadedDocument.setDirty();
-                      newRecord = loadedDocument;
-                    }
-
-                    // SAVE THE UPDATE RECORD
-                    newRecord.save();
-
-                    totalUpdated++;
-                  }
-
-                  if (!newRecord.getIdentity().equals(rid))
-                    throw new ODistributedDatabaseDeltaSyncException(
-                        "Error on synchronization of records, rids are different: saved " + newRecord.getIdentity()
-                            + ", but it should be " + rid);
-                }
-
-                final long now = System.currentTimeMillis();
-                if (now - lastLap > 1000) {
-                  // DUMP STATS EVERY SECOND
-                  ODistributedServerLog.info(this, nodeName, null, DIRECTION.IN,
-                      "- %d total entries: %d created, %d updated, %d deleted, %d holes...", totalRecords, totalCreated,
-                      totalUpdated, totalDeleted, totalHoles);
-                  lastLap = now;
-                }
-              }
-
-              db.getMetadata().reload();
-
-            } finally {
-              input.close();
-            }
-
-          } catch (Exception e) {
-            ODistributedServerLog.error(this, nodeName, null, DIRECTION.IN,
-                "Error on installing database delta '%s' on local server", e, db.getName());
-            throw OException.wrapException(
-                new ODistributedException("Error on installing database delta '" + db.getName() + "' on local server"), e);
-          } finally {
-            // gzipInput.close();
-          }
-
-          ODistributedServerLog.info(this, nodeName, null, DIRECTION.IN,
-              "Installed database delta for '%s'. %d total entries: %d created, %d updated, %d deleted, %d holes", db.getName(),
-              totalRecords, totalCreated, totalUpdated, totalDeleted, totalHoles);
-
-          return null;
-        }
-      });
-
-      db.activateOnCurrentThread();
-
-    } catch (Exception e) {
-      // FORCE FULL DATABASE SYNC
-      ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE,
-          "Error while applying changes of database delta sync on '%s': forcing full database sync...", e, db.getName());
-      throw OException
-          .wrapException(
-              new ODistributedDatabaseDeltaSyncException(
-                  "Error while applying changes of database delta sync on '" + db.getName() + "': forcing full database sync..."),
-              e);
-    }
   }
 
   @Override

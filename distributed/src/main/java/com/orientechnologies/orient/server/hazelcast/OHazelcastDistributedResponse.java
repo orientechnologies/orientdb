@@ -19,13 +19,13 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
+import com.orientechnologies.orient.server.distributed.ODistributedResponse;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.util.Arrays;
-
-import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 
 /**
  * Hazelcast implementation of distributed peer.
@@ -51,11 +51,6 @@ public class OHazelcastDistributedResponse implements ODistributedResponse {
     this.executorNodeName = executorNodeName;
     this.senderNodeName = senderNodeName;
     this.payload = payload;
-  }
-
-  @Override
-  public boolean isExecutedOnLocalNode() {
-    return getExecutorNodeName().equals(getSenderNodeName());
   }
 
   @Override

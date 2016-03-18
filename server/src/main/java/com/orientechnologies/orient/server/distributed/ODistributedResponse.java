@@ -39,6 +39,4 @@ public interface ODistributedResponse extends Externalizable {
   ODistributedResponse setPayload(Object iPayload);
 
   long getRequestId();
-
-  boolean isExecutedOnLocalNode();
 }

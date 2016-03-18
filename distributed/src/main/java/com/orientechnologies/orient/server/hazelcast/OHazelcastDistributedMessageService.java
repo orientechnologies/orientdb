@@ -19,10 +19,6 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
-
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedMessageService;
@@ -30,6 +26,10 @@ import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedResponseManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Hazelcast implementation of distributed peer. There is one instance per database. Each node creates own instance to talk with
@@ -78,8 +78,10 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
       responseThread = null;
     }
 
+    // SHUTDOWN ALL DATABASES
     for (Entry<String, OHazelcastDistributedDatabase> m : databases.entrySet())
       m.getValue().shutdown();
+    databases.clear();
 
     asynchMessageManager.cancel();
     responsesByRequestIds.clear();

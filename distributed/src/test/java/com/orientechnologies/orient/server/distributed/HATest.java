@@ -28,6 +28,7 @@ public class HATest extends AbstractServerClusterTxTest {
   @Test
   public void test() throws Exception {
     useTransactions = false;
+    count = 10;
     init(SERVERS);
     prepare(false);
     execute();
@@ -39,11 +40,9 @@ public class HATest extends AbstractServerClusterTxTest {
     serverInstance.get(SERVERS - 1).shutdownServer();
     poolFactory.reset();
 
-    Thread.sleep(1000);
-
     banner("RESTARTING TESTS WITH SERVER " + (SERVERS - 1) + " DOWN...");
 
-    count = 200;
+    count = 10;
 
     executeMultipleTest();
 
@@ -52,8 +51,6 @@ public class HATest extends AbstractServerClusterTxTest {
     serverInstance.get(SERVERS - 1).startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
     if (serverInstance.get(SERVERS - 1).server.getPluginByClass(OHazelcastPlugin.class) != null)
       serverInstance.get(SERVERS - 1).server.getPluginByClass(OHazelcastPlugin.class).waitUntilOnline();
-
-    Thread.sleep(1000);
 
     banner("RESTARTING TESTS WITH SERVER " + (SERVERS - 1) + " UP...");
 

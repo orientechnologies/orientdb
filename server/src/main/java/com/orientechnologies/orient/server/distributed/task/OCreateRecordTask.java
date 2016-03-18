@@ -192,7 +192,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
                 dManager.getLocalNodeName());
 
             final ORawBuffer remoteReadRecord = (ORawBuffer) dManager.sendRequest(iRequest.getDatabaseName(), null, nodes,
-                new OReadRecordTask(toUpdateRid), ODistributedRequest.EXECUTION_MODE.RESPONSE, 0);
+                new OReadRecordTask(toUpdateRid), ODistributedRequest.EXECUTION_MODE.RESPONSE, null);
 
             if (remoteReadRecord != null) {
               toUpdateRecord = Orient.instance().getRecordFactoryManager().newInstance(recordType);

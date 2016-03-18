@@ -31,12 +31,14 @@ import com.orientechnologies.orient.server.distributed.task.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.*;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Hazelcast implementation of distributed peer. There is one instance per database. Each node creates own instance to talk with
@@ -56,7 +58,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
   protected AtomicBoolean                             status                         = new AtomicBoolean(false);
   protected ConcurrentHashMap<ORID, String>           lockManager                    = new ConcurrentHashMap<ORID, String>();
   protected final List<ODistributedWorker>            workerThreads                  = new ArrayList<ODistributedWorker>();
-  protected volatile CountDownLatch                   queueLatch;
+  protected volatile ReadWriteLock                    processLock                    = new ReentrantReadWriteLock();
 
   public OHazelcastDistributedDatabase(final OHazelcastPlugin manager, final OHazelcastDistributedMessageService msgService,
       final String iDatabaseName) {
@@ -85,70 +87,80 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
    * cluster.
    */
   public void processRequest(final ODistributedRequest request) {
-    final int partitionKey = request.getTask().getPartitionKey();
-
-    if (queueLatch != null) {
-      try {
-        queueLatch.await();
-      } catch (InterruptedException e) {
-      }
-      queueLatch = null;
-    }
+    final ORemoteTask task = request.getTask();
+    final int partitionKey = task.getPartitionKey();
 
     if (partitionKey < 0) {
-      boolean anyQueueWorkerIsWorking = false;
-      // for (ODistributedWorker w : workerThreads) {
-      // if (!w.localQueue.isEmpty()) {
-      // anyQueueWorkerIsWorking = true;
-      // break;
-      // }
-      // }
-
-      if (anyQueueWorkerIsWorking) {
-        // WAIT ALL THE REQUESTS ARE MANAGED
-        ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
-            "Request %s on database %s waiting for all the previous requests to be completed", request, databaseName);
-
-        final CountDownLatch emptyQueues = new CountDownLatch(workerThreads.size());
-
+      processLock.writeLock().lock();
+      try {
+        boolean anyQueueWorkerIsWorking = false;
         for (ODistributedWorker w : workerThreads) {
-          w.processRequest(new OHazelcastDistributedRequest(-1, databaseName, new OSynchronizedTaskWrapper(emptyQueues),
-              ODistributedRequest.EXECUTION_MODE.NO_RESPONSE).setSenderNodeId(request.getSenderNodeId()));
+          if (!w.localQueue.isEmpty()) {
+            anyQueueWorkerIsWorking = true;
+            break;
+          }
         }
 
-        try {
-          // WAIT ALL WORKERS HAVE DONE
-          emptyQueues.await();
+        if (anyQueueWorkerIsWorking) {
+          // WAIT ALL THE REQUESTS ARE MANAGED
+          ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
+              "Request %s on database %s waiting for all the previous requests to be completed", request, databaseName);
 
-          queueLatch = new CountDownLatch(1);
-          final String senderNodeName = manager.getNodeNameById(request.getSenderNodeId());
-          request.setTask(new OSynchronizedTaskWrapper(senderNodeName, queueLatch, request.getTask()));
+          final CountDownLatch emptyQueues = new CountDownLatch(workerThreads.size());
+
+          for (ODistributedWorker w : workerThreads) {
+            w.processRequest(new OHazelcastDistributedRequest(-1, databaseName, new OSynchronizedTaskWrapper(emptyQueues),
+                ODistributedRequest.EXECUTION_MODE.NO_RESPONSE).setSenderNodeId(request.getSenderNodeId()));
+          }
+
+          try {
+            // WAIT ALL WORKERS HAVE DONE
+            emptyQueues.await();
+
+            final CountDownLatch queueLatch = new CountDownLatch(1);
+
+            final String senderNodeName = manager.getNodeNameById(request.getSenderNodeId());
+            request.setTask(new OSynchronizedTaskWrapper(senderNodeName, queueLatch, task));
+            workerThreads.get(0).processRequest(request);
+
+            // WAIT FOR THE ASYNC OPERATION TO FINISH
+            queueLatch.await();
+
+          } catch (InterruptedException e) {
+          }
+        } else {
+          // EMPTY QUEUES: JUST EXECUTE IT
+          ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
+              "Synchronous request %s on database %s dispatched to the worker 0", request, databaseName);
+
           workerThreads.get(0).processRequest(request);
-
-        } catch (InterruptedException e) {
         }
-      } else {
-        // EMPTY QUEUES: JUST EXECUTE IT
-        ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
-            "Synchronous request %s on database %s dispatched to the worker 0", request, databaseName);
 
-        workerThreads.get(0).processRequest(request);
+      } finally {
+        processLock.writeLock().unlock();
       }
 
     } else {
-      final int partition = partitionKey % workerThreads.size();
+      processLock.readLock().lock();
+      try {
 
-      ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
-          "Request %s on database %s dispatched to the worker %d", request, databaseName, partition);
+        final int partition = partitionKey % workerThreads.size();
 
-      final ODistributedWorker worker = workerThreads.get(partition);
-      worker.processRequest(request);
+        ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
+            "Request %s on database %s dispatched to the worker %d", request, databaseName, partition);
+
+        final ODistributedWorker worker = workerThreads.get(partition);
+        worker.processRequest(request);
+
+      } finally {
+        processLock.readLock().unlock();
+      }
     }
   }
 
   @Override
   public ODistributedResponse send2Nodes(final ODistributedRequest iRequest, final Collection<String> iClusterNames,
-      final List<String> iNodes, final ODistributedRequest.EXECUTION_MODE iExecutionMode, final int quorumOffset) {
+      final List<String> iNodes, final ODistributedRequest.EXECUTION_MODE iExecutionMode, final Object localResult) {
     checkForServerOnline(iRequest);
 
     final String databaseName = iRequest.getDatabaseName();
@@ -165,7 +177,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
     final int availableNodes = manager.getAvailableNodes(iNodes, databaseName);
 
-    final int quorum = calculateQuorum(iRequest, iClusterNames, cfg, availableNodes, iExecutionMode, quorumOffset);
+    final int quorum = calculateQuorum(iRequest, iClusterNames, cfg, availableNodes, iExecutionMode);
 
     int expectedSynchronousResponses = availableNodes;
 
@@ -183,6 +195,11 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     final ODistributedResponseManager currentResponseMgr = new ODistributedResponseManager(manager, iRequest, iNodes,
         expectedSynchronousResponses, quorum, waitLocalNode, iRequest.getTask().getSynchronousTimeout(expectedSynchronousResponses),
         iRequest.getTask().getTotalTimeout(availableNodes), groupByResponse);
+
+    if (localResult != null)
+      // COLLECT LOCAL RESULT
+      currentResponseMgr.collectResponse(new OHazelcastDistributedResponse(-1, manager.getLocalNodeName(),
+          manager.getLocalNodeName(), (Serializable) localResult));
 
     Collections.sort(iNodes);
 
@@ -219,19 +236,6 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
           + ") against database '" + databaseName + (iClusterNames != null ? "." + iClusterNames : "") + "' to nodes " + iNodes),
           e);
     }
-  }
-
-  public OHazelcastDistributedDatabase configureDatabase(final Callable<Void> iCallback) {
-    if (iCallback != null)
-      try {
-        iCallback.call();
-      } catch (Exception e) {
-        throw OException.wrapException(new ODistributedException("Database cannot be configured"), e);
-      }
-
-    setOnline();
-
-    return this;
   }
 
   @Override
@@ -352,8 +356,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
   }
 
   protected int calculateQuorum(final ODistributedRequest iRequest, final Collection<String> clusterNames,
-      final ODistributedConfiguration cfg, final int availableNodes, final ODistributedRequest.EXECUTION_MODE iExecutionMode,
-      final int quorumOffset) {
+      final ODistributedConfiguration cfg, final int availableNodes, final ODistributedRequest.EXECUTION_MODE iExecutionMode) {
 
     if (availableNodes == 0 && iExecutionMode == ODistributedRequest.EXECUTION_MODE.RESPONSE)
       throw new ODistributedException("Quorum cannot be reached because there are no nodes available");
@@ -382,7 +385,6 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     final int originalQuorum = quorum;
 
     // CHECK THE QUORUM OFFSET IF ANY
-    quorum -= quorumOffset;
     if (quorum < 0)
       quorum = 0;
 

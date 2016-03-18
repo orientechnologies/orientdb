@@ -52,7 +52,9 @@ public class ODefaultClusterOwnershipRebalanceStrategy implements OClusterOwners
     if (availableNodes.isEmpty())
       return false;
 
-    ((OClassImpl) iClass).setClusterSelectionInternal(new OLocalClusterStrategy(manager, iDatabase.getName(), iClass));
+    if (!(iClass.getClusterSelection() instanceof OLocalClusterStrategy))
+      ((OClassImpl) iClass).setClusterSelectionInternal(new OLocalClusterStrategy(manager, iDatabase.getName(), iClass));
+
     if (iClass.isAbstract())
       return false;
 
@@ -119,7 +121,7 @@ public class ODefaultClusterOwnershipRebalanceStrategy implements OClusterOwners
       final String cluster = entry.getKey();
       final String node = entry.getValue();
 
-      assignClusterOwnerswhip(iDatabase, cfg, iClass, cluster, node);
+      assignClusterOwnership(iDatabase, cfg, iClass, cluster, node);
     }
 
     // MOVE THE UNASSIGNED CLUSTERS TO THE ORIGINAL SET TO BE REALLOCATED FROM THE EXTERNAL
@@ -164,7 +166,7 @@ public class ODefaultClusterOwnershipRebalanceStrategy implements OClusterOwners
             OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED);
         }
 
-        assignClusterOwnerswhip(iDatabase, cfg, iClass, newClusterName, server);
+        assignClusterOwnership(iDatabase, cfg, iClass, newClusterName, server);
         cfgChanged = true;
       }
     }
@@ -172,7 +174,7 @@ public class ODefaultClusterOwnershipRebalanceStrategy implements OClusterOwners
     return cfgChanged;
   }
 
-  private void assignClusterOwnerswhip(final ODatabaseInternal iDatabase, final ODistributedConfiguration cfg, final OClass iClass,
+  private void assignClusterOwnership(final ODatabaseInternal iDatabase, final ODistributedConfiguration cfg, final OClass iClass,
       final String cluster, final String node) {
     ODistributedServerLog.info(this, node, null, ODistributedServerLog.DIRECTION.NONE,
         "Class '%s': change mastership of cluster '%s' (id=%d) to node '%s'", iClass, cluster,

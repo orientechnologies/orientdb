@@ -150,7 +150,7 @@ public class OCommandExecutorSQLSyncCluster extends OCommandExecutorSQLAbstract 
 
     final OSyncClusterTask task = new OSyncClusterTask(clusterName);
     final Map<String, Object> results = (Map<String, Object>) dManager.sendRequest(databaseName, null, nodesWhereClusterIsCfg, task,
-        ODistributedRequest.EXECUTION_MODE.RESPONSE, 0);
+        ODistributedRequest.EXECUTION_MODE.RESPONSE, null);
 
     File tempFile = null;
     FileOutputStream out = null;

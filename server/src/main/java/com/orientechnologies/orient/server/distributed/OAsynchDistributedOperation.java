@@ -36,21 +36,16 @@ public class OAsynchDistributedOperation {
   private final List<String> nodes;
   private final ORemoteTask  task;
   private final OCallable    callback;
-  private final int          quorumOffset;
+  private final Object       localResult;
 
   public OAsynchDistributedOperation(final String iDatabaseName, final Set<String> iClusterNames, final List<String> iNodes,
-      final ORemoteTask iTask, final int iQuorumOffset) {
-    this(iDatabaseName, iClusterNames, iNodes, iTask, null, iQuorumOffset);
-  }
-
-  public OAsynchDistributedOperation(final String iDatabaseName, final Set<String> iClusterNames, final List<String> iNodes,
-      final ORemoteTask iTask, final OCallable iCallback, final int iQuorumOffset) {
+      final ORemoteTask iTask, final OCallable iCallback, final Object iLocalResult) {
     databaseName = iDatabaseName;
     clusterNames = iClusterNames;
     nodes = iNodes;
     task = iTask;
     callback = iCallback;
-    quorumOffset = iQuorumOffset;
+    localResult = iLocalResult;
   }
 
   public Set<String> getClusterNames() {
@@ -73,8 +68,8 @@ public class OAsynchDistributedOperation {
     return callback;
   }
 
-  public int getQuorumOffset() {
-    return quorumOffset;
+  public Object getLocalResult() {
+    return localResult;
   }
 
 }

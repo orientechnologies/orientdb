@@ -276,6 +276,11 @@ public class ODistributedWorker extends Thread {
   }
 
   private void sendResponseBack(final ODistributedRequest iRequest, Serializable responsePayload) {
+    sendResponseBack(this, manager, iRequest, responsePayload);
+  }
+
+  public static void sendResponseBack(final Object iContext, final ODistributedServerManager manager, final ODistributedRequest iRequest,
+      Serializable responsePayload) {
     final String senderNodeName = manager.getNodeNameById(iRequest.getSenderNodeId());
 
     final OHazelcastDistributedResponse response = new OHazelcastDistributedResponse(iRequest.getId(), manager.getLocalNodeName(),
@@ -285,13 +290,13 @@ public class ODistributedWorker extends Thread {
       // GET THE SENDER'S RESPONSE QUEUE
       final ORemoteServerController remoteSenderServer = manager.getRemoteServer(senderNodeName);
 
-      ODistributedServerLog.debug(this, manager.getLocalNodeName(), senderNodeName, ODistributedServerLog.DIRECTION.OUT,
+      ODistributedServerLog.debug(iContext, manager.getLocalNodeName(), senderNodeName, ODistributedServerLog.DIRECTION.OUT,
           "Sending response %s back", response);
 
       remoteSenderServer.sendResponse(response, senderNodeName);
 
     } catch (Exception e) {
-      ODistributedServerLog.debug(this, manager.getLocalNodeName(), senderNodeName, ODistributedServerLog.DIRECTION.OUT,
+      ODistributedServerLog.debug(iContext, manager.getLocalNodeName(), senderNodeName, ODistributedServerLog.DIRECTION.OUT,
           "Error on sending response %s back", response);
     }
   }
@@ -307,7 +312,7 @@ public class ODistributedWorker extends Thread {
               "Node is not online yet (status=%s), blocking the command until it is online (retry=%d, queue=%d)",
               mgr.getNodeStatus(), retry + 1, localQueue.size());
           try {
-            Thread.sleep(3000);
+            Thread.sleep(2000);
           } catch (InterruptedException e) {
           }
         } else

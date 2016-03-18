@@ -53,12 +53,14 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
     final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     if (db != null) {
       final OClass clazz = db.getMetadata().getSchema().getClassByClusterId(rid.clusterId);
-      final Set<OIndex<?>> indexes = clazz.getIndexes();
-      if (indexes != null && !indexes.isEmpty()) {
-        for (OIndex idx : indexes)
-          if (idx.isUnique())
-            // UNIQUE INDEX: RETURN THE HASH OF THE NAME TO USE THE SAME PARTITION ID AVOIDING CONCURRENCY ON INDEX UPDATES
-            partitionKey = idx.getName().hashCode();
+      if (clazz != null) {
+        final Set<OIndex<?>> indexes = clazz.getIndexes();
+        if (indexes != null && !indexes.isEmpty()) {
+          for (OIndex idx : indexes)
+            if (idx.isUnique())
+              // UNIQUE INDEX: RETURN THE HASH OF THE NAME TO USE THE SAME PARTITION ID AVOIDING CONCURRENCY ON INDEX UPDATES
+              partitionKey = idx.getName().hashCode();
+        }
       }
     }
   }

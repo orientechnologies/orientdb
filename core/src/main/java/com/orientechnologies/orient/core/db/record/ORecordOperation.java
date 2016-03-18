@@ -34,17 +34,17 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class ORecordOperation implements OSerializableStream {
+public class ORecordOperation implements OSerializableStream, Comparable {
 
   private static final long serialVersionUID = 1L;
 
-  public static final byte LOADED  = 0;
-  public static final byte UPDATED = 1;
-  public static final byte DELETED = 2;
-  public static final byte CREATED = 3;
+  public static final byte  LOADED           = 0;
+  public static final byte  UPDATED          = 1;
+  public static final byte  DELETED          = 2;
+  public static final byte  CREATED          = 3;
 
-  public byte          type;
-  public OIdentifiable record;
+  public byte               type;
+  public OIdentifiable      record;
 
   public ORecordOperation() {
   }
@@ -156,5 +156,10 @@ public class ORecordOperation implements OSerializableStream {
     else if (iName.startsWith("READ"))
       return ORecordOperation.LOADED;
     return -1;
+  }
+
+  @Override
+  public int compareTo(Object o) {
+    return record.compareTo(((ORecordOperation) o).record);
   }
 }

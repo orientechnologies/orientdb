@@ -17,7 +17,6 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
-import com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -32,8 +31,7 @@ import java.util.concurrent.Callable;
  * Test distributed TX
  */
 public abstract class AbstractServerClusterTxTest extends AbstractServerClusterInsertTest {
-  protected final OPartitionedDatabasePoolFactory poolFactory   = new OPartitionedDatabasePoolFactory();
-  protected int                                   printBlocksOf = 100;
+  protected int printBlocksOf = 100;
 
   protected AbstractServerClusterTxTest() {
     useTransactions = true;

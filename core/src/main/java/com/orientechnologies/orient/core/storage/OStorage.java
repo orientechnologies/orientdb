@@ -20,15 +20,18 @@
 package com.orientechnologies.orient.core.storage;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
 import com.orientechnologies.common.concur.resource.OSharedContainer;
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -98,7 +101,7 @@ public interface OStorage extends OBackupable, OSharedContainer {
   boolean cleanOutRecord(ORecordId recordId, int recordVersion, int iMode, ORecordCallback<Boolean> callback);
 
   // TX OPERATIONS
-  void commit(OTransaction iTx, Runnable callback);
+  List<OPair<ORecordOperation, Object>> commit(OTransaction iTx, Runnable callback);
 
   // TX OPERATIONS
   void rollback(OTransaction iTx);

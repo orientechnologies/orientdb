@@ -417,7 +417,9 @@ public class ODistributedConfiguration {
             // DON'T RETURN <NEW_NODE>
             owner = serverList.get(1);
         }
-      }
+      } else
+        // RETURN THE OWNER OF *
+        return getOwnerOfCluster(ALL_WILDCARD);
 
       return owner;
     }

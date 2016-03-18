@@ -629,7 +629,7 @@ public enum OGlobalConfiguration {
    * @Since 2.2.0
    */
   @OApi(maturity = OApi.MATURITY.NEW) DISTRIBUTED_LOCAL_QUEUESIZE("distributed.localQueueSize",
-      "Size of the intra thread queue for distributed messages", Integer.class, 100),
+      "Size of the intra-thread queue for distributed messages", Integer.class, 100),
 
   /**
    * @Since 2.2.0

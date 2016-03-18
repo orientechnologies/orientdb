@@ -19,12 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
@@ -36,6 +30,12 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedT
 import com.orientechnologies.orient.server.distributed.task.OCreateRecordTask;
 import com.orientechnologies.orient.server.distributed.task.ODeleteRecordTask;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
+
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Asynchronous response manager
@@ -92,19 +92,20 @@ public class ODistributedResponseManager {
    */
   public boolean collectResponse(final ODistributedResponse response) {
     final String executorNode = response.getExecutorNodeName();
+    final String senderNode = response.getSenderNodeName();
 
     synchronousResponsesLock.lock();
     try {
-      if (!responses.containsKey(executorNode)) {
-        ODistributedServerLog.warn(this, response.getSenderNodeName(), executorNode, DIRECTION.IN,
-            "received response for request (%s) from unexpected node. Expected are: %s", request, getExpectedNodes());
-
-        Orient.instance().getProfiler().updateCounter("distributed.node.unexpectedNodeResponse",
-            "Number of responses from unexpected nodes", +1);
-
-        return false;
-      }
-
+      // if (!responses.containsKey(executorNode)) {
+      // ODistributedServerLog.warn(this, senderNode, executorNode, DIRECTION.IN,
+      // "received response for request (%s) from unexpected node. Expected are: %s", request, getExpectedNodes());
+      //
+      // Orient.instance().getProfiler().updateCounter("distributed.node.unexpectedNodeResponse",
+      // "Number of responses from unexpected nodes", +1);
+      //
+      // return false;
+      // }
+      //
       Orient.instance().getProfiler().stopChrono("distributed.node.latency", "Latency of distributed messages", sentOn,
           "distributed.node.latency");
 
@@ -115,11 +116,11 @@ public class ODistributedResponseManager {
       responses.put(executorNode, response);
       receivedResponses++;
 
-      if (waitForLocalNode && response.isExecutedOnLocalNode())
+      if (waitForLocalNode && executorNode.equals(senderNode))
         receivedCurrentNode = true;
 
       if (ODistributedServerLog.isDebugEnabled())
-        ODistributedServerLog.debug(this, response.getSenderNodeName(), executorNode, DIRECTION.IN,
+        ODistributedServerLog.debug(this, senderNode, executorNode, DIRECTION.IN,
             "received response '%s' for request (%s) (receivedCurrentNode=%s receivedResponses=%d expectedSynchronousResponses=%d quorum=%d)",
             response, request, receivedCurrentNode, receivedResponses, expectedSynchronousResponses, quorum);
 
@@ -534,9 +535,8 @@ public class ODistributedResponseManager {
     final int maxCoherentResponses = bestResponsesGroup.size();
     final int conflicts = getExpectedResponses() - (maxCoherentResponses + discardedResponses);
 
-    if (isMinimumQuorumReached()) {
+    if (!(bestResponsesGroup.get(0) instanceof Throwable) && isMinimumQuorumReached()) {
       // QUORUM SATISFIED
-
       if (responseGroups.size() == 1)
         // NO CONFLICT
         return;
@@ -594,7 +594,7 @@ public class ODistributedResponseManager {
                 "sending undo message (%s) for request (%s) to server %s", undoTask, request, r.getExecutorNodeName());
 
             dManager.sendRequest(request.getDatabaseName(), null, OMultiValue.getSingletonList(r.getExecutorNodeName()), undoTask,
-                ODistributedRequest.EXECUTION_MODE.RESPONSE, 0);
+                ODistributedRequest.EXECUTION_MODE.RESPONSE, null);
           }
         }
       }
@@ -653,7 +653,7 @@ public class ODistributedResponseManager {
           ORecordInternal.setIdentity(((OCreateRecordTask) task).getRecord(),
               ((OCreateRecordTask) task).getRecord().getIdentity().getClusterId(), -1);
           dManager.sendRequest(request.getDatabaseName(), null, OMultiValue.getSingletonList(r.getExecutorNodeName()), task,
-              ODistributedRequest.EXECUTION_MODE.NO_RESPONSE, 0);
+              ODistributedRequest.EXECUTION_MODE.NO_RESPONSE, null);
         }
 
         final OPlaceholder ph = new OPlaceholder(new ORecordId(origPh.getIdentity().getClusterId(), i), -1);
@@ -665,7 +665,7 @@ public class ODistributedResponseManager {
               "sending undo message (%s) for request (%s) to server %s", undoTask, request, r.getExecutorNodeName());
 
           dManager.sendRequest(request.getDatabaseName(), null, OMultiValue.getSingletonList(r.getExecutorNodeName()), undoTask,
-              ODistributedRequest.EXECUTION_MODE.NO_RESPONSE, 0);
+              ODistributedRequest.EXECUTION_MODE.NO_RESPONSE, null);
         }
       }
     }
@@ -694,7 +694,7 @@ public class ODistributedResponseManager {
                   "sending fix message (%s) for response (%s) on request (%s) to be: %s", fixTask, r, request, goodResponse);
 
               dManager.sendRequest(request.getDatabaseName(), null, OMultiValue.getSingletonList(r.getExecutorNodeName()), fixTask,
-                  ODistributedRequest.EXECUTION_MODE.NO_RESPONSE, 0);
+                  ODistributedRequest.EXECUTION_MODE.NO_RESPONSE, null);
             }
           }
         }

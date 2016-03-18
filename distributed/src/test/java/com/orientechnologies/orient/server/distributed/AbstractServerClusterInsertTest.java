@@ -262,37 +262,32 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
 
     System.out.println("Creating Writers and Readers threads...");
 
-    final ExecutorService writerExecutors = Executors.newCachedThreadPool();
+    final ExecutorService executors = Executors.newCachedThreadPool();
     final ExecutorService readerExecutors = Executors.newCachedThreadPool();
 
     runningWriters = new CountDownLatch(executeTestsOnServers.size() * writerCount);
 
     int serverId = 0;
     int threadId = 0;
-    List<Callable<Void>> writerWorkers = new ArrayList<Callable<Void>>();
+
+    List<Callable<Void>> workers = new ArrayList<Callable<Void>>();
     for (ServerRun server : executeTestsOnServers) {
       if (server.isActive()) {
         for (int j = 0; j < writerCount; j++) {
           Callable writer = createWriter(serverId, threadId++, getDatabaseURL(server));
-          writerWorkers.add(writer);
+          workers.add(writer);
         }
+
+        Callable<Void> reader = createReader(getDatabaseURL(server));
+        workers.add(reader);
+
         serverId++;
       }
     }
 
     expected = writerCount * count * serverId + baseCount;
 
-    List<Future<Void>> futures = writerExecutors.invokeAll(writerWorkers);
-
-    List<Callable<Void>> readerWorkers = new ArrayList<Callable<Void>>();
-    for (ServerRun server : executeTestsOnServers) {
-      if (server.isActive()) {
-        Callable<Void> reader = createReader(getDatabaseURL(server));
-        readerWorkers.add(reader);
-      }
-    }
-
-    List<Future<Void>> rFutures = readerExecutors.invokeAll(readerWorkers);
+    List<Future<Void>> futures = executors.invokeAll(workers);
 
     System.out.println("Threads started, waiting for the end");
 
@@ -300,17 +295,8 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
       future.get();
     }
 
-    writerExecutors.shutdown();
-    Assert.assertTrue(writerExecutors.awaitTermination(1, TimeUnit.MINUTES));
-
-    System.out.println("All writer threads have finished, shutting down readers");
-
-    for (Future<Void> future : rFutures) {
-      future.get();
-    }
-
-    readerExecutors.shutdown();
-    Assert.assertTrue(readerExecutors.awaitTermination(1, TimeUnit.MINUTES));
+    executors.shutdown();
+    Assert.assertTrue(executors.awaitTermination(1, TimeUnit.MINUTES));
 
     System.out.println("All threads have finished, shutting down server instances");
 
