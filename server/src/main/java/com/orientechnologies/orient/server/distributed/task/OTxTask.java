@@ -73,7 +73,7 @@ public class OTxTask extends OAbstractReplicatedTask {
   public Object execute(long requestId, final OServer iServer, ODistributedServerManager iManager,
       final ODatabaseDocumentTx database) throws Exception {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-        "committing transaction against db=%s...", database.getName());
+        "Committing transaction against db=%s...", database.getName());
 
     ODatabaseRecordThreadLocal.INSTANCE.set(database);
 

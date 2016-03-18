@@ -44,7 +44,7 @@ import java.util.concurrent.Callable;
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
-public class OServerIncrementalSynchronization {
+public class OIncrementalServerSync {
 
   /**
    * Deleted records are written in output stream first, then created/updated records. All records are sorted by record id.
@@ -60,8 +60,7 @@ public class OServerIncrementalSynchronization {
    * <li>Binary presentation of the record, only if record is not deleted - length of content is provided in above entity</li>
    * </ol>
    */
-  public void importDelta(final OServer serverInstance, final ODatabaseDocumentTx db, final FileInputStream in)
-      throws IOException {
+  public void importDelta(final OServer serverInstance, final ODatabaseDocumentTx db, final FileInputStream in) throws IOException {
     final String nodeName = serverInstance.getDistributedManager().getLocalNodeName();
 
     try {
@@ -103,7 +102,7 @@ public class OServerIncrementalSynchronization {
                 final ORecord loadedRecord = rid.getRecord();
 
                 if (deleted) {
-                  ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "DELTA <- deleting " + rid);
+                  ODistributedServerLog.debug(this, nodeName, null, DIRECTION.NONE, "DELTA <- deleting " + rid);
 
                   if (loadedRecord != null)
                     // DELETE IT
@@ -140,7 +139,7 @@ public class OServerIncrementalSynchronization {
 
                     } while (newRecord.getIdentity().getClusterPosition() < clusterPos);
 
-                    ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE,
+                    ODistributedServerLog.debug(this, nodeName, null, DIRECTION.NONE,
                         "DELTA <- creating rid=%s type=%d size=%d v=%d content=%s", rid, recordType, recordSize, recordVersion,
                         newRecord);
 
@@ -162,7 +161,7 @@ public class OServerIncrementalSynchronization {
                     // SAVE THE UPDATE RECORD
                     newRecord.save();
 
-                    ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE,
+                    ODistributedServerLog.debug(this, nodeName, null, DIRECTION.NONE,
                         "DELTA <- updating rid=%s type=%d size=%d v=%d content=%s", rid, recordType, recordSize, recordVersion,
                         newRecord);
 

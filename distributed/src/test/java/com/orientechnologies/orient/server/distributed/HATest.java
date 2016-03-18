@@ -38,7 +38,6 @@ public class HATest extends AbstractServerClusterTxTest {
   protected void onAfterExecution() throws Exception {
     banner("SIMULATE SOFT SHUTDOWN OF SERVER " + (SERVERS - 1));
     serverInstance.get(SERVERS - 1).shutdownServer();
-    poolFactory.reset();
 
     banner("RESTARTING TESTS WITH SERVER " + (SERVERS - 1) + " DOWN...");
 

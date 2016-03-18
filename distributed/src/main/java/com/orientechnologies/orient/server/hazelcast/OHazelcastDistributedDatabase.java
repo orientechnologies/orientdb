@@ -103,7 +103,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
         if (anyQueueWorkerIsWorking) {
           // WAIT ALL THE REQUESTS ARE MANAGED
-          ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
+          ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
               "Request %s on database %s waiting for all the previous requests to be completed", request, databaseName);
 
           final CountDownLatch emptyQueues = new CountDownLatch(workerThreads.size());

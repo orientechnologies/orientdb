@@ -252,6 +252,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
   }
 
   protected void executeMultipleTest() throws InterruptedException, java.util.concurrent.ExecutionException {
+    poolFactory.reset();
     ODatabaseDocumentTx database = poolFactory.get(getDatabaseURL(serverInstance.get(0)), "admin", "admin").acquire();
     try {
       List<ODocument> result = database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));
@@ -263,7 +264,6 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
     System.out.println("Creating Writers and Readers threads...");
 
     final ExecutorService executors = Executors.newCachedThreadPool();
-    final ExecutorService readerExecutors = Executors.newCachedThreadPool();
 
     runningWriters = new CountDownLatch(executeTestsOnServers.size() * writerCount);
 

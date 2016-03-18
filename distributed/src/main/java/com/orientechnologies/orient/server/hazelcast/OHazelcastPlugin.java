@@ -1901,7 +1901,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       try {
         if (delta) {
 
-          new OServerIncrementalSynchronization().importDelta(serverInstance, db, in);
+          new OIncrementalServerSync().importDelta(serverInstance, db, in);
 
         } else {
 
