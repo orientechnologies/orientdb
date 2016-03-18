@@ -85,7 +85,7 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
 
         if (!graphDb.isClosed()) {
           ODatabaseRecordThreadLocal.INSTANCE.set(graphDb);
-          if (autoStartTx)
+          if (autoStartTx && !graphDb.getTransaction().isActive())
             ((OrientGraph) result).begin();
 
           shouldBeShutDown.setValue(false);
@@ -98,7 +98,7 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
     shouldBeShutDown.setValue(true);
 
     final OrientGraph g = new OrientGraph((ODatabaseDocumentTx) database, false);
-    if (autoStartTx)
+    if (autoStartTx && !database.getTransaction().isActive())
       g.begin();
     return g;
   }
