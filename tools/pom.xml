@@ -36,7 +36,10 @@
 
     <properties>
         <osgi.import>sun.misc;resolution:=optional,*</osgi.import>
-        <osgi.export>com.orientechnologies.orient.console.*</osgi.export>
+        <osgi.export>
+            com.orientechnologies.orient.console.*,
+            com.orientechnologies.orient.server.config.*
+        </osgi.export>
         <jar.manifest.mainclass>com.orientechnologies.orient.console.OConsoleDatabaseApp</jar.manifest.mainclass>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
