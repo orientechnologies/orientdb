@@ -31,7 +31,6 @@ import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
 
-import java.io.File;
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
@@ -89,6 +88,14 @@ public enum OGlobalConfiguration {
       "Minimal amount of time (in seconds), since the last System.gc(), when called after tree optimization.", Long.class, 600),
 
   // STORAGE
+  /**
+   * Amount of cached locks is used for component lock in atomic operation to avoid constant creation of new lock instances,
+   * default value is 10000.
+   */
+  COMPONENTS_LOCK_CACHE("storage.componentsLock.cache",
+      "Amount of cached locks is used for component lock to avoid constant creation of new lock instances", Integer.class,
+      10000),
+
   DISK_CACHE_PINNED_PAGES("storage.diskCache.pinnedPages", "Maximum amount of pinned pages which may be contained in cache,"
       + " if this percent is reached next pages will be left in unpinned state. You can not set value more than 50", Integer.class,
       20, false),
@@ -902,8 +909,9 @@ public enum OGlobalConfiguration {
       // DISK-CACHE IN MB = OS MEMORY - MAX HEAP JVM MEMORY - 2 GB
       long diskCacheInMB = (osMemory - jvmMaxMemory) / (1024 * 1024) - 2 * 1024;
       if (diskCacheInMB > 0) {
-        OLogManager.instance().info(null, "OrientDB auto-config DISKCACHE=%,dMB (heap=%,dMB os=%,dMB)", diskCacheInMB,
-            jvmMaxMemory / 1024 / 1024, osMemory / 1024 / 1024);
+        OLogManager.instance()
+            .info(null, "OrientDB auto-config DISKCACHE=%,dMB (heap=%,dMB os=%,dMB)", diskCacheInMB, jvmMaxMemory / 1024 / 1024,
+                osMemory / 1024 / 1024);
 
         DISK_CACHE_SIZE.setValue(diskCacheInMB);
       } else {
@@ -913,8 +921,9 @@ public enum OGlobalConfiguration {
                 + O2QCache.MIN_CACHE_SIZE + "MB", osMemory / 1024 / 1024, jvmMaxMemory / 1024 / 1024);
         DISK_CACHE_SIZE.setValue(O2QCache.MIN_CACHE_SIZE);
 
-        OLogManager.instance().info(null, "OrientDB config DISKCACHE=%,dMB (heap=%,dMB os=%,dMB)", diskCacheInMB,
-            jvmMaxMemory / 1024 / 1024, osMemory / 1024 / 1024);
+        OLogManager.instance()
+            .info(null, "OrientDB config DISKCACHE=%,dMB (heap=%,dMB os=%,dMB)", diskCacheInMB, jvmMaxMemory / 1024 / 1024,
+                osMemory / 1024 / 1024);
       }
     } catch (NoSuchMethodException e) {
     } catch (InvocationTargetException e) {

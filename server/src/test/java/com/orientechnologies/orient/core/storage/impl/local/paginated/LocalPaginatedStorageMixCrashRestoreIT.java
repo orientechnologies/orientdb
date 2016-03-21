@@ -40,7 +40,7 @@ public class LocalPaginatedStorageMixCrashRestoreIT {
   private File buildDir;
   private AtomicInteger idGen = new AtomicInteger();
 
-  private OLockManager<Integer> idLockManager = new OLockManager<Integer>(true, 1000);
+  private OLockManager<Integer> idLockManager = new OLockManager<Integer>(true, 1000, 10000);
 
   private ExecutorService executorService = Executors.newCachedThreadPool();
 

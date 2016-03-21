@@ -19,9 +19,10 @@
  */
 package com.orientechnologies.common.concur.lock;
 
+import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import com.orientechnologies.common.exception.OException;
 
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -32,51 +33,31 @@ public class OLockManager<T> {
     SHARED, EXCLUSIVE
   }
 
-  private static final int                                        DEFAULT_CONCURRENCY_LEVEL = 16;
-  protected long                                                  acquireTimeout;
-  protected final ConcurrentHashMap<T, CountableLock> map;
-  private final boolean                                           enabled;
+  private static final int DEFAULT_CONCURRENCY_LEVEL = 16;
+  private         long                                      acquireTimeout;
+  protected final ConcurrentLinkedHashMap<T, CountableLock> map;
+  private final   boolean                                   enabled;
+  private final   int                                       amountOfCachedInstances;
 
   @SuppressWarnings("serial")
-  protected static class CountableLock {
+  private static class CountableLock {
     private final AtomicInteger countLocks    = new AtomicInteger(1);
     private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o)
-        return true;
-      if (!(o instanceof CountableLock))
-        return false;
-
-      CountableLock that = (CountableLock) o;
-
-      if (!countLocks.equals(that.countLocks))
-        return false;
-      return readWriteLock.equals(that.readWriteLock);
-
-    }
-
-    @Override
-    public int hashCode() {
-      int result = countLocks.hashCode();
-      result = 31 * result + readWriteLock.hashCode();
-      return result;
-    }
   }
 
-  public OLockManager(final boolean iEnabled, final int iAcquireTimeout) {
-    this(iEnabled, iAcquireTimeout, defaultConcurrency());
+  public OLockManager(final boolean iEnabled, final int iAcquireTimeout, final int amountOfCachedInstances) {
+    this(iEnabled, iAcquireTimeout, defaultConcurrency(), amountOfCachedInstances);
   }
 
-  public OLockManager(final boolean iEnabled, final int iAcquireTimeout, final int concurrencyLevel) {
-    int cL = 1;
+  public OLockManager(final boolean iEnabled, final int iAcquireTimeout, final int concurrencyLevel,
+      final int amountOfCachedInstances) {
 
-    while (cL < concurrencyLevel) {
-      cL <<= 1;
-    }
+    this.amountOfCachedInstances = amountOfCachedInstances;
+    final int cL = closestInteger(concurrencyLevel);
 
-    map = new ConcurrentHashMap<T, CountableLock>(cL);
+    map = new ConcurrentLinkedHashMap.Builder<T, CountableLock>().concurrencyLevel(cL).maximumWeightedCapacity(Long.MAX_VALUE)
+        .build();
+
     acquireTimeout = iAcquireTimeout;
     enabled = iEnabled;
   }
@@ -89,27 +70,62 @@ public class OLockManager<T> {
     if (!enabled)
       return;
 
+    if (!enabled)
+      return;
+
     final T immutableResource = getImmutableResourceId(iResourceId);
 
     CountableLock lock;
+    do {
+      lock = map.get(immutableResource);
 
-    while (true) {
-      lock = new CountableLock();
+      if (lock != null) {
+        final int oldLockCount = lock.countLocks.get();
 
-      CountableLock oldLock = map.putIfAbsent(immutableResource, lock);
-      if (oldLock == null)
-        break;
-
-      lock = oldLock;
-      final int oldValue = lock.countLocks.get();
-
-      if (oldValue > 0) {
-        if (lock.countLocks.compareAndSet(oldValue, oldValue + 1)) {
-          assert map.get(immutableResource) == lock;
-          break;
+        if (oldLockCount >= 0) {
+          if (lock.countLocks.compareAndSet(oldLockCount, oldLockCount + 1)) {
+            break;
+          }
+        } else {
+          map.remove(immutableResource, lock);
         }
+      }
+    } while (lock != null);
 
-        // otherwise wait till lock will be removed by release
+    if (lock == null) {
+      while (true) {
+        lock = new CountableLock();
+
+        CountableLock oldLock = map.putIfAbsent(immutableResource, lock);
+        if (oldLock == null)
+          break;
+
+        lock = oldLock;
+        final int oldValue = lock.countLocks.get();
+
+        if (oldValue >= 0) {
+          if (lock.countLocks.compareAndSet(oldValue, oldValue + 1)) {
+            assert map.get(immutableResource) == lock;
+            break;
+          }
+        } else {
+          map.remove(immutableResource, lock);
+        }
+      }
+    }
+
+    if (map.size() > amountOfCachedInstances) {
+      final Iterator<T> keyToRemoveIterator = map.ascendingKeySetWithLimit(1).iterator();
+      if (keyToRemoveIterator.hasNext()) {
+        final T keyToRemove = keyToRemoveIterator.next();
+        final CountableLock lockToRemove = map.get(keyToRemove);
+        if (lockToRemove != null) {
+          final int counter = lockToRemove.countLocks.get();
+          if (counter == 0 && lockToRemove.countLocks.compareAndSet(counter, -1)) {
+            assert lockToRemove.countLocks.get() == -1;
+            map.remove(keyToRemove, lockToRemove);
+          }
+        }
       }
     }
 
@@ -123,17 +139,17 @@ public class OLockManager<T> {
         try {
           if (iLockType == LOCK.SHARED) {
             if (!lock.readWriteLock.readLock().tryLock(iTimeout, TimeUnit.MILLISECONDS))
-              throw new OLockException("Timeout (" + iTimeout + "ms) on acquiring resource '" + iResourceId
-                  + "' because is locked from another thread");
+              throw new OLockException(
+                  "Timeout (" + iTimeout + "ms) on acquiring resource '" + iResourceId + "' because is locked from another thread");
           } else {
             if (!lock.readWriteLock.writeLock().tryLock(iTimeout, TimeUnit.MILLISECONDS))
-              throw new OLockException("Timeout (" + iTimeout + "ms) on acquiring resource '" + iResourceId
-                  + "' because is locked from another thread");
+              throw new OLockException(
+                  "Timeout (" + iTimeout + "ms) on acquiring resource '" + iResourceId + "' because is locked from another thread");
           }
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
-          throw OException.wrapException(new OLockException("Thread interrupted while waiting for resource '" + iResourceId + "'"),
-              e);
+          throw OException
+              .wrapException(new OLockException("Thread interrupted while waiting for resource '" + iResourceId + "'"), e);
         }
       }
     } catch (RuntimeException e) {
@@ -145,20 +161,17 @@ public class OLockManager<T> {
     }
   }
 
-  public void releaseLock(final Object iRequester, final T iResourceId, final LOCK iLockType)
-      throws OLockException {
+  public void releaseLock(final Object iRequester, final T iResourceId, final LOCK iLockType) throws OLockException {
     if (!enabled)
       return;
 
-    final CountableLock lock;
-    lock = map.get(iResourceId);
+    final CountableLock lock = map.get(iResourceId);
     if (lock == null)
-      throw new OLockException("Error on releasing a non acquired lock by the requester '" + iRequester
-          + "' against the resource: '" + iResourceId + "'");
+      throw new OLockException(
+          "Error on releasing a non acquired lock by the requester '" + iRequester + "' against the resource: '" + iResourceId
+              + "'");
 
-    final int usages = lock.countLocks.decrementAndGet();
-    if (usages == 0)
-      map.remove(iResourceId);
+    lock.countLocks.decrementAndGet();
 
     if (iLockType == LOCK.SHARED)
       lock.readWriteLock.readLock().unlock();
@@ -166,19 +179,22 @@ public class OLockManager<T> {
       lock.readWriteLock.writeLock().unlock();
   }
 
-
   // For tests purposes.
   public int getCountCurrentLocks() {
     return map.size();
   }
-
 
   protected T getImmutableResourceId(final T iResourceId) {
     return iResourceId;
   }
 
   private static int defaultConcurrency() {
-    return Runtime.getRuntime().availableProcessors() * 64 > DEFAULT_CONCURRENCY_LEVEL ? Runtime.getRuntime().availableProcessors() * 64
-        : DEFAULT_CONCURRENCY_LEVEL;
+    return (Runtime.getRuntime().availableProcessors() << 6) > DEFAULT_CONCURRENCY_LEVEL ?
+        (Runtime.getRuntime().availableProcessors() << 6) :
+        DEFAULT_CONCURRENCY_LEVEL;
+  }
+
+  private static int closestInteger(int value) {
+    return 1 << (32 - Integer.numberOfLeadingZeros(value - 1));
   }
 }
