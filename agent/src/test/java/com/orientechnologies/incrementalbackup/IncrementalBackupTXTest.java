@@ -30,9 +30,10 @@ import java.util.concurrent.Future;
 /**
  * It tests the behaviour of the incremental backup with through the following steps:
  *
- * - two graph databases primary db and secondary db and n threads (now set to 5) that execute writes on the primary db
+ * - two graph databases (TX) primary db and secondary db and n threads (now set to 5) that execute writes on the primary db
  * - 1st operation: inserting 5000 triples for each thread (with 5 threads: 25000 triples, 50000 vertices, 25000 edges)
  * - 1st incremental backup
+ * - 1st restore on the secondary db
  * - 2nd operation: inserting 20000 triples for each thread (with 5 threads: 100000 triples, 200000 vertices, 100000 edges)
  * - 2nd incremental backup
  * - 3rd operation: updating all the vertices
@@ -43,7 +44,7 @@ import java.util.concurrent.Future;
  * - comparing primary db and secondary db checking if they are equal
  *
  */
-public class IncrementalBackupTest extends TestCase {
+public class IncrementalBackupTXTest extends TestCase {
 
   private OrientBaseGraph primaryGraph;
   private OrientBaseGraph secondaryGraph;
@@ -171,6 +172,7 @@ public class IncrementalBackupTest extends TestCase {
       e.printStackTrace();
       // cleaning all the directories
       this.cleanDirectories();
+    } finally {
       primaryGraph.shutdown();
       secondaryGraph.shutdown();
     }
@@ -178,8 +180,12 @@ public class IncrementalBackupTest extends TestCase {
 
   public void testIncrementalBackup() {
 
+    primaryGraph = new OrientGraph(this.primaryDbURL);
+    secondaryGraph = new OrientGraph(this.secondaryDbURL);
+
     try {
 
+      ODatabaseRecordThreadLocal.INSTANCE.set(primaryGraph.getRawGraph());
       this.banner("1st op. - Inserting 25000 triples (50000 vertices, 25000 edges)");
       this.executeWrites(this.primaryDbURL, 5000);
       List<ODocument> result = primaryGraph.getRawGraph().query(new OSQLSynchQuery<OIdentifiable>("select count(*) from V"));
@@ -228,16 +234,22 @@ public class IncrementalBackupTest extends TestCase {
 
       // delete vertices (where updated = true)
       this.banner("5th op. - Deleting the last 10 vertices inserted");
-      primaryGraph.command(new OCommandSQL("delete vertex from User where name = 'User-t0-v" + (this.incrementalVerticesIdForThread[0]-1) + "'"
-                                                                   + " or name = 'User-t1-v" + (this.incrementalVerticesIdForThread[1]-1) + "'"
-                                                                   + " or name = 'User-t2-v" + (this.incrementalVerticesIdForThread[2]-1) + "'"
-                                                                   + " or name = 'User-t3-v" + (this.incrementalVerticesIdForThread[3]-1) + "'"
-                                                                   + " or name = 'User-t4-v" + (this.incrementalVerticesIdForThread[4]-1) + "'")).execute();
-      primaryGraph.command(new OCommandSQL("delete vertex from Product where name = 'Product-t0-v" + (this.incrementalVerticesIdForThread[0]-1) + "'"
-                                                                      + " or name = 'Product-t1-v" + (this.incrementalVerticesIdForThread[1]-1) + "'"
-                                                                      + " or name = 'Product-t2-v" + (this.incrementalVerticesIdForThread[2]-1) + "'"
-                                                                      + " or name = 'Product-t3-v" + (this.incrementalVerticesIdForThread[3]-1) + "'"
-                                                                      + " or name = 'Product-t4-v" + (this.incrementalVerticesIdForThread[4]-1) + "'")).execute();
+      try {
+        primaryGraph.command(new OCommandSQL("delete vertex from User where name = 'User-t0-v" + (this.incrementalVerticesIdForThread[0]-1) + "'"
+            + " or name = 'User-t1-v" + (this.incrementalVerticesIdForThread[1]-1) + "'"
+            + " or name = 'User-t2-v" + (this.incrementalVerticesIdForThread[2]-1) + "'"
+            + " or name = 'User-t3-v" + (this.incrementalVerticesIdForThread[3]-1) + "'"
+            + " or name = 'User-t4-v" + (this.incrementalVerticesIdForThread[4]-1) + "'")).execute();
+        primaryGraph.command(new OCommandSQL("delete vertex from Product where name = 'Product-t0-v" + (this.incrementalVerticesIdForThread[0]-1) + "'"
+            + " or name = 'Product-t1-v" + (this.incrementalVerticesIdForThread[1]-1) + "'"
+            + " or name = 'Product-t2-v" + (this.incrementalVerticesIdForThread[2]-1) + "'"
+            + " or name = 'Product-t3-v" + (this.incrementalVerticesIdForThread[3]-1) + "'"
+            + " or name = 'Product-t4-v" + (this.incrementalVerticesIdForThread[4]-1) + "'")).execute();
+        primaryGraph.commit();
+      } catch (Exception e) {
+        primaryGraph.rollback();
+      }
+
       result = primaryGraph.getRawGraph().query(new OSQLSynchQuery< OIdentifiable>("select count(*) from V"));
       assertEquals(449990, ((Number) result.get(0).field("count")).intValue());
 
@@ -249,10 +261,12 @@ public class IncrementalBackupTest extends TestCase {
 
       // check the backup
       this.banner("Checking consistency of the incremental backup and restore operations");
-      this.databaseAreEqual(primaryGraph, secondaryGraph);
+      this.databaseAreEqual();
 
     } finally {
+      ODatabaseRecordThreadLocal.INSTANCE.set(primaryGraph.getRawGraph());
       primaryGraph.shutdown();
+      ODatabaseRecordThreadLocal.INSTANCE.set(secondaryGraph.getRawGraph());
       secondaryGraph.shutdown();
       // cleaning all the directories
       this.cleanDirectories();
@@ -299,7 +313,10 @@ public class IncrementalBackupTest extends TestCase {
     }
   }
 
-  private void databaseAreEqual(OrientBaseGraph graph1, OrientBaseGraph graph2) {
+  private void databaseAreEqual() {
+
+    OrientGraphNoTx graph1 = new OrientGraphNoTx(this.primaryDbURL);
+    OrientGraphNoTx graph2 = new OrientGraphNoTx(this.secondaryDbURL);
 
     // Checking number of vertices and edges in both the graphs
     ODatabaseRecordThreadLocal.INSTANCE.set(graph1.getRawGraph());
@@ -340,6 +357,7 @@ public class IncrementalBackupTest extends TestCase {
       for(Vertex v2: graph2.getVertices("name",v1.getProperty("name"))) {
         queryVertices.add(v2);
       }
+
       assertEquals(1, queryVertices.size());
       currentVertexGraph2 = queryVertices.get(0);
       assertEquals(v1, currentVertexGraph2);
@@ -375,39 +393,45 @@ public class IncrementalBackupTest extends TestCase {
       }
     }
     System.out.println("\nCompared successfully " + comparedVertices + "/" + numberVerticesGraph1 + " records and " + comparedEdges + "/" + numberEdgesGraph1 + " edges so far");
+
+    graph1.shutdown();
+    graph2.shutdown();
   }
 
   // Atomic operations on the primaryGraph database
-  protected OrientVertex createVerticesWithEdge(OrientBaseGraph graph, int threadId) {
+  protected void createVerticesWithEdge(OrientBaseGraph graph, int threadId) {
 
-    final String accountUniqueId = "User-t" + threadId + "-v" + incrementalVerticesIdForThread[threadId];
-    final String productUniqueId = "Product-t" + threadId + "-v" + incrementalVerticesIdForThread[threadId];
+    try {
 
-    OrientVertex account = graph.addVertex("class:User");
-    account.setProperties("name", accountUniqueId, "updated", false);
-    account.save();
+      final String accountUniqueId = "User-t" + threadId + "-v" + incrementalVerticesIdForThread[threadId];
+      final String productUniqueId = "Product-t" + threadId + "-v" + incrementalVerticesIdForThread[threadId];
 
-    OrientVertex product = graph.addVertex("class:Product");
-    product.setProperties("name", productUniqueId, "updated", false);
-    product.save();
+      OrientVertex account = graph.addVertex("class:User");
+      account.setProperties("name", accountUniqueId, "updated", false);
 
-    this.incrementThreadCount(threadId);
+      OrientVertex product = graph.addVertex("class:Product");
+      product.setProperties("name", productUniqueId, "updated", false);
 
-    OrientEdge edge = graph.addEdge(null, account, product, "bought");
-    Date creationDate = new Date();
-    edge.setProperties("purchaseDate", creationDate, "updated", true);
-    edge.save();
+      this.incrementThreadCount(threadId);
 
-    return account;
+      OrientEdge edge = graph.addEdge(null, account, product, "bought");
+      Date creationDate = new Date();
+      edge.setProperties("purchaseDate", creationDate, "updated", true);
+
+      graph.commit();
+    } catch (Exception e) {
+      graph.rollback();
+    }
+
   }
 
   protected void updateVertex(OrientBaseGraph graph, OrientVertex vertex) {
-    vertex.setProperty("updated", true);
-    vertex.save();
-  }
-
-  protected void deleteRecord(OrientBaseGraph graph, OrientVertex vertex) {
-    vertex.remove();
+    try {
+      vertex.setProperty("updated", true);
+      graph.commit();
+    } catch (Exception e) {
+      graph.rollback();
+    }
   }
 
   protected void checkRecordIsDeleted(OrientBaseGraph graph, OrientVertex vertex) {
