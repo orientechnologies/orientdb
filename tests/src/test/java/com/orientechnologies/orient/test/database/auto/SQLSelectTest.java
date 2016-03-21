@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -1708,6 +1709,41 @@ public class SQLSelectTest extends AbstractSelectTest {
         new OSQLSynchQuery<OIdentifiable>("select from cluster:binarycluster"));
 
     Assert.assertEquals(result.size(), 0);
+  }
+
+  public void testExpandSkip() {
+    OSchemaProxy schema = database.getMetadata().getSchema();
+    OClass v = schema.getClass("V");
+    final OClass cls = schema.createClass("TestExpandSkip", v);
+    cls.createProperty("name", OType.STRING);
+    cls.createIndex("TestExpandSkip.name", INDEX_TYPE.UNIQUE, "name");
+    database.command(new OCommandSQL("CREATE VERTEX TestExpandSkip set name = '1'")).execute();
+    database.command(new OCommandSQL("CREATE VERTEX TestExpandSkip set name = '2'")).execute();
+    database.command(new OCommandSQL("CREATE VERTEX TestExpandSkip set name = '3'")).execute();
+    database.command(new OCommandSQL("CREATE VERTEX TestExpandSkip set name = '4'")).execute();
+
+    database.command(new OCommandSQL("CREATE EDGE E FROM (SELECT FROM TestExpandSkip WHERE name = '1') to (SELECT FROM TestExpandSkip WHERE name <> '1')")).execute();
+
+    List<OIdentifiable> result = database.query(
+        new OSQLSynchQuery<OIdentifiable>("select expand(out()) from TestExpandSkip where name = '1'"));
+    Assert.assertEquals(result.size(), 3);
+
+    result = database.query(
+        new OSQLSynchQuery<OIdentifiable>("select expand(out()) from TestExpandSkip where name = '1' skip 1"));
+    Assert.assertEquals(result.size(), 2);
+
+    result = database.query(
+        new OSQLSynchQuery<OIdentifiable>("select expand(out()) from TestExpandSkip where name = '1' skip 2"));
+    Assert.assertEquals(result.size(), 1);
+
+    result = database.query(
+        new OSQLSynchQuery<OIdentifiable>("select expand(out()) from TestExpandSkip where name = '1' skip 3"));
+    Assert.assertEquals(result.size(), 0);
+
+    result = database.query(
+        new OSQLSynchQuery<OIdentifiable>("select expand(out()) from TestExpandSkip where name = '1' skip 1 limit 1"));
+    Assert.assertEquals(result.size(), 1);
+
   }
 
 
