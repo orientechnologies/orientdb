@@ -27,17 +27,21 @@ import java.util.NoSuchElementException;
 
 /**
  * Implementation of index cursor in case of only single entree should be returned.
- * 
+ *
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 4/4/14
  */
 public class OIndexCursorSingleValue extends OIndexAbstractCursor implements OSizeable {
-  private final Object  key;
-  private OIdentifiable identifiable;
+  private final Object        key;
+  private       OIdentifiable identifiable;
+  boolean empty = false;
 
   public OIndexCursorSingleValue(OIdentifiable identifiable, Object key) {
     this.identifiable = identifiable;
     this.key = key;
+    if (this.identifiable == null) {
+      empty = true;
+    }
   }
 
   @Override
@@ -84,6 +88,6 @@ public class OIndexCursorSingleValue extends OIndexAbstractCursor implements OSi
 
   @Override
   public int size() {
-    return 1;
+    return empty ? 0 : 1;
   }
 }
