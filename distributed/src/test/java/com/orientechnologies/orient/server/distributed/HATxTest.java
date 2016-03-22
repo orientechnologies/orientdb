@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
@@ -26,7 +25,6 @@ import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 public class HATxTest extends AbstractServerClusterTxTest {
   final static int SERVERS = 3;
 
-  @Ignore
   @Test
   public void test() throws Exception {
     useTransactions = true;
