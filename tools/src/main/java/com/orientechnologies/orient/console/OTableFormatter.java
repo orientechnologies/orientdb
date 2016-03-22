@@ -19,29 +19,30 @@
  */
 package com.orientechnologies.orient.console;
 
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.Map.Entry;
-
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.console.OConsoleApplication;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.Map.Entry;
+
 public class OTableFormatter {
-  protected final static String       MORE            = "...";
-  protected final static Set<String>  prefixedColumns = new LinkedHashSet<String>(Arrays.asList(new String[] { "#", "@RID",
-      "@CLASS"                                       }));
+  protected final static String      MORE            = "...";
+  protected final static Set<String> prefixedColumns = new LinkedHashSet<String>(
+      Arrays.asList(new String[] { "#", "@RID", "@CLASS" }));
   protected final OConsoleApplication out;
-  protected final SimpleDateFormat    DEF_DATEFORMAT  = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
-  protected int                       minColumnSize   = 4;
-  protected int                       maxWidthSize    = 150;
+  protected final SimpleDateFormat DEF_DATEFORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+  protected       int              minColumnSize  = 4;
+  protected       int              maxWidthSize   = 150;
 
   public OTableFormatter(final OConsoleApplication iConsole) {
     this.out = iConsole;
@@ -100,6 +101,10 @@ public class OTableFormatter {
         Object value = getFieldValue(iIndex, iRecord, col.getKey());
 
         if (value != null) {
+          if (value instanceof ORidBag) {
+            ((ORidBag) value).size();
+          }
+
           value = value.toString();
           if (((String) value).length() > col.getValue()) {
             // APPEND ...
@@ -198,7 +203,7 @@ public class OTableFormatter {
 
   /**
    * Fill the column map computing the maximum size for a field.
-   * 
+   *
    * @param resultSet
    * @param limit
    * @return
