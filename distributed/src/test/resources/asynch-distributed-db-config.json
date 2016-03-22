@@ -8,8 +8,6 @@
     "clusters": {
         "internal": {
         },
-        "index": {
-        },
         "*": {
             "servers" : [ "<NEW_NODE>" ]
         }

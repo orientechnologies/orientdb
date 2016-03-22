@@ -7,8 +7,6 @@
     "clusters": {
         "internal": {
         },
-        "index": {
-        },
         "client": {
             "servers" : [ "europe", "usa" ]
         },
