@@ -160,8 +160,8 @@ public class ORuntimeKeyIndexDefinition<T> extends OAbstractIndexDefinition {
    * @param indexType
    */
   public String toCreateIndexDDL(final String indexName, final String indexType, String engine) {
-    final StringBuilder ddl = new StringBuilder("create index ");
-    ddl.append(indexName).append(' ').append(indexType).append(' ');
+    final StringBuilder ddl = new StringBuilder("create index `");
+    ddl.append(indexName).append("` ").append(indexType).append(' ');
     ddl.append("runtime ").append(serializer.getId());
     return ddl.toString();
   }

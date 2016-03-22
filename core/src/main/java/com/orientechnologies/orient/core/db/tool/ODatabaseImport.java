@@ -19,19 +19,6 @@
  */
 package com.orientechnologies.orient.core.db.tool;
 
-import java.io.BufferedInputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.lang.reflect.InvocationTargetException;
-import java.text.ParseException;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.zip.GZIPInputStream;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.listener.OProgressListener;
@@ -51,23 +38,13 @@ import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexFactory;
-import com.orientechnologies.orient.core.index.OIndexManagerProxy;
-import com.orientechnologies.orient.core.index.OIndexes;
-import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
-import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.index.hashindex.local.OHashIndexFactory;
 import com.orientechnologies.orient.core.index.hashindex.local.OMurmurHash3HashFunction;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
-import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.metadata.security.OIdentity;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
@@ -83,6 +60,13 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
+
+import java.io.*;
+import java.lang.reflect.InvocationTargetException;
+import java.text.ParseException;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.zip.GZIPInputStream;
 
 /**
  * Import data from a file into a database.
@@ -1094,6 +1078,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       if (name.length() == 0)
         name = null;
 
+      name = OClassImpl.decodeClassName(name);
       if (name != null)
         // CHECK IF THE CLUSTER IS INCLUDED
         if (includeClusters != null) {
