@@ -41,7 +41,6 @@ public class ORemoteConnectionManager {
 
   protected final ConcurrentHashMap<String, ORemoteConnectionPool> connections;
   protected final long                                             timeout;
-  protected ORemoteConnectionPushListener                          listener;
 
   public ORemoteConnectionManager(final long iTimeout) {
     connections = new ConcurrentHashMap<String, ORemoteConnectionPool>();
@@ -87,7 +86,7 @@ public class ORemoteConnectionManager {
           localTimeout = Integer.parseInt(netLockTimeout.toString());
       }
 
-      pool = new ORemoteConnectionPool(maxPool, listener != null);
+      pool = new ORemoteConnectionPool(maxPool, iListener != null);
       final ORemoteConnectionPool prev = connections.putIfAbsent(iServerURL, pool);
       if (prev != null) {
         // ALREADY PRESENT, DESTROY IT AND GET THE ALREADY EXISTENT OBJ
