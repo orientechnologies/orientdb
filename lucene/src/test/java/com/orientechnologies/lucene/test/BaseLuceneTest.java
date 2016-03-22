@@ -34,6 +34,7 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Field;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by enricorisa on 19/09/14.
@@ -99,29 +100,55 @@ public abstract class BaseLuceneTest {
       storageType = OEngineMemory.NAME;
 
     buildDirectory = System.getProperty("buildDirectory", ".");
+    if (buildDirectory == null)
+      buildDirectory = ".";
+
+    if (remote)
+      System.out.println("REMOTE IS DISABLED IN LUCENE TESTS");
+    //    TODO: understand why remote tests aren't working
+    //    if (remote) {
+    //      try {
+    //
+    //        startServer(drop);
+    //
+    //        url = "remote:localhost/" + getDatabaseName();
+    //        databaseDocumentTx = new ODatabaseDocumentTx(url);
+    //        databaseDocumentTx.open("admin", "admin");
+    //      } catch (Exception e) {
+    //        e.printStackTrace();
+    //      }
+    //    } else {
 
     if (storageType.equals(OEngineLocalPaginated.NAME))
       url = OEngineLocalPaginated.NAME + ":" + buildDirectory + "/databases/" + getDatabaseName();
     else
       url = OEngineMemory.NAME + ":" + getDatabaseName();
 
-    databaseDocumentTx = new ODatabaseDocumentTx(url);
 
-    if (databaseDocumentTx.exists()) {
-      databaseDocumentTx.open("admin", "admin");
+    databaseDocumentTx = dropOrCreate(url, drop);
+    //    }
+  }
+
+  protected ODatabaseDocumentTx dropOrCreate(String url, boolean drop) {
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
+    if (db.exists()) {
+      db.open("admin", "admin");
       if (drop) {
         // DROP AND RE-CREATE IT
-        databaseDocumentTx.drop();
-        databaseDocumentTx = new ODatabaseDocumentTx(url);
-        databaseDocumentTx.create();
+        db.drop();
+        db = new ODatabaseDocumentTx(url);
+        db.create();
       }
     } else {
       // CREATE IT
-      databaseDocumentTx = new ODatabaseDocumentTx(url);
-      databaseDocumentTx.create();
+      db = new ODatabaseDocumentTx(url);
+      db.create();
+
     }
-    databaseDocumentTx.activateOnCurrentThread();
-    //    }
+
+    db.activateOnCurrentThread();
+
+    return db;
   }
 
   protected final String getDatabaseName() {
