@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.client.remote;
 
-import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -477,7 +476,7 @@ public class OStorageRemoteThread implements OStorageProxy {
     }
   }
 
-  public List<OPair<ORecordOperation, Object>> commit(final OTransaction iTx, Runnable callback) {
+  public List<ORecordOperation> commit(final OTransaction iTx, Runnable callback) {
     pushSession();
     try {
       delegate.commit(iTx, null);

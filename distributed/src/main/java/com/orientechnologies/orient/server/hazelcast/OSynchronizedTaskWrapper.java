@@ -22,6 +22,7 @@ package com.orientechnologies.orient.server.hazelcast;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
@@ -62,7 +63,8 @@ public class OSynchronizedTaskWrapper extends OAbstractRemoteTask {
   }
 
   @Override
-  public Object execute(long requestId, OServer iServer, ODistributedServerManager iManager, ODatabaseDocumentTx database)
+  public Object execute(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager,
+      ODatabaseDocumentTx database)
       throws Exception {
     try {
       if (task != null)

@@ -19,6 +19,10 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
+import java.io.*;
+import java.util.UUID;
+import java.util.concurrent.locks.Lock;
+
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -31,10 +35,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-
-import java.io.*;
-import java.util.UUID;
-import java.util.concurrent.locks.Lock;
 
 /**
  * Ask for synchronization of database from a remote node.
@@ -53,7 +53,7 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
   }
 
   @Override
-  public Object execute(final long requestId, final OServer iServer, final ODistributedServerManager iManager,
+  public Object execute(final ODistributedRequestId requestId, final OServer iServer, final ODistributedServerManager iManager,
       final ODatabaseDocumentTx database) throws Exception {
 
     if (!getNodeSource().equals(iManager.getLocalNodeName())) {
@@ -154,8 +154,7 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
                 "reusing last backup of database '%s' in directory: %s...", databaseName, backupFile.getAbsolutePath());
           }
 
-          final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(requestId, backupFile, 0, CHUNK_MAX_SIZE, endLSN,
-              false);
+          final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(backupFile, 0, CHUNK_MAX_SIZE, endLSN, false);
 
           ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
               "- transferring chunk #%d offset=%d size=%s...", 1, 0, OFileUtils.getSizeAsNumber(chunk.buffer.length));

@@ -210,7 +210,7 @@ public class OServerNetworkListener extends Thread {
           socket.setReceiveBufferSize(socketBufferSize);
 
           // CREATE A NEW PROTOCOL INSTANCE
-          ONetworkProtocol protocol = protocolType.newInstance();
+          final ONetworkProtocol protocol = protocolType.newInstance();
 
           // CONFIGURE THE PROTOCOL FOR THE INCOMING CONNECTION
           protocol.config(this, server, socket, configuration);

@@ -19,18 +19,21 @@
      */
 package com.orientechnologies.orient.server.distributed.task;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedStorage;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 /**
  * Distributed task to fix delete record in conflict on synchronization.
@@ -47,9 +50,13 @@ public class OResurrectRecordTask extends OAbstractRemoteTask {
   public OResurrectRecordTask() {
   }
 
-  public OResurrectRecordTask(final ORecordId iRid, final int iVersion) {
-    rid = iRid;
+  public OResurrectRecordTask(final OIdentifiable iRid, final int iVersion) {
+    rid = (ORecordId) iRid.getIdentity();
     version = iVersion;
+  }
+
+  public OResurrectRecordTask(final ORecord record) {
+    this((ORecordId) record.getIdentity(), record.getVersion());
   }
 
   public ORecordId getRid() {
@@ -61,8 +68,8 @@ public class OResurrectRecordTask extends OAbstractRemoteTask {
   }
 
   @Override
-  public Object execute(long requestId, final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
-      throws Exception {
+  public Object execute(ODistributedRequestId requestId, final OServer iServer, ODistributedServerManager iManager,
+      final ODatabaseDocumentTx database) throws Exception {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
         "resurrecting deleted record %s/%s v.%d", database.getName(), rid.toString(), version);
 

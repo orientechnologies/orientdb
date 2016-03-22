@@ -54,8 +54,8 @@ public class ORemoteTaskFactory {
     case OCompletedTxTask.FACTORYID: // 8
       return new OCompletedTxTask();
 
-    case OFixTxTask.FACTORYID: // 9
-      return new OFixTxTask();
+    // TODO: REASSIGN IDs
+    // 9
 
     case ORestartNodeTask.FACTORYID: // 10
       return new ORestartNodeTask();

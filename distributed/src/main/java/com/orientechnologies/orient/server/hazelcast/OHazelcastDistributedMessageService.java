@@ -141,18 +141,18 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
     final long chrono = Orient.instance().getProfiler().startChrono();
 
     try {
-      final long reqId = response.getRequestId();
+      final long msgId = response.getRequestId().getMessageId();
 
       // GET ASYNCHRONOUS MSG MANAGER IF ANY
-      final ODistributedResponseManager asynchMgr = responsesByRequestIds.get(reqId);
+      final ODistributedResponseManager asynchMgr = responsesByRequestIds.get(msgId);
       if (asynchMgr == null) {
         if (ODistributedServerLog.isDebugEnabled())
           ODistributedServerLog.debug(this, manager.getLocalNodeName(), response.getExecutorNodeName(), DIRECTION.IN,
-              "received response for message %d after the timeout (%dms)", reqId,
+              "received response for message %d after the timeout (%dms)", msgId,
               OGlobalConfiguration.DISTRIBUTED_ASYNCH_RESPONSES_TIMEOUT.getValueAsLong());
       } else if (asynchMgr.collectResponse(response)) {
         // ALL RESPONSE RECEIVED, REMOVE THE RESPONSE MANAGER WITHOUT WAITING THE PURGE THREAD REMOVE THEM FOR TIMEOUT
-        responsesByRequestIds.remove(reqId);
+        responsesByRequestIds.remove(msgId);
 
         // RETURN THE ASYNCH RESPONSE TIME
         return System.currentTimeMillis() - asynchMgr.getSentOn();

@@ -25,7 +25,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCommonConst;
-import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.client.remote.OStorageRemoteThreadLocal.OStorageRemoteSession;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
@@ -1263,7 +1262,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return result;
   }
 
-  public List<OPair<ORecordOperation, Object>> commit(final OTransaction iTx, final Runnable callback) {
+  public List<ORecordOperation> commit(final OTransaction iTx, final Runnable callback) {
     networkOperation(new OStorageRemoteOperation<Void>() {
       @Override
       public Void execute(OChannelBinaryAsynchClient network) throws IOException {

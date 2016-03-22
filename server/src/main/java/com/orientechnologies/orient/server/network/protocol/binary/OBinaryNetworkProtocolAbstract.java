@@ -19,10 +19,6 @@
  */
 package com.orientechnologies.orient.server.network.protocol.binary;
 
-import java.io.IOException;
-import java.net.Socket;
-import java.util.logging.Level;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -61,6 +57,10 @@ import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolEx
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
+
+import java.io.IOException;
+import java.net.Socket;
+import java.util.logging.Level;
 
 /**
  * Abstract base class for binary network implementations.
@@ -200,6 +200,8 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
         return;
       }
 
+      OLogManager.instance().debug(this, "Request id:" + clientTxId + " type:" + requestType);
+
       try {
         if (!executeRequest()) {
           OLogManager.instance().error(this, "Request not supported. Code: " + requestType);
@@ -211,6 +213,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       }
 
     } catch (IOException e) {
+      OLogManager.instance().debug(this, "I/O Error on client request=%d reqId=%d", clientTxId, requestType);
       handleConnectionError(channel, e);
       sendShutdown();
     } catch (OException e) {

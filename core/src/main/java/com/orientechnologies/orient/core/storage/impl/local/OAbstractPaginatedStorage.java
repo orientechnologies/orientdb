@@ -46,7 +46,6 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
-import com.orientechnologies.orient.core.db.record.OPlaceholder;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerShared;
@@ -1249,7 +1248,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
   }
 
-  public List<OPair<ORecordOperation, Object>> commit(final OTransaction clientTx, Runnable callback) {
+  public List<ORecordOperation> commit(final OTransaction clientTx, Runnable callback) {
     checkOpeness();
     checkLowDiskSpaceAndFullCheckpointRequests();
 
@@ -1265,7 +1264,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       }
     }
 
-    final List<OPair<ORecordOperation, Object>> result = new ArrayList<OPair<ORecordOperation, Object>>();
+    final List<ORecordOperation> result = new ArrayList<ORecordOperation>();
 
     stateLock.acquireReadLock();
     try {
@@ -1312,7 +1311,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           }
 
           for (ORecordOperation txEntry : entries) {
-            result.add(new OPair<ORecordOperation, Object>(txEntry, commitEntry(txEntry, positions.get(txEntry))));
+            commitEntry(txEntry, positions.get(txEntry));
+            result.add(txEntry);
           }
 
           if (callback != null)
@@ -3435,20 +3435,18 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     return null;
   }
 
-  private Object commitEntry(final ORecordOperation txEntry, final OPhysicalPosition allocated) throws IOException {
+  private void commitEntry(final ORecordOperation txEntry, final OPhysicalPosition allocated) throws IOException {
 
     final ORecord rec = txEntry.getRecord();
     if (txEntry.type != ORecordOperation.DELETED && !rec.isDirty())
       // NO OPERATION
-      return null;
+      return;
 
     ORecordId rid = (ORecordId) rec.getIdentity();
 
     if (txEntry.type == ORecordOperation.UPDATED && rid.isNew())
       // OVERWRITE OPERATION AS CREATE
       txEntry.type = ORecordOperation.CREATED;
-
-    Object result = null;
 
     ORecordSerializationContext.pushContext();
     try {
@@ -3457,7 +3455,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       if (cluster.getName().equals(OMetadataDefault.CLUSTER_INDEX_NAME)
           || cluster.getName().equals(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME))
         // AVOID TO COMMIT INDEX STUFF
-        return null;
+        return;
 
       if (rec instanceof OTxListener)
         ((OTxListener) rec).onEvent(txEntry, OTxListener.EVENT.BEFORE_COMMIT);
@@ -3475,14 +3473,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
               allocated).getResult();
 
           ORecordInternal.setVersion(rec, ppos.recordVersion);
-          result = new OPlaceholder(rid, ppos.recordVersion);
         } else {
           // USE -2 AS VERSION TO AVOID INCREMENTING THE VERSION
           ORecordInternal.setVersion(rec,
               updateRecord(rid, ORecordInternal.isContentChanged(rec), stream, -2, ORecordInternal.getRecordType(rec), -1, null)
                   .getResult());
-          result = new OPlaceholder(rid, rec.getVersion());
         }
+        txEntry.getRecord().fromStream(stream);
         break;
       }
 
@@ -3495,13 +3492,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         if (updateRes.getModifiedRecordContent() != null) {
           ORecordInternal.fill(rec, rid, updateRes.getResult(), updateRes.getModifiedRecordContent(), false);
         }
-        result = new OPlaceholder(rid, rec.getVersion());
+
+        txEntry.getRecord().fromStream(stream);
         break;
       }
 
       case ORecordOperation.DELETED: {
         deleteRecord(rid, rec.getVersion(), -1, null);
-        result = new OPlaceholder(rid, rec.getVersion());
         break;
       }
 
@@ -3521,8 +3518,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     if (rec instanceof OTxListener)
       ((OTxListener) rec).onEvent(txEntry, OTxListener.EVENT.AFTER_COMMIT);
-
-    return result;
   }
 
   private void checkClusterSegmentIndexRange(final int iClusterId) {

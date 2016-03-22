@@ -1940,10 +1940,10 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     final OIndex<?> autoShardingIndex = getAutoShardingIndex();
     if (autoShardingIndex != null) {
       // OVERRIDE CLUSTER SELECTION
-      setClusterSelectionInternal(new OAutoShardingClusterSelectionStrategy(this, autoShardingIndex));
+      this.clusterSelection = new OAutoShardingClusterSelectionStrategy(this, autoShardingIndex);
     } else if (clusterSelection instanceof OAutoShardingClusterSelectionStrategy)
       // REMOVE AUTO SHARDING CLUSTER SELECTION
-      setClusterSelectionInternal(new ORoundRobinClusterSelectionStrategy());
+      this.clusterSelection = new ORoundRobinClusterSelectionStrategy();
   }
 
   @Override

@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
@@ -45,7 +46,8 @@ public class ORestartNodeTask extends OAbstractRemoteTask {
   }
 
   @Override
-  public Object execute(long requestId, final OServer iServer, final ODistributedServerManager iManager, final ODatabaseDocumentTx database)
+  public Object execute(ODistributedRequestId requestId, final OServer iServer, final ODistributedServerManager iManager,
+      final ODatabaseDocumentTx database)
       throws Exception {
 
     ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.IN,

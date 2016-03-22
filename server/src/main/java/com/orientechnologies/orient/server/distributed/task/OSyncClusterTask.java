@@ -19,10 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
-import java.io.*;
-import java.util.UUID;
-import java.util.concurrent.locks.Lock;
-
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -34,11 +30,12 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPo
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedDatabaseChunk;
-import com.orientechnologies.orient.server.distributed.ODistributedException;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+
+import java.io.*;
+import java.util.UUID;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Ask for deployment of single cluster from a remote node.
@@ -68,8 +65,8 @@ public class OSyncClusterTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public Object execute(long requestId, final OServer iServer, final ODistributedServerManager iManager, final ODatabaseDocumentTx database)
-      throws Exception {
+  public Object execute(ODistributedRequestId requestId, final OServer iServer, final ODistributedServerManager iManager,
+      final ODatabaseDocumentTx database) throws Exception {
 
     if (getNodeSource() == null || !getNodeSource().equals(iManager.getLocalNodeName())) {
       if (database == null)
@@ -167,7 +164,7 @@ public class OSyncClusterTask extends OAbstractReplicatedTask {
                 "Sending the compressed cluster '%s.%s' over the NETWORK to node '%s', size=%s...", databaseName, clusterName,
                 getNodeSource(), OFileUtils.getSizeAsString(fileSize));
 
-            final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(0, backupFile, 0, CHUNK_MAX_SIZE,
+            final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(backupFile, 0, CHUNK_MAX_SIZE,
                 new OLogSequenceNumber(-1, -1), false);
 
             ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,

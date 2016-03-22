@@ -19,11 +19,12 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.common.util.OCallable;
-import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
-
-import java.util.List;
+import java.util.Collection;
 import java.util.Set;
+
+import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 /**
  * Asynchronous distributed operation.
@@ -31,15 +32,15 @@ import java.util.Set;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class OAsynchDistributedOperation {
-  private final String       databaseName;
-  private final Set<String>  clusterNames;
-  private final List<String> nodes;
-  private final ORemoteTask  task;
-  private final OCallable    callback;
-  private final Object       localResult;
+  private final String                                                  databaseName;
+  private final Set<String>                                             clusterNames;
+  private final Collection<String>                                      nodes;
+  private final ORemoteTask                                             task;
+  private final OCallable<Object, OPair<ODistributedRequestId, Object>> callback;
+  private final Object                                                  localResult;
 
-  public OAsynchDistributedOperation(final String iDatabaseName, final Set<String> iClusterNames, final List<String> iNodes,
-      final ORemoteTask iTask, final OCallable iCallback, final Object iLocalResult) {
+  public OAsynchDistributedOperation(final String iDatabaseName, final Set<String> iClusterNames, final Collection<String> iNodes,
+      final ORemoteTask iTask, final OCallable<Object, OPair<ODistributedRequestId, Object>> iCallback, final Object iLocalResult) {
     databaseName = iDatabaseName;
     clusterNames = iClusterNames;
     nodes = iNodes;
@@ -52,7 +53,7 @@ public class OAsynchDistributedOperation {
     return clusterNames;
   }
 
-  public List<String> getNodes() {
+  public Collection<String> getNodes() {
     return nodes;
   }
 
@@ -64,7 +65,7 @@ public class OAsynchDistributedOperation {
     return databaseName;
   }
 
-  public OCallable getCallback() {
+  public OCallable<Object, OPair<ODistributedRequestId, Object>> getCallback() {
     return callback;
   }
 

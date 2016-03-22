@@ -410,6 +410,8 @@ public class OClientConnectionManager {
 
       protocol.sendShutdown();
 
+      OLogManager.instance().info(this, "Sending shutdown to thread %s", protocol);
+
       OCommandRequestText command = entry.getValue().getData().command;
       if (command != null && command.isIdempotent()) {
         protocol.interrupt();
@@ -419,35 +421,34 @@ public class OClientConnectionManager {
           continue;
         }
 
-        try {
-          final Socket socket;
-          if (protocol == null || protocol.getChannel() == null)
-            socket = null;
-          else
-            socket = protocol.getChannel().socket;
+        final Socket socket;
+        if (protocol == null || protocol.getChannel() == null)
+          socket = null;
+        else
+          socket = protocol.getChannel().socket;
 
-          if (socket != null && !socket.isClosed() && !socket.isInputShutdown()) {
+        if (socket != null && !socket.isClosed() && !socket.isInputShutdown()) {
+          try {
+            OLogManager.instance().info(this, "Closing input socket of thread %s", protocol);
+            socket.shutdownInput();
+          } catch (IOException e) {
+            OLogManager.instance().info(this, "Error on closing connection of %s client during shutdown", e,
+                entry.getValue().getRemoteAddress());
+          }
+        }
+        if (protocol.isAlive()) {
+          if (protocol instanceof ONetworkProtocolBinary && ((ONetworkProtocolBinary) protocol).getRequestType() == -1) {
             try {
-              socket.shutdownInput();
-            } catch (IOException e) {
-              OLogManager.instance().debug(this, "Error on closing connection of %s client during shutdown", e,
-                  entry.getValue().getRemoteAddress());
+              OLogManager.instance().info(this, "Closing socket of thread %s", protocol);
+              protocol.getChannel().close();
+            } catch (Exception e) {
+              OLogManager.instance().info(this, "Error during chanel close at shutdown", e);
             }
+            OLogManager.instance().info(this, "Sending interrupt signal to thread %s", protocol);
+            protocol.interrupt();
           }
-          if (protocol.isAlive()) {
-            if (protocol instanceof ONetworkProtocolBinary && ((ONetworkProtocolBinary) protocol).getRequestType() == -1) {
-              try {
-                protocol.getChannel().close();
-              } catch (Exception e) {
-                OLogManager.instance().debug(this, "Error during chanel close at shutdown", e);
-              }
-              protocol.interrupt();
-            }
 
-            protocol.join();
-          }
-        } catch (InterruptedException e) {
-          // NOT Needed to handle
+          // protocol.join();
         }
       }
     }

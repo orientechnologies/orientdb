@@ -29,11 +29,8 @@ import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 import java.io.Serializable;
@@ -49,7 +46,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 public class ODistributedWorker extends Thread {
 
   protected final OHazelcastDistributedDatabase           distributed;
-  protected final OHazelcastPlugin                        manager;
+  protected final ODistributedServerManager               manager;
   protected final OHazelcastDistributedMessageService     msgService;
   protected final String                                  databaseName;
   protected final ArrayBlockingQueue<ODistributedRequest> localQueue;
@@ -62,7 +59,7 @@ public class ODistributedWorker extends Thread {
     distributed = iDistributed;
     localQueue = new ArrayBlockingQueue<ODistributedRequest>(OGlobalConfiguration.DISTRIBUTED_LOCAL_QUEUESIZE.getValueAsInteger());
     databaseName = iDatabaseName;
-    manager = distributed.manager;
+    manager = distributed.getManager();
     msgService = distributed.msgService;
   }
 
@@ -80,14 +77,14 @@ public class ODistributedWorker extends Thread {
   @Override
   public void run() {
     for (long processedMessages = 0; running; processedMessages++) {
-      int senderNodeId = -1;
+      ODistributedRequestId reqId = null;
       ODistributedRequest message = null;
       try {
         message = readRequest();
 
         if (message != null) {
           message.getId();
-          senderNodeId = message.getSenderNodeId();
+          reqId = message.getId();
           onMessage(message);
         }
 
@@ -105,9 +102,10 @@ public class ODistributedWorker extends Thread {
         if (e.getCause() instanceof InterruptedException)
           Thread.interrupted();
         else
-          ODistributedServerLog.error(this, manager.getLocalNodeName(), manager.getNodeNameById(senderNodeId),
-              ODistributedServerLog.DIRECTION.IN, "Error on executing distributed request %d: %s", e,
-              message != null ? message.getId() : -1, message != null ? message.getTask() : "-");
+          ODistributedServerLog.error(this, manager.getLocalNodeName(),
+              reqId != null ? manager.getNodeNameById(reqId.getNodeId()) : "?", ODistributedServerLog.DIRECTION.IN,
+              "Error on executing distributed request %d: %s", e, message != null ? message.getId() : -1,
+              message != null ? message.getTask() : "-");
       }
     }
 
@@ -118,7 +116,7 @@ public class ODistributedWorker extends Thread {
   public void initDatabaseInstance() {
     if (database == null) {
       // OPEN IT
-      database = (ODatabaseDocumentTx) manager.getServerInstance().openDatabase(databaseName, "internal", "internal", null, true);
+      database = distributed.getDatabaseInstance();
 
     } else if (database.isClosed()) {
       // DATABASE CLOSED, REOPEN IT
@@ -173,11 +171,11 @@ public class ODistributedWorker extends Thread {
     if (manager.isOffline())
       waitNodeIsOnline();
 
-    final String senderNodeName = manager.getNodeNameById(req.getSenderNodeId());
-
-    if (ODistributedServerLog.isDebugEnabled())
+    if (ODistributedServerLog.isDebugEnabled()) {
+      final String senderNodeName = manager.getNodeNameById(req.getId().getNodeId());
       ODistributedServerLog.debug(this, manager.getLocalNodeName(), senderNodeName, DIRECTION.IN,
           "Processing request=%s sourceNode=%s", req, senderNodeName);
+    }
 
     return req;
   }
@@ -193,7 +191,7 @@ public class ODistributedWorker extends Thread {
     OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED);
 
     try {
-      final String senderNodeName = manager.getNodeNameById(iRequest.getSenderNodeId());
+      final String senderNodeName = manager.getNodeNameById(iRequest.getId().getNodeId());
 
       final ORemoteTask task = iRequest.getTask();
 
@@ -279,12 +277,12 @@ public class ODistributedWorker extends Thread {
     sendResponseBack(this, manager, iRequest, responsePayload);
   }
 
-  public static void sendResponseBack(final Object iContext, final ODistributedServerManager manager, final ODistributedRequest iRequest,
-      Serializable responsePayload) {
-    final String senderNodeName = manager.getNodeNameById(iRequest.getSenderNodeId());
+  public static void sendResponseBack(final Object iContext, final ODistributedServerManager manager,
+      final ODistributedRequest iRequest, Serializable responsePayload) {
+    final String senderNodeName = manager.getNodeNameById(iRequest.getId().getNodeId());
 
-    final OHazelcastDistributedResponse response = new OHazelcastDistributedResponse(iRequest.getId(), manager.getLocalNodeName(),
-        senderNodeName, responsePayload);
+    final ODistributedResponse response = new ODistributedResponse(iRequest.getId(), manager.getLocalNodeName(), senderNodeName,
+        responsePayload);
 
     try {
       // GET THE SENDER'S RESPONSE QUEUE

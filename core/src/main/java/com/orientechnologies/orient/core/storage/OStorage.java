@@ -26,7 +26,6 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 
 import com.orientechnologies.common.concur.resource.OSharedContainer;
-import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
@@ -101,7 +100,7 @@ public interface OStorage extends OBackupable, OSharedContainer {
   boolean cleanOutRecord(ORecordId recordId, int recordVersion, int iMode, ORecordCallback<Boolean> callback);
 
   // TX OPERATIONS
-  List<OPair<ORecordOperation, Object>> commit(OTransaction iTx, Runnable callback);
+  List<ORecordOperation> commit(OTransaction iTx, Runnable callback);
 
   // TX OPERATIONS
   void rollback(OTransaction iTx);

@@ -589,10 +589,10 @@ public enum OGlobalConfiguration {
   // DISTRIBUTED
 
   DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT("distributed.crudTaskTimeout", "Maximum timeout (in ms) to wait for CRUD remote tasks.",
-      Long.class, 3000l, true),
+      Long.class, 300000l, true),
 
   DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT("distributed.commandTaskTimeout",
-      "Maximum timeout (in ms) to wait for Command remote tasks.", Long.class, 10000l, true),
+      "Maximum timeout (in ms) to wait for Command remote tasks.", Long.class, 1000000l, true),
 
   DISTRIBUTED_COMMAND_LONG_TASK_SYNCH_TIMEOUT("distributed.commandLongTaskTimeout",
       "Maximum timeout (in ms) to wait for Long-running remote tasks.", Long.class, 24 * 60 * 60 * 1000, true),

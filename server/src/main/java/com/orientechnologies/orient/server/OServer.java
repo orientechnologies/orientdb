@@ -443,10 +443,10 @@ public class OServer {
             OLogManager.instance().error(this, "Error during deactivation of server lifecycle listener %s", e, l);
           }
 
+        clientConnectionManager.shutdown();
+
         if (pluginManager != null)
           pluginManager.shutdown();
-
-        clientConnectionManager.shutdown();
 
       } finally {
         lock.unlock();

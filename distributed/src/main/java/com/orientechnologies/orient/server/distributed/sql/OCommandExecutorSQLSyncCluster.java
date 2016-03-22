@@ -149,8 +149,10 @@ public class OCommandExecutorSQLSyncCluster extends OCommandExecutorSQLAbstract 
           "Cannot synchronize cluster '" + clusterName + "' because is not configured on any running nodes");
 
     final OSyncClusterTask task = new OSyncClusterTask(clusterName);
-    final Map<String, Object> results = (Map<String, Object>) dManager.sendRequest(databaseName, null, nodesWhereClusterIsCfg, task,
+    final ODistributedResponse response = dManager.sendRequest(databaseName, null, nodesWhereClusterIsCfg, task,
         ODistributedRequest.EXECUTION_MODE.RESPONSE, null);
+
+    final Map<String, Object> results = (Map<String, Object>) response.getPayload();
 
     File tempFile = null;
     FileOutputStream out = null;

@@ -19,20 +19,18 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedDatabaseChunk;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+import com.orientechnologies.orient.server.distributed.*;
 
 /**
  * Ask for a database chunk.
@@ -60,13 +58,13 @@ public class OCopyDatabaseChunkTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public Object execute(long requestId, final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
-      throws Exception {
+  public Object execute(ODistributedRequestId requestId, final OServer iServer, ODistributedServerManager iManager,
+      final ODatabaseDocumentTx database) throws Exception {
     final File f = new File(fileName);
     if (!f.exists())
       throw new IllegalArgumentException("File name '" + fileName + "' not found");
 
-    final ODistributedDatabaseChunk result = new ODistributedDatabaseChunk(0, f, offset, OSyncDatabaseTask.CHUNK_MAX_SIZE,
+    final ODistributedDatabaseChunk result = new ODistributedDatabaseChunk(f, offset, OSyncDatabaseTask.CHUNK_MAX_SIZE,
         new OLogSequenceNumber(-1, -1), false);
 
     ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,

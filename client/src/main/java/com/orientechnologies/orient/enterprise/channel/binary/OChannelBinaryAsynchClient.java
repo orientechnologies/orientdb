@@ -149,8 +149,11 @@ public class OChannelBinaryAsynchClient extends OChannelBinaryClientAbstract {
 
           final long start = System.currentTimeMillis();
 
-          // WAIT MAX 30 SECOND AND RETRY, THIS IS UNBLOCKED BY ANOTHER THREAD IN CASE THE RESPONSE FOR THIS IS ARRIVED
-          readCondition.await(30, TimeUnit.SECONDS);
+          if (iTimeout > 0)
+            readCondition.await(iTimeout, TimeUnit.MILLISECONDS);
+          else
+            // WAIT MAX 3 SECOND AND RETRY, THIS IS UNBLOCKED BY ANOTHER THREAD IN CASE THE RESPONSE FOR THIS IS ARRIVED
+            readCondition.await(3000, TimeUnit.MILLISECONDS);
 
           if (debug) {
             final long now = System.currentTimeMillis();

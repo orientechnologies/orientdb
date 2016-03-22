@@ -20,35 +20,36 @@
 package com.orientechnologies.orient.server.distributed.task;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
-import com.orientechnologies.orient.core.id.ORID;
 
 /**
- * Exception thrown when a record is locked by a running distributed transaction.
+ * Exception thrown when a distributed operation doesn't reach the quorum.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class ODistributedRecordLockedException extends ONeedRetryException {
-  protected ORID rid;
+public class ODistributedOperationException extends ONeedRetryException {
 
-  protected ODistributedRecordLockedException(ODistributedRecordLockedException exception) {
+  private static final long serialVersionUID = 1L;
+
+  protected ODistributedOperationException(ODistributedOperationException exception) {
     super(exception);
   }
 
-  public ODistributedRecordLockedException(final ORID iRid) {
-    super("Record with rid " + iRid + " is locked");
-    rid = iRid;
-  }
-
-  public ORID getRid() {
-    return rid;
+  public ODistributedOperationException(String message) {
+    super(message);
   }
 
   @Override
-  public boolean equals(Object obj) {
-    if (!(obj instanceof ODistributedRecordLockedException))
+  public boolean equals(final Object obj) {
+    if (obj == null || !obj.getClass().equals(getClass()))
       return false;
 
-    return rid.equals(((ODistributedRecordLockedException) obj).rid);
+    String message = ((ODistributedOperationException) obj).getMessage();
+    return (getMessage() == message) || (getMessage() != null && getMessage().equals(message));
+  }
+
+  @Override
+  public int hashCode() {
+    return getMessage() != null ? getMessage().hashCode() : 0;
   }
 }

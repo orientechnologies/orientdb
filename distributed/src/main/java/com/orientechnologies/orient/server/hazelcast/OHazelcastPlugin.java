@@ -468,10 +468,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   }
 
   @Override
-  public Object sendRequest(final String iDatabaseName, final Collection<String> iClusterNames, final List<String> iTargetNodes,
-      final ORemoteTask iTask, final EXECUTION_MODE iExecutionMode, final Object localResult) {
+  public ODistributedResponse sendRequest(final String iDatabaseName, final Collection<String> iClusterNames,
+      final Collection<String> iTargetNodes, final ORemoteTask iTask, final ODistributedRequest.EXECUTION_MODE iExecutionMode,
+      final Object localResult) {
 
-    final OHazelcastDistributedRequest req = new OHazelcastDistributedRequest(nodeId, iDatabaseName, iTask, iExecutionMode);
+    final ODistributedRequest req = new ODistributedRequest(nodeId, iDatabaseName, iTask, iExecutionMode);
 
     final ODatabaseDocument currentDatabase = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     if (currentDatabase != null && currentDatabase.getUser() != null)
@@ -492,27 +493,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       throw new ODistributedException("Distributed database '" + iDatabaseName + "' not found on server '" + nodeName + "'");
     }
 
-    final ODistributedResponse response = db.send2Nodes(req, iClusterNames, iTargetNodes, iExecutionMode, localResult);
-    if (response != null)
-      return response.getPayload();
-
-    return null;
-  }
-
-  @Override
-  public ODistributedRequest createRequest() {
-    return new OHazelcastDistributedRequest();
-  }
-
-  @Override
-  public ODistributedResponse createResponse() {
-    return new OHazelcastDistributedResponse();
-  }
-
-  @Override
-  public ODistributedResponse createResponse(final long requestId, final String executorNodeName, final String senderNodeName,
-      final Serializable payload) {
-    return new OHazelcastDistributedResponse(requestId, executorNodeName, senderNodeName, payload);
+    return db.send2Nodes(req, iClusterNames, iTargetNodes, iExecutionMode, localResult);
   }
 
   /**
@@ -530,15 +511,15 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       final Serializable result = (Serializable) task.execute(req.getId(), serverInstance, this, database);
 
       if (result instanceof Throwable && !(result instanceof OException))
-        ODistributedServerLog.error(this, nodeName, getNodeNameById(req.getSenderNodeId()), DIRECTION.IN,
+        ODistributedServerLog.error(this, nodeName, getNodeNameById(req.getId().getNodeId()), DIRECTION.IN,
             "error on executing request %d (%s) on local node: ", (Throwable) result, req.getId(), req.getTask());
 
       return result;
 
     } catch (Throwable e) {
       if (!(e instanceof OException))
-        ODistributedServerLog.error(this, nodeName, getNodeNameById(req.getSenderNodeId()), DIRECTION.IN,
-            "error on executing distributed request %d on local node: %s", e, req.getId(), req.getTask());
+        ODistributedServerLog.error(this, nodeName, getNodeNameById(req.getId().getNodeId()), DIRECTION.IN,
+            "error on executing distributed request %s on local node: %s", e, req.getId(), req.getTask());
 
       return e;
     }
@@ -743,7 +724,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     if (cfg != null)
       return cfg.field("name");
 
-    if (iMember.getUuid().equals(nodeUuid))
+    if (nodeUuid.equals(iMember.getUuid()))
       // LOCAL NODE (NOT YET NAMED)
       return nodeName;
 
@@ -804,6 +785,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       final Member member = iEvent.getMember();
       final String nodeLeftName = getNodeName(member);
       if (nodeLeftName != null) {
+        final int nodeLeftId = getNodeIdByName(nodeLeftName);
+
         // REMOVE INTRA SERVER CONNECTION
         closeRemoteServer(nodeLeftName);
 
@@ -814,7 +797,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         // UNLOCK ANY PENDING LOCKS
         if (messageService != null)
           for (String dbName : messageService.getDatabases())
-            messageService.getDatabase(dbName).unlockRecords(nodeLeftName);
+            messageService.getDatabase(dbName).handleUnreachableNode(nodeLeftId);
 
         final HashSet<String> entriesToRemove = new HashSet<String>();
 
@@ -1099,7 +1082,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   }
 
   public HazelcastInstance getHazelcastInstance() {
-    while (hazelcastInstance == null) {
+    while (hazelcastInstance == null && !Thread.currentThread().isInterrupted()) {
       // WAIT UNTIL THE INSTANCE IS READY
       try {
         Thread.sleep(100);
@@ -1255,7 +1238,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           databaseName, entry.getValue());
 
       final Map<String, Object> results = (Map<String, Object>) sendRequest(databaseName, null, targetNodes, deployTask,
-          EXECUTION_MODE.RESPONSE, null);
+          EXECUTION_MODE.RESPONSE, null).getPayload();
 
       ODistributedServerLog.info(this, nodeName, entry.getKey(), DIRECTION.IN, "Receiving delta sync for '%s'...", databaseName);
 
@@ -1336,7 +1319,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     final OAbstractReplicatedTask deployTask = new OSyncDatabaseTask();
 
     final Map<String, Object> results = (Map<String, Object>) sendRequest(databaseName, null, selectedNodes, deployTask,
-        EXECUTION_MODE.RESPONSE, null);
+        EXECUTION_MODE.RESPONSE, null).getPayload();
 
     ODistributedServerLog.debug(this, nodeName, selectedNodes.toString(), DIRECTION.OUT, "deploy returned: %s", results);
 
@@ -1460,10 +1443,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
               long fileSize = writeDatabaseChunk(1, chunk, fOut);
               for (int chunkNum = 2; !chunk.last; chunkNum++) {
-                final Object result = sendRequest(databaseName, null, OMultiValue.getSingletonList(iNode),
+                final ODistributedResponse response = sendRequest(databaseName, null, OMultiValue.getSingletonList(iNode),
                     new OCopyDatabaseChunkTask(chunk.filePath, chunkNum, chunk.offset + chunk.buffer.length, false),
                     EXECUTION_MODE.RESPONSE, null);
 
+                final Object result = response.getPayload();
                 if (result instanceof Boolean)
                   continue;
                 else if (result instanceof Exception) {
@@ -1957,8 +1941,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   public void stopNode(final String iNode) throws IOException {
     ODistributedServerLog.warn(this, nodeName, null, DIRECTION.NONE, "Sending request of stopping node '%s'...", iNode);
 
-    final OHazelcastDistributedRequest request = new OHazelcastDistributedRequest(nodeId, null, new OStopNodeTask(),
-        EXECUTION_MODE.NO_RESPONSE);
+    final ODistributedRequest request = new ODistributedRequest(nodeId, null, new OStopNodeTask(), EXECUTION_MODE.NO_RESPONSE);
 
     getRemoteServer(iNode).sendRequest(request, iNode);
   }
@@ -1966,8 +1949,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   public void restartNode(final String iNode) throws IOException {
     ODistributedServerLog.warn(this, nodeName, null, DIRECTION.NONE, "Sending request of restarting node '%s'...", iNode);
 
-    final OHazelcastDistributedRequest request = new OHazelcastDistributedRequest(nodeId, null, new ORestartNodeTask(),
-        EXECUTION_MODE.NO_RESPONSE);
+    final ODistributedRequest request = new ODistributedRequest(nodeId, null, new ORestartNodeTask(), EXECUTION_MODE.NO_RESPONSE);
 
     getRemoteServer(iNode).sendRequest(request, iNode);
   }
@@ -2014,8 +1996,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
   }
 
-  public AtomicLong getLocalMessageIdCounter() {
-    return localMessageIdCounter;
+  public long getNextMessageIdCounter() {
+    return localMessageIdCounter.getAndIncrement();
   }
 
   private void closeRemoteServer(final String node) {

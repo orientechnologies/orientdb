@@ -299,12 +299,12 @@ public class ODistributedConfiguration {
    * @param iClusterNames
    *          Set of cluster names to find
    */
-  public List<String> getServers(Collection<String> iClusterNames) {
+  public Set<String> getServers(Collection<String> iClusterNames) {
     synchronized (configuration) {
       if (iClusterNames == null || iClusterNames.isEmpty())
         iClusterNames = DEFAULT_CLUSTER_NAME;
 
-      final List<String> partitions = new ArrayList<String>(iClusterNames.size());
+      final Set<String> partitions = new HashSet<String>(iClusterNames.size());
       for (String p : iClusterNames) {
         final List<String> serverList = getClusterConfiguration(p).field("servers");
         if (serverList != null) {

@@ -22,14 +22,15 @@ package com.orientechnologies.orient.server.distributed;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -49,14 +50,11 @@ public interface ODistributedServerManager {
     OFFLINE, SYNCHRONIZING, ONLINE, BACKUP
   };
 
+  Set<String> getAvailableNodeNames(String databaseName);
+
+  OServer getServerInstance();
+
   boolean isEnabled();
-
-  ODistributedRequest createRequest();
-
-  ODistributedResponse createResponse();
-
-  ODistributedResponse createResponse(final long requestId, final String executorNodeName, final String senderNodeName,
-      final Serializable payload);
 
   ODistributedServerManager registerLifecycleListener(ODistributedLifecycleListener iListener);
 
@@ -83,6 +81,8 @@ public interface ODistributedServerManager {
   ODistributedMessageService getMessageService();
 
   void updateCachedDatabaseConfiguration(String iDatabaseName, ODocument cfg, boolean iSaveToDisk, boolean iDeployToCluster);
+
+  long getNextMessageIdCounter();
 
   void updateLastClusterChange();
 
@@ -142,8 +142,8 @@ public interface ODistributedServerManager {
    * 
    * @return
    */
-  Object sendRequest(String iDatabaseName, Collection<String> iClusterNames, List<String> iTargetNodeNames, ORemoteTask iTask,
-      EXECUTION_MODE iExecutionMode, Object localResult);
+  ODistributedResponse sendRequest(String iDatabaseName, Collection<String> iClusterNames, Collection<String> iTargetNodeNames,
+      ORemoteTask iTask, EXECUTION_MODE iExecutionMode, Object localResult);
 
   ODocument getStats();
 

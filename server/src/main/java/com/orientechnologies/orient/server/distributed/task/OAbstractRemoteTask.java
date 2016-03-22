@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.command.OCommandDistributedReplicateReq
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
 /**
@@ -33,6 +34,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
  */
 public abstract class OAbstractRemoteTask implements ORemoteTask {
   private static final long  serialVersionUID = 1L;
+
   protected transient String nodeSource;
 
   /**
@@ -47,8 +49,8 @@ public abstract class OAbstractRemoteTask implements ORemoteTask {
   public abstract OCommandDistributedReplicateRequest.QUORUM_TYPE getQuorumType();
 
   @Override
-  public abstract Object execute(long requestId, OServer iServer, ODistributedServerManager iManager, ODatabaseDocumentTx database)
-      throws Exception;
+  public abstract Object execute(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager,
+      ODatabaseDocumentTx database) throws Exception;
 
   @Override
   public int getPartitionKey() {

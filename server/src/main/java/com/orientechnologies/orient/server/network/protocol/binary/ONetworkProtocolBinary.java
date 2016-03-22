@@ -846,7 +846,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     final byte[] serializedReq = channel.readBytes();
 
     final ODistributedServerManager manager = server.getDistributedManager();
-    final ODistributedRequest req = manager.createRequest();
+    final ODistributedRequest req = new ODistributedRequest();
 
     final ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(serializedReq));
     try {
@@ -857,7 +857,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       in.close();
     }
 
-    ODistributedServerLog.debug(this, manager.getLocalNodeName(), manager.getNodeNameById(req.getSenderNodeId()),
+    ODistributedServerLog.debug(this, manager.getLocalNodeName(), manager.getNodeNameById(req.getId().getNodeId()),
         ODistributedServerLog.DIRECTION.IN, "Received request %s (%d bytes)", req, serializedReq.length);
 
     final String dbName = req.getDatabaseName();
@@ -878,7 +878,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     final byte[] serializedResponse = channel.readBytes();
 
     final ODistributedServerManager manager = server.getDistributedManager();
-    final ODistributedResponse response = manager.createResponse();
+    final ODistributedResponse response = new ODistributedResponse();
 
     final ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(serializedResponse));
     try {
@@ -2099,6 +2099,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     try {
       shutdownThread.join();
     } catch (InterruptedException ignored) {
+      Thread.currentThread().interrupt();
     }
   }
 

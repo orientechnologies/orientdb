@@ -42,7 +42,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIR
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -69,7 +68,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   }
 
   public OCreateRecordTask(final ORecord record) {
-    this((ORecordId) record.getIdentity(), record.toStream(), record.getVersion(), ORecordInternal.getRecordType(record));
+    this((ORecordId) record.getIdentity(), record.toStream(), record.getVersion() - 1, ORecordInternal.getRecordType(record));
 
     if (rid.getClusterId() == ORID.CLUSTER_ID_INVALID) {
       final OClass clazz;
@@ -92,17 +91,9 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
     return record;
   }
 
-  public void resetRecord() {
-    record = null;
-  }
-
   @Override
-  void setLockRecord(boolean lockRecord) {
-  }
-
-  @Override
-  public Object execute(final long requestId, final OServer iServer, final ODistributedServerManager iManager,
-      final ODatabaseDocumentTx database) throws Exception {
+  public Object executeRecordTask(final ODistributedRequestId requestId, final OServer iServer,
+      final ODistributedServerManager iManager, final ODatabaseDocumentTx database) throws Exception {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "creating record %s/%s v.%d...",
         database.getName(), rid.toString(), version);
 
@@ -164,7 +155,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   }
 
   @Override
-  public List<ORemoteTask> getFixTask(final ODistributedRequest iRequest, ORemoteTask iOriginalTask, final Object iBadResponse,
+  public ORemoteTask getFixTask(final ODistributedRequest iRequest, ORemoteTask iOriginalTask, final Object iBadResponse,
       final Object iGoodResponse, final String executorNode, final ODistributedServerManager dManager) {
     if (iBadResponse instanceof Throwable)
       return null;
@@ -172,7 +163,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
     final OPlaceholder badResult = (OPlaceholder) iBadResponse;
     final OPlaceholder goodResult = (OPlaceholder) iGoodResponse;
 
-    final List<ORemoteTask> result = new ArrayList<ORemoteTask>(2);
+    ORemoteTask result = null;
 
     if (!badResult.equals(goodResult)) {
       // CREATE RECORD FAILED TO HAVE THE SAME RIDS. FORCE REALIGNING OF DATA CLUSTERS
@@ -191,8 +182,10 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
             final List<String> nodes = dCfg.getServers(ODatabaseRecordThreadLocal.INSTANCE.get().getClusterNameById(clusterId),
                 dManager.getLocalNodeName());
 
-            final ORawBuffer remoteReadRecord = (ORawBuffer) dManager.sendRequest(iRequest.getDatabaseName(), null, nodes,
+            final ODistributedResponse response = dManager.sendRequest(iRequest.getDatabaseName(), null, nodes,
                 new OReadRecordTask(toUpdateRid), ODistributedRequest.EXECUTION_MODE.RESPONSE, null);
+
+            final ORawBuffer remoteReadRecord = (ORawBuffer) response.getPayload();
 
             if (remoteReadRecord != null) {
               toUpdateRecord = Orient.instance().getRecordFactoryManager().newInstance(recordType);
@@ -204,31 +197,27 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
             toUpdateRecord = toUpdateRid.getRecord();
 
           if (toUpdateRecord != null)
-            result.add(new OUpdateRecordTask(toUpdateRid, toUpdateRecord.toStream(), toUpdateRecord.getVersion(),
-                toUpdateRecord.toStream(), toUpdateRecord.getVersion(), ORecordInternal.getRecordType(toUpdateRecord)));
+            result = new OUpdateRecordTask(toUpdateRid, toUpdateRecord.toStream(), toUpdateRecord.getVersion(),
+                ORecordInternal.getRecordType(toUpdateRecord));
         }
 
         // CREATE LAST RECORD
-        result.add(new OCreateRecordTask((ORecordId) goodResult.getIdentity(), content, version, recordType));
+        result = new OCreateRecordTask((ORecordId) goodResult.getIdentity(), content, version, recordType);
 
       } else if (badResult.getIdentity().getClusterId() == goodResult.getIdentity().getClusterId()
           && badResult.getIdentity().getClusterPosition() > goodResult.getIdentity().getClusterPosition()) {
 
       } else
         // ANY OTHER CASE JUST DELETE IT
-        result.add(new ODeleteRecordTask(new ORecordId(badResult.getIdentity()), badResult.getVersion()).setDelayed(false));
+        result = new ODeleteRecordTask(new ORecordId(badResult.getIdentity()), badResult.getVersion()).setDelayed(false);
     }
 
     return result;
   }
 
   @Override
-  public ODeleteRecordTask getUndoTask(final ODistributedRequest iRequest, final Object iBadResponse) {
-    if (iBadResponse instanceof Throwable)
-      return null;
-
-    final OPlaceholder badResult = (OPlaceholder) iBadResponse;
-    return new ODeleteRecordTask(new ORecordId(badResult.getIdentity()), badResult.getVersion()).setDelayed(false);
+  public ODeleteRecordTask getUndoTask(ODistributedRequestId reqId) {
+    return new ODeleteRecordTask(rid, -1).setDelayed(false);
   }
 
   @Override

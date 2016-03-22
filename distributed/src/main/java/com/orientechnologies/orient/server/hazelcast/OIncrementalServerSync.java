@@ -131,7 +131,7 @@ public class OIncrementalServerSync {
 
                       if (newRecord.getIdentity().getClusterPosition() < clusterPos) {
                         // DELETE THE RECORD TO CREATE A HOLE
-                        ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "DELTA <- creating hole rid=%s",
+                        ODistributedServerLog.debug(this, nodeName, null, DIRECTION.NONE, "DELTA <- creating hole rid=%s",
                             newRecord.getIdentity());
                         newRecord.delete();
                         totalHoles++;

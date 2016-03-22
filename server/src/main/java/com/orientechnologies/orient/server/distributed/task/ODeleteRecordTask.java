@@ -32,8 +32,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIR
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Distributed delete record task used for synchronization.
@@ -41,16 +39,20 @@ import java.util.List;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
-  private static final long    serialVersionUID = 1L;
-  public static final  int     FACTORYID        = 4;
-  private              boolean delayed          = false;
-  private transient    boolean lockRecord       = true;
+  private static final long serialVersionUID = 1L;
+  public static final int   FACTORYID        = 4;
+  private boolean           delayed          = false;
+  private transient boolean lockRecord       = true;
 
   public ODeleteRecordTask() {
   }
 
-  public ODeleteRecordTask(final ORecordId iRid, final int iVersion) {
-    super(iRid, iVersion);
+  public ODeleteRecordTask(final ORecord record) {
+    super(record);
+  }
+
+  public ODeleteRecordTask(final ORecordId rid, final int version) {
+    super(rid, version);
   }
 
   @Override
@@ -59,35 +61,22 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
   }
 
   @Override
-  public Object execute(long requestId, final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
-      throws Exception {
-    ODistributedServerLog
-        .debug(this, iManager.getLocalNodeName(), null, DIRECTION.IN, "delete record %s/%s v.%d", database.getName(),
-            rid.toString(), version);
+  public Object executeRecordTask(ODistributedRequestId requestId, final OServer iServer, ODistributedServerManager iManager,
+      final ODatabaseDocumentTx database) throws Exception {
+    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), null, DIRECTION.IN, "delete record %s/%s v.%d",
+        database.getName(), rid.toString(), version);
 
-    // TRY LOCKING RECORD
-    final ODistributedDatabase ddb = iManager.getMessageService().getDatabase(database.getName());
-    if (!inTx) {
-      if (lockRecord && !ddb.lockRecord(rid, nodeSource))
-        throw new ODistributedRecordLockedException(rid);
-    }
-
-    try {
-      final ORecord record = database.load(rid);
-      if (record != null) {
-        if (delayed)
-          if (record.getVersion() == version)
-            // POSTPONE DELETION TO BE UNDO IN CASE QUORUM IS NOT RESPECTED
-            ((ODistributedStorage) database.getStorage()).pushDeletedRecord(rid, version);
-          else
-            throw new OConcurrentModificationException(rid, record.getVersion(), version, ORecordOperation.DELETED);
+    final ORecord record = database.load(rid);
+    if (record != null) {
+      if (delayed)
+        if (record.getVersion() == version)
+          // POSTPONE DELETION TO BE UNDO IN CASE QUORUM IS NOT RESPECTED
+          ((ODistributedStorage) database.getStorage()).pushDeletedRecord(rid, version);
         else
-          // DELETE IT RIGHT NOW
-          record.delete();
-      }
-    } finally {
-      if (!inTx)
-        ddb.unlockRecord(rid);
+          throw new OConcurrentModificationException(rid, record.getVersion(), version, ORecordOperation.DELETED);
+      else
+        // DELETE IT RIGHT NOW
+        record.delete();
     }
 
     return true;
@@ -99,26 +88,14 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
   }
 
   @Override
-  public List<ORemoteTask> getFixTask(final ODistributedRequest iRequest, final ORemoteTask iOriginalTask,
-      final Object iBadResponse, final Object iGoodResponse, String executorNodeName, ODistributedServerManager dManager) {
-    final List<ORemoteTask> fixTasks = new ArrayList<ORemoteTask>(1);
-    fixTasks.add(new OResurrectRecordTask(rid, version));
-    return fixTasks;
-
-  }
-
-  @Override
-  public ORemoteTask getUndoTask(final ODistributedRequest iRequest, final Object iBadResponse) {
+  public ORemoteTask getFixTask(final ODistributedRequest iRequest, final ORemoteTask iOriginalTask, final Object iBadResponse,
+      final Object iGoodResponse, String executorNodeName, ODistributedServerManager dManager) {
     return new OResurrectRecordTask(rid, version);
   }
 
-  public boolean isLockRecord() {
-    return lockRecord;
-  }
-
   @Override
-  public void setLockRecord(final boolean lockRecord) {
-    this.lockRecord = lockRecord;
+  public ORemoteTask getUndoTask(ODistributedRequestId reqId) {
+    return new OResurrectRecordTask(rid, version);
   }
 
   @Override
