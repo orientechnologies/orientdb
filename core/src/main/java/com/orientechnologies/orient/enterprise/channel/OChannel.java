@@ -82,7 +82,8 @@ public abstract class OChannel extends OListenerManger<OChannelListener> {
     socket = iSocket;
     socketBufferSize = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_BUFFER_SIZE);
     socket.setTcpNoDelay(true);
-    timeout = iConfig.getValueAsLong(OGlobalConfiguration.NETWORK_REQUEST_TIMEOUT);
+    //THIS TIMEOUT IS CORRECT BUT CREATE SOME PROBLEM ON REMOTE, NEED CHECK BEFORE BE ENABLED
+    //timeout = iConfig.getValueAsLong(OGlobalConfiguration.NETWORK_REQUEST_TIMEOUT);
   }
 
   public static String getLocalIpAddress(final boolean iFavoriteIp4) throws SocketException {

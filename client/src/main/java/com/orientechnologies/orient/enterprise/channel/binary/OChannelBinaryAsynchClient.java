@@ -21,6 +21,7 @@ package com.orientechnologies.orient.enterprise.channel.binary;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.concur.lock.OLockException;
+import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.remote.OStorageRemoteThreadLocal;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -149,11 +150,14 @@ public class OChannelBinaryAsynchClient extends OChannelBinaryClientAbstract {
 
           final long start = System.currentTimeMillis();
 
-          if (iTimeout > 0)
-            readCondition.await(iTimeout, TimeUnit.MILLISECONDS);
-          else
-            // WAIT MAX 3 SECOND AND RETRY, THIS IS UNBLOCKED BY ANOTHER THREAD IN CASE THE RESPONSE FOR THIS IS ARRIVED
-            readCondition.await(3000, TimeUnit.MILLISECONDS);
+          if (this.serviceThread == null || iRequesterId != Integer.MIN_VALUE && this.currentSessionId != Integer.MIN_VALUE) {
+            throw new OIOException("Found a session id " + this.currentSessionId + " not expected, possible wrong data on socket");
+          } else
+            // WAIT MAX 30  SEC FOR THE ASYNC THREAD TO READ THE RESPONSE
+          if (!readCondition.await(30000, TimeUnit.MILLISECONDS)) {
+            //SOMETHING WENT WRONG IN THE ASYNC THREAD
+            throw new OIOException("Timeout on push messaged reading by async thread");
+          }
 
           if (debug) {
             final long now = System.currentTimeMillis();
