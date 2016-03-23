@@ -3751,6 +3751,7 @@ OAlterClassStatement AlterClassStatement():
 {
 	OIdentifier lastIdentifier;
 	OInteger lastInteger;
+	Token lastToken;
 }
 {
 	<ALTER> <CLASS>
@@ -3869,6 +3870,8 @@ OAlterClassStatement AlterClassStatement():
 				jjtThis.identifierValue = Identifier()
 				|
 				"round-robin" { jjtThis.customString = "round-robin"; }
+				|
+				lastToken = <STRING_LITERAL> {  jjtThis.customString = token.image.substring(1, token.image.length() - 1); }
 			)
 		)
 		|
