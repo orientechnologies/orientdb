@@ -45,8 +45,9 @@ public class RestartNodeTest extends AbstractServerClusterTxTest {
   public void test() throws Exception {
     startupNodesInSequence = true;
     useTransactions = false;
-    count = 400;
+    count = 500;
     maxRetries = 10;
+    delayWriter = 100;
     init(SERVERS);
     prepare(false);
 
@@ -104,7 +105,7 @@ public class RestartNodeTest extends AbstractServerClusterTxTest {
                 final ODatabaseDocumentTx database = poolFactory.get(getDatabaseURL(serverInstance.get(0)), "admin", "admin")
                     .acquire();
                 try {
-                  return database.countClass("Person") > (count * SERVERS) * 1 / 2;
+                  return database.countClass("Person") > (count * SERVERS) * 1 / 3;
                 } finally {
                   database.close();
                 }

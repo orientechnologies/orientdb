@@ -371,6 +371,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
 
   @Override
   public void close() {
+
   }
 
   @Override
@@ -575,7 +576,6 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
 
   public OIndexInternal<T> delete() {
     acquireExclusiveLock();
-
     try {
 
       storage.deleteIndexEngine(indexId);

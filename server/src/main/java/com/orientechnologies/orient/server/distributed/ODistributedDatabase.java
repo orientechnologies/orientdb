@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 import java.util.Collection;
+import java.util.concurrent.Callable;
 
 /**
  * Generic Distributed Database interface.
@@ -32,7 +33,7 @@ import java.util.Collection;
  */
 public interface ODistributedDatabase {
   ODistributedResponse send2Nodes(ODistributedRequest iRequest, Collection<String> iClusterNames, Collection<String> iNodes,
-      ODistributedRequest.EXECUTION_MODE iExecutionMode, Object localResult);
+      ODistributedRequest.EXECUTION_MODE iExecutionMode, Object localResult, Callable<Void> iAfterSentCallback);
 
   void setOnline();
 

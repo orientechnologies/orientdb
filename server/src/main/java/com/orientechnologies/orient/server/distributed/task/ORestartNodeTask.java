@@ -47,11 +47,12 @@ public class ORestartNodeTask extends OAbstractRemoteTask {
 
   @Override
   public Object execute(ODistributedRequestId requestId, final OServer iServer, final ODistributedServerManager iManager,
-      final ODatabaseDocumentTx database)
-      throws Exception {
+      final ODatabaseDocumentTx database) throws Exception {
 
     ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.IN,
         "restarting server...");
+
+    iManager.setNodeStatus(ODistributedServerManager.NODE_STATUS.OFFLINE);
 
     Orient.instance().scheduleTask(new TimerTask() {
       @Override

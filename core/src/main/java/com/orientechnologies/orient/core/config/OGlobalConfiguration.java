@@ -629,19 +629,19 @@ public enum OGlobalConfiguration {
    * @Since 2.2.0
    */
   @OApi(maturity = OApi.MATURITY.NEW) DISTRIBUTED_LOCAL_QUEUESIZE("distributed.localQueueSize",
-      "Size of the intra-thread queue for distributed messages", Integer.class, 100),
+      "Size of the intra-thread queue for distributed messages", Integer.class, 10000),
 
   /**
    * @Since 2.2.0
    */
   @OApi(maturity = OApi.MATURITY.NEW) DISTRIBUTED_DB_WORKERTHREADS("distributed.dbWorkerThreads",
-      "Number of parallel worker threads per database that process distributed messages", Integer.class, 1),
+      "Number of parallel worker threads per database that process distributed messages", Integer.class, 8),
 
   /**
-   * @Since 2.1.3
+   * @Since 2.1.3, Deprecated in 2.2.0
    */
-  @OApi(maturity = OApi.MATURITY.NEW) DISTRIBUTED_QUEUE_MAXSIZE("distributed.queueMaxSize",
-      "Maximum queue size to mark a node as stalled. If the numer of messages in queue are more than this values, the node is restarted with a remote command (0 = no maximum, which means up to 2^31-1 entries).",
+  @Deprecated @OApi(maturity = OApi.MATURITY.NEW) DISTRIBUTED_QUEUE_MAXSIZE("distributed.queueMaxSize",
+      "Maximum queue size to mark a node as stalled. If the number of messages in queue are more than this values, the node is restarted with a remote command (0 = no maximum, which means up to 2^31-1 entries).",
       Integer.class, 10000),
 
   /**

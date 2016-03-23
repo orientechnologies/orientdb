@@ -42,7 +42,6 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
   private static final long serialVersionUID = 1L;
   public static final int   FACTORYID        = 4;
   private boolean           delayed          = false;
-  private transient boolean lockRecord       = true;
 
   public ODeleteRecordTask() {
   }
@@ -63,20 +62,22 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
   @Override
   public Object executeRecordTask(ODistributedRequestId requestId, final OServer iServer, ODistributedServerManager iManager,
       final ODatabaseDocumentTx database) throws Exception {
-    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), null, DIRECTION.IN, "delete record %s/%s v.%d",
+    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), null, DIRECTION.IN, "Delete record %s/%s v.%d",
         database.getName(), rid.toString(), version);
 
-    final ORecord record = database.load(rid);
-    if (record != null) {
+    prepareUndoOperation();
+
+    final ORecord loadedRecord = previousRecord.copy();
+    if (loadedRecord != null) {
       if (delayed)
-        if (record.getVersion() == version)
+        if (loadedRecord.getVersion() == version)
           // POSTPONE DELETION TO BE UNDO IN CASE QUORUM IS NOT RESPECTED
           ((ODistributedStorage) database.getStorage()).pushDeletedRecord(rid, version);
         else
-          throw new OConcurrentModificationException(rid, record.getVersion(), version, ORecordOperation.DELETED);
+          throw new OConcurrentModificationException(rid, loadedRecord.getVersion(), version, ORecordOperation.DELETED);
       else
         // DELETE IT RIGHT NOW
-        record.delete();
+        loadedRecord.delete();
     }
 
     return true;

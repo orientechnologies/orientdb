@@ -94,7 +94,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   @Override
   public Object executeRecordTask(final ODistributedRequestId requestId, final OServer iServer,
       final ODistributedServerManager iManager, final ODatabaseDocumentTx database) throws Exception {
-    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "creating record %s/%s v.%d...",
+    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "Creating record %s/%s v.%d...",
         database.getName(), rid.toString(), version);
 
     if (!rid.isPersistent())
@@ -183,7 +183,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
                 dManager.getLocalNodeName());
 
             final ODistributedResponse response = dManager.sendRequest(iRequest.getDatabaseName(), null, nodes,
-                new OReadRecordTask(toUpdateRid), ODistributedRequest.EXECUTION_MODE.RESPONSE, null);
+                new OReadRecordTask(toUpdateRid), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
 
             final ORawBuffer remoteReadRecord = (ORawBuffer) response.getPayload();
 

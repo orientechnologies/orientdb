@@ -35,6 +35,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -126,7 +127,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
             final CountDownLatch queueLatch = new CountDownLatch(1);
 
             final String senderNodeName = manager.getNodeNameById(request.getId().getNodeId());
-            request.setTask(new OSynchronizedTaskWrapper(senderNodeName, queueLatch, task));
+            request.setTask(new OSynchronizedTaskWrapper(queueLatch, senderNodeName, task));
             workerThreads.get(0).processRequest(request);
 
             // WAIT FOR THE ASYNC OPERATION TO FINISH
@@ -166,7 +167,8 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
   @Override
   public ODistributedResponse send2Nodes(final ODistributedRequest iRequest, final Collection<String> iClusterNames,
-      Collection<String> iNodes, final ODistributedRequest.EXECUTION_MODE iExecutionMode, final Object localResult) {
+      Collection<String> iNodes, final ODistributedRequest.EXECUTION_MODE iExecutionMode, final Object localResult,
+      final Callable<Void> iAfterSentCallback) {
     checkForServerOnline(iRequest);
 
     final String databaseName = iRequest.getDatabaseName();
@@ -234,6 +236,9 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
       Orient.instance().getProfiler().updateCounter("distributed.db." + databaseName + ".msgSent",
           "Number of replication messages sent from current node", +1, "distributed.db.*.msgSent");
+
+      if (iAfterSentCallback != null)
+        iAfterSentCallback.call();
 
       return waitForResponse(iRequest, currentResponseMgr);
 

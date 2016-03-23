@@ -20,12 +20,7 @@
 
 package com.orientechnologies.common.concur.lock;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -37,13 +32,13 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @since 8/11/14
  */
 public class ONewLockManager<T> {
-  private static final int CONCURRENCY_LEVEL = closestInteger(Runtime.getRuntime().availableProcessors() * 64);
-  private static final int MASK              = CONCURRENCY_LEVEL - 1;
+  private static final int               CONCURRENCY_LEVEL = closestInteger(Runtime.getRuntime().availableProcessors() * 64);
+  private static final int               MASK              = CONCURRENCY_LEVEL - 1;
 
   private final ReadWriteLock[]          locks;
   private final OReadersWriterSpinLock[] spinLocks;
 
-  private final boolean useSpinLock;
+  private final boolean                  useSpinLock;
 
   private static final class SpinLockWrapper implements Lock {
     private final boolean                readLock;
@@ -176,6 +171,7 @@ public class ONewLockManager<T> {
     final ReadWriteLock rwLock = locks[index];
 
     final Lock lock = rwLock.writeLock();
+
     lock.lock();
     return lock;
   }
@@ -249,7 +245,7 @@ public class ONewLockManager<T> {
   }
 
   public void acquireExclusiveLocksInBatch(Collection<T> values) {
-    if (values == null)
+    if (values == null || values.isEmpty())
       return;
 
     final List<T> valCopy = new ArrayList<T>(values);

@@ -410,7 +410,7 @@ public class OClientConnectionManager {
 
       protocol.sendShutdown();
 
-      OLogManager.instance().info(this, "Sending shutdown to thread %s", protocol);
+      OLogManager.instance().debug(this, "Sending shutdown to thread %s", protocol);
 
       OCommandRequestText command = entry.getValue().getData().command;
       if (command != null && command.isIdempotent()) {
@@ -429,22 +429,22 @@ public class OClientConnectionManager {
 
         if (socket != null && !socket.isClosed() && !socket.isInputShutdown()) {
           try {
-            OLogManager.instance().info(this, "Closing input socket of thread %s", protocol);
+            OLogManager.instance().debug(this, "Closing input socket of thread %s", protocol);
             socket.shutdownInput();
           } catch (IOException e) {
-            OLogManager.instance().info(this, "Error on closing connection of %s client during shutdown", e,
+            OLogManager.instance().debug(this, "Error on closing connection of %s client during shutdown", e,
                 entry.getValue().getRemoteAddress());
           }
         }
         if (protocol.isAlive()) {
           if (protocol instanceof ONetworkProtocolBinary && ((ONetworkProtocolBinary) protocol).getRequestType() == -1) {
             try {
-              OLogManager.instance().info(this, "Closing socket of thread %s", protocol);
+              OLogManager.instance().debug(this, "Closing socket of thread %s", protocol);
               protocol.getChannel().close();
             } catch (Exception e) {
-              OLogManager.instance().info(this, "Error during chanel close at shutdown", e);
+              OLogManager.instance().debug(this, "Error during chanel close at shutdown", e);
             }
-            OLogManager.instance().info(this, "Sending interrupt signal to thread %s", protocol);
+            OLogManager.instance().debug(this, "Sending interrupt signal to thread %s", protocol);
             protocol.interrupt();
           }
 

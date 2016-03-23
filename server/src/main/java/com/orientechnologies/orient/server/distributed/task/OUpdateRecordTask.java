@@ -22,7 +22,6 @@ package com.orientechnologies.orient.server.distributed.task;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -53,7 +52,6 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
   protected byte[]          content;
 
   private transient ORecord record;
-  private ORecord           previousRecord;
 
   public OUpdateRecordTask() {
   }
@@ -91,12 +89,9 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "updating record %s/%s v.%d",
         database.getName(), rid.toString(), version);
 
-    // TODO: STORE THE OLD VERSION TO BE RESTORED IN CASE OF ROLLBACK
-    ORecord loadedRecord = rid.getRecord();
-    if (loadedRecord == null)
-      throw new ORecordNotFoundException(rid);
+    prepareUndoOperation();
 
-    previousRecord = loadedRecord.copy();
+    ORecord loadedRecord = previousRecord.copy();
 
     if (loadedRecord instanceof ODocument) {
       // APPLY CHANGES FIELD BY FIELD TO MARK DIRTY FIELDS FOR INDEXES/HOOKS
@@ -137,6 +132,9 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
 
   @Override
   public ORemoteTask getUndoTask(ODistributedRequestId reqId) {
+    if (previousRecord == null)
+      return null;
+
     final int versionCopy = ORecordVersionHelper.setRollbackMode(previousRecord.getVersion());
     return new OUpdateRecordTask(rid, previousRecord.toStream(), versionCopy, recordType);
   }

@@ -31,6 +31,7 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -143,7 +144,7 @@ public interface ODistributedServerManager {
    * @return
    */
   ODistributedResponse sendRequest(String iDatabaseName, Collection<String> iClusterNames, Collection<String> iTargetNodeNames,
-      ORemoteTask iTask, EXECUTION_MODE iExecutionMode, Object localResult);
+      ORemoteTask iTask, EXECUTION_MODE iExecutionMode, Object localResult, Callable<Void> iAfterSentCallback);
 
   ODocument getStats();
 

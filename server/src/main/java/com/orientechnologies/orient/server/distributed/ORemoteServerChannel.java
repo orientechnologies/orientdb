@@ -102,7 +102,7 @@ public class ORemoteServerChannel {
 
         return null;
       }
-    }, "Cannot send distributed request", MAX_RETRY);
+    }, "Cannot send distributed request", MAX_RETRY, true);
 
   }
 
@@ -135,7 +135,7 @@ public class ORemoteServerChannel {
 
         return null;
       }
-    }, "Cannot send response back to the sender node '" + response.getSenderNodeName() + "'", MAX_RETRY);
+    }, "Cannot send response back to the sender node '" + response.getSenderNodeName() + "'", MAX_RETRY, true);
 
   }
 
@@ -167,7 +167,7 @@ public class ORemoteServerChannel {
 
         return null;
       }
-    }, "Cannot connect to the remote server '" + url + "'", 1);
+    }, "Cannot connect to the remote server '" + url + "'", MAX_RETRY, false);
   }
 
   public void close() {
@@ -178,7 +178,7 @@ public class ORemoteServerChannel {
   }
 
   protected synchronized <T> T networkOperation(final byte operationId, final OStorageRemoteOperation<T> operation,
-      final String errorMessage, final int maxRetry) {
+      final String errorMessage, final int maxRetry, final boolean autoReconnect) {
     Exception lastException = null;
     for (int retry = 1; retry <= maxRetry; ++retry) {
       try {
@@ -193,8 +193,17 @@ public class ORemoteServerChannel {
 
         close();
 
+        if (!autoReconnect)
+          break;
+
         ODistributedServerLog.warn(this, manager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.OUT,
             "Error on sending message to distributed node (%s) retrying (%d/%d)", lastException.toString(), retry, maxRetry);
+
+        try {
+          Thread.sleep(100 * (retry * 2));
+        } catch (InterruptedException e1) {
+          break;
+        }
 
         try {
           connect();
@@ -203,8 +212,6 @@ public class ORemoteServerChannel {
 
           ODistributedServerLog.warn(this, manager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.OUT,
               "Error on reconnecting to distributed node (%s)", lastException.toString());
-
-          break;
         }
       }
     }

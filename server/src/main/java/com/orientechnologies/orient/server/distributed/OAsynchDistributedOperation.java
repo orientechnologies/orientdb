@@ -19,12 +19,13 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.util.Collection;
-import java.util.Set;
-
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
+
+import java.util.Collection;
+import java.util.Set;
+import java.util.concurrent.Callable;
 
 /**
  * Asynchronous distributed operation.
@@ -38,15 +39,18 @@ public class OAsynchDistributedOperation {
   private final ORemoteTask                                             task;
   private final OCallable<Object, OPair<ODistributedRequestId, Object>> callback;
   private final Object                                                  localResult;
+  private final Callable<Void>                                          afterRequestCallback;
 
   public OAsynchDistributedOperation(final String iDatabaseName, final Set<String> iClusterNames, final Collection<String> iNodes,
-      final ORemoteTask iTask, final OCallable<Object, OPair<ODistributedRequestId, Object>> iCallback, final Object iLocalResult) {
+      final ORemoteTask iTask, final OCallable<Object, OPair<ODistributedRequestId, Object>> iCallback, final Object iLocalResult,
+      final Callable<Void> iAfterRequestCallback) {
     databaseName = iDatabaseName;
     clusterNames = iClusterNames;
     nodes = iNodes;
     task = iTask;
     callback = iCallback;
     localResult = iLocalResult;
+    afterRequestCallback = iAfterRequestCallback;
   }
 
   public Set<String> getClusterNames() {
@@ -73,4 +77,7 @@ public class OAsynchDistributedOperation {
     return localResult;
   }
 
+  public Callable<Void> getAfterRequestCallback() {
+    return afterRequestCallback;
+  }
 }

@@ -22,6 +22,7 @@ package com.orientechnologies.orient.server.distributed.task;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -43,10 +44,12 @@ import java.util.Set;
  *
  */
 public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedTask {
-  protected ORecordId rid;
-  protected int       version;
-  protected int       partitionKey = -1;
-  protected boolean   lockRecords  = true;
+  protected ORecordId         rid;
+  protected int               version;
+  protected int               partitionKey = -1;
+  protected boolean           lockRecords  = true;
+
+  protected transient ORecord previousRecord;
 
   public OAbstractRecordReplicatedTask() {
   }
@@ -115,6 +118,14 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
 
   public int getVersion() {
     return version;
+  }
+
+  public void prepareUndoOperation() {
+    if (previousRecord == null) {
+      previousRecord = rid.getRecord();
+      if (previousRecord == null)
+        throw new ORecordNotFoundException(rid);
+    }
   }
 
   @Override

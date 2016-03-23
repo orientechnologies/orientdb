@@ -626,7 +626,7 @@ public class ODistributedResponseManager {
                   "Sending undo message (%s) for request (%s) to server %s", undoTask, request, targetNode);
 
               dManager.sendRequest(request.getDatabaseName(), null, OMultiValue.getSingletonList(targetNode), undoTask,
-                  ODistributedRequest.EXECUTION_MODE.RESPONSE, null);
+                  ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
             }
           }
         }
@@ -686,7 +686,7 @@ public class ODistributedResponseManager {
           ORecordInternal.setIdentity(((OCreateRecordTask) task).getRecord(),
               ((OCreateRecordTask) task).getRecord().getIdentity().getClusterId(), -1);
           dManager.sendRequest(request.getDatabaseName(), null, OMultiValue.getSingletonList(r.getExecutorNodeName()), task,
-              ODistributedRequest.EXECUTION_MODE.NO_RESPONSE, null);
+              ODistributedRequest.EXECUTION_MODE.NO_RESPONSE, null, null);
         }
 
         final OPlaceholder ph = new OPlaceholder(new ORecordId(origPh.getIdentity().getClusterId(), i), -1);
@@ -698,7 +698,7 @@ public class ODistributedResponseManager {
               "sending undo message (%s) for request (%s) to server %s", undoTask, request, r.getExecutorNodeName());
 
           dManager.sendRequest(request.getDatabaseName(), null, OMultiValue.getSingletonList(r.getExecutorNodeName()), undoTask,
-              ODistributedRequest.EXECUTION_MODE.NO_RESPONSE, null);
+              ODistributedRequest.EXECUTION_MODE.NO_RESPONSE, null, null);
         }
       }
     }
@@ -732,7 +732,7 @@ public class ODistributedResponseManager {
               "sending fix message (%s) for response (%s) on request (%s) to be: %s", fixTask, r, request, goodResponse);
 
           dManager.sendRequest(request.getDatabaseName(), null, OMultiValue.getSingletonList(r.getExecutorNodeName()), fixTask,
-              ODistributedRequest.EXECUTION_MODE.NO_RESPONSE, null);
+              ODistributedRequest.EXECUTION_MODE.NO_RESPONSE, null, null);
         }
       }
     }

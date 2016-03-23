@@ -67,6 +67,7 @@ import java.io.*;
 import java.security.SecureRandom;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -470,7 +471,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   @Override
   public ODistributedResponse sendRequest(final String iDatabaseName, final Collection<String> iClusterNames,
       final Collection<String> iTargetNodes, final ORemoteTask iTask, final ODistributedRequest.EXECUTION_MODE iExecutionMode,
-      final Object localResult) {
+      final Object localResult, final Callable<Void> iAfterSentCallback) {
 
     final ODistributedRequest req = new ODistributedRequest(nodeId, iDatabaseName, iTask, iExecutionMode);
 
@@ -493,7 +494,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       throw new ODistributedException("Distributed database '" + iDatabaseName + "' not found on server '" + nodeName + "'");
     }
 
-    return db.send2Nodes(req, iClusterNames, iTargetNodes, iExecutionMode, localResult);
+    return db.send2Nodes(req, iClusterNames, iTargetNodes, iExecutionMode, localResult, iAfterSentCallback);
   }
 
   /**
@@ -1238,7 +1239,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           databaseName, entry.getValue());
 
       final Map<String, Object> results = (Map<String, Object>) sendRequest(databaseName, null, targetNodes, deployTask,
-          EXECUTION_MODE.RESPONSE, null).getPayload();
+          EXECUTION_MODE.RESPONSE, null, null).getPayload();
 
       ODistributedServerLog.info(this, nodeName, entry.getKey(), DIRECTION.IN, "Receiving delta sync for '%s'...", databaseName);
 
@@ -1319,7 +1320,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     final OAbstractReplicatedTask deployTask = new OSyncDatabaseTask();
 
     final Map<String, Object> results = (Map<String, Object>) sendRequest(databaseName, null, selectedNodes, deployTask,
-        EXECUTION_MODE.RESPONSE, null).getPayload();
+        EXECUTION_MODE.RESPONSE, null, null).getPayload();
 
     ODistributedServerLog.debug(this, nodeName, selectedNodes.toString(), DIRECTION.OUT, "deploy returned: %s", results);
 
@@ -1445,7 +1446,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
               for (int chunkNum = 2; !chunk.last; chunkNum++) {
                 final ODistributedResponse response = sendRequest(databaseName, null, OMultiValue.getSingletonList(iNode),
                     new OCopyDatabaseChunkTask(chunk.filePath, chunkNum, chunk.offset + chunk.buffer.length, false),
-                    EXECUTION_MODE.RESPONSE, null);
+                    EXECUTION_MODE.RESPONSE, null, null);
 
                 final Object result = response.getPayload();
                 if (result instanceof Boolean)

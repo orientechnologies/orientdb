@@ -42,7 +42,7 @@ public class OSynchronizedTaskWrapper extends OAbstractRemoteTask {
   private CountDownLatch latch;
   private ORemoteTask    task;
 
-  public OSynchronizedTaskWrapper(final String iNodeName, final CountDownLatch iLatch, final ORemoteTask iTask) {
+  public OSynchronizedTaskWrapper(final CountDownLatch iLatch, final String iNodeName, final ORemoteTask iTask) {
     latch = iLatch;
     task = iTask;
     task.setNodeSource(iNodeName);
@@ -64,8 +64,7 @@ public class OSynchronizedTaskWrapper extends OAbstractRemoteTask {
 
   @Override
   public Object execute(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager,
-      ODatabaseDocumentTx database)
-      throws Exception {
+      ODatabaseDocumentTx database) throws Exception {
     try {
       if (task != null)
         return task.execute(requestId, iServer, iManager, database);
