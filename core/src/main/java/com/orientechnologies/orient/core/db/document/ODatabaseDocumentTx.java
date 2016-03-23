@@ -33,6 +33,7 @@ import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.OUnfinishedCommit;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCommandCacheHook;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
@@ -2554,16 +2555,25 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
   @Override
   public ODatabaseDocument commit(boolean force) throws OTransactionException {
+    initiateCommit(force).complete();
+    return this;
+  }
+
+  @Override
+  public OUnfinishedCommit initiateCommit() {
+    return initiateCommit(false);
+  }
+
+  @Override
+  public OUnfinishedCommit initiateCommit(boolean force) {
     checkOpeness();
     checkIfActive();
 
     if (!currentTx.isActive())
-      return this;
+      return OUnfinishedCommit.NO_OPERATION;
 
-    if (!force && currentTx.amountOfNestedTxs() > 1) {
-      currentTx.commit();
-      return this;
-    }
+    if (!force && currentTx.amountOfNestedTxs() > 1)
+      return currentTx.initiateCommit(false);
 
     // WAKE UP LISTENERS
     for (ODatabaseListener listener : browseListeners())
@@ -2579,49 +2589,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
                 + "#onBeforeTxCommit()"), e);
       }
 
-    try {
-      currentTx.commit(force);
-    } catch (RuntimeException e) {
-      OLogManager.instance().debug(this, "Error on transaction commit", e);
-
-      // WAKE UP ROLLBACK LISTENERS
-      for (ODatabaseListener listener : browseListeners())
-        try {
-          listener.onBeforeTxRollback(this);
-        } catch (Throwable t) {
-          OLogManager.instance().error(this, "Error before transaction rollback", t);
-        }
-
-      // ROLLBACK TX AT DB LEVEL
-      currentTx.rollback(false, 0);
-      getLocalCache().clear();
-
-      // WAKE UP ROLLBACK LISTENERS
-      for (ODatabaseListener listener : browseListeners())
-        try {
-          listener.onAfterTxRollback(this);
-        } catch (Throwable t) {
-          OLogManager.instance().error(this, "Error after transaction rollback", t);
-        }
-      throw e;
-    }
-
-    // WAKE UP LISTENERS
-    for (ODatabaseListener listener : browseListeners())
-      try {
-        listener.onAfterTxCommit(this);
-      } catch (Exception e) {
-        final String message =
-            "Error after the transaction has been committed. The transaction remains valid. The exception caught was on execution of "
-                + listener.getClass() + ".onAfterTxCommit()";
-
-        OLogManager.instance().error(this, message, e);
-
-        throw OException.wrapException(new OTransactionBlockedException(message), e);
-
-      }
-
-    return this;
+    return new UnfinishedCommit(currentTx.initiateCommit(force));
   }
 
   /**
@@ -3079,6 +3047,71 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
   public Set<Integer> getBlobClusterIds() {
     return getMetadata().getSchema().getBlobClusters();
+  }
+
+  private class UnfinishedCommit implements OUnfinishedCommit {
+
+    private final OUnfinishedCommit nestedCommit;
+
+    public UnfinishedCommit(OUnfinishedCommit nestedCommit) {
+      this.nestedCommit = nestedCommit;
+    }
+
+    @Override
+    public void complete() {
+      checkOpeness();
+      checkIfActive();
+
+      try {
+        nestedCommit.complete();
+      } catch (RuntimeException e) {
+        OLogManager.instance().debug(this, "Error on transaction commit", e);
+
+        // WAKE UP ROLLBACK LISTENERS
+        for (ODatabaseListener listener : browseListeners())
+          try {
+            listener.onBeforeTxRollback(ODatabaseDocumentTx.this);
+          } catch (Throwable t) {
+            OLogManager.instance().error(this, "Error before transaction rollback", t);
+          }
+
+        // ROLLBACK TX AT DB LEVEL
+        currentTx.rollback(false, 0);
+        getLocalCache().clear();
+
+        // WAKE UP ROLLBACK LISTENERS
+        for (ODatabaseListener listener : browseListeners())
+          try {
+            listener.onAfterTxRollback(ODatabaseDocumentTx.this);
+          } catch (Throwable t) {
+            OLogManager.instance().error(this, "Error after transaction rollback", t);
+          }
+        throw e;
+      }
+
+      // WAKE UP LISTENERS
+      for (ODatabaseListener listener : browseListeners())
+        try {
+          listener.onAfterTxCommit(ODatabaseDocumentTx.this);
+        } catch (Exception e) {
+          final String message =
+              "Error after the transaction has been committed. The transaction remains valid. The exception caught was on execution of "
+                  + listener.getClass() + ".onAfterTxCommit()";
+
+          OLogManager.instance().error(this, message, e);
+
+          throw OException.wrapException(new OTransactionBlockedException(message), e);
+
+        }
+    }
+
+    @Override
+    public void cancel() { // TODO
+      checkOpeness();
+      checkIfActive();
+
+      nestedCommit.cancel();
+    }
   }
 
 }

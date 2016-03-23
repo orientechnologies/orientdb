@@ -32,6 +32,7 @@ import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.OOrientShutdownListener;
 import com.orientechnologies.orient.core.OOrientStartupListener;
+import com.orientechnologies.orient.core.OUnfinishedCommit;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
@@ -1303,7 +1304,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               OPhysicalPosition ppos = cluster.allocatePosition(ORecordInternal.getRecordType(rec));
               positions.put(txEntry, ppos);
               rid.clusterId = cluster.getId();
-              ;
               rid.clusterPosition = ppos.clusterPosition;
               clientTx.updateIdentityAfterCommit(oldRID, rid);
             }
@@ -1334,6 +1334,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } finally {
       stateLock.releaseReadLock();
     }
+  }
+
+  @Override
+  public OUnfinishedCommit initiateCommit(OTransaction iTx, Runnable callback) {
+    return null;
   }
 
   public int loadIndexEngine(String name) {

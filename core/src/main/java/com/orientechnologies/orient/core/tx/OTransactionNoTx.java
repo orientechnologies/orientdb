@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.core.OUnfinishedCommit;
 import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -79,6 +80,16 @@ public class OTransactionNoTx extends OTransactionAbstract {
   }
 
   public void rollback() {
+  }
+
+  @Override
+  public OUnfinishedCommit initiateCommit() {
+    return OUnfinishedCommit.NO_OPERATION;
+  }
+
+  @Override
+  public OUnfinishedCommit initiateCommit(boolean force) {
+    return OUnfinishedCommit.NO_OPERATION;
   }
 
   @Deprecated

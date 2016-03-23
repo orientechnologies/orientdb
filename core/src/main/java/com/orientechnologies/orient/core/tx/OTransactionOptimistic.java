@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.tx;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.OUnfinishedCommit;
 import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal.RUN_MODE;
@@ -140,6 +141,16 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
    */
   @Override
   public void commit(final boolean force) {
+    initiateCommit(force).complete();
+  }
+
+  @Override
+  public OUnfinishedCommit initiateCommit() {
+    return initiateCommit(false);
+  }
+
+  @Override
+  public OUnfinishedCommit initiateCommit(boolean force) {
     checkTransaction();
 
     if (txStartCounter < 0)
@@ -150,10 +161,12 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     else
       txStartCounter--;
 
-    if (txStartCounter == 0) {
-      doCommit();
-    } else if (txStartCounter > 0)
+    if (txStartCounter == 0)
+      return doCommit();
+    else if (txStartCounter > 0) {
       OLogManager.instance().debug(this, "Nested transaction was closed but transaction itself was not committed.");
+      return OUnfinishedCommit.NO_OPERATION;
+    }
     else
       throw new OTransactionException("Transaction was committed more times than it is started.");
   }
@@ -556,7 +569,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     }
   }
 
-  private void doCommit() {
+  private OUnfinishedCommit doCommit() {
     if (status == TXSTATUS.ROLLED_BACK || status == TXSTATUS.ROLLBACKING)
       throw new ORollbackException("Given transaction was rolled back and cannot be used.");
 
@@ -565,7 +578,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     if (!allEntries.isEmpty() || !indexEntries.isEmpty()) {
       if (OScenarioThreadLocal.INSTANCE.get() != RUN_MODE.RUNNING_DISTRIBUTED
           && !(database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage))
-        database.getStorage().commit(this, null);
+        return new UnfinishedCommit(database.getStorage().initiateCommit(this, null));
       else {
         final Map<String, OIndex<?>> indexes = new HashMap<String, OIndex<?>>();
         for (OIndex<?> index : database.getMetadata().getIndexManager().getIndexes())
@@ -576,22 +589,44 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
         final String storageType = database.getStorage().getUnderlying().getType();
 
         if (storageType.equals(OEngineLocalPaginated.NAME) || storageType.equals(OEngineMemory.NAME))
-          database.getStorage().commit(OTransactionOptimistic.this, callback);
-        else {
-          database.getStorage().callInLock(new Callable<Object>() {
+          return new UnfinishedCommit(database.getStorage().initiateCommit(OTransactionOptimistic.this, callback));
+        else
+          return database.getStorage().callInLock(new Callable<OUnfinishedCommit>() {
             @Override
-            public Object call() throws Exception {
-              database.getStorage().commit(OTransactionOptimistic.this, callback);
-              return null;
+            public OUnfinishedCommit call() throws Exception {
+              return new UnfinishedCommit(database.getStorage().initiateCommit(OTransactionOptimistic.this, callback));
             }
           }, true);
-        }
       }
     }
 
-    close();
+    return OUnfinishedCommit.NO_OPERATION;
+  }
 
-    status = TXSTATUS.COMPLETED;
+  private class UnfinishedCommit implements OUnfinishedCommit {
+
+    private final OUnfinishedCommit nestedCommit;
+
+    public UnfinishedCommit(OUnfinishedCommit nestedCommit) {
+      this.nestedCommit = nestedCommit;
+    }
+
+    @Override
+    public void complete() {
+      checkTransaction();
+
+      nestedCommit.complete();
+
+      close();
+      status = TXSTATUS.COMPLETED;
+    }
+
+    @Override
+    public void cancel() { // TODO
+      checkTransaction();
+
+      nestedCommit.cancel();
+    }
   }
 
 }

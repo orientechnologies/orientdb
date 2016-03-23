@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.db;
 
+import com.orientechnologies.orient.core.OUnfinishedCommit;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -707,6 +708,10 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   ODatabase<T> rollback() throws OTransactionException;
 
   ODatabase<T> rollback(boolean force) throws OTransactionException;
+
+  OUnfinishedCommit initiateCommit();
+
+  OUnfinishedCommit initiateCommit(boolean force);
 
   /**
    * Execute a query against the database. If the OStorage used is remote (OStorageRemote) then the command will be executed
