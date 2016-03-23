@@ -185,13 +185,12 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
       final int availableNodes = manager.getAvailableNodes(iNodes, databaseName);
 
-      final int quorum = calculateQuorum(iRequest, iClusterNames, cfg, availableNodes, iExecutionMode);
+      int expectedSynchronousResponses = localResult != null ? availableNodes + 1 : availableNodes;
 
-      int expectedSynchronousResponses = availableNodes;
+      final int quorum = calculateQuorum(iRequest, iClusterNames, cfg, expectedSynchronousResponses);
 
       final boolean groupByResponse;
       if (iRequest.getTask().getResultStrategy() == OAbstractRemoteTask.RESULT_STRATEGY.UNION) {
-        expectedSynchronousResponses = availableNodes;
         groupByResponse = false;
       } else {
         groupByResponse = true;
@@ -432,10 +431,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
   }
 
   protected int calculateQuorum(final ODistributedRequest iRequest, final Collection<String> clusterNames,
-      final ODistributedConfiguration cfg, final int availableNodes, final ODistributedRequest.EXECUTION_MODE iExecutionMode) {
-
-    if (availableNodes == 0 && iExecutionMode == ODistributedRequest.EXECUTION_MODE.RESPONSE)
-      throw new ODistributedException("Quorum cannot be reached because there are no nodes available");
+      final ODistributedConfiguration cfg, final int availableNodes) {
 
     final String clusterName = clusterNames == null || clusterNames.isEmpty() ? null : clusterNames.iterator().next();
 
@@ -458,15 +454,14 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       break;
     }
 
-    final int originalQuorum = quorum;
-
     // CHECK THE QUORUM OFFSET IF ANY
+
     if (quorum < 0)
       quorum = 0;
 
     if (quorum > availableNodes)
       throw new ODistributedException(
-          "Quorum (" + originalQuorum + ") cannot be reached because it is major than available nodes (" + availableNodes + ")");
+          "Quorum (" + quorum + ") cannot be reached because it is major than available nodes (" + availableNodes + ")");
 
     return quorum;
   }

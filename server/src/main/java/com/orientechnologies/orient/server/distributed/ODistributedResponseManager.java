@@ -23,8 +23,6 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OPlaceholder;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -566,6 +564,22 @@ public class ODistributedResponseManager {
         "detected %d node(s) in timeout or in conflict and quorum (%d) has not been reached, rolling back changes for request (%s)",
         conflicts, quorum, request);
 
+    if (ODistributedServerLog.isDebugEnabled())
+      ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE, composeConflictMessage());
+
+    undoRequest();
+
+    final Object goodResponsePayload = bestResponsesGroup.isEmpty() ? null : bestResponsesGroup.get(0).getPayload();
+    if (goodResponsePayload instanceof RuntimeException)
+      // RESPONSE IS ALREADY AN EXCEPTION: THROW THIS
+      return (RuntimeException) goodResponsePayload;
+    else if (goodResponsePayload instanceof Throwable)
+      return OException.wrapException(new ODistributedException(composeConflictMessage()), (Throwable) goodResponsePayload);
+    else
+      return new ODistributedOperationException(composeConflictMessage());
+  }
+
+  private String composeConflictMessage() {
     final StringBuilder msg = new StringBuilder(256);
     msg.append("Quorum " + getQuorum() + " not reached for request (" + request + "). Elapsed="
         + (System.currentTimeMillis() - sentOn) + "ms");
@@ -585,42 +599,25 @@ public class ODistributedResponseManager {
 
     msg.append("Received: ");
     msg.append(responses);
-
-    ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE, msg.toString());
-
-    undoRequest();
-
-    final Object goodResponsePayload = bestResponsesGroup.isEmpty() ? null : bestResponsesGroup.get(0).getPayload();
-    if (goodResponsePayload instanceof RuntimeException)
-      // RESPONSE IS ALREADY AN EXCEPTION: THROW THIS
-      return (RuntimeException) goodResponsePayload;
-    else if (goodResponsePayload instanceof Throwable)
-      return OException.wrapException(new ODistributedException(msg.toString()), (Throwable) goodResponsePayload);
-    else
-      return new ODistributedOperationException(msg.toString());
+    return msg.toString();
   }
 
   protected void undoRequest() {
     // DETERMINE IF ANY CREATE FAILED TO RESTORE RIDS
     if (!realignRecordClusters()) {
       for (ODistributedResponse r : getReceivedResponses()) {
+        if (r.getPayload() instanceof Throwable)
+          // NO NEED TO UNDO AN OPERATION THAT RETURNED EXCEPTION
+          // TODO: CONSIDER DIFFERENT TYPE OF EXCEPTION, SOME OF THOSE COULD REQUIRE AN UNDO
+          continue;
+
         final ORemoteTask task = request.getTask();
         if (task instanceof OAbstractReplicatedTask) {
           final ORemoteTask undoTask = ((OAbstractReplicatedTask) task).getUndoTask(request.getId());
 
           if (undoTask != null) {
             final String targetNode = r.getExecutorNodeName();
-            if (dManager.getLocalNodeName().equals(targetNode)) {
-              // LOCAL
-
-              try {
-                undoTask.execute(request.getId(), dManager.getServerInstance(), dManager,
-                    (ODatabaseDocumentTx) ODatabaseRecordThreadLocal.INSTANCE.get());
-              } catch (Exception e) {
-                ODistributedServerLog.error(this, dManager.getLocalNodeName(), targetNode, DIRECTION.NONE,
-                    "Error executing undo message (%s) on local node for request (%s)", undoTask, request);
-              }
-            } else {
+            if (!dManager.getLocalNodeName().equals(targetNode)) {
               // REMOTE
               ODistributedServerLog.warn(this, dManager.getLocalNodeName(), targetNode, DIRECTION.OUT,
                   "Sending undo message (%s) for request (%s) to server %s", undoTask, request, targetNode);

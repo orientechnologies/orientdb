@@ -96,26 +96,29 @@ public class OCompletedTxTask extends OAbstractReplicatedTask {
       }
 
     } else {
-      if (pRequest != null) {
-        // FIX TRANSACTION CONTENT
-        ODistributedServerLog.info(this, ddb.getManager().getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-            "Distributed transaction: fixing transaction %s", requestId);
+      // FIX TRANSACTION CONTENT
+      ODistributedServerLog.info(this, ddb.getManager().getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+          "Distributed transaction: fixing transaction %s", requestId);
 
-        for (ORemoteTask fixTask : fixTasks) {
-          try {
-            fixTask.execute(requestId, iManager.getServerInstance(), iManager, database);
+      for (ORemoteTask fixTask : fixTasks) {
+        try {
+          if (fixTask instanceof OAbstractRecordReplicatedTask)
+            ((OAbstractRecordReplicatedTask) fixTask).setLockRecords(false);
 
-          } catch (Exception e) {
-            ODistributedServerLog.error(this, iManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-                "Error on fixing transaction %s task %s", e, requestId, fixTask);
-          }
+          fixTask.execute(requestId, iManager.getServerInstance(), iManager, database);
+
+        } catch (Exception e) {
+          ODistributedServerLog.error(this, iManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+              "Error on fixing transaction %s task %s", e, requestId, fixTask);
         }
-
-        pRequest.fix();
       }
+
+      if (pRequest != null)
+        pRequest.fix();
     }
 
     return Boolean.TRUE;
+
   }
 
   @Override
