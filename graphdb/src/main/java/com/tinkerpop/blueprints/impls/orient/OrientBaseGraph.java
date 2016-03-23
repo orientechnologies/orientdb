@@ -1738,7 +1738,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
             "Requested command '%s' must be executed outside active transaction: the transaction will be committed and reopen right after it. To avoid this behavior execute it outside a transaction",
             msg.toString());
       }
-      raw.commit();
+      raw.commit(true);
       committed = true;
     } else
       committed = false;
