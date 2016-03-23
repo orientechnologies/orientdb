@@ -298,11 +298,15 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
     OChannelBinaryAsynchClient network = null;
 
+    if(getSessionId() == -1)
+      //SESSION ALREADY CLOSED, DO NOTHING
+      return;
+
+
     stateLock.acquireWriteLock();
     try {
       if (status == STATUS.CLOSED)
         return;
-
       network = beginRequest(OChannelBinaryProtocol.REQUEST_DB_CLOSE);
       try {
         setSessionId(null, -1, null);
