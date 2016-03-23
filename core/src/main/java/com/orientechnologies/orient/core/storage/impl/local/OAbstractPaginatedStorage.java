@@ -115,7 +115,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   private volatile ThreadLocal<OStorageTransaction> transaction          = new ThreadLocal<OStorageTransaction>();
   private final    AtomicBoolean                    checkpointInProgress = new AtomicBoolean();
-  private final      OSBTreeCollectionManagerShared sbTreeCollectionManager;
+  protected final      OSBTreeCollectionManagerShared sbTreeCollectionManager;
   protected volatile OWriteAheadLog                 writeAheadLog;
   private            OStorageRecoverListener        recoverListener;
 
