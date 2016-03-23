@@ -19,11 +19,11 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import java.util.Collection;
+
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-
-import java.util.Collection;
-import java.util.concurrent.Callable;
 
 /**
  * Generic Distributed Database interface.
@@ -33,7 +33,8 @@ import java.util.concurrent.Callable;
  */
 public interface ODistributedDatabase {
   ODistributedResponse send2Nodes(ODistributedRequest iRequest, Collection<String> iClusterNames, Collection<String> iNodes,
-      ODistributedRequest.EXECUTION_MODE iExecutionMode, Object localResult, Callable<Void> iAfterSentCallback);
+      ODistributedRequest.EXECUTION_MODE iExecutionMode, Object localResult,
+      OCallable<Void, ODistributedRequestId> iAfterSentCallback);
 
   void setOnline();
 

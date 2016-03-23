@@ -205,6 +205,9 @@ public class ORemoteServerChannel {
           break;
         }
 
+        if (!manager.isNodeAvailable(server))
+          break;
+
         try {
           connect();
         } catch (IOException e1) {

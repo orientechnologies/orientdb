@@ -25,11 +25,10 @@ import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 import java.util.Collection;
 import java.util.Set;
-import java.util.concurrent.Callable;
 
 /**
  * Asynchronous distributed operation.
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class OAsynchDistributedOperation {
@@ -39,11 +38,11 @@ public class OAsynchDistributedOperation {
   private final ORemoteTask                                             task;
   private final OCallable<Object, OPair<ODistributedRequestId, Object>> callback;
   private final Object                                                  localResult;
-  private final Callable<Void>                                          afterRequestCallback;
+  private final OCallable<Void, ODistributedRequestId>                  afterRequestCallback;
 
   public OAsynchDistributedOperation(final String iDatabaseName, final Set<String> iClusterNames, final Collection<String> iNodes,
       final ORemoteTask iTask, final OCallable<Object, OPair<ODistributedRequestId, Object>> iCallback, final Object iLocalResult,
-      final Callable<Void> iAfterRequestCallback) {
+      final OCallable<Void, ODistributedRequestId> iAfterRequestCallback) {
     databaseName = iDatabaseName;
     clusterNames = iClusterNames;
     nodes = iNodes;
@@ -77,7 +76,7 @@ public class OAsynchDistributedOperation {
     return localResult;
   }
 
-  public Callable<Void> getAfterRequestCallback() {
+  public OCallable<Void, ODistributedRequestId> getAfterRequestCallback() {
     return afterRequestCallback;
   }
 }

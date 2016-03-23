@@ -72,13 +72,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
@@ -101,7 +96,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   private ODistributedServerManager.DB_STATUS                        prevStatus;
   private final ReentrantReadWriteLock                               messageManagementLock = new ReentrantReadWriteLock();
   // ARRAY OF LOCKS FOR CONCURRENT OPERATIONS ON CLUSTERS
-  private final Lock[]                                               clusterLocks;
+  private final Semaphore[]                                          clusterLocks;
 
   public ODistributedStorage(final OServer iServer, final OAbstractPaginatedStorage wrapped) {
     this.serverInstance = iServer;
@@ -154,18 +149,27 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     asynchWorker = new Thread() {
       @Override
       public void run() {
-        while (running || !asynchronousOperationsQueue.isEmpty()) {
+        while (running) { // || !asynchronousOperationsQueue.isEmpty()
           try {
             final OAsynchDistributedOperation operation = asynchronousOperationsQueue.take();
 
-            final ODistributedResponse response = dManager.sendRequest(operation.getDatabaseName(), operation.getClusterNames(),
-                operation.getNodes(), operation.getTask(),
-                operation.getCallback() != null ? EXECUTION_MODE.RESPONSE : EXECUTION_MODE.NO_RESPONSE, operation.getLocalResult(),
-                operation.getAfterRequestCallback());
+            ODistributedRequestId reqId = null;
+            try {
+              final ODistributedResponse response = dManager.sendRequest(operation.getDatabaseName(), operation.getClusterNames(),
+                  operation.getNodes(), operation.getTask(),
+                  operation.getCallback() != null ? EXECUTION_MODE.RESPONSE : EXECUTION_MODE.NO_RESPONSE,
+                  operation.getLocalResult(), operation.getAfterRequestCallback());
 
-            if (operation.getCallback() != null)
-              operation.getCallback()
-                  .call(new OPair<ODistributedRequestId, Object>(response.getRequestId(), response.getPayload()));
+              reqId = response.getRequestId();
+
+              if (operation.getCallback() != null)
+                operation.getCallback().call(new OPair<ODistributedRequestId, Object>(reqId, response.getPayload()));
+
+            } finally {
+              // ASSURE IT'S CALLED ANYWAY
+              if (operation.getAfterRequestCallback() != null)
+                operation.getAfterRequestCallback().call(reqId);
+            }
 
           } catch (InterruptedException e) {
 
@@ -196,9 +200,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     asynchWorker.setName("OrientDB Distributed asynch ops node=" + getNodeId() + " db=" + getName());
     asynchWorker.start();
 
-    clusterLocks = new ReentrantLock[32];
+    clusterLocks = new Semaphore[32];
     for (int i = 0; i < clusterLocks.length; ++i)
-      clusterLocks[i] = new ReentrantLock();
+      clusterLocks[i] = new Semaphore(1);
   }
 
   @Override
@@ -546,9 +550,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       // IN ANY CASE EXECUTE LOCALLY AND THEN DISTRIBUTE
       return (OStorageOperationResult<OPhysicalPosition>) executeRecordOperationInLock(clusterId,
-          new OCallable<Object, Callable<Void>>() {
+          new OCallable<Object, OCallable<Void, ODistributedRequestId>>() {
             @Override
-            public Object call(Callable<Void> unlockCallback) {
+            public Object call(OCallable<Void, ODistributedRequestId> unlockCallback) {
               final OStorageOperationResult<OPhysicalPosition> localResult;
               try {
                 localResult = (OStorageOperationResult<OPhysicalPosition>) ODistributedAbstractPlugin
@@ -775,64 +779,65 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       final int clusterId = iRecordId.clusterId;
 
-      return (OStorageOperationResult<Integer>) executeRecordOperationInLock(clusterId, new OCallable<Object, Callable<Void>>() {
-        @Override
-        public Object call(Callable<Void> unlockCallback) {
+      return (OStorageOperationResult<Integer>) executeRecordOperationInLock(clusterId,
+          new OCallable<Object, OCallable<Void, ODistributedRequestId>>() {
+            @Override
+            public Object call(OCallable<Void, ODistributedRequestId> unlockCallback) {
 
-          final OUpdateRecordTask task = new OUpdateRecordTask(iRecordId, iContent, iVersion, iRecordType);
+              final OUpdateRecordTask task = new OUpdateRecordTask(iRecordId, iContent, iVersion, iRecordType);
 
-          final OStorageOperationResult<Integer> localResult;
-          try {
-            localResult = (OStorageOperationResult<Integer>) ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
+              final OStorageOperationResult<Integer> localResult;
+              try {
+                localResult = (OStorageOperationResult<Integer>) ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
 
-              @Override
-              public Object call() throws Exception {
-                // USE THE DATABASE TO CALL HOOKS
-                final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+                  @Override
+                  public Object call() throws Exception {
+                    // USE THE DATABASE TO CALL HOOKS
+                    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
 
-                final ORecord record = Orient.instance().getRecordFactoryManager().newInstance(iRecordType);
-                ORecordInternal.fill(record, iRecordId, iVersion, iContent, true);
-                db.save(record);
+                    final ORecord record = Orient.instance().getRecordFactoryManager().newInstance(iRecordType);
+                    ORecordInternal.fill(record, iRecordId, iVersion, iContent, true);
+                    db.save(record);
 
-                return new OStorageOperationResult<Integer>(record.getVersion());
+                    return new OStorageOperationResult<Integer>(record.getVersion());
+                  }
+                });
+              } catch (RuntimeException e) {
+                throw e;
+              } catch (Exception e) {
+                OException.wrapException(new ODistributedException("Cannot delete record " + iRecordId), e);
+                // UNREACHABLE
+                return null;
               }
-            });
-          } catch (RuntimeException e) {
-            throw e;
-          } catch (Exception e) {
-            OException.wrapException(new ODistributedException("Cannot delete record " + iRecordId), e);
-            // UNREACHABLE
-            return null;
-          }
 
-          if (!nodes.isEmpty()) {
-            Boolean executionModeSynch = dbCfg.isExecutionModeSynchronous(clusterName);
-            if (executionModeSynch == null)
-              executionModeSynch = iMode == 0;
+              if (!nodes.isEmpty()) {
+                Boolean executionModeSynch = dbCfg.isExecutionModeSynchronous(clusterName);
+                if (executionModeSynch == null)
+                  executionModeSynch = iMode == 0;
 
-            if (executionModeSynch) {
-              // REPLICATE IT
-              task.prepareUndoOperation();
-              final Object result = dManager.sendRequest(getName(), Collections.singleton(clusterName), nodes, task,
-                  EXECUTION_MODE.RESPONSE, localResult.getResult(), unlockCallback).getPayload();
+                if (executionModeSynch) {
+                  // REPLICATE IT
+                  task.prepareUndoOperation();
+                  final Object result = dManager.sendRequest(getName(), Collections.singleton(clusterName), nodes, task,
+                      EXECUTION_MODE.RESPONSE, localResult.getResult(), unlockCallback).getPayload();
 
-              if (result instanceof ONeedRetryException)
-                throw (ONeedRetryException) result;
-              else if (result instanceof Exception)
-                throw OException.wrapException(new ODistributedException("Error on execution distributed UPDATE_RECORD"),
-                    (Exception) result);
+                  if (result instanceof ONeedRetryException)
+                    throw (ONeedRetryException) result;
+                  else if (result instanceof Exception)
+                    throw OException.wrapException(new ODistributedException("Error on execution distributed UPDATE_RECORD"),
+                        (Exception) result);
 
-              // UPDATE LOCALLY
-              return new OStorageOperationResult<Integer>((Integer) result);
+                  // UPDATE LOCALLY
+                  return new OStorageOperationResult<Integer>((Integer) result);
+                }
+
+                // ASYNCHRONOUS CALL: EXECUTE LOCALLY AND THEN DISTRIBUTE
+                asynchronousExecution(new OAsynchDistributedOperation(getName(), Collections.singleton(clusterName), nodes, task,
+                    null, localResult.getResult(), unlockCallback));
+              }
+              return localResult;
             }
-
-            // ASYNCHRONOUS CALL: EXECUTE LOCALLY AND THEN DISTRIBUTE
-            asynchronousExecution(new OAsynchDistributedOperation(getName(), Collections.singleton(clusterName), nodes, task, null,
-                localResult.getResult(), unlockCallback));
-          }
-          return localResult;
-        }
-      });
+          });
 
     } catch (ONeedRetryException e) {
       // PASS THROUGH
@@ -883,64 +888,65 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       final int clusterId = iRecordId.clusterId;
 
-      return (OStorageOperationResult<Boolean>) executeRecordOperationInLock(clusterId, new OCallable<Object, Callable<Void>>() {
-        @Override
-        public Object call(Callable<Void> unlockCallback) {
-          final ODeleteRecordTask task = new ODeleteRecordTask(iRecordId, iVersion);
-          task.prepareUndoOperation();
+      return (OStorageOperationResult<Boolean>) executeRecordOperationInLock(clusterId,
+          new OCallable<Object, OCallable<Void, ODistributedRequestId>>() {
+            @Override
+            public Object call(OCallable<Void, ODistributedRequestId> unlockCallback) {
+              final ODeleteRecordTask task = new ODeleteRecordTask(iRecordId, iVersion);
+              task.prepareUndoOperation();
 
-          final OStorageOperationResult<Boolean> localResult;
-          try {
-            localResult = (OStorageOperationResult<Boolean>) ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
+              final OStorageOperationResult<Boolean> localResult;
+              try {
+                localResult = (OStorageOperationResult<Boolean>) ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
 
-              @Override
-              public Object call() throws Exception {
-                // USE THE DATABASE TO CALL HOOKS
-                final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
-                try {
-                  db.delete(iRecordId, iVersion);
-                  return new OStorageOperationResult<Boolean>(true);
-                } catch (ORecordNotFoundException e) {
-                  return new OStorageOperationResult<Boolean>(false);
-                }
-                // return wrapped.deleteRecord(iRecordId, iVersion, 0, null).getResult();
+                  @Override
+                  public Object call() throws Exception {
+                    // USE THE DATABASE TO CALL HOOKS
+                    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+                    try {
+                      db.delete(iRecordId, iVersion);
+                      return new OStorageOperationResult<Boolean>(true);
+                    } catch (ORecordNotFoundException e) {
+                      return new OStorageOperationResult<Boolean>(false);
+                    }
+                    // return wrapped.deleteRecord(iRecordId, iVersion, 0, null).getResult();
+                  }
+                });
+              } catch (RuntimeException e) {
+                throw e;
+              } catch (Exception e) {
+                OException.wrapException(new ODistributedException("Cannot delete record " + iRecordId), e);
+                // UNREACHABLE
+                return null;
               }
-            });
-          } catch (RuntimeException e) {
-            throw e;
-          } catch (Exception e) {
-            OException.wrapException(new ODistributedException("Cannot delete record " + iRecordId), e);
-            // UNREACHABLE
-            return null;
-          }
 
-          if (!nodes.isEmpty()) {
-            Boolean executionModeSynch = dbCfg.isExecutionModeSynchronous(clusterName);
-            if (executionModeSynch == null)
-              executionModeSynch = iMode == 0;
+              if (!nodes.isEmpty()) {
+                Boolean executionModeSynch = dbCfg.isExecutionModeSynchronous(clusterName);
+                if (executionModeSynch == null)
+                  executionModeSynch = iMode == 0;
 
-            if (executionModeSynch) {
-              // REPLICATE IT
-              final Object result = dManager.sendRequest(getName(), Collections.singleton(clusterName), nodes, task,
-                  EXECUTION_MODE.RESPONSE, localResult.getResult(), unlockCallback).getPayload();
+                if (executionModeSynch) {
+                  // REPLICATE IT
+                  final Object result = dManager.sendRequest(getName(), Collections.singleton(clusterName), nodes, task,
+                      EXECUTION_MODE.RESPONSE, localResult.getResult(), unlockCallback).getPayload();
 
-              if (result instanceof ONeedRetryException)
-                throw (ONeedRetryException) result;
-              else if (result instanceof Exception)
-                throw OException.wrapException(new ODistributedException("Error on execution distributed DELETE_RECORD"),
-                    (Exception) result);
+                  if (result instanceof ONeedRetryException)
+                    throw (ONeedRetryException) result;
+                  else if (result instanceof Exception)
+                    throw OException.wrapException(new ODistributedException("Error on execution distributed DELETE_RECORD"),
+                        (Exception) result);
 
-              return new OStorageOperationResult<Boolean>(true);
+                  return new OStorageOperationResult<Boolean>(true);
+                }
+
+                // ASYNCHRONOUS CALL: EXECUTE LOCALLY AND THEN DISTRIBUTE
+                if (!nodes.isEmpty())
+                  asynchronousExecution(new OAsynchDistributedOperation(getName(), Collections.singleton(clusterName), nodes, task,
+                      null, localResult.getResult(), unlockCallback));
+              }
+              return localResult;
             }
-
-            // ASYNCHRONOUS CALL: EXECUTE LOCALLY AND THEN DISTRIBUTE
-            if (!nodes.isEmpty())
-              asynchronousExecution(new OAsynchDistributedOperation(getName(), Collections.singleton(clusterName), nodes, task,
-                  null, localResult.getResult(), unlockCallback));
-          }
-          return localResult;
-        }
-      });
+          });
 
     } catch (ONeedRetryException e) {
       // PASS THROUGH
@@ -953,59 +959,24 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     }
   }
 
-  private Object executeRecordOperationInLock(final int iPartition, final OCallable<Object, Callable<Void>> callback) {
+  private Object executeRecordOperationInLock(final int clusterId,
+      final OCallable<Object, OCallable<Void, ODistributedRequestId>> callback) throws InterruptedException {
     messageManagementLock.readLock().lock();
     final AtomicBoolean acquiredMessageManagementLock = new AtomicBoolean(true);
 
     try {
-      clusterLocks[iPartition % clusterLocks.length].lock();
+      final int partition = clusterId % clusterLocks.length;
+      clusterLocks[partition].acquire();
       final AtomicBoolean acquiredClusterLock = new AtomicBoolean(true);
 
-      try {
-
-        final Callable<Void> unlockCallback = new Callable<Void>() {
-          @Override
-          public Void call() throws Exception {
-            // UNLOCK AS SOON AS THE REQUEST IS SENT
-            if (acquiredClusterLock.compareAndSet(true, false))
-              clusterLocks[iPartition % clusterLocks.length].unlock();
-            if (acquiredMessageManagementLock.compareAndSet(true, false))
-              messageManagementLock.readLock().unlock();
-            return null;
-          }
-        };
-
-        return callback.call(unlockCallback);
-
-      } finally {
-        if (acquiredClusterLock.compareAndSet(true, false))
-          clusterLocks[iPartition % clusterLocks.length].unlock();
-      }
-    } finally {
-      if (acquiredMessageManagementLock.compareAndSet(true, false))
-        messageManagementLock.readLock().unlock();
-    }
-  }
-
-  private Object executeOperationInLock(final boolean iExclusiveLock, final OCallable<Object, Callable<Void>> callback) {
-    if (iExclusiveLock)
-      messageManagementLock.writeLock().lock();
-    else
-      messageManagementLock.readLock().lock();
-
-    final AtomicBoolean acquiredMessageManagementLock = new AtomicBoolean(true);
-
-    try {
-
-      final Callable<Void> unlockCallback = new Callable<Void>() {
+      final OCallable<Void, ODistributedRequestId> unlockCallback = new OCallable<Void, ODistributedRequestId>() {
         @Override
-        public Void call() throws Exception {
+        public Void call(final ODistributedRequestId req) {
           // UNLOCK AS SOON AS THE REQUEST IS SENT
+          if (acquiredClusterLock.compareAndSet(true, false))
+            clusterLocks[partition].release();
           if (acquiredMessageManagementLock.compareAndSet(true, false))
-            if (iExclusiveLock)
-              messageManagementLock.writeLock().unlock();
-            else
-              messageManagementLock.readLock().unlock();
+            messageManagementLock.readLock().unlock();
           return null;
         }
       };
@@ -1014,11 +985,32 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
     } finally {
       if (acquiredMessageManagementLock.compareAndSet(true, false))
-        if (iExclusiveLock)
-          messageManagementLock.writeLock().unlock();
-        else
-          messageManagementLock.readLock().unlock();
+        messageManagementLock.readLock().unlock();
     }
+  }
+
+  private Object executeOperationInLock(final boolean iExclusiveLock,
+      final OCallable<Object, OCallable<Void, ODistributedRequestId>> callback) {
+    if (iExclusiveLock)
+      messageManagementLock.writeLock().lock();
+    else
+      messageManagementLock.readLock().lock();
+    final AtomicBoolean acquiredMessageManagementLock = new AtomicBoolean(true);
+
+    final OCallable<Void, ODistributedRequestId> unlockCallback = new OCallable<Void, ODistributedRequestId>() {
+      @Override
+      public Void call(final ODistributedRequestId req) {
+        // UNLOCK AS SOON AS THE REQUEST IS SENT
+        if (acquiredMessageManagementLock.compareAndSet(true, false))
+          if (iExclusiveLock)
+            messageManagementLock.writeLock().unlock();
+          else
+            messageManagementLock.readLock().unlock();
+        return null;
+      }
+    };
+
+    return callback.call(unlockCallback);
   }
 
   @Override
@@ -1176,213 +1168,215 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       // SYNCHRONIZE THE ENTIRE BLOCK TO BE LINEARIZABLE WITH CREATE OPERATION
       final boolean exclusiveLock = iTx.hasRecordCreation();
 
-      return (List<ORecordOperation>) executeOperationInLock(exclusiveLock, new OCallable<Object, Callable<Void>>() {
-        @Override
-        public Object call(final Callable<Void> unlockCallback) {
-          try {
-            final ODistributedDatabase ddb = acquireMultipleLocks(iTx, maxAutoRetry, autoRetryDelay);
+      return (List<ORecordOperation>) executeOperationInLock(exclusiveLock,
+          new OCallable<Object, OCallable<Void, ODistributedRequestId>>() {
+            @Override
+            public Object call(final OCallable<Void, ODistributedRequestId> unlockCallback) {
+              try {
+                final ODistributedDatabase ddb = acquireMultipleLocks(iTx, maxAutoRetry, autoRetryDelay);
 
-            try {
-              final List<ORecordOperation> uResult = (List<ORecordOperation>) ODistributedAbstractPlugin
-                  .runInDistributedMode(new Callable() {
-                @Override
-                public Object call() throws Exception {
-                  return wrapped.commit(iTx, callback);
-                }
-              });
+                try {
+                  final List<ORecordOperation> uResult = (List<ORecordOperation>) ODistributedAbstractPlugin
+                      .runInDistributedMode(new Callable() {
+                    @Override
+                    public Object call() throws Exception {
+                      return wrapped.commit(iTx, callback);
+                    }
+                  });
 
-              // After commit force the clean of dirty managers due to possible copy and miss clean.
-              for (ORecordOperation ent : iTx.getAllRecordEntries()) {
-                ORecordInternal.getDirtyManager(ent.getRecord()).clear();
-              }
-
-              final OTxTaskResult localResult = new OTxTaskResult();
-              for (ORecordOperation op : uResult) {
-                final OAbstractRecordReplicatedTask task;
-
-                final ORecord record = op.getRecord();
-
-                switch (op.type) {
-                case ORecordOperation.CREATED:
-                  task = new OCreateRecordTask(record);
-                  localResult.results.add(new OPlaceholder((ORecordId) record.getIdentity(), record.getVersion()));
-                  // ADD UNDO TASK ONCE YHE RID OS KNOWN
-                  undoTasks.add(new ODeleteRecordTask(record));
-                  break;
-
-                case ORecordOperation.UPDATED:
-                  task = new OUpdateRecordTask(record);
-                  localResult.results.add(record.getVersion());
-                  break;
-
-                case ORecordOperation.DELETED:
-                  task = new ODeleteRecordTask(record);
-                  localResult.results.add(Boolean.TRUE);
-                  break;
-
-                default:
-                  continue;
-                }
-
-                involvedClusters.add(getClusterNameByRID((ORecordId) record.getIdentity()));
-                txTask.add(task);
-              }
-
-              txTask.setUndoTasks(undoTasks);
-
-              OTransactionInternal.setStatus((OTransactionAbstract) iTx, OTransaction.TXSTATUS.COMMITTING);
-
-              final Set<String> nodes = dbCfg.getServers(involvedClusters);
-
-              // REMOVE CURRENT NODE BECAUSE IT HAS BEEN ALREADY EXECUTED LOCALLY
-              nodes.remove(localNodeName);
-
-              // FILTER ONLY AVAILABLE NODES
-              dManager.getAvailableNodes(nodes, getName());
-
-              if (nodes.isEmpty())
-                // NO FURTHER NODES TO INVOLVE
-                return null;
-
-              if (finalExecutionModeSynch) {
-                // SYNCHRONOUS
-
-                // AUTO-RETRY IN CASE RECORDS ARE LOCKED
-                ODistributedResponse lastResult = null;
-                for (int retry = 1; retry <= maxAutoRetry; ++retry) {
-                  // SYNCHRONOUS CALL: REPLICATE IT
-                  lastResult = dManager.sendRequest(getName(), involvedClusters, nodes, txTask, EXECUTION_MODE.RESPONSE,
-                      localResult, unlockCallback);
-                  if (!processCommitResult(localNodeName, iTx, txTask, involvedClusters, uResult, nodes, autoRetryDelay,
-                      lastResult.getRequestId(), lastResult.getPayload())) {
-                    // RETRY
-                    continue;
+                  // After commit force the clean of dirty managers due to possible copy and miss clean.
+                  for (ORecordOperation ent : iTx.getAllRecordEntries()) {
+                    ORecordInternal.getDirtyManager(ent.getRecord()).clear();
                   }
 
-                  return null;
-                }
+                  final OTxTaskResult localResult = new OTxTaskResult();
+                  for (ORecordOperation op : uResult) {
+                    final OAbstractRecordReplicatedTask task;
 
-                if (ODistributedServerLog.isDebugEnabled())
-                  ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
-                      "Distributed transaction retries exceed maximum auto-retries (%d)", maxAutoRetry);
+                    final ORecord record = op.getRecord();
 
-                // ONLY CASE: ODistributedRecordLockedException MORE THAN AUTO-RETRY
-                throw (ODistributedRecordLockedException) lastResult.getPayload();
-              }
+                    switch (op.type) {
+                    case ORecordOperation.CREATED:
+                      task = new OCreateRecordTask(record);
+                      localResult.results.add(new OPlaceholder((ORecordId) record.getIdentity(), record.getVersion()));
+                      // ADD UNDO TASK ONCE YHE RID OS KNOWN
+                      undoTasks.add(new ODeleteRecordTask(record));
+                      break;
 
-              // ASYNC
-              if (!nodes.isEmpty()) {
-                if (finalExecutionModeSynch)
-                  dManager.sendRequest(getName(), involvedClusters, nodes, txTask, EXECUTION_MODE.RESPONSE, localResult,
-                      unlockCallback);
-                else {
+                    case ORecordOperation.UPDATED:
+                      task = new OUpdateRecordTask(record);
+                      localResult.results.add(record.getVersion());
+                      break;
 
-                  // MANAGE REPLICATION CALLBACK
-                  final OAsyncReplicationOk onAsyncReplicationOk = OExecutionThreadLocal.INSTANCE.get().onAsyncReplicationOk;
-                  final OAsyncReplicationError onAsyncReplicationError = getAsyncReplicationError();
+                    case ORecordOperation.DELETED:
+                      task = new ODeleteRecordTask(record);
+                      localResult.results.add(Boolean.TRUE);
+                      break;
 
-                  // ASYNCHRONOUSLY REPLICATE IT TO ALL THE OTHER NODES
-                  asynchronousExecution(new OAsynchDistributedOperation(getName(), involvedClusters, nodes, txTask,
-                      new OCallable<Object, OPair<ODistributedRequestId, Object>>() {
-                    @Override
-                    public Object call(final OPair<ODistributedRequestId, Object> iArgument) {
-                      try {
-                        final Object value = iArgument.getValue();
+                    default:
+                      continue;
+                    }
 
-                        final ODistributedRequestId reqId = iArgument.getKey();
+                    involvedClusters.add(getClusterNameByRID((ORecordId) record.getIdentity()));
+                    txTask.add(task);
+                  }
 
-                        if (value instanceof OTxTaskResult) {
-                          // SEND 2-PHASE DISTRIBUTED COMMIT TX
-                          sendTxCompleted(localNodeName, involvedClusters, nodes, reqId, true);
+                  txTask.setUndoTasks(undoTasks);
 
-                          if (onAsyncReplicationOk != null)
-                            onAsyncReplicationOk.onAsyncReplicationOk();
+                  OTransactionInternal.setStatus((OTransactionAbstract) iTx, OTransaction.TXSTATUS.COMMITTING);
 
-                          return null;
-                        } else if (value instanceof Exception) {
+                  final Set<String> nodes = dbCfg.getServers(involvedClusters);
+
+                  // REMOVE CURRENT NODE BECAUSE IT HAS BEEN ALREADY EXECUTED LOCALLY
+                  nodes.remove(localNodeName);
+
+                  // FILTER ONLY AVAILABLE NODES
+                  dManager.getAvailableNodes(nodes, getName());
+
+                  if (nodes.isEmpty())
+                    // NO FURTHER NODES TO INVOLVE
+                    return null;
+
+                  if (finalExecutionModeSynch) {
+                    // SYNCHRONOUS
+
+                    // AUTO-RETRY IN CASE RECORDS ARE LOCKED
+                    ODistributedResponse lastResult = null;
+                    for (int retry = 1; retry <= maxAutoRetry; ++retry) {
+                      // SYNCHRONOUS CALL: REPLICATE IT
+                      lastResult = dManager.sendRequest(getName(), involvedClusters, nodes, txTask, EXECUTION_MODE.RESPONSE,
+                          localResult, unlockCallback);
+                      if (!processCommitResult(localNodeName, iTx, txTask, involvedClusters, uResult, nodes, autoRetryDelay,
+                          lastResult.getRequestId(), lastResult.getPayload())) {
+                        // RETRY
+                        continue;
+                      }
+
+                      return null;
+                    }
+
+                    if (ODistributedServerLog.isDebugEnabled())
+                      ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
+                          "Distributed transaction retries exceed maximum auto-retries (%d)", maxAutoRetry);
+
+                    // ONLY CASE: ODistributedRecordLockedException MORE THAN AUTO-RETRY
+                    throw (ODistributedRecordLockedException) lastResult.getPayload();
+                  }
+
+                  // ASYNC
+                  if (!nodes.isEmpty()) {
+                    if (finalExecutionModeSynch)
+                      dManager.sendRequest(getName(), involvedClusters, nodes, txTask, EXECUTION_MODE.RESPONSE, localResult,
+                          unlockCallback);
+                    else {
+
+                      // MANAGE REPLICATION CALLBACK
+                      final OAsyncReplicationOk onAsyncReplicationOk = OExecutionThreadLocal.INSTANCE.get().onAsyncReplicationOk;
+                      final OAsyncReplicationError onAsyncReplicationError = getAsyncReplicationError();
+
+                      // ASYNCHRONOUSLY REPLICATE IT TO ALL THE OTHER NODES
+                      asynchronousExecution(new OAsynchDistributedOperation(getName(), involvedClusters, nodes, txTask,
+                          new OCallable<Object, OPair<ODistributedRequestId, Object>>() {
+                        @Override
+                        public Object call(final OPair<ODistributedRequestId, Object> iArgument) {
                           try {
-                            final ORemoteTask undo = txTask.getUndoTask(reqId);
+                            final Object value = iArgument.getValue();
 
-                            if (undo != null)
+                            final ODistributedRequestId reqId = iArgument.getKey();
+
+                            if (value instanceof OTxTaskResult) {
+                              // SEND 2-PHASE DISTRIBUTED COMMIT TX
+                              sendTxCompleted(localNodeName, involvedClusters, nodes, reqId, true);
+
+                              if (onAsyncReplicationOk != null)
+                                onAsyncReplicationOk.onAsyncReplicationOk();
+
+                              return null;
+                            } else if (value instanceof Exception) {
                               try {
+                                final ORemoteTask undo = txTask.getUndoTask(reqId);
 
-                                final ODatabaseDocumentTx database = new ODatabaseDocumentTx(getURL());
-                                database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSecurityServerUser.class);
-                                database.open("system", "system");
+                                if (undo != null)
+                                  try {
 
-                                try {
-                                  undo.execute(new ODistributedRequestId(), serverInstance, dManager, database);
-                                } finally {
-                                  database.close();
-                                }
+                                    final ODatabaseDocumentTx database = new ODatabaseDocumentTx(getURL());
+                                    database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSecurityServerUser.class);
+                                    database.open("system", "system");
 
-                              } catch (Exception e) {
-                                ODistributedServerLog.error(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
-                                    "Async distributed transaction failed, cannot revert local transaction. Current node could have a not aligned database. Remote answer: %s",
-                                    e, value);
-                                throw OException.wrapException(
-                                    new OTransactionException(
-                                        "Error on execution async distributed transaction, the database could be inconsistent"),
-                                    (Exception) value);
+                                    try {
+                                      undo.execute(new ODistributedRequestId(), serverInstance, dManager, database);
+                                    } finally {
+                                      database.close();
+                                    }
+
+                                  } catch (Exception e) {
+                                    ODistributedServerLog.error(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
+                                        "Async distributed transaction failed, cannot revert local transaction. Current node could have a not aligned database. Remote answer: %s",
+                                        e, value);
+                                    throw OException.wrapException(
+                                        new OTransactionException(
+                                            "Error on execution async distributed transaction, the database could be inconsistent"),
+                                        (Exception) value);
+                                  }
+
+                                if (ODistributedServerLog.isDebugEnabled())
+                                  ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
+                                      "Async distributed transaction failed: %s", value);
+
+                                // SEND 2-PHASE DISTRIBUTED ROLLBACK TX
+                                sendTxCompleted(localNodeName, involvedClusters, nodes, reqId, false);
+
+                                if (value instanceof RuntimeException)
+                                  throw (RuntimeException) value;
+                                else
+                                  throw OException.wrapException(
+                                      new OTransactionException("Error on execution async distributed transaction"),
+                                      (Exception) value);
+
+                              } finally {
+
+                                if (onAsyncReplicationError != null)
+                                  onAsyncReplicationError.onAsyncReplicationError((Throwable) value, 0);
+
                               }
+                            }
 
+                            // UNKNOWN RESPONSE TYPE
                             if (ODistributedServerLog.isDebugEnabled())
                               ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
-                                  "Async distributed transaction failed: %s", value);
+                                  "Async distributed transaction error, received unknown response type: %s", iArgument);
 
-                            // SEND 2-PHASE DISTRIBUTED ROLLBACK TX
-                            sendTxCompleted(localNodeName, involvedClusters, nodes, reqId, false);
-
-                            if (value instanceof RuntimeException)
-                              throw (RuntimeException) value;
-                            else
-                              throw OException.wrapException(
-                                  new OTransactionException("Error on execution async distributed transaction"), (Exception) value);
+                            throw new OTransactionException(
+                                "Error on committing async distributed transaction, received unknown response type " + iArgument);
 
                           } finally {
-
-                            if (onAsyncReplicationError != null)
-                              onAsyncReplicationError.onAsyncReplicationError((Throwable) value, 0);
-
+                            try {
+                              unlockCallback.call(iArgument.getKey());
+                            } catch (Exception e) {
+                              ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
+                                  "Error on unlocking Async distributed transaction", e);
+                            }
                           }
                         }
-
-                        // UNKNOWN RESPONSE TYPE
-                        if (ODistributedServerLog.isDebugEnabled())
-                          ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
-                              "Async distributed transaction error, received unknown response type: %s", iArgument);
-
-                        throw new OTransactionException(
-                            "Error on committing async distributed transaction, received unknown response type " + iArgument);
-
-                      } finally {
-                        try {
-                          unlockCallback.call();
-                        } catch (Exception e) {
-                          ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
-                              "Error on unlocking Async distributed transaction", e);
-                        }
-                      }
+                      }, localResult, unlockCallback));
                     }
-                  }, localResult, unlockCallback));
-                }
-              }
+                  }
 
-            } finally {
-              // UNLOCK ALL THE RECORDS
-              for (ORecordOperation op : iTx.getAllRecordEntries()) {
-                ddb.unlockRecord(op.record);
+                } finally {
+                  // UNLOCK ALL THE RECORDS
+                  for (ORecordOperation op : iTx.getAllRecordEntries()) {
+                    ddb.unlockRecord(op.record);
+                  }
+                }
+              } catch (RuntimeException e) {
+                throw e;
+              } catch (Exception e) {
+                OException.wrapException(new ODistributedException("Cannot commit transaction"), e);
+                // UNREACHABLE
               }
+              return null;
             }
-          } catch (RuntimeException e) {
-            throw e;
-          } catch (Exception e) {
-            OException.wrapException(new ODistributedException("Cannot commit transaction"), e);
-            // UNREACHABLE
-          }
-          return null;
-        }
-      });
+          });
 
     } catch (OValidationException e) {
       throw e;

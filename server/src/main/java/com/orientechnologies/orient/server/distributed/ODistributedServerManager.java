@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -31,7 +32,6 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -50,6 +50,8 @@ public interface ODistributedServerManager {
   enum DB_STATUS {
     OFFLINE, SYNCHRONIZING, ONLINE, BACKUP
   };
+
+  boolean isNodeAvailable(final String iNodeName);
 
   Set<String> getAvailableNodeNames(String databaseName);
 
@@ -140,11 +142,13 @@ public interface ODistributedServerManager {
    * @param iExecutionMode
    * @param localResult
    *          It's the result of the request executed locally
-   * 
+   *
+   * @param iAfterSentCallback
    * @return
    */
   ODistributedResponse sendRequest(String iDatabaseName, Collection<String> iClusterNames, Collection<String> iTargetNodeNames,
-      ORemoteTask iTask, EXECUTION_MODE iExecutionMode, Object localResult, Callable<Void> iAfterSentCallback);
+      ORemoteTask iTask, EXECUTION_MODE iExecutionMode, Object localResult,
+      OCallable<Void, ODistributedRequestId> iAfterSentCallback);
 
   ODocument getStats();
 

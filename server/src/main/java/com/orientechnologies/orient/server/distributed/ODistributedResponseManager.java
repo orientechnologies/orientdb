@@ -258,7 +258,7 @@ public class ODistributedResponseManager {
         if (Thread.currentThread().isInterrupted()) {
           // INTERRUPTED
           ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
-              "thread has been interrupted wait for request (%s)", request);
+              "Thread has been interrupted wait for request (%s)", request);
           Thread.currentThread().interrupt();
           break;
         }

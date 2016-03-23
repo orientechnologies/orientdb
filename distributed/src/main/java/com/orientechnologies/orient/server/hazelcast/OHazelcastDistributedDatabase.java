@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.server.hazelcast;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -35,7 +36,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.*;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -168,52 +168,54 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
   @Override
   public ODistributedResponse send2Nodes(final ODistributedRequest iRequest, final Collection<String> iClusterNames,
       Collection<String> iNodes, final ODistributedRequest.EXECUTION_MODE iExecutionMode, final Object localResult,
-      final Callable<Void> iAfterSentCallback) {
-    checkForServerOnline(iRequest);
-
-    final String databaseName = iRequest.getDatabaseName();
-
-    if (iNodes.isEmpty()) {
-      ODistributedServerLog.error(this, getLocalNodeName(), null, DIRECTION.OUT,
-          "No nodes configured for database '%s' request: %s", databaseName, iRequest);
-      throw new ODistributedException("No nodes configured for partition '" + databaseName + "' request: " + iRequest);
-    }
-
-    final ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
-
-    final int availableNodes = manager.getAvailableNodes(iNodes, databaseName);
-
-    final int quorum = calculateQuorum(iRequest, iClusterNames, cfg, availableNodes, iExecutionMode);
-
-    int expectedSynchronousResponses = availableNodes;
-
-    final boolean groupByResponse;
-    if (iRequest.getTask().getResultStrategy() == OAbstractRemoteTask.RESULT_STRATEGY.UNION) {
-      expectedSynchronousResponses = availableNodes;
-      groupByResponse = false;
-    } else {
-      groupByResponse = true;
-    }
-
-    final boolean waitLocalNode = waitForLocalNode(cfg, iClusterNames, iNodes);
-
-    // CREATE THE RESPONSE MANAGER
-    final ODistributedResponseManager currentResponseMgr = new ODistributedResponseManager(manager, iRequest, iNodes,
-        expectedSynchronousResponses, quorum, waitLocalNode, iRequest.getTask().getSynchronousTimeout(expectedSynchronousResponses),
-        iRequest.getTask().getTotalTimeout(availableNodes), groupByResponse);
-
-    iRequest.setId(new ODistributedRequestId(manager.getLocalNodeId(), manager.getNextMessageIdCounter()));
-
-    if (localResult != null)
-      // COLLECT LOCAL RESULT
-      currentResponseMgr.collectResponse(new ODistributedResponse(iRequest.getId(), manager.getLocalNodeName(),
-          manager.getLocalNodeName(), (Serializable) localResult));
-
-    if (!(iNodes instanceof List))
-      iNodes = new ArrayList<String>(iNodes);
-    Collections.sort((List<String>) iNodes);
-
+      final OCallable<Void, ODistributedRequestId> iAfterSentCallback) {
+    boolean afterSendCallBackCalled = false;
     try {
+      checkForServerOnline(iRequest);
+
+      final String databaseName = iRequest.getDatabaseName();
+
+      if (iNodes.isEmpty()) {
+        ODistributedServerLog.error(this, getLocalNodeName(), null, DIRECTION.OUT,
+            "No nodes configured for database '%s' request: %s", databaseName, iRequest);
+        throw new ODistributedException("No nodes configured for partition '" + databaseName + "' request: " + iRequest);
+      }
+
+      final ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
+
+      final int availableNodes = manager.getAvailableNodes(iNodes, databaseName);
+
+      final int quorum = calculateQuorum(iRequest, iClusterNames, cfg, availableNodes, iExecutionMode);
+
+      int expectedSynchronousResponses = availableNodes;
+
+      final boolean groupByResponse;
+      if (iRequest.getTask().getResultStrategy() == OAbstractRemoteTask.RESULT_STRATEGY.UNION) {
+        expectedSynchronousResponses = availableNodes;
+        groupByResponse = false;
+      } else {
+        groupByResponse = true;
+      }
+
+      final boolean waitLocalNode = waitForLocalNode(cfg, iClusterNames, iNodes);
+
+      // CREATE THE RESPONSE MANAGER
+      final ODistributedResponseManager currentResponseMgr = new ODistributedResponseManager(manager, iRequest, iNodes,
+          expectedSynchronousResponses, quorum, waitLocalNode,
+          iRequest.getTask().getSynchronousTimeout(expectedSynchronousResponses),
+          iRequest.getTask().getTotalTimeout(availableNodes), groupByResponse);
+
+      iRequest.setId(new ODistributedRequestId(manager.getLocalNodeId(), manager.getNextMessageIdCounter()));
+
+      if (localResult != null)
+        // COLLECT LOCAL RESULT
+        currentResponseMgr.collectResponse(new ODistributedResponse(iRequest.getId(), manager.getLocalNodeName(),
+            manager.getLocalNodeName(), (Serializable) localResult));
+
+      if (!(iNodes instanceof List))
+        iNodes = new ArrayList<String>(iNodes);
+      Collections.sort((List<String>) iNodes);
+
       msgService.registerRequest(iRequest.getId().getMessageId(), currentResponseMgr);
 
       if (ODistributedServerLog.isDebugEnabled())
@@ -237,8 +239,10 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       Orient.instance().getProfiler().updateCounter("distributed.db." + databaseName + ".msgSent",
           "Number of replication messages sent from current node", +1, "distributed.db.*.msgSent");
 
+      afterSendCallBackCalled = true;
+
       if (iAfterSentCallback != null)
-        iAfterSentCallback.call();
+        iAfterSentCallback.call(iRequest.getId());
 
       return waitForResponse(iRequest, currentResponseMgr);
 
@@ -248,6 +252,9 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       throw OException.wrapException(new ODistributedException("Error on executing distributed request (" + iRequest
           + ") against database '" + databaseName + (iClusterNames != null ? "." + iClusterNames : "") + "' to nodes " + iNodes),
           e);
+    } finally {
+      if (iAfterSentCallback != null && !afterSendCallBackCalled)
+        iAfterSentCallback.call(iRequest.getId());
     }
   }
 

@@ -32,6 +32,7 @@ import com.orientechnologies.common.log.OAnsiCode;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.util.OArrays;
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -67,7 +68,6 @@ import java.io.*;
 import java.security.SecureRandom;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -470,8 +470,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
   @Override
   public ODistributedResponse sendRequest(final String iDatabaseName, final Collection<String> iClusterNames,
-      final Collection<String> iTargetNodes, final ORemoteTask iTask, final ODistributedRequest.EXECUTION_MODE iExecutionMode,
-      final Object localResult, final Callable<Void> iAfterSentCallback) {
+      final Collection<String> iTargetNodes, final ORemoteTask iTask, final EXECUTION_MODE iExecutionMode, final Object localResult,
+      final OCallable<Void, ODistributedRequestId> iAfterSentCallback) {
 
     final ODistributedRequest req = new ODistributedRequest(nodeId, iDatabaseName, iTask, iExecutionMode);
 
@@ -1053,6 +1053,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   @Override
   public boolean isNodeAvailable(final String iNodeName, final String iDatabaseName) {
     return getDatabaseStatus(iNodeName, iDatabaseName) != DB_STATUS.OFFLINE;
+  }
+
+  @Override
+  public boolean isNodeAvailable(final String iNodeName) {
+    return activeNodes.containsKey(iNodeName);
   }
 
   @Override
