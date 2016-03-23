@@ -50,6 +50,10 @@ import java.util.zip.ZipOutputStream;
 public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
   private final AtomicBoolean backupInProgress = new AtomicBoolean(false);
 
+  public static final String                        IBU_EXTENSION                              = ".ibu";
+  public static final String                        CONF_ENTRY_NAME                            = "database.ocf";
+  public static final String                        INCREMENTAL_BACKUP_DATEFORMAT              = "yyyy-MM-dd-HH-mm-ss";
+
   public OEnterpriseLocalPaginatedStorage(String name, String filePath, String mode, int id, OReadCache readCache)
       throws IOException {
     super(name, filePath, mode, id, readCache);
