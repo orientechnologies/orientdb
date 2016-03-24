@@ -20,6 +20,7 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
+import com.orientechnologies.common.log.OLogManager;
 import org.apache.commons.configuration.Configuration;
 
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
@@ -128,6 +129,19 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
     return this;
   }
 
+  @Override
+  public void setAutoStartTx(boolean autoStartTx) {
+    makeActive();
+
+    final boolean showWarning = !autoStartTx && isAutoStartTx() && database != null && database.getTransaction().isActive();
+    super.setAutoStartTx(autoStartTx);
+
+    if (showWarning)
+      OLogManager.instance().warn(this,
+          "Auto transaction starting is turned off for the graph, but already started transaction is left open."
+              + "Commit it manually or consider disabling auto transactions while creating the graph or its factory.");
+  }
+
   /**
    * Closes a transaction.
    *
@@ -181,6 +195,13 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
   public void begin() {
     makeActive();
 
+    // XXX: Under some circumstances, auto started transactions are committed outside of the graph using the
+    // underlying database and later restarted using the graph. So we have to check the status of the
+    // database transaction to support this behaviour.
+    if (isAutoStartTx() && database.getTransaction().isActive())
+      throw new OTransactionException("A mixture of auto started and manually started transactions is not allowed. "
+          + "Disable auto transactions for the graph before starting a manual transaction.");
+
     database.begin();
     database.getTransaction().setUsingLog(settings.isUseLog());
   }
@@ -196,13 +217,13 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
       return;
     }
 
-    if (!txBegun)
-      begin();
+    if (!txBegun) {
+      database.begin();
+      database.getTransaction().setUsingLog(settings.isUseLog());
+    }
   }
 
   private void ensureTransaction() {
-    makeActive();
-
     final boolean txBegun = database.getTransaction().isActive();
     if (!txBegun) {
       database.begin();
