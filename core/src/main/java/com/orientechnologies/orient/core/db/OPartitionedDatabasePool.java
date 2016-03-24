@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.common.concur.lock.OInterruptedException;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
@@ -285,7 +286,7 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
       if (connectionsCounter != null)
         connectionsCounter.acquire();
     } catch (InterruptedException ie) {
-      throw new OInterruptedException(ie);
+      throw OException.wrapException(new OInterruptedException("Acquiring of new connection was interrupted"), ie);
     }
 
     boolean acquired = false;
