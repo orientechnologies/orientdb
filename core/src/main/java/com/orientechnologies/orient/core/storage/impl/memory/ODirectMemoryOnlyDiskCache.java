@@ -34,7 +34,6 @@ import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
-import com.orientechnologies.orient.core.storage.impl.local.statistic.OStoragePerformanceStatistic;
 
 import java.io.File;
 import java.io.IOException;
@@ -183,15 +182,13 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
-  public OCacheEntry load(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache, final int pageCount,
-      OStoragePerformanceStatistic storagePerformanceStatistic) {
+  public OCacheEntry load(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache, final int pageCount) {
     final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = OSessionStoragePerformanceStatistic
         .getStatisticInstance();
 
     if (sessionStoragePerformanceStatistic != null) {
       sessionStoragePerformanceStatistic.startPageReadFromCacheTimer();
     }
-    storagePerformanceStatistic.startPageReadFromCacheTimer();
 
     try {
       int intId = extractFileId(fileId);
@@ -207,7 +204,6 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
 
       return cacheEntry;
     } finally {
-      storagePerformanceStatistic.stopPageReadFromCacheTimer();
       if (sessionStoragePerformanceStatistic != null) {
         sessionStoragePerformanceStatistic.stopPageReadFromCacheTimer();
       }
@@ -219,15 +215,13 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
-  public OCacheEntry allocateNewPage(long fileId, OWriteCache writeCache,
-      OStoragePerformanceStatistic storagePerformanceStatistic) {
+  public OCacheEntry allocateNewPage(long fileId, OWriteCache writeCache) {
     final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = OSessionStoragePerformanceStatistic
         .getStatisticInstance();
 
     if (sessionStoragePerformanceStatistic != null) {
       sessionStoragePerformanceStatistic.startPageReadFromCacheTimer();
     }
-    storagePerformanceStatistic.startPageReadFromCacheTimer();
 
     try {
       int intId = extractFileId(fileId);
@@ -241,7 +235,6 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
 
       return cacheEntry;
     } finally {
-      storagePerformanceStatistic.stopPageReadFromCacheTimer();
       if (sessionStoragePerformanceStatistic != null) {
         sessionStoragePerformanceStatistic.stopPageReadFromCacheTimer();
       }
@@ -258,7 +251,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
-  public void release(OCacheEntry cacheEntry, OWriteCache writeCache, OStoragePerformanceStatistic storagePerformanceStatistic) {
+  public void release(OCacheEntry cacheEntry, OWriteCache writeCache) {
     synchronized (cacheEntry) {
       cacheEntry.decrementUsages();
     }

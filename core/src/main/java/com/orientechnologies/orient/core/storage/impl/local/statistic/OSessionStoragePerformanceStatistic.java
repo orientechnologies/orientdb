@@ -104,7 +104,7 @@ public class OSessionStoragePerformanceStatistic {
    * Stack of active components or in another words
    * components which currently perform actions inside current thread.
    */
-  private Deque<String> componentsStack = new ArrayDeque<String>();
+  private Deque<Component> componentsStack = new ArrayDeque<Component>();
 
   /**
    * Container for performance counters of system performance as whole.
@@ -112,7 +112,7 @@ public class OSessionStoragePerformanceStatistic {
    * Counters are put in separate class because each component also has given performance counters, so
    * definition of counters on component and system level is reused.
    */
-  private final PerformanceCountersHolder performanceCountersHolder = new PerformanceCountersHolder();
+  private final PerformanceCountersHolder performanceCountersHolder;
 
   /**
    * Amount of times when atomic operation commit was performed.
@@ -163,6 +163,7 @@ public class OSessionStoragePerformanceStatistic {
   public OSessionStoragePerformanceStatistic(int pageSize, NanoTimer nanoTimer) {
     this.pageSize = pageSize;
     this.nanoTimer = nanoTimer;
+    this.performanceCountersHolder = new PerformanceCountersHolder(pageSize);
   }
 
   /**
@@ -176,12 +177,14 @@ public class OSessionStoragePerformanceStatistic {
    * @param componentName Name of component which started to perform operation on data. Name is case sensitive.
    */
   public void startComponentOperation(String componentName) {
-    final String currentComponent = componentsStack.peek();
+    final Component currentComponent = componentsStack.peek();
 
-    if (componentName.equals(currentComponent))
+    if (componentName.equals(currentComponent.name)) {
+      currentComponent.operationCount++;
       return;
+    }
 
-    componentsStack.push(componentName);
+    componentsStack.push(new Component(componentName));
   }
 
   /**
@@ -191,17 +194,22 @@ public class OSessionStoragePerformanceStatistic {
    * @see #startComponentOperation(String)
    */
   public void completeComponentOperation() {
-    final String currentComponent = componentsStack.peek();
+    final Component currentComponent = componentsStack.peek();
+    currentComponent.operationCount--;
 
-    PerformanceCountersHolder cHolder = countersByComponent.get(currentComponent);
-    if (cHolder == null) {
-      cHolder = new PerformanceCountersHolder();
-      countersByComponent.put(currentComponent, cHolder);
+    if (currentComponent.operationCount == 0) {
+      final String componentName = currentComponent.name;
+
+      PerformanceCountersHolder cHolder = countersByComponent.get(componentName);
+      if (cHolder == null) {
+        cHolder = new PerformanceCountersHolder(pageSize);
+        countersByComponent.put(componentName, cHolder);
+      }
+
+      cHolder.operationsCount++;
+
+      componentsStack.pop();
     }
-
-    cHolder.operationsCount++;
-
-    componentsStack.pop();
   }
 
   /**
@@ -511,6 +519,32 @@ public class OSessionStoragePerformanceStatistic {
     return -1;
   }
 
+  public void pushComponentCounters(Map<String, PerformanceCountersHolder> counters) {
+    for (Map.Entry<String, PerformanceCountersHolder> entry : countersByComponent.entrySet()) {
+      final String componentName = entry.getKey();
+
+      PerformanceCountersHolder holder = counters.get(componentName);
+      if (holder == null) {
+        holder = new PerformanceCountersHolder(pageSize);
+        counters.put(componentName, holder);
+      }
+
+      entry.getValue().pushData(holder);
+    }
+  }
+
+  public void pushSystemCounters(PerformanceCountersHolder holder) {
+    performanceCountersHolder.pushData(holder);
+  }
+
+  public void pushComponentCounters(String name, PerformanceCountersHolder holder) {
+    final PerformanceCountersHolder countersHolder = countersByComponent.get(name);
+
+    if (countersHolder != null) {
+      countersHolder.pushData(holder);
+    }
+  }
+
   /**
    * Converts properties of given class into values of fields of returned document.
    * Names of fields equal to names of properties.
@@ -548,10 +582,12 @@ public class OSessionStoragePerformanceStatistic {
     if (cacheHit)
       performanceCountersHolder.cacheHit++;
 
-    for (String componentName : componentsStack) {
+    for (Component component : componentsStack) {
+      final String componentName = component.name;
+
       PerformanceCountersHolder cHolder = countersByComponent.get(componentName);
       if (cHolder == null) {
-        cHolder = new PerformanceCountersHolder();
+        cHolder = new PerformanceCountersHolder(pageSize);
         countersByComponent.put(componentName, cHolder);
       }
 
@@ -583,10 +619,12 @@ public class OSessionStoragePerformanceStatistic {
     performanceCountersHolder.pageReadFromFileTime += timeDiff;
     performanceCountersHolder.pageReadFromFileCount += readPages;
 
-    for (String componentName : componentsStack) {
+    for (Component component : componentsStack) {
+      final String componentName = component.name;
+
       PerformanceCountersHolder cHolder = countersByComponent.get(componentName);
       if (cHolder == null) {
-        cHolder = new PerformanceCountersHolder();
+        cHolder = new PerformanceCountersHolder(pageSize);
         countersByComponent.put(componentName, cHolder);
       }
       cHolder.pageReadFromFileTime += timeDiff;
@@ -615,10 +653,11 @@ public class OSessionStoragePerformanceStatistic {
     performanceCountersHolder.pageReadFromCacheTime += timeDiff;
     performanceCountersHolder.pageReadFromCacheCount++;
 
-    for (String componentName : componentsStack) {
+    for (Component component : componentsStack) {
+      final String componentName = component.name;
       PerformanceCountersHolder cHolder = countersByComponent.get(componentName);
       if (cHolder == null) {
-        cHolder = new PerformanceCountersHolder();
+        cHolder = new PerformanceCountersHolder(pageSize);
         countersByComponent.put(componentName, cHolder);
       }
 
@@ -647,10 +686,11 @@ public class OSessionStoragePerformanceStatistic {
     performanceCountersHolder.pageWriteToCacheTime += timeDiff;
     performanceCountersHolder.pageWriteToCacheCount++;
 
-    for (String componentName : componentsStack) {
+    for (Component component : componentsStack) {
+      final String componentName = component.name;
       PerformanceCountersHolder cHolder = countersByComponent.get(componentName);
       if (cHolder == null) {
-        cHolder = new PerformanceCountersHolder();
+        cHolder = new PerformanceCountersHolder(pageSize);
         countersByComponent.put(componentName, cHolder);
       }
 
@@ -688,10 +728,27 @@ public class OSessionStoragePerformanceStatistic {
     long getNano();
   }
 
+  private static final class Component {
+    private final String name;
+
+    private int operationCount;
+
+    Component(String name) {
+      this.name = name;
+      operationCount = 1;
+    }
+  }
+
   /**
    * Container for all performance counters which are shared between durable components and whole system.
    */
-  private final class PerformanceCountersHolder {
+  public static final class PerformanceCountersHolder {
+    private final int pageSize;
+
+    public PerformanceCountersHolder(int pageSize) {
+      this.pageSize = pageSize;
+    }
+
     private long operationsCount = 0;
 
     /**
@@ -733,6 +790,18 @@ public class OSessionStoragePerformanceStatistic {
      * Amount of pages in total which were written to disk cache.
      */
     private long pageWriteToCacheCount = 0;
+
+    public void pushData(PerformanceCountersHolder aggregator) {
+      aggregator.operationsCount += operationsCount;
+      aggregator.cacheAccessCount += cacheAccessCount;
+      aggregator.cacheHit += cacheHit;
+      aggregator.pageReadFromFileTime += pageReadFromFileTime;
+      aggregator.pageReadFromFileCount += pageReadFromFileCount;
+      aggregator.pageReadFromCacheTime += pageReadFromCacheTime;
+      aggregator.pageReadFromCacheCount += pageReadFromCacheCount;
+      aggregator.pageWriteToCacheTime += pageWriteToCacheTime;
+      aggregator.pageWriteToCacheCount += pageWriteToCacheCount;
+    }
 
     /**
      * @return Read speed of data in megabytes per second on cache level

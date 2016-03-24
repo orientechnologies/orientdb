@@ -74,7 +74,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
-import com.orientechnologies.orient.core.storage.impl.local.statistic.OStoragePerformanceStatistic;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTxListener;
@@ -99,7 +98,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     OOrientShutdownListener {
   private static final int RECORD_LOCK_TIMEOUT = OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT.getValueAsInteger();
 
-  private final OLockManager<ORID>    lockManager;
+  private final OLockManager<ORID> lockManager;
 
   /**
    * Lock is used to atomically update record versions.
@@ -115,7 +114,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   private volatile ThreadLocal<OStorageTransaction> transaction          = new ThreadLocal<OStorageTransaction>();
   private final    AtomicBoolean                    checkpointInProgress = new AtomicBoolean();
-  protected final      OSBTreeCollectionManagerShared sbTreeCollectionManager;
+  protected final    OSBTreeCollectionManagerShared sbTreeCollectionManager;
   protected volatile OWriteAheadLog                 writeAheadLog;
   private            OStorageRecoverListener        recoverListener;
 
@@ -136,8 +135,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private Map<String, OIndexEngine> indexEngineNameMap        = new HashMap<String, OIndexEngine>();
   private List<OIndexEngine>        indexEngines              = new ArrayList<OIndexEngine>();
   private boolean                   wereDataRestoredAfterOpen = false;
-
-  protected volatile OStoragePerformanceStatistic storagePerformanceStatistic;
 
   public OAbstractPaginatedStorage(String name, String filePath, String mode, int id) {
     super(name, filePath, mode, OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.getValueAsInteger());
@@ -181,9 +178,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       preOpenSteps();
 
-      storagePerformanceStatistic = new OStoragePerformanceStatistic(
-          OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, name, id);
-
       initWalAndDiskCache();
 
       atomicOperationsManager = new OAtomicOperationsManager(this);
@@ -202,12 +196,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         makeFullCheckpoint();
 
       writeCache.startFuzzyCheckpoints();
-
-      try {
-        storagePerformanceStatistic.registerMBean();
-      } catch (Exception e) {
-        OLogManager.instance().error(this, "Error during of registering of MBean for storage performance statistic", e);
-      }
 
       status = STATUS.OPEN;
 
@@ -354,9 +342,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             .setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY, OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getValue());
 
       componentsFactory = new OCurrentStorageComponentsFactory(configuration);
-
-      storagePerformanceStatistic = new OStoragePerformanceStatistic(
-          OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, name, id);
 
       initWalAndDiskCache();
 
@@ -1084,13 +1069,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   public OAtomicOperationsManager getAtomicOperationsManager() {
     return atomicOperationsManager;
-  }
-
-  /**
-   * @return Instance of tool which is used to gather statistic about storage performance.
-   */
-  public OStoragePerformanceStatistic getStoragePerformanceStatistic() {
-    return storagePerformanceStatistic;
   }
 
   public OWriteAheadLog getWALInstance() {
@@ -3277,12 +3255,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       preCloseSteps();
 
-      if (storagePerformanceStatistic != null)
-        try {
-          storagePerformanceStatistic.unregisterMBean();
-        } catch (Exception e) {
-          OLogManager.instance().error(this, "Error during of unregister of MBean for storage performance statistic", e);
-        }
 
       sbTreeCollectionManager.close();
 
@@ -3829,13 +3801,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         final long pageIndex = updatePageRecord.getPageIndex();
         fileId = readCache.openFile(fileId, writeCache);
 
-        OCacheEntry cacheEntry = readCache.load(fileId, pageIndex, true, writeCache, 1, storagePerformanceStatistic);
+        OCacheEntry cacheEntry = readCache.load(fileId, pageIndex, true, writeCache, 1);
         if (cacheEntry == null) {
           do {
             if (cacheEntry != null)
-              readCache.release(cacheEntry, writeCache, storagePerformanceStatistic);
+              readCache.release(cacheEntry, writeCache);
 
-            cacheEntry = readCache.allocateNewPage(fileId, writeCache, storagePerformanceStatistic);
+            cacheEntry = readCache.allocateNewPage(fileId, writeCache);
           } while (cacheEntry.getPageIndex() != pageIndex);
         }
 
@@ -3847,7 +3819,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           durablePage.setLsn(updatePageRecord.getLsn());
         } finally {
           cachePointer.releaseExclusiveLock();
-          readCache.release(cacheEntry, writeCache, storagePerformanceStatistic);
+          readCache.release(cacheEntry, writeCache);
         }
 
         atLeastOnePageUpdate.setValue(true);

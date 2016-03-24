@@ -7,7 +7,6 @@ import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.orientechnologies.orient.core.storage.impl.local.statistic.OStoragePerformanceStatistic;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -257,8 +256,6 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
       throws IOException {
 
     final OReadCache expectedReadCache = ((OAbstractPaginatedStorage) expectedDatabaseDocumentTx.getStorage()).getReadCache();
-    final OStoragePerformanceStatistic expectedStorageStatistic = ((OAbstractPaginatedStorage) expectedDatabaseDocumentTx
-        .getStorage()).getStoragePerformanceStatistic();
     final OWriteCache expectedWriteCache = ((OAbstractPaginatedStorage) expectedDatabaseDocumentTx.getStorage()).getWriteCache();
 
     for (OWALRecord walRecord : records) {
@@ -285,10 +282,10 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
               expectedReadCache.openFile(fileId, expectedWriteCache);
 
             OCacheEntry cacheEntry = expectedReadCache
-                .load(fileId, pageIndex, true, expectedWriteCache, 0, expectedStorageStatistic);
+                .load(fileId, pageIndex, true, expectedWriteCache, 0);
             if (cacheEntry == null)
               do {
-                cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache, expectedStorageStatistic);
+                cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache);
               } while (cacheEntry.getPageIndex() != pageIndex);
 
             cacheEntry.acquireExclusiveLock();
@@ -298,7 +295,7 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
               durablePage.setLsn(updatePageRecord.getLsn());
             } finally {
               cacheEntry.releaseExclusiveLock();
-              expectedReadCache.release(cacheEntry, expectedWriteCache, expectedStorageStatistic);
+              expectedReadCache.release(cacheEntry, expectedWriteCache);
             }
           } else if (restoreRecord instanceof OFileCreatedWALRecord) {
             final OFileCreatedWALRecord fileCreatedCreatedRecord = (OFileCreatedWALRecord) restoreRecord;
