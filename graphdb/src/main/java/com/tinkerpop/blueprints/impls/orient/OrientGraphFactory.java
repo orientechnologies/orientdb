@@ -8,18 +8,17 @@ import com.orientechnologies.orient.core.intent.OIntent;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class OrientGraphFactory extends OrientConfigurableGraph {
-  protected final String                      url;
-  protected final String                      user;
-  protected final String                      password;
+  protected final    String                   url;
+  protected final    String                   user;
+  protected final    String                   password;
   protected volatile OPartitionedDatabasePool pool;
-  protected OIntent                           intent;
-  protected AtomicBoolean                     used = new AtomicBoolean(false);
+  protected          OIntent                  intent;
+  protected AtomicBoolean used = new AtomicBoolean(false);
 
   /**
    * Creates a factory that use default admin credentials.
    *
-   * @param iURL
-   *          to the database
+   * @param iURL to the database
    */
   public OrientGraphFactory(final String iURL) {
     this(iURL, OrientBaseGraph.ADMIN, OrientBaseGraph.ADMIN);
@@ -28,12 +27,9 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
   /**
    * Creates a factory with given credentials.
    *
-   * @param iURL
-   *          to the database
-   * @param iUser
-   *          name of the user
-   * @param iPassword
-   *          of the user
+   * @param iURL      to the database
+   * @param iUser     name of the user
+   * @param iPassword of the user
    */
   public OrientGraphFactory(final String iURL, final String iUser, final String iPassword) {
     url = iURL;
@@ -53,7 +49,6 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
 
   /**
    * Drops current database if such one exists.
-   *
    */
   public void drop() {
     getDatabase(false, true).drop();
@@ -100,9 +95,9 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
   /**
    * Gives new connection to database. If current factory configured to use pool (see {@link #setupPool(int, int)} method),
    * retrieves connection from pool. Otherwise creates new connection each time.
-   *
+   * <p>
    * Automatically creates database if database with given URL does not exist
-   *
+   * <p>
    * Shortcut for {@code getDatabase(true)}
    *
    * @return database.
@@ -115,10 +110,8 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
    * Gives new connection to database. If current factory configured to use pool (see {@link #setupPool(int, int)} method),
    * retrieves connection from pool. Otherwise creates new connection each time.
    *
-   * @param iCreate
-   *          if true automatically creates database if database with given URL does not exist
-   * @param iOpen
-   *          if true automatically opens the database
+   * @param iCreate if true automatically creates database if database with given URL does not exist
+   * @param iOpen   if true automatically opens the database
    * @return database
    */
   public ODatabaseDocumentTx getDatabase(final boolean iCreate, final boolean iOpen) {
@@ -151,14 +144,12 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
   /**
    * Setting up the factory to use database pool instead of creation a new instance of database connection each time.
    *
-   * @param iMin
-   *          minimum size of pool
-   * @param iMax
-   *          maximum size of pool
+   * @param iMin minimum size of pool
+   * @param iMax maximum size of pool
    * @return this
    */
   public OrientGraphFactory setupPool(final int iMin, final int iMax) {
-    pool = new OPartitionedDatabasePool(url, user, password, iMax).setAutoCreate(true);
+    pool = new OPartitionedDatabasePool(url, user, password, 64, iMax).setAutoCreate(true);
     return this;
   }
 
