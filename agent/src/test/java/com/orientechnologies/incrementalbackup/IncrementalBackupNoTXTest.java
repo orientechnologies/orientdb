@@ -48,8 +48,8 @@ public class IncrementalBackupNoTXTest extends TestCase {
 
   private OrientBaseGraph primaryGraph;
   private OrientBaseGraph secondaryGraph;
-  private final String primaryDbPath =  "target/primarydb";
-  private final String secondaryDbPath =  "target/secondarydb";
+  private final String primaryDbPath =  "target/primarydb_notx";
+  private final String secondaryDbPath =  "target/secondarydb_notx";
   private final String primaryDbURL =  "plocal:" + this.primaryDbPath;
   private final String secondaryDbURL =  "plocal:" + this.secondaryDbPath;
   private final String backupPath =  "target/backup";
@@ -229,7 +229,8 @@ public class IncrementalBackupNoTXTest extends TestCase {
 
       // delete vertices (where updated = true)
       this.banner("5th op. - Deleting the last 10 vertices inserted");
-      primaryGraph.command(new OCommandSQL("delete vertex from User where name = 'User-t0-v" + (this.incrementalVerticesIdForThread[0]-1) + "'"
+      primaryGraph
+          .command(new OCommandSQL("delete vertex from User where name = 'User-t0-v" + (this.incrementalVerticesIdForThread[0]-1) + "'"
                                                                    + " or name = 'User-t1-v" + (this.incrementalVerticesIdForThread[1]-1) + "'"
                                                                    + " or name = 'User-t2-v" + (this.incrementalVerticesIdForThread[2]-1) + "'"
                                                                    + " or name = 'User-t3-v" + (this.incrementalVerticesIdForThread[3]-1) + "'"
