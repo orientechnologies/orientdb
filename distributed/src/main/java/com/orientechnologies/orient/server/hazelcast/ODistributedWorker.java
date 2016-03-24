@@ -53,8 +53,10 @@ public class ODistributedWorker extends Thread {
   protected volatile ODatabaseDocumentTx                  database;
   protected volatile OUser                                lastUser;
   protected volatile boolean                              running = true;
+  protected final int                                     id;
 
   public ODistributedWorker(final OHazelcastDistributedDatabase iDistributed, final String iDatabaseName, final int i) {
+    id = i;
     setName("OrientDB DistributedWorker node=" + iDistributed.getLocalNodeName() + " db=" + iDatabaseName + " id=" + i);
     distributed = iDistributed;
     localQueue = new ArrayBlockingQueue<ODistributedRequest>(OGlobalConfiguration.DISTRIBUTED_LOCAL_QUEUESIZE.getValueAsInteger());
@@ -117,7 +119,6 @@ public class ODistributedWorker extends Thread {
     if (database == null) {
       // OPEN IT
       database = distributed.getDatabaseInstance();
-
     } else if (database.isClosed()) {
       // DATABASE CLOSED, REOPEN IT
       manager.getServerInstance().openDatabase(database, "internal", "internal", null, true);
@@ -196,44 +197,43 @@ public class ODistributedWorker extends Thread {
       final ORemoteTask task = iRequest.getTask();
 
       if (ODistributedServerLog.isDebugEnabled())
-        ODistributedServerLog.debug(this, manager.getLocalNodeName(), senderNodeName, DIRECTION.OUT, "Received request: %s",
+        ODistributedServerLog.debug(this, manager.getLocalNodeName(), senderNodeName, DIRECTION.IN, "Received request: %s",
             iRequest);
 
       // EXECUTE IT LOCALLY
       Serializable responsePayload;
       OSecurityUser origin = null;
       try {
+        task.setNodeSource(senderNodeName);
+        waitNodeIsOnline();
+        initDatabaseInstance();
+
+        // keep original user in database, check the username passed in request and set new user in DB, after document saved,
+        // reset to original user
+        if (database != null) {
+          database.activateOnCurrentThread();
+          origin = database.getUser();
+          try {
+            if (lastUser == null || !(lastUser.getIdentity()).equals(iRequest.getUserRID())) {
+              lastUser = database.getMetadata().getSecurity().getUser(iRequest.getUserRID());
+              database.setUser(lastUser);// set to new user
+            } else
+              origin = null;
+
+          } catch (Throwable ex) {
+            OLogManager.instance().error(this, "Failed on user switching " + ex.getMessage());
+          }
+        }
+
         // EXECUTE THE TASK
         for (int retry = 1;; ++retry) {
-          task.setNodeSource(senderNodeName);
-
-          waitNodeIsOnline();
-          initDatabaseInstance();
-
-          // keep original user in database, check the username passed in request and set new user in DB, after document saved,
-          // reset to original user
-          if (database != null) {
-            database.activateOnCurrentThread();
-            origin = database.getUser();
-            try {
-              if (lastUser == null || !(lastUser.getIdentity()).equals(iRequest.getUserRID())) {
-                lastUser = database.getMetadata().getSecurity().getUser(iRequest.getUserRID());
-                database.setUser(lastUser);// set to new user
-              } else
-                origin = null;
-
-            } catch (Throwable ex) {
-              OLogManager.instance().error(this, "Failed on user switching " + ex.getMessage());
-            }
-          }
-
           responsePayload = manager.executeOnLocalNode(iRequest, database);
 
           if (responsePayload instanceof OModificationOperationProhibitedException) {
             // RETRY
             try {
-              ODistributedServerLog.info(this, manager.getLocalNodeName(), senderNodeName, DIRECTION.OUT,
-                  "Database is frozen, waiting and retrying. Request %s (retry=%d)", iRequest, retry);
+              ODistributedServerLog.info(this, manager.getLocalNodeName(), senderNodeName, DIRECTION.IN,
+                  "Database is frozen, waiting and retrying. Request %s (retry=%d, worker=%d)", iRequest, retry, id);
 
               Thread.sleep(1000);
             } catch (InterruptedException e) {
@@ -241,7 +241,7 @@ public class ODistributedWorker extends Thread {
           } else {
             // OPERATION EXECUTED (OK OR ERROR), NO RETRY NEEDED
             if (retry > 1)
-              ODistributedServerLog.info(this, manager.getLocalNodeName(), senderNodeName, DIRECTION.OUT,
+              ODistributedServerLog.info(this, manager.getLocalNodeName(), senderNodeName, DIRECTION.IN,
                   "Request %s succeed after retry=%d", iRequest, retry);
 
             break;

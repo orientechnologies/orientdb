@@ -559,6 +559,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
             @Override
             public Object call(OCallable<Void, ODistributedRequestId> unlockCallback) {
+              final ODistributedDatabase ddb = acquireRecordLock(iRecordId);
+
               final OStorageOperationResult<OPhysicalPosition> localResult;
               try {
                 localResult = (OStorageOperationResult<OPhysicalPosition>) ODistributedAbstractPlugin
@@ -585,6 +587,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
                 OException.wrapException(new ODistributedException("Cannot delete record " + iRecordId), e);
                 // UNREACHABLE
                 return null;
+
+              } finally {
+                // RELEASE LOCK
+                ddb.unlockRecord(iRecordId);
               }
 
               // UPDATE RID WITH NEW POSITION
@@ -594,7 +600,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
               final OCreateRecordTask task = new OCreateRecordTask(iRecordId, iContent, iRecordVersion, iRecordType);
 
-              if (!nodes.isEmpty()) {
+              if (!nodes.isEmpty())
+
+          {
                 if (syncMode) {
 
                   // SYNCHRONOUS CALL: REPLICATE IT
@@ -979,10 +987,13 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
             }
           });
 
-    } catch (ONeedRetryException e) {
+    } catch (
+
+    ONeedRetryException e) {
       // PASS THROUGH
       throw e;
     } catch (Exception e) {
+
       handleDistributedException("Cannot route DELETE_RECORD operation for %s to the distributed node", e, iRecordId);
       // UNREACHABLE
       return null;
@@ -1210,7 +1221,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
             @Override
             public Object call(final OCallable<Void, ODistributedRequestId> unlockCallback) {
               try {
-                final ODistributedDatabase ddb = acquireMultipleLocks(iTx, maxAutoRetry, autoRetryDelay);
+                final ODistributedDatabase ddb = acquireMultipleRecordLocks(iTx, maxAutoRetry, autoRetryDelay);
 
                 try {
                   final List<ORecordOperation> uResult = (List<ORecordOperation>) ODistributedAbstractPlugin
@@ -1384,9 +1395,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
             }
           });
 
-    } catch (OValidationException e) {
+    } catch (
+
+    OValidationException e) {
       throw e;
     } catch (Exception e) {
+
       handleDistributedException("Cannot route TX operation against distributed node", e);
     }
 
@@ -1394,8 +1408,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
   }
 
-  protected ODistributedDatabase acquireMultipleLocks(final OTransaction iTx, final int maxAutoRetry, final int autoRetryDelay)
-      throws InterruptedException {
+  protected ODistributedDatabase acquireMultipleRecordLocks(final OTransaction iTx, final int maxAutoRetry,
+      final int autoRetryDelay) throws InterruptedException {
     // ACQUIRE ALL THE LOCKS ON RECORDS ON LOCAL NODE BEFORE TO PROCEED
     final ODistributedDatabase ddb = dManager.getMessageService().getDatabase(getName());
     final ODistributedRequestId localReqId = new ODistributedRequestId(dManager.getLocalNodeId(),
@@ -1416,6 +1430,18 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       if (!recordLocked)
         throw new ODistributedRecordLockedException(op.record.getIdentity());
     }
+    return ddb;
+  }
+
+  protected ODistributedDatabase acquireRecordLock(final ORecordId rid) {
+    // ACQUIRE ALL THE LOCKS ON RECORDS ON LOCAL NODE BEFORE TO PROCEED
+    final ODistributedDatabase ddb = dManager.getMessageService().getDatabase(getName());
+    final ODistributedRequestId localReqId = new ODistributedRequestId(dManager.getLocalNodeId(),
+        dManager.getNextMessageIdCounter());
+
+    if (!(ddb.lockRecord(rid, localReqId)))
+      throw new ODistributedRecordLockedException(rid);
+
     return ddb;
   }
 
@@ -1457,7 +1483,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         continue;
       }
 
-      undoTasks.add(undoTask);
+      if (undoTask != null)
+        undoTasks.add(undoTask);
     }
     return undoTasks;
   }

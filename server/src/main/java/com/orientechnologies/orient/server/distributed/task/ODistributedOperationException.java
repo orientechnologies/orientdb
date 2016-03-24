@@ -31,11 +31,11 @@ public class ODistributedOperationException extends ONeedRetryException {
 
   private static final long serialVersionUID = 1L;
 
-  protected ODistributedOperationException(ODistributedOperationException exception) {
+  public ODistributedOperationException(final ODistributedOperationException exception) {
     super(exception);
   }
 
-  public ODistributedOperationException(String message) {
+  public ODistributedOperationException(final String message) {
     super(message);
   }
 
@@ -44,7 +44,7 @@ public class ODistributedOperationException extends ONeedRetryException {
     if (obj == null || !obj.getClass().equals(getClass()))
       return false;
 
-    String message = ((ODistributedOperationException) obj).getMessage();
+    final String message = ((ODistributedOperationException) obj).getMessage();
     return (getMessage() == message) || (getMessage() != null && getMessage().equals(message));
   }
 

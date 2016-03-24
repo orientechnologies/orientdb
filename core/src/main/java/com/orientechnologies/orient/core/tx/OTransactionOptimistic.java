@@ -196,13 +196,15 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     // CLEAR THE CACHE
     database.getLocalCache().clear();
 
-    // REMOVE ALL THE ENTRIES AND INVALIDATE THE DOCUMENTS TO AVOID TO BE RE-USED DIRTY AT USER-LEVEL. IN THIS WAY RE-LOADING MUST
-    // EXECUTED
-    // for (ORecordOperation v : recordEntries.values())
-    // v.getRecord().unload();
-
-    for (ORecordOperation v : allEntries.values())
-      v.getRecord().unload();
+    // REMOVE ALL THE DIRTY ENTRIES AND UNDO ANY DIRTY DOCUMENT IF POSSIBLE.
+    for (ORecordOperation v : allEntries.values()) {
+      final ORecord rec = v.getRecord();
+      if (rec.isDirty())
+        if (rec instanceof ODocument && ((ODocument) rec).isTrackingChanges())
+          ((ODocument) rec).undo();
+        else
+          rec.unload();
+    }
 
     close();
 

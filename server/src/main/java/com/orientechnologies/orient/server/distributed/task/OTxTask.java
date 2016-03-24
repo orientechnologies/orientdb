@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.server.distributed.task;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -134,7 +133,7 @@ public class OTxTask extends OAbstractReplicatedTask {
       return e;
     } catch (Exception e) {
       database.rollback();
-      OLogManager.instance().error(this, "Error on distributed transaction commit", e);
+      ODistributedServerLog.info(this, getNodeSource(), null, DIRECTION.NONE, "Error on distributed transaction commit", e);
       return e;
     }
   }
