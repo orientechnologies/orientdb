@@ -25,10 +25,9 @@ import java.util.regex.Pattern;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OInvalidPasswordException;
-import com.orientechnologies.orient.core.security.OPasswordValidator;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerConfigurationManager;
-import com.orientechnologies.orient.server.security.OSecurityComponent;
+import com.orientechnologies.orient.server.security.OPasswordValidator;
 
 
 /**
@@ -37,7 +36,7 @@ import com.orientechnologies.orient.server.security.OSecurityComponent;
  * @author S. Colin Leister
  * 
  */
-public class ODefaultPasswordValidator implements OPasswordValidator, OSecurityComponent
+public class ODefaultPasswordValidator implements OPasswordValidator
 {
 	private boolean _Enabled = true;
 	private boolean _IgnoreUUID = true;
