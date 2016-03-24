@@ -19,6 +19,12 @@
  */
 package com.orientechnologies.orient.client.remote;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -31,12 +37,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Remote administration class of OrientDB Server instances.
@@ -683,17 +683,16 @@ public class OServerAdmin {
 
   protected <T> T networkAdminOperation(final OStorageRemoteOperation<T> operation, final String errorMessage) {
 
-      OChannelBinaryAsynchClient network=null;
-      try {
-        storage.pushSessionId(getURL(),sessionId,sessionToken,connections);
-        //TODO:replace this api with one that get connection for only the specified url.
-        network = storage.getAvailableNetwork(getURL());
-        return operation.execute(network);
-      } catch (Exception e) {
-        storage.close(true, false);
-        throw OException.wrapException(new OStorageException(errorMessage), e);
-      }
+    OChannelBinaryAsynchClient network = null;
+    try {
+      storage.pushSessionId(getURL(), sessionId, sessionToken, connections);
+      // TODO:replace this api with one that get connection for only the specified url.
+      network = storage.getAvailableNetwork(getURL());
+      return operation.execute(network);
+    } catch (Exception e) {
+      storage.close(true, false);
+      throw OException.wrapException(new OStorageException(errorMessage), e);
+    }
   }
-
 
 }

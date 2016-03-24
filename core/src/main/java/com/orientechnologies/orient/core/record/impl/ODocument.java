@@ -249,21 +249,27 @@ public class ODocument extends ORecordAbstract
         if (!(fieldValue instanceof List))
           throw new OValidationException("The field '" + p.getFullName()
               + "' has been declared as LINKLIST but an incompatible type is used. Value: " + fieldValue);
-        validateLinkCollection(p, (Collection<Object>) fieldValue);
+        validateLinkCollection(p, (Collection<Object>) fieldValue, entry);
         break;
       case LINKSET:
         if (!(fieldValue instanceof Set))
           throw new OValidationException("The field '" + p.getFullName()
               + "' has been declared as LINKSET but an incompatible type is used. Value: " + fieldValue);
-        validateLinkCollection(p, (Collection<Object>) fieldValue);
+        validateLinkCollection(p, (Collection<Object>) fieldValue, entry);
         break;
       case LINKMAP:
         if (!(fieldValue instanceof Map))
           throw new OValidationException("The field '" + p.getFullName()
               + "' has been declared as LINKMAP but an incompatible type is used. Value: " + fieldValue);
-        validateLinkCollection(p, ((Map<?, Object>) fieldValue).values());
+        validateLinkCollection(p, ((Map<?, Object>) fieldValue).values(), entry);
         break;
 
+      case LINKBAG:
+        if (!(fieldValue instanceof ORidBag))
+          throw new OValidationException("The field '" + p.getFullName()
+              + "' has been declared as LINKBAG but an incompatible type is used. Value: " + fieldValue);
+        validateLinkCollection(p, (Iterable<Object>) fieldValue, entry);
+        break;
       case EMBEDDED:
         validateEmbedded(p, fieldValue);
         break;
@@ -372,18 +378,27 @@ public class ODocument extends ORecordAbstract
     }
   }
 
-  protected static void validateLinkCollection(final OProperty property, Collection<Object> values) {
+  protected static void validateLinkCollection(final OProperty property, Iterable<Object> values, ODocumentEntry value) {
     if (property.getLinkedClass() != null) {
-      boolean autoconvert = false;
-      if (values instanceof ORecordLazyMultiValue) {
-        autoconvert = ((ORecordLazyMultiValue) values).isAutoConvertToRecord();
-        ((ORecordLazyMultiValue) values).setAutoConvertToRecord(false);
+      if (value.timeLine != null) {
+        List<OMultiValueChangeEvent<Object, Object>> event = value.timeLine.getMultiValueChangeEvents();
+        for (OMultiValueChangeEvent object : event) {
+          if (object.getChangeType() == OMultiValueChangeEvent.OChangeType.ADD
+              || object.getChangeType() == OMultiValueChangeEvent.OChangeType.UPDATE && object.getValue() != null)
+            validateLink(property, object.getValue(), OSecurityShared.ALLOW_FIELDS.contains(property.getName()));
+        }
+      } else {
+        boolean autoconvert = false;
+        if (values instanceof ORecordLazyMultiValue) {
+          autoconvert = ((ORecordLazyMultiValue) values).isAutoConvertToRecord();
+          ((ORecordLazyMultiValue) values).setAutoConvertToRecord(false);
+        }
+        for (Object object : values) {
+          validateLink(property, object, OSecurityShared.ALLOW_FIELDS.contains(property.getName()));
+        }
+        if (values instanceof ORecordLazyMultiValue)
+          ((ORecordLazyMultiValue) values).setAutoConvertToRecord(autoconvert);
       }
-      for (Object object : values) {
-        validateLink(property, object, OSecurityShared.ALLOW_FIELDS.contains(property.getName()));
-      }
-      if (values instanceof ORecordLazyMultiValue)
-        ((ORecordLazyMultiValue) values).setAutoConvertToRecord(autoconvert);
     }
   }
 
@@ -2263,21 +2278,21 @@ public class ODocument extends ORecordAbstract
         if (value == null)
           continue;
         try {
-          if (type == OType.EMBEDDEDLIST) {
+          if (type == OType.EMBEDDEDLIST && !(value instanceof OTrackedList)) {
             List<Object> list = new OTrackedList<Object>(this);
             Collection<Object> values = (Collection<Object>) value;
             for (Object object : values) {
               list.add(OType.convert(object, linkedType.getDefaultJavaType()));
             }
             field(prop.getName(), list);
-          } else if (type == OType.EMBEDDEDMAP) {
+          } else if (type == OType.EMBEDDEDMAP && !(value instanceof OTrackedMap)) {
             Map<Object, Object> map = new OTrackedMap<Object>(this);
             Map<Object, Object> values = (Map<Object, Object>) value;
             for (Entry<Object, Object> object : values.entrySet()) {
               map.put(object.getKey(), OType.convert(object.getValue(), linkedType.getDefaultJavaType()));
             }
             field(prop.getName(), map);
-          } else if (type == OType.EMBEDDEDSET) {
+          } else if (type == OType.EMBEDDEDSET && !(value instanceof OTrackedSet)) {
             Set<Object> list = new OTrackedSet<Object>(this);
             Collection<Object> values = (Collection<Object>) value;
             for (Object object : values) {
@@ -2369,6 +2384,9 @@ public class ODocument extends ORecordAbstract
       if (!(fieldValue instanceof Collection<?>) && !(fieldValue instanceof Map<?, ?>) && !(fieldValue instanceof ODocument))
         continue;
       if (addCollectionChangeListener(fieldEntry.getValue())) {
+        if (fieldEntry.getValue().timeLine != null && !fieldEntry.getValue().timeLine.getMultiValueChangeEvents().isEmpty()) {
+          checkTimelineTrackable(fieldEntry.getValue().timeLine, (OTrackedMultiValue) fieldEntry.getValue().value);
+        }
         continue;
       }
 
@@ -2420,6 +2438,14 @@ public class ODocument extends ORecordAbstract
         if (fieldValue instanceof Map<?, ?>)
           newValue = new ORecordLazyMap(this, (Map<Object, OIdentifiable>) fieldValue);
         break;
+      case LINKBAG:
+        if (fieldValue instanceof Collection<?>) {
+          ORidBag bag = new ORidBag();
+          bag.setOwner(this);
+          bag.addAll((Collection<OIdentifiable>) fieldValue);
+          newValue = bag;
+        }
+        break;
       default:
         break;
       }
@@ -2430,6 +2456,28 @@ public class ODocument extends ORecordAbstract
       }
     }
 
+  }
+
+  private void checkTimelineTrackable(OMultiValueChangeTimeLine<Object, Object> timeLine, OTrackedMultiValue origin) {
+    List<OMultiValueChangeEvent<Object, Object>> events = timeLine.getMultiValueChangeEvents();
+    for (OMultiValueChangeEvent<Object, Object> event : events) {
+      Object value = event.getValue();
+      if (event.getChangeType() == OMultiValueChangeEvent.OChangeType.ADD && !(value instanceof OTrackedMultiValue)) {
+        if (value instanceof Collection) {
+          Collection<Object> newCollection = value instanceof List ? new OTrackedList<Object>(this) : new OTrackedSet<Object>(this);
+          fillTrackedCollection(newCollection, (Collection<Object>) value);
+          origin.replace(event, newCollection);
+        } else if (value instanceof Map) {
+          Map<Object, Object> newMap = new OTrackedMap<Object>(this);
+          fillTrackedMap(newMap, (Map<Object, Object>) value);
+          origin.replace(event, newMap);
+        }
+      } else if (event.getChangeType() == OMultiValueChangeEvent.OChangeType.NESTED) {
+        OMultiValueChangeTimeLine nestedTimeline = ((ONestedMultiValueChangeEvent) event).getTimeLine();
+        if (nestedTimeline != null)
+          checkTimelineTrackable(nestedTimeline, (OTrackedMultiValue) value);
+      }
+    }
   }
 
   private void fillTrackedCollection(Collection<Object> dest, Collection<Object> source) {

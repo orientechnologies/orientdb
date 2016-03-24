@@ -15,13 +15,14 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
-import java.io.InputStream;
-import java.io.StringWriter;
+import java.io.*;
 import java.util.HashMap;
+import java.util.Map;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
@@ -33,37 +34,59 @@ import com.orientechnologies.orient.server.network.protocol.http.multipart.OHttp
 
 /**
  * @author luca.molino
- * 
  */
-public class OServerCommandPostImportDatabase extends OHttpMultipartRequestCommand<String, InputStream> implements
-    OCommandOutputListener {
+public class OServerCommandPostImportDatabase extends OHttpMultipartRequestCommand<String, InputStream>
+    implements OCommandOutputListener {
 
   protected static final String[] NAMES = { "POST|import/*" };
-  protected StringWriter          buffer;
-  protected InputStream           importData;
-  protected ODatabaseDocument     database;
+  protected StringWriter              buffer;
+  protected InputStream               importData;
+  protected ODatabaseDocumentInternal database;
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
     if (!iRequest.isMultipart) {
-      iResponse.send(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Request is not multipart/form-data", OHttpUtils.CONTENT_TEXT_PLAIN,
-          "Request is not multipart/form-data", null);
+      database = getProfiledDatabaseInstance(iRequest);
+      try {
+        ODatabaseImport importer = new ODatabaseImport(database, new ByteArrayInputStream(iRequest.content.getBytes("UTF8")),
+            this);
+        for (Map.Entry<String, String> option : iRequest.getParameters().entrySet())
+          importer.setOption(option.getKey(), option.getValue());
+        importer.importDatabase();
+
+        iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON,
+            "{\"responseText\": \"Database imported Correctly, see server log for more informations.\"}", null);
+      } catch (Exception e) {
+        iResponse.send(OHttpUtils.STATUS_INTERNALERROR_CODE,
+            e.getMessage() + ": " + e.getCause() != null ? e.getCause().getMessage() : "", OHttpUtils.CONTENT_JSON,
+            "{\"responseText\": \"" + e.getMessage() + ": " + (e.getCause() != null ? e.getCause().getMessage() : "") + "\"}",
+            null);
+      } finally {
+        if (database != null)
+          database.close();
+        database = null;
+      }
     } else if (iRequest.multipartStream == null || iRequest.multipartStream.available() <= 0) {
       iResponse.send(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Content stream is null or empty", OHttpUtils.CONTENT_TEXT_PLAIN,
           "Content stream is null or empty", null);
     } else {
       database = getProfiledDatabaseInstance(iRequest);
       try {
-        parse(iRequest, iResponse, new OHttpMultipartContentBaseParser(), new OHttpMultipartDatabaseImportContentParser(), database);
+        parse(iRequest, iResponse, new OHttpMultipartContentBaseParser(), new OHttpMultipartDatabaseImportContentParser(),
+            database);
 
-        ODatabaseImport importer = new ODatabaseImport(getProfiledDatabaseInstance(iRequest), importData, this);
+        ODatabaseImport importer = new ODatabaseImport(database, importData, this);
+        for (Map.Entry<String, String> option : iRequest.getParameters().entrySet())
+          importer.setOption(option.getKey(), option.getValue());
         importer.importDatabase();
+
         iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON,
             "{\"responseText\": \"Database imported Correctly, see server log for more informations.\"}", null);
       } catch (Exception e) {
-        iResponse.send(OHttpUtils.STATUS_INTERNALERROR_CODE, e.getMessage() + ": " + e.getCause() != null ? e.getCause()
-            .getMessage() : "", OHttpUtils.CONTENT_JSON, "{\"responseText\": \"" + e.getMessage() + ": "
-            + (e.getCause() != null ? e.getCause().getMessage() : "") + "\"}", null);
+        iResponse.send(OHttpUtils.STATUS_INTERNALERROR_CODE,
+            e.getMessage() + ": " + e.getCause() != null ? e.getCause().getMessage() : "", OHttpUtils.CONTENT_JSON,
+            "{\"responseText\": \"" + e.getMessage() + ": " + (e.getCause() != null ? e.getCause().getMessage() : "") + "\"}",
+            null);
       } finally {
         if (database != null)
           database.close();

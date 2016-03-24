@@ -71,6 +71,9 @@ public class OSQLMethodInclude extends OAbstractSQLMethod {
   public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
 
     if (iParams[0] != null) {
+      if(iThis instanceof OIdentifiable){
+        iThis = ((OIdentifiable) iThis).getRecord();
+      }
       if (iThis instanceof ODocument) {
         // ACT ON SINGLE DOCUMENT
         return copy((ODocument) iThis, iParams);

@@ -28,7 +28,7 @@ import java.util.Set;
 
 /**
  * Default command operator executor factory.
- * 
+ *
  * @author Johann Sorel (Geomatys)
  */
 public class ODefaultCommandExecutorSQLFactory implements OCommandExecutorSQLFactory {
@@ -61,6 +61,9 @@ public class ODefaultCommandExecutorSQLFactory implements OCommandExecutorSQLFac
     commands.put(OCommandExecutorSQLCreateClass.KEYWORD_CREATE + " " + OCommandExecutorSQLCreateClass.KEYWORD_CLASS,
         OCommandExecutorSQLCreateClass.class);
     commands.put(OCommandExecutorSQLCreateCluster.KEYWORD_CREATE + " " + OCommandExecutorSQLCreateCluster.KEYWORD_CLUSTER,
+        OCommandExecutorSQLCreateCluster.class);
+    commands.put(OCommandExecutorSQLCreateCluster.KEYWORD_CREATE + " " + OCommandExecutorSQLCreateCluster.KEYWORD_BLOB + " "
+            + OCommandExecutorSQLCreateCluster.KEYWORD_CLUSTER,
         OCommandExecutorSQLCreateCluster.class);
     commands.put(OCommandExecutorSQLAlterClass.KEYWORD_ALTER + " " + OCommandExecutorSQLAlterClass.KEYWORD_CLASS,
         OCommandExecutorSQLAlterClass.class);

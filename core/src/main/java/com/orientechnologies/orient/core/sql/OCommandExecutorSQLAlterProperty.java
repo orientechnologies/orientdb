@@ -80,10 +80,10 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstrac
       if (parts.length != 2)
         throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), parserText, oldPos);
 
-      className = parts[0];
+      className = decodeClassName(parts[0]);
       if (className == null)
         throw new OCommandSQLParsingException("Class not found", parserText, oldPos);
-      fieldName = parts[1];
+      fieldName = decodeClassName(parts[1]);
 
       oldPos = pos;
       pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
@@ -109,7 +109,7 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstrac
       if (value.equalsIgnoreCase("null")) {
         value = null;
       }
-      if (isQuoted(value)) {
+      if (value != null && isQuoted(value)) {
         value = removeQuotes(value);
       }
 

@@ -37,11 +37,13 @@ import java.util.Map;
 @SuppressWarnings("unchecked")
 public class OCommandExecutorSQLCreateCluster extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
   public static final String KEYWORD_CREATE  = "CREATE";
+  public static final String KEYWORD_BLOB    = "BLOB";
   public static final String KEYWORD_CLUSTER = "CLUSTER";
   public static final String KEYWORD_ID      = "ID";
 
   private String clusterName;
-  private int requestedId = -1;
+  private int     requestedId = -1;
+  private boolean blob        = false;
 
   public OCommandExecutorSQLCreateCluster parse(final OCommandRequest iRequest) {
     final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
@@ -57,7 +59,13 @@ public class OCommandExecutorSQLCreateCluster extends OCommandExecutorSQLAbstrac
       init((OCommandRequestText) iRequest);
 
       parserRequiredKeyword(KEYWORD_CREATE);
-      parserRequiredKeyword(KEYWORD_CLUSTER);
+      String nextWord = parserRequiredWord(true);
+      if (nextWord.equals("BLOB")) {
+        parserRequiredKeyword(KEYWORD_CLUSTER);
+        blob = true;
+      } else if (!nextWord.equals(KEYWORD_CLUSTER)) {
+        throw new OCommandSQLParsingException("Invalid Syntax: " + queryText);
+      }
 
       clusterName = parserRequiredWord(false);
       if (!clusterName.isEmpty() && Character.isDigit(clusterName.charAt(0)))
@@ -105,10 +113,18 @@ public class OCommandExecutorSQLCreateCluster extends OCommandExecutorSQLAbstrac
     if (clusterId > -1)
       throw new OCommandSQLParsingException("Cluster '" + clusterName + "' already exists");
 
-    if (requestedId == -1) {
-      return database.addCluster(clusterName);
+    if (blob) {
+      if (requestedId == -1) {
+        return database.addBlobCluster(clusterName);
+      } else {
+        throw new OCommandExecutionException("Request id not supported by blob cluster creation.");
+      }
     } else {
-      return database.addCluster(clusterName, requestedId, null);
+      if (requestedId == -1) {
+        return database.addCluster(clusterName);
+      } else {
+        return database.addCluster(clusterName, requestedId, null);
+      }
     }
   }
 

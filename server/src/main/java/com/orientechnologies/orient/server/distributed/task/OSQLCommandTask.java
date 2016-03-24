@@ -19,14 +19,10 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
-import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
-import com.orientechnologies.orient.core.command.OCommandExecutor;
-import com.orientechnologies.orient.core.command.OCommandManager;
-import com.orientechnologies.orient.core.command.OCommandRequest;
-import com.orientechnologies.orient.core.command.OCommandRequestInternal;
-import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.command.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.ORetryQueryException;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClusters;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLDelegate;
@@ -48,13 +44,12 @@ import java.util.Map;
 
 /**
  * Distributed task used for synchronization.
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
  */
 public class OSQLCommandTask extends OAbstractCommandTask {
   private static final long                                 serialVersionUID = 1L;
-  public static final int FACTORYID                                          = 5;
+  public static final int                                   FACTORYID        = 5;
 
   protected String                                          text;
   protected Map<Object, Object>                             params;
@@ -80,43 +75,52 @@ public class OSQLCommandTask extends OAbstractCommandTask {
   }
 
   public Object execute(ODistributedRequestId requestId, final OServer iServer, ODistributedServerManager iManager,
-      final ODatabaseDocumentTx database)
-      throws Exception {
+      final ODatabaseDocumentTx database) throws Exception {
 
     if (ODistributedServerLog.isDebugEnabled())
       ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "execute command=%s db=%s",
           text.toString(), database.getName());
 
-    final OCommandRequest cmd = database.command(new OCommandSQL(text));
+    Object res;
 
-    OCommandExecutor executor = OCommandManager.instance().getExecutor((OCommandRequestInternal) cmd);
-    executor.parse(cmd);
+    while (true) {
+      try {
+        final OCommandRequest cmd = database.command(new OCommandSQL(text));
 
-    final OCommandExecutor exec = executor instanceof OCommandExecutorSQLDelegate ? ((OCommandExecutorSQLDelegate) executor)
-        .getDelegate() : executor;
+        OCommandExecutor executor = OCommandManager.instance().getExecutor((OCommandRequestInternal) cmd);
+        executor.parse(cmd);
 
-    if (exec instanceof OCommandExecutorSQLSelect && clusters.size() > 0) {
-      final Iterator<? extends OIdentifiable> target = ((OCommandExecutorSQLSelect) exec).getTarget();
+        final OCommandExecutor exec = executor instanceof OCommandExecutorSQLDelegate
+            ? ((OCommandExecutorSQLDelegate) executor).getDelegate() : executor;
 
-      final int[] clusterIds = new int[clusters.size()];
-      int i = 0;
-      for (String c : clusters)
-        clusterIds[i++] = database.getClusterIdByName(c);
+        if (exec instanceof OCommandExecutorSQLSelect && clusters.size() > 0) {
+          final Iterator<? extends OIdentifiable> target = ((OCommandExecutorSQLSelect) exec).getTarget();
 
-      final ORecordIteratorClusters<ORecord> filteredTarget = new ORecordIteratorClusters<ORecord>(database, database, clusterIds);
-      if (target instanceof ORecordIteratorClusters)
-        filteredTarget.setRange(((ORecordIteratorClusters) target).getBeginRange(),
-            ((ORecordIteratorClusters) target).getEndRange());
+          final int[] clusterIds = new int[clusters.size()];
+          int i = 0;
+          for (String c : clusters)
+            clusterIds[i++] = database.getClusterIdByName(c);
 
-      ((OCommandExecutorSQLSelect) exec).setTarget(filteredTarget);
+          final ORecordIteratorClusters<ORecord> filteredTarget = new ORecordIteratorClusters<ORecord>(database, database,
+              clusterIds);
+          if (target instanceof ORecordIteratorClusters)
+            filteredTarget.setRange(((ORecordIteratorClusters) target).getBeginRange(),
+                ((ORecordIteratorClusters) target).getEndRange());
+
+          ((OCommandExecutorSQLSelect) exec).setTarget(filteredTarget);
+        }
+
+        if (params != null)
+          // EXECUTE WITH PARAMETERS
+          res = executor.execute(params);
+        else
+          res = executor.execute(null);
+
+        break;
+      } catch (ORetryQueryException e) {
+        continue;
+      }
     }
-
-    final Object res;
-    if (params != null)
-      // EXECUTE WITH PARAMETERS
-      res = executor.execute(params);
-    else
-      res = executor.execute(null);
 
     return res;
   }
@@ -174,6 +178,7 @@ public class OSQLCommandTask extends OAbstractCommandTask {
   public String getPayload() {
     return text;
   }
+
   @Override
   public int getFactoryId() {
     return FACTORYID;

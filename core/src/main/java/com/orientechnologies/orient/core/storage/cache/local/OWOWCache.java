@@ -19,6 +19,23 @@
  */
 package com.orientechnologies.orient.core.storage.cache.local;
 
+import java.io.EOFException;
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.lang.management.ManagementFactory;
+import java.lang.ref.WeakReference;
+import java.nio.ByteBuffer;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+import java.util.zip.CRC32;
+
+import javax.management.*;
+
 import com.orientechnologies.common.concur.lock.ODistributedCounter;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.ONewLockManager;
@@ -51,22 +68,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWrite
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OStoragePerformanceStatistic;
 
-import javax.management.*;
-import java.io.EOFException;
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.lang.management.ManagementFactory;
-import java.lang.ref.WeakReference;
-import java.nio.ByteBuffer;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
-import java.util.zip.CRC32;
-
 /**
  * @author Andrey Lomakin
  * @since 7/23/13
@@ -98,7 +99,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   private final ConcurrentSkipListSet<PageKey>             exclusiveWritePages      = new ConcurrentSkipListSet<PageKey>();
 
   private final OBinarySerializer<String>                  stringSerializer;
-  private final Map<Integer, OFileClassic>                 files;
+  private final ConcurrentMap<Integer, OFileClassic>       files;
   private final boolean                                    syncOnPageFlush;
   private final int                                        pageSize;
   private final long                                       groupTTL;
@@ -115,7 +116,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
   private final ExecutorService                            lowSpaceEventsPublisher;
 
-  private Map<String, Integer>                             nameIdMap;
+  private volatile ConcurrentMap<String, Integer>          nameIdMap;
+
   private RandomAccessFile                                 nameIdMapHolder;
   private final int                                        writeCacheMaxSize;
   private final int                                        cacheMaxSize;
@@ -717,6 +719,11 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   }
 
   public Long isOpen(final String fileName) throws IOException {
+    final Long lightResult = isOpenLightCheck(fileName);
+
+    if (lightResult != null)
+      return lightResult;
+
     filesLock.acquireWriteLock();
     try {
       initNameIdMapping();
@@ -733,6 +740,24 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     } finally {
       filesLock.releaseWriteLock();
     }
+  }
+
+  private Long isOpenLightCheck(final String fileName) {
+    ConcurrentMap<String, Integer> map = this.nameIdMap;
+
+    if (map != null) {
+      final Integer fileId = map.get(fileName);
+      if (fileId == null || fileId < 0)
+        return null;
+
+      final OFileClassic fileClassic = files.get(fileId);
+      if (fileClassic == null || !fileClassic.isOpen())
+        return null;
+
+      return composeFileId(id, fileId);
+    }
+
+    return null;
   }
 
   public void deleteFile(final long fileId) throws IOException {

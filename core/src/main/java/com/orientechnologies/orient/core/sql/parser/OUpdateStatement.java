@@ -17,12 +17,12 @@ public class OUpdateStatement extends OStatement {
   protected boolean                 returnAfter  = false;
   protected OProjection             returnProjection;
 
-  protected OWhereClause            whereClause;
+  public OWhereClause               whereClause;
 
-  protected boolean                 lockRecord   = false;
+  public boolean                    lockRecord   = false;
 
-  protected OLimit                  limit;
-  protected OTimeout                  timeout;
+  public OLimit                     limit;
+  public OTimeout                   timeout;
 
   public OUpdateStatement(int id) {
     super(id);

@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.storage.impl.local;
 
 import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
+import com.orientechnologies.common.concur.lock.ONewLockManager;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -59,6 +60,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
+import com.orientechnologies.orient.core.query.OQueryAbstract;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
@@ -87,6 +89,7 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -96,14 +99,16 @@ import java.util.zip.ZipOutputStream;
  */
 public abstract class OAbstractPaginatedStorage extends OStorageAbstract implements OLowDiskSpaceListener,
     OFullCheckpointRequestListener, OIdentifiableStorage, OOrientStartupListener, OOrientShutdownListener {
-  public static final String                        IBU_EXTENSION                              = ".ibu";
-  public static final String                        CONF_ENTRY_NAME                            = "database.ocf";
-  public static final String                        INCREMENTAL_BACKUP_DATEFORMAT              = "yyyy-MM-dd-HH-mm-ss";
-
   private static final int                          RECORD_LOCK_TIMEOUT                        = OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT
       .getValueAsInteger();
 
   private final OLockManager<ORID>                  lockManager;
+
+  /**
+   * Lock is used to atomically update record versions.
+   */
+  private final ONewLockManager<ORID>               recordVersionManager;
+
   private final String                              PROFILER_CREATE_RECORD;
   private final String                              PROFILER_READ_RECORD;
   private final String                              PROFILER_UPDATE_RECORD;
@@ -141,7 +146,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     super(name, filePath, mode, OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.getValueAsInteger());
 
     this.id = id;
-    lockManager = new ORIDOLockManager();
+    lockManager = new ORIDOLockManager(OGlobalConfiguration.COMPONENTS_LOCK_CACHE.getValueAsInteger());
+    recordVersionManager = new ONewLockManager<ORID>();
 
     PROFILER_CREATE_RECORD = "db." + this.name + ".createRecord";
     PROFILER_READ_RECORD = "db." + this.name + ".readRecord";
@@ -1047,7 +1053,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     stateLock.acquireReadLock();
     try {
       // GET THE SHARED LOCK AND GET AN EXCLUSIVE LOCK AGAINST THE RECORD
-      lockManager.acquireLock(rid, OLockManager.LOCK.EXCLUSIVE);
+      final Lock lock = recordVersionManager.acquireExclusiveLock(rid);
       try {
         dataLock.acquireSharedLock();
         try {
@@ -1059,7 +1065,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           dataLock.releaseSharedLock();
         }
       } finally {
-        lockManager.releaseLock(this, rid, OLockManager.LOCK.EXCLUSIVE);
+        lock.unlock();
       }
     } finally {
       stateLock.releaseReadLock();
@@ -1108,18 +1114,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     stateLock.acquireReadLock();
 
     try {
-      lockManager.acquireLock(rid, OLockManager.LOCK.EXCLUSIVE);
+      dataLock.acquireSharedLock();
       try {
-        dataLock.acquireSharedLock();
-        try {
-          checkOpeness();
+        checkOpeness();
 
-          return doDeleteRecord(rid, version, cluster);
-        } finally {
-          dataLock.releaseSharedLock();
-        }
+        return doDeleteRecord(rid, version, cluster);
       } finally {
-        lockManager.releaseLock(this, rid, OLockManager.LOCK.EXCLUSIVE);
+        dataLock.releaseSharedLock();
       }
     } finally {
       stateLock.releaseReadLock();
@@ -2380,15 +2381,27 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
    * Executes the command request and return the result back.
    */
   public Object command(final OCommandRequestText iCommand) {
-    final OCommandExecutor executor = OCommandManager.instance().getExecutor(iCommand);
+    while (true) {
+      try {
+        final OCommandExecutor executor = OCommandManager.instance().getExecutor(iCommand);
 
-    // COPY THE CONTEXT FROM THE REQUEST
-    executor.setContext(iCommand.getContext());
+        // COPY THE CONTEXT FROM THE REQUEST
+        executor.setContext(iCommand.getContext());
 
-    executor.setProgressListener(iCommand.getProgressListener());
-    executor.parse(iCommand);
+        executor.setProgressListener(iCommand.getProgressListener());
+        executor.parse(iCommand);
 
-    return executeCommand(iCommand, executor);
+        return executeCommand(iCommand, executor);
+      } catch (ORetryQueryException e) {
+
+        if (iCommand instanceof OQueryAbstract) {
+          final OQueryAbstract query = (OQueryAbstract) iCommand;
+          query.reset();
+        }
+
+        continue;
+      }
+    }
   }
 
   public Object executeCommand(final OCommandRequestText iCommand, final OCommandExecutor executor) {
@@ -2806,20 +2819,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     final long timer = Orient.instance().getProfiler().startChrono();
     stateLock.acquireReadLock();
     try {
-      lockManager.acquireLock(rid, OLockManager.LOCK.SHARED);
+      ORawBuffer buff;
+      dataLock.acquireSharedLock();
       try {
-        ORawBuffer buff;
-        dataLock.acquireSharedLock();
-        try {
-          checkOpeness();
+        checkOpeness();
 
-          buff = doReadRecord(clusterSegment, rid);
-          return buff;
-        } finally {
-          dataLock.releaseSharedLock();
-        }
+        buff = doReadRecord(clusterSegment, rid);
+        return buff;
       } finally {
-        lockManager.releaseLock(this, rid, OLockManager.LOCK.SHARED);
+        dataLock.releaseSharedLock();
       }
     } finally {
       stateLock.releaseReadLock();
@@ -3491,9 +3499,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         ORecordInternal.setVersion(rec, updateRes.getResult());
         if (updateRes.getModifiedRecordContent() != null) {
           ORecordInternal.fill(rec, rid, updateRes.getResult(), updateRes.getModifiedRecordContent(), false);
-        }
+        } else
+          txEntry.getRecord().fromStream(stream);
 
-        txEntry.getRecord().fromStream(stream);
         break;
       }
 
@@ -3960,8 +3968,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   }
 
   private static class ORIDOLockManager extends OLockManager<ORID> {
-    public ORIDOLockManager() {
-      super(true, -1);
+    public ORIDOLockManager(final int amountOfCachedInstances) {
+      super(true, -1, amountOfCachedInstances);
     }
 
     @Override

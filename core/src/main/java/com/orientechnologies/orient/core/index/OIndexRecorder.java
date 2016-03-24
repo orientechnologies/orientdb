@@ -165,6 +165,11 @@ public class OIndexRecorder implements OIndex<OIdentifiable>, OIndexInternal<OId
   }
 
   @Override
+  public long getRebuildVersion() {
+    throw new UnsupportedOperationException("Not allowed operation");
+  }
+
+  @Override
   public void flush() {
     throw new UnsupportedOperationException("Not allowed operation");
   }
@@ -266,7 +271,7 @@ public class OIndexRecorder implements OIndex<OIdentifiable>, OIndexInternal<OId
   }
 
   @Override
-  public boolean isRebuiding() {
+  public boolean isRebuilding() {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 

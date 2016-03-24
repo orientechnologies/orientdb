@@ -19,16 +19,16 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
+import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import com.orientechnologies.common.listener.OProgressListener;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Schema class
@@ -42,7 +42,7 @@ public interface OClass extends Comparable<OClass> {
 
   enum INDEX_TYPE {
     UNIQUE(true), NOTUNIQUE(true), FULLTEXT(true), DICTIONARY(false), PROXY(true), UNIQUE_HASH_INDEX(true), NOTUNIQUE_HASH_INDEX(
-        true), FULLTEXT_HASH_INDEX(true), DICTIONARY_HASH_INDEX(false), SPATIAL(true), FULLTEXTEXP(true);
+        true), FULLTEXT_HASH_INDEX(true), DICTIONARY_HASH_INDEX(false), SPATIAL(true);
 
     private boolean automaticIndexable;
 
@@ -164,10 +164,14 @@ public interface OClass extends Comparable<OClass> {
   OClass addCluster(String iClusterName);
 
   /**
-   * Removes all data in the cluster with given name. As result indexes for this class will be rebuilt.
+   * <<<<<<< HEAD Removes all data in the cluster with given name. As result indexes for this class will be rebuilt.
    *
    * @param clusterName
-   *          Name of cluster to be truncated.
+   *          Name of cluster to be truncated. ======= Removes all data in the cluster with given name. As result indexes for this
+   *          class will be rebuilt.
+   *
+   * @param clusterName
+   *          Name of cluster to be truncated. >>>>>>> develop
    * @return Instance of current object.
    */
   OClass truncateCluster(String clusterName);

@@ -101,6 +101,7 @@ public class OMetadataDefault implements OMetadataInternal {
     init(false);
 
     schema.create();
+//    schema.addBlobCluster("blob");
     indexManager.create();
     security.create();
     functionLibrary.create();

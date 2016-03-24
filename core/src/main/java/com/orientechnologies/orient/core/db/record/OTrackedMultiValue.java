@@ -19,6 +19,7 @@
   */
 package com.orientechnologies.orient.core.db.record;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -37,7 +38,7 @@ public interface OTrackedMultiValue<K, V> {
 	 * @param changeListener
 	 *          Change listener instance.
 	 */
-	public void addChangeListener(OMultiValueChangeListener<K, V> changeListener);
+	void addChangeListener(OMultiValueChangeListener<K, V> changeListener);
 
 	/**
 	 * Remove change listener.
@@ -45,7 +46,7 @@ public interface OTrackedMultiValue<K, V> {
 	 * @param changeListener
 	 *          Change listener instance.
 	 */
-	public void removeRecordChangeListener(OMultiValueChangeListener<K, V> changeListener);
+	void removeRecordChangeListener(OMultiValueChangeListener<K, V> changeListener);
 
 	/**
 	 * 
@@ -56,7 +57,11 @@ public interface OTrackedMultiValue<K, V> {
 	 * 
 	 * @return Original collection state.
 	 */
-	public Object returnOriginalState(List<OMultiValueChangeEvent<K, V>> changeEvents);
+	Object returnOriginalState(List<OMultiValueChangeEvent<K, V>> changeEvents);
 
-	public Class<?> getGenericClass();
+	void fireCollectionChangedEvent(final OMultiValueChangeEvent<K, V> event);
+
+	Class<?> getGenericClass();
+
+	void replace(OMultiValueChangeEvent<Object, Object> event, Object newValue);
 }

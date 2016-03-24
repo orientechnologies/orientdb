@@ -36,7 +36,7 @@ public class OCommandExecutorSQLResultsetDelegate extends OCommandExecutorSQLDel
 
   @Override
   public Iterator<OIdentifiable> iterator() {
-    return ((OCommandExecutorSQLResultsetAbstract) delegate).iterator();
+    return ((OIterableRecordSource) delegate).iterator(null);
   }
 
   @Override

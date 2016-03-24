@@ -20,14 +20,6 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.util.*;
-import java.util.logging.Level;
-
-import org.apache.commons.configuration.Configuration;
-
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
@@ -68,6 +60,13 @@ import com.tinkerpop.blueprints.*;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
 import com.tinkerpop.blueprints.util.wrappers.partition.PartitionVertex;
+import org.apache.commons.configuration.Configuration;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.util.*;
+import java.util.logging.Level;
 
 /**
  * A Blueprints implementation of the graph database OrientDB (http://www.orientechnologies.com)
@@ -294,7 +293,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
         public void run() {
           new OGraphRepair().repair(g, OLogManager.instance().getCommandOutputListener(this, Level.INFO));
         }
-      });
+      }).start();
     }
   }
 

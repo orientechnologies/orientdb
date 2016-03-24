@@ -11,6 +11,9 @@ public class OCreateClusterStatementTest extends OParserTestAbstract {
     checkRightSyntax("CREATE CLUSTER Foo ID 14");
     checkRightSyntax("create cluster Foo");
     checkRightSyntax("create cluster Foo id 14");
+    checkRightSyntax("CREATE BLOB CLUSTER Foo");
+    checkRightSyntax("create blob cluster Foo id 14");
+
 
     checkWrongSyntax("CREATE Cluster");
     checkWrongSyntax("CREATE Cluster foo bar");

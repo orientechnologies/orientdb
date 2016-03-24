@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.test.database.speed;
 
+import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
@@ -32,7 +33,7 @@ import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
 public class LocalCreateBinaryDocumentSpeedTest extends OrientMonoThreadTest {
   private static final int PAYLOAD_SIZE = 2000;
   private ODatabaseDocumentInternal database;
-  private ORecordBytes              record;
+  private OBlob                     record;
   private byte[]                    payload;
 
   public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {

@@ -241,4 +241,18 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared>implements OSche
   public OClusterSelectionFactory getClusterSelectionFactory() {
     return delegate.getClusterSelectionFactory();
   }
+
+
+  public Set<Integer> getBlobClusters() {
+    return delegate.getBlobClusters();
+  }
+
+  public int addBlobCluster(final int clusterId) {
+    return delegate.addBlobCluster(clusterId);
+  }
+
+  public void removeBlobCluster(String clusterName){
+    delegate.removeBlobCluster(clusterName);
+  }
+
 }

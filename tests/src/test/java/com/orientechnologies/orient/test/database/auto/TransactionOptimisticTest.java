@@ -23,6 +23,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import com.orientechnologies.orient.core.record.impl.OBlob;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -47,13 +48,13 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
   @Test
   public void testTransactionOptimisticRollback() throws IOException {
     if (database.getClusterIdByName("binary") == -1)
-      database.addCluster("binary");
+      database.addBlobCluster("binary");
 
     long rec = database.countClusterElements("binary");
 
     database.begin();
 
-    ORecordBytes recordBytes = new ORecordBytes("This is the first version".getBytes());
+    OBlob recordBytes = new ORecordBytes("This is the first version".getBytes());
     recordBytes.save("binary");
 
     database.rollback();
@@ -64,13 +65,13 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
   @Test(dependsOnMethods = "testTransactionOptimisticRollback")
   public void testTransactionOptimisticCommit() throws IOException {
     if (database.getClusterIdByName("binary") == -1)
-      database.addCluster("binary");
+      database.addBlobCluster("binary");
 
     long tot = database.countClusterElements("binary");
 
     database.begin();
 
-    ORecordBytes recordBytes = new ORecordBytes("This is the first version".getBytes());
+    OBlob recordBytes = new ORecordBytes("This is the first version".getBytes());
     recordBytes.save("binary");
 
     database.commit();
@@ -81,13 +82,13 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
   @Test(dependsOnMethods = "testTransactionOptimisticCommit")
   public void testTransactionOptimisticConcurrentException() throws IOException {
     if (database.getClusterIdByName("binary") == -1)
-      database.addCluster("binary");
+      database.addBlobCluster("binary");
 
     ODatabaseDocumentTx db2 = new ODatabaseDocumentTx(database.getURL());
     db2.open("admin", "admin");
 
     database.activateOnCurrentThread();
-    ORecordBytes record1 = new ORecordBytes("This is the first version".getBytes());
+    OBlob record1 = new ORecordBytes("This is the first version".getBytes());
     record1.save("binary");
 
     try {
@@ -97,7 +98,7 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
       record1.load();
 
       ODatabaseRecordThreadLocal.INSTANCE.set(db2);
-      ORecordBytes record2 = db2.load(record1.getIdentity());
+      OBlob record2 = db2.load(record1.getIdentity());
 
       record2.setDirty();
       record2.fromStream("This is the second version".getBytes());
@@ -128,9 +129,9 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
   @Test(dependsOnMethods = "testTransactionOptimisticConcurrentException")
   public void testTransactionOptimisticCacheMgmt1Db() throws IOException {
     if (database.getClusterIdByName("binary") == -1)
-      database.addCluster("binary");
+      database.addBlobCluster("binary");
 
-    ORecordBytes record = new ORecordBytes("This is the first version".getBytes());
+    OBlob record = new ORecordBytes("This is the first version".getBytes());
     record.save();
 
     try {
@@ -155,12 +156,12 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
   @Test(dependsOnMethods = "testTransactionOptimisticCacheMgmt1Db")
   public void testTransactionOptimisticCacheMgmt2Db() throws IOException {
     if (database.getClusterIdByName("binary") == -1)
-      database.addCluster("binary");
+      database.addBlobCluster("binary");
 
     ODatabaseDocumentTx db2 = new ODatabaseDocumentTx(database.getURL());
     db2.open("admin", "admin");
 
-    ORecordBytes record1 = new ORecordBytes("This is the first version".getBytes());
+    OBlob record1 = new ORecordBytes("This is the first version".getBytes());
     record1.save();
 
     try {
@@ -178,7 +179,7 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
 
       db2.activateOnCurrentThread();
 
-      ORecordBytes record2 = db2.load(record1.getIdentity(), "*:-1", true);
+      OBlob record2 = db2.load(record1.getIdentity(), "*:-1", true);
       Assert.assertEquals(record2.getVersion(), v1 + 1);
       Assert.assertTrue(new String(record2.toStream()).contains("second"));
 

@@ -117,7 +117,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   private final OAbstractPaginatedStorage    storage;
   private final OStoragePerformanceStatistic storagePerformanceStatistic;
   private final OWriteAheadLog               writeAheadLog;
-  private final OLockManager<String> lockManager = new OLockManager<String>(true, -1);
+  private final OLockManager<String> lockManager = new OLockManager<String>(true, -1, OGlobalConfiguration.COMPONENTS_LOCK_CACHE.getValueAsInteger());
   private final OReadCache  readCache;
   private final OWriteCache writeCache;
 

@@ -71,6 +71,9 @@ public class LuceneManualIndex extends BaseLuceneTest {
     docs = databaseDocumentTx.command(new OSQLSynchQuery("select from index:manual where key LUCENE '(k0:Luca)'")).execute();
     Assert.assertEquals(docs.size(), 1);
 
+    docs = databaseDocumentTx.command(new OSQLSynchQuery("select from index:manual where key LUCENE '(k1:Rome)'")).execute();
+    Assert.assertEquals(docs.size(), 2);
+
     docs = databaseDocumentTx.command(new OSQLSynchQuery("select from index:manual where key LUCENE '(k1:London)'")).execute();
     Assert.assertEquals(docs.size(), 1);
 

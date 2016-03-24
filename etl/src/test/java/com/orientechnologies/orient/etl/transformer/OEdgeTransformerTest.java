@@ -31,9 +31,7 @@ import org.junit.Test;
 import java.util.Iterator;
 import java.util.Set;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * Tests ETL Field Transformer.
@@ -86,11 +84,12 @@ public class OEdgeTransformerTest extends OETLBaseTest {
 
   @Test
   public void testEdgeWithProperties() {
-    process("{source: { content: { value: 'id,name,surname,friendSince,friendId,friendName,friendSurname\n0,Jay,Miner,1996,1,Luca,Garulli' } }, extractor : { csv: {} },"
-        + " transformers: [ {vertex: {class:'V1'}}, "
-        + "{edge:{unresolvedLinkAction:'CREATE',class:'Friend',joinFieldName:'friendId',lookup:'V2.fid',targetVertexFields:{name:'${input.friendName}',surname:'${input.friendSurname}'},edgeFields:{since:'${input.friendSince}'}}},"
-        + "{field:{fieldNames:['friendSince','friendId','friendName','friendSurname'],operation:'remove'}}"
-        + "], loader: { orientdb: { dbURL: 'memory:OETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
+    process(
+        "{source: { content: { value: 'id,name,surname,friendSince,friendId,friendName,friendSurname\n0,Jay,Miner,1996,1,Luca,Garulli' } }, extractor : { csv: {} },"
+            + " transformers: [ {vertex: {class:'V1'}}, "
+            + "{edge:{unresolvedLinkAction:'CREATE',class:'Friend',joinFieldName:'friendId',lookup:'V2.fid',targetVertexFields:{name:'${input.friendName}',surname:'${input.friendSurname}'},edgeFields:{since:'${input.friendSince}'}}},"
+            + "{field:{fieldNames:['friendSince','friendId','friendName','friendSurname'],operation:'remove'}}"
+            + "], loader: { orientdb: { dbURL: 'memory:OETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
 
     assertEquals(1, graph.countVertices("V1"));
     assertEquals(2, graph.countVertices("V2"));
@@ -130,7 +129,6 @@ public class OEdgeTransformerTest extends OETLBaseTest {
     assertEquals(v0.getProperty("id"), 0);
   }
 
-//  @Test(expected = ORecordDuplicatedException.class)
   @Test
   public void testErrorOnDuplicateVertex() {
     process("{source: { content: { value: 'name,surname,friend\nJay,Miner,Luca\nJay,Miner,Luca' } }, extractor : { csv: {} },"
@@ -138,7 +136,6 @@ public class OEdgeTransformerTest extends OETLBaseTest {
         + "], loader: { orientdb: { dbURL: 'memory:OETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
 
     assertEquals(1, graph.countVertices("V1"));
-
   }
 
   @Test
@@ -162,12 +159,13 @@ public class OEdgeTransformerTest extends OETLBaseTest {
     assertEquals(5, graph.countVertices("PersonMF"));
 
     // IMPORT FRIEND (EDGES)
-    process("{source: { content: { value: 'friend_from,friend_to,since\n" + "1,2,2005\n" + "1,3,2008\n" + "2,3,2008\n"
-        + "1,4,2015\n" + "2,5,2008\n" + "3,5,2015\n" + "4,5,2015' } }, extractor : { csv: {} }," + " transformers: ["
-        + "{merge: {joinFieldName:'friend_from',lookup:'PersonMF.id'}}," + "{vertex: {class:'PersonMF'}},"
-        + "{edge:{class:'FriendMF',joinFieldName:'friend_to',lookup:'PersonMF.id',edgeFields:{since:'${input.since}'} }},"
-        + "{field: {operation:'remove', fieldNames:['friend_from','friend_to','since']}}"
-        + "], loader: { orientdb: { dbURL: 'memory:OETLBaseTest', dbType:'graph', classes: [{name:'FriendMF',extends:'E'}] } } }");
+    process(
+        "{source: { content: { value: 'friend_from,friend_to,since\n" + "1,2,2005\n" + "1,3,2008\n" + "2,3,2008\n" + "1,4,2015\n"
+            + "2,5,2008\n" + "3,5,2015\n" + "4,5,2015' } }, extractor : { csv: {} }," + " transformers: ["
+            + "{merge: {joinFieldName:'friend_from',lookup:'PersonMF.id'}}," + "{vertex: {class:'PersonMF'}},"
+            + "{edge:{class:'FriendMF',joinFieldName:'friend_to',lookup:'PersonMF.id',edgeFields:{since:'${input.since}'} }},"
+            + "{field: {operation:'remove', fieldNames:['friend_from','friend_to','since']}}"
+            + "], loader: { orientdb: { dbURL: 'memory:OETLBaseTest', dbType:'graph', classes: [{name:'FriendMF',extends:'E'}] } } }");
 
     assertEquals(5, graph.countVertices("PersonMF"));
     assertEquals(7, graph.countEdges("FriendMF"));

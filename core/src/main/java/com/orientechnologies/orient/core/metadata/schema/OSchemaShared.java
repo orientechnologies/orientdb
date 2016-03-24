@@ -67,6 +67,7 @@ import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 @SuppressWarnings("unchecked")
 public class OSchemaShared extends ODocumentWrapperNoClass
     implements OSchema, OCloseable, OOrientStartupListener, OOrientShutdownListener {
+  private static final int                         NOT_EXISTENT_CLUSTER_ID = -1;
   public static final int                          CURRENT_VERSION_NUMBER  = 4;
   public static final int                          VERSION_NUMBER_V4       = 4;
   // this is needed for guarantee the compatibility to 2.0-M1 and 2.0-M2 no changed associated with it
@@ -85,6 +86,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass
   private volatile ThreadLocal<OModifiableInteger> modificationCounter     = new OModificationsCounter();
   private final List<OGlobalProperty>              properties              = new ArrayList<OGlobalProperty>();
   private final Map<String, OGlobalProperty>       propertiesByNameType    = new HashMap<String, OGlobalProperty>();
+  private Set<Integer>                             blobClusters            = new HashSet<Integer>();
   private volatile int                             version                 = 0;
   private volatile OImmutableSchema                snapshot;
 
@@ -449,9 +451,12 @@ public class OSchemaShared extends ODocumentWrapperNoClass
       if (clusterId < 0)
         return;
 
+      if (blobClusters.contains(clusterId))
+        throw new OSchemaException("Cluster with id " + clusterId + " already belongs to Blob");
+
       final OClass existingCls = clustersToClasses.get(clusterId);
 
-      if (existingCls != null && !cls.equals(existingCls))
+      if (existingCls != null && (cls == null || !cls.equals(existingCls)))
         throw new OSchemaException(
             "Cluster with id " + clusterId + " already belongs to class " + clustersToClasses.get(clusterId));
 
@@ -750,6 +755,9 @@ public class OSchemaShared extends ODocumentWrapperNoClass
         }
       }
 
+      if (document.containsField("blobClusters"))
+        blobClusters = document.field("blobClusters");
+
       if (!hasGlobalProperties) {
         if (getDatabase().getStorage().getUnderlying() instanceof OAbstractPaginatedStorage)
           saveInternal();
@@ -787,6 +795,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass
             globalProperties.add(((OGlobalPropertyImpl) globalProperty).toDocument());
         }
         document.field("globalProperties", globalProperties, OType.EMBEDDEDLIST);
+        document.field("blobClusters", blobClusters, OType.EMBEDDEDSET);
       } finally {
         document.setInternalStatus(ORecordElement.STATUS.LOADED);
       }
@@ -1360,5 +1369,56 @@ public class OSchemaShared extends ODocumentWrapperNoClass
     protected OModifiableInteger initialValue() {
       return new OModifiableInteger(0);
     }
+  }
+
+  public int addBlobCluster(int clusterId) {
+    acquireSchemaWriteLock();
+    try {
+      checkClusterCanBeAdded(clusterId, null);
+      blobClusters.add(clusterId);
+    } finally {
+      releaseSchemaWriteLock();
+    }
+    return clusterId;
+  }
+
+  public void removeBlobCluster(String clusterName) {
+    acquireSchemaWriteLock();
+    try {
+      int clusterId = getClusterId(clusterName);
+      blobClusters.remove(clusterId);
+    } finally {
+      releaseSchemaWriteLock();
+    }
+  }
+
+  protected int getClusterId(final String stringValue) {
+    int clId;
+    try {
+      clId = Integer.parseInt(stringValue);
+    } catch (NumberFormatException e) {
+      clId = getDatabase().getClusterIdByName(stringValue);
+    }
+    return clId;
+  }
+
+  protected int createClusterIfNeeded(String nameOrId) {
+    final String[] parts = nameOrId.split(" ");
+    int clId = getClusterId(parts[0]);
+
+    if (clId == NOT_EXISTENT_CLUSTER_ID) {
+      try {
+        clId = Integer.parseInt(parts[0]);
+        throw new IllegalArgumentException("Cluster id '" + clId + "' cannot be added");
+      } catch (NumberFormatException e) {
+        clId = getDatabase().addCluster(parts[0]);
+      }
+    }
+
+    return clId;
+  }
+
+  public Set<Integer> getBlobClusters() {
+    return Collections.unmodifiableSet(blobClusters);
   }
 }

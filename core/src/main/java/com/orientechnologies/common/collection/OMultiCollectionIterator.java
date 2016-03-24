@@ -49,9 +49,13 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
   private Iterator<T>  partialIterator;
 
   private int          browsed            = 0;
+  private int          skip               = -1;
   private int          limit              = -1;
   private boolean      embedded           = false;
   private boolean      autoConvert2Record = true;
+
+
+  private int skipped = 0;
 
   public OMultiCollectionIterator() {
     sources = new ArrayList<Object>();
@@ -64,6 +68,17 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
 
   @Override
   public boolean hasNext() {
+    while(skipped < skip){
+      if(!hasNextInternal()){
+        return false;
+      }
+      partialIterator.next();
+      skipped++;
+    }
+    return hasNextInternal();
+  }
+
+  private boolean hasNextInternal() {
     if (sourcesIterator == null) {
       if (sources == null || sources.isEmpty())
         return false;
@@ -107,6 +122,7 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
     sourcesIterator = null;
     partialIterator = null;
     browsed = 0;
+    skipped = 0;
   }
 
   public OMultiCollectionIterator<T> add(final Object iValue) {
@@ -161,6 +177,14 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
 
   public void setLimit(final int limit) {
     this.limit = limit;
+  }
+
+  public int getSkip() {
+    return skip;
+  }
+
+  public void setSkip(final int skip) {
+    this.skip = skip;
   }
 
   public void setAutoConvertToRecord(final boolean autoConvert2Record) {

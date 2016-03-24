@@ -95,6 +95,7 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
       OClass clazz = null;
       String where = null;
 
+      int limit = -1;
       String word = parseOptionalWord(true);
       while (word != null) {
 

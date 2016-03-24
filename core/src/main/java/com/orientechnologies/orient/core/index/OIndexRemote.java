@@ -102,6 +102,11 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     return databaseName;
   }
 
+  @Override
+  public long getRebuildVersion() {
+    throw new UnsupportedOperationException();
+  }
+
   public boolean contains(final Object iKey) {
     final OCommandRequest cmd = formatCommand(QUERY_CONTAINS, name);
     final List<ODocument> result = getDatabase().command(cmd).execute(iKey);
@@ -320,7 +325,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   }
 
   @Override
-  public boolean isRebuiding() {
+  public boolean isRebuilding() {
     return false;
   }
 

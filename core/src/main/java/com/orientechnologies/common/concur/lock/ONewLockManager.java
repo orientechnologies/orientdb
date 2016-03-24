@@ -32,7 +32,9 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @since 8/11/14
  */
 public class ONewLockManager<T> {
-  private static final int               CONCURRENCY_LEVEL = closestInteger(Runtime.getRuntime().availableProcessors() * 64);
+  private static final int               HASH_BITS         = 0x7fffffff;
+
+  private static final int               CONCURRENCY_LEVEL = closestInteger(Runtime.getRuntime().availableProcessors() << 6);
   private static final int               MASK              = CONCURRENCY_LEVEL - 1;
 
   private final ReadWriteLock[]          locks;
@@ -116,7 +118,11 @@ public class ONewLockManager<T> {
   }
 
   private static int index(int hashCode) {
-    return hashCode & MASK;
+    return shuffleHashCode(hashCode) & MASK;
+  }
+
+  private static int shuffleHashCode(int h) {
+    return (h ^ (h >>> 16)) & HASH_BITS;
   }
 
   public Lock acquireExclusiveLock(long value) {
@@ -452,7 +458,7 @@ public class ONewLockManager<T> {
     lock.unlock();
   }
 
-  protected T[] getOrderedValues(final T[] value) {
+  private T[] getOrderedValues(final T[] value) {
     final T[] values = Arrays.copyOf(value, value.length);
 
     Arrays.sort(values, 0, values.length, new Comparator<T>() {

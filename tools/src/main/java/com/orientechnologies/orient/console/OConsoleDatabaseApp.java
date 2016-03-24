@@ -47,6 +47,7 @@ import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.db.tool.*;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.ORetryQueryException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -58,8 +59,8 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -463,6 +464,11 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       return;
     }
 
+    if(currentDatabase.getStorage().isRemote()){
+      message("\nWARNING - Transactions are not supported from console in remote, please use an sql script: \neg.\n\nscript sql\nbegin;\n<your commands here>\ncommit;\nend\n\n");
+      return;
+    }
+
     currentDatabase.begin();
     message("\nTransaction " + currentDatabase.getTransaction().getId() + " is running");
   }
@@ -476,6 +482,10 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       return;
     }
 
+    if(currentDatabase.getStorage().isRemote()){
+      message("\nWARNING - Transactions are not supported from console in remote, please use an sql script: \neg.\n\nscript sql\nbegin;\n<your commands here>\ncommit;\nend\n\n");
+      return;
+    }
     final long begin = System.currentTimeMillis();
 
     final int txId = currentDatabase.getTransaction().getId();
@@ -490,6 +500,11 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     if (!currentDatabase.getTransaction().isActive()) {
       message("\nError: no active transaction is running right now.");
+      return;
+    }
+
+    if(currentDatabase.getStorage().isRemote()){
+      message("\nWARNING - Transactions are not supported from console in remote, please use an sql script: \neg.\n\nscript sql\nbegin;\n<your commands here>\ncommit;\nend\n\n");
       return;
     }
 
@@ -933,11 +948,18 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     resetResultSet();
 
-    final OCommandExecutorScript cmd = new OCommandExecutorScript();
-    cmd.parse(new OCommandScript("Javascript", iText));
-
     long start = System.currentTimeMillis();
-    currentResult = cmd.execute(null);
+    while (true) {
+      try {
+        final OCommandExecutorScript cmd = new OCommandExecutorScript();
+        cmd.parse(new OCommandScript("Javascript", iText));
+
+        currentResult = cmd.execute(null);
+        break;
+      } catch (ORetryQueryException e) {
+        continue;
+      }
+    }
     float elapsedSeconds = getElapsedSecs(start);
 
     parseResult();
@@ -2672,8 +2694,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         message("\n| %24s | %-68s |", fieldName, value);
       }
 
-    } else if (currentRecord instanceof ORecordBytes) {
-      ORecordBytes rec = (ORecordBytes) currentRecord;
+    } else if (currentRecord instanceof OBlob) {
+      OBlob rec = (OBlob) currentRecord;
       message("\n+-------------------------------------------------------------------------------------------------+");
       message("\n| Bytes    - @rid: %s @version: %d", rec.getIdentity().toString(), rec.getVersion());
       message("\n+-------------------------------------------------------------------------------------------------+");

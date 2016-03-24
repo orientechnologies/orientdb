@@ -19,6 +19,12 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Arrays;
+import java.util.List;
+
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -27,23 +33,14 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OPlaceholder;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * Distributed create record task used for synchronization.
@@ -71,14 +68,10 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
     this((ORecordId) record.getIdentity(), record.toStream(), record.getVersion() - 1, ORecordInternal.getRecordType(record));
 
     if (rid.getClusterId() == ORID.CLUSTER_ID_INVALID) {
-      final OClass clazz;
-      if (record instanceof ODocument && (clazz = ODocumentInternal.getImmutableSchemaClass((ODocument) record)) != null) {
-        // PRE-ASSIGN THE CLUSTER ID ON CALLER NODE
-        clusterId = clazz.getClusterSelection().getCluster(clazz, (ODocument) record);
-      } else {
-        ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
-        clusterId = db.getDefaultClusterId();
-      }
+      ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+      clusterId = db.assignAndCheckCluster(record, null);
+      // RESETTING FOR AVOID DESERIALIZATION ISSUE.
+      ((ORecordId) record.getIdentity()).clusterId = ORID.CLUSTER_ID_INVALID;
     }
   }
 

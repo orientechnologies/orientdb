@@ -42,7 +42,7 @@ public class LockManagerTest {
   public static OLockManager<Callable<?>> lockMgr         = new OLockManager<Callable<?>>(
                                                                         OGlobalConfiguration.ENVIRONMENT_CONCURRENT
                                                                             .getValueAsBoolean(),
-                                                                        5000);
+                                                                        5000, 10000);
   protected List<Callable<?>>                       resources       = new ArrayList<Callable<?>>();
   protected List<Thread>                            processes       = Collections.synchronizedList(new ArrayList<Thread>());
   protected List<Throwable>                         exceptions      = Collections.synchronizedList(new ArrayList<Throwable>());

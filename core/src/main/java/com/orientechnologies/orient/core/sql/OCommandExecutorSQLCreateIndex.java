@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPatternConst;
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
@@ -108,7 +109,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
         if (pos == -1)
           throw new OCommandSQLParsingException("Expected class name. Use " + getSyntax(), parserText, oldPos);
         oldPos = pos;
-        oClass = findClass(word.toString());
+        oClass = findClass(decodeClassName(word.toString()));
 
         if (oClass == null)
           throw new OCommandExecutionException("Class " + word + " not found");
@@ -141,6 +142,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
             if (collates != null)
               collates[i] = null;
           }
+          fields[i] = decodeClassName(fields[i]);
         }
 
         for (String propToIndex : fields) {
@@ -263,9 +265,13 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
             .getIndexManager()
             .createIndex(indexName, indexType.toString(),
                 new ORuntimeKeyIndexDefinition(serializerKeyId, factory.getLastVersion()), null, null, metadataDoc, engine);
-      } else
+      } else {
+        OLogManager.instance().warn(this,
+            "Key type is not provided for '%s' index. Untyped indexes are deprecated and considered unstable." +
+                " Please specify a key type.", indexName);
         idx = database.getMetadata().getIndexManager()
             .createIndex(indexName, indexType.toString(), null, null, null, metadataDoc, engine);
+      }
     } else {
       if ((keyTypes == null || keyTypes.length == 0) && collates == null) {
         idx = oClass.createIndex(indexName, indexType.toString(), null, metadataDoc, engine, fields);

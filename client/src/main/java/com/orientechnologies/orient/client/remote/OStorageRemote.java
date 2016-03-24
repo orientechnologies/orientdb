@@ -63,6 +63,7 @@ import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.enterprise.channel.binary.OTokenSecurityException;
 
 import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
@@ -1652,11 +1653,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
     final Throwable firstCause = OException.getFirstCause(exception);
 
-    final boolean tokenException = firstCause instanceof OTokenException;
+    final boolean tokenException = firstCause instanceof OTokenException || firstCause instanceof OTokenSecurityException;
 
     // CHECK IF THE EXCEPTION SHOULD BE JUST PROPAGATED
     if (!(firstCause instanceof IOException) && !(firstCause instanceof OIOException)
-        && !(firstCause instanceof IllegalMonitorStateException) && !(firstCause instanceof OOfflineNodeException)) {
+        && !(firstCause instanceof IllegalMonitorStateException) && !(firstCause instanceof OOfflineNodeException) && !tokenException) {
       if (exception instanceof OException)
         // NOT AN IO CAUSE, JUST PROPAGATE IT
         throw (OException) exception;
@@ -1719,7 +1720,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
         // FORCE RESET OF THREAD DATA (SERVER URL + SESSION ID)
         setSessionId(null, -1, null);
-
+        if(tokenException)
+          tokens.remove(iNetwork.getServerURL());
         // REACQUIRE DB SESSION ID
         final String currentURL = reopenRemoteDatabase();
 

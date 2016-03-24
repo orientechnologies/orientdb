@@ -55,6 +55,7 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Handles indexing when records change.
@@ -66,21 +67,24 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
   protected static final String                 CONFIG_CLUSTERS = "clusters";
   protected final String                        type;
   protected final ONewLockManager<Object>       keyLockManager  = new ONewLockManager<Object>();
+  protected volatile IndexConfiguration         configuration;
+
   protected final ODocument                     metadata;
   protected final OAbstractPaginatedStorage     storage;
-  protected String                              valueContainerAlgorithm;
-  protected int                                 indexId         = -1;
   private final String                          databaseName;
   private final String                          name;
+
   private final OReadersWriterSpinLock          rwLock          = new OReadersWriterSpinLock();
+  private final AtomicLong                      rebuildVersion  = new AtomicLong();
+
   private final int                             version;
+  protected String                              valueContainerAlgorithm;
+  protected int                                 indexId         = -1;
   private String                                algorithm;
   private Set<String>                           clustersToIndex = new HashSet<String>();
-  private Thread                                rebuildThread   = null;
-  private volatile boolean                      rebuilding      = false;
   private volatile OIndexDefinition             indexDefinition;
+  private volatile boolean                      rebuilding      = false;
   private volatile ThreadLocal<IndexTxSnapshot> txSnapshot      = new IndexTxSnapshotThreadLocal();
-  protected volatile IndexConfiguration         configuration;
 
   public OIndexAbstract(String name, final String type, String algorithm, String valueContainerAlgorithm, ODocument metadata,
       int version, OAbstractPaginatedStorage storage) {
@@ -313,7 +317,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
             rebuild();
           } catch (Throwable t) {
             OLogManager.instance().error(this,
-                "Cannot rebuild index '%s'  BECAUSE '" + t + "'. The index will be removed in configuration", e, getName());
+                "Cannot rebuild index '%s' because '" + t + "'. The index will be removed in configuration", e, getName());
             // REMOVE IT
             return false;
           }
@@ -336,8 +340,6 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
   }
 
   public boolean contains(Object key) {
-    checkForRebuild();
-
     key = getCollatingValue(key);
 
     final ODatabase database = getDatabase();
@@ -360,6 +362,9 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public long rebuild() {
     return rebuild(new OIndexRebuildOutputListener(this));
   }
@@ -395,7 +400,15 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
   }
 
   /**
-   * Populates the index with all the existent records. Uses the massive insert intent to speed up and keep the consumed memory low.
+   * {@inheritDoc}
+   */
+  @Override
+  public long getRebuildVersion() {
+    return 0;
+  }
+
+  /**
+   * {@inheritDoc}
    */
   public long rebuild(final OProgressListener iProgressListener) {
     long documentIndexed = 0;
@@ -404,8 +417,10 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
 
     acquireExclusiveLock();
     try {
-      rebuildThread = Thread.currentThread();
+      // DO NOT REORDER 2 assignments bellow
+      // see #getRebuildVersion()
       rebuilding = true;
+      rebuildVersion.incrementAndGet();
 
       try {
         if (indexId >= 0)
@@ -420,9 +435,24 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
           isDurableInNonTxMode(), version, getEngineProperties(), clustersToIndex, metadata);
 
       onIndexEngineChange(indexId);
+    } catch (Exception e) {
+      try {
+        if (indexId >= 0)
+          storage.clearIndex(indexId);
+      } catch (Exception e2) {
+        OLogManager.instance().error(this, "Error during index rebuild", e2);
+        // IGNORE EXCEPTION: IF THE REBUILD WAS LAUNCHED IN CASE OF RID INVALID CLEAR ALWAYS GOES IN ERROR
+      }
 
+      rebuilding = false;
+      throw OException.wrapException(new OIndexException("Error on rebuilding the index for clusters: " + clustersToIndex), e);
+    } finally {
+      releaseExclusiveLock();
+    }
+
+    acquireSharedLock();
+    try {
       documentIndexed = fillIndex(iProgressListener);
-
     } catch (final Exception e) {
       try {
         if (indexId >= 0)
@@ -433,15 +463,13 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
       }
 
       throw OException.wrapException(new OIndexException("Error on rebuilding the index for clusters: " + clustersToIndex), e);
-
     } finally {
       rebuilding = false;
-      rebuildThread = null;
 
       if (intentInstalled)
         getDatabase().declareIntent(null);
 
-      releaseExclusiveLock();
+      releaseSharedLock();
     }
 
     return documentIndexed;
@@ -481,8 +509,6 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
   }
 
   public boolean remove(Object key) {
-    checkForRebuild();
-
     key = getCollatingValue(key);
 
     final ODatabase database = getDatabase();
@@ -552,8 +578,6 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
   }
 
   public OIndex<T> clear() {
-    checkForRebuild();
-
     final ODatabase database = getDatabase();
     final boolean txIsActive = database.getTransaction().isActive();
 
@@ -685,8 +709,6 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
 
   @SuppressWarnings("unchecked")
   public void addTxOperation(final ODocument operationDocument) {
-    checkForRebuild();
-
     if (operationDocument == null)
       return;
 
@@ -769,8 +791,6 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
 
   @Override
   public OIndexKeyCursor keyCursor() {
-    checkForRebuild();
-
     acquireSharedLock();
     try {
       return storage.getIndexKeyCursor(indexId);
@@ -821,7 +841,11 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
     return databaseName;
   }
 
-  public boolean isRebuiding() {
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public boolean isRebuilding() {
     return rebuilding;
   }
 
@@ -886,12 +910,6 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
 
   protected ODatabaseDocumentInternal getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
-  }
-
-  protected void checkForRebuild() {
-    if (rebuilding && !Thread.currentThread().equals(rebuildThread)) {
-      throw new OIndexException("Index " + name + " is rebuilding now and cannot be used");
-    }
   }
 
   protected long[] indexCluster(final String clusterName, final OProgressListener iProgressListener, long documentNum,

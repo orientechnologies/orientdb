@@ -589,6 +589,7 @@ public class OETLProcessor {
       while (!(content = queue.take()).finished) {
           pipeline.execute(content);
       }
+      pipeline.end();
       //RE-ADD END FLAG FOR OTHER THREADS
       queue.put(content);
       return Boolean.TRUE;

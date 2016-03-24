@@ -15,6 +15,9 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import java.io.File;
+import java.io.IOException;
+
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
@@ -25,9 +28,6 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-
-import java.io.File;
-import java.io.IOException;
 
 /**
  * Running server instance.

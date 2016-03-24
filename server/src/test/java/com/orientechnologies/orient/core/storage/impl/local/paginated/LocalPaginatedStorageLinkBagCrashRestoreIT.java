@@ -31,7 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class LocalPaginatedStorageLinkBagCrashRestoreIT {
   private static String URL_BASE;
   private static String URL_TEST;
-  private final OLockManager<ORID>              lockManager     = new OLockManager<ORID>(true, 30000);
+  private final OLockManager<ORID>              lockManager     = new OLockManager<ORID>(true, 30000, 10000);
   private final AtomicInteger                   positionCounter = new AtomicInteger();
   private final OPartitionedDatabasePoolFactory poolFactory     = new OPartitionedDatabasePoolFactory();
   private File buildDir;

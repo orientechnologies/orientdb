@@ -51,16 +51,21 @@ public class OServerCommandGetIndex extends OServerCommandDocumentAbstract {
       final Object content = index.get(urlParts[3]);
 
       if (content == null)
-        iResponse.send(OHttpUtils.STATUS_NOTFOUND_CODE, OHttpUtils.STATUS_NOTFOUND_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
-            null, null);
+        iResponse.send(OHttpUtils.STATUS_NOTFOUND_CODE, OHttpUtils.STATUS_NOTFOUND_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, null,
+            null);
       else {
         final StringBuilder buffer = new StringBuilder(128);
         buffer.append('[');
 
         if (content instanceof Collection<?>) {
           Collection<OIdentifiable> collection = (Collection<OIdentifiable>) content;
+          int count = 0;
           for (OIdentifiable item : collection) {
+            if (count > 0) {
+              buffer.append(", ");
+            }
             buffer.append(item.getRecord().toJSON());
+            count++;
           }
         } else
           buffer.append(((OIdentifiable) content).getRecord().toJSON());
@@ -77,8 +82,7 @@ public class OServerCommandGetIndex extends OServerCommandDocumentAbstract {
     } finally {
       if (db != null)
         db.close();
-    }
-    return false;
+    } return false;
   }
 
   @Override

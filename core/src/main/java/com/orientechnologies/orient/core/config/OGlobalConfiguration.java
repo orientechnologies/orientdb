@@ -19,18 +19,6 @@
 */
 package com.orientechnologies.orient.core.config;
 
-import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OProfiler;
-import com.orientechnologies.common.util.OApi;
-import com.orientechnologies.orient.core.OConstants;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.cache.ORecordCacheWeakRefs;
-import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
-import com.orientechnologies.orient.core.metadata.OMetadataDefault;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
-import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
-
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
@@ -42,6 +30,18 @@ import java.util.Map.Entry;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
+
+import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.common.util.OApi;
+import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.cache.ORecordCacheWeakRefs;
+import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
+import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
+import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
 
 /**
  * Keeps all configuration settings. At startup assigns the configuration values by reading system properties.
@@ -89,6 +89,12 @@ public enum OGlobalConfiguration {
       "Minimal amount of time (in seconds), since the last System.gc(), when called after tree optimization.", Long.class, 600),
 
   // STORAGE
+  /**
+   * Amount of cached locks is used for component lock in atomic operation to avoid constant creation of new lock instances, default
+   * value is 10000.
+   */
+  COMPONENTS_LOCK_CACHE("storage.componentsLock.cache",
+      "Amount of cached locks is used for component lock to avoid constant creation of new lock instances", Integer.class, 10000),
 
   DISK_CACHE_PINNED_PAGES("storage.diskCache.pinnedPages",
       "Maximum amount of pinned pages which may be contained in cache,"

@@ -68,6 +68,11 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
     return delegate.put(iKey, iValue);
   }
 
+  @Override
+  public long getRebuildVersion() {
+    return delegate.getRebuildVersion();
+  }
+
   public boolean remove(final Object key) {
     return delegate.remove(key);
   }
@@ -227,8 +232,8 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
   }
 
   @Override
-  public boolean isRebuiding() {
-    return delegate.isRebuiding();
+  public boolean isRebuilding() {
+    return delegate.isRebuilding();
   }
 
   @Override

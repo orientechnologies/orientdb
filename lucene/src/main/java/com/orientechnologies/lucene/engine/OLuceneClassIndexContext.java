@@ -1,10 +1,10 @@
 package com.orientechnologies.lucene.engine;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.HashMap;
@@ -20,14 +20,15 @@ public class OLuceneClassIndexContext {
   protected final Map<String, Boolean> fieldsToStore = new HashMap<String, Boolean>();
   protected final OClass indexClass;
 
-  public OLuceneClassIndexContext(OIndexDefinition definition, String name, boolean automatic, ODocument metadata) {
+  public OLuceneClassIndexContext(OSchema schema, OIndexDefinition definition, String name, boolean automatic, ODocument metadata) {
     this.definition = definition;
     this.name = name;
     this.automatic = automatic;
     this.metadata = metadata;
 
     OLogManager.instance().info(this, "index definition:: " + definition);
-    indexClass = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema().getClass(definition.getClassName());
+
+    indexClass = schema.getClass(definition.getClassName());
 
     updateFieldToStore(definition);
   }
@@ -45,6 +46,13 @@ public class OLuceneClassIndexContext {
         fieldsToStore.put(field, false);
       }
     }
+  }
+
+  public boolean isFieldToStore(String field) {
+    if (fieldsToStore.containsKey(field))
+      return fieldsToStore.get(field);
+    return false;
+
   }
 
 }

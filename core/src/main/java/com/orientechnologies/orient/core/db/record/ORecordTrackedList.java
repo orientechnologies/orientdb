@@ -39,4 +39,10 @@ public class ORecordTrackedList extends OTrackedList<OIdentifiable> {
   public Iterator<OIdentifiable> rawIterator() {
     return iterator();
   }
+
+  @Override
+  public void replace(OMultiValueChangeEvent<Object, Object> event, Object newValue) {
+    //not needed do nothing
+  }
+
 }

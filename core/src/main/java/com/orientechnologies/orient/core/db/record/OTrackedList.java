@@ -70,6 +70,7 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
           element));
     }
 
+    addNested(element);
     return result;
   }
 
@@ -86,7 +87,7 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
     super.add(index, element);
 
     addOwnerToEmbeddedDoc(element);
-
+    addNested(element);
     fireCollectionChangedEvent(new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.ADD, index, element));
   }
 
@@ -104,7 +105,16 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
           oldValue));
     }
 
+    addNested(element);
+
     return oldValue;
+  }
+
+  private void addNested(T element) {
+    if (element instanceof OTrackedMultiValue) {
+      ((OTrackedMultiValue) element)
+          .addChangeListener(new ONestedValueChangeListener((ODocument) sourceRecord, this, (OTrackedMultiValue) element));
+    }
   }
 
   private void addOwnerToEmbeddedDoc(T e) {
@@ -124,7 +134,15 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
 
     fireCollectionChangedEvent(new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.REMOVE, index, null,
         oldValue));
+    removeNested(oldValue);
+
     return oldValue;
+  }
+
+  private void removeNested(Object element){
+    if(element instanceof OTrackedMultiValue){
+//      ((OTrackedMultiValue) element).removeRecordChangeListener(null);
+    }
   }
 
   @Override
@@ -172,6 +190,7 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
 
         fireCollectionChangedEvent(new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.REMOVE, i, null,
             origValue));
+        removeNested(origValue);
       }
     else
       setDirty();
@@ -234,7 +253,7 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
     return reverted;
   }
 
-  protected void fireCollectionChangedEvent(final OMultiValueChangeEvent<Integer, T> event) {
+  public void fireCollectionChangedEvent(final OMultiValueChangeEvent<Integer, T> event) {
     if (status == STATUS.UNMARSHALLING)
       return;
     setDirty();
@@ -265,4 +284,13 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
   private Object writeReplace() {
     return new ArrayList<T>(this);
   }
+
+  @Override
+  public void replace(OMultiValueChangeEvent<Object, Object> event, Object newValue) {
+    super.set((Integer) event.getKey(), (T) newValue);
+    addNested((T) newValue);
+  }
+
+
+
 }

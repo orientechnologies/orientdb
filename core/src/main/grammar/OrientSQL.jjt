@@ -331,6 +331,8 @@ TOKEN:
     < SLEEP: ( "S" | "s") ( "L" | "l") ( "E" | "e") ( "E" | "e") ( "P" | "p")  >
     |
     < CONSOLE: ( "C" | "c") ( "O" | "o") ( "N" | "n") ( "S" | "s") ( "O" | "o")  ( "L" | "l") ( "E" | "e")>
+    |
+    < BLOB: ( "B" | "b") ( "L" | "l") ( "O" | "o") ( "B" | "b") >
 	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
@@ -761,6 +763,8 @@ OIdentifier Identifier():
     |
     token = <CONSOLE>
     |
+    token = <BLOB>
+    |
     quotedToken = <QUOTED_IDENTIFIER>
 ) {
 
@@ -991,7 +995,7 @@ OSelectWithoutTargetStatement SelectWithoutTargetStatement():
     	<SELECT>
         jjtThis.projection = Projection()
     	[ jjtThis.letClause = LetClause() ]
-    	[ jjtThis.unwind = Unwind() ] 
+    	[ jjtThis.unwind = Unwind() ]
     	(
 			[
 				jjtThis.skip = Skip() [ jjtThis.limit = Limit() ]
@@ -1538,9 +1542,9 @@ OUpdateIncrementItem UpdateIncrementItem():
 {}
 {
     (
-	    jjtThis.left = Identifier() 
+	    jjtThis.left = Identifier()
 	    [ jjtThis.leftModifier = Modifier() ]
-	    <EQ> 
+	    <EQ>
 	    jjtThis.right = Expression()
 	)
 	{ return jjtThis; }
@@ -3747,6 +3751,7 @@ OAlterClassStatement AlterClassStatement():
 {
 	OIdentifier lastIdentifier;
 	OInteger lastInteger;
+	Token lastToken;
 }
 {
 	<ALTER> <CLASS>
@@ -3865,6 +3870,8 @@ OAlterClassStatement AlterClassStatement():
 				jjtThis.identifierValue = Identifier()
 				|
 				"round-robin" { jjtThis.customString = "round-robin"; }
+				|
+				lastToken = <STRING_LITERAL> {  jjtThis.customString = token.image.substring(1, token.image.length() - 1); }
 			)
 		)
 		|
@@ -4105,11 +4112,16 @@ ODropIndexStatement DropIndexStatement():
 OCreateClusterStatement CreateClusterStatement():
 {}
 {
-	<CREATE> <CLUSTER>
-	(
-		jjtThis.name = Identifier()
+    (
+        <CREATE>
+        (
+            ( <CLUSTER> )
+            |
+            ( <BLOB> <CLUSTER> { jjtThis.blob = true; } )
+        )
+        jjtThis.name = Identifier()
+        [ <ID> jjtThis.id = Integer() ]
 	)
-	[ <ID> jjtThis.id = Integer() ]
 	{ return jjtThis; }
 }
 

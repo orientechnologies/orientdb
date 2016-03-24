@@ -21,20 +21,37 @@ package com.orientechnologies.orient.enterprise.channel.binary;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.concur.lock.OLockException;
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.client.remote.OStorageRemoteThreadLocal;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
+import com.orientechnologies.orient.enterprise.channel.OSocketFactory;
 
-import java.io.IOException;
+import java.io.*;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.SocketException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 
-public class OChannelBinaryAsynchClient extends OChannelBinaryClientAbstract {
+public class OChannelBinaryAsynchClient extends OChannelBinary {
+  protected final int                          socketTimeout;                                               // IN MS
+  protected final short                        srvProtocolVersion;
   private final Condition                      readCondition = getLockRead().getUnderlying().newCondition();
   private final int                            maxUnreadResponses;
+  private String                               serverURL;
   private volatile boolean                     channelRead   = false;
+  private byte                                 currentStatus;
+  private int                                  currentSessionId;
   private volatile OAsynchChannelServiceThread serviceThread;
 
   public OChannelBinaryAsynchClient(final String remoteHost, final int remotePort, final String iDatabaseName,
@@ -45,24 +62,93 @@ public class OChannelBinaryAsynchClient extends OChannelBinaryClientAbstract {
   public OChannelBinaryAsynchClient(final String remoteHost, final int remotePort, final String iDatabaseName,
       final OContextConfiguration iConfig, final int protocolVersion, final ORemoteServerEventListener asynchEventListener)
           throws IOException {
-    super(remoteHost, remotePort, iDatabaseName, iConfig, protocolVersion);
-    maxUnreadResponses = OGlobalConfiguration.NETWORK_BINARY_READ_RESPONSE_MAX_TIMES.getValueAsInteger();
+    super(OSocketFactory.instance(iConfig).createSocket(), iConfig);
+    try {
 
-    if (asynchEventListener != null)
-      serviceThread = new OAsynchChannelServiceThread(asynchEventListener, this);
+      maxUnreadResponses = OGlobalConfiguration.NETWORK_BINARY_READ_RESPONSE_MAX_TIMES.getValueAsInteger();
+      serverURL = remoteHost + ":" + remotePort;
+      if (iDatabaseName != null)
+        serverURL += "/" + iDatabaseName;
+      socketTimeout = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT);
+
+      socket.setPerformancePreferences(0, 2, 1);
+
+      socket.setKeepAlive(true);
+      socket.setSendBufferSize(socketBufferSize);
+      socket.setReceiveBufferSize(socketBufferSize);
+      try {
+        socket.connect(new InetSocketAddress(remoteHost, remotePort), socketTimeout);
+        setReadResponseTimeout();
+        connected();
+      } catch (java.net.SocketTimeoutException e) {
+        throw new IOException("Cannot connect to host " + remoteHost + ":" + remotePort, e);
+      }
+      try {
+        inStream = new BufferedInputStream(socket.getInputStream(), socketBufferSize);
+        outStream = new BufferedOutputStream(socket.getOutputStream(), socketBufferSize);
+
+        in = new DataInputStream(inStream);
+        out = new DataOutputStream(outStream);
+
+        srvProtocolVersion = readShort();
+      } catch (IOException e) {
+        throw new ONetworkProtocolException(
+            "Cannot read protocol version from remote server " + socket.getRemoteSocketAddress() + ": " + e);
+      }
+
+      if (srvProtocolVersion != protocolVersion) {
+        OLogManager.instance().warn(this,
+            "The Client driver version is different than Server version: client=" + protocolVersion + ", server="
+                + srvProtocolVersion
+                + ". You could not use the full features of the newer version. Assure to have the same versions on both");
+      }
+
+      if (asynchEventListener != null)
+        serviceThread = new OAsynchChannelServiceThread(asynchEventListener, this);
+    } catch (RuntimeException e) {
+      if (socket.isConnected())
+        socket.close();
+      throw e;
+    }
   }
 
-  public void beginRequest(byte iCommand, OStorageRemoteThreadLocal.OStorageRemoteSession session, byte[] token)
-      throws IOException {
-    writeByte(iCommand);
-    writeInt(session.sessionId);
-    if (token != null) {
-      if (!session.has(this)) {
-        writeBytes(token);
-        session.add(this);
-      } else
-        writeBytes(new byte[] {});
+  @SuppressWarnings("unchecked")
+  private static RuntimeException createException(final String iClassName, final String iMessage, final Exception iPrevious) {
+    RuntimeException rootException = null;
+    Constructor<?> c = null;
+    try {
+      final Class<RuntimeException> excClass = (Class<RuntimeException>) Class.forName(iClassName);
+      if (iPrevious != null) {
+        try {
+          c = excClass.getConstructor(String.class, Throwable.class);
+        } catch (NoSuchMethodException e) {
+          c = excClass.getConstructor(String.class, Exception.class);
+        }
+      }
+
+      if (c == null)
+        c = excClass.getConstructor(String.class);
+
+    } catch (Exception e) {
+      // UNABLE TO REPRODUCE THE SAME SERVER-SIZE EXCEPTION: THROW AN IO EXCEPTION
+      rootException = OException.wrapException(new OIOException(iMessage), iPrevious);
     }
+
+    if (c != null)
+      try {
+        final Exception cause;
+        if (c.getParameterTypes().length > 1)
+          cause = (Exception) c.newInstance(iMessage, iPrevious);
+        else
+          cause = (Exception) c.newInstance(iMessage);
+
+        rootException = OException.wrapException(new OSystemException("Data processing exception"), cause);
+      } catch (InstantiationException ignored) {
+      } catch (IllegalAccessException ignored) {
+      } catch (InvocationTargetException ignored) {
+      }
+
+    return rootException;
   }
 
   public byte[] beginResponse(final int iRequesterId, final boolean token) throws IOException {
@@ -150,14 +236,8 @@ public class OChannelBinaryAsynchClient extends OChannelBinaryClientAbstract {
 
           final long start = System.currentTimeMillis();
 
-          if (this.serviceThread == null || iRequesterId != Integer.MIN_VALUE && this.currentSessionId != Integer.MIN_VALUE) {
-            throw new OIOException("Found a session id " + this.currentSessionId + " not expected, possible wrong data on socket");
-          } else
-            // WAIT MAX 30  SEC FOR THE ASYNC THREAD TO READ THE RESPONSE
-          if (!readCondition.await(30000, TimeUnit.MILLISECONDS)) {
-            //SOMETHING WENT WRONG IN THE ASYNC THREAD
-            throw new OIOException("Timeout on push messaged reading by async thread");
-          }
+          // WAIT MAX 30 SECOND AND RETRY, THIS IS UNBLOCKED BY ANOTHER THREAD IN CASE THE RESPONSE FOR THIS IS ARRIVED
+          readCondition.await(30, TimeUnit.SECONDS);
 
           if (debug) {
             final long now = System.currentTimeMillis();
@@ -233,6 +313,158 @@ public class OChannelBinaryAsynchClient extends OChannelBinaryClientAbstract {
       if (s != null)
         // CHECK S BECAUSE IT COULD BE CONCURRENTLY RESET
         s.sendShutdown();
+    }
+  }
+
+  @Override
+  public void clearInput() throws IOException {
+    acquireReadLock();
+    try {
+      super.clearInput();
+    } finally {
+      releaseReadLock();
+    }
+  }
+
+  /**
+   * Tells if the channel is connected.
+   *
+   * @return true if it's connected, otherwise false.
+   */
+  public boolean isConnected() {
+    final Socket s = socket;
+    return s != null && !s.isClosed() && s.isConnected() && !s.isInputShutdown() && !s.isOutputShutdown();
+  }
+
+  /**
+   * Gets the major supported protocol version
+   *
+   */
+  public short getSrvProtocolVersion() {
+    return srvProtocolVersion;
+  }
+
+  public String getServerURL() {
+    return serverURL;
+  }
+
+  public boolean tryLock() {
+    return getLockWrite().tryAcquireLock();
+  }
+
+  public void unlock() {
+    getLockWrite().unlock();
+  }
+
+  public OAsynchChannelServiceThread getServiceThread() {
+    return serviceThread;
+  }
+
+  protected int handleStatus(final byte iResult, final int iClientTxId) throws IOException {
+    if (iResult == OChannelBinaryProtocol.RESPONSE_STATUS_OK || iResult == OChannelBinaryProtocol.PUSH_DATA) {
+      return iClientTxId;
+    } else if (iResult == OChannelBinaryProtocol.RESPONSE_STATUS_ERROR) {
+
+      final List<OPair<String, String>> exceptions = new ArrayList<OPair<String, String>>();
+
+      // EXCEPTION
+      while (readByte() == 1) {
+        final String excClassName = readString();
+        final String excMessage = readString();
+        exceptions.add(new OPair<String, String>(excClassName, excMessage));
+      }
+
+      byte[] serializedException = null;
+      if (srvProtocolVersion >= 19)
+        serializedException = readBytes();
+
+      Exception previous = null;
+
+      if (serializedException != null && serializedException.length > 0)
+        throwSerializedException(serializedException);
+
+      for (int i = exceptions.size() - 1; i > -1; --i) {
+        previous = createException(exceptions.get(i).getKey(), exceptions.get(i).getValue(), previous);
+      }
+
+      if (previous != null) {
+        throw new RuntimeException(previous);
+      } else
+        throw new ONetworkProtocolException("Network response error");
+
+    } else {
+      // PROTOCOL ERROR
+      // close();
+      throw new ONetworkProtocolException("Error on reading response from the server");
+    }
+  }
+
+  private void setReadResponseTimeout() throws SocketException {
+    final Socket s = socket;
+    if (s != null && s.isConnected() && !s.isClosed())
+      s.setSoTimeout(socketTimeout);
+  }
+
+  private void setWaitResponseTimeout() throws SocketException {
+    final Socket s = socket;
+    if (s != null)
+      s.setSoTimeout(OGlobalConfiguration.NETWORK_REQUEST_TIMEOUT.getValueAsInteger());
+  }
+
+  private void throwSerializedException(final byte[] serializedException) throws IOException {
+    final OMemoryInputStream inputStream = new OMemoryInputStream(serializedException);
+    final ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
+
+    Object throwable = null;
+    try {
+      throwable = objectInputStream.readObject();
+    } catch (ClassNotFoundException e) {
+      OLogManager.instance().error(this, "Error during exception deserialization", e);
+      throw new IOException("Error during exception deserialization: " + e.toString());
+    }
+
+    objectInputStream.close();
+
+    if (throwable instanceof OException) {
+      try {
+        final Class<? extends OException> cls = (Class<? extends OException>) throwable.getClass();
+        final Constructor<? extends OException> constructor;
+        constructor = cls.getConstructor(cls);
+        final OException proxyInstance = constructor.newInstance(throwable);
+
+        throw proxyInstance;
+
+      } catch (NoSuchMethodException e) {
+        OLogManager.instance().error(this, "Error during exception deserialization", e);
+      } catch (InvocationTargetException e) {
+        OLogManager.instance().error(this, "Error during exception deserialization", e);
+      } catch (InstantiationException e) {
+        OLogManager.instance().error(this, "Error during exception deserialization", e);
+      } catch (IllegalAccessException e) {
+        OLogManager.instance().error(this, "Error during exception deserialization", e);
+      }
+    }
+
+    if (throwable instanceof Throwable) {
+      throw new OResponseProcessingException("Exception during response processing", (Throwable) throwable);
+    }
+    // WRAP IT
+    else
+      OLogManager.instance().error(this,
+          "Error during exception serialization, serialized exception is not Throwable, exception type is "
+              + (throwable != null ? throwable.getClass().getName() : "null"));
+  }
+
+  public void beginRequest(byte iCommand, OStorageRemoteThreadLocal.OStorageRemoteSession session, byte[] token)
+      throws IOException {
+    writeByte(iCommand);
+    writeInt(session.sessionId);
+    if (token != null) {
+      if (!session.has(this)) {
+        writeBytes(token);
+        session.add(this);
+      } else
+        writeBytes(new byte[] {});
     }
   }
 }

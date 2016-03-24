@@ -27,8 +27,8 @@ import javax.persistence.Embedded;
 import javax.persistence.Id;
 import javax.persistence.Version;
 
+import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.test.domain.business.Child;
 import com.orientechnologies.orient.test.domain.business.IdentityChild;
 
@@ -45,7 +45,7 @@ public class JavaComplexTestClass {
   @Embedded
   private ODocument                 embeddedDocument;
   private ODocument                 document;
-  private ORecordBytes              byteArray;
+  private OBlob                     byteArray;
   private String                    name;
   private EnumTest                  enumField;
   private Child                     child;
@@ -135,11 +135,11 @@ public class JavaComplexTestClass {
     this.embeddedDocument = embeddedDocument;
   }
 
-  public ORecordBytes getByteArray() {
+  public OBlob getByteArray() {
     return byteArray;
   }
 
-  public void setByteArray(ORecordBytes byteArray) {
+  public void setByteArray(OBlob byteArray) {
     this.byteArray = byteArray;
   }
 

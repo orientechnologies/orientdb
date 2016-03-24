@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
@@ -24,10 +23,13 @@ import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
+import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
@@ -140,6 +142,7 @@ public class SQLSelectTest extends AbstractSelectTest {
 
   @Test
   public void testQueryCount() {
+    database.getMetadata().reload();
     final long vertexesCount = database.countClass("V");
     List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select count(*) from V"));
     Assert.assertEquals(result.get(0).field("count"), vertexesCount);
@@ -501,9 +504,11 @@ public class SQLSelectTest extends AbstractSelectTest {
 
   @Test
   public void queryWhereRidDirectMatching() {
-    List<Long> positions = getValidPositions(4);
+    int clusterId = database.getMetadata().getSchema().getClass("ORole").getDefaultClusterId();
+    List<Long> positions = getValidPositions(clusterId);
 
-    List<ODocument> result = executeQuery("select * from OUser where roles contains #4:" + positions.get(0), database);
+    List<ODocument> result = executeQuery("select * from OUser where roles contains #" + clusterId + ":" + positions.get(0),
+        database);
 
     Assert.assertEquals(result.size(), 1);
   }
@@ -1667,6 +1672,26 @@ public class SQLSelectTest extends AbstractSelectTest {
     }
   }
 
+  public void testOutFilterInclude() {
+    OSchemaProxy schema = database.getMetadata().getSchema();
+    schema.createClass("TestOutFilterInclude", schema.getClass("V"));
+    database.command(new OCommandSQL("create class linkedToOutFilterInclude extends E")).execute();
+    database.command(new OCommandSQL("insert into TestOutFilterInclude content { \"name\": \"one\" }")).execute();
+    database.command(new OCommandSQL("insert into TestOutFilterInclude content { \"name\": \"two\" }")).execute();
+    database.command(new OCommandSQL(
+        "create edge linkedToOutFilterInclude from (select from TestOutFilterInclude where name = 'one') to (select from TestOutFilterInclude where name = 'two')"))
+        .execute();
+
+    final List<OIdentifiable> result = database.query(new OSQLSynchQuery<OIdentifiable>(
+        "select expand(out('linkedToOutFilterInclude')[@class='TestOutFilterInclude'].include('@rid')) from TestOutFilterInclude where name = 'one'"));
+
+    Assert.assertEquals(result.size(), 1);
+
+    for (OIdentifiable r : result) {
+      Assert.assertEquals(((ODocument) r.getRecord()).field("name"), null);
+    }
+  }
+
   private List<Long> getValidPositions(int clusterId) {
     final List<Long> positions = new ArrayList<Long>();
 
@@ -1681,5 +1706,62 @@ public class SQLSelectTest extends AbstractSelectTest {
     }
     return positions;
   }
+
+  public void testBinaryClusterSelect() {
+    database.command(new OCommandSQL("create blob cluster binarycluster")).execute();
+    database.reload();
+    OBlob bytes = new ORecordBytes(new byte[]{1,2,3});
+    database.save(bytes, "binarycluster");
+
+
+    List<OIdentifiable> result = database.query(
+        new OSQLSynchQuery<OIdentifiable>("select from cluster:binarycluster"));
+
+    Assert.assertEquals(result.size(), 1);
+
+    database.command(
+        new OCommandSQL("delete from cluster:binarycluster")).execute();
+
+    result = database.query(
+        new OSQLSynchQuery<OIdentifiable>("select from cluster:binarycluster"));
+
+    Assert.assertEquals(result.size(), 0);
+  }
+
+  public void testExpandSkip() {
+    OSchemaProxy schema = database.getMetadata().getSchema();
+    OClass v = schema.getClass("V");
+    final OClass cls = schema.createClass("TestExpandSkip", v);
+    cls.createProperty("name", OType.STRING);
+    cls.createIndex("TestExpandSkip.name", INDEX_TYPE.UNIQUE, "name");
+    database.command(new OCommandSQL("CREATE VERTEX TestExpandSkip set name = '1'")).execute();
+    database.command(new OCommandSQL("CREATE VERTEX TestExpandSkip set name = '2'")).execute();
+    database.command(new OCommandSQL("CREATE VERTEX TestExpandSkip set name = '3'")).execute();
+    database.command(new OCommandSQL("CREATE VERTEX TestExpandSkip set name = '4'")).execute();
+
+    database.command(new OCommandSQL("CREATE EDGE E FROM (SELECT FROM TestExpandSkip WHERE name = '1') to (SELECT FROM TestExpandSkip WHERE name <> '1')")).execute();
+
+    List<OIdentifiable> result = database.query(
+        new OSQLSynchQuery<OIdentifiable>("select expand(out()) from TestExpandSkip where name = '1'"));
+    Assert.assertEquals(result.size(), 3);
+
+    result = database.query(
+        new OSQLSynchQuery<OIdentifiable>("select expand(out()) from TestExpandSkip where name = '1' skip 1"));
+    Assert.assertEquals(result.size(), 2);
+
+    result = database.query(
+        new OSQLSynchQuery<OIdentifiable>("select expand(out()) from TestExpandSkip where name = '1' skip 2"));
+    Assert.assertEquals(result.size(), 1);
+
+    result = database.query(
+        new OSQLSynchQuery<OIdentifiable>("select expand(out()) from TestExpandSkip where name = '1' skip 3"));
+    Assert.assertEquals(result.size(), 0);
+
+    result = database.query(
+        new OSQLSynchQuery<OIdentifiable>("select expand(out()) from TestExpandSkip where name = '1' skip 1 limit 1"));
+    Assert.assertEquals(result.size(), 1);
+
+  }
+
 
 }

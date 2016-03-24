@@ -39,7 +39,7 @@ public class LocalPaginatedStorageUpdateCrashRestoreIT {
   private File buildDir;
   private AtomicInteger idGen = new AtomicInteger(0);
 
-  private OLockManager<Integer> idLockManager = new OLockManager<Integer>(true, 1000);
+  private OLockManager<Integer> idLockManager = new OLockManager<Integer>(true, 1000, 10000);
 
   private ExecutorService executorService = Executors.newCachedThreadPool();
   private Process process;

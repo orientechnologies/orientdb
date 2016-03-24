@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.etl.extractor;
 
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLBaseTest;
 import com.orientechnologies.orient.etl.transformer.OCSVTransformer;
@@ -225,20 +226,6 @@ public class OCSVExtractorTest extends OETLBaseTest {
   }
 
   @Test
-  public void testGetCellContentDoubleQuoted() {
-    String doubleQuotedString = "\"\"aaa\"\"";
-    String unQuotedString = "\"aaa\"";
-    OCSVTransformer ocsvTransformer = new OCSVTransformer();
-    assertEquals(unQuotedString, ocsvTransformer.getCellContent(doubleQuotedString));
-  }
-
-  @Test
-  public void testGetCellContentNullValue() {
-    OCSVTransformer ocsvTransformer = new OCSVTransformer();
-    assertEquals(null, ocsvTransformer.getCellContent(null));
-  }
-
-  @Test
   public void testIsFiniteFloat() {
     OCSVExtractor ocsvExtractor = new OCSVExtractor();
     assertFalse(ocsvExtractor.isFinite(Float.NaN));
@@ -315,9 +302,9 @@ public class OCSVExtractorTest extends OETLBaseTest {
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
 
-    assertThat(doc.<Integer> field("id")).isEqualTo(1);
-    assertThat(doc.<String> field("text")).isEqualTo("my test text");
-    assertThat(doc.<Integer> field("num")).isEqualTo(1);
+    assertThat(doc.<Integer>field("id")).isEqualTo(1);
+    assertThat(doc.<String>field("text")).isEqualTo("my test text");
+    assertThat(doc.<Integer>field("num")).isEqualTo(1);
   }
 
   @Test
@@ -339,10 +326,10 @@ public class OCSVExtractorTest extends OETLBaseTest {
     List<ODocument> res = getResult();
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
-    assertThat(doc.<Integer> field("id ")).isEqualTo(1);
+    assertThat(doc.<Integer>field("id ")).isEqualTo(1);
     assertThat(doc.field("text")).isNull();
-    assertThat(doc.<String> field("text ")).isEqualTo("my test text");
-    assertThat(doc.<Integer> field("num ")).isEqualTo(1);
+    assertThat(doc.<String>field("text ")).isEqualTo("my test text");
+    assertThat(doc.<Integer>field("num ")).isEqualTo(1);
   }
 
   @Test
@@ -364,9 +351,9 @@ public class OCSVExtractorTest extends OETLBaseTest {
     List<ODocument> res = getResult();
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
-    assertThat(doc.<Integer> field("id ")).isEqualTo(1);
-    assertThat(doc.<String> field("text ")).isEqualTo("my test \"\" text");
-    assertThat(doc.<Integer> field("num ")).isEqualTo(1);
+    assertThat(doc.<Integer>field("id ")).isEqualTo(1);
+    assertThat(doc.<String>field("text ")).isEqualTo("my test \"\" text");
+    assertThat(doc.<Integer>field("num ")).isEqualTo(1);
   }
 
   @Test
@@ -376,7 +363,7 @@ public class OCSVExtractorTest extends OETLBaseTest {
     List<ODocument> res = getResult();
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
-    assertThat(doc.<Integer> field("id")).isEqualTo(-1);
+    assertThat(doc.<Integer>field("id")).isEqualTo(-1);
 
   }
 
@@ -387,7 +374,20 @@ public class OCSVExtractorTest extends OETLBaseTest {
     List<ODocument> res = getResult();
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
-    assertThat(doc.<Float> field("id")).isEqualTo(-1.0f);
+    assertThat(doc.<Float>field("id")).isEqualTo(-1.0f);
   }
 
+
+  @Test
+  public void testLinkType() {
+    String cfgJson = "{source: { content: { value: 'id\r\n#1:1'} }, extractor : { csv : {'columns':['id:Link']} }, loader : { test: {} } }";
+    process(cfgJson);
+    List<ODocument> res = getResult();
+    assertFalse(res.isEmpty());
+    ODocument doc = res.get(1);
+    System.out.println(doc.toJSON());
+    assertThat(doc.<OIdentifiable>field("id")).isEqualTo("#1:1");
+
+
+  }
 }

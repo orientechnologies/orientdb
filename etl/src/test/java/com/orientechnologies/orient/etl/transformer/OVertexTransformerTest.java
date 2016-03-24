@@ -20,9 +20,11 @@ package com.orientechnologies.orient.etl.transformer;
 import com.orientechnologies.orient.etl.OETLBaseTest;
 import com.tinkerpop.blueprints.Parameter;
 import com.tinkerpop.blueprints.Vertex;
+import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -56,7 +58,8 @@ public class OVertexTransformerTest extends OETLBaseTest {
             + "{edge:{ class: 'E', joinFieldName: 'parent', lookup: 'V.idf', unresolvedLinkAction: 'CREATE' }, if: '$input.parent IS NOT NULL'}"
             + "], loader: { orientdb: { dbURL: 'memory:OETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
 
-    assertEquals(2, graph.countVertices("V"));
+
+    assertThat(graph.countVertices("V")).isEqualTo(2);
   }
 
 //  @Test(expected = ORecordDuplicatedException.class)
@@ -66,6 +69,7 @@ public class OVertexTransformerTest extends OETLBaseTest {
             + " transformers: [ {vertex: {class:'Person', skipDuplicates:false}},"
             + "], loader: { orientdb: { dbURL: 'memory:OETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
 
+    assertThat(graph.countVertices("V")).isEqualTo(1);
   }
 
   @Test
