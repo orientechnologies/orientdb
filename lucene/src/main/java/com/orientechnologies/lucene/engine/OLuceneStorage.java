@@ -66,7 +66,6 @@ import static com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract.RID
 
 public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements OOrientListener {
 
-
   private final String              name;
   private final ODocument           metadata;
   protected     OLuceneFacetManager facetManager;

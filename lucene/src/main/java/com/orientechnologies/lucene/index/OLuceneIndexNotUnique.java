@@ -16,16 +16,6 @@
 
 package com.orientechnologies.lucene.index;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-
-import org.apache.lucene.document.Document;
-import org.apache.lucene.search.IndexSearcher;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
@@ -35,18 +25,23 @@ import com.orientechnologies.lucene.OLuceneIndex;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.index.OIndexAbstract;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexEngine;
-import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OIndexEngineCallback;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.search.IndexSearcher;
 
-public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>>implements OLuceneIndex {
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+
+public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> implements OLuceneIndex {
 
   public OLuceneIndexNotUnique(String name, String typeId, String algorithm, int version, OAbstractPaginatedStorage storage,
       String valueContainerAlgorithm, ODocument metadata) {
@@ -101,7 +96,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>>imp
       @Override
       public Object callEngine(OIndexEngine engine) {
         OLuceneIndexEngine oIndexEngine = (OLuceneIndexEngine) engine;
-        oIndexEngine.init(getName(), getType(), getDefinition(), isAutomatic(), getMetadata());
+        oIndexEngine.init( getName(), getType(), getDefinition(), isAutomatic(), getMetadata());
         return null;
       }
     });
