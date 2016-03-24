@@ -93,6 +93,16 @@ import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTxListener;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
+import java.io.*;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
 /**
  * @author Andrey Lomakin
  * @since 28.03.13
@@ -107,7 +117,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   /**
    * Lock is used to atomically update record versions.
    */
-
   private final ONewLockManager<ORID> recordVersionManager;
 
   private final String PROFILER_CREATE_RECORD;
@@ -2628,41 +2637,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     this.recordConflictStrategy = conflictResolver;
   }
 
-  private OLogSequenceNumber extractIBULsn(File backupDirectory, String file) {
-    final File ibuFile = new File(backupDirectory, file);
-    final RandomAccessFile rndIBUFile;
-    try {
-      rndIBUFile = new RandomAccessFile(ibuFile, "r");
-    } catch (FileNotFoundException e) {
-      throw OException.wrapException(new OStorageException("Backup file was not found"), e);
-    }
+  protected abstract OLogSequenceNumber copyWALToIncrementalBackup(ZipOutputStream zipOutputStream, long startSegment)
+      throws IOException;
 
-    try {
-      try {
-        final FileChannel ibuChannel = rndIBUFile.getChannel();
-        ibuChannel.position(OLongSerializer.LONG_SIZE);
-
-        ByteBuffer lsnData = ByteBuffer.allocate(2 * OLongSerializer.LONG_SIZE);
-        ibuChannel.read(lsnData);
-        lsnData.rewind();
-
-        final long segment = lsnData.getLong();
-        final long position = lsnData.getLong();
-
-        return new OLogSequenceNumber(segment, position);
-      } finally {
-        rndIBUFile.close();
-      }
-    } catch (IOException e) {
-      throw OException.wrapException(new OStorageException("Error during read of backup file"), e);
-    } finally {
-      try {
-        rndIBUFile.close();
-      } catch (IOException e) {
-        OLogManager.instance().error(this, "Error during read of backup file", e);
-      }
-    }
-  }
+  protected abstract boolean isWriteAllowedDuringIncrementalBackup();
 
   public OStorageRecoverListener getRecoverListener() {
     return recoverListener;
@@ -2676,11 +2654,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     if (this.recoverListener == recoverListener)
       this.recoverListener = null;
   }
-
-  protected abstract OLogSequenceNumber copyWALToIncrementalBackup(ZipOutputStream zipOutputStream, long startSegment)
-      throws IOException;
-
-  protected abstract boolean isWriteAllowedDuringIncrementalBackup();
 
   protected abstract File createWalTempDirectory();
 

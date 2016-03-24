@@ -164,21 +164,10 @@ public interface OClass extends Comparable<OClass> {
   OClass addCluster(String iClusterName);
 
   /**
-<<<<<<< HEAD
-   * <<<<<<< HEAD Removes all data in the cluster with given name. As result indexes for this class will be rebuilt.
-   *
-   * @param clusterName
-   *          Name of cluster to be truncated. ======= Removes all data in the cluster with given name. As result indexes for this
-   *          class will be rebuilt.
-   *
-   * @param clusterName
-   *          Name of cluster to be truncated. >>>>>>> develop
-=======
    * Removes all data in the cluster with given name.
    * As result indexes for this class will be rebuilt.
    *
    * @param clusterName Name of cluster to be truncated.
->>>>>>> develop
    * @return Instance of current object.
    */
   OClass truncateCluster(String clusterName);

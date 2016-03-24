@@ -195,7 +195,7 @@ public class OrientJdbcResultSetMetaData implements ResultSetMetaData {
 
     }
   }
-
+  
   protected ODocument getCurrentRecord() throws SQLException {
     final ODocument currentRecord = this.resultSet.unwrap(ODocument.class);
     if (currentRecord == null)

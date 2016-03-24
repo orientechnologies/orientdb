@@ -1704,7 +1704,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       throws RuntimeException {
     makeActive();
 
-    final boolean committed;
+    final int committed;
     final ODatabaseDocumentTx raw = getRawGraph();
     if (raw.getTransaction().isActive()) {
       if (isWarnOnForceClosingTx() && OLogManager.instance().isWarnEnabled() && iOperationStrings.length > 0) {
@@ -1718,16 +1718,16 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
             "Requested command '%s' must be executed outside active transaction: the transaction will be committed and reopen right after it. To avoid this behavior execute it outside a transaction",
             msg.toString());
       }
-      raw.commit();
-      committed = true;
+      committed = raw.getTransaction().amountOfNestedTxs();
+      raw.commit(true);
     } else
-      committed = false;
+      committed = 0;
 
     try {
       return iCallable.call(this);
     } finally {
-      if (committed)
-        // RESTART TRANSACTION
+      // RESTART TRANSACTION
+      for (int i = 0; i < committed; ++i)
         ((OrientTransactionalGraph) this).begin();
     }
   }

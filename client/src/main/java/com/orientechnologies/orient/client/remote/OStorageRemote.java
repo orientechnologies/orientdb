@@ -94,10 +94,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
   private CONNECTION_STRATEGY                  connectionStrategy      = CONNECTION_STRATEGY.STICKY;
 
-  private final OSBTreeCollectionManagerRemote sbTreeCollectionManager = new OSBTreeCollectionManagerRemote();
-  protected final List<String>                 serverURLs              = new ArrayList<String>();
-  protected final Map<String, OCluster>        clusterMap              = new ConcurrentHashMap<String, OCluster>();
-  private final ExecutorService                asynchExecutor;
+  private final   OSBTreeCollectionManagerRemote sbTreeCollectionManager = new OSBTreeCollectionManagerRemote();
+  protected final List<String>                   serverURLs              = new ArrayList<String>();
+  protected final Map<String, OCluster>          clusterMap              = new ConcurrentHashMap<String, OCluster>();
+  private final ExecutorService asynchExecutor;
   private final ODocument                      clusterConfiguration    = new ODocument();
   private final String                         clientId;
   private OContextConfiguration                clientConfiguration;
@@ -410,6 +410,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           mode = 2;
         else
           mode = iMode;
+        // ASYNCHRONOUS MODE NO ANSWER
 
         final OPhysicalPosition ppos = new OPhysicalPosition(iRecordType);
 

@@ -223,6 +223,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
       else
         query = new OSQLAsynchQuery<ODocument>("select from " + getSelectTarget() , this);
 
+
       if (upsertMode && !isUpsertAllowed)
         throwSyntaxErrorException("Upsert only works with class names ");
 
