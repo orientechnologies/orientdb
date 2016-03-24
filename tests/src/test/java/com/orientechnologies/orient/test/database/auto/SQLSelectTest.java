@@ -1763,5 +1763,31 @@ public class SQLSelectTest extends AbstractSelectTest {
 
   }
 
+  public void testPolymorphicEdges() {
+    OSchemaProxy schema = database.getMetadata().getSchema();
+    OClass v = schema.getClass("V");
+    OClass e = schema.getClass("E");
+    final OClass v1 = schema.createClass("TestPolymorphicEdges_V", v);
+    final OClass e1 = schema.createClass("TestPolymorphicEdges_E1", e);
+    final OClass e2 = schema.createClass("TestPolymorphicEdges_E2", e1);
 
+    database.command(new OCommandSQL("CREATE VERTEX TestPolymorphicEdges_V set name = '1'")).execute();
+    database.command(new OCommandSQL("CREATE VERTEX TestPolymorphicEdges_V set name = '2'")).execute();
+    database.command(new OCommandSQL("CREATE VERTEX TestPolymorphicEdges_V set name = '3'")).execute();
+
+
+    database.command(new OCommandSQL(
+        "CREATE EDGE TestPolymorphicEdges_E1 FROM (SELECT FROM TestPolymorphicEdges_V WHERE name = '1') to (SELECT FROM TestPolymorphicEdges_V WHERE name = '2')")).execute();
+    database.command(new OCommandSQL(
+        "CREATE EDGE TestPolymorphicEdges_E2 FROM (SELECT FROM TestPolymorphicEdges_V WHERE name = '1') to (SELECT FROM TestPolymorphicEdges_V WHERE name = '3')")).execute();
+
+
+    List<OIdentifiable> result = database.query(new OSQLSynchQuery<OIdentifiable>("select expand(out('TestPolymorphicEdges_E1')) from TestPolymorphicEdges_V where name = '1'"));
+    Assert.assertEquals(result.size(), 2);
+
+    result = database.query(new OSQLSynchQuery<OIdentifiable>("select expand(out('TestPolymorphicEdges_E2')) from TestPolymorphicEdges_V where name = '1' "));
+    Assert.assertEquals(result.size(), 1);
+
+
+  }
 }
