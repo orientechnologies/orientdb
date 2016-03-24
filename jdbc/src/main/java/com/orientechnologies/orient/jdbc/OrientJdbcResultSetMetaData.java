@@ -17,6 +17,17 @@
  */
 package com.orientechnologies.orient.jdbc;
 
+<<<<<<< HEAD
+=======
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordLazyList;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.OBlob;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+
+>>>>>>> develop
 import java.math.BigDecimal;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -192,10 +203,16 @@ public class OrientJdbcResultSetMetaData implements ResultSetMetaData {
           return typesSqlTypes.get(otype);
         }
       }
+<<<<<<< HEAD
 
     }
   }
+=======
+>>>>>>> develop
 
+    }
+  }
+  
   protected ODocument getCurrentRecord() throws SQLException {
     final ODocument currentRecord = this.resultSet.unwrap(ODocument.class);
     if (currentRecord == null)

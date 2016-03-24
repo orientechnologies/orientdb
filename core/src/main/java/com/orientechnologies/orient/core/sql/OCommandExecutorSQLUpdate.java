@@ -19,6 +19,8 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.*;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
@@ -50,8 +52,6 @@ import com.orientechnologies.orient.core.sql.parser.OUpdateStatement;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.OStorage;
-
-import java.util.*;
 
 /**
  * SQL UPDATE command.
@@ -202,18 +202,18 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
             selectString.append(" ");
             updateStm.limit.toString(params, selectString);
           }
-          if (updateStm.timeout != null) {
+          if(updateStm.timeout!=null){
             selectString.append(" ");
             updateStm.timeout.toString(params, selectString);
           }
-          if (updateStm.lockRecord) {
+          if(updateStm.lockRecord) {
             selectString.append(" LOCK RECORD");
           }
 
           query = new OSQLAsynchQuery<ODocument>(selectString.toString(), this);
         } else {
-          query = new OSQLAsynchQuery<ODocument>("select from " + getSelectTarget() + " " + additionalStatement + " "
-              + parserText.substring(parserGetCurrentPosition()), this);
+          query = new OSQLAsynchQuery<ODocument>("select from " + getSelectTarget() + " " + additionalStatement + " " + parserText
+              .substring(parserGetCurrentPosition()), this);
         }
 
         isUpsertAllowed = (((OMetadataInternal) getDatabase().getMetadata()).getImmutableSchemaSnapshot()
@@ -221,7 +221,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
       } else if (!additionalStatement.isEmpty())
         throwSyntaxErrorException("Invalid keyword " + additionalStatement);
       else
-        query = new OSQLAsynchQuery<ODocument>("select from " + getSelectTarget(), this);
+        query = new OSQLAsynchQuery<ODocument>("select from " + getSelectTarget() , this);
 
       if (upsertMode && !isUpsertAllowed)
         throwSyntaxErrorException("Upsert only works with class names ");
@@ -242,10 +242,10 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
   }
 
   private String getSelectTarget() {
-    if (preParsedStatement == null) {
+    if(preParsedStatement == null){
       return subjectName;
     }
-    return ((OUpdateStatement) preParsedStatement).target.toString();
+    return ((OUpdateStatement)preParsedStatement).target.toString();
   }
 
   public Object execute(final Map<Object, Object> iArgs) {

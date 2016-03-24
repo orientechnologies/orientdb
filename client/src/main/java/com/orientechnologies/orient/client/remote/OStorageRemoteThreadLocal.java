@@ -19,13 +19,13 @@
  */
 package com.orientechnologies.orient.client.remote;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import com.orientechnologies.orient.client.remote.OStorageRemoteThreadLocal.OStorageRemoteSession;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
-
-import java.util.HashSet;
-import java.util.Set;
 
 public class OStorageRemoteThreadLocal extends ThreadLocal<OStorageRemoteSession> {
   public static volatile OStorageRemoteThreadLocal INSTANCE = new OStorageRemoteThreadLocal();

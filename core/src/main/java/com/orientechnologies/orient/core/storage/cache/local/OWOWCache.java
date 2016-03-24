@@ -97,17 +97,16 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
   private final ConcurrentSkipListMap<PageKey, PageGroup>  writeCachePages          = new ConcurrentSkipListMap<PageKey, PageGroup>();
   private final ConcurrentSkipListSet<PageKey>             exclusiveWritePages      = new ConcurrentSkipListSet<PageKey>();
-
-  private final OBinarySerializer<String>                  stringSerializer;
-  private final ConcurrentMap<Integer, OFileClassic>       files;
-  private final boolean                                    syncOnPageFlush;
-  private final int                                        pageSize;
-  private final long                                       groupTTL;
-  private final OWriteAheadLog                             writeAheadLog;
-  private final AtomicLong                                 amountOfNewPagesAdded    = new AtomicLong();
-
   private final ODistributedCounter                        writeCacheSize           = new ODistributedCounter();
   private final ODistributedCounter                        exclusiveWriteCacheSize  = new ODistributedCounter();
+
+  private final OBinarySerializer<String>            stringSerializer;
+  private final ConcurrentMap<Integer, OFileClassic> files;
+  private final boolean                              syncOnPageFlush;
+  private final int                                  pageSize;
+  private final long                                 groupTTL;
+  private final OWriteAheadLog                       writeAheadLog;
+  private final AtomicLong amountOfNewPagesAdded = new AtomicLong();
 
   private final ONewLockManager<PageKey>                   lockManager              = new ONewLockManager<PageKey>();
   private final OLocalPaginatedStorage                     storageLocal;
@@ -116,11 +115,11 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
   private final ExecutorService                            lowSpaceEventsPublisher;
 
-  private volatile ConcurrentMap<String, Integer>          nameIdMap;
+  private volatile ConcurrentMap<String, Integer> nameIdMap;
 
-  private RandomAccessFile                                 nameIdMapHolder;
-  private final int                                        writeCacheMaxSize;
-  private final int                                        cacheMaxSize;
+  private       RandomAccessFile nameIdMapHolder;
+  private final int              writeCacheMaxSize;
+  private final int              cacheMaxSize;
 
   private final OStoragePerformanceStatistic               storagePerformanceStatistic;
 

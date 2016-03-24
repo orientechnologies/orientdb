@@ -98,13 +98,14 @@ public enum OGlobalConfiguration {
 
   DISK_CACHE_PINNED_PAGES("storage.diskCache.pinnedPages",
       "Maximum amount of pinned pages which may be contained in cache,"
-          + " if this percent is reached next pages will be left in unpinned state. You cannot set value more than 50",
+          + " if this percent is reached next pages will be left in unpinned state. You can not set value more than 50",
       Integer.class, 20, false),
 
   DISK_CACHE_SIZE("storage.diskCache.bufferSize",
       "Size of disk buffer in megabytes, disk size may be changed at runtime, "
           + "but if does not enough to contain all pinned pages exception will be thrown.",
       Integer.class, 4 * 1024, new OConfigurationChangeCallback() {
+
         @Override
         public void change(Object currentValue, Object newValue) {
           final OEngineLocalPaginated engineLocalPaginated = (OEngineLocalPaginated) Orient.instance()

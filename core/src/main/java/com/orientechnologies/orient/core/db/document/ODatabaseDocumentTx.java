@@ -3038,7 +3038,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   }
 
   @Override
-  public int addBlobCluster(String iClusterName, Object... iParameters) {
+  public int addBlobCluster(final String iClusterName, final Object... iParameters) {
     int id;
     if (getStorage() instanceof OStorageProxy) {
       id = command(new OCommandSQL("create blob cluster :1")).execute(iClusterName);

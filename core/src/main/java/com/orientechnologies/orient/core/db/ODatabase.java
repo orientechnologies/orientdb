@@ -19,6 +19,9 @@
  */
 package com.orientechnologies.orient.core.db;
 
+import java.io.Closeable;
+import java.util.*;
+
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -40,9 +43,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.util.OBackupable;
 
-import java.io.Closeable;
-import java.util.*;
-
 /**
  * Generic Database interface. Represents the lower level of the Database providing raw API to access to the raw records.<br>
  * Limits:
@@ -57,8 +57,6 @@ import java.util.*;
  * @author Luca Garulli
  */
 public interface ODatabase<T> extends OBackupable, Closeable {
-
-
 
   enum OPTIONS {
     SECURITY
@@ -75,8 +73,10 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   /**
    * Opens a database using the user and password received as arguments.
    *
-   * @param iUserName     Username to login
-   * @param iUserPassword Password associated to the user
+   * @param iUserName
+   *          Username to login
+   * @param iUserPassword
+   *          Password associated to the user
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
   <DB extends ODatabase> DB open(final String iUserName, final String iUserPassword);
@@ -114,7 +114,8 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   /**
    * Drops a database.
    *
-   * @throws ODatabaseException if database is closed.
+   * @throws ODatabaseException
+   *           if database is closed.
    */
   void drop();
 
@@ -128,7 +129,8 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   /**
    * Declares an intent to the database. Intents aim to optimize common use cases.
    *
-   * @param iIntent The intent
+   * @param iIntent
+   *          The intent
    */
   boolean declareIntent(final OIntent iIntent);
 
@@ -197,7 +199,8 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   /**
    * Returns true if the cluster exists, otherwise false.
    *
-   * @param iClusterName Cluster name
+   * @param iClusterName
+   *          Cluster name
    * @return true if the cluster exists, otherwise false
    */
   boolean existsCluster(String iClusterName);
@@ -212,7 +215,8 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   /**
    * Returns the cluster id by name.
    *
-   * @param iClusterName Cluster name
+   * @param iClusterName
+   *          Cluster name
    * @return The id of searched cluster.
    */
   int getClusterIdByName(String iClusterName);
@@ -220,7 +224,8 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   /**
    * Returns the cluster name by id.
    *
-   * @param iClusterId Cluster id
+   * @param iClusterId
+   *          Cluster id
    * @return The name of searched cluster.
    */
   String getClusterNameById(int iClusterId);
@@ -228,7 +233,8 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   /**
    * Returns the total size of records contained in the cluster defined by its name.
    *
-   * @param iClusterName Cluster name
+   * @param iClusterName
+   *          Cluster name
    * @return Total size of records contained.
    */
   long getClusterRecordSizeByName(String iClusterName);
@@ -236,7 +242,8 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   /**
    * Returns the total size of records contained in the cluster defined by its id.
    *
-   * @param iClusterId Cluster id
+   * @param iClusterId
+   *          Cluster id
    * @return The name of searched cluster.
    */
   long getClusterRecordSizeById(int iClusterId);
@@ -249,24 +256,22 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   boolean isClosed();
 
   /**
-<<<<<<< HEAD
-   * Removes all data in the cluster with given name. As result indexes for this class will be rebuilt.
+   * <<<<<<< HEAD <<<<<<< HEAD Removes all data in the cluster with given name. As result indexes for this class will be rebuilt.
    *
    * @param clusterName
-   *          Name of cluster to be truncated.
-=======
-   * Removes all data in the cluster with given name.
-   * As result indexes for this class will be rebuilt.
+   *          Name of cluster to be truncated. ======= ======= >>>>>>> develop Removes all data in the cluster with given name. As
+   *          result indexes for this class will be rebuilt.
    *
-   * @param clusterName Name of cluster to be truncated.
->>>>>>> develop
+   * @param clusterName
+   *          Name of cluster to be truncated. <<<<<<< HEAD >>>>>>> develop ======= >>>>>>> develop
    */
   void truncateCluster(String clusterName);
 
   /**
    * Counts all the entities in the specified cluster id.
    *
-   * @param iCurrentClusterId Cluster id
+   * @param iCurrentClusterId
+   *          Cluster id
    * @return Total number of entities contained in the specified cluster
    */
   long countClusterElements(int iCurrentClusterId);
@@ -276,7 +281,8 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   /**
    * Counts all the entities in the specified cluster ids.
    *
-   * @param iClusterIds Array of cluster ids Cluster id
+   * @param iClusterIds
+   *          Array of cluster ids Cluster id
    * @return Total number of entities contained in the specified clusters
    */
   long countClusterElements(int[] iClusterIds);
@@ -286,7 +292,8 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   /**
    * Counts all the entities in the specified cluster name.
    *
-   * @param iClusterName Cluster name
+   * @param iClusterName
+   *          Cluster name
    * @return Total number of entities contained in the specified cluster
    */
   long countClusterElements(String iClusterName);
@@ -294,8 +301,10 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   /**
    * Adds a new cluster.
    *
-   * @param iClusterName Cluster name
-   * @param iParameters  Additional parameters to pass to the factories
+   * @param iClusterName
+   *          Cluster name
+   * @param iParameters
+   *          Additional parameters to pass to the factories
    * @return Cluster id
    */
   int addCluster(String iClusterName, Object... iParameters);
@@ -303,18 +312,10 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   /**
    * Adds a new cluster for store blobs.
    *
-<<<<<<< HEAD
    * @param iClusterName
    *          Cluster name
-   * @param iRequestedId
-   *          requested id of the cluster
    * @param iParameters
    *          Additional parameters to pass to the factories
-=======
-   * A blob cluster cannot be used to store documents.
-   *
-   * @param iClusterName Cluster name
-   * @param iParameters  Additional parameters to pass to the factories
    * @return Cluster id
    */
   int addBlobCluster(String iClusterName, Object... iParameters);
@@ -329,10 +330,12 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   /**
    * Adds a new cluster.
    *
-   * @param iClusterName Cluster name
-   * @param iRequestedId requested id of the cluster
-   * @param iParameters  Additional parameters to pass to the factories
->>>>>>> develop
+   * @param iClusterName
+   *          Cluster name
+   * @param iRequestedId
+   *          requested id of the cluster
+   * @param iParameters
+   *          Additional parameters to pass to the factories
    * @return Cluster id
    */
   int addCluster(String iClusterName, int iRequestedId, Object... iParameters);
@@ -340,7 +343,8 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   /**
    * Drops a cluster by its name. Physical clusters will be completely deleted
    *
-   * @param iClusterName the name of the cluster
+   * @param iClusterName
+   *          the name of the cluster
    * @return true if has been removed, otherwise false
    */
   boolean dropCluster(String iClusterName, final boolean iTruncate);
@@ -348,7 +352,8 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   /**
    * Drops a cluster by its id. Physical clusters will be completely deleted.
    *
-   * @param iClusterId id of cluster to delete
+   * @param iClusterId
+   *          id of cluster to delete
    * @return true if has been removed, otherwise false
    */
   boolean dropCluster(int iClusterId, final boolean iTruncate);
@@ -356,8 +361,10 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   /**
    * Sets a property value
    *
-   * @param iName  Property name
-   * @param iValue new value to set
+   * @param iName
+   *          Property name
+   * @param iValue
+   *          new value to set
    * @return The previous value if any, otherwise null
    */
   Object setProperty(String iName, Object iValue);
@@ -365,7 +372,8 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   /**
    * Gets the property value.
    *
-   * @param iName Property name
+   * @param iName
+   *          Property name
    * @return The previous value if any, otherwise null
    */
   Object getProperty(String iName);
@@ -378,7 +386,8 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   /**
    * Returns a database attribute value
    *
-   * @param iAttribute Attributes between #ATTRIBUTES enum
+   * @param iAttribute
+   *          Attributes between #ATTRIBUTES enum
    * @return The attribute value
    */
   Object get(ATTRIBUTES iAttribute);
@@ -386,8 +395,10 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   /**
    * Sets a database attribute value
    *
-   * @param iAttribute Attributes between #ATTRIBUTES enum
-   * @param iValue     Value to set
+   * @param iAttribute
+   *          Attributes between #ATTRIBUTES enum
+   * @param iValue
+   *          Value to set
    * @return underlying
    */
   <DB extends ODatabase> DB set(ATTRIBUTES iAttribute, Object iValue);
@@ -395,14 +406,16 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   /**
    * Registers a listener to the database events.
    *
-   * @param iListener the listener to register
+   * @param iListener
+   *          the listener to register
    */
   void registerListener(ODatabaseListener iListener);
 
   /**
    * Unregisters a listener to the database events.
    *
-   * @param iListener the listener to unregister
+   * @param iListener
+   *          the listener to unregister
    */
   void unregisterListener(ODatabaseListener iListener);
 
@@ -438,8 +451,9 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * <p>
    * IMPORTANT: This command is not reentrant.
    *
-   * @param throwException If <code>true</code> {@link com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException}
-   *                       exception will be thrown in case of write command will be performed.
+   * @param throwException
+   *          If <code>true</code> {@link com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException}
+   *          exception will be thrown in case of write command will be performed.
    */
   void freeze(boolean throwException);
 
@@ -471,7 +485,8 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   /**
    * Loads the entity and return it.
    *
-   * @param iObject The entity to load. If the entity was already loaded it will be reloaded and all the changes will be lost.
+   * @param iObject
+   *          The entity to load. If the entity was already loaded it will be reloaded and all the changes will be lost.
    * @return
    */
   <RET extends T> RET load(T iObject);
@@ -479,8 +494,10 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   /**
    * Loads a record using a fetch plan.
    *
-   * @param iObject    Record to load
-   * @param iFetchPlan Fetch plan used
+   * @param iObject
+   *          Record to load
+   * @param iFetchPlan
+   *          Fetch plan used
    * @return The record received
    */
   <RET extends T> RET load(T iObject, String iFetchPlan);
@@ -488,15 +505,20 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   /**
    * Loads a record using a fetch plan.
    *
-<<<<<<< HEAD
+   * <<<<<<< HEAD <<<<<<< HEAD
+   * 
    * @param iObject
    *          Record to load
    * @param iFetchPlan
-   *          Fetch plan used
-=======
-   * @param iObject          Record to load
-   * @param iFetchPlan       Fetch plan used
->>>>>>> develop
+   *          Fetch plan used =======
+   * @param iObject
+   *          Record to load
+   * @param iFetchPlan
+   *          Fetch plan used >>>>>>> develop =======
+   * @param iObject
+   *          Record to load
+   * @param iFetchPlan
+   *          Fetch plan used >>>>>>> develop
    * @param iLockingStrategy
    * @return The record received
    * @deprecated Usage of this method may lead to deadlocks.
@@ -508,15 +530,20 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   /**
    * Loads a record using a fetch plan.
    *
-<<<<<<< HEAD
+   * <<<<<<< HEAD <<<<<<< HEAD
+   * 
    * @param iObject
    *          Record to load
    * @param iFetchPlan
-   *          Fetch plan used
-=======
-   * @param iObject          Record to load
-   * @param iFetchPlan       Fetch plan used
->>>>>>> develop
+   *          Fetch plan used =======
+   * @param iObject
+   *          Record to load
+   * @param iFetchPlan
+   *          Fetch plan used >>>>>>> develop =======
+   * @param iObject
+   *          Record to load
+   * @param iFetchPlan
+   *          Fetch plan used >>>>>>> develop
    * @param iLockingStrategy
    * @return The record received
    * @deprecated Usage of this method may lead to deadlocks.
@@ -528,9 +555,12 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   /**
    * Loads a record using a fetch plan.
    *
-   * @param iObject      Record to load
-   * @param iFetchPlan   Fetch plan used
-   * @param iIgnoreCache Ignore cache or use it
+   * @param iObject
+   *          Record to load
+   * @param iFetchPlan
+   *          Fetch plan used
+   * @param iIgnoreCache
+   *          Ignore cache or use it
    * @return The record received
    */
   <RET extends T> RET load(T iObject, String iFetchPlan, boolean iIgnoreCache);
@@ -538,9 +568,12 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   /**
    * Force the reloading of the entity.
    *
-   * @param iObject      The entity to load. If the entity was already loaded it will be reloaded and all the changes will be lost.
-   * @param iFetchPlan   Fetch plan used
-   * @param iIgnoreCache Ignore cache or use it
+   * @param iObject
+   *          The entity to load. If the entity was already loaded it will be reloaded and all the changes will be lost.
+   * @param iFetchPlan
+   *          Fetch plan used
+   * @param iIgnoreCache
+   *          Ignore cache or use it
    * @return The loaded entity
    */
   <RET extends T> RET reload(final T iObject, String iFetchPlan, boolean iIgnoreCache);
@@ -548,7 +581,8 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   /**
    * Force the reloading of the entity.
    *
-<<<<<<< HEAD
+   * <<<<<<< HEAD <<<<<<< HEAD
+   * 
    * @param iObject
    *          The entity to load. If the entity was already loaded it will be reloaded and all the changes will be lost.
    * @param iFetchPlan
@@ -557,14 +591,16 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    *          Ignore cache or use it
    * @param force
    *          Force to reload record even if storage has the same record as reloaded record, it is useful if fetch plan is not null
-   *          and alongside with root record linked records will be reloaded.
-=======
-   * @param iObject      The entity to load. If the entity was already loaded it will be reloaded and all the changes will be lost.
-   * @param iFetchPlan   Fetch plan used
-   * @param iIgnoreCache Ignore cache or use it
-   * @param force        Force to reload record even if storage has the same record as reloaded record, it is useful if fetch plan is not null
-   *                     and alongside with root record linked records will be reloaded.
->>>>>>> develop
+   *          and alongside with root record linked records will be reloaded. ======= ======= >>>>>>> develop
+   * @param iObject
+   *          The entity to load. If the entity was already loaded it will be reloaded and all the changes will be lost.
+   * @param iFetchPlan
+   *          Fetch plan used
+   * @param iIgnoreCache
+   *          Ignore cache or use it
+   * @param force
+   *          Force to reload record even if storage has the same record as reloaded record, it is useful if fetch plan is not null
+   *          and alongside with root record linked records will be reloaded. <<<<<<< HEAD >>>>>>> develop ======= >>>>>>> develop
    * @return The loaded entity
    */
   <RET extends T> RET reload(final T iObject, String iFetchPlan, boolean iIgnoreCache, boolean force);
@@ -572,7 +608,8 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   /**
    * Loads the entity by the Record ID.
    *
-   * @param recordId The unique record id of the entity to load.
+   * @param recordId
+   *          The unique record id of the entity to load.
    * @return The loaded entity
    */
   <RET extends T> RET load(ORID recordId);
@@ -580,8 +617,10 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   /**
    * Loads the entity by the Record ID using a fetch plan.
    *
-   * @param iRecordId  The unique record id of the entity to load.
-   * @param iFetchPlan Fetch plan used
+   * @param iRecordId
+   *          The unique record id of the entity to load.
+   * @param iFetchPlan
+   *          Fetch plan used
    * @return The loaded entity
    */
   <RET extends T> RET load(ORID iRecordId, String iFetchPlan);
@@ -589,9 +628,12 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   /**
    * Loads the entity by the Record ID using a fetch plan and specifying if the cache must be ignored.
    *
-   * @param iRecordId    The unique record id of the entity to load.
-   * @param iFetchPlan   Fetch plan used
-   * @param iIgnoreCache Ignore cache or use it
+   * @param iRecordId
+   *          The unique record id of the entity to load.
+   * @param iFetchPlan
+   *          Fetch plan used
+   * @param iIgnoreCache
+   *          Ignore cache or use it
    * @return The loaded entity
    */
   <RET extends T> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache);
@@ -614,7 +656,8 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * Saves an entity in synchronous mode. If the entity is not dirty, then the operation will be ignored. For custom entity
    * implementations assure to set the entity as dirty.
    *
-   * @param iObject The entity to save
+   * @param iObject
+   *          The entity to save
    * @return The saved entity.
    */
   <RET extends T> RET save(T iObject);
@@ -623,18 +666,29 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * Saves an entity specifying the mode. If the entity is not dirty, then the operation will be ignored. For custom entity
    * implementations assure to set the entity as dirty. If the cluster does not exist, an error will be thrown.
    *
-<<<<<<< HEAD
+   * <<<<<<< HEAD <<<<<<< HEAD
+   * 
    * @param iObject
    *          The entity to save
    * @param iMode
    *          Mode of save: synchronous (default) or asynchronous
    * @param iForceCreate
    *          Flag that indicates that record should be created. If record with current rid already exists, exception is thrown
-=======
-   * @param iObject                The entity to save
-   * @param iMode                  Mode of save: synchronous (default) or asynchronous
-   * @param iForceCreate           Flag that indicates that record should be created. If record with current rid already exists, exception is thrown
->>>>>>> develop
+   *          =======
+   * @param iObject
+   *          The entity to save
+   * @param iMode
+   *          Mode of save: synchronous (default) or asynchronous
+   * @param iForceCreate
+   *          Flag that indicates that record should be created. If record with current rid already exists, exception is thrown
+   *          >>>>>>> develop =======
+   * @param iObject
+   *          The entity to save
+   * @param iMode
+   *          Mode of save: synchronous (default) or asynchronous
+   * @param iForceCreate
+   *          Flag that indicates that record should be created. If record with current rid already exists, exception is thrown
+   *          >>>>>>> develop
    * @param iRecordCreatedCallback
    * @param iRecordUpdatedCallback
    */
@@ -645,8 +699,10 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * Saves an entity in the specified cluster in synchronous mode. If the entity is not dirty, then the operation will be ignored.
    * For custom entity implementations assure to set the entity as dirty. If the cluster does not exist, an error will be thrown.
    *
-   * @param iObject      The entity to save
-   * @param iClusterName Name of the cluster where to save
+   * @param iObject
+   *          The entity to save
+   * @param iClusterName
+   *          Name of the cluster where to save
    * @return The saved entity.
    */
   <RET extends T> RET save(T iObject, String iClusterName);
@@ -655,7 +711,8 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * Saves an entity in the specified cluster specifying the mode. If the entity is not dirty, then the operation will be ignored.
    * For custom entity implementations assure to set the entity as dirty. If the cluster does not exist, an error will be thrown.
    *
-<<<<<<< HEAD
+   * <<<<<<< HEAD <<<<<<< HEAD
+   * 
    * @param iObject
    *          The entity to save
    * @param iClusterName
@@ -664,12 +721,16 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    *          Mode of save: synchronous (default) or asynchronous
    * @param iForceCreate
    *          Flag that indicates that record should be created. If record with current rid already exists, exception is thrown
-=======
-   * @param iObject                The entity to save
-   * @param iClusterName           Name of the cluster where to save
-   * @param iMode                  Mode of save: synchronous (default) or asynchronous
-   * @param iForceCreate           Flag that indicates that record should be created. If record with current rid already exists, exception is thrown
->>>>>>> develop
+   *          ======= ======= >>>>>>> develop
+   * @param iObject
+   *          The entity to save
+   * @param iClusterName
+   *          Name of the cluster where to save
+   * @param iMode
+   *          Mode of save: synchronous (default) or asynchronous
+   * @param iForceCreate
+   *          Flag that indicates that record should be created. If record with current rid already exists, exception is thrown
+   *          <<<<<<< HEAD >>>>>>> develop ======= >>>>>>> develop
    * @param iRecordCreatedCallback
    * @param iRecordUpdatedCallback
    */
@@ -679,7 +740,8 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   /**
    * Deletes an entity from the database in synchronous mode.
    *
-   * @param iObject The entity to delete.
+   * @param iObject
+   *          The entity to delete.
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
   ODatabase<T> delete(T iObject);
@@ -687,7 +749,8 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   /**
    * Deletes the entity with the received RID from the database.
    *
-   * @param iRID The RecordID to delete.
+   * @param iRID
+   *          The RecordID to delete.
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
   ODatabase<T> delete(ORID iRID);
@@ -695,8 +758,10 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   /**
    * Deletes the entity with the received RID from the database.
    *
-   * @param iRID     The RecordID to delete.
-   * @param iVersion for MVCC
+   * @param iRID
+   *          The RecordID to delete.
+   * @param iVersion
+   *          for MVCC
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
   ODatabase<T> delete(ORID iRID, int iVersion);
@@ -707,20 +772,22 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * This method is used in case of record content itself is broken and cannot be read or deleted. So it is emergence method. This
    * method can be used only if there is no active transaction in database.
    *
-<<<<<<< HEAD
+   * <<<<<<< HEAD <<<<<<< HEAD
+   * 
    * @param rid
    *          record id.
    * @return <code>true</code> if record was hidden and <code>false</code> if record does not exits in database.
    * @throws java.lang.UnsupportedOperationException
    *           In case current version of cluster does not support given operation.
    * @throws com.orientechnologies.orient.core.exception.ORecordNotFoundException
-   *           if record is already deleted/hidden.
-=======
-   * @param rid record id.
+   *           if record is already deleted/hidden. ======= ======= >>>>>>> develop
+   * @param rid
+   *          record id.
    * @return <code>true</code> if record was hidden and <code>false</code> if record does not exits in database.
-   * @throws java.lang.UnsupportedOperationException                              In case current version of cluster does not support given operation.
-   * @throws com.orientechnologies.orient.core.exception.ORecordNotFoundException if record is already deleted/hidden.
->>>>>>> develop
+   * @throws java.lang.UnsupportedOperationException
+   *           In case current version of cluster does not support given operation.
+   * @throws com.orientechnologies.orient.core.exception.ORecordNotFoundException
+   *           if record is already deleted/hidden. <<<<<<< HEAD >>>>>>> develop ======= >>>>>>> develop
    */
 
   boolean hide(ORID rid);
@@ -784,8 +851,10 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * Execute a query against the database. If the OStorage used is remote (OStorageRemote) then the command will be executed
    * remotely and the result returned back to the calling client.
    *
-   * @param iCommand Query command
-   * @param iArgs    Optional parameters to bind to the query
+   * @param iCommand
+   *          Query command
+   * @param iArgs
+   *          Optional parameters to bind to the query
    * @return List of POJOs
    */
   <RET extends List<?>> RET query(final OQuery<?> iCommand, final Object... iArgs);
@@ -794,7 +863,8 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * Execute a command against the database. A command can be a SQL statement or a Procedure. If the OStorage used is remote
    * (OStorageRemote) then the command will be executed remotely and the result returned back to the calling client.
    *
-   * @param iCommand Command request to execute.
+   * @param iCommand
+   *          Command request to execute.
    * @return The same Command request received as parameter.
    */
   <RET extends OCommandRequest> RET command(OCommandRequest iCommand);
@@ -809,7 +879,8 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   /**
    * Registers a hook to listen all events for Records.
    *
-   * @param iHookImpl ORecordHook implementation
+   * @param iHookImpl
+   *          ORecordHook implementation
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
   <DB extends ODatabase<?>> DB registerHook(ORecordHook iHookImpl);
@@ -826,7 +897,8 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   /**
    * Unregisters a previously registered hook.
    *
-   * @param iHookImpl ORecordHook implementation
+   * @param iHookImpl
+   *          ORecordHook implementation
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
   <DB extends ODatabase<?>> DB unregisterHook(ORecordHook iHookImpl);
@@ -834,9 +906,10 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   /**
    * Invokes the callback on all the configured hooks.
    *
-   * @param iObject The object passed change based on the Database implementation: records for
-   *                {@link com.orientechnologies.orient.core.db.document.ODatabaseDocument} implementations and POJO for
-   *                {@link com.orientechnologies.orient.core.db.object.ODatabaseObject} implementations.
+   * @param iObject
+   *          The object passed change based on the Database implementation: records for
+   *          {@link com.orientechnologies.orient.core.db.document.ODatabaseDocument} implementations and POJO for
+   *          {@link com.orientechnologies.orient.core.db.object.ODatabaseObject} implementations.
    * @return True if the input record is changed, otherwise false
    */
   ORecordHook.RESULT callbackHooks(ORecordHook.TYPE iType, OIdentifiable iObject);
@@ -863,13 +936,13 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * and delete against the records.
    *
    * @param iValue
-<<<<<<< HEAD
+   *          <<<<<<< HEAD <<<<<<< HEAD
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain. deprecated since
-   *         2.2
-=======
-   * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
-   * deprecated since 2.2
->>>>>>> develop
+   *         2.2 =======
+   * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain. deprecated since
+   *         2.2 >>>>>>> develop =======
+   * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain. deprecated since
+   *         2.2 >>>>>>> develop
    * @see com.orientechnologies.orient.core.db.document.ODatabaseDocument#isMVCC()
    */
   @Deprecated
@@ -885,7 +958,8 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   /**
    * Overrides record conflict strategy selecting the strategy by name.
    *
-   * @param iStrategyName ORecordConflictStrategy strategy name
+   * @param iStrategyName
+   *          ORecordConflictStrategy strategy name
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
   <DB extends ODatabase<?>> DB setConflictStrategy(String iStrategyName);
@@ -893,7 +967,8 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   /**
    * Overrides record conflict strategy.
    *
-   * @param iResolver ORecordConflictStrategy implementation
+   * @param iResolver
+   *          ORecordConflictStrategy implementation
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
   <DB extends ODatabase<?>> DB setConflictStrategy(ORecordConflictStrategy iResolver);
@@ -905,7 +980,8 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * If it will be first backup of data full content of database will be copied into folder otherwise only changes after last backup
    * in the same folder will be copied.
    *
-   * @param path Path to backup folder.
+   * @param path
+   *          Path to backup folder.
    * @since 2.2
    */
   void incrementalBackup(String path);
@@ -913,16 +989,19 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   /**
    * Restores content of database stored using {@link #incrementalBackup(String)} method.
    * <p>
-<<<<<<< HEAD
-   * During data restore database cannot be used in normal mode you should wait till database restore will be finished.
+   * <<<<<<< HEAD <<<<<<< HEAD During data restore database cannot be used in normal mode you should wait till database restore will
+   * be finished.
    *
    * @param path
-   *          Path to backup folder.
-=======
-   * During data restore database can not be used in normal mode you should wait till database restore will be finished.
+   *          Path to backup folder. ======= During data restore database can not be used in normal mode you should wait till
+   *          database restore will be finished.
    *
-   * @param path Path to backup folder.
->>>>>>> develop
+   * @param path
+   *          Path to backup folder. >>>>>>> develop ======= During data restore database can not be used in normal mode you should
+   *          wait till database restore will be finished.
+   *
+   * @param path
+   *          Path to backup folder. >>>>>>> develop
    * @since 2.2
    */
   void incrementalRestore(String path);

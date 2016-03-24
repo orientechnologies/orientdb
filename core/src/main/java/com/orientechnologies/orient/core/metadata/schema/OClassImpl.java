@@ -19,10 +19,6 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.util.*;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.OArrays;
@@ -60,6 +56,10 @@ import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
+
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.*;
 
 /**
  * Schema Class implementation.
@@ -464,12 +464,10 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       final OStorage storage = database.getStorage();
 
       if (storage instanceof OStorageProxy) {
-        final String cmd = String.format("alter class `%s` superclass +`%s`", name,
-            superClass != null ? superClass.getName() : null);
+        final String cmd = String.format("alter class `%s` superclass +`%s`", name, superClass != null ? superClass.getName() : null);
         database.command(new OCommandSQL(cmd)).execute();
       } else if (isDistributedCommand()) {
-        final String cmd = String.format("alter class `%s` superclass +`%s`", name,
-            superClass != null ? superClass.getName() : null);
+        final String cmd = String.format("alter class `%s` superclass +`%s`", name, superClass != null ? superClass.getName() : null);
         final OCommandSQL commandSQL = new OCommandSQL(cmd);
         commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
 
@@ -524,12 +522,10 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       final OStorage storage = database.getStorage();
 
       if (storage instanceof OStorageProxy) {
-        final String cmd = String.format("alter class `%s` superclass -`%s`", name,
-            superClass != null ? superClass.getName() : null);
+        final String cmd = String.format("alter class `%s` superclass -`%s`", name, superClass != null ? superClass.getName() : null);
         database.command(new OCommandSQL(cmd)).execute();
       } else if (isDistributedCommand()) {
-        final String cmd = String.format("alter class `%s` superclass -`%s`", name,
-            superClass != null ? superClass.getName() : null);
+        final String cmd = String.format("alter class `%s` superclass -`%s`", name, superClass != null ? superClass.getName() : null);
         final OCommandSQL commandSQL = new OCommandSQL(cmd);
         commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
 
@@ -1826,15 +1822,16 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
         final String fieldName = decodeClassName(OIndexDefinitionFactory.extractFieldName(fieldToIndex));
 
         if (!fieldName.equals("@rid") && !existsProperty(fieldName))
-          throw new OIndexException("Index with name : '" + name + "' cannot be created on class : '" + this.name
-              + "' because field: '" + fieldName + "' is absent in class definition.");
+          throw new OIndexException(
+              "Index with name : '" + name + "' cannot be created on class : '" + this.name + "' because field: '" + fieldName
+                  + "' is absent in class definition.");
       }
 
-      final OIndexDefinition indexDefinition = OIndexDefinitionFactory.createIndexDefinition(this, Arrays.asList(fields),
-          extractFieldTypes(fields), null, type, algorithm);
+      final OIndexDefinition indexDefinition = OIndexDefinitionFactory
+          .createIndexDefinition(this, Arrays.asList(fields), extractFieldTypes(fields), null, type, algorithm);
 
-      return getDatabase().getMetadata().getIndexManager().createIndex(name, type, indexDefinition, polymorphicClusterIds,
-          progressListener, metadata, algorithm);
+      return getDatabase().getMetadata().getIndexManager()
+          .createIndex(name, type, indexDefinition, polymorphicClusterIds, progressListener, metadata, algorithm);
     } finally {
       releaseSchemaReadLock();
     }
@@ -2028,8 +2025,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   public void fireDatabaseMigration(final ODatabaseDocument database, final String propertyName, final OType type) {
     final boolean strictSQL = ((ODatabaseInternal) database).getStorage().getConfiguration().isStrictSql();
 
-    database.query(new OSQLAsynchQuery<Object>("select from " + getEscapedName(name, strictSQL) + " where "
-        + getEscapedName(propertyName, strictSQL) + ".type() <> \"" + type.name() + "\"", new OCommandResultListener() {
+    database.query(new OSQLAsynchQuery<Object>(
+        "select from " + getEscapedName(name, strictSQL) + " where " + getEscapedName(propertyName, strictSQL) + ".type() <> \""
+            + type.name() + "\"", new OCommandResultListener() {
 
           @Override
           public boolean result(Object iRecord) {
@@ -2282,25 +2280,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     } finally {
       releaseSchemaWriteLock();
     }
-  }
-
-  private int createClusterIfNeeded(String nameOrId) {
-    final String[] parts = nameOrId.split(" ");
-    int clId = getClusterId(parts[0]);
-
-    if (clId == NOT_EXISTENT_CLUSTER_ID) {
-      if (!parts[0].isEmpty() && Character.isDigit(parts[0].charAt(0)))
-        try {
-          clId = Integer.parseInt(parts[0]);
-          throw new IllegalArgumentException("Cluster id '" + clId + "' cannot be added");
-        } catch (NumberFormatException e) {
-          clId = getDatabase().addCluster(parts[0]);
-        }
-      else
-        clId = getDatabase().addCluster(parts[0]);
-    }
-
-    return clId;
   }
 
   private OClass addClusterIdInternal(final int clusterId) {
@@ -2587,8 +2566,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     for (OProperty property : baseClassProperties) {
       OProperty thisProperty = getProperty(property.getName());
       if (thisProperty != null && !thisProperty.getType().equals(property.getType())) {
-        throw new OSchemaException("Cannot add base class '" + baseClass.getName() + "', because of property conflict: '"
-            + thisProperty + "' vs '" + property + "'");
+        throw new OSchemaException(
+            "Cannot add base class '" + baseClass.getName() + "', because of property conflict: '" + thisProperty + "' vs '"
+                + property + "'");
       }
     }
   }
@@ -2729,14 +2709,15 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   public static String decodeClassName(String s) {
-    if (s == null) {
+    if(s==null){
       return null;
     }
     s = s.trim();
-    if (s.startsWith("`") && s.endsWith("`")) {
-      return s.substring(1, s.length() - 1);
+    if(s.startsWith("`") && s.endsWith("`")){
+      return s.substring(1, s.length()-1);
     }
     return s;
   }
 
 }
+

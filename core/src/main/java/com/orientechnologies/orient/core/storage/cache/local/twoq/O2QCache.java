@@ -1097,8 +1097,7 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
           mbeanIsRegistered.set(false);
           OLogManager.instance().warn(this,
               "MBean with name %s has already registered. Probably your system was not shutdown correctly"
-                  + " or you have several running applications which use OrientDB engine inside",
-              mbeanName.getCanonicalName());
+                  + " or you have several running applications which use OrientDB engine inside", mbeanName.getCanonicalName());
         }
 
       } catch (MalformedObjectNameException e) {

@@ -79,7 +79,26 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
     if (facetManager != null) {
       facetManager.delete();
     }
+<<<<<<< HEAD
 
+=======
+
+  }
+
+  @Override
+  public int getVersion() {
+    return 0;
+  }
+
+  @Override
+  public void onRecordAddedToResultSet(QueryContext queryContext, OContextualRecordId recordId, Document ret,
+      final ScoreDoc score) {
+    recordId.setContext(new HashMap<String, Object>() {
+      {
+        put("score", score.score);
+      }
+    });
+>>>>>>> develop
   }
 
   @Override

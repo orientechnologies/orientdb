@@ -683,16 +683,16 @@ public class OServerAdmin {
 
   protected <T> T networkAdminOperation(final OStorageRemoteOperation<T> operation, final String errorMessage) {
 
-    OChannelBinaryAsynchClient network = null;
-    try {
-      storage.pushSessionId(getURL(), sessionId, sessionToken, connections);
-      // TODO:replace this api with one that get connection for only the specified url.
-      network = storage.getAvailableNetwork(getURL());
-      return operation.execute(network);
-    } catch (Exception e) {
-      storage.close(true, false);
-      throw OException.wrapException(new OStorageException(errorMessage), e);
-    }
+      OChannelBinaryAsynchClient network=null;
+      try {
+        storage.pushSessionId(getURL(),sessionId,sessionToken,connections);
+        //TODO:replace this api with one that get connection for only the specified url.
+        network = storage.getAvailableNetwork(getURL());
+        return operation.execute(network);
+      } catch (Exception e) {
+        storage.close(true, false);
+        throw OException.wrapException(new OStorageException(errorMessage), e);
+      }
   }
 
 }

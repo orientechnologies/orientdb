@@ -1183,26 +1183,30 @@ public class OCommandExecutorSQLSelectTest {
   }
 
   public void testCollateOnCollections() {
-    // issue #4851
+    //issue #4851
     db.command(new OCommandSQL("create class OCommandExecutorSqlSelectTest_collateOnCollections")).execute();
-    db.command(new OCommandSQL("create property OCommandExecutorSqlSelectTest_collateOnCollections.categories EMBEDDEDLIST string"))
-        .execute();
-    db.command(new OCommandSQL("insert into OCommandExecutorSqlSelectTest_collateOnCollections set categories=['a','b']"))
-        .execute();
-    db.command(new OCommandSQL("alter property OCommandExecutorSqlSelectTest_collateOnCollections.categories COLLATE ci"))
-        .execute();
-    db.command(new OCommandSQL("insert into OCommandExecutorSqlSelectTest_collateOnCollections set categories=['Math','English']"))
-        .execute();
-    db.command(new OCommandSQL("insert into OCommandExecutorSqlSelectTest_collateOnCollections set categories=['a','b','c']"))
-        .execute();
-    List<ODocument> results = db.query(
-        new OSQLSynchQuery<ODocument>("select from OCommandExecutorSqlSelectTest_collateOnCollections where 'Math' in categories"));
+    db.command(new OCommandSQL("create property OCommandExecutorSqlSelectTest_collateOnCollections.categories EMBEDDEDLIST string")).execute();
+    db.command(new OCommandSQL("insert into OCommandExecutorSqlSelectTest_collateOnCollections set categories=['a','b']")).execute();
+    db.command(new OCommandSQL("alter property OCommandExecutorSqlSelectTest_collateOnCollections.categories COLLATE ci")).execute();
+    db.command(new OCommandSQL("insert into OCommandExecutorSqlSelectTest_collateOnCollections set categories=['Math','English']")).execute();
+    db.command(new OCommandSQL("insert into OCommandExecutorSqlSelectTest_collateOnCollections set categories=['a','b','c']")).execute();
+    List<ODocument> results =db.query(new OSQLSynchQuery<ODocument>("select from OCommandExecutorSqlSelectTest_collateOnCollections where 'Math' in categories"));
     assertEquals(results.size(), 1);
-    results = db.query(
-        new OSQLSynchQuery<ODocument>("select from OCommandExecutorSqlSelectTest_collateOnCollections where 'math' in categories"));
+    results =db.query(new OSQLSynchQuery<ODocument>("select from OCommandExecutorSqlSelectTest_collateOnCollections where 'math' in categories"));
     assertEquals(results.size(), 1);
   }
 
+  public void testCountUniqueIndex() {
+    //issue http://www.prjhub.com/#/issues/6419
+    db.command(new OCommandSQL("create class OCommandExecutorSqlSelectTest_testCountUniqueIndex")).execute();
+    db.command(new OCommandSQL("create property OCommandExecutorSqlSelectTest_testCountUniqueIndex.AAA String")).execute();
+    db.command(new OCommandSQL("create index OCommandExecutorSqlSelectTest_testCountUniqueIndex.AAA unique")).execute();
+
+    List<ODocument> results =db.query(new OSQLSynchQuery<ODocument>("select count(*) from OCommandExecutorSqlSelectTest_testCountUniqueIndex where AAA='missing'"));
+    assertEquals(results.size(), 1);
+    assertEquals(results.iterator().next().field("count"), 0l);
+
+  }
   private long indexUsages(ODatabaseDocumentTx db) {
     final long oldIndexUsage;
     try {

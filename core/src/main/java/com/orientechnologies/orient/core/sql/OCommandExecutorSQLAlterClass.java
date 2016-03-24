@@ -19,11 +19,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -35,6 +30,11 @@ import com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.sql.parser.OAlterClassStatement;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
 /**
  * SQL ALTER PROPERTY command: Changes an attribute of an existent property in the target class.
  *
@@ -45,10 +45,10 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
   public static final String KEYWORD_ALTER = "ALTER";
   public static final String KEYWORD_CLASS = "CLASS";
 
-  private String             className;
-  private ATTRIBUTES         attribute;
-  private String             value;
-  private boolean            unsafe        = false;
+  private String     className;
+  private ATTRIBUTES attribute;
+  private String     value;
+  private boolean unsafe = false;
 
   public OCommandExecutorSQLAlterClass parse(final OCommandRequest iRequest) {
     final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
@@ -98,10 +98,9 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
 
       value = parserText.substring(pos + 1).trim();
 
-      if ("addcluster".equalsIgnoreCase(attributeAsString) || "removecluster".equalsIgnoreCase(attributeAsString)) {
+      if("addcluster".equalsIgnoreCase(attributeAsString) || "removecluster".equalsIgnoreCase(attributeAsString) ){
         value = decodeClassName(value);
       }
-
       OAlterClassStatement stm = (OAlterClassStatement) preParsedStatement;
       if (this.preParsedStatement != null && stm.property == ATTRIBUTES.CUSTOM) {
         value = "" + stm.customKey.getValue() + "=" + stm.customValue.toString();
@@ -177,8 +176,8 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
       superClass = superClass.substring(1);
     }
     if (database.getMetadata().getSchema().getClass(decodeClassName(superClass)) == null) {
-      throw new OCommandExecutionException(
-          "Cannot alter superClass of '" + targetClass + "' because  " + superClass + " class not found");
+      throw new OCommandExecutionException("Cannot alter superClass of '" + targetClass + "' because " + superClass
+          + " class not found");
     }
   }
 

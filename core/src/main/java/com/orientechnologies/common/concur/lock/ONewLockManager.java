@@ -32,10 +32,10 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @since 8/11/14
  */
 public class ONewLockManager<T> {
-  private static final int               HASH_BITS         = 0x7fffffff;
+  private static final int HASH_BITS = 0x7fffffff;
 
-  private static final int               CONCURRENCY_LEVEL = closestInteger(Runtime.getRuntime().availableProcessors() << 6);
-  private static final int               MASK              = CONCURRENCY_LEVEL - 1;
+  private static final int CONCURRENCY_LEVEL = closestInteger(Runtime.getRuntime().availableProcessors() << 6);
+  private static final int MASK              = CONCURRENCY_LEVEL - 1;
 
   private final ReadWriteLock[]          locks;
   private final OReadersWriterSpinLock[] spinLocks;
