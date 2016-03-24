@@ -114,7 +114,7 @@ public class StopNodeTest extends AbstractServerClusterTxTest {
               public Object call() throws Exception {
                 Assert.assertTrue("Insert was too fast", inserting);
 
-                banner("RESTARTING SERVER " + (SERVERS - 1));
+                banner("STOPPING SERVER " + (SERVERS - 1));
 
                 ((OHazelcastPlugin) serverInstance.get(0).getServerInstance().getDistributedManager())
                     .stopNode(server.server.getDistributedManager().getLocalNodeName());

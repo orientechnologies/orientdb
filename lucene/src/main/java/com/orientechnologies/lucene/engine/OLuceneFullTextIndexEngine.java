@@ -16,9 +16,21 @@
 
 package com.orientechnologies.lucene.engine;
 
+import java.io.IOException;
+import java.util.*;
+
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.store.Directory;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.lucene.OLuceneIndexType;
 import com.orientechnologies.lucene.builder.DocBuilder;
 import com.orientechnologies.lucene.builder.OQueryBuilder;
@@ -31,23 +43,15 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.parser.ParseException;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.store.Directory;
-
-import java.io.IOException;
-import java.util.*;
 
 public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
   protected OLuceneFacetManager facetManager;
-  private DocBuilder            builder;
-  private OQueryBuilder         queryBuilder;
+  private   DocBuilder          builder;
+  private   OQueryBuilder       queryBuilder;
 
   public OLuceneFullTextIndexEngine(String idxName, DocBuilder builder, OQueryBuilder queryBuilder) {
     super(idxName);
@@ -74,31 +78,17 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   }
 
   @Override
+  public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
+      OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, ODocument metadata) {
+  }
+
+  @Override
   public void delete() {
     super.delete();
     if (facetManager != null) {
       facetManager.delete();
     }
-<<<<<<< HEAD
 
-=======
-
-  }
-
-  @Override
-  public int getVersion() {
-    return 0;
-  }
-
-  @Override
-  public void onRecordAddedToResultSet(QueryContext queryContext, OContextualRecordId recordId, Document ret,
-      final ScoreDoc score) {
-    recordId.setContext(new HashMap<String, Object>() {
-      {
-        put("score", score.score);
-      }
-    });
->>>>>>> develop
   }
 
   @Override
@@ -136,8 +126,8 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
     Collection<OIdentifiable> container = (Collection<OIdentifiable>) value;
     for (OIdentifiable oIdentifiable : container) {
       Document doc = new Document();
-      doc.add(OLuceneIndexType.createField(RID, oIdentifiable.getIdentity().toString(), Field.Store.YES,
-          Field.Index.NOT_ANALYZED_NO_NORMS));
+      doc.add(OLuceneIndexType
+          .createField(RID, oIdentifiable.getIdentity().toString(), Field.Store.YES, Field.Index.NOT_ANALYZED_NO_NORMS));
       int i = 0;
       if (index.isAutomatic()) {
         putInAutomaticIndex(key, doc, i);
@@ -305,8 +295,8 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
   public class LuceneIndexCursor implements OIndexCursor {
 
-    private final Object            key;
-    private LuceneResultSet         resultSet;
+    private final Object          key;
+    private       LuceneResultSet resultSet;
 
     private Iterator<OIdentifiable> iterator;
 

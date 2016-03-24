@@ -18,26 +18,24 @@
 
 package com.orientechnologies.lucene.engine;
 
-import java.io.IOException;
-
+import com.orientechnologies.lucene.query.QueryContext;
+import com.orientechnologies.lucene.tx.OLuceneTxChanges;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.OContextualRecordId;
+import com.orientechnologies.orient.core.index.OIndexEngine;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 
-import com.orientechnologies.lucene.query.QueryContext;
-import com.orientechnologies.lucene.tx.OLuceneTxChanges;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.OContextualRecordId;
-import com.orientechnologies.orient.core.index.OIndexEngine;
+import java.io.IOException;
 
 /**
  * Created by Enrico Risa on 04/09/15.
  */
 public interface OLuceneIndexEngine extends OIndexEngine {
 
-<<<<<<< HEAD
   String indexName();
 
   void onRecordAddedToResultSet(QueryContext queryContext, OContextualRecordId recordId, Document ret, ScoreDoc score);
@@ -59,33 +57,6 @@ public interface OLuceneIndexEngine extends OIndexEngine {
   long sizeInTx(OLuceneTxChanges changes);
 
   OLuceneTxChanges buildTxChanges() throws IOException;
-=======
-  void initIndex(String indexType, OIndexDefinition indexDefinition, boolean isAutomatic, ODocument metadata);
-
-  String indexName();
-
-  void onRecordAddedToResultSet(QueryContext queryContext, OContextualRecordId recordId, Document ret, ScoreDoc score);
-
-  Document buildDocument(Object key, OIdentifiable value);
-
-  Query buildQuery(Object query);
-
-  Analyzer indexAnalyzer();
-
-  Analyzer queryAnalyzer();
-
-  boolean remove(Object key, OIdentifiable value);
-
-  IndexSearcher searcher() throws IOException;
-
-  Object getInTx(Object key, OLuceneTxChanges changes);
-
-  long sizeInTx(OLuceneTxChanges changes);
-
-  OLuceneTxChanges buildTxChanges() throws IOException;
-
-  Query deleteQuery(Object key, OIdentifiable value);
->>>>>>> develop
 
   Query deleteQuery(Object key, OIdentifiable value);
 }

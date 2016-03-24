@@ -66,23 +66,7 @@ import static com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract.RID
 
 public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements OOrientListener {
 
-<<<<<<< HEAD
-  private final String                          name;
-  private final ODocument                       metadata;
-  protected OLuceneFacetManager                 facetManager;
-  protected TimerTask                           commitTask;
-  protected AtomicBoolean                       closed = new AtomicBoolean(true);
-  protected TrackingIndexWriter                 mgrWriter;
-  protected SearcherManager                     searcherManager;
-  protected ControlledRealTimeReopenThread      nrt;
-  private DocBuilder                            builder;
-  private OQueryBuilder                         queryBuilder;
-  private Map<String, OLuceneClassIndexContext> oindexes;
-  private long                                  reopenToken;
 
-  private Analyzer                              indexAnalyzer;
-  private Analyzer                              queryAnalyzer;
-=======
   private final String              name;
   private final ODocument           metadata;
   protected     OLuceneFacetManager facetManager;
@@ -98,7 +82,6 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
 
   private Analyzer indexAnalyzer;
   private Analyzer queryAnalyzer;
->>>>>>> develop
 
   public OLuceneStorage(String name, DocBuilder builder, OQueryBuilder queryBuilder, ODocument metadata) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(),
@@ -220,11 +203,7 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
     OLogManager.instance().info(this, "START INIT initIndex:: name " + indexContext.name + " def :: " + indexContext.definition);
     oindexes.put(indexContext.name, indexContext);
 
-<<<<<<< HEAD
-    // initializerAnalyzers(indexContext.indexClass, indexContext.metadata);
-=======
     //    initializerAnalyzers(indexContext.indexClass, indexContext.metadata);
->>>>>>> develop
 
     OLuceneAnalyzerFactory afc = new OLuceneAnalyzerFactory();
 
@@ -233,13 +212,8 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
     indexAnalyzer = afc.createAnalyzer(indexContext.definition, OLuceneAnalyzerFactory.AnalyzerKind.INDEX, indexContext.metadata);
     queryAnalyzer = afc.createAnalyzer(indexContext.definition, OLuceneAnalyzerFactory.AnalyzerKind.QUERY, indexContext.metadata);
 
-<<<<<<< HEAD
-    OLogManager.instance().info(this,
-        "DONE INIT initIndex:: indexAnalyzer::  " + indexAnalyzer + " queryanalzer:: " + queryAnalyzer);
-=======
     OLogManager.instance()
         .info(this, "DONE INIT initIndex:: indexAnalyzer::  " + indexAnalyzer + " queryanalzer:: " + queryAnalyzer);
->>>>>>> develop
 
   }
 
