@@ -20,8 +20,9 @@
 
 package com.orientechnologies.common.serialization.types;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
+
+import java.nio.ByteBuffer;
 
 /**
  * Serializer for byte type .
@@ -87,43 +88,6 @@ public class OByteSerializer implements OBinarySerializer<Byte> {
     return stream[startPosition];
   }
 
-  @Override
-  public void serializeInDirectMemoryObject(final Byte object, ODirectMemoryPointer pointer, long offset, Object... hints) {
-    pointer.setByte(offset, object);
-  }
-
-  public void serializeInDirectMemory(final byte object, ODirectMemoryPointer pointer, long offset, Object... hints) {
-    pointer.setByte(offset, object);
-  }
-
-  @Override
-  public Byte deserializeFromDirectMemoryObject(final ODirectMemoryPointer pointer, final long offset) {
-    return pointer.getByte(offset);
-  }
-
-  @Override
-  public Byte deserializeFromDirectMemoryObject(OWALChangesTree.PointerWrapper wrapper, long offset) {
-    return wrapper.getByte(offset);
-  }
-
-  public byte deserializeFromDirectMemory(final ODirectMemoryPointer pointer, final long offset) {
-    return pointer.getByte(offset);
-  }
-
-  public byte deserializeFromDirectMemory(final OWALChangesTree.PointerWrapper wrapper, final long offset) {
-    return wrapper.getByte(offset);
-  }
-
-  @Override
-  public int getObjectSizeInDirectMemory(final ODirectMemoryPointer pointer, final long offset) {
-    return BYTE_SIZE;
-  }
-
-  @Override
-  public int getObjectSizeInDirectMemory(OWALChangesTree.PointerWrapper wrapper, long offset) {
-    return BYTE_SIZE;
-  }
-
   public boolean isFixedLength() {
     return true;
   }
@@ -135,5 +99,45 @@ public class OByteSerializer implements OBinarySerializer<Byte> {
   @Override
   public Byte preprocess(Byte value, Object... hints) {
     return value;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void serializeInByteBufferObject(Byte object, ByteBuffer buffer, Object... hints) {
+    buffer.put(object);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public Byte deserializeFromByteBufferObject(ByteBuffer buffer) {
+    return buffer.get();
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
+    return BYTE_SIZE;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public Byte deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+    return walChanges.getByteValue(buffer, offset);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+    return BYTE_SIZE;
   }
 }

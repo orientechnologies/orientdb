@@ -20,14 +20,7 @@
 package com.orientechnologies.orient.core.db.record;
 
 import java.io.Serializable;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Set;
-import java.util.WeakHashMap;
+import java.util.*;
 
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -43,12 +36,11 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
  */
 @SuppressWarnings("serial")
 public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrackedMultiValue<T, T>, Serializable {
-  protected final ORecord                      sourceRecord;
-  private final boolean                        embeddedCollection;
-  protected Class<?>                           genericClass;
-  private STATUS                               status          = STATUS.NOT_LOADED;
-  private Set<OMultiValueChangeListener<T, T>> changeListeners = Collections
-                                                                   .newSetFromMap(new WeakHashMap<OMultiValueChangeListener<T, T>, Boolean>());
+  protected final ORecord                       sourceRecord;
+  private final boolean                         embeddedCollection;
+  protected Class<?>                            genericClass;
+  private STATUS                                status          = STATUS.NOT_LOADED;
+  private List<OMultiValueChangeListener<T, T>> changeListeners;
 
   public OTrackedSet(final ORecord iRecord, final Collection<? extends T> iOrigin, final Class<?> cls) {
     this(iRecord);
@@ -95,11 +87,20 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
       addOwnerToEmbeddedDoc(e);
 
       fireCollectionChangedEvent(new OMultiValueChangeEvent<T, T>(OMultiValueChangeEvent.OChangeType.ADD, e, e));
+      addNested(e);
       return true;
     }
 
     return false;
   }
+
+  private void addNested(T element) {
+    if (element instanceof OTrackedMultiValue) {
+      ((OTrackedMultiValue) element)
+          .addChangeListener(new ONestedValueChangeListener((ODocument) sourceRecord, this, (OTrackedMultiValue) element));
+    }
+  }
+
 
   @SuppressWarnings("unchecked")
   @Override
@@ -109,6 +110,7 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
         ODocumentInternal.removeOwner((ODocument) o, this);
 
       fireCollectionChangedEvent(new OMultiValueChangeEvent<T, T>(OMultiValueChangeEvent.OChangeType.REMOVE, (T) o, null, (T) o));
+      removeNested(o);
       return true;
     }
     return false;
@@ -117,7 +119,7 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
   @Override
   public void clear() {
     final Set<T> origValues;
-    if (changeListeners.isEmpty())
+    if (changeListeners == null )
       origValues = null;
     else
       origValues = new HashSet<T>(this);
@@ -137,10 +139,18 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
           ODocumentInternal.removeOwner((ODocument) item, this);
 
         fireCollectionChangedEvent(new OMultiValueChangeEvent<T, T>(OMultiValueChangeEvent.OChangeType.REMOVE, item, null, item));
+        removeNested(item);
       }
 
     } else
       setDirty();
+  }
+
+
+  private void removeNested(Object element){
+    if(element instanceof OTrackedMultiValue){
+      //      ((OTrackedMultiValue) element).removeRecordChangeListener(null);
+    }
   }
 
   @SuppressWarnings("unchecked")
@@ -166,11 +176,14 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
   }
 
   public void addChangeListener(final OMultiValueChangeListener<T, T> changeListener) {
+    if(changeListeners == null)
+      changeListeners = new LinkedList<OMultiValueChangeListener<T, T>>();
     changeListeners.add(changeListener);
   }
 
   public void removeRecordChangeListener(final OMultiValueChangeListener<T, T> changeListener) {
-    changeListeners.remove(changeListener);
+    if (changeListeners != null)
+      changeListeners.remove(changeListener);
   }
 
   public Set<T> returnOriginalState(final List<OMultiValueChangeEvent<T, T>> multiValueChangeEvents) {
@@ -204,14 +217,16 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
     this.genericClass = genericClass;
   }
 
-  protected void fireCollectionChangedEvent(final OMultiValueChangeEvent<T, T> event) {
+  public void fireCollectionChangedEvent(final OMultiValueChangeEvent<T, T> event) {
     if (status == STATUS.UNMARSHALLING)
       return;
 
     setDirty();
-    for (final OMultiValueChangeListener<T, T> changeListener : changeListeners) {
-      if (changeListener != null)
-        changeListener.onAfterRecordChanged(event);
+    if (changeListeners != null) {
+      for (final OMultiValueChangeListener<T, T> changeListener : changeListeners) {
+        if (changeListener != null)
+          changeListener.onAfterRecordChanged(event);
+      }
     }
   }
 
@@ -224,5 +239,12 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
 
   private Object writeReplace() {
     return new HashSet<T>(this);
+  }
+
+  @Override
+  public void replace(OMultiValueChangeEvent<Object, Object> event, Object newValue) {
+    super.remove(event.getKey());
+    super.add((T) newValue);
+    addNested((T) newValue);
   }
 }

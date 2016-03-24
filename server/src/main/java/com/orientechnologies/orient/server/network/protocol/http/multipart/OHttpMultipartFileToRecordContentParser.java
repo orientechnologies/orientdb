@@ -20,6 +20,7 @@ import java.util.Map;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 
@@ -32,7 +33,7 @@ public class OHttpMultipartFileToRecordContentParser implements OHttpMultipartCo
   @Override
   public ORID parse(final OHttpRequest iRequest, final Map<String, String> headers, final OHttpMultipartContentInputStream in,
       ODatabaseDocument database) throws IOException {
-    final ORecordBytes record = new ORecordBytes();
+    final OBlob record = new ORecordBytes();
     record.fromInputStream(in);
     record.save();
     return record.getIdentity();

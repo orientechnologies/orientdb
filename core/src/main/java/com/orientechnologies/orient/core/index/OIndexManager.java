@@ -312,14 +312,4 @@ public interface OIndexManager {
    *          index to remove.
    */
   void removeClassPropertyIndex(OIndex<?> idx);
-
-  /**
-   * IMPORTANT! Only for internal usage.
-   */
-  boolean isFullCheckpointOnChange();
-
-	/**
-	 * IMPORTANT! Only for internal usage.
-	 */
-	void setFullCheckpointOnChange(boolean fullCheckpointOnChange);
 }

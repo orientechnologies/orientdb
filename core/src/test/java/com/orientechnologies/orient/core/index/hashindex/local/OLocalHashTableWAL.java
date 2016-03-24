@@ -7,6 +7,7 @@ import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.orientechnologies.orient.core.storage.impl.local.statistic.OStoragePerformanceStatistic;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -41,10 +42,10 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
     OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(100000000);
   }
 
-  private String              buildDirectory;
+  private String buildDirectory;
 
-  private String              actualStorageDir;
-  private String              expectedStorageDir;
+  private String actualStorageDir;
+  private String expectedStorageDir;
 
   private ODatabaseDocumentTx expectedDatabaseDocumentTx;
 
@@ -119,16 +120,17 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
 
     localHashTable = new OLocalHashTable<Integer, String>("actualLocalHashTable", ".imc", ".tsc", ".obf", ".nbh",
         murmurHash3HashFunction, true, (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
-    localHashTable.create(OIntegerSerializer.INSTANCE,
-        OBinarySerializerFactory.getInstance().<String> getObjectSerializer(OType.STRING), null, true);
+    localHashTable
+        .create(OIntegerSerializer.INSTANCE, OBinarySerializerFactory.getInstance().<String>getObjectSerializer(OType.STRING), null,
+            true);
   }
 
   @Override
   public void testKeyPut() throws IOException {
     super.testKeyPut();
 
-    Assert.assertNull(((OAbstractPaginatedStorage) databaseDocumentTx.getStorage()).getAtomicOperationsManager()
-        .getCurrentOperation());
+    Assert.assertNull(
+        ((OAbstractPaginatedStorage) databaseDocumentTx.getStorage()).getAtomicOperationsManager().getCurrentOperation());
 
     assertFileRestoreFromWAL();
   }
@@ -137,8 +139,8 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
   public void testKeyPutRandomUniform() throws IOException {
     super.testKeyPutRandomUniform();
 
-    Assert.assertNull(((OAbstractPaginatedStorage) databaseDocumentTx.getStorage()).getAtomicOperationsManager()
-        .getCurrentOperation());
+    Assert.assertNull(
+        ((OAbstractPaginatedStorage) databaseDocumentTx.getStorage()).getAtomicOperationsManager().getCurrentOperation());
 
     assertFileRestoreFromWAL();
   }
@@ -147,8 +149,8 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
   public void testKeyPutRandomGaussian() throws IOException {
     super.testKeyPutRandomGaussian();
 
-    Assert.assertNull(((OAbstractPaginatedStorage) databaseDocumentTx.getStorage()).getAtomicOperationsManager()
-        .getCurrentOperation());
+    Assert.assertNull(
+        ((OAbstractPaginatedStorage) databaseDocumentTx.getStorage()).getAtomicOperationsManager().getCurrentOperation());
 
     assertFileRestoreFromWAL();
   }
@@ -157,8 +159,8 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
   public void testKeyDelete() throws IOException {
     super.testKeyDelete();
 
-    Assert.assertNull(((OAbstractPaginatedStorage) databaseDocumentTx.getStorage()).getAtomicOperationsManager()
-        .getCurrentOperation());
+    Assert.assertNull(
+        ((OAbstractPaginatedStorage) databaseDocumentTx.getStorage()).getAtomicOperationsManager().getCurrentOperation());
 
     assertFileRestoreFromWAL();
   }
@@ -167,8 +169,8 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
   public void testKeyDeleteRandomUniform() throws IOException {
     super.testKeyDeleteRandomUniform();
 
-    Assert.assertNull(((OAbstractPaginatedStorage) databaseDocumentTx.getStorage()).getAtomicOperationsManager()
-        .getCurrentOperation());
+    Assert.assertNull(
+        ((OAbstractPaginatedStorage) databaseDocumentTx.getStorage()).getAtomicOperationsManager().getCurrentOperation());
 
     assertFileRestoreFromWAL();
   }
@@ -177,8 +179,8 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
   public void testKeyDeleteRandomGaussian() throws IOException {
     super.testKeyDeleteRandomGaussian();
 
-    Assert.assertNull(((OAbstractPaginatedStorage) databaseDocumentTx.getStorage()).getAtomicOperationsManager()
-        .getCurrentOperation());
+    Assert.assertNull(
+        ((OAbstractPaginatedStorage) databaseDocumentTx.getStorage()).getAtomicOperationsManager().getCurrentOperation());
 
     assertFileRestoreFromWAL();
   }
@@ -187,8 +189,8 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
   public void testKeyAddDelete() throws IOException {
     super.testKeyAddDelete();
 
-    Assert.assertNull(((OAbstractPaginatedStorage) databaseDocumentTx.getStorage()).getAtomicOperationsManager()
-        .getCurrentOperation());
+    Assert.assertNull(
+        ((OAbstractPaginatedStorage) databaseDocumentTx.getStorage()).getAtomicOperationsManager().getCurrentOperation());
 
     assertFileRestoreFromWAL();
   }
@@ -197,8 +199,8 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
   public void testKeyPutRemoveNullKey() throws IOException {
     super.testKeyPutRemoveNullKey();
 
-    Assert.assertNull(((OAbstractPaginatedStorage) databaseDocumentTx.getStorage()).getAtomicOperationsManager()
-        .getCurrentOperation());
+    Assert.assertNull(
+        ((OAbstractPaginatedStorage) databaseDocumentTx.getStorage()).getAtomicOperationsManager().getCurrentOperation());
 
     assertFileRestoreFromWAL();
   }
@@ -255,6 +257,8 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
       throws IOException {
 
     final OReadCache expectedReadCache = ((OAbstractPaginatedStorage) expectedDatabaseDocumentTx.getStorage()).getReadCache();
+    final OStoragePerformanceStatistic expectedStorageStatistic = ((OAbstractPaginatedStorage) expectedDatabaseDocumentTx
+        .getStorage()).getStoragePerformanceStatistic();
     final OWriteCache expectedWriteCache = ((OAbstractPaginatedStorage) expectedDatabaseDocumentTx.getStorage()).getWriteCache();
 
     for (OWALRecord walRecord : records) {
@@ -280,10 +284,11 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
             if (!expectedWriteCache.isOpen(fileId))
               expectedReadCache.openFile(fileId, expectedWriteCache);
 
-            OCacheEntry cacheEntry = expectedReadCache.load(fileId, pageIndex, true, expectedWriteCache, 0);
+            OCacheEntry cacheEntry = expectedReadCache
+                .load(fileId, pageIndex, true, expectedWriteCache, 0, expectedStorageStatistic);
             if (cacheEntry == null)
               do {
-                cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache);
+                cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache, expectedStorageStatistic);
               } while (cacheEntry.getPageIndex() != pageIndex);
 
             cacheEntry.acquireExclusiveLock();
@@ -293,7 +298,7 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
               durablePage.setLsn(updatePageRecord.getLsn());
             } finally {
               cacheEntry.releaseExclusiveLock();
-              expectedReadCache.release(cacheEntry, expectedWriteCache);
+              expectedReadCache.release(cacheEntry, expectedWriteCache, expectedStorageStatistic);
             }
           } else if (restoreRecord instanceof OFileCreatedWALRecord) {
             final OFileCreatedWALRecord fileCreatedCreatedRecord = (OFileCreatedWALRecord) restoreRecord;
@@ -319,12 +324,12 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
   }
 
   private void assertFileContentIsTheSame(String expectedLocalHashTable, String actualLocalHashTable) throws IOException {
-    assertCompareFilesAreTheSame(new File(expectedStorageDir, expectedLocalHashTable + ".imc"), new File(actualStorageDir,
-        actualLocalHashTable + ".imc"));
-    assertCompareFilesAreTheSame(new File(expectedStorageDir, expectedLocalHashTable + ".tsc"), new File(actualStorageDir,
-        actualLocalHashTable + ".tsc"));
-    assertCompareFilesAreTheSame(new File(expectedStorageDir, expectedLocalHashTable + ".nbh"), new File(actualStorageDir,
-        actualLocalHashTable + ".nbh"));
+    assertCompareFilesAreTheSame(new File(expectedStorageDir, expectedLocalHashTable + ".imc"),
+        new File(actualStorageDir, actualLocalHashTable + ".imc"));
+    assertCompareFilesAreTheSame(new File(expectedStorageDir, expectedLocalHashTable + ".tsc"),
+        new File(actualStorageDir, actualLocalHashTable + ".tsc"));
+    assertCompareFilesAreTheSame(new File(expectedStorageDir, expectedLocalHashTable + ".nbh"),
+        new File(actualStorageDir, actualLocalHashTable + ".nbh"));
 
     File expectedStorageDirFile = new File(expectedStorageDir);
 

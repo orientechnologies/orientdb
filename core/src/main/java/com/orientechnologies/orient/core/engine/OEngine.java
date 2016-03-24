@@ -24,14 +24,20 @@ import java.util.Map;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 public interface OEngine {
+  String getName();
 
-	public String getName();
+  OStorage createStorage(String iURL, Map<String, String> parameters);
 
-	public OStorage createStorage(String iURL, Map<String, String> parameters);
+  void removeStorage(OStorage iStorage);
 
-	public void removeStorage(OStorage iStorage);
+  boolean isShared();
 
-	public boolean isShared();
+  void shutdown();
 
-	public void shutdown();
+  /**
+   * Performs initialization of engine.
+   * Initialization of engine in constructor is prohibited and all initialization steps should be done in
+   * this method.
+   */
+  void startup();
 }

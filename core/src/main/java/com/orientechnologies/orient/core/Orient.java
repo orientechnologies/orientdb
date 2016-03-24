@@ -19,23 +19,6 @@
  */
 package com.orientechnologies.orient.core;
 
-import java.io.IOException;
-import java.lang.ref.ReferenceQueue;
-import java.lang.ref.WeakReference;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-
-import com.orientechnologies.common.directmemory.ODirectMemoryPointerFactory;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.listener.OListenerManger;
@@ -43,6 +26,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfilerStub;
+import com.orientechnologies.common.util.OClassLoaderHelper;
 import com.orientechnologies.orient.core.cache.OLocalRecordCacheFactory;
 import com.orientechnologies.orient.core.cache.OLocalRecordCacheFactoryImpl;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
@@ -51,12 +35,20 @@ import com.orientechnologies.orient.core.conflict.ORecordConflictStrategyFactory
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseThreadLocalFactory;
 import com.orientechnologies.orient.core.engine.OEngine;
-import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
-import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.ORecordFactoryManager;
+import com.orientechnologies.orient.core.shutdown.OShutdownHandler;
 import com.orientechnologies.orient.core.storage.OIdentifiableStorage;
 import com.orientechnologies.orient.core.storage.OStorage;
+
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Orient extends OListenerManger<OOrientListener> {
   public static final String ORIENTDB_HOME = "ORIENTDB_HOME";
@@ -83,6 +75,22 @@ public class Orient extends OListenerManger<OOrientListener> {
       .newSetFromMap(new ConcurrentHashMap<WeakHashSetValueHolder<OOrientStartupListener>, Boolean>());
   private final Set<WeakHashSetValueHolder<OOrientShutdownListener>> weakShutdownListeners         = Collections
       .newSetFromMap(new ConcurrentHashMap<WeakHashSetValueHolder<OOrientShutdownListener>, Boolean>());
+
+
+
+  private final PriorityQueue<OShutdownHandler> shutdownHandlers = new PriorityQueue<OShutdownHandler>(11,
+      new Comparator<OShutdownHandler>() {
+        @Override
+        public int compare(OShutdownHandler handlerOne, OShutdownHandler handlerTwo) {
+          if (handlerOne.getPriority() > handlerTwo.getPriority())
+            return 1;
+
+          if (handlerOne.getPriority() < handlerTwo.getPriority())
+            return -1;
+
+          return 0;
+        }
+      });
 
   private final OLocalRecordCacheFactory localRecordCache = new OLocalRecordCacheFactoryImpl();
 
@@ -166,7 +174,6 @@ public class Orient extends OListenerManger<OOrientListener> {
    * Tells if to register database by path. Default is false. Setting to true allows to have multiple databases in different path
    * with the same name.
    *
-   * @return
    * @see #setRegisterDatabaseByPath(boolean)
    */
   public static boolean isRegisterDatabaseByPath() {
@@ -176,8 +183,6 @@ public class Orient extends OListenerManger<OOrientListener> {
   /**
    * Register database by path. Default is false. Setting to true allows to have multiple databases in different path with the same
    * name.
-   *
-   * @param iValue
    */
   public static void setRegisterDatabaseByPath(final boolean iValue) {
     registerDatabaseByPath = iValue;
@@ -223,12 +228,7 @@ public class Orient extends OListenerManger<OOrientListener> {
         }
       });
 
-      ODirectMemoryPointerFactory.instance().onStartup();
-
-      // REGISTER THE EMBEDDED ENGINE
-      registerEngine(new OEngineLocalPaginated());
-      registerEngine(new OEngineMemory());
-      registerEngine("com.orientechnologies.orient.client.remote.OEngineRemote");
+      registerEngines();
 
       if (OGlobalConfiguration.ENVIRONMENT_DUMP_CFG_AT_STARTUP.getValueAsBoolean())
         OGlobalConfiguration.dumpConfiguration(System.out);
@@ -256,11 +256,64 @@ public class Orient extends OListenerManger<OOrientListener> {
           OLogManager.instance().error(this, "Error on startup", e);
         }
 
+      initShutdownQueue();
     } finally {
       engineLock.writeLock().unlock();
     }
 
     return this;
+  }
+
+  /**
+   * Add handler which will be executed during {@link #shutdown()} call.
+   *
+   * @param shutdownHandler Shutdown handler instance.
+   */
+  public void addShutdownHandler(OShutdownHandler shutdownHandler) {
+    engineLock.writeLock().lock();
+    try {
+      shutdownHandlers.add(shutdownHandler);
+    } finally {
+      engineLock.writeLock().unlock();
+    }
+  }
+
+  /**
+   * Adds shutdown handlers in order which will be used during execution of shutdown.
+   */
+  private void initShutdownQueue() {
+    addShutdownHandler(new OShutdownWorkersHandler());
+    addShutdownHandler(new OShutdownEnginesHandler());
+    addShutdownHandler(new OShutdownPendingThreadsHandler());
+    addShutdownHandler(new OShutdownProfilerHandler());
+    addShutdownHandler(new OShutdownCallListenersHandler());
+  }
+
+  /**
+   * Shutdown whole OrientDB ecosystem. Usually is called during JVM shutdown by JVM shutdown handler.
+   * During shutdown all handlers which were registered by the call of {@link #addShutdownHandler(OShutdownHandler)}
+   * are called together with pre-registered system shoutdown handlers according to their priority.
+   *
+   * @see OShutdownWorkersHandler
+   * @see
+   */
+  private void registerEngines() {
+    ClassLoader classLoader = Orient.class.getClassLoader();
+
+    Iterator<OEngine> engines = OClassLoaderHelper.lookupProviderWithOrientClassLoader(OEngine.class, classLoader);
+
+    OEngine engine = null;
+    while (engines.hasNext()) {
+      try {
+        engine = engines.next();
+        registerEngine(engine);
+      } catch (IllegalArgumentException e) {
+        if (engine != null)
+          OLogManager.instance().debug(this, "Failed to replace engine " + engine.getName());
+      }
+    }
+
+    initEngines();
   }
 
   public Orient shutdown() {
@@ -271,68 +324,16 @@ public class Orient extends OListenerManger<OOrientListener> {
 
       active = false;
 
-      workers.shutdown();
-      try {
-        workers.awaitTermination(2, TimeUnit.MINUTES);
-      } catch (InterruptedException e) {
-      }
-
-      OLogManager.instance().debug(this, "Orient Engine is shutting down...");
-
-      shutdownAllStorages();
-
-      // SHUTDOWN ENGINES
-      for (OEngine engine : engines.values())
-        engine.shutdown();
-      engines.clear();
-
-      if (threadGroup != null)
-        // STOP ALL THE PENDING THREADS
-        threadGroup.interrupt();
-
-      if (shutdownHook != null) {
-        shutdownHook.cancel();
-        shutdownHook = null;
-      }
-      if (signalHandler != null) {
-        signalHandler.cancel();
-        signalHandler = null;
-      }
-
-      timer.cancel();
-      timer = null;
-
-      // NOTE: DON'T REMOVE PROFILER TO AVOID NPE AROUND THE CODE IF ANY THREADS IS STILL WORKING
-      profiler.shutdown();
-
-      purgeWeakShutdownListeners();
-      for (final WeakHashSetValueHolder<OOrientShutdownListener> wl : weakShutdownListeners)
+      OLogManager.instance().info(this, "Orient Engine is shutting down...");
+      for (OShutdownHandler handler : shutdownHandlers) {
         try {
-          if (wl != null) {
-            final OOrientShutdownListener l = wl.get();
-            if (l != null) {
-              l.onShutdown();
-            }
-          }
-
+          OLogManager.instance().info(this, "Shutdown handler %s is going to be called", handler);
+          handler.shutdown();
+          OLogManager.instance().info(this, "Shutdown handler %s completed", handler);
         } catch (Exception e) {
-          OLogManager.instance().error(this, "Error during orient shutdown", e);
+          OLogManager.instance().error(this, "Exception during calling of shutdown handler %s", handler);
         }
-
-      // CALL THE SHUTDOWN ON ALL THE LISTENERS
-      for (OOrientListener l : browseListeners()) {
-        if (l != null)
-          try {
-            l.onShutdown();
-          } catch (Exception e) {
-            OLogManager.instance().error(this, "Error during orient shutdown", e);
-          }
-
       }
-
-      System.gc();
-
-      ODirectMemoryPointerFactory.instance().onShutdown();
 
       OLogManager.instance().info(this, "OrientDB Engine shutdown complete");
       OLogManager.instance().flush();
@@ -458,14 +459,6 @@ public class Orient extends OListenerManger<OOrientListener> {
     if (iURL.endsWith("/"))
       iURL = iURL.substring(0, iURL.length() - 1);
 
-    if (isWindowsOS()) {
-      // WINDOWS ONLY: REMOVE DOUBLE SLASHES NOT AS PREFIX (WINDOWS PATH COULD NEED STARTING FOR "\\". EXAMPLE: "\\mydrive\db"). AT
-      // THIS LEVEL BACKSLASHES ARRIVES AS SLASHES
-      iURL = iURL.charAt(0) + iURL.substring(1).replace("//", "/");
-    } else
-      // REMOVE ANY //
-      iURL = iURL.replace("//", "/");
-
     // SEARCH FOR ENGINE
     int pos = iURL.indexOf(':');
     if (pos <= 0)
@@ -485,10 +478,20 @@ public class Orient extends OListenerManger<OOrientListener> {
 
       // SEARCH FOR DB-NAME
       iURL = iURL.substring(pos + 1);
+
+      if (isWindowsOS()) {
+        // WINDOWS ONLY: REMOVE DOUBLE SLASHES NOT AS PREFIX (WINDOWS PATH COULD NEED STARTING FOR "\\". EXAMPLE: "\\mydrive\db"). AT
+        // THIS LEVEL BACKSLASHES ARRIVES AS SLASHES
+        iURL = iURL.charAt(0) + iURL.substring(1).replace("//", "/");
+      } else
+        // REMOVE ANY //
+        iURL = iURL.replace("//", "/");
+
+
       pos = iURL.indexOf('?');
 
       Map<String, String> parameters = null;
-      String dbPath = null;
+      final String dbPath;
       if (pos > 0) {
         dbPath = iURL.substring(0, pos);
         iURL = iURL.substring(pos + 1);
@@ -541,7 +544,7 @@ public class Orient extends OListenerManger<OOrientListener> {
   }
 
   public boolean isWindowsOS() {
-    return os.indexOf("win") >= 0;
+    return os.contains("win");
   }
 
   public OStorage getStorage(final String dbName) {
@@ -553,12 +556,39 @@ public class Orient extends OListenerManger<OOrientListener> {
     }
   }
 
-  public void registerEngine(final OEngine iEngine) {
-    engineLock.readLock().lock();
-    try {
-      engines.put(iEngine.getName(), iEngine);
-    } finally {
-      engineLock.readLock().unlock();
+  private void registerEngine(final OEngine iEngine) throws IllegalArgumentException {
+    OEngine oEngine = engines.get(iEngine.getName());
+
+    if (oEngine != null) {
+      if (!oEngine.getClass().isAssignableFrom(iEngine.getClass())) {
+        throw new IllegalArgumentException("Cannot replace storage " + iEngine.getName());
+      }
+    }
+    engines.put(iEngine.getName(), iEngine);
+  }
+
+  private void initEngines() {
+    final List<String> entriesToDelete = new ArrayList<String>();
+
+    for (Map.Entry<String, OEngine> entry : engines.entrySet()) {
+      final OEngine engine = entry.getValue();
+      try {
+        engine.startup();
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "Error during initialization of engine %s , engine will be removed", entry.getKey());
+
+        try {
+          engine.shutdown();
+        } catch (Exception se) {
+          OLogManager.instance().error(this, "Error during engine shutdown", se);
+        }
+
+        entriesToDelete.add(entry.getKey());
+      }
+    }
+
+    for (String storageType : entriesToDelete) {
+      engines.remove(storageType);
     }
   }
 
@@ -604,8 +634,7 @@ public class Orient extends OListenerManger<OOrientListener> {
     try {
       // UNREGISTER ALL THE LISTENER ONE BY ONE AVOIDING SELF-RECURSION BY REMOVING FROM THE LIST
       final Iterable<OOrientListener> listenerCopy = getListenersCopy();
-      for (Iterator<OOrientListener> it = listenerCopy.iterator(); it.hasNext(); ) {
-        final OOrientListener l = it.next();
+      for (final OOrientListener l : listenerCopy) {
         unregisterListener(l);
         l.onStorageUnregistered(storage);
       }
@@ -779,14 +808,6 @@ public class Orient extends OListenerManger<OOrientListener> {
     return localRecordCache;
   }
 
-  private void registerEngine(final String className) {
-    try {
-      final Class<?> cls = Class.forName(className);
-      registerEngine((OEngine) cls.newInstance());
-    } catch (Exception e) {
-    }
-  }
-
   private void purgeWeakStartupListeners() {
     synchronized (removedStartupListenersQueue) {
       WeakHashSetValueHolder<OOrientStartupListener> ref = (WeakHashSetValueHolder<OOrientStartupListener>) removedStartupListenersQueue
@@ -808,6 +829,147 @@ public class Orient extends OListenerManger<OOrientListener> {
         ref = (WeakHashSetValueHolder<OOrientShutdownListener>) removedShutdownListenersQueue.poll();
       }
 
+    }
+  }
+
+  /**
+   * Shutdown thread group which is used in methods {@link #submit(Callable)} and {@link #submit(Runnable)}.
+   */
+  public class OShutdownWorkersHandler implements OShutdownHandler {
+    @Override
+    public int getPriority() {
+      return SHUTDOWN_WORKERS_PRIORITY;
+    }
+
+    @Override
+    public void shutdown() throws Exception {
+      workers.shutdown();
+      try {
+        workers.awaitTermination(2, TimeUnit.MINUTES);
+      } catch (InterruptedException e) {
+      }
+    }
+
+    @Override
+    public String toString() {
+      return getClass().getSimpleName();
+    }
+  }
+
+  /**
+   * Closes all storages and shutdown all engines.
+   */
+  public class OShutdownEnginesHandler implements OShutdownHandler {
+    @Override
+    public int getPriority() {
+      return SHUTDOWN_ENGINES_PRIORITY;
+    }
+
+    @Override
+    public void shutdown() throws Exception {
+      shutdownAllStorages();
+
+      // SHUTDOWN ENGINES
+      for (OEngine engine : engines.values())
+        engine.shutdown();
+      engines.clear();
+    }
+
+    @Override
+    public String toString() {
+      return getClass().getSimpleName();
+    }
+  }
+
+  /**
+   * Interrupts all threads in OrientDB thread group and stops timer is used in methods {@link #scheduleTask(TimerTask, Date, long)} and
+   * {@link #scheduleTask(TimerTask, long, long)}.
+   */
+  private class OShutdownPendingThreadsHandler implements OShutdownHandler {
+    @Override
+    public int getPriority() {
+      return SHUTDOWN_PENDING_THREADS_PRIORITY;
+    }
+
+    @Override
+    public void shutdown() throws Exception {
+      if (threadGroup != null)
+        // STOP ALL THE PENDING THREADS
+        threadGroup.interrupt();
+
+      timer.cancel();
+      timer = null;
+    }
+
+    @Override
+    public String toString() {
+      return getClass().getSimpleName();
+    }
+  }
+
+  /**
+   * Shutdown OrientDB profiler.
+   */
+  private class OShutdownProfilerHandler implements OShutdownHandler {
+    @Override
+    public int getPriority() {
+      return SHUTDOWN_PROFILER_PRIORITY;
+    }
+
+    @Override
+    public void shutdown() throws Exception {
+      // NOTE: DON'T REMOVE PROFILER TO AVOID NPE AROUND THE CODE IF ANY THREADS IS STILL WORKING
+      profiler.shutdown();
+    }
+
+    @Override
+    public String toString() {
+      return getClass().getSimpleName();
+    }
+  }
+
+  /**
+   * Calls all shutdown listeners.
+   */
+  private class OShutdownCallListenersHandler implements OShutdownHandler {
+    @Override
+    public int getPriority() {
+      return SHUTDOWN_CALL_LISTENERS;
+    }
+
+    @Override
+    public void shutdown() throws Exception {
+      purgeWeakShutdownListeners();
+      for (final WeakHashSetValueHolder<OOrientShutdownListener> wl : weakShutdownListeners)
+        try {
+          if (wl != null) {
+            final OOrientShutdownListener l = wl.get();
+            if (l != null) {
+              l.onShutdown();
+            }
+          }
+
+        } catch (Exception e) {
+          OLogManager.instance().error(this, "Error during orient shutdown", e);
+        }
+
+      // CALL THE SHUTDOWN ON ALL THE LISTENERS
+      for (OOrientListener l : browseListeners()) {
+        if (l != null)
+          try {
+            l.onShutdown();
+          } catch (Exception e) {
+            OLogManager.instance().error(this, "Error during orient shutdown", e);
+          }
+
+      }
+
+      System.gc();
+    }
+
+    @Override
+    public String toString() {
+      return getClass().getSimpleName();
     }
   }
 }

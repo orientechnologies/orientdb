@@ -9,6 +9,8 @@ import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.orientechnologies.common.directmemory.OByteBufferPool;
+import com.orientechnologies.orient.core.storage.impl.local.statistic.OStoragePerformanceStatistic;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -126,7 +128,8 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiLocalTest {
 
     writeAheadLog = new ODiskWriteAheadLog(6000, -1, 10 * 1024L * OWALPage.PAGE_SIZE, null, actualStorage);
 
-    actualWriteCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000,
+    actualWriteCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024,
+        new OByteBufferPool(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024), 1000000,
         writeAheadLog, 100, 1648L * 1024 * 1024, 1648L * 1024 * 1024 + 400L * 1024 * 1024 * 1024, actualStorage, false, 1);
 
     actualReadCache = new O2QCache(400L * 1024 * 1024 * 1024, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024,
@@ -167,7 +170,8 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiLocalTest {
     if (!expectedStorageDirFile.exists())
       expectedStorageDirFile.mkdirs();
 
-    expectedWriteCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000,
+    expectedWriteCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024,
+        new OByteBufferPool(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024), 1000000,
         writeAheadLog, 100, 1648L * 1024 * 1024, 1648L * 1024 * 1024 + 400L * 1024 * 1024 * 1024, expectedStorage, false, 2);
     expectedReadCache = new O2QCache(400L * 1024 * 1024 * 1024,
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, false, 20);
@@ -292,6 +296,9 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiLocalTest {
   }
 
   private void restoreDataFromWAL() throws IOException {
+    OStoragePerformanceStatistic storagePerformanceStatistic = new OStoragePerformanceStatistic(
+        OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, "test", 1);
+
     ODiskWriteAheadLog log = new ODiskWriteAheadLog(4, -1, 10 * 1024L * OWALPage.PAGE_SIZE, null, actualStorage);
     OLogSequenceNumber lsn = log.begin();
 
@@ -320,10 +327,11 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiLocalTest {
           if (!expectedWriteCache.isOpen(fileId))
             expectedReadCache.openFile(fileId, expectedWriteCache);
 
-          OCacheEntry cacheEntry = expectedReadCache.load(fileId, pageIndex, true, expectedWriteCache, 0);
+          OCacheEntry cacheEntry = expectedReadCache
+              .load(fileId, pageIndex, true, expectedWriteCache, 0, storagePerformanceStatistic);
           if (cacheEntry == null) {
             do {
-              cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache);
+              cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache, storagePerformanceStatistic);
             } while (cacheEntry.getPageIndex() != pageIndex);
           }
           cacheEntry.acquireExclusiveLock();
@@ -335,7 +343,7 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiLocalTest {
             cacheEntry.markDirty();
           } finally {
             cacheEntry.releaseExclusiveLock();
-            expectedReadCache.release(cacheEntry, expectedWriteCache);
+            expectedReadCache.release(cacheEntry, expectedWriteCache, storagePerformanceStatistic);
           }
         }
         atomicUnit.clear();

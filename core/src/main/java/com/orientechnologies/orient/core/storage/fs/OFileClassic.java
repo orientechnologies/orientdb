@@ -25,6 +25,7 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.exception.OFileLockedByAnotherProcessException;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 
 import java.io.File;
@@ -79,13 +80,18 @@ public class OFileClassic implements OFile {
   }
 
   @Override
-  public long allocateSpace(long size) {
+  public long allocateSpace(long size) throws IOException {
     acquireWriteLock();
     try {
+      assert channel.size() - HEADER_SIZE == this.size;
+
       final long currentSize = this.size;
       this.size += size;
 
       assert this.size >= size;
+
+      accessFile.setLength(this.size + HEADER_SIZE);
+      assert channel.size() - HEADER_SIZE == this.size;
 
       return currentSize;
     } finally {
@@ -142,6 +148,84 @@ public class OFileClassic implements OFile {
         }
       } catch (IOException e) {
         OLogManager.instance().error(this, "Error during data read for file '" + getName() + "' " + attempts + "-th attempt", e);
+        reopenFile(attempts, e);
+      }
+    }
+  }
+
+  @Override
+  public void read(long offset, ByteBuffer buffer) throws IOException {
+    int attempts = 0;
+
+    while (true) {
+      try {
+        acquireReadLock();
+        try {
+          offset = checkRegions(offset, buffer.limit());
+          channel.read(buffer, offset);
+
+          break;
+
+        } finally {
+          releaseReadLock();
+          attempts++;
+        }
+      } catch (IOException e) {
+        OLogManager.instance().error(this, "Error during data read for file '" + getName() + "' " + attempts + "-th attempt", e);
+        reopenFile(attempts, e);
+      }
+    }
+  }
+
+  @Override
+  public long read(long offset, ByteBuffer[] buffers) throws IOException {
+    int bytesRead = 0;
+
+    int attempts = 0;
+
+    while (true) {
+      try {
+        acquireWriteLock();
+        try {
+          offset += HEADER_SIZE;
+
+          channel.position(offset);
+          bytesRead = (int) channel.read(buffers);
+
+          break;
+
+        } finally {
+          releaseWriteLock();
+          attempts++;
+        }
+      } catch (IOException e) {
+        OLogManager.instance().error(this, "Error during data read for file '" + getName() + "' " + attempts + "-th attempt", e);
+        reopenFile(attempts, e);
+      }
+    }
+
+    return bytesRead;
+  }
+
+  @Override
+  public void write(long offset, ByteBuffer buffer) throws IOException {
+    int attempts = 0;
+
+    while (true) {
+      try {
+        acquireWriteLock();
+        try {
+          offset += HEADER_SIZE;
+          channel.write(buffer, offset);
+          setDirty();
+
+          break;
+        } finally {
+          releaseWriteLock();
+          attempts++;
+        }
+      } catch (IOException e) {
+        OLogManager.instance().error(this, "Error during data write for file '" + getName() + "' " + attempts + "-th attempt", e);
         reopenFile(attempts, e);
       }
     }
@@ -667,7 +751,7 @@ public class OFileClassic implements OFile {
         }
 
         if (fileLock == null)
-          throw new OLockException(
+          throw new OFileLockedByAnotherProcessException(
               "File '"
                   + osFile.getPath()
                   + "' is locked by another process, maybe the database is in use by another process. Use the remote mode with a OrientDB server to allow multiple access to the same database");

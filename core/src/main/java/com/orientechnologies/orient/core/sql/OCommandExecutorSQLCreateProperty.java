@@ -37,66 +37,64 @@ import java.util.Map;
 
 /**
  * SQL CREATE PROPERTY command: Creates a new property in the target class.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 @SuppressWarnings("unchecked")
 public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
   public static final String KEYWORD_CREATE   = "CREATE";
   public static final String KEYWORD_PROPERTY = "PROPERTY";
 
-  private String             className;
-  private String             fieldName;
-  private OType              type;
-  private String             linked;
-  private boolean            unsafe           = false;
+  private String className;
+  private String fieldName;
+  private OType  type;
+  private String linked;
+  private boolean unsafe = false;
 
   public OCommandExecutorSQLCreateProperty parse(final OCommandRequest iRequest) {
-    init((OCommandRequestText) iRequest);
 
-    final StringBuilder word = new StringBuilder();
+    final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
 
-    int oldPos = 0;
-    int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_CREATE))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_CREATE + " not found", parserText, oldPos);
+    String queryText = textRequest.getText();
+    String originalQuery = queryText;
+    try {
+      queryText = preParse(queryText, iRequest);
+      textRequest.setText(queryText);
 
-    oldPos = pos;
-    pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_PROPERTY))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_PROPERTY + " not found", parserText, oldPos);
+      init((OCommandRequestText) iRequest);
 
-    oldPos = pos;
-    pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false);
-    if (pos == -1)
-      throw new OCommandSQLParsingException("Expected <class>.<property>", parserText, oldPos);
+      final StringBuilder word = new StringBuilder();
 
-    String[] parts = split(word);
-    if (parts.length != 2)
-      throw new OCommandSQLParsingException("Expected <class>.<property>", parserText, oldPos);
+      int oldPos = 0;
+      int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
+      if (pos == -1 || !word.toString().equals(KEYWORD_CREATE))
+        throw new OCommandSQLParsingException("Keyword " + KEYWORD_CREATE + " not found", parserText, oldPos);
 
-    className = parts[0];
-    if (className == null)
-      throw new OCommandSQLParsingException("Class not found", parserText, oldPos);
-    fieldName = parts[1];
+      oldPos = pos;
+      pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
+      if (pos == -1 || !word.toString().equals(KEYWORD_PROPERTY))
+        throw new OCommandSQLParsingException("Keyword " + KEYWORD_PROPERTY + " not found", parserText, oldPos);
 
-    oldPos = pos;
-    pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1)
-      throw new OCommandSQLParsingException("Missed property type", parserText, oldPos);
+      oldPos = pos;
+      pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false);
+      if (pos == -1)
+        throw new OCommandSQLParsingException("Expected <class>.<property>", parserText, oldPos);
 
-    type = OType.valueOf(word.toString());
+      String[] parts = split(word);
+      if (parts.length != 2)
+        throw new OCommandSQLParsingException("Expected <class>.<property>", parserText, oldPos);
 
-    oldPos = pos;
-    pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false);
-    if (pos == -1)
-      return this;
+      className = decodeClassName(parts[0]);
+      if (className == null)
+        throw new OCommandSQLParsingException("Class not found", parserText, oldPos);
+      fieldName = decodeClassName(parts[1]);
 
-    if (word.toString().equals(KEYWORD_UNSAFE))
-      unsafe = true;
-    else {
-      linked = word.toString();
+      oldPos = pos;
+      pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
+      if (pos == -1)
+        throw new OCommandSQLParsingException("Missed property type", parserText, oldPos);
+
+      type = OType.valueOf(word.toString());
 
       oldPos = pos;
       pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false);
@@ -105,11 +103,25 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
 
       if (word.toString().equals(KEYWORD_UNSAFE))
         unsafe = true;
-    }
+      else {
+        linked = word.toString();
+        if (linked.startsWith("`") && linked.endsWith("`") && linked.length() > 1) {
+          linked = linked.substring(1, linked.length() - 1);
+        }
 
+        oldPos = pos;
+        pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false);
+        if (pos == -1)
+          return this;
+
+        if (word.toString().equals(KEYWORD_UNSAFE))
+          unsafe = true;
+      }
+    } finally {
+      textRequest.setText(originalQuery);
+    }
     return this;
   }
-
 
   private String[] split(StringBuilder word) {
     List<String> result = new ArrayList<String>();
@@ -179,7 +191,7 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
     }
 
     // CREATE IT LOCALLY
-    sourceClass.addPropertyInternal(fieldName, type, linkedType, linkedClass, !unsafe);
+    sourceClass.addPropertyInternal(fieldName, type, linkedType, linkedClass, unsafe);
     return sourceClass.properties().size();
   }
 

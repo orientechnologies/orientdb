@@ -47,6 +47,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODirtyManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
@@ -198,8 +199,8 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
     // REMOVE ALL THE ENTRIES AND INVALIDATE THE DOCUMENTS TO AVOID TO BE RE-USED DIRTY AT USER-LEVEL. IN THIS WAY RE-LOADING MUST
     // EXECUTED
-    for (ORecordOperation v : recordEntries.values())
-      v.getRecord().unload();
+    //    for (ORecordOperation v : recordEntries.values())
+    //      v.getRecord().unload();
 
     for (ORecordOperation v : allEntries.values())
       v.getRecord().unload();
@@ -360,9 +361,9 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     boolean originalSaved = false;
     ODirtyManager dirtyManager = ORecordInternal.getDirtyManager(iRecord);
     do {
-      Set<ORecord> newRecord = dirtyManager.getNewRecord();
+      Set<ORecord> newRecord = dirtyManager.getNewRecords();
       Set<ORecord> updatedRecord = dirtyManager.getUpdateRecords();
-      dirtyManager.cleanForSave();
+      dirtyManager.clear();
       if (newRecord != null) {
         for (ORecord rec : newRecord) {
           if (rec instanceof ODocument)
@@ -387,7 +388,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
             addRecord(rec, ORecordOperation.UPDATED, getClusterName(rec));
         }
       }
-    } while (dirtyManager.getNewRecord() != null || dirtyManager.getUpdateRecords() != null);
+    } while (dirtyManager.getNewRecords() != null || dirtyManager.getUpdateRecords() != null);
 
     if (!originalSaved && iRecord.isDirty()) {
       final byte operation = iForceCreate ? ORecordOperation.CREATED
@@ -399,7 +400,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
   @Override
   public String toString() {
-    return "OTransactionOptimistic [id=" + id + ", status=" + status + ", recEntries=" + recordEntries.size() + ", idxEntries="
+    return "OTransactionOptimistic [id=" + id + ", status=" + status + ", recEntries=" + allEntries.size() + ", idxEntries="
         + indexEntries.size() + ']';
   }
 
@@ -451,29 +452,11 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       }
 
       try {
-        if (iRecord.getIdentity().isTemporary())
-          temp2persistent.put(iRecord.getIdentity().copy(), iRecord);
-
         final ORecordId rid = (ORecordId) iRecord.getIdentity();
 
         if (!rid.isValid()) {
           ORecordInternal.onBeforeIdentityChanged(iRecord);
-          if (database.getStorage().isAssigningClusterIds() || iClusterName != null) {
-            // ASSIGN A UNIQUE SERIAL TEMPORARY ID
-            if (rid.clusterId == ORID.CLUSTER_ID_INVALID)
-              rid.clusterId = iClusterName != null ? database.getClusterIdByName(iClusterName) : database.getDefaultClusterId();
-
-            if (database.getStorageVersions().classesAreDetectedByClusterId() && iRecord instanceof ODocument) {
-              final ODocument recordSchemaAware = (ODocument) iRecord;
-              final OClass recordClass = ODocumentInternal.getImmutableSchemaClass(recordSchemaAware);
-              final OClass clusterIdClass = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot()
-                  .getClassByClusterId(rid.clusterId);
-              if (recordClass == null && clusterIdClass != null || clusterIdClass == null && recordClass != null
-                  || (recordClass != null && !recordClass.equals(clusterIdClass)))
-                throw new OSchemaException("Record saved into cluster " + iClusterName + " should be saved with class "
-                    + clusterIdClass + " but saved with class " + recordClass);
-            }
-          }
+          database.assignAndCheckCluster(iRecord, iClusterName);
 
           rid.clusterPosition = newObjectCounter--;
 
@@ -486,7 +469,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
           if (!(rid.isTemporary() && iStatus != ORecordOperation.CREATED)) {
             // NEW ENTRY: JUST REGISTER IT
             txEntry = new ORecordOperation(iRecord, iStatus);
-            recordEntries.put(rid, txEntry);
+            allEntries.put(rid.copy(), txEntry);
           }
         } else {
           // UPDATE PREVIOUS STATUS
@@ -515,7 +498,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
           case ORecordOperation.CREATED:
             switch (iStatus) {
             case ORecordOperation.DELETED:
-              recordEntries.remove(rid);
+              allEntries.remove(rid);
               // txEntry.type = ORecordOperation.DELETED;
               break;
             }
@@ -579,7 +562,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
     status = TXSTATUS.COMMITTING;
 
-    if (!recordEntries.isEmpty() || !indexEntries.isEmpty()) {
+    if (!allEntries.isEmpty() || !indexEntries.isEmpty()) {
       if (OScenarioThreadLocal.INSTANCE.get() != RUN_MODE.RUNNING_DISTRIBUTED
           && !(database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage))
         database.getStorage().commit(this, null);

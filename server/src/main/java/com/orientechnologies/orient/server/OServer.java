@@ -72,12 +72,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.security.SecureRandom;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.locks.ReentrantLock;
@@ -100,7 +96,7 @@ public class OServer {
   protected OConfigurableHooksManager                      hookManager;
   protected ODistributedServerManager                      distributedManager;
   private OPartitionedDatabasePoolFactory                  dbPoolFactory;
-  private Random                                           random                 = new Random();
+  private SecureRandom                                     random                 = new SecureRandom();
   private Map<String, Object>                              variables              = new HashMap<String, Object>();
   private String                                           serverRootDirectory;
   private String                                           databaseDirectory;
@@ -169,9 +165,12 @@ public class OServer {
 
   public void restart() throws ClassNotFoundException, InvocationTargetException, InstantiationException, NoSuchMethodException,
       IllegalAccessException {
-    shutdown();
-    startup(serverCfg.getConfiguration());
-    activate();
+    try {
+      shutdown();
+    } finally {
+      startup(serverCfg.getConfiguration());
+      activate();
+    }
   }
 
   /**
@@ -192,7 +191,7 @@ public class OServer {
   }
 
   /**
-   * Attempt to load a class from given class-loader.
+   * Attempt to load a class from givenstar class-loader.
    */
   /* @Nullable */
   private Class<?> tryLoadClass(/* @Nullable */final ClassLoader classLoader, final String name) {
@@ -231,20 +230,6 @@ public class OServer {
     Orient.instance().startup();
 
     startup(new File(OSystemVariableResolver.resolveSystemVariables(config)));
-
-    Orient.instance().getProfiler().registerHookValue("system.databases", "List of databases configured in Server",
-        METRIC_TYPE.TEXT, new OProfilerHookValue() {
-          @Override
-          public Object getValue() {
-            final StringBuilder dbs = new StringBuilder(64);
-            for (String dbName : getAvailableStorageNames().keySet()) {
-              if (dbs.length() > 0)
-                dbs.append(',');
-              dbs.append(dbName);
-            }
-            return dbs.toString();
-          }
-        });
 
     return this;
   }
@@ -311,6 +296,20 @@ public class OServer {
       databaseDirectory += "/";
 
     OLogManager.instance().info(this, "Databases directory: " + new File(databaseDirectory).getAbsolutePath());
+
+    Orient.instance().getProfiler().registerHookValue("system.databases", "List of databases configured in Server",
+        METRIC_TYPE.TEXT, new OProfilerHookValue() {
+          @Override
+          public Object getValue() {
+            final StringBuilder dbs = new StringBuilder(64);
+            for (String dbName : getAvailableStorageNames().keySet()) {
+              if (dbs.length() > 0)
+                dbs.append(',');
+              dbs.append(dbName);
+            }
+            return dbs.toString();
+          }
+        });
 
     return this;
   }
@@ -475,6 +474,17 @@ public class OServer {
 
     final String dbName = Orient.isRegisterDatabaseByPath() ? getDatabaseDirectory() + name : name;
     final String dbPath = Orient.isRegisterDatabaseByPath() ? dbName : getDatabaseDirectory() + name;
+
+    if (dbPath.contains(".."))
+      throw new IllegalArgumentException("Storage path is invalid because contains '..'");
+
+    if (dbPath.contains("*"))
+      throw new IllegalArgumentException("Storage path is invalid because the wildcard '*'");
+
+    if (dbPath.startsWith("/")) {
+      if (!dbPath.startsWith(getDatabaseDirectory()))
+        throw new IllegalArgumentException("Storage path is invalid because points to an absolute directory");
+    }
 
     final OStorage stg = Orient.instance().getStorage(dbName);
     if (stg != null)
@@ -760,12 +770,16 @@ public class OServer {
   }
 
   public void addUser(final String iName, String iPassword, final String iPermissions) throws IOException {
-    if (iPassword == null)
+    if (iPassword == null) {
       // AUTO GENERATE PASSWORD
-      iPassword = OSecurityManager.instance().createSHA256(String.valueOf(random.nextLong()));
+      final byte[] buffer = new byte[32];
+      random.nextBytes(buffer);
+      iPassword = OSecurityManager.instance().createSHA256(OSecurityManager.byteArrayToHexStr(buffer));
+    }
 
     // HASH THE PASSWORD
-    iPassword = OSecurityManager.instance().createHash(iPassword, OSecurityManager.PBKDF2_ALGORITHM, true);
+    iPassword = OSecurityManager.instance().createHash(iPassword,
+        getContextConfiguration().getValueAsString(OGlobalConfiguration.SECURITY_USER_PASSWORD_DEFAULT_ALGORITHM), true);
 
     serverCfg.setUser(iName, iPassword, iPermissions);
     serverCfg.saveConfiguration();

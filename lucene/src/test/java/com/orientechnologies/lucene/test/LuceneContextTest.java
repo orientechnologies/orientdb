@@ -25,10 +25,10 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.InputStream;
 import java.util.List;
@@ -36,9 +36,9 @@ import java.util.List;
 /**
  * Created by enricorisa on 08/10/14.
  */
-@Test(groups = "embedded")
 public class LuceneContextTest extends BaseLuceneTest {
 
+  @Test
   public void testContext() {
     InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql");
 
@@ -67,7 +67,7 @@ public class LuceneContextTest extends BaseLuceneTest {
 
   }
 
-  @BeforeClass
+  @Before
   public void init() {
     initDB();
     OSchema schema = databaseDocumentTx.getMetadata().getSchema();
@@ -82,7 +82,7 @@ public class LuceneContextTest extends BaseLuceneTest {
 
   }
 
-  @AfterClass
+  @After
   public void deInit() {
     deInitDB();
   }

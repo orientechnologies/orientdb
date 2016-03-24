@@ -27,7 +27,7 @@
 This document contains the last changes of OrientDB Community Edition.
 
 -----------------------------------------------------------------------------------------------------------------------------------
-VERSION 2.2.0-beta - (December, 14 2015)
+VERSION 2.2.0-beta - (February, 18 2016)
 
 CHANGELOG:
 - Core

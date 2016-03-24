@@ -166,8 +166,18 @@ public abstract class OClassAbstractDelegate implements OClass {
   }
 
   @Override
+  public OProperty createProperty(String iPropertyName, OType iType, OClass iLinkedClass, boolean unsafe) {
+    return delegate.createProperty(iPropertyName, iType, iLinkedClass, unsafe);
+  }
+
+  @Override
   public OProperty createProperty(final String iPropertyName, final OType iType, final OType iLinkedType) {
     return delegate.createProperty(iPropertyName, iType, iLinkedType);
+  }
+
+  @Override
+  public OProperty createProperty(String iPropertyName, OType iType, OType iLinkedType, boolean unsafe) {
+    return delegate.createProperty(iPropertyName, iType, iLinkedType, unsafe);
   }
 
   @Override
@@ -226,6 +236,16 @@ public abstract class OClassAbstractDelegate implements OClass {
   @Override
   public OClass addCluster(final String iClusterName) {
     delegate.addCluster(iClusterName);
+    return this;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public OClass truncateCluster(String clusterName) {
+    delegate.truncateCluster(clusterName);
+
     return this;
   }
 

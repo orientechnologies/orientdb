@@ -288,7 +288,17 @@ public class OImmutableClass implements OClass {
   }
 
   @Override
+  public OProperty createProperty(String iPropertyName, OType iType, OClass iLinkedClass, boolean unsafe) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public OProperty createProperty(String iPropertyName, OType iType, OType iLinkedType) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public OProperty createProperty(String iPropertyName, OType iType, OType iLinkedType, boolean unsafe) {
     throw new UnsupportedOperationException();
   }
 
@@ -353,6 +363,11 @@ public class OImmutableClass implements OClass {
 
   @Override
   public OClass addCluster(String iClusterName) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public OClass truncateCluster(String clusterName) {
     throw new UnsupportedOperationException();
   }
 

@@ -437,7 +437,14 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
 
       if (!dirtyFields.isEmpty()) {
         for (final OIndex<?> index : indexes) {
-          processIndexUpdate(iDocument, dirtyFields, index);
+          try {
+            processIndexUpdate(iDocument, dirtyFields, index);
+          } catch (ORecordDuplicatedException ex) {
+            iDocument.undo();
+            iDocument.setDirty();
+            database.save(iDocument);
+            throw ex;
+          }
         }
       }
     }

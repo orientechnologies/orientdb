@@ -10,13 +10,13 @@ import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OStoragePerformanceStatistic;
+import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 
 import java.util.Map;
 
 public class OProfileStorageStatement extends OStatement {
 
-  protected boolean          on;
+  protected boolean on;
 
   public static final String KEYWORD_PROFILE = "PROFILE";
 
@@ -42,9 +42,17 @@ public class OProfileStorageStatement extends OStatement {
         request.getResultListener().result(result);
       } else {
         // stop the profiler and return the stats
-        final OStoragePerformanceStatistic performanceStatistic = ((OAbstractPaginatedStorage) storage)
+        final OSessionStoragePerformanceStatistic performanceStatistic = ((OAbstractPaginatedStorage) storage)
             .completeGatheringPerformanceStatisticForCurrentThread();
-        request.getResultListener().result(performanceStatistic.toDocument());
+
+        if (performanceStatistic != null)
+          request.getResultListener().result(performanceStatistic.toDocument());
+        else {
+          ODocument result = new ODocument();
+          result.field("result", "Error: profiling of storage was not started.");
+          request.getResultListener().result(result);
+        }
+
       }
       return getResult(request);
     } finally {

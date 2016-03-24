@@ -32,22 +32,23 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.OBinaryField;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
-import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodField;
 import com.orientechnologies.orient.core.sql.method.OSQLMethodRuntime;
+import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodField;
 
 import java.util.Set;
 
 /**
  * Represent an object field as value in the query condition.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 public class OSQLFilterItemField extends OSQLFilterItemAbstract {
+
   protected Set<String> preLoadedFields;
   protected String[]    preLoadedFieldsArray;
   protected String      name;
   protected OCollate    collate;
+  private   boolean     collatePreset = false;
 
   /**
    * Represents filter item as chain of fields. Provide interface to work with this chain like with sequence of field names.
@@ -74,7 +75,7 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
 
     /**
      * Field chain is considered as long chain if it contains more than one item.
-     * 
+     *
      * @return true if this chain is long and false in another case.
      */
     public boolean isLong() {
@@ -89,11 +90,17 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
   public OSQLFilterItemField(final String iName, final OClass iClass) {
     this.name = OIOUtils.getStringContent(iName);
     collate = getCollateForField(iClass, name);
+    if (iClass != null) {
+      collatePreset = true;
+    }
   }
 
   public OSQLFilterItemField(final OBaseParser iQueryToParse, final String iName, final OClass iClass) {
     super(iQueryToParse, iName);
     collate = getCollateForField(iClass, iName);
+    if (iClass != null) {
+      collatePreset = true;
+    }
   }
 
   public Object getValue(final OIdentifiable iRecord, final Object iCurrentResult, final OCommandContext iContext) {
@@ -113,6 +120,14 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
       return null;
 
     final Object v = doc.rawField(name);
+
+    if (!collatePreset && doc != null) {
+      OClass schemaClass = doc.getSchemaClass();
+      if(schemaClass!=null) {
+        collate = getCollateForField(schemaClass, name);
+      }
+    }
+
     return transformValue(iRecord, iContext, v);
   }
 
@@ -142,7 +157,7 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
    * Check whether or not this filter item is chain of fields (e.g. "field1.field2.field3"). Return true if filter item contains
    * only field projections operators, if field item contains any other projection operator the method returns false. When filter
    * item does not contains any chain operator, it is also field chain consist of one field.
-   * 
+   *
    * @return whether or not this filter item can be represented as chain of fields.
    */
   public boolean isFieldChain() {
@@ -161,10 +176,9 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
 
   /**
    * Creates {@code FieldChain} in case when filter item can have such representation.
-   * 
+   *
    * @return {@code FieldChain} representation of this filter item.
-   * @throws IllegalStateException
-   *           if this filter item cannot be represented as {@code FieldChain}.
+   * @throws IllegalStateException if this filter item cannot be represented as {@code FieldChain}.
    */
   public FieldChain getFieldChain() {
     if (!isFieldChain()) {

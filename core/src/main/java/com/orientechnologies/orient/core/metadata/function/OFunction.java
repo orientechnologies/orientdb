@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.command.script.OCommandExecutorScript;
 import com.orientechnologies.orient.core.command.script.OCommandFunction;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.exception.ORetryQueryException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -38,9 +39,8 @@ import java.util.Map;
 /**
  * Stored function. It contains language and code to execute as a function. The execute() takes parameters. The function is
  * state-less, so can be used by different threads.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 public class OFunction extends ODocumentWrapper {
   public static final String CLASS_NAME = "OFunction";
@@ -55,9 +55,8 @@ public class OFunction extends ODocumentWrapper {
 
   /**
    * Creates a new function wrapping the saved document.
-   * 
-   * @param iDocument
-   *          Document to assign
+   *
+   * @param iDocument Document to assign
    */
   public OFunction(final ODocument iDocument) {
     super(iDocument);
@@ -65,9 +64,8 @@ public class OFunction extends ODocumentWrapper {
 
   /**
    * Loads a function.
-   * 
-   * @param iRid
-   *          RID of the function to load
+   *
+   * @param iRid RID of the function to load
    */
   public OFunction(final ORecordId iRid) {
     super(iRid);
@@ -169,16 +167,21 @@ public class OFunction extends ODocumentWrapper {
   public Object execute(final Map<Object, Object> iArgs) {
     final long start = Orient.instance().getProfiler().startChrono();
 
-    final OCommandExecutorScript command = new OCommandExecutorScript();
-    command.parse(new OCommandScript(getLanguage(), getCode()));
-    final Object result = command.execute(iArgs);
+    Object result;
+    while (true) {
+      try {
+        final OCommandExecutorScript command = new OCommandExecutorScript();
+        command.parse(new OCommandScript(getLanguage(), getCode()));
+        result = command.execute(iArgs);
+        break;
+      } catch (ORetryQueryException e) {
+        continue;
+      }
+    }
 
     if (Orient.instance().getProfiler().isRecording())
-      Orient
-          .instance()
-          .getProfiler()
-          .stopChrono("db." + ODatabaseRecordThreadLocal.INSTANCE.get().getName() + ".function.execute",
-              "Time to execute a function", start, "db.*.function.execute");
+      Orient.instance().getProfiler().stopChrono("db." + ODatabaseRecordThreadLocal.INSTANCE.get().getName() + ".function.execute",
+          "Time to execute a function", start, "db.*.function.execute");
 
     return result;
   }

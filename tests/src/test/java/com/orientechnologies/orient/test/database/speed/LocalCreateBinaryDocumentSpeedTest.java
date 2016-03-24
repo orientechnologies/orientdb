@@ -15,14 +15,14 @@
  */
 package com.orientechnologies.orient.test.database.speed;
 
+import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OStoragePerformanceStatistic;
+import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
@@ -33,7 +33,7 @@ import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
 public class LocalCreateBinaryDocumentSpeedTest extends OrientMonoThreadTest {
   private static final int PAYLOAD_SIZE = 2000;
   private ODatabaseDocumentInternal database;
-  private ORecordBytes              record;
+  private OBlob                     record;
   private byte[]                    payload;
 
   public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
@@ -79,10 +79,9 @@ public class LocalCreateBinaryDocumentSpeedTest extends OrientMonoThreadTest {
     if (data.getCyclesDone() == data.getCycles() - 1)
       database.commit();
 
-    final OStoragePerformanceStatistic performanceStatistic = ((OAbstractPaginatedStorage) storage)
+    OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = ((OAbstractPaginatedStorage) storage)
         .completeGatheringPerformanceStatisticForCurrentThread();
-
-    System.out.println(performanceStatistic.toDocument().toJSON(""));
+    System.out.println(sessionStoragePerformanceStatistic.toDocument().toJSON(""));
   }
 
   @Override

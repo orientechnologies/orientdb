@@ -36,41 +36,35 @@
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-graphdb</artifactId>
             <version>${project.version}</version>
         </dependency>
-
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-object</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-tools</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-server</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-test-commons</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-core</artifactId>
@@ -78,12 +72,30 @@
             <type>jar</type>
             <scope>compile</scope>
         </dependency>
-
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-core</artifactId>
             <version>${project.version}</version>
             <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.tinkerpop.rexster</groupId>
+            <artifactId>rexster-core</artifactId>
+            <version>${blueprints.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.tinkerpop.gremlin</groupId>
+            <artifactId>gremlin-java</artifactId>
+            <version>${blueprints.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.tinkerpop.gremlin</groupId>
+            <artifactId>gremlin-groovy</artifactId>
+            <version>${blueprints.version}</version>
             <scope>test</scope>
         </dependency>
 
@@ -122,7 +134,7 @@
                         <storage.diskCache.bufferSize>4096</storage.diskCache.bufferSize>
                         <memory.directMemory.trackMode>true</memory.directMemory.trackMode>
                     </systemPropertyVariables>
-                    <argLine>-Xmx3072m</argLine>
+                    <argLine>-Xmx3072m -XX:MaxDirectMemorySize=512g</argLine>
                 </configuration>
                 <executions>
                     <execution>

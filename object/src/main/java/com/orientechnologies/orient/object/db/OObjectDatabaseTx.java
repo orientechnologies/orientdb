@@ -66,11 +66,7 @@ import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper
 import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyObject;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Object Database instance. It's a wrapper to the class ODatabaseDocumentTx that handles conversion between ODocument instances and
@@ -617,9 +613,9 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object>implements O
     if (!underlying.getTransaction().isActive()) {
       // COPY ALL TX ENTRIES
       final List<ORecordOperation> newEntries;
-      if (getTransaction().getCurrentRecordEntries() != null) {
+      if (getTransaction().getAllRecordEntries() != null) {
         newEntries = new ArrayList<ORecordOperation>();
-        for (ORecordOperation entry : getTransaction().getCurrentRecordEntries())
+        for (ORecordOperation entry : getTransaction().getAllRecordEntries())
           if (entry.type == ORecordOperation.CREATED)
             newEntries.add(entry);
       } else
@@ -849,7 +845,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object>implements O
 
   protected void init() {
     entityManager = OEntityManager.getEntityManagerByDatabaseURL(getURL());
-    entityManager.setClassHandler(OObjectEntityClassHandler.getInstance());
+    entityManager.setClassHandler(OObjectEntityClassHandler.getInstance(getURL()));
     saveOnlyDirty = OGlobalConfiguration.OBJECT_SAVE_ONLY_DIRTY.getValueAsBoolean();
     OObjectSerializerHelper.register();
     lazyLoading = true;
@@ -863,7 +859,8 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object>implements O
     for (ORID orphan : handler.getOrphans()) {
       final ODocument doc = orphan.getRecord();
       deleteCascade(doc);
-      underlying.delete(doc);
+      if (doc != null)
+        underlying.delete(doc);
     }
     handler.getOrphans().clear();
   }
@@ -890,5 +887,15 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object>implements O
 
     }
     return false;
+  }
+
+  @Override
+  public int addBlobCluster(String iClusterName, Object... iParameters) {
+    return getUnderlying().addBlobCluster(iClusterName,iParameters);
+  }
+
+  @Override
+  public Set<Integer> getBlobClusterIds() {
+    return getUnderlying().getBlobClusterIds();
   }
 }

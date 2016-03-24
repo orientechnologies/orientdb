@@ -61,14 +61,13 @@ public interface OSchema {
 
   /**
    * Returns the OClass instance by class name.
-   * 
+   * <p>
    * If the class is not configured and the database has an entity manager with the requested class as registered, then creates a
    * schema class for it at the fly.
-   * 
+   * <p>
    * If the database nor the entity manager have not registered class with specified name, returns null.
-   * 
-   * @param iClassName
-   *          Name of the class to retrieve
+   *
+   * @param iClassName Name of the class to retrieve
    * @return class instance or null if class with given name is not configured.
    */
   OClass getClass(String iClassName);
@@ -90,7 +89,7 @@ public interface OSchema {
 
   /**
    * Do nothing. Starting from 1.0rc2 the schema is auto saved!
-   * 
+   *
    * @COMPATIBILITY 1.0rc1
    */
   @Deprecated
@@ -98,9 +97,8 @@ public interface OSchema {
 
   /**
    * Returns all the classes that rely on a cluster
-   * 
-   * @param iClusterName
-   *          Cluster name
+   *
+   * @param iClusterName Cluster name
    */
   Set<OClass> getClassesRelyOnCluster(String iClusterName);
 
@@ -117,14 +115,4 @@ public interface OSchema {
   OClusterSelectionFactory getClusterSelectionFactory();
 
   OImmutableSchema makeSnapshot();
-
-  /**
-   * IMPORTANT! Only for internal usage.
-   */
-  boolean isFullCheckpointOnChange();
-
-  /**
-   * IMPORTANT! Only for internal usage.
-   */
-  void setFullCheckpointOnChange(boolean fullCheckpointOnChange);
 }

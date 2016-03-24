@@ -39,16 +39,13 @@ public class OETLStubLoader extends OAbstractLoader {
   }
 
   @Override
-  public void load(Object input, OCommandContext context) {
+  public void load(OETLPipeline pipeline, Object input, OCommandContext context) {
     synchronized (loadedRecords) {
       loadedRecords.add((ODocument) input);
+      progress.incrementAndGet();
     }
   }
 
-  @Override
-  public long getProgress() {
-    return loadedRecords.size();
-  }
 
   @Override
   public String getUnit() {
@@ -56,7 +53,7 @@ public class OETLStubLoader extends OAbstractLoader {
   }
 
   @Override
-  public void rollback() {
+  public void rollback(OETLPipeline pipeline) {
   }
 
   @Override

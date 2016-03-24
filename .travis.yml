@@ -3,9 +3,9 @@ language: java
 cache:
   directories:
   - $HOME/.m2
-install: mvn install -Dmaven.test.failure.ignore=true
+install: mvn clean install -Dmaven.test.failure.ignore=true
 branches:
   only:
   - develop
 jdk:
-- oraclejdk8
+  - oraclejdk8

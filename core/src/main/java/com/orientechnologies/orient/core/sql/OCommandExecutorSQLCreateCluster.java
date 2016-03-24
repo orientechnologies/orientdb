@@ -31,41 +31,60 @@ import java.util.Map;
 
 /**
  * SQL CREATE CLUSTER command: Creates a new cluster.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 @SuppressWarnings("unchecked")
 public class OCommandExecutorSQLCreateCluster extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
   public static final String KEYWORD_CREATE  = "CREATE";
+  public static final String KEYWORD_BLOB    = "BLOB";
   public static final String KEYWORD_CLUSTER = "CLUSTER";
   public static final String KEYWORD_ID      = "ID";
 
-  private String             clusterName;
-  private int                requestedId     = -1;
+  private String clusterName;
+  private int     requestedId = -1;
+  private boolean blob        = false;
 
   public OCommandExecutorSQLCreateCluster parse(final OCommandRequest iRequest) {
-    final ODatabaseDocumentInternal database = getDatabase();
+    final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
 
-    init((OCommandRequestText) iRequest);
+    String queryText = textRequest.getText();
+    String originalQuery = queryText;
+    try {
+      queryText = preParse(queryText, iRequest);
+      textRequest.setText(queryText);
 
-    parserRequiredKeyword(KEYWORD_CREATE);
-    parserRequiredKeyword(KEYWORD_CLUSTER);
+      final ODatabaseDocumentInternal database = getDatabase();
 
-    clusterName = parserRequiredWord(false);
-    if (!clusterName.isEmpty() && Character.isDigit(clusterName.charAt(0)))
-      throw new IllegalArgumentException("Cluster name cannot begin with a digit");
+      init((OCommandRequestText) iRequest);
 
-    String temp = parseOptionalWord(true);
-
-    while (temp != null) {
-      if (temp.equals(KEYWORD_ID)) {
-        requestedId = Integer.parseInt(parserRequiredWord(false));
+      parserRequiredKeyword(KEYWORD_CREATE);
+      String nextWord = parserRequiredWord(true);
+      if (nextWord.equals("BLOB")) {
+        parserRequiredKeyword(KEYWORD_CLUSTER);
+        blob = true;
+      } else if (!nextWord.equals(KEYWORD_CLUSTER)) {
+        throw new OCommandSQLParsingException("Invalid Syntax: " + queryText);
       }
 
-      temp = parseOptionalWord(true);
-      if (parserIsEnded())
-        break;
+      clusterName = parserRequiredWord(false);
+      if (!clusterName.isEmpty() && Character.isDigit(clusterName.charAt(0)))
+        throw new IllegalArgumentException("Cluster name cannot begin with a digit");
+
+      String temp = parseOptionalWord(true);
+
+      while (temp != null) {
+        if (temp.equals(KEYWORD_ID)) {
+          requestedId = Integer.parseInt(parserRequiredWord(false));
+        }
+
+        temp = parseOptionalWord(true);
+        if (parserIsEnded())
+          break;
+      }
+
+    } finally {
+      textRequest.setText(originalQuery);
     }
 
     return this;
@@ -94,10 +113,18 @@ public class OCommandExecutorSQLCreateCluster extends OCommandExecutorSQLAbstrac
     if (clusterId > -1)
       throw new OCommandSQLParsingException("Cluster '" + clusterName + "' already exists");
 
-    if (requestedId == -1) {
-      return database.addCluster(clusterName);
+    if (blob) {
+      if (requestedId == -1) {
+        return database.addBlobCluster(clusterName);
+      } else {
+        throw new OCommandExecutionException("Request id not supported by blob cluster creation.");
+      }
     } else {
-      return database.addCluster(clusterName, requestedId, null);
+      if (requestedId == -1) {
+        return database.addCluster(clusterName);
+      } else {
+        return database.addCluster(clusterName, requestedId, null);
+      }
     }
   }
 

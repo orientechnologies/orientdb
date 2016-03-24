@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OL
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
+import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.Map;
@@ -80,15 +81,18 @@ public class OSBTreeCollectionManagerRemote extends OSBTreeCollectionManagerAbst
   }
 
   @Override
-  protected OSBTreeBonsaiRemote<OIdentifiable, Integer> createTree(int clusterId) {
+  protected OSBTreeBonsaiRemote<OIdentifiable, Integer> createTree(final int clusterId) {
     if (remoteCreationAllowed) {
-      OStorageRemote storage = (OStorageRemote) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying();
-      OChannelBinaryAsynchClient client = null;
-      while (true) {
-        try {
-          client = storage.beginRequest(OChannelBinaryProtocol.REQUEST_CREATE_SBTREE_BONSAI);
-          client.writeInt(clusterId);
-          storage.endRequest(client);
+      final OStorageRemote storage = (OStorageRemote) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying();
+      return storage.networkOperation(new OStorageRemoteOperation<OSBTreeBonsaiRemote<OIdentifiable, Integer>>() {
+        @Override
+        public OSBTreeBonsaiRemote<OIdentifiable, Integer> execute(final OChannelBinaryAsynchClient client) throws IOException {
+          try {
+            storage.beginRequest(client, OChannelBinaryProtocol.REQUEST_CREATE_SBTREE_BONSAI);
+            client.writeInt(clusterId);
+          }finally {
+            storage.endRequest(client);
+          }
           OBonsaiCollectionPointer pointer;
           try {
             storage.beginResponse(client);
@@ -101,10 +105,8 @@ public class OSBTreeCollectionManagerRemote extends OSBTreeCollectionManagerAbst
           OBinarySerializer<Integer> valueSerializer = OIntegerSerializer.INSTANCE;
 
           return new OSBTreeBonsaiRemote<OIdentifiable, Integer>(pointer, keySerializer, valueSerializer);
-        } catch (Exception e2) {
-          storage.handleException(client, "Cannot create sb-tree bonsai", e2);
         }
-      }
+      },"Cannot create sb-tree bonsai");
     } else {
       throw new UnsupportedOperationException("Creation of SB-Tree from remote storage is not allowed");
     }

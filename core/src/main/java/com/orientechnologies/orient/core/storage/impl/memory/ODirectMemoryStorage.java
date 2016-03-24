@@ -104,7 +104,7 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
-  protected boolean isWritesAllowedDuringBackup() {
+  protected boolean isWriteAllowedDuringIncrementalBackup() {
     return false;
   }
 

@@ -40,7 +40,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeMapProvider;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -323,7 +322,6 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
       writer.writeAttribute(2, true, "engine-build", engineBuild);
     writer.writeAttribute(2, true, "storage-config-version", OStorageConfiguration.CURRENT_VERSION);
     writer.writeAttribute(2, true, "schema-version", OSchemaShared.CURRENT_VERSION_NUMBER);
-    writer.writeAttribute(2, true, "mvrbtree-version", OMVRBTreeMapProvider.CURRENT_PROTOCOL_VERSION);
     writer.writeAttribute(2, true, "schemaRecordId", database.getStorage().getConfiguration().schemaRecordId);
     writer.writeAttribute(2, true, "indexMgrRecordId", database.getStorage().getConfiguration().indexMgrRecordId);
     writer.endObject(1, true);
@@ -470,7 +468,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     writer.beginObject(1, true, "schema");
     OSchema s = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot();
     writer.writeAttribute(2, true, "version", s.getVersion());
-
+    writer.writeAttribute(2, false, "blob-clusters", database.getBlobClusterIds());
     if (!s.getClasses().isEmpty()) {
       writer.beginCollection(2, true, "classes");
 
@@ -480,10 +478,10 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
       for (OClass cls : classes) {
         // CHECK TO FILTER CLASS
         if (includeClasses != null) {
-          if (!includeClasses.contains(cls.getName()))
+          if (!includeClasses.contains(cls.getName().toUpperCase()))
             continue;
         } else if (excludeClasses != null) {
-          if (excludeClasses.contains(cls.getName()))
+          if (excludeClasses.contains(cls.getName().toUpperCase()))
             continue;
         }
 
@@ -529,6 +527,8 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
               writer.writeAttribute(0, false, "max", p.getMax());
             if (p.getCollate() != null)
               writer.writeAttribute(0, false, "collate", p.getCollate().getName());
+            if (p.getDefaultValue() != null)
+              writer.writeAttribute(0, false, "default-value", p.getDefaultValue());
 
             final Set<String> customKeys = p.getCustomKeys();
             final Map<String, String> custom = new HashMap<String, String>();

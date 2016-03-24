@@ -49,7 +49,7 @@ public class OServerCommandPostKillDbConnection extends OServerCommandAuthentica
         final OHttpRequest req = http.getRequest();
 
         if (req != null && req != iRequest && req.sessionId.equals(iRequest.sessionId)) {
-          server.getClientConnectionManager().interrupt(connection.id);
+          server.getClientConnectionManager().interrupt(connection.getId());
         }
       }
     }

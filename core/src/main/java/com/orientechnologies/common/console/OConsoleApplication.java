@@ -197,7 +197,10 @@ public class OConsoleApplication {
   }
 
   protected boolean executeBatch(final String commandLine) {
-    final File commandFile = new File(commandLine);
+    File commandFile = new File(commandLine);
+    if(!commandFile.isAbsolute()){
+      commandFile = new File(new File("."), commandLine);
+    }
 
     OCommandStream scanner;
     try {
@@ -499,7 +502,7 @@ public class OConsoleApplication {
 
   protected void syntaxError(String iCommand, Method m) {
     error(
-        "\n!Wrong syntax. If you're runnin in batch mode make sure all commands are delimited by semicolon (;) or a linefeed (\\n). Expected: \n\r\n\r%s",
+        "\n!Wrong syntax. If you're running in batch mode make sure all commands are delimited by semicolon (;) or a linefeed (\\n). Expected: \n\r\n\r%s",
         formatCommandSpecs(iCommand, m));
   }
 

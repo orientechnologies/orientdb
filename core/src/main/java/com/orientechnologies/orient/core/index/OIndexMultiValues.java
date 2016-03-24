@@ -19,6 +19,16 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -29,19 +39,8 @@ import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContai
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerListRID;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerSBTreeIndexRIDContainer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
 
 /**
  * Abstract index implementation that supports multi-values for the same key.
@@ -56,8 +55,6 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
   }
 
   public Set<OIdentifiable> get(Object key) {
-    checkForRebuild();
-
     key = getCollatingValue(key);
 
     final ODatabase database = getDatabase();
@@ -87,8 +84,6 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
   }
 
   public long count(Object key) {
-    checkForRebuild();
-
     key = getCollatingValue(key);
 
     final ODatabase database = getDatabase();
@@ -117,8 +112,6 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
   }
 
   public OIndexMultiValues put(Object key, final OIdentifiable singleValue) {
-    checkForRebuild();
-
     key = getCollatingValue(key);
 
     final ODatabase database = getDatabase();
@@ -177,8 +170,6 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
   @Override
   public boolean remove(Object key, final OIdentifiable value) {
-    checkForRebuild();
-
     key = getCollatingValue(key);
 
     final ODatabase database = getDatabase();
@@ -222,18 +213,12 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
   }
 
   protected OBinarySerializer determineValueSerializer() {
-    if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm))
-      return storage.getComponentsFactory().binarySerializerFactory
-          .getObjectSerializer(OStreamSerializerSBTreeIndexRIDContainer.ID);
-    else
-      return OStreamSerializerListRID.INSTANCE;
+    return storage.getComponentsFactory().binarySerializerFactory.getObjectSerializer(OStreamSerializerSBTreeIndexRIDContainer.ID);
   }
 
   @Override
   public OIndexCursor iterateEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
       boolean ascOrder) {
-    checkForRebuild();
-
     fromKey = getCollatingValue(fromKey);
     toKey = getCollatingValue(toKey);
 
@@ -248,8 +233,6 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
   @Override
   public OIndexCursor iterateEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder) {
-    checkForRebuild();
-
     fromKey = getCollatingValue(fromKey);
 
     acquireSharedLock();
@@ -263,8 +246,6 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
   @Override
   public OIndexCursor iterateEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder) {
-    checkForRebuild();
-
     toKey = getCollatingValue(toKey);
 
     acquireSharedLock();
@@ -277,8 +258,6 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
   @Override
   public OIndexCursor iterateEntries(Collection<?> keys, boolean ascSortOrder) {
-    checkForRebuild();
-
     final List<Object> sortedKeys = new ArrayList<Object>(keys);
     final Comparator<Object> comparator;
     if (ascSortOrder)
@@ -289,10 +268,10 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     Collections.sort(sortedKeys, comparator);
 
     return new OIndexAbstractCursor() {
-      private Iterator<?>             keysIterator    = sortedKeys.iterator();
+      private Iterator<?> keysIterator = sortedKeys.iterator();
 
       private Iterator<OIdentifiable> currentIterator = OEmptyIterator.IDENTIFIABLE_INSTANCE;
-      private Object                  currentKey;
+      private Object currentKey;
 
       @Override
       public Map.Entry<Object, OIdentifiable> nextEntry() {
@@ -346,7 +325,6 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
   }
 
   public long getSize() {
-    checkForRebuild();
     acquireSharedLock();
     try {
       return storage.getIndexSize(indexId, MultiValuesTransformer.INSTANCE);
@@ -357,7 +335,6 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
   }
 
   public long getKeySize() {
-    checkForRebuild();
     acquireSharedLock();
     try {
       return storage.getIndexSize(indexId, null);
@@ -368,8 +345,6 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
   @Override
   public OIndexCursor cursor() {
-    checkForRebuild();
-
     acquireSharedLock();
     try {
       return storage.getIndexCursor(indexId, MultiValuesTransformer.INSTANCE);
@@ -380,8 +355,6 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
   @Override
   public OIndexCursor descCursor() {
-    checkForRebuild();
-
     acquireSharedLock();
     try {
       return storage.getIndexDescCursor(indexId, MultiValuesTransformer.INSTANCE);

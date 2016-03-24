@@ -48,16 +48,15 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordStringable;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
-import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+import com.orientechnologies.orient.core.record.impl.*;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.util.ODateHelper;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.StringWriter;
 import java.text.ParseException;
 import java.util.Collection;
@@ -243,7 +242,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
             // RECORD VALUE(S)
             if ("null".equals(fieldValue))
               iRecord.fromStream(OCommonConst.EMPTY_BYTE_ARRAY);
-            else if (iRecord instanceof ORecordBytes) {
+            else if (iRecord instanceof OBlob) {
               // BYTES
               iRecord.fromStream(OBase64Utils.decode(fieldValueAsString));
             } else if (iRecord instanceof ORecordStringable) {
@@ -327,8 +326,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
   @Override
   public StringBuilder toString(final ORecord iRecord, final StringBuilder iOutput, final String iFormat,
-      final OUserObject2RecordHandler iObjHandler, final Map<ODocument, Boolean> iMarshalledRecords, boolean iOnlyDelta,
-      boolean autoDetectCollectionType) {
+      final OUserObject2RecordHandler iObjHandler, boolean iOnlyDelta, boolean autoDetectCollectionType) {
     try {
       final StringWriter buffer = new StringWriter(INITIAL_SIZE);
       final OJSONWriter json = new OJSONWriter(buffer, iFormat);
@@ -349,9 +347,9 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         final ORecordStringable record = (ORecordStringable) iRecord;
         json.writeAttribute(settings.indentLevel, true, "value", record.value());
 
-      } else if (iRecord instanceof ORecordBytes) {
+      } else if (iRecord instanceof OBlob) {
         // BYTES
-        final ORecordBytes record = (ORecordBytes) iRecord;
+        final OBlob record = (OBlob) iRecord;
         json.writeAttribute(settings.indentLevel, true, "value", OBase64Utils.encodeBytes(record.toStream()));
       } else
 
@@ -541,6 +539,17 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         }
       case BINARY:
         return OStringSerializerHelper.fieldTypeFromStream(iRecord, iType, iFieldValueAsString);
+      case CUSTOM: {
+        try {
+          ByteArrayInputStream bais = new ByteArrayInputStream(OBase64Utils.decode(iFieldValueAsString));
+          ObjectInputStream input = new ObjectInputStream(bais);
+          return input.readObject();
+        } catch (IOException e) {
+          throw OException.wrapException(new OSerializationException("Error on custom field deserialization"), e);
+        } catch (ClassNotFoundException e) {
+          throw OException.wrapException(new OSerializationException("Error on custom field deserialization"), e);
+        }
+      }
       default:
         return OStringSerializerHelper.fieldTypeFromStream(iRecord, iType, iFieldValue);
       }

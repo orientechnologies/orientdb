@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
 import com.orientechnologies.orient.core.sql.parser.OStatementCache;
@@ -238,9 +239,16 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
       } catch (Exception e) {
         throwParsingException("Error parsing query: \n" + queryText + "\n" + e.getMessage(), e);
       }
-
+      OClass clazz = getDatabase().getMetadata().getSchema().getClass("Foo");
+      clazz.setCustom("schemaVersion", "1");
+      String version = clazz.getCustom("schemaVersion");
     }
     return queryText;
   }
+
+  protected String decodeClassName(String s) {
+    return OClassImpl.decodeClassName(s);
+  }
+
 
 }

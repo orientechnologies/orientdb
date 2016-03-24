@@ -34,9 +34,15 @@
     <properties>
         <surefire.version>2.18.1</surefire.version>
         <orientdb.version>${project.version}</orientdb.version>
-        <lucene.version>5.3.1</lucene.version>
+        <lucene.version>5.4.0</lucene.version>
         <geotools.version>13.2</geotools.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <argLine>-ea -XX:MaxDirectMemorySize=512g -Xmx2048m -Dstorage.diskCache.bufferSize=4096 -Dindex.flushAfterCreate=false
+            -Dstorage.makeFullCheckpointAfterCreate=false
+            -Dstorage.makeFullCheckpointAfterClusterCreate=false -Dstorage.wal.syncOnPageFlush=false
+            -Dstorage.configuration.syncOnUpdate=false
+        </argLine>
+
     </properties>
 
     <name>OrientDB Lucene full text index</name>
@@ -64,20 +70,13 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-
-                <configuration>
-                    <useFile>false</useFile>
-                    <argLine>-ea -Xmx2048m -Dstorage.diskCache.bufferSize=4096 -Dindex.flushAfterCreate=false
-                        -Dstorage.makeFullCheckpointAfterCreate=false
-                        -Dstorage.makeFullCheckpointAfterClusterCreate=false -Dstorage.wal.syncOnPageFlush=false
-                        -Dstorage.configuration.syncOnUpdate=false
-                    </argLine>
-
-                    <groups>embedded</groups>
-                    <systemPropertyVariables>
-                        <buildDirectory>${project.build.directory}</buildDirectory>
-                    </systemPropertyVariables>
-                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.apache.maven.surefire</groupId>
+                        <artifactId>surefire-junit47</artifactId>
+                        <version>${surefire.version}</version>
+                    </dependency>
+                </dependencies>
             </plugin>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
@@ -143,12 +142,7 @@
             <version>${orientdb.version}</version>
             <scope>compile</scope>
         </dependency>
-        <dependency>
-            <groupId>com.orientechnologies</groupId>
-            <artifactId>orientdb-enterprise</artifactId>
-            <version>${orientdb.version}</version>
-            <scope>compile</scope>
-        </dependency>
+
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-server</artifactId>

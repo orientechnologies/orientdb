@@ -1,5 +1,6 @@
 package com.orientechnologies.common.exception;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OApi;
 import com.orientechnologies.orient.core.exception.OBackupInProgressException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
@@ -55,15 +56,24 @@ public enum OErrorCode {
   public void throwException(String message, Throwable parent) {
     final String fullMessage = String.format("%1$06d_%2$06d - %s", category.code, code, message);
     try {
-      throw exceptionClass.getConstructor(String.class, Exception.class).newInstance(fullMessage, parent);
+      OException exc = OException.wrapException(exceptionClass.getConstructor(String.class).newInstance(message), parent);
+      throw exc;
     } catch (InstantiationException e) {
+      OLogManager.instance().warn(this, "Cannot instantiate exception "+exceptionClass);
       e.printStackTrace();
+      parent.printStackTrace();
     } catch (IllegalAccessException e) {
+      OLogManager.instance().warn(this, "Cannot instantiate exception "+exceptionClass);
       e.printStackTrace();
+      parent.printStackTrace();
     } catch (NoSuchMethodException e) {
+      OLogManager.instance().warn(this, "Cannot instantiate exception "+exceptionClass);
       e.printStackTrace();
+      parent.printStackTrace();
     } catch (InvocationTargetException e) {
+      OLogManager.instance().warn(this, "Cannot instantiate exception "+exceptionClass);
       e.printStackTrace();
+      parent.printStackTrace();
     }
 
   }

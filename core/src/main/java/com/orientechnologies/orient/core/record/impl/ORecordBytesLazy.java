@@ -25,9 +25,12 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
  * Extension of ORecordBytes that handle lazy serialization and converts temporary links (record id in transactions) to finals.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
+ *
+ * Depecraded since v2.2
+ *
  */
 @SuppressWarnings({ "unchecked", "serial" })
+@Deprecated
 public class ORecordBytesLazy extends ORecordBytes {
   private OSerializableStream serializableContent;
 

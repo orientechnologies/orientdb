@@ -46,6 +46,7 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
+import com.orientechnologies.orient.core.sql.parser.OUpdateStatement;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -187,14 +188,40 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
       } else if (additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE)
           || additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_LIMIT)
           || additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_LET) || additionalStatement.equals(KEYWORD_LOCK)) {
-        query = new OSQLAsynchQuery<ODocument>("select from " + subjectName + " " + additionalStatement + " "
-            + parserText.substring(parserGetCurrentPosition()), this);
+        if (this.preParsedStatement != null) {
+          Map<Object, Object> params = ((OCommandRequestText) iRequest).getParameters();
+          OUpdateStatement updateStm = (OUpdateStatement) preParsedStatement;
+          StringBuilder selectString = new StringBuilder();
+          selectString.append("select from ");
+          updateStm.target.toString(params, selectString);
+          if (updateStm.whereClause != null) {
+            selectString.append(" WHERE ");
+            updateStm.whereClause.toString(params, selectString);
+          }
+          if (updateStm.limit != null) {
+            selectString.append(" ");
+            updateStm.limit.toString(params, selectString);
+          }
+          if(updateStm.timeout!=null){
+            selectString.append(" ");
+            updateStm.timeout.toString(params, selectString);
+          }
+          if(updateStm.lockRecord) {
+            selectString.append(" LOCK RECORD");
+          }
+
+          query = new OSQLAsynchQuery<ODocument>(selectString.toString(), this);
+        } else {
+          query = new OSQLAsynchQuery<ODocument>("select from " + getSelectTarget() + " " + additionalStatement + " " + parserText
+              .substring(parserGetCurrentPosition()), this);
+        }
 
         isUpsertAllowed = (((OMetadataInternal) getDatabase().getMetadata()).getImmutableSchemaSnapshot().getClass(subjectName) != null);
       } else if (!additionalStatement.isEmpty())
         throwSyntaxErrorException("Invalid keyword " + additionalStatement);
       else
-        query = new OSQLAsynchQuery<ODocument>("select from " + subjectName, this);
+        query = new OSQLAsynchQuery<ODocument>("select from " + getSelectTarget() , this);
+
 
       if (upsertMode && !isUpsertAllowed)
         throwSyntaxErrorException("Upsert only works with class names ");
@@ -212,6 +239,13 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
 
   private boolean isUpdateEdge() {
     return updateEdge;
+  }
+
+  private String getSelectTarget() {
+    if(preParsedStatement == null){
+      return subjectName;
+    }
+    return ((OUpdateStatement)preParsedStatement).target.toString();
   }
 
   public Object execute(final Map<Object, Object> iArgs) {

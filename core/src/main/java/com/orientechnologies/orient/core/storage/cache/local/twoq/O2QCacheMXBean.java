@@ -27,10 +27,6 @@ public interface O2QCacheMXBean {
 
   int getAmSize();
 
-  double getCacheHits();
-
-  void clearCacheStatistics();
-
   long getUsedMemory();
 
   long getUsedMemoryInMB();

@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OSequenceException;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence.SEQUENCE_TYPE;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -130,7 +131,7 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
       return;
     }
 
-    final OClass sequenceClass = db.getMetadata().getSchema().createClass(OSequence.CLASS_NAME);
+    final OClassImpl sequenceClass = (OClassImpl) db.getMetadata().getSchema().createClass(OSequence.CLASS_NAME);
     OSequence.initClass(sequenceClass);
   }
 

@@ -20,6 +20,13 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
+import java.io.IOException;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
@@ -28,17 +35,14 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordOperationMetadata;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationMetadata;
 
-import java.io.IOException;
-import java.util.*;
-
 /**
  * @author Andrey Lomakin
  * @since 24.05.13
  */
 public class OAtomicUnitEndRecord extends OOperationUnitBodyRecord {
-  private boolean rollback;
+  private boolean                                  rollback;
 
-  private Map<String, OAtomicOperationMetadata<?>> atomicOperationMetadataMap = new HashMap<String, OAtomicOperationMetadata<?>>();
+  private Map<String, OAtomicOperationMetadata<?>> atomicOperationMetadataMap = new LinkedHashMap<String, OAtomicOperationMetadata<?>>();
 
   public OAtomicUnitEndRecord() {
   }
@@ -103,7 +107,7 @@ public class OAtomicUnitEndRecord extends OOperationUnitBodyRecord {
     rollback = content[offset] > 0;
     offset++;
 
-    atomicOperationMetadataMap = new HashMap<String, OAtomicOperationMetadata<?>>();
+    atomicOperationMetadataMap = new LinkedHashMap<String, OAtomicOperationMetadata<?>>();
 
     final int metadataId = content[offset];
     offset++;
@@ -124,7 +128,7 @@ public class OAtomicUnitEndRecord extends OOperationUnitBodyRecord {
       }
 
       atomicOperationMetadataMap.put(recordOperationMetadata.getKey(), recordOperationMetadata);
-    } else
+    } else if (metadataId > 0)
       throw new IllegalStateException("Invalid metadata entry id " + metadataId);
 
     return offset;

@@ -20,18 +20,18 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
-import com.orientechnologies.orient.core.record.ORecordVersionHelper;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Andrey Lomakin
@@ -54,14 +54,14 @@ public class OClusterPage extends ODurablePage {
   private static final int INDEX_ITEM_SIZE        = OIntegerSerializer.INT_SIZE + VERSION_SIZE;
   private static final int MARKED_AS_DELETED_FLAG = 1 << 16;
   private static final int POSITION_MASK          = 0xFFFF;
-  public static final int  PAGE_SIZE              = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
+  public static final  int PAGE_SIZE              = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
 
   public static final int MAX_ENTRY_SIZE = PAGE_SIZE - PAGE_INDEXES_OFFSET - INDEX_ITEM_SIZE;
 
   public static final int MAX_RECORD_SIZE = MAX_ENTRY_SIZE - 3 * OIntegerSerializer.INT_SIZE;
 
-  public OClusterPage(OCacheEntry cacheEntry, boolean newPage, OWALChangesTree changesTree) throws IOException {
-    super(cacheEntry, changesTree);
+  public OClusterPage(OCacheEntry cacheEntry, boolean newPage, OWALChanges changes) throws IOException {
+    super(cacheEntry, changes);
 
     if (newPage) {
       setLongValue(NEXT_PAGE_OFFSET, -1);

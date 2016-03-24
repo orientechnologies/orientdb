@@ -27,7 +27,10 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerHelper;
+
+import java.io.UnsupportedEncodingException;
 
 public class OStringSerializerEmbedded implements OStringSerializer {
   public static final OStringSerializerEmbedded INSTANCE = new OStringSerializerEmbedded();
@@ -42,7 +45,11 @@ public class OStringSerializerEmbedded implements OStringSerializer {
       return null;
 
     final ODocument instance = new ODocument();
-    instance.fromStream(OBinaryProtocol.string2bytes(iStream));
+    try {
+      ORecordSerializerSchemaAware2CSV.INSTANCE.fromStream(iStream.getBytes("UTF-8"), instance, null);
+    } catch (UnsupportedEncodingException e) {
+      throw OException.wrapException(new OSerializationException("Error decoding string"),e);
+    }
 
     final String className = instance.field(ODocumentSerializable.CLASS_NAME);
     if (className == null)
@@ -93,7 +100,11 @@ public class OStringSerializerEmbedded implements OStringSerializer {
       OSerializableStream stream = (OSerializableStream) iValue;
       iOutput.append(iValue.getClass().getName());
       iOutput.append(OStreamSerializerHelper.SEPARATOR);
-      iOutput.append(OBinaryProtocol.bytes2string(stream.toStream()));
+      try {
+        iOutput.append(new String(stream.toStream(),"UTF-8"));
+      } catch (UnsupportedEncodingException e) {
+        throw OException.wrapException(new OSerializationException("Error serializing embedded object"), e);
+      }
     }
 
     return iOutput;

@@ -44,14 +44,10 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
-import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
-import com.orientechnologies.orient.core.db.tool.ODatabaseExportException;
-import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
-import com.orientechnologies.orient.core.db.tool.ODatabaseImportException;
-import com.orientechnologies.orient.core.db.tool.ODatabaseRepair;
+import com.orientechnologies.orient.core.db.tool.*;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.ORetryQueryException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -63,8 +59,8 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -96,7 +92,7 @@ import java.util.*;
 import java.util.Map.Entry;
 
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutputListener, OProgressListener {
-  protected static final int DEFAULT_WIDTH = 150;
+  protected static final int    DEFAULT_WIDTH        = 150;
 
   protected ODatabaseDocumentTx currentDatabase;
   protected String              currentDatabaseName;
@@ -135,6 +131,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       }
 
       new OSignalHandler().installDefaultSignals(new SignalHandler() {
+
         public void handle(Signal signal) {
           restoreTerminal();
         }
@@ -467,6 +464,11 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       return;
     }
 
+    if(currentDatabase.getStorage().isRemote()){
+      message("\nWARNING - Transactions are not supported from console in remote, please use an sql script: \neg.\n\nscript sql\nbegin;\n<your commands here>\ncommit;\nend\n\n");
+      return;
+    }
+
     currentDatabase.begin();
     message("\nTransaction " + currentDatabase.getTransaction().getId() + " is running");
   }
@@ -480,6 +482,10 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       return;
     }
 
+    if(currentDatabase.getStorage().isRemote()){
+      message("\nWARNING - Transactions are not supported from console in remote, please use an sql script: \neg.\n\nscript sql\nbegin;\n<your commands here>\ncommit;\nend\n\n");
+      return;
+    }
     final long begin = System.currentTimeMillis();
 
     final int txId = currentDatabase.getTransaction().getId();
@@ -494,6 +500,11 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     if (!currentDatabase.getTransaction().isActive()) {
       message("\nError: no active transaction is running right now.");
+      return;
+    }
+
+    if(currentDatabase.getStorage().isRemote()){
+      message("\nWARNING - Transactions are not supported from console in remote, please use an sql script: \neg.\n\nscript sql\nbegin;\n<your commands here>\ncommit;\nend\n\n");
       return;
     }
 
@@ -575,6 +586,37 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   public void createEdge(
       @ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
     sqlCommand("create", iCommandText, "\nCreated edge '%s' in %f sec(s).\n", true);
+  }
+
+  @ConsoleCommand(description = "Switches on storage profiling for upcoming set of commands")
+  public void profileStorageOn() {
+    sqlCommand("profile", " storage on", "\nProfiling of storage is switched on.\n", false);
+  }
+
+  @ConsoleCommand(description = "Switches off storage profiling for issued set of commands and " + "returns reslut of profiling.")
+  public void profileStorageOff() {
+    final Collection<ODocument> result = (Collection<ODocument>) sqlCommand("profile", " storage off",
+        "\nProfiling of storage is switched off\n", false);
+
+    final String profilingWasNotSwitchedOn = "Can not retrieve results of profiling, probably profiling was not switched on";
+
+    if (result == null) {
+      message(profilingWasNotSwitchedOn);
+      return;
+    }
+
+    final Iterator<ODocument> profilerIterator = result.iterator();
+
+    if (profilerIterator.hasNext()) {
+      final ODocument profilerDocument = profilerIterator.next();
+      if (profilerDocument == null)
+        message(profilingWasNotSwitchedOn);
+      else
+        message("Profiling result is : \n%s\n", profilerDocument.toJSON("prettyPrint"));
+    } else {
+      message(profilingWasNotSwitchedOn);
+    }
+
   }
 
   @ConsoleCommand(splitInWords = false, description = "Update records in the database", onlineHelp = "SQL-Update")
@@ -772,9 +814,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   /***
    * Creates a function.
    *
-   * @author Claudio Tesoriero
    * @param iCommandText
    *          the command text to execute
+   * @author Claudio Tesoriero
    */
   @ConsoleCommand(splitInWords = false, description = "Create a stored function", onlineHelp = "SQL-Create-Function")
   public void createFunction(
@@ -906,11 +948,18 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     resetResultSet();
 
-    final OCommandExecutorScript cmd = new OCommandExecutorScript();
-    cmd.parse(new OCommandScript("Javascript", iText));
-
     long start = System.currentTimeMillis();
-    currentResult = cmd.execute(null);
+    while (true) {
+      try {
+        final OCommandExecutorScript cmd = new OCommandExecutorScript();
+        cmd.parse(new OCommandScript("Javascript", iText));
+
+        currentResult = cmd.execute(null);
+        break;
+      } catch (ORetryQueryException e) {
+        continue;
+      }
+    }
     float elapsedSeconds = getElapsedSecs(start);
 
     parseResult();
@@ -1383,23 +1432,23 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     if (cls.properties().size() > 0) {
       message("\n\nPROPERTIES");
       message(
-          "\n-------------------------------+-------------+-------------------------------+-----------+----------+----------+-----------+-----------+----------+");
+          "\n-------------------------------+-------------+-------------------------------+-----------+----------+----------+-----------+-----------+----------+----------+");
       message(
-          "\n NAME                          | TYPE        | LINKED TYPE/CLASS             | MANDATORY | READONLY | NOT NULL |    MIN    |    MAX    | COLLATE  |");
+          "\n NAME                          | TYPE        | LINKED TYPE/CLASS             | MANDATORY | READONLY | NOT NULL |    MIN    |    MAX    | COLLATE  | DEFAULT  |");
       message(
-          "\n-------------------------------+-------------+-------------------------------+-----------+----------+----------+-----------+-----------+----------+");
+          "\n-------------------------------+-------------+-------------------------------+-----------+----------+----------+-----------+-----------+----------+----------+");
 
       for (final OProperty p : cls.properties()) {
         try {
-          message("\n %-30s| %-12s| %-30s| %-10s| %-9s| %-9s| %-10s| %-10s| %-9s|", p.getName(), p.getType(),
+          message("\n %-30s| %-12s| %-30s| %-10s| %-9s| %-9s| %-10s| %-10s| %-9s| %-9s|", p.getName(), p.getType(),
               p.getLinkedClass() != null ? p.getLinkedClass() : p.getLinkedType(), p.isMandatory(), p.isReadonly(), p.isNotNull(),
               p.getMin() != null ? p.getMin() : "", p.getMax() != null ? p.getMax() : "",
-              p.getCollate() != null ? p.getCollate().getName() : "");
+              p.getCollate() != null ? p.getCollate().getName() : "", p.getDefaultValue() != null ? p.getDefaultValue() : "");
         } catch (Exception ignored) {
         }
       }
       message(
-          "\n-------------------------------+-------------+-------------------------------+-----------+----------+----------+-----------+-----------+----------+");
+          "\n-------------------------------+-------------+-------------------------------+-----------+----------+----------+-----------+-----------+----------+----------+");
     }
 
     final Set<OIndex<?>> indexes = cls.getClassIndexes();
@@ -1890,16 +1939,25 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       throws IOException {
     checkForDatabase();
 
-    final List<String> items = OStringSerializerHelper.smartSplit(iText, ' ');
+    final List<String> items = OStringSerializerHelper.smartSplit(iText, ' ', ' ');
 
-    if (items.size() < 2)
+    if (items.size() < 2) {
+      try {
+        syntaxError("backupDatabase", getClass().getMethod("backupDatabase", String.class));
+      } catch (NoSuchMethodException ignored) {
+      }
+      return;
+    }
+
+    final String fileName = items.size() <= 0 || items.get(1).charAt(0) == '-' ? null : items.get(1);
+
+    if (fileName == null || fileName.trim().isEmpty()) {
       try {
         syntaxError("backupDatabase", getClass().getMethod("backupDatabase", String.class));
         return;
       } catch (NoSuchMethodException ignored) {
       }
-
-    final String fileName = items.size() <= 0 || items.get(1).charAt(0) == '-' ? null : items.get(1);
+    }
 
     int bufferSize = Integer.parseInt(properties.get("backupBufferSize"));
     int compressionLevel = Integer.parseInt(properties.get("backupCompressionLevel"));
@@ -2111,11 +2169,13 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       currentDatabase.declareIntent(new OIntentMassiveInsert());
     else if (iIntentName.equalsIgnoreCase("massiveread"))
       currentDatabase.declareIntent(new OIntentMassiveRead());
+    else if (iIntentName.equalsIgnoreCase("null"))
+      currentDatabase.declareIntent(null);
     else
       throw new IllegalArgumentException(
-          "Intent '" + iIntentName + "' not supported. Available ones are: massiveinsert, massiveread");
+          "Intent '" + iIntentName + "' not supported. Available ones are: massiveinsert, massiveread, null");
 
-    message("\nIntent '" + iIntentName + "' setted successfully");
+    message("\nIntent '" + iIntentName + "' set successfully");
   }
 
   @ConsoleCommand(description = "Execute a command against the profiler")
@@ -2208,7 +2268,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         "\n+--------------------------------------------------------------------------------------+---------------------------+");
   }
 
-  /** Should be used only by console commands */
+  /**
+   * Should be used only by console commands
+   */
   public ODatabaseDocument getCurrentDatabase() {
     return currentDatabase;
   }
@@ -2222,32 +2284,44 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     return this;
   }
 
-  /** Should be used only by console commands */
+  /**
+   * Should be used only by console commands
+   */
   public String getCurrentDatabaseName() {
     return currentDatabaseName;
   }
 
-  /** Should be used only by console commands */
+  /**
+   * Should be used only by console commands
+   */
   public String getCurrentDatabaseUserName() {
     return currentDatabaseUserName;
   }
 
-  /** Should be used only by console commands */
+  /**
+   * Should be used only by console commands
+   */
   public String getCurrentDatabaseUserPassword() {
     return currentDatabaseUserPassword;
   }
 
-  /** Should be used only by console commands */
+  /**
+   * Should be used only by console commands
+   */
   public ORecord getCurrentRecord() {
     return currentRecord;
   }
 
-  /** Should be used only by console commands */
+  /**
+   * Should be used only by console commands
+   */
   public List<OIdentifiable> getCurrentResultSet() {
     return currentResultSet;
   }
 
-  /** Should be used only by console commands */
+  /**
+   * Should be used only by console commands
+   */
   public void loadRecordInternal(String iRecordId, String iFetchPlan) {
     checkForDatabase();
 
@@ -2257,7 +2331,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     message("\nOK");
   }
 
-  /** Should be used only by console commands */
+  /**
+   * Should be used only by console commands
+   */
   public void reloadRecordInternal(String iRecordId, String iFetchPlan) {
     checkForDatabase();
 
@@ -2268,7 +2344,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     message("\nOK");
   }
 
-  /** Should be used only by console commands */
+  /**
+   * Should be used only by console commands
+   */
   protected void checkForRemoteServer() {
     if (serverAdmin == null && (currentDatabase == null || !(currentDatabase.getStorage() instanceof OStorageRemoteThread)
         || currentDatabase.isClosed()))
@@ -2276,7 +2354,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
           "Remote server is not connected. Use 'connect remote:<host>[:<port>][/<database-name>]' to connect");
   }
 
-  /** Should be used only by console commands */
+  /**
+   * Should be used only by console commands
+   */
   protected void checkForDatabase() {
     if (currentDatabase == null)
       throw new OSystemException("Database not selected. Use 'connect <database-name>' to connect to a database.");
@@ -2284,7 +2364,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       throw new ODatabaseException("Database '" + currentDatabaseName + "' is closed");
   }
 
-  /** Should be used only by console commands */
+  /**
+   * Should be used only by console commands
+   */
   protected void checkCurrentObject() {
     if (currentRecord == null)
       throw new OSystemException("The is no current object selected: create a new one or load it");
@@ -2611,8 +2693,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         message("\n| %24s | %-68s |", fieldName, value);
       }
 
-    } else if (currentRecord instanceof ORecordBytes) {
-      ORecordBytes rec = (ORecordBytes) currentRecord;
+    } else if (currentRecord instanceof OBlob) {
+      OBlob rec = (OBlob) currentRecord;
       message("\n+-------------------------------------------------------------------------------------------------+");
       message("\n| Bytes    - @rid: %s @version: %d", rec.getIdentity().toString(), rec.getVersion());
       message("\n+-------------------------------------------------------------------------------------------------+");

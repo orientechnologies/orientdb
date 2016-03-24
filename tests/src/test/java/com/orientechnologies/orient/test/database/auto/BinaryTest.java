@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import com.orientechnologies.orient.core.record.impl.OBlob;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -48,14 +49,14 @@ public class BinaryTest extends DocumentDBBaseTest {
 
   @Test
   public void testBasicCreateExternal() {
-    ORecordBytes record = new ORecordBytes(database, "This is a test".getBytes());
+    OBlob record = new ORecordBytes(database, "This is a test".getBytes());
     record.save();
     rid = record.getIdentity();
   }
 
   @Test(dependsOnMethods = "testBasicCreateExternal")
   public void testBasicReadExternal() {
-    ORecordBytes record = database.load(rid);
+    OBlob record = database.load(rid);
 
     Assert.assertEquals("This is a test", new String(record.toStream()));
   }
@@ -74,6 +75,6 @@ public class BinaryTest extends DocumentDBBaseTest {
     ODocument doc = new ODocument(rid);
     doc.reload();
 
-    Assert.assertEquals("Binary data", new String(((ORecordBytes) doc.field("binary")).toStream()));
+    Assert.assertEquals("Binary data", new String(((OBlob) doc.field("binary")).toStream()));
   }
 }

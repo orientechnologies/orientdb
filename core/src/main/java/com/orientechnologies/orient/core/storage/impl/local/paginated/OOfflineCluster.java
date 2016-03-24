@@ -115,7 +115,12 @@ public class OOfflineCluster implements OCluster {
   }
 
   @Override
-  public OPhysicalPosition createRecord(byte[] content, int recordVersion, byte recordType) throws IOException {
+  public OPhysicalPosition allocatePosition(byte recordType) throws IOException {
+    throw new OOfflineClusterException("Cannot allocat a new position on offline cluster '" + name + "'");
+  }
+
+  @Override
+  public OPhysicalPosition createRecord(byte[] content, int recordVersion, byte recordType, OPhysicalPosition allocatedPosition) throws IOException {
     throw new OOfflineClusterException("Cannot create a new record on offline cluster '" + name + "'");
   }
 

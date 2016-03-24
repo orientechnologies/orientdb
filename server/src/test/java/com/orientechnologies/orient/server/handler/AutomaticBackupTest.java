@@ -121,7 +121,8 @@ public class AutomaticBackupTest {
     Assert.assertEquals(database2.countClass("TestBackup"), 1);
   }
 
-  @Test
+//  @Test
+  //TODO: move to EE test suite
   public void testIncrementalBackup() throws IOException, ClassNotFoundException, MalformedObjectNameException,
       InstanceAlreadyExistsException, NotCompliantMBeanException, MBeanRegistrationException {
     if (new File(BACKUPDIR + "/" + DBNAME).exists())

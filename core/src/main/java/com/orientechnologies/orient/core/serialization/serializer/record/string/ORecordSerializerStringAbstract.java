@@ -19,11 +19,13 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
+import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -34,18 +36,17 @@ import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
-import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationSetThreadLocal;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerAnyStreamable;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerEmbedded;
 import com.orientechnologies.orient.core.util.ODateHelper;
 
 import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 @SuppressWarnings("serial")
@@ -200,28 +201,33 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
       break;
 
     case EMBEDDEDSET:
-      ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedCollectionToStream(ODatabaseRecordThreadLocal.INSTANCE.getIfDefined(),
-          null, iBuffer, null, null, iValue, null, true, true);
+      ORecordSerializerSchemaAware2CSV.INSTANCE
+          .embeddedCollectionToStream(ODatabaseRecordThreadLocal.INSTANCE.getIfDefined(), null, iBuffer, null, null, iValue, true,
+              true);
       PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.embedSet2string"), "Serialize embeddedset to string",
           timer);
       break;
 
     case EMBEDDEDLIST:
-      ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedCollectionToStream(ODatabaseRecordThreadLocal.INSTANCE.getIfDefined(),
-          null, iBuffer, null, null, iValue, null, true, false);
+      ORecordSerializerSchemaAware2CSV.INSTANCE
+          .embeddedCollectionToStream(ODatabaseRecordThreadLocal.INSTANCE.getIfDefined(), null, iBuffer, null, null, iValue, true,
+              false);
       PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.embedList2string"),
           "Serialize embeddedlist to string", timer);
       break;
 
     case EMBEDDEDMAP:
       ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedMapToStream(ODatabaseRecordThreadLocal.INSTANCE.getIfDefined(), null,
-          iBuffer, null, null, iValue, null, true);
+          iBuffer, null, null, iValue, true);
       PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.embedMap2string"), "Serialize embeddedmap to string",
           timer);
       break;
 
     case EMBEDDED:
-      OStringSerializerEmbedded.INSTANCE.toStream(iBuffer, iValue);
+      if (iValue instanceof ODocument) {
+        ORecordSerializerSchemaAware2CSV.INSTANCE.toString((ODocument) iValue, iBuffer, null);
+      } else
+        OStringSerializerEmbedded.INSTANCE.toStream(iBuffer, iValue);
       PROFILER
           .stopChrono(PROFILER.getProcessMetric("serializer.record.string.embed2string"), "Serialize embedded to string", timer);
       break;
@@ -375,6 +381,10 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
       return OType.LINK;
     else if (iCharType == 'n')
       return OType.LINKSET;
+    else if (iCharType == 'x')
+      return OType.LINK;
+    else if (iCharType == 'u')
+      return OType.CUSTOM;
 
     return OType.STRING;
   }
@@ -654,7 +664,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
   public abstract ORecord fromString(String iContent, ORecord iRecord, String[] iFields);
 
   public StringBuilder toString(final ORecord iRecord, final StringBuilder iOutput, final String iFormat) {
-    return toString(iRecord, iOutput, iFormat, null, OSerializationSetThreadLocal.INSTANCE.get(), false, true);
+    return toString(iRecord, iOutput, iFormat, null, false, true);
   }
 
   public ORecord fromString(final String iSource) {
@@ -670,7 +680,9 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
     final long timer = PROFILER.startChrono();
 
     try {
-      return fromString(OBinaryProtocol.bytes2string(iSource), iRecord, iFields);
+      return fromString(new String(iSource,"UTF-8"), iRecord, iFields);
+    } catch (UnsupportedEncodingException e) {
+      throw OException.wrapException(new OSchemaException("Error reading record"),e);
     } finally {
 
       PROFILER
@@ -682,7 +694,9 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
     final long timer = PROFILER.startChrono();
 
     try {
-      return OBinaryProtocol.string2bytes(toString(iRecord, new StringBuilder(2048), null, null, OSerializationSetThreadLocal.INSTANCE.get(), iOnlyDelta, true).toString());
+      return toString(iRecord, new StringBuilder(2048), null, null, iOnlyDelta, true).toString().getBytes("UTF-8");
+    } catch (UnsupportedEncodingException e) {
+      throw OException.wrapException(new OSchemaException("error encoding string"), e);
     } finally {
 
       PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.toStream"), "Serialize record to stream", timer);
@@ -690,8 +704,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
   }
 
   protected abstract StringBuilder toString(final ORecord iRecord, final StringBuilder iOutput, final String iFormat,
-      final OUserObject2RecordHandler iObjHandler, final Map<ODocument, Boolean> iMarshalledRecords, boolean iOnlyDelta,
-      boolean autoDetectCollectionType);
+      final OUserObject2RecordHandler iObjHandler, boolean iOnlyDelta, boolean autoDetectCollectionType);
 
   public boolean getSupportBinaryEvaluate() {
     return false;

@@ -20,9 +20,11 @@
 
 package com.orientechnologies.orient.core.storage.cache;
 
+import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.Future;
@@ -60,7 +62,8 @@ public interface OWriteCache {
 
   Future store(long fileId, long pageIndex, OCachePointer dataPointer);
 
-  OCachePointer[] load(long fileId, long startPageIndex, int pageCount, boolean addNewPages) throws IOException;
+  OCachePointer[] load(long fileId, long startPageIndex, int pageCount, boolean addNewPages, OModifiableBoolean cacheHit)
+      throws IOException;
 
   void flush(long fileId);
 
@@ -97,4 +100,31 @@ public interface OWriteCache {
   int pageSize();
 
   boolean fileIdsAreEqual(long firsId, long secondId);
+
+  /**
+   * Directory which contains all files managed by write cache.
+   *
+   * @return Directory which contains all files managed by write cache or <code>null</code> in case of in memory database.
+   */
+  File getRootDirectory();
+
+  /**
+   * Returns internal file id which is unique and always the same for given file
+   * in contrary to external id which changes over close/open cycle of cache.
+   *
+   * @param fileId External file id.
+   * @return Internal file id.
+   */
+  int internalFileId(long fileId);
+
+  /**
+   * Converts unique internal file id to external one.
+   * External id is combination of internal id and write cache id, which changes every time when cache is closed and opened again.
+   *
+   * @param fileId Internal file id.
+   * @return External file id.
+   * @see #internalFileId(long)
+   * @see #getId()
+   */
+  long externalFileId(int fileId);
 }

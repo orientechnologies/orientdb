@@ -20,15 +20,15 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import java.io.IOException;
-
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
+
+import java.io.IOException;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
@@ -41,13 +41,14 @@ public class OClusterPositionMapBucket extends ODurablePage {
 
   private static final byte REMOVED          = 1;
   private static final byte FILLED           = 2;
+  private static final byte ALLOCATED        = 4;
 
   public static final int   ENTRY_SIZE       = OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE;
 
   public static final int   MAX_ENTRIES      = (MAX_PAGE_SIZE_BYTES - POSITIONS_OFFSET) / ENTRY_SIZE;
 
-  public OClusterPositionMapBucket(OCacheEntry cacheEntry, OWALChangesTree changesTree) {
-    super(cacheEntry, changesTree);
+  public OClusterPositionMapBucket(OCacheEntry cacheEntry, OWALChanges changes) {
+    super(cacheEntry, changes);
   }
 
   public int add(long pageIndex, int recordPosition) throws IOException {
@@ -58,6 +59,20 @@ public class OClusterPositionMapBucket extends ODurablePage {
     position += setByteValue(position, FILLED);
     position += setLongValue(position, pageIndex);
     setIntValue(position, recordPosition);
+
+    setIntValue(SIZE_OFFSET, size + 1);
+
+    return size;
+  }
+
+  public int allocate() throws IOException {
+    int size = getIntValue(SIZE_OFFSET);
+
+    int position = entryPosition(size);
+
+    position += setByteValue(position, ALLOCATED);
+    position += setLongValue(position, -1);
+    setIntValue(position, -1);
 
     setIntValue(SIZE_OFFSET, size + 1);
 
@@ -84,7 +99,10 @@ public class OClusterPositionMapBucket extends ODurablePage {
       throw new OStorageException("Provided index " + index + " is out of range.");
 
     final int position = entryPosition(index);
-    if (getByteValue(position) != FILLED)
+    final byte flag = getByteValue(position);
+    if (flag == ALLOCATED)
+      setByteValue(position, FILLED);
+    else if (flag != FILLED)
       throw new OStorageException("Provided index " + index + " points to removed entry.");
 
     updateEntry(position, entry);

@@ -199,10 +199,10 @@ public class OPropertyMapIndexDefinition extends OAbstractIndexDefinitionMultiVa
 
   @Override
   public String toCreateIndexDDL(String indexName, String indexType,String engine) {
-    final StringBuilder ddl = new StringBuilder("create index ");
+    final StringBuilder ddl = new StringBuilder("create index `");
 
-    ddl.append(indexName).append(" on ");
-    ddl.append(className).append(" ( ").append(field);
+    ddl.append(indexName).append("` on `");
+    ddl.append(className).append("` ( `").append(field).append("`");
 
     if (indexBy == INDEX_BY.KEY)
       ddl.append(" by key");

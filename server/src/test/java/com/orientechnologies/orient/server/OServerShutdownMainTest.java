@@ -9,9 +9,9 @@ import com.orientechnologies.orient.server.config.OServerNetworkListenerConfigur
 import com.orientechnologies.orient.server.config.OServerNetworkProtocolConfiguration;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
@@ -29,8 +29,8 @@ public class OServerShutdownMainTest {
   private String  prevPassword;
   private String  prevOrientHome;
 
-  @BeforeMethod
-  public void startupOserver() throws Exception {
+  @Before
+  public void startupOServer() throws Exception {
 
     OLogManager.instance().setConsoleLevel(Level.OFF.getName());
     prevPassword = System.setProperty("ORIENTDB_ROOT_PASSWORD", "rootPassword");
@@ -56,7 +56,7 @@ public class OServerShutdownMainTest {
 
   }
 
-  @AfterMethod
+  @After
   public void tearDown() throws Exception {
     if (server.isActive())
       server.shutdown();
@@ -72,8 +72,8 @@ public class OServerShutdownMainTest {
     Orient.instance().startup();
   }
 
-  @Test(enabled = true)
-  public void shouldShutdowServerWithDirectCall() throws Exception {
+  @Test
+  public void shouldShutdownServerWithDirectCall() throws Exception {
 
     OServerShutdownMain shutdownMain = new OServerShutdownMain("localhost", "2424", "root", "rootPassword");
     shutdownMain.connect(5000);
@@ -83,8 +83,8 @@ public class OServerShutdownMainTest {
 
   }
 
-  @Test(enabled = true)
-  public void shouldShutdowServerParsingShortArguments() throws Exception {
+  @Test
+  public void shouldShutdownServerParsingShortArguments() throws Exception {
 
     OServerShutdownMain.main(new String[] { "-h", "localhost", "-P", "2424", "-p", "rootPassword", "-u", "root" });
 
@@ -93,8 +93,8 @@ public class OServerShutdownMainTest {
 
   }
 
-  @Test(enabled = true)
-  public void shouldShutdowServerParsingLongArguments() throws Exception {
+  @Test
+  public void shouldShutdownServerParsingLongArguments() throws Exception {
 
     OServerShutdownMain
         .main(new String[] { "--host", "localhost", "--ports", "2424", "--password", "rootPassword", "--user", "root" });

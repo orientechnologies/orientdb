@@ -19,11 +19,6 @@
   */
 package com.orientechnologies.orient.graph.gremlin;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -31,6 +26,13 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.script.OCommandScriptException;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.ORule;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Executes a GREMLIN command.
@@ -50,6 +52,7 @@ public class OCommandGremlinExecutor extends OCommandExecutorAbstract {
 
   @Override
   public Object execute(final Map<Object, Object> iArgs) {
+    getDatabase().checkSecurity(ORule.ResourceGeneric.COMMAND_GREMLIN, ORole.PERMISSION_READ);
     parameters = iArgs;
     final List<Object> result = new ArrayList<Object>();
     final Object scriptResult = OGremlinHelper.execute(db, parserText, parameters, new HashMap<Object, Object>(), result, null,

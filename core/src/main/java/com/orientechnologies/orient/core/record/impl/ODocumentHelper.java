@@ -19,13 +19,6 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
-import java.lang.reflect.Array;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.Map.Entry;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
@@ -35,8 +28,17 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.*;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement.STATUS;
+import com.orientechnologies.orient.core.db.record.ORecordLazyList;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
+import com.orientechnologies.orient.core.db.record.ORecordTrackedList;
+import com.orientechnologies.orient.core.db.record.ORecordTrackedSet;
+import com.orientechnologies.orient.core.db.record.OTrackedList;
+import com.orientechnologies.orient.core.db.record.OTrackedMap;
+import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -48,10 +50,25 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
+import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.method.OSQLMethod;
-import com.orientechnologies.orient.core.sql.parser.ORid;
-import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
+
+import java.lang.reflect.Array;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * Helper class to manage documents.
@@ -87,8 +104,9 @@ public class ODocumentHelper {
   @SuppressWarnings("unchecked")
   public static <RET> RET convertField(final ODocument iDocument, final String iFieldName, OType type, Class<?> iFieldType,
       Object iValue) {
-    if (iFieldType == null)
+    if (iFieldType == null && type != null)
       iFieldType = type.getDefaultJavaType();
+
     if (iFieldType == null)
       return (RET) iValue;
 
@@ -408,14 +426,14 @@ public class ODocumentHelper {
 
         } else if (OMultiValue.isMultiValue(value)) {
           // MULTI VALUE
-          final Object index = getIndexPart(iContext, indexPart);
+            final Object index = getIndexPart(iContext, indexPart);
           final String indexAsString = index != null ? index.toString() : null;
 
           final List<String> indexParts = OStringSerializerHelper.smartSplit(indexAsString, ',');
           final List<String> indexRanges = OStringSerializerHelper.smartSplit(indexAsString, '-');
           final List<String> indexCondition = OStringSerializerHelper.smartSplit(indexAsString, '=', ' ');
 
-          if (indexParts.size() == 1 && indexRanges.size() == 1 && indexCondition.size() == 1) {
+          if (isFieldName(indexAsString)) {
             // SINGLE VALUE
             if (value instanceof Map<?, ?>)
               value = getMapEntry((Map<String, ?>) value, index);
@@ -425,15 +443,19 @@ public class ODocumentHelper {
               // FILTER BY FIELD
               value = getFieldValue(value, indexAsString, iContext);
 
-          } else if (indexParts.size() > 1) {
+          } else if (isListOfNumbers(indexParts)) {
 
             // MULTI VALUES
             final Object[] values = new Object[indexParts.size()];
             for (int i = 0; i < indexParts.size(); ++i)
               values[i] = OMultiValue.getValue(value, Integer.parseInt(indexParts.get(i)));
-            value = values;
+            if(indexParts.size() > 1){
+              value = values;
+            }else{
+              value = values[0];
+            }
 
-          } else if (indexRanges.size() > 1) {
+          } else if (isListOfNumbers(indexRanges)) {
 
             // MULTI VALUES RANGE
             String from = indexRanges.get(0);
@@ -448,22 +470,18 @@ public class ODocumentHelper {
               values[i - rangeFrom] = OMultiValue.getValue(value, i);
             value = values;
 
-          } else if (!indexCondition.isEmpty()) {
+          } else {
             // CONDITION
-            final String conditionFieldName = indexCondition.get(0);
-            Object conditionFieldValue = ORecordSerializerStringAbstract.getTypeValue(indexCondition.get(1));
-
-            if (conditionFieldValue instanceof String)
-              conditionFieldValue = OIOUtils.getStringContent(conditionFieldValue);
-
+            OSQLPredicate pred = new OSQLPredicate(indexAsString);
             final HashSet<Object> values = new HashSet<Object>();
+
             for (Object v : OMultiValue.getMultiValueIterable(value)) {
-              Object filtered = filterItem(conditionFieldName, conditionFieldValue, v);
-              if (filtered != null)
-                if (filtered instanceof Collection<?>)
-                  values.addAll((Collection<? extends Object>) filtered);
-                else
-                  values.add(filtered);
+              if (v instanceof OIdentifiable) {
+                Object result = pred.evaluate((OIdentifiable) v, (ODocument) ((OIdentifiable) v).getRecord(), iContext);
+                if (Boolean.TRUE.equals(result)) {
+                  values.add(v);
+                }
+              }
             }
 
             if (values.isEmpty())
@@ -559,6 +577,52 @@ public class ODocumentHelper {
     return (RET) value;
   }
 
+  private static boolean isFieldName(String indexAsString) {
+    indexAsString = indexAsString.trim();
+    if (indexAsString.startsWith("`") && indexAsString.endsWith("`")) {
+      //quoted identifier
+      return !indexAsString.substring(1, indexAsString.length() - 1).contains("`");
+    }
+    boolean firstChar = true;
+    for (char c : indexAsString.toCharArray()) {
+      if (isLetter(c) || (isNumber(c) && !firstChar)) {
+        firstChar = false;
+        continue;
+      }
+      return false;
+    }
+    return true;
+  }
+
+  private static boolean isNumber(char c) {
+    return c >= '0' && c <= '9';
+  }
+
+  private static boolean isLetter(char c) {
+    if (c == '$' || c == '_' || c == '@') {
+      return true;
+    }
+    if (c >= 'a' && c <= 'z') {
+      return true;
+    }
+    if (c >= 'A' && c <= 'Z') {
+      return true;
+    }
+
+    return false;
+  }
+
+  private static boolean isListOfNumbers(List<String> list) {
+    for (String s : list) {
+      try {
+        Integer.parseInt(s);
+      } catch (NumberFormatException e) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   protected static Object getIndexPart(final OCommandContext iContext, final String indexPart) {
     Object index = indexPart;
     if (indexPart.indexOf(',') == -1 && (indexPart.charAt(0) == '"' || indexPart.charAt(0) == '\''))
@@ -606,6 +670,7 @@ public class ODocumentHelper {
    *
    * @param iKey
    *          Field(s) to retrieve. If are multiple fields, then the dot must be used as separator
+   * @param iMap
    * @return
    */
   @SuppressWarnings("unchecked")
@@ -818,9 +883,6 @@ public class ODocumentHelper {
         return new ArrayList<Object>((List<Object>) fieldValue);
 
         // SETS
-      } else if (fieldValue instanceof OMVRBTreeRIDSet) {
-        return ((OMVRBTreeRIDSet) fieldValue).copy(iCloned);
-
       } else if (fieldValue instanceof ORecordLazySet) {
         final ORecordLazySet newList = new ORecordLazySet(iCloned);
         newList.addAll((ORecordLazySet) fieldValue);
@@ -897,8 +959,7 @@ public class ODocumentHelper {
    * Makes a deep comparison field by field to check if the passed ODocument instance is identical as identity and content to the
    * current one. Instead equals() just checks if the RID are the same.
    *
-   * @param iOther
-   *          ODocument instance
+   * @param iOther ODocument instance
    * @return true if the two document are identical, otherwise false
    * @see #equals(Object)
    */
@@ -1418,7 +1479,7 @@ public class ODocumentHelper {
           deleteCrossRefs(iRid, (ODocument) fieldValue);
         } else if (OMultiValue.isMultiValue(fieldValue)) {
           // MULTI-VALUE (COLLECTION, ARRAY OR MAP), CHECK THE CONTENT
-          for (final Iterator<?> it = OMultiValue.getMultiValueIterator(fieldValue, false); it.hasNext();) {
+          for (final Iterator<?> it = OMultiValue.getMultiValueIterator(fieldValue); it.hasNext(); ) {
             final Object item = it.next();
 
             if (fieldValue.equals(iRid)) {

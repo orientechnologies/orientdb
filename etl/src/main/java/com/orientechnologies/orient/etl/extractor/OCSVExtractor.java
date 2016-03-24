@@ -15,9 +15,16 @@ import java.io.Reader;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.DEBUG;
 
 /**
+ * An extractor based on Apache Commons CSV
  * Created by frank on 10/5/15.
  */
 public class OCSVExtractor extends OAbstractSourceExtractor {
@@ -37,17 +44,19 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
   @Override
   public ODocument getConfiguration() {
     return new ODocument().fromJSON(
-        "{parameters:[" + getCommonConfigurationParameters() + ",{separator:{optional:true,description:'Column separator'}},"
-            + "{columnsOnFirstLine:{optional:true,description:'Columns are described in the first line'}},"
-            + "{columns:{optional:true,description:'Columns array containing names, and optionally type after : (e.g.: name:String, age:int'}},"
-            + "{nullValue:{optional:true,description:'Value to consider as NULL_STRING. Default is NULL'}},"
-            + "{dateFormat:{optional:true,description:'Date format used to parde dates. Default is yyyy-MM-dd'}},"
-            + "{quote:{optional:true,description:'String character delimiter. Use \"\" to do not use any delimitator'}},"
-            + "{ignoreEmptyLines:{optional:true,description:'Ignore empty lines',type:'boolean'}},"
-            + "{skipFrom:{optional:true,description:'Line number where start to skip',type:'int'}},"
-            + "{skipTo:{optional:true,description:'Line number where skip ends',type:'int'}},"
-            + "{predefinedFormat:{optional:true,description:'Name of standard csv format (from Apache commons-csv): DEFAULT, EXCEL, MYSQL, RFC4180, TDF',type:'String'}}"
-            + "],input:['String'],output:'ODocument'}");
+        "{parameters:["
+        + getCommonConfigurationParameters()
+        + ",{separator:{optional:true,description:'Column separator'}},"
+        + "{columnsOnFirstLine:{optional:true,description:'Columns are described in the first line'}},"
+        + "{columns:{optional:true,description:'Columns array containing names, and optionally type after : (e.g.: name:String, age:int'}},"
+        + "{nullValue:{optional:true,description:'Value to consider as NULL_STRING. Default is NULL'}},"
+        + "{dateFormat:{optional:true,description:'Date format used to parde dates. Default is yyyy-MM-dd'}},"
+        + "{quote:{optional:true,description:'String character delimiter. Use \"\" to do not use any delimitator'}},"
+        + "{ignoreEmptyLines:{optional:true,description:'Ignore empty lines',type:'boolean'}},"
+        + "{skipFrom:{optional:true,description:'Line number where start to skip',type:'int'}},"
+        + "{skipTo:{optional:true,description:'Line number where skip ends',type:'int'}},"
+        + "{predefinedFormat:{optional:true,description:'Name of standard csv format (from Apache commons-csv): DEFAULT, EXCEL, MYSQL, RFC4180, TDF',type:'String'}}"
+        + "],input:['String'],output:'ODocument'}");
   }
 
   @Override
@@ -108,14 +117,14 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
       }
 
       log(OETLProcessor.LOG_LEVELS.INFO, "column types: %s", columnTypes);
-      String[] header = columnTypes.keySet().toArray(new String[] {});
-      csvFormat = csvFormat.withHeader(header);
+      csvFormat = csvFormat.withHeader(columnNames.toArray(new String[] {}));
 
     }
+
     if (iConfiguration.containsField("skipFrom")) {
       skipFrom = ((Number) iConfiguration.field("skipFrom")).longValue();
-
     }
+
     if (iConfiguration.containsField("skipTo")) {
       skipTo = ((Number) iConfiguration.field("skipTo")).longValue();
     }
@@ -188,7 +197,6 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
         final OType fieldType = typeEntry.getValue();
         String fieldValueAsString = recordAsMap.get(fieldName);
         try {
-
           Object fieldValue = OType.convert(fieldValueAsString, fieldType.getDefaultJavaType());
           doc.field(fieldName, fieldValue);
         } catch (Exception e) {
@@ -199,14 +207,9 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
       }
     }
 
-    log(OETLProcessor.LOG_LEVELS.DEBUG, "document=%s", doc);
+    log(DEBUG, "document=%s", doc);
     current++;
     return new OExtractedItem(current, doc);
-  }
-
-  @Override
-  public OExtractedItem next() {
-    return next;
   }
 
   private Object determineTheType(String fieldStringValue) {
@@ -266,6 +269,11 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
    **/
   protected boolean isFinite(Float f) {
     return Math.abs(f) <= FloatConsts.MAX_VALUE;
+  }
+
+  @Override
+  public OExtractedItem next() {
+    return next;
   }
 
 }

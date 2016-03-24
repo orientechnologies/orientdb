@@ -22,9 +22,14 @@ package com.orientechnologies.orient.server.distributed;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
+import com.orientechnologies.orient.core.db.record.OPlaceholder;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
+import com.orientechnologies.orient.server.distributed.task.OCreateRecordTask;
+import com.orientechnologies.orient.server.distributed.task.ODeleteRecordTask;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -173,11 +178,9 @@ public class ODistributedResponseManager {
 
       completed = getExpectedResponses() == receivedResponses;
 
-      if (receivedResponses >= expectedSynchronousResponses && (!waitForLocalNode || receivedCurrentNode)) {
-        if (completed || isMinimumQuorumReached(false)) {
-          // NOTIFY TO THE WAITER THE RESPONSE IS COMPLETE NOW
-          notifyWaiters();
-        }
+      if (completed || isMinimumQuorumReached(false)) {
+        // NOTIFY TO THE WAITER THE RESPONSE IS COMPLETE NOW
+        notifyWaiters();
       }
       return completed;
     }
@@ -246,14 +249,14 @@ public class ODistributedResponseManager {
     try {
 
       long currentTimeout = synchTimeout;
-      while (currentTimeout > 0
-          && ((waitForLocalNode && !receivedCurrentNode) || receivedResponses < expectedSynchronousResponses)) {
+      while (currentTimeout > 0 && !isMinimumQuorumReached(false) && receivedResponses < expectedSynchronousResponses) {
+
         // WAIT FOR THE RESPONSES
         synchronousResponsesArrived.await(currentTimeout, TimeUnit.MILLISECONDS);
 
-        if ((!waitForLocalNode || receivedCurrentNode) && (receivedResponses >= expectedSynchronousResponses))
+        if (isMinimumQuorumReached(false) || receivedResponses >= expectedSynchronousResponses)
           // OK
-          break;
+          return true;
 
         if (Thread.currentThread().isInterrupted()) {
           // INTERRUPTED
@@ -315,7 +318,7 @@ public class ODistributedResponseManager {
         }
       }
 
-      return receivedResponses >= expectedSynchronousResponses;
+      return isMinimumQuorumReached(false) || receivedResponses >= expectedSynchronousResponses;
 
     } finally {
       synchronousResponsesLock.unlock();
@@ -369,6 +372,10 @@ public class ODistributedResponseManager {
 
   public String getDatabaseName() {
     return request.getDatabaseName();
+  }
+
+  public long getSynchTimeout() {
+    return synchTimeout;
   }
 
   public void timeout() {
@@ -462,8 +469,6 @@ public class ODistributedResponseManager {
 
   protected boolean isMinimumQuorumReached(final boolean iCheckAvailableNodes) {
     if (isWaitForLocalNode() && !isReceivedCurrentNode()) {
-      ODistributedServerLog.warn(this, dManager.getLocalNodeName(), dManager.getLocalNodeName(), DIRECTION.IN,
-          "no response received from local node about request %s", request);
       return false;
     }
 
@@ -572,11 +577,85 @@ public class ODistributedResponseManager {
   }
 
   protected void undoRequest() {
+    // DETERMINE IF ANY CREATE FAILED TO RESTORE RIDS
+    if (!realignRecordClusters()) {
+
+      for (ODistributedResponse r : getReceivedResponses()) {
+        final OAbstractRemoteTask task = request.getTask();
+        if (task instanceof OAbstractReplicatedTask) {
+          final OAbstractRemoteTask undoTask = ((OAbstractReplicatedTask) task).getUndoTask(request, r.getPayload());
+
+          if (undoTask != null) {
+            ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
+                "sending undo message (%s) for request (%s) to server %s", undoTask, request, r.getExecutorNodeName());
+
+            dManager.sendRequest(request.getDatabaseName(), null, Collections.singleton(r.getExecutorNodeName()), undoTask,
+                ODistributedRequest.EXECUTION_MODE.NO_RESPONSE);
+          }
+        }
+      }
+    }
+  }
+
+  private boolean realignRecordClusters() {
+    final Set<Integer> clusterIds = new HashSet<Integer>();
+
+    long minClusterPos = Long.MAX_VALUE;
+    long maxClusterPos = Long.MIN_VALUE;
+
     for (ODistributedResponse r : getReceivedResponses()) {
       final OAbstractRemoteTask task = request.getTask();
-      if (task instanceof OAbstractReplicatedTask) {
-        final OAbstractRemoteTask undoTask = ((OAbstractReplicatedTask) task).getUndoTask(request, r.getPayload());
+      if (task instanceof OCreateRecordTask) {
+        final Object badResponse = r.getPayload();
+        if (badResponse instanceof Throwable)
+          // FOUND AN EXCEPTION
+          return false;
 
+        final OPlaceholder badResult = (OPlaceholder) badResponse;
+        clusterIds.add(badResult.getIdentity().getClusterId());
+
+        if (clusterIds.size() > 1)
+          // DIFFERENT CLUSTERS
+          return false;
+
+        final long clPos = ((OPlaceholder) badResponse).getIdentity().getClusterPosition();
+
+        // DEFINE THE RANGE
+        if (clPos < minClusterPos)
+          minClusterPos = clPos;
+        if (clPos > maxClusterPos)
+          maxClusterPos = clPos;
+      }
+    }
+
+    if (clusterIds.isEmpty())
+      // NO CREATE
+      return false;
+
+    if (minClusterPos == maxClusterPos)
+      // NO HOLE
+      return false;
+
+    // FOUND HOLE(S)
+    for (ODistributedResponse r : getReceivedResponses()) {
+      final OAbstractRemoteTask task = request.getTask();
+
+      final OPlaceholder origPh = (OPlaceholder) r.getPayload();
+
+      for (long i = minClusterPos; i <= maxClusterPos; ++i) {
+
+        if (i > origPh.getIdentity().getClusterPosition()) {
+          // CREATE THE RECORD FIRST AND THEN DELETE IT TO LEAVE THE HOLE AND ALIGN CLUSTER POS NUMERATION
+          ORecordInternal.setIdentity(((OCreateRecordTask) task).getRecord(),
+              ((OCreateRecordTask) task).getRecord().getIdentity().getClusterId(), -1);
+          dManager.sendRequest(request.getDatabaseName(), null, Collections.singleton(r.getExecutorNodeName()), task,
+              ODistributedRequest.EXECUTION_MODE.NO_RESPONSE);
+        }
+
+        final OPlaceholder ph = new OPlaceholder(new ORecordId(origPh.getIdentity().getClusterId(), i), -1);
+
+        final ODeleteRecordTask undoTask = new ODeleteRecordTask(new ORecordId(ph.getIdentity()), ph.getVersion())
+            .setDelayed(false);
         if (undoTask != null) {
           ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
               "sending undo message (%s) for request (%s) to server %s", undoTask, request, r.getExecutorNodeName());
@@ -586,6 +665,8 @@ public class ODistributedResponseManager {
         }
       }
     }
+
+    return true;
   }
 
   protected void fixNodesInConflict(final List<ODistributedResponse> bestResponsesGroup, final int conflicts) {
@@ -600,16 +681,17 @@ public class ODistributedResponseManager {
       if (responseGroup != bestResponsesGroup) {
         // CONFLICT GROUP: FIX THEM ONE BY ONE
         for (ODistributedResponse r : responseGroup) {
-          final OAbstractRemoteTask fixTask = ((OAbstractReplicatedTask) request.getTask()).getFixTask(request, request.getTask(),
-              r.getPayload(), goodResponse.getPayload());
+          final List<OAbstractRemoteTask> fixTasks = ((OAbstractReplicatedTask) request.getTask()).getFixTask(request,
+              request.getTask(), r.getPayload(), goodResponse.getPayload(), r.getExecutorNodeName(), dManager);
 
-          if (fixTask != null) {
-            ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
-                "sending fix message (%s) for response (%s) on request (%s) in server %s to be: %s", fixTask, r, request,
-                r.getExecutorNodeName(), goodResponse);
+          if (fixTasks != null) {
+            for (OAbstractRemoteTask fixTask : fixTasks) {
+              ODistributedServerLog.warn(this, dManager.getLocalNodeName(), r.getExecutorNodeName(), DIRECTION.OUT,
+                  "sending fix message (%s) for response (%s) on request (%s) to be: %s", fixTask, r, request, goodResponse);
 
-            dManager.sendRequest(request.getDatabaseName(), null, Collections.singleton(r.getExecutorNodeName()), fixTask,
-                ODistributedRequest.EXECUTION_MODE.NO_RESPONSE);
+              dManager.sendRequest(request.getDatabaseName(), null, Collections.singleton(r.getExecutorNodeName()), fixTask,
+                  ODistributedRequest.EXECUTION_MODE.NO_RESPONSE);
+            }
           }
         }
       }

@@ -32,12 +32,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.OQueryParsingException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.exception.OSchemaException;
-import com.orientechnologies.orient.core.exception.OValidationException;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.OEmptyMapEntryIterator;
@@ -59,8 +54,6 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordListener;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
-import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
-import com.orientechnologies.orient.core.serialization.serializer.ONetworkThreadLocalSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
@@ -69,12 +62,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 
-import java.io.ByteArrayOutputStream;
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+import java.io.*;
 import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.Map.Entry;
@@ -274,21 +262,27 @@ public class ODocument extends ORecordAbstract
         if (!(fieldValue instanceof List))
           throw new OValidationException("The field '" + p.getFullName()
               + "' has been declared as LINKLIST but an incompatible type is used. Value: " + fieldValue);
-        validateLinkCollection(p, (Collection<Object>) fieldValue);
+        validateLinkCollection(p, (Collection<Object>) fieldValue, entry);
         break;
       case LINKSET:
         if (!(fieldValue instanceof Set))
           throw new OValidationException("The field '" + p.getFullName()
               + "' has been declared as LINKSET but an incompatible type is used. Value: " + fieldValue);
-        validateLinkCollection(p, (Collection<Object>) fieldValue);
+        validateLinkCollection(p, (Collection<Object>) fieldValue, entry);
         break;
       case LINKMAP:
         if (!(fieldValue instanceof Map))
           throw new OValidationException("The field '" + p.getFullName()
               + "' has been declared as LINKMAP but an incompatible type is used. Value: " + fieldValue);
-        validateLinkCollection(p, ((Map<?, Object>) fieldValue).values());
+        validateLinkCollection(p, ((Map<?, Object>) fieldValue).values(), entry);
         break;
 
+      case LINKBAG:
+        if (!(fieldValue instanceof ORidBag))
+          throw new OValidationException("The field '" + p.getFullName()
+              + "' has been declared as LINKBAG but an incompatible type is used. Value: " + fieldValue);
+        validateLinkCollection(p, (Iterable<Object>) fieldValue, entry);
+        break;
       case EMBEDDED:
         validateEmbedded(p, fieldValue);
         break;
@@ -383,7 +377,7 @@ public class ODocument extends ORecordAbstract
       }
     }
 
-    if (p.isReadonly() && iRecord instanceof ODocument && !ORecordVersionHelper.isTombstone(iRecord.getVersion())) {
+    if (p.isReadonly() && !ORecordVersionHelper.isTombstone(iRecord.getVersion())) {
       if (entry != null && (entry.changed || entry.timeLine != null) && !entry.created) {
         // check if the field is actually changed by equal.
         // this is due to a limitation in the merge algorithm used server side marking all non simple fields as dirty
@@ -397,18 +391,27 @@ public class ODocument extends ORecordAbstract
     }
   }
 
-  protected static void validateLinkCollection(final OProperty property, Collection<Object> values) {
+  protected static void validateLinkCollection(final OProperty property, Iterable<Object> values, ODocumentEntry value) {
     if (property.getLinkedClass() != null) {
-      boolean autoconvert = false;
-      if (values instanceof ORecordLazyMultiValue) {
-        autoconvert = ((ORecordLazyMultiValue) values).isAutoConvertToRecord();
-        ((ORecordLazyMultiValue) values).setAutoConvertToRecord(false);
+      if (value.timeLine != null) {
+        List<OMultiValueChangeEvent<Object, Object>> event = value.timeLine.getMultiValueChangeEvents();
+        for (OMultiValueChangeEvent object : event) {
+          if (object.getChangeType() == OMultiValueChangeEvent.OChangeType.ADD
+              || object.getChangeType() == OMultiValueChangeEvent.OChangeType.UPDATE && object.getValue() != null)
+          validateLink(property, object.getValue(), OSecurityShared.ALLOW_FIELDS.contains(property.getName()));
+        }
+      } else {
+        boolean autoconvert = false;
+        if (values instanceof ORecordLazyMultiValue) {
+          autoconvert = ((ORecordLazyMultiValue) values).isAutoConvertToRecord();
+          ((ORecordLazyMultiValue) values).setAutoConvertToRecord(false);
+        }
+        for (Object object : values) {
+          validateLink(property, object, OSecurityShared.ALLOW_FIELDS.contains(property.getName()));
+        }
+        if (values instanceof ORecordLazyMultiValue)
+          ((ORecordLazyMultiValue) values).setAutoConvertToRecord(autoconvert);
       }
-      for (Object object : values) {
-        validateLink(property, object, OSecurityShared.ALLOW_FIELDS.contains(property.getName()));
-      }
-      if (values instanceof ORecordLazyMultiValue)
-        ((ORecordLazyMultiValue) values).setAutoConvertToRecord(autoconvert);
     }
   }
 
@@ -706,12 +709,17 @@ public class ODocument extends ORecordAbstract
    * </p>
    *
    * @param iValue
+   *          String representation of the record.
    */
   @Deprecated
   public void fromString(final String iValue) {
     _dirty = true;
     _contentChanged = true;
-    _source = OBinaryProtocol.string2bytes(iValue);
+    try {
+      _source = iValue.getBytes("UTF-8");
+    } catch (UnsupportedEncodingException e) {
+      throw OException.wrapException(new OSerializationException("Error reading content from string"), e);
+    }
 
     removeAllCollectionChangeListeners();
 
@@ -880,7 +888,8 @@ public class ODocument extends ORecordAbstract
         if (iFieldType == original)
           return value;
       }
-      Object newValue = null;
+
+      final Object newValue;
 
       if (iFieldType == OType.BINARY && value instanceof String)
         newValue = OStringSerializerHelper.getBinaryContent(value);
@@ -997,7 +1006,7 @@ public class ODocument extends ORecordAbstract
         if (iPropertyValue instanceof Number)
           v = ((Number) iPropertyValue).intValue();
         else
-          Integer.parseInt(iPropertyValue.toString());
+          v = Integer.parseInt(iPropertyValue.toString());
 
         _recordVersion = v;
       }
@@ -1032,7 +1041,8 @@ public class ODocument extends ORecordAbstract
             }
 
             final String indexPart = subFieldName.substring(1, subFieldNameLen - 1);
-            String indexAsString = ODocumentHelper.getIndexPart(null, indexPart).toString();
+            final Object indexPartObject = ODocumentHelper.getIndexPart(null, indexPart);
+            final String indexAsString = indexPartObject == null ? null : indexPartObject.toString();
 
             try {
               final int index = Integer.parseInt(indexAsString);
@@ -1057,7 +1067,8 @@ public class ODocument extends ORecordAbstract
           }
           return this;
         }
-      }
+      } else
+        throw new IllegalArgumentException("Property '" + iFieldName.substring(0, lastSep)+ "' is null, is possible to set a value with dotted notation only on not null property");
       return null;
     }
 
@@ -1215,6 +1226,7 @@ public class ODocument extends ORecordAbstract
    *          if true, the other document properties will always be added or overwritten. If false, the missed properties in the
    *          "other" document will be removed by original document
    * @param iMergeSingleItemsOfMultiValueFields
+   *          If true, merges single items of multi field fields (collections, maps, arrays, etc)
    *
    * @return
    */
@@ -1238,7 +1250,7 @@ public class ODocument extends ORecordAbstract
    *          if true, the other document properties will always be added or overwritten. If false, the missed properties in the
    *          "other" document will be removed by original document
    * @param iMergeSingleItemsOfMultiValueFields
-   *
+   *          If true, merges single items of multi field fields (collections, maps, arrays, etc)
    * @return
    */
   public ODocument merge(final Map<String, Object> iOther, final boolean iUpdateOnlyMode,
@@ -1319,7 +1331,7 @@ public class ODocument extends ORecordAbstract
             // Look wrong but is correct, it need to fail if there isn't next.
             iterator.next();
           }
-        Entry<String, Object> toRet = new Entry<String, Object>() {
+        final Entry<String, Object> toRet = new Entry<String, Object>() {
           private Entry<String, ODocumentEntry> intern = current;
 
           @Override
@@ -1699,8 +1711,8 @@ public class ODocument extends ORecordAbstract
           cur.getValue().setChanged(false);
           cur.getValue().original = null;
           cur.getValue().timeLine = null;
-          if (cur.getValue().value instanceof OTrackedMultiValue<?, ?>) {
-            removeCollectionChangeListener(cur.getValue(), cur.getValue().value);
+
+          if (cur.getValue().changeListener == null && cur.getValue().value instanceof OTrackedMultiValue<?, ?>) {
             addCollectionChangeListener(cur.getValue());
           }
         }
@@ -1778,7 +1790,7 @@ public class ODocument extends ORecordAbstract
    * @param iFieldName
    *          Field name
    * @param iFieldType
-   *          Type to set between OType enumaration values
+   *          Type to set between OType enumeration values
    */
   public ODocument setFieldType(final String iFieldName, final OType iFieldType) {
     checkForLoading();
@@ -1850,7 +1862,7 @@ public class ODocument extends ORecordAbstract
           }
 
         if (allFound)
-          // ALL THE REQUESTED FIELDS HAVE BEEN LOADED BEFORE AND AVAILABLES, AVOID UNMARSHALLIGN
+          // ALL THE REQUESTED FIELDS HAVE BEEN LOADED BEFORE AND AVAILABLE, AVOID UNMARSHALLIGN
           return true;
       }
     }
@@ -2133,7 +2145,7 @@ public class ODocument extends ORecordAbstract
 
       ODocumentEntry curValue = _fields.get(f);
 
-      if(curValue != null && curValue.exist()) {
+      if (curValue != null && curValue.exist()) {
         final Object value = curValue.value;
         if (iMergeSingleItemsOfMultiValueFields) {
           if (value instanceof Map<?, ?>) {
@@ -2158,7 +2170,7 @@ public class ODocument extends ORecordAbstract
         if (value instanceof ORidBag && otherValue instanceof ORidBag)
           bagsMerged = ((ORidBag) value).tryMerge((ORidBag) otherValue, iMergeSingleItemsOfMultiValueFields);
 
-        if (!bagsMerged && (value != null && !value.equals(otherValue)) || (value== null && otherValue != null)) {
+        if (!bagsMerged && (value != null && !value.equals(otherValue)) || (value == null && otherValue != null)) {
           if (otherValue instanceof ORidBag)
             // DESERIALIZE IT TO ASSURE TEMPORARY RIDS ARE TREATED CORRECTLY
             ((ORidBag) otherValue).convertLinks2Records();
@@ -2278,21 +2290,21 @@ public class ODocument extends ORecordAbstract
         if (value == null)
           continue;
         try {
-          if (type == OType.EMBEDDEDLIST) {
+          if (type == OType.EMBEDDEDLIST && !(value instanceof OTrackedList)) {
             List<Object> list = new OTrackedList<Object>(this);
             Collection<Object> values = (Collection<Object>) value;
             for (Object object : values) {
               list.add(OType.convert(object, linkedType.getDefaultJavaType()));
             }
             field(prop.getName(), list);
-          } else if (type == OType.EMBEDDEDMAP) {
+          } else if (type == OType.EMBEDDEDMAP && !(value instanceof OTrackedMap)) {
             Map<Object, Object> map = new OTrackedMap<Object>(this);
             Map<Object, Object> values = (Map<Object, Object>) value;
             for (Entry<Object, Object> object : values.entrySet()) {
               map.put(object.getKey(), OType.convert(object.getValue(), linkedType.getDefaultJavaType()));
             }
             field(prop.getName(), map);
-          } else if (type == OType.EMBEDDEDSET && linkedType != null) {
+          } else if (type == OType.EMBEDDEDSET && !(value instanceof OTrackedSet)) {
             Set<Object> list = new OTrackedSet<Object>(this);
             Collection<Object> values = (Collection<Object>) value;
             for (Object object : values) {
@@ -2308,25 +2320,10 @@ public class ODocument extends ORecordAbstract
     }
   }
 
-  @Override
-  protected ODocument flatCopy() {
-    if (isDirty())
-      throw new IllegalStateException("Cannot execute a flat copy of a dirty record");
-
-    final ODocument cloned = new ODocument();
-
-    cloned.setOrdered(_ordered);
-    cloned.fill(_recordId, _recordVersion, _source, false);
-    return cloned;
-  }
-
   protected byte[] toStream(final boolean iOnlyDelta) {
     STATUS prev = _status;
     _status = STATUS.MARSHALLING;
     try {
-      if (ONetworkThreadLocalSerializer.getNetworkSerializer() != null)
-        return ONetworkThreadLocalSerializer.getNetworkSerializer().toStream(this, iOnlyDelta);
-
       if (_source == null)
         _source = _recordFormat.toStream(this, iOnlyDelta);
     } finally {
@@ -2399,6 +2396,9 @@ public class ODocument extends ORecordAbstract
       if (!(fieldValue instanceof Collection<?>) && !(fieldValue instanceof Map<?, ?>) && !(fieldValue instanceof ODocument))
         continue;
       if (addCollectionChangeListener(fieldEntry.getValue())) {
+        if (fieldEntry.getValue().timeLine != null && !fieldEntry.getValue().timeLine.getMultiValueChangeEvents().isEmpty()) {
+          checkTimelineTrackable(fieldEntry.getValue().timeLine, (OTrackedMultiValue) fieldEntry.getValue().value);
+        }
         continue;
       }
 
@@ -2450,6 +2450,14 @@ public class ODocument extends ORecordAbstract
         if (fieldValue instanceof Map<?, ?>)
           newValue = new ORecordLazyMap(this, (Map<Object, OIdentifiable>) fieldValue);
         break;
+      case LINKBAG:
+        if (fieldValue instanceof Collection<?>) {
+          ORidBag bag = new ORidBag();
+          bag.setOwner(this);
+          bag.addAll((Collection<OIdentifiable>) fieldValue);
+          newValue = bag;
+        }
+        break;
       default:
         break;
       }
@@ -2460,6 +2468,28 @@ public class ODocument extends ORecordAbstract
       }
     }
 
+  }
+
+  private void checkTimelineTrackable(OMultiValueChangeTimeLine<Object, Object> timeLine, OTrackedMultiValue origin) {
+    List<OMultiValueChangeEvent<Object, Object>> events = timeLine.getMultiValueChangeEvents();
+    for (OMultiValueChangeEvent<Object, Object> event : events) {
+      Object value = event.getValue();
+      if (event.getChangeType() == OMultiValueChangeEvent.OChangeType.ADD && !(value instanceof OTrackedMultiValue)) {
+        if (value instanceof Collection) {
+          Collection<Object> newCollection = value instanceof List ? new OTrackedList<Object>(this) : new OTrackedSet<Object>(this);
+          fillTrackedCollection(newCollection, (Collection<Object>) value);
+          origin.replace(event, newCollection);
+        } else if (value instanceof Map) {
+          Map<Object, Object> newMap = new OTrackedMap<Object>(this);
+          fillTrackedMap(newMap, (Map<Object, Object>) value);
+          origin.replace(event, newMap);
+        }
+      } else if (event.getChangeType() == OMultiValueChangeEvent.OChangeType.NESTED) {
+        OMultiValueChangeTimeLine nestedTimeline = ((ONestedMultiValueChangeEvent) event).getTimeLine();
+        if (nestedTimeline != null)
+          checkTimelineTrackable(nestedTimeline, (OTrackedMultiValue) value);
+      }
+    }
   }
 
   private void fillTrackedCollection(Collection<Object> dest, Collection<Object> source) {
@@ -2602,11 +2632,9 @@ public class ODocument extends ORecordAbstract
   }
 
   /**
-   * Check and convert the field of the document matching the types specified by the class.
-   *
-   * @param _clazz
-   */
-  private void convertFieldsToClass(OClass _clazz) {
+   * Checks and convert the field of the document matching the types specified by the class.
+   **/
+  private void convertFieldsToClass(final OClass _clazz) {
     for (OProperty prop : _clazz.properties()) {
       ODocumentEntry entry = _fields != null ? _fields.get(prop.getName()) : null;
       if (entry != null && entry.exist()) {
@@ -2635,7 +2663,7 @@ public class ODocument extends ORecordAbstract
 
     OClass _clazz = getImmutableSchemaClass();
     if (_clazz != null) {
-      // SCHEMAFULL?
+      // SCHEMA-FULL?
       final OProperty prop = _clazz.getProperty(iFieldName);
       if (prop != null) {
         entry.property = prop;
@@ -2694,7 +2722,7 @@ public class ODocument extends ORecordAbstract
     if (_className == null)
       fetchClassName();
 
-    final OSchema immutableSchema = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot();
+    final OSchema immutableSchema = database.getMetadata().getImmutableSchemaSnapshot();
     if (immutableSchema == null)
       return;
 

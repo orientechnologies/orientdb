@@ -35,7 +35,7 @@ public class ORecordBytesTest {
   private static final int FULL_ARRAY  = 5;
   private InputStream      inputStream;
   private InputStream      emptyStream;
-  private ORecordBytes     testedInstance;
+  private OBlob     testedInstance;
 
   @BeforeMethod
   public void setUp() throws Exception {

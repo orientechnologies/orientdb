@@ -26,16 +26,20 @@ import com.orientechnologies.orient.etl.OETLProcessor;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
+import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.INFO;
+
 public class OVertexTransformer extends OAbstractTransformer {
-  private String  vertexClass;
+  private String vertexClass;
   private boolean skipDuplicates = false;
 
   @Override
   public ODocument getConfiguration() {
     return new ODocument().fromJSON("{parameters:[" + getCommonConfigurationParameters() + ","
-        + "{class:{optional:true,description:'Vertex class name to assign. Default is " + OrientVertexType.CLASS_NAME + "'}}"
-        + ",skipDuplicates:{optional:true,description:'Vertices with duplicate keys are skipped', default:false}" + "]"
-        + ",input:['OrientVertex','ODocument'],output:'OrientVertex'}");
+                                    + "{class:{optional:true,description:'Vertex class name to assign. Default is "
+                                    + OrientVertexType.CLASS_NAME + "'}}"
+                                    + ",skipDuplicates:{optional:true,description:'Vertices with duplicate keys are skipped', default:false}"
+                                    + "]"
+                                    + ",input:['OrientVertex','ODocument'],output:'OrientVertex'}");
   }
 
   @Override
@@ -48,18 +52,21 @@ public class OVertexTransformer extends OAbstractTransformer {
   }
 
   @Override
+  public void begin() {
+    if (vertexClass != null) {
+      final OClass cls = pipeline.getGraphDatabase().getVertexType(vertexClass);
+      if (cls == null)
+        pipeline.getGraphDatabase().createVertexType(vertexClass);
+    }
+  }
+
+  @Override
   public String getName() {
     return "vertex";
   }
 
   @Override
   public Object executeTransform(final Object input) {
-    vertexClass = (String) resolve(vertexClass);
-    if (vertexClass != null) {
-      final OClass cls = pipeline.getGraphDatabase().getVertexType(vertexClass);
-      if (cls == null)
-        pipeline.getGraphDatabase().createVertexType(vertexClass);
-    }
 
     final OrientVertex v = pipeline.getGraphDatabase().getVertex(input);
     if (v == null)

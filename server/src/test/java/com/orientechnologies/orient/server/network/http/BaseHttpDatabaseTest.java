@@ -1,30 +1,31 @@
 package com.orientechnologies.orient.server.network.http;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
 
 /**
  * Test HTTP "query" command.
  *
  * @author Luca Garulli (l.garulli--at-orientechnologies.com)
  */
-@Test
+
 public abstract class BaseHttpDatabaseTest extends BaseHttpTest {
-  @BeforeClass
+  @Before
   public void createDatabase() throws Exception {
     super.startServer();
-    Assert.assertEquals(post("database/" + getDatabaseName() + "/memory").setUserName("root").setUserPassword("root").getResponse()
-        .getStatusLine().getStatusCode(), 200);
+    Assert.assertEquals(
+        post("database/" + getDatabaseName() + "/memory").setUserName("root").setUserPassword("root").getResponse().getStatusLine()
+            .getStatusCode(), 200);
 
     onAfterDatabaseCreated();
   }
 
-  @AfterClass
+  @After
   public void dropDatabase() throws Exception {
-    Assert.assertEquals(delete("database/" + getDatabaseName()).setUserName("root").setUserPassword("root").getResponse()
-        .getStatusLine().getStatusCode(), 204);
+    Assert.assertEquals(
+        delete("database/" + getDatabaseName()).setUserName("root").setUserPassword("root").getResponse().getStatusLine()
+            .getStatusCode(), 204);
     super.stopServer();
 
     onAfterDatabaseDropped();

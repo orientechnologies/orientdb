@@ -364,17 +364,18 @@ public class OrientGraph extends OrientTransactionalGraph {
       to = to.getIdentity();
     }
 
-    edge.save(iClusterName);
+
 
     // OUT-VERTEX ---> IN-VERTEX/EDGE
     currentVertex.createLink(this, outDocument, to, outFieldName);
 
     // IN-VERTEX ---> OUT-VERTEX/EDGE
     currentVertex.createLink(this, inDocument, from, inFieldName);
-
-    outDocument.save();
-    inDocument.save();
-
+    //THE DIRTY MANAGER MANAGE THE SAVE OF ALL LINKED ENTITIES.
+    if(!edge.isLightweight())
+      edge.save(iClusterName);
+    else
+      outDocument.save();
     return edge;
   }
 

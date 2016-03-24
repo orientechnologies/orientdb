@@ -62,15 +62,16 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
     }
 
     addressClusterId = addressClass.getDefaultClusterId();
+
   }
 
   @Test
   public void updateWithWhereOperator() {
 
-    List<Long> positions = getValidPositions(4);
+    List<Long> positions = getValidPositions(addressClusterId);
 
     Integer records = database.command(
-        new OCommandSQL("update Profile set salary = 120.30, location = 4:" + positions.get(2)
+        new OCommandSQL("update Profile set salary = 120.30, location = "+addressClusterId+":" + positions.get(2)
             + ", salary_cloned = salary where surname = 'Obama'")).execute();
 
     Assert.assertEquals(records.intValue(), 3);

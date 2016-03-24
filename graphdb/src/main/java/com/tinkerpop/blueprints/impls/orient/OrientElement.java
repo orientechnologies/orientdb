@@ -42,9 +42,9 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.tinkerpop.blueprints.Edge;
@@ -272,7 +272,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
       return (T) rawElement.getIdentity().toString();
 
     final Object fieldValue = getRecord().field(key);
-    if (graph != null && fieldValue instanceof OIdentifiable && !(((OIdentifiable) fieldValue).getRecord() instanceof ORecordBytes))
+    if (graph != null && fieldValue instanceof OIdentifiable && !(((OIdentifiable) fieldValue).getRecord() instanceof OBlob))
       // CONVERT IT TO VERTEX/EDGE
       return (T) graph.getElement(fieldValue);
     else if (!(fieldValue instanceof Map) && OMultiValue.isMultiValue(fieldValue)

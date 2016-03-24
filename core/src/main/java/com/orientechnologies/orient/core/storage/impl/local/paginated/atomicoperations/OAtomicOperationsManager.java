@@ -24,11 +24,13 @@ import com.orientechnologies.common.concur.lock.ODistributedCounter;
 import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -37,6 +39,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ONonTxOperationPerformedWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.statistic.OStoragePerformanceStatistic;
 
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.InstanceNotFoundException;
@@ -83,6 +86,19 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
 
   private static volatile ThreadLocal<OAtomicOperation> currentOperation = new ThreadLocal<OAtomicOperation>();
 
+  /**
+   * Flag which indicates whether we work in unsafe mode for current thread.
+   * Unsafe mode means that all operations in this thread may violate violate ACID properties but system performance will be faster.
+   * <p>
+   * To start unsafe mode call {@link #switchOnUnsafeMode()}, to stop unsafe mode call {@link #switchOffUnsafeMode()}.
+   */
+  private static final ThreadLocal<Boolean> unsafeMode = new ThreadLocal<Boolean>() {
+    @Override
+    protected Boolean initialValue() {
+      return false;
+    }
+  };
+
   static {
     Orient.instance().registerListener(new OOrientListenerAbstract() {
       @Override
@@ -98,9 +114,10 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     });
   }
 
-  private final OAbstractPaginatedStorage storage;
-  private final OWriteAheadLog            writeAheadLog;
-  private final OLockManager<String> lockManager = new OLockManager<String>(true, -1);
+  private final OAbstractPaginatedStorage    storage;
+  private final OStoragePerformanceStatistic storagePerformanceStatistic;
+  private final OWriteAheadLog               writeAheadLog;
+  private final OLockManager<String> lockManager = new OLockManager<String>(true, -1, OGlobalConfiguration.COMPONENTS_LOCK_CACHE.getValueAsInteger());
   private final OReadCache  readCache;
   private final OWriteCache writeCache;
 
@@ -111,17 +128,43 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     this.writeAheadLog = storage.getWALInstance();
     this.readCache = storage.getReadCache();
     this.writeCache = storage.getWriteCache();
+    this.storagePerformanceStatistic = storage.getStoragePerformanceStatistic();
   }
 
-  public OAtomicOperation startAtomicOperation(ODurableComponent durableComponent) throws IOException {
+  /**
+   * @see #startAtomicOperation(String, boolean)
+   */
+  public OAtomicOperation startAtomicOperation(ODurableComponent durableComponent, boolean trackNonTxOperations)
+      throws IOException {
     if (durableComponent != null)
-      return startAtomicOperation(durableComponent.getFullName());
+      return startAtomicOperation(durableComponent.getFullName(), trackNonTxOperations);
 
-    return startAtomicOperation((String) null);
+    return startAtomicOperation((String) null, trackNonTxOperations);
   }
 
-  public OAtomicOperation startAtomicOperation(String fullName) throws IOException {
-    if (writeAheadLog == null)
+  /**
+   * Starts atomic operation inside of current thread.
+   * If atomic operation has been already started , current atomic operation instance will be returned.
+   * All durable components have to call this method at the beginning of any data modification operation.
+   * <p>
+   * In current implementation of atomic operation, each component which is participated in atomic operation is hold under exclusive
+   * lock till atomic operation will not be completed (committed or rollbacked).
+   * <p>
+   * If other thread is going to read data from component it has to acquire read lock inside of atomic operation manager {@link #acquireReadLock(ODurableComponent)}
+   * , otherwise data consistency will be compromised.
+   * <p>
+   * Atomic operation may be delayed if start of atomic operations is prohibited by call of {@link #freezeAtomicOperations(Class, String)}
+   * method. If mentioned above method is called then execution of current method will be stopped till call of {@link #releaseAtomicOperations(long)}
+   * method or exception will be thrown. Concrete behaviour depends on real values of parameters of {@link #freezeAtomicOperations(Class, String)} method.
+   *
+   * @param trackNonTxOperations If this flag set to <code>true</code> then special record {@link ONonTxOperationPerformedWALRecord} will be added to
+   *                             WAL in case of atomic operation is started outside of active storage transaction. During storage restore procedure
+   *                             this record is monitored and if given record is present then rebuild of all indexes is performed.
+   * @param fullName             Name of component which is going participate in atomic operation.
+   * @return Instance of active atomic operation.
+   */
+  public OAtomicOperation startAtomicOperation(String fullName, boolean trackNonTxOperations) throws IOException {
+    if (unsafeMode.get() || writeAheadLog == null)
       return null;
 
     OAtomicOperation operation = currentOperation.get();
@@ -129,7 +172,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       operation.incrementCounter();
 
       if (fullName != null)
-        acquireExclusiveLockTillOperationComplete(fullName);
+        acquireExclusiveLockTillOperationComplete(operation, fullName);
 
       return operation;
     }
@@ -159,7 +202,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     final OOperationUnitId unitId = OOperationUnitId.generateId();
     final OLogSequenceNumber lsn = writeAheadLog.logAtomicOperationStartRecord(true, unitId);
 
-    operation = new OAtomicOperation(lsn, unitId, readCache, writeCache, storage.getId());
+    operation = new OAtomicOperation(lsn, unitId, readCache, writeCache, storagePerformanceStatistic, storage.getId());
     currentOperation.set(operation);
 
     if (trackAtomicOperations) {
@@ -167,13 +210,31 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       activeAtomicOperations.put(unitId, new OPair<String, StackTraceElement[]>(thread.getName(), thread.getStackTrace()));
     }
 
-    if (storage.getStorageTransaction() == null)
+    if (trackNonTxOperations && storage.getStorageTransaction() == null)
       writeAheadLog.log(new ONonTxOperationPerformedWALRecord());
 
     if (fullName != null)
-      acquireExclusiveLockTillOperationComplete(fullName);
+      acquireExclusiveLockTillOperationComplete(operation, fullName);
 
     return operation;
+  }
+
+  /**
+   * Switch off unsafe mode. During this mode it is not guaranteed that operations will support
+   * ACID properties but system performance will be faster.
+   * <p>
+   * To switch off unsafe mode call {@link #switchOffUnsafeMode()}
+   */
+  public void switchOnUnsafeMode() {
+    unsafeMode.set(true);
+  }
+
+  /**
+   * Switch off unsafe mode. It is highly recommended to call {@link OStorage#synch()}  after calling of this method.
+   * Otherwise there is risk that database may be in broken state after crash/restore cycle if this method will not be called.
+   */
+  public void switchOffUnsafeMode() {
+    unsafeMode.set(false);
   }
 
   private void addThreadInWaitingList(Thread thread) {
@@ -313,7 +374,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   }
 
   public OAtomicOperation endAtomicOperation(boolean rollback, Exception exception) throws IOException {
-    if (writeAheadLog == null)
+    if (unsafeMode.get() || writeAheadLog == null)
       return null;
 
     final OAtomicOperation operation = currentOperation.get();
@@ -363,11 +424,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     return operation;
   }
 
-  private void acquireExclusiveLockTillOperationComplete(String fullName) {
-    final OAtomicOperation operation = currentOperation.get();
-    if (operation == null)
-      return;
-
+  private void acquireExclusiveLockTillOperationComplete(OAtomicOperation operation, String fullName) {
     if (operation.containsInLockedObjects(fullName))
       return;
 
@@ -376,7 +433,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   }
 
   public void acquireReadLock(ODurableComponent durableComponent) {
-    if (writeAheadLog == null)
+    if (unsafeMode.get() || writeAheadLog == null)
       return;
 
     assert durableComponent.getName() != null;
@@ -386,7 +443,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   }
 
   public void releaseReadLock(ODurableComponent durableComponent) {
-    if (writeAheadLog == null)
+    if (unsafeMode.get() || writeAheadLog == null)
       return;
 
     assert durableComponent.getName() != null;
@@ -400,8 +457,15 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       try {
         final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
         final ObjectName mbeanName = new ObjectName(getMBeanName());
-        if (!server.isRegistered(mbeanName))
+
+        if (!server.isRegistered(mbeanName)) {
           server.registerMBean(this, mbeanName);
+        } else {
+          mbeanIsRegistered.set(false);
+          OLogManager.instance().warn(this, "MBean with name %s has already registered. Probably your system was not shutdown correctly "
+              + "or you have several running applications which use OrientDB engine inside",
+              mbeanName.getCanonicalName());
+        }
 
       } catch (MalformedObjectNameException e) {
         throw OException.wrapException(new OStorageException("Error during registration of atomic manager MBean"), e);

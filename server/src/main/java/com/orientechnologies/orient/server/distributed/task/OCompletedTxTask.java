@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -79,8 +80,9 @@ public class OCompletedTxTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public OFixTxTask getFixTask(final ODistributedRequest iRequest, OAbstractRemoteTask iOriginalTask, final Object iBadResponse,
-      final Object iGoodResponse) {
+  public List<OAbstractRemoteTask> getFixTask(final ODistributedRequest iRequest, OAbstractRemoteTask iOriginalTask, final Object iBadResponse,
+                                                 final Object iGoodResponse, String executorNodeName,
+                                                 ODistributedServerManager dManager) {
     return null;
   }
 
@@ -112,7 +114,7 @@ public class OCompletedTxTask extends OAbstractReplicatedTask {
   @Override
   public long getDistributedTimeout() {
     final long to = OGlobalConfiguration.DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT.getValueAsLong();
-    return to + ((to / 2) * locks.size());
+    return to + (100 * locks.size());
   }
 
   @Override

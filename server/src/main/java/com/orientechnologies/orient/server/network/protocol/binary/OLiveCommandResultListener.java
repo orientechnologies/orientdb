@@ -53,22 +53,23 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class OLiveCommandResultListener extends OAbstractCommandResultListener implements OLiveResultListener {
 
-  private ONetworkProtocolBinary protocol;
+  private OClientConnection      connection;
   private final AtomicBoolean    empty       = new AtomicBoolean(true);
   private final int              txId;
   private final Set<ORID>        alreadySent = new HashSet<ORID>();
   private OClientSessions        session;
 
-  public OLiveCommandResultListener(final ONetworkProtocolBinary iNetworkProtocolBinary, final int txId,
+  public OLiveCommandResultListener(final OClientConnection connection, final int txId,
       OCommandResultListener wrappedResultListener) {
     super(wrappedResultListener);
-    this.protocol = iNetworkProtocolBinary;
-    session = iNetworkProtocolBinary.getServer().getClientConnectionManager().getSession(iNetworkProtocolBinary);
+    this.connection = connection;
+    session = connection.getProtocol().getServer().getClientConnectionManager().getSession(connection);
     this.txId = txId;
   }
 
   @Override
   public boolean result(final Object iRecord) {
+    final ONetworkProtocolBinary protocol = ((ONetworkProtocolBinary) connection.getProtocol());
     if (empty.compareAndSet(true, false))
       try {
         protocol.sendOk(txId);
@@ -106,7 +107,10 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
   public void onLiveResult(int iToken, ORecordOperation iOp) throws OException {
     boolean sendFail = true;
     do {
-      OChannelBinaryServer channel = protocol.channel;
+      List<OClientConnection> connections = session.getConnections();
+      ONetworkProtocolBinary protocol = (ONetworkProtocolBinary) connections.get(0).getProtocol();
+
+      OChannelBinaryServer channel = (OChannelBinaryServer) protocol.getChannel();
       try {
         channel.acquireWriteLock();
         try {
@@ -133,17 +137,16 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
         }
         sendFail = false;
       } catch (IOException e) {
-        List<OClientConnection> connections = session.getConnections();
+        connections = session.getConnections();
         if (connections.isEmpty()) {
-          OLiveQueryHook.unsubscribe(iToken, protocol.connection.database);
+          OLiveQueryHook.unsubscribe(iToken, protocol.connection.getDatabase());
           break;
         }
-        protocol = (ONetworkProtocolBinary) connections.get(0).getProtocol();
       } catch (Exception e) {
         OLogManager.instance().warn(this, "Cannot push cluster configuration to the client %s", e,
             protocol.connection.getRemoteAddress());
         protocol.getServer().getClientConnectionManager().disconnect(protocol.connection);
-        OLiveQueryHook.unsubscribe(iToken, protocol.connection.database);
+        OLiveQueryHook.unsubscribe(iToken, protocol.connection.getDatabase());
         break;
       }
 
@@ -159,7 +162,10 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
   public void onUnsubscribe(int iLiveToken) {
     boolean sendFail = true;
     do {
-      OChannelBinaryServer channel = protocol.channel;
+      List<OClientConnection> connections = session.getConnections();
+      ONetworkProtocolBinary protocol = (ONetworkProtocolBinary) connections.get(0).getProtocol();
+
+      OChannelBinaryServer channel = (OChannelBinaryServer) protocol.getChannel();
       try {
         channel.acquireWriteLock();
         try {
@@ -180,11 +186,10 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
         }
         sendFail = false;
       } catch (IOException e) {
-        List<OClientConnection> connections = session.getConnections();
+        connections = session.getConnections();
         if (connections.isEmpty()) {
           break;
         }
-        protocol = (ONetworkProtocolBinary) connections.get(0).getProtocol();
       } catch (Exception e) {
         OLogManager.instance().warn(this, "Cannot push cluster configuration to the client %s", e,
           protocol.connection.getRemoteAddress());

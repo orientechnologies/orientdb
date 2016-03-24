@@ -23,8 +23,10 @@ package com.orientechnologies.common.types;
  * Binary wrapper to let to byte[] to be managed inside OrientDB where comparable is needed, like for indexes.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
+ *
+ * Deprecated sice v2.2
  */
+@Deprecated
 public class OBinary implements Comparable<OBinary> {
   private final byte[] value;
 

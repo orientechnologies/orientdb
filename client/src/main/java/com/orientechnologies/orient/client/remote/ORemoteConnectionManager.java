@@ -19,18 +19,10 @@
  */
 package com.orientechnologies.orient.client.remote;
 
-import com.orientechnologies.common.concur.resource.OResourcePool;
-import com.orientechnologies.common.concur.resource.OResourcePoolListener;
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelListener;
-import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEventListener;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,7 +43,7 @@ public class ORemoteConnectionManager {
   protected final long                                             timeout;
   protected       ORemoteConnectionPushListener                    listener;
 
-  public ORemoteConnectionManager(final int iMaxConnectionPerURL, final long iTimeout) {
+  public ORemoteConnectionManager(final long iTimeout) {
     connections = new ConcurrentHashMap<String, ORemoteConnectionPool>();
     timeout = iTimeout;
   }

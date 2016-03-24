@@ -1,20 +1,28 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.Arrays;
-
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.testng.Assert;
-import org.testng.annotations.*;
-
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.index.OPropertyIndexDefinition;
+import com.orientechnologies.orient.core.index.OPropertyListIndexDefinition;
+import com.orientechnologies.orient.core.index.OPropertyMapIndexDefinition;
+import com.orientechnologies.orient.core.index.OPropertyRidBagIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
-import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.util.Arrays;
 
 @Test(groups = { "index" })
 public class SQLCreateIndexTest extends DocumentDBBaseTest {
@@ -156,13 +164,6 @@ public class SQLCreateIndexTest extends DocumentDBBaseTest {
           .execute();
       Assert.fail();
     } catch (OCommandSQLParsingException e) {
-      Assert
-          .assertTrue(e
-              .getMessage()
-              .contains(
-                  "Error on parsing command at position #84: Illegal field name format, should be '<property> [by key|value]' but was 'prop3 by ttt'\n"
-                      + "Command: CREATE INDEX sqlCreateIndexEmbeddedMapWrongSpecifierIndex ON sqlCreateIndexTestClass (prop3 by ttt) UNIQUE\n"
-                      + "--------------------------------------------------------------------------------------------^"));
     }
     final OIndex<?> index = database.getMetadata().getSchema().getClass("sqlCreateIndexTestClass")
         .getClassIndex("sqlCreateIndexEmbeddedMapWrongSpecifierIndex");
@@ -179,13 +180,7 @@ public class SQLCreateIndexTest extends DocumentDBBaseTest {
           .execute();
       Assert.fail();
     } catch (OCommandSQLParsingException e) {
-      Assert
-          .assertTrue(e
-              .getMessage()
-              .contains(
-                  "Error on parsing command at position #84: Illegal field name format, should be '<property> [by key|value]' but was 'prop3 b value'\n"
-                      + "Command: CREATE INDEX sqlCreateIndexEmbeddedMapWrongSpecifierIndex ON sqlCreateIndexTestClass (prop3 b value) UNIQUE\n"
-                      + "--------------------------------------------------------------------------------------------^"));
+
     }
     final OIndex<?> index = database.getMetadata().getSchema().getClass("sqlCreateIndexTestClass")
         .getClassIndex("sqlCreateIndexEmbeddedMapWrongSpecifierIndex");
@@ -202,13 +197,7 @@ public class SQLCreateIndexTest extends DocumentDBBaseTest {
           .execute();
       Assert.fail();
     } catch (OCommandSQLParsingException e) {
-      Assert
-          .assertTrue(e
-              .getMessage()
-              .contains(
-                  "Error on parsing command at position #84: Illegal field name format, should be '<property> [by key|value]' but was 'prop3 by value t'\n"
-                      + "Command: CREATE INDEX sqlCreateIndexEmbeddedMapWrongSpecifierIndex ON sqlCreateIndexTestClass (prop3 by value t) UNIQUE\n"
-                      + "--------------------------------------------------------------------------------------------^"));
+
     }
     final OIndex<?> index = database.getMetadata().getSchema().getClass("sqlCreateIndexTestClass")
         .getClassIndex("sqlCreateIndexEmbeddedMapWrongSpecifierIndex");

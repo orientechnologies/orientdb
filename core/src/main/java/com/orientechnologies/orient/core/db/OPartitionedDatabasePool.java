@@ -19,10 +19,12 @@
  */
 package com.orientechnologies.orient.core.db;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OStorageExistsException;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.storage.OStorage;
 
@@ -163,11 +165,30 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
         PoolPartition p = partition;
         partition = null;
 
-        super.close();
+        final OStorage storage = getStorage();
+        //if connection is lost and storage is closed as result we should not put closed connection back to the pool
+        if (!storage.isClosed()) {
+          super.close();
 
-        data.acquiredDatabase = null;
+          data.acquiredDatabase = null;
 
-        p.queue.offer(this);
+          p.queue.offer(this);
+        } else {
+          //close database instance but be ready that it will throw exception because of storage is closed
+          try {
+            super.close();
+          } catch (Exception e) {
+            OLogManager.instance().error(this, "Error during closing of database % when storage %s was already closed", e, getUrl(),
+                storage.getName());
+          }
+
+          data.acquiredDatabase = null;
+
+          //we create new connection instead of old one
+          final DatabaseDocumentTxPolled db = new DatabaseDocumentTxPolled(url);
+          p.queue.offer(db);
+        }
+
         p.acquiredConnections.decrementAndGet();
       } else {
         super.close();
@@ -340,10 +361,19 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
     return this;
   }
 
+  public boolean isClosed() {
+    return closed;
+  }
+
   protected void openDatabase(final DatabaseDocumentTxPolled db) {
     if (autoCreate) {
       if (!db.getURL().startsWith("remote:") && !db.exists()) {
-        db.create();
+        try {
+          db.create();
+        } catch (OStorageExistsException ex) {
+          OLogManager.instance().debug(this, "Can not create storage " + db.getStorage() + " because it already exists.");
+          db.internalOpen();
+        }
       } else {
         db.internalOpen();
       }

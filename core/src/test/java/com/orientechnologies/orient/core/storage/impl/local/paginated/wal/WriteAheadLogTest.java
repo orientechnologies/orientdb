@@ -321,7 +321,7 @@ public class WriteAheadLogTest {
 
     writeAheadLog.close();
 
-    long seed = System.currentTimeMillis();
+    long seed = 1452266995596L;//System.currentTimeMillis();
     System.out.println("seed of testWriteMultipleRecordsWithDifferentSizeAfterCloseOne " + seed);
     Random random = new Random(seed);
     writeAheadLog = createWAL();
@@ -336,9 +336,13 @@ public class WriteAheadLogTest {
       writtenRecords.add(walRecord);
 
       writtenSize += contentSize;
+
+      assertLogContent(writeAheadLog, writtenRecords);
     }
 
     Assert.assertEquals(writeAheadLog.end(), end);
+    assertLogContent(writeAheadLog, writtenRecords);
+
     assertLogContent(writeAheadLog, writtenRecords);
 
     writeAheadLog.close();

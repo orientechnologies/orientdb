@@ -1,7 +1,9 @@
 {
   "type": "Feature",
   "id": "ITA",
-  "properties": {"name": "Italy"},
+  "properties": {
+    "name": "Italy"
+  },
   "geometry": {
     "type": "MultiPolygon",
     "coordinates": [

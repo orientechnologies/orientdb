@@ -245,12 +245,12 @@ public class OPropertyMapIndexDefinitionTest {
 
   public void testCreateDDLByKey() {
     final String ddl = propertyIndexByKey.toCreateIndexDDL("testIndex", "unique",null).toLowerCase();
-    Assert.assertEquals(ddl, "create index testindex on testclass ( fone by key ) unique");
+    Assert.assertEquals(ddl, "create index `testindex` on `testclass` ( `fone` by key ) unique");
   }
 
   public void testCreateDDLByValue() {
     final String ddl = propertyIndexByValue.toCreateIndexDDL("testIndex", "unique",null).toLowerCase();
-    Assert.assertEquals(ddl, "create index testindex on testclass ( fone by value ) unique");
+    Assert.assertEquals(ddl, "create index `testindex` on `testclass` ( `fone` by value ) unique");
   }
 
   public void testProcessChangeEventAddKey() {

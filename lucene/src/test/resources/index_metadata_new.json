@@ -1,0 +1,25 @@
+{
+  "directory_type": "nio",
+  "directory_path": "./target/another/disk",
+  "use_compound_file": false,
+  "ram_buffer_MB": "16",
+  "max_buffered_docs": "-1",
+  "max_buffered_delete_terms": "-1",
+  "ram_per_thread_MB": "1024",
+  "default": "org.apache.lucene.analysis.standard.StandardAnalyzer",
+  "index": "org.apache.lucene.analysis.core.KeywordAnalyzer",
+  "query": "org.apache.lucene.analysis.standard.StandardAnalyzer",
+  "name_index": "org.apache.lucene.analysis.standard.StandardAnalyzer",
+  "name_query": "org.apache.lucene.analysis.core.KeywordAnalyzer",
+  "lyrics_index": "org.apache.lucene.analysis.en.EnglishAnalyzer",
+  "title_index": "org.apache.lucene.analysis.en.EnglishAnalyzer",
+  "title_query": "org.apache.lucene.analysis.en.EnglishAnalyzer",
+  "author_query": "org.apache.lucene.analysis.core.KeywordAnalyzer",
+  "description_index": "org.apache.lucene.analysis.standard.StandardAnalyzer",
+  "description_index_stopwords": [
+    "the",
+    "is"
+  ]
+}
+
+

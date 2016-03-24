@@ -44,25 +44,42 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
+import com.orientechnologies.orient.core.sql.parser.OIfStatement;
+import com.orientechnologies.orient.core.sql.parser.OStatement;
+import com.orientechnologies.orient.core.sql.parser.OrientSql;
+import com.orientechnologies.orient.core.sql.parser.ParseException;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
-import javax.script.*;
+import javax.script.Bindings;
+import javax.script.Compilable;
+import javax.script.CompiledScript;
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
+import javax.script.ScriptException;
+import javax.script.SimpleBindings;
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringReader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
 /**
  * Executes Script Commands.
- * 
- * @see OCommandScript
+ *
  * @author Luca Garulli
- * 
+ * @see OCommandScript
  */
 public class OCommandExecutorScript extends OCommandExecutorAbstract implements OCommandDistributedReplicateRequest {
-  private static final int             MAX_DELAY     = 100;
-  protected OCommandScript             request;
+  private static final int MAX_DELAY = 100;
+  protected OCommandScript request;
   protected DISTRIBUTED_EXECUTION_MODE executionMode = DISTRIBUTED_EXECUTION_MODE.LOCAL;
 
   public OCommandExecutorScript() {
@@ -89,11 +106,52 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
     parameters = iArgs;
 
     parameters = iArgs;
-    if (language.equalsIgnoreCase("SQL"))
+    if (language.equalsIgnoreCase("SQL")) {
       // SPECIAL CASE: EXECUTE THE COMMANDS IN SEQUENCE
+      try {
+        parserText = preParse(parserText, iArgs);
+      } catch (ParseException e) {
+        throw new OCommandExecutionException("Invalid script:" + e.getMessage());
+      }
       return executeSQL();
-    else
+    } else {
       return executeJsr223Script(language, iContext, iArgs);
+    }
+  }
+
+  private String preParse(String parserText, final Map<Object, Object> iArgs) throws ParseException {
+    final boolean strict = getDatabase().getStorage().getConfiguration().isStrictSql();
+    if (strict) {
+      parserText = addSemicolons(parserText);
+      InputStream is = new ByteArrayInputStream(parserText.getBytes());
+      OrientSql osql = new OrientSql(is);
+      List<OStatement> statements = osql.parseScript();
+      StringBuilder result = new StringBuilder();
+      for (OStatement stm : statements) {
+        stm.toString(iArgs, result);
+        if (!(stm instanceof OIfStatement)) {
+          result.append(";");
+        }
+        result.append("\n");
+      }
+      return result.toString();
+    }else{
+      return parserText;
+    }
+  }
+
+  private String addSemicolons(String parserText) {
+    String[] rows = parserText.split("\n");
+    StringBuilder builder = new StringBuilder();
+    for(String row:rows){
+      row = row.trim();
+      builder.append(row);
+      if(!(row.endsWith(";") || row.endsWith("{"))){
+        builder.append(";");
+      }
+      builder.append("\n");
+    }
+    return builder.toString();
   }
 
   public boolean isIdempotent() {
@@ -189,28 +247,11 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
           for (; (lastLine = reader.readLine()) != null; ++line) {
             lastLine = lastLine.trim();
 
-            //this block is here (and not below, with the other conditions)
-            //just because of the smartSprit() that does not parse correctly a single bracket
-            if(isIfCondition(lastLine)){
-              nestedLevel++;
-              if(skippingScriptsAtNestedLevel >= 0){
-                continue; // I'm in an (outer) IF that did not match the condition
-              }
-              boolean ifResult = evaluateIfCondition(lastLine);
-              if(!ifResult){
-                // if does not match the condition, skip all the inner statements
-                skippingScriptsAtNestedLevel = nestedLevel;
-              }
-              continue;
-            } else if(lastLine.equals("}")){
-              nestedLevel--;
-              if(skippingScriptsAtNestedLevel > nestedLevel) {
-                skippingScriptsAtNestedLevel = -1;
-              }
-              continue;
-            }
+            // this block is here (and not below, with the other conditions)
+            // just because of the smartSprit() that does not parse correctly a single bracket
 
-            final List<String> lineParts = OStringSerializerHelper.smartSplit(lastLine, ';', true);
+            // final List<String> lineParts = OStringSerializerHelper.smartSplit(lastLine, ';', true);
+            final List<String> lineParts = splitBySemicolon(lastLine);
 
             if (line == txBegunAtLine)
               // SKIP PREVIOUS COMMAND PART AND JUMP TO THE BEGIN IF ANY
@@ -223,9 +264,26 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
             for (; linePart < lineParts.size(); ++linePart) {
               final String lastCommand = lineParts.get(linePart);
 
-              if(skippingScriptsAtNestedLevel >= 0){
+              if (isIfCondition(lastCommand)) {
+                nestedLevel++;
+                if (skippingScriptsAtNestedLevel >= 0) {
+                  continue; // I'm in an (outer) IF that did not match the condition
+                }
+                boolean ifResult = evaluateIfCondition(lastCommand);
+                if (!ifResult) {
+                  // if does not match the condition, skip all the inner statements
+                  skippingScriptsAtNestedLevel = nestedLevel;
+                }
+                continue;
+              } else if (lastCommand.equals("}")) {
+                nestedLevel--;
+                if (skippingScriptsAtNestedLevel > nestedLevel) {
+                  skippingScriptsAtNestedLevel = -1;
+                }
+                continue;
+              } else if (skippingScriptsAtNestedLevel >= 0) {
                 continue; // I'm in an IF that did not match the condition
-              }else if (OStringSerializerHelper.startsWithIgnoreCase(lastCommand, "let ")) {
+              } else if (OStringSerializerHelper.startsWithIgnoreCase(lastCommand, "let ")) {
                 lastResult = executeLet(lastCommand, db);
 
               } else if (OStringSerializerHelper.startsWithIgnoreCase(lastCommand, "begin")) {
@@ -303,7 +361,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
               } else if (lastCommand != null && lastCommand.length() > 0)
                 lastResult = executeCommand(lastCommand, db);
             }
-            if(breakReturn){
+            if (breakReturn) {
               break;
             }
           }
@@ -313,7 +371,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
           throw ex;
         }
 
-        //COMPLETED
+        // COMPLETED
         break;
 
       } catch (OTransactionException e) {
@@ -354,37 +412,69 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
     return lastResult;
   }
 
+  private List<String> splitBySemicolon(String lastLine) {
+    if (lastLine == null) {
+      return Collections.EMPTY_LIST;
+    }
+    List<String> result = new ArrayList<String>();
+    Character prev = null;
+    Character lastQuote = null;
+    StringBuilder buffer = new StringBuilder();
+    for (char c : lastLine.toCharArray()) {
+      if (c == ';' && lastQuote == null) {
+        if (buffer.toString().trim().length() > 0) {
+          result.add(buffer.toString().trim());
+        }
+        buffer = new StringBuilder();
+        prev = null;
+        continue;
+      }
+      if ((c == '"' || c == '\'') && (prev == null || !prev.equals('\\'))) {
+        if (lastQuote != null && lastQuote.equals(c)) {
+          lastQuote = null;
+        } else if (lastQuote == null) {
+          lastQuote = c;
+        }
+      }
+      buffer.append(c);
+      prev = c;
+    }
+    if (buffer.toString().trim().length() > 0) {
+      result.add(buffer.toString().trim());
+    }
+    return result;
+  }
+
   private boolean evaluateIfCondition(String lastCommand) {
     String cmd = lastCommand;
-    cmd = cmd.trim().substring(2);//remove IF
-    cmd = cmd.trim().substring(0, cmd.trim().length()-1); //remove {
-    OSQLFilter condition = OSQLEngine.getInstance()
-        .parseCondition(cmd, getContext(), "IF");
+    cmd = cmd.trim().substring(2);// remove IF
+    cmd = cmd.trim().substring(0, cmd.trim().length() - 1); // remove {
+    OSQLFilter condition = OSQLEngine.getInstance().parseCondition(cmd, getContext(), "IF");
     Object result = null;
-    try{
+    try {
       result = condition.evaluate(null, null, getContext());
-    }catch(Exception e){
-      throw new OCommandExecutionException("Could not evaluate IF condition: "+cmd+" - "+ e.getMessage());
+    } catch (Exception e) {
+      throw new OCommandExecutionException("Could not evaluate IF condition: " + cmd + " - " + e.getMessage());
     }
 
-    if(Boolean.TRUE.equals(result)){
+    if (Boolean.TRUE.equals(result)) {
       return true;
     }
     return false;
   }
 
   private boolean isIfCondition(String iCommand) {
-    if(iCommand==null){
+    if (iCommand == null) {
       return false;
     }
     String cmd = iCommand.trim();
-    if(cmd.length()<3){
+    if (cmd.length() < 3) {
       return false;
     }
-    if(!((OStringSerializerHelper.startsWithIgnoreCase(cmd, "if ")) || OStringSerializerHelper.startsWithIgnoreCase(cmd, "if("))){
+    if (!((OStringSerializerHelper.startsWithIgnoreCase(cmd, "if ")) || OStringSerializerHelper.startsWithIgnoreCase(cmd, "if("))) {
       return false;
     }
-    if(!cmd.endsWith("{")){
+    if (!cmd.endsWith("{")) {
       return false;
     }
     return true;
@@ -486,7 +576,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
     try {
       Thread.sleep(Integer.parseInt(sleepTimeInMs));
     } catch (InterruptedException e) {
-      OLogManager.instance().error(this, "Sleep was interrupted", e);
+      OLogManager.instance().debug(this, "Sleep was interrupted in SQL batch");
     }
   }
 

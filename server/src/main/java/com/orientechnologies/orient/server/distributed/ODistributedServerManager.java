@@ -66,6 +66,8 @@ public interface ODistributedServerManager {
 
   ODistributedMessageService getMessageService();
 
+  void updateCachedDatabaseConfiguration(String iDatabaseName, ODocument cfg, boolean iSaveToDisk, boolean iDeployToCluster);
+
   void updateLastClusterChange();
 
   /**
@@ -115,4 +117,6 @@ public interface ODistributedServerManager {
       OAbstractRemoteTask iTask, EXECUTION_MODE iExecutionMode);
 
   ODocument getStats();
+
+  Throwable convertException(Throwable original);
 }

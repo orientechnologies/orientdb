@@ -16,12 +16,15 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.hazelcast.core.Hazelcast;
+import com.hazelcast.core.IQueue;
 import com.hazelcast.instance.GroupProperties;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.server.hazelcast.OHazelcastDistributedMessageService;
+import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import org.junit.Assert;
@@ -30,17 +33,20 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.Callable;
 
 /**
  * Test class that creates and executes distributed operations against a cluster of servers created in the same JVM.
  */
 public abstract class AbstractServerClusterTest {
-  protected int     delayServerStartup     = 0;
-  protected int     delayServerAlign       = 0;
-  protected String  rootDirectory          = "target/servers/";
-  protected boolean startupNodesInSequence = true;
+  protected int             delayServerStartup     = 0;
+  protected int             delayServerAlign       = 0;
+  protected boolean         startupNodesInSequence = true;
+  protected String          rootDirectory          = "target/servers/";
 
-  protected List<ServerRun> serverInstance = new ArrayList<ServerRun>();
+  protected List<ServerRun> serverInstance         = new ArrayList<ServerRun>();
 
   protected AbstractServerClusterTest() {
     OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.setValue(true);
@@ -273,4 +279,44 @@ public abstract class AbstractServerClusterTest {
     return "orientdb-dserver-config-" + server.getServerId() + ".xml";
   }
 
+  protected void executeWhen(Callable<Boolean> condition, Callable action) throws Exception {
+    while (true) {
+      if (condition.call()) {
+        action.call();
+        break;
+      }
+
+      try {
+        Thread.sleep(200);
+      } catch (InterruptedException e) {
+        // IGNORE IT
+      }
+    }
+  }
+
+  protected void startQueueMonitorTask() {
+    new Timer(true).schedule(new TimerTask() {
+      @Override
+      public void run() {
+        // DUMP QUEUE SIZES
+        System.out.println("---------------------------------------------------------------------");
+        for (int i = 0; i < serverInstance.size(); ++i) {
+          try {
+            final OHazelcastPlugin dInstance = (OHazelcastPlugin) serverInstance.get(i).getServerInstance().getDistributedManager();
+
+            final String queueName = OHazelcastDistributedMessageService.getRequestQueueName(dInstance.getLocalNodeName(),
+                getDatabaseName());
+
+            final OHazelcastDistributedMessageService msgService = dInstance.getMessageService();
+            if (msgService != null) {
+              final IQueue<Object> queue = msgService.getQueue(queueName);
+              System.out.println("Queue " + queueName + " size = " + queue.size());
+            }
+          } catch (Exception e) {
+          }
+        }
+        System.out.println("---------------------------------------------------------------------");
+      }
+    }, 1000, 1000);
+  }
 }

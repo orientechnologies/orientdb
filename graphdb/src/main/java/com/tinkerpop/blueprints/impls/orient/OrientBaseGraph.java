@@ -311,7 +311,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
         public void run() {
           new OGraphRepair().repair(g, OLogManager.instance().getCommandOutputListener(this, Level.INFO));
         }
-      });
+      }).start();
     }
   }
 
@@ -1210,6 +1210,13 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   }
 
   /**
+   * begins current transaction (if the graph is transactional)
+   */
+  public void begin() {
+    makeActive();
+  }
+
+  /**
    * Commits the current active transaction.
    */
   public void commit() {
@@ -2078,14 +2085,14 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
               if (otherVertexRecord != null)
                 otherVertexRecord.save();
 
+              break;
+
             } catch (ONeedRetryException e) {
               // RETRY
             }
           }
         }
-
-      } else
-        throw new IllegalStateException("Invalid content found in " + iFieldName + " field");
+      }
     }
   }
 

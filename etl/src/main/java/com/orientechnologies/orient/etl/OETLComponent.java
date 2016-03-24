@@ -22,16 +22,31 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
- * ETL basic component.
+ * ETL basic component. Each ETL component must implement this interface.
  */
 public interface OETLComponent {
+
+  /**
+   * @return
+   */
   ODocument getConfiguration();
 
-  void configure(OETLProcessor iProcessor, ODocument iConfiguration, OCommandContext iSettings);
+  /**
+   * Called by the @OETLProcessor
+   * @param processor
+   * @param configuration
+   * @param context
+   */
+  void configure(OETLProcessor processor, ODocument configuration, OCommandContext context);
 
   void begin();
 
   void end();
 
+  /**
+   * Return the symbolic name of the component
+   *
+   * @return the name of the component
+   */
   String getName();
 }

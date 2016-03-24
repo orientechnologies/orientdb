@@ -36,7 +36,6 @@ import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.ONetworkThreadLocalSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
@@ -148,19 +147,13 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
         final boolean contentChanged = ORecordInternal.isContentChanged(record);
 
         if (ORecordInternal.getRecordType(record) == ODocument.RECORD_TYPE && !dbSerializerName.equals(name)) {
-          try {
-            ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(name);
-            ONetworkThreadLocalSerializer.setNetworkSerializer(ser);
-            record.fromStream(entry.getValue());
-          } finally {
-            ONetworkThreadLocalSerializer.setNetworkSerializer(null);
-          }
+          ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(name);
+          ser.fromStream(entry.getValue(), record, null);
           record.setDirty();
           ORecordInternal.setContentChanged(record, contentChanged);
 
         } else {
           record.fromStream(entry.getValue());
-
           record.setDirty();
           ORecordInternal.setContentChanged(record, contentChanged);
         }

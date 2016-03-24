@@ -24,10 +24,11 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import java.util.List;
 
@@ -36,7 +37,7 @@ import java.util.List;
  */
 public class LuceneFacetTest extends BaseLuceneTest {
 
-  @BeforeClass
+  @Before
   public void init() {
     initDB();
     OSchema schema = databaseDocumentTx.getMetadata().getSchema();
@@ -48,15 +49,6 @@ public class LuceneFacetTest extends BaseLuceneTest {
     databaseDocumentTx.command(new OCommandSQL(
         "create index Item.name_category on Item (name,category) FULLTEXT ENGINE LUCENE METADATA { 'facetFields' : ['category']}"))
         .execute();
-  }
-
-  @AfterClass
-  public void deInit() {
-    deInitDB();
-  }
-
-  @Test
-  public void baseFacetTest() {
 
     ODocument doc = new ODocument("Item");
     doc.field("name", "Pioneer");
@@ -81,6 +73,19 @@ public class LuceneFacetTest extends BaseLuceneTest {
     doc.field("category", "Electronic/Computer");
 
     databaseDocumentTx.save(doc);
+
+    databaseDocumentTx.commit();
+  }
+
+  @After
+  public void deInit() {
+    deInitDB();
+  }
+
+  @Test
+  @Ignore
+  public void baseFacetTest() {
+
     List<ODocument> result = databaseDocumentTx
         .command(new OSQLSynchQuery<ODocument>("select *,$facet from Item where name lucene '(name:P*)' limit 1 ")).execute();
 

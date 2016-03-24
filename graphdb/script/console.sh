@@ -22,7 +22,7 @@ PRGDIR=`dirname "$PRG"`
 # Only set ORIENTDB_HOME if not already set
 [ -f "$ORIENTDB_HOME"/lib/orientdb-tools-@VERSION@.jar ] || ORIENTDB_HOME=`cd "$PRGDIR/.." ; pwd`
 export ORIENTDB_HOME
-cd "$ORIENTDB_HOME/bin"
+
 
 # Set JavaHome if it exists
 if [ -f "${JAVA_HOME}/bin/java" ]; then 
@@ -32,7 +32,7 @@ else
 fi
 export JAVA
 
-ORIENTDB_SETTINGS="-Djava.util.logging.config.file=\"$ORIENTDB_HOME/config/orientdb-client-log.properties\" -Djava.awt.headless=true"
+ORIENTDB_SETTINGS="-XX:MaxDirectMemorySize=512g -Djava.util.logging.config.file=\"$ORIENTDB_HOME/config/orientdb-client-log.properties\" -Djava.awt.headless=true"
 #JAVA_OPTS=-Xmx1024m
 KEYSTORE="$ORIENTDB_HOME/config/cert/orientdb-console.ks"
 KEYSTORE_PASS=password

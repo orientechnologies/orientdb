@@ -214,8 +214,8 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
    * @param indexType
    */
   public String toCreateIndexDDL(final String indexName, final String indexType, final String engine) {
-    final StringBuilder ddl = new StringBuilder("create index ");
-    ddl.append(indexName).append(' ').append(indexType).append(' ');
+    final StringBuilder ddl = new StringBuilder("create index `");
+    ddl.append(indexName).append("` ").append(indexType).append(' ');
 
     if (keyTypes != null && keyTypes.length > 0) {
       ddl.append(keyTypes[0].toString());

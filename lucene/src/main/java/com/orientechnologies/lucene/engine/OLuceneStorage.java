@@ -17,9 +17,10 @@
 package com.orientechnologies.lucene.engine;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
-import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory;
 import com.orientechnologies.lucene.analyzer.OLucenePerFieldAnalyzerWrapper;
 import com.orientechnologies.lucene.builder.DocBuilder;
 import com.orientechnologies.lucene.builder.OQueryBuilder;
@@ -28,13 +29,12 @@ import com.orientechnologies.orient.core.OOrientListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexEngine.ValuesTransformer;
-import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexKeyCursor;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -44,7 +44,6 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TrackingIndexWriter;
 import org.apache.lucene.search.ControlledRealTimeReopenThread;
@@ -57,7 +56,6 @@ import org.apache.lucene.store.RAMDirectory;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TimerTask;
@@ -69,6 +67,7 @@ import static com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract.RID
 public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements OOrientListener {
 
   private final String              name;
+  private final ODocument           metadata;
   protected     OLuceneFacetManager facetManager;
   protected     TimerTask           commitTask;
   protected AtomicBoolean closed = new AtomicBoolean(true);
@@ -80,15 +79,16 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
   private   Map<String, OLuceneClassIndexContext> oindexes;
   private   long                                  reopenToken;
 
-  private OLucenePerFieldAnalyzerWrapper indexAnalyzer;
-  private OLucenePerFieldAnalyzerWrapper queryAnalyzer;
+  private Analyzer indexAnalyzer;
+  private Analyzer queryAnalyzer;
 
-  public OLuceneStorage(String name, DocBuilder builder, OQueryBuilder queryBuilder) {
+  public OLuceneStorage(String name, DocBuilder builder, OQueryBuilder queryBuilder, ODocument metadata) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(),
         OGlobalConfiguration.MVRBTREE_TIMEOUT.getValueAsInteger(), true);
     this.name = name;
     this.builder = builder;
     this.queryBuilder = queryBuilder;
+    this.metadata = metadata;
 
     indexAnalyzer = new OLucenePerFieldAnalyzerWrapper(new StandardAnalyzer());
     queryAnalyzer = new OLucenePerFieldAnalyzerWrapper(new StandardAnalyzer());
@@ -121,7 +121,7 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
   private void reOpen() throws IOException {
 
     if (mgrWriter != null) {
-      OLogManager.instance().info(this, "index storage is openm don't reopen");
+      OLogManager.instance().info(this, "index storage is open don't reopen");
 
       return;
     }
@@ -159,68 +159,6 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
     OLogManager.instance().info(this, "REOPEN DONE");
   }
 
-  public IndexWriter createIndexWriter(Directory directory) throws IOException {
-
-    IndexWriterConfig iwc = new IndexWriterConfig(indexAnalyzer);
-    iwc.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
-
-    // TODO: manage taxo
-    // facetManager = new OLuceneFacetManager(this, metadata);
-
-    OLogManager.instance().debug(this, "Creating Lucene index in '%s'...", directory);
-
-    return new IndexWriter(directory, iwc);
-  }
-
-  public void initIndex(OLuceneClassIndexContext indexContext) {
-
-    OLogManager.instance().info(this, "START INIT initIndex:: name " + indexContext.name + " def :: " + indexContext.definition);
-    oindexes.put(indexContext.name, indexContext);
-
-    initializerAnalyzers(indexContext.indexClass, indexContext.metadata);
-
-    OLogManager.instance()
-        .info(this, "DONE INIT initIndex:: indexAnalyzer::  " + indexAnalyzer + " queryanalzer:: " + queryAnalyzer);
-
-  }
-
-  private void initializerAnalyzers(OClass indexClass, ODocument metadata) {
-    for (String meta : metadata.fieldNames()) {
-      String fieldName = meta.substring(0, meta.indexOf("_"));
-      if (meta.contains("index"))
-        indexAnalyzer.add(indexClass.getName() + "." + fieldName, buildAnalyzer(metadata.<String>field(meta)));
-      else if (meta.contains("query"))
-        queryAnalyzer.add(indexClass.getName() + "." + fieldName, buildAnalyzer(metadata.<String>field(meta)));
-    }
-  }
-
-  private Analyzer buildAnalyzer(String analyzerFQN) {
-
-    OLogManager.instance().info(this, "looking for analyzer::  " + analyzerFQN);
-    try {
-
-      final Class classAnalyzer = Class.forName(analyzerFQN);
-      final Constructor constructor = classAnalyzer.getConstructor();
-
-      return (Analyzer) constructor.newInstance();
-    } catch (ClassNotFoundException e) {
-      throw OException.wrapException(new OIndexException("Analyzer: " + analyzerFQN + " not found"), e);
-    } catch (NoSuchMethodException e) {
-      Class classAnalyzer = null;
-      try {
-        classAnalyzer = Class.forName(analyzerFQN);
-        return (Analyzer) classAnalyzer.newInstance();
-
-      } catch (Throwable e1) {
-        throw OException.wrapException(new OIndexException("Couldn't instantiate analyzer:  public constructor  not found"), e);
-      }
-
-    } catch (Exception e) {
-      OLogManager.instance().error(this, "Error on getting analyzer for Lucene index", e);
-    }
-    return new StandardAnalyzer();
-  }
-
   public void commit() {
     try {
       OLogManager.instance().info(this, "committing");
@@ -230,6 +168,52 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on committing Lucene index", e);
     }
+  }
+
+  private String getIndexPath(OLocalPaginatedStorage storageLocalAbstract) {
+    return getIndexPath(storageLocalAbstract, "databaseIndex");
+  }
+
+  public IndexWriter createIndexWriter(Directory directory) throws IOException {
+
+    OLuceneIndexWriterFactory fc = new OLuceneIndexWriterFactory();
+    // TODO: manage taxo
+    // facetManager = new OLuceneFacetManager(this, metadata);
+
+    OLogManager.instance().debug(this, "Creating Lucene index in '%s'...", directory);
+    return fc.createIndexWriter(directory, metadata, indexAnalyzer());
+  }
+
+  public void flush() {
+    commit();
+
+  }
+
+  private String getIndexPath(OLocalPaginatedStorage storageLocalAbstract, String indexName) {
+    return storageLocalAbstract.getStoragePath() + File.separator + OLUCENE_BASE_DIR + File.separator + indexName;
+  }
+
+  public Analyzer indexAnalyzer() {
+    return indexAnalyzer;
+  }
+
+  public void initIndex(OLuceneClassIndexContext indexContext) {
+
+    OLogManager.instance().info(this, "START INIT initIndex:: name " + indexContext.name + " def :: " + indexContext.definition);
+    oindexes.put(indexContext.name, indexContext);
+
+    //    initializerAnalyzers(indexContext.indexClass, indexContext.metadata);
+
+    OLuceneAnalyzerFactory afc = new OLuceneAnalyzerFactory();
+
+    indexContext.metadata.field("prefix_with_class_name", true, OType.BOOLEAN);
+
+    indexAnalyzer = afc.createAnalyzer(indexContext.definition, OLuceneAnalyzerFactory.AnalyzerKind.INDEX, indexContext.metadata);
+    queryAnalyzer = afc.createAnalyzer(indexContext.definition, OLuceneAnalyzerFactory.AnalyzerKind.QUERY, indexContext.metadata);
+
+    OLogManager.instance()
+        .info(this, "DONE INIT initIndex:: indexAnalyzer::  " + indexAnalyzer + " queryanalzer:: " + queryAnalyzer);
+
   }
 
   public boolean remove(Object key, OIdentifiable value) {
@@ -247,8 +231,14 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
 
   }
 
-  public long sizeInTx(OLuceneTxChanges changes) {
-    return 0;
+  public long size() {
+
+    try {
+      return searcher().getIndexReader().numDocs();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return mgrWriter.getIndexWriter().maxDoc();
   }
 
   public OLuceneTxChanges buildTxChanges() throws IOException {
@@ -268,11 +258,6 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
 
   }
 
-  public void flush() {
-    commit();
-
-  }
-
   public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
       OBinarySerializer keySerializer, int keySize) {
 
@@ -285,27 +270,18 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
 
   }
 
-  public void deleteWithoutLoad(String indexName) {
-    OLogManager.instance().info(this, "DELETing withoutLoAD ::: " + indexName);
+  public void delete(final ODatabaseInternal database) {
+    OLogManager.instance().info(this, "DELETING STORAGE:: ");
 
-  }
+    close();
 
-  public void load(String indexName, OBinarySerializer valueSerializer, boolean isAutomatic, OBinarySerializer keySerializer,
-      OType[] keyTypes, boolean nullPointerSupport, int keySize) {
+    final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
+    if (storageLocalAbstract instanceof OLocalPaginatedStorage) {
+      String pathname = getIndexPath((OLocalPaginatedStorage) storageLocalAbstract);
 
-    OLogManager.instance().info(this, "LOAD:: " + indexName);
-  }
+      OFileUtils.deleteRecursively(new File(pathname));
 
-  public boolean contains(Object key) {
-    return false;
-  }
-
-  public boolean remove(Object key) {
-    return false;
-  }
-
-  public void clear(String indexName) {
-    OLogManager.instance().info(this, "clear index:: " + indexName);
+    }
   }
 
   public void close() {
@@ -333,11 +309,33 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
       searcherManager.close();
 
     if (mgrWriter != null) {
-
       mgrWriter.getIndexWriter().forceMergeDeletes();
       mgrWriter.getIndexWriter().commit();
       mgrWriter.getIndexWriter().close();
     }
+  }
+
+  public void deleteWithoutLoad(String indexName) {
+    OLogManager.instance().info(this, "DELETing withoutLoAD ::: " + indexName);
+
+  }
+
+  public void load(String indexName, OBinarySerializer valueSerializer, boolean isAutomatic, OBinarySerializer keySerializer,
+      OType[] keyTypes, boolean nullPointerSupport, int keySize) {
+
+    OLogManager.instance().info(this, "LOAD:: " + indexName);
+  }
+
+  public boolean contains(Object key) {
+    return false;
+  }
+
+  public boolean remove(Object key) {
+    return false;
+  }
+
+  public void clear(String indexName) {
+    OLogManager.instance().info(this, "clear index:: " + indexName);
   }
 
   public void addDocument(Document doc) {
@@ -400,10 +398,6 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
     return name;
   }
 
-  public Analyzer indexAnalyzer() {
-    return indexAnalyzer;
-  }
-
   public Analyzer queryAnalyzer() {
     return queryAnalyzer;
   }
@@ -424,18 +418,6 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
   @Override
   public void onStorageUnregistered(OStorage storage) {
 
-  }
-
-  private String getIndexPath(OLocalPaginatedStorage storageLocalAbstract, String indexName) {
-    return storageLocalAbstract.getStoragePath() + File.separator + OLUCENE_BASE_DIR + File.separator + indexName;
-  }
-
-  private String getIndexPath(OLocalPaginatedStorage storageLocalAbstract) {
-    return getIndexPath(storageLocalAbstract, "databaseIndex");
-  }
-
-  protected String getIndexBasePath(OLocalPaginatedStorage storageLocalAbstract) {
-    return storageLocalAbstract.getStoragePath() + File.separator + OLUCENE_BASE_DIR;
   }
 
 }

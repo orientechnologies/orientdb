@@ -30,8 +30,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OCluster.ATTRIBUTES;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -44,71 +42,81 @@ import java.util.regex.Pattern;
 
 /**
  * SQL ALTER PROPERTY command: Changes an attribute of an existent property in the target class.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 @SuppressWarnings("unchecked")
 public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
   public static final String KEYWORD_ALTER   = "ALTER";
   public static final String KEYWORD_CLUSTER = "CLUSTER";
 
-  protected String     clusterName;
-  protected int        clusterId = -1;
+  protected String clusterName;
+  protected int clusterId = -1;
   protected ATTRIBUTES attribute;
   protected String     value;
 
   public OCommandExecutorSQLAlterCluster parse(final OCommandRequest iRequest) {
-    final ODatabaseDocument database = getDatabase();
+    final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
 
-    init((OCommandRequestText) iRequest);
-
-    StringBuilder word = new StringBuilder();
-
-    int oldPos = 0;
-    int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_ALTER))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_ALTER + " not found. Use " + getSyntax(), parserText, oldPos);
-
-    oldPos = pos;
-    pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_CLUSTER))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLUSTER + " not found. Use " + getSyntax(), parserText, oldPos);
-
-    oldPos = pos;
-    pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false);
-    if (pos == -1)
-      throw new OCommandSQLParsingException("Expected <cluster-name>. Use " + getSyntax(), parserText, oldPos);
-
-    clusterName = word.toString();
-
-    final Pattern p = Pattern.compile("([0-9]*)");
-    final Matcher m = p.matcher(clusterName);
-    if (m.matches())
-      clusterId = Integer.parseInt(clusterName);
-
-    oldPos = pos;
-    pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1)
-      throw new OCommandSQLParsingException("Missing cluster attribute to change. Use " + getSyntax(), parserText, oldPos);
-
-    final String attributeAsString = word.toString();
-
+    String queryText = textRequest.getText();
+    String originalQuery = queryText;
     try {
-      attribute = OCluster.ATTRIBUTES.valueOf(attributeAsString.toUpperCase(Locale.ENGLISH));
-    } catch (IllegalArgumentException e) {
-      throw new OCommandSQLParsingException("Unknown class attribute '" + attributeAsString + "'. Supported attributes are: "
-          + Arrays.toString(OCluster.ATTRIBUTES.values()), parserText, oldPos);
+      queryText = preParse(queryText, iRequest);
+      textRequest.setText(queryText);
+
+      final ODatabaseDocument database = getDatabase();
+
+      init((OCommandRequestText) iRequest);
+
+      StringBuilder word = new StringBuilder();
+
+      int oldPos = 0;
+      int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
+      if (pos == -1 || !word.toString().equals(KEYWORD_ALTER))
+        throw new OCommandSQLParsingException("Keyword " + KEYWORD_ALTER + " not found. Use " + getSyntax(), parserText, oldPos);
+
+      oldPos = pos;
+      pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
+      if (pos == -1 || !word.toString().equals(KEYWORD_CLUSTER))
+        throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLUSTER + " not found. Use " + getSyntax(), parserText, oldPos);
+
+      oldPos = pos;
+      pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false);
+      if (pos == -1)
+        throw new OCommandSQLParsingException("Expected <cluster-name>. Use " + getSyntax(), parserText, oldPos);
+
+      clusterName = word.toString();
+
+      final Pattern p = Pattern.compile("([0-9]*)");
+      final Matcher m = p.matcher(clusterName);
+      if (m.matches())
+        clusterId = Integer.parseInt(clusterName);
+
+      oldPos = pos;
+      pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
+      if (pos == -1)
+        throw new OCommandSQLParsingException("Missing cluster attribute to change. Use " + getSyntax(), parserText, oldPos);
+
+      final String attributeAsString = word.toString();
+
+      try {
+        attribute = OCluster.ATTRIBUTES.valueOf(attributeAsString.toUpperCase(Locale.ENGLISH));
+      } catch (IllegalArgumentException e) {
+        throw new OCommandSQLParsingException("Unknown class attribute '" + attributeAsString + "'. Supported attributes are: "
+            + Arrays.toString(OCluster.ATTRIBUTES.values()), parserText, oldPos);
+      }
+
+      value = parserText.substring(pos + 1).trim();
+
+      if (value.length() == 0)
+        throw new OCommandSQLParsingException(
+            "Missing property value to change for attribute '" + attribute + "'. Use " + getSyntax(), parserText, oldPos);
+
+      if (value.equalsIgnoreCase("null"))
+        value = null;
+    } finally {
+      textRequest.setText(originalQuery);
     }
-
-    value = parserText.substring(pos + 1).trim();
-
-    if (value.length() == 0)
-      throw new OCommandSQLParsingException(
-          "Missing property value to change for attribute '" + attribute + "'. Use " + getSyntax(), parserText, oldPos);
-
-    if (value.equalsIgnoreCase("null"))
-      value = null;
 
     return this;
   }
@@ -144,10 +152,6 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
           getDatabase().getMetadata().getCommandCache().invalidateResultsOfCluster(clusterName);
 
         result = cluster.set(attribute, value);
-
-        final OStorage storage = getDatabase().getStorage();
-        if (storage instanceof OLocalPaginatedStorage)
-          storage.synch();
       } catch (IOException ioe) {
         throw OException.wrapException(new OCommandExecutionException("Error altering cluster '" + clusterName + "'"), ioe);
       }

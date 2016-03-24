@@ -27,18 +27,19 @@ import java.util.*;
 
 public class OMatchStatement extends OStatement implements OCommandExecutor, OIterableRecordSource {
 
-  String                             DEFAULT_ALIAS_PREFIX = "$ORIENT_DEFAULT_ALIAS_";
+  String DEFAULT_ALIAS_PREFIX = "$ORIENT_DEFAULT_ALIAS_";
 
   private OSQLAsynchQuery<ODocument> request;
 
-  long                               threshold            = 20;
+  long threshold = 20;
+  private int limitFromProtocol = -1;
 
   class MatchContext {
-    int                        currentEdgeNumber = 0;
+    int currentEdgeNumber = 0;
 
-    Map<String, Iterable>      candidates        = new LinkedHashMap<String, Iterable>();
-    Map<String, OIdentifiable> matched           = new LinkedHashMap<String, OIdentifiable>();
-    Map<PatternEdge, Boolean>  matchedEdges      = new IdentityHashMap<PatternEdge, Boolean>();
+    Map<String, Iterable>      candidates   = new LinkedHashMap<String, Iterable>();
+    Map<String, OIdentifiable> matched      = new LinkedHashMap<String, OIdentifiable>();
+    Map<PatternEdge, Boolean>  matchedEdges = new IdentityHashMap<PatternEdge, Boolean>();
 
     public MatchContext copy(String alias, OIdentifiable value) {
       MatchContext result = new MatchContext();
@@ -62,7 +63,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   }
 
   public static class EdgeTraversal {
-    boolean     out = true;
+    boolean out = true;
     PatternEdge edge;
 
     public EdgeTraversal(PatternEdge edge, boolean out) {
@@ -73,25 +74,25 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
 
   public static class MatchExecutionPlan {
     public List<EdgeTraversal> sortedEdges;
-    public Map<String, Long>   preFetchedAliases = new HashMap<String, Long>();
-    public String              rootAlias;
+    public Map<String, Long> preFetchedAliases = new HashMap<String, Long>();
+    public String rootAlias;
   }
 
-  public static final String        KEYWORD_MATCH    = "MATCH";
+  public static final String                 KEYWORD_MATCH    = "MATCH";
   // parsed data
-  protected List<OMatchExpression>  matchExpressions = new ArrayList<OMatchExpression>();
-  protected List<OExpression>       returnItems      = new ArrayList<OExpression>();
-  protected List<OIdentifier>       returnAliases    = new ArrayList<OIdentifier>();
-  protected OLimit                  limit;
+  protected           List<OMatchExpression> matchExpressions = new ArrayList<OMatchExpression>();
+  protected           List<OExpression>      returnItems      = new ArrayList<OExpression>();
+  protected           List<OIdentifier>      returnAliases    = new ArrayList<OIdentifier>();
+  protected OLimit limit;
 
-  protected Pattern                 pattern;
+  protected Pattern pattern;
 
   private Map<String, OWhereClause> aliasFilters;
   private Map<String, String>       aliasClasses;
 
   // execution data
-  private OCommandContext           context;
-  private OProgressListener         progressListener;
+  private OCommandContext   context;
+  private OProgressListener progressListener;
 
   public OMatchStatement() {
     super(-1);
@@ -119,9 +120,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   /**
    * this method parses the statement
    *
-   * @param iRequest
-   *          Command request implementation.
-   *
+   * @param iRequest Command request implementation.
    * @param <RET>
    * @return
    */
@@ -176,7 +175,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
 
   /**
    * rebinds filter (where) conditions to alias nodes after optimization
-   * 
+   *
    * @param aliasFilters
    */
   private void rebindFilters(Map<String, OWhereClause> aliasFilters) {
@@ -193,7 +192,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
 
   /**
    * assigns default aliases to pattern nodes that do not have an explicit alias
-   * 
+   *
    * @param matchExpressions
    */
   private void assignDefaultAliases(List<OMatchExpression> matchExpressions) {
@@ -222,9 +221,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
    * this method works statefully, using request and context variables from current Match statement. This method will be deprecated
    * in next releases
    *
-   * @param iArgs
-   *          Optional variable arguments to pass to the command.
-   *
+   * @param iArgs Optional variable arguments to pass to the command.
    * @return
    */
   @Override
@@ -236,7 +233,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   /**
    * executes the match statement. This is the preferred execute() method and it has to be used as the default one in the future.
    * This method works in stateless mode
-   * 
+   *
    * @param request
    * @param context
    * @return
@@ -254,7 +251,8 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       MatchExecutionPlan executionPlan = new MatchExecutionPlan();
       executionPlan.sortedEdges = sortedEdges;
 
-      calculateMatch(pattern, estimatedRootEntries, new MatchContext(), aliasClasses, aliasFilters, context, request, executionPlan);
+      calculateMatch(pattern, estimatedRootEntries, new MatchContext(), aliasClasses, aliasFilters, context, request,
+          executionPlan);
 
       return getResult(request);
     } finally {
@@ -418,6 +416,9 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
           rightValues = Collections.singleton(rightValues);
         }
         for (OIdentifiable rightValue : (Iterable<OIdentifiable>) rightValues) {
+          if (rightValue == null) {
+            continue; //broken graph?, null reference
+          }
           Iterable<OIdentifiable> prevMatchedRightValues = matchContext.candidates.get(outEdge.in.alias);
 
           if (matchContext.matched.containsKey(outEdge.in.alias)) {
@@ -431,7 +432,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
               break;
             }
           } else if (prevMatchedRightValues != null && prevMatchedRightValues.iterator().hasNext()) {// just matching against
-                                                                                                     // known
+            // known
             // values
             for (OIdentifiable id : prevMatchedRightValues) {
               if (id.getIdentity().equals(rightValue.getIdentity())) {
@@ -465,6 +466,9 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
             leftValues = Collections.singleton(leftValues);
           }
           for (OIdentifiable leftValue : (Iterable<OIdentifiable>) leftValues) {
+            if(leftValue==null){
+              continue; //broken graph? null reference
+            }
             Iterable<OIdentifiable> prevMatchedRightValues = matchContext.candidates.get(inEdge.out.alias);
 
             if (matchContext.matched.containsKey(inEdge.out.alias)) {
@@ -587,16 +591,16 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       }
     }
 
-
     if (request.getResultListener() != null && doc != null) {
-      if(((OBasicCommandContext) context).addToUniqueResult(doc)){
+      if (((OBasicCommandContext) context).addToUniqueResult(doc)) {
         request.getResultListener().result(doc);
         long currentCount = ((OBasicCommandContext) ctx).getResultsProcessed().incrementAndGet();
+        long limitValue = limitFromProtocol;
         if (limit != null) {
-          long limitValue = limit.num.getValue().longValue();
-          if (limitValue > -1 && limitValue <= currentCount) {
-            return false;
-          }
+          limitValue = limit.num.getValue().longValue();
+        }
+        if (limitValue > -1 && limitValue <= currentCount) {
+          return false;
         }
       }
     }
@@ -771,8 +775,8 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
         } else {
           String lower = getLowerSubclass(clazz, previousClass);
           if (lower == null) {
-            throw new OCommandExecutionException("classes defined for alias " + alias + " (" + clazz + ", " + previousClass
-                + ") are not in the same hierarchy");
+            throw new OCommandExecutionException(
+                "classes defined for alias " + alias + " (" + clazz + ", " + previousClass + ") are not in the same hierarchy");
           }
           aliasClasses.put(alias, lower);
         }
@@ -801,11 +805,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
 
   @Override
   public <RET extends OCommandExecutor> RET setLimit(int iLimit) {
-    if (this.limit == null) {
-      this.limit = new OLimit(-1);
-      this.limit.num = new OInteger(-1);
-      this.limit.num.value = iLimit;
-    }
+    limitFromProtocol = iLimit;
     return (RET) this;
   }
 

@@ -20,6 +20,7 @@ import javax.persistence.Id;
 import javax.persistence.OneToOne;
 import javax.persistence.Version;
 
+import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 
 /**
@@ -37,7 +38,7 @@ public class Media {
   private String       name;
 
   @OneToOne(orphanRemoval = true)
-  private ORecordBytes content;
+  private OBlob content;
 
   public Object getId() {
     return id;
@@ -63,12 +64,12 @@ public class Media {
     this.name = name;
   }
 
-  public ORecordBytes getContent() {
+  public OBlob getContent() {
     return content;
   }
 
-  public void setContent(ORecordBytes content) {
-    ORecordBytes current = this.getContent();
+  public void setContent(OBlob content) {
+    OBlob current = this.getContent();
     this.content = content;
     if (current != null)
       current.getRecord().delete();

@@ -23,7 +23,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
-import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.compression.impl.OZIPCompressionUtil;
@@ -188,7 +187,7 @@ public class OCommandExecutorSQLSyncCluster extends OCommandExecutorSQLAbstract 
           fileSize = writeDatabaseChunk(nodeName, 1, chunk, out);
           for (int chunkNum = 2; !chunk.last; chunkNum++) {
             final Object result = dManager.sendRequest(databaseName, null, Collections.singleton(r.getKey()),
-                new OCopyDatabaseChunkTask(chunk.filePath, chunkNum, chunk.offset + chunk.buffer.length),
+                new OCopyDatabaseChunkTask(chunk.filePath, chunkNum, chunk.offset + chunk.buffer.length, false),
                 ODistributedRequest.EXECUTION_MODE.RESPONSE);
 
             if (result instanceof Boolean)

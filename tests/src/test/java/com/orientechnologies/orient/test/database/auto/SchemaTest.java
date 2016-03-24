@@ -571,9 +571,9 @@ public class SchemaTest extends DocumentDBBaseTest {
 
   public void testWrongClassNameWithAt() {
     try {
-      database.command(new OCommandSQL("create class Ant@ni")).execute();
+      database.command(new OCommandSQL("create class `Ant@ni`")).execute();
       Assert.fail();
-
+      //why...? it can be allowed now with backtick quoting...
     } catch (Exception e) {
       Assert.assertTrue(e instanceof OSchemaException);
     }
@@ -601,9 +601,9 @@ public class SchemaTest extends DocumentDBBaseTest {
 
   public void testWrongClassNameWithColon() {
     try {
-      database.command(new OCommandSQL("create class Ant:ni")).execute();
+      database.command(new OCommandSQL("create class `Ant:ni`")).execute();
       Assert.fail();
-
+      //why...? it can be allowed now with backtick quoting...
     } catch (Exception e) {
       Assert.assertTrue(e instanceof OSchemaException);
     }

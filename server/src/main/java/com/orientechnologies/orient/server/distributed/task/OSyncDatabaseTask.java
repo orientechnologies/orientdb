@@ -167,7 +167,10 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
 
             // WAIT UNTIL THE lastOperationId IS SET
             while (lastOperationId.get() < 0) {
-              Thread.sleep(100);
+              try {
+                Thread.sleep(100);
+              } catch (InterruptedException e) {
+              }
             }
           } else {
             lastOperationId.set(database.getStorage().getLastOperationId());
@@ -217,7 +220,7 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
 
   @Override
   public boolean isRequireNodeOnline() {
-    return true;
+    return false;
   }
 
   @Override

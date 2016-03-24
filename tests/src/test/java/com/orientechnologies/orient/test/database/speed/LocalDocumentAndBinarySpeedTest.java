@@ -3,6 +3,7 @@ package com.orientechnologies.orient.test.database.speed;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.record.impl.OBlob;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -100,7 +101,7 @@ public class LocalDocumentAndBinarySpeedTest {
 
 				ODocument doc = (ODocument) result.getRecord();
 				System.out.println("loaded " + i + "(" + rand + "), binary record: " + doc.field("binary", ORID.class));
-				ORecordBytes record = doc.field("binary");
+				OBlob record = doc.field("binary");
 				Assert.assertNotNull(record);
 				if (record != null) {
 					byte[] data = record.toStream();

@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.sql.parser.OCreateClassStatement;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,112 +54,129 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
   private Integer      clusters     = null;
 
   public OCommandExecutorSQLCreateClass parse(final OCommandRequest iRequest) {
-    final ODatabaseDocumentInternal database = getDatabase();
-    init((OCommandRequestText) iRequest);
+    final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
 
-    StringBuilder word = new StringBuilder();
+    String queryText = textRequest.getText();
+    String originalQuery = queryText;
+    try {
+      queryText = preParse(queryText, iRequest);
+      textRequest.setText(queryText);
 
-    int oldPos = 0;
-    int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_CREATE))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_CREATE + " not found. Use " + getSyntax(), parserText, oldPos);
+      final ODatabaseDocumentInternal database = getDatabase();
+      init((OCommandRequestText) iRequest);
 
-    oldPos = pos;
-    pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_CLASS))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLASS + " not found. Use " + getSyntax(), parserText, oldPos);
+      StringBuilder word = new StringBuilder();
 
-    oldPos = pos;
-    pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false);
-    if (pos == -1)
-      throw new OCommandSQLParsingException("Expected <class>", parserText, oldPos);
-
-    className = word.toString();
-    if (className == null)
-      throw new OCommandSQLParsingException("Expected <class>", parserText, oldPos);
-
-    oldPos = pos;
-
-    while ((pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true)) > -1) {
-      final String k = word.toString();
-      if (k.equals(KEYWORD_EXTENDS)) {
-        boolean hasNext;
-        OClass superClass;
-        do {
-          oldPos = pos;
-          pos = nextWord(parserText, parserTextUpperCase, pos, word, false);
-          if (pos == -1)
-            throw new OCommandSQLParsingException(
-                "Syntax error after EXTENDS for class " + className + ". Expected the super-class name. Use " + getSyntax(),
-                parserText, oldPos);
-          if (!database.getMetadata().getSchema().existsClass(word.toString()))
-            throw new OCommandSQLParsingException("Super-class " + word + " not exists", parserText, oldPos);
-          superClass = database.getMetadata().getSchema().getClass(word.toString());
-          superClasses.add(superClass);
-          hasNext = false;
-          for (; pos < parserText.length(); pos++) {
-            char ch = parserText.charAt(pos);
-            if (ch == ',')
-              hasNext = true;
-            else if (Character.isLetterOrDigit(ch))
-              break;
-          }
-        } while (hasNext);
-      } else if (k.equals(KEYWORD_CLUSTER)) {
-        oldPos = pos;
-        pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false, " =><()");
-        if (pos == -1)
-          throw new OCommandSQLParsingException(
-              "Syntax error after CLUSTER for class " + className + ". Expected the cluster id or name. Use " + getSyntax(),
-              parserText, oldPos);
-
-        final String[] clusterIdsAsStrings = word.toString().split(",");
-        if (clusterIdsAsStrings.length > 0) {
-          clusterIds = new int[clusterIdsAsStrings.length];
-          for (int i = 0; i < clusterIdsAsStrings.length; ++i) {
-            if (Character.isDigit(clusterIdsAsStrings[i].charAt(0)))
-              // GET CLUSTER ID FROM NAME
-              clusterIds[i] = Integer.parseInt(clusterIdsAsStrings[i]);
-            else
-              // GET CLUSTER ID
-              clusterIds[i] = database.getStorage().getClusterIdByName(clusterIdsAsStrings[i]);
-
-            if (clusterIds[i] == -1)
-              throw new OCommandSQLParsingException("Cluster with id " + clusterIds[i] + " does not exists", parserText, oldPos);
-
-            try {
-              database.getStorage().getClusterById(clusterIds[i]);
-            } catch (Exception e) {
-              throw new OCommandSQLParsingException("Cluster with id " + clusterIds[i] + " does not exists", parserText, oldPos);
-            }
-          }
-        }
-      } else if (k.equals(KEYWORD_CLUSTERS)) {
-        oldPos = pos;
-        pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false, " =><()");
-        if (pos == -1)
-          throw new OCommandSQLParsingException(
-              "Syntax error after CLUSTERS for class " + className + ". Expected the number of clusters. Use " + getSyntax(),
-              parserText, oldPos);
-
-        clusters = Integer.parseInt(word.toString());
-      } else if (k.equals(KEYWORD_ABSTRACT))
-        clusterIds = new int[] { -1 };
-      else
-        throw new OCommandSQLParsingException("Invalid keyword: " + k);
+      int oldPos = 0;
+      int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
+      if (pos == -1 || !word.toString().equals(KEYWORD_CREATE))
+        throw new OCommandSQLParsingException("Keyword " + KEYWORD_CREATE + " not found. Use " + getSyntax(), parserText, oldPos);
 
       oldPos = pos;
-    }
+      pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
+      if (pos == -1 || !word.toString().equals(KEYWORD_CLASS))
+        throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLASS + " not found. Use " + getSyntax(), parserText, oldPos);
 
-    if (clusterIds == null) {
-      final int clusterId = database.getStorage().getClusterIdByName(className);
-      if (clusterId > -1) {
-        clusterIds = new int[] { clusterId };
+      oldPos = pos;
+      pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false);
+      if (pos == -1)
+        throw new OCommandSQLParsingException("Expected <class>", parserText, oldPos);
+
+      className = word.toString();
+      if(this.preParsedStatement!=null){
+        className = ((OCreateClassStatement)preParsedStatement).name.getValue();
       }
-    }
+      if (className == null)
+        throw new OCommandSQLParsingException("Expected <class>", parserText, oldPos);
 
+      oldPos = pos;
+
+      while ((pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true)) > -1) {
+        final String k = word.toString();
+        if (k.equals(KEYWORD_EXTENDS)) {
+          boolean hasNext;
+          OClass superClass;
+          do {
+            oldPos = pos;
+            pos = nextWord(parserText, parserTextUpperCase, pos, word, false);
+            if (pos == -1)
+              throw new OCommandSQLParsingException(
+                  "Syntax error after EXTENDS for class " + className + ". Expected the super-class name. Use " + getSyntax(),
+                  parserText, oldPos);
+            String superclassName = decodeClassName(word.toString());
+
+            if (!database.getMetadata().getSchema().existsClass(superclassName))
+              throw new OCommandSQLParsingException("Super-class " + word + " not exists", parserText, oldPos);
+            superClass = database.getMetadata().getSchema().getClass(superclassName);
+            superClasses.add(superClass);
+            hasNext = false;
+            for (; pos < parserText.length(); pos++) {
+              char ch = parserText.charAt(pos);
+              if (ch == ',')
+                hasNext = true;
+              else if (Character.isLetterOrDigit(ch))
+                break;
+            }
+          } while (hasNext);
+        } else if (k.equals(KEYWORD_CLUSTER)) {
+          oldPos = pos;
+          pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false, " =><()");
+          if (pos == -1)
+            throw new OCommandSQLParsingException(
+                "Syntax error after CLUSTER for class " + className + ". Expected the cluster id or name. Use " + getSyntax(),
+                parserText, oldPos);
+
+          final String[] clusterIdsAsStrings = word.toString().split(",");
+          if (clusterIdsAsStrings.length > 0) {
+            clusterIds = new int[clusterIdsAsStrings.length];
+            for (int i = 0; i < clusterIdsAsStrings.length; ++i) {
+              if (Character.isDigit(clusterIdsAsStrings[i].charAt(0)))
+                // GET CLUSTER ID FROM NAME
+                clusterIds[i] = Integer.parseInt(clusterIdsAsStrings[i]);
+              else
+                // GET CLUSTER ID
+                clusterIds[i] = database.getStorage().getClusterIdByName(clusterIdsAsStrings[i]);
+
+              if (clusterIds[i] == -1)
+                throw new OCommandSQLParsingException("Cluster with id " + clusterIds[i] + " does not exists", parserText, oldPos);
+
+              try {
+                database.getStorage().getClusterById(clusterIds[i]);
+              } catch (Exception e) {
+                throw new OCommandSQLParsingException("Cluster with id " + clusterIds[i] + " does not exists", parserText, oldPos);
+              }
+            }
+          }
+        } else if (k.equals(KEYWORD_CLUSTERS)) {
+          oldPos = pos;
+          pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false, " =><()");
+          if (pos == -1)
+            throw new OCommandSQLParsingException(
+                "Syntax error after CLUSTERS for class " + className + ". Expected the number of clusters. Use " + getSyntax(),
+                parserText, oldPos);
+
+          clusters = Integer.parseInt(word.toString());
+        } else if (k.equals(KEYWORD_ABSTRACT))
+          clusterIds = new int[] { -1 };
+        else
+          throw new OCommandSQLParsingException("Invalid keyword: " + k);
+
+        oldPos = pos;
+      }
+
+      if (clusterIds == null) {
+        final int clusterId = database.getStorage().getClusterIdByName(className);
+        if (clusterId > -1) {
+          clusterIds = new int[] { clusterId };
+        }
+      }
+
+    }finally{
+      textRequest.setText(originalQuery);
+    }
     return this;
   }
+
 
   @Override
   public long getDistributedTimeout() {

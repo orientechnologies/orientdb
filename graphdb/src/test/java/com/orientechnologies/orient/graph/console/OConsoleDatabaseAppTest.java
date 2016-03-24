@@ -20,21 +20,20 @@
 
 package com.orientechnologies.orient.graph.console;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.util.Iterator;
-import java.util.List;
-
-import org.junit.Assert;
-import org.junit.Test;
-
 import com.orientechnologies.orient.console.OConsoleDatabaseApp;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import org.junit.Assert;
+import org.junit.Test;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Test cases against OrientDB console.
@@ -305,7 +304,37 @@ public class OConsoleDatabaseAppTest {
     } finally {
       c.shutdown();
     }
-
   }
 
+  @Test
+  public void testDeclareIntent() {
+    ConsoleTest c = new ConsoleTest();
+    try {
+      c.console().createDatabase("memory:OConsoleDatabaseAppTestDeclareIntent", null, null, null, null, null);
+      c.resetOutput();
+      try {
+        c.console().declareIntent("foobar");
+        Assert.fail();
+      }catch(Exception e){
+
+      }
+
+      c.resetOutput();
+      c.console().declareIntent("massiveinsert");
+      c.console().declareIntent("massiveread");
+      c.console().declareIntent("null");
+
+      String resultString = c.getConsoleOutput();
+
+      Assert.assertTrue(resultString.contains("Intent 'massiveinsert' set successfully"));
+      Assert.assertTrue(resultString.contains("Intent 'massiveread' set successfully"));
+      Assert.assertTrue(resultString.contains("Intent 'null' set successfully"));
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      Assert.fail();
+    } finally {
+      c.shutdown();
+    }
+  }
 }

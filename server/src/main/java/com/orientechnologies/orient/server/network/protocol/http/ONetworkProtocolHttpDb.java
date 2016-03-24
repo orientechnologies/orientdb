@@ -45,7 +45,7 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
      cmdManager.registerCommand(new OServerCommandPostImportDatabase());
      cmdManager.registerCommand(new OServerCommandPostUploadSingleFile());
 
-     connection.data.serverInfo = ORIENT_SERVER_DB;
+     connection.getData().serverInfo = ORIENT_SERVER_DB;
    }
 
    @Override

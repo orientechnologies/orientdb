@@ -41,6 +41,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
+import com.orientechnologies.orient.core.sql.parser.ODeleteStatement;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -151,7 +152,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract
         }
 
         final String condition = parserGetCurrentPosition() > -1 ? " " + parserText.substring(parserGetCurrentPosition()) : "";
-        query = database.command(new OSQLAsynchQuery<ODocument>("select from " + subjectName + condition, this));
+        query = database.command(new OSQLAsynchQuery<ODocument>("select from " + getSelectTarget(subjectName) + condition, this));
       }
     } finally {
       textRequest.setText(originalQuery);
@@ -159,6 +160,14 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract
 
     return this;
   }
+
+  private String getSelectTarget(String subjectName) {
+    if(preParsedStatement == null){
+      return subjectName;
+    }
+    return ((ODeleteStatement)preParsedStatement).fromClause.toString();
+  }
+
 
   public Object execute(final Map<Object, Object> iArgs) {
     if (query == null && indexName == null)

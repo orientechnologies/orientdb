@@ -25,29 +25,22 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.List;
 
 /**
  * Created by enricorisa on 23/09/14.
  */
-@Test(groups = "embedded")
 public class LuceneMassiveInsertDeleteTest extends BaseLuceneTest {
-
-  public LuceneMassiveInsertDeleteTest(boolean remote) {
-
-    //super(remote);
-  }
 
   public LuceneMassiveInsertDeleteTest() {
   }
 
-
-  @BeforeClass
+  @Before
   public void init() {
     initDB();
     OSchema schema = databaseDocumentTx.getMetadata().getSchema();
@@ -96,7 +89,7 @@ public class LuceneMassiveInsertDeleteTest extends BaseLuceneTest {
     Assert.assertEquals(idx.getSize(), 0);
   }
 
-  @AfterClass
+  @After
   public void deInit() {
     deInitDB();
   }

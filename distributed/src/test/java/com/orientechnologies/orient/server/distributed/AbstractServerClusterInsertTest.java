@@ -16,19 +16,6 @@
 
 package com.orientechnologies.orient.server.distributed;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
-import org.junit.Assert;
-
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -46,13 +33,25 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import org.junit.Assert;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Insert records concurrently against the cluster
  */
 public abstract class AbstractServerClusterInsertTest extends AbstractDistributedWriteTest {
-  protected static final int delayWriter           = 0;
-  protected static final int delayReader           = 1000;
+  protected int              delayWriter           = 0;
+  protected int              delayReader           = 1000;
   protected static final int writerCount           = 5;
   protected int              baseCount             = 0;
   protected int              expected;

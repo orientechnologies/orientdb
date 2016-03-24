@@ -19,6 +19,9 @@
  */
 package com.orientechnologies.orient.core.storage.cache;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.storage.impl.local.statistic.OStoragePerformanceStatistic;
+
 import java.io.IOException;
 
 /**
@@ -33,14 +36,14 @@ import java.io.IOException;
  * <ol>
  * <li>Open file using {@link #openFile(String, OWriteCache)} method</li>
  * <li>Remember id of opened file</li>
- * <li>Load page which you want to use to write data using method {@link #load(long, long, boolean, OWriteCache)}</li>
+ * <li>Load page which you want to use to write data using method {@link #load(long, long, boolean, OWriteCache, int, OStoragePerformanceStatistic)}</li>
  * <li>Get pointer to the memory page {@link OCacheEntry#getCachePointer()}</li>
  * <li>Lock allocated page for writes {@link OCachePointer#acquireExclusiveLock()}</li>
  * <li>Get pointer to the direct memory which is allocated to hold page data {@link OCachePointer#getDataPointer()}</li>
  * <li>Change page content as you wish.</li>
  * <li>Release page write lock {@link OCachePointer#releaseExclusiveLock()}</li>
  * <li>Mark page as dirty so it will be flushed eventually to the disk {@link OCacheEntry#markDirty()}</li>
- * <li>Put page back to the cache {@link #release(OCacheEntry, OWriteCache)}</li>
+ * <li>Put page back to the cache {@link #release(OCacheEntry, OWriteCache, OStoragePerformanceStatistic)}</li>
  * </ol>
  * <p>
  * If you wish to read data, not change them, you use the same steps but:
@@ -50,9 +53,9 @@ import java.io.IOException;
  * </ol>
  * <p>
  * If you want to add new data but not to change existing one and you do not have enough space to add new data use method
- * {@link #allocateNewPage(long, OWriteCache)} instead of {@link #load(long, long, boolean, OWriteCache)}.
+ * {@link #allocateNewPage(long, OWriteCache, OStoragePerformanceStatistic)} instead of {@link #load(long, long, boolean, OWriteCache, int, OStoragePerformanceStatistic)}.
  * <p>
- * {@link #load(long, long, boolean, OWriteCache)} method has checkPinnedPages parameter. Pinned pages are pages which are kept
+ * {@link #load(long, long, boolean, OWriteCache, int, OStoragePerformanceStatistic)} method has checkPinnedPages parameter. Pinned pages are pages which are kept
  * always loaded in RAM ,this class of pages is needed for some data structures usually this attribute should be set to
  * <code>false</code> and it is set to <code>true</code> when storage goes through data restore procedure after system crash.
  *
@@ -70,13 +73,15 @@ public interface OReadCache {
 
   long openFile(String fileName, long fileId, OWriteCache writeCache) throws IOException;
 
-  OCacheEntry load(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache, int pageCount) throws IOException;
+  OCacheEntry load(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache, int pageCount,
+      OStoragePerformanceStatistic storagePerformanceStatistic) throws IOException;
 
   void pinPage(OCacheEntry cacheEntry) throws IOException;
 
-  OCacheEntry allocateNewPage(long fileId, OWriteCache writeCache) throws IOException;
+  OCacheEntry allocateNewPage(long fileId, OWriteCache writeCache, OStoragePerformanceStatistic storagePerformanceStatistic)
+      throws IOException;
 
-  void release(OCacheEntry cacheEntry, OWriteCache writeCache);
+  void release(OCacheEntry cacheEntry, OWriteCache writeCache, OStoragePerformanceStatistic storagePerformanceStatistic);
 
   long getUsedMemory();
 
@@ -90,5 +95,24 @@ public interface OReadCache {
 
   void deleteStorage(OWriteCache writeCache) throws IOException;
 
+  /**
+   * Closes all files inside of write cache and flushes all associated data.
+   *
+   * @param writeCache Write cache to close.
+   */
   void closeStorage(OWriteCache writeCache) throws IOException;
+
+  /**
+   * Load state of cache from file system if possible.
+   *
+   * @param writeCache Write cache is used to load pages back into cache if possible.
+   */
+  void loadCacheState(OWriteCache writeCache);
+
+  /**
+   * Stores state of cache inside file if possible.
+   *
+   * @param writeCache Write cache which manages files cache state of which is going to be stored.
+   */
+  void storeCacheState(OWriteCache writeCache);
 }
