@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.db.document;
 
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -44,6 +45,24 @@ public class ODatabaseDocumentTxTest {
         Assert.assertTrue(rec instanceof ODocument);
       }
 
+    } finally {
+      db.close();
+    }
+  }
+
+  @Test
+  public void testTimezone() {
+    String url = "memory:" + ODatabaseDocumentTxTest.class.getSimpleName()+"Timezone";
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx(url).create();
+    try {
+
+      db.set(ODatabase.ATTRIBUTES.TIMEZONE, "Europe/Rome");
+      Object newTimezone = db.get(ODatabase.ATTRIBUTES.TIMEZONE);
+      Assert.assertEquals(newTimezone, "Europe/Rome");
+
+      db.set(ODatabase.ATTRIBUTES.TIMEZONE, "foobar");
+      newTimezone = db.get(ODatabase.ATTRIBUTES.TIMEZONE);
+      Assert.assertEquals(newTimezone, "GMT");
     } finally {
       db.close();
     }
