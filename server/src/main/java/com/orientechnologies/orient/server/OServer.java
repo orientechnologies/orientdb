@@ -60,9 +60,9 @@ import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 import com.orientechnologies.orient.server.plugin.OServerPluginManager;
+import com.orientechnologies.orient.server.security.ODefaultServerSecurity;
 import com.orientechnologies.orient.server.security.OSecurityServerUser;
 import com.orientechnologies.orient.server.security.OServerSecurity;
-import com.orientechnologies.orient.server.security.ODefaultServerSecurity;
 import com.orientechnologies.orient.server.token.OTokenHandlerImpl;
 
 import javax.management.InstanceAlreadyExistsException;
@@ -97,7 +97,7 @@ public class OServer {
   protected OServerPluginManager                           pluginManager;
   protected OConfigurableHooksManager                      hookManager;
   protected ODistributedServerManager                      distributedManager;
-  protected OServerSecurity										  serverSecurity;
+  protected OServerSecurity                                serverSecurity;
   private OPartitionedDatabasePoolFactory                  dbPoolFactory;
   private SecureRandom                                     random                 = new SecureRandom();
   private Map<String, Object>                              variables              = new HashMap<String, Object>();
@@ -155,7 +155,9 @@ public class OServer {
     return extensionClassLoader;
   }
 
-  public OServerSecurity getSecurity() { return serverSecurity; }
+  public OServerSecurity getSecurity() {
+    return serverSecurity;
+  }
 
   public boolean isActive() {
     return running;
@@ -324,7 +326,7 @@ public class OServer {
   public OServer activate() throws ClassNotFoundException, InstantiationException, IllegalAccessException {
     try {
       serverSecurity = new ODefaultServerSecurity(this, serverCfg);
-      Orient.instance().setSecurity(serverSecurity);    	
+      Orient.instance().setSecurity(serverSecurity);
 
       for (OServerLifecycleListener l : lifecycleListeners)
         l.onBeforeActivate();
@@ -630,8 +632,8 @@ public class OServer {
   }
 
   public OServerUserConfiguration serverLogin(final String iUser, final String iPassword, final String iResource) {
-  	 // Returns null if authentication or authorization fails for any reason.
-  	 return authenticateUser(iUser, iPassword, iResource);  	
+    // Returns null if authentication or authorization fails for any reason.
+    return authenticateUser(iUser, iPassword, iResource);
   }
 
   /**
@@ -648,37 +650,30 @@ public class OServer {
     return authenticateUser(iUserName, iPassword, iResourceToCheck) != null;
   }
 
-  // Returns null if the user cannot be authenticated.  Otherwise returns the OServerUserConfiguration user.
-  protected OServerUserConfiguration authenticateUser(final String iUserName, final String iPassword, final String iResourceToCheck)
-  {
-		if(serverSecurity != null && serverSecurity.isEnabled())
-		{
-			// Returns the authenticated username, if successful, otherwise null.
-			String authUsername = serverSecurity.authenticate(iUserName, iPassword);
-			
-			// Authenticated, now see if the user is authorized.
-			if(authUsername != null)
-			{
-				if(serverSecurity.isAuthorized(authUsername, iResourceToCheck))
-				{
-					return serverSecurity.getUser(authUsername);
-				}
-			}
-		}
-		else
-		{
-			OServerUserConfiguration user = getUser(iUserName);
-			
-			if (user != null && user.password != null)
-			{
-				if (OSecurityManager.instance().checkPassword(iPassword, user.password) && isAllowed(iUserName, iResourceToCheck))
-				{			
-					return user;
-				}
-			}
-		}
-			
-		return null;
+  // Returns null if the user cannot be authenticated. Otherwise returns the OServerUserConfiguration user.
+  protected OServerUserConfiguration authenticateUser(final String iUserName, final String iPassword,
+      final String iResourceToCheck) {
+    if (serverSecurity != null && serverSecurity.isEnabled()) {
+      // Returns the authenticated username, if successful, otherwise null.
+      String authUsername = serverSecurity.authenticate(iUserName, iPassword);
+
+      // Authenticated, now see if the user is authorized.
+      if (authUsername != null) {
+        if (serverSecurity.isAuthorized(authUsername, iResourceToCheck)) {
+          return serverSecurity.getUser(authUsername);
+        }
+      }
+    } else {
+      OServerUserConfiguration user = getUser(iUserName);
+
+      if (user != null && user.password != null) {
+        if (OSecurityManager.instance().checkPassword(iPassword, user.password) && isAllowed(iUserName, iResourceToCheck)) {
+          return user;
+        }
+      }
+    }
+
+    return null;
   }
 
   /**
@@ -689,14 +684,12 @@ public class OServer {
    * @return true if authentication is ok, otherwise false
    */
   public boolean isAllowed(final String iUserName, final String iResourceToCheck) {
-  	
-	 if(serverSecurity != null && serverSecurity.isEnabled())
-	 {
-     	 // Let the security plug-in check its users list first.
-    	 if(serverSecurity.isAuthorized(iUserName, iResourceToCheck)) return true;
-    }
-    else
-    {  
+
+    if (serverSecurity != null && serverSecurity.isEnabled()) {
+      // Let the security plug-in check its users list first.
+      if (serverSecurity.isAuthorized(iUserName, iResourceToCheck))
+        return true;
+    } else {
       final OServerUserConfiguration user = getUser(iUserName);
 
       if (user != null) {
@@ -706,10 +699,11 @@ public class OServer {
 
         String[] resourceParts = user.resources.split(",");
         for (String r : resourceParts)
-          if (r.equals(iResourceToCheck)) return true;
+          if (r.equals(iResourceToCheck))
+            return true;
       }
     }
-    
+
     // WRONG PASSWORD OR NO AUTHORIZATION
     return false;
   }
@@ -718,17 +712,18 @@ public class OServer {
     OServerUserConfiguration userCfg = null;
 
     // First see if iUserName is a security plugin user.
-    if(serverSecurity != null && serverSecurity.isEnabled())
-    {
-       userCfg = serverSecurity.getUser(iUserName);
+    if (serverSecurity != null && serverSecurity.isEnabled()) {
+      userCfg = serverSecurity.getUser(iUserName);
+    } else {
+      // This will throw an IllegalArgumentException if iUserName is null or empty.
+      // However, a null or empty iUserName is possible with some security implementations.
+      if (iUserName != null && !iUserName.isEmpty())
+        userCfg = serverCfg.getUser(iUserName);
     }
-    else
-    {
-       // This will throw an IllegalArgumentException if iUserName is null or empty.
-       // However, a null or empty iUserName is possible with some security implementations.
-       if(iUserName != null && !iUserName.isEmpty()) userCfg = serverCfg.getUser(iUserName);
-    }
-    
+
+    if( userCfg == null )
+      userCfg = temporaryUsers.get(iUserName);
+
     return userCfg;
   }
 
@@ -893,18 +888,16 @@ public class OServer {
         } else {
           // TRY WITH SERVER'S AUTHENTICATION
           OServerUserConfiguration serverUser = serverLogin(user, password, "database.passthrough");
-          
-          if(serverUser != null)
-          {
+
+          if (serverUser != null) {
             // Why do we use the returned serverUser name instead of just passing-in user?
             // Because in some security implementations the user is embedded inside a ticket of some kind
-            // that must be decrypted to retrieve the actual user identity.  If serverLogin() is successful,
+            // that must be decrypted to retrieve the actual user identity. If serverLogin() is successful,
             // that user identity is returned.
-          
+
             // SERVER AUTHENTICATED, BYPASS SECURITY
-            openDatabaseBypassingSecurity(database, data, serverUser.name);            
-          }
-          else {
+            openDatabaseBypassingSecurity(database, data, serverUser.name);
+          } else {
             // TRY DATABASE AUTHENTICATION
             database.open(user, password);
             if (data != null) {
@@ -978,7 +971,8 @@ public class OServer {
     }
 
     configuration.isAfterFirstTime = true;
-    if(serverSecurity == null || serverSecurity.areDefaultUsersCreated()) createDefaultServerUsers();
+    if (serverSecurity == null || serverSecurity.areDefaultUsersCreated())
+      createDefaultServerUsers();
   }
 
   /**
@@ -1040,7 +1034,8 @@ public class OServer {
 
   protected void createDefaultServerUsers() throws IOException {
 
-    if(serverSecurity != null && !serverSecurity.arePasswordsStored()) return;
+    if (serverSecurity != null && !serverSecurity.arePasswordsStored())
+      return;
 
     // ORIENTDB_ROOT_PASSWORD ENV OR JVM SETTING
     String rootPassword = OSystemVariableResolver.resolveVariable(ROOT_PASSWORD_VAR);
@@ -1168,10 +1163,8 @@ public class OServer {
 
           handler.config(this, h.parameters);
           handler.startup();
-        }
-        catch(Exception handlerEx)
-        {
-         	OLogManager.instance().error(this, "registerPlugins() Exception: ", handlerEx);
+        } catch (Exception handlerEx) {
+          OLogManager.instance().error(this, "registerPlugins() Exception: ", handlerEx);
         }
       }
     }
