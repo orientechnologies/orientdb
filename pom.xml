@@ -37,6 +37,31 @@
 	<url>http://maven.apache.org</url>
 	<inceptionYear>2016</inceptionYear>
 
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<configuration>
+					<descriptors>
+						<descriptor>src/main/assembly/assembly.xml</descriptor>
+					</descriptors>
+				</configuration>
+				<executions>
+					<execution>
+						<id>make-assembly</id>
+						<!-- this is used for inheritance merges -->
+						<phase>package</phase>
+						<!-- bind to the packaging phase -->
+						<goals>
+							<goal>single</goal>
+						</goals>
+						<configuration></configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+
 	<dependencies>
 		<dependency>
 			<groupId>com.orientechnologies</groupId>
@@ -49,6 +74,11 @@
 			<artifactId>orientdb-server</artifactId>
 			<version>${orientdb.version}</version>
 			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.cloudbees</groupId>
+			<artifactId>syslog-java-client</artifactId>
+			<version>1.0.9-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
 </project>
