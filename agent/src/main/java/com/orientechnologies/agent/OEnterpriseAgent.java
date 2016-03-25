@@ -17,7 +17,6 @@
  */
 package com.orientechnologies.agent;
 
-import com.orientechnologies.agent.hook.OAuditingHook;
 import com.orientechnologies.agent.http.command.*;
 import com.orientechnologies.agent.plugins.OEventPlugin;
 import com.orientechnologies.agent.profiler.OEnterpriseProfiler;
@@ -51,7 +50,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
   public OServer              server;
   private String              license;
   private boolean             enabled                    = false;
-  public OAuditingListener    auditingListener;
   public static final String  TOKEN;
 
   static {
@@ -90,8 +88,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
       installCommands();
 
       installPlugins();
-
-      auditingListener = new OAuditingListener(this);
 
       Thread installer = new Thread(new Runnable() {
         @Override
@@ -187,10 +183,11 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
 
   @Override
   public void onDrop(final ODatabaseInternal iDatabase) {
+/*  	
     final Map<ORecordHook, ORecordHook.HOOK_POSITION> hooks = iDatabase.getHooks();
     for (ORecordHook h : hooks.keySet())
       if (h instanceof OAuditingHook)
-        ((OAuditingHook) h).shutdown(false);
+        ((OAuditingHook) h).shutdown(false);*/
   }
 
   @Override
@@ -232,7 +229,8 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
     listener.registerStatelessCommand(new OServerCommandPluginManager());
     listener.registerStatelessCommand(new OServerCommandGetNode());
     listener.registerStatelessCommand(new OServerCommandQueryCacheManager());
-    listener.registerStatelessCommand(new OServerCommandAuditing(this));
+    listener.registerStatelessCommand(new OServerCommandAuditing(server.getSecurity()));
+    listener.registerStatelessCommand(new OServerCommandPostSecurityReload(server.getSecurity()));
 
   }
 
@@ -247,6 +245,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
     listener.unregisterStatelessCommand(OServerCommandConfiguration.class);
     listener.unregisterStatelessCommand(OServerCommandPostBackupDatabase.class);
     listener.unregisterStatelessCommand(OServerCommandGetDeployDb.class);
+    listener.unregisterStatelessCommand(OServerCommandPostSecurityReload.class);
   }
 
   private void installProfiler() {
