@@ -56,9 +56,11 @@ public class OHttpUtils {
   public static final String HEADER_AUTHENTICATION               = "OAuthentication: ";
   public static final String HEADER_CONTENT_ENCODING             = "Accept-Encoding: ";
   public static final String HEADER_ETAG                         = "ETag: ";
-
+  public static final String HEADER_AUTHENTICATE_NEGOTIATE       = "WWW-Authenticate: Negotiate";
+  
   public static final String AUTHORIZATION_BEARER                = "Bearer";
   public static final String AUTHORIZATION_BASIC                 = "Basic";
+  public static final String AUTHORIZATION_NEGOTIATE             = "Negotiate";
   public static final String OSESSIONID                          = "OSESSIONID";
 
   public static final String MULTIPART_CONTENT_DISPOSITION       = "Content-Disposition";

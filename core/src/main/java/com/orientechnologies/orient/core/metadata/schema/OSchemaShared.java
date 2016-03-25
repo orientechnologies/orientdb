@@ -1257,6 +1257,10 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
       removeClusterClassMap(cls);
 
+      // WAKE UP DB LIFECYCLE LISTENER
+      for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext(); )
+        it.next().onDropClass(getDatabase(), cls);      
+
     } finally {
       releaseSchemaWriteLock();
     }

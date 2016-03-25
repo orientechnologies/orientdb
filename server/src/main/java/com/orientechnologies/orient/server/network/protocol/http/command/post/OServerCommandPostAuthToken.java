@@ -130,10 +130,9 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
 
   protected void sendAuthorizationRequest(final OHttpRequest iRequest, final OHttpResponse iResponse, final String iDatabaseName)
       throws IOException {
-    String header = null;
-    if (iRequest.authentication == null || iRequest.authentication.equalsIgnoreCase("basic")) {
-      header = "WWW-Authenticate: Basic realm=\"OrientDB db-" + iDatabaseName + "\"";
-    }
+
+    // Defaults to "WWW-Authenticate: Basic".
+    String header = server.getSecurity().getAuthenticationHeader(iDatabaseName);
 
     if (isJsonResponse(iResponse)) {
       sendJsonError(iResponse, OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,

@@ -50,6 +50,8 @@ import com.orientechnologies.orient.core.metadata.security.OTokenException;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.security.OCredentialInterceptor;
+import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
@@ -225,8 +227,21 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     try {
       if (status == STATUS.CLOSED || !iUserName.equals(connectionUserName) || !iUserPassword.equals(connectionUserPassword)
           || this.tokens.isEmpty()) {
-        connectionUserName = iUserName;
-        connectionUserPassword = iUserPassword;
+
+        OCredentialInterceptor ci = OSecurityManager.instance().newCredentialInterceptor();
+		
+        if(ci != null)
+		  {	
+          ci.intercept(getURL(), iUserName, iUserPassword);
+          connectionUserName = ci.getUsername();
+          connectionUserPassword = ci.getPassword();
+        }
+        else // Do Nothing
+        {
+          connectionUserName = iUserName;
+          connectionUserPassword = iUserPassword;
+        }
+
         parseOptions(iOptions);
 
         openRemoteDatabase();
