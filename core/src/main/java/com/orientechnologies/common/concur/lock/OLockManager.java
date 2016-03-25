@@ -39,6 +39,7 @@ public class OLockManager<T> {
   protected final ConcurrentLinkedHashMap<T, CountableLock> map;
   private final boolean                                     enabled;
   private final int                                         amountOfCachedInstances;
+  private final static Object                               NULL_KEY                  = new Object();
 
   @SuppressWarnings("serial")
   private static class CountableLock {
@@ -90,7 +91,9 @@ public class OLockManager<T> {
     if (!enabled)
       return;
 
-    final T immutableResource = getImmutableResourceId(iResourceId);
+    T immutableResource = getImmutableResourceId(iResourceId);
+    if( immutableResource == null )
+      immutableResource = (T) NULL_KEY;
 
     CountableLock lock;
     do {
@@ -178,9 +181,12 @@ public class OLockManager<T> {
     }
   }
 
-  public void releaseLock(final Object iRequester, final T iResourceId, final LOCK iLockType) throws OLockException {
+  public void releaseLock(final Object iRequester, T iResourceId, final LOCK iLockType) throws OLockException {
     if (!enabled)
       return;
+
+    if( iResourceId == null )
+      iResourceId = (T) NULL_KEY;
 
     final CountableLock lock = map.get(iResourceId);
     if (lock == null)
