@@ -19,13 +19,19 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
-import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
+import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
+import java.io.IOException;
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -35,6 +41,7 @@ import java.util.concurrent.locks.Lock;
  *
  */
 public interface ODistributedServerManager {
+  String FILE_DISTRIBUTED_DB_CONFIG = "distributed-config.json";
 
   enum NODE_STATUS {
     OFFLINE, STARTING, ONLINE, SHUTTINGDOWN
@@ -44,11 +51,21 @@ public interface ODistributedServerManager {
     OFFLINE, SYNCHRONIZING, ONLINE, BACKUP
   };
 
+  boolean isNodeAvailable(final String iNodeName);
+
+  Set<String> getAvailableNodeNames(String databaseName);
+
+  OServer getServerInstance();
+
   boolean isEnabled();
 
   ODistributedServerManager registerLifecycleListener(ODistributedLifecycleListener iListener);
 
   ODistributedServerManager unregisterLifecycleListener(ODistributedLifecycleListener iListener);
+
+  Serializable executeOnLocalNode(ODistributedRequest req, ODatabaseDocumentTx database);
+
+  ORemoteServerController getRemoteServer(final String nodeName) throws IOException;
 
   Map<String, Object> getConfigurationMap();
 
@@ -68,6 +85,8 @@ public interface ODistributedServerManager {
 
   void updateCachedDatabaseConfiguration(String iDatabaseName, ODocument cfg, boolean iSaveToDisk, boolean iDeployToCluster);
 
+  long getNextMessageIdCounter();
+
   void updateLastClusterChange();
 
   /**
@@ -80,27 +99,27 @@ public interface ODistributedServerManager {
    */
   boolean isNodeOnline(String iNodeName, String databaseName);
 
+  int getAvailableNodes(final String iDatabaseName);
+
+  int getAvailableNodes(final Collection<String> iNodes, final String databaseName);
+
   boolean isOffline();
 
-  String getLocalNodeId();
+  int getLocalNodeId();
 
   String getLocalNodeName();
 
   ODocument getClusterConfiguration();
 
-  ODocument getNodeConfigurationById(String iNode);
+  String getNodeNameById(int id);
+
+  int getNodeIdByName(String node);
+
+  ODocument getNodeConfigurationByUuid(String iNode);
 
   ODocument getLocalNodeConfiguration();
 
   void propagateSchemaChanges(ODatabaseInternal iStorage);
-
-  /**
-   * Returns a time taking care about the offset with the cluster time. This allows to have a quite precise idea about information
-   * on date times, such as logs to determine the youngest in case of conflict.
-   *
-   * @return
-   */
-  long getDistributedTime(long iTme);
 
   /**
    * Gets a distributed lock
@@ -113,8 +132,23 @@ public interface ODistributedServerManager {
 
   ODistributedConfiguration getDatabaseConfiguration(String iDatabaseName);
 
-  Object sendRequest(String iDatabaseName, Collection<String> iClusterNames, Collection<String> iTargetNodeNames,
-      OAbstractRemoteTask iTask, EXECUTION_MODE iExecutionMode);
+  /**
+   * Sends a distributed request against multiple servers.
+   * 
+   * @param iDatabaseName
+   * @param iClusterNames
+   * @param iTargetNodeNames
+   * @param iTask
+   * @param iExecutionMode
+   * @param localResult
+   *          It's the result of the request executed locally
+   *
+   * @param iAfterSentCallback
+   * @return
+   */
+  ODistributedResponse sendRequest(String iDatabaseName, Collection<String> iClusterNames, Collection<String> iTargetNodeNames,
+      ORemoteTask iTask, EXECUTION_MODE iExecutionMode, Object localResult,
+      OCallable<Void, ODistributedRequestId> iAfterSentCallback);
 
   ODocument getStats();
 

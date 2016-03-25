@@ -20,16 +20,36 @@
 package com.orientechnologies.orient.core.exception;
 
 import com.orientechnologies.common.exception.OHighLevelException;
+import com.orientechnologies.orient.core.id.ORID;
 
 public class ORecordNotFoundException extends OCoreException implements OHighLevelException {
 
   private static final long serialVersionUID = -265573123216968L;
 
-  public ORecordNotFoundException(ORecordNotFoundException exception) {
+  private ORID              rid;
+
+  public ORecordNotFoundException(final ORecordNotFoundException exception) {
     super(exception);
   }
 
-  public ORecordNotFoundException(final String string) {
-    super(string);
+  public ORecordNotFoundException(final ORID iRID) {
+    super("The record with id '" + iRID + "' was not found");
+    rid = iRID;
+  }
+
+  public ORecordNotFoundException(final ORID iRID, final String message) {
+    super(message);
+    rid = iRID;
+  }
+
+  @Override
+  public boolean equals(final Object obj) {
+    if (!(obj instanceof ORecordNotFoundException))
+      return false;
+
+    if (rid == null && ((ORecordNotFoundException) obj).rid == null)
+      return toString().equals(obj.toString());
+
+    return rid != null ? rid.equals(((ORecordNotFoundException) obj).rid) : ((ORecordNotFoundException) obj).rid.equals(rid);
   }
 }

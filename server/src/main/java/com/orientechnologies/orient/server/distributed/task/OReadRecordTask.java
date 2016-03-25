@@ -19,28 +19,29 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 /**
  * Execute a read of a record from a distributed node.
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- *
  */
 public class OReadRecordTask extends OAbstractRemoteTask {
   private static final long serialVersionUID = 1L;
+  public static final  int  FACTORYID        = 1;
 
-  protected ORecordId       rid;
+  protected ORecordId rid;
 
   public OReadRecordTask() {
   }
@@ -50,7 +51,8 @@ public class OReadRecordTask extends OAbstractRemoteTask {
   }
 
   @Override
-  public Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
+  public Object execute(ODistributedRequestId requestId, final OServer iServer, ODistributedServerManager iManager,
+      final ODatabaseDocumentTx database)
       throws Exception {
     final ORecord record = database.load(rid);
     if (record == null)
@@ -87,4 +89,10 @@ public class OReadRecordTask extends OAbstractRemoteTask {
   public boolean isIdempotent() {
     return true;
   }
+
+  @Override
+  public int getFactoryId() {
+    return FACTORYID;
+  }
+
 }

@@ -20,10 +20,6 @@
 
 package com.orientechnologies.orient.core.index.engine;
 
-import java.util.Iterator;
-import java.util.Map;
-
-import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -31,20 +27,25 @@ import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTree;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Andrey Lomakin
  * @since 8/30/13
  */
 public class OSBTreeIndexEngine implements OIndexEngine {
-  public static final int VERSION = 1;
+  public static final int               VERSION                    = 1;
 
-  public static final String DATA_FILE_EXTENSION        = ".sbt";
-  public static final String NULL_BUCKET_FILE_EXTENSION = ".nbt";
+  public static final String            DATA_FILE_EXTENSION        = ".sbt";
+  public static final String            NULL_BUCKET_FILE_EXTENSION = ".nbt";
 
   private final OSBTree<Object, Object> sbTree;
-  private       int                     version;
+  private int                           version;
   private final String                  name;
 
   public OSBTreeIndexEngine(String name, Boolean durableInNonTxMode, OAbstractPaginatedStorage storage, int version) {
@@ -62,7 +63,7 @@ public class OSBTreeIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void init() {
+  public void init(String indexName, String indexType, OIndexDefinition indexDefinition, boolean isAutomatic, ODocument metadata) {
   }
 
   @Override
@@ -77,7 +78,7 @@ public class OSBTreeIndexEngine implements OIndexEngine {
 
   @Override
   public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-      OBinarySerializer keySerializer, int keySize) {
+      OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, ODocument metadata) {
     sbTree.create(keySerializer, valueSerializer, keyTypes, keySize, nullPointerSupport);
   }
 
@@ -224,8 +225,8 @@ public class OSBTreeIndexEngine implements OIndexEngine {
     private final OSBTree.OSBTreeCursor<Object, Object> treeCursor;
     private final ValuesTransformer                     valuesTransformer;
 
-    private Iterator<OIdentifiable> currentIterator = OEmptyIterator.IDENTIFIABLE_INSTANCE;
-    private Object                  currentKey      = null;
+    private Iterator<OIdentifiable>                     currentIterator = OEmptyIterator.IDENTIFIABLE_INSTANCE;
+    private Object                                      currentKey      = null;
 
     private OSBTreeIndexCursor(OSBTree.OSBTreeCursor<Object, Object> treeCursor, ValuesTransformer valuesTransformer) {
       this.treeCursor = treeCursor;

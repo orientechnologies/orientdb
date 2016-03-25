@@ -9,9 +9,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.*;
 
 public class DatabaseConflictStrategyAutoMergeTest {
 
@@ -81,7 +79,6 @@ public class DatabaseConflictStrategyAutoMergeTest {
 
           if (exceptionInThread != null)
             break;
-          sleep(100);
           OrientVertex vertex = graph.addVertex("vertextype3", (String) null);
           graph.commit();
           assertEquals(1, vertex.getRecord().getVersion());
@@ -155,8 +152,6 @@ public class DatabaseConflictStrategyAutoMergeTest {
 
           if (exceptionInThread != null)
             break;
-          // Let's give it some time for asynchronous replication.
-          sleep(500);
           countPropValue++;
           if (parentV1 == null) {
             parentV1 = graph.getVertex(parentV1Id);

@@ -19,9 +19,6 @@
  */
 package com.orientechnologies.orient.client.remote;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -29,15 +26,19 @@ import com.orientechnologies.orient.core.engine.OEngineAbstract;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Remote engine implementation.
  *
  * @author Luca Garulli
  */
 public class OEngineRemote extends OEngineAbstract {
-  public static final    String                      NAME           = "remote";
+  public static final String                         NAME           = "remote";
+  public static final String                         PREFIX         = NAME + ":";
   protected static final Map<String, OStorageRemote> sharedStorages = new HashMap<String, OStorageRemote>();
-  protected volatile ORemoteConnectionManager connectionManager;
+  protected volatile ORemoteConnectionManager        connectionManager;
 
   public OEngineRemote() {
   }

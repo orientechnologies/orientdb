@@ -1,37 +1,19 @@
 package com.orientechnologies.orient.server.token;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
-import java.util.Random;
-import java.util.UUID;
-
-import javax.crypto.Mac;
-
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
-import com.orientechnologies.orient.core.metadata.security.jwt.OJwtHeader;
-import com.orientechnologies.orient.core.metadata.security.jwt.OJwtPayload;
-import com.orientechnologies.orient.core.metadata.security.jwt.OKeyProvider;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.security.OSecurityManager;
-import com.orientechnologies.orient.core.serialization.OBase64Utils;
+import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OTokenHandler;
-import com.orientechnologies.orient.server.binary.impl.OBinaryToken;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
+
+import javax.crypto.Mac;
+import java.security.NoSuchAlgorithmException;
 
 /**
  * Created by emrul on 27/10/2014.
@@ -101,7 +83,7 @@ public class OrientTokenHandler extends OServerPluginAbstract implements OTokenH
     throw new UnsupportedOperationException();
   }
 
-  public ONetworkProtocolData getProtocolDataFromToken(final OToken token) {
+  public ONetworkProtocolData getProtocolDataFromToken(OClientConnection oClientConnection, final OToken token) {
     throw new UnsupportedOperationException();
   }
 

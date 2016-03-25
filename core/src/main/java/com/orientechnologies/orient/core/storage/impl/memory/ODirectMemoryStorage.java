@@ -20,6 +20,15 @@
 
 package com.orientechnologies.orient.core.storage.impl.memory;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.zip.ZipOutputStream;
+
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
@@ -29,12 +38,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageMe
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OMemoryWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
-
-import java.io.*;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.zip.ZipOutputStream;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)

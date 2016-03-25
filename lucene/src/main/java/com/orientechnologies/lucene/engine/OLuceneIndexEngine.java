@@ -38,8 +38,6 @@ import java.io.IOException;
  */
 public interface OLuceneIndexEngine extends OIndexEngine {
 
-  void initIndex(String indexType, OIndexDefinition indexDefinition, boolean isAutomatic, ODocument metadata);
-
   String indexName();
 
   void onRecordAddedToResultSet(QueryContext queryContext, OContextualRecordId recordId, Document ret, ScoreDoc score);

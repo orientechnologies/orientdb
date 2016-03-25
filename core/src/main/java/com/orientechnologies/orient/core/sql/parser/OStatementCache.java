@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -31,11 +30,11 @@ public class OStatementCache {
    */
   public OStatementCache(int size) {
     this.mapSize = size;
-    map = Collections.synchronizedMap(new LinkedHashMap<String, OStatement>(size) {
+    map = new LinkedHashMap<String, OStatement>(size) {
       protected boolean removeEldestEntry(final Map.Entry<String, OStatement> eldest) {
         return super.size() > mapSize;
       }
-    });
+    };
   }
 
   /**
@@ -44,7 +43,7 @@ public class OStatementCache {
    *          an SQL statement
    * @return true if the corresponding executor is present in the cache
    */
-  public boolean contains(String statement) {
+  public synchronized boolean contains(String statement) {
     return map.containsKey(statement);
   }
 

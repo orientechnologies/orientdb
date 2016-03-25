@@ -10,27 +10,27 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
  * @since 9/28/2015
  */
 public abstract class OCoreException extends OException {
-  private OErrorCode errorCode;
+  private OErrorCode   errorCode;
 
   private final String storageURL;
   private final String componentName;
 
-  public OCoreException(OCoreException exception) {
+  public OCoreException(final OCoreException exception) {
     super(exception);
     this.storageURL = exception.storageURL;
     this.componentName = exception.componentName;
   }
 
-  public OCoreException(String message) {
+  public OCoreException(final String message) {
     this(message, null, null);
   }
 
-  public OCoreException(String message, String componentName) {
+  public OCoreException(final String message, final String componentName) {
     this(message, componentName, null);
 
   }
 
-  public OCoreException(String message, String componentName, OErrorCode errorCode) {
+  public OCoreException(final String message, final String componentName, final OErrorCode errorCode) {
     super(message);
 
     this.errorCode = errorCode;

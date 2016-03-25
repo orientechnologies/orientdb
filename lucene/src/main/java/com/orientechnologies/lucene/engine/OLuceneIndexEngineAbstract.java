@@ -59,10 +59,7 @@ import org.apache.lucene.util.Version;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory.AnalyzerKind.INDEX;
@@ -147,7 +144,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   }
 
   @Override
-  public void initIndex(String indexType, OIndexDefinition indexDefinition, boolean isAutomatic, ODocument metadata) {
+  public void init(String indexName, String indexType, OIndexDefinition indexDefinition, boolean isAutomatic, ODocument metadata) {
 
     // FIXME how many timers are around?
     Orient.instance().registerListener(this);
@@ -241,8 +238,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
   @Override
   public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-      OBinarySerializer keySerializer, int keySize) {
-    // initIndex(indexName, null, isAutomatic, metadata);
+      OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, ODocument metadata) {
   }
 
   @Override

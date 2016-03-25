@@ -23,20 +23,15 @@ import com.orientechnologies.orient.core.command.OCommandDistributedReplicateReq
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Task to manage the end of distributed transaction when no fix is needed (OFixTxTask) and all the locks must be released. Locks
@@ -46,32 +41,84 @@ import java.util.Set;
  *
  */
 public class OCompletedTxTask extends OAbstractReplicatedTask {
-  private static final long serialVersionUID = 1L;
-  private final Set<ORID>   locks;
+  private static final long     serialVersionUID = 1L;
+  public static final int       FACTORYID        = 8;
+
+  private ODistributedRequestId requestId;
+  private boolean               success;
+  private List<ORemoteTask>     fixTasks         = new ArrayList<ORemoteTask>();
 
   public OCompletedTxTask() {
-    locks = new HashSet<ORID>();
   }
 
-  public OCompletedTxTask(final Set<ORID> iLocks) {
-    locks = iLocks;
+  public OCompletedTxTask(final ODistributedRequestId iRequestId, final boolean iSuccess) {
+    requestId = iRequestId;
+    success = iSuccess;
+  }
+
+  public void addFixTask(final ORemoteTask fixTask) {
+    fixTasks.add(fixTask);
   }
 
   @Override
-  public Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
-      throws Exception {
+  public Object execute(final ODistributedRequestId msgId, final OServer iServer, ODistributedServerManager iManager,
+      final ODatabaseDocumentTx database) throws Exception {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-        "completing transaction against db=%s locks=%s...", database.getName(), locks);
+        "%s transaction db=%s originalReqId=%s...", (success ? "committing" : fixTasks.isEmpty() ? "rolling back" : "fixing"),
+        database.getName(), requestId, requestId);
 
     ODatabaseRecordThreadLocal.INSTANCE.set(database);
 
     // UNLOCK ALL LOCKS ACQUIRED IN TX
     final ODistributedDatabase ddb = iManager.getMessageService().getDatabase(database.getName());
 
-    for (ORID r : locks)
-      ddb.unlockRecord(r);
+    final ODistributedTxContext pRequest = ddb.popTxContext(requestId);
+    if (success) {
+      // COMMIT
+      if (pRequest != null)
+        pRequest.commit();
+      else {
+        // UNABLE TO FIND TX CONTEXT
+        ODistributedServerLog.error(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+            "Error on committing transaction %s db=%s", requestId, database.getName());
+        return Boolean.FALSE;
+      }
+
+    } else if (fixTasks.isEmpty()) {
+      // ROLLBACK
+      if (pRequest != null)
+        pRequest.rollback(database);
+      else {
+        // UNABLE TO FIND TX CONTEXT
+        ODistributedServerLog.error(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+            "Error on rolling back transaction %s db=%s", requestId, database.getName());
+        return Boolean.FALSE;
+      }
+
+    } else {
+      // FIX TRANSACTION CONTENT
+      ODistributedServerLog.info(this, ddb.getManager().getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+          "Distributed transaction: fixing transaction %s", requestId);
+
+      for (ORemoteTask fixTask : fixTasks) {
+        try {
+          if (fixTask instanceof OAbstractRecordReplicatedTask)
+            ((OAbstractRecordReplicatedTask) fixTask).setLockRecords(false);
+
+          fixTask.execute(requestId, iManager.getServerInstance(), iManager, database);
+
+        } catch (Exception e) {
+          ODistributedServerLog.error(this, iManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+              "Error on fixing transaction %s task %s", e, requestId, fixTask);
+        }
+      }
+
+      if (pRequest != null)
+        pRequest.fix();
+    }
 
     return Boolean.TRUE;
+
   }
 
   @Override
@@ -80,30 +127,21 @@ public class OCompletedTxTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public List<OAbstractRemoteTask> getFixTask(final ODistributedRequest iRequest, OAbstractRemoteTask iOriginalTask, final Object iBadResponse,
-                                                 final Object iGoodResponse, String executorNodeName,
-                                                 ODistributedServerManager dManager) {
-    return null;
-  }
-
-  @Override
-  public OAbstractRemoteTask getUndoTask(final ODistributedRequest iRequest, final Object iBadResponse) {
-    return null;
-  }
-
-  @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
-    out.writeInt(locks.size());
-    for (ORID task : locks)
+    out.writeObject(requestId);
+    out.writeBoolean(success);
+    out.writeInt(fixTasks.size());
+    for (ORemoteTask task : fixTasks)
       out.writeObject(task);
   }
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-    locks.clear();
+    requestId = (ODistributedRequestId) in.readObject();
+    success = in.readBoolean();
     final int size = in.readInt();
     for (int i = 0; i < size; ++i)
-      locks.add((ORID) in.readObject());
+      fixTasks.add((ORemoteTask) in.readObject());
   }
 
   /**
@@ -113,8 +151,7 @@ public class OCompletedTxTask extends OAbstractReplicatedTask {
    */
   @Override
   public long getDistributedTimeout() {
-    final long to = OGlobalConfiguration.DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT.getValueAsLong();
-    return to + (100 * locks.size());
+    return OGlobalConfiguration.DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT.getValueAsLong();
   }
 
   @Override
@@ -125,5 +162,15 @@ public class OCompletedTxTask extends OAbstractReplicatedTask {
   @Override
   public String getPayload() {
     return null;
+  }
+
+  @Override
+  public int getFactoryId() {
+    return FACTORYID;
+  }
+
+  @Override
+  public String toString() {
+    return getName() + " type: " + (success ? "commit" : (fixTasks.isEmpty() ? "rollback" : "fix (" + fixTasks.size() + " ops)"));
   }
 }

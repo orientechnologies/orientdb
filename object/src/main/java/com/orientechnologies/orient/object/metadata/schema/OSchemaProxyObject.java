@@ -16,6 +16,14 @@
  */
 package com.orientechnologies.orient.object.metadata.schema;
 
+import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+
+import javassist.util.proxy.Proxy;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.reflection.OReflectionHelper;
@@ -24,24 +32,13 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.entity.OEntityManager;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
-import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionFactory;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
-import javassist.util.proxy.Proxy;
-
-import java.lang.reflect.Field;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
 
 /**
  * @author luca.molino
@@ -151,6 +148,11 @@ public class OSchemaProxyObject implements OSchema {
   }
 
   @Override
+  public void onPostIndexManagement() {
+    underlying.onPostIndexManagement();
+  }
+
+  @Override
   public OClass getOrCreateClass(String iClassName, OClass... superClasses) {
     return underlying.getOrCreateClass(iClassName, superClasses);
   }
@@ -210,7 +212,6 @@ public class OSchemaProxyObject implements OSchema {
     return underlying.getClusterSelectionFactory();
   }
 
-
   /**
    * Scans all classes accessible from the context class loader which belong to the given package and subpackages.
    * 
@@ -234,7 +235,7 @@ public class OSchemaProxyObject implements OSchema {
     try {
       classes = OReflectionHelper.getClassesFor(iPackageName, iClassLoader);
     } catch (ClassNotFoundException e) {
-      throw OException.wrapException(new ODatabaseException("Classes can not be loaded during schema generation"), e);
+      throw OException.wrapException(new ODatabaseException("Classes cannot be loaded during schema generation"), e);
     }
     for (Class<?> c : classes) {
       generateSchema(c);

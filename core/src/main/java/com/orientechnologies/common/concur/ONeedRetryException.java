@@ -31,11 +31,11 @@ import com.orientechnologies.orient.core.exception.OCoreException;
 public abstract class ONeedRetryException extends OCoreException {
   private static final long serialVersionUID = 1L;
 
-  protected ONeedRetryException(ONeedRetryException exception) {
+  protected ONeedRetryException(final ONeedRetryException exception) {
     super(exception);
   }
 
-  protected ONeedRetryException(String message) {
+  protected ONeedRetryException(final String message) {
     super(message);
   }
 }

@@ -60,9 +60,11 @@ public class TestAsyncReplMode2Servers2OpsCommitConcurrent extends BareBoneBase2
             vertex1.addEdge("edgetype", vertex2);
             graph.commit();
 
-            System.out.println(iClient + " - successfully committed version: " + vertex1.getRecord().getVersion());
+            System.out
+                .println(iClient + " - successfully committed version: " + vertex1.getRecord().getVersion() + " retry: " + retry);
           } catch (ONeedRetryException e) {
-            System.out.println(iClient + " - caught conflict, reloading vertex. v=" + vertex1.getRecord().getVersion());
+            System.out.println(
+                iClient + " - caught conflict, reloading vertex. v=" + vertex1.getRecord().getVersion() + " retry: " + retry);
             vertex1.reload();
           }
         }

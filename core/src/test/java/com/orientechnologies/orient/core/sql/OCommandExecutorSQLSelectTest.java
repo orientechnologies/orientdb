@@ -35,29 +35,19 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Pattern;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
+import static org.testng.Assert.*;
 
 @Test
 public class OCommandExecutorSQLSelectTest {
-  private static String DB_STORAGE = "memory";
-  private static String DB_NAME    = "OCommandExecutorSQLSelectTest";
+  private static String DB_STORAGE             = "memory";
+  private static String DB_NAME                = "OCommandExecutorSQLSelectTest";
 
-  private int ORDER_SKIP_LIMIT_ITEMS = 100 * 1000;
+  private int           ORDER_SKIP_LIMIT_ITEMS = 100 * 1000;
 
-  ODatabaseDocumentTx db;
+  ODatabaseDocumentTx   db;
 
   @BeforeClass
   public void beforeClass() throws Exception {
@@ -142,12 +132,10 @@ public class OCommandExecutorSQLSelectTest {
     db.command(new OCommandSQL("insert into TestParams  set name = 'foo', surname ='bar', active = false")).execute();
 
     db.command(new OCommandSQL("CREATE class TestParamsEmbedded")).execute();
-    db.command(
-        new OCommandSQL("insert into TestParamsEmbedded set emb = {  \n" + "            \"count\":0,\n"
-            + "            \"testupdate\":\"1441258203385\"\n" + "         }")).execute();
-    db.command(
-        new OCommandSQL("insert into TestParamsEmbedded set emb = {  \n" + "            \"count\":1,\n"
-            + "            \"testupdate\":\"1441258203385\"\n" + "         }")).execute();
+    db.command(new OCommandSQL("insert into TestParamsEmbedded set emb = {  \n" + "            \"count\":0,\n"
+        + "            \"testupdate\":\"1441258203385\"\n" + "         }")).execute();
+    db.command(new OCommandSQL("insert into TestParamsEmbedded set emb = {  \n" + "            \"count\":1,\n"
+        + "            \"testupdate\":\"1441258203385\"\n" + "         }")).execute();
 
     db.command(new OCommandSQL("CREATE class TestBacktick")).execute();
     db.command(new OCommandSQL("insert into TestBacktick  set foo = 1, bar = 2, `foo-bar` = 10")).execute();
@@ -175,9 +163,8 @@ public class OCommandExecutorSQLSelectTest {
     }
 
     db.command(new OCommandSQL("create class OCommandExecutorSQLSelectTest_aggregations")).execute();
-    db.command(
-        new OCommandSQL(
-            "insert into OCommandExecutorSQLSelectTest_aggregations set data = [{\"size\": 0}, {\"size\": 0}, {\"size\": 30}, {\"size\": 50}, {\"size\": 50}]"))
+    db.command(new OCommandSQL(
+        "insert into OCommandExecutorSQLSelectTest_aggregations set data = [{\"size\": 0}, {\"size\": 0}, {\"size\": 30}, {\"size\": 50}, {\"size\": 50}]"))
         .execute();
 
     initExpandSkipLimit(db);
@@ -412,8 +399,8 @@ public class OCommandExecutorSQLSelectTest {
     List<ODocument> qResult7 = db.command(new OCommandSQL("select * from foo where (((name ='a' and bar = 1000)) or name = 'b')"))
         .execute();
 
-    List<ODocument> qResult8 = db
-        .command(new OCommandSQL("select * from foo where (((name ='a' and bar = 1000)) or (name = 'b'))")).execute();
+    List<ODocument> qResult8 = db.command(new OCommandSQL("select * from foo where (((name ='a' and bar = 1000)) or (name = 'b'))"))
+        .execute();
 
     assertEquals(qResult.size(), qResult2.size());
     assertEquals(qResult.size(), qResult3.size());
@@ -428,33 +415,28 @@ public class OCommandExecutorSQLSelectTest {
   @Test
   public void testOperatorPriority2() {
     List<ODocument> qResult = db
-        .command(
-            new OCommandSQL(
-                "select * from bar where name ='a' and foo = 1 or name='b' or name='c' and foo = 3 and other = 4 or name = 'e' and foo = 5 or name = 'm' and foo > 2 "))
+        .command(new OCommandSQL(
+            "select * from bar where name ='a' and foo = 1 or name='b' or name='c' and foo = 3 and other = 4 or name = 'e' and foo = 5 or name = 'm' and foo > 2 "))
         .execute();
 
     List<ODocument> qResult2 = db
-        .command(
-            new OCommandSQL(
-                "select * from bar where (name ='a' and foo = 1) or name='b' or (name='c' and foo = 3 and other = 4) or (name = 'e' and foo = 5) or (name = 'm' and foo > 2)"))
+        .command(new OCommandSQL(
+            "select * from bar where (name ='a' and foo = 1) or name='b' or (name='c' and foo = 3 and other = 4) or (name = 'e' and foo = 5) or (name = 'm' and foo > 2)"))
         .execute();
 
     List<ODocument> qResult3 = db
-        .command(
-            new OCommandSQL(
-                "select * from bar where (name ='a' and foo = 1) or (name='b') or (name='c' and foo = 3 and other = 4) or (name ='e' and foo = 5) or (name = 'm' and foo > 2)"))
+        .command(new OCommandSQL(
+            "select * from bar where (name ='a' and foo = 1) or (name='b') or (name='c' and foo = 3 and other = 4) or (name ='e' and foo = 5) or (name = 'm' and foo > 2)"))
         .execute();
 
     List<ODocument> qResult4 = db
-        .command(
-            new OCommandSQL(
-                "select * from bar where (name ='a' and foo = 1) or ((name='b') or (name='c' and foo = 3 and other = 4)) or (name = 'e' and foo = 5) or (name = 'm' and foo > 2)"))
+        .command(new OCommandSQL(
+            "select * from bar where (name ='a' and foo = 1) or ((name='b') or (name='c' and foo = 3 and other = 4)) or (name = 'e' and foo = 5) or (name = 'm' and foo > 2)"))
         .execute();
 
     List<ODocument> qResult5 = db
-        .command(
-            new OCommandSQL(
-                "select * from bar where (name ='a' and foo = 1) or ((name='b') or (name='c' and foo = 3 and other = 4) or (name = 'e' and foo = 5)) or (name = 'm' and foo > 2)"))
+        .command(new OCommandSQL(
+            "select * from bar where (name ='a' and foo = 1) or ((name='b') or (name='c' and foo = 3 and other = 4) or (name = 'e' and foo = 5)) or (name = 'm' and foo > 2)"))
         .execute();
 
     assertEquals(qResult.size(), qResult2.size());
@@ -467,33 +449,28 @@ public class OCommandExecutorSQLSelectTest {
   @Test
   public void testOperatorPriority3() {
     List<ODocument> qResult = db
-        .command(
-            new OCommandSQL(
-                "select * from bar where name <> 'a' and foo = 1 or name='b' or name='c' and foo = 3 and other = 4 or name = 'e' and foo = 5 or name = 'm' and foo > 2 "))
+        .command(new OCommandSQL(
+            "select * from bar where name <> 'a' and foo = 1 or name='b' or name='c' and foo = 3 and other = 4 or name = 'e' and foo = 5 or name = 'm' and foo > 2 "))
         .execute();
 
     List<ODocument> qResult2 = db
-        .command(
-            new OCommandSQL(
-                "select * from bar where (name <> 'a' and foo = 1) or name='b' or (name='c' and foo = 3 and other <>  4) or (name = 'e' and foo = 5) or (name = 'm' and foo > 2)"))
+        .command(new OCommandSQL(
+            "select * from bar where (name <> 'a' and foo = 1) or name='b' or (name='c' and foo = 3 and other <>  4) or (name = 'e' and foo = 5) or (name = 'm' and foo > 2)"))
         .execute();
 
     List<ODocument> qResult3 = db
-        .command(
-            new OCommandSQL(
-                "select * from bar where ( name <> 'a' and foo = 1) or (name='b') or (name='c' and foo = 3 and other <>  4) or (name ='e' and foo = 5) or (name = 'm' and foo > 2)"))
+        .command(new OCommandSQL(
+            "select * from bar where ( name <> 'a' and foo = 1) or (name='b') or (name='c' and foo = 3 and other <>  4) or (name ='e' and foo = 5) or (name = 'm' and foo > 2)"))
         .execute();
 
     List<ODocument> qResult4 = db
-        .command(
-            new OCommandSQL(
-                "select * from bar where (name <> 'a' and foo = 1) or ( (name='b') or (name='c' and foo = 3 and other <>  4)) or  (name = 'e' and foo = 5) or (name = 'm' and foo > 2)"))
+        .command(new OCommandSQL(
+            "select * from bar where (name <> 'a' and foo = 1) or ( (name='b') or (name='c' and foo = 3 and other <>  4)) or  (name = 'e' and foo = 5) or (name = 'm' and foo > 2)"))
         .execute();
 
     List<ODocument> qResult5 = db
-        .command(
-            new OCommandSQL(
-                "select * from bar where (name <> 'a' and foo = 1) or ((name='b') or (name='c' and foo = 3 and other <>  4) or (name = 'e' and foo = 5)) or (name = 'm' and foo > 2)"))
+        .command(new OCommandSQL(
+            "select * from bar where (name <> 'a' and foo = 1) or ((name='b') or (name='c' and foo = 3 and other <>  4) or (name = 'e' and foo = 5)) or (name = 'm' and foo > 2)"))
         .execute();
 
     assertEquals(qResult.size(), qResult2.size());
@@ -553,7 +530,7 @@ public class OCommandExecutorSQLSelectTest {
 
   @Test
   public void testLimitWithNamedParam2() {
-    //issue #5493
+    // issue #5493
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("limit", 2);
     List<ODocument> qResult = db.command(new OCommandSQL("select from foo limit :limit")).execute(params);
@@ -564,8 +541,8 @@ public class OCommandExecutorSQLSelectTest {
   public void testParamsInLetSubquery() {
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("name", "foo");
-    List<ODocument> qResult = db.command(
-        new OCommandSQL(
+    List<ODocument> qResult = db
+        .command(new OCommandSQL(
             "select from TestParams let $foo = (select name from TestParams where surname = :name) where surname in $foo.name "))
         .execute(params);
     assertEquals(qResult.size(), 1);
@@ -574,8 +551,8 @@ public class OCommandExecutorSQLSelectTest {
   @Test
   public void testBooleanParams() {
     // issue #4224
-    List<ODocument> qResult = db.command(new OCommandSQL("select name from TestParams where name = ? and active = ?")).execute(
-        "foo", true);
+    List<ODocument> qResult = db.command(new OCommandSQL("select name from TestParams where name = ? and active = ?"))
+        .execute("foo", true);
     assertEquals(qResult.size(), 1);
   }
 
@@ -779,12 +756,12 @@ public class OCommandExecutorSQLSelectTest {
   public void testMultipleParamsWithSameName() {
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("param1", "foo");
-    List<ODocument> qResult = db.command(new OCommandSQL("select from TestParams where name like '%' + :param1 + '%'")).execute(
-        params);
+    List<ODocument> qResult = db.command(new OCommandSQL("select from TestParams where name like '%' + :param1 + '%'"))
+        .execute(params);
     assertEquals(qResult.size(), 2);
 
-    qResult = db.command(
-        new OCommandSQL("select from TestParams where name like '%' + :param1 + '%' and surname like '%' + :param1 + '%'"))
+    qResult = db
+        .command(new OCommandSQL("select from TestParams where name like '%' + :param1 + '%' and surname like '%' + :param1 + '%'"))
         .execute(params);
     assertEquals(qResult.size(), 1);
 
@@ -929,8 +906,8 @@ public class OCommandExecutorSQLSelectTest {
     // issue #4949
     Map<String, Object> parameters = new HashMap<String, Object>();
     parameters.put("paramvalue", "count");
-    List<ODocument> qResult = db.command(new OCommandSQL("select from TestParamsEmbedded order by emb[:paramvalue] DESC")).execute(
-        parameters);
+    List<ODocument> qResult = db.command(new OCommandSQL("select from TestParamsEmbedded order by emb[:paramvalue] DESC"))
+        .execute(parameters);
     assertEquals(qResult.size(), 2);
     Map embedded = qResult.get(0).field("emb");
     assertEquals(embedded.get("count"), 1);
@@ -941,8 +918,8 @@ public class OCommandExecutorSQLSelectTest {
     // issue #4949
     Map<String, Object> parameters = new HashMap<String, Object>();
     parameters.put("paramvalue", "count");
-    List<ODocument> qResult = db.command(new OCommandSQL("select from TestParamsEmbedded order by emb[:paramvalue] ASC")).execute(
-        parameters);
+    List<ODocument> qResult = db.command(new OCommandSQL("select from TestParamsEmbedded order by emb[:paramvalue] ASC"))
+        .execute(parameters);
     assertEquals(qResult.size(), 2);
     Map embedded = qResult.get(0).field("emb");
     assertEquals(embedded.get("count"), 0);
@@ -975,7 +952,7 @@ public class OCommandExecutorSQLSelectTest {
 
   @Test
   public void testIntersectExpandLet() {
-    //issue #5121
+    // issue #5121
     OSQLSynchQuery sql = new OSQLSynchQuery("select expand(intersect($q1, $q2)) "
         + "let $q1 = (select from OUser where name ='admin')," + "$q2 = (select from OUser where name ='admin')");
 
@@ -989,7 +966,7 @@ public class OCommandExecutorSQLSelectTest {
 
   @Test
   public void testDatesListContainsString() {
-    //issue #3526
+    // issue #3526
     OSQLSynchQuery sql = new OSQLSynchQuery("select from OCommandExecutorSQLSelectTest_datesSet where foo contains '2015-10-21'");
 
     List<ODocument> results = db.query(sql);
@@ -998,7 +975,7 @@ public class OCommandExecutorSQLSelectTest {
 
   @Test
   public void testParamWithMatches() {
-    //issue #5229
+    // issue #5229
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("param1", "adm.*");
     OSQLSynchQuery sql = new OSQLSynchQuery("select from OUser where name matches :param1");
@@ -1008,20 +985,20 @@ public class OCommandExecutorSQLSelectTest {
 
   @Test
   public void testParamWithMatchesQuoteRegex() {
-    //issue #5229
+    // issue #5229
     Map<String, Object> params = new HashMap<String, Object>();
-    params.put("param1", ".*admin[name].*");//will not work
+    params.put("param1", ".*admin[name].*");// will not work
     OSQLSynchQuery sql = new OSQLSynchQuery("select from matchesstuff where name matches :param1");
     List<ODocument> results = db.query(sql, params);
     assertEquals(results.size(), 0);
-    params.put("param1", Pattern.quote("admin[name]") + ".*");//should work
+    params.put("param1", Pattern.quote("admin[name]") + ".*");// should work
     results = db.query(sql, params);
     assertEquals(results.size(), 1);
   }
 
   @Test
   public void testMatchesWithQuotes() {
-    //issue #5229
+    // issue #5229
     String pattern = Pattern.quote("adm") + ".*";
     OSQLSynchQuery sql = new OSQLSynchQuery("SELECT FROM matchesstuff WHERE (name matches ?)");
     List<ODocument> results = db.query(sql, pattern);
@@ -1030,7 +1007,7 @@ public class OCommandExecutorSQLSelectTest {
 
   @Test
   public void testMatchesWithQuotes2() {
-    //issue #5229
+    // issue #5229
     OSQLSynchQuery sql = new OSQLSynchQuery(
         "SELECT FROM matchesstuff WHERE (name matches '\\\\Qadm\\\\E.*' and not ( name matches '(.*)foo(.*)' ) )");
     List<ODocument> results = db.query(sql);
@@ -1039,7 +1016,7 @@ public class OCommandExecutorSQLSelectTest {
 
   @Test
   public void testMatchesWithQuotes3() {
-    //issue #5229
+    // issue #5229
     OSQLSynchQuery sql = new OSQLSynchQuery(
         "SELECT FROM matchesstuff WHERE (name matches '\\\\Qadm\\\\E.*' and  ( name matches '\\\\Qadmin\\\\E.*' ) )");
     List<ODocument> results = db.query(sql);
@@ -1048,7 +1025,7 @@ public class OCommandExecutorSQLSelectTest {
 
   @Test
   public void testParamWithMatchesAndNot() {
-    //issue #5229
+    // issue #5229
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("param1", "adm.*");
     params.put("param2", "foo.*");
@@ -1082,10 +1059,10 @@ public class OCommandExecutorSQLSelectTest {
   }
 
   @Test
-  public void testSelectFromClusterNumber(){
+  public void testSelectFromClusterNumber() {
     OClass clazz = db.getMetadata().getSchema().getClass("DistinctLimit");
     int clusterId = clazz.getClusterIds()[0];
-    OSQLSynchQuery sql = new OSQLSynchQuery("select from cluster:"+clusterId+" limit 1");
+    OSQLSynchQuery sql = new OSQLSynchQuery("select from cluster:" + clusterId + " limit 1");
     List<ODocument> results = db.query(sql);
     assertEquals(results.size(), 1);
   }
@@ -1127,7 +1104,7 @@ public class OCommandExecutorSQLSelectTest {
 
   @Test
   public void testMaxLongNumber() {
-    //issue #5664
+    // issue #5664
     OSQLSynchQuery sql = new OSQLSynchQuery("select from MaxLongNumberTest WHERE last < 10 OR last is null");
     List<ODocument> results = db.query(sql);
     assertEquals(results.size(), 3);
@@ -1139,7 +1116,7 @@ public class OCommandExecutorSQLSelectTest {
 
   @Test
   public void testFilterAndOrderBy() {
-    //issue http://www.prjhub.com/#/issues/6199
+    // issue http://www.prjhub.com/#/issues/6199
 
     OSQLSynchQuery sql = new OSQLSynchQuery("SELECT FROM FilterAndOrderByTest WHERE active = true ORDER BY dc DESC");
     List<ODocument> results = db.query(sql);
@@ -1163,7 +1140,7 @@ public class OCommandExecutorSQLSelectTest {
 
   @Test
   public void testComplexFilterInSquareBrackets() {
-    //issues #513 #5451
+    // issues #513 #5451
 
     OSQLSynchQuery sql = new OSQLSynchQuery("SELECT expand(collection[name = 'n1']) FROM ComplexFilterInSquareBrackets2");
     List<ODocument> results = db.query(sql);
@@ -1202,7 +1179,6 @@ public class OCommandExecutorSQLSelectTest {
     sql = new OSQLSynchQuery("SELECT expand(collection[1-3]) FROM ComplexFilterInSquareBrackets2");
     results = db.query(sql);
     assertEquals(results.size(), 3);
-
 
   }
 

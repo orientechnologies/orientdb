@@ -176,7 +176,7 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
       superClass = superClass.substring(1);
     }
     if (database.getMetadata().getSchema().getClass(decodeClassName(superClass)) == null) {
-      throw new OCommandExecutionException("Cannot alter superClass of '" + targetClass + "' because  " + superClass
+      throw new OCommandExecutionException("Cannot alter superClass of '" + targetClass + "' because " + superClass
           + " class not found");
     }
   }

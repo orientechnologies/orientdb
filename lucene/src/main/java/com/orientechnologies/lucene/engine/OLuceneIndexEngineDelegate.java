@@ -39,6 +39,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 
 import java.io.IOException;
+import java.util.Set;
 
 /**
  * Created by Enrico Risa on 04/09/15.
@@ -61,18 +62,14 @@ public class OLuceneIndexEngineDelegate implements OLuceneIndexEngine {
   }
 
   @Override
-  public void init() {
-    delegate.init();
-  }
-
-  @Override
   public void flush() {
     delegate.flush();
   }
 
   @Override
   public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-                     OBinarySerializer keySerializer, int keySize) {
+      OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, ODocument metadata){
+
   }
 
   @Override
@@ -189,14 +186,14 @@ public class OLuceneIndexEngineDelegate implements OLuceneIndexEngine {
   }
 
   @Override
-  public void initIndex(String indexType, OIndexDefinition indexDefinition, boolean isAutomatic, ODocument metadata) {
+  public void init(String indexName, String indexType, OIndexDefinition indexDefinition, boolean isAutomatic, ODocument metadata) {
     if (delegate == null) {
       if (OClass.INDEX_TYPE.FULLTEXT.name()
                                     .equalsIgnoreCase(indexType)) {
         delegate = new OLuceneFullTextIndexEngine(indexName, new ODocBuilder(), new OQueryBuilderImpl());
       }
 
-      delegate.initIndex(indexType, indexDefinition, isAutomatic, metadata);
+      delegate.init(indexName, indexType, indexDefinition, isAutomatic, metadata);
     }
   }
 

@@ -32,18 +32,14 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
 import com.orientechnologies.orient.enterprise.channel.OSocketFactory;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
+import java.io.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 
@@ -54,9 +50,9 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
   private final int                            maxUnreadResponses;
   private String                               serverURL;
   private volatile boolean                     channelRead   = false;
-  private          byte                                                 currentStatus;
-  private          int                                                  currentSessionId;
-  private volatile OAsynchChannelServiceThread                          serviceThread;
+  private byte                                 currentStatus;
+  private int                                  currentSessionId;
+  private volatile OAsynchChannelServiceThread serviceThread;
 
   public OChannelBinaryAsynchClient(final String remoteHost, final int remotePort, final String iDatabaseName,
       final OContextConfiguration iConfig, final int iProtocolVersion) throws IOException {
@@ -262,7 +258,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
 
       if (debug)
         OLogManager.instance().debug(this, "%s - Session %d handle response", socket.getLocalAddress(), iRequesterId);
-      byte [] tokenBytes;
+      byte[] tokenBytes;
       if (token)
         tokenBytes = this.readBytes();
       else
@@ -332,7 +328,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
 
   /**
    * Tells if the channel is connected.
-   * 
+   *
    * @return true if it's connected, otherwise false.
    */
   public boolean isConnected() {
@@ -342,7 +338,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
 
   /**
    * Gets the major supported protocol version
-   * 
+   *
    */
   public short getSrvProtocolVersion() {
     return srvProtocolVersion;

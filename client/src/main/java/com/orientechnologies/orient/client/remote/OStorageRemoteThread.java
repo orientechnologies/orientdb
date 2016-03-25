@@ -32,22 +32,16 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.ORecordMetadata;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageOperationResult;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
+import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
-import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEventListener;
 
 /**
  * Wrapper of OStorageRemote that maintains the sessionId. It's bound to the ODatabase and allow to use the shared OStorageRemote.
@@ -59,7 +53,7 @@ public class OStorageRemoteThread implements OStorageProxy {
   private final OStorageRemote delegate;
   private String               serverURL;
   private int                  sessionId;
-  private Set<OChannelBinaryAsynchClient>                  connections = new HashSet<OChannelBinaryAsynchClient>();
+  private Set<OChannelBinary>  connections     = new HashSet<OChannelBinary>();
   private byte[]               token;
 
   public OStorageRemoteThread(final OStorageRemote iSharedStorage) {
@@ -482,13 +476,14 @@ public class OStorageRemoteThread implements OStorageProxy {
     }
   }
 
-  public void commit(final OTransaction iTx, Runnable callback) {
+  public List<ORecordOperation> commit(final OTransaction iTx, Runnable callback) {
     pushSession();
     try {
       delegate.commit(iTx, null);
     } finally {
       popSession();
     }
+    return null;
   }
 
   public void rollback(OTransaction iTx) {
@@ -678,11 +673,6 @@ public class OStorageRemoteThread implements OStorageProxy {
   @Override
   public OCurrentStorageComponentsFactory getComponentsFactory() {
     return delegate.getComponentsFactory();
-  }
-
-  @Override
-  public long getLastOperationId() {
-    return 0;
   }
 
   public boolean existsResource(final String iName) {

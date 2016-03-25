@@ -99,7 +99,6 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
     }
   }
 
-
   @Override
   public OIndexCursor iterateEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
       boolean ascOrder) {
@@ -134,7 +133,6 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
     return delegate.delete();
   }
 
-
   public String getName() {
     return delegate.getName();
   }
@@ -152,6 +150,11 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
     return delegate.isAutomatic();
   }
 
+  @Override
+  public boolean isUnique() {
+    return delegate.isUnique();
+  }
+
   public ODocument getConfiguration() {
     return delegate.getConfiguration();
   }
@@ -160,7 +163,6 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
   public ODocument getMetadata() {
     return delegate.getMetadata();
   }
-
 
   public long rebuild() {
     return delegate.rebuild();
@@ -242,6 +244,11 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
   @Override
   public Object getLastKey() {
     return delegate.getLastKey();
+  }
+
+  @Override
+  public int getIndexId() {
+    return delegate.getIndexId();
   }
 
   @Override

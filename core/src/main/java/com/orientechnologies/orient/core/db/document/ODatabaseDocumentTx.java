@@ -20,13 +20,6 @@
 
 package com.orientechnologies.orient.core.db.document;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.Callable;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.listener.OListenerManger;
@@ -42,30 +35,12 @@ import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
-import com.orientechnologies.orient.core.db.ODatabaseListener;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.OHookReplacedRecordThreadLocal;
-import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
-import com.orientechnologies.orient.core.db.record.OClassTrigger;
-import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.ORidBagDeleteHook;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
-import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.exception.OSchemaException;
-import com.orientechnologies.orient.core.exception.OSecurityAccessException;
-import com.orientechnologies.orient.core.exception.OTransactionBlockedException;
-import com.orientechnologies.orient.core.exception.OTransactionException;
-import com.orientechnologies.orient.core.exception.OValidationException;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
@@ -97,13 +72,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.ORecordMetadata;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageOperationResult;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
+import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
@@ -112,6 +81,13 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionNoTx;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.concurrent.Callable;
 
 /**
  * Document API entrypoint.
@@ -1398,7 +1374,13 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       if (stringValue == null)
         throw new IllegalArgumentException("Timezone can't be null");
 
-      storage.getConfiguration().setTimeZone(TimeZone.getTimeZone(stringValue.toUpperCase()));
+      // for backward compatibility, until 2.1.13 OrientDB accepted timezones in lowercase as well
+      TimeZone timeZoneValue = TimeZone.getTimeZone(stringValue.toUpperCase());
+      if(timeZoneValue.equals(TimeZone.getTimeZone("GMT"))){
+        timeZoneValue = TimeZone.getTimeZone(stringValue);
+      }
+
+      storage.getConfiguration().setTimeZone(timeZoneValue);
       storage.getConfiguration().update();
       break;
 
@@ -1580,7 +1562,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       record.fromStream(loadedRecord.toStream());
       ORecordInternal.setVersion(record, loadedRecord.getVersion());
     } else if (loadedRecord == null) {
-      throw new ORecordNotFoundException("Record with rid " + record.getIdentity() + " was not found in database");
+      throw new ORecordNotFoundException(record.getIdentity());
     }
 
     return (RET) record;
@@ -1814,7 +1796,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       throw t;
     } catch (Throwable t) {
       if (rid.isTemporary())
-        throw OException.wrapException(new ODatabaseException("Error on retrieving record using temporary RecordId: " + rid), t);
+        throw OException.wrapException(new ODatabaseException("Error on retrieving record using temporary RID: " + rid), t);
       else
         throw OException.wrapException(new ODatabaseException(
             "Error on retrieving record " + rid + " (cluster: " + storage.getPhysicalClusterNameById(rid.clusterId) + ")"), t);
@@ -2063,12 +2045,12 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
           if (prohibitTombstones) {
             final boolean result = storage.cleanOutRecord(rid, iVersion, iMode.ordinal(), null);
             if (!result && iRequired)
-              throw new ORecordNotFoundException("The record with id " + rid + " was not found");
+              throw new ORecordNotFoundException(rid);
             operationResult = new OStorageOperationResult<Boolean>(result);
           } else {
             final OStorageOperationResult<Boolean> result = storage.deleteRecord(rid, iVersion, iMode.ordinal(), null);
             if (!result.getResult() && iRequired)
-              throw new ORecordNotFoundException("The record with id " + rid + " was not found");
+              throw new ORecordNotFoundException(rid);
             operationResult = new OStorageOperationResult<Boolean>(result.getResult());
           }
 
@@ -3062,7 +3044,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   }
 
   @Override
-  public int addBlobCluster(String iClusterName, Object... iParameters) {
+  public int addBlobCluster(final String iClusterName, final Object... iParameters) {
     int id;
     if (getStorage() instanceof OStorageProxy) {
       id = command(new OCommandSQL("create blob cluster :1")).execute(iClusterName);

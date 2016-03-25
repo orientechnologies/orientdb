@@ -25,12 +25,7 @@ import com.orientechnologies.common.profiler.OProfilerStub;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexAbstractCursor;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexInternal;
-import com.orientechnologies.orient.core.index.OIndexKeyCursor;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -57,7 +52,7 @@ import java.util.*;
 
 @SuppressWarnings({ "unchecked", "rawtypes" })
 public class OChainedIndexProxy<T> implements OIndex<T> {
-  private final OIndex<T>       firstIndex;
+  private final OIndex<T> firstIndex;
 
   private final List<OIndex<?>> indexChain;
   private final OIndex<?>       lastIndex;
@@ -419,8 +414,8 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
 
     final OProfiler profiler = Orient.instance().getProfiler();
     if (profiler.isRecording()) {
-      Orient.instance().getProfiler()
-          .updateCounter(profiler.getDatabaseMetric(index.getDatabaseName(), "query.indexUsed"), "Used index in query", +1);
+      Orient.instance().getProfiler().updateCounter(profiler.getDatabaseMetric(index.getDatabaseName(), "query.indexUsed"),
+          "Used index in query", +1);
 
       final int paramCount = index.getDefinition().getParamCount();
       if (paramCount > 1) {
@@ -549,6 +544,16 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
   }
 
   @Override
+  public int getIndexId() {
+    throw new UnsupportedOperationException("Not allowed operation");
+  }
+
+  @Override
+  public boolean isUnique() {
+    return firstIndex.isUnique();
+  }
+
+  @Override
   public OIndexCursor cursor() {
     throw new UnsupportedOperationException("Not allowed operation");
   }
@@ -598,7 +603,7 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
   }
 
   private final class ExternalIndexCursor extends OIndexAbstractCursor {
-    private final OIndexCursor        internalCursor;
+    private final OIndexCursor internalCursor;
 
     private final List<OIdentifiable> queryResult     = new ArrayList<OIdentifiable>();
     private Iterator<OIdentifiable>   currentIterator = OEmptyIterator.IDENTIFIABLE_INSTANCE;

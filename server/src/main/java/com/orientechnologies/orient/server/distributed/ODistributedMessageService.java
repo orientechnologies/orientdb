@@ -19,23 +19,17 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.orient.core.record.impl.ODocument;
-
-import java.util.List;
-
 /**
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
 public interface ODistributedMessageService {
-  ODocument getQueueStats(String iQueueName);
-
   ODistributedDatabase registerDatabase(String iDatabaseName);
 
   ODistributedDatabase getDatabase(String iDatabaseName);
 
   ODistributedDatabase unregisterDatabase(String iDatabaseName);
 
-  List<String> getManagedQueueNames();
+  long dispatchResponseToThread(final ODistributedResponse response);
 }

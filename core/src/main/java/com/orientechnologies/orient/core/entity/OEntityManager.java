@@ -19,14 +19,6 @@
  */
 package com.orientechnologies.orient.core.entity;
 
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.reflection.OReflectionHelper;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.metadata.security.OUser;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
@@ -34,6 +26,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.reflection.OReflectionHelper;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.OUser;
 
 public class OEntityManager {
   private static Map<String, OEntityManager> databaseInstances = new HashMap<String, OEntityManager>();
@@ -115,7 +115,7 @@ public class OEntityManager {
     try {
       classes = OReflectionHelper.getClassesFor(iPackageName, iClassLoader);
     } catch (ClassNotFoundException e) {
-      throw OException.wrapException(new ODatabaseException("Class can not be found in package " + iPackageName), e);
+      throw OException.wrapException(new ODatabaseException("Class cannot be found in package " + iPackageName), e);
     }
     for (Class<?> c : classes) {
       deregisterEntityClass(c);
@@ -155,7 +155,7 @@ public class OEntityManager {
     try {
       registerEntityClasses(OReflectionHelper.getClassesFor(iClassNames, iClassLoader));
     } catch (ClassNotFoundException e) {
-      throw OException.wrapException(new ODatabaseException("Entity class can not be found"), e);
+      throw OException.wrapException(new ODatabaseException("Entity class cannot be found"), e);
     }
   }
 
@@ -182,7 +182,7 @@ public class OEntityManager {
     try {
       registerEntityClasses(OReflectionHelper.getClassesFor(iPackageName, iClassLoader));
     } catch (ClassNotFoundException e) {
-      throw OException.wrapException(new ODatabaseException("Entity class can not be found"), e);
+      throw OException.wrapException(new ODatabaseException("Entity class cannot be found"), e);
     }
   }
 
@@ -245,8 +245,8 @@ public class OEntityManager {
     return classHandler.getRegisteredEntities();
   }
 
-  protected Object createInstance(final Class<?> iClass) throws InstantiationException, IllegalAccessException,
-      InvocationTargetException {
+  protected Object createInstance(final Class<?> iClass)
+      throws InstantiationException, IllegalAccessException, InvocationTargetException {
     return classHandler.createInstance(iClass);
   }
 }

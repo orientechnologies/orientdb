@@ -3,13 +3,10 @@
     "hotAlignment": false,
     "executionMode": "asynchronous",
     "readQuorum": 1,
-    "writeQuorum": 2,
-    "failureAvailableNodesLessQuorum": false,
+    "writeQuorum": "majority",
     "readYourWrites": true,
     "clusters": {
         "internal": {
-        },
-        "index": {
         },
         "*": {
             "servers" : [ "<NEW_NODE>" ]

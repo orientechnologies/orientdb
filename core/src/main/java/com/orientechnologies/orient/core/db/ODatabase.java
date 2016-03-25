@@ -19,6 +19,9 @@
  */
 package com.orientechnologies.orient.core.db;
 
+import java.io.Closeable;
+import java.util.*;
+
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -41,7 +44,10 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.util.OBackupable;
 
 import java.io.Closeable;
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Generic Database interface. Represents the lower level of the Database providing raw API to access to the raw records.<br>
@@ -296,10 +302,10 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   /**
    * Adds a new cluster for store blobs.
    *
-   * A blob cluster cannot be used to store documents.
-   *
-   * @param iClusterName Cluster name
-   * @param iParameters  Additional parameters to pass to the factories
+   * @param iClusterName
+   *          Cluster name
+   * @param iParameters
+   *          Additional parameters to pass to the factories
    * @return Cluster id
    */
   int addBlobCluster(String iClusterName, Object... iParameters);
@@ -314,9 +320,12 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   /**
    * Adds a new cluster.
    *
-   * @param iClusterName Cluster name
-   * @param iRequestedId requested id of the cluster
-   * @param iParameters  Additional parameters to pass to the factories
+   * @param iClusterName
+   *          Cluster name
+   * @param iRequestedId
+   *          requested id of the cluster
+   * @param iParameters
+   *          Additional parameters to pass to the factories
    * @return Cluster id
    */
   int addCluster(String iClusterName, int iRequestedId, Object... iParameters);
@@ -472,8 +481,11 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   /**
    * Loads a record using a fetch plan.
    *
-   * @param iObject          Record to load
-   * @param iFetchPlan       Fetch plan used
+   *
+   * @param iObject
+   *          Record to load
+   * @param iFetchPlan
+   *          Fetch plan used
    * @param iLockingStrategy
    * @return The record received
    * @deprecated Usage of this method may lead to deadlocks.
@@ -485,8 +497,11 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   /**
    * Loads a record using a fetch plan.
    *
-   * @param iObject          Record to load
-   * @param iFetchPlan       Fetch plan used
+   *
+   * @param iObject
+   *          Record to load
+   * @param iFetchPlan
+   *          Fetch plan used
    * @param iLockingStrategy
    * @return The record received
    * @deprecated Usage of this method may lead to deadlocks.
@@ -518,11 +533,16 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   /**
    * Force the reloading of the entity.
    *
-   * @param iObject      The entity to load. If the entity was already loaded it will be reloaded and all the changes will be lost.
-   * @param iFetchPlan   Fetch plan used
-   * @param iIgnoreCache Ignore cache or use it
-   * @param force        Force to reload record even if storage has the same record as reloaded record, it is useful if fetch plan is not null
-   *                     and alongside with root record linked records will be reloaded.
+   * @param iObject
+   *          The entity to load. If the entity was already loaded it will be reloaded and all the changes will be lost.
+   * @param iFetchPlan
+   *          Fetch plan used
+   * @param iIgnoreCache
+   *          Ignore cache or use it
+   *
+   * @param force
+   *          Force to reload record even if storage has the same record as reloaded record, it is useful if fetch plan is not null
+   *          and alongside with root record linked records will be reloaded.
    * @return The loaded entity
    */
   <RET extends T> RET reload(final T iObject, String iFetchPlan, boolean iIgnoreCache, boolean force);
@@ -581,9 +601,13 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * Saves an entity specifying the mode. If the entity is not dirty, then the operation will be ignored. For custom entity
    * implementations assure to set the entity as dirty. If the cluster does not exist, an error will be thrown.
    *
-   * @param iObject                The entity to save
-   * @param iMode                  Mode of save: synchronous (default) or asynchronous
-   * @param iForceCreate           Flag that indicates that record should be created. If record with current rid already exists, exception is thrown
+   *
+   * @param iObject
+   *          The entity to save
+   * @param iMode
+   *          Mode of save: synchronous (default) or asynchronous
+   * @param iForceCreate
+   *          Flag that indicates that record should be created. If record with current rid already exists, exception is thrown
    * @param iRecordCreatedCallback
    * @param iRecordUpdatedCallback
    */
@@ -604,10 +628,15 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * Saves an entity in the specified cluster specifying the mode. If the entity is not dirty, then the operation will be ignored.
    * For custom entity implementations assure to set the entity as dirty. If the cluster does not exist, an error will be thrown.
    *
-   * @param iObject                The entity to save
-   * @param iClusterName           Name of the cluster where to save
-   * @param iMode                  Mode of save: synchronous (default) or asynchronous
-   * @param iForceCreate           Flag that indicates that record should be created. If record with current rid already exists, exception is thrown
+   *
+   * @param iObject
+   *          The entity to save
+   * @param iClusterName
+   *          Name of the cluster where to save
+   * @param iMode
+   *          Mode of save: synchronous (default) or asynchronous
+   * @param iForceCreate
+   *          Flag that indicates that record should be created. If record with current rid already exists, exception is thrown
    * @param iRecordCreatedCallback
    * @param iRecordUpdatedCallback
    */
@@ -645,10 +674,16 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * This method is used in case of record content itself is broken and cannot be read or deleted. So it is emergence method. This
    * method can be used only if there is no active transaction in database.
    *
-   * @param rid record id.
+   *
+   *
+   * @param rid
+   *          record id.
+   * @throws java.lang.UnsupportedOperationException
+   *           In case current version of cluster does not support given operation.
+   * @throws com.orientechnologies.orient.core.exception.ORecordNotFoundException
+   *           if record is already deleted/hidden.
+   *
    * @return <code>true</code> if record was hidden and <code>false</code> if record does not exits in database.
-   * @throws java.lang.UnsupportedOperationException                              In case current version of cluster does not support given operation.
-   * @throws com.orientechnologies.orient.core.exception.ORecordNotFoundException if record is already deleted/hidden.
    */
 
   boolean hide(ORID rid);
@@ -774,8 +809,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * update and delete against the records.
    *
    * @return true if enabled, otherwise false
-   * @see com.orientechnologies.orient.core.db.document.ODatabaseDocument#setMVCC(boolean)
-   * deprecated since 2.2
+   * @see com.orientechnologies.orient.core.db.document.ODatabaseDocument#setMVCC(boolean) deprecated since 2.2
    */
   @Deprecated
   boolean isMVCC();
@@ -792,9 +826,9 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * and delete against the records.
    *
    * @param iValue
+   * @see com.orientechnologies.orient.core.db.document.ODatabaseDocument#isMVCC()
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    * deprecated since 2.2
-   * @see com.orientechnologies.orient.core.db.document.ODatabaseDocument#isMVCC()
    */
   @Deprecated
   <DB extends ODatabase<?>> DB setMVCC(boolean iValue);
@@ -836,10 +870,11 @@ public interface ODatabase<T> extends OBackupable, Closeable {
 
   /**
    * Restores content of database stored using {@link #incrementalBackup(String)} method.
-   * <p>
-   * During data restore database can not be used in normal mode you should wait till database restore will be finished.
    *
-   * @param path Path to backup folder.
+   * During data restore database can not be used in normal mode you should wait till database restore will be finished.
+   * 
+   * @param path
+   *          Path to backup folder.
    * @since 2.2
    */
   void incrementalRestore(String path);

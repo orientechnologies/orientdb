@@ -29,10 +29,12 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
 public class OReadRecordIfNotLatestTask extends OAbstractRemoteTask {
   private static final long serialVersionUID = 1L;
+  public static final  int  FACTORYID        = 2;
 
   protected ORecordId rid;
   protected int       recordVersion;
@@ -46,7 +48,8 @@ public class OReadRecordIfNotLatestTask extends OAbstractRemoteTask {
   }
 
   @Override
-  public Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
+  public Object execute(ODistributedRequestId requestId, final OServer iServer, ODistributedServerManager iManager,
+      final ODatabaseDocumentTx database)
       throws Exception {
     final ORecord record = database.loadIfVersionIsNotLatest(rid, recordVersion, null, true);
 
@@ -81,4 +84,10 @@ public class OReadRecordIfNotLatestTask extends OAbstractRemoteTask {
   public boolean isIdempotent() {
     return true;
   }
+
+  @Override
+  public int getFactoryId() {
+    return FACTORYID;
+  }
+
 }

@@ -19,16 +19,12 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
-import com.orientechnologies.orient.core.id.ORID;
-
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Result of distributed transaction.
@@ -37,7 +33,6 @@ import java.util.Set;
  */
 public class OTxTaskResult implements Externalizable {
   public final List<Object> results = new ArrayList<Object>();
-  public final Set<ORID>    locks   = new HashSet<ORID>();
 
   public OTxTaskResult() {
   }
@@ -60,9 +55,6 @@ public class OTxTaskResult implements Externalizable {
     out.writeInt(results.size());
     for (Object o : results)
       out.writeObject(o);
-    out.writeInt(locks.size());
-    for (ORID r : locks)
-      out.writeObject(r);
   }
 
   @Override
@@ -70,13 +62,10 @@ public class OTxTaskResult implements Externalizable {
     final int resultSize = in.readInt();
     for (int i = 0; i < resultSize; ++i)
       results.add(in.readObject());
-    final int locksSize = in.readInt();
-    for (int i = 0; i < locksSize; ++i)
-      locks.add((ORID) in.readObject());
   }
 
   @Override
   public String toString() {
-    return "TX[result=" + results.size() + ", locks=" + locks.size() + "]";
+    return "TX[result=" + results.size() + "]";
   }
 }

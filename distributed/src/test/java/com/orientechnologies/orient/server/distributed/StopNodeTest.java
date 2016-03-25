@@ -15,62 +15,51 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.util.ArrayList;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicInteger;
-
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Starts 3 servers, lock on node3 simulating a unknown stall situation, checks:
+ * Starts 3 servers, stop last node, checks:
  * <ul>
  * <li>other nodes can work in the meanwhile</li>
- * <li>node3 is restarted automatically</li>
- * <li>node3 is realigned once backup is finished</li>
+ * <li>node3 is down</li>
  * </ul>
  */
-public class AutoRestartStalledNodeTest extends AbstractServerClusterTxTest {
+public class StopNodeTest extends AbstractServerClusterTxTest {
   final static int            SERVERS       = 3;
   volatile boolean            inserting     = true;
   volatile int                serverStarted = 0;
-  volatile boolean            nodeStalled   = false;
+  final private Set<String>   nodeReJoined  = new HashSet<String>();
   final private AtomicInteger nodeLefts     = new AtomicInteger();
 
   @Test
   public void test() throws Exception {
-    // SET MAXQUEUE SIZE LOWER TO TEST THE NODE IS RESTARTED AUTOMATICALLY
-    final long queueMaxSize = OGlobalConfiguration.DISTRIBUTED_QUEUE_MAXSIZE.getValueAsLong();
-    OGlobalConfiguration.DISTRIBUTED_QUEUE_MAXSIZE.setValue(100);
+    startupNodesInSequence = true;
+    useTransactions = false;
+    count = 400;
+    maxRetries = 10;
+    init(SERVERS);
+    prepare(false);
 
-    try {
-      startupNodesInSequence = true;
-      useTransactions = false;
-      count = 400;
-      maxRetries = 10;
-      init(SERVERS);
-      prepare(false);
-
-      // EXECUTE TESTS ONLY ON FIRST 2 NODES LEAVING NODE3 AD BACKUP ONLY REPLICA
-      executeTestsOnServers = new ArrayList<ServerRun>();
-      for (int i = 0; i < serverInstance.size() - 1; ++i) {
-        executeTestsOnServers.add(serverInstance.get(i));
-      }
-
-      execute();
-
-    } finally {
-      OGlobalConfiguration.DISTRIBUTED_QUEUE_MAXSIZE.setValue(queueMaxSize);
+    // EXECUTE TESTS ONLY ON FIRST 2 NODES LEAVING NODE3 AD BACKUP ONLY REPLICA
+    executeTestsOnServers = new ArrayList<ServerRun>();
+    for (int i = 0; i < serverInstance.size() - 1; ++i) {
+      executeTestsOnServers.add(serverInstance.get(i));
     }
+
+    execute();
   }
 
   @Override
-  protected void onServerStarted(ServerRun server) {
+  protected void onServerStarted(final ServerRun server) {
     super.onServerStarted(server);
 
     if (serverStarted == 0) {
@@ -83,10 +72,12 @@ public class AutoRestartStalledNodeTest extends AbstractServerClusterTxTest {
 
         @Override
         public void onNodeJoined(String iNode) {
+          nodeReJoined.add(iNode);
         }
 
         @Override
         public void onNodeLeft(String iNode) {
+          nodeReJoined.clear();
           nodeLefts.incrementAndGet();
         }
 
@@ -97,8 +88,6 @@ public class AutoRestartStalledNodeTest extends AbstractServerClusterTxTest {
     }
 
     if (serverStarted++ == (SERVERS - 1)) {
-
-      startQueueMonitorTask();
 
       // BACKUP LAST SERVER, RUN ASYNCHRONOUSLY
       new Thread(new Runnable() {
@@ -125,31 +114,13 @@ public class AutoRestartStalledNodeTest extends AbstractServerClusterTxTest {
               public Object call() throws Exception {
                 Assert.assertTrue("Insert was too fast", inserting);
 
-                banner("STARTING LOCKING SERVER " + (SERVERS - 1));
+                banner("STOPPING SERVER " + (SERVERS - 1));
 
-                OrientGraphFactory factory = new OrientGraphFactory(// getDatabaseURL(serverInstance.get(SERVERS - 2)));
-                    "plocal:target/server" + (SERVERS - 1) + "/databases/" + getDatabaseName());
-                OrientGraphNoTx g = factory.getNoTx();
+                ((OHazelcastPlugin) serverInstance.get(0).getServerInstance().getDistributedManager())
+                    .stopNode(server.server.getDistributedManager().getLocalNodeName());
 
-                nodeStalled = true;
-                try {
-                  g.getRawGraph().getStorage().callInLock(new Callable<Object>() {
-                    @Override
-                    public Object call() throws Exception {
+                Thread.sleep(5000);
 
-                      // SIMULATE LONG BACKUP
-                      Thread.sleep(10000);
-
-                      return null;
-                    }
-                  }, true);
-
-                } finally {
-                  g.shutdown();
-
-                  banner("RELEASED STALLED SERVER " + (SERVERS - 1));
-                  nodeStalled = false;
-                }
                 return null;
               }
             });
@@ -167,7 +138,7 @@ public class AutoRestartStalledNodeTest extends AbstractServerClusterTxTest {
   @Override
   protected void onAfterExecution() throws Exception {
     inserting = false;
-    Assert.assertFalse(nodeStalled);
+    Assert.assertEquals("Node was not down", 0, nodeReJoined.size());
     Assert.assertEquals("Found no node has been restarted", 1, nodeLefts.get());
   }
 
@@ -177,6 +148,6 @@ public class AutoRestartStalledNodeTest extends AbstractServerClusterTxTest {
 
   @Override
   public String getDatabaseName() {
-    return "distributed-autorestartstallednode";
+    return "distributed-stopnode";
   }
 }

@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.core.metadata.sequence;
 
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -56,7 +55,7 @@ public class OSequenceCached extends OSequence {
         ++cacheStart;
         return cacheStart;
       }
-    });
+    }, "next");
   }
 
   @Override
@@ -78,7 +77,7 @@ public class OSequenceCached extends OSequence {
 
         return newValue;
       }
-    });
+    }, "reset");
   }
 
   @Override

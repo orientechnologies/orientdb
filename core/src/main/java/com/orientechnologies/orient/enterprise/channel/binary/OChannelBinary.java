@@ -33,12 +33,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 public abstract class OChannelBinary extends OChannel {
   private static final int MAX_LENGTH_DEBUG = 150;
@@ -159,9 +154,8 @@ public abstract class OChannelBinary extends OChannel {
 
     final int len = in.readInt();
     if (len > maxChunkSize) {
-      throw OException.wrapException(new OIOException(
-          "Impossible to read a chunk of length:" + len + " max allowed chunk length:" + maxChunkSize
-              + " see NETWORK_BINARY_MAX_CONTENT_LENGTH settings "), null);
+      throw OException.wrapException(new OIOException("Impossible to read a chunk of length:" + len + " max allowed chunk length:"
+          + maxChunkSize + " see NETWORK_BINARY_MAX_CONTENT_LENGTH settings "), null);
     }
     updateMetricReceivedBytes(OBinaryProtocol.SIZE_INT + len);
 
@@ -270,10 +264,9 @@ public abstract class OChannelBinary extends OChannel {
       out.writeInt(-1);
       updateMetricTransmittedBytes(OBinaryProtocol.SIZE_INT);
     } else {
-      if(iLength > maxChunkSize){
-        throw OException.wrapException(new OIOException(
-            "Impossible to write a chunk of length:" + iLength + " max allowed chunk length:" + maxChunkSize
-                + " see NETWORK_BINARY_MAX_CONTENT_LENGTH settings "), null);
+      if (iLength > maxChunkSize) {
+        throw OException.wrapException(new OIOException("Impossible to write a chunk of length:" + iLength
+            + " max allowed chunk length:" + maxChunkSize + " see NETWORK_BINARY_MAX_CONTENT_LENGTH settings "), null);
       }
 
       out.writeInt(iLength);

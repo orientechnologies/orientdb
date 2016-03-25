@@ -19,17 +19,6 @@
  */
 package com.orientechnologies.orient.enterprise.channel;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.Inet4Address;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.Socket;
-import java.net.SocketException;
-import java.util.Enumeration;
-import java.util.concurrent.atomic.AtomicLong;
-
 import com.orientechnologies.common.concur.lock.OAdaptiveLock;
 import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.log.OLogManager;
@@ -40,6 +29,13 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelListener;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.*;
+import java.util.Enumeration;
+import java.util.concurrent.atomic.AtomicLong;
 
 public abstract class OChannel extends OListenerManger<OChannelListener> {
   private static final OProfiler  PROFILER                     = Orient.instance().getProfiler();
@@ -86,6 +82,8 @@ public abstract class OChannel extends OListenerManger<OChannelListener> {
     socket = iSocket;
     socketBufferSize = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_BUFFER_SIZE);
     socket.setTcpNoDelay(true);
+    //THIS TIMEOUT IS CORRECT BUT CREATE SOME PROBLEM ON REMOTE, NEED CHECK BEFORE BE ENABLED
+    //timeout = iConfig.getValueAsLong(OGlobalConfiguration.NETWORK_REQUEST_TIMEOUT);
   }
 
   public static String getLocalIpAddress(final boolean iFavoriteIp4) throws SocketException {
@@ -186,8 +184,8 @@ public abstract class OChannel extends OListenerManger<OChannelListener> {
   public void connected() {
     final String dictProfilerMetric = PROFILER.getProcessMetric("network.channel.binary.*");
 
-    profilerMetric = PROFILER.getProcessMetric("network.channel.binary." + socket.getRemoteSocketAddress().toString()
-        + socket.getLocalPort() + "".replace('.', '_'));
+    profilerMetric = PROFILER.getProcessMetric(
+        "network.channel.binary." + socket.getRemoteSocketAddress().toString() + socket.getLocalPort() + "".replace('.', '_'));
 
     PROFILER.registerHookValue(profilerMetric + ".transmittedBytes", "Bytes transmitted to a network channel", METRIC_TYPE.SIZE,
         new OProfilerHookValue() {

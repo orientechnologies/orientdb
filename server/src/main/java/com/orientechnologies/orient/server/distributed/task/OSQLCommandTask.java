@@ -19,12 +19,15 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
-import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
-import com.orientechnologies.orient.core.command.OCommandExecutor;
-import com.orientechnologies.orient.core.command.OCommandManager;
-import com.orientechnologies.orient.core.command.OCommandRequest;
-import com.orientechnologies.orient.core.command.OCommandRequestInternal;
-import com.orientechnologies.orient.core.command.OCommandRequestText;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+
+import com.orientechnologies.orient.core.command.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ORetryQueryException;
@@ -34,17 +37,10 @@ import com.orientechnologies.orient.core.sql.OCommandExecutorSQLDelegate;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
 
 /**
  * Distributed task used for synchronization.
@@ -52,7 +48,8 @@ import java.util.Map;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class OSQLCommandTask extends OAbstractCommandTask {
-  private static final long serialVersionUID = 1L;
+  private static final long                                 serialVersionUID = 1L;
+  public static final int                                   FACTORYID        = 5;
 
   protected String                                          text;
   protected Map<Object, Object>                             params;
@@ -77,13 +74,12 @@ public class OSQLCommandTask extends OAbstractCommandTask {
     timeout = ((OCommandDistributedReplicateRequest) executor).getDistributedTimeout();
   }
 
-  public Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
-      throws Exception {
+  public Object execute(ODistributedRequestId requestId, final OServer iServer, ODistributedServerManager iManager,
+      final ODatabaseDocumentTx database) throws Exception {
 
     if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog
-          .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "execute command=%s db=%s", text.toString(),
-              database.getName());
+      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "Execute command=%s db=%s",
+          text.toString(), database.getName());
 
     Object res;
 
@@ -94,9 +90,8 @@ public class OSQLCommandTask extends OAbstractCommandTask {
         OCommandExecutor executor = OCommandManager.instance().getExecutor((OCommandRequestInternal) cmd);
         executor.parse(cmd);
 
-        final OCommandExecutor exec = executor instanceof OCommandExecutorSQLDelegate ?
-            ((OCommandExecutorSQLDelegate) executor).getDelegate() :
-            executor;
+        final OCommandExecutor exec = executor instanceof OCommandExecutorSQLDelegate
+            ? ((OCommandExecutorSQLDelegate) executor).getDelegate() : executor;
 
         if (exec instanceof OCommandExecutorSQLSelect && clusters.size() > 0) {
           final Iterator<? extends OIdentifiable> target = ((OCommandExecutorSQLSelect) exec).getTarget();
@@ -109,8 +104,8 @@ public class OSQLCommandTask extends OAbstractCommandTask {
           final ORecordIteratorClusters<ORecord> filteredTarget = new ORecordIteratorClusters<ORecord>(database, database,
               clusterIds);
           if (target instanceof ORecordIteratorClusters)
-            filteredTarget
-                .setRange(((ORecordIteratorClusters) target).getBeginRange(), ((ORecordIteratorClusters) target).getEndRange());
+            filteredTarget.setRange(((ORecordIteratorClusters) target).getBeginRange(),
+                ((ORecordIteratorClusters) target).getEndRange());
 
           ((OCommandExecutorSQLSelect) exec).setTarget(filteredTarget);
         }
@@ -183,4 +178,10 @@ public class OSQLCommandTask extends OAbstractCommandTask {
   public String getPayload() {
     return text;
   }
+
+  @Override
+  public int getFactoryId() {
+    return FACTORYID;
+  }
+
 }

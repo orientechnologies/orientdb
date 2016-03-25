@@ -19,12 +19,23 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
+import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Set;
 
 /**
  * Distributed create record task used for synchronization.
@@ -33,19 +44,68 @@ import java.io.ObjectOutput;
  *
  */
 public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedTask {
-  protected ORecordId rid;
-  protected int       version;
-  protected boolean   inTx = false;
+  protected ORecordId         rid;
+  protected int               version;
+  protected int               partitionKey = -1;
+  protected boolean           lockRecords  = true;
+
+  protected transient ORecord previousRecord;
 
   public OAbstractRecordReplicatedTask() {
   }
 
-  public OAbstractRecordReplicatedTask(final ORecordId iRid, final int iVersion) {
-    this.rid = iRid;
-    this.version = iVersion;
+  protected OAbstractRecordReplicatedTask(final ORecord record) {
+    this((ORecordId) record.getIdentity(), record.getVersion());
   }
 
+  protected OAbstractRecordReplicatedTask(final ORecordId iRid, final int iVersion) {
+    this.rid = iRid;
+    this.version = iVersion;
+
+    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    if (db != null) {
+      final OClass clazz = db.getMetadata().getSchema().getClassByClusterId(rid.clusterId);
+      if (clazz != null) {
+        final Set<OIndex<?>> indexes = clazz.getIndexes();
+        if (indexes != null && !indexes.isEmpty()) {
+          for (OIndex idx : indexes)
+            if (idx.isUnique())
+              // UNIQUE INDEX: RETURN THE HASH OF THE NAME TO USE THE SAME PARTITION ID AVOIDING CONCURRENCY ON INDEX UPDATES
+              partitionKey = idx.getName().hashCode();
+        }
+      }
+    }
+  }
+
+  public abstract Object executeRecordTask(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager,
+      ODatabaseDocumentTx database) throws Exception;
+
   public abstract ORecord getRecord();
+
+  @Override
+  public final Object execute(final ODistributedRequestId requestId, final OServer iServer,
+      final ODistributedServerManager iManager, final ODatabaseDocumentTx database) throws Exception {
+    final ODistributedDatabase ddb = iManager.getMessageService().getDatabase(database.getName());
+    if (lockRecords)
+      // TRY LOCKING RECORD
+      if (!ddb.lockRecord(rid, requestId))
+        throw new ODistributedRecordLockedException(rid);
+
+    try {
+
+      return executeRecordTask(requestId, iServer, iManager, database);
+
+    } finally {
+      if (lockRecords)
+        // UNLOCK THE SINGLE OPERATION. IN TX WAIT FOR THE 2-PHASE COMMIT/ROLLBACK/FIX MESSAGE
+        ddb.unlockRecord(rid);
+    }
+  }
+
+  @Override
+  public int getPartitionKey() {
+    return partitionKey > -1 ? partitionKey : rid.clusterId;
+  }
 
   @Override
   public String toString() {
@@ -56,40 +116,34 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
     return rid;
   }
 
-  public void setRid(ORecordId rid) {
-    this.rid = rid;
-  }
-
   public int getVersion() {
     return version;
   }
 
-  public void setVersion(int version) {
-    this.version = version;
+  public void prepareUndoOperation() {
+    if (previousRecord == null) {
+      previousRecord = rid.getRecord();
+      if (previousRecord == null)
+        throw new ORecordNotFoundException(rid);
+    }
   }
-
-  abstract void setLockRecord(boolean lockRecord);
 
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
     out.writeUTF(rid.toString());
     out.writeInt(version);
-    out.writeBoolean(inTx);
+    out.writeInt(partitionKey);
   }
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
     rid = new ORecordId(in.readUTF());
     version = in.readInt();
-    inTx = in.readBoolean();
+    partitionKey = in.readInt();
   }
 
-  public boolean isInTx() {
-    return inTx;
-  }
-
-  public void setInTx(final boolean inTx) {
-    this.inTx = inTx;
+  public void setLockRecords(final boolean lockRecords) {
+    this.lockRecords = lockRecords;
   }
 
   @Override

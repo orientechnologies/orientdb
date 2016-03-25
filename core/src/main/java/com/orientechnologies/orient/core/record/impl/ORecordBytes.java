@@ -89,6 +89,12 @@ public class ORecordBytes extends ORecordAbstract implements OBlob {
   }
 
   @Override
+  public ORecordAbstract clear() {
+    clearSource();
+    return super.clear();
+  }
+
+  @Override
   public byte[] toStream() {
     return _source;
   }

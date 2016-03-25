@@ -29,21 +29,27 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Distributed cluster selection strategy that always prefers local cluster if any reducing network latency of remote calls. It
  * computes the best cluster the first time and every-time the configuration changes.
  * 
+ * Starting from v2.2.0 a local round robin strategy is used.
+ * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
 public class OLocalClusterStrategy implements OClusterSelectionStrategy {
-  public final static String                NAME          = "local";
-  protected final OClass                    cls;
-  protected final ODistributedServerManager manager;
-  protected final String                    nodeName;
-  protected final String                    databaseName;
-  protected volatile int                    bestClusterId = -1;
+  public final static String              NAME           = "local";
+
+  private OClass                          cls;
+  private final ODistributedServerManager manager;
+  private final String                    nodeName;
+  private final String                    databaseName;
+  private final AtomicLong                pointer        = new AtomicLong(0);
+  private int                             lastVersion    = -1;
+  private volatile List<Integer>          bestClusterIds = new ArrayList<Integer>();
 
   public OLocalClusterStrategy(final ODistributedServerManager iManager, final String iDatabaseName, final OClass iClass) {
     this.manager = iManager;
@@ -57,14 +63,25 @@ public class OLocalClusterStrategy implements OClusterSelectionStrategy {
     if (!iClass.equals(cls))
       throw new IllegalArgumentException("Class '" + iClass + "' is different than the configured one: " + cls);
 
-    if (bestClusterId == -1)
+    if (bestClusterIds.isEmpty())
       readConfiguration();
+    else {
+      final ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
+      if (lastVersion != cfg.getVersion()) {
+        // DISTRIBUTED CFG IS CHANGED: GET BEST CLUSTER AGAIN
+        readConfiguration();
+      }
+    }
 
-    return bestClusterId;
-  }
+    final int size = bestClusterIds.size();
+    if (size == 0)
+      return -1;
 
-  public void resetConfiguration() {
-    bestClusterId = -1;
+    if (size == 1)
+      // ONLY ONE: RETURN THE FIRST ONE
+      return bestClusterIds.get(0);
+
+    return bestClusterIds.get((int) (pointer.getAndIncrement() % size));
   }
 
   @Override
@@ -85,8 +102,8 @@ public class OLocalClusterStrategy implements OClusterSelectionStrategy {
 
     final ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
 
-    final String bestCluster = cfg.getLocalCluster(clusterNames, nodeName);
-    if (bestCluster == null) {
+    final List<String> bestClusters = cfg.getOwnedClusters(clusterNames, nodeName);
+    if (bestClusters.isEmpty()) {
 
       // FILL THE MAP CLUSTER/SERVERS
       final StringBuilder buffer = new StringBuilder();
@@ -94,9 +111,9 @@ public class OLocalClusterStrategy implements OClusterSelectionStrategy {
         if (buffer.length() > 0)
           buffer.append(" ");
 
-        buffer.append("cluster ");
+        buffer.append(" ");
         buffer.append(c);
-        buffer.append(": ");
+        buffer.append(":");
         buffer.append(cfg.getServers(c, null));
       }
 
@@ -107,6 +124,11 @@ public class OLocalClusterStrategy implements OClusterSelectionStrategy {
           "Cannot find best cluster for class '" + cls.getName() + "' on server '" + nodeName + "'. ClusterStrategy=" + getName());
     }
 
-    bestClusterId = db.getClusterIdByName(bestCluster);
+    final List<Integer> newBestClusters = new ArrayList<Integer>();
+    for (String c : bestClusters)
+      newBestClusters.add(db.getClusterIdByName(c));
+    bestClusterIds = newBestClusters;
+
+    lastVersion = cfg.getVersion();
   }
 }

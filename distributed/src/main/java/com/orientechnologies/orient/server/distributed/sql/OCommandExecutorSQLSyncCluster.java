@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.distributed.sql;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.Orient;
@@ -36,11 +37,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedDatabaseChunk;
-import com.orientechnologies.orient.server.distributed.ODistributedException;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.task.OCopyDatabaseChunkTask;
 import com.orientechnologies.orient.server.distributed.task.OSyncClusterTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
@@ -49,7 +46,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -121,9 +117,9 @@ public class OCommandExecutorSQLSyncCluster extends OCommandExecutorSQLAbstract 
       case FULL_REPLACE:
         return replaceCluster(dManager, database, serverInstance, databaseName, clusterName);
 
-        // case MERGE:
-        // int merged = 0;
-        // return String.format("Merged %d records", merged);
+      // case MERGE:
+      // int merged = 0;
+      // return String.format("Merged %d records", merged);
       }
     } catch (Exception e) {
       throw OException.wrapException(new OCommandExecutionException("Cannot execute synchronization of cluster"), e);
@@ -149,12 +145,14 @@ public class OCommandExecutorSQLSyncCluster extends OCommandExecutorSQLAbstract 
     nodesWhereClusterIsCfg.remove(nodeName);
 
     if (nodesWhereClusterIsCfg.isEmpty())
-      throw new OCommandExecutionException("Cannot synchronize cluster '" + clusterName
-          + "' because is not configured on any running nodes");
+      throw new OCommandExecutionException(
+          "Cannot synchronize cluster '" + clusterName + "' because is not configured on any running nodes");
 
     final OSyncClusterTask task = new OSyncClusterTask(clusterName);
-    final Map<String, Object> results = (Map<String, Object>) dManager.sendRequest(databaseName, null, nodesWhereClusterIsCfg,
-        task, ODistributedRequest.EXECUTION_MODE.RESPONSE);
+    final ODistributedResponse response = dManager.sendRequest(databaseName, null, nodesWhereClusterIsCfg, task,
+        ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+
+    final Map<String, Object> results = (Map<String, Object>) response.getPayload();
 
     File tempFile = null;
     FileOutputStream out = null;
@@ -186,9 +184,9 @@ public class OCommandExecutorSQLSyncCluster extends OCommandExecutorSQLAbstract 
 
           fileSize = writeDatabaseChunk(nodeName, 1, chunk, out);
           for (int chunkNum = 2; !chunk.last; chunkNum++) {
-            final Object result = dManager.sendRequest(databaseName, null, Collections.singleton(r.getKey()),
+            final Object result = dManager.sendRequest(databaseName, null, OMultiValue.getSingletonList(r.getKey()),
                 new OCopyDatabaseChunkTask(chunk.filePath, chunkNum, chunk.offset + chunk.buffer.length, false),
-                ODistributedRequest.EXECUTION_MODE.RESPONSE);
+                ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
 
             if (result instanceof Boolean)
               continue;
@@ -265,8 +263,8 @@ public class OCommandExecutorSQLSyncCluster extends OCommandExecutorSQLAbstract 
   protected static long writeDatabaseChunk(final String iNodeName, final int iChunkId, final ODistributedDatabaseChunk chunk,
       final FileOutputStream out) throws IOException {
 
-    ODistributedServerLog.warn(null, iNodeName, null, ODistributedServerLog.DIRECTION.NONE,
-        "- writing chunk #%d offset=%d size=%s", iChunkId, chunk.offset, OFileUtils.getSizeAsString(chunk.buffer.length));
+    ODistributedServerLog.warn(null, iNodeName, null, ODistributedServerLog.DIRECTION.NONE, "- writing chunk #%d offset=%d size=%s",
+        iChunkId, chunk.offset, OFileUtils.getSizeAsString(chunk.buffer.length));
     out.write(chunk.buffer);
 
     return chunk.buffer.length;

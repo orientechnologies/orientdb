@@ -21,7 +21,15 @@ package com.orientechnologies.orient.core.index.hashindex.local;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.ODefaultIndexFactory;
+import com.orientechnologies.orient.core.index.OIndexDictionary;
+import com.orientechnologies.orient.core.index.OIndexEngine;
+import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.index.OIndexFactory;
+import com.orientechnologies.orient.core.index.OIndexFullText;
+import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.index.OIndexNotUnique;
+import com.orientechnologies.orient.core.index.OIndexUnique;
 import com.orientechnologies.orient.core.index.engine.OHashTableIndexEngine;
 import com.orientechnologies.orient.core.index.engine.ORemoteIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -44,6 +52,7 @@ public class OHashIndexFactory implements OIndexFactory {
   private static final Set<String> TYPES;
   public static final String       HASH_INDEX_ALGORITHM = "HASH_INDEX";
   private static final Set<String> ALGORITHMS;
+
   static {
     final Set<String> types = new HashSet<String>();
     types.add(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.toString());
@@ -52,6 +61,7 @@ public class OHashIndexFactory implements OIndexFactory {
     types.add(OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString());
     TYPES = Collections.unmodifiableSet(types);
   }
+
   static {
     final Set<String> algorithms = new HashSet<String>();
     algorithms.add(HASH_INDEX_ALGORITHM);
@@ -100,7 +110,7 @@ public class OHashIndexFactory implements OIndexFactory {
       return new OIndexDictionary(name, indexType, algorithm, version, (OAbstractPaginatedStorage) storage.getUnderlying(),
           valueContainerAlgorithm, metadata);
 
-    throw new OConfigurationException("Unsupported type : " + indexType);
+    throw new OConfigurationException("Unsupported type: " + indexType);
   }
 
   @Override
@@ -109,8 +119,8 @@ public class OHashIndexFactory implements OIndexFactory {
   }
 
   @Override
-  public OIndexEngine createIndexEngine(String algoritm ,String name, Boolean durableInNonTxMode, OStorage storage, int version,
-      Map<String, String> engineProperties) {
+  public OIndexEngine createIndexEngine(final String algoritm, final String name, final Boolean durableInNonTxMode,
+      final OStorage storage, final int version, final Map<String, String> engineProperties) {
     OIndexEngine indexEngine;
 
     final String storageType = storage.getType();
@@ -123,7 +133,7 @@ public class OHashIndexFactory implements OIndexFactory {
     else if (storageType.equals("remote"))
       indexEngine = new ORemoteIndexEngine(name);
     else
-      throw new OIndexException("Unsupported storage type : " + storageType);
+      throw new OIndexException("Unsupported storage type: " + storageType);
 
     return indexEngine;
   }

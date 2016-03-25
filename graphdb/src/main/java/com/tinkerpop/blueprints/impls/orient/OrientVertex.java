@@ -32,10 +32,7 @@ import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -553,13 +550,13 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
     final OrientBaseGraph graph = getGraph();
 
     if (checkDeletedInTx())
-      graph.throwRecordNotFoundException("The vertex " + getIdentity() + " has been deleted");
+      graph.throwRecordNotFoundException(getIdentity(), "The vertex " + getIdentity() + " has been deleted");
 
     final ORID oldIdentity = getIdentity().copy();
 
     final ORecord oldRecord = oldIdentity.getRecord();
     if (oldRecord == null)
-      graph.throwRecordNotFoundException("The vertex " + getIdentity() + " has been deleted");
+      graph.throwRecordNotFoundException(getIdentity(), "The vertex " + getIdentity() + " has been deleted");
 
     if (!graph.getRawGraph().getTransaction().isActive())
       throw new IllegalStateException("Move vertex requires an active transaction to be executed in safe manner");
@@ -1031,14 +1028,30 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
       // DEFAULT CLASS, TREAT IT AS NO CLASS/LABEL
       iClassNames = null;
 
+
     final List<String> result = new ArrayList<String>();
 
     if (settings.isUseVertexFieldsForEdgeLabels()) {
       if (iClassNames == null)
         // FALL BACK TO LOAD ALL FIELD NAMES
+      {
         return null;
+      }
+      OSchemaProxy schema = getGraph().getRawGraph().getMetadata().getSchema();
 
-      for (String className : iClassNames) {
+      Set<String> allClassNames = new HashSet<String>();
+      for(String className:iClassNames){
+        allClassNames.add(className);
+        OClass clazz = schema.getClass(className);
+        if(clazz!=null){
+          Collection<OClass> subClasses = clazz.getAllSubclasses();
+          for(OClass subClass:subClasses){
+            allClassNames.add(subClass.getName());
+          }
+        }
+      }
+
+      for (String className : allClassNames) {
         switch (iDirection) {
         case OUT:
           result.add(CONNECTION_OUT_PREFIX + className);

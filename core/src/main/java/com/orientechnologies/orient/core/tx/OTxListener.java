@@ -21,18 +21,16 @@ package com.orientechnologies.orient.core.tx;
 
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 
-
 /**
  * Listener interface to catch events during transactions phases.
  * 
- * @author Luca Garulli
- * deprecated since 2.2
+ * @author Luca Garulli deprecated since 2.2
  */
 @Deprecated
 public interface OTxListener {
-	public enum EVENT {
-		BEFORE_COMMIT, AFTER_COMMIT, BEFORE_ROLLBACK, AFTER_ROLLBACK
-	}
+  enum EVENT {
+    BEFORE_COMMIT, AFTER_COMMIT, BEFORE_ROLLBACK, AFTER_ROLLBACK
+  }
 
-	public void onEvent(ORecordOperation iTxEntry, EVENT iEvent);
+  void onEvent(ORecordOperation iTxEntry, EVENT iEvent);
 }

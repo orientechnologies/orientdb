@@ -19,31 +19,24 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.exception.OSerializationException;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.serialization.OMemoryStream;
-import com.orientechnologies.orient.core.serialization.OSerializableStream;
 
 /**
  * Contains the information about a database operation.
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
-public class ORecordOperation {
+public class ORecordOperation implements Comparable {
 
   private static final long serialVersionUID = 1L;
 
-  public static final byte LOADED  = 0;
-  public static final byte UPDATED = 1;
-  public static final byte DELETED = 2;
-  public static final byte CREATED = 3;
+  public static final byte  LOADED           = 0;
+  public static final byte  UPDATED          = 1;
+  public static final byte  DELETED          = 2;
+  public static final byte  CREATED          = 3;
 
-  public byte          type;
-  public OIdentifiable record;
+  public byte               type;
+  public OIdentifiable      record;
 
   public ORecordOperation() {
   }
@@ -113,5 +106,10 @@ public class ORecordOperation {
     else if (iName.startsWith("READ"))
       return ORecordOperation.LOADED;
     return -1;
+  }
+
+  @Override
+  public int compareTo(Object o) {
+    return record.compareTo(((ORecordOperation) o).record);
   }
 }

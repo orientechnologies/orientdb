@@ -19,22 +19,24 @@
  */
 package com.orientechnologies.orient.core.storage;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+
 import com.orientechnologies.common.concur.resource.OSharedContainer;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.util.OBackupable;
-
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
 
 /**
  * This is the gateway interface between the Database side and the storage. Provided implementations are: Local, Remote and Memory.
@@ -98,7 +100,7 @@ public interface OStorage extends OBackupable, OSharedContainer {
   boolean cleanOutRecord(ORecordId recordId, int recordVersion, int iMode, ORecordCallback<Boolean> callback);
 
   // TX OPERATIONS
-  void commit(OTransaction iTx, Runnable callback);
+  List<ORecordOperation> commit(OTransaction iTx, Runnable callback);
 
   // TX OPERATIONS
   void rollback(OTransaction iTx);
@@ -235,8 +237,6 @@ public interface OStorage extends OBackupable, OSharedContainer {
 
   OCurrentStorageComponentsFactory getComponentsFactory();
 
-  long getLastOperationId();
-
   OStorageOperationResult<Boolean> hideRecord(ORecordId recordId, int mode, ORecordCallback<Boolean> callback);
 
   OCluster getClusterByName(String clusterName);
@@ -250,9 +250,8 @@ public interface OStorage extends OBackupable, OSharedContainer {
   void restoreFromIncrementalBackup(String filePath);
 
   /**
-   * This method is called in {@link com.orientechnologies.orient.core.Orient#shutdown()} method.
-   * For most of the storages it means that storage will be merely closed, but sometimes additional operations are need to be
-   * taken in account.
+   * This method is called in {@link com.orientechnologies.orient.core.Orient#shutdown()} method. For most of the storages it means
+   * that storage will be merely closed, but sometimes additional operations are need to be taken in account.
    */
   void shutdown();
 }
