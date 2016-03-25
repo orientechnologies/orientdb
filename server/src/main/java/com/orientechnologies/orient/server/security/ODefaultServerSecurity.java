@@ -881,8 +881,8 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
 	{
 		try
 		{
-			_CreateDefaultUsers = false;
-			_StorePasswords = false;
+			_CreateDefaultUsers = true;
+			_StorePasswords = true;
 			
 			if(serverDoc != null)
 			{
