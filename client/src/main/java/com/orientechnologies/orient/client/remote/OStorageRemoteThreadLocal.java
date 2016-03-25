@@ -48,6 +48,8 @@ public class OStorageRemoteThreadLocal extends ThreadLocal<OStorageRemoteSession
     public Integer sessionId        = -1;
     public String  serverURL        = null;
     public byte[]  token            = null;
+    public String  connectionUserName;
+    public String  connectionUserPassword;
   }
 
   @Override
