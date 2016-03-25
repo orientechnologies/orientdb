@@ -476,6 +476,12 @@ public enum OGlobalConfiguration {
 
   PROFILER_MAXVALUES("profiler.maxValues", "Maximum values to store. Values are managed in a LRU", Integer.class, 200),
 
+  /**
+   * Interval between snapshots of profiler state in milliseconds, default value is 100.
+   */
+  STORAGE_PROFILER_SNAPSHOT_INTERVAL("storageProfiler.intervalBetweenSnapshots",
+      "Interval between snapshots of profiler state in milliseconds", Integer.class, 100),
+
   // LOG
   LOG_CONSOLE_LEVEL("log.console.level", "Console logging level.", String.class, "info", new OConfigurationChangeCallback() {
     public void change(final Object iCurrentValue, final Object iNewValue) {

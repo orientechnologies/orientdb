@@ -47,8 +47,7 @@ import java.nio.ByteBuffer;
  * <p>
  * Developer which will extend this class should use all page memory starting from {@link #NEXT_FREE_POSITION} offset.
  * <p>
- * {@link OReadCache#release(OCacheEntry, com.orientechnologies.orient.core.storage.cache.OWriteCache,
- * com.orientechnologies.orient.core.storage.impl.local.statistic.OStoragePerformanceStatistic)} back to the cache.
+ * {@link OReadCache#release(OCacheEntry, com.orientechnologies.orient.core.storage.cache.OWriteCache)} back to the cache.
  * <p>
  * All data structures which use this kind of pages should be derived from
  * {@link com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent} class.
@@ -173,9 +172,8 @@ public class ODurablePage {
       changes.setIntValue(buffer, value, pageOffset);
     } else {
       buffer.putInt(pageOffset, value);
+      cacheEntry.markDirty();
     }
-
-    cacheEntry.markDirty();
 
     return OIntegerSerializer.INT_SIZE;
   }
@@ -184,10 +182,10 @@ public class ODurablePage {
     final ByteBuffer buffer = pointer.getExclusiveBuffer();
     if (changes != null) {
       changes.setByteValue(buffer, value, pageOffset);
-    } else
+    } else {
       buffer.put(pageOffset, value);
-
-    cacheEntry.markDirty();
+      cacheEntry.markDirty();
+    }
 
     return OByteSerializer.BYTE_SIZE;
   }
@@ -198,9 +196,8 @@ public class ODurablePage {
       changes.setLongValue(buffer, value, pageOffset);
     } else {
       buffer.putLong(pageOffset, value);
+      cacheEntry.markDirty();
     }
-
-    cacheEntry.markDirty();
 
     return OLongSerializer.LONG_SIZE;
   }
@@ -215,9 +212,8 @@ public class ODurablePage {
     } else {
       buffer.position(pageOffset);
       buffer.put(value);
+      cacheEntry.markDirty();
     }
-
-    cacheEntry.markDirty();
 
     return value.length;
   }

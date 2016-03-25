@@ -2231,7 +2231,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     if (!hasClusterId(clusterId))
       return;
 
-    database.command(new OCommandSQL("alter cluster " + oldName + " name " + newName)).execute();
+    database.command(new OCommandSQL("alter cluster `" + oldName + "` name `" + newName + "`")).execute();
   }
 
   private void setShortNameInternal(final String iShortName) {

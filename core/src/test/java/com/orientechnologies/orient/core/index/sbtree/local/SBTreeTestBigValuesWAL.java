@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
-import com.orientechnologies.orient.core.storage.impl.local.statistic.OStoragePerformanceStatistic;
 import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -366,9 +365,6 @@ public class SBTreeTestBigValuesWAL extends SBTreeTestBigValues {
   }
 
   private void restoreDataFromWAL() throws IOException {
-    OStoragePerformanceStatistic storagePerformanceStatistic = new OStoragePerformanceStatistic(
-        OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, "test", 1);
-
     ODiskWriteAheadLog log = new ODiskWriteAheadLog(4, -1, 10 * 1024L * OWALPage.PAGE_SIZE, null, actualStorage);
     OLogSequenceNumber lsn = log.begin();
 
@@ -399,13 +395,13 @@ public class SBTreeTestBigValuesWAL extends SBTreeTestBigValues {
             expectedReadCache.openFile(fileId, expectedWriteCache);
 
           OCacheEntry cacheEntry = expectedReadCache
-              .load(fileId, pageIndex, true, expectedWriteCache, 0, storagePerformanceStatistic);
+              .load(fileId, pageIndex, true, expectedWriteCache, 0);
           if (cacheEntry == null) {
             do {
               if (cacheEntry != null)
-                expectedReadCache.release(cacheEntry, expectedWriteCache, storagePerformanceStatistic);
+                expectedReadCache.release(cacheEntry, expectedWriteCache);
 
-              cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache, storagePerformanceStatistic);
+              cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache);
             } while (cacheEntry.getPageIndex() != pageIndex);
           }
           cacheEntry.acquireExclusiveLock();
@@ -417,7 +413,7 @@ public class SBTreeTestBigValuesWAL extends SBTreeTestBigValues {
             cacheEntry.markDirty();
           } finally {
             cacheEntry.releaseExclusiveLock();
-            expectedReadCache.release(cacheEntry, expectedWriteCache, storagePerformanceStatistic);
+            expectedReadCache.release(cacheEntry, expectedWriteCache);
           }
         }
         atomicUnit.clear();

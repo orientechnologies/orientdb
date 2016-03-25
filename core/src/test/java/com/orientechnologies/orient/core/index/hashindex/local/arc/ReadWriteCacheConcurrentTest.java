@@ -12,7 +12,6 @@ import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.statistic.OStoragePerformanceStatistic;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -235,23 +234,20 @@ public class ReadWriteCacheConcurrentTest {
     }
 
     private void writeToFile(int fileNumber, long pageIndex) throws IOException {
-      OStoragePerformanceStatistic storagePerformanceStatistic = new OStoragePerformanceStatistic(
-          OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, "test", 1);
-
       OCacheEntry cacheEntry = readBuffer
-          .load(fileIds.get(fileNumber), pageIndex, false, writeBuffer, 1, storagePerformanceStatistic);
+          .load(fileIds.get(fileNumber), pageIndex, false, writeBuffer, 1);
       if (cacheEntry == null) {
         do {
           if (cacheEntry != null)
-            readBuffer.release(cacheEntry, writeBuffer, storagePerformanceStatistic);
+            readBuffer.release(cacheEntry, writeBuffer);
 
-          cacheEntry = readBuffer.allocateNewPage(fileIds.get(fileNumber), writeBuffer, storagePerformanceStatistic);
+          cacheEntry = readBuffer.allocateNewPage(fileIds.get(fileNumber), writeBuffer);
         } while (cacheEntry.getPageIndex() < pageIndex);
       }
 
       if (cacheEntry.getPageIndex() > pageIndex) {
-        readBuffer.release(cacheEntry, writeBuffer, storagePerformanceStatistic);
-        cacheEntry = readBuffer.load(fileIds.get(fileNumber), pageIndex, false, writeBuffer, 1, storagePerformanceStatistic);
+        readBuffer.release(cacheEntry, writeBuffer);
+        cacheEntry = readBuffer.load(fileIds.get(fileNumber), pageIndex, false, writeBuffer, 1);
       }
 
       OCachePointer pointer = cacheEntry.getCachePointer();
@@ -264,7 +260,7 @@ public class ReadWriteCacheConcurrentTest {
       cacheEntry.markDirty();
 
       pointer.releaseExclusiveLock();
-      readBuffer.release(cacheEntry, writeBuffer, storagePerformanceStatistic);
+      readBuffer.release(cacheEntry, writeBuffer);
     }
 
     private long getNextPageIndex(int fileNumber) {
@@ -307,14 +303,11 @@ public class ReadWriteCacheConcurrentTest {
   private class Reader implements Callable<Void> {
     @Override
     public Void call() throws Exception {
-      OStoragePerformanceStatistic storagePerformanceStatistic = new OStoragePerformanceStatistic(
-          OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, "test", 1);
-
       long pageIndex = Math.abs(new Random().nextInt() % PAGE_COUNT);
       int fileNumber = new Random().nextInt(FILE_COUNT);
 
       OCacheEntry cacheEntry = readBuffer
-          .load(fileIds.get(fileNumber), pageIndex, false, writeBuffer, 1, storagePerformanceStatistic);
+          .load(fileIds.get(fileNumber), pageIndex, false, writeBuffer, 1);
       OCachePointer pointer = cacheEntry.getCachePointer();
 
       final ByteBuffer buffer = pointer.getSharedBuffer();
@@ -323,7 +316,7 @@ public class ReadWriteCacheConcurrentTest {
       buffer.get(content);
 
 
-      readBuffer.release(cacheEntry, writeBuffer, storagePerformanceStatistic);
+      readBuffer.release(cacheEntry, writeBuffer);
 
       Assert.assertTrue(content[0] == 1 || content[0] == 2);
       Assert.assertEquals(content, new byte[] { content[0], 2, 3, seed, 5, 6, (byte) fileNumber, (byte) (pageIndex & 0xFF) });
