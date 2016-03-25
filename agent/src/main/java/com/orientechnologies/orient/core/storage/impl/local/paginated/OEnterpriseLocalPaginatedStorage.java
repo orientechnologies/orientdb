@@ -324,7 +324,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
       stream.write(binaryFileId, 0, binaryFileId.length);
 
       for (long pageIndex = 0; pageIndex < filledUpTo; pageIndex++) {
-        final OCacheEntry cacheEntry = readCache.load(fileId, pageIndex, true, writeCache, 1, storagePerformanceStatistic);
+        final OCacheEntry cacheEntry = readCache.load(fileId, pageIndex, true, writeCache, 1);
         cacheEntry.acquireSharedLock();
         try {
           final OLogSequenceNumber pageLsn = ODurablePage
@@ -344,7 +344,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
           }
         } finally {
           cacheEntry.releaseSharedLock();
-          readCache.release(cacheEntry, writeCache, storagePerformanceStatistic);
+          readCache.release(cacheEntry, writeCache);
         }
       }
 
@@ -501,14 +501,14 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
 
           final long pageIndex = OLongSerializer.INSTANCE.deserializeNative(data, 0);
 
-          OCacheEntry cacheEntry = readCache.load(fileId, pageIndex, true, writeCache, 1, storagePerformanceStatistic);
+          OCacheEntry cacheEntry = readCache.load(fileId, pageIndex, true, writeCache, 1);
 
           if (cacheEntry == null) {
             do {
               if (cacheEntry != null)
-                readCache.release(cacheEntry, writeCache, storagePerformanceStatistic);
+                readCache.release(cacheEntry, writeCache);
 
-              cacheEntry = readCache.allocateNewPage(fileId, writeCache, storagePerformanceStatistic);
+              cacheEntry = readCache.allocateNewPage(fileId, writeCache);
             } while (cacheEntry.getPageIndex() != pageIndex);
           }
 
@@ -539,7 +539,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
             }
           } finally {
             cacheEntry.releaseExclusiveLock();
-            readCache.release(cacheEntry, writeCache, storagePerformanceStatistic);
+            readCache.release(cacheEntry, writeCache);
           }
         }
       }
