@@ -26,7 +26,7 @@ public abstract class OServerSocketFactory {
 	private static OServerSocketFactory theFactory;
 	private String name;
 
-	protected OServerSocketFactory() {
+	public OServerSocketFactory() {
 	}
 
 	public static OServerSocketFactory getDefault() {

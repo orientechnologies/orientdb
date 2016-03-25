@@ -97,12 +97,16 @@ public abstract class OServerCommandAuthenticatedServerAbstract extends OServerC
   protected void sendAuthorizationRequest(final OHttpRequest iRequest, final OHttpResponse iResponse) throws IOException {
     // UNAUTHORIZED
     iRequest.sessionId = SESSIONID_UNAUTHORIZED;
+
+    // Defaults to "WWW-Authenticate: Basic".
+    String header = server.getSecurity().getAuthenticationHeader(null);
+
     if (isJsonResponse(iResponse)) {
       sendJsonError(iResponse, OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
-          "401 Unauthorized.", "WWW-Authenticate: Basic realm=\"OrientDB Server\"");
+          "401 Unauthorized.", header);
     } else {
       iResponse.send(OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
-          "401 Unauthorized.", "WWW-Authenticate: Basic realm=\"OrientDB Server\"");
+          "401 Unauthorized.", header);
     }
   }
 }

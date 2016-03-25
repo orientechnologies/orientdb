@@ -110,6 +110,7 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
     final OJSONWriter json = new OJSONWriter(buffer);
 
     json.beginObject();
+    
     if (db.getMetadata().getSchema().getClasses() != null) {
       json.beginCollection(1, false, "classes");
       Set<String> exportedNames = new HashSet<String>();
@@ -148,11 +149,12 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
       json.endCollection(1, true);
     }
 
-    json.writeAttribute(1, false, "currentUser", db.getUser().getName());
+    if(db.getUser() != null)
+    	json.writeAttribute(1, false, "currentUser", db.getUser().getName());
 
     json.beginCollection(1, false, "users");
     OUser user;
-    for (ODocument doc : db.getMetadata().getSecurity().getAllUsers()) {
+    for (ODocument doc : db.getMetadata().getSecurity().getAllUsers()) {    	
       user = new OUser(doc);
       json.beginObject(2, true, null);
       json.writeAttribute(3, false, "name", user.getName());

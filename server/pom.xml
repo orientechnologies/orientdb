@@ -88,6 +88,11 @@
             <version>4.4</version>
             <scope>test</scope>
         </dependency>
+		  <dependency>
+			   <groupId>com.cloudbees</groupId>
+			   <artifactId>syslog-java-client</artifactId>
+			   <version>1.0.9-SNAPSHOT</version>
+		  </dependency>
     </dependencies>
 
     <profiles>

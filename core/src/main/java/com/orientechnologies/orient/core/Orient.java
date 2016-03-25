@@ -37,6 +37,7 @@ import com.orientechnologies.orient.core.db.ODatabaseThreadLocalFactory;
 import com.orientechnologies.orient.core.engine.OEngine;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.ORecordFactoryManager;
+import com.orientechnologies.orient.core.security.OSecuritySystem;
 import com.orientechnologies.orient.core.shutdown.OShutdownHandler;
 import com.orientechnologies.orient.core.storage.OIdentifiableStorage;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -107,7 +108,8 @@ public class Orient extends OListenerManger<OOrientListener> {
   private volatile boolean active = false;
   private ThreadPoolExecutor workers;
   private OSignalHandler     signalHandler;
-
+  private volatile OSecuritySystem security;
+  
   private static class WeakHashSetValueHolder<T> extends WeakReference<T> {
     private final int hashCode;
 
@@ -740,6 +742,11 @@ public class Orient extends OListenerManger<OOrientListener> {
 
   public void setProfiler(final OProfiler iProfiler) {
     profiler = iProfiler;
+  }
+
+  public OSecuritySystem getSecurity() { return this.security; }
+  public void setSecurity(final OSecuritySystem security) {
+    this.security = security;
   }
 
   public void registerThreadDatabaseFactory(final ODatabaseThreadLocalFactory iDatabaseFactory) {
