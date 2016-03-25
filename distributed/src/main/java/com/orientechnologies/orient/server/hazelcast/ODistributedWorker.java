@@ -126,19 +126,20 @@ public class ODistributedWorker extends Thread {
   }
 
   public void shutdown() {
+    running = false;
+
     final int pendingMsgs = localQueue.size();
 
     if (pendingMsgs > 0)
       ODistributedServerLog.info(this, getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
           "Received shutdown signal, waiting for distributed worker queue is empty (pending msgs=%d)...", pendingMsgs);
 
-    try {
-      running = false;
+    interrupt();
 
+    try {
       if (pendingMsgs > 0)
         try {
           join();
-          interrupt();
         } catch (Exception e) {
           ODistributedServerLog.debug(this, getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
               "Interrupted shutdown of distributed worker thread");
