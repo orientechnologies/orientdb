@@ -497,7 +497,7 @@ public class OServer {
     String dbURL = configuration.getStoragePath(name);
     if (dbURL == null) {
       // SEARCH IN DEFAULT DATABASE DIRECTORY
-      if (new File(OIOUtils.getPathFromDatabaseName(dbPath) + "/default.pcl").exists())
+      if (new File(OIOUtils.getPathFromDatabaseName(dbPath) + "/database.ocf").exists())
         dbURL = "plocal:" + dbPath;
       else
         throw new OConfigurationException(
@@ -1132,7 +1132,7 @@ public class OServer {
       if (files != null)
         for (File db : files) {
           if (db.isDirectory()) {
-            final File plocalFile = new File(db.getAbsolutePath() + "/default.pcl");
+            final File plocalFile = new File(db.getAbsolutePath() + "/database.ocf");
             final String dbPath = db.getPath().replace('\\', '/');
             final int lastBS = dbPath.lastIndexOf('/', dbPath.length() - 1) + 1;// -1 of dbPath may be ended with slash
             if (plocalFile.exists()) {
