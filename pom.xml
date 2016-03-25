@@ -50,10 +50,5 @@
 			<version>${orientdb.version}</version>
 			<scope>provided</scope>
 		</dependency>
-		<dependency>
-			<groupId>com.cloudbees</groupId>
-			<artifactId>syslog-java-client</artifactId>
-			<version>1.0.9-SNAPSHOT</version>
-		</dependency>
 	</dependencies>
 </project>
